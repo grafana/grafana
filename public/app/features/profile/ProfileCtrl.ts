@@ -1,6 +1,7 @@
 import config from 'app/core/config';
 import { coreModule } from 'app/core/core';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { UserSession } from 'app/types';
 
 export class ProfileCtrl {
   user: any;
@@ -31,10 +32,10 @@ export class ProfileCtrl {
   }
 
   getUserSessions() {
-    this.backendSrv.get('/api/user/auth-tokens').then(sessions => {
+    this.backendSrv.get('/api/user/auth-tokens').then((sessions: UserSession[]) => {
       sessions.reverse();
 
-      const found = sessions.findIndex(session => {
+      const found = sessions.findIndex((session: UserSession) => {
         return session.isActive;
       });
 
@@ -44,16 +45,32 @@ export class ProfileCtrl {
         sessions.unshift(now);
       }
 
-      this.sessions = sessions.map(session => {
+      this.sessions = sessions.map((session: UserSession) => {
         return {
+          id: session.id,
           isActive: session.isActive,
           seenAt: dateTime(session.seenAt).fromNow(true),
           createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
           clientIp: session.clientIp,
-          browserOs: this.getBrowserOS(session.userAgent),
+          userAgent: this.getBrowserOS(session.userAgent),
         };
       });
     });
+  }
+
+  revokeUserSession(tokenId: number) {
+    this.backendSrv
+      .post('/api/user/revoke-auth-token', {
+        authTokenId: tokenId,
+      })
+      .then(() => {
+        this.sessions = this.sessions.filter((session: UserSession) => {
+          if (session.id === tokenId) {
+            return false;
+          }
+          return true;
+        });
+      });
   }
 
   getUserTeams() {
@@ -76,7 +93,7 @@ export class ProfileCtrl {
     });
   }
 
-  getBrowserOS(userAgent) {
+  getBrowserOS(userAgent: string) {
     const browser = userAgent.match(/(MSIE|Firefox|Chrome|Safari|Edge|Opera)/gi),
       os = userAgent.match(/(Windows|Linux|iOS|Android|OS |Mac OS)(?: |\s|\d|\w)([^;|)]*)/gi);
 

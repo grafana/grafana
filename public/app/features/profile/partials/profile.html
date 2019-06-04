@@ -93,7 +93,8 @@
           <td ng-if="!session.isActive">{{session.seenAt}}</td>
           <td>{{session.createdAt}}</td>
           <td>{{session.clientIp}}</td>
-          <td>{{session.browserOs}}</td>
+          <td>{{session.userAgent}}</td>
+          <td><button ng-click="ctrl.revokeUserSession(session.id)"></button></td>
         </tr>
       </tbody>
     </table>

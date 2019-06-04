@@ -1,12 +1,15 @@
 import _ from 'lodash';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
+import { UserSession } from 'app/types';
 
 export default class AdminEditUserCtrl {
   /** @ngInject */
   constructor($scope: any, $routeParams: any, backendSrv: BackendSrv, $location: any, navModelSrv: NavModelSrv) {
     $scope.user = {};
+    $scope.sessions = [];
     $scope.newOrg = { name: '', role: 'Editor' };
     $scope.permissions = {};
     $scope.navModel = navModelSrv.getNav('admin', 'global-users');
@@ -14,6 +17,7 @@ export default class AdminEditUserCtrl {
     $scope.init = () => {
       if ($routeParams.id) {
         $scope.getUser($routeParams.id);
+        $scope.getUserSessions($routeParams.id);
         $scope.getUserOrgs($routeParams.id);
       }
     };
@@ -24,6 +28,54 @@ export default class AdminEditUserCtrl {
         $scope.user_id = id;
         $scope.permissions.isGrafanaAdmin = user.isGrafanaAdmin;
       });
+    };
+
+    $scope.getUserSessions = (id: number) => {
+      backendSrv.get('/api/admin/users/' + id + '/auth-tokens').then((sessions: UserSession[]) => {
+        sessions.reverse();
+
+        $scope.sessions = sessions.map((session: UserSession) => {
+          return {
+            id: session.id,
+            isActive: session.isActive,
+            seenAt: dateTime(session.seenAt).fromNow(true),
+            createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
+            clientIp: session.clientIp,
+            userAgent: $scope.getBrowserOS(session.userAgent),
+          };
+        });
+      });
+    };
+
+    $scope.revokeUserSession = (tokenId: number) => {
+      backendSrv
+        .post('/api/admin/users/' + $scope.user_id + '/revoke-auth-token', {
+          authTokenId: tokenId,
+        })
+        .then(() => {
+          $scope.sessions = $scope.sessions.filter((session: UserSession) => {
+            if (session.id === tokenId) {
+              return false;
+            }
+            return true;
+          });
+        });
+    };
+
+    $scope.revokeAllUserSessions = (tokenId: number) => {
+      backendSrv.post('/api/admin/users/' + $scope.user_id + '/logout').then(() => {
+        $scope.sessions = [];
+      });
+    };
+
+    $scope.getBrowserOS = userAgent => {
+      const browser = userAgent.match(/(MSIE|Firefox|Chrome|Safari|Edge|Opera)/gi),
+        os = userAgent.match(/(Windows|Linux|iOS|Android|OS |Mac OS)(?: |\s|\d|\w)([^;|)]*)/gi);
+
+      let browserOS = browser.length ? browser[0] + ' on ' : 'Undetected browser on ';
+
+      browserOS += os[0].replace(/_/g, '.');
+      return browserOS;
     };
 
     $scope.setPassword = () => {
