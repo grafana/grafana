@@ -70,33 +70,35 @@
 		</div>
 	</form>
 
-	<table class="filter-table">
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th>Role</th>
-				<th></th>
+	<div class="gf-form-group">
+		<table class="filter-table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Role</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tr ng-repeat="org in orgs">
+				<td>
+					{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>
+				</td>
+				<td>
+			<div class="gf-form">
+				<span class="gf-form-select-wrapper">
+					<select type="text" ng-model="org.role" class="gf-form-input max-width-12" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="updateOrgUser(org)">
+					</select>
+				</span>
+			</div>
+				</td>
+				<td style="width: 1%">
+					<a ng-click="removeOrgUser(org)" class="btn btn-danger btn-small">
+						<i class="fa fa-remove"></i>
+					</a>
+				</td>
 			</tr>
-		</thead>
-		<tr ng-repeat="org in orgs">
-			<td>
-				{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>
-			</td>
-			<td>
-        <div class="gf-form">
-            <span class="gf-form-select-wrapper">
-                <select type="text" ng-model="org.role" class="gf-form-input max-width-12" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="updateOrgUser(org)">
-                </select>
-            </span>
-        </div>
-			</td>
-			<td style="width: 1%">
-				<a ng-click="removeOrgUser(org)" class="btn btn-danger btn-small">
-					<i class="fa fa-remove"></i>
-				</a>
-			</td>
-		</tr>
-	</table>
+		</table>
+	</div>
 
 	<h3 class="page-heading">Sessions</h3>
 
