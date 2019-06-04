@@ -1,3 +1,7 @@
+// @ts-ignore
+import PluginPrism from 'slate-prism';
+// @ts-ignore
+import Prism from 'prismjs';
 import React, { useState, ChangeEvent, useMemo } from 'react';
 import { DrillDownLink } from '../../index';
 import { FormField, Switch, Portal } from '../index';
@@ -19,6 +23,11 @@ interface DrilldownLinkEditorProps {
   onChange: (index: number, link: DrillDownLink) => void;
   onRemove: (link: DrillDownLink) => void;
 }
+const plugins = [
+  PluginPrism({
+    onlyIn: (node: any) => node.type === 'code_block',
+  }),
+];
 
 class SelectionReference {
   getBoundingClientRect() {
@@ -62,7 +71,7 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
           nodes: [
             {
               object: 'block',
-              type: 'paragraph',
+              type: 'code_block',
               nodes: [
                 {
                   object: 'text',
@@ -104,14 +113,13 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Backspace') {
         setShowingSuggestions(false);
-        // return;
+        setSuggestionsIndex(0);
       }
 
       if (event.key === 'Enter') {
         if (showingSuggestions) {
           onVariableSelect(getCurrentSuggestions[suggestionsIndex]);
         }
-        // return true;
       }
 
       if (showingSuggestions) {
@@ -131,10 +139,9 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
       }
 
       if (event.key === '?' || event.key === '&' || (event.keyCode === 32 && event.ctrlKey)) {
-        requestAnimationFrame(() => {
-          setShowingSuggestions(true);
-        });
+        setShowingSuggestions(true);
       }
+      return true;
     };
 
     const onUrlChange = ({ value }: Change) => {
@@ -169,6 +176,7 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
       setUsedSuggestions(previous => {
         return [...previous, item];
       });
+      setSuggestionsIndex(0);
     };
 
     return (
@@ -219,6 +227,7 @@ export const DrilldownLinkEditor: React.FC<DrilldownLinkEditorProps> = React.mem
                 onChange={onUrlChange}
                 onBlur={onUrlBlur}
                 onKeyDown={onKeyDown}
+                plugins={plugins}
               />
             </div>
           </div>
