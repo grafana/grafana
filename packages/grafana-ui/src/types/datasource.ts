@@ -202,14 +202,20 @@ export abstract class DataSourceApi<
    * Used by alerting to check if query contains template variables
    */
   targetContainsTemplate?(query: TQuery): boolean;
-}
 
-export abstract class ExploreDataSourceApi<
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
-> extends DataSourceApi<TQuery, TOptions> {
+  /**
+   * Used in explore
+   */
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
+
+  /**
+   * Used in explore
+   */
   getHighlighterExpression?(query: TQuery): string[];
+
+  /**
+   * Used in explore
+   */
   languageProvider?: any;
 }
 

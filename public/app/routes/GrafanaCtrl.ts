@@ -13,7 +13,7 @@ import appEvents from 'app/core/app_events';
 import { TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
-import { AngularLoader, setAngularLoader } from '@grafana/runtime';
+import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
 
 // Types

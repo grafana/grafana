@@ -16,7 +16,7 @@ import { StoreState } from 'app/types';
 import {
   TimeRange,
   DataQuery,
-  ExploreDataSourceApi,
+  DataSourceApi,
   QueryFixAction,
   DataSourceStatus,
   PanelData,
@@ -38,7 +38,7 @@ interface QueryRowProps extends PropsFromParent {
   changeQuery: typeof changeQuery;
   className?: string;
   exploreId: ExploreId;
-  datasourceInstance: ExploreDataSourceApi;
+  datasourceInstance: DataSourceApi;
   datasourceStatus: DataSourceStatus;
   highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
   history: HistoryItem[];
