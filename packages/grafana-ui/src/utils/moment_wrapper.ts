@@ -43,6 +43,9 @@ export interface DateTimeLocale {
 
 export interface DateTimeDuration {
   asHours: () => number;
+  hours: () => number;
+  minutes: () => number;
+  seconds: () => number;
 }
 
 export interface DateTime extends Object {

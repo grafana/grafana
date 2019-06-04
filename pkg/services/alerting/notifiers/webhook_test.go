@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -16,7 +16,7 @@ func TestWebhookNotifier(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "ops",
 					Type:     "webhook",
 					Settings: settingsJSON,
@@ -33,7 +33,7 @@ func TestWebhookNotifier(t *testing.T) {
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "ops",
 					Type:     "webhook",
 					Settings: settingsJSON,
@@ -45,7 +45,7 @@ func TestWebhookNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(webhookNotifier.Name, ShouldEqual, "ops")
 				So(webhookNotifier.Type, ShouldEqual, "webhook")
-				So(webhookNotifier.Url, ShouldEqual, "http://google.com")
+				So(webhookNotifier.URL, ShouldEqual, "http://google.com")
 			})
 		})
 	})

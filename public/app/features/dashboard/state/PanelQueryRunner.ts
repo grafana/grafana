@@ -108,9 +108,6 @@ export class PanelQueryRunner {
       delayStateNotification,
     } = options;
 
-    // filter out hidden queries & deep clone them
-    const clonedAndFilteredQueries = cloneDeep(queries.filter(q => !q.hide));
-
     const request: DataQueryRequest = {
       requestId: getNextRequestId(),
       timezone,
@@ -120,7 +117,7 @@ export class PanelQueryRunner {
       timeInfo,
       interval: '',
       intervalMs: 0,
-      targets: clonedAndFilteredQueries,
+      targets: cloneDeep(queries),
       maxDataPoints: maxDataPoints || widthPixels,
       scopedVars: scopedVars || {},
       cacheTimeout,
@@ -134,6 +131,10 @@ export class PanelQueryRunner {
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
+
+      if (ds.meta && !ds.meta.hiddenQueries) {
+        request.targets = request.targets.filter(q => !q.hide);
+      }
 
       // Attach the datasource name to each query
       request.targets = request.targets.map(query => {

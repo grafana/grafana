@@ -11,6 +11,8 @@ import TimeSeries from 'app/core/time_series2';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { GrafanaThemeType, getValueFormat, getColorFromHexRgbOrName, isTableData } from '@grafana/ui';
 
+const BASE_FONT_SIZE = 38;
+
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
@@ -384,10 +386,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return valueString;
     }
 
-    function getSpan(className, fontSize, applyColoring, value) {
+    function getSpan(className, fontSizePercent, applyColoring, value) {
       value = $sanitize(templateSrv.replace(value, data.scopedVars));
       value = applyColoring ? applyColoringThresholds(value) : value;
-      return '<span class="' + className + '" style="font-size:' + fontSize + '">' + value + '</span>';
+      const pixelSize = (parseInt(fontSizePercent, 10) / 100) * BASE_FONT_SIZE;
+      return '<span class="' + className + '" style="font-size:' + pixelSize + 'px">' + value + '</span>';
     }
 
     function getBigValueHtml() {

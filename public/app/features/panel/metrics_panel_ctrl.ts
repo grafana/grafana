@@ -15,6 +15,7 @@ import {
   PanelData,
   LoadingState,
   DataQueryResponse,
+  SeriesData,
 } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -37,6 +38,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   skipDataOnInit: boolean;
   dataList: LegacyResponseData[];
   querySubscription?: Unsubscribable;
+  dataFormat = PanelQueryRunnerFormat.legacy;
 
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -129,9 +131,22 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);
-      } else if (data.state === LoadingState.Done) {
-        this.loading = false;
+        return;
+      }
 
+      this.loading = false;
+
+      if (data.request) {
+        const { range, timeInfo } = data.request;
+        if (range) {
+          this.range = range;
+        }
+        if (timeInfo) {
+          this.timeInfo = timeInfo;
+        }
+      }
+
+      if (this.dataFormat === PanelQueryRunnerFormat.legacy) {
         // The result should already be processed, but just in case
         if (!data.legacy) {
           data.legacy = data.series.map(v => {
@@ -147,6 +162,8 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.handleQueryResult({
           data: data.legacy,
         });
+      } else {
+        this.handleSeriesData(data.series);
       }
     },
   };
@@ -187,7 +204,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     const queryRunner = panel.getQueryRunner();
 
     if (!this.querySubscription) {
-      this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.legacy);
+      this.querySubscription = queryRunner.subscribe(this.panelDataObserver, this.dataFormat);
     }
 
     return queryRunner.run({
@@ -203,6 +220,16 @@ class MetricsPanelCtrl extends PanelCtrl {
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
     });
+  }
+
+  handleSeriesData(data: SeriesData[]) {
+    this.loading = false;
+
+    if (this.dashboard && this.dashboard.snapshot) {
+      this.panel.snapshotData = data;
+    }
+
+    // Subclasses that asked for SeriesData will override
   }
 
   handleQueryResult(result: DataQueryResponse) {

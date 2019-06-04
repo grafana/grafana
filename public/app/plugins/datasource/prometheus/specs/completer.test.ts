@@ -7,7 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { IQService } from 'angular';
 jest.mock('../datasource');
-jest.mock('app/core/services/backend_srv');
+jest.mock('@grafana/ui');
 
 describe('Prometheus editor completer', () => {
   function getSessionStub(data) {

@@ -154,6 +154,15 @@ callback URL to be correct).
 > in front of Grafana that exposes it through a subpath. In that
 > case add the subpath to the end of this URL setting.
 
+### serve_from_sub_path
+
+Serve Grafana from subpath specified in `root_url` setting. By
+default it is set to `false` for compatibility reasons.
+
+By enabling this setting and using a subpath in `root_url` above, e.g.
+`root_url = http://localhost:3000/grafana`, Grafana will be accessible on
+`http://localhost:3000/grafana`.
+
 ### static_root_path
 
 The path to the directory where the front end files (HTML, JS, and CSS
@@ -579,7 +588,7 @@ Service Account keys can be created and downloaded from https://console.develope
 
 Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
 
-### bucket name
+### bucket
 Bucket Name on Google Cloud Storage.
 
 ### path

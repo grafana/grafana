@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
-	LDAP "github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ldap"
 )
 
 var (
@@ -19,13 +19,15 @@ var (
 	ErrPasswordEmpty         = errors.New("No password provided")
 	ErrUsersQuotaReached     = errors.New("Users quota reached")
 	ErrGettingUserQuota      = errors.New("Error getting user quota")
+	ErrUserDisabled          = errors.New("User is disabled")
 )
 
 func Init() {
 	bus.AddHandler("auth", AuthenticateUser)
 }
 
-func AuthenticateUser(query *m.LoginUserQuery) error {
+// AuthenticateUser authenticates the user via username & password
+func AuthenticateUser(query *models.LoginUserQuery) error {
 	if err := validateLoginAttempts(query.Username); err != nil {
 		return err
 	}
@@ -35,29 +37,33 @@ func AuthenticateUser(query *m.LoginUserQuery) error {
 	}
 
 	err := loginUsingGrafanaDB(query)
-	if err == nil || (err != m.ErrUserNotFound && err != ErrInvalidCredentials) {
+	if err == nil || (err != models.ErrUserNotFound && err != ErrInvalidCredentials && err != ErrUserDisabled) {
 		return err
 	}
 
-	ldapEnabled, ldapErr := loginUsingLdap(query)
+	ldapEnabled, ldapErr := loginUsingLDAP(query)
 	if ldapEnabled {
-		if ldapErr == nil || ldapErr != LDAP.ErrInvalidCredentials {
+		if ldapErr == nil || ldapErr != ldap.ErrInvalidCredentials {
 			return ldapErr
 		}
 
-		err = ldapErr
+		if err != ErrUserDisabled || ldapErr != ldap.ErrInvalidCredentials {
+			err = ldapErr
+		}
 	}
 
-	if err == ErrInvalidCredentials || err == LDAP.ErrInvalidCredentials {
+	if err == ErrInvalidCredentials || err == ldap.ErrInvalidCredentials {
 		saveInvalidLoginAttempt(query)
+		return ErrInvalidCredentials
 	}
 
-	if err == m.ErrUserNotFound {
+	if err == models.ErrUserNotFound {
 		return ErrInvalidCredentials
 	}
 
 	return err
 }
+
 func validatePasswordSet(password string) error {
 	if len(password) == 0 {
 		return ErrPasswordEmpty

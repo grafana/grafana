@@ -17,28 +17,14 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
     this.data = instanceSettings.jsonData.data ? instanceSettings.jsonData.data : [];
   }
 
-  getDescription(data: SeriesData[]): string {
-    if (!data) {
-      return '';
-    }
-    if (data.length > 1) {
-      const count = data.reduce((acc, series) => {
-        return acc + series.rows.length;
-      }, 0);
-      return `${data.length} Series, ${count} Rows`;
-    }
-    const series = data[0];
-    return `${series.fields.length} Fields, ${series.rows.length} Rows`;
-  }
-
   /**
    * Convert a query to a simple text string
    */
   getQueryDisplayText(query: InputQuery): string {
     if (query.data) {
-      return 'Panel Data: ' + this.getDescription(query.data);
+      return 'Panel Data: ' + describeSeriesData(query.data);
     }
-    return `Shared Data From: ${this.name} (${this.getDescription(this.data)})`;
+    return `Shared Data From: ${this.name} (${describeSeriesData(this.data)})`;
   }
 
   metricFindQuery(query: string, options?: any) {
@@ -94,6 +80,23 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
       });
     });
   }
+}
+
+export function describeSeriesData(data: SeriesData[]): string {
+  if (!data || !data.length) {
+    return '';
+  }
+  if (data.length > 1) {
+    const count = data.reduce((acc, series) => {
+      return acc + series.rows.length;
+    }, 0);
+    return `${data.length} Series, ${count} Rows`;
+  }
+  const series = data[0];
+  if (!series.fields) {
+    return 'Missing Fields';
+  }
+  return `${series.fields.length} Fields, ${series.rows.length} Rows`;
 }
 
 export default InputDatasource;

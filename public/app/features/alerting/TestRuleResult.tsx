@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { LoadingPlaceholder } from '@grafana/ui/src';
 
