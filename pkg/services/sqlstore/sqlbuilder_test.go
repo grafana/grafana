@@ -228,7 +228,8 @@ func createDummyTeam() (*models.Team, error) {
 }
 
 func createDummyDashboard(dashboardProps DashboardProps) (*models.Dashboard, error) {
-	json, err := simplejson.NewJson([]byte(`{"schemaVersion":17,"title":"gdev dashboards","uid":"","version":1}`))
+	json, _ := simplejson.NewJson([]byte(`{"schemaVersion":17,"title":"gdev dashboards","uid":"","version":1}`))
+
 	saveDashboardCmd := &models.SaveDashboardCommand{
 		Dashboard:    json,
 		UserId:       0,
@@ -246,7 +247,7 @@ func createDummyDashboard(dashboardProps DashboardProps) (*models.Dashboard, err
 		saveDashboardCmd.OrgId = 1
 	}
 
-	err = SaveDashboard(saveDashboardCmd)
+	err := SaveDashboard(saveDashboardCmd)
 	if err != nil {
 		return nil, err
 	}
@@ -309,9 +310,8 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 	err = UpdateDashboardAcl(updateAclCmd)
 	if user != nil {
 		return user.Id, err
-	} else {
-		return 0, err
 	}
+	return 0, err
 }
 
 func getDashboards(sqlStore *SqlStore, search Search, aclUserId int64) ([]*dashboardResponse, error) {
