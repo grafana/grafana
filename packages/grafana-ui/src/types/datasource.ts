@@ -77,6 +77,8 @@ export class DataSourcePlugin<
     this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
     this.components.ExploreQueryField = pluginExports.ExploreQueryField;
     this.components.ExploreStartPage = pluginExports.ExploreStartPage;
+    this.components.ExploreMetricsQueryField = pluginExports.ExploreMetricsQueryField;
+    this.components.ExploreLogsQueryField = pluginExports.ExploreLogsQueryField;
     this.components.QueryEditor = pluginExports.QueryEditor;
     this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
   }
@@ -198,6 +200,10 @@ export abstract class DataSourceApi<
     row: LogRowModel,
     options?: TContextQueryOptions
   ) => Promise<DataQueryResponse>;
+
+  getTagKeys?(options: any): any[];
+
+  getTagValues?(options: { key: any }): any[];
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
