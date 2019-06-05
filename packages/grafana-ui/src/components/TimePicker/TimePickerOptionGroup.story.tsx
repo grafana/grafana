@@ -1,4 +1,4 @@
-import React, { ComponentType } from 'react';
+import React, { ComponentType, createRef } from 'react';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 
@@ -28,8 +28,11 @@ const data = {
   },
 };
 
+const pickerTriggerRef = createRef<HTMLDivElement>();
+const TimePickerOptionGroupComponent = TimePickerOptionGroup({ pickerTriggerRef: pickerTriggerRef });
+
 TimePickerOptionGroupStories.add('default', () => (
-  <TimePickerOptionGroup
+  <TimePickerOptionGroupComponent
     clearValue={() => {}}
     className={''}
     cx={() => {}}

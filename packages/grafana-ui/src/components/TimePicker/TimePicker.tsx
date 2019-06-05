@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, createRef } from 'react';
 import { ButtonSelect } from '../Select/ButtonSelect';
 import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
 import { Props as TimePickerPopoverProps } from './TimePickerPopover';
@@ -69,20 +69,10 @@ export interface State {
 }
 
 export class TimePicker extends PureComponent<Props, State> {
+  pickerTriggerRef = createRef<HTMLDivElement>();
+
   state: State = {
     isMenuOpen: false,
-  };
-
-  componentWillUnmount = () => {
-    this.removeResizeListener();
-  };
-
-  removeResizeListener = () => {
-    window.removeEventListener('resize', this.onCloseMenu);
-  };
-
-  addResizeListener = () => {
-    window.addEventListener('resize', this.onCloseMenu);
   };
 
   mapTimeOptionsToSelectOptionItems = (selectOptions: TimeOption[]) => {
@@ -122,15 +112,9 @@ export class TimePicker extends PureComponent<Props, State> {
     });
   };
 
-  onOpenMenu = () => {
-    this.onChangeMenuOpenState(true);
-    this.addResizeListener();
-  };
+  onOpenMenu = () => this.onChangeMenuOpenState(true);
 
-  onCloseMenu = () => {
-    this.onChangeMenuOpenState(false);
-    this.removeResizeListener();
-  };
+  onCloseMenu = () => this.onChangeMenuOpenState(false);
 
   onPopoverClose = (timeRange: TimeRange) => {
     const { onChange } = this.props;
@@ -158,7 +142,7 @@ export class TimePicker extends PureComponent<Props, State> {
     const isAbsolute = isDateTime(value.raw.to);
 
     return (
-      <div className="time-picker">
+      <div className="time-picker" ref={this.pickerTriggerRef}>
         <div className="time-picker-buttons">
           {isAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveBackward}>
@@ -171,7 +155,7 @@ export class TimePicker extends PureComponent<Props, State> {
             label={label}
             options={options}
             onChange={this.onSelectChanged}
-            components={{ Group: TimePickerOptionGroup }}
+            components={{ Group: TimePickerOptionGroup({ pickerTriggerRef: this.pickerTriggerRef }) }}
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={tooltipContent}
             isMenuOpen={this.state.isMenuOpen}
