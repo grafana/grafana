@@ -29,6 +29,7 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
 import { appEvents } from 'app/core/core';
+import { config } from 'app/core/config';
 
 export function getLoadingNav(): NavModel {
   const node = {
@@ -94,6 +95,8 @@ class PluginPage extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const { pluginId, path, query } = this.props;
+    const { appSubUrl } = config;
+
     const plugin = await loadPlugin(pluginId);
     if (!plugin) {
       this.setState({
@@ -102,15 +105,16 @@ class PluginPage extends PureComponent<Props, State> {
       });
       return; // 404
     }
-    const { meta } = plugin;
 
+    const { meta } = plugin;
     let defaultPage: string;
     const pages: NavModelItem[] = [];
+
     if (true) {
       pages.push({
         text: 'Readme',
         icon: 'fa fa-fw fa-file-text-o',
-        url: path + '?page=' + PAGE_ID_README,
+        url: `${appSubUrl}${path}?page=${PAGE_ID_README}`,
         id: PAGE_ID_README,
       });
     }
@@ -122,7 +126,7 @@ class PluginPage extends PureComponent<Props, State> {
         pages.push({
           text: 'Config',
           icon: 'gicon gicon-cog',
-          url: path + '?page=' + PAGE_ID_CONFIG_CTRL,
+          url: `${appSubUrl}${path}?page=${PAGE_ID_CONFIG_CTRL}`,
           id: PAGE_ID_CONFIG_CTRL,
         });
         defaultPage = PAGE_ID_CONFIG_CTRL;
@@ -147,7 +151,7 @@ class PluginPage extends PureComponent<Props, State> {
         pages.push({
           text: 'Dashboards',
           icon: 'gicon gicon-dashboard',
-          url: path + '?page=' + PAGE_ID_DASHBOARDS,
+          url: `${appSubUrl}${path}?page=${PAGE_ID_DASHBOARDS}`,
           id: PAGE_ID_DASHBOARDS,
         });
       }
@@ -162,7 +166,7 @@ class PluginPage extends PureComponent<Props, State> {
       img: meta.info.logos.large,
       subTitle: meta.info.author.name,
       breadcrumbs: [{ title: 'Plugins', url: '/plugins' }],
-      url: path,
+      url: `${appSubUrl}${path}`,
       children: this.setActivePage(query.page as string, pages, defaultPage),
     };
 
