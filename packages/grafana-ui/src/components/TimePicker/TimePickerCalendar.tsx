@@ -40,6 +40,8 @@ export class TimePickerCalendar extends PureComponent<Props> {
         className="time-picker-calendar"
         tileClassName="time-picker-calendar-tile"
         onChange={this.onCalendarChange}
+        nextLabel={<span className="fa fa-angle-right" />}
+        prevLabel={<span className="fa fa-angle-left" />}
       />
     );
   }
