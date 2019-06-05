@@ -139,6 +139,26 @@ describe('InfluxQuery', () => {
     });
   });
 
+  describe('field name with single quote should be escaped and', () => {
+    it('should generate correct query', () => {
+      const query = new InfluxQuery(
+        {
+          measurement: 'cpu',
+          groupBy: [{ type: 'time', params: ['auto'] }],
+          tags: [{ key: 'name', value: "Let's encrypt." }, { key: 'hostname', value: 'server2', condition: 'OR' }],
+        },
+        templateSrv,
+        {}
+      );
+
+      const queryText = query.render();
+      expect(queryText).toBe(
+        'SELECT mean("value") FROM "cpu" WHERE ("name" = \'Let\\\'s encrypt.\' OR "hostname" = \'server2\') AND ' +
+          '$timeFilter GROUP BY time($__interval)'
+      );
+    });
+  });
+
   describe('query with value condition', () => {
     it('should not quote value', () => {
       const query = new InfluxQuery(

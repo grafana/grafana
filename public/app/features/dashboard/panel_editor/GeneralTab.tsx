@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 import { EditorTabBody } from './EditorTabBody';
 import { DrilldownLinksEditor } from '@grafana/ui';
 import './../../panel/GeneralTabCtrl';

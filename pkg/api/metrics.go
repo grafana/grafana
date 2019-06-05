@@ -89,6 +89,7 @@ func GetTestDataScenarios(c *m.ReqContext) Response {
 // Generates a index out of range error
 func GenerateError(c *m.ReqContext) Response {
 	var array []string
+	// nolint: govet
 	return JSON(200, array[20])
 }
 

@@ -94,6 +94,11 @@ type DisableUserCommand struct {
 	IsDisabled bool
 }
 
+type BatchDisableUsersCommand struct {
+	UserIds    []int64
+	IsDisabled bool
+}
+
 type DeleteUserCommand struct {
 	UserId int64
 }

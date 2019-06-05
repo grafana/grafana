@@ -53,7 +53,7 @@ func TestSimpleReducer(t *testing.T) {
 		})
 
 		Convey("median should ignore null values", func() {
-			reducer := NewSimpleReducer("median")
+			reducer := newSimpleReducer("median")
 			series := &tsdb.TimeSeries{
 				Name: "test time serie",
 			}
@@ -76,7 +76,7 @@ func TestSimpleReducer(t *testing.T) {
 		})
 
 		Convey("avg with only nulls", func() {
-			reducer := NewSimpleReducer("avg")
+			reducer := newSimpleReducer("avg")
 			series := &tsdb.TimeSeries{
 				Name: "test time serie",
 			}
@@ -87,7 +87,7 @@ func TestSimpleReducer(t *testing.T) {
 
 		Convey("count_non_null", func() {
 			Convey("with null values and real values", func() {
-				reducer := NewSimpleReducer("count_non_null")
+				reducer := newSimpleReducer("count_non_null")
 				series := &tsdb.TimeSeries{
 					Name: "test time serie",
 				}
@@ -102,7 +102,7 @@ func TestSimpleReducer(t *testing.T) {
 			})
 
 			Convey("with null values", func() {
-				reducer := NewSimpleReducer("count_non_null")
+				reducer := newSimpleReducer("count_non_null")
 				series := &tsdb.TimeSeries{
 					Name: "test time serie",
 				}
@@ -115,7 +115,7 @@ func TestSimpleReducer(t *testing.T) {
 		})
 
 		Convey("avg of number values and null values should ignore nulls", func() {
-			reducer := NewSimpleReducer("avg")
+			reducer := newSimpleReducer("avg")
 			series := &tsdb.TimeSeries{
 				Name: "test time serie",
 			}
@@ -144,7 +144,7 @@ func TestSimpleReducer(t *testing.T) {
 		})
 
 		Convey("diff with only nulls", func() {
-			reducer := NewSimpleReducer("diff")
+			reducer := newSimpleReducer("diff")
 			series := &tsdb.TimeSeries{
 				Name: "test time serie",
 			}
@@ -171,7 +171,7 @@ func TestSimpleReducer(t *testing.T) {
 		})
 
 		Convey("percent_diff with only nulls", func() {
-			reducer := NewSimpleReducer("percent_diff")
+			reducer := newSimpleReducer("percent_diff")
 			series := &tsdb.TimeSeries{
 				Name: "test time serie",
 			}
@@ -184,8 +184,8 @@ func TestSimpleReducer(t *testing.T) {
 	})
 }
 
-func testReducer(typ string, datapoints ...float64) float64 {
-	reducer := NewSimpleReducer(typ)
+func testReducer(reducerType string, datapoints ...float64) float64 {
+	reducer := newSimpleReducer(reducerType)
 	series := &tsdb.TimeSeries{
 		Name: "test time serie",
 	}
