@@ -3,6 +3,7 @@ package dashboards
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -38,8 +39,13 @@ func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerI
 
 func (provider *DashboardProvisionerImpl) Provision() error {
 	for _, reader := range provider.fileReaders {
-		err := reader.startWalkingDisk()
-		if err != nil {
+		if err := reader.startWalkingDisk(); err != nil {
+			if os.IsNotExist(err) {
+				// don't stop the provisioning service in case the folder is missing. The folder can appear after the startup
+				provider.log.Warn("Failed to provision config", "name", reader.Cfg.Name, "error", err)
+				return nil
+			}
+
 			return errutil.Wrapf(err, "Failed to provision config %v", reader.Cfg.Name)
 		}
 	}
