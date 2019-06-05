@@ -12,8 +12,7 @@ import {
 } from './explore';
 import { ExploreUrlState } from 'app/types/explore';
 import store from 'app/core/store';
-import { LogsDedupStrategy } from 'app/core/logs_model';
-import { DataQueryError } from '@grafana/ui';
+import { DataQueryError, LogsDedupStrategy } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
@@ -182,11 +181,11 @@ describe('updateHistory()', () => {
 
 describe('hasNonEmptyQuery', () => {
   test('should return true if one query is non-empty', () => {
-    expect(hasNonEmptyQuery([{ refId: '1', key: '2', expr: 'foo' }])).toBeTruthy();
+    expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'explore', expr: 'foo' }])).toBeTruthy();
   });
 
   test('should return false if query is empty', () => {
-    expect(hasNonEmptyQuery([{ refId: '1', key: '2' }])).toBeFalsy();
+    expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'panel' }])).toBeFalsy();
   });
 
   test('should return false if no queries exist', () => {

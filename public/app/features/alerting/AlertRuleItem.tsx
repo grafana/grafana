@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+// @ts-ignore
 import Highlighter from 'react-highlight-words';
 import classNames from 'classnames';
 import { AlertRule } from '../../types';

@@ -4,11 +4,11 @@ import { AlertBox } from '../AlertBox/AlertBox';
 
 interface Props {
   appNotification: AppNotification;
-  onClearNotification: (id) => void;
+  onClearNotification: (id: number) => void;
 }
 
 export default class AppNotificationItem extends Component<Props> {
-  shouldComponentUpdate(nextProps) {
+  shouldComponentUpdate(nextProps: Props) {
     return this.props.appNotification.id !== nextProps.appNotification.id;
   }
 

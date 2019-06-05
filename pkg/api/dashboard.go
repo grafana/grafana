@@ -14,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -316,6 +316,7 @@ func GetHomeDashboard(c *m.ReqContext) Response {
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)
 	}
+	defer file.Close()
 
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true

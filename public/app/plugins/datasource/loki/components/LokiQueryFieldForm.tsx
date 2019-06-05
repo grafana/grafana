@@ -12,12 +12,11 @@ import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explor
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
-import { ExploreDataSourceApi, ExploreQueryFieldProps, DataSourceStatus } from '@grafana/ui';
+import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus } from '@grafana/ui';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DataSourceStatus) {
   if (datasourceStatus === DataSourceStatus.Disconnected) {
@@ -66,7 +65,7 @@ export interface CascaderOption {
   disabled?: boolean;
 }
 
-export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<ExploreDataSourceApi<LokiQuery>, LokiQuery> {
+export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<DataSourceApi<LokiQuery>, LokiQuery> {
   history: HistoryItem[];
   syntax: any;
   logLabelOptions: any[];
@@ -77,7 +76,6 @@ export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<ExploreD
 
 export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps> {
   plugins: any[];
-  pluginsSearch: any[];
   modifiedSearch: string;
   modifiedQuery: string;
 
@@ -86,14 +84,11 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
     this.plugins = [
       BracesPlugin(),
-      RunnerPlugin({ handler: props.onRunQuery }),
       PluginPrism({
         onlyIn: (node: any) => node.type === 'code_block',
         getSyntax: (node: any) => 'promql',
       }),
     ];
-
-    this.pluginsSearch = [RunnerPlugin({ handler: props.onRunQuery })];
   }
 
   loadOptions = (selectedOptions: CascaderOption[]) => {

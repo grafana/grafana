@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

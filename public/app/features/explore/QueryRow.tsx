@@ -16,37 +16,41 @@ import { StoreState } from 'app/types';
 import {
   TimeRange,
   DataQuery,
-  ExploreDataSourceApi,
+  DataSourceApi,
   QueryFixAction,
   DataSourceStatus,
   PanelData,
-  LoadingState,
   DataQueryError,
 } from '@grafana/ui';
-import { HistoryItem, ExploreItemState, ExploreId } from 'app/types/explore';
+import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
 import QueryStatus from './QueryStatus';
 
-interface QueryRowProps {
+interface PropsFromParent {
+  exploreId: ExploreId;
+  index: number;
+  exploreEvents: Emitter;
+}
+
+interface QueryRowProps extends PropsFromParent {
   addQueryRow: typeof addQueryRow;
   changeQuery: typeof changeQuery;
   className?: string;
   exploreId: ExploreId;
-  datasourceInstance: ExploreDataSourceApi;
+  datasourceInstance: DataSourceApi;
   datasourceStatus: DataSourceStatus;
   highlightLogsExpressionAction: typeof highlightLogsExpressionAction;
   history: HistoryItem[];
-  index: number;
   query: DataQuery;
   modifyQueries: typeof modifyQueries;
-  exploreEvents: Emitter;
   range: TimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
   latency: number;
   queryErrors: DataQueryError[];
+  mode: ExploreMode;
 }
 
 export class QueryRow extends PureComponent<QueryRowProps> {
@@ -95,7 +99,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     const { datasourceInstance } = this.props;
     if (datasourceInstance.getHighlighterExpression) {
       const { exploreId } = this.props;
-      const expressions = [datasourceInstance.getHighlighterExpression(value)];
+      const expressions = datasourceInstance.getHighlighterExpression(value);
       this.props.highlightLogsExpressionAction({ exploreId, expressions });
     }
   }, 500);
@@ -111,8 +115,17 @@ export class QueryRow extends PureComponent<QueryRowProps> {
       queryResponse,
       latency,
       queryErrors,
+      mode,
     } = this.props;
-    const QueryField = datasourceInstance.components.ExploreQueryField;
+    let QueryField;
+
+    if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
+      QueryField = datasourceInstance.components.ExploreMetricsQueryField;
+    } else if (mode === ExploreMode.Logs && datasourceInstance.components.ExploreLogsQueryField) {
+      QueryField = datasourceInstance.components.ExploreLogsQueryField;
+    } else {
+      QueryField = datasourceInstance.components.ExploreQueryField;
+    }
 
     return (
       <div className="query-row">
@@ -176,25 +189,18 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     range,
     datasourceError,
     graphResult,
-    graphIsLoading,
-    tableIsLoading,
-    logIsLoading,
+    loadingState,
     latency,
     queryErrors,
+    mode,
   } = item;
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
   const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
   const series = graphResult ? graphResult : []; // TODO: use SeriesData
-  const queryResponseState =
-    graphIsLoading || tableIsLoading || logIsLoading
-      ? LoadingState.Loading
-      : error
-      ? LoadingState.Error
-      : LoadingState.Done;
   const queryResponse: PanelData = {
     series,
-    state: queryResponseState,
+    state: loadingState,
     error,
   };
 
@@ -207,6 +213,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     queryResponse,
     latency,
     queryErrors,
+    mode,
   };
 }
 
@@ -219,9 +226,7 @@ const mapDispatchToProps = {
   runQueries,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(QueryRow)
-);
+export default hot(module)(connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(QueryRow) as React.ComponentType<PropsFromParent>);

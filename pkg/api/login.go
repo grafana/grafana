@@ -7,8 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -103,6 +103,10 @@ func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response
 	if err := bus.Dispatch(authQuery); err != nil {
 		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
 			return Error(401, "Invalid username or password", err)
+		}
+
+		if err == login.ErrUserDisabled {
+			return Error(401, "User is disabled", err)
 		}
 
 		return Error(500, "Error while trying to authenticate user", err)

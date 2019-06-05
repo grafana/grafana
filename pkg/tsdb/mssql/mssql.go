@@ -8,7 +8,7 @@ import (
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/go-xorm/core"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"

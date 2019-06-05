@@ -12,11 +12,10 @@ import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 // dom also includes Element polyfills
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
-import { PromQuery } from '../types';
+import { PromQuery, PromContext } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreDataSourceApi, ExploreQueryFieldProps, DataSourceStatus, QueryHint } from '@grafana/ui';
+import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus, QueryHint } from '@grafana/ui';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -102,7 +101,7 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface PromQueryFieldProps extends ExploreQueryFieldProps<ExploreDataSourceApi<PromQuery>, PromQuery> {
+interface PromQueryFieldProps extends ExploreQueryFieldProps<DataSourceApi<PromQuery>, PromQuery> {
   history: HistoryItem[];
 }
 
@@ -126,7 +125,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     this.plugins = [
       BracesPlugin(),
-      RunnerPlugin({ handler: props.onRunQuery }),
       PluginPrism({
         onlyIn: (node: any) => node.type === 'code_block',
         getSyntax: (node: any) => 'promql',
@@ -225,7 +223,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     // Send text change to parent
     const { query, onChange, onRunQuery } = this.props;
     if (onChange) {
-      const nextQuery: PromQuery = { ...query, expr: value };
+      const nextQuery: PromQuery = { ...query, expr: value, context: PromContext.Explore };
       onChange(nextQuery);
 
       if (override && onRunQuery) {

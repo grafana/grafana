@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Services
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
@@ -60,6 +60,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     this.component = loader.load(this.element, scopeProps, template);
     setTimeout(() => {
       this.props.onQueryChange(target);
+      this.props.onExecuteQuery();
     }, 1);
   }
 

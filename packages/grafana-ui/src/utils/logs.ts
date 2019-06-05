@@ -23,6 +23,15 @@ export function getLogLevel(line: string): LogLevel {
   return LogLevel.unknown;
 }
 
+export function getLogLevelFromKey(key: string): LogLevel {
+  const level = (LogLevel as any)[key];
+  if (level) {
+    return level;
+  }
+
+  return LogLevel.unknown;
+}
+
 export function addLogLevelToSeries(series: SeriesData, lineIndex: number): SeriesData {
   return {
     ...series, // Keeps Tags, RefID etc

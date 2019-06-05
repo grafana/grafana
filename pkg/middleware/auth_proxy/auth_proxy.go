@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -21,10 +23,14 @@ const (
 	CachePrefix = "auth-proxy-sync-ttl:%s"
 )
 
-var (
-	getLDAPConfig = ldap.GetConfig
-	isLDAPEnabled = ldap.IsEnabled
-)
+// getLDAPConfig gets LDAP config
+var getLDAPConfig = ldap.GetConfig
+
+// isLDAPEnabled checks if LDAP is enabled
+var isLDAPEnabled = ldap.IsEnabled
+
+// newLDAP creates multiple LDAP instance
+var newLDAP = multildap.New
 
 // AuthProxy struct
 type AuthProxy struct {
@@ -33,13 +39,13 @@ type AuthProxy struct {
 	orgID  int64
 	header string
 
-	LDAP func(server *ldap.ServerConfig) ldap.IAuth
-
-	enabled     bool
-	whitelistIP string
-	headerType  string
-	headers     map[string]string
-	cacheTTL    int
+	enabled             bool
+	LDAPAllowSignup     bool
+	AuthProxyAutoSignUp bool
+	whitelistIP         string
+	headerType          string
+	headers             map[string]string
+	cacheTTL            int
 }
 
 // Error auth proxy specific error
@@ -58,7 +64,7 @@ func newError(message string, err error) *Error {
 
 // Error returns a Error error string
 func (err *Error) Error() string {
-	return fmt.Sprintf("%s", err.Message)
+	return err.Message
 }
 
 // Options for the AuthProxy
@@ -78,13 +84,13 @@ func New(options *Options) *AuthProxy {
 		orgID:  options.OrgID,
 		header: header,
 
-		LDAP: ldap.New,
-
-		enabled:     setting.AuthProxyEnabled,
-		headerType:  setting.AuthProxyHeaderProperty,
-		headers:     setting.AuthProxyHeaders,
-		whitelistIP: setting.AuthProxyWhitelist,
-		cacheTTL:    setting.AuthProxyLdapSyncTtl,
+		enabled:             setting.AuthProxyEnabled,
+		headerType:          setting.AuthProxyHeaderProperty,
+		headers:             setting.AuthProxyHeaders,
+		whitelistIP:         setting.AuthProxyWhitelist,
+		cacheTTL:            setting.AuthProxyLDAPSyncTtl,
+		LDAPAllowSignup:     setting.LDAPAllowSignup,
+		AuthProxyAutoSignUp: setting.AuthProxyAutoSignUp,
 	}
 }
 
@@ -92,20 +98,12 @@ func New(options *Options) *AuthProxy {
 func (auth *AuthProxy) IsEnabled() bool {
 
 	// Bail if the setting is not enabled
-	if auth.enabled == false {
-		return false
-	}
-
-	return true
+	return auth.enabled
 }
 
 // HasHeader checks if the we have specified header
 func (auth *AuthProxy) HasHeader() bool {
-	if len(auth.header) == 0 {
-		return false
-	}
-
-	return true
+	return len(auth.header) != 0
 }
 
 // IsAllowedIP compares presented IP with the whitelist one
@@ -144,34 +142,22 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 	return false, newError("Proxy authentication required", err)
 }
 
-// InCache checks if we have user in cache
-func (auth *AuthProxy) InCache() bool {
-	userID, _ := auth.GetUserIDViaCache()
-
-	if userID == 0 {
-		return false
-	}
-
-	return true
-}
-
 // getKey forms a key for the cache
 func (auth *AuthProxy) getKey() string {
 	return fmt.Sprintf(CachePrefix, auth.header)
 }
 
-// GetUserID gets user id with whatever means possible
-func (auth *AuthProxy) GetUserID() (int64, *Error) {
-	if auth.InCache() {
+// Login logs in user id with whatever means possible
+func (auth *AuthProxy) Login() (int64, *Error) {
 
+	id, _ := auth.GetUserViaCache()
+	if id != 0 {
 		// Error here means absent cache - we don't need to handle that
-		id, _ := auth.GetUserIDViaCache()
-
 		return id, nil
 	}
 
 	if isLDAPEnabled() {
-		id, err := auth.GetUserIDViaLDAP()
+		id, err := auth.LoginViaLDAP()
 
 		if err == ldap.ErrInvalidCredentials {
 			return 0, newError(
@@ -181,16 +167,16 @@ func (auth *AuthProxy) GetUserID() (int64, *Error) {
 		}
 
 		if err != nil {
-			return 0, newError("Failed to sync user", err)
+			return 0, newError("Failed to get the user", err)
 		}
 
 		return id, nil
 	}
 
-	id, err := auth.GetUserIDViaHeader()
+	id, err := auth.LoginViaHeader()
 	if err != nil {
 		return 0, newError(
-			"Failed to login as user specified in auth proxy header",
+			"Failed to log in as user, specified in auth proxy header",
 			err,
 		)
 	}
@@ -198,8 +184,8 @@ func (auth *AuthProxy) GetUserID() (int64, *Error) {
 	return id, nil
 }
 
-// GetUserIDViaCache gets the user from cache
-func (auth *AuthProxy) GetUserIDViaCache() (int64, error) {
+// GetUserViaCache gets user id from cache
+func (auth *AuthProxy) GetUserViaCache() (int64, error) {
 	var (
 		cacheKey    = auth.getKey()
 		userID, err = auth.store.Get(cacheKey)
@@ -212,33 +198,34 @@ func (auth *AuthProxy) GetUserIDViaCache() (int64, error) {
 	return userID.(int64), nil
 }
 
-// GetUserIDViaLDAP gets user via LDAP request
-func (auth *AuthProxy) GetUserIDViaLDAP() (int64, *Error) {
-	query := &models.LoginUserQuery{
-		ReqContext: auth.ctx,
-		Username:   auth.header,
-	}
-
+// LoginViaLDAP logs in user via LDAP request
+func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	config, err := getLDAPConfig()
 	if err != nil {
 		return 0, newError("Failed to get LDAP config", nil)
 	}
-	if len(config.Servers) == 0 {
-		return 0, newError("No LDAP servers available", nil)
+
+	extUser, err := newLDAP(config.Servers).User(auth.header)
+	if err != nil {
+		return 0, newError(err.Error(), nil)
 	}
 
-	for _, server := range config.Servers {
-		author := auth.LDAP(server)
-		if err := author.SyncUser(query); err != nil {
-			return 0, newError(err.Error(), nil)
-		}
+	// Have to sync grafana and LDAP user during log in
+	user, err := user.Upsert(&user.UpsertArgs{
+		ReqContext:    auth.ctx,
+		SignupAllowed: auth.LDAPAllowSignup,
+		ExternalUser:  extUser,
+	})
+	if err != nil {
+		return 0, newError(err.Error(), nil)
 	}
 
-	return query.User.Id, nil
+	return user.Id, nil
 }
 
-// GetUserIDViaHeader gets user from the header only
-func (auth *AuthProxy) GetUserIDViaHeader() (int64, error) {
+// LoginViaHeader logs in user from the header only
+// TODO: refactor - cyclomatic complexity should be much lower
+func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "authproxy",
 		AuthId:     auth.header,
@@ -269,18 +256,16 @@ func (auth *AuthProxy) GetUserIDViaHeader() (int64, error) {
 		}
 	}
 
-	// add/update user in grafana
-	cmd := &models.UpsertUserCommand{
+	result, err := user.Upsert(&user.UpsertArgs{
 		ReqContext:    auth.ctx,
+		SignupAllowed: true,
 		ExternalUser:  extUser,
-		SignupAllowed: setting.AuthProxyAutoSignUp,
-	}
-	err := bus.Dispatch(cmd)
+	})
 	if err != nil {
 		return 0, err
 	}
 
-	return cmd.Result.Id, nil
+	return result.Id, nil
 }
 
 // GetSignedUser get full signed user info
@@ -298,21 +283,18 @@ func (auth *AuthProxy) GetSignedUser(userID int64) (*models.SignedInUser, *Error
 }
 
 // Remember user in cache
-func (auth *AuthProxy) Remember() *Error {
+func (auth *AuthProxy) Remember(id int64) *Error {
+	key := auth.getKey()
 
-	// Make sure we do not rewrite the expiration time
-	if auth.InCache() {
+	// Check if user already in cache
+	userID, _ := auth.store.Get(key)
+	if userID != nil {
 		return nil
 	}
 
-	var (
-		key        = auth.getKey()
-		value, _   = auth.GetUserIDViaCache()
-		expiration = time.Duration(-auth.cacheTTL) * time.Minute
+	expiration := time.Duration(-auth.cacheTTL) * time.Minute
 
-		err = auth.store.Set(key, value, expiration)
-	)
-
+	err := auth.store.Set(key, id, expiration)
 	if err != nil {
 		return newError(err.Error(), nil)
 	}

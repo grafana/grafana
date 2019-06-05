@@ -5,18 +5,20 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/xerrors"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
+// Config holds list of connections to LDAP
 type Config struct {
 	Servers []*ServerConfig `toml:"servers"`
 }
 
+// ServerConfig holds connection data to LDAP
 type ServerConfig struct {
 	Host          string       `toml:"host"`
 	Port          int          `toml:"port"`
@@ -63,26 +65,27 @@ var loadingMutex = &sync.Mutex{}
 
 // IsEnabled checks if ldap is enabled
 func IsEnabled() bool {
-	return setting.LdapEnabled
+	return setting.LDAPEnabled
 }
 
 // ReloadConfig reads the config from the disc and caches it.
 func ReloadConfig() error {
-	if IsEnabled() == false {
+	if !IsEnabled() {
 		return nil
 	}
+
 	loadingMutex.Lock()
 	defer loadingMutex.Unlock()
 
 	var err error
-	config, err = readConfig(setting.LdapConfigFile)
+	config, err = readConfig(setting.LDAPConfigFile)
 	return err
 }
 
 // GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
 // the config or it reads it and caches it first.
 func GetConfig() (*Config, error) {
-	if IsEnabled() == false {
+	if !IsEnabled() {
 		return nil, nil
 	}
 
@@ -95,7 +98,7 @@ func GetConfig() (*Config, error) {
 	defer loadingMutex.Unlock()
 
 	var err error
-	config, err = readConfig(setting.LdapConfigFile)
+	config, err = readConfig(setting.LDAPConfigFile)
 
 	return config, err
 }
@@ -103,15 +106,15 @@ func GetConfig() (*Config, error) {
 func readConfig(configFile string) (*Config, error) {
 	result := &Config{}
 
-	logger.Info("Ldap enabled, reading config file", "file", configFile)
+	logger.Info("LDAP enabled, reading config file", "file", configFile)
 
 	_, err := toml.DecodeFile(configFile, result)
 	if err != nil {
-		return nil, errutil.Wrap("Failed to load ldap config file", err)
+		return nil, errutil.Wrap("Failed to load LDAP config file", err)
 	}
 
 	if len(result.Servers) == 0 {
-		return nil, xerrors.New("ldap enabled but no ldap servers defined in config file")
+		return nil, xerrors.New("LDAP enabled but no LDAP servers defined in config file")
 	}
 
 	// set default org id
