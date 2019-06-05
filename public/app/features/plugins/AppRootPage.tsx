@@ -4,7 +4,8 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
 // Types
-import { StoreState, UrlQueryMap } from 'app/types';
+import { StoreState } from 'app/types';
+import { UrlQueryMap } from '@grafana/runtime';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';

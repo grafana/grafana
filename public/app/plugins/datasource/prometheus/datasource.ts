@@ -2,6 +2,7 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import { from, Observable } from 'rxjs';
+import { single, map, filter } from 'rxjs/operators';
 
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
@@ -15,7 +16,7 @@ import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
 
 // Types
-import { PromQuery, PromOptions, PromQueryRequest } from './types';
+import { PromQuery, PromOptions, PromQueryRequest, PromContext } from './types';
 import {
   DataQueryRequest,
   DataSourceApi,
@@ -29,7 +30,6 @@ import { ExploreUrlState } from 'app/types/explore';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { single, map, filter } from 'rxjs/operators';
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -224,7 +224,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         continue;
       }
 
-      if (target.context === 'explore') {
+      if (target.context === PromContext.Explore) {
         target.format = 'time_series';
         target.instant = false;
         const instantTarget: any = _.cloneDeep(target);
@@ -260,7 +260,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return this.$q.when({ data: [] }) as Promise<{ data: any }>;
     }
 
-    if (observer && options.targets.filter(target => target.context === 'explore').length === options.targets.length) {
+    if (
+      observer &&
+      options.targets.filter(target => target.context === PromContext.Explore).length === options.targets.length
+    ) {
       // using observer to make the instant query return immediately
       this.runObserverQueries(options, observer, queries, activeTargets, end);
       return this.$q.when({ data: [] }) as Promise<{ data: any }>;

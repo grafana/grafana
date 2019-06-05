@@ -13,8 +13,9 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { PanelModel, GridPos } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { TimeRange } from '@grafana/ui/src';
-import { UrlQueryValue, KIOSK_MODE_TV, DashboardMeta } from 'app/types';
+import { TimeRange } from '@grafana/ui';
+import { UrlQueryValue } from '@grafana/runtime';
+import { KIOSK_MODE_TV, DashboardMeta } from 'app/types';
 import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export interface CloneOptions {
