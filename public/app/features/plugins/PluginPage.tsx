@@ -28,6 +28,7 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
 import { appEvents } from 'app/core/core';
+import { config } from 'app/core/config';
 
 export function getLoadingNav(): NavModel {
   const node = {
@@ -93,6 +94,8 @@ class PluginPage extends PureComponent<Props, State> {
 
   async componentDidMount() {
     const { pluginId, path, query } = this.props;
+    const { appSubUrl } = config;
+
     const plugin = await loadPlugin(pluginId);
     if (!plugin) {
       this.setState({
@@ -109,7 +112,7 @@ class PluginPage extends PureComponent<Props, State> {
       tabs.push({
         text: 'Readme',
         icon: 'fa fa-fw fa-file-text-o',
-        url: path + '?tab=' + TAB_ID_README,
+        url: `${appSubUrl}${path}?tab=${TAB_ID_README}`,
         id: TAB_ID_README,
       });
     }
@@ -121,7 +124,7 @@ class PluginPage extends PureComponent<Props, State> {
         tabs.push({
           text: 'Config',
           icon: 'gicon gicon-cog',
-          url: path + '?tab=' + TAB_ID_CONFIG_CTRL,
+          url: `${appSubUrl}${path}?tab=${TAB_ID_CONFIG_CTRL}`,
           id: TAB_ID_CONFIG_CTRL,
         });
         defaultTab = TAB_ID_CONFIG_CTRL;
@@ -146,7 +149,7 @@ class PluginPage extends PureComponent<Props, State> {
         tabs.push({
           text: 'Dashboards',
           icon: 'gicon gicon-dashboard',
-          url: path + '?tab=' + TAB_ID_DASHBOARDS,
+          url: `${appSubUrl}${path}?tab=${TAB_ID_DASHBOARDS}`,
           id: TAB_ID_DASHBOARDS,
         });
       }
@@ -161,7 +164,7 @@ class PluginPage extends PureComponent<Props, State> {
       img: meta.info.logos.large,
       subTitle: meta.info.author.name,
       breadcrumbs: [{ title: 'Plugins', url: '/plugins' }],
-      url: path,
+      url: `${appSubUrl}${path}`,
       children: this.setActiveTab(query.tab as string, tabs, defaultTab),
     };
 
