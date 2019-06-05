@@ -29,7 +29,7 @@ export interface Props {
   onOperatorChanged: (operator: string) => void;
 }
 
-export const KeyValue: React.FunctionComponent<Props> = props => {
+export const AdHocFilter: React.FunctionComponent<Props> = props => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { DataSourceApi, DataQuery, DataSourceJsonData, ExploreQueryFieldProps } from '@grafana/ui';
-import { KeyValue } from './KeyValue';
+import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/ui';
+import { AdHocFilter } from './AdHocFilter';
 
 export interface KeyValuePair {
   keys: string[];
@@ -10,21 +10,19 @@ export interface KeyValuePair {
   values: string[];
 }
 
-export interface Props<
-  DSType extends DataSourceApi<TQuery, TOptions>,
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
-> extends ExploreQueryFieldProps<DSType, TQuery, TOptions> {}
+export interface Props<TQuery extends DataQuery = DataQuery, TOptions extends DataSourceJsonData = DataSourceJsonData> {
+  datasource: DataSourceApi<TQuery, TOptions>;
+  onPairsChanged: (pairs: KeyValuePair[]) => void;
+}
 
 export interface State {
   pairs: KeyValuePair[];
 }
 
 export class AdHocFilterField<
-  DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
-> extends React.PureComponent<Props<DSType, TQuery, TOptions>, State> {
+> extends React.PureComponent<Props<TQuery, TOptions>, State> {
   state: State = { pairs: [] };
 
   async componentDidMount() {
@@ -34,7 +32,31 @@ export class AdHocFilterField<
     this.setState({ pairs });
   }
 
-  updatePairAt = (index: number, pair: Partial<KeyValuePair>) => {
+  onKeyChanged = (index: number) => async (key: string) => {
+    const { datasource, onPairsChanged } = this.props;
+    const tagValues = datasource.getTagValues ? await datasource.getTagValues({ key }) : [];
+    const values = tagValues.map(tagValue => tagValue.text);
+    const newPairs = this.updatePairAt(index, { key, values });
+
+    this.setState({ pairs: newPairs });
+    onPairsChanged(newPairs);
+  };
+
+  onValueChanged = (index: number) => (value: string) => {
+    const newPairs = this.updatePairAt(index, { value });
+
+    this.setState({ pairs: newPairs });
+    this.props.onPairsChanged(newPairs);
+  };
+
+  onOperatorChanged = (index: number) => (operator: string) => {
+    const newPairs = this.updatePairAt(index, { operator });
+
+    this.setState({ pairs: newPairs });
+    this.props.onPairsChanged(newPairs);
+  };
+
+  private updatePairAt = (index: number, pair: Partial<KeyValuePair>) => {
     const { pairs } = this.state;
     const newPairs: KeyValuePair[] = [];
     for (let pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
@@ -57,36 +79,12 @@ export class AdHocFilterField<
     return newPairs;
   };
 
-  onKeyChanged = (index: number) => async (key: string) => {
-    const { datasource } = this.props;
-    const tagValues = datasource.getTagValues ? await datasource.getTagValues({ key }) : [];
-    const values = tagValues.map(tagValue => tagValue.text);
-    const newPairs = this.updatePairAt(index, { key, values });
-
-    this.setState({ pairs: newPairs });
-    this.props.onRunQuery();
-  };
-
-  onValueChanged = (index: number) => (value: string) => {
-    const newPairs = this.updatePairAt(index, { value });
-
-    this.setState({ pairs: newPairs });
-    this.props.onRunQuery();
-  };
-
-  onOperatorChanged = (index: number) => (operator: string) => {
-    const newPairs = this.updatePairAt(index, { operator });
-
-    this.setState({ pairs: newPairs });
-    this.props.onRunQuery();
-  };
-
   render() {
     const { pairs } = this.state;
     return (
       <>
         {pairs.map((pair, index) => (
-          <KeyValue
+          <AdHocFilter
             key={`key-value-${pair.key}-${pair.value}`}
             keys={pair.keys}
             values={pair.values}

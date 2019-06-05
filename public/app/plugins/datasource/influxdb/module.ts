@@ -1,11 +1,11 @@
 import InfluxDatasource from './datasource';
 import { InfluxQueryCtrl } from './query_ctrl';
+import { InfluxLogQueryField } from './InfluxLogQueryField';
 import {
   createChangeHandler,
   createResetHandler,
   PasswordFieldEnum,
 } from '../../../features/datasources/utils/passwordHandlers';
-import { AdHocFilterField } from 'app/features/explore/AdHocFilterField';
 
 class InfluxConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -31,5 +31,5 @@ export {
   InfluxQueryCtrl as QueryCtrl,
   InfluxConfigCtrl as ConfigCtrl,
   InfluxAnnotationsQueryCtrl as AnnotationsQueryCtrl,
-  AdHocFilterField as ExploreLogsQueryField,
+  InfluxLogQueryField as ExploreLogsQueryField,
 };

@@ -9,6 +9,7 @@ export default class InfluxQuery {
   groupByParts: any;
   templateSrv: any;
   scopedVars: any;
+  refId: string;
 
   /** @ngInject */
   constructor(target, templateSrv?, scopedVars?) {
