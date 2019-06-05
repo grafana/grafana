@@ -146,6 +146,9 @@ $arrowPadding: $arrowPaddingToBorder * 3;
     background-color: $input-bg;
     border: 0;
     line-height: 32px;
+    @include media-breakpoint-up(lg) {
+      line-height: 22px;
+    }
   }
 
   button.time-picker-calendar-tile:hover {
@@ -172,7 +175,7 @@ $arrowPadding: $arrowPaddingToBorder * 3;
   padding-right: $space-xs;
 }
 
-@media only screen and (max-width: 1116px) {
+@include media-breakpoint-down(lg) {
   .time-picker-popover {
     margin-left: $spacer;
     display: flex;
