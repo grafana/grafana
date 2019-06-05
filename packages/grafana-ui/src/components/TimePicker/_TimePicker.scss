@@ -89,6 +89,32 @@
   }
 }
 
+.time-picker-input {
+  max-width: 170px;
+}
+
+.react-calendar__navigation__label {
+  line-height: 31px;
+  padding-bottom: 0;
+}
+
+.react-calendar__navigation__arrow {
+  font-size: $font-size-lg;
+}
+
+$arrowPaddingToBorder: 7px;
+$arrowPadding: $arrowPaddingToBorder * 3;
+
+.react-calendar__navigation__next-button {
+  padding-left: $arrowPadding;
+  padding-right: $arrowPaddingToBorder;
+}
+
+.react-calendar__navigation__prev-button {
+  padding-left: $arrowPaddingToBorder;
+  padding-right: $arrowPadding;
+}
+
 .time-picker-calendar {
   border: 1px solid $popover-border-color;
   max-width: 220px;
@@ -119,7 +145,7 @@
     color: $input-color;
     background-color: $input-bg;
     border: 0;
-    line-height: 22px;
+    line-height: 32px;
   }
 
   button.time-picker-calendar-tile:hover {
