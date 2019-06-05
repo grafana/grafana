@@ -59,18 +59,19 @@ export class InfluxLogQueryField extends React.Component<Props, State> {
 
   render() {
     const { datasource } = this.props;
-    const { measurements } = this.state;
+    const { measurements, measurement } = this.state;
+    const cascadeText = measurement ? `Measurements (${measurement})` : 'Measurements';
 
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
         <div className="gf-form flex-shrink-0">
           <Cascader options={measurements} onChange={this.onMeasurementsChange}>
             <button className="gf-form-label gf-form-label--btn">
-              Measurements <i className="fa fa-caret-down" />
+              {cascadeText} <i className="fa fa-caret-down" />
             </button>
           </Cascader>
         </div>
-        <div className="gf-form gf-form--grow flex-shrink-1">
+        <div className="flex-shrink-1 flex-flow-column-nowrap">
           <AdHocFilterField onPairsChanged={this.onPairsChanged} datasource={datasource} />
         </div>
       </div>

@@ -1,6 +1,7 @@
 import React from 'react';
-import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataSourceJsonData, Button } from '@grafana/ui';
 import { AdHocFilter } from './AdHocFilter';
+import { ButtonSize, ButtonVariant } from '@grafana/ui/src/components/Button/AbstractButton';
 
 export interface KeyValuePair {
   keys: string[];
@@ -56,6 +57,15 @@ export class AdHocFilterField<
     this.props.onPairsChanged(newPairs);
   };
 
+  onAddFilter = async () => {
+    const { pairs } = this.state;
+    const tagKeys = this.props.datasource.getTagKeys ? await this.props.datasource.getTagKeys({}) : [];
+    const keys = tagKeys.map(tagKey => tagKey.text);
+    const newPairs = pairs.concat({ key: null, operator: null, value: null, keys, values: [] });
+
+    this.setState({ pairs: newPairs });
+  };
+
   private updatePairAt = (index: number, pair: Partial<KeyValuePair>) => {
     const { pairs } = this.state;
     const newPairs: KeyValuePair[] = [];
@@ -84,17 +94,28 @@ export class AdHocFilterField<
     return (
       <>
         {pairs.map((pair, index) => (
-          <AdHocFilter
-            key={`key-value-${pair.key}-${pair.value}`}
-            keys={pair.keys}
-            values={pair.values}
-            initialKey={pair.key}
-            initialOperator={pair.operator}
-            initialValue={pair.value}
-            onKeyChanged={this.onKeyChanged(index)}
-            onOperatorChanged={this.onOperatorChanged(index)}
-            onValueChanged={this.onValueChanged(index)}
-          />
+          <div className="align-items-center">
+            <AdHocFilter
+              key={`key-value-${pair.key}-${pair.value}`}
+              keys={pair.keys}
+              values={pair.values}
+              initialKey={pair.key}
+              initialOperator={pair.operator}
+              initialValue={pair.value}
+              onKeyChanged={this.onKeyChanged(index)}
+              onOperatorChanged={this.onOperatorChanged(index)}
+              onValueChanged={this.onValueChanged(index)}
+            />
+            {index < pairs.length - 1 && <span>AND</span>}
+            {index === pairs.length - 1 && (
+              <Button
+                size={ButtonSize.Small}
+                variant={ButtonVariant.Transparent}
+                icon="fa fa-plus"
+                onClick={this.onAddFilter}
+              />
+            )}
+          </div>
         ))}
       </>
     );
