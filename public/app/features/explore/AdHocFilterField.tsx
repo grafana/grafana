@@ -1,7 +1,6 @@
 import React from 'react';
-import { DataSourceApi, DataQuery, DataSourceJsonData, Button } from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/ui';
 import { AdHocFilter } from './AdHocFilter';
-import { ButtonSize, ButtonVariant } from '@grafana/ui/src/components/Button/AbstractButton';
 
 export interface KeyValuePair {
   keys: string[];
@@ -66,6 +65,18 @@ export class AdHocFilterField<
     this.setState({ pairs: newPairs });
   };
 
+  onRemoveFilter = async (index: number) => {
+    const { pairs } = this.state;
+    const newPairs = pairs.reduce((allPairs, pair, pairIndex) => {
+      if (pairIndex === index) {
+        return allPairs;
+      }
+      return allPairs.concat(pair);
+    }, []);
+
+    this.setState({ pairs: newPairs });
+  };
+
   private updatePairAt = (index: number, pair: Partial<KeyValuePair>) => {
     const { pairs } = this.state;
     const newPairs: KeyValuePair[] = [];
@@ -93,30 +104,34 @@ export class AdHocFilterField<
     const { pairs } = this.state;
     return (
       <>
-        {pairs.map((pair, index) => (
-          <div className="align-items-center">
-            <AdHocFilter
-              key={`key-value-${pair.key}-${pair.value}`}
-              keys={pair.keys}
-              values={pair.values}
-              initialKey={pair.key}
-              initialOperator={pair.operator}
-              initialValue={pair.value}
-              onKeyChanged={this.onKeyChanged(index)}
-              onOperatorChanged={this.onOperatorChanged(index)}
-              onValueChanged={this.onValueChanged(index)}
-            />
-            {index < pairs.length - 1 && <span>AND</span>}
-            {index === pairs.length - 1 && (
-              <Button
-                size={ButtonSize.Small}
-                variant={ButtonVariant.Transparent}
-                icon="fa fa-plus"
-                onClick={this.onAddFilter}
+        {pairs.map((pair, index) => {
+          const adHocKey = `adhoc-filter-${index}-${pair.key}-${pair.value}`;
+          return (
+            <div className="align-items-center flex-grow-1" key={adHocKey}>
+              <AdHocFilter
+                keys={pair.keys}
+                values={pair.values}
+                initialKey={pair.key}
+                initialOperator={pair.operator}
+                initialValue={pair.value}
+                onKeyChanged={this.onKeyChanged(index)}
+                onOperatorChanged={this.onOperatorChanged(index)}
+                onValueChanged={this.onValueChanged(index)}
               />
-            )}
-          </div>
-        ))}
+              {index < pairs.length - 1 && <span>&nbsp;AND&nbsp;</span>}
+              {index < pairs.length - 1 && (
+                <button className="gf-form-label gf-form-label--btn" onClick={() => this.onRemoveFilter(index)}>
+                  <i className="fa fa-minus" />
+                </button>
+              )}
+              {index === pairs.length - 1 && (
+                <button className="gf-form-label gf-form-label--btn" onClick={this.onAddFilter}>
+                  <i className="fa fa-plus" />
+                </button>
+              )}
+            </div>
+          );
+        })}
       </>
     );
   }

@@ -17,6 +17,7 @@ export interface State {
 }
 
 export class InfluxLogQueryField extends React.Component<Props, State> {
+  templateSrv: TemplateSrv = new TemplateSrv();
   state: State = { measurements: [], measurement: null };
 
   async componentDidMount() {
@@ -25,7 +26,7 @@ export class InfluxLogQueryField extends React.Component<Props, State> {
     const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, influxDataSource.database);
     const query = queryBuilder.buildExploreQuery('MEASUREMENTS');
     const influxMeasurements = await influxDataSource.metricFindQuery(query);
-    const measurements = influxMeasurements.map(influxMeasurement => ({
+    const measurements = influxMeasurements.map((influxMeasurement: any) => ({
       label: influxMeasurement.text,
       value: influxMeasurement.text,
     }));
@@ -51,7 +52,7 @@ export class InfluxLogQueryField extends React.Component<Props, State> {
         tags: pairs,
         measurement,
       },
-      new TemplateSrv()
+      this.templateSrv
     );
 
     this.props.onChange(query.target);
