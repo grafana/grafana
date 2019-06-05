@@ -20,15 +20,15 @@ func init() {
 }
 
 type TracingService struct {
-	enabled              bool
-	address              string
-	customTags           map[string]string
-	samplerType          string
-	samplerParam         float64
-	log                  log.Logger
-	closer               io.Closer
-	useZipkinPropagation bool
-	useSharedZipkinSpans bool
+	enabled                  bool
+	address                  string
+	customTags               map[string]string
+	samplerType              string
+	samplerParam             float64
+	log                      log.Logger
+	closer                   io.Closer
+	zipkinPropagation        bool
+	disableSharedZipkinSpans bool
 
 	Cfg *setting.Cfg `inject:""`
 }
@@ -58,8 +58,8 @@ func (ts *TracingService) parseSettings() {
 	ts.customTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
 	ts.samplerType = section.Key("sampler_type").MustString("")
 	ts.samplerParam = section.Key("sampler_param").MustFloat64(1)
-	ts.useZipkinPropagation = section.Key("zipkin_propagation").MustBool(false)
-	ts.useSharedZipkinSpans = section.Key("shared_zipkin_spans").MustBool(false)
+	ts.zipkinPropagation = section.Key("zipkin_propagation").MustBool(false)
+	ts.disableSharedZipkinSpans = section.Key("disable_shared_zipkin_spans").MustBool(false)
 }
 
 func (ts *TracingService) initGlobalTracer() error {
@@ -85,13 +85,14 @@ func (ts *TracingService) initGlobalTracer() error {
 		options = append(options, jaegercfg.Tag(tag, value))
 	}
 
-	if ts.useZipkinPropagation {
+	if ts.zipkinPropagation {
 		zipkinPropagator := zipkin.NewZipkinB3HTTPHeaderPropagator()
 		options = append(options,
 			jaegercfg.Injector(opentracing.HTTPHeaders, zipkinPropagator),
 			jaegercfg.Extractor(opentracing.HTTPHeaders, zipkinPropagator),
 		)
-		if ts.useSharedZipkinSpans {
+
+		if !ts.disableSharedZipkinSpans {
 			options = append(options, jaegercfg.ZipkinSharedRPCSpan(true))
 		}
 	}
