@@ -1,8 +1,10 @@
 import { PanelChrome } from './PanelChrome';
+import { setTemplateSrv } from '@grafana/runtime';
+import TemplateSrv from 'app/features/templating/template_srv';
 
 describe('PanelChrome', () => {
   let chrome: PanelChrome;
-
+  setTemplateSrv(new TemplateSrv());
   beforeEach(() => {
     chrome = new PanelChrome({
       panel: {

@@ -12,13 +12,13 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
 import { getProcessedSeriesData } from '../state/PanelQueryState';
-import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { LoadingState, PanelData, PanelPlugin } from '@grafana/ui';
 import { ScopedVars } from '@grafana/ui';
+import { getTemplateSrv } from '@grafana/runtime';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -207,7 +207,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
-    return templateSrv.replace(value, vars, format);
+    return getTemplateSrv().replace(value, vars, format);
   };
 
   onPanelError = (message: string) => {

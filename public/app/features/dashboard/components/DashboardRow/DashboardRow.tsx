@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 
 export interface DashboardRowProps {
@@ -79,7 +79,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       'fa-chevron-right': this.state.collapsed,
     });
 
-    const title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
+    const title = getTemplateSrv().replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
     const count = this.props.panel.panels ? this.props.panel.panels.length : 0;
     const panels = count === 1 ? 'panel' : 'panels';
     const canEdit = this.props.dashboard.meta.canEdit === true;

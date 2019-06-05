@@ -3,9 +3,9 @@ import Remarkable from 'remarkable';
 import { Tooltip, ScopedVars } from '@grafana/ui';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import templateSrv from 'app/features/templating/template_srv';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv } from '@grafana/runtime';
 
 enum InfoMode {
   Error = 'Error',
@@ -43,7 +43,8 @@ export class PanelHeaderCorner extends Component<Props> {
   getInfoContent = (): JSX.Element => {
     const { panel } = this.props;
     const markdown = panel.description;
-    const linkSrv = new LinkSrv(templateSrv, this.timeSrv);
+    const templateSrv = getTemplateSrv();
+    const linkSrv = new LinkSrv(this.timeSrv);
     const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
     const remarkableInterpolatedMarkdown = new Remarkable().render(interpolatedMarkdown);
 

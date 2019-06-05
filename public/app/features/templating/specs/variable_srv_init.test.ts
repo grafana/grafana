@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { VariableSrv } from '../variable_srv';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import $q from 'q';
+import { setTemplateSrv } from '@grafana/runtime';
 
 describe('VariableSrv init', function(this: any) {
   const templateSrv = {
@@ -17,6 +18,7 @@ describe('VariableSrv init', function(this: any) {
         return match;
       }),
   };
+  setTemplateSrv(templateSrv as any);
 
   const timeSrv = {
     timeRange: () => {
@@ -50,7 +52,7 @@ describe('VariableSrv init', function(this: any) {
         };
 
         // @ts-ignore
-        ctx.variableSrv = new VariableSrv($q, {}, $injector, templateSrv, timeSrv);
+        ctx.variableSrv = new VariableSrv($q, {}, $injector, timeSrv);
 
         $injector.instantiate = (variable, model) => {
           return getVarMockConstructor(variable, model, ctx);

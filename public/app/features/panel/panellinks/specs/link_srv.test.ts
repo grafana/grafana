@@ -1,5 +1,6 @@
 import { LinkSrv } from '../link_srv';
 import _ from 'lodash';
+import { setTemplateSrv } from '@grafana/runtime';
 
 jest.mock('angular', () => {
   const AngularJSMock = require('test/mocks/angular');
@@ -9,10 +10,11 @@ jest.mock('angular', () => {
 describe('linkSrv', () => {
   let linkSrv;
   const templateSrvMock = {};
+  setTemplateSrv(templateSrvMock as any);
   const timeSrvMock = {};
 
   beforeEach(() => {
-    linkSrv = new LinkSrv(templateSrvMock, timeSrvMock);
+    linkSrv = new LinkSrv(timeSrvMock);
   });
 
   describe('when appending query strings', () => {

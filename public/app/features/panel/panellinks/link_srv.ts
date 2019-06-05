@@ -1,10 +1,14 @@
 import angular from 'angular';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 export class LinkSrv {
+  private templateSrv: TemplateSrv;
   /** @ngInject */
-  constructor(private templateSrv, private timeSrv) {}
+  constructor(private timeSrv) {
+    this.templateSrv = getTemplateSrv();
+  }
 
   getLinkUrl(link) {
     const url = this.templateSrv.replace(link.url || '');

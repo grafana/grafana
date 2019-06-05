@@ -16,11 +16,12 @@ import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
 
-import { LocationUpdate, setLocationSrv } from '@grafana/runtime';
+import { LocationUpdate, setLocationSrv, setTemplateSrv } from '@grafana/runtime';
 import { updateLocation } from 'app/core/actions';
 
 // Types
 import { KioskUrlValue } from 'app/types';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -33,12 +34,14 @@ export class GrafanaCtrl {
     bridgeSrv,
     backendSrv: BackendSrv,
     timeSrv: TimeSrv,
+    templateSrv: TemplateSrv,
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
     angularLoader: AngularLoader
   ) {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
+    setTemplateSrv(templateSrv);
     setBackendSrv(backendSrv);
     setDataSourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);

@@ -6,25 +6,23 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
 import { Graph } from 'app/core/utils/dag';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 // Types
 import { TimeRange } from '@grafana/ui/src';
+import { TemplateSrv, getTemplateSrv } from '@grafana/runtime';
 
 export class VariableSrv {
+  private templateSrv: TemplateSrv;
   dashboard: DashboardModel;
   variables: any[];
 
   /** @ngInject */
-  constructor(
-    private $q,
-    private $location,
-    private $injector,
-    private templateSrv: TemplateSrv,
-    private timeSrv: TimeSrv
-  ) {}
+  constructor(private $q, private $location, private $injector, private timeSrv: TimeSrv) {
+    this.templateSrv = getTemplateSrv();
+  }
 
   init(dashboard: DashboardModel) {
     this.dashboard = dashboard;

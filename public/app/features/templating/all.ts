@@ -1,7 +1,7 @@
 import './editor_ctrl';
 import coreModule from 'app/core/core_module';
 
-import templateSrv from './template_srv';
+import { TemplateSrv } from './template_srv';
 import { VariableSrv } from './variable_srv';
 import { IntervalVariable } from './interval_variable';
 import { QueryVariable } from './query_variable';
@@ -11,9 +11,7 @@ import { ConstantVariable } from './constant_variable';
 import { AdhocVariable } from './adhoc_variable';
 import { TextBoxVariable } from './TextBoxVariable';
 
-coreModule.factory('templateSrv', () => {
-  return templateSrv;
-});
+coreModule.service('templateSrv', TemplateSrv);
 
 export {
   VariableSrv,

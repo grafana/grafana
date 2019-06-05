@@ -6,7 +6,7 @@ import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import { PanelQueryState } from './PanelQueryState';
 
 // Types
@@ -144,7 +144,7 @@ export class PanelQueryRunner {
         return query;
       });
 
-      const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
+      const lowerIntervalLimit = minInterval ? getTemplateSrv().replace(minInterval, request.scopedVars) : ds.interval;
       const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,

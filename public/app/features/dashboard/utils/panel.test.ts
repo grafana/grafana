@@ -2,6 +2,8 @@ import { TimeRange } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { advanceTo, clear } from 'jest-date-mock';
 import { dateTime, DateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { setTemplateSrv } from '@grafana/runtime';
+import TemplateSrv from 'app/features/templating/template_srv';
 
 const dashboardTimeRange: TimeRange = {
   from: dateTime([2019, 1, 11, 12, 0]),
@@ -14,7 +16,7 @@ const dashboardTimeRange: TimeRange = {
 
 describe('applyPanelTimeOverrides', () => {
   const fakeCurrentDate = dateTime([2019, 1, 11, 14, 0, 0]).toDate();
-
+  setTemplateSrv(new TemplateSrv());
   beforeAll(() => {
     advanceTo(fakeCurrentDate);
   });

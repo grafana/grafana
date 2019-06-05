@@ -8,6 +8,8 @@ import {
   ScopedVars,
 } from '@grafana/ui/src/types';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { setTemplateSrv } from '@grafana/runtime';
+import TemplateSrv from 'app/features/templating/template_srv';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -92,6 +94,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
 }
 
 describe('PanelQueryRunner', () => {
+  setTemplateSrv(new TemplateSrv());
   describeQueryRunnerScenario('simple scenario', ctx => {
     it('should set requestId on request', async () => {
       expect(ctx.queryCalledWith.requestId).toBe('Q100');

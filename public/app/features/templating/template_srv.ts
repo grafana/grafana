@@ -2,12 +2,13 @@ import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import { variableRegex } from 'app/features/templating/variable';
 import { TimeRange, ScopedVars } from '@grafana/ui/src';
+import { TemplateSrv as TemplateService } from '@grafana/runtime';
 
 function luceneEscape(value) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
 
-export class TemplateSrv {
+export class TemplateSrv implements TemplateService {
   variables: any[];
 
   private regex = variableRegex;
@@ -194,7 +195,7 @@ export class TemplateSrv {
     return name && this.index[name] !== void 0;
   }
 
-  highlightVariablesAsHtml(str) {
+  highlightVariablesAsHtml(str?: string) {
     if (!str || !_.isString(str)) {
       return str;
     }
@@ -320,4 +321,5 @@ export class TemplateSrv {
   }
 }
 
-export default new TemplateSrv();
+// coreModule.service('templateSrv', TemplateSrv);
+export default TemplateSrv;

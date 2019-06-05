@@ -2,10 +2,12 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { DashboardRow } from './DashboardRow';
 import { PanelModel } from '../../state/PanelModel';
+import { setTemplateSrv } from '@grafana/runtime';
+import TemplateSrv from 'app/features/templating/template_srv';
 
 describe('DashboardRow', () => {
   let wrapper, panel, dashboardMock;
-
+  setTemplateSrv(new TemplateSrv());
   beforeEach(() => {
     dashboardMock = {
       toggleRow: jest.fn(),

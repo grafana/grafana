@@ -1,8 +1,14 @@
 import config from 'app/core/config';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { ShareModalCtrl } from './ShareModalCtrl';
+import { setTemplateSrv } from '@grafana/runtime';
 
 describe('ShareModalCtrl', () => {
+  const templateSrv = {
+    fillVariableValuesForUrl: () => {},
+  };
+  setTemplateSrv(templateSrv as any);
+
   const ctx = {
     timeSrv: {
       timeRange: () => {
@@ -22,9 +28,7 @@ describe('ShareModalCtrl', () => {
         },
       },
     },
-    templateSrv: {
-      fillVariableValuesForUrl: () => {},
-    },
+    templateSrv,
   } as any;
 
   (window as any).Intl.DateTimeFormat = () => {
@@ -49,7 +53,7 @@ describe('ShareModalCtrl', () => {
       {},
       ctx.timeSrv,
       ctx.templateSrv,
-      new LinkSrv({}, ctx.stimeSrv)
+      new LinkSrv(ctx.stimeSrv)
     );
   });
 

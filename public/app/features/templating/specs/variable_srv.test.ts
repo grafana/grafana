@@ -4,8 +4,22 @@ import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import $q from 'q';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { CustomVariable } from '../custom_variable';
+import { setTemplateSrv } from '@grafana/runtime';
 
 describe('VariableSrv', function(this: any) {
+  const templateSrv = {
+    setGrafanaVariable: jest.fn(),
+    init: vars => {
+      this.variables = vars;
+    },
+    updateIndex: () => {},
+    replace: str =>
+      str.replace(this.regex, match => {
+        return match;
+      }),
+  };
+  setTemplateSrv(templateSrv as any);
+
   const ctx = {
     datasourceSrv: {},
     timeSrv: {
@@ -19,20 +33,10 @@ describe('VariableSrv', function(this: any) {
     $injector: {
       instantiate: (ctr, obj) => new ctr(obj.model),
     },
-    templateSrv: {
-      setGrafanaVariable: jest.fn(),
-      init: vars => {
-        this.variables = vars;
-      },
-      updateIndex: () => {},
-      replace: str =>
-        str.replace(this.regex, match => {
-          return match;
-        }),
-    },
     $location: {
       search: () => {},
     },
+    templateSrv,
   } as any;
 
   function describeUpdateVariable(desc, fn) {
@@ -48,7 +52,7 @@ describe('VariableSrv', function(this: any) {
         const ds: any = {};
         ds.metricFindQuery = () => Promise.resolve(scenario.queryResult);
 
-        ctx.variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.templateSrv, ctx.timeSrv);
+        ctx.variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.timeSrv);
 
         ctx.variableSrv.timeSrv = ctx.timeSrv;
         ctx.datasourceSrv = {
@@ -625,7 +629,7 @@ describe('VariableSrv', function(this: any) {
 });
 
 function setupSetFromUrlTest(ctx, model = {}) {
-  const variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.templateSrv, ctx.timeSrv);
+  const variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.timeSrv);
   const finalModel = {
     type: 'custom',
     options: ['one', 'two', 'three'].map(v => ({ text: v, value: v })),

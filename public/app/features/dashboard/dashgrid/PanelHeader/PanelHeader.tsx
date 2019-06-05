@@ -5,7 +5,7 @@ import { ScopedVars } from '@grafana/ui';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -72,7 +72,7 @@ export class PanelHeader extends Component<Props, State> {
 
   render() {
     const { panel, dashboard, timeInfo, scopedVars, error, isFullscreen } = this.props;
-    const title = templateSrv.replaceWithText(panel.title, scopedVars);
+    const title = getTemplateSrv().replaceWithText(panel.title, scopedVars);
 
     const panelHeaderClass = classNames({
       'panel-header': true,
