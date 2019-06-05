@@ -46,11 +46,11 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 
 	metrics.M_Alerting_Result_State.WithLabelValues(string(evalContext.Rule.State)).Inc()
 	if evalContext.shouldUpdateAlertState() {
-		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
+		handler.log.Info("New state change", "alertId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
 		cmd := &models.SetAlertStateCommand{
-			AlertId:  evalContext.Rule.Id,
-			OrgId:    evalContext.Rule.OrgId,
+			AlertId:  evalContext.Rule.ID,
+			OrgId:    evalContext.Rule.OrgID,
 			State:    evalContext.Rule.State,
 			Error:    executionError,
 			EvalData: annotationData,
@@ -81,10 +81,10 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 
 		// save annotation
 		item := annotations.Item{
-			OrgId:       evalContext.Rule.OrgId,
-			DashboardId: evalContext.Rule.DashboardId,
-			PanelId:     evalContext.Rule.PanelId,
-			AlertId:     evalContext.Rule.Id,
+			OrgId:       evalContext.Rule.OrgID,
+			DashboardId: evalContext.Rule.DashboardID,
+			PanelId:     evalContext.Rule.PanelID,
+			AlertId:     evalContext.Rule.ID,
 			Text:        "",
 			NewState:    string(evalContext.Rule.State),
 			PrevState:   string(evalContext.PrevAlertState),

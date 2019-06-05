@@ -6,7 +6,7 @@ import { StoreState } from 'app/types';
 import { addDataSource, loadDataSourceTypes, setDataSourceTypeSearchQuery } from './state/actions';
 import { getDataSourceTypes } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { NavModel, DataSourcePluginMeta, List } from '@grafana/ui';
+import { NavModel, DataSourcePluginMeta, List, PluginType } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -43,6 +43,7 @@ class NewDataSourcePage extends PureComponent<Props> {
     loki: 90,
     mysql: 80,
     postgres: 79,
+    gcloud: -1,
   };
 
   componentDidMount() {
@@ -114,6 +115,8 @@ class NewDataSourcePage extends PureComponent<Props> {
       {} as DataSourceCategories
     );
 
+    categories['cloud'].push(getGrafanaCloudPhantomPlugin());
+
     return (
       <>
         {this.categoryInfoList.map(category => (
@@ -174,7 +177,9 @@ interface DataSourceTypeCardProps {
 }
 
 const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
-  const { plugin, onClick, onLearnMoreClick } = props;
+  const { plugin, onLearnMoreClick } = props;
+  const canSelect = plugin.id !== 'gcloud';
+  const onClick = canSelect ? props.onClick : () => {};
 
   // find first plugin info link
   const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0].url : null;
@@ -188,15 +193,44 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
       </div>
       <div className="add-data-source-item-actions">
         {learnMoreLink && (
-          <a className="btn btn-inverse" href={learnMoreLink} target="_blank" onClick={onLearnMoreClick}>
-            Learn more
+          <a
+            className="btn btn-inverse"
+            href={`${learnMoreLink}?utm_source=grafana_add_ds`}
+            target="_blank"
+            onClick={onLearnMoreClick}
+          >
+            Learn more <i className="fa fa-external-link add-datasource-item-actions__btn-icon" />
           </a>
         )}
-        <button className="btn btn-primary">Select</button>
+        {canSelect && <button className="btn btn-primary">Select</button>}
       </div>
     </div>
   );
 };
+
+function getGrafanaCloudPhantomPlugin(): DataSourcePluginMeta {
+  return {
+    id: 'gcloud',
+    name: 'Grafana Cloud',
+    type: PluginType.datasource,
+    module: '',
+    baseUrl: '',
+    info: {
+      description: 'Hosted Graphite, Prometheus and Loki',
+      logos: { small: 'public/img/grafana_icon.svg', large: 'asd' },
+      author: { name: 'Grafana Labs' },
+      links: [
+        {
+          url: 'https://grafana.com/cloud',
+          name: 'Learn more',
+        },
+      ],
+      screenshots: [],
+      updated: '2019-05-10',
+      version: '1.0.0',
+    },
+  };
+}
 
 export function getNavModel(): NavModel {
   const main = {

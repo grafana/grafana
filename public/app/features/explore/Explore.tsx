@@ -31,7 +31,7 @@ import {
 } from './state/actions';
 
 // Types
-import { RawTimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi, DataQueryError } from '@grafana/ui';
+import { RawTimeRange, DataQuery, ExploreStartPageProps, DataSourceApi, DataQueryError } from '@grafana/ui';
 import {
   ExploreItemState,
   ExploreUrlState,
@@ -51,18 +51,18 @@ import {
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
-import { scanStopAction } from './state/actionTypes';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
+import { scanStopAction } from './state/actionTypes';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
   changeSize: typeof changeSize;
   changeTime: typeof changeTime;
   datasourceError: string;
-  datasourceInstance: ExploreDataSourceApi;
+  datasourceInstance: DataSourceApi;
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;

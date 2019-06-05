@@ -30,7 +30,6 @@ type IConnection interface {
 type IServer interface {
 	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	Users([]string) ([]*models.ExternalUserInfo, error)
-	ExtractGrafanaUser(*UserInfo) (*models.ExternalUserInfo, error)
 	InitialBind(string, string) error
 	Dial() error
 	Close()
@@ -148,6 +147,11 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 
 	// Check if a second user bind is needed
 	user := users[0]
+
+	if err := server.validateGrafanaUser(user); err != nil {
+		return nil, err
+	}
+
 	if server.requireSecondBind {
 		err = server.secondBind(user, query.Password)
 		if err != nil {
@@ -186,16 +190,6 @@ func (server *Server) Users(logins []string) (
 	}
 
 	return serializedUsers, nil
-}
-
-// ExtractGrafanaUser extracts external user info from LDAP user
-func (server *Server) ExtractGrafanaUser(user *UserInfo) (*models.ExternalUserInfo, error) {
-	result := server.buildGrafanaUser(user)
-	if err := server.validateGrafanaUser(result); err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 // validateGrafanaUser validates user access.

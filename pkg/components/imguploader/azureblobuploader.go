@@ -72,10 +72,6 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 		return "", aerr
 	}
 
-	if err != nil {
-		return "", err
-	}
-
 	url := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", az.account_name, az.container_name, randomFileName)
 	return url, nil
 }

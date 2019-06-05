@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { TimeRange, TimeZone, AbsoluteTimeRange } from '@grafana/ui';
+import { TimeRange, TimeZone, AbsoluteTimeRange, LoadingState } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -69,8 +69,8 @@ function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const { split } = explore;
   const item: ExploreItemState = explore[exploreId];
-  const { graphResult, graphIsLoading, range, showingGraph, showingTable } = item;
-  const loading = graphIsLoading;
+  const { graphResult, loadingState, range, showingGraph, showingTable } = item;
+  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   return { graphResult, loading, range, showingGraph, showingTable, split, timeZone: getTimeZone(state.user) };
 }
 

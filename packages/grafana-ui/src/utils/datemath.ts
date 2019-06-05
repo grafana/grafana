@@ -87,12 +87,13 @@ export function isValid(text: string | DateTime): boolean {
  */
 // TODO: Had to revert Andrejs `time: moment.Moment` to `time: any`
 export function parseDateMath(mathString: string, time: any, roundUp?: boolean): DateTime | undefined {
+  const strippedMathString = mathString.replace(/\s/g, '');
   const dateTime = time;
   let i = 0;
-  const len = mathString.length;
+  const len = strippedMathString.length;
 
   while (i < len) {
-    const c = mathString.charAt(i++);
+    const c = strippedMathString.charAt(i++);
     let type;
     let num;
     let unit;
@@ -107,19 +108,19 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
       return undefined;
     }
 
-    if (isNaN(parseInt(mathString.charAt(i), 10))) {
+    if (isNaN(parseInt(strippedMathString.charAt(i), 10))) {
       num = 1;
-    } else if (mathString.length === 2) {
-      num = mathString.charAt(i);
+    } else if (strippedMathString.length === 2) {
+      num = strippedMathString.charAt(i);
     } else {
       const numFrom = i;
-      while (!isNaN(parseInt(mathString.charAt(i), 10))) {
+      while (!isNaN(parseInt(strippedMathString.charAt(i), 10))) {
         i++;
         if (i > 10) {
           return undefined;
         }
       }
-      num = parseInt(mathString.substring(numFrom, i), 10);
+      num = parseInt(strippedMathString.substring(numFrom, i), 10);
     }
 
     if (type === 0) {
@@ -128,7 +129,7 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
         return undefined;
       }
     }
-    unit = mathString.charAt(i++);
+    unit = strippedMathString.charAt(i++);
 
     if (!includes(units, unit)) {
       return undefined;
