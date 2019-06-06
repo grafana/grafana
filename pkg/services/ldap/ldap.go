@@ -276,16 +276,25 @@ func (server *Server) getSearchRequest(
 }
 
 // buildGrafanaUser extracts info from UserInfo model to ExternalUserInfo
-func (server *Server) buildGrafanaUser(user *UserInfo) *models.ExternalUserInfo {
+func (server *Server) buildGrafanaUser(
+	user *ldap.Entry,
+	memberOf []string,
+) *models.ExternalUserInfo {
+
+	attrs := server.Config.Attr
 	extUser := &models.ExternalUserInfo{
 		AuthModule: models.AuthModuleLDAP,
 		AuthId:     user.DN,
 		Name: strings.TrimSpace(
-			fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+			fmt.Sprintf(
+				"%s %s",
+				getAttribute(attrs.Name, user),
+				getAttribute(attrs.Surname, user),
+			),
 		),
-		Login:    user.Username,
-		Email:    user.Email,
-		Groups:   user.MemberOf,
+		Login:    getAttribute(attrs.Username, user),
+		Email:    getAttribute(attrs.Email, user),
+		Groups:   memberOf,
 		OrgRoles: map[int64]models.RoleType{},
 	}
 
@@ -295,7 +304,7 @@ func (server *Server) buildGrafanaUser(user *UserInfo) *models.ExternalUserInfo 
 			continue
 		}
 
-		if user.isMemberOf(group.GroupDN) {
+		if isMemberOf(memberOf, group.GroupDN) {
 			extUser.OrgRoles[group.OrgId] = group.OrgRole
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
@@ -393,17 +402,21 @@ func (server *Server) InitialBind(username, userPassword string) error {
 // requestMemberOf use this function when POSIX LDAP schema does not support memberOf, so it manually search the groups
 func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string, error) {
 	var memberOf []string
+	var config = server.Config
 
-	for _, groupSearchBase := range server.Config.GroupSearchBaseDNs {
+	for _, groupSearchBase := range config.GroupSearchBaseDNs {
 		var filterReplace string
-		if server.Config.GroupSearchFilterUserAttribute == "" {
-			filterReplace = getLDAPAttr(server.Config.Attr.Username, searchResult)
+		if config.GroupSearchFilterUserAttribute == "" {
+			filterReplace = getLDAPAttr(config.Attr.Username, searchResult)
 		} else {
-			filterReplace = getLDAPAttr(server.Config.GroupSearchFilterUserAttribute, searchResult)
+			filterReplace = getLDAPAttr(
+				config.GroupSearchFilterUserAttribute,
+				searchResult,
+			)
 		}
 
 		filter := strings.Replace(
-			server.Config.GroupSearchFilter, "%s",
+			config.GroupSearchFilter, "%s",
 			ldap.EscapeFilter(filterReplace),
 			-1,
 		)
@@ -411,7 +424,7 @@ func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string
 		server.log.Info("Searching for user's groups", "filter", filter)
 
 		// support old way of reading settings
-		groupIDAttribute := server.Config.Attr.MemberOf
+		groupIDAttribute := config.Attr.MemberOf
 		// but prefer dn attribute if default settings are used
 		if groupIDAttribute == "" || groupIDAttribute == "memberOf" {
 			groupIDAttribute = "dn"
@@ -432,7 +445,10 @@ func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string
 
 		if len(groupSearchResult.Entries) > 0 {
 			for i := range groupSearchResult.Entries {
-				memberOf = append(memberOf, getLDAPAttrN(groupIDAttribute, groupSearchResult, i))
+				memberOf = append(
+					memberOf,
+					getLDAPAttrN(groupIDAttribute, groupSearchResult, i),
+				)
 			}
 			break
 		}
@@ -448,44 +464,15 @@ func (server *Server) serializeUsers(
 ) ([]*models.ExternalUserInfo, error) {
 	var serialized []*models.ExternalUserInfo
 
-	for index := range users.Entries {
-		memberOf, err := server.getMemberOf(users)
-		if err != nil {
-			return nil, err
-		}
+	memberOf, err := server.getMemberOf(users)
+	if err != nil {
+		return nil, err
+	}
 
-		userInfo := &UserInfo{
-			DN: getLDAPAttrN(
-				"dn",
-				users,
-				index,
-			),
-			LastName: getLDAPAttrN(
-				server.Config.Attr.Surname,
-				users,
-				index,
-			),
-			FirstName: getLDAPAttrN(
-				server.Config.Attr.Name,
-				users,
-				index,
-			),
-			Username: getLDAPAttrN(
-				server.Config.Attr.Username,
-				users,
-				index,
-			),
-			Email: getLDAPAttrN(
-				server.Config.Attr.Email,
-				users,
-				index,
-			),
-			MemberOf: memberOf,
-		}
-
+	for _, user := range users.Entries {
 		serialized = append(
 			serialized,
-			server.buildGrafanaUser(userInfo),
+			server.buildGrafanaUser(user, memberOf),
 		)
 	}
 
@@ -493,59 +480,19 @@ func (server *Server) serializeUsers(
 }
 
 // getMemberOf finds memberOf property or request it
-func (server *Server) getMemberOf(search *ldap.SearchResult) (
+func (server *Server) getMemberOf(result *ldap.SearchResult) (
 	[]string, error,
 ) {
 	if server.Config.GroupSearchFilter == "" {
-		memberOf := getLDAPAttrArray(server.Config.Attr.MemberOf, search)
+		memberOf := getLDAPAttrArray(server.Config.Attr.MemberOf, result)
 
 		return memberOf, nil
 	}
 
-	memberOf, err := server.requestMemberOf(search)
+	memberOf, err := server.requestMemberOf(result)
 	if err != nil {
 		return nil, err
 	}
 
 	return memberOf, nil
-}
-
-func appendIfNotEmpty(slice []string, values ...string) []string {
-	for _, v := range values {
-		if v != "" {
-			slice = append(slice, v)
-		}
-	}
-	return slice
-}
-
-func getLDAPAttr(name string, result *ldap.SearchResult) string {
-	return getLDAPAttrN(name, result, 0)
-}
-
-func getLDAPAttrN(name string, result *ldap.SearchResult, n int) string {
-	if strings.ToLower(name) == "dn" {
-		return result.Entries[n].DN
-	}
-	for _, attr := range result.Entries[n].Attributes {
-		if attr.Name == name {
-			if len(attr.Values) > 0 {
-				return attr.Values[0]
-			}
-		}
-	}
-	return ""
-}
-
-func getLDAPAttrArray(name string, result *ldap.SearchResult) []string {
-	return getLDAPAttrArrayN(name, result, 0)
-}
-
-func getLDAPAttrArrayN(name string, result *ldap.SearchResult, n int) []string {
-	for _, attr := range result.Entries[n].Attributes {
-		if attr.Name == name {
-			return attr.Values
-		}
-	}
-	return []string{}
 }
