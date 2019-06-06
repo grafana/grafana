@@ -1,3 +1,5 @@
 {
-  "extends": "../tsconfig.json"
+  "extends": "../tsconfig.json",
+  "include": ["./src/**/*.ts", "./src/**/*.tsx", "../../public/app/types/jquery/*.ts"],
+  "exclude": ["./dist", "./node_modules"]
 }
