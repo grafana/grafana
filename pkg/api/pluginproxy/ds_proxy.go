@@ -17,7 +17,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -101,8 +101,14 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header))
 
+	originalSetCookie := proxy.ctx.Resp.Header().Get("Set-Cookie")
+
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
 	proxy.ctx.Resp.Header().Del("Set-Cookie")
+
+	if originalSetCookie != "" {
+		proxy.ctx.Resp.Header().Set("Set-Cookie", originalSetCookie)
+	}
 }
 
 func (proxy *DataSourceProxy) addTraceFromHeaderValue(span opentracing.Span, headerName string, tagName string) {

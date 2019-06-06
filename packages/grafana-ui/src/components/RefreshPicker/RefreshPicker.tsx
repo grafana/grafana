@@ -1,10 +1,13 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-
-import { SelectOptionItem, ButtonSelect, Tooltip } from '@grafana/ui';
+import { SelectOptionItem } from '../Select/Select';
+import { Tooltip } from '../Tooltip/Tooltip';
+import { ButtonSelect } from '../Select/ButtonSelect';
 
 export const offOption = { label: 'Off', value: '' };
+export const liveOption = { label: 'Live', value: 'LIVE' };
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
+export const isLive = (refreshInterval: string): boolean => refreshInterval === liveOption.value;
 
 export interface Props {
   intervals?: string[];
@@ -12,6 +15,7 @@ export interface Props {
   onIntervalChanged: (interval: string) => void;
   value?: string;
   tooltip: string;
+  hasLiveOption?: boolean;
 }
 
 export class RefreshPicker extends PureComponent<Props> {
@@ -33,15 +37,19 @@ export class RefreshPicker extends PureComponent<Props> {
     return false;
   };
 
-  intervalsToOptions = (intervals: string[] = defaultIntervals): SelectOptionItem[] => {
+  intervalsToOptions = (intervals: string[] = defaultIntervals): Array<SelectOptionItem<string>> => {
     const options = intervals.map(interval => ({ label: interval, value: interval }));
+    if (this.props.hasLiveOption) {
+      options.unshift(liveOption);
+    }
     options.unshift(offOption);
     return options;
   };
 
-  onChangeSelect = (item: SelectOptionItem) => {
+  onChangeSelect = (item: SelectOptionItem<string>) => {
     const { onIntervalChanged } = this.props;
     if (onIntervalChanged) {
+      // @ts-ignore
       onIntervalChanged(item.value);
     }
   };
@@ -54,7 +62,8 @@ export class RefreshPicker extends PureComponent<Props> {
 
     const cssClasses = classNames({
       'refresh-picker': true,
-      'refresh-picker--refreshing': selectedValue.label !== offOption.label,
+      'refresh-picker--off': selectedValue.label === offOption.label,
+      'refresh-picker--live': selectedValue === liveOption,
     });
 
     return (
@@ -66,7 +75,7 @@ export class RefreshPicker extends PureComponent<Props> {
             </button>
           </Tooltip>
           <ButtonSelect
-            className="navbar-button--attached btn--radius-left-0"
+            className="navbar-button--attached btn--radius-left-0$"
             value={selectedValue}
             label={selectedValue.label}
             options={options}

@@ -1,9 +1,10 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { UsersListPage, Props } from './UsersListPage';
-import { Invitee, NavModel, OrgUser } from 'app/types';
+import { Invitee, OrgUser } from 'app/types';
 import { getMockUser } from './__mocks__/userMocks';
 import appEvents from '../../core/app_events';
+import { NavModel } from '@grafana/ui';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),

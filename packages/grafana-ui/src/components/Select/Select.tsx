@@ -17,25 +17,25 @@ import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from './resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
-import { Tooltip } from '@grafana/ui';
+import { PopperContent } from '../Tooltip/PopperController';
+import { Tooltip } from '../Tooltip/Tooltip';
 
-export interface SelectOptionItem {
+export interface SelectOptionItem<T> {
   label?: string;
-  value?: any;
+  value?: T;
   imgUrl?: string;
   description?: string;
   [key: string]: any;
 }
 
-export interface CommonProps {
+export interface CommonProps<T> {
   defaultValue?: any;
-  getOptionLabel?: (item: SelectOptionItem) => string;
-  getOptionValue?: (item: SelectOptionItem) => string;
-  onChange: (item: SelectOptionItem) => {} | void;
+  getOptionLabel?: (item: SelectOptionItem<T>) => string;
+  getOptionValue?: (item: SelectOptionItem<T>) => string;
+  onChange: (item: SelectOptionItem<T>) => {} | void;
   placeholder?: string;
   width?: number;
-  value?: SelectOptionItem;
+  value?: SelectOptionItem<T>;
   className?: string;
   isDisabled?: boolean;
   isSearchable?: boolean;
@@ -55,13 +55,13 @@ export interface CommonProps {
   onCloseMenu?: () => void;
 }
 
-export interface SelectProps {
-  options: SelectOptionItem[];
+export interface SelectProps<T> extends CommonProps<T> {
+  options: Array<SelectOptionItem<T>>;
 }
 
-interface AsyncProps {
+interface AsyncProps<T> extends CommonProps<T> {
   defaultOptions: boolean;
-  loadOptions: (query: string) => Promise<SelectOptionItem[]>;
+  loadOptions: (query: string) => Promise<Array<SelectOptionItem<T>>>;
   loadingMessage?: () => string;
 }
 
@@ -95,9 +95,8 @@ export const MenuList = (props: any) => {
   );
 };
 
-export class Select extends PureComponent<CommonProps & SelectProps> {
-  static defaultProps = {
-    width: null,
+export class Select<T> extends PureComponent<SelectProps<T>> {
+  static defaultProps: Partial<SelectProps<any>> = {
     className: '',
     isDisabled: false,
     isSearchable: true,
@@ -108,7 +107,6 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
     isLoading: false,
     backspaceRemovesValue: true,
     maxMenuHeight: 300,
-    menuIsOpen: false,
     components: {
       Option: SelectOption,
       SingleValue,
@@ -201,9 +199,8 @@ export class Select extends PureComponent<CommonProps & SelectProps> {
   }
 }
 
-export class AsyncSelect extends PureComponent<CommonProps & AsyncProps> {
-  static defaultProps = {
-    width: null,
+export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
+  static defaultProps: Partial<AsyncProps<any>> = {
     className: '',
     components: {},
     loadingMessage: () => 'Loading...',

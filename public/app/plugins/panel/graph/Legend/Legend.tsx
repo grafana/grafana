@@ -89,7 +89,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
 
   sortLegend() {
     let seriesList: TimeSeries[] = [...this.props.seriesList] || [];
-    if (this.props.sort) {
+    if (this.props.sort && this.props[this.props.sort] && this.props.alignAsTable) {
       seriesList = _.sortBy(seriesList, series => {
         let sort = series.stats[this.props.sort];
         if (sort === null) {
@@ -311,7 +311,7 @@ class LegendTableHeaderItem extends PureComponent<LegendTableHeaderProps & Legen
 export class Legend extends PureComponent<GraphLegendProps> {
   render() {
     return (
-      <CustomScrollbar renderTrackHorizontal={props => <div {...props} style={{ visibility: 'none' }} />}>
+      <CustomScrollbar hideHorizontalTrack>
         <GraphLegend {...this.props} />
       </CustomScrollbar>
     );

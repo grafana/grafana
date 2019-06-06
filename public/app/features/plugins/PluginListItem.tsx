@@ -1,30 +1,18 @@
 import React, { FC } from 'react';
-import { Plugin } from 'app/types';
+import { PluginMeta } from '@grafana/ui';
 
 interface Props {
-  plugin: Plugin;
+  plugin: PluginMeta;
 }
 
 const PluginListItem: FC<Props> = props => {
   const { plugin } = props;
-  let icon;
-
-  if (plugin.type === 'datasource') {
-    icon = 'gicon gicon-datasources';
-  } else if (plugin.type === 'panel') {
-    icon = 'icon-gf icon-gf-panel';
-  } else {
-    icon = 'icon-gf icon-gf-apps';
-  }
 
   return (
     <li className="card-item-wrapper">
-      <a className="card-item" href={`plugins/${plugin.id}/edit`}>
+      <a className="card-item" href={`plugins/${plugin.id}/`}>
         <div className="card-item-header">
-          <div className="card-item-type">
-            <i className={icon} />
-            {plugin.type}
-          </div>
+          <div className="card-item-type">{plugin.type}</div>
           {plugin.hasUpdate && (
             <div className="card-item-notice">
               <span bs-tooltip="plugin.latestVersion">Update available!</span>

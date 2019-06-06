@@ -1,8 +1,8 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { css } from 'emotion';
 import { getColorFromHexRgbOrName } from '../../utils';
-import { DisplayValue, Threshold, GrafanaThemeType, Themeable } from '../../types';
+import { DisplayValue, Threshold, Themeable } from '../../types';
+import { selectThemeVariant } from '../../themes';
 
 export interface Props extends Themeable {
   height: number;
@@ -58,19 +58,28 @@ export class Gauge extends PureComponent<Props> {
     if (length > 12) {
       return FONT_SCALE - (length * 5) / 110;
     }
-    return FONT_SCALE - (length * 5) / 100;
+    return FONT_SCALE - (length * 5) / 101;
   }
 
   draw() {
     const { maxValue, minValue, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
-    const dimension = Math.min(width, height * 1.3);
-    const backgroundColor = theme.type === GrafanaThemeType.Light ? 'rgb(230,230,230)' : theme.colors.dark3;
+    const autoProps = calculateGaugeAutoProps(width, height, value.title);
+    const dimension = Math.min(width, autoProps.gaugeHeight);
+
+    const backgroundColor = selectThemeVariant(
+      {
+        dark: theme.colors.dark8,
+        light: theme.colors.gray6,
+      },
+      theme.type
+    );
 
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
-    const gaugeWidth = Math.min(dimension / 6, 60) / gaugeWidthReduceRatio;
+    const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const fontSize = Math.min(dimension / 5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
+    const fontSize = Math.min(dimension / 4, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
+
     const thresholdLabelFontSize = fontSize / 2.5;
 
     const options: any = {
@@ -86,7 +95,7 @@ export class Gauge extends PureComponent<Props> {
           },
           frame: { show: false },
           label: { show: false },
-          layout: { margin: 0, thresholdWidth: 0 },
+          layout: { margin: 0, thresholdWidth: 0, vMargin: 0 },
           cell: { border: { width: 0 } },
           threshold: {
             values: this.getFormattedThresholds(),
@@ -103,14 +112,17 @@ export class Gauge extends PureComponent<Props> {
             formatter: () => {
               return value.text;
             },
-            font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
+            font: { size: fontSize, family: theme.typography.fontFamily.sansSerif },
           },
           show: true,
         },
       },
     };
 
-    const plotSeries = { data: [[0, value.numeric]] };
+    const plotSeries = {
+      data: [[0, value.numeric]],
+      label: value.title,
+    };
 
     try {
       $.plot(this.canvasElement, [plotSeries], options);
@@ -120,26 +132,36 @@ export class Gauge extends PureComponent<Props> {
   }
 
   render() {
-    const { height, width, value } = this.props;
+    const { width, value, height } = this.props;
+    const autoProps = calculateGaugeAutoProps(width, height, value.title);
 
     return (
       <div
         style={{
-          height: `${Math.min(height, width * 1.3)}px`,
-          width: `${Math.min(width, height * 1.3)}px`,
-          margin: 'auto',
-          marginTop: '-8px',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          overflow: 'hidden',
         }}
-        ref={element => (this.canvasElement = element)}
       >
-        {value.title && (
+        <div
+          style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
+          ref={element => (this.canvasElement = element)}
+        />
+        {autoProps.showLabel && (
           <div
-            className={css({
+            style={{
               textAlign: 'center',
-              bottom: -8,
+              fontSize: autoProps.titleFontSize,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              position: 'relative',
               width: '100%',
-              position: 'absolute',
-            })}
+              top: '-4px',
+            }}
           >
             {value.title}
           </div>
@@ -147,4 +169,24 @@ export class Gauge extends PureComponent<Props> {
       </div>
     );
   }
+}
+
+interface GaugeAutoProps {
+  titleFontSize: number;
+  gaugeHeight: number;
+  showLabel: boolean;
+}
+
+function calculateGaugeAutoProps(width: number, height: number, title: string | undefined): GaugeAutoProps {
+  const showLabel = title !== null && title !== undefined;
+  const titleFontSize = Math.min((width * 0.15) / 1.5, 20); // 20% of height * line-height, max 40px
+  const titleHeight = titleFontSize * 1.5;
+  const availableHeight = showLabel ? height - titleHeight : height;
+  const gaugeHeight = Math.min(availableHeight, width);
+
+  return {
+    showLabel,
+    gaugeHeight,
+    titleFontSize,
+  };
 }

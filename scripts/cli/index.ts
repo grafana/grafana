@@ -6,6 +6,8 @@ import { buildTask } from './tasks/grafanaui.build';
 import { releaseTask } from './tasks/grafanaui.release';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
+import { precommitTask } from './tasks/precommit';
+import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 
 program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','));
 
@@ -62,6 +64,21 @@ program
   .description('Helps find commits to cherry pick')
   .action(async cmd => {
     await execTask(cherryPickTask)({});
+  });
+
+program
+  .command('precommit')
+  .description('Executes checks')
+  .action(async cmd => {
+    await execTask(precommitTask)({});
+  });
+
+program
+  .command('searchTestData')
+  .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
+  .description('Setup test data for search')
+  .action(async cmd => {
+    await execTask(searchTestDataSetupTask)({ count: cmd.count });
   });
 
 program.parse(process.argv);

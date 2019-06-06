@@ -2,14 +2,18 @@
   "rules": {
     "array-type": [true, "array-simple"],
     "arrow-return-shorthand": true,
-    "ban": [true,
-      {"name": "Array", "message": "tsstyle#array-constructor"}
+    "ban": [
+      true,
+      { "name": "Array", "message": "tsstyle#array-constructor" }
+      // { "name": "moment", "message": "Use 'dateTime' instead." }
     ],
-    "ban-types": [true,
+    "ban-types": [
+      true,
       ["Object", "Use {} instead."],
       ["String", "Use 'string' instead."],
       ["Number", "Use 'number' instead."],
-      ["Boolean", "Use 'boolean' instead."]
+      ["Boolean", "Use 'boolean' instead."],
+      ["Moment", "Use 'DateTime' instead."]
     ],
     "interface-name": [true, "never-prefix"],
     "no-string-throw": true,
@@ -71,6 +75,7 @@
       "allow-pascal-case"
     ],
     "use-isnan": true,
-    "whitespace": [true, "check-branch", "check-decl", "check-type", "check-preblock"]
+    "whitespace": [true, "check-branch", "check-decl", "check-type", "check-preblock"],
+    "import-blacklist": [true, "moment"]
   }
 }

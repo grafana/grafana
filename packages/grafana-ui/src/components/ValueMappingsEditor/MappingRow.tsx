@@ -126,6 +126,7 @@ export default class MappingRow extends PureComponent<Props, State> {
             isSearchable={false}
             options={mappingOptions}
             value={mappingOptions.find(o => o.value === type)}
+            // @ts-ignore
             onChange={type => this.onMappingTypeChange(type.value)}
             width={7}
           />

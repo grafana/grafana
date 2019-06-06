@@ -22,7 +22,7 @@ export { SecretFormField } from './SecretFormFied/SecretFormField';
 export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
-export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
+
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { ValueMappingsEditor } from './ValueMappingsEditor/ValueMappingsEditor';
@@ -33,6 +33,7 @@ export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
+export { List } from './List/List';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
@@ -44,8 +45,22 @@ export { TableInputCSV } from './Table/TableInputCSV';
 export { BigValue } from './BigValue/BigValue';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
+export { GraphLegend } from './Graph/GraphLegend';
+export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';
+export {
+  LegendOptions,
+  LegendBasicOptions,
+  LegendRenderOptions,
+  LegendList,
+  LegendTable,
+  LegendItem,
+  LegendPlacement,
+  LegendDisplayMode,
+} from './Legend/Legend';
+// Panel editors
+export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
-export * from './SingleStatShared/shared';
+export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';

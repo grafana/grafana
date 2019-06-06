@@ -2,7 +2,7 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
-import { UrlQueryMap } from 'app/types';
+import { UrlQueryMap } from '@grafana/runtime';
 
 export function renderUrl(path: string, query: UrlQueryMap | undefined): string {
   if (query && Object.keys(query).length > 0) {
@@ -11,7 +11,7 @@ export function renderUrl(path: string, query: UrlQueryMap | undefined): string 
   return path;
 }
 
-export function encodeURIComponentAsAngularJS(val, pctEncodeSpaces) {
+export function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boolean) {
   return encodeURIComponent(val)
     .replace(/%40/gi, '@')
     .replace(/%3A/gi, ':')
@@ -21,15 +21,15 @@ export function encodeURIComponentAsAngularJS(val, pctEncodeSpaces) {
     .replace(/%20/g, pctEncodeSpaces ? '%20' : '+');
 }
 
-export function toUrlParams(a) {
+export function toUrlParams(a: any) {
   const s = [];
   const rbracket = /\[\]$/;
 
-  const isArray = obj => {
+  const isArray = (obj: any) => {
     return Object.prototype.toString.call(obj) === '[object Array]';
   };
 
-  const add = (k, v) => {
+  const add = (k: string, v: any) => {
     v = typeof v === 'function' ? v() : v === null ? '' : v === undefined ? '' : v;
     if (typeof v !== 'boolean') {
       s[s.length] = encodeURIComponentAsAngularJS(k, true) + '=' + encodeURIComponentAsAngularJS(v, true);
@@ -38,7 +38,7 @@ export function toUrlParams(a) {
     }
   };
 
-  const buildParams = (prefix, obj) => {
+  const buildParams = (prefix: string, obj: any) => {
     let i, len, key;
 
     if (prefix) {

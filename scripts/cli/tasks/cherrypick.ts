@@ -7,6 +7,10 @@ const cherryPickRunner: TaskRunner<CherryPickOptions> = async () => {
   let client = axios.create({
     baseURL: 'https://api.github.com/repos/grafana/grafana',
     timeout: 10000,
+    // auth: {
+    //   username: '<username>',
+    //   password: '<personal access token>',
+    // },
   });
 
   const res = await client.get('/issues', {
@@ -16,10 +20,16 @@ const cherryPickRunner: TaskRunner<CherryPickOptions> = async () => {
     },
   });
 
-  // sort by closed date
+  // sort by closed date ASC
   res.data.sort(function(a, b) {
-    return new Date(b.closed_at).getTime() - new Date(a.closed_at).getTime();
+    return new Date(a.closed_at).getTime() - new Date(b.closed_at).getTime();
   });
+
+  let commands = '';
+
+  console.log('--------------------------------------------------------------------');
+  console.log('Printing PRs with cherry-pick-needed, in ASC merge date order');
+  console.log('--------------------------------------------------------------------');
 
   for (const item of res.data) {
     if (!item.milestone) {
@@ -27,11 +37,15 @@ const cherryPickRunner: TaskRunner<CherryPickOptions> = async () => {
       continue;
     }
 
-    console.log(`${item.title} (${item.number}) closed_at ${item.closed_at}`);
-    console.log(`\tURL: ${item.closed_at} ${item.html_url}`);
     const issueDetails = await client.get(item.pull_request.url);
-    console.log(`\tMerge sha: ${issueDetails.data.merge_commit_sha}`);
+    console.log(`* ${item.title}, (#${item.number}), merge-sha: ${issueDetails.data.merge_commit_sha}`);
+    commands += `git cherry-pick -x ${issueDetails.data.merge_commit_sha}\n`;
   }
+
+  console.log('--------------------------------------------------------------------');
+  console.log('Commands (in order of how they should be executed)');
+  console.log('--------------------------------------------------------------------');
+  console.log(commands);
 };
 
 export const cherryPickTask = new Task<CherryPickOptions>();

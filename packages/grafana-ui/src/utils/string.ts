@@ -43,9 +43,24 @@ export function stringToMs(str: string): number {
   }
 }
 
-export function getIntervalFromString(strInterval: string): SelectOptionItem {
+export function getIntervalFromString(strInterval: string): SelectOptionItem<number> {
   return {
     label: strInterval,
     value: stringToMs(strInterval),
   };
+}
+
+export function toNumberString(value: number | undefined | null): string {
+  if (value !== null && value !== undefined && Number.isFinite(value as number)) {
+    return value.toString();
+  }
+  return '';
+}
+
+export function toIntegerOrUndefined(value: string): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const v = parseInt(value, 10);
+  return isNaN(v) ? undefined : v;
 }

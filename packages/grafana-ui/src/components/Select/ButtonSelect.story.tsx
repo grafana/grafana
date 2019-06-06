@@ -12,9 +12,9 @@ const ButtonSelectStories = storiesOf('UI/Select/ButtonSelect', module);
 ButtonSelectStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
 
 ButtonSelectStories.add('default', () => {
-  const intialState: SelectOptionItem = { label: 'A label', value: 'A value' };
-  const value = object<SelectOptionItem>('Selected Value:', intialState);
-  const options = object<SelectOptionItem[]>('Options:', [
+  const intialState: SelectOptionItem<string> = { label: 'A label', value: 'A value' };
+  const value = object<SelectOptionItem<string>>('Selected Value:', intialState);
+  const options = object<Array<SelectOptionItem<string>>>('Options:', [
     intialState,
     { label: 'Another label', value: 'Another value' },
   ]);
