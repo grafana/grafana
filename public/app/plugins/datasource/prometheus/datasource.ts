@@ -1,8 +1,8 @@
 // Libraries
 import _ from 'lodash';
 import $ from 'jquery';
-import { from, Observable } from 'rxjs';
-import { single, map, filter } from 'rxjs/operators';
+import { from, of, Observable } from 'rxjs';
+import { single, map, filter, catchError } from 'rxjs/operators';
 
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
@@ -187,31 +187,32 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           single(), // unsubscribes automatically after first result
           filter((response: any) => (response.cancelled ? false : true)),
           map((response: any) => {
-            return this.processResult(response, query, target, queries.length);
+            const delta = this.processResult(response, query, target, queries.length);
+            const state = {
+              key: `prometheus-${target.refId}`,
+              state: query.instant ? LoadingState.Loading : LoadingState.Done,
+              request: options,
+              delta,
+              unsubscribe: () => undefined,
+            };
+
+            return state;
+          }),
+          catchError(err => {
+            const error = this.handleErrors(err, target);
+            const state = {
+              key: `prometheus-${target.refId}`,
+              request: options,
+              state: LoadingState.Error,
+              error,
+              unsubscribe: () => undefined,
+            };
+
+            return of(state);
           })
         )
         .subscribe({
-          next: series => {
-            if (query.instant) {
-              observer({
-                key: `prometheus-${target.refId}`,
-                state: LoadingState.Loading,
-                request: options,
-                series: null,
-                delta: series,
-                unsubscribe: () => undefined,
-              });
-            } else {
-              observer({
-                key: `prometheus-${target.refId}`,
-                state: LoadingState.Done,
-                request: options,
-                series: null,
-                delta: series,
-                unsubscribe: () => undefined,
-              });
-            }
-          },
+          next: state => observer(state),
         });
     }
   };
@@ -385,9 +386,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) =>
-      this.handleErrors(err, query)
-    );
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) => {
+      if (err.cancelled) {
+        return err;
+      }
+
+      throw this.handleErrors(err, query);
+    });
   }
 
   performInstantQuery(query, time) {
@@ -399,16 +404,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
-    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) =>
-      this.handleErrors(err, query)
-    );
+    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) => {
+      if (err.cancelled) {
+        return err;
+      }
+
+      throw this.handleErrors(err, query);
+    });
   }
 
   handleErrors = (err: any, target: PromQuery) => {
-    if (err.cancelled) {
-      return err;
-    }
-
     const error: DataQueryError = {
       message: 'Unknown error during query transaction. Please check JS console logs.',
       refId: target.refId,
@@ -429,7 +434,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     error.status = err.status;
     error.statusText = err.statusText;
 
-    throw error;
+    return error;
   };
 
   performSuggestQuery(query, cache = false) {
