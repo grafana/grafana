@@ -22,7 +22,7 @@ Prism.languages['links'] = {
     pattern: /\bvar-[a-zA-Z0-9=\{\}\$,]*/,
   },
   builtInVariable: {
-    pattern: /(?<=(&|\?)).*?(?=&|$)/,
+    pattern: /(\${\w+})/,
   },
 };
 
