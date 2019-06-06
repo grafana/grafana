@@ -172,9 +172,6 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
                 onClick={() => {
                   onSuggestionSelect(item);
                 }}
-                onKeyDown={() => {
-                  onSuggestionSelect(item);
-                }}
               >
                 <div className={styles.itemValue}>{item.value}</div>
                 {item.documentation && <div className={styles.itemDocs}>{item.documentation}</div>}

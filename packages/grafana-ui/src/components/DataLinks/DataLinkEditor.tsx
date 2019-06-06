@@ -70,7 +70,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
     );
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
-    const selectionRef = new SelectionReference();
+    const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions]);
 
     // Keep track of variables that has been used already
     const updateUsedSuggestions = () => {

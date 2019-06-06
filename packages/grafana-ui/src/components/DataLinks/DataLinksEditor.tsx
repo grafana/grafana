@@ -1,5 +1,5 @@
 // Libraries
-import React, { FC, useContext, useEffect } from 'react';
+import React, { FC, useContext } from 'react';
 // @ts-ignore
 import Prism from 'prismjs';
 
@@ -17,20 +17,17 @@ interface DataLinksEditorProps {
   maxLinks?: number;
 }
 
+Prism.languages['links'] = {
+  variable: {
+    pattern: /\bvar-[a-zA-Z0-9=\{\}\$,]*/,
+  },
+  builtInVariable: {
+    pattern: /(?<=(&|\?)).*?(?=&|$)/,
+  },
+};
+
 export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, onChange, suggestions, maxLinks }) => {
   const theme = useContext(ThemeContext);
-
-  useEffect(() => {
-    // When component did mount, set Prism syntax for links
-    Prism.languages['links'] = {
-      variable: {
-        pattern: /\bvar-[a-zA-Z0-9=\{\}\$,]*/,
-      },
-      builtInVariable: {
-        pattern: /(?<=(&|\?)).*?(?=&|$)/,
-      },
-    };
-  }, []);
 
   const onAdd = () => {
     onChange([...value, { url: '', title: '' }]);
