@@ -488,9 +488,9 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load specified config file
 	err = loadSpecifedConfigFile(args.Config, parsedFile)
 	if err != nil {
-		err = cfg.initLogging(parsedFile)
-		if err != nil {
-			return nil, err
+		err2 := cfg.initLogging(parsedFile)
+		if err2 != nil {
+			return nil, err2
 		}
 		log.Fatal(3, err.Error())
 	}

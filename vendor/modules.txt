@@ -194,6 +194,7 @@ github.com/stretchr/testify/assert
 github.com/teris-io/shortid
 # github.com/uber/jaeger-client-go v2.16.0+incompatible
 github.com/uber/jaeger-client-go/config
+github.com/uber/jaeger-client-go/zipkin
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/internal/baggage/remote
 github.com/uber/jaeger-client-go/internal/throttler/remote
