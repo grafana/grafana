@@ -24,7 +24,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
     // When component did mount, set Prism syntax for links
     Prism.languages['links'] = {
       variable: {
-        pattern: /\bvar-[a-zA-Z0-9=\{\},]*/,
+        pattern: /\bvar-[a-zA-Z0-9=\{\}\$,]*/,
       },
       builtInVariable: {
         pattern: /(?<=(&|\?)).*?(?=&|$)/,

@@ -1,12 +1,18 @@
 import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
 import { css, cx } from 'emotion';
-import React, { useRef, useContext } from 'react';
+import React, { useRef, useContext, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 import { List } from '../index';
 
+export enum VariableOrigin {
+  BuiltIn = 'builtin',
+  Template = 'template',
+}
+
 export interface VariableSuggestion {
   value: string;
-  documentation: string;
+  documentation?: string;
+  origin: VariableOrigin;
 }
 
 interface DataLinkSuggestionsProps {
@@ -16,7 +22,7 @@ interface DataLinkSuggestionsProps {
   onClose?: () => void;
 }
 
-const DataLinkSuggestionsStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   const wrapperBg = selectThemeVariant(
     {
       light: theme.colors.white,
@@ -81,6 +87,12 @@ const DataLinkSuggestionsStyles = (theme: GrafanaTheme) => {
         background: ${itemBgHover};
       }
     `,
+    label: css`
+      color: ${theme.colors.textWeak};
+      font-size: ${theme.typography.size.sm};
+      line-height: ${theme.typography.lineHeight.lg};
+      padding: ${theme.spacing.sm};
+    `,
     activeItem: css`
       background: ${itemBgActive};
       &:hover {
@@ -98,40 +110,79 @@ const DataLinkSuggestionsStyles = (theme: GrafanaTheme) => {
   };
 };
 
-export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({
-  suggestions,
-  onSuggestionSelect,
-  onClose,
-  activeIndex,
-}) => {
+export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ suggestions, ...otherProps }) => {
   const ref = useRef(null);
   const theme = useContext(ThemeContext);
   useClickAway(ref, () => {
-    if (onClose) {
-      onClose();
+    if (otherProps.onClose) {
+      otherProps.onClose();
     }
   });
 
-  const styles = DataLinkSuggestionsStyles(theme);
+  const templateSuggestions = useMemo(() => {
+    return suggestions.filter(suggestion => suggestion.origin === VariableOrigin.Template);
+  }, [suggestions]);
 
+  const builtInSuggestions = useMemo(() => {
+    return suggestions.filter(suggestion => suggestion.origin === VariableOrigin.BuiltIn);
+  }, [suggestions]);
+
+  const styles = getStyles(theme);
   return (
     <div ref={ref} className={styles.wrapper}>
-      <List
-        items={suggestions}
-        renderItem={(item, index) => {
-          return (
-            <div
-              className={cx(styles.item, index === activeIndex && styles.activeItem)}
-              onClick={() => {
-                onSuggestionSelect(item);
-              }}
-            >
-              <div className={styles.itemValue}>{item.value}</div>
-              <div className={styles.itemDocs}>{item.documentation}</div>
-            </div>
-          );
-        }}
-      />
+      {templateSuggestions.length > 0 && (
+        <DataLinkSuggestionsList
+          {...otherProps}
+          suggestions={templateSuggestions}
+          label="Template variables"
+          activeIndex={otherProps.activeIndex}
+          activeIndexOffset={0}
+        />
+      )}
+      {builtInSuggestions.length > 0 && (
+        <DataLinkSuggestionsList
+          {...otherProps}
+          suggestions={builtInSuggestions}
+          label="Built-in variables"
+          activeIndexOffset={templateSuggestions.length}
+        />
+      )}
     </div>
   );
 };
+
+interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
+  label: string;
+  activeIndexOffset: number;
+}
+const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
+  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions }) => {
+    const theme = useContext(ThemeContext);
+    const styles = getStyles(theme);
+
+    return (
+      <>
+        <div className={styles.label}>{label}</div>
+        <List
+          items={suggestions}
+          renderItem={(item, index) => {
+            return (
+              <div
+                className={cx(styles.item, index + activeIndexOffset === activeIndex && styles.activeItem)}
+                onClick={() => {
+                  onSuggestionSelect(item);
+                }}
+                onKeyDown={() => {
+                  onSuggestionSelect(item);
+                }}
+              >
+                <div className={styles.itemValue}>{item.value}</div>
+                {item.documentation && <div className={styles.itemDocs}>{item.documentation}</div>}
+              </div>
+            );
+          }}
+        />
+      </>
+    );
+  }
+);

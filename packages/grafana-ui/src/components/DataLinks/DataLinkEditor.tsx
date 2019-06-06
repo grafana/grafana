@@ -13,7 +13,7 @@ import Plain from 'slate-plain-serializer';
 
 import useDebounce from 'react-use/lib/useDebounce';
 import { Popper as ReactPopper } from 'react-popper';
-import { DataLinkSuggestions, VariableSuggestion } from './DataLinkSuggestions';
+import { DataLinkSuggestions, VariableSuggestion, VariableOrigin } from './DataLinkSuggestions';
 import { SelectionReference } from './SelectionReference';
 import { css } from 'emotion';
 import { ThemeContext } from '../../themes/index';
@@ -61,7 +61,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
       })
     );
     const [linkUrl, setLinkUrl] = useState(makeValue(value.url));
-    const getCurrentSuggestions = useMemo(
+    const currentSuggestions = useMemo(
       () =>
         suggestions.filter(suggestion => {
           return usedSuggestions.map(s => s.value).indexOf(suggestion.value) === -1;
@@ -93,7 +93,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
 
       if (event.key === 'Enter') {
         if (showingSuggestions) {
-          onVariableSelect(getCurrentSuggestions[suggestionsIndex]);
+          onVariableSelect(currentSuggestions[suggestionsIndex]);
         }
       }
 
@@ -101,13 +101,13 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
         if (event.key === 'ArrowDown') {
           event.preventDefault();
           setSuggestionsIndex(index => {
-            return (index + 1) % suggestions.length;
+            return (index + 1) % currentSuggestions.length;
           });
         }
         if (event.key === 'ArrowUp') {
           event.preventDefault();
           setSuggestionsIndex(index => {
-            const nextIndex = index - 1 < 0 ? suggestions.length - 1 : (index - 1) % suggestions.length;
+            const nextIndex = index - 1 < 0 ? currentSuggestions.length - 1 : (index - 1) % currentSuggestions.length;
             return nextIndex;
           });
         }
@@ -152,10 +152,16 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
     const onVariableSelect = (item: VariableSuggestion) => {
       const includeDollarSign = Plain.serialize(linkUrl).slice(-1) !== '$';
       const change = linkUrl.change();
-      change.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
+
+      if (item.origin === VariableOrigin.BuiltIn) {
+        change.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
+      } else {
+        change.insertText(`var-${item.value}=$${item.value}`);
+      }
+
       setLinkUrl(change.value);
       setShowingSuggestions(false);
-      setUsedSuggestions(previous => {
+      setUsedSuggestions((previous: VariableSuggestion[]) => {
         return [...previous, item];
       });
       setSuggestionsIndex(0);
@@ -192,7 +198,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
                       return (
                         <div ref={ref} style={style} data-placement={placement}>
                           <DataLinkSuggestions
-                            suggestions={getCurrentSuggestions}
+                            suggestions={currentSuggestions}
                             onSuggestionSelect={onVariableSelect}
                             onClose={() => setShowingSuggestions(false)}
                             activeIndex={suggestionsIndex}

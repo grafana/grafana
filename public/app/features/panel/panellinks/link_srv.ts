@@ -1,11 +1,11 @@
 import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { DrillDownLink, VariableSuggestion, KeyValue, ScopedVars, DateTime, dateTime } from '@grafana/ui';
 import { TimeSeriesValue, transformAbsoluteTimeRange } from '@grafana/ui';
-import { deprecationWarning } from '@grafana/ui';
+import { deprecationWarning, VariableOrigin } from '@grafana/ui';
 
 export const DrilldownLinkBuiltInVars = {
   keepTime: '__url_time_range',
@@ -15,13 +15,19 @@ export const DrilldownLinkBuiltInVars = {
 };
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
+  ...templateSrv.variables.map(variable => ({
+    value: variable.name as string,
+    origin: VariableOrigin.Template,
+  })),
   {
     value: `${DrilldownLinkBuiltInVars.includeVars}`,
     documentation: 'Adds current variables',
+    origin: VariableOrigin.BuiltIn,
   },
   {
     value: `${DrilldownLinkBuiltInVars.keepTime}`,
     documentation: 'Adds current time range',
+    origin: VariableOrigin.BuiltIn,
   },
 ];
 
@@ -30,10 +36,12 @@ export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
   {
     value: `${DrilldownLinkBuiltInVars.seriesName}`,
     documentation: 'Adds series name',
+    origin: VariableOrigin.BuiltIn,
   },
   {
     value: `${DrilldownLinkBuiltInVars.valueTime}`,
     documentation: "Adds narrowed down time range relative to data point's timestamp",
+    origin: VariableOrigin.BuiltIn,
   },
 ];
 
