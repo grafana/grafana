@@ -11,9 +11,22 @@ exports[`Render should render alpha info text 1`] = `
       <form
         onSubmit={[Function]}
       >
-        <PluginStateinfo
-          state="alpha"
-        />
+        <div
+          className="gf-form"
+        >
+          <label
+            className="gf-form-label width-10"
+          >
+            Plugin state
+          </label>
+          <label
+            className="gf-form-label gf-form-label--transparent"
+          >
+            <PluginStateinfo
+              state="alpha"
+            />
+          </label>
+        </div>
         <BasicSettings
           dataSourceName="gdev-cloudwatch"
           isDefault={false}
@@ -118,86 +131,27 @@ exports[`Render should render beta info text 1`] = `
       <form
         onSubmit={[Function]}
       >
-        <PluginStateinfo
-          state="beta"
-        />
+        <div
+          className="gf-form"
+        >
+          <label
+            className="gf-form-label width-10"
+          >
+            Plugin state
+          </label>
+          <label
+            className="gf-form-label gf-form-label--transparent"
+          >
+            <PluginStateinfo
+              state="beta"
+            />
+          </label>
+        </div>
         <BasicSettings
           dataSourceName="gdev-cloudwatch"
           isDefault={false}
           onDefaultChange={[Function]}
           onNameChange={[Function]}
-        />
-        <PluginSettings
-          dataSource={
-            Object {
-              "access": "",
-              "basicAuth": false,
-              "basicAuthPassword": "",
-              "basicAuthUser": "",
-              "database": "",
-              "id": 13,
-              "isDefault": false,
-              "jsonData": Object {
-                "authType": "credentials",
-                "defaultRegion": "eu-west-2",
-              },
-              "name": "gdev-cloudwatch",
-              "orgId": 1,
-              "password": "",
-              "readOnly": false,
-              "type": "cloudwatch",
-              "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-              "url": "",
-              "user": "",
-              "withCredentials": false,
-            }
-          }
-          dataSourceMeta={
-            Object {
-              "baseUrl": "path/to/plugin",
-              "defaultNavUrl": "some/url",
-              "enabled": false,
-              "hasUpdate": false,
-              "id": "1",
-              "info": Object {
-                "author": Object {
-                  "name": "Grafana Labs",
-                  "url": "url/to/GrafanaLabs",
-                },
-                "description": "pretty decent plugin",
-                "links": Array [
-                  Object {
-                    "name": "project",
-                    "url": "one link",
-                  },
-                ],
-                "logos": Object {
-                  "large": "large/logo",
-                  "small": "small/logo",
-                },
-                "screenshots": Array [
-                  Object {
-                    "path": "screenshot",
-                  },
-                ],
-                "updated": "2018-09-26",
-                "version": "1",
-              },
-              "latestVersion": "1",
-              "module": "path/to/module",
-              "name": "pretty cool plugin 1",
-              "pinned": false,
-              "state": "beta",
-              "type": "panel",
-            }
-          }
-          onModelChange={[Function]}
-          plugin={
-            DataSourcePlugin {
-              "DataSourceClass": Object {},
-              "components": Object {},
-            }
-          }
         />
         <div
           className="gf-form-group"
@@ -225,83 +179,11 @@ exports[`Render should render component 1`] = `
       <form
         onSubmit={[Function]}
       >
-        <PluginStateinfo />
         <BasicSettings
           dataSourceName="gdev-cloudwatch"
           isDefault={false}
           onDefaultChange={[Function]}
           onNameChange={[Function]}
-        />
-        <PluginSettings
-          dataSource={
-            Object {
-              "access": "",
-              "basicAuth": false,
-              "basicAuthPassword": "",
-              "basicAuthUser": "",
-              "database": "",
-              "id": 13,
-              "isDefault": false,
-              "jsonData": Object {
-                "authType": "credentials",
-                "defaultRegion": "eu-west-2",
-              },
-              "name": "gdev-cloudwatch",
-              "orgId": 1,
-              "password": "",
-              "readOnly": false,
-              "type": "cloudwatch",
-              "typeLogoUrl": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-              "url": "",
-              "user": "",
-              "withCredentials": false,
-            }
-          }
-          dataSourceMeta={
-            Object {
-              "baseUrl": "path/to/plugin",
-              "defaultNavUrl": "some/url",
-              "enabled": false,
-              "hasUpdate": false,
-              "id": "1",
-              "info": Object {
-                "author": Object {
-                  "name": "Grafana Labs",
-                  "url": "url/to/GrafanaLabs",
-                },
-                "description": "pretty decent plugin",
-                "links": Array [
-                  Object {
-                    "name": "project",
-                    "url": "one link",
-                  },
-                ],
-                "logos": Object {
-                  "large": "large/logo",
-                  "small": "small/logo",
-                },
-                "screenshots": Array [
-                  Object {
-                    "path": "screenshot",
-                  },
-                ],
-                "updated": "2018-09-26",
-                "version": "1",
-              },
-              "latestVersion": "1",
-              "module": "path/to/module",
-              "name": "pretty cool plugin 1",
-              "pinned": false,
-              "type": "panel",
-            }
-          }
-          onModelChange={[Function]}
-          plugin={
-            DataSourcePlugin {
-              "DataSourceClass": Object {},
-              "components": Object {},
-            }
-          }
         />
         <div
           className="gf-form-group"
@@ -334,7 +216,6 @@ exports[`Render should render is ready only message 1`] = `
         >
           This datasource was added by config and cannot be modified using the UI. Please contact your server admin to update this datasource.
         </div>
-        <PluginStateinfo />
         <BasicSettings
           dataSourceName="gdev-cloudwatch"
           isDefault={false}

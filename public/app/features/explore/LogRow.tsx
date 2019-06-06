@@ -3,11 +3,29 @@ import _ from 'lodash';
 import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
-import { LogRowModel, LogLabelStatsModel, LogsParser, calculateFieldStats, getParser } from 'app/core/logs_model';
+import { calculateFieldStats, getParser } from 'app/core/logs_model';
 import { LogLabels } from './LogLabels';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
 import { LogMessageAnsi } from './LogMessageAnsi';
+import { css, cx } from 'emotion';
+import {
+  LogRowContextProvider,
+  LogRowContextRows,
+  HasMoreContextRows,
+  LogRowContextQueryErrors,
+} from './LogRowContextProvider';
+import {
+  ThemeContext,
+  selectThemeVariant,
+  GrafanaTheme,
+  DataQueryResponse,
+  LogRowModel,
+  LogLabelStatsModel,
+  LogsParser,
+} from '@grafana/ui';
+import { LogRowContext } from './LogRowContext';
+import tinycolor from 'tinycolor2';
 
 interface Props {
   highlighterExpressions?: string[];
@@ -18,6 +36,9 @@ interface Props {
   showUtc: boolean;
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
+  onContextClick?: () => void;
+  getRowContext?: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
+  className?: string;
 }
 
 interface State {
@@ -29,6 +50,7 @@ interface State {
   parser?: LogsParser;
   parsedFieldHighlights: string[];
   showFieldStats: boolean;
+  showContext: boolean;
 }
 
 /**
@@ -42,6 +64,32 @@ const FieldHighlight = onClick => props => {
       <span className="logs-row__field-highlight--icon fa fa-signal" onClick={() => onClick(props.children)} />
     </span>
   );
+};
+
+const logRowStyles = css`
+  position: relative;
+  /* z-index: 0; */
+  /* outline: none; */
+`;
+
+const getLogRowWithContextStyles = (theme: GrafanaTheme, state: State) => {
+  const outlineColor = selectThemeVariant(
+    {
+      light: theme.colors.white,
+      dark: theme.colors.black,
+    },
+    theme.type
+  );
+
+  return {
+    row: css`
+      z-index: 1;
+      outline: 9999px solid
+        ${tinycolor(outlineColor)
+          .setAlpha(0.7)
+          .toRgbString()};
+    `,
+  };
 };
 
 /**
@@ -63,6 +111,7 @@ export class LogRow extends PureComponent<Props, State> {
     parser: undefined,
     parsedFieldHighlights: [],
     showFieldStats: false,
+    showContext: false,
   };
 
   componentWillUnmount() {
@@ -89,11 +138,21 @@ export class LogRow extends PureComponent<Props, State> {
   };
 
   onMouseOverMessage = () => {
+    if (this.state.showContext || this.isTextSelected()) {
+      // When showing context we don't want to the LogRow rerender as it will mess up state of context block
+      // making the "after" context to be scrolled to the top, what is desired only on open
+      // The log row message needs to be refactored to separate component that encapsulates parsing and parsed message state
+      return;
+    }
     // Don't parse right away, user might move along
     this.mouseMessageTimer = setTimeout(this.parseMessage, 500);
   };
 
   onMouseOutMessage = () => {
+    if (this.state.showContext) {
+      // See comment in onMouseOverMessage method
+      return;
+    }
     clearTimeout(this.mouseMessageTimer);
     this.setState({ parsed: false });
   };
@@ -110,7 +169,39 @@ export class LogRow extends PureComponent<Props, State> {
     }
   };
 
-  render() {
+  isTextSelected() {
+    if (!window.getSelection) {
+      return false;
+    }
+
+    const selection = window.getSelection();
+
+    if (!selection) {
+      return false;
+    }
+
+    return selection.anchorNode !== null && selection.isCollapsed === false;
+  }
+
+  toggleContext = () => {
+    this.setState(state => {
+      return {
+        showContext: !state.showContext,
+      };
+    });
+  };
+
+  onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
+    e.stopPropagation();
+    this.toggleContext();
+  };
+
+  renderLogRow(
+    context?: LogRowContextRows,
+    errors?: LogRowContextQueryErrors,
+    hasMoreContextRows?: HasMoreContextRows,
+    updateLimit?: () => void
+  ) {
     const {
       getRows,
       highlighterExpressions,
@@ -129,69 +220,142 @@ export class LogRow extends PureComponent<Props, State> {
       parsed,
       parsedFieldHighlights,
       showFieldStats,
+      showContext,
     } = this.state;
     const { entry, hasAnsi, raw } = row;
     const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
-    const needsHighlighter = highlights && highlights.length > 0 && highlights[0].length > 0;
+    const needsHighlighter = highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0;
     const highlightClassName = classnames('logs-row__match-highlight', {
       'logs-row__match-highlight--preview': previewHighlights,
     });
 
     return (
-      <div className="logs-row">
-        {showDuplicates && (
-          <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
-        )}
-        <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
-        {showUtc && (
-          <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-            {row.timestamp}
-          </div>
-        )}
-        {showLocalTime && (
-          <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
-            {row.timeLocal}
-          </div>
-        )}
-        {showLabels && (
-          <div className="logs-row__labels">
-            <LogLabels getRows={getRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
-          </div>
-        )}
-        <div className="logs-row__message" onMouseEnter={this.onMouseOverMessage} onMouseLeave={this.onMouseOutMessage}>
-          {parsed && (
-            <Highlighter
-              autoEscape
-              highlightTag={FieldHighlight(this.onClickHighlight)}
-              textToHighlight={entry}
-              searchWords={parsedFieldHighlights}
-              highlightClassName="logs-row__field-highlight"
-            />
-          )}
-          {!parsed && needsHighlighter && (
-            <Highlighter
-              textToHighlight={entry}
-              searchWords={highlights}
-              findChunks={findHighlightChunksInText}
-              highlightClassName={highlightClassName}
-            />
-          )}
-          {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
-          {!hasAnsi && !parsed && !needsHighlighter && entry}
-          {showFieldStats && (
-            <div className="logs-row__stats">
-              <LogLabelStats
-                stats={fieldStats}
-                label={fieldLabel}
-                value={fieldValue}
-                onClickClose={this.onClickClose}
-                rowCount={fieldCount}
-              />
+      <ThemeContext.Consumer>
+        {theme => {
+          const styles = this.state.showContext
+            ? cx(logRowStyles, getLogRowWithContextStyles(theme, this.state).row)
+            : logRowStyles;
+          return (
+            <div className={`logs-row ${this.props.className}`}>
+              {showDuplicates && (
+                <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
+              )}
+              <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
+              {showUtc && (
+                <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                  {row.timestamp}
+                </div>
+              )}
+              {showLocalTime && (
+                <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
+                  {row.timeLocal}
+                </div>
+              )}
+              {showLabels && (
+                <div className="logs-row__labels">
+                  <LogLabels getRows={getRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
+                </div>
+              )}
+              <div
+                className="logs-row__message"
+                onMouseEnter={this.onMouseOverMessage}
+                onMouseLeave={this.onMouseOutMessage}
+              >
+                <div
+                  className={css`
+                    position: relative;
+                  `}
+                >
+                  {showContext && context && (
+                    <LogRowContext
+                      row={row}
+                      context={context}
+                      errors={errors}
+                      hasMoreContextRows={hasMoreContextRows}
+                      onOutsideClick={this.toggleContext}
+                      onLoadMoreContext={() => {
+                        if (updateLimit) {
+                          updateLimit();
+                        }
+                      }}
+                    />
+                  )}
+                  <span className={styles}>
+                    {parsed && (
+                      <Highlighter
+                        autoEscape
+                        highlightTag={FieldHighlight(this.onClickHighlight)}
+                        textToHighlight={entry}
+                        searchWords={parsedFieldHighlights}
+                        highlightClassName="logs-row__field-highlight"
+                      />
+                    )}
+                    {!parsed && needsHighlighter && (
+                      <Highlighter
+                        textToHighlight={entry}
+                        searchWords={highlights}
+                        findChunks={findHighlightChunksInText}
+                        highlightClassName={highlightClassName}
+                      />
+                    )}
+                    {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
+                    {!hasAnsi && !parsed && !needsHighlighter && entry}
+                    {showFieldStats && (
+                      <div className="logs-row__stats">
+                        <LogLabelStats
+                          stats={fieldStats}
+                          label={fieldLabel}
+                          value={fieldValue}
+                          onClickClose={this.onClickClose}
+                          rowCount={fieldCount}
+                        />
+                      </div>
+                    )}
+                  </span>
+                  {row.searchWords && row.searchWords.length > 0 && (
+                    <span
+                      onClick={this.onContextToggle}
+                      className={css`
+                        visibility: hidden;
+                        white-space: nowrap;
+                        position: relative;
+                        z-index: ${showContext ? 1 : 0};
+                        cursor: pointer;
+                        .logs-row:hover & {
+                          visibility: visible;
+                          margin-left: 10px;
+                          text-decoration: underline;
+                        }
+                      `}
+                    >
+                      {showContext ? 'Hide' : 'Show'} context
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      </div>
+          );
+        }}
+      </ThemeContext.Consumer>
     );
+  }
+
+  render() {
+    const { showContext } = this.state;
+
+    if (showContext) {
+      return (
+        <>
+          <LogRowContextProvider row={this.props.row} getRowContext={this.props.getRowContext}>
+            {({ result, errors, hasMoreContextRows, updateLimit }) => {
+              return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit)}</>;
+            }}
+          </LogRowContextProvider>
+        </>
+      );
+    }
+
+    return this.renderLogRow();
   }
 }

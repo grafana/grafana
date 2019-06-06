@@ -4,16 +4,18 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
+
+	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	macaron "gopkg.in/macaron.v1"
 )
 
 var (
@@ -231,11 +233,25 @@ func WriteSessionCookie(ctx *m.ReqContext, value string, maxLifetimeDays int) {
 }
 
 func AddDefaultResponseHeaders() macaron.Handler {
-	return func(ctx *m.ReqContext) {
-		if ctx.IsApiRequest() && ctx.Req.Method == "GET" {
-			ctx.Resp.Header().Add("Cache-Control", "no-cache")
-			ctx.Resp.Header().Add("Pragma", "no-cache")
-			ctx.Resp.Header().Add("Expires", "-1")
-		}
+	return func(ctx *macaron.Context) {
+		ctx.Resp.Before(func(w macaron.ResponseWriter) {
+			if !strings.HasPrefix(ctx.Req.URL.Path, "/api/datasources/proxy/") {
+				AddNoCacheHeaders(ctx.Resp)
+			}
+
+			if !setting.AllowEmbedding {
+				AddXFrameOptionsDenyHeader(w)
+			}
+		})
 	}
+}
+
+func AddNoCacheHeaders(w macaron.ResponseWriter) {
+	w.Header().Add("Cache-Control", "no-cache")
+	w.Header().Add("Pragma", "no-cache")
+	w.Header().Add("Expires", "-1")
+}
+
+func AddXFrameOptionsDenyHeader(w macaron.ResponseWriter) {
+	w.Header().Add("X-Frame-Options", "deny")
 }

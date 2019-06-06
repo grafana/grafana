@@ -182,10 +182,8 @@ exports[`Render should render with base threshold 1`] = `
                               "sm": "24px",
                             },
                             "name": "Grafana Dark",
-                            "panelPadding": Object {
-                              "horizontal": 16,
-                              "vertical": 8,
-                            },
+                            "panelHeaderHeight": 28,
+                            "panelPadding": 8,
                             "spacing": Object {
                               "d": "14px",
                               "gutter": "30px",
@@ -345,10 +343,8 @@ exports[`Render should render with base threshold 1`] = `
                                     "sm": "24px",
                                   },
                                   "name": "Grafana Dark",
-                                  "panelPadding": Object {
-                                    "horizontal": 16,
-                                    "vertical": 8,
-                                  },
+                                  "panelHeaderHeight": 28,
+                                  "panelPadding": 8,
                                   "spacing": Object {
                                     "d": "14px",
                                     "gutter": "30px",

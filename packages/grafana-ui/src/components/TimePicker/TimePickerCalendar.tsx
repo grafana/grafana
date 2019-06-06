@@ -1,17 +1,17 @@
 import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import moment, { Moment } from 'moment';
-import { TimeFragment } from '@grafana/ui';
-import { Timezone } from '../../../../../public/app/core/utils/datemath';
+import { TimeFragment } from '../../types/time';
+import { Timezone } from '../../utils/datemath';
+import { DateTime, dateTime, isDateTime } from '../../utils/moment_wrapper';
 
-import { stringToMoment } from './time';
+import { stringToDateTimeType } from './time';
 
 export interface Props {
   value: TimeFragment;
   isTimezoneUtc: boolean;
   roundup?: boolean;
   timezone?: Timezone;
-  onChange: (value: Moment) => void;
+  onChange: (value: DateTime) => void;
 }
 
 export class TimePickerCalendar extends PureComponent<Props> {
@@ -22,15 +22,15 @@ export class TimePickerCalendar extends PureComponent<Props> {
       return;
     }
 
-    onChange(moment(date));
+    onChange(dateTime(date));
   };
 
   render() {
     const { value, isTimezoneUtc, roundup, timezone } = this.props;
-    const dateValue = moment.isMoment(value)
+    const dateValue = isDateTime(value)
       ? value.toDate()
-      : stringToMoment(value, isTimezoneUtc, roundup, timezone).toDate();
-    const calendarValue = dateValue instanceof Date && !isNaN(dateValue.getTime()) ? dateValue : moment().toDate();
+      : stringToDateTimeType(value, isTimezoneUtc, roundup, timezone).toDate();
+    const calendarValue = dateValue instanceof Date && !isNaN(dateValue.getTime()) ? dateValue : dateTime().toDate();
 
     return (
       <Calendar

@@ -22,6 +22,11 @@
   .ds-picker {
     min-width: 200px;
     max-width: 200px;
+
+    .gf-form-select-box__img-value {
+      max-width: 150px;
+      overflow: hidden;
+    }
   }
 }
 
@@ -31,20 +36,24 @@
   flex-flow: row wrap;
   justify-content: flex-start;
   height: auto;
-  padding: 0 $dashboard-padding 0 50px;
+  padding: 0 $dashboard-padding;
   border-bottom: 1px solid #0000;
   transition-duration: 0.35s;
   transition-timing-function: ease-in-out;
   transition-property: box-shadow, border-bottom;
-
-  @include media-breakpoint-up(md) {
-    padding-left: $dashboard-padding;
-  }
 }
 
 .explore-toolbar-item {
   position: relative;
   align-self: center;
+
+  &:first-child {
+    padding-left: 34px;
+
+    @include media-breakpoint-up(md) {
+      padding-left: 0;
+    }
+  }
 }
 
 .explore-toolbar.splitted {
@@ -92,6 +101,7 @@
 .explore-toolbar-content-item:first-child {
   padding-left: $dashboard-padding;
   margin-right: auto;
+  display: flex;
 }
 
 @media only screen and (max-width: 1545px) {
@@ -133,7 +143,13 @@
 }
 
 .explore {
+  display: flex;
   flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.explore.explore-live {
+  flex-direction: column-reverse;
 }
 
 .explore + .explore {
@@ -141,7 +157,14 @@
 }
 
 .explore-container {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   padding: $dashboard-padding;
+}
+
+.explore-container.explore-live {
+  flex-direction: column-reverse;
 }
 
 .explore-wrapper {
@@ -163,8 +186,7 @@
 .explore-panel__header {
   padding: $space-sm $space-md 0 $space-md;
   display: flex;
-  cursor: pointer;
-  margin-bottom: $space-sm;
+  cursor: inherit;
   transition: all 0.1s linear;
 }
 
@@ -176,9 +198,20 @@
 }
 
 .explore-panel__header-buttons {
-  margin-right: $space-sm;
-  font-size: $font-size-lg;
-  line-height: $font-size-h6;
+  display: none;
+}
+
+.explore-panel--collapsible {
+  .explore-panel__header {
+    cursor: pointer;
+  }
+
+  .explore-panel__header-buttons {
+    margin-right: $space-sm;
+    font-size: $font-size-lg;
+    line-height: $font-size-h6;
+    display: inherit;
+  }
 }
 
 .time-series-disclaimer {
@@ -413,4 +446,22 @@
 .cheat-sheet-item__expression {
   margin: $space-xs 0;
   cursor: pointer;
+}
+
+.query-type-toggle {
+  margin-left: 5px;
+
+  .toggle-button-group {
+    padding-top: 2px;
+  }
+
+  .btn.active {
+    background-color: $input-bg;
+    background-image: none;
+    background-clip: padding-box;
+    border: $input-border;
+    border-radius: $input-border-radius;
+    @include box-shadow($input-box-shadow);
+    color: $input-color;
+  }
 }

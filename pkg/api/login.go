@@ -4,10 +4,11 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/url"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -104,6 +105,10 @@ func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response
 			return Error(401, "Invalid username or password", err)
 		}
 
+		if err == login.ErrUserDisabled {
+			return Error(401, "User is disabled", err)
+		}
+
 		return Error(500, "Error while trying to authenticate user", err)
 	}
 
@@ -115,11 +120,9 @@ func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response
 		"message": "Logged in",
 	}
 
-
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		result["redirectUrl"] = redirectTo
 		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
-
 	}
 
 	metrics.M_Api_Login_Post.Inc()

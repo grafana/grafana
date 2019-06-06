@@ -13,10 +13,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+
 	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
@@ -35,21 +37,62 @@ func GenStateString() string {
 }
 
 var OrgIdMap map[int64]m.RoleType
+var OrganizationMembership int = 0
+	func GetOrgByNameQuery(orgName string,email string)(){
+	 OrgIdMap = make(map[int64]m.RoleType)
+	 listOrgs := &m.GetOrgByNameQuery {Name: orgName}
+	 if err := bus.Dispatch(listOrgs); err != nil {
+	 log.Debug("This organization does not exist in grafana "+orgName)
+	 }else{
+    log.Debug("This organization in grafana "+orgName)
+    OrganizationMembership = OrganizationMembership+1
+	   //Set default permissions,The organization is created by the administrator of grafana, others can only join
+	   //OrgIdMap[listOrgs.Result.Id] = m.ROLE_VIEWER
+    //OrgIdMap[listOrgs.Result.Id] = ""
+    //OrgIdMap[listOrgs.Result.Id] = m.ROLE_ADMIN
+    //m.GetExternalUserInfoByLoginQuery{LoginOrEmail:"ying.lv2@hp.com",}
+    userQuery := &m.GetExternalUserInfoByLoginQuery{
+     //LoginOrEmail:     "ying.lv2@hp.com",
+     LoginOrEmail:     email,
 
-func GetOrgByNameQuery(orgName string)(){
- OrgIdMap = make(map[int64]m.RoleType)
- listOrgs := &m.GetOrgByNameQuery {Name: orgName}
- if err := bus.Dispatch(listOrgs); err != nil {
- log.Debug("This organization does not exist in grafana "+orgName)
- }else{
-   //Set default permissions,The organization is created by the administrator of grafana, others can only join
-   OrgIdMap[listOrgs.Result.Id] = "Viewer"
-//   for key, value := range OrgIdMap { fmt.Println("Key:", key, "Value:", value) }
-   log.Debug("The name of the organization is "+orgName)
-   log.Debug("The organization number is "+strconv.FormatInt(listOrgs.Result.Id,10))
- }
+    }
 
-}
+    fmt.Println(userQuery)
+    if err := bus.Dispatch(userQuery); err != nil {
+     fmt.Println(err)
+     OrgIdMap[listOrgs.Result.Id] = m.ROLE_VIEWER
+     //OrgIdMap[listOrgs.Result.Id] = m.ROLE_EDITOR 
+    }else{
+     userInfo := userQuery.Result
+     fmt.Println(userInfo)
+     //fmt.Println(userInfo.OrgRoles)
+     //fmt.Println(userInfo.Groups)
+     //fmt.Println(userInfo.IsDisabled)
+     //fmt.Println("IsGrafanaAdmin")
+     //fmt.Println(userInfo.IsGrafanaAdmin)
+    }
+    /**
+    userQueryitems := m.GetUserByLoginQuery{LoginOrEmail: email}
+    err := bus.Dispatch(&userQueryitems)
+    if err != nil {
+     fmt.Println(err) 
+    }else{
+      fmt.Println("userQueryitems") 
+      fmt.Println(userQueryitems) 
+    }
+    fmt.Println(userQuery.Result.UserId) 
+    authInfoQuery := &m.GetAuthInfoQuery{UserId: userQuery.Result.UserId}
+    if err := bus.Dispatch(authInfoQuery); err != nil {
+     fmt.Println(err) 
+    }
+**/
+	   for key, value := range OrgIdMap { fmt.Println("Key:", key, "Value:", value) }
+	   log.Debug("The name of the organization is "+orgName)
+	   log.Debug("The organization number is "+strconv.FormatInt(listOrgs.Result.Id,10))
+    fmt.Println(OrgIdMap)
+	 }
+	
+	}
 func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	if setting.OAuthService == nil {
 		ctx.Handle(404, "OAuth not enabled", nil)
@@ -152,7 +195,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	// set up oauth2 client
 	client := connect.Client(oauthCtx, token)
-	// Get user information
+
+	// get user info
 	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
 		if sErr, ok := err.(*social.Error); ok {
@@ -162,9 +206,9 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		}
 		return
 	}
- 
+
 	oauthLogger.Debug("OAuthLogin got user info", "userInfo", userInfo)
- 
+
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
 		hs.redirectWithError(ctx, login.ErrNoEmail)
@@ -177,6 +221,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		return
 	}
 
+
+ //		OrgRoles:   OrgIdMap ,
 	extUser := &m.ExternalUserInfo{
 		AuthModule: "oauth_" + name,
 		OAuthToken: token,
@@ -185,32 +231,34 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
   Organizations:      userInfo.Organizations,
-		OrgRoles:   OrgIdMap ,
-
+//		OrgRoles:   map[int64]m.RoleType{2: m.ROLE_VIEWER},
 	}
 
-
-
-
-	if userInfo.Role != "" {
-		extUser.OrgRoles[1] = m.RoleType(userInfo.Role)
-	}
- 
 
  for _, value := range extUser.Organizations{
-   log.Debug("Loop printing user's Organizations is "+value)
-   GetOrgByNameQuery(value)
+	   log.Debug("Loop printing user's Organizations is "+value)
+	   GetOrgByNameQuery(value,userInfo.Email)
+	 }
+ extUser.OrgRoles = OrgIdMap
+  
+//	if userInfo.Role != "" {
+//		extUser.OrgRoles[1] = m.RoleType(userInfo.Role)
+//	}
+ if  OrganizationMembership == 0 {
+
+   hs.redirectWithError(ctx, login.ErrMissingOrganizationMembership)
+   return
+ }else{
+   log.Debug("OrganizationMembership count is "+strconv.Itoa(OrganizationMembership))
+   OrganizationMembership = 0
  }
-  
-  
 	// add/update user in grafana
 	cmd := &m.UpsertUserCommand{
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
- 
- 
+//		SignupAllowed: true,
 	err = bus.Dispatch(cmd)
 	if err != nil {
 		hs.redirectWithError(ctx, err)

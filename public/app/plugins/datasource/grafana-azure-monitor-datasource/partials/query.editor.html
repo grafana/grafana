@@ -7,6 +7,12 @@
           ng-change="ctrl.onQueryTypeChange()"></select>
       </div>
     </div>
+    <div class="gf-form" ng-if="ctrl.target.queryType === 'Azure Monitor' || ctrl.target.queryType === 'Azure Log Analytics'">
+      <label class="gf-form-label query-keyword width-9">Subscription</label>
+      <gf-form-dropdown model="ctrl.target.subscription" allow-custom="true" lookup-text="true"
+        get-options="ctrl.getSubscriptions()" on-change="ctrl.onSubscriptionChange()" css-class="min-width-12">
+      </gf-form-dropdown>
+    </div>
     <div class="gf-form gf-form--grow">
       <div class="gf-form-label gf-form-label--grow"></div>
     </div>
@@ -99,27 +105,23 @@
     <div class="gf-form-inline">
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-9">Workspace</label>
-        <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
-          <select class="gf-form-input min-width-12" ng-model="ctrl.target.azureLogAnalytics.workspace" ng-options="f.value as f.text for f in ctrl.workspaces"
-            ng-change="ctrl.refresh()"></select>
+        <gf-form-dropdown model="ctrl.target.azureLogAnalytics.workspace" allow-custom="true" lookup-text="true"
+          get-options="ctrl.workspaces" on-change="ctrl.refresh()" css-class="min-width-12">
+        </gf-form-dropdown>
+        <div class="gf-form">
+          <div class="width-1"></div>
+        </div>
+        <div class="gf-form">
+          <button class="btn btn-primary width-10" ng-click="ctrl.refresh()">Run</button>
+        </div>
+        <div class="gf-form">
+          <label class="gf-form-label">(Run Query: Shift+Enter, Trigger Suggestion: Ctrl+Space)</label>
+        </div>
+        <div class="gf-form gf-form--grow">
+          <div class="gf-form-label gf-form-label--grow"></div>
         </div>
       </div>
-      <div class="gf-form">
-        <div class="width-1"></div>
-      </div>
-      <div class="gf-form">
-        <button class="btn btn-primary width-10" ng-click="ctrl.refresh()">Run</button>
-      </div>
-      <div class="gf-form">
-        <label class="gf-form-label">(Run Query: Shift+Enter, Trigger Suggestion: Ctrl+Space)</label>
-      </div>
-      <div class="gf-form gf-form--grow">
-        <div class="gf-form-label gf-form-label--grow"></div>
-      </div>
     </div>
-
-    <!-- <kusto-monaco-editor content="ctrl.target.azureLogAnalytics.query" on-change="ctrl.refresh()" get-schema="ctrl.getAzureLogAnalyticsSchema()"
-      default-time-field="TimeGenerated" plugin-base-url={{ctrl.datasource.meta.baseUrl}}></kusto-monaco-editor> -->
 
     <div class="gf-form gf-form--grow">
       <kusto-editor
@@ -187,13 +189,13 @@
       If using the All option, then check the Include All Option checkbox and in the Custom all value field type in: all. If All is chosen -&gt; 1 == 1
 
     Or build your own conditionals using these built-in variables which just return the values:
-    - $__from -&gt;  datetime(2018-06-05T18:09:58.907Z)
-    - $__to -&gt; datetime(2018-06-05T20:09:58.907Z)
+    - $__timeFrom -&gt;  datetime(2018-06-05T18:09:58.907Z)
+    - $__timeTo -&gt; datetime(2018-06-05T20:09:58.907Z)
     - $__interval -&gt; 5m
 
     Examples:
     - ¡ where $__timeFilter
-    - | where TimeGenerated &ge; $__from and TimeGenerated &le; $__to
+    - | where TimeGenerated &ge; $__timeFrom and TimeGenerated &le; $__timeTo
     - | summarize count() by Category, bin(TimeGenerated, $__interval)
       </pre>
     </div>

@@ -14,7 +14,6 @@ import { Themeable } from '../../types/theme';
 
 import { sortSeriesData } from '../../utils/processSeriesData';
 
-import { SeriesData, InterpolateFunction } from '@grafana/ui';
 import {
   TableCellBuilder,
   ColumnStyle,
@@ -23,6 +22,8 @@ import {
   simpleCellBuilder,
 } from './TableCellBuilder';
 import { stringToJsRegex } from '../../utils/index';
+import { SeriesData } from '../../types/data';
+import { InterpolateFunction } from '../../types/panel';
 
 export interface Props extends Themeable {
   data: SeriesData;
@@ -281,14 +282,16 @@ export class Table extends Component<Props, State> {
       this.scrollToTop = false;
     }
 
+    // Force MultiGrid to rerender if these options change
+    // See: https://github.com/bvaughn/react-virtualized#pass-thru-props
+    const refreshKeys = {
+      ...this.state, // Includes data and sort parameters
+      d1: this.props.data,
+      s0: this.props.styles,
+    };
     return (
       <MultiGrid
-        {
-          ...this.state /** Force MultiGrid to update when data changes */
-        }
-        {
-          ...this.props /** Force MultiGrid to update when data changes */
-        }
+        {...refreshKeys}
         scrollToRow={scrollToRow}
         columnCount={columnCount}
         scrollToColumn={scrollToColumn}

@@ -2,13 +2,16 @@
 import React, { PureComponent, ChangeEvent } from 'react';
 
 // Components
-import { FormField, FormLabel, PanelOptionsGroup, StatsPicker, ReducerID } from '@grafana/ui';
+import { FormLabel } from '../FormLabel/FormLabel';
+import { FormField } from '../FormField/FormField';
+import { StatsPicker } from '../StatsPicker/StatsPicker';
 
 // Types
 import { FieldDisplayOptions, DEFAULT_FIELD_DISPLAY_VALUES_LIMIT } from '../../utils/fieldDisplay';
 import { Field } from '../../types/data';
 import Select, { SelectOptionItem } from '../Select/Select';
 import { toNumberString, toIntegerOrUndefined } from '../../utils';
+import { ReducerID } from '../../utils/fieldReducer';
 
 const showOptions: Array<SelectOptionItem<boolean>> = [
   {
@@ -24,75 +27,71 @@ const showOptions: Array<SelectOptionItem<boolean>> = [
 ];
 
 export interface Props {
-  options: FieldDisplayOptions;
-  onChange: (valueOptions: FieldDisplayOptions) => void;
   labelWidth?: number;
-  children?: JSX.Element[];
+  value: FieldDisplayOptions;
+  onChange: (value: FieldDisplayOptions, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
 export class FieldDisplayEditor extends PureComponent<Props> {
   onShowValuesChange = (item: SelectOptionItem<boolean>) => {
     const val = item.value === true;
-    this.props.onChange({ ...this.props.options, values: val });
+    this.props.onChange({ ...this.props.value, values: val });
   };
 
   onCalcsChange = (calcs: string[]) => {
-    this.props.onChange({ ...this.props.options, calcs });
+    this.props.onChange({ ...this.props.value, calcs });
   };
 
   onDefaultsChange = (value: Partial<Field>) => {
-    this.props.onChange({ ...this.props.options, defaults: value });
+    this.props.onChange({ ...this.props.value, defaults: value });
   };
 
   onLimitChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.props.onChange({
-      ...this.props.options,
+      ...this.props.value,
       limit: toIntegerOrUndefined(event.target.value),
     });
   };
 
   render() {
-    const { options, children } = this.props;
-    const { calcs, values, limit } = options;
+    const { value } = this.props;
+    const { calcs, values, limit } = value;
 
     const labelWidth = this.props.labelWidth || 5;
 
     return (
-      <PanelOptionsGroup title="Display">
-        <>
+      <>
+        <div className="gf-form">
+          <FormLabel width={labelWidth}>Show</FormLabel>
+          <Select
+            options={showOptions}
+            value={values ? showOptions[0] : showOptions[1]}
+            onChange={this.onShowValuesChange}
+          />
+        </div>
+        {values ? (
+          <FormField
+            label="Limit"
+            labelWidth={labelWidth}
+            placeholder={`${DEFAULT_FIELD_DISPLAY_VALUES_LIMIT}`}
+            onChange={this.onLimitChange}
+            value={toNumberString(limit)}
+            type="number"
+          />
+        ) : (
           <div className="gf-form">
-            <FormLabel width={labelWidth}>Show</FormLabel>
-            <Select
-              options={showOptions}
-              value={values ? showOptions[0] : showOptions[1]}
-              onChange={this.onShowValuesChange}
+            <FormLabel width={labelWidth}>Calc</FormLabel>
+            <StatsPicker
+              width={12}
+              placeholder="Choose Stat"
+              defaultStat={ReducerID.mean}
+              allowMultiple={false}
+              stats={calcs}
+              onChange={this.onCalcsChange}
             />
           </div>
-          {values ? (
-            <FormField
-              label="Limit"
-              labelWidth={labelWidth}
-              placeholder={`${DEFAULT_FIELD_DISPLAY_VALUES_LIMIT}`}
-              onChange={this.onLimitChange}
-              value={toNumberString(limit)}
-              type="number"
-            />
-          ) : (
-            <div className="gf-form">
-              <FormLabel width={labelWidth}>Calc</FormLabel>
-              <StatsPicker
-                width={12}
-                placeholder="Choose Stat"
-                defaultStat={ReducerID.mean}
-                allowMultiple={false}
-                stats={calcs}
-                onChange={this.onCalcsChange}
-              />
-            </div>
-          )}
-          {children}
-        </>
-      </PanelOptionsGroup>
+        )}
+      </>
     );
   }
 }

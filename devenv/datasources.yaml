@@ -1,10 +1,11 @@
+
 apiVersion: 1
 
 datasources:
   - name: gdev-graphite
     type: graphite
     access: proxy
-    url: http://localhost:8080
+    url: http://localhost:8180
     jsonData:
       graphiteVersion: "1.1"
 
@@ -12,6 +13,11 @@ datasources:
     type: prometheus
     access: proxy
     url: http://localhost:9090
+
+  - name: gdev-slow-prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:3011
 
   - name: gdev-testdata
     type: testdata
@@ -136,6 +142,17 @@ datasources:
       interval: Daily
       timeField: "@timestamp"
       esVersion: 70
+
+  - name: gdev-elasticsearch-v7-metricbeat
+    type: elasticsearch
+    access: proxy
+    database: "[metricbeat-]YYYY.MM.DD"
+    url: http://localhost:12200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
+      timeInterval: "10s"
 
   - name: gdev-mysql
     type: mysql

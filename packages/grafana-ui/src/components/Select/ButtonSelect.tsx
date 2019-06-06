@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import Select, { SelectOptionItem } from './Select';
-import { PopperContent } from '@grafana/ui/src/components/Tooltip/PopperController';
+import { PopperContent } from '../Tooltip/PopperController';
 
 interface ButtonComponentProps {
   label: string | undefined;
@@ -74,7 +74,7 @@ export class ButtonSelect<T> extends PureComponent<Props<T>> {
         isSearchable={false}
         options={options}
         onChange={this.onChange}
-        defaultValue={value}
+        value={value}
         maxMenuHeight={maxMenuHeight}
         components={combinedComponents}
         className="gf-form-select-box-button-select"

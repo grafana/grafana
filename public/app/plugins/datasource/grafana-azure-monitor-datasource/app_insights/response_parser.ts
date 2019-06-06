@@ -1,5 +1,5 @@
-import moment from 'moment';
 import _ from 'lodash';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export default class ResponseParser {
   constructor(private results) {}
@@ -98,7 +98,9 @@ export default class ResponseParser {
           const bucket = ResponseParser.findOrCreateBucket(data, target);
           bucket.datapoints.push([value.segments[i].segments[j][metricName][aggField], epoch]);
           bucket.refId = query.refId;
-          bucket.query = query.query;
+          bucket.meta = {
+            query: query.query,
+          };
         }
       }
     }
@@ -171,8 +173,8 @@ export default class ResponseParser {
     return _.intersection(keys, ['sum', 'avg', 'min', 'max', 'count', 'unique'])[0];
   }
 
-  static dateTimeToEpoch(dateTime) {
-    return moment(dateTime).valueOf();
+  static dateTimeToEpoch(dateTimeValue) {
+    return dateTime(dateTimeValue).valueOf();
   }
 
   static parseMetricNames(result) {

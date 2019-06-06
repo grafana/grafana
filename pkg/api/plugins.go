@@ -47,6 +47,7 @@ func (hs *HTTPServer) GetPluginList(c *m.ReqContext) Response {
 			Id:            pluginDef.Id,
 			Name:          pluginDef.Name,
 			Type:          pluginDef.Type,
+			Category:      pluginDef.Category,
 			Info:          &pluginDef.Info,
 			LatestVersion: pluginDef.GrafanaNetVersion,
 			HasUpdate:     pluginDef.GrafanaNetHasUpdate,

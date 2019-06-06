@@ -2,7 +2,7 @@
 
 FROM debian:jessie
 
-LABEL maintainer="Christian Luginbühl <dinke@pimprecords.com>"
+LABEL maintainer="Grafana team <hello@grafana.com>"
 
 ENV OPENLDAP_VERSION 2.4.40
 

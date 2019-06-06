@@ -1,8 +1,8 @@
 import angular from 'angular';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import _ from 'lodash';
-import moment from 'moment';
 import { ElasticDatasource } from '../datasource';
+import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('ElasticDatasource', function(this: any) {
   const backendSrv = {
@@ -66,7 +66,7 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.testDatasource();
 
-      const today = moment.utc().format('YYYY.MM.DD');
+      const today = toUtc().format('YYYY.MM.DD');
       expect(requestOptions.url).toBe('http://es.com/asd-' + today + '/_mapping');
     });
   });
@@ -105,8 +105,8 @@ describe('ElasticDatasource', function(this: any) {
 
       query = {
         range: {
-          from: moment.utc([2015, 4, 30, 10]),
-          to: moment.utc([2015, 5, 1, 10]),
+          from: toUtc([2015, 4, 30, 10]),
+          to: toUtc([2015, 5, 1, 10]),
         },
         targets: [
           {
@@ -159,8 +159,8 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.query({
         range: {
-          from: moment([2015, 4, 30, 10]),
-          to: moment([2015, 5, 1, 10]),
+          from: dateTime([2015, 4, 30, 10]),
+          to: dateTime([2015, 5, 1, 10]),
         },
         targets: [
           {
@@ -441,8 +441,8 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.query({
         range: {
-          from: moment([2015, 4, 30, 10]),
-          to: moment([2015, 5, 1, 10]),
+          from: dateTime([2015, 4, 30, 10]),
+          to: dateTime([2015, 5, 1, 10]),
         },
         targets: [
           {

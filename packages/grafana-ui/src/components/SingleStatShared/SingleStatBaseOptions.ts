@@ -11,7 +11,7 @@ export interface SingleStatBaseOptions {
   orientation: VizOrientation;
 }
 
-const optionsToKeep = ['valueOptions', 'stat', 'maxValue', 'maxValue', 'thresholds', 'valueMappings'];
+const optionsToKeep = ['fieldOptions', 'orientation'];
 
 export const sharedSingleStatOptionsCheck = (
   options: Partial<SingleStatBaseOptions> | any,
@@ -53,10 +53,13 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
         fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
       }
     }
+
     field.min = old.minValue;
     field.max = old.maxValue;
 
-    return omit(old, 'valueMappings', 'thresholds', 'valueOptions');
+    // remove old props
+    return omit(old, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
   }
+
   return panel.options;
 };
