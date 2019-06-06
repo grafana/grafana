@@ -30,7 +30,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
   const theme = useContext(ThemeContext);
 
   const onAdd = () => {
-    onChange([...value, { url: '', title: '' }]);
+    onChange(value ? [...value, { url: '', title: '' }] : [{ url: '', title: '' }]);
   };
 
   const onLinkChanged = (linkIndex: number, newLink: DrillDownLink) => {
