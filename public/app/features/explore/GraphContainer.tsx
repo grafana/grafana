@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import moment from 'moment';
-import { TimeRange, TimeZone, AbsoluteTimeRange } from '@grafana/ui';
+import { TimeRange, TimeZone, AbsoluteTimeRange, LoadingState } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -11,6 +10,7 @@ import { toggleGraph, changeTime } from './state/actions';
 import Graph from './Graph';
 import Panel from './Panel';
 import { getTimeZone } from '../profile/state/selectors';
+import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface GraphContainerProps {
   exploreId: ExploreId;
@@ -34,8 +34,8 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
   onChangeTime = (absRange: AbsoluteTimeRange) => {
     const { exploreId, timeZone, changeTime } = this.props;
     const range = {
-      from: timeZone.isUtc ? moment.utc(absRange.from) : moment(absRange.from),
-      to: timeZone.isUtc ? moment.utc(absRange.to) : moment(absRange.to),
+      from: timeZone.isUtc ? toUtc(absRange.from) : dateTime(absRange.from),
+      to: timeZone.isUtc ? toUtc(absRange.to) : dateTime(absRange.to),
     };
 
     changeTime(exploreId, range);
@@ -46,22 +46,20 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
     const graphHeight = showingGraph && showingTable ? 200 : 400;
     const timeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
 
-    if (!graphResult) {
-      return null;
-    }
-
     return (
-      <Panel label="Graph" isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
-        <Graph
-          data={graphResult}
-          height={graphHeight}
-          id={`explore-graph-${exploreId}`}
-          onChangeTime={this.onChangeTime}
-          range={timeRange}
-          timeZone={timeZone}
-          split={split}
-          width={width}
-        />
+      <Panel label="Graph" collapsible isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
+        {graphResult && (
+          <Graph
+            data={graphResult}
+            height={graphHeight}
+            id={`explore-graph-${exploreId}`}
+            onChangeTime={this.onChangeTime}
+            range={timeRange}
+            timeZone={timeZone}
+            split={split}
+            width={width}
+          />
+        )}
       </Panel>
     );
   }
@@ -71,8 +69,8 @@ function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const { split } = explore;
   const item: ExploreItemState = explore[exploreId];
-  const { graphResult, queryTransactions, range, showingGraph, showingTable } = item;
-  const loading = queryTransactions.some(qt => qt.resultType === 'Graph' && !qt.done);
+  const { graphResult, loadingState, range, showingGraph, showingTable } = item;
+  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   return { graphResult, loading, range, showingGraph, showingTable, split, timeZone: getTimeZone(state.user) };
 }
 

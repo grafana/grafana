@@ -132,10 +132,15 @@ export class AddPanelWidget extends React.Component<Props, State> {
     dashboard.removePanel(this.props.panel);
   };
 
-  renderOptionLink = (icon, text, onClick) => {
+  renderOptionLink = (icon: string, text: string, onClick) => {
     return (
       <div>
-        <a href="#" onClick={onClick} className="add-panel-widget__link btn btn-inverse">
+        <a
+          href="#"
+          onClick={onClick}
+          className="add-panel-widget__link btn btn-inverse"
+          aria-label={`${text} CTA button`}
+        >
           <div className="add-panel-widget__icon">
             <i className={`gicon gicon-${icon}`} />
           </div>

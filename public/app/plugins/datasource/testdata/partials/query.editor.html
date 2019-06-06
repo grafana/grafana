@@ -3,7 +3,7 @@
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">Scenario</label>
 			<div class="gf-form-select-wrapper width-15">
-				<select class="gf-form-input" ng-model="ctrl.target.scenarioId" ng-options="v.id as v.name for v in ctrl.scenarioList" ng-change="ctrl.scenarioChanged()"></select>
+				<select class="gf-form-input" ng-model="ctrl.target.scenarioId" ng-options="v.id as v.name for v in ctrl.scenarioList" ng-change="ctrl.scenarioChanged()" aria-label="Scenario Select"></select>
 			</div>
 		</div>
 		<div class="gf-form gf-form gf-form--grow" ng-if="ctrl.scenario.stringInput">
@@ -40,46 +40,70 @@
 		<div class="gf-form gf-form">
 			<label class="gf-form-label query-keyword width-7">Type</label>
 			<div class="gf-form-select-wrapper">
-				<select 
-				  ng-model="ctrl.target.stream.type" 
+				<select
+				  ng-model="ctrl.target.stream.type"
 				  class="gf-form-input"
-					ng-options="type for type in ['signal','logs']"
+					ng-options="type for type in ['signal','logs', 'fetch']"
 				  ng-change="ctrl.streamChanged()" />
 				</select>
 			</div>
 		</div>
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword">Speed (ms)</label>
-			<input type="number" 
-				class="gf-form-input width-5" 
-				placeholder="value" 
-				ng-model="ctrl.target.stream.speed" 
+			<input type="number"
+				class="gf-form-input width-5"
+				placeholder="value"
+				ng-model="ctrl.target.stream.speed"
 				min="10"
 				step="10"
 				ng-change="ctrl.streamChanged()" />
 		</div>
 		<div class="gf-form" ng-if="ctrl.target.stream.type === 'signal'">
 			<label class="gf-form-label query-keyword">Spread</label>
-			<input type="number" 
-				class="gf-form-input width-5" 
-				placeholder="value" 
-				ng-model="ctrl.target.stream.spread" 
+			<input type="number"
+				class="gf-form-input width-5"
+				placeholder="value"
+				ng-model="ctrl.target.stream.spread"
 				min="0.5"
 				step="0.1"
 				ng-change="ctrl.streamChanged()" />
 		</div>
 		<div class="gf-form" ng-if="ctrl.target.stream.type === 'signal'">
 			<label class="gf-form-label query-keyword">Noise</label>
-			<input type="number" 
-				class="gf-form-input width-5" 
-				placeholder="value" 
-				ng-model="ctrl.target.stream.noise" 
+			<input type="number"
+				class="gf-form-input width-5"
+				placeholder="value"
+				ng-model="ctrl.target.stream.noise"
 				min="0"
 				step="0.1"
 				ng-change="ctrl.streamChanged()" />
 		</div>
-		<div class="gf-form gf-form--grow">
+		<div class="gf-form gf-form--grow" ng-if="ctrl.target.stream.type === 'fetch'">
+			<label class="gf-form-label query-keyword">URL</label>
+			<input type="string"
+				class="gf-form-input gf-form-label--grow"
+				placeholder="Fetch URL"
+				ng-model="ctrl.target.stream.url"
+				ng-change="ctrl.streamChanged()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form gf-form--grow" ng-if="ctrl.target.stream.type !== 'fetch'">
 			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'logs'">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword">Lines</label>
+			<input type="number"
+				class="gf-form-input width-5"
+				placeholder="10"
+				ng-model="ctrl.target.lines"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<gf-form-switch class="gf-form" label="Level" label-class="query-keyword width-5" checked="ctrl.target.levelColumn" switch-class="max-width-6" on-change="ctrl.refresh()"></gf-form-switch>
 		</div>
 	</div>
 </query-editor-row>

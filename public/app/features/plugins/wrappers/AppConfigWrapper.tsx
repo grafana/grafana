@@ -5,7 +5,7 @@ import extend from 'lodash/extend';
 
 import { PluginMeta, AppPlugin, Button } from '@grafana/ui';
 
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ButtonVariant } from '@grafana/ui/src/components/Button/AbstractButton';
 import { css } from 'emotion';

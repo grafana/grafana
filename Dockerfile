@@ -35,6 +35,8 @@ RUN ./node_modules/.bin/grunt build
 # Final container
 FROM debian:stretch-slim
 
+LABEL maintainer="Grafana team <hello@grafana.com>"
+
 ARG GF_UID="472"
 ARG GF_GID="472"
 
@@ -66,8 +68,8 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
              "$GF_PATHS_DATA" && \
     cp "$GF_PATHS_HOME/conf/sample.ini" "$GF_PATHS_CONFIG" && \
     cp "$GF_PATHS_HOME/conf/ldap.toml" /etc/grafana/ldap.toml && \
-    chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" && \
-    chmod 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS"
+    chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+    chmod 777 -R "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
 COPY --from=0 /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-server /go/src/github.com/grafana/grafana/bin/linux-amd64/grafana-cli ./bin/
 COPY --from=1 /usr/src/app/public ./public
@@ -77,6 +79,14 @@ COPY tools/phantomjs/render.js ./tools/phantomjs/render.js
 EXPOSE 3000
 
 COPY ./packaging/docker/run.sh /run.sh
+RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
+RUN apt-get update -y 
+RUN apt-get install python-pip -y 
+RUN apt-get install vim -y 
+RUN pip install --upgrade pip
+#COPY ./pip /usr/bin/pip
+RUN pip install awscli
+#RUN chmod 755 /usr/share/grafana/conf/defaults.ini
 
-USER grafana
+#USER grafana
 ENTRYPOINT [ "/run.sh" ]

@@ -72,10 +72,8 @@ const theme: GrafanaThemeCommons = {
     md: '32px',
     lg: '48px',
   },
-  panelPadding: {
-    horizontal: 16,
-    vertical: 8,
-  },
+  panelPadding: 8,
+  panelHeaderHeight: 28,
   zIndex: {
     dropdown: '1000',
     navbarFixed: '1020',

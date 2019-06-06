@@ -1,15 +1,18 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
 import { CloudWatchQuery } from '../types';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 describe('CloudWatchDatasource', () => {
   const instanceSettings = {
-    jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
-  };
+    jsonData: { defaultRegion: 'us-east-1' },
+  } as DataSourceInstanceSettings;
 
   const templateSrv = new TemplateSrv();
 
@@ -21,8 +24,8 @@ describe('CloudWatchDatasource', () => {
         to: dateMath.parse(timeSrv.time.to, true),
       };
     },
-  };
-  const backendSrv = {};
+  } as TimeSrv;
+  const backendSrv = {} as BackendSrv;
   const ctx = {
     backendSrv,
     templateSrv,

@@ -43,19 +43,9 @@ export class KeybindingSrv {
     this.bind('g h', this.goToHome);
     this.bind('g a', this.openAlerting);
     this.bind('g p', this.goToProfile);
-    this.bind('s s', this.openSearchStarred);
     this.bind('s o', this.openSearch);
-    this.bind('s t', this.openSearchTags);
     this.bind('f', this.openSearch);
     this.bindGlobal('esc', this.exit);
-  }
-
-  openSearchStarred() {
-    appEvents.emit('show-dash-search', { starred: true });
-  }
-
-  openSearchTags() {
-    appEvents.emit('show-dash-search', { tagsMode: true });
   }
 
   openSearch() {

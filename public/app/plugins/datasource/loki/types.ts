@@ -1,7 +1,14 @@
-import { DataQuery, Labels } from '@grafana/ui/src/types';
+import { DataQuery, Labels, DataSourceJsonData } from '@grafana/ui/src/types';
 
 export interface LokiQuery extends DataQuery {
   expr: string;
+  live?: boolean;
+  query?: string;
+  regexp?: string;
+}
+
+export interface LokiOptions extends DataSourceJsonData {
+  maxLines?: string;
 }
 
 export interface LokiLogsStream {
@@ -17,4 +24,9 @@ export interface LokiLogsStreamEntry {
   ts: string;
   // Legacy, was renamed to ts
   timestamp?: string;
+}
+
+export interface LokiExpression {
+  regexp: string;
+  query: string;
 }

@@ -6,6 +6,10 @@ import (
 	"golang.org/x/oauth2"
 )
 
+const (
+	AuthModuleLDAP = "ldap"
+)
+
 type UserAuth struct {
 	Id                int64
 	UserId            int64
@@ -30,6 +34,7 @@ type ExternalUserInfo struct {
 	Groups         []string
 	OrgRoles       map[int64]RoleType
 	IsGrafanaAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
+	IsDisabled     bool
 }
 
 // ---------------------
@@ -79,7 +84,14 @@ type GetUserByAuthInfoQuery struct {
 	Email      string
 	Login      string
  Organizations  []string
+
 	Result *User
+}
+
+type GetExternalUserInfoByLoginQuery struct {
+	LoginOrEmail string
+
+	Result *ExternalUserInfo
 }
 
 type GetAuthInfoQuery struct {
@@ -94,4 +106,3 @@ type SyncTeamsCommand struct {
 	ExternalUser *ExternalUserInfo
 	User         *User
 }
-

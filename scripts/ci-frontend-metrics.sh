@@ -2,9 +2,9 @@
 
 echo -e "Collecting code stats (typescript errors & more)"
 
-ERROR_COUNT_LIMIT=5623
-DIRECTIVES_LIMIT=175
-CONTROLLERS_LIMIT=140
+ERROR_COUNT_LIMIT=5150
+DIRECTIVES_LIMIT=172
+CONTROLLERS_LIMIT=139
 
 ERROR_COUNT="$(./node_modules/.bin/tsc --project tsconfig.json --noEmit --noImplicitAny true | grep -oP 'Found \K(\d+)')"
 DIRECTIVES="$(grep -r -o  directive public/app/**/*  | wc -l)"

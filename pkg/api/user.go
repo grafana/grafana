@@ -202,7 +202,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *m.ReqContext) {
 }
 
 func ChangeUserPassword(c *m.ReqContext, cmd m.ChangeUserPasswordCommand) Response {
-	if setting.LdapEnabled || setting.AuthProxyEnabled {
+	if setting.LDAPEnabled || setting.AuthProxyEnabled {
 		return Error(400, "Not allowed to change password when LDAP or Auth Proxy is enabled", nil)
 	}
 

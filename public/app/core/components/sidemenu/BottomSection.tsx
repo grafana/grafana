@@ -4,10 +4,11 @@ import SignIn from './SignIn';
 import BottomNavLinks from './BottomNavLinks';
 import { contextSrv } from 'app/core/services/context_srv';
 import config from '../../config';
+import { NavModelItem } from '@grafana/ui';
 
 export default function BottomSection() {
-  const navTree: any = _.cloneDeep(config.bootData.navTree);
-  const bottomNav: any = _.filter(navTree, item => item.hideFromMenu);
+  const navTree: NavModelItem[] = _.cloneDeep(config.bootData.navTree);
+  const bottomNav: NavModelItem[] = _.filter(navTree, item => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
   const user = contextSrv.user;
 

@@ -1,38 +1,35 @@
 // Libraries
 import _ from 'lodash';
-import moment, { Moment } from 'moment';
+import { from } from 'rxjs';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 // Services & Utils
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { getNextRefIdChar } from './query';
 
 // Types
 import {
-  colors,
   TimeRange,
   RawTimeRange,
   TimeZone,
   IntervalValues,
   DataQuery,
   DataSourceApi,
-  toSeriesData,
-  guessFieldTypes,
+  TimeFragment,
+  DataQueryError,
+  LogRowModel,
+  LogsModel,
+  LogsDedupStrategy,
+  DataSourceJsonData,
+  DataQueryRequest,
+  DataStreamObserver,
 } from '@grafana/ui';
-import TimeSeries from 'app/core/time_series2';
-import {
-  ExploreUrlState,
-  HistoryItem,
-  QueryTransaction,
-  ResultType,
-  QueryIntervals,
-  QueryOptions,
-  ResultGetter,
-} from 'app/types/explore';
-import { LogsDedupStrategy, seriesDataToLogsModel } from 'app/core/logs_model';
+import { ExploreUrlState, HistoryItem, QueryTransaction, QueryIntervals, QueryOptions } from 'app/types/explore';
+import { config } from '../config';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -109,9 +106,7 @@ export async function getExploreUrl(
 }
 
 export function buildQueryTransaction(
-  query: DataQuery,
-  rowIndex: number,
-  resultType: ResultType,
+  queries: DataQuery[],
   queryOptions: QueryOptions,
   range: TimeRange,
   queryIntervals: QueryIntervals,
@@ -119,12 +114,11 @@ export function buildQueryTransaction(
 ): QueryTransaction {
   const { interval, intervalMs } = queryIntervals;
 
-  const configuredQueries = [
-    {
-      ...query,
-      ...queryOptions,
-    },
-  ];
+  const configuredQueries = queries.map(query => ({ ...query, ...queryOptions }));
+  const key = queries.reduce((combinedKey, query) => {
+    combinedKey += query.key;
+    return combinedKey;
+  }, '');
 
   // Clone range for query request
   // const queryRange: RawTimeRange = { ...range };
@@ -133,7 +127,7 @@ export function buildQueryTransaction(
   // Using `format` here because it relates to the view panel that the request is for.
   // However, some datasources don't use `panelId + query.refId`, but only `panelId`.
   // Therefore panel id has to be unique.
-  const panelId = `${queryOptions.format}-${query.key}`;
+  const panelId = `${key}`;
 
   const options = {
     interval,
@@ -150,10 +144,8 @@ export function buildQueryTransaction(
   };
 
   return {
+    queries,
     options,
-    query,
-    resultType,
-    rowIndex,
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
@@ -192,6 +184,20 @@ export const safeParseJson = (text: string) => {
   } catch (error) {
     console.error(error);
   }
+};
+
+export const safeStringifyValue = (value: any, space?: number) => {
+  if (!value) {
+    return '';
+  }
+
+  try {
+    return JSON.stringify(value, null, space);
+  } catch (error) {
+    console.error(error);
+  }
+
+  return '';
 };
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
@@ -264,12 +270,34 @@ export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
   return { refId: getNextRefIdChar(queries), key: generateKey(index) };
 }
 
+export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: DataQuery[], index = 0): DataQuery => {
+  const key = generateKey(index);
+  const refId = target.refId || getNextRefIdChar(queries);
+
+  return { ...target, refId, key };
+};
+
 /**
  * Ensure at least one target exists and that targets have the necessary keys
  */
 export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
   if (queries && typeof queries === 'object' && queries.length > 0) {
-    return queries.map((query, i) => ({ ...query, ...generateEmptyQuery(queries, i) }));
+    const allQueries = [];
+    for (let index = 0; index < queries.length; index++) {
+      const query = queries[index];
+      const key = generateKey(index);
+      let refId = query.refId;
+      if (!refId) {
+        refId = getNextRefIdChar(allQueries);
+      }
+
+      allQueries.push({
+        ...query,
+        refId,
+        key,
+      });
+    }
+    return allQueries;
   }
   return [{ ...generateEmptyQuery(queries) }];
 }
@@ -289,34 +317,6 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
   );
 }
 
-export function calculateResultsFromQueryTransactions(
-  queryTransactions: QueryTransaction[],
-  datasource: any,
-  graphInterval: number
-) {
-  const graphResult = _.flatten(
-    queryTransactions.filter(qt => qt.resultType === 'Graph' && qt.done && qt.result).map(qt => qt.result)
-  );
-  const tableResult = mergeTablesIntoModel(
-    new TableModel(),
-    ...queryTransactions
-      .filter(qt => qt.resultType === 'Table' && qt.done && qt.result && qt.result.columns && qt.result.rows)
-      .map(qt => qt.result)
-  );
-  const logsResult = seriesDataToLogsModel(
-    _.flatten(
-      queryTransactions.filter(qt => qt.resultType === 'Logs' && qt.done && qt.result).map(qt => qt.result)
-    ).map(r => guessFieldTypes(toSeriesData(r))),
-    graphInterval
-  );
-
-  return {
-    graphResult,
-    tableResult,
-    logsResult,
-  };
-}
-
 export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
   if (!resolution) {
     return { interval: '1s', intervalMs: 1000 };
@@ -324,37 +324,6 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
 
   return kbn.calculateInterval(range, resolution, lowLimit);
 }
-
-export const makeTimeSeriesList: ResultGetter = (dataList, transaction, allTransactions) => {
-  // Prevent multiple Graph transactions to have the same colors
-  let colorIndexOffset = 0;
-  for (const other of allTransactions) {
-    // Only need to consider transactions that came before the current one
-    if (other === transaction) {
-      break;
-    }
-    // Count timeseries of previous query results
-    if (other.resultType === 'Graph' && other.done) {
-      colorIndexOffset += other.result.length;
-    }
-  }
-
-  return dataList.map((seriesData, index: number) => {
-    const datapoints = seriesData.datapoints || [];
-    const alias = seriesData.target;
-    const colorIndex = (colorIndexOffset + index) % colors.length;
-    const color = colors[colorIndex];
-
-    const series = new TimeSeries({
-      datapoints,
-      alias,
-      color,
-      unit: seriesData.unit,
-    });
-
-    return series;
-  });
-};
 
 /**
  * Update the query history. Side-effect: store history in local storage
@@ -401,7 +370,7 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRa
   };
 };
 
-const parseRawTime = (value): Moment | string => {
+const parseRawTime = (value): TimeFragment => {
   if (value === null) {
     return null;
   }
@@ -410,19 +379,19 @@ const parseRawTime = (value): Moment | string => {
     return value;
   }
   if (value.length === 8) {
-    return moment.utc(value, 'YYYYMMDD');
+    return toUtc(value, 'YYYYMMDD');
   }
   if (value.length === 15) {
-    return moment.utc(value, 'YYYYMMDDTHHmmss');
+    return toUtc(value, 'YYYYMMDDTHHmmss');
   }
   // Backward compatibility
   if (value.length === 19) {
-    return moment.utc(value, 'YYYY-MM-DD HH:mm:ss');
+    return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
   }
 
   if (!isNaN(value)) {
     const epoch = parseInt(value, 10);
-    return moment.utc(epoch);
+    return toUtc(epoch);
   }
 
   return null;
@@ -439,4 +408,114 @@ export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): Ti
     to: dateMath.parse(raw.to, true, timeZone.raw as any),
     raw,
   };
+};
+
+export const instanceOfDataQueryError = (value: any): value is DataQueryError => {
+  return value.message !== undefined && value.status !== undefined && value.statusText !== undefined;
+};
+
+export const getValueWithRefId = (value: any): any | null => {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value !== 'object') {
+    return null;
+  }
+
+  if (value.refId) {
+    return value;
+  }
+
+  const keys = Object.keys(value);
+  for (let index = 0; index < keys.length; index++) {
+    const key = keys[index];
+    const refId = getValueWithRefId(value[key]);
+    if (refId) {
+      return refId;
+    }
+  }
+
+  return null;
+};
+
+export const getFirstQueryErrorWithoutRefId = (errors: DataQueryError[]) => {
+  if (!errors) {
+    return null;
+  }
+
+  return errors.filter(error => (error.refId ? false : true))[0];
+};
+
+export const getRefIds = (value: any): string[] => {
+  if (!value) {
+    return [];
+  }
+
+  if (typeof value !== 'object') {
+    return [];
+  }
+
+  const keys = Object.keys(value);
+  const refIds = [];
+  for (let index = 0; index < keys.length; index++) {
+    const key = keys[index];
+    if (key === 'refId') {
+      refIds.push(value[key]);
+      continue;
+    }
+    refIds.push(getRefIds(value[key]));
+  }
+
+  return _.uniq(_.flatten(refIds));
+};
+
+const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  if (a.timeEpochMs < b.timeEpochMs) {
+    return -1;
+  }
+
+  if (a.timeEpochMs > b.timeEpochMs) {
+    return 1;
+  }
+
+  return 0;
+};
+
+const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  if (a.timeEpochMs > b.timeEpochMs) {
+    return -1;
+  }
+
+  if (a.timeEpochMs < b.timeEpochMs) {
+    return 1;
+  }
+
+  return 0;
+};
+
+export const sortLogsResult = (logsResult: LogsModel, refreshInterval: string) => {
+  const rows = logsResult ? logsResult.rows : [];
+  const live = isLive(refreshInterval);
+  live ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
+  const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
+
+  return result;
+};
+
+export const convertToWebSocketUrl = (url: string) => {
+  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
+  if (backend.endsWith('/')) {
+    backend = backend.slice(0, backend.length - 1);
+  }
+  return `${backend}${url}`;
+};
+
+export const getQueryResponse = (
+  datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData>,
+  options: DataQueryRequest<DataQuery>,
+  observer?: DataStreamObserver
+) => {
+  return from(datasourceInstance.query(options, observer));
 };

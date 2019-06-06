@@ -1,8 +1,9 @@
 import '../all';
 import { VariableSrv } from '../variable_srv';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
-import moment from 'moment';
 import $q from 'q';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { CustomVariable } from '../custom_variable';
 
 describe('VariableSrv', function(this: any) {
   const ctx = {
@@ -106,7 +107,7 @@ describe('VariableSrv', function(this: any) {
       };
 
       const range = {
-        from: moment(new Date())
+        from: dateTime(new Date())
           .subtract(7, 'days')
           .toDate(),
         to: new Date(),
@@ -514,7 +515,7 @@ describe('VariableSrv', function(this: any) {
 
     beforeEach(() => {
       const range = {
-        from: moment(new Date())
+        from: dateTime(new Date())
           .subtract(7, 'days')
           .toDate(),
         to: new Date(),
@@ -589,7 +590,54 @@ describe('VariableSrv', function(this: any) {
       expect(unknownSet).toEqual(false);
     });
   });
+
+  describe('setOptionFromUrl', () => {
+    it('sets single value as string if not multi choice', async () => {
+      const [setValueMock, setFromUrl] = setupSetFromUrlTest(ctx);
+      await setFromUrl('one');
+      expect(setValueMock).toHaveBeenCalledWith({ text: 'one', value: 'one' });
+    });
+
+    it('sets single value as array if multi choice', async () => {
+      const [setValueMock, setFromUrl] = setupSetFromUrlTest(ctx, { multi: true });
+      await setFromUrl('one');
+      expect(setValueMock).toHaveBeenCalledWith({ text: 'one', value: ['one'] });
+    });
+
+    it('sets both text and value as array if multiple values in url', async () => {
+      const [setValueMock, setFromUrl] = setupSetFromUrlTest(ctx, { multi: true });
+      await setFromUrl(['one', 'two']);
+      expect(setValueMock).toHaveBeenCalledWith({ text: ['one', 'two'], value: ['one', 'two'] });
+    });
+
+    it('sets text and value even if it does not match any option', async () => {
+      const [setValueMock, setFromUrl] = setupSetFromUrlTest(ctx);
+      await setFromUrl('none');
+      expect(setValueMock).toHaveBeenCalledWith({ text: 'none', value: 'none' });
+    });
+
+    it('sets text and value even if it does not match any option and it is array', async () => {
+      const [setValueMock, setFromUrl] = setupSetFromUrlTest(ctx);
+      await setFromUrl(['none', 'none2']);
+      expect(setValueMock).toHaveBeenCalledWith({ text: ['none', 'none2'], value: ['none', 'none2'] });
+    });
+  });
 });
+
+function setupSetFromUrlTest(ctx, model = {}) {
+  const variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.templateSrv, ctx.timeSrv);
+  const finalModel = {
+    type: 'custom',
+    options: ['one', 'two', 'three'].map(v => ({ text: v, value: v })),
+    name: 'test',
+    ...model,
+  };
+  const variable = new CustomVariable(finalModel, variableSrv);
+  // We are mocking the setValue here instead of just checking the final variable.current value because there is lots
+  // of stuff going when the setValue is called that is hard to mock out.
+  variable.setValue = jest.fn();
+  return [variable.setValue, val => variableSrv.setOptionFromUrl(variable, val)];
+}
 
 function getVarMockConstructor(variable, model, ctx) {
   switch (model.model.type) {

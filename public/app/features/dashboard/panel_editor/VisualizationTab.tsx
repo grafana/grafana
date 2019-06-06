@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Utils & Services
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
@@ -53,8 +53,8 @@ export class VisualizationTab extends PureComponent<Props, State> {
   }
 
   getReactPanelOptions = () => {
-    const { panel, plugin } = this.props;
-    return panel.getOptions(plugin.defaults);
+    const { panel } = this.props;
+    return panel.getOptions();
   };
 
   renderPanelOptions() {
@@ -185,11 +185,14 @@ export class VisualizationTab extends PureComponent<Props, State> {
       );
     } else {
       return (
-        <div className="toolbar__main" onClick={this.onOpenVizPicker}>
-          <img className="toolbar__main-image" src={meta.info.logos.small} />
-          <div className="toolbar__main-name">{meta.name}</div>
-          <i className="fa fa-caret-down" />
-        </div>
+        <>
+          <div className="toolbar__main" onClick={this.onOpenVizPicker}>
+            <img className="toolbar__main-image" src={meta.info.logos.small} />
+            <div className="toolbar__main-name">{meta.name}</div>
+            <i className="fa fa-caret-down" />
+          </div>
+          <PluginStateinfo state={meta.state} />
+        </>
       );
     }
   };
@@ -237,7 +240,6 @@ export class VisualizationTab extends PureComponent<Props, State> {
               onClose={this.onCloseVizPicker}
             />
           </FadeIn>
-          <PluginStateinfo state={meta.state} />
           {this.renderPanelOptions()}
         </>
       </EditorTabBody>

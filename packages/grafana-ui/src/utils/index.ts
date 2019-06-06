@@ -16,3 +16,7 @@ export * from './validate';
 export { getFlotPairs } from './flotPairs';
 export * from './object';
 export * from './fieldCache';
+export * from './moment_wrapper';
+
+// Names are too general to export
+// rangeutils, datemath

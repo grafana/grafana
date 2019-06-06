@@ -4,7 +4,7 @@
   "id": "text2",
   "state": "alpha",
 
-  "dataFormats": [],
+  "skipDataQuery": true,
 
   "info": {
     "author": {

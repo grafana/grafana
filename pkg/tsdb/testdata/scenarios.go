@@ -2,6 +2,7 @@ package testdata
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"math/rand"
 	"strconv"
@@ -9,7 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -254,6 +255,84 @@ func init() {
 			for i := int64(0); i < 10 && timeWalkerMs < to; i++ {
 				table.Rows = append(table.Rows, tsdb.RowValues{float64(timeWalkerMs), "This is a message", "Description", 23.1})
 				timeWalkerMs += query.IntervalMs
+			}
+
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Tables = append(queryRes.Tables, &table)
+			return queryRes
+		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "logs",
+		Name: "Logs",
+
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			from := context.TimeRange.GetFromAsMsEpoch()
+			to := context.TimeRange.GetToAsMsEpoch()
+			lines := query.Model.Get("lines").MustInt64(10)
+			includeLevelColumn := query.Model.Get("levelColumn").MustBool(false)
+
+			logLevelGenerator := newRandomStringProvider([]string{
+				"emerg",
+				"alert",
+				"crit",
+				"critical",
+				"warn",
+				"warning",
+				"err",
+				"eror",
+				"error",
+				"info",
+				"notice",
+				"dbug",
+				"debug",
+				"trace",
+				"",
+			})
+			containerIDGenerator := newRandomStringProvider([]string{
+				"f36a9eaa6d34310686f2b851655212023a216de955cbcc764210cefa71179b1a",
+				"5a354a630364f3742c602f315132e16def594fe68b1e4a195b2fce628e24c97a",
+			})
+			hostnameGenerator := newRandomStringProvider([]string{
+				"srv-001",
+				"srv-002",
+			})
+
+			table := tsdb.Table{
+				Columns: []tsdb.TableColumn{
+					{Text: "time"},
+					{Text: "message"},
+					{Text: "container_id"},
+					{Text: "hostname"},
+				},
+				Rows: []tsdb.RowValues{},
+			}
+
+			if includeLevelColumn {
+				table.Columns = append(table.Columns, tsdb.TableColumn{Text: "level"})
+			}
+
+			for i := int64(0); i < lines && to > from; i++ {
+				row := tsdb.RowValues{float64(to)}
+
+				logLevel := logLevelGenerator.Next()
+				timeFormatted := time.Unix(to/1000, 0).Format(time.RFC3339)
+				lvlString := ""
+				if !includeLevelColumn {
+					lvlString = fmt.Sprintf("lvl=%s ", logLevel)
+				}
+
+				row = append(row, fmt.Sprintf("t=%s %smsg=\"Request Completed\" logger=context userId=1 orgId=1 uname=admin method=GET path=/api/datasources/proxy/152/api/prom/label status=502 remote_addr=[::1] time_ms=1 size=0 referer=\"http://localhost:3000/explore?left=%%5B%%22now-6h%%22,%%22now%%22,%%22Prometheus%%202.x%%22,%%7B%%7D,%%7B%%22ui%%22:%%5Btrue,true,true,%%22none%%22%%5D%%7D%%5D\"", timeFormatted, lvlString))
+				row = append(row, containerIDGenerator.Next())
+				row = append(row, hostnameGenerator.Next())
+
+				if includeLevelColumn {
+					row = append(row, logLevel)
+				}
+
+				table.Rows = append(table.Rows, row)
+				to -= query.IntervalMs
 			}
 
 			queryRes := tsdb.NewQueryResult()

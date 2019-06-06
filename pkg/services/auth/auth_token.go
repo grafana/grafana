@@ -4,11 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -300,6 +301,36 @@ func (s *UserAuthTokenService) RevokeAllUserTokens(ctx context.Context, userId i
 		}
 
 		s.log.Debug("all user tokens for user revoked", "userId", userId, "count", affected)
+
+		return err
+	})
+}
+
+func (s *UserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context, userIds []int64) error {
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		if len(userIds) == 0 {
+			return nil
+		}
+
+		user_id_params := strings.Repeat(",?", len(userIds)-1)
+		sql := "DELETE from user_auth_token WHERE user_id IN (?" + user_id_params + ")"
+
+		params := []interface{}{sql}
+		for _, v := range userIds {
+			params = append(params, v)
+		}
+
+		res, err := dbSession.Exec(params...)
+		if err != nil {
+			return err
+		}
+
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		s.log.Debug("all user tokens for given users revoked", "usersCount", len(userIds), "count", affected)
 
 		return err
 	})

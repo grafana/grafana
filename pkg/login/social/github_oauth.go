@@ -278,4 +278,3 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	return userInfo, nil
 }
 
-

@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import moment from 'moment';
 import q from 'q';
 import {
   alignRange,
@@ -8,6 +7,12 @@ import {
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
 } from '../datasource';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { PromOptions } from '../types';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { CustomVariable } from 'app/features/templating/custom_variable';
 
 jest.mock('../metric_find_query');
 
@@ -18,13 +23,13 @@ const DEFAULT_TEMPLATE_SRV_MOCK = {
 
 describe('PrometheusDatasource', () => {
   const ctx: any = {};
-  const instanceSettings = {
+  const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: {} as any,
-  };
+  } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
   ctx.backendSrvMock = {};
 
@@ -33,8 +38,8 @@ describe('PrometheusDatasource', () => {
   ctx.timeSrvMock = {
     timeRange: () => {
       return {
-        from: moment(1531468681),
-        to: moment(1531489712),
+        from: dateTime(1531468681),
+        to: dateTime(1531489712),
       };
     },
   };
@@ -135,7 +140,7 @@ describe('PrometheusDatasource', () => {
   describe('When converting prometheus histogram to heatmap format', () => {
     beforeEach(() => {
       ctx.query = {
-        range: { from: moment(1443454528000), to: moment(1443454528000) },
+        range: { from: dateTime(1443454528000), to: dateTime(1443454528000) },
         targets: [{ expr: 'test{job="testjob"}', format: 'heatmap', legendFormat: '{{le}}' }],
         interval: '1s',
       };
@@ -283,7 +288,7 @@ describe('PrometheusDatasource', () => {
     it('should not escape simple string', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });
-    it('should escape $^*+?.()\\', () => {
+    it('should escape $^*+?.()|\\', () => {
       expect(prometheusSpecialRegexEscape("looking'glass")).toEqual("looking\\\\'glass");
       expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
       expect(prometheusSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
@@ -298,9 +303,57 @@ describe('PrometheusDatasource', () => {
       expect(prometheusSpecialRegexEscape('looking(glass')).toEqual('looking\\\\(glass');
       expect(prometheusSpecialRegexEscape('looking)glass')).toEqual('looking\\\\)glass');
       expect(prometheusSpecialRegexEscape('looking\\glass')).toEqual('looking\\\\\\\\glass');
+      expect(prometheusSpecialRegexEscape('looking|glass')).toEqual('looking\\\\|glass');
     });
     it('should escape multiple special characters', () => {
       expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
+    });
+  });
+
+  describe('When interpolating variables', () => {
+    beforeEach(() => {
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
+      ctx.variable = new CustomVariable({}, {});
+    });
+
+    describe('and value is a string', () => {
+      it('should only escape single quotes', () => {
+        expect(ctx.ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", ctx.variable)).toEqual("abc\\\\'$^*{}[]+?.()|");
+      });
+    });
+
+    describe('and value is a number', () => {
+      it('should return a number', () => {
+        expect(ctx.ds.interpolateQueryExpr(1000, ctx.variable)).toEqual(1000);
+      });
+    });
+
+    describe('and variable allows multi-value', () => {
+      beforeEach(() => {
+        ctx.variable.multi = true;
+      });
+
+      it('should regex escape values if the value is a string', () => {
+        expect(ctx.ds.interpolateQueryExpr('looking*glass', ctx.variable)).toEqual('looking\\\\*glass');
+      });
+
+      it('should return pipe separated values if the value is an array of strings', () => {
+        expect(ctx.ds.interpolateQueryExpr(['a|bc', 'de|f'], ctx.variable)).toEqual('a\\\\|bc|de\\\\|f');
+      });
+    });
+
+    describe('and variable allows all', () => {
+      beforeEach(() => {
+        ctx.variable.includeAll = true;
+      });
+
+      it('should regex escape values if the array is a string', () => {
+        expect(ctx.ds.interpolateQueryExpr('looking*glass', ctx.variable)).toEqual('looking\\\\*glass');
+      });
+
+      it('should return pipe separated values if the value is an array of strings', () => {
+        expect(ctx.ds.interpolateQueryExpr(['a|bc', 'de|f'], ctx.variable)).toEqual('a\\\\|bc|de\\\\|f');
+      });
     });
   });
 
@@ -310,8 +363,8 @@ describe('PrometheusDatasource', () => {
       ctx.templateSrvMock.replace = jest.fn();
       ctx.timeSrvMock.timeRange = () => {
         return {
-          from: moment(1531468681),
-          to: moment(1531489712),
+          from: dateTime(1531468681),
+          to: dateTime(1531489712),
         };
       };
       ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
@@ -344,30 +397,30 @@ const SECOND = 1000;
 const MINUTE = 60 * SECOND;
 const HOUR = 60 * MINUTE;
 
-const time = ({ hours = 0, seconds = 0, minutes = 0 }) => moment(hours * HOUR + minutes * MINUTE + seconds * SECOND);
+const time = ({ hours = 0, seconds = 0, minutes = 0 }) => dateTime(hours * HOUR + minutes * MINUTE + seconds * SECOND);
 
 const ctx = {} as any;
-const instanceSettings = {
+const instanceSettings = ({
   url: 'proxied',
   directUrl: 'direct',
   user: 'test',
   password: 'mupp',
   jsonData: { httpMethod: 'GET' },
-};
+} as unknown) as DataSourceInstanceSettings<PromOptions>;
 const backendSrv = {
   datasourceRequest: jest.fn(),
 } as any;
 
-const templateSrv = {
+const templateSrv = ({
   getAdhocFilters: () => [],
   replace: jest.fn(str => str),
-};
+} as unknown) as TemplateSrv;
 
-const timeSrv = {
+const timeSrv = ({
   timeRange: () => {
     return { to: { diff: () => 2000 }, from: '' };
   },
-};
+} as unknown) as TimeSrv;
 
 describe('PrometheusDatasource', () => {
   describe('When querying prometheus with one target using query editor target spec', () => {
@@ -397,7 +450,7 @@ describe('PrometheusDatasource', () => {
         },
       };
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
       await ctx.ds.query(query).then(data => {
         results = data;
@@ -414,7 +467,7 @@ describe('PrometheusDatasource', () => {
       expect(results.data[0].target).toBe('test{job="testjob"}');
     });
   });
-  describe('When querying prometheus with one target which return multiple series', () => {
+  describe('When querying prometheus with one target which returns multiple series', () => {
     let results;
     const start = 60;
     const end = 360;
@@ -447,7 +500,7 @@ describe('PrometheusDatasource', () => {
       };
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
       await ctx.ds.query(query).then(data => {
         results = data;
@@ -508,7 +561,7 @@ describe('PrometheusDatasource', () => {
       };
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
       await ctx.ds.query(query).then(data => {
         results = data;
@@ -565,7 +618,7 @@ describe('PrometheusDatasource', () => {
       beforeEach(async () => {
         options.annotation.useValueForTime = false;
         backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
         await ctx.ds.annotationQuery(options).then(data => {
           results = data;
@@ -585,7 +638,7 @@ describe('PrometheusDatasource', () => {
       beforeEach(async () => {
         options.annotation.useValueForTime = true;
         backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
         await ctx.ds.annotationQuery(options).then(data => {
           results = data;
@@ -600,7 +653,7 @@ describe('PrometheusDatasource', () => {
     describe('step parameter', () => {
       beforeEach(() => {
         backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       });
 
       it('should use default step for short range if no interval is given', () => {
@@ -696,7 +749,7 @@ describe('PrometheusDatasource', () => {
       };
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query).then(data => {
         results = data;
       });
@@ -733,7 +786,7 @@ describe('PrometheusDatasource', () => {
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=10';
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -749,7 +802,7 @@ describe('PrometheusDatasource', () => {
       };
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=1';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -770,7 +823,7 @@ describe('PrometheusDatasource', () => {
       };
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=60&end=420&step=10';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -787,7 +840,7 @@ describe('PrometheusDatasource', () => {
       const start = 60 * 60;
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=' + start + '&end=' + end + '&step=2';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -809,7 +862,7 @@ describe('PrometheusDatasource', () => {
       // times get rounded up to interval
       const urlExpected = 'proxied/api/v1/query_range?query=test&start=50&end=400&step=50';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -830,7 +883,7 @@ describe('PrometheusDatasource', () => {
       };
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=60&end=420&step=15';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -852,7 +905,7 @@ describe('PrometheusDatasource', () => {
       // times get aligned to interval
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=0&end=400&step=100';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -874,7 +927,7 @@ describe('PrometheusDatasource', () => {
       const start = 0;
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=' + start + '&end=' + end + '&step=100';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -896,7 +949,7 @@ describe('PrometheusDatasource', () => {
       const start = 0;
       const urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=' + start + '&end=' + end + '&step=60';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -939,7 +992,7 @@ describe('PrometheusDatasource', () => {
 
       templateSrv.replace = jest.fn(str => str);
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -979,7 +1032,7 @@ describe('PrometheusDatasource', () => {
         '&start=60&end=420&step=10';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1020,7 +1073,7 @@ describe('PrometheusDatasource', () => {
         '&start=0&end=400&step=100';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1067,7 +1120,7 @@ describe('PrometheusDatasource', () => {
 
       templateSrv.replace = jest.fn(str => str);
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1108,7 +1161,7 @@ describe('PrometheusDatasource', () => {
         '&start=60&end=420&step=15';
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1154,7 +1207,7 @@ describe('PrometheusDatasource', () => {
         '&step=60';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       templateSrv.replace = jest.fn(str => str);
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1177,13 +1230,13 @@ describe('PrometheusDatasource', () => {
 
 describe('PrometheusDatasource for POST', () => {
   //   const ctx = new helpers.ServiceTestContext();
-  const instanceSettings = {
+  const instanceSettings = ({
     url: 'proxied',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'POST' },
-  };
+  } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
   describe('When querying prometheus with one target using query editor target spec', () => {
     let results;
@@ -1216,7 +1269,7 @@ describe('PrometheusDatasource for POST', () => {
         },
       };
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query).then(data => {
         results = data;
       });
@@ -1241,7 +1294,7 @@ describe('PrometheusDatasource for POST', () => {
     };
 
     it('with proxy access tracing headers should be added', () => {
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       ctx.ds._addTracingHeaders(httpOptions, options);
       expect(httpOptions.headers['X-Dashboard-Id']).toBe(1);
       expect(httpOptions.headers['X-Panel-Id']).toBe(2);
@@ -1249,7 +1302,7 @@ describe('PrometheusDatasource for POST', () => {
 
     it('with direct access tracing headers should not be added', () => {
       instanceSettings.url = 'http://127.0.0.1:8000';
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv, timeSrv);
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       ctx.ds._addTracingHeaders(httpOptions, options);
       expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
       expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);

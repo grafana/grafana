@@ -70,6 +70,34 @@ jobs:
             name: cache server tests
             command: './scripts/circle-test-cache-servers.sh'
 
+  end-to-end-test:
+      docker:
+        - image: circleci/node:8-browsers
+        - image: grafana/grafana-dev:master-$CIRCLE_SHA1
+      steps:
+          - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
+          - checkout
+          - restore_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+          - run:
+              name: yarn install
+              command: 'yarn install --pure-lockfile --no-progress'
+              no_output_timeout: 5m
+          - save_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+              paths:
+                - node_modules
+          - run:
+              name: run end-to-end tests
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
+              no_output_timeout: 5m
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theTruth
+                destination: expected-screenshots
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theOutput
+                destination: output-screenshots               
+
   codespell:
     docker:
       - image: circleci/python
@@ -81,7 +109,7 @@ jobs:
       - run:
           # Important: all words have to be in lowercase, and separated by "\n".
           name: exclude known exceptions
-          command: 'echo -e "unknwon" > words_to_ignore.txt'
+          command: 'echo -e "unknwon\nreferer\nerrorstring" > words_to_ignore.txt'
       - run:
           name: check documentation spelling errors
           command: 'codespell -I ./words_to_ignore.txt docs/'
@@ -566,6 +594,7 @@ jobs:
           root: .
           paths:
             - dist/grafana-*.msi
+            - dist/grafana-*.msi.sha256
 
   store-build-artifacts:
     docker:
@@ -606,7 +635,7 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
-          filters: *filter-only-master
+          filters: *filter-only-master 
       - grafana-docker-master:
           requires:
             - build-all
@@ -639,7 +668,10 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
-
+      - end-to-end-test:
+          requires:
+            - grafana-docker-master
+          filters: *filter-only-master
   release:
     jobs:
       - build-all:
@@ -700,7 +732,7 @@ workflows:
             - backend-lint
             - mysql-integration-test
             - postgres-integration-test
-          filters: *filter-only-master
+          filters: *filter-only-release
 
   build-branches-and-prs:
       jobs:

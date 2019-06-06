@@ -154,6 +154,15 @@ callback URL to be correct).
 > in front of Grafana that exposes it through a subpath. In that
 > case add the subpath to the end of this URL setting.
 
+### serve_from_sub_path
+
+Serve Grafana from subpath specified in `root_url` setting. By
+default it is set to `false` for compatibility reasons.
+
+By enabling this setting and using a subpath in `root_url` above, e.g.
+`root_url = http://localhost:3000/grafana`, Grafana will be accessible on
+`http://localhost:3000/grafana`.
+
 ### static_root_path
 
 The path to the directory where the front end files (HTML, JS, and CSS
@@ -313,6 +322,12 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 ### cookie_samesite
 
 Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
+
+### allow_embedding
+
+When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTTP responses which will instruct
+browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
+mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
 
 <hr />
 
@@ -573,7 +588,7 @@ Service Account keys can be created and downloaded from https://console.develope
 
 Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
 
-### bucket name
+### bucket
 Bucket Name on Google Cloud Storage.
 
 ### path

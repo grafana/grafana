@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
-import moment from 'moment';
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import { Input, RawTimeRange, TimeRange, TIME_FORMAT } from '@grafana/ui';
+import { toUtc, isDateTime, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 interface TimePickerProps {
   isOpen?: boolean;
@@ -28,14 +28,14 @@ const getRaw = (isUtc: boolean, range: any) => {
     to: range.raw.to,
   };
 
-  if (moment.isMoment(rawRange.from)) {
+  if (isDateTime(rawRange.from)) {
     if (!isUtc) {
       rawRange.from = rawRange.from.local();
     }
     rawRange.from = rawRange.from.format(TIME_FORMAT);
   }
 
-  if (moment.isMoment(rawRange.to)) {
+  if (isDateTime(rawRange.to)) {
     if (!isUtc) {
       rawRange.to = rawRange.to.local();
     }
@@ -99,8 +99,8 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
   move(direction: number, scanning?: boolean): RawTimeRange {
     const { onChangeTime, range: origRange } = this.props;
     const range = {
-      from: moment.utc(origRange.from),
-      to: moment.utc(origRange.to),
+      from: toUtc(origRange.from),
+      to: toUtc(origRange.to),
     };
     const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
     let to, from;
@@ -116,8 +116,8 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
     }
 
     const nextTimeRange = {
-      from: this.props.isUtc ? moment.utc(from) : moment(from),
-      to: this.props.isUtc ? moment.utc(to) : moment(to),
+      from: this.props.isUtc ? toUtc(from) : dateTime(from),
+      to: this.props.isUtc ? toUtc(to) : dateTime(to),
     };
     if (onChangeTime) {
       onChangeTime(nextTimeRange);
@@ -149,11 +149,11 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
         };
 
         if (rawRange.from.indexOf('now') === -1) {
-          rawRange.from = isUtc ? moment.utc(rawRange.from, TIME_FORMAT) : moment(rawRange.from, TIME_FORMAT);
+          rawRange.from = isUtc ? toUtc(rawRange.from, TIME_FORMAT) : dateTime(rawRange.from, TIME_FORMAT);
         }
 
         if (rawRange.to.indexOf('now') === -1) {
-          rawRange.to = isUtc ? moment.utc(rawRange.to, TIME_FORMAT) : moment(rawRange.to, TIME_FORMAT);
+          rawRange.to = isUtc ? toUtc(rawRange.to, TIME_FORMAT) : dateTime(rawRange.to, TIME_FORMAT);
         }
 
         const rangeString = rangeUtil.describeTimeRange(rawRange);

@@ -20,7 +20,7 @@ import (
 	"github.com/go-macaron/session"
 	ini "gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -47,10 +47,11 @@ var (
 
 var (
 	// App settings.
-	Env          = DEV
-	AppUrl       string
-	AppSubUrl    string
-	InstanceName string
+	Env              = DEV
+	AppUrl           string
+	AppSubUrl        string
+	ServeFromSubPath bool
+	InstanceName     string
 
 	// build
 	BuildVersion    string
@@ -93,6 +94,7 @@ var (
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
 	CookieSameSite                   http.SameSite
+	AllowEmbedding                   bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -137,7 +139,7 @@ var (
 	AuthProxyHeaderName     string
 	AuthProxyHeaderProperty string
 	AuthProxyAutoSignUp     bool
-	AuthProxyLdapSyncTtl    int
+	AuthProxyLDAPSyncTtl    int
 	AuthProxyWhitelist      string
 	AuthProxyHeaders        map[string]string
 
@@ -164,11 +166,11 @@ var (
 	GoogleTagManagerId string
 
 	// LDAP
-	LdapEnabled           bool
-	LdapConfigFile        string
-	LdapSyncCron          string
-	LdapAllowSignup       bool
-	LdapActiveSyncEnabled bool
+	LDAPEnabled           bool
+	LDAPConfigFile        string
+	LDAPSyncCron          string
+	LDAPAllowSignup       bool
+	LDAPActiveSyncEnabled bool
 
 	// QUOTA
 	Quota QuotaSettings
@@ -204,8 +206,9 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
-	AppUrl    string
-	AppSubUrl string
+	AppUrl           string
+	AppSubUrl        string
+	ServeFromSubPath bool
 
 	// Paths
 	ProvisioningPath string
@@ -609,8 +612,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
+
 	cfg.AppUrl = AppUrl
 	cfg.AppSubUrl = AppSubUrl
+	cfg.ServeFromSubPath = ServeFromSubPath
 
 	Protocol = HTTP
 	protocolStr, err := valueAsString(server, "protocol", "http")
@@ -689,6 +695,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		CookieSameSite = http.SameSiteLaxMode
 		cfg.CookieSameSite = CookieSameSite
 	}
+
+	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
 	// read snapshots settings
 	snapshots := iniFile.Section("snapshots")
@@ -802,6 +810,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// auth proxy
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
+
 	AuthProxyHeaderName, err = valueAsString(authProxy, "header_name", "")
 	if err != nil {
 		return err
@@ -811,7 +820,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
-	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
+	AuthProxyLDAPSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 	AuthProxyWhitelist, err = valueAsString(authProxy, "whitelist", "")
 	if err != nil {
 		return err
@@ -974,11 +983,11 @@ type RemoteCacheOptions struct {
 
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
-	LdapConfigFile = ldapSec.Key("config_file").String()
-	LdapSyncCron = ldapSec.Key("sync_cron").String()
-	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
-	LdapActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
-	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
+	LDAPConfigFile = ldapSec.Key("config_file").String()
+	LDAPSyncCron = ldapSec.Key("sync_cron").String()
+	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
+	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
 
 func (cfg *Cfg) readSessionConfig() {

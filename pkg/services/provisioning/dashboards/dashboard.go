@@ -3,8 +3,9 @@ package dashboards
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/pkg/errors"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type DashboardProvisionerImpl struct {
@@ -18,13 +19,13 @@ func NewDashboardProvisionerImpl(configDirectory string) (*DashboardProvisionerI
 	configs, err := cfgReader.readConfig()
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to read dashboards config")
+		return nil, errutil.Wrap("Failed to read dashboards config", err)
 	}
 
 	fileReaders, err := getFileReaders(configs, logger)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to initialize file readers")
+		return nil, errutil.Wrap("Failed to initialize file readers", err)
 	}
 
 	d := &DashboardProvisionerImpl{
@@ -39,7 +40,7 @@ func (provider *DashboardProvisionerImpl) Provision() error {
 	for _, reader := range provider.fileReaders {
 		err := reader.startWalkingDisk()
 		if err != nil {
-			return errors.Wrapf(err, "Failed to provision config %v", reader.Cfg.Name)
+			return errutil.Wrapf(err, "Failed to provision config %v", reader.Cfg.Name)
 		}
 	}
 
@@ -73,7 +74,7 @@ func getFileReaders(configs []*DashboardsAsConfig, logger log.Logger) ([]*fileRe
 		case "file":
 			fileReader, err := NewDashboardFileReader(config, logger.New("type", config.Type, "name", config.Name))
 			if err != nil {
-				return nil, errors.Wrapf(err, "Failed to create file reader for config %v", config.Name)
+				return nil, errutil.Wrapf(err, "Failed to create file reader for config %v", config.Name)
 			}
 			readers = append(readers, fileReader)
 		default:

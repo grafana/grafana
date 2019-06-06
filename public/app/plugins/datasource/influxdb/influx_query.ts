@@ -146,7 +146,7 @@ export default class InfluxQuery {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
       if (operator !== '>' && operator !== '<') {
-        value = "'" + value.replace(/\\/g, '\\\\') + "'";
+        value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
       }
     } else if (interpolate) {
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
