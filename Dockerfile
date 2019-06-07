@@ -33,7 +33,7 @@ ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
 # Final container
-FROM debian:stretch-slim
+FROM alpine:3.9
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
@@ -50,11 +50,14 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -qq -y libfontconfig1 ca-certificates && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add -U fontconfig ca-certificates shadow bash
 
+# Install glibc
+RUN apk --no-cache add ca-certificates wget &&  \
+    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
+    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.29-r0/glibc-2.29-r0.apk && \
+    apk add glibc-2.29-r0.apk && \
+    rm glibc-2.29-r0.apk /etc/apk/keys/sgerrand.rsa.pub
 COPY conf ./conf
 
 RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
