@@ -18,9 +18,6 @@ interface DataLinksEditorProps {
 }
 
 Prism.languages['links'] = {
-  variable: {
-    pattern: /\bvar-[a-zA-Z0-9=\{\}\$,]*/,
-  },
   builtInVariable: {
     pattern: /(\${\w+})/,
   },
