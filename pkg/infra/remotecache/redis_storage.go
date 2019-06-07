@@ -1,6 +1,8 @@
 package remotecache
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -13,12 +15,32 @@ type redisStorage struct {
 	c *redis.Client
 }
 
-func newRedisStorage(opts *setting.RemoteCacheOptions) *redisStorage {
-	opt := &redis.Options{
-		Network: "tcp",
-		Addr:    opts.ConnStr,
+// parseRedisConnStr parses k=v pairs in csv and builds a redis Options object
+func parseRedisConnStr(connStr string) (*redis.Options, error) {
+	keyValueCSV := strings.Split(connStr, ",")
+	options := &redis.Options{Network: "tcp"}
+	for _, rawKeyValue := range keyValueCSV {
+		keyValueTuple := strings.Split(rawKeyValue, "=")
+		if len(keyValueTuple) != 2 {
+			return nil, fmt.Errorf("incorrect redis connection string format detected for '%s', format is key=value,key=value", rawKeyValue)
+		}
+		switch keyValueTuple[0] {
+		case "addr":
+			options.Addr = keyValueTuple[1]
+		//TODO db, password, pool size
+		default:
+			return nil, fmt.Errorf("unrecorgnized option '%v' in redis connection string", keyValueTuple[0])
+		}
 	}
-	return &redisStorage{c: redis.NewClient(opt)}
+	return options, nil
+}
+
+func newRedisStorage(opts *setting.RemoteCacheOptions) (*redisStorage, error) {
+	opt, err := parseRedisConnStr(opts.ConnStr)
+	if err != nil {
+		return nil, err
+	}
+	return &redisStorage{c: redis.NewClient(opt)}, nil
 }
 
 // Set sets value to given key in session.
@@ -28,8 +50,7 @@ func (s *redisStorage) Set(key string, val interface{}, expires time.Duration) e
 	if err != nil {
 		return err
 	}
-
-	status := s.c.SetEx(key, expires, string(value))
+	status := s.c.SetEx(key, -expires, string(value))
 	return status.Err()
 }
 
