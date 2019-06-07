@@ -201,6 +201,10 @@ const ContextMenuGroup: React.FC<ContextMenuGroupProps> = ({ group, onItemClick 
   const theme = useContext(ThemeContext);
   const styles = getContextMenuStyles(theme);
 
+  if (group.items.length === 0) {
+    return null;
+  }
+
   return (
     <div>
       {group.label && <div className={styles.groupLabel}>{group.label}</div>}
