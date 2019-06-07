@@ -2,6 +2,7 @@ package remotecache
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,12 +25,27 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 		if len(keyValueTuple) != 2 {
 			return nil, fmt.Errorf("incorrect redis connection string format detected for '%s', format is key=value,key=value", rawKeyValue)
 		}
-		switch keyValueTuple[0] {
+		connKey := keyValueTuple[0]
+		connVal := keyValueTuple[1]
+		switch connKey {
 		case "addr":
-			options.Addr = keyValueTuple[1]
-		//TODO db, password, pool size
+			options.Addr = connVal
+		case "password":
+			options.Password = connVal
+		case "db":
+			i, err := strconv.ParseInt(connVal, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("value for db in redis connection string must be a number: %v", err)
+			}
+			options.DB = i
+		case "pool_size":
+			i, err := strconv.Atoi(connVal)
+			if err != nil {
+				return nil, fmt.Errorf("value for pool_size in redis connection string must be a number: %v", err)
+			}
+			options.PoolSize = i
 		default:
-			return nil, fmt.Errorf("unrecorgnized option '%v' in redis connection string", keyValueTuple[0])
+			return nil, fmt.Errorf("unrecorgnized option '%v' in redis connection string", connVal)
 		}
 	}
 	return options, nil
