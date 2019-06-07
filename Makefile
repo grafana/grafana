@@ -1,6 +1,6 @@
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go test-go test-js test run clean gosec revive devenv devenv-down revive-alerting bra
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go test-go test-js test run clean gosec revive devenv devenv-down revive-alerting
 
 GO := GO111MODULE=on go
 GO_FILES := ./pkg/...
@@ -57,10 +57,6 @@ test-js:
 
 test: test-go test-js
 
-run:
-	@echo "start a server"
-	./bin/grafana-server
-
 clean:
 	@echo "cleaning"
 	rm -rf node_modules
@@ -93,7 +89,7 @@ revive-alerting: scripts/go/bin/revive
 		-formatter stylish \
 		./pkg/services/alerting/...
 
-bra: scripts/go/bin/bra
+run: scripts/go/bin/bra
 	@scripts/go/bin/bra run
 
 # TODO recheck the rules and leave only necessary exclusions
