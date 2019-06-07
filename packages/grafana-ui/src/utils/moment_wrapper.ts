@@ -66,6 +66,7 @@ export interface DateTime extends Object {
   valueOf: () => number;
   unix: () => number;
   utc: () => DateTime;
+  utcOffset: () => number;
 }
 
 export const setLocale = (language: string) => {
