@@ -30,17 +30,16 @@ type IConnection interface {
 type IServer interface {
 	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	Users([]string) ([]*models.ExternalUserInfo, error)
-	InitialBind(string, string) error
+	Auth(string, string) error
 	Dial() error
 	Close()
 }
 
 // Server is basic struct of LDAP authorization
 type Server struct {
-	Config            *ServerConfig
-	Connection        IConnection
-	requireSecondBind bool
-	log               log.Logger
+	Config     *ServerConfig
+	Connection IConnection
+	log        log.Logger
 }
 
 var (
@@ -48,10 +47,6 @@ var (
 	// ErrInvalidCredentials is returned if username and password do not match
 	ErrInvalidCredentials = errors.New("Invalid Username or Password")
 )
-
-var dial = func(network, addr string) (IConnection, error) {
-	return ldap.Dial(network, addr)
-}
 
 // New creates the new LDAP auth
 func New(config *ServerConfig) IServer {
@@ -96,7 +91,7 @@ func (server *Server) Dial() error {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if server.Config.StartTLS {
-				server.Connection, err = dial("tcp", address)
+				server.Connection, err = ldap.Dial("tcp", address)
 				if err == nil {
 					if err = server.Connection.StartTLS(tlsCfg); err == nil {
 						return nil
@@ -106,7 +101,7 @@ func (server *Server) Dial() error {
 				server.Connection, err = ldap.DialTLS("tcp", address, tlsCfg)
 			}
 		} else {
-			server.Connection, err = dial("tcp", address)
+			server.Connection, err = ldap.Dial("tcp", address)
 		}
 
 		if err == nil {
@@ -125,9 +120,8 @@ func (server *Server) Close() {
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
-
-	// Perform initial authentication
-	err := server.InitialBind(query.Username, query.Password)
+	// Authentication
+	err := server.Auth(query.Username, query.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -152,13 +146,6 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		return nil, err
 	}
 
-	if server.requireSecondBind {
-		err = server.secondBind(user, query.Password)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return user, nil
 }
 
@@ -168,8 +155,8 @@ func (server *Server) Users(logins []string) (
 	error,
 ) {
 	var result *ldap.SearchResult
-	var err error
 	var Config = server.Config
+	var err error
 
 	for _, base := range Config.SearchBaseDNs {
 		result, err = server.Connection.Search(
@@ -182,6 +169,10 @@ func (server *Server) Users(logins []string) (
 		if len(result.Entries) > 0 {
 			break
 		}
+	}
+
+	if len(result.Entries) == 0 {
+		return []*models.ExternalUserInfo{}, nil
 	}
 
 	serializedUsers, err := server.serializeUsers(result)
@@ -300,12 +291,12 @@ func (server *Server) buildGrafanaUser(
 
 	for _, group := range server.Config.Groups {
 		// only use the first match for each org
-		if extUser.OrgRoles[group.OrgId] != "" {
+		if extUser.OrgRoles[group.OrgID] != "" {
 			continue
 		}
 
 		if isMemberOf(memberOf, group.GroupDN) {
-			extUser.OrgRoles[group.OrgId] = group.OrgRole
+			extUser.OrgRoles[group.OrgID] = group.OrgRole
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
@@ -315,78 +306,31 @@ func (server *Server) buildGrafanaUser(
 	return extUser
 }
 
-func (server *Server) serverBind() error {
-	bindFn := func() error {
-		return server.Connection.Bind(
-			server.Config.BindDN,
-			server.Config.BindPassword,
-		)
-	}
-
-	if server.Config.BindPassword == "" {
-		bindFn = func() error {
-			return server.Connection.UnauthenticatedBind(server.Config.BindDN)
-		}
-	}
-
-	// bind_dn and bind_password to bind
-	if err := bindFn(); err != nil {
-		server.log.Info("LDAP initial bind failed, %v", err)
-
-		if ldapErr, ok := err.(*ldap.Error); ok {
-			if ldapErr.ResultCode == 49 {
-				return ErrInvalidCredentials
-			}
-		}
-		return err
-	}
-
-	return nil
+// shouldBindAdmin checks if we should use
+// admin username & password for LDAP bind
+func (server *Server) shouldBindAdmin() bool {
+	return server.Config.BindPassword != ""
 }
 
-func (server *Server) secondBind(
-	user *models.ExternalUserInfo,
-	userPassword string,
-) error {
-	err := server.Connection.Bind(user.AuthId, userPassword)
-	if err != nil {
-		server.log.Info("Second bind failed", "error", err)
+// Auth authentificates user in LDAP.
+// It might not use passed password and username,
+// since they can be overwritten with admin config values -
+// see "bind_dn" and "bind_password" options in LDAP config
+func (server *Server) Auth(username, password string) error {
+	path := server.Config.BindDN
 
-		if ldapErr, ok := err.(*ldap.Error); ok {
-			if ldapErr.ResultCode == 49 {
-				return ErrInvalidCredentials
-			}
-		}
-		return err
-	}
-
-	return nil
-}
-
-// InitialBind intiates first bind to LDAP server
-func (server *Server) InitialBind(username, userPassword string) error {
-	if server.Config.BindPassword != "" || server.Config.BindDN == "" {
-		userPassword = server.Config.BindPassword
-		server.requireSecondBind = true
-	}
-
-	bindPath := server.Config.BindDN
-	if strings.Contains(bindPath, "%s") {
-		bindPath = fmt.Sprintf(server.Config.BindDN, username)
+	if server.shouldBindAdmin() {
+		password = server.Config.BindPassword
+	} else {
+		path = fmt.Sprintf(path, username)
 	}
 
 	bindFn := func() error {
-		return server.Connection.Bind(bindPath, userPassword)
-	}
-
-	if userPassword == "" {
-		bindFn = func() error {
-			return server.Connection.UnauthenticatedBind(bindPath)
-		}
+		return server.Connection.Bind(path, password)
 	}
 
 	if err := bindFn(); err != nil {
-		server.log.Info("Initial bind failed", "error", err)
+		server.log.Error("Cannot authentificate in LDAP", "err", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {

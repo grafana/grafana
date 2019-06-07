@@ -1,3 +1,5 @@
+//+build !test
+
 package ldap
 
 import (
@@ -15,6 +17,7 @@ import (
 // MockConnection struct for testing
 type MockConnection struct {
 	SearchResult     *ldap.SearchResult
+	SearchError      error
 	SearchCalled     bool
 	SearchAttributes []string
 
@@ -53,10 +56,19 @@ func (c *MockConnection) setSearchResult(result *ldap.SearchResult) {
 	c.SearchResult = result
 }
 
+func (c *MockConnection) setSearchError(err error) {
+	c.SearchError = err
+}
+
 // Search mocks Search connection function
 func (c *MockConnection) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, error) {
 	c.SearchCalled = true
 	c.SearchAttributes = sr.Attributes
+
+	if c.SearchError != nil {
+		return nil, c.SearchError
+	}
+
 	return c.SearchResult, nil
 }
 
