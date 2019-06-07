@@ -109,6 +109,11 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 		} else {
 			sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`
 			_, err = session.Exec(sql, key, data, getTime().Unix(), expiresInSeconds)
+			if err != nil {
+				// TODO: check for integrity error
+				sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
+				_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
+			}
 		}
 
 		return err
