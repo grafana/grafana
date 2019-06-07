@@ -6,7 +6,7 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
-import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin, DrillDownLink } from '@grafana/ui';
+import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin, DataLink } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -106,7 +106,7 @@ export class PanelModel {
   maxDataPoints?: number;
   interval?: string;
   description?: string;
-  links?: DrillDownLink[];
+  links?: DataLink[];
   transparent: boolean;
 
   // non persisted

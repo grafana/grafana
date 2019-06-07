@@ -2,7 +2,7 @@
 import PluginPrism from 'slate-prism';
 
 import React, { useState, ChangeEvent, useMemo, useContext, useCallback } from 'react';
-import { DrillDownLink } from '../../index';
+import { DataLink } from '../../index';
 import { FormField, Switch, Portal } from '../index';
 // @ts-ignore
 import { Editor } from 'slate-react';
@@ -22,10 +22,10 @@ import { makeValue } from '../../utils/slate';
 
 interface DataLinkEditorProps {
   index: number;
-  value: DrillDownLink;
+  value: DataLink;
   suggestions: VariableSuggestion[];
-  onChange: (index: number, link: DrillDownLink) => void;
-  onRemove: (link: DrillDownLink) => void;
+  onChange: (index: number, link: DataLink) => void;
+  onRemove: (link: DataLink) => void;
 }
 
 const plugins = [

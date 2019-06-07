@@ -5,14 +5,14 @@ import Prism from 'prismjs';
 
 // Components
 import { css } from 'emotion';
-import { DrillDownLink, ThemeContext } from '../../index';
+import { DataLink, ThemeContext } from '../../index';
 import { Button, ButtonVariant } from '../index';
 import { DataLinkEditor } from './DataLinkEditor';
 import { VariableSuggestion } from './DataLinkSuggestions';
 
 interface DataLinksEditorProps {
-  value: DrillDownLink[];
-  onChange: (links: DrillDownLink[]) => void;
+  value: DataLink[];
+  onChange: (links: DataLink[]) => void;
   suggestions: VariableSuggestion[];
   maxLinks?: number;
 }
@@ -33,7 +33,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
     onChange(value ? [...value, { url: '', title: '' }] : [{ url: '', title: '' }]);
   };
 
-  const onLinkChanged = (linkIndex: number, newLink: DrillDownLink) => {
+  const onLinkChanged = (linkIndex: number, newLink: DataLink) => {
     onChange(
       value.map((item, listIndex) => {
         if (linkIndex === listIndex) {
@@ -44,10 +44,11 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
     );
   };
 
-  const onRemove = (link: DrillDownLink) => {
+  const onRemove = (link: DataLink) => {
     onChange(value.filter(item => item !== link));
   };
 
+  console.log(value);
   return (
     <>
       {value && value.length > 0 && (

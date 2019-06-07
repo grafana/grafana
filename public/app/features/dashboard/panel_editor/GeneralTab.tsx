@@ -8,7 +8,7 @@ import './../../panel/GeneralTabCtrl';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DrillDownLink, PanelOptionsGroup, DataLinksEditor } from '@grafana/ui';
+import { DataLink, PanelOptionsGroup, DataLinksEditor } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 interface Props {
@@ -47,7 +47,7 @@ export class GeneralTab extends PureComponent<Props> {
     }
   }
 
-  onPanelDrillDownLinksChanged = (links: DrillDownLink[]) => {
+  onDataLinksChanged = (links: DataLink[]) => {
     this.props.panel.links = links;
     this.props.panel.render();
     this.forceUpdate();
@@ -64,7 +64,7 @@ export class GeneralTab extends PureComponent<Props> {
           <PanelOptionsGroup title="Panel links">
             <DataLinksEditor
               value={panel.links}
-              onChange={this.onPanelDrillDownLinksChanged}
+              onChange={this.onDataLinksChanged}
               suggestions={suggestions}
               maxLinks={10}
             />

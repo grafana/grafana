@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DrilldownLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
+import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -414,7 +414,7 @@ describe('DashboardModel', () => {
     });
 
     it('should add keepTime as variable', () => {
-      expect(model.panels[0].links[0].url).toBe(`http://mylink.com?$${DrilldownLinkBuiltInVars.keepTime}`);
+      expect(model.panels[0].links[0].url).toBe(`http://mylink.com?$${DataLinkBuiltInVars.keepTime}`);
     });
 
     it('should add params to url', () => {
@@ -422,9 +422,7 @@ describe('DashboardModel', () => {
     });
 
     it('should add includeVars to url', () => {
-      expect(model.panels[0].links[2].url).toBe(
-        `http://mylink.com?existingParam&$${DrilldownLinkBuiltInVars.includeVars}`
-      );
+      expect(model.panels[0].links[2].url).toBe(`http://mylink.com?existingParam&$${DataLinkBuiltInVars.includeVars}`);
     });
   });
 });

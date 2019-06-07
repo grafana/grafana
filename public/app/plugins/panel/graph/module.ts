@@ -11,13 +11,7 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import {
-  getColorFromHexRgbOrName,
-  LegacyResponseData,
-  SeriesData,
-  DrillDownLink,
-  VariableSuggestion,
-} from '@grafana/ui';
+import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData, DataLink, VariableSuggestion } from '@grafana/ui';
 import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
@@ -129,7 +123,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     thresholds: [],
     timeRegions: [],
     options: {
-      drilldownLinks: [],
+      dataLinks: [],
     },
   };
 
@@ -154,7 +148,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
 
-    this.onDrilldownLinksChange = this.onDrilldownLinksChange.bind(this);
+    this.onDataLinksChange = this.onDataLinksChange.bind(this);
   }
 
   onInitEditMode() {
@@ -300,10 +294,10 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   };
 
-  onDrilldownLinksChange(drilldownLinks: DrillDownLink[]) {
+  onDataLinksChange(dataLinks: DataLink[]) {
     this.panel.updateOptions({
       ...this.panel.options,
-      drilldownLinks,
+      dataLinks,
     });
   }
 

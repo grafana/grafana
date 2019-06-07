@@ -81,6 +81,8 @@ export function registerAngularDirectives() {
     ['getContextMenuSource', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
+  // We keep the drilldown terminology here because of as using data-* directive
+  // being in conflict with HTML data attributes
   react2AngularDirective('drilldownLinksEditor', DataLinksEditor, [
     'value',
     'suggestions',
