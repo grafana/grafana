@@ -156,7 +156,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
       if (item.origin === VariableOrigin.BuiltIn) {
         change.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
       } else {
-        change.insertText(`var-${item.value}=$${item.value}`);
+        change.insertText(`var-${item.value}=$\{${item.value}}`);
       }
 
       setLinkUrl(change.value);
