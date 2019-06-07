@@ -10,6 +10,7 @@ import (
 
 	"gopkg.in/ldap.v3"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -139,9 +140,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		return nil, ErrInvalidCredentials
 	}
 
-	// Check if a second user bind is needed
 	user := users[0]
-
 	if err := server.validateGrafanaUser(user); err != nil {
 		return nil, err
 	}
@@ -179,6 +178,8 @@ func (server *Server) Users(logins []string) (
 	if err != nil {
 		return nil, err
 	}
+
+	server.log.Debug("LDAP users found", "users", spew.Sdump(serializedUsers))
 
 	return serializedUsers, nil
 }

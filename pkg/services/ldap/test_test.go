@@ -1,5 +1,3 @@
-//+build !test
-
 package ldap
 
 import (
