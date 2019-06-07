@@ -3,7 +3,6 @@ package ldap
 import (
 	"crypto/tls"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/ldap.v3"
 )
 
