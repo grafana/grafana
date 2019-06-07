@@ -292,7 +292,9 @@ func (auth *AuthProxy) Remember(id int64) *Error {
 		return nil
 	}
 
+	// Switch the comments in the following lines to trigger the error
 	expiration := time.Duration(-auth.cacheTTL) * time.Minute
+	//expiration := time.Second
 
 	err := auth.store.Set(key, id, expiration)
 	if err != nil {
