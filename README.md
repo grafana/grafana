@@ -46,7 +46,7 @@ cd $GOPATH/src/github.com/grafana/grafana
 To run the backend and rebuild on source change:
 
 ```bash
-make bra
+make run
 ```
 
 #### Frontend
