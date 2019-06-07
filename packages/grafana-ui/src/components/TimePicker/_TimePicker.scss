@@ -27,10 +27,10 @@
   border-radius: $border-radius;
   background: $popover-bg;
   color: $popover-color;
+  box-shadow: $popover-shadow;
 
   .time-picker-popover-box {
     max-width: 500px;
-    padding: 20px;
 
     ul {
       padding-right: $spacer;
@@ -53,11 +53,12 @@
       display: flex;
       flex-flow: row nowrap;
       justify-content: space-around;
+      padding: $space-md;
     }
   }
 
   .time-picker-popover-box-title {
-    font-size: $font-size-lg;
+    font-size: $font-size-md;
     font-weight: $font-weight-semi-bold;
   }
 
@@ -87,6 +88,11 @@
     justify-content: flex-end;
     margin-top: $spacer;
   }
+}
+
+.time-picker-popover-box-header {
+  background: $popover-header-bg;
+  padding: $space-sm;
 }
 
 .time-picker-input {
@@ -186,7 +192,6 @@ $arrowPadding: $arrowPaddingToBorder * 3;
 
       .time-picker-popover-box-title {
         font-size: $font-size-md;
-        font-weight: $font-weight-semi-bold;
       }
     }
 
