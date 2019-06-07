@@ -7,12 +7,13 @@ const template = `
     <div class="graph-legend-content" graph-legend></div>
   </div>
   <div ng-if="ctrl.contextMenuCtrl.isVisible">
-    <context-menu
+    <graph-context-menu
       items="ctrl.contextMenuCtrl.menuItems"
       onClose="ctrl.onContextMenuClose"
+      getContextMenuSource="ctrl.contextMenuCtrl.getSource"
       x="ctrl.contextMenuCtrl.position.x"
       y="ctrl.contextMenuCtrl.position.y"
-    ></context-menu>
+    ></graph-context-menu>
   </div>
 </div>
 `;
