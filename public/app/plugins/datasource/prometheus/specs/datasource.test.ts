@@ -237,15 +237,15 @@ describe('PrometheusDatasource', () => {
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(3);
     });
-    it('does align intervals with local midnight +UTC offset', () => {
+    it('does align intervals with local midnight -UTC offset', () => {
       //week range, location 4+ hours UTC offset, 24h step time
-      const range = alignRange(4*60*60, (7*24 + 4)*60*60, 24*60*60, 4*60*60); //04:00 UTC, 7 day range
+      const range = alignRange(4*60*60, (7*24 + 4)*60*60, 24*60*60, -4*60*60); //04:00 UTC, 7 day range
       expect(range.start).toEqual(4*60*60);
       expect(range.end).toEqual((7*24 + 4)*60*60);
     });
-    it('does align intervals with local midnight -UTC offset', () => {
+    it('does align intervals with local midnight +UTC offset', () => {
       //week range, location 4- hours UTC offset, 24h step time
-      const range = alignRange(20*60*60, (8*24 - 4)*60*60, 24*60*60, -4*60*60);  //20:00 UTC on day1, 7 days later is 20:00 on day8
+      const range = alignRange(20*60*60, (8*24 - 4)*60*60, 24*60*60, 4*60*60);  //20:00 UTC on day1, 7 days later is 20:00 on day8
       expect(range.start).toEqual(20*60*60);
       expect(range.end).toEqual((8*24 - 4)*60*60);
     });
