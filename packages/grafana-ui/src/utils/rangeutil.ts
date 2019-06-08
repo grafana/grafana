@@ -59,10 +59,9 @@ const rangeOptions = [
   { from: 'now-1y', to: 'now', display: 'Last 1 year', section: 0 },
   { from: 'now-2y', to: 'now', display: 'Last 2 years', section: 0 },
   { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 0 },
-  { from: 'custom', to: 'custum', display: 'Custom time range', section: 0 },
 ];
 
-const absoluteFormat = 'MMM D, YYYY HH:mm:ss';
+const absoluteFormat = 'YYYY-MM-DD HH:mm:ss';
 
 const rangeIndex: any = {};
 _.each(rangeOptions, (frame: any) => {
