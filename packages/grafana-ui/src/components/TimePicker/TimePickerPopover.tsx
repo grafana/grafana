@@ -75,66 +75,56 @@ export class TimePickerPopover extends Component<Props, State> {
 
     return (
       <div className={TimePickerPopover.popoverClassName}>
-        <div className="time-picker-popover-box">
-          <div className="time-picker-popover-box-header">
-            <span className="time-picker-popover-box-title">Custom range</span>
-          </div>
-          <div className="time-picker-popover-box-body">
-            <div className="time-picker-popover-box-body-custom-ranges">
-              <div className="time-picker-popover-box-body-custom-ranges-input">
-                <span className="time-picker-popover-custom-range-label">From:</span>
-                <TimePickerInput
-                  isTimezoneUtc={isTimezoneUtc}
-                  roundup={false}
-                  timezone={timezone}
-                  value={value.raw.from}
-                  onChange={this.onFromInputChanged}
-                  tabIndex={1}
-                />
-              </div>
-              <div className="time-picker-popover-box-body-custom-ranges-calendar">
-                <TimePickerCalendar
-                  isTimezoneUtc={isTimezoneUtc}
-                  roundup={false}
-                  timezone={timezone}
-                  value={value.raw.from}
-                  onChange={this.onFromCalendarChanged}
-                />
-              </div>
+        <div className="time-picker-popover-body">
+          <div className="time-picker-popover-body-custom-ranges">
+            <div className="time-picker-popover-body-custom-ranges-input">
+              <span className="time-picker-popover-custom-range-label">From</span>
+              <TimePickerInput
+                isTimezoneUtc={isTimezoneUtc}
+                roundup={false}
+                timezone={timezone}
+                value={value.raw.from}
+                onChange={this.onFromInputChanged}
+                tabIndex={1}
+              />
             </div>
-            <div className="time-picker-popover-box-body-custom-ranges">
-              <div className="time-picker-popover-box-body-custom-ranges-input">
-                <span className="time-picker-popover-custom-range-label">To:</span>
-                <TimePickerInput
-                  isTimezoneUtc={isTimezoneUtc}
-                  roundup={true}
-                  timezone={timezone}
-                  value={value.raw.to}
-                  onChange={this.onToInputChanged}
-                  tabIndex={2}
-                />
-              </div>
-              <div className="time-picker-popover-box-body-custom-ranges-calendar">
-                <TimePickerCalendar
-                  isTimezoneUtc={isTimezoneUtc}
-                  roundup={true}
-                  timezone={timezone}
-                  value={value.raw.to}
-                  onChange={this.onToCalendarChanged}
-                />
-              </div>
+            <div className="time-picker-popover-body-custom-ranges-calendar">
+              <TimePickerCalendar
+                isTimezoneUtc={isTimezoneUtc}
+                roundup={false}
+                timezone={timezone}
+                value={value.raw.from}
+                onChange={this.onFromCalendarChanged}
+              />
             </div>
           </div>
-          <div className="time-picker-popover-box-footer">
-            <button
-              type="submit"
-              className="btn gf-form-btn btn-success"
-              disabled={!isValid}
-              onClick={this.onApplyClick}
-            >
-              Apply
-            </button>
+          <div className="time-picker-popover-body-custom-ranges">
+            <div className="time-picker-popover-body-custom-ranges-input">
+              <span className="time-picker-popover-custom-range-label">To</span>
+              <TimePickerInput
+                isTimezoneUtc={isTimezoneUtc}
+                roundup={true}
+                timezone={timezone}
+                value={value.raw.to}
+                onChange={this.onToInputChanged}
+                tabIndex={2}
+              />
+            </div>
+            <div className="time-picker-popover-body-custom-ranges-calendar">
+              <TimePickerCalendar
+                isTimezoneUtc={isTimezoneUtc}
+                roundup={true}
+                timezone={timezone}
+                value={value.raw.to}
+                onChange={this.onToCalendarChanged}
+              />
+            </div>
           </div>
+        </div>
+        <div className="time-picker-popover-footer">
+          <button type="submit" className="btn btn-success" disabled={!isValid} onClick={this.onApplyClick}>
+            Apply
+          </button>
         </div>
       </div>
     );

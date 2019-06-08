@@ -6,6 +6,7 @@
     display: flex;
   }
 }
+
 .time-picker-popover-popper {
   z-index: $zindex-timepicker-popover;
 }
@@ -28,32 +29,34 @@
   background: $popover-bg;
   color: $popover-color;
   box-shadow: $popover-shadow;
+  position: absolute;
+  flex-direction: column;
+  max-width: 600px;
+  top: 48px;
+  right: 20px;
 
-  .time-picker-popover-box {
-    max-width: 500px;
-
-    .time-picker-popover-box-body {
-      display: flex;
-      flex-flow: row nowrap;
-      justify-content: space-around;
-      padding: $space-md;
-    }
+  .time-picker-popover-body {
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-around;
+    padding: $space-md;
+    padding-bottom: 0;
   }
 
-  .time-picker-popover-box-title {
+  .time-picker-popover-title {
     font-size: $font-size-md;
     font-weight: $font-weight-semi-bold;
   }
 
-  .time-picker-popover-box-body-custom-ranges:first-child {
-    margin-right: $spacer;
+  .time-picker-popover-body-custom-ranges:first-child {
+    margin-right: $space-md;
   }
 
-  .time-picker-popover-box-body-custom-ranges-input {
+  .time-picker-popover-body-custom-ranges-input {
     display: flex;
     flex-flow: row nowrap;
     align-items: center;
-    margin: $spacer 0;
+    margin-bottom: $space-sm;
 
     .our-custom-wrapper-class {
       margin-left: $spacer;
@@ -65,15 +68,15 @@
     }
   }
 
-  .time-picker-popover-box-footer {
+  .time-picker-popover-footer {
     display: flex;
     flex-flow: row nowrap;
-    justify-content: flex-end;
-    margin-top: $spacer;
+    justify-content: center;
+    padding: $space-md;
   }
 }
 
-.time-picker-popover-box-header {
+.time-picker-popover-header {
   background: $popover-header-bg;
   padding: $space-sm;
 }
@@ -114,7 +117,6 @@ $arrowPadding: $arrowPaddingToBorder * 3;
 
 .time-picker-calendar {
   border: 1px solid $popover-border-color;
-  max-width: 220px;
   color: $black;
 
   .react-calendar__navigation__label,
@@ -189,27 +191,27 @@ $arrowPadding: $arrowPaddingToBorder * 3;
     margin-left: $spacer;
     display: flex;
     flex-flow: column nowrap;
+    max-width: 400px;
 
-    .time-picker-popover-box {
-      padding: $spacer / 2 $spacer;
-
-      .time-picker-popover-box-title {
-        font-size: $font-size-md;
-      }
+    .time-picker-popover-title {
+      font-size: $font-size-md;
     }
 
-    .time-picker-popover-box:last-child {
-      .time-picker-popover-box-body {
-        display: flex;
-        flex-flow: column nowrap;
-
-        .time-picker-popover-box-body-custom-ranges:first-child {
-          margin: 0;
-        }
-      }
+    .time-picker-popover-body {
+      padding: $space-sm;
+      display: flex;
+      flex-flow: column nowrap;
     }
 
-    .time-picker-popover-box-footer {
+    .time-picker-popover-body-custom-ranges:first-child {
+      margin-right: 0;
+    }
+
+    .time-picker-popover-body-custom-ranges:last-child {
+      margin-bottom: $space-sm;
+    }
+
+    .time-picker-popover-footer {
       display: flex;
       flex-flow: row nowrap;
       justify-content: flex-end;
@@ -218,13 +220,6 @@ $arrowPadding: $arrowPaddingToBorder * 3;
   }
 
   .time-picker-calendar {
-    max-width: 500px;
     width: 100%;
-  }
-}
-
-@media only screen and (max-width: 746px) {
-  .time-picker-popover {
-    margin-top: 48px;
   }
 }

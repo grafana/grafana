@@ -40,7 +40,6 @@ export interface TimeOption {
   to: string;
   display: string;
   section: number;
-  active: boolean;
 }
 
 export interface TimeOptions {
