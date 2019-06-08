@@ -68,7 +68,6 @@ export interface State {
   isMenuOpen: boolean;
   isCustomOpen: boolean;
 }
-
 export class TimePicker extends PureComponent<Props, State> {
   pickerTriggerRef = createRef<HTMLDivElement>();
 
@@ -97,7 +96,10 @@ export class TimePicker extends PureComponent<Props, State> {
     const { isTimezoneUtc, onChange, timezone } = this.props;
 
     if (item.value && item.value.from === 'custom') {
-      this.setState({ isCustomOpen: true });
+      // this is to prevent the ClickOutsideWrapper from directly closing the popover
+      setTimeout(() => {
+        this.setState({ isCustomOpen: true });
+      }, 1);
       return;
     }
 
@@ -119,7 +121,7 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   onCloseCustom = () => {
-    // this.setState({ isCustomOpen: false });
+    this.setState({ isCustomOpen: false });
   };
 
   render() {
@@ -137,9 +139,11 @@ export class TimePicker extends PureComponent<Props, State> {
 
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
+
     const label = (
       <>
-        {mapTimeRangeToRangeString(getRawTimeRangeToShow(isTimezoneUtc, value.raw))}
+        {isCustomOpen && <span>Custom time range</span>}
+        {!isCustomOpen && mapTimeRangeToRangeString(getRawTimeRangeToShow(isTimezoneUtc, value.raw))}
         {isTimezoneUtc && <span className="time-picker-utc">UTC</span>}
       </>
     );

@@ -78,15 +78,17 @@ export class TimePickerPopover extends Component<Props, State> {
         <div className="time-picker-popover-body">
           <div className="time-picker-popover-body-custom-ranges">
             <div className="time-picker-popover-body-custom-ranges-input">
-              <span className="time-picker-popover-custom-range-label">From</span>
-              <TimePickerInput
-                isTimezoneUtc={isTimezoneUtc}
-                roundup={false}
-                timezone={timezone}
-                value={value.raw.from}
-                onChange={this.onFromInputChanged}
-                tabIndex={1}
-              />
+              <div className="gf-form">
+                <label className="gf-form-label">From</label>
+                <TimePickerInput
+                  isTimezoneUtc={isTimezoneUtc}
+                  roundup={false}
+                  timezone={timezone}
+                  value={value.raw.from}
+                  onChange={this.onFromInputChanged}
+                  tabIndex={1}
+                />
+              </div>
             </div>
             <div className="time-picker-popover-body-custom-ranges-calendar">
               <TimePickerCalendar
@@ -100,15 +102,17 @@ export class TimePickerPopover extends Component<Props, State> {
           </div>
           <div className="time-picker-popover-body-custom-ranges">
             <div className="time-picker-popover-body-custom-ranges-input">
-              <span className="time-picker-popover-custom-range-label">To</span>
-              <TimePickerInput
-                isTimezoneUtc={isTimezoneUtc}
-                roundup={true}
-                timezone={timezone}
-                value={value.raw.to}
-                onChange={this.onToInputChanged}
-                tabIndex={2}
-              />
+              <div className="gf-form">
+                <label className="gf-form-label">To</label>
+                <TimePickerInput
+                  isTimezoneUtc={isTimezoneUtc}
+                  roundup={true}
+                  timezone={timezone}
+                  value={value.raw.to}
+                  onChange={this.onToInputChanged}
+                  tabIndex={2}
+                />
+              </div>
             </div>
             <div className="time-picker-popover-body-custom-ranges-calendar">
               <TimePickerCalendar

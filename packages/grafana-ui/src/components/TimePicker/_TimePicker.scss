@@ -186,7 +186,7 @@ $arrowPadding: $arrowPaddingToBorder * 3;
   padding-right: $space-xs;
 }
 
-@include media-breakpoint-down(lg) {
+@include media-breakpoint-down(md) {
   .time-picker-popover {
     margin-left: $spacer;
     display: flex;
@@ -205,9 +205,6 @@ $arrowPadding: $arrowPaddingToBorder * 3;
 
     .time-picker-popover-body-custom-ranges:first-child {
       margin-right: 0;
-    }
-
-    .time-picker-popover-body-custom-ranges:last-child {
       margin-bottom: $space-sm;
     }
 

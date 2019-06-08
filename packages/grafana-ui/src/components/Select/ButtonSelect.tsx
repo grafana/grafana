@@ -21,7 +21,8 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
       <div className="select-button">
         {iconClass && <i className={`select-button-icon ${iconClass}`} />}
         <span className="select-button-value">{label ? label : ''}</span>
-        <i className="fa fa-caret-down fa-fw" />
+        {!props.menuIsOpen && <i className="fa fa-caret-down fa-fw" />}
+        {props.menuIsOpen && <i className="fa fa-caret-up fa-fw" />}
       </div>
     </button>
   );
@@ -30,7 +31,7 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
 export interface Props<T> {
   className: string | undefined;
   options: Array<SelectOptionItem<T>>;
-  value: SelectOptionItem<T>;
+  value?: SelectOptionItem<T>;
   label?: ReactElement | string;
   iconClass?: string;
   components?: any;
