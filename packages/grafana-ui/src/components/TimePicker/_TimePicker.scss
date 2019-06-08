@@ -32,23 +32,6 @@
   .time-picker-popover-box {
     max-width: 500px;
 
-    ul {
-      padding-right: $spacer;
-      padding-top: $spacer;
-      list-style-type: none;
-
-      li {
-        line-height: 22px;
-        display: list-item;
-        text-align: left;
-      }
-
-      li.active {
-        border-bottom: 1px solid $blue;
-        font-weight: $font-weight-semi-bold;
-      }
-    }
-
     .time-picker-popover-box-body {
       display: flex;
       flex-flow: row nowrap;
