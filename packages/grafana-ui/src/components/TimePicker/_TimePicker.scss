@@ -123,33 +123,38 @@ $arrowPadding: $arrowPaddingToBorder * 3;
   .react-calendar__navigation__arrow,
   .react-calendar__navigation {
     color: $input-color;
-    background-color: $input-bg;
+    background-color: $input-label-bg;
     border: 0;
   }
 
   .react-calendar__month-view__weekdays {
-    background-color: $popover-border-color;
+    background-color: $input-bg;
     text-align: center;
 
     abbr {
       border: 0;
       text-decoration: none;
       cursor: default;
-      color: $popover-color;
+      color: $orange;
       font-weight: $font-weight-semi-bold;
+      display: block;
+      padding: 4px 0 0 0;
     }
   }
 
   .time-picker-calendar-tile {
-    color: $input-color;
-    // background-color: $input-bg;
+    color: $text-color;
     background-color: inherit;
-    border: 0;
-    line-height: 32px;
+    line-height: 26px;
     font-size: $font-size-md;
+    border: 1px solid transparent;
+    border-radius: $border-radius;
 
-    @include media-breakpoint-up(lg) {
-      line-height: 22px;
+    &:hover {
+      box-shadow: $panel-editor-viz-item-shadow-hover;
+      background: $panel-editor-viz-item-bg-hover;
+      border: $panel-editor-viz-item-border-hover;
+      color: $text-color-strong;
     }
   }
 
@@ -160,10 +165,6 @@ $arrowPadding: $arrowPaddingToBorder * 3;
     background-color: $calendar-bg-now;
   }
 
-  button.time-picker-calendar-tile:hover {
-    font-weight: $font-weight-semi-bold;
-  }
-
   .react-calendar__navigation__label,
   .react-calendar__navigation > button:focus,
   .time-picker-calendar-tile:focus {
@@ -171,14 +172,16 @@ $arrowPadding: $arrowPaddingToBorder * 3;
   }
 
   .react-calendar__tile--now {
-    border-radius: $border-radius-lg;
+    border-radius: $border-radius;
   }
 
-  .react-calendar__tile--active {
+  .react-calendar__tile--active,
+  .react-calendar__tile--active:hover {
     color: $white;
     font-weight: $font-weight-semi-bold;
-    background-color: $blue-base;
-    border-radius: $border-radius-lg;
+    background: linear-gradient(0deg, $blue-base, $blue-shade);
+    box-shadow: none;
+    border: 1px solid transparent;
   }
 }
 

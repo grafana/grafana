@@ -399,6 +399,6 @@ $vertical-resize-handle-dots: $gray-1;
 $vertical-resize-handle-dots-hover: $gray-2;
 
 // Calendar
-$calendar-bg-days: $dark-4;
+$calendar-bg-days: $input-bg;
 $calendar-bg-now: $dark-10;
 `;
