@@ -27,6 +27,8 @@ $black: ${theme.colors.black};
 
 $dark-1: ${theme.colors.dark1};
 $dark-2: ${theme.colors.dark2};
+$dark-4: ${theme.colors.dark4};
+$dark-10: ${theme.colors.dark10};
 $gray-1: ${theme.colors.gray1};
 $gray-2: ${theme.colors.gray2};
 $gray-3: ${theme.colors.gray3};
@@ -382,4 +384,8 @@ $button-toggle-group-btn-seperator-border: 1px solid $gray-6;
 $vertical-resize-handle-bg: $gray-4;
 $vertical-resize-handle-dots: $gray-3;
 $vertical-resize-handle-dots-hover: $gray-2;
+
+// Calendar
+$calendar-bg-days: $white;
+$calendar-bg-now: $gray-6;
 `;

@@ -115,6 +115,14 @@ $arrowPadding: $arrowPaddingToBorder * 3;
   padding-right: $arrowPadding;
 }
 
+.react-calendar__month-view__days__day--neighboringMonth abbr {
+  opacity: 0.35;
+}
+
+.react-calendar__month-view__days {
+  padding: 4px;
+}
+
 .time-picker-calendar {
   border: 1px solid $popover-border-color;
   max-width: 220px;
@@ -143,12 +151,22 @@ $arrowPadding: $arrowPaddingToBorder * 3;
 
   .time-picker-calendar-tile {
     color: $input-color;
-    background-color: $input-bg;
+    // background-color: $input-bg;
+    background-color: inherit;
     border: 0;
     line-height: 32px;
+    font-size: $font-size-md;
+
     @include media-breakpoint-up(lg) {
       line-height: 22px;
     }
+  }
+
+  .react-calendar__month-view__days {
+    background-color: $calendar-bg-days;
+  }
+  .react-calendar__tile--now {
+    background-color: $calendar-bg-now;
   }
 
   button.time-picker-calendar-tile:hover {
@@ -162,12 +180,14 @@ $arrowPadding: $arrowPaddingToBorder * 3;
   }
 
   .react-calendar__tile--now {
-    color: $orange;
+    border-radius: $border-radius-lg;
   }
 
   .react-calendar__tile--active {
-    color: $blue;
+    color: $white;
     font-weight: $font-weight-semi-bold;
+    background-color: $blue-base;
+    border-radius: $border-radius-lg;
   }
 }
 

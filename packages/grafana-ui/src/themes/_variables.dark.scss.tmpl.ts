@@ -39,6 +39,7 @@ $gray-2: ${theme.colors.gray2};
 $gray-3: ${theme.colors.gray3};
 $gray-4: ${theme.colors.gray4};
 $gray-5: ${theme.colors.gray5};
+$gray-6: ${theme.colors.gray6};
 
 $gray-blue: ${theme.colors.grayBlue};
 $input-black: #09090b;
@@ -395,4 +396,8 @@ $button-toggle-group-btn-seperator-border: 1px solid $dark-2;
 $vertical-resize-handle-bg: $dark-10;
 $vertical-resize-handle-dots: $gray-1;
 $vertical-resize-handle-dots-hover: $gray-2;
+
+// Calendar
+$calendar-bg-days: $dark-4;
+$calendar-bg-now: $dark-10;
 `;
