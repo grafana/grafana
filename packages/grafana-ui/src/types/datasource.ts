@@ -30,6 +30,11 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setConfigCtrl(ConfigCtrl: any) {
+    this.angularConfigCtrl = ConfigCtrl;
+    return this;
+  }
+
   setQueryCtrl(QueryCtrl: any) {
     this.components.QueryCtrl = QueryCtrl;
     return this;
@@ -77,8 +82,6 @@ export class DataSourcePlugin<
     this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
     this.components.ExploreQueryField = pluginExports.ExploreQueryField;
     this.components.ExploreStartPage = pluginExports.ExploreStartPage;
-    this.components.ExploreMetricsQueryField = pluginExports.ExploreMetricsQueryField;
-    this.components.ExploreLogsQueryField = pluginExports.ExploreLogsQueryField;
     this.components.QueryEditor = pluginExports.QueryEditor;
     this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
   }
@@ -446,6 +449,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
+  database?: string;
 
   /**
    * This is the full Authorization header if basic auth is ennabled.

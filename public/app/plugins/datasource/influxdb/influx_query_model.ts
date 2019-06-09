@@ -1,9 +1,10 @@
 import _ from 'lodash';
 import queryPart from './query_part';
 import kbn from 'app/core/utils/kbn';
+import { InfluxQuery } from './types';
 
-export default class InfluxQuery {
-  target: any;
+export default class InfluxQueryModel {
+  target: InfluxQuery;
   selectModels: any[];
   queryBuilder: any;
   groupByParts: any;
@@ -12,7 +13,7 @@ export default class InfluxQuery {
   refId: string;
 
   /** @ngInject */
-  constructor(target, templateSrv?, scopedVars?) {
+  constructor(target: InfluxQuery, templateSrv?, scopedVars?) {
     this.target = target;
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;

@@ -1,22 +1,23 @@
 import React from 'react';
-import { ExploreQueryFieldProps, DataSourceApi } from '@grafana/ui';
+import { ExploreQueryFieldProps } from '@grafana/ui';
 // @ts-ignore
 import Cascader from 'rc-cascader';
 
-import InfluxQuery from './influx_query';
+import InfluxQueryModel from '../influx_query_model';
 import { AdHocFilterField, KeyValuePair } from 'app/features/explore/AdHocFilterField';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import InfluxDatasource from './datasource';
-import { InfluxQueryBuilder } from './query_builder';
+import InfluxDatasource from '../datasource';
+import { InfluxQueryBuilder } from '../query_builder';
+import { InfluxQuery, InfluxOptions } from '../types';
 
-export interface Props extends ExploreQueryFieldProps<DataSourceApi<InfluxQuery>, InfluxQuery> {}
+export interface Props extends ExploreQueryFieldProps<InfluxDatasource, InfluxQuery, InfluxOptions> {}
 
 export interface State {
   measurements: string[];
   measurement: string;
 }
 
-export class InfluxLogQueryField extends React.Component<Props, State> {
+export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
   templateSrv: TemplateSrv = new TemplateSrv();
   state: State = { measurements: [], measurement: null };
 
@@ -43,9 +44,11 @@ export class InfluxLogQueryField extends React.Component<Props, State> {
   };
 
   onPairsChanged = (pairs: KeyValuePair[]) => {
+    const { query } = this.props;
     const { measurement } = this.state;
-    const query = new InfluxQuery(
+    const queryModel = new InfluxQueryModel(
       {
+        ...query,
         resultFormat: 'table',
         groupBy: [],
         select: [[{ type: 'field', params: ['*'] }]],
@@ -55,7 +58,7 @@ export class InfluxLogQueryField extends React.Component<Props, State> {
       this.templateSrv
     );
 
-    this.props.onChange(query.target);
+    this.props.onChange(queryModel.target);
   };
 
   render() {
