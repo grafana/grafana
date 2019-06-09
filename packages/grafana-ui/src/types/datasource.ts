@@ -204,9 +204,20 @@ export abstract class DataSourceApi<
     options?: TContextQueryOptions
   ) => Promise<DataQueryResponse>;
 
-  getTagKeys?(options: any): any[];
+  /**
+   * Variable query action.
+   */
+  metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
 
-  getTagValues?(options: { key: any }): any[];
+  /**
+   * Get tag keys for adhoc filters
+   */
+  getTagKeys?(options: any): Promise<MetricFindValue[]>;
+
+  /**
+   * Get tag values for adhoc filters
+   */
+  getTagValues?(options: { key: any }): Promise<MetricFindValue[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -403,6 +414,10 @@ export interface QueryHint {
   type: string;
   label: string;
   fix?: QueryFix;
+}
+
+export interface MetricFindValue {
+  text: string;
 }
 
 export interface DataSourceJsonData {
