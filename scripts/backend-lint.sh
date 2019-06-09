@@ -33,6 +33,7 @@ exit_if_fail golangci-lint run --deadline 10m --disable-all \
   --enable=structcheck\
   --enable=typecheck\
   --enable=unconvert\
+  --enable=unused\
   --enable=varcheck
 
 exit_if_fail go vet ./pkg/...
