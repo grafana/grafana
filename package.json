@@ -150,7 +150,7 @@
     "typecheck": "tsc --noEmit",
     "jest": "jest --notify --watch",
     "e2e-tests": "jest --runInBand --config=jest.config.e2e.js",
-    "api-tests": "jest --notify --watch --config=tests/api/jest.js",
+    "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
     "storybook": "cd packages/grafana-ui && yarn storybook",
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",

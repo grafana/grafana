@@ -284,6 +284,7 @@ export class LogRow extends PureComponent<Props, State> {
                   <span className={styles}>
                     {parsed && (
                       <Highlighter
+                        style={{ whiteSpace: 'pre-wrap' }}
                         autoEscape
                         highlightTag={FieldHighlight(this.onClickHighlight)}
                         textToHighlight={entry}
@@ -293,6 +294,7 @@ export class LogRow extends PureComponent<Props, State> {
                     )}
                     {!parsed && needsHighlighter && (
                       <Highlighter
+                        style={{ whiteSpace: 'pre-wrap' }}
                         textToHighlight={entry}
                         searchWords={highlights}
                         findChunks={findHighlightChunksInText}

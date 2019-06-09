@@ -72,9 +72,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	fr.log.Debug("Start walking disk", "path", fr.Path)
 	resolvedPath := fr.resolvedPath()
 	if _, err := os.Stat(resolvedPath); err != nil {
-		if os.IsNotExist(err) {
-			return err
-		}
+		return err
 	}
 
 	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardProvisioningService)
