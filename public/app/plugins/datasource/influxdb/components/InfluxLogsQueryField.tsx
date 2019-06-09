@@ -53,6 +53,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
         groupBy: [],
         select: [[{ type: 'field', params: ['*'] }]],
         tags: pairs,
+        limit: '1000',
         measurement,
       },
       this.templateSrv
@@ -76,7 +77,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
           </Cascader>
         </div>
         <div className="flex-shrink-1 flex-flow-column-nowrap">
-          <AdHocFilterField onPairsChanged={this.onPairsChanged} datasource={datasource} />
+          {measurement && <AdHocFilterField onPairsChanged={this.onPairsChanged} datasource={datasource} />}
         </div>
       </div>
     );
