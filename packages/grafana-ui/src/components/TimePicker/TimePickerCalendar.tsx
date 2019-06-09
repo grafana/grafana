@@ -3,7 +3,6 @@ import Calendar from 'react-calendar/dist/entry.nostyle';
 import { TimeFragment } from '../../types/time';
 import { Timezone } from '../../utils/datemath';
 import { DateTime, dateTime, isDateTime } from '../../utils/moment_wrapper';
-
 import { stringToDateTimeType } from './time';
 
 export interface Props {

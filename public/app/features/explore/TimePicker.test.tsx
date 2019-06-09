@@ -122,7 +122,7 @@ describe('<TimePicker />', () => {
     expect(wrapper.state('fromRaw')).toBe('1970-01-01 00:00:00');
     expect(wrapper.state('toRaw')).toBe('1970-01-01 00:00:01');
     expect(wrapper.state('initialRange')).toBe(range.raw);
-    expect(wrapper.find('.timepicker-rangestring').text()).toBe('Jan 1, 1970 00:00:00 to Jan 1, 1970 00:00:01');
+    expect(wrapper.find('.timepicker-rangestring').text()).toBe('1970-01-01 00:00:00 to 1970-01-01 00:00:01');
     expect(wrapper.find('.timepicker-from').props().value).toBe('1970-01-01 00:00:00');
     expect(wrapper.find('.timepicker-to').props().value).toBe('1970-01-01 00:00:01');
 
@@ -132,7 +132,7 @@ describe('<TimePicker />', () => {
     expect(onChangeTime.getCall(0).args[0].to.valueOf()).toBe(1000);
 
     expect(wrapper.state('isOpen')).toBeFalsy();
-    expect(wrapper.state('rangeString')).toBe('Jan 1, 1970 00:00:00 to Jan 1, 1970 00:00:01');
+    expect(wrapper.state('rangeString')).toBe('1970-01-01 00:00:00 to 1970-01-01 00:00:01');
   });
 
   it('moves ranges backward by half the range on left arrow click when utc', () => {
