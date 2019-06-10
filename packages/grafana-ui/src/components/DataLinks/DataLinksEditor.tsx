@@ -2,7 +2,6 @@
 import React, { FC, useContext } from 'react';
 // @ts-ignore
 import Prism from 'prismjs';
-
 // Components
 import { css } from 'emotion';
 import { DataLink, ThemeContext } from '../../index';
@@ -45,7 +44,6 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
     onChange(value.filter(item => item !== link));
   };
 
-  console.log(value);
   return (
     <>
       {value && value.length > 0 && (

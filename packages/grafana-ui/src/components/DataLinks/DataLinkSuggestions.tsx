@@ -151,10 +151,13 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
   );
 };
 
+DataLinkSuggestions.displayName = 'DataLinkSuggestions';
+
 interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   label: string;
   activeIndexOffset: number;
 }
+
 const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
   ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions }) => {
     const theme = useContext(ThemeContext);
@@ -183,3 +186,5 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
     );
   }
 );
+
+DataLinkSuggestionsList.displayName = 'DataLinkSuggestionsList';
