@@ -261,10 +261,10 @@ export class PanelCtrl {
     if (this.panel.links && this.panel.links.length > 0) {
       html += '<ul>';
       for (const link of this.panel.links) {
-        const info = linkSrv.getDrilldownLinkUIModel(link, this.panel.scopedVars);
+        const info = linkSrv.getDataLinkUIModel(link, this.panel.scopedVars);
         html +=
           '<li><a class="panel-menu-link" href="' +
-          info.href +
+          info.url +
           '" target="' +
           info.target +
           '">' +

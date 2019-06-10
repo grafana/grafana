@@ -1,4 +1,4 @@
-import { LinkSrv, DrilldownLinkBuiltInVars } from '../link_srv';
+import { LinkSrv, DataLinkBuiltInVars } from '../link_srv';
 import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -76,10 +76,10 @@ describe('linkSrv', () => {
   describe('built in variables', () => {
     it('should add time range to url if $__url_time_range variable present', () => {
       expect(
-        linkSrv.getDrilldownLinkUIModel(
+        linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?$${DrilldownLinkBuiltInVars.keepTime}`,
+            url: `/d/1?$${DataLinkBuiltInVars.keepTime}`,
           },
           {}
         ).url
@@ -88,10 +88,10 @@ describe('linkSrv', () => {
 
     it('should add all variables to url if $__all_variables variable present', () => {
       expect(
-        linkSrv.getDrilldownLinkUIModel(
+        linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?$${DrilldownLinkBuiltInVars.includeVars}`,
+            url: `/d/1?$${DataLinkBuiltInVars.includeVars}`,
           },
           {}
         ).url
@@ -100,10 +100,10 @@ describe('linkSrv', () => {
 
     it('should interpolate series name from datapoint', () => {
       expect(
-        linkSrv.getDrilldownLinkUIModel(
+        linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?$${DrilldownLinkBuiltInVars.seriesName}`,
+            url: `/d/1?$${DataLinkBuiltInVars.seriesName}`,
           },
           {},
           dataPointMock
@@ -112,10 +112,10 @@ describe('linkSrv', () => {
     });
     it('should interpolate time range based on datapoint timestamp', () => {
       expect(
-        linkSrv.getDrilldownLinkUIModel(
+        linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?$${DrilldownLinkBuiltInVars.valueTime}`,
+            url: `/d/1?$${DataLinkBuiltInVars.valueTime}`,
           },
           {},
           dataPointMock

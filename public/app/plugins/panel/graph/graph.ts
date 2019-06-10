@@ -25,7 +25,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat, ContextMenuItem, PanelDrillDownLink } from '@grafana/ui';
+import { getValueFormat, ContextMenuItem, ContextMenuGroup, DataLink } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';
@@ -176,31 +176,41 @@ class GraphElement {
     }
   }
 
-  getContextMenuItems = (flotPosition: { x: number; y: number }, item?: FlotDataPoint): ContextMenuItem[] => {
-    const drilldownLinks: PanelDrillDownLink[] = this.panel.options.drilldownLinks || [];
+  getContextMenuItems = (flotPosition: { x: number; y: number }, item?: FlotDataPoint): ContextMenuGroup[] => {
+    const dataLinks: DataLink[] = this.panel.options.dataLinks || [];
 
-    const items: ContextMenuItem[] = [
+    const items: ContextMenuGroup[] = [
       {
-        label: 'Add annotation',
-        icon: 'gicon gicon-annotation',
-        onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
+        items: [
+          {
+            label: 'Add annotation',
+            icon: 'gicon gicon-annotation',
+            onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
+          },
+        ],
       },
     ];
 
     return item
       ? [
           ...items,
-          ...drilldownLinks.map<ContextMenuItem>(link => {
-            const linkUiModel = this.linkSrv.getDrilldownLinkUIModel(link, this.panel.scopedVariables, {
-              seriesName: item.series.alias,
-              datapoint: item.datapoint,
-            });
-            return {
-              label: linkUiModel.title,
-              url: linkUiModel.url,
-              target: linkUiModel.target,
-            };
-          }),
+          {
+            label: 'Data link',
+            items: [
+              ...dataLinks.map<ContextMenuItem>(link => {
+                const linkUiModel = this.linkSrv.getDataLinkUIModel(link, this.panel.scopedVariables, {
+                  seriesName: item.series.alias,
+                  datapoint: item.datapoint,
+                });
+                return {
+                  label: linkUiModel.title,
+                  url: linkUiModel.url,
+                  target: linkUiModel.target,
+                  icon: `fa ${linkUiModel.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
+                };
+              }),
+            ],
+          },
         ]
       : items;
   };

@@ -147,7 +147,7 @@ export interface RangeMap extends BaseMap {
   to: string;
 }
 
-export interface PanelDrillDownLink {
+export interface DataLink {
   url: string;
   title: string;
   targetBlank?: boolean;

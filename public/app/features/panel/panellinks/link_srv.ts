@@ -1,22 +1,53 @@
 import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { PanelDrillDownLink, KeyValue, ScopedVars, DateTime, dateTime } from '@grafana/ui';
+import { DataLink, VariableSuggestion, KeyValue, ScopedVars, DateTime, dateTime } from '@grafana/ui';
 import { TimeSeriesValue, transformAbsoluteTimeRange } from '@grafana/ui';
-import { deprecationWarning } from '@grafana/ui';
+import { deprecationWarning, VariableOrigin } from '@grafana/ui';
 
-export const DrilldownLinkBuiltInVars = {
+export const DataLinkBuiltInVars = {
   keepTime: '__url_time_range',
   includeVars: '__all_variables',
   seriesName: '__series_name',
   valueTime: '__value_time',
 };
 
+export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
+  ...templateSrv.variables.map(variable => ({
+    value: variable.name as string,
+    origin: VariableOrigin.Template,
+  })),
+  {
+    value: `${DataLinkBuiltInVars.includeVars}`,
+    documentation: 'Adds current variables',
+    origin: VariableOrigin.BuiltIn,
+  },
+  {
+    value: `${DataLinkBuiltInVars.keepTime}`,
+    documentation: 'Adds current time range',
+    origin: VariableOrigin.BuiltIn,
+  },
+];
+
+export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
+  ...getPanelLinksVariableSuggestions(),
+  {
+    value: `${DataLinkBuiltInVars.seriesName}`,
+    documentation: 'Adds series name',
+    origin: VariableOrigin.BuiltIn,
+  },
+  {
+    value: `${DataLinkBuiltInVars.valueTime}`,
+    documentation: "Adds narrowed down time range relative to data point's timestamp",
+    origin: VariableOrigin.BuiltIn,
+  },
+];
+
 // Represents factor by which the original time range will be narrowed down when
-// using drilldown link
-const DrilldownLinkDataPointRangeFactor = 0.5;
+// user clicks data link
+const DataLinkDataPointRangeFactor = 0.5;
 
 type LinkTarget = '_blank' | '_self';
 
@@ -31,7 +62,7 @@ interface LinkDataPoint {
   seriesName: string;
 }
 export interface LinkService {
-  getDrilldownLinkUIModel: (link: PanelDrillDownLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
+  getDataLinkUIModel: (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
   getDataPointVars: (seriesName: string, dataPointTs: DateTime) => ScopedVars;
 }
 
@@ -65,7 +96,7 @@ export class LinkSrv implements LinkService {
 
   getDataPointVars = (seriesName: string, valueTime: DateTime) => {
     const timeRange = this.timeSrv.timeRange();
-    const targetAbsoluteTimeRange = transformAbsoluteTimeRange(timeRange, DrilldownLinkDataPointRangeFactor);
+    const targetAbsoluteTimeRange = transformAbsoluteTimeRange(timeRange, DataLinkDataPointRangeFactor);
     const dataPointRangeQuery = toUrlParams({
       from: dateTime(valueTime)
         .subtract(targetAbsoluteTimeRange)
@@ -80,18 +111,18 @@ export class LinkSrv implements LinkService {
     });
 
     return {
-      [DrilldownLinkBuiltInVars.valueTime]: {
+      [DataLinkBuiltInVars.valueTime]: {
         text: dataPointRangeQuery,
         value: dataPointRangeQuery,
       },
-      [DrilldownLinkBuiltInVars.seriesName]: {
+      [DataLinkBuiltInVars.seriesName]: {
         text: seriesQuery,
         value: seriesQuery,
       },
     };
   };
 
-  getDrilldownLinkUIModel = (link: PanelDrillDownLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => {
+  getDataLinkUIModel = (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
     const info: LinkModel = {
@@ -105,11 +136,11 @@ export class LinkSrv implements LinkService {
 
     info.url = this.templateSrv.replace(link.url, {
       ...scopedVars,
-      [DrilldownLinkBuiltInVars.keepTime]: {
+      [DataLinkBuiltInVars.keepTime]: {
         text: timeRangeUrl,
         value: timeRangeUrl,
       },
-      [DrilldownLinkBuiltInVars.includeVars]: {
+      [DataLinkBuiltInVars.includeVars]: {
         text: variablesQuery,
         value: variablesQuery,
       },
@@ -126,11 +157,11 @@ export class LinkSrv implements LinkService {
   /**
    * getPanelLinkAnchorInfo method is left for plugins compatibility reasons
    *
-   * @deprecated Drilldown links should be generated using getDrilldownLinkUIModel method
+   * @deprecated Drilldown links should be generated using getDataLinkUIModel method
    */
-  getPanelLinkAnchorInfo(link: PanelDrillDownLink, scopedVars: ScopedVars) {
-    deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDrilldownLinkUIModel');
-    return this.getDrilldownLinkUIModel(link, scopedVars);
+  getPanelLinkAnchorInfo(link: DataLink, scopedVars: ScopedVars) {
+    deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDataLinkUIModel');
+    return this.getDataLinkUIModel(link, scopedVars);
   }
 }
 

@@ -18,6 +18,7 @@ export * from './object';
 export * from './fieldCache';
 export * from './moment_wrapper';
 export { transformAbsoluteTimeRange } from './rangeutil';
+export * from './slate';
 
 // Names are too general to export
 // rangeutils, datemath

@@ -8,7 +8,7 @@ import { appendQueryToUrl } from 'app/core/utils/url';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { PanelDrillDownLink } from '@grafana/ui/src/types/panel';
+import { DataLink } from '@grafana/ui/src/types/panel';
 
 // Constants
 import {
@@ -19,7 +19,7 @@ import {
   MIN_PANEL_HEIGHT,
   DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
-import { DrilldownLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
+import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -632,15 +632,15 @@ class RowArea {
   }
 }
 
-function upgradePanelLink(link: any): PanelDrillDownLink {
+function upgradePanelLink(link: any): DataLink {
   let url = link.url;
 
   if (link.keepTime) {
-    url = appendQueryToUrl(url, `$${DrilldownLinkBuiltInVars.keepTime}`);
+    url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.keepTime}`);
   }
 
   if (link.includeVars) {
-    url = appendQueryToUrl(url, `$${DrilldownLinkBuiltInVars.includeVars}`);
+    url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.includeVars}`);
   }
 
   if (link.params) {
