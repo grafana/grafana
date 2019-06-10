@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	redis "gopkg.in/redis.v2"
 )
 
@@ -23,7 +24,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 	for _, rawKeyValue := range keyValueCSV {
 		keyValueTuple := strings.Split(rawKeyValue, "=")
 		if len(keyValueTuple) != 2 {
-			return nil, fmt.Errorf("incorrect redis connection string format detected for '%s', format is key=value,key=value", rawKeyValue)
+			return nil, fmt.Errorf("incorrect redis connection string format detected for '%v', format is key=value,key=value", rawKeyValue)
 		}
 		connKey := keyValueTuple[0]
 		connVal := keyValueTuple[1]
@@ -35,13 +36,13 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 		case "db":
 			i, err := strconv.ParseInt(connVal, 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("value for db in redis connection string must be a number: %v", err)
+				return nil, errutil.Wrap("value for db in redis connection string must be a number", err)
 			}
 			options.DB = i
 		case "pool_size":
 			i, err := strconv.Atoi(connVal)
 			if err != nil {
-				return nil, fmt.Errorf("value for pool_size in redis connection string must be a number: %v", err)
+				return nil, errutil.Wrap("value for pool_size in redis connection string must be a number", err)
 			}
 			options.PoolSize = i
 		default:
