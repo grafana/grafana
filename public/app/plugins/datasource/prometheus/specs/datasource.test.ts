@@ -1226,6 +1226,60 @@ describe('PrometheusDatasource', () => {
       });
     });
   });
+  describe('The __range, __range_s and __range_ms variables', () => {
+    const response = {
+      status: 'success',
+      data: {
+        data: {
+          resultType: 'matrix',
+          result: [],
+        },
+      },
+    };
+
+    it('should use overridden ranges, not dashboard ranges', async () => {
+      const expectedRangeSecond = 3600;
+      const expectedRangeString = '1h';
+      const query = {
+        range: {
+          from: time({}),
+          to: time({ hours: 1 }),
+        },
+        targets: [
+          {
+            expr: 'test[${__range_s}s]',
+          },
+        ],
+        interval: '60s',
+      };
+      const urlExpected = `proxied/api/v1/query_range?query=${encodeURIComponent(
+        query.targets[0].expr
+      )}&start=0&end=3600&step=60`;
+
+      templateSrv.replace = jest.fn(str => str);
+      backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
+      await ctx.ds.query(query);
+      const res = backendSrv.datasourceRequest.mock.calls[0][0];
+      expect(res.url).toBe(urlExpected);
+
+      // @ts-ignore
+      expect(templateSrv.replace.mock.calls[1][1]).toEqual({
+        __range_s: {
+          text: expectedRangeSecond,
+          value: expectedRangeSecond,
+        },
+        __range: {
+          text: expectedRangeString,
+          value: expectedRangeString,
+        },
+        __range_ms: {
+          text: expectedRangeSecond * 1000,
+          value: expectedRangeSecond * 1000,
+        },
+      });
+    });
+  });
 });
 
 describe('PrometheusDatasource for POST', () => {

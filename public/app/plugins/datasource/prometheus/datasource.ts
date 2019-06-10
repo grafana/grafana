@@ -30,6 +30,7 @@ import { ExploreUrlState } from 'app/types/explore';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TimeRange } from '@grafana/ui/src';
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -320,14 +321,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-    let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars() };
+    let scopedVars = { ...options.scopedVars, ...this.getRangeScopedVars(options.range) };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
       interval = adjustedInterval;
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
-        ...this.getRangeScopedVars(),
+        ...this.getRangeScopedVars(options.range),
       });
     }
     query.step = interval;
@@ -461,15 +462,15 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
       __interval_ms: { text: kbn.interval_to_ms(this.interval), value: kbn.interval_to_ms(this.interval) },
-      ...this.getRangeScopedVars(),
+      ...this.getRangeScopedVars(this.timeSrv.timeRange()),
     };
     const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated, this.timeSrv);
     return metricFindQuery.process();
   }
 
-  getRangeScopedVars() {
-    const range = this.timeSrv.timeRange();
+  getRangeScopedVars(range: TimeRange) {
+    range = range || this.timeSrv.timeRange();
     const msRange = range.to.diff(range.from);
     const sRange = Math.round(msRange / 1000);
     const regularRange = kbn.secondsToHms(msRange / 1000);
