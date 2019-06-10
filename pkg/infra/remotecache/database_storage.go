@@ -94,7 +94,7 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 	defer session.Close()
 
 	var cacheHit CacheData
-	has, err := session.Where("cache_key = ?", key).Get(&cacheHit)
+	_, err = session.Where("cache_key = ?", key).Get(&cacheHit)
 	if err != nil {
 		return err
 	}
@@ -105,17 +105,11 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 	}
 
 	// insert or update depending on if item already exist
-	if has {
+	sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`
+	_, err = session.Exec(sql, key, data, getTime().Unix(), expiresInSeconds)
+	if err != nil {
 		sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
 		_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
-	} else {
-		// insert or update depending on if item already exist
-		sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`
-		_, err = session.Exec(sql, key, data, getTime().Unix(), expiresInSeconds)
-		if err != nil {
-			sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
-			_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
-		}
 	}
 
 	return err
