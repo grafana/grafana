@@ -31,7 +31,6 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({ getContextMe
               <SeriesIcon color={source.series.color} />
               <span
                 className={css`
-                  cursor: pointer;
                   white-space: nowrap;
                   padding-left: ${theme.spacing.xs};
                 `}
