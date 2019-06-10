@@ -84,40 +84,41 @@ func (dc *databaseCache) Get(key string) (interface{}, error) {
 }
 
 func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration) error {
-	return dc.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		item := &cachedItem{Val: value}
-		data, err := encodeGob(item)
-		if err != nil {
-			return err
-		}
+	item := &cachedItem{Val: value}
+	data, err := encodeGob(item)
+	if err != nil {
+		return err
+	}
 
-		var cacheHit CacheData
-		has, err := session.Where("cache_key = ?", key).Get(&cacheHit)
-		if err != nil {
-			return err
-		}
+	session := dc.SQLStore.NewSession()
+	defer session.Close()
 
-		var expiresInSeconds int64
-		if expire != 0 {
-			expiresInSeconds = int64(expire) / int64(time.Second)
-		}
+	var cacheHit CacheData
+	has, err := session.Where("cache_key = ?", key).Get(&cacheHit)
+	if err != nil {
+		return err
+	}
 
+	var expiresInSeconds int64
+	if expire != 0 {
+		expiresInSeconds = int64(expire) / int64(time.Second)
+	}
+
+	// insert or update depending on if item already exist
+	if has {
+		sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
+		_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
+	} else {
 		// insert or update depending on if item already exist
-		if has {
+		sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`
+		_, err = session.Exec(sql, key, data, getTime().Unix(), expiresInSeconds)
+		if err != nil {
 			sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
 			_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
-		} else {
-			sql := `INSERT INTO cache_data (cache_key,data,created_at,expires) VALUES(?,?,?,?)`
-			_, err = session.Exec(sql, key, data, getTime().Unix(), expiresInSeconds)
-			if err != nil {
-				// TODO: check for integrity error
-				sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
-				_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
-			}
 		}
+	}
 
-		return err
-	})
+	return err
 }
 
 func (dc *databaseCache) Delete(key string) error {
