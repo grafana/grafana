@@ -66,7 +66,7 @@ func (s *redisStorage) Set(key string, val interface{}, expires time.Duration) e
 	if err != nil {
 		return err
 	}
-	status := s.c.SetEx(key, -expires, string(value))
+	status := s.c.SetEx(key, expires, string(value))
 	return status.Err()
 }
 
