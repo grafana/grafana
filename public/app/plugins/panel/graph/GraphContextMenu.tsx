@@ -22,7 +22,8 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({ getContextMe
         return (
           <div
             className={css`
-              padding: ${theme.spacing.sm};
+              padding: ${theme.spacing.xs} ${theme.spacing.sm};
+              font-size: ${theme.typography.size.sm};
             `}
           >
             <strong>{dateTime(source.datapoint[0]).format(timeFormat)}</strong>

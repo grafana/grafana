@@ -206,6 +206,7 @@ class GraphElement {
                   label: linkUiModel.title,
                   url: linkUiModel.url,
                   target: linkUiModel.target,
+                  icon: `fa ${linkUiModel.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
                 };
               }),
             ],

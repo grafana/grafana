@@ -42,14 +42,14 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
   );
   const wrapperBg = selectThemeVariant(
     {
-      light: theme.colors.white,
+      light: theme.colors.gray7,
       dark: theme.colors.dark2,
     },
     theme.type
   );
   const wrapperShadow = selectThemeVariant(
     {
-      light: theme.colors.gray5,
+      light: theme.colors.gray3,
       dark: theme.colors.black,
     },
     theme.type
@@ -69,6 +69,13 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
     },
     theme.type
   );
+  const headerBg = selectThemeVariant(
+    {
+      light: theme.colors.white,
+      dark: theme.colors.dark1,
+    },
+    theme.type
+  );
   const headerSeparator = selectThemeVariant(
     {
       light: theme.colors.gray5,
@@ -81,12 +88,16 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
     header: css`
       padding: 4px;
       border-bottom: 1px solid ${headerSeparator};
+      background: ${headerBg};
+      margin-bottom: ${theme.spacing.xs};
+      border-radius: ${theme.border.radius.sm} ${theme.border.radius.sm} 0 0;
     `,
     wrapper: css`
       background: ${wrapperBg};
       z-index: 1;
-      box-shadow: 0 5px 10px 0 ${wrapperShadow};
+      box-shadow: 0 2px 5px 0 ${wrapperShadow};
       min-width: 200px;
+      border-radius: ${theme.border.radius.sm};
     `,
     link: css`
       color: ${linkColor};
@@ -114,7 +125,7 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       padding: ${theme.spacing.xs} ${theme.spacing.sm};
     `,
     icon: css`
-      opacity: 0.9;
+      opacity: 0.7;
       width: 12px;
       height: 12px;
       display: inline-block;
@@ -122,6 +133,10 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       color: ${theme.colors.linkDisabled};
       position: relative;
       top: 3px;
+    `,
+    divider: css`
+      margin: ${theme.spacing.xs} 0;
+      border-top: 1px solid ${headerSeparator};
     `,
   };
 };
@@ -151,8 +166,13 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
         {renderHeader && <div className={styles.header}>{renderHeader()}</div>}
         <List
           items={items || []}
-          renderItem={item => {
-            return <ContextMenuGroup group={item} onItemClick={onClose} />;
+          renderItem={(item, index) => {
+            return (
+              <>
+                {index !== 0 && <div className={styles.divider} />}
+                <ContextMenuGroup group={item} onItemClick={onClose} />
+              </>
+            );
           }}
         />
       </div>
