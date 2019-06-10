@@ -1,6 +1,5 @@
 import config from 'app/core/config';
 import { coreModule } from 'app/core/core';
-import { getBrowserOS } from 'app/core/utils/userAgent';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { UserSession } from 'app/types';
 
@@ -53,7 +52,7 @@ export class ProfileCtrl {
           seenAt: dateTime(session.seenAt).fromNow(true),
           createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
           clientIp: session.clientIp,
-          userAgent: getBrowserOS(session.userAgent),
+          userAgent: session.userAgent,
         };
       });
     });

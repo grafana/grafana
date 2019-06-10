@@ -119,7 +119,7 @@
 			<td ng-if="!session.isActive">{{session.seenAt}}</td>
 			<td>{{session.createdAt}}</td>
 			<td>{{session.clientIp}}</td>
-			<td>{{session.userAgent}}</td>
+			<td>{{session.userAgent.browser.family}} on {{session.userAgent.os.family}} {{session.userAgent.os.version}}</td>
 			<td>
 				<button class="btn btn-danger btn-small" ng-click="revokeUserSession(session.id)">
 					<i class="fa fa-power-off"></i>
