@@ -1,0 +1,35 @@
+# Grafana backend codebase
+
+The code [styleguide](STYLEGUIDE.md) and brief description of the architecture[architecture](ARCHITECTURE.md)
+
+# On going refactorings.
+These issues are not something we want to address all at once but something we will improve over time. 
+
+## Global state
+Global state makes testing and debugging software harder and its something we want to avoid when possible.
+Unfortunately, there is quite a lot of global state in Grafana. The way we want to migrate away from this
+is to use the `inject` package to wire up all dependencies either in `pkg/cmd/grafana-server/main.go` or
+self registering using `registry.RegisterService` ex https://github.com/grafana/grafana/blob/master/pkg/services/cleanup/cleanup.go#L25
+
+## Reduce the use of the init() function
+Should only be used to register services/implementations
+
+## Settings refactoring 
+The plan is to move all settings to from package level vars in settings package to the setting.Cfg object. To access the settings services/components can inject this setting.Cfg object. 
+
+Cfg object: 
+https://github.com/grafana/grafana/blob/master/pkg/setting/setting.go#L184
+
+Injection example:
+https://github.com/grafana/grafana/blob/master/pkg/services/cleanup/cleanup.go#L19
+
+## Reduce the use of Goconvey
+
+## Sqlstore refactoring
+The sqlstore handlers all use a global xorm engine variable. This should be refactored to use the Sqlstore instance. 
+
+## Avoid global Http Handler functions
+Http handlers should be refactored to so the handler methods are on the HttpServer instance or a more detailed handler struct. E.g (AuthHandler). This way they get access to HttpServer service dependencies (& Cfg object) and can avoid global state
+
+
+
