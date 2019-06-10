@@ -9,49 +9,66 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import InfluxDatasource from '../datasource';
 import { InfluxQueryBuilder } from '../query_builder';
 import { InfluxQuery, InfluxOptions } from '../types';
+import { CascaderOption } from '../../loki/components/LokiQueryFieldForm';
 
 export interface Props extends ExploreQueryFieldProps<InfluxDatasource, InfluxQuery, InfluxOptions> {}
 
 export interface State {
-  measurements: string[];
+  measurements: CascaderOption[];
   measurement: string;
+  field: string;
 }
 
 export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
   templateSrv: TemplateSrv = new TemplateSrv();
-  state: State = { measurements: [], measurement: null };
+  state: State = { measurements: [], measurement: null, field: null };
 
   async componentDidMount() {
     const { datasource } = this.props;
-    const influxDataSource = (datasource as any) as InfluxDatasource;
-    const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, influxDataSource.database);
-    const query = queryBuilder.buildExploreQuery('MEASUREMENTS');
-    const influxMeasurements = await influxDataSource.metricFindQuery(query);
-    const measurements = influxMeasurements.map((influxMeasurement: any) => ({
-      label: influxMeasurement.text,
-      value: influxMeasurement.text,
-    }));
+    const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, datasource.database);
+    const measureMentsQuery = queryBuilder.buildExploreQuery('MEASUREMENTS');
+    const influxMeasurements = await datasource.metricFindQuery(measureMentsQuery);
+
+    const measurements = [];
+    for (let index = 0; index < influxMeasurements.length; index++) {
+      const measurementObj = influxMeasurements[index];
+      const queryBuilder = new InfluxQueryBuilder({ measurement: measurementObj.text, tags: [] }, datasource.database);
+      const fieldsQuery = queryBuilder.buildExploreQuery('FIELDS');
+      const influxFields = await datasource.metricFindQuery(fieldsQuery);
+      const fields = influxFields.map((field: any) => ({
+        label: field.text,
+        value: field.text,
+        children: [],
+      }));
+      measurements.push({
+        label: measurementObj.text,
+        value: measurementObj.text,
+        children: fields,
+      });
+    }
 
     this.setState({ measurements });
   }
 
-  onMeasurementsChange = (values: string[]) => {
+  onMeasurementsChange = async (values: string[]) => {
     const { query } = this.props;
     const measurement = values[0];
-    this.setState({ measurement }, () => {
+    const field = values[1];
+
+    this.setState({ measurement, field }, () => {
       this.onPairsChanged((query as any).tags);
     });
   };
 
   onPairsChanged = (pairs: KeyValuePair[]) => {
     const { query } = this.props;
-    const { measurement } = this.state;
+    const { measurement, field } = this.state;
     const queryModel = new InfluxQueryModel(
       {
         ...query,
         resultFormat: 'table',
         groupBy: [],
-        select: [[{ type: 'field', params: ['*'] }]],
+        select: [[{ type: 'field', params: [field] }]],
         tags: pairs,
         limit: '1000',
         measurement,
@@ -64,8 +81,8 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
 
   render() {
     const { datasource } = this.props;
-    const { measurements, measurement } = this.state;
-    const cascadeText = measurement ? `Measurements (${measurement})` : 'Measurements';
+    const { measurements, measurement, field } = this.state;
+    const cascadeText = measurement ? `Measurements (${measurement}/${field})` : 'Measurements';
 
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
