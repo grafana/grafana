@@ -145,7 +145,7 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       top: 3px;
     `,
     divider: css`
-      margin: ${theme.spacing.sm} 0;
+      margin: ${theme.spacing.xs} 0;
       border-top: 1px solid ${headerSeparator};
     `,
   };
