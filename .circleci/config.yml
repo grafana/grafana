@@ -91,6 +91,12 @@ jobs:
               name: run end-to-end tests
               command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
               no_output_timeout: 5m
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theTruth
+                destination: expected-screenshots
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theOutput
+                destination: output-screenshots               
 
   codespell:
     docker:
@@ -661,6 +667,10 @@ workflows:
             - backend-lint
             - mysql-integration-test
             - postgres-integration-test
+          filters: *filter-only-master
+      - end-to-end-test:
+          requires:
+            - grafana-docker-master
           filters: *filter-only-master
   release:
     jobs:

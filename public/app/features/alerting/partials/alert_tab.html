@@ -149,6 +149,38 @@
         <textarea class="gf-form-input" rows="10" ng-model="ctrl.alert.message"
                   placeholder="Notification message details..."></textarea>
       </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-8">Tags</span>
+        <div class="gf-form-group">
+          <div class="gf-form-inline" ng-repeat="(name, value) in ctrl.alert.alertRuleTags">
+            <label class="gf-form-label width-15">{{ name }}</label>
+            <input class="gf-form-input width-15" placeholder="Tag value..."
+                   ng-model="ctrl.alert.alertRuleTags[name]" type="text"/>
+            <label class="gf-form-label">
+              <a class="pointer" tabindex="1" ng-click="ctrl.removeAlertRuleTag(name)">
+                <i class="fa fa-trash"></i>
+              </a>
+            </label>
+          </div>
+          <div class="gf-form-group">
+            <div class="gf-form-inline">
+              <div class="gf-form">
+                <input class="gf-form-input width-15" placeholder="New tag name..."
+                       ng-model="ctrl.newAlertRuleTag.name" type="text">
+                <input class="gf-form-input width-15" placeholder="New tag value..."
+                       ng-model="ctrl.newAlertRuleTag.value" type="text">
+              </div>
+            </div>
+            <div class="gf-form">
+              <label class="gf-form-label">
+                <a class="pointer" tabindex="1" ng-click="ctrl.addAlertRuleTag()">
+                  <i class="fa fa-plus"></i>&nbsp;Add Tag
+                </a>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

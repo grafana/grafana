@@ -1,6 +1,6 @@
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go test-go test-js test run clean gosec revive devenv devenv-down
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go test-go test-js test run clean gosec revive devenv devenv-down revive-alerting
 
 GO := GO111MODULE=on go
 GO_FILES := ./pkg/...
@@ -57,10 +57,6 @@ test-js:
 
 test: test-go test-js
 
-run:
-	@echo "start a server"
-	./bin/grafana-server
-
 clean:
 	@echo "cleaning"
 	rm -rf node_modules
@@ -78,10 +74,29 @@ scripts/go/bin/gosec: scripts/go/go.mod
 	@cd scripts/go; \
 	$(GO) build -o ./bin/gosec github.com/securego/gosec/cmd/gosec
 
+scripts/go/bin/bra: scripts/go/go.mod
+	@cd scripts/go; \
+	$(GO) build -o ./bin/bra github.com/Unknwon/bra
+
 revive: scripts/go/bin/revive
 	@scripts/go/bin/revive \
 		-formatter stylish \
 		-config ./scripts/go/configs/revive.toml \
+		$(GO_FILES)
+
+revive-alerting: scripts/go/bin/revive
+	@scripts/go/bin/revive \
+		-formatter stylish \
+		./pkg/services/alerting/...
+
+run: scripts/go/bin/bra
+	@scripts/go/bin/bra run
+
+# TODO recheck the rules and leave only necessary exclusions
+gosec: scripts/go/bin/gosec
+	@scripts/go/bin/gosec -quiet \
+		-exclude=G104,G107,G201,G202,G204,G301,G304,G401,G402,G501 \
+		-conf=./scripts/go/configs/gosec.json \
 		$(GO_FILES)
 
 # create docker-compose file with provided sources and start them
@@ -98,7 +113,7 @@ devenv: devenv-down
 	(rm -rf docker-compose.yaml; exit 1)
 
 	@cd devenv; \
-	docker-compose up -d
+	docker-compose up -d --build
 endif
 
 # drop down the envs
@@ -106,10 +121,3 @@ devenv-down:
 	@cd devenv; \
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;
-
-# TODO recheck the rules and leave only necessary exclusions
-gosec: scripts/go/bin/gosec
-	@scripts/go/bin/gosec -quiet \
-		-exclude=G104,G107,G201,G202,G204,G301,G304,G401,G402,G501 \
-		-conf=./scripts/go/configs/gosec.json \
-		$(GO_FILES)

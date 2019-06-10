@@ -27,7 +27,6 @@ the latest master builds [here](https://grafana.com/grafana/download)
 ### Dependencies
 
 - Go (Latest Stable)
-  - bra [`go get github.com/Unknwon/bra`]
 - Node.js LTS
   - yarn [`npm install -g yarn`]
 
@@ -40,23 +39,6 @@ go get github.com/grafana/grafana
 cd $GOPATH/src/github.com/grafana/grafana
 ```
 
-### Building
-
-#### The backend
-
-```bash
-go run build.go setup
-go run build.go build
-```
-
-#### Frontend assets
-
-_For this you need Node.js (LTS version)._
-
-```bash
-yarn install --pure-lockfile
-```
-
 ### Run and rebuild on source change
 
 #### Backend
@@ -64,7 +46,7 @@ yarn install --pure-lockfile
 To run the backend and rebuild on source change:
 
 ```bash
-$GOPATH/bin/bra run
+make run
 ```
 
 #### Frontend
@@ -92,6 +74,23 @@ yarn jest
 ```
 
 **Open grafana in your browser (default: e.g. `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).**
+
+### Building
+
+#### The backend
+
+```bash
+go run build.go setup
+go run build.go build
+```
+
+#### Frontend assets
+
+_For this you need Node.js (LTS version)._
+
+```bash
+yarn install --pure-lockfile
+```
 
 ### Building a Docker image
 

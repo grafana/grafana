@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 
 import { FormLabel, Select } from '@grafana/ui';
-import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 export interface Props {
   resourceUri: string;
@@ -25,7 +25,7 @@ const timezones = [
 ];
 
 export class SharedPreferences extends PureComponent<Props, State> {
-  backendSrv: BackendSrv = getBackendSrv();
+  backendSrv = getBackendSrv();
 
   constructor(props: Props) {
     super(props);

@@ -5,36 +5,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
-
-func TestSavingTags(t *testing.T) {
-	InitTestDB(t)
-
-	Convey("Testing annotation saving/loading", t, func() {
-
-		repo := SqlAnnotationRepo{}
-
-		Convey("Can save tags", func() {
-			Reset(func() {
-				_, err := x.Exec("DELETE FROM annotation_tag WHERE 1=1")
-				So(err, ShouldBeNil)
-			})
-
-			tagPairs := []*models.Tag{
-				{Key: "outage"},
-				{Key: "type", Value: "outage"},
-				{Key: "server", Value: "server-1"},
-				{Key: "error"},
-			}
-			tags, err := repo.ensureTagsExist(newSession(), tagPairs)
-
-			So(err, ShouldBeNil)
-			So(len(tags), ShouldEqual, 4)
-		})
-	})
-}
 
 func TestAnnotations(t *testing.T) {
 	InitTestDB(t)

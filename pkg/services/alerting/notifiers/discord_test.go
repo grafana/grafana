@@ -22,7 +22,7 @@ func TestDiscordNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewDiscordNotifier(model)
+				_, err := newDiscordNotifier(model)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -40,7 +40,7 @@ func TestDiscordNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewDiscordNotifier(model)
+				not, err := newDiscordNotifier(model)
 				discordNotifier := not.(*DiscordNotifier)
 
 				So(err, ShouldBeNil)

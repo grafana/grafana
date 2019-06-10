@@ -50,6 +50,16 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setExploreMetricsQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+    this.components.ExploreMetricsQueryField = ExploreQueryField;
+    return this;
+  }
+
+  setExploreLogsQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+    this.components.ExploreLogsQueryField = ExploreQueryField;
+    return this;
+  }
+
   setExploreStartPage(ExploreStartPage: ComponentClass<ExploreStartPageProps>) {
     this.components.ExploreStartPage = ExploreStartPage;
     return this;
@@ -75,9 +85,7 @@ export class DataSourcePlugin<
 export interface DataSourcePluginMeta extends PluginMeta {
   builtIn?: boolean; // Is this for all
   metrics?: boolean;
-  tables?: boolean;
   logs?: boolean;
-  explore?: boolean;
   annotations?: boolean;
   alerting?: boolean;
   mixed?: boolean;
@@ -85,7 +93,7 @@ export interface DataSourcePluginMeta extends PluginMeta {
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
-  supportsStreaming?: boolean;
+  streaming?: boolean;
 
   /**
    * By default, hidden queries are not passed to the datasource
@@ -111,6 +119,8 @@ export interface DataSourcePluginComponents<
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
   ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreMetricsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreLogsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>;
 }
@@ -166,10 +176,6 @@ export abstract class DataSourceApi<
    */
   abstract query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
-  convertToStreamTargets?(options: DataQueryRequest<TQuery>): Array<{ url: string; refId: string }>;
-
-  resultToSeriesData?(data: any, refId: string): SeriesData[];
-
   /**
    * Test & verify datasource settings & connection details
    */
@@ -208,14 +214,20 @@ export abstract class DataSourceApi<
    * Used by alerting to check if query contains template variables
    */
   targetContainsTemplate?(query: TQuery): boolean;
-}
 
-export abstract class ExploreDataSourceApi<
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
-> extends DataSourceApi<TQuery, TOptions> {
+  /**
+   * Used in explore
+   */
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
+
+  /**
+   * Used in explore
+   */
   getHighlighterExpression?(query: TQuery): string[];
+
+  /**
+   * Used in explore
+   */
   languageProvider?: any;
 }
 

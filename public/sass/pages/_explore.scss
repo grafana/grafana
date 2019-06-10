@@ -22,6 +22,11 @@
   .ds-picker {
     min-width: 200px;
     max-width: 200px;
+
+    .gf-form-select-box__img-value {
+      max-width: 150px;
+      overflow: hidden;
+    }
   }
 }
 

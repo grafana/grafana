@@ -28,6 +28,7 @@ func (ss *SqlStore) addUserQueryAndCommandHandlers() {
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserOrgList)
 	bus.AddHandler("sql", DisableUser)
+	bus.AddHandler("sql", BatchDisableUsers)
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", UpdateUserPermissions)
 	bus.AddHandler("sql", SetUserHelpFlag)
@@ -487,6 +488,31 @@ func DisableUser(cmd *m.DisableUserCommand) error {
 	return err
 }
 
+func BatchDisableUsers(cmd *m.BatchDisableUsersCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		userIds := cmd.UserIds
+
+		if len(userIds) == 0 {
+			return nil
+		}
+
+		user_id_params := strings.Repeat(",?", len(userIds)-1)
+		disableSQL := "UPDATE " + dialect.Quote("user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
+
+		disableParams := []interface{}{disableSQL, cmd.IsDisabled}
+		for _, v := range userIds {
+			disableParams = append(disableParams, v)
+		}
+
+		_, err := sess.Exec(disableParams...)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func DeleteUser(cmd *m.DeleteUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		return deleteUserInTransaction(sess, cmd)
@@ -502,6 +528,8 @@ func deleteUserInTransaction(sess *DBSession, cmd *m.DeleteUserCommand) error {
 		"DELETE FROM preferences WHERE user_id = ?",
 		"DELETE FROM team_member WHERE user_id = ?",
 		"DELETE FROM user_auth WHERE user_id = ?",
+		"DELETE FROM user_auth_token WHERE user_id = ?",
+		"DELETE FROM quota WHERE user_id = ?",
 	}
 
 	for _, sql := range deletes {

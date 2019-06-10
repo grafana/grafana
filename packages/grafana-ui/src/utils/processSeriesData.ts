@@ -160,6 +160,7 @@ export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData
     const type = guessFieldTypeFromSeries(series, 1);
     if (type === FieldType.time) {
       return {
+        alias: fields[0].name || series.name,
         target: fields[0].name || series.name,
         datapoints: rows,
         unit: fields[0].unit,

@@ -27,16 +27,15 @@ func TestQueryCondition(t *testing.T) {
 
 				So(ctx.condition.Query.From, ShouldEqual, "5m")
 				So(ctx.condition.Query.To, ShouldEqual, "now")
-				So(ctx.condition.Query.DatasourceId, ShouldEqual, 1)
+				So(ctx.condition.Query.DatasourceID, ShouldEqual, 1)
 
 				Convey("Can read query reducer", func() {
-					reducer, ok := ctx.condition.Reducer.(*SimpleReducer)
-					So(ok, ShouldBeTrue)
+					reducer := ctx.condition.Reducer
 					So(reducer.Type, ShouldEqual, "avg")
 				})
 
 				Convey("Can read evaluator", func() {
-					evaluator, ok := ctx.condition.Evaluator.(*ThresholdEvaluator)
+					evaluator, ok := ctx.condition.Evaluator.(*thresholdEvaluator)
 					So(ok, ShouldBeTrue)
 					So(evaluator.Type, ShouldEqual, "gt")
 				})
@@ -163,7 +162,7 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
           }`))
 	So(err, ShouldBeNil)
 
-	condition, err := NewQueryCondition(jsonModel, 0)
+	condition, err := newQueryCondition(jsonModel, 0)
 	So(err, ShouldBeNil)
 
 	ctx.condition = condition

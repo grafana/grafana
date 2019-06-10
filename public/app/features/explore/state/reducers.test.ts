@@ -17,7 +17,6 @@ import {
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   scanStartAction,
-  scanStopAction,
   testDataSourcePendingAction,
   testDataSourceSuccessAction,
   testDataSourceFailureAction,
@@ -25,6 +24,7 @@ import {
   splitOpenAction,
   splitCloseAction,
   changeModeAction,
+  scanStopAction,
   runQueriesAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
@@ -32,7 +32,7 @@ import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, dateTime } from '@grafana/ui';
+import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, LoadingState, dateTime } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -144,7 +144,6 @@ describe('Explore item reducer', () => {
             meta: {
               metrics: true,
               logs: true,
-              tables: true,
             },
             components: {
               ExploreStartPage: StartPage,
@@ -154,9 +153,6 @@ describe('Explore item reducer', () => {
           const queryKeys: string[] = [];
           const initalState: Partial<ExploreItemState> = {
             datasourceInstance: null,
-            supportsGraph: false,
-            supportsLogs: false,
-            supportsTable: false,
             StartPage: null,
             showingStartPage: false,
             queries,
@@ -164,18 +160,13 @@ describe('Explore item reducer', () => {
           };
           const expectedState = {
             datasourceInstance,
-            supportsGraph: true,
-            supportsLogs: true,
-            supportsTable: true,
             StartPage,
             showingStartPage: true,
             queries,
             queryKeys,
             supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
             mode: ExploreMode.Metrics,
-            graphIsLoading: false,
-            tableIsLoading: false,
-            logIsLoading: false,
+            loadingState: LoadingState.NotStarted,
             latency: 0,
             queryErrors: [],
           };
