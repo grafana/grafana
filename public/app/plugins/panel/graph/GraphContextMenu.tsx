@@ -33,6 +33,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({ getContextMe
                 className={css`
                   cursor: pointer;
                   white-space: nowrap;
+                  padding-left: ${theme.spacing.xs};
                 `}
               >
                 {source.series.alias}

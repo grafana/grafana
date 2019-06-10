@@ -62,6 +62,14 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
     theme.type
   );
 
+  const groupLabelColor = selectThemeVariant(
+    {
+      light: theme.colors.gray1,
+      dark: theme.colors.textWeak,
+    },
+    theme.type
+  );
+
   const itemBgHover = selectThemeVariant(
     {
       light: theme.colors.gray5,
@@ -78,7 +86,7 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
   );
   const headerSeparator = selectThemeVariant(
     {
-      light: theme.colors.gray5,
+      light: theme.colors.white,
       dark: theme.colors.dark7,
     },
     theme.type
@@ -116,10 +124,12 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       cursor: pointer;
       &:hover {
         background: ${itemBgHover};
+        border-image: linear-gradient(rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
+        border-image-slice: 1;
       }
     `,
     groupLabel: css`
-      color: ${theme.colors.textWeak};
+      color: ${groupLabelColor};
       font-size: ${theme.typography.size.sm};
       line-height: ${theme.typography.lineHeight.lg};
       padding: ${theme.spacing.xs} ${theme.spacing.sm};
@@ -135,7 +145,7 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       top: 3px;
     `,
     divider: css`
-      margin: ${theme.spacing.xs} 0;
+      margin: ${theme.spacing.sm} 0;
       border-top: 1px solid ${headerSeparator};
     `,
   };
