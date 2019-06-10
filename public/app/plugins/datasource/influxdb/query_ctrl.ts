@@ -1,14 +1,14 @@
 import angular from 'angular';
 import _ from 'lodash';
 import { InfluxQueryBuilder } from './query_builder';
-import InfluxQuery from './influx_query';
+import InfluxQueryModel from './influx_query_model';
 import queryPart from './query_part';
 import { QueryCtrl } from 'app/plugins/sdk';
 
 export class InfluxQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  queryModel: InfluxQuery;
+  queryModel: InfluxQueryModel;
   queryBuilder: any;
   groupBySegment: any;
   resultFormats: any[];
@@ -23,7 +23,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
     this.target = this.target;
-    this.queryModel = new InfluxQuery(this.target, templateSrv, this.panel.scopedVars);
+    this.queryModel = new InfluxQueryModel(this.target, templateSrv, this.panel.scopedVars);
     this.queryBuilder = new InfluxQueryBuilder(this.target, this.datasource.database);
     this.groupBySegment = this.uiSegmentSrv.newPlusButton();
     this.resultFormats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];

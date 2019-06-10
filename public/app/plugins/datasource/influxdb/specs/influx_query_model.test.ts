@@ -1,12 +1,13 @@
-import InfluxQuery from '../influx_query';
+import InfluxQueryModel from '../influx_query_model';
 
 describe('InfluxQuery', () => {
   const templateSrv = { replace: val => val };
 
   describe('render series with mesurement only', () => {
     it('should generate correct query', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
         },
         templateSrv,
@@ -20,8 +21,9 @@ describe('InfluxQuery', () => {
 
   describe('render series with policy only', () => {
     it('should generate correct query', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           policy: '5m_avg',
         },
@@ -38,8 +40,9 @@ describe('InfluxQuery', () => {
 
   describe('render series with math and alias', () => {
     it('should generate correct query', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           select: [
             [
@@ -63,8 +66,9 @@ describe('InfluxQuery', () => {
 
   describe('series with single tag only', () => {
     it('should generate correct query', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [{ key: 'hostname', value: 'server\\1' }],
@@ -82,8 +86,9 @@ describe('InfluxQuery', () => {
     });
 
     it('should switch regex operator with tag value is regex', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [{ key: 'app', value: '/e.*/' }],
@@ -101,8 +106,9 @@ describe('InfluxQuery', () => {
 
   describe('series with multiple tags only', () => {
     it('should generate correct query', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [{ key: 'hostname', value: 'server1' }, { key: 'app', value: 'email', condition: 'AND' }],
@@ -121,8 +127,9 @@ describe('InfluxQuery', () => {
 
   describe('series with tags OR condition', () => {
     it('should generate correct query', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [{ key: 'hostname', value: 'server1' }, { key: 'hostname', value: 'server2', condition: 'OR' }],
@@ -141,8 +148,9 @@ describe('InfluxQuery', () => {
 
   describe('field name with single quote should be escaped and', () => {
     it('should generate correct query', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           groupBy: [{ type: 'time', params: ['auto'] }],
           tags: [{ key: 'name', value: "Let's encrypt." }, { key: 'hostname', value: 'server2', condition: 'OR' }],
@@ -161,8 +169,9 @@ describe('InfluxQuery', () => {
 
   describe('query with value condition', () => {
     it('should not quote value', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           groupBy: [],
           tags: [{ key: 'value', value: '5', operator: '>' }],
@@ -178,8 +187,9 @@ describe('InfluxQuery', () => {
 
   describe('series with groupByTag', () => {
     it('should generate correct query', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           tags: [],
           groupBy: [{ type: 'time', interval: 'auto' }, { type: 'tag', params: ['host'] }],
@@ -195,8 +205,9 @@ describe('InfluxQuery', () => {
 
   describe('render series without group by', () => {
     it('should generate correct query', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           select: [[{ type: 'field', params: ['value'] }]],
           groupBy: [],
@@ -211,8 +222,9 @@ describe('InfluxQuery', () => {
 
   describe('render series without group by and fill', () => {
     it('should generate correct query', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           select: [[{ type: 'field', params: ['value'] }]],
           groupBy: [{ type: 'time' }, { type: 'fill', params: ['0'] }],
@@ -227,8 +239,9 @@ describe('InfluxQuery', () => {
 
   describe('when adding group by part', () => {
     it('should add tag before fill', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           groupBy: [{ type: 'time' }, { type: 'fill' }],
         },
@@ -244,8 +257,9 @@ describe('InfluxQuery', () => {
     });
 
     it('should add tag last if no fill', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           groupBy: [],
         },
@@ -261,8 +275,9 @@ describe('InfluxQuery', () => {
 
   describe('when adding select part', () => {
     it('should add mean after after field', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           select: [[{ type: 'field', params: ['value'] }]],
         },
@@ -276,8 +291,9 @@ describe('InfluxQuery', () => {
     });
 
     it('should replace sum by mean', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           select: [[{ type: 'field', params: ['value'] }, { type: 'mean' }]],
         },
@@ -291,8 +307,9 @@ describe('InfluxQuery', () => {
     });
 
     it('should add math before alias', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           select: [[{ type: 'field', params: ['value'] }, { type: 'mean' }, { type: 'alias' }]],
         },
@@ -306,8 +323,9 @@ describe('InfluxQuery', () => {
     });
 
     it('should add math last', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           select: [[{ type: 'field', params: ['value'] }, { type: 'mean' }]],
         },
@@ -321,8 +339,9 @@ describe('InfluxQuery', () => {
     });
 
     it('should replace math', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           select: [[{ type: 'field', params: ['value'] }, { type: 'mean' }, { type: 'math' }]],
         },
@@ -336,8 +355,9 @@ describe('InfluxQuery', () => {
     });
 
     it('should add math when one only query part', () => {
-      const query = new InfluxQuery(
+      const query = new InfluxQueryModel(
         {
+          refId: 'A',
           measurement: 'cpu',
           select: [[{ type: 'field', params: ['value'] }]],
         },
@@ -352,7 +372,7 @@ describe('InfluxQuery', () => {
 
     describe('when render adhoc filters', () => {
       it('should generate correct query segment', () => {
-        const query = new InfluxQuery({ measurement: 'cpu' }, templateSrv, {});
+        const query = new InfluxQueryModel({ refId: 'A', measurement: 'cpu' }, templateSrv, {});
 
         const queryText = query.renderAdhocFilters([
           { key: 'key1', operator: '=', value: 'value1' },
