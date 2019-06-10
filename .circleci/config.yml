@@ -605,6 +605,24 @@ jobs:
       - store_artifacts:
           path: ./dist
 
+  trigger-docs-update:
+    docker:
+      - image: circleci/python:3.6.8
+    steps:
+      - checkout
+      - run:
+          name: Trigger Docs update
+          command: |
+            if git diff --name-only HEAD^ | grep -q "^docs"; then
+              echo "Build URL:"
+              curl -s -u "$DOCS_CIRCLE_TOKEN:" \
+                -d build_parameters[CIRCLE_JOB]=pull-submodule-changes \
+                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/staging \
+              | jq .build_url
+            else
+              echo "-- no changes to docs files --"
+            fi
+
 workflows:
   version: 2
   build-master:
@@ -671,6 +689,10 @@ workflows:
       - end-to-end-test:
           requires:
             - grafana-docker-master
+          filters: *filter-only-master
+      - trigger-docs-update:
+          requires:
+            - end-to-end-test
           filters: *filter-only-master
   release:
     jobs:
