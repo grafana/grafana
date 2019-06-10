@@ -528,6 +528,8 @@ func deleteUserInTransaction(sess *DBSession, cmd *m.DeleteUserCommand) error {
 		"DELETE FROM preferences WHERE user_id = ?",
 		"DELETE FROM team_member WHERE user_id = ?",
 		"DELETE FROM user_auth WHERE user_id = ?",
+		"DELETE FROM user_auth_token WHERE user_id = ?",
+		"DELETE FROM quota WHERE user_id = ?",
 	}
 
 	for _, sql := range deletes {
