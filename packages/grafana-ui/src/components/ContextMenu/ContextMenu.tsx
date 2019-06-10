@@ -144,10 +144,6 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       position: relative;
       top: 3px;
     `,
-    divider: css`
-      margin: ${theme.spacing.xs} 0;
-      border-top: 1px solid ${headerSeparator};
-    `,
   };
 };
 
@@ -179,7 +175,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
           renderItem={(item, index) => {
             return (
               <>
-                {index !== 0 && <div className={styles.divider} />}
                 <ContextMenuGroup group={item} onItemClick={onClose} />
               </>
             );

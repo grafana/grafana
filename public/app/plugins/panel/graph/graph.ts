@@ -195,7 +195,6 @@ class GraphElement {
       ? [
           ...items,
           {
-            label: 'Data link',
             items: [
               ...dataLinks.map<ContextMenuItem>(link => {
                 const linkUiModel = this.linkSrv.getDataLinkUIModel(link, this.panel.scopedVariables, {
