@@ -144,12 +144,10 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 			So(resultOne.Get("seenAt").MustString(), ShouldEqual, time.Unix(tokens[0].SeenAt, 0).Format(time.RFC3339))
 
 			So(resultOne.Get("device").MustString(), ShouldEqual, "Other")
-			browserOne := resultOne.Get("browser")
-			So(browserOne.Get("family").MustString(), ShouldEqual, "Chrome")
-			So(browserOne.Get("version").MustString(), ShouldEqual, "72.0")
-			osOne := resultOne.Get("os")
-			So(osOne.Get("family").MustString(), ShouldEqual, "Linux")
-			So(osOne.Get("version").MustString(), ShouldEqual, "")
+			So(resultOne.Get("browser").MustString(), ShouldEqual, "Chrome")
+			So(resultOne.Get("browserVersion").MustString(), ShouldEqual, "72.0")
+			So(resultOne.Get("os").MustString(), ShouldEqual, "Linux")
+			So(resultOne.Get("osVersion").MustString(), ShouldEqual, "")
 
 			resultTwo := result.GetIndex(1)
 			So(resultTwo.Get("id").MustInt64(), ShouldEqual, tokens[1].Id)
@@ -159,12 +157,10 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 			So(resultTwo.Get("seenAt").MustString(), ShouldEqual, time.Unix(tokens[1].SeenAt, 0).Format(time.RFC3339))
 
 			So(resultTwo.Get("device").MustString(), ShouldEqual, "iPhone")
-			browserTwo := resultTwo.Get("browser")
-			So(browserTwo.Get("family").MustString(), ShouldEqual, "Mobile Safari")
-			So(browserTwo.Get("version").MustString(), ShouldEqual, "11.0")
-			osTwo := resultTwo.Get("os")
-			So(osTwo.Get("family").MustString(), ShouldEqual, "iOS")
-			So(osTwo.Get("version").MustString(), ShouldEqual, "11.0")
+			So(resultTwo.Get("browser").MustString(), ShouldEqual, "Mobile Safari")
+			So(resultTwo.Get("browserVersion").MustString(), ShouldEqual, "11.0")
+			So(resultTwo.Get("os").MustString(), ShouldEqual, "iOS")
+			So(resultTwo.Get("osVersion").MustString(), ShouldEqual, "11.0")
 		})
 	})
 }
