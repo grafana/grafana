@@ -1,6 +1,6 @@
 import config from 'app/core/config';
 import { coreModule } from 'app/core/core';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/ui';
 import { UserSession } from 'app/types';
 
 export class ProfileCtrl {
@@ -33,6 +33,7 @@ export class ProfileCtrl {
 
   getUserSessions() {
     this.backendSrv.get('/api/user/auth-tokens').then((sessions: UserSession[]) => {
+      console.log(sessions);
       sessions.reverse();
 
       const found = sessions.findIndex((session: UserSession) => {
@@ -52,7 +53,9 @@ export class ProfileCtrl {
           seenAt: dateTime(session.seenAt).fromNow(true),
           createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
           clientIp: session.clientIp,
-          userAgent: session.userAgent,
+          browser: session.browser,
+          os: session.os,
+          device: session.device,
         };
       });
     });

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/ui';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
@@ -41,7 +41,9 @@ export default class AdminEditUserCtrl {
             seenAt: dateTime(session.seenAt).fromNow(true),
             createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
             clientIp: session.clientIp,
-            userAgent: session.userAgent,
+            browser: session.browser,
+            os: session.os,
+            device: session.device,
           };
         });
       });

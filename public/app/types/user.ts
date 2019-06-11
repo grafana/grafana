@@ -55,5 +55,7 @@ export interface UserSession {
   clientIp: string;
   isActive: boolean;
   seenAt: string;
-  userAgent: object;
+  browser: object;
+  os: object;
+  device: string;
 }
