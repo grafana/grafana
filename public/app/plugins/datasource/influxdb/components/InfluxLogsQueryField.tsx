@@ -60,6 +60,10 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     });
   };
 
+  private pairsSet = (pairs: KeyValuePair[]) => {
+    return pairs.length && pairs.reduce((prev, pair) => prev && !!pair.key && !!pair.operator && !!pair.value, true);
+  };
+
   onPairsChanged = (pairs: KeyValuePair[]) => {
     const { query } = this.props;
     const { measurement, field } = this.state;
@@ -77,6 +81,11 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     );
 
     this.props.onChange(queryModel.target);
+
+    // Only run the query if measurement, field, and pairs are all set
+    if (this.pairsSet(pairs) && measurement && field) {
+      this.props.onRunQuery();
+    }
   };
 
   render() {
