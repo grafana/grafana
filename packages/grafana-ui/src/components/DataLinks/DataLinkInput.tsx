@@ -140,6 +140,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
       return [...previous, item];
     });
     setSuggestionsIndex(0);
+    onChange(Plain.serialize(change.value));
   };
   return (
     <div
