@@ -268,7 +268,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                 return (
                   <main className="m-t-2" style={{ width }}>
                     <ErrorBoundary>
-                      {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
+                      {showingStartPage && <StartPage onClickExample={this.onClickExample} mode={mode} />}
                       {!showingStartPage && (
                         <>
                           {mode === ExploreMode.Metrics && <GraphContainer width={width} exploreId={exploreId} />}

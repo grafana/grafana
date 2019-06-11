@@ -281,6 +281,7 @@ export interface ExploreQueryFieldProps<
 
 export interface ExploreStartPageProps {
   onClickExample: (query: DataQuery) => void;
+  mode?: any;
 }
 
 /**
