@@ -450,8 +450,8 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 	if query.AuthModule != "" {
 		whereConditions = append(
 			whereConditions,
-			`id IN (SELECT "user_id"
-			FROM "user_auth"
+			`id IN (SELECT user_id
+			FROM user_auth
 			WHERE auth_module=?)`,
 		)
 
