@@ -3,7 +3,6 @@ import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { advanceTo } from 'jest-date-mock';
-// import { ContextSrvStub } from 'test/specs/helpers';
 
 jest.mock('angular', () => {
   const AngularJSMock = require('test/mocks/angular');
@@ -120,7 +119,7 @@ describe('linkSrv', () => {
           {},
           dataPointMock
         ).url
-      ).toEqual('/d/1?from=998200000&to=1001800000');
+      ).toEqual('/d/1?time=1000000000');
     });
   });
 });

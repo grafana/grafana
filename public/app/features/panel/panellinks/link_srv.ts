@@ -4,7 +4,7 @@ import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { DataLink, VariableSuggestion, KeyValue, ScopedVars, DateTime, dateTime } from '@grafana/ui';
-import { TimeSeriesValue, transformAbsoluteTimeRange } from '@grafana/ui';
+import { TimeSeriesValue } from '@grafana/ui';
 import { deprecationWarning, VariableOrigin } from '@grafana/ui';
 
 export const DataLinkBuiltInVars = {
@@ -45,10 +45,6 @@ export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
   },
 ];
 
-// Represents factor by which the original time range will be narrowed down when
-// user clicks data link
-const DataLinkDataPointRangeFactor = 0.5;
-
 type LinkTarget = '_blank' | '_self';
 
 interface LinkModel {
@@ -87,7 +83,7 @@ export class LinkSrv implements LinkService {
     return appendQueryToUrl(url, toUrlParams(params));
   }
 
-  getAnchorInfo(link) {
+  getAnchorInfo(link: any) {
     const info: any = {};
     info.href = this.getLinkUrl(link);
     info.title = this.templateSrv.replace(link.title || '');
@@ -95,15 +91,8 @@ export class LinkSrv implements LinkService {
   }
 
   getDataPointVars = (seriesName: string, valueTime: DateTime) => {
-    const timeRange = this.timeSrv.timeRange();
-    const targetAbsoluteTimeRange = transformAbsoluteTimeRange(timeRange, DataLinkDataPointRangeFactor);
-    const dataPointRangeQuery = toUrlParams({
-      from: dateTime(valueTime)
-        .subtract(targetAbsoluteTimeRange)
-        .valueOf(),
-      to: dateTime(valueTime)
-        .add(targetAbsoluteTimeRange)
-        .valueOf(),
+    const valueTimeQuery = toUrlParams({
+      time: dateTime(valueTime).valueOf(),
     });
 
     const seriesQuery = toUrlParams({
@@ -112,8 +101,8 @@ export class LinkSrv implements LinkService {
 
     return {
       [DataLinkBuiltInVars.valueTime]: {
-        text: dataPointRangeQuery,
-        value: dataPointRangeQuery,
+        text: valueTimeQuery,
+        value: valueTimeQuery,
       },
       [DataLinkBuiltInVars.seriesName]: {
         text: seriesQuery,
