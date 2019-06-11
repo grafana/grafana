@@ -2,10 +2,10 @@ package ldap
 
 import (
 	"fmt"
-	"sync"
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/BurntSushi/toml"
 	"golang.org/x/xerrors"
@@ -154,7 +154,7 @@ func evalEnvVar(value string) string {
 			envVar = strings.TrimSuffix(envVar, "}")
 			envValue := os.Getenv(envVar)
 			return envValue
-			})
+		})
 	} else {
 		return value
 	}
