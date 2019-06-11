@@ -25,27 +25,10 @@ func TestLDAPHelpers(t *testing.T) {
 		})
 	})
 
-	Convey("getLDAPAttr()", t, func() {
-		Convey("Should get wildcard", func() {
-			value := []string{"roelgerrits"}
-			entry := ldap.Entry{
-				DN: "long-dn",
-				Attributes: []*ldap.EntryAttribute{
-					{Name: "username", Values: value},
-				},
-			}
-			search := &ldap.SearchResult{
-				Entries: []*ldap.Entry{&entry},
-			}
-
-			result := getLDAPAttr("dn", search)
-
-			So(result, ShouldEqual, "long-dn")
-		})
-
+	Convey("getAttribute()", t, func() {
 		Convey("Should get username", func() {
 			value := []string{"roelgerrits"}
-			entry := ldap.Entry{
+			entry := &ldap.Entry{
 				Attributes: []*ldap.EntryAttribute{
 					{
 						Name: "username", Values: value,
@@ -53,62 +36,31 @@ func TestLDAPHelpers(t *testing.T) {
 				},
 			}
 
-			search := &ldap.SearchResult{
-				Entries: []*ldap.Entry{&entry},
-			}
-
-			result := getLDAPAttr("username", search)
-
-			So(result, ShouldEqual, value[0])
-		})
-	})
-
-	Convey("getLDAPAttrN()", t, func() {
-		Convey("Should get wildcard", func() {
-			value := []string{"roelgerrits"}
-			entry := ldap.Entry{
-				DN: "long-dn",
-				Attributes: []*ldap.EntryAttribute{
-					{Name: "username", Values: value},
-				},
-			}
-			search := &ldap.SearchResult{
-				Entries: []*ldap.Entry{
-					{},
-					&entry,
-				},
-			}
-
-			result := getLDAPAttrN("dn", search, 1)
-
-			So(result, ShouldEqual, "long-dn")
-		})
-
-		Convey("Should get username", func() {
-			value := []string{"roelgerrits"}
-			entry := ldap.Entry{
-				Attributes: []*ldap.EntryAttribute{
-					{
-						Name: "username", Values: value,
-					},
-				},
-			}
-
-			search := &ldap.SearchResult{
-				Entries: []*ldap.Entry{
-					&entry,
-					{},
-				},
-			}
-
-			result := getLDAPAttrN("username", search, 0)
+			result := getAttribute("username", entry)
 
 			So(result, ShouldEqual, value[0])
 		})
 
 		Convey("Should not get anything", func() {
 			value := []string{"roelgerrits"}
-			entry := ldap.Entry{
+			entry := &ldap.Entry{
+				Attributes: []*ldap.EntryAttribute{
+					{
+						Name: "killa", Values: value,
+					},
+				},
+			}
+
+			result := getAttribute("username", entry)
+
+			So(result, ShouldEqual, "")
+		})
+	})
+
+	Convey("getArrayAttribute()", t, func() {
+		Convey("Should get username", func() {
+			value := []string{"roelgerrits"}
+			entry := &ldap.Entry{
 				Attributes: []*ldap.EntryAttribute{
 					{
 						Name: "username", Values: value,
@@ -116,16 +68,24 @@ func TestLDAPHelpers(t *testing.T) {
 				},
 			}
 
-			search := &ldap.SearchResult{
-				Entries: []*ldap.Entry{
-					&entry,
-					{},
+			result := getArrayAttribute("username", entry)
+
+			So(result, ShouldResemble, value)
+		})
+
+		Convey("Should not get anything", func() {
+			value := []string{"roelgerrits"}
+			entry := &ldap.Entry{
+				Attributes: []*ldap.EntryAttribute{
+					{
+						Name: "username", Values: value,
+					},
 				},
 			}
 
-			result := getLDAPAttrN("something", search, 0)
+			result := getArrayAttribute("something", entry)
 
-			So(result, ShouldEqual, "")
+			So(result, ShouldResemble, []string{})
 		})
 	})
 }

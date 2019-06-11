@@ -28,13 +28,15 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			}
 
 			entry := ldap.Entry{
-				DN: "dn", Attributes: []*ldap.EntryAttribute{
+				DN: "dn",
+				Attributes: []*ldap.EntryAttribute{
 					{Name: "username", Values: []string{"roelgerrits"}},
 					{Name: "surname", Values: []string{"Gerrits"}},
 					{Name: "email", Values: []string{"roel@test.com"}},
 					{Name: "name", Values: []string{"Roel"}},
 					{Name: "memberof", Values: []string{"admins"}},
-				}}
+				},
+			}
 			users := &ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 
 			result, err := server.serializeUsers(users)
@@ -61,12 +63,14 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			}
 
 			entry := ldap.Entry{
-				DN: "dn", Attributes: []*ldap.EntryAttribute{
+				DN: "dn",
+				Attributes: []*ldap.EntryAttribute{
 					{Name: "username", Values: []string{"roelgerrits"}},
 					{Name: "email", Values: []string{"roel@test.com"}},
 					{Name: "name", Values: []string{"Roel"}},
 					{Name: "memberof", Values: []string{"admins"}},
-				}}
+				},
+			}
 			users := &ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 
 			result, err := server.serializeUsers(users)
