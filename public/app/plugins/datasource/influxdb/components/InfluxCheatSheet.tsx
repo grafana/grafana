@@ -3,7 +3,8 @@ import React from 'react';
 const CHEAT_SHEET_ITEMS = [
   {
     title: 'Getting started',
-    label: 'Start by selecting a measurement and field from the dropdown above.',
+    label:
+      'Start by selecting a measurement and field from the dropdown above. You can then use the tag selector to further narrow your search.',
   },
 ];
 
