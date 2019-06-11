@@ -1,7 +1,7 @@
 // @ts-ignore
 import _ from 'lodash';
 
-import { RawTimeRange, TimeRange } from '../types/time';
+import { RawTimeRange } from '../types/time';
 
 import * as dateMath from './datemath';
 import { isDateTime, DateTime } from '../utils/moment_wrapper';
@@ -169,14 +169,3 @@ export const isValidTimeSpan = (value: string) => {
   const info = describeTextRange(value);
   return info.invalid !== true;
 };
-
-/**
- * Narrows down or widens given time range by provided factor
- * @param range
- * @param factor
- * @returns new absolute time range
- */
-export function transformAbsoluteTimeRange(range: TimeRange, factor: number) {
-  const absoluteTimeRange = range.to.diff(range.from);
-  return factor * absoluteTimeRange;
-}
