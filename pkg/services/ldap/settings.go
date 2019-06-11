@@ -3,6 +3,9 @@ package ldap
 import (
 	"fmt"
 	"sync"
+	"os"
+	"regexp"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"golang.org/x/xerrors"
@@ -135,7 +138,26 @@ func readConfig(configFile string) (*Config, error) {
 		}
 	}
 
+	for _, server := range result.Servers {
+		envValue := evalBindPwdVariable(server.BindPassword)
+		server.BindPassword = envValue
+	}
+
 	return result, nil
+}
+
+func evalBindPasswordVariable(value string) string {
+	regex := regexp.MustCompile(`\${(\w+)}`)
+	if regex != nil {
+		return regex.ReplaceAllStringFunc(value, func(envVar string) string {
+			envVar = strings.TrimPrefix(envVar, "${")
+			envVar = strings.TrimSuffix(envVar, "}")
+			envValue := os.Getenv(envVar)
+			return envValue
+			})
+	} else {
+		return value
+	}
 }
 
 func assertNotEmptyCfg(val interface{}, propName string) error {
