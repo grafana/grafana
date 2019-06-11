@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/facebookgo/inject"
+	"github.com/patrickmn/go-cache"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -31,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/cache"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"

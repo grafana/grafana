@@ -16,13 +16,13 @@ import (
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -60,7 +60,7 @@ type HTTPServer struct {
 	RenderService       rendering.Service        `inject:""`
 	Cfg                 *setting.Cfg             `inject:""`
 	HooksService        *hooks.HooksService      `inject:""`
-	CacheService        *cache.CacheService      `inject:""`
+	CacheService        *localcache.CacheService `inject:""`
 	DatasourceCache     datasources.CacheService `inject:""`
 	AuthTokenService    models.UserTokenService  `inject:""`
 	QuotaService        *quota.QuotaService      `inject:""`
