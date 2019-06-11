@@ -141,9 +141,25 @@ func TestUserDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(query.Result.Users, ShouldHaveLength, 3)
-				So(query.Result.Users[0].Name, ShouldEqual, "user0")
-				So(query.Result.Users[1].Name, ShouldEqual, "user2")
-				So(query.Result.Users[2].Name, ShouldEqual, "user4")
+
+				zero, second, fourth := false, false, false
+				for _, user := range query.Result.Users {
+					if user.Name == "user0" {
+						zero = true
+					}
+
+					if user.Name == "user2" {
+						second = true
+					}
+
+					if user.Name == "user4" {
+						fourth = true
+					}
+				}
+
+				So(zero, ShouldBeTrue)
+				So(second, ShouldBeTrue)
+				So(fourth, ShouldBeTrue)
 			})
 
 			Convey("when a user is an org member and has been assigned permissions", func() {

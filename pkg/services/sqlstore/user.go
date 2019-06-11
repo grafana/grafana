@@ -452,7 +452,7 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 			whereConditions, fmt.Sprintf(
 				`id IN (SELECT "user_id"
 				FROM "user_auth"
-				WHERE auth_module='%s')`,
+				WHERE auth_module="%s")`,
 				query.AuthModule,
 			),
 		)
