@@ -30,6 +30,11 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setConfigCtrl(ConfigCtrl: any) {
+    this.angularConfigCtrl = ConfigCtrl;
+    return this;
+  }
+
   setQueryCtrl(QueryCtrl: any) {
     this.components.QueryCtrl = QueryCtrl;
     return this;
@@ -198,6 +203,21 @@ export abstract class DataSourceApi<
     row: LogRowModel,
     options?: TContextQueryOptions
   ) => Promise<DataQueryResponse>;
+
+  /**
+   * Variable query action.
+   */
+  metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
+
+  /**
+   * Get tag keys for adhoc filters
+   */
+  getTagKeys?(options: any): Promise<MetricFindValue[]>;
+
+  /**
+   * Get tag values for adhoc filters
+   */
+  getTagValues?(options: { key: any }): Promise<MetricFindValue[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -396,6 +416,10 @@ export interface QueryHint {
   fix?: QueryFix;
 }
 
+export interface MetricFindValue {
+  text: string;
+}
+
 export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
@@ -440,6 +464,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
+  database?: string;
 
   /**
    * This is the full Authorization header if basic auth is ennabled.
