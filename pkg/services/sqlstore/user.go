@@ -449,13 +449,13 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 
 	if query.AuthModule != "" {
 		whereConditions = append(
-			whereConditions, fmt.Sprintf(
-				`id IN (SELECT "user_id"
-				FROM "user_auth"
-				WHERE auth_module="%s")`,
-				query.AuthModule,
-			),
+			whereConditions,
+			`id IN (SELECT "user_id"
+			FROM "user_auth"
+			WHERE auth_module=?)`,
 		)
+
+		whereParams = append(whereParams, query.AuthModule)
 	}
 
 	if len(whereConditions) > 0 {
