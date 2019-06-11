@@ -505,14 +505,10 @@ Content-Type: application/json
     "id": 361,
     "isActive": true,
     "clientIp": "127.0.0.1",
-    "browser": {
-      "family": "Chrome",
-      "version": "72.0"
-    },
-    "os": {
-      "family": "Linux",
-      "version": ""
-    },
+    "browser": "Chrome",
+    "browserVersion": "72.0",
+    "os": "Linux",
+    "osVersion": "",
     "device": "Other",
     "createdAt": "2019-03-05T21:22:54+01:00",
     "seenAt": "2019-03-06T19:41:06+01:00"
@@ -521,14 +517,10 @@ Content-Type: application/json
     "id": 364,
     "isActive": false,
     "clientIp": "127.0.0.1",
-    "browser": {
-      "family": "Mobile Safari",
-      "version": "11.0"
-    },
-    "os": {
-      "family": "iOS",
-      "version": "11.0"
-    },
+    "browser": "Mobile Safari",
+    "browserVersion": "11.0",
+    "os": "iOS",
+    "osVersion": "11.0",
     "device": "iPhone",
     "createdAt": "2019-03-06T19:41:19+01:00",
     "seenAt": "2019-03-06T19:41:21+01:00"
