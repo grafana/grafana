@@ -447,6 +447,17 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 	}
 
+	if query.AuthModule != "" {
+		whereConditions = append(
+			whereConditions, fmt.Sprintf(
+				`id IN (SELECT "user_id"
+				FROM "user_auth"
+				WHERE auth_module='%s')`,
+				query.AuthModule,
+			),
+		)
+	}
+
 	if len(whereConditions) > 0 {
 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 	}

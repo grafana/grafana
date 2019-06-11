@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	. "github.com/smartystreets/goconvey/convey"
 
+	"github.com/grafana/grafana/pkg/models"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -116,6 +118,36 @@ func TestUserDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 1)
 				So(query.Result.TotalCount, ShouldEqual, 1)
+			})
+
+			Convey("can return list users based on their auth type", func() {
+				// add users to auth table
+				for index, user := range users {
+					authModule := "killa"
+
+					// define every second user as ldap
+					if index%2 == 0 {
+						spew.Dump(9999, user.Name)
+						authModule = "ldap"
+					}
+
+					cmd2 := &models.SetAuthInfoCommand{
+						UserId:     user.Id,
+						AuthModule: authModule,
+						AuthId:     "gorilla",
+					}
+					err = SetAuthInfo(cmd2)
+					So(err, ShouldBeNil)
+
+				}
+				query := m.SearchUsersQuery{AuthModule: "ldap"}
+				err = SearchUsers(&query)
+				So(err, ShouldBeNil)
+
+				So(query.Result.Users, ShouldHaveLength, 3)
+				So(query.Result.Users[0].Name, ShouldEqual, "user0")
+				So(query.Result.Users[1].Name, ShouldEqual, "user2")
+				So(query.Result.Users[2].Name, ShouldEqual, "user4")
 			})
 
 			Convey("when a user is an org member and has been assigned permissions", func() {
