@@ -125,11 +125,13 @@ export class LinkSrv implements LinkService {
   getDataLinkUIModel = (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
+
     const info: LinkModel = {
       url: link.url,
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
     };
+
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
     const variablesQuery = toUrlParams(params);
@@ -146,12 +148,14 @@ export class LinkSrv implements LinkService {
       },
     });
 
-    return dataPoint
-      ? {
-          ...info,
-          url: this.templateSrv.replace(info.url, this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint[0]))),
-        }
-      : info;
+    if (dataPoint) {
+      info.url = this.templateSrv.replace(
+        info.url,
+        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint[0]))
+      );
+    }
+
+    return info;
   };
 
   /**

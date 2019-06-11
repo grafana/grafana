@@ -4,6 +4,7 @@ import _ from 'lodash';
 // Utils
 import getFactors from 'app/core/utils/factors';
 import { appendQueryToUrl } from 'app/core/utils/url';
+import kbn from 'app/core/utils/kbn';
 
 // Types
 import { PanelModel } from './PanelModel';
@@ -28,7 +29,7 @@ export class DashboardMigrator {
     this.dashboard = dashboardModel;
   }
 
-  updateSchema(old) {
+  updateSchema(old: any) {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
@@ -52,7 +53,6 @@ export class DashboardMigrator {
         if (panel.type === 'graphite') {
           panel.type = 'graph';
         }
-
         if (panel.type !== 'graph') {
           return;
         }
@@ -634,6 +634,14 @@ class RowArea {
 
 function upgradePanelLink(link: any): DataLink {
   let url = link.url;
+
+  if (!url && link.dashboard) {
+    url = `/dashboard/db/${kbn.slugifyForUrl(link.dashboard)}`;
+  }
+
+  if (!url && link.dashUri) {
+    url = `/dashboard/${link.dashUri}`;
+  }
 
   if (link.keepTime) {
     url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.keepTime}`);
