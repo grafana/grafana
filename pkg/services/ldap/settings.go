@@ -155,9 +155,9 @@ func evalEnvVar(value string) string {
 			envValue := os.Getenv(envVar)
 			return envValue
 		})
-	} else {
-		return value
 	}
+	return value
+	
 }
 
 func assertNotEmptyCfg(val interface{}, propName string) error {
