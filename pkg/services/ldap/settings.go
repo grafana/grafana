@@ -157,7 +157,7 @@ func evalEnvVar(value string) string {
 		})
 	}
 	return value
-	
+
 }
 
 func assertNotEmptyCfg(val interface{}, propName string) error {
