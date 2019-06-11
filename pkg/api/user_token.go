@@ -88,19 +88,14 @@ func (server *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID
 			Id:       token.Id,
 			IsActive: isActive,
 			ClientIp: token.ClientIp,
-			UserAgent: map[string]map[string]string{
-				"os": {
-					"family":  client.Os.Family,
-					"version": osVersion,
-				},
-				"browser": {
-					"family":  client.UserAgent.Family,
-					"version": browserVersion,
-				},
-				"device": {
-					"brand":  client.Device.Brand,
-					"family": client.Device.Family,
-				},
+			Device:   client.Device.ToString(),
+			OperatingSystem: map[string]string{
+				"family":  client.Os.Family,
+				"version": osVersion,
+			},
+			Browser: map[string]string{
+				"family":  client.UserAgent.Family,
+				"version": browserVersion,
 			},
 			CreatedAt: time.Unix(token.CreatedAt, 0),
 			SeenAt:    time.Unix(token.SeenAt, 0),
