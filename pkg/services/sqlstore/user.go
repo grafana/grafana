@@ -533,7 +533,7 @@ func deleteUserInTransaction(sess *DBSession, cmd *m.DeleteUserCommand) error {
 	}
 
 	for _, sql := range deletes {
-		_, err := sess.Exec(sql, cmgitd.UserId)
+		_, err := sess.Exec(sql, cmd.UserId)
 		if err != nil {
 			return err
 		}
