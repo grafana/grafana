@@ -258,7 +258,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 		return
 	}
 
-	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/metrics" {
+	if ctx.Req.Method != http.MethodGet || ctx.Req.URL.Path != "/metrics" {
 		return
 	}
 
