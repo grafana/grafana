@@ -407,6 +407,14 @@ describe('DashboardModel', () => {
                 includeVars: true,
                 title: 'test',
               },
+              {
+                dashboard: 'my other dashboard',
+                title: 'test',
+              },
+              {
+                dashUri: '',
+                title: 'test',
+              },
             ],
           },
         ],
@@ -423,6 +431,10 @@ describe('DashboardModel', () => {
 
     it('should add includeVars to url', () => {
       expect(model.panels[0].links[2].url).toBe(`http://mylink.com?existingParam&$${DataLinkBuiltInVars.includeVars}`);
+    });
+
+    it('should slugify dashboard name', () => {
+      expect(model.panels[0].links[3].url).toBe(`/dashboard/db/my-other-dashboard`);
     });
   });
 });
