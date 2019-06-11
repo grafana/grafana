@@ -87,14 +87,16 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey                        string
-	DisableGravatar                  bool
-	EmailCodeValidMinutes            int
-	DataProxyWhiteList               map[string]bool
-	DisableBruteForceLoginProtection bool
-	CookieSecure                     bool
-	CookieSameSite                   http.SameSite
-	AllowEmbedding                   bool
+	SecretKey                          string
+	DisableGravatar                    bool
+	EmailCodeValidMinutes              int
+	DataProxyWhiteList                 map[string]bool
+	DisableBruteForceLoginProtection   bool
+	CookieSecure                       bool
+	CookieSameSite                     http.SameSite
+	AllowEmbedding                     bool
+	DisableXSSProtectionHeader         bool
+	DisableContentTypeProtectionHeader bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
