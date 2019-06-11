@@ -58,7 +58,7 @@ Available built-in variables are:
 1. ``__all_variables`` - will add all current dashboard's variables to the URL
 2. ``__url_time_range`` - will add current dashboard's time range to the URL (i.e. ``?from=now-6h&to=now``)
 3. ``__series_name`` - will add series name as a query param in the URL (i.e. ``?series=B-series``)
-4. ``__value_time`` - will add narrowed down time range relative to the datapoint's timestamp. Time range will be narrowed down by 50% and added as Unix epoch timestamp(ms)
+4. ``__value_time`` - will add datapoint's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
 
 
 #### Template variables in data links
