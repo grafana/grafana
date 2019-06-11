@@ -14,6 +14,8 @@ The end goal is to follow the golint. And the approuch for reachin that goal is 
 ## Testing
 We use GoConvey for BDD/scenario based testing. Which we think is useful for testing certain chain or interactions. Ex https://github.com/grafana/grafana/blob/master/pkg/services/auth/auth_token_test.go
 
+We value clean & readable code that is loosely coupled and covered by unit tests. This makes it easier to collaborate and maintain the code. In the sqlstore package we do database operations in tests and while some might say that's not suited for unit tests. We think they are fast enough and provide a lot of value. 
+
 For new tests its preferred to use standard library testing.
 
 ### Mocks/Stubs
