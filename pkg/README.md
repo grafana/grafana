@@ -3,7 +3,7 @@
 The code [styleguide](STYLEGUIDE.md) and brief description of the architecture[architecture](ARCHITECTURE.md)
 
 # On going refactorings.
-These issues are not something we want to address all at once but something we will improve over time. 
+These issues are not something we want to address all at once but something we will improve over time. Since Grafana is released at a regular schedule the prefer approuch is to do this in batches. Not only is it easier to review, it also reduces the risk of conflicts when cherry-picking fixes from master to release branches. Changes that spawn multiple locations are therefore prefered in the end of the release cycle since we make fewer patch releases in the end of the cycle. 
 
 ## Global state
 Global state makes testing and debugging software harder and its something we want to avoid when possible.
@@ -12,7 +12,7 @@ is to use the `inject` package to wire up all dependencies either in `pkg/cmd/gr
 self registering using `registry.RegisterService` ex https://github.com/grafana/grafana/blob/master/pkg/services/cleanup/cleanup.go#L25
 
 ## Reduce the use of the init() function
-Should only be used to register services/implementations
+Should only be used to register services/implementations.
 
 ## Settings refactoring 
 The plan is to move all settings to from package level vars in settings package to the setting.Cfg object. To access the settings services/components can inject this setting.Cfg object. 
@@ -24,6 +24,7 @@ Injection example:
 https://github.com/grafana/grafana/blob/master/pkg/services/cleanup/cleanup.go#L19
 
 ## Reduce the use of Goconvey
+TODO
 
 ## Sqlstore refactoring
 The sqlstore handlers all use a global xorm engine variable. This should be refactored to use the Sqlstore instance. 
