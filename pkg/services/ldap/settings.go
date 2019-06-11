@@ -139,14 +139,14 @@ func readConfig(configFile string) (*Config, error) {
 	}
 
 	for _, server := range result.Servers {
-		envValue := evalBindPwdVariable(server.BindPassword)
+		envValue := evalEnvVar(server.BindPassword)
 		server.BindPassword = envValue
 	}
 
 	return result, nil
 }
 
-func evalBindPasswordVariable(value string) string {
+func evalEnvVar(value string) string {
 	regex := regexp.MustCompile(`\${(\w+)}`)
 	if regex != nil {
 		return regex.ReplaceAllStringFunc(value, func(envVar string) string {

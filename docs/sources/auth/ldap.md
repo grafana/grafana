@@ -102,6 +102,12 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 bind_password = "grafana"
 ```
 
+You can also set the bind password using an environment variable, the variable name is case insensitive and can not contain any dots.
+
+```bash
+bind_password = "${LDAP_BIND}"
+```
+
 #### Single Bind Example
 
 If you can provide a single bind expression that matches all possible users, you can skip the second bind and bind against the user DN directly.
