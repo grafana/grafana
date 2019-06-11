@@ -38,11 +38,13 @@ export default class AdminEditUserCtrl {
           return {
             id: session.id,
             isActive: session.isActive,
-            seenAt: dateTime(session.seenAt).fromNow(true),
+            seenAt: dateTime(session.seenAt).fromNow(),
             createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
             clientIp: session.clientIp,
             browser: session.browser,
+            browserVersion: session.browserVersion,
             os: session.os,
+            osVersion: session.osVersion,
             device: session.device,
           };
         });
