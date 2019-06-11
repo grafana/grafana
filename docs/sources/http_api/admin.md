@@ -373,20 +373,15 @@ Content-Type: application/json
     "id": 361,
     "isActive": false,
     "clientIp": "127.0.0.1",
-    "userAgent": {
-      "browser": {
-        "family": "Chrome",
-        "version": "72.0"
-      },
-      "device": {
-        "brand": "",
-        "family": "Other"
-      },
-      "os": {
-        "family": "Linux",
-        "version": ""
-      }
+    "browser": {
+      "family": "Chrome",
+      "version": "72.0"
     },
+    "os": {
+      "family": "Linux",
+      "version": ""
+    },
+    "device": "Other",
     "createdAt": "2019-03-05T21:22:54+01:00",
     "seenAt": "2019-03-06T19:41:06+01:00"
   },
@@ -394,20 +389,15 @@ Content-Type: application/json
     "id": 364,
     "isActive": false,
     "clientIp": "127.0.0.1",
-    "userAgent": {
-      "browser": {
-        "family": "Mobile Safari",
-        "version": "11.0"
-      },
-      "device": {
-        "brand": "Apple",
-        "family": "iPhone"
-      },
-      "os": {
-        "family": "iOS",
-        "version": "11.0"
-      }
+    "browser": {
+      "family": "Mobile Safari",
+      "version": "11.0"
     },
+    "os": {
+      "family": "iOS",
+      "version": "11.0"
+    },
+    "device": "iPhone",
     "createdAt": "2019-03-06T19:41:19+01:00",
     "seenAt": "2019-03-06T19:41:21+01:00"
   }
