@@ -8,12 +8,11 @@ Grafanas backend is written in GO using sqlite3/mysql or postgres as storage for
 | ------- | ----------- |
 | /pkg/api | Http Handlers and routing. Almost all handler funcs are global which is something we would like to improve in the future. Handlers should be assosicated with a struct that refers to all depedencies. Ex bus |
 | /pkg/cmd | The binaries that we build. Grafana-server and grafana-cli |
-| /pkg/components | Mixed content of packages that we copied into Grafana and packages we implemented ourself. TODO |
-| /pkg/infra | TODO |
-| /pkg/services | TODO |
-| /pkg/setting | settings package for Grafana. Anything related to grafana global configuration should be dealt with in this package. |
+| /pkg/components | Mixed content of packages that we copied into Grafana and packages we implemented ourself. The Purpose of this folders should be packages that are too big for util and doesnt belong somewhere else |
+| /pkg/infra | Packages in infra should be packages that are used in multiple places of Grafana without knowing anything about Grafana domain. E.g. Logs, Metrics, Traces |
+| /pkg/services | Packages in services are responsible for peristing domain objects and manage the relationship between domain objects. |
 | /pkg/tsdb | All backend implementations of the datasources in Grafana. Used by both Grafanas frontend and alerting. |
-| /pkg/util | TODO |
+| /pkg/util | Small helper functions that are used in multiple parts of the codebase. Many functions are placed directly in the util folders which is something we want to avoid. Its better to give the util function a more descriptive package name. Ex `errutil` |
 
 ## Central components of Grafanas backend
 
