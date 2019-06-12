@@ -8,7 +8,7 @@ Grafanas backend is written in GO using sqlite3/mysql or postgres as storage for
 | ------- | ----------- |
 | /pkg/api | Http Handlers and routing. Almost all handler funcs are global which is something we would like to improve in the future. Handlers should be assosicated with a struct that refers to all depedencies. Ex bus |
 | /pkg/cmd | The binaries that we build. Grafana-server and grafana-cli |
-| /pkg/components | TODO |
+| /pkg/components | Mixed content of packages that we copied into Grafana and packages we implemented ourself. TODO |
 | /pkg/infra | TODO |
 | /pkg/services | TODO |
 | /pkg/setting | settings package for Grafana. Anything related to grafana global configuration should be dealt with in this package. |
