@@ -331,7 +331,7 @@ mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking
 
 ### strict_transport_security
 
-Set to `false` if you want to disable http `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS.
+Set to `true` if you want to enable http `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS. The default value is `false` until the next minor release, `6.3`.
 
 ### strict_transport_security_max_age_seconds
 
@@ -347,11 +347,11 @@ Set to `true` if to enable the HSTS includeSubDomains option. Only applied if st
 
 ### x_content_type_options
 
-Set to `false` to disable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `true`.
+Set to `false` to disable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `false` until the next minor release, `6.3`.
 
 ### x_xss_protection
 
-Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `true`.
+Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
 
 <hr />
 
