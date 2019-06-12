@@ -35,6 +35,8 @@ RUN apt-get update   && \
         curl            \
         git             \
         make            \
+        cmake           \
+        libssl-dev      \
         xz-utils     && \
     git clone https://github.com/tpoechtrager/osxcross.git  /tmp/osxcross  && \
     curl -L ${OSX_SDK_URL}/${OSX_SDK}.tar.xz -o /tmp/osxcross/tarballs/${OSX_SDK}.tar.xz && \
