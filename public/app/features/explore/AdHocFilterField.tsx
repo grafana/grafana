@@ -1,7 +1,7 @@
 import React from 'react';
+import _ from 'lodash';
 import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/ui';
 import { AdHocFilter } from './AdHocFilter';
-
 export interface KeyValuePair {
   keys: string[];
   key: string;
@@ -13,6 +13,7 @@ export interface KeyValuePair {
 export interface Props<TQuery extends DataQuery = DataQuery, TOptions extends DataSourceJsonData = DataSourceJsonData> {
   datasource: DataSourceApi<TQuery, TOptions>;
   onPairsChanged: (pairs: KeyValuePair[]) => void;
+  extendedOptions?: any;
 }
 
 export interface State {
@@ -26,59 +27,52 @@ export class AdHocFilterField<
   state: State = { pairs: [] };
 
   async componentDidMount() {
-    const tagKeys = this.props.datasource.getTagKeys ? await this.props.datasource.getTagKeys({}) : [];
-    const keys = tagKeys.map(tagKey => tagKey.text);
-    const pairs = [{ key: null, operator: null, value: null, keys, values: [] }];
+    const keys = await this.loadTagKeys();
+    const pairs = this.updatePairs([], 0, { keys });
+
     this.setState({ pairs });
   }
 
-  onKeyChanged = (index: number) => async (key: string) => {
-    const { datasource, onPairsChanged } = this.props;
-    const tagValues = datasource.getTagValues ? await datasource.getTagValues({ key }) : [];
-    const values = tagValues.map(tagValue => tagValue.text);
-    const newPairs = this.updatePairAt(index, { key, values });
+  async componentDidUpdate(prevProps: Props) {
+    if (_.isEqual(prevProps.extendedOptions, this.props.extendedOptions) === false) {
+      const keys = await this.loadTagKeys();
+      const pairs = this.updatePairs([], 0, { keys });
 
-    this.setState({ pairs: newPairs });
-    onPairsChanged(newPairs);
-  };
+      this.setState({ pairs }, () => this.props.onPairsChanged(pairs));
+    }
+  }
 
-  onValueChanged = (index: number) => (value: string) => {
-    const newPairs = this.updatePairAt(index, { value });
-
-    this.setState({ pairs: newPairs });
-    this.props.onPairsChanged(newPairs);
-  };
-
-  onOperatorChanged = (index: number) => (operator: string) => {
-    const newPairs = this.updatePairAt(index, { operator });
-
-    this.setState({ pairs: newPairs });
-    this.props.onPairsChanged(newPairs);
-  };
-
-  onAddFilter = async () => {
-    const { pairs } = this.state;
-    const tagKeys = this.props.datasource.getTagKeys ? await this.props.datasource.getTagKeys({}) : [];
+  loadTagKeys = async () => {
+    const { datasource, extendedOptions } = this.props;
+    const options = extendedOptions || {};
+    const tagKeys = datasource.getTagKeys ? await datasource.getTagKeys(options) : [];
     const keys = tagKeys.map(tagKey => tagKey.text);
-    const newPairs = pairs.concat({ key: null, operator: null, value: null, keys, values: [] });
 
-    this.setState({ pairs: newPairs });
+    return keys;
   };
 
-  onRemoveFilter = async (index: number) => {
-    const { pairs } = this.state;
-    const newPairs = pairs.reduce((allPairs, pair, pairIndex) => {
-      if (pairIndex === index) {
-        return allPairs;
-      }
-      return allPairs.concat(pair);
-    }, []);
+  loadTagValues = async (key: string) => {
+    const { datasource, extendedOptions } = this.props;
+    const options = extendedOptions || {};
+    const tagValues = datasource.getTagValues ? await datasource.getTagValues({ ...options, key }) : [];
+    const values = tagValues.map(tagValue => tagValue.text);
 
-    this.setState({ pairs: newPairs });
+    return values;
   };
 
-  private updatePairAt = (index: number, pair: Partial<KeyValuePair>) => {
-    const { pairs } = this.state;
+  updatePairs(pairs: KeyValuePair[], index: number, pair: Partial<KeyValuePair>) {
+    if (pairs.length === 0) {
+      return [
+        {
+          key: pair.key || '',
+          keys: pair.keys || [],
+          operator: pair.operator || '',
+          value: pair.value || '',
+          values: pair.values || [],
+        },
+      ];
+    }
+
     const newPairs: KeyValuePair[] = [];
     for (let pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
       const newPair = pairs[pairIndex];
@@ -98,6 +92,44 @@ export class AdHocFilterField<
     }
 
     return newPairs;
+  }
+
+  onKeyChanged = (index: number) => async (key: string) => {
+    const { onPairsChanged } = this.props;
+    const values = await this.loadTagValues(key);
+    const pairs = this.updatePairs(this.state.pairs, index, { key, values });
+
+    this.setState({ pairs }, () => onPairsChanged(pairs));
+  };
+
+  onValueChanged = (index: number) => (value: string) => {
+    const pairs = this.updatePairs(this.state.pairs, index, { value });
+
+    this.setState({ pairs }, () => this.props.onPairsChanged(pairs));
+  };
+
+  onOperatorChanged = (index: number) => (operator: string) => {
+    const pairs = this.updatePairs(this.state.pairs, index, { operator });
+
+    this.setState({ pairs }, () => this.props.onPairsChanged(pairs));
+  };
+
+  onAddFilter = async () => {
+    const keys = await this.loadTagKeys();
+    const pairs = this.state.pairs.concat(this.updatePairs([], 0, { keys }));
+
+    this.setState({ pairs }, () => this.props.onPairsChanged(pairs));
+  };
+
+  onRemoveFilter = async (index: number) => {
+    const pairs = this.state.pairs.reduce((allPairs, pair, pairIndex) => {
+      if (pairIndex === index) {
+        return allPairs;
+      }
+      return allPairs.concat(pair);
+    }, []);
+
+    this.setState({ pairs });
   };
 
   render() {
