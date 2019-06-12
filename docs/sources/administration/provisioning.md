@@ -207,8 +207,8 @@ The dashboard provider config file looks somewhat like this:
 apiVersion: 1
 
 providers:
-  # <string> provider name
-- name: 'default'
+  # <string> an unique provider name
+- name: 'a unique provider name'
   # <int> org id. will default to orgId 1 if not specified
   orgId: 1
   # <string, required> name of the dashboard folder. Required
