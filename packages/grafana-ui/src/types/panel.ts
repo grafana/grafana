@@ -31,6 +31,7 @@ export interface PanelProps<T = any> {
   options: T;
   onOptionsChange: (options: T) => void;
   renderCounter: number;
+  transparent: boolean;
   width: number;
   height: number;
   replaceVariables: InterpolateFunction;

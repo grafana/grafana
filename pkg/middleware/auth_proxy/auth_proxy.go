@@ -292,7 +292,7 @@ func (auth *AuthProxy) Remember(id int64) *Error {
 		return nil
 	}
 
-	expiration := time.Duration(-auth.cacheTTL) * time.Minute
+	expiration := time.Duration(auth.cacheTTL) * time.Minute
 
 	err := auth.store.Set(key, id, expiration)
 	if err != nil {

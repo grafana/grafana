@@ -11,7 +11,9 @@ export const downloadBrowserIfNeeded = async (): Promise<void> => {
 
   console.log('Did not find any local revisions for browser, downloading latest this might take a while.');
   await browserFetcher.download(constants.chromiumRevision, (downloaded, total) => {
-    console.log(`Downloaded ${downloaded}bytes of ${total}bytes.`);
+    if (downloaded === total) {
+      console.log('Chromium successfully downloaded');
+    }
   });
 };
 

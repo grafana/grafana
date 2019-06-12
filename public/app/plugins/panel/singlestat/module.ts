@@ -11,6 +11,8 @@ import TimeSeries from 'app/core/time_series2';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { GrafanaThemeType, getValueFormat, getColorFromHexRgbOrName, isTableData } from '@grafana/ui';
 
+const BASE_FONT_SIZE = 38;
+
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
@@ -65,6 +67,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     sparkline: {
       show: false,
       full: false,
+      ymin: null,
+      ymax: null,
       lineColor: 'rgb(31, 120, 193)',
       fillColor: 'rgba(31, 118, 189, 0.18)',
     },
@@ -384,10 +388,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return valueString;
     }
 
-    function getSpan(className, fontSize, applyColoring, value) {
+    function getSpan(className, fontSizePercent, applyColoring, value) {
       value = $sanitize(templateSrv.replace(value, data.scopedVars));
       value = applyColoring ? applyColoringThresholds(value) : value;
-      return '<span class="' + className + '" style="font-size:' + fontSize + '">' + value + '</span>';
+      const pixelSize = (parseInt(fontSizePercent, 10) / 100) * BASE_FONT_SIZE;
+      return '<span class="' + className + '" style="font-size:' + pixelSize + 'px">' + value + '</span>';
     }
 
     function getBigValueHtml() {
@@ -545,12 +550,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           lines: {
             show: true,
             fill: 1,
-            zero: false,
             lineWidth: 1,
             fillColor: getColorFromHexRgbOrName(panel.sparkline.fillColor, config.theme.type),
           },
         },
-        yaxes: { show: false },
+        yaxes: {
+          show: false,
+          min: panel.sparkline.ymin,
+          max: panel.sparkline.ymax,
+        },
         xaxis: {
           show: false,
           mode: 'time',

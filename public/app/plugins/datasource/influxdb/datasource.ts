@@ -2,11 +2,16 @@ import _ from 'lodash';
 
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import InfluxSeries from './influx_series';
-import InfluxQuery from './influx_query';
+import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
+import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/ui';
+import { InfluxQuery, InfluxOptions } from './types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { IQService } from 'angular';
 
-export default class InfluxDatasource {
+export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxOptions> {
   type: string;
   urls: any;
   username: string;
@@ -20,7 +25,13 @@ export default class InfluxDatasource {
   httpMode: string;
 
   /** @ngInject */
-  constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
+    private $q: IQService,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv
+  ) {
+    super(instanceSettings);
     this.type = 'influxdb';
     this.urls = _.map(instanceSettings.url.split(','), url => {
       return url.trim();
@@ -32,9 +43,10 @@ export default class InfluxDatasource {
     this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
-    this.interval = (instanceSettings.jsonData || {}).timeInterval;
+    const settingsData = instanceSettings.jsonData || ({} as InfluxOptions);
+    this.interval = settingsData.timeInterval;
+    this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
-    this.httpMode = instanceSettings.jsonData.httpMode || 'GET';
   }
 
   query(options) {
@@ -55,7 +67,7 @@ export default class InfluxDatasource {
       // backward compatibility
       scopedVars.interval = scopedVars.__interval;
 
-      queryModel = new InfluxQuery(target, this.templateSrv, scopedVars);
+      queryModel = new InfluxQueryModel(target, this.templateSrv, scopedVars);
       return queryModel.render(true);
     }).reduce((acc, current) => {
       if (current !== '') {

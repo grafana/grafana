@@ -22,6 +22,9 @@ var ErrNoLDAPServers = errors.New("No LDAP servers are configured")
 // ErrDidNotFindUser if request for user is unsuccessful
 var ErrDidNotFindUser = errors.New("Did not find a user")
 
+// newLDAP return instance of the single LDAP server
+var newLDAP = ldap.New
+
 // IMultiLDAP is interface for MultiLDAP
 type IMultiLDAP interface {
 	Login(query *models.LoginUserQuery) (
@@ -35,9 +38,6 @@ type IMultiLDAP interface {
 	User(login string) (
 		*models.ExternalUserInfo, error,
 	)
-
-	Add(dn string, values map[string][]string) error
-	Remove(dn string) error
 }
 
 // MultiLDAP is basic struct of LDAP authorization
@@ -52,65 +52,17 @@ func New(configs []*ldap.ServerConfig) IMultiLDAP {
 	}
 }
 
-// Add adds user to the *first* defined LDAP
-func (multiples *MultiLDAP) Add(
-	dn string,
-	values map[string][]string,
-) error {
-	if len(multiples.configs) == 0 {
-		return ErrNoLDAPServers
-	}
-
-	config := multiples.configs[0]
-	ldap := ldap.New(config)
-
-	if err := ldap.Dial(); err != nil {
-		return err
-	}
-
-	defer ldap.Close()
-
-	err := ldap.Add(dn, values)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Remove removes user from the *first* defined LDAP
-func (multiples *MultiLDAP) Remove(dn string) error {
-	if len(multiples.configs) == 0 {
-		return ErrNoLDAPServers
-	}
-
-	config := multiples.configs[0]
-	ldap := ldap.New(config)
-
-	if err := ldap.Dial(); err != nil {
-		return err
-	}
-
-	defer ldap.Close()
-
-	err := ldap.Remove(dn)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Login tries to log in the user in multiples LDAP
 func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
+
 	if len(multiples.configs) == 0 {
 		return nil, ErrNoLDAPServers
 	}
 
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
 			return nil, err
@@ -119,7 +71,6 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		defer server.Close()
 
 		user, err := server.Login(query)
-
 		if user != nil {
 			return user, nil
 		}
@@ -132,8 +83,6 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		if err != nil {
 			return nil, err
 		}
-
-		return user, nil
 	}
 
 	// Return invalid credentials if we couldn't find the user anywhere
@@ -152,7 +101,7 @@ func (multiples *MultiLDAP) User(login string) (
 
 	search := []string{login}
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
 			return nil, err
@@ -185,7 +134,7 @@ func (multiples *MultiLDAP) Users(logins []string) (
 	}
 
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
 			return nil, err

@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
 // Utils & Services
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 
 // Components

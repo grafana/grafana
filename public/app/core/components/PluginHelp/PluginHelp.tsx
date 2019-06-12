@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 // @ts-ignore
 import Remarkable from 'remarkable';
-import { getBackendSrv } from '../../services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 interface Props {
   plugin: {

@@ -11,8 +11,9 @@ import { DisplayValue, Themeable, TimeSeriesValue, Threshold, VizOrientation } f
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;
 const MIN_VALUE_WIDTH = 50;
-const MAX_VALUE_WIDTH = 100;
-const LINE_HEIGHT = 1.5;
+const MAX_VALUE_WIDTH = 150;
+const TITLE_LINE_HEIGHT = 1.5;
+const VALUE_LINE_HEIGHT = 1;
 
 export interface Props extends Themeable {
   height: number;
@@ -227,7 +228,7 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
     return {
       fontSize: 14,
       width: width,
-      height: 14 * LINE_HEIGHT,
+      height: 14 * TITLE_LINE_HEIGHT,
       placement: 'below',
     };
   }
@@ -238,7 +239,7 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
     const titleHeight = Math.max(Math.min(height * maxTitleHeightRatio, MAX_VALUE_HEIGHT), 17);
 
     return {
-      fontSize: titleHeight / LINE_HEIGHT,
+      fontSize: titleHeight / TITLE_LINE_HEIGHT,
       width: 0,
       height: titleHeight,
       placement: 'above',
@@ -251,7 +252,7 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   const titleHeight = Math.max(height * maxTitleHeightRatio, MIN_VALUE_HEIGHT);
 
   return {
-    fontSize: titleHeight / LINE_HEIGHT,
+    fontSize: titleHeight / TITLE_LINE_HEIGHT,
     height: 0,
     width: Math.min(Math.max(width * maxTitleWidthRatio, 50), 200),
     placement: 'left',
@@ -485,7 +486,7 @@ export function getValueColor(props: Props): string {
  * Only exported to for unit test
  */
 function getValueStyles(value: string, color: string, width: number, height: number): CSSProperties {
-  const heightFont = height / LINE_HEIGHT;
+  const heightFont = height / VALUE_LINE_HEIGHT;
   const guess = width / (value.length * 1.1);
   const fontSize = Math.min(Math.max(guess, 14), heightFont);
 
@@ -495,6 +496,15 @@ function getValueStyles(value: string, color: string, width: number, height: num
     width: `${width}px`,
     display: 'flex',
     alignItems: 'center',
-    fontSize: fontSize.toFixed(2) + 'px',
+    lineHeight: VALUE_LINE_HEIGHT,
+    fontSize: fontSize.toFixed(4) + 'px',
   };
 }
+
+// function getTextWidth(text: string): number {
+//   const canvas = getTextWidth.canvas || (getTextWidth.canvas = document.createElement("canvas"));
+//   var context = canvas.getContext("2d");
+//   context.font = "'Roboto', 'Helvetica Neue', Arial, sans-serif";
+//   var metrics = context.measureText(text);
+//   return metrics.width;
+// }
