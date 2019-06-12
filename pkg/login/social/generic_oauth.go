@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 
+	"github.com/tidwall/gjson"
 	"golang.org/x/oauth2"
 )
 
@@ -22,6 +23,7 @@ type SocialGenericOAuth struct {
 	allowSignup          bool
 	emailAttributeName   string
 	teamIds              []int
+	userInfoRootPath     string
 }
 
 func (s *SocialGenericOAuth) Type() int {
@@ -189,7 +191,12 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 			return nil, fmt.Errorf("Error getting user info: %s", err)
 		}
 
-		err = json.Unmarshal(response.Body, &data)
+		if len(s.userInfoRootPath) != 0 {
+			user := gjson.Get(string(response.Body), s.userInfoRootPath).String()
+			err = json.Unmarshal([]byte(user), &data)
+		} else {
+			err = json.Unmarshal(response.Body, &data)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("Error decoding user info JSON: %s", err)
 		}

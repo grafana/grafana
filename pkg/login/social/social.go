@@ -167,6 +167,7 @@ func NewOAuthService() {
 				emailAttributeName:   info.EmailAttributeName,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				userInfoRootPath:     sec.Key("user_info_root_path").String(),
 			}
 		}
 

@@ -17,6 +17,8 @@ can find examples using Okta, BitBucket, OneLogin and Azure.
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
 
+If the user attributes is not at the outermost level of the data. Can add the `user_info_root_path` variable。A path is in dot syntax that contains the user attributes (i.e. userAuthentication.principal for a JsonAPI-formatted response)
+
 You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
 
@@ -33,6 +35,7 @@ token_url =
 api_url =
 allowed_domains = mycompany.com mycompany.org
 allow_sign_up = true
+user_info_root_path = userAuthentication.principal
 ```
 
 Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.

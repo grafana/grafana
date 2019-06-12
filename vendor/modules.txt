@@ -192,6 +192,12 @@ github.com/smartystreets/goconvey/convey/gotest
 github.com/stretchr/testify/assert
 # github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 github.com/teris-io/shortid
+# github.com/tidwall/gjson v1.2.1
+github.com/tidwall/gjson
+# github.com/tidwall/match v1.0.1
+github.com/tidwall/match
+# github.com/tidwall/pretty v1.0.0
+github.com/tidwall/pretty
 # github.com/ua-parser/uap-go v0.0.0-20190303233514-1004ccd816b3
 github.com/ua-parser/uap-go/uaparser
 # github.com/uber/jaeger-client-go v2.16.0+incompatible
