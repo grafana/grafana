@@ -195,7 +195,7 @@ Content-Type: application/json
 ```
 
 ## Patch Annotation
-> This setting is available in Grafana 6.0.0-beta2 and above.
+> This is available in Grafana 6.0.0-beta2 and above.
 
 `PATCH /api/annotations/:id`
 
