@@ -138,6 +138,13 @@ func (db *Postgres) CleanDB() error {
 	return nil
 }
 
+func (db *Postgres) GetErrorCode(err error) string {
+	if driverErr, ok := err.(*pq.Error); ok {
+		return string(driverErr.Code)
+	}
+	return ""
+}
+
 func (db *Postgres) isThisError(err error, errcode string) bool {
 	if driverErr, ok := err.(*pq.Error); ok {
 		if string(driverErr.Code) == errcode {
