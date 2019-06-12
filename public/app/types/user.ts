@@ -4,6 +4,7 @@ export interface OrgUser {
   lastSeenAt: string;
   lastSeenAtAge: string;
   login: string;
+  name: string;
   orgId: number;
   role: string;
   userId: number;
@@ -47,6 +48,10 @@ export interface UsersState {
 export interface UserState {
   orgId: number;
   timeZone: string;
+}
+
+export interface UserAccountState {
+  userProfile: OrgUser;
 }
 
 export interface UserSession {

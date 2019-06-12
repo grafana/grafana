@@ -13,6 +13,7 @@ import pluginReducers from 'app/features/plugins/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
 import userReducers from 'app/features/profile/state/reducers';
+import userAccountReducers from 'app/core/components/UserAccount/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import { setStore } from './store';
 import { limitMessageRateEpic } from 'app/features/explore/state/epics/limitMessageRateEpic';
@@ -46,6 +47,7 @@ const rootReducers = {
   ...dataSourcesReducers,
   ...usersReducers,
   ...userReducers,
+  ...userAccountReducers,
   ...organizationReducers,
 };
 

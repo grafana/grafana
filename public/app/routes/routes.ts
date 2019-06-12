@@ -17,6 +17,8 @@ import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportC
 import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
 import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
+import UserPreferences from 'app/features/profile/UserPreferences';
+import AdminEditUser from 'app/features/admin/AdminEditUser';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
 import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
@@ -227,6 +229,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'ProfileCtrl',
       controllerAs: 'ctrl',
     })
+    .when('/profile/react', {
+      template: '<react-container />',
+      resolve: {
+        component: () => UserPreferences,
+      },
+    })
     .when('/profile/password', {
       templateUrl: 'public/app/features/profile/partials/change_password.html',
       controller: 'ChangePasswordCtrl',
@@ -258,6 +266,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/admin/users/edit/:id', {
       templateUrl: 'public/app/features/admin/partials/edit_user.html',
       controller: 'AdminEditUserCtrl',
+    })
+    .when('/admin/users/edit/react/:id', {
+      template: '<react-container />',
+      resolve: {
+        component: () => AdminEditUser,
+      },
     })
     .when('/admin/orgs', {
       templateUrl: 'public/app/features/admin/partials/orgs.html',
