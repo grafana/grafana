@@ -10,6 +10,7 @@ import { cherryPickTask } from './tasks/cherrypick';
 import { precommitTask } from './tasks/precommit';
 import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
+import { toolkitBuildTask } from './tasks/toolkit.build';
 
 export const run = () => {
   program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','));
@@ -88,6 +89,13 @@ export const run = () => {
     .description('Anything')
     .action(async cmd => {
       await execTask(pluginBuildTask)({});
+    });
+
+  program
+    .command('toolkit:build')
+    .description('Anything')
+    .action(async cmd => {
+      await execTask(toolkitBuildTask)();
     });
 
   program.parse(process.argv);
