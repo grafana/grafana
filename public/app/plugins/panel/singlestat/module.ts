@@ -552,9 +552,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             fill: 1,
             lineWidth: 1,
             fillColor: getColorFromHexRgbOrName(panel.sparkline.fillColor, config.theme.type),
+            zero: false,
           },
         },
-        yaxes: {
+        yaxis: {
           show: false,
           min: panel.sparkline.ymin,
           max: panel.sparkline.ymax,
