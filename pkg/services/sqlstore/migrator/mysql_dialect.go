@@ -134,13 +134,6 @@ func (db *Mysql) CleanDB() error {
 	return nil
 }
 
-func (db *Mysql) GetErrorCode(err error) string {
-	if driverErr, ok := err.(*mysql.MySQLError); ok {
-		return strconv.Itoa(int(driverErr.Number))
-	}
-	return ""
-}
-
 func (db *Mysql) isThisError(err error, errcode uint16) bool {
 	if driverErr, ok := err.(*mysql.MySQLError); ok {
 		if driverErr.Number == errcode {

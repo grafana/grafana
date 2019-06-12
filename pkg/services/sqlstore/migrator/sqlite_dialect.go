@@ -85,13 +85,6 @@ func (db *Sqlite3) CleanDB() error {
 	return nil
 }
 
-func (db *Sqlite3) GetErrorCode(err error) string {
-	if driverErr, ok := err.(sqlite3.Error); ok {
-		return string(driverErr.ExtendedCode)
-	}
-	return ""
-}
-
 func (db *Sqlite3) isThisError(err error, errcode int) bool {
 	if driverErr, ok := err.(sqlite3.Error); ok {
 		if int(driverErr.ExtendedCode) == errcode {
