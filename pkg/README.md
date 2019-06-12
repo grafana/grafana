@@ -24,7 +24,7 @@ Injection example:
 https://github.com/grafana/grafana/blob/master/pkg/services/cleanup/cleanup.go#L19
 
 ## Reduce the use of Goconvey
-TODO
+We want to migrated away from using Goconvey and use stdlib testing as its the most common approuch in the GO community and we think it will make it easier for new contributors. 
 
 ## Sqlstore refactoring
 The sqlstore handlers all use a global xorm engine variable. This should be refactored to use the Sqlstore instance. 
