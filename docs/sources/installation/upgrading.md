@@ -143,7 +143,7 @@ If you have `login_remember_days` configured to 0 (zero) you should change your 
 
 ```ini
 [auth]
-login_maximum_inactive_lifetime_days = 1
+login_maximum_inactive_lifetime_duration = 24h
 login_maximum_lifetime_days = 1
 ```
 

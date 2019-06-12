@@ -497,9 +497,9 @@ func createTestContext(t *testing.T) *testContext {
 	tokenService := &UserAuthTokenService{
 		SQLStore: sqlstore,
 		Cfg: &setting.Cfg{
-			LoginMaxInactiveLifetimeDays: 7,
-			LoginMaxLifetimeDays:         30,
-			TokenRotationIntervalMinutes: 10,
+			LoginMaxInactiveLifetimeDuration: "168h",
+			LoginMaxLifetimeDays:             30,
+			TokenRotationIntervalMinutes:     10,
 		},
 		log: log.New("test-logger"),
 	}

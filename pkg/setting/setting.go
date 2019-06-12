@@ -247,10 +247,10 @@ type Cfg struct {
 	EnterpriseLicensePath            string
 
 	// Auth
-	LoginCookieName              string
-	LoginMaxInactiveLifetimeDays int
-	LoginMaxLifetimeDays         int
-	TokenRotationIntervalMinutes int
+	LoginCookieName                  string
+	LoginMaxInactiveLifetimeDuration string
+	LoginMaxLifetimeDays             int
+	TokenRotationIntervalMinutes     int
 
 	// Dataproxy
 	SendUserHeader bool
@@ -791,7 +791,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
-	cfg.LoginMaxInactiveLifetimeDays = auth.Key("login_maximum_inactive_lifetime_days").MustInt(7)
+	cfg.LoginMaxInactiveLifetimeDuration, err = valueAsString(auth, "login_maximum_inactive_lifetime_duration", "168h")
+	if err != nil {
+		return err
+	}
 
 	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
 	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
