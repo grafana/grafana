@@ -16,6 +16,8 @@ import {
 
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
+import { auto } from 'angular';
+
 export class PanelCtrl {
   panel: any;
   error: any;
@@ -36,7 +38,7 @@ export class PanelCtrl {
   timing: any;
   maxPanelsPerRowOptions: number[];
 
-  constructor($scope, $injector) {
+  constructor($scope: any, $injector: auto.IInjectorService) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
@@ -67,14 +69,14 @@ export class PanelCtrl {
     this.panel.refresh();
   }
 
-  publishAppEvent(evtName, evt) {
+  publishAppEvent(evtName: string, evt: any) {
     this.$scope.$root.appEvent(evtName, evt);
   }
 
-  changeView(fullscreen, edit) {
+  changeView(fullscreen: boolean, edit: boolean) {
     this.publishAppEvent('panel-change-view', {
-      fullscreen: fullscreen,
-      edit: edit,
+      fullscreen,
+      edit,
       panelId: this.panel.id,
     });
   }
@@ -99,7 +101,7 @@ export class PanelCtrl {
     }
   }
 
-  addEditorTab(title, directiveFn, index?, icon?) {
+  addEditorTab(title: string, directiveFn: any, index?: number, icon?: undefined) {
     const editorTab = { title, directiveFn, icon };
 
     if (_.isString(directiveFn)) {
@@ -193,7 +195,7 @@ export class PanelCtrl {
   }
 
   // Override in sub-class to add items before extended menu
-  getAdditionalMenuItems() {
+  getAdditionalMenuItems(): null[] {
     return [];
   }
 
@@ -201,12 +203,12 @@ export class PanelCtrl {
     return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
   }
 
-  calculatePanelHeight(containerHeight) {
+  calculatePanelHeight(containerHeight: number) {
     this.containerHeight = containerHeight;
     this.height = calculateInnerPanelHeight(this.panel, containerHeight);
   }
 
-  render(payload?) {
+  render(payload?: any) {
     this.events.emit('render', payload);
   }
 
@@ -243,7 +245,7 @@ export class PanelCtrl {
     return '';
   }
 
-  getInfoContent(options) {
+  getInfoContent(options: { mode: string }) {
     let markdown = this.panel.description;
 
     if (options.mode === 'tooltip') {
