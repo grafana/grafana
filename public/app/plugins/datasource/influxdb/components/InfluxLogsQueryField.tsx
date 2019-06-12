@@ -34,7 +34,23 @@ export function pairsAreValid(pairs: KeyValuePair[]) {
 
 export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
   templateSrv: TemplateSrv = new TemplateSrv();
-  state: State = { measurements: [], measurement: null, field: null };
+
+  constructor(props: Props) {
+    super(props);
+
+    const measurement = props.query.measurement;
+    let field = null;
+
+    if (props.query.select && props.query.select.length > 0) {
+      field = props.query.select[0][0].params[0];
+    }
+
+    this.state = {
+      measurements: [],
+      measurement,
+      field,
+    };
+  }
 
   async componentDidMount() {
     const { datasource } = this.props;
@@ -61,6 +77,12 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     }
 
     this.setState({ measurements });
+  }
+
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.query.measurement && !this.props.query.measurement) {
+      this.setState({ measurement: null, field: null });
+    }
   }
 
   onMeasurementsChange = async (values: string[]) => {
@@ -105,7 +127,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
         <div className="gf-form flex-shrink-0">
-          <Cascader options={measurements} onChange={this.onMeasurementsChange}>
+          <Cascader options={measurements} value={[measurement, field]} onChange={this.onMeasurementsChange}>
             <button className="gf-form-label gf-form-label--btn">
               {cascadeText} <i className="fa fa-caret-down" />
             </button>
