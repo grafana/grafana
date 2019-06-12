@@ -329,6 +329,30 @@ When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTT
 browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
 mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
 
+### strict_transport_security
+
+Set to `true` if you want to enable http `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS. The default value is `false` until the next minor release, `6.3`.
+
+### strict_transport_security_max_age_seconds
+
+Sets how long a browser should cache HSTS in seconds. Only applied if strict_transport_security is enabled. The default value is `86400`.
+
+### strict_transport_security_preload
+
+Set to `true` if to enable HSTS `preloading` option. Only applied if strict_transport_security is enabled. The default value is `false`.
+
+### strict_transport_security_subdomains
+
+Set to `true` if to enable the HSTS includeSubDomains option. Only applied if strict_transport_security is enabled. The default value is `false`.
+
+### x_content_type_options
+
+Set to `true` to enable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `false` until the next minor release, `6.3`.
+
+### x_xss_protection
+
+Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
+
 <hr />
 
 ## [users]
