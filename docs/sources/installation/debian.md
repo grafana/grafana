@@ -146,10 +146,10 @@ those options.
 
 ### Adding data sources
 
-- [Graphite]({{< relref "features/datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "features/datasources/prometheus.md" >}})
+- [Graphite]({{< relref "../features/datasources/graphite.md" >}})
+- [InfluxDB]({{< relref "../features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "../features/datasources/opentsdb.md" >}})
+- [Prometheus]({{< relref "../features/datasources/prometheus.md" >}})
 
 ## Installing from binary tar file
 

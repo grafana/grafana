@@ -389,14 +389,14 @@ Text used as placeholder text on login page for password input.
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
 
-- [Authentication Overview]({{< relref "auth/overview.md" >}}) (anonymous access options, hide login and more)
-- [Google OAuth]({{< relref "auth/google.md" >}}) (auth.google)
-- [GitHub OAuth]({{< relref "auth/github.md" >}}) (auth.github)
-- [Gitlab OAuth]({{< relref "auth/gitlab.md" >}}) (auth.gitlab)
-- [Generic OAuth]({{< relref "auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
-- [Basic Authentication]({{< relref "auth/overview.md" >}}) (auth.basic)
-- [LDAP Authentication]({{< relref "auth/ldap.md" >}}) (auth.ldap)
-- [Auth Proxy]({{< relref "auth/auth-proxy.md" >}}) (auth.proxy)
+- [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
+- [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
+- [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
+- [Gitlab OAuth]({{< relref "../auth/gitlab.md" >}}) (auth.gitlab)
+- [Generic OAuth]({{< relref "../auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
+- [Basic Authentication]({{< relref "../auth/overview.md" >}}) (auth.basic)
+- [LDAP Authentication]({{< relref "../auth/ldap.md" >}}) (auth.ldap)
+- [Auth Proxy]({{< relref "../auth/auth-proxy.md" >}}) (auth.proxy)
 
 ## [dataproxy]
 
