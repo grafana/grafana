@@ -34,23 +34,7 @@ export function pairsAreValid(pairs: KeyValuePair[]) {
 
 export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
   templateSrv: TemplateSrv = new TemplateSrv();
-
-  constructor(props: Props) {
-    super(props);
-
-    const measurement = props.query.measurement;
-    let field = null;
-
-    if (props.query.select && props.query.select.length > 0) {
-      field = props.query.select[0][0].params[0];
-    }
-
-    this.state = {
-      measurements: [],
-      measurement,
-      field,
-    };
-  }
+  state: State = { measurements: [], measurement: null, field: null };
 
   async componentDidMount() {
     const { datasource } = this.props;
