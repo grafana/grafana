@@ -4,6 +4,7 @@ import config from 'app/core/config';
 export const initialState: UserState = {
   orgId: config.bootData.user.orgId,
   timeZone: config.bootData.user.timezone,
+  userProfile: null,
 };
 
 export const userReducer = (state = initialState, action: any): UserState => {
