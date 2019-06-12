@@ -2,19 +2,29 @@
 
 Grafanas backend is written in GO using sqlite3/mysql or postgres as storage for dashboards, users etc. When Grafana was born there didnt exist much guides or direction for how to write medium sized application. So there are parts of Grafana code base that didn't quite pan out as we wanted. More about that under current rewrites! :)
 
+## Central folders of Grafanas backend
+
+| folder | description | 
+| ------- | ----------- |
+| /pkg/api | Http Handlers and routing. Almost all handler funcs are global which is something we would like to improve in the future. Handlers should be assosicated with a struct that refers to all depedencies. Ex bus |
+| /pkg/cmd | The binaries that we build. Grafana-server and grafana-cli |
+| /pkg/components | TODO |
+| /pkg/infra | TODO |
+| /pkg/services | TODO |
+| /pkg/setting | settings package for Grafana. Anything related to grafana global configuration should be dealt with in this package. |
+| /pkg/tsdb | All backend implementations of the datasources in Grafana. Used by both Grafanas frontend and alerting. |
+| /pkg/util | TODO |
+
 ## Central components of Grafanas backend
 
 | package | description | 
 | ------- | ----------- |
-| /pkg/api | Http Handlers and routing. Almost all handler funcs are global which is something we would like to improve in the future. Handlers should be assosicated with a struct that refers to all depedencies. Ex bus |
 | /pkg/bus | The bus! Described more below |
-| /pkg/cmd | The binaries that we build. Grafana-server and grafana-cli |
 | /pkg/models | This is where we keep our domain model. This package should not depend on any package outside standard library. (It does contain some refs within Grafana but that is something we should avoid going forward) |
 | /pkg/registry | service management package. |
 | /pkg/services/alerting | Grafanas alerting services. The alerting engine run in a seperate go routine and should not depend on anything else within grafan. |
 | /pkg/services/sqlstore | Currently where are database calls resides. |
 | /pkg/setting | settings package for Grafana. Anything related to grafana global configuration should be dealt with in this package. |
-| /pkg/tsdb | All backend implementations of the datasources in Grafana. Used by both Grafanas frontend and alerting. |
 
 ## Testing
 We value clean & readable code that is loosely coupled and covered by unit tests. This makes it easier to collaborate and maintain the code. In the sqlstore package we do database operations in tests and while some might say that's not suited for unit tests. We think they are fast enough and provide a lot of value. 
