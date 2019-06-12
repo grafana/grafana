@@ -164,11 +164,14 @@ func scan(pluginDir string) error {
 }
 
 func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
+	// TODO: Based on how we search for plugin.json in grafan-net fetchPluginJson, it should be enough to scan
+	// just /src, /dist or / paths inside the plugin dir
+
 	if err != nil {
 		return err
 	}
 
-	if f.Name() == "node_modules" {
+	if f.Name() == "node_modules" || f.Name() == "Chromium.app" {
 		return util.ErrWalkSkipDir
 	}
 

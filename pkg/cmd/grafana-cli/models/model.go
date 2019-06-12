@@ -33,6 +33,10 @@ type Version struct {
 	Commit  string `json:"commit"`
 	Url     string `json:"url"`
 	Version string `json:"version"`
+	// os-arch string for which the version is available
+	Arch []string `json:"arch"`
+	// os-arch to md5 checksum to check when downloading the file
+	CheckSums map[string]string `json:"checksums"`
 }
 
 type PluginRepo struct {
