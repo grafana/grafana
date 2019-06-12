@@ -19,6 +19,19 @@ export interface State {
   field: string;
 }
 
+// Helper function for determining if a collection of pairs are valid
+// where a valid pair is either fully defined, or not defined at all, but not partially defined
+export function pairsAreValid(pairs: KeyValuePair[]) {
+  return (
+    !pairs ||
+    pairs.every(pair => {
+      const allDefined = !!(pair.key && pair.operator && pair.value);
+      const allEmpty = pair.key === undefined && pair.operator === undefined && pair.value === undefined;
+      return allDefined || allEmpty;
+    })
+  );
+}
+
 export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
   templateSrv: TemplateSrv = new TemplateSrv();
   state: State = { measurements: [], measurement: null, field: null };
@@ -60,10 +73,6 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     });
   };
 
-  private pairsSet = (pairs: KeyValuePair[]) => {
-    return pairs.length && pairs.reduce((prev, pair) => prev && !!pair.key && !!pair.operator && !!pair.value, true);
-  };
-
   onPairsChanged = (pairs: KeyValuePair[]) => {
     const { query } = this.props;
     const { measurement, field } = this.state;
@@ -82,8 +91,8 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
 
     this.props.onChange(queryModel.target);
 
-    // Only run the query if measurement, field, and pairs are all set
-    if (this.pairsSet(pairs) && measurement && field) {
+    // Only run the query if measurement & field are set, and there are no invalid pairs
+    if (measurement && field && pairsAreValid(pairs)) {
       this.props.onRunQuery();
     }
   };
