@@ -161,12 +161,13 @@ func NewOAuthService() {
 					Config: &config,
 					log:    logger,
 				},
-				allowedDomains:       info.AllowedDomains,
-				apiUrl:               info.ApiUrl,
-				allowSignup:          info.AllowSignup,
-				emailAttributeName:   info.EmailAttributeName,
-				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				allowedDomains:             info.AllowedDomains,
+				apiUrl:                     info.ApiUrl,
+				allowSignup:                info.AllowSignup,
+				emailAttributeName:         info.EmailAttributeName,
+				organizationsAttributeName: sec.Key("organizations_attribute_name").String(),
+				teamIds:                    sec.Key("team_ids").Ints(","),
+				allowedOrganizations:       util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
 

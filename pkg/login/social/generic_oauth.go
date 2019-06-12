@@ -16,12 +16,13 @@ import (
 
 type SocialGenericOAuth struct {
 	*SocialBase
-	allowedDomains       []string
-	allowedOrganizations []string
-	apiUrl               string
-	allowSignup          bool
-	emailAttributeName   string
-	teamIds              []int
+	allowedDomains             []string
+	allowedOrganizations       []string
+	apiUrl                     string
+	allowSignup                bool
+	emailAttributeName         string
+	organizationsAttributeName string
+	teamIds                    []int
 }
 
 func (s *SocialGenericOAuth) Type() int {
@@ -57,14 +58,21 @@ func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
 	return false
 }
 
-func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
+func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client, organizationsFromAttribute []string) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
 
-	organizations, err := s.FetchOrganizations(client)
-	if err != nil {
-		return false
+	var organizations []string
+	var err error
+
+	if s.organizationsAttributeName != "" {
+		organizations = organizationsFromAttribute
+	} else {
+		organizations, err = s.FetchOrganizations(client)
+		if err != nil {
+			return false
+		}
 	}
 
 	for _, allowedOrganization := range s.allowedOrganizations {
@@ -217,7 +225,8 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		return nil, errors.New("User not a member of one of the required teams")
 	}
 
-	if !s.IsOrganizationMember(client) {
+	organizationsFromAttribute := s.extractOrganizations(&data)
+	if !s.IsOrganizationMember(client, organizationsFromAttribute) {
 		return nil, errors.New("User not a member of one of the required organizations")
 	}
 
@@ -278,6 +287,18 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	}
 
 	return ""
+}
+
+func (s *SocialGenericOAuth) extractOrganizations(data *UserInfoJson) []string {
+	orgs := []string{}
+
+	if s.organizationsAttributeName == "" {
+		return orgs
+	}
+
+	orgs = data.Attributes[s.organizationsAttributeName]
+	s.log.Debug("organizations extracted from attributes", "attributeName", s.organizationsAttributeName, "orgs", orgs)
+	return orgs
 }
 
 func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson, email string) string {
