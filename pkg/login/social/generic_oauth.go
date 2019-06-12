@@ -192,7 +192,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 
 		if len(s.userInfoRootPath) != 0 {
-			user := gjson.Get(string(response.Body), s.userInfoRootPath).String()
+			user := gjson.GetBytes(response.Body, s.userInfoRootPath).String()
 			err = json.Unmarshal([]byte(user), &data)
 		} else {
 			err = json.Unmarshal(response.Body, &data)
