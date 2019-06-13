@@ -2,6 +2,8 @@ import React from 'react';
 import _ from 'lodash';
 import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/ui';
 import { AdHocFilter } from './AdHocFilter';
+export const DEFAULT_REMOVE_FILTER_VALUE = '-- remove filter --';
+
 export interface KeyValuePair {
   keys: string[];
   key: string;
@@ -95,11 +97,15 @@ export class AdHocFilterField<
   }
 
   onKeyChanged = (index: number) => async (key: string) => {
-    const { onPairsChanged } = this.props;
-    const values = await this.loadTagValues(key);
-    const pairs = this.updatePairs(this.state.pairs, index, { key, values });
+    if (key !== DEFAULT_REMOVE_FILTER_VALUE) {
+      const { onPairsChanged } = this.props;
+      const values = await this.loadTagValues(key);
+      const pairs = this.updatePairs(this.state.pairs, index, { key, values });
 
-    this.setState({ pairs }, () => onPairsChanged(pairs));
+      this.setState({ pairs }, () => onPairsChanged(pairs));
+    } else {
+      this.onRemoveFilter(index);
+    }
   };
 
   onValueChanged = (index: number) => (value: string) => {
@@ -136,12 +142,17 @@ export class AdHocFilterField<
     const { pairs } = this.state;
     return (
       <>
+        {pairs.length < 1 && (
+          <button className="gf-form-label gf-form-label--btn query-part" onClick={this.onAddFilter}>
+            <i className="fa fa-plus" />
+          </button>
+        )}
         {pairs.map((pair, index) => {
           const adHocKey = `adhoc-filter-${index}-${pair.key}-${pair.value}`;
           return (
             <div className="align-items-center flex-grow-1" key={adHocKey}>
               <AdHocFilter
-                keys={pair.keys}
+                keys={[DEFAULT_REMOVE_FILTER_VALUE].concat(pair.keys)}
                 values={pair.values}
                 initialKey={pair.key}
                 initialOperator={pair.operator}

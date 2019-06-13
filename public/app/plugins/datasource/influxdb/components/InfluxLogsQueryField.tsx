@@ -19,6 +19,19 @@ export interface State {
   field: string;
 }
 
+// Helper function for determining if a collection of pairs are valid
+// where a valid pair is either fully defined, or not defined at all, but not partially defined
+export function pairsAreValid(pairs: KeyValuePair[]) {
+  return (
+    !pairs ||
+    pairs.every(pair => {
+      const allDefined = !!(pair.key && pair.operator && pair.value);
+      const allEmpty = pair.key === undefined && pair.operator === undefined && pair.value === undefined;
+      return allDefined || allEmpty;
+    })
+  );
+}
+
 export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
   templateSrv: TemplateSrv = new TemplateSrv();
   state: State = { measurements: [], measurement: null, field: null };
@@ -50,6 +63,12 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     this.setState({ measurements });
   }
 
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.query.measurement && !this.props.query.measurement) {
+      this.setState({ measurement: null, field: null });
+    }
+  }
+
   onMeasurementsChange = async (values: string[]) => {
     const { query } = this.props;
     const measurement = values[0];
@@ -77,6 +96,11 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     );
 
     this.props.onChange(queryModel.target);
+
+    // Only run the query if measurement & field are set, and there are no invalid pairs
+    if (measurement && field && pairsAreValid(pairs)) {
+      this.props.onRunQuery();
+    }
   };
 
   render() {
@@ -87,7 +111,7 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
         <div className="gf-form flex-shrink-0">
-          <Cascader options={measurements} onChange={this.onMeasurementsChange}>
+          <Cascader options={measurements} value={[measurement, field]} onChange={this.onMeasurementsChange}>
             <button className="gf-form-label gf-form-label--btn">
               {cascadeText} <i className="fa fa-caret-down" />
             </button>

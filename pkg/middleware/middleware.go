@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -242,7 +243,32 @@ func AddDefaultResponseHeaders() macaron.Handler {
 			if !setting.AllowEmbedding {
 				AddXFrameOptionsDenyHeader(w)
 			}
+
+			AddSecurityHeaders(w)
 		})
+	}
+}
+
+// AddSecurityHeaders adds various HTTP(S) response headers that enable various security protections behaviors in the client's browser.
+func AddSecurityHeaders(w macaron.ResponseWriter) {
+	if setting.Protocol == setting.HTTPS && setting.StrictTransportSecurity {
+		strictHeader := "Strict-Transport-Security"
+		w.Header().Add(strictHeader, fmt.Sprintf("max-age=%v", setting.StrictTransportSecurityMaxAge))
+		if setting.StrictTransportSecurityPreload {
+			w.Header().Add(strictHeader, "preload")
+		}
+		if setting.StrictTransportSecuritySubDomains {
+			w.Header().Add(strictHeader, "includeSubDomains")
+		}
+	}
+
+	if setting.ContentTypeProtectionHeader {
+		w.Header().Add("X-Content-Type-Options", "nosniff")
+	}
+
+	if setting.XSSProtectionHeader {
+		w.Header().Add("X-XSS-Protection", "1")
+		w.Header().Add("X-XSS-Protection", "mode=block")
 	}
 }
 
