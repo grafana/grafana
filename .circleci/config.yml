@@ -96,7 +96,7 @@ jobs:
                 destination: expected-screenshots
           - store_artifacts:
                 path: public/e2e-test/screenShots/theOutput
-                destination: output-screenshots               
+                destination: output-screenshots
 
   codespell:
     docker:
@@ -129,7 +129,7 @@ jobs:
 
   test-frontend:
     docker:
-      - image: circleci/node:8
+      - image: circleci/node:10
     steps:
       - checkout
       - restore_cache:
@@ -635,7 +635,7 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
-          filters: *filter-only-master 
+          filters: *filter-only-master
       - grafana-docker-master:
           requires:
             - build-all
