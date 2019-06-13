@@ -1,5 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
+import { DataSourceApi } from '@grafana/ui';
 
 import { AdHocFilterField, DEFAULT_REMOVE_FILTER_VALUE } from './AdHocFilterField';
 import { AdHocFilter } from './AdHocFilter';
