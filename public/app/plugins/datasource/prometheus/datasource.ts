@@ -581,6 +581,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const expandedQueries = queries.map(query => ({
         ...query,
         expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+        context: 'explore',
 
         // null out values we don't support in Explore yet
         legendFormat: null,
