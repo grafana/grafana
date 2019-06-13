@@ -41,10 +41,3 @@ Grafana will then create a Graph of all dependencies and inject the services tha
 
 ## Provisionable*
 All new features that require state should be possible to configure using config files. Ex datasources, alert notifiers, dashboards, teams etc. Today its only possible to provision datasources and dashboards but this is something we want to support all over Grafana. 
-
-
-
-
-
-
-
