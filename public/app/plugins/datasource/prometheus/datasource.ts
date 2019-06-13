@@ -25,6 +25,7 @@ import {
   DataQueryError,
   DataStreamObserver,
   LoadingState,
+  DataStreamState,
 } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -188,7 +189,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           filter((response: any) => (response.cancelled ? false : true)),
           map((response: any) => {
             const delta = this.processResult(response, query, target, queries.length);
-            const state = {
+            const state: DataStreamState = {
               key: `prometheus-${target.refId}`,
               state: query.instant ? LoadingState.Loading : LoadingState.Done,
               request: options,
@@ -200,7 +201,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           }),
           catchError(err => {
             const error = this.handleErrors(err, target);
-            const state = {
+            const state: DataStreamState = {
               key: `prometheus-${target.refId}`,
               request: options,
               state: LoadingState.Error,

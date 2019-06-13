@@ -471,7 +471,7 @@ describe('PrometheusDatasource', () => {
     });
 
     describe('and query syntax is invalid', () => {
-      let results;
+      let results: string;
       const query = {
         range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
         targets: [{ expr: 'tes;;t{job="testjob"}', format: 'time_series' }],
