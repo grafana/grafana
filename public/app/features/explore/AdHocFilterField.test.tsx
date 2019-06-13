@@ -4,7 +4,6 @@ import { DataSourceApi } from '@grafana/ui';
 
 import { AdHocFilterField, DEFAULT_REMOVE_FILTER_VALUE } from './AdHocFilterField';
 import { AdHocFilter } from './AdHocFilter';
-import { DataSourceApi } from '@grafana/ui';
 import { MockDataSourceApi } from '../../../test/mocks/datasource_srv';
 
 describe('<AdHocFilterField />', () => {
