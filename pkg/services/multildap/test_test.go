@@ -35,7 +35,7 @@ func (mock *mockLDAP) Users([]string) ([]*models.ExternalUserInfo, error) {
 
 	return mock.usersRestReturn, mock.usersErrReturn
 }
-func (mock *mockLDAP) InitialBind(string, string) error {
+func (mock *mockLDAP) Auth(string, string) error {
 	return nil
 }
 func (mock *mockLDAP) Dial() error {
