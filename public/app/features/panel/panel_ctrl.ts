@@ -38,7 +38,7 @@ export class PanelCtrl {
   timing: any;
   maxPanelsPerRowOptions: number[];
 
-  constructor($scope: any, $injector: auto.IInjectorService) {
+  constructor($scope: angular.IScope, $injector: auto.IInjectorService) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
