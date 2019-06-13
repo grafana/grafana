@@ -2,8 +2,8 @@
 import execa from 'execa';
 import { execTask } from '../utils/execTask';
 import { changeCwdToGrafanaUiDist, changeCwdToGrafanaUi, restoreCwd } from '../utils/cwd';
-import  {ReleaseType, inc} from 'semver';
-import {prompt} from 'inquirer';
+import { ReleaseType, inc } from 'semver';
+import { prompt } from 'inquirer';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { savePackage, buildTask, clean } from './grafanaui.build';
@@ -85,7 +85,6 @@ const ensureMasterBranch = async () => {
     console.error(chalk.red.bold('You need to be on clean master branch to release @grafana/ui'));
     process.exit(1);
   }
-
 };
 
 const prepareVersionCommitAndPush = async (version: string) =>
