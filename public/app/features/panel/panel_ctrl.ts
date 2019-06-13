@@ -17,7 +17,25 @@ import {
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { auto } from 'angular';
-
+export class PanelCtrl {
+  panel: any;
+  error: any;
+  dashboard: any;
+  pluginName: string;
+  pluginId: string;
+  editorTabs: any;
+  $scope: angular.IScope;
+  $injector: auto.IInjectorService;
+  $location: any;
+  $timeout: any;
+  inspector: any;
+  editModeInitiated: boolean;
+  height: any;
+  containerHeight: any;
+  events: Emitter;
+  loading: boolean;
+  timing: any;
+  maxPanelsPerRowOptions: number[];
 export class PanelCtrl {
   panel: any;
   error: any;
