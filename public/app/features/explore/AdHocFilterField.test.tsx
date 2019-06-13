@@ -20,7 +20,7 @@ describe('<AdHocFilterField />', () => {
     expect(wrapper.find(AdHocFilter).exists()).toBeFalsy();
   });
 
-  it('should add <AdHocFilter /> when onAddFilter is invoked', () => {
+  it('should add <AdHocFilter /> when onAddFilter is invoked', async () => {
     const mockOnPairsChanged = jest.fn();
     const wrapper = shallow(<AdHocFilterField datasource={mockDataSourceApi} onPairsChanged={mockOnPairsChanged} />);
     expect(wrapper.state('pairs')).toEqual([]);
@@ -28,10 +28,13 @@ describe('<AdHocFilterField />', () => {
       .find('button')
       .first()
       .simulate('click');
-    expect(wrapper.find(AdHocFilter).exists()).toBeTruthy();
+    const asyncCheck = setImmediate(() => {
+      expect(wrapper.find(AdHocFilter).exists()).toBeTruthy();
+    });
+    global.clearImmediate(asyncCheck);
   });
 
-  it(`should remove the relavant filter when the '${DEFAULT_REMOVE_FILTER_VALUE}' key is selected`, () => {
+  it(`should remove the relevant filter when the '${DEFAULT_REMOVE_FILTER_VALUE}' key is selected`, () => {
     const mockOnPairsChanged = jest.fn();
     const wrapper = shallow(<AdHocFilterField datasource={mockDataSourceApi} onPairsChanged={mockOnPairsChanged} />);
     expect(wrapper.state('pairs')).toEqual([]);
@@ -40,10 +43,13 @@ describe('<AdHocFilterField />', () => {
       .find('button')
       .first()
       .simulate('click');
-    expect(wrapper.find(AdHocFilter).exists()).toBeTruthy();
+    const asyncCheck = setImmediate(() => {
+      expect(wrapper.find(AdHocFilter).exists()).toBeTruthy();
 
-    wrapper.find(AdHocFilter).prop('onKeyChanged')(DEFAULT_REMOVE_FILTER_VALUE);
-    expect(wrapper.find(AdHocFilter).exists()).toBeFalsy();
+      wrapper.find(AdHocFilter).prop('onKeyChanged')(DEFAULT_REMOVE_FILTER_VALUE);
+      expect(wrapper.find(AdHocFilter).exists()).toBeFalsy();
+    });
+    global.clearImmediate(asyncCheck);
   });
 
   it('it should call onPairsChanged when a filter is removed', async () => {
@@ -55,12 +61,15 @@ describe('<AdHocFilterField />', () => {
       .find('button')
       .first()
       .simulate('click');
-    expect(wrapper.find(AdHocFilter).exists()).toBeTruthy();
+    const asyncCheck = setImmediate(() => {
+      expect(wrapper.find(AdHocFilter).exists()).toBeTruthy();
 
-    wrapper.find(AdHocFilter).prop('onKeyChanged')(DEFAULT_REMOVE_FILTER_VALUE);
-    expect(wrapper.find(AdHocFilter).exists()).toBeFalsy();
+      wrapper.find(AdHocFilter).prop('onKeyChanged')(DEFAULT_REMOVE_FILTER_VALUE);
+      expect(wrapper.find(AdHocFilter).exists()).toBeFalsy();
 
-    expect(mockOnPairsChanged.mock.calls.length).toBe(1);
+      expect(mockOnPairsChanged.mock.calls.length).toBe(1);
+    });
+    global.clearImmediate(asyncCheck);
   });
 });
 

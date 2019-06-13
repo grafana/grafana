@@ -4,6 +4,12 @@ import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/ui';
 import { AdHocFilter } from './AdHocFilter';
 export const DEFAULT_REMOVE_FILTER_VALUE = '-- remove filter --';
 
+const addFilterButton = (onAddFilter: (event: React.MouseEvent) => void) => (
+  <button className="gf-form-label gf-form-label--btn query-part" onClick={onAddFilter}>
+    <i className="fa fa-plus" />
+  </button>
+);
+
 export interface KeyValuePair {
   keys: string[];
   key: string;
@@ -28,17 +34,9 @@ export class AdHocFilterField<
 > extends React.PureComponent<Props<TQuery, TOptions>, State> {
   state: State = { pairs: [] };
 
-  async componentDidMount() {
-    const keys = await this.loadTagKeys();
-    const pairs = this.updatePairs([], 0, { keys });
-
-    this.setState({ pairs });
-  }
-
-  async componentDidUpdate(prevProps: Props) {
+  componentDidUpdate(prevProps: Props) {
     if (_.isEqual(prevProps.extendedOptions, this.props.extendedOptions) === false) {
-      const keys = await this.loadTagKeys();
-      const pairs = this.updatePairs([], 0, { keys });
+      const pairs = [];
 
       this.setState({ pairs }, () => this.props.onPairsChanged(pairs));
     }
@@ -142,11 +140,7 @@ export class AdHocFilterField<
     const { pairs } = this.state;
     return (
       <>
-        {pairs.length < 1 && (
-          <button className="gf-form-label gf-form-label--btn query-part" onClick={this.onAddFilter}>
-            <i className="fa fa-plus" />
-          </button>
-        )}
+        {pairs.length < 1 && addFilterButton(this.onAddFilter)}
         {pairs.map((pair, index) => {
           const adHocKey = `adhoc-filter-${index}-${pair.key}-${pair.value}`;
           return (
@@ -167,11 +161,7 @@ export class AdHocFilterField<
                   <i className="fa fa-minus" />
                 </button>
               )}
-              {index === pairs.length - 1 && (
-                <button className="gf-form-label gf-form-label--btn" onClick={this.onAddFilter}>
-                  <i className="fa fa-plus" />
-                </button>
-              )}
+              {index === pairs.length - 1 && addFilterButton(this.onAddFilter)}
             </div>
           );
         })}
