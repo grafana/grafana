@@ -3,10 +3,11 @@ import { shallow } from 'enzyme';
 
 import { AdHocFilterField, DEFAULT_REMOVE_FILTER_VALUE } from './AdHocFilterField';
 import { AdHocFilter } from './AdHocFilter';
+import { DataSourceApi } from '@grafana/ui';
 import { MockDataSourceApi } from '../../../test/mocks/datasource_srv';
 
 describe('<AdHocFilterField />', () => {
-  let mockDataSourceApi;
+  let mockDataSourceApi: DataSourceApi;
 
   beforeEach(() => {
     mockDataSourceApi = new MockDataSourceApi();
