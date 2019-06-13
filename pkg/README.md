@@ -15,13 +15,10 @@ self registering using `registry.RegisterService` ex https://github.com/grafana/
 Should only be used to register services/implementations.
 
 ## Settings refactoring 
-The plan is to move all settings to from package level vars in settings package to the setting.Cfg object. To access the settings services/components can inject this setting.Cfg object. 
+The plan is to move all settings to from package level vars in settings package to the setting.Cfg object. To access the settings services/components can inject this setting.Cfg struct. 
 
-Cfg object: 
-https://github.com/grafana/grafana/blob/master/pkg/setting/setting.go#L184
-
-Injection example:
-https://github.com/grafana/grafana/blob/master/pkg/services/cleanup/cleanup.go#L19
+[Cfg struct](https://github.com/grafana/grafana/blob/df917663e6f358a076ed3daa9b199412e95c11f4/pkg/setting/setting.go#L210)
+[Injection example](https://github.com/grafana/grafana/blob/df917663e6f358a076ed3daa9b199412e95c11f4/pkg/services/cleanup/cleanup.go#L20)
 
 ## Reduce the use of Goconvey
 We want to migrated away from using Goconvey and use stdlib testing as its the most common approuch in the GO community and we think it will make it easier for new contributors. 
