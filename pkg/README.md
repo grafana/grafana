@@ -1,6 +1,6 @@
 # Grafana backend codebase
 
-The code [styleguide](STYLEGUIDE.md) and brief description of the architecture[architecture](ARCHITECTURE.md)
+The code [styleguide](STYLEGUIDE.md) and brief description of the [architecture](ARCHITECTURE.md)
 
 # On going refactorings.
 These issues are not something we want to address all at once but something we will improve over time. Since Grafana is released at a regular schedule the prefer approuch is to do this in batches. Not only is it easier to review, it also reduces the risk of conflicts when cherry-picking fixes from master to release branches. Changes that spawn multiple locations are therefore prefered in the end of the release cycle since we make fewer patch releases in the end of the cycle. 
