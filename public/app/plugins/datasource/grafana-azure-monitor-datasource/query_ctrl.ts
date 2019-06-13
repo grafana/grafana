@@ -3,7 +3,8 @@ import { QueryCtrl } from 'app/plugins/sdk';
 // import './css/query_editor.css';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
-import { TemplateSrv } from 'app/features/templating/template_srv'; // @ts
+
+import { TemplateSrv } from 'app/features/templating/template_srv';
 import { auto } from 'angular';
 
 export interface ResultFormat {
@@ -362,7 +363,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   getAutoInterval() {
     if (this.target.azureMonitor.timeGrain === 'auto') {
       return TimegrainConverter.findClosestTimeGrain(
-        this.templateSrv.getBuiltInIntervalValue,
+        this.templateSrv.getBuiltInIntervalValue(),
         _.map(this.target.azureMonitor.timeGrains, o =>
           TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)
         ) || ['1m', '5m', '15m', '30m', '1h', '6h', '12h', '1d']
