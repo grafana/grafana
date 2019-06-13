@@ -480,7 +480,7 @@ class GraphElement {
     }
 
     return {
-      colors: [{ opacity: 0.0 }, { opacity: amount }],
+      colors: [{ opacity: 0.0 }, { opacity: amount / 10 }],
     };
   }
 
