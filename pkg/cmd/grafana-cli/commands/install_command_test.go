@@ -51,7 +51,7 @@ func TestExtractFiles(t *testing.T) {
 		body, err := ioutil.ReadFile("testdata/grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip")
 		So(err, ShouldBeNil)
 
-		err = extractFiles(body, "grafana-simple-json-datasource", "testdata/fake-plugins-dir")
+		err = extractFiles(body, "grafana-simple-json-datasource", "testdata/fake-plugins-dir", false)
 		So(err, ShouldBeNil)
 
 		//File in zip has permissions 777

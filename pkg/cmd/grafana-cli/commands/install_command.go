@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
@@ -68,8 +69,17 @@ func installCommand(c utils.CommandLine) error {
 func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	downloadURL := c.PluginURL()
+	isInternal := false
+
 	var checksum string
 	if downloadURL == "" {
+		if strings.HasPrefix(pluginName, "grafana-") {
+			// At this point the plugin download is going through grafana.com API and thus the name is validated.
+			// Checking for grafana prefix is how it is done there so no 3rd party plugin should have that prefix.
+			// You can supply custom plugin name and then set custom download url to 3rd party plugin but then that
+			// is up to the user to know what she is doing.
+			isInternal = true
+		}
 		plugin, err := s.GetPlugin(pluginName, c.RepoDirectory())
 		if err != nil {
 			return err
@@ -101,9 +111,14 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	logger.Infof("into: %v\n", pluginFolder)
 	logger.Info("\n")
 
-	err := downloadFile(pluginName, pluginFolder, downloadURL, checksum)
+	content, err := downloadFile(pluginName, pluginFolder, downloadURL, checksum)
 	if err != nil {
-		return err
+		return errutil.Wrap("Failed to download plugin archive", err)
+	}
+
+	err = extractFiles(content, pluginName, pluginFolder, isInternal)
+	if err != nil {
+		return errutil.Wrap("Failed to extract plugin archive", err)
 	}
 
 	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), pluginName)
@@ -179,13 +194,13 @@ func RemoveGitBuildFromName(pluginName, filename string) string {
 var retryCount = 0
 var permissionsDeniedMessage = "Could not create %s. Permission denied. Make sure you have write access to plugindir"
 
-func downloadFile(pluginName, filePath, url string, checksum string) (err error) {
+func downloadFile(pluginName, filePath, url string, checksum string) (content []byte, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			retryCount++
 			if retryCount < 3 {
 				fmt.Println("Failed downloading. Will retry once.")
-				err = downloadFile(pluginName, filePath, url, checksum)
+				content, err = downloadFile(pluginName, filePath, url, checksum)
 			} else {
 				failure := fmt.Sprintf("%v", r)
 				if failure == "runtime error: makeslice: len out of range" {
@@ -199,22 +214,23 @@ func downloadFile(pluginName, filePath, url string, checksum string) (err error)
 
 	resp, err := http.Get(url) // #nosec
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
+	// TODO: this would be better if it was streamed file by file instead of buffered.
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, errutil.Wrap("Failed to read response body", err)
 	}
 
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", md5.Sum(body)) {
-		return xerrors.New("Expected MD5 checksum does not match the downloaded archive. Please contact security@grafana.com.")
+		return nil, xerrors.New("Expected MD5 checksum does not match the downloaded archive. Please contact security@grafana.com.")
 	}
-	return extractFiles(body, pluginName, filePath)
+	return body, nil
 }
 
-func extractFiles(body []byte, pluginName string, filePath string) error {
+func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks bool) error {
 	r, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
 	if err != nil {
 		return err
@@ -229,12 +245,19 @@ func extractFiles(body []byte, pluginName string, filePath string) error {
 			}
 		} else {
 			if isSymlink(zf) {
+				if !allowSymlinks {
+					logger.Errorf("%v: plugin archive contains symlink which is not allowed. Skipping", zf.Name)
+					continue
+				}
 				err = extractSymlink(zf, newFile)
 				if err != nil {
 					logger.Errorf("Failed to extract symlink: %v", err)
 					continue
 				}
 			} else {
+				if !isPathSafe(newFile, path.Join(filePath, pluginName)) {
+					return xerrors.Errorf("%v: filepath tries to write outside of plugin directory. This can be a security risk.", newFile)
+				}
 				err = extractFile(zf, newFile)
 				if err != nil {
 					logger.Errorf("Failed to extract file: %v", err)
@@ -301,4 +324,12 @@ func extractFile(file *zip.File, filePath string) (err error) {
 
 	_, err = io.Copy(dst, src)
 	return
+}
+
+// isPathSafe checks if the filePath does not resolve outside of destination. This is used to prevent
+// https://snyk.io/research/zip-slip-vulnerability
+// Based on https://github.com/mholt/archiver/pull/65/files#diff-635e4219ee55ef011b2b32bba065606bR109
+func isPathSafe(filePath string, destination string) bool {
+	destpath := filepath.Join(destination, filePath)
+	return !strings.HasPrefix(destpath, destination)
 }
