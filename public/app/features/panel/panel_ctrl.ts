@@ -17,6 +17,8 @@ import {
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { auto } from 'angular';
+import { TemplateSrv } from '../templating/template_srv';
+import { LinkSrv } from './panellinks/link_srv';
 export class PanelCtrl {
   panel: any;
   error: any;
@@ -24,7 +26,7 @@ export class PanelCtrl {
   pluginName: string;
   pluginId: string;
   editorTabs: any;
-  $scope: angular.IScope;
+  $scope: any;
   $injector: auto.IInjectorService;
   $location: any;
   $timeout: any;
@@ -36,27 +38,8 @@ export class PanelCtrl {
   loading: boolean;
   timing: any;
   maxPanelsPerRowOptions: number[];
-export class PanelCtrl {
-  panel: any;
-  error: any;
-  dashboard: any;
-  pluginName: string;
-  pluginId: string;
-  editorTabs: any;
-  $scope: any;
-  $injector: any;
-  $location: any;
-  $timeout: any;
-  inspector: any;
-  editModeInitiated: boolean;
-  height: any;
-  containerHeight: any;
-  events: Emitter;
-  loading: boolean;
-  timing: any;
-  maxPanelsPerRowOptions: number[];
 
-  constructor($scope: angular.IScope, $injector: auto.IInjectorService) {
+  constructor($scope: any, $injector: auto.IInjectorService) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
@@ -270,9 +253,9 @@ export class PanelCtrl {
       markdown = this.error || this.panel.description;
     }
 
-    const linkSrv = this.$injector.get('linkSrv');
-    const sanitize = this.$injector.get('$sanitize');
-    const templateSrv = this.$injector.get('templateSrv');
+    const linkSrv: LinkSrv = this.$injector.get('linkSrv');
+    const sanitize: any = this.$injector.get('$sanitize');
+    const templateSrv: TemplateSrv = this.$injector.get('templateSrv');
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     let html = '<div class="markdown-html">';
 
