@@ -213,7 +213,7 @@ export class PanelCtrl {
   }
 
   // Override in sub-class to add items before extended menu
-  getAdditionalMenuItems(): null[] {
+  getAdditionalMenuItems(): any[] {
     return [];
   }
 
