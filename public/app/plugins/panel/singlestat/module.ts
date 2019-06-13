@@ -610,6 +610,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           } else {
             elem.css('background-color', '');
           }
+        } else {
+          $panelContainer.css('background-color', '');
+          elem.css('background-color', '');
         }
       } else {
         $panelContainer.css('background-color', '');
