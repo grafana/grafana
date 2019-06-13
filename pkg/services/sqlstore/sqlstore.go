@@ -13,11 +13,11 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
@@ -50,9 +50,9 @@ func init() {
 }
 
 type SqlStore struct {
-	Cfg          *setting.Cfg        `inject:""`
-	Bus          bus.Bus             `inject:""`
-	CacheService *cache.CacheService `inject:""`
+	Cfg          *setting.Cfg             `inject:""`
+	Bus          bus.Bus                  `inject:""`
+	CacheService *localcache.CacheService `inject:""`
 
 	dbCfg           DatabaseConfig
 	engine          *xorm.Engine
@@ -296,7 +296,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 	sqlstore := &SqlStore{}
 	sqlstore.skipEnsureAdmin = true
 	sqlstore.Bus = bus.New()
-	sqlstore.CacheService = cache.New(5*time.Minute, 10*time.Minute)
+	sqlstore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
 
 	dbType := migrator.SQLITE
 

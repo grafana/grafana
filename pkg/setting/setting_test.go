@@ -1,14 +1,19 @@
 package setting
 
 import (
-	"gopkg.in/ini.v1"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"testing"
 
+	"gopkg.in/ini.v1"
+
 	. "github.com/smartystreets/goconvey/convey"
+)
+
+const (
+	windows = "windows"
 )
 
 func TestLoadingSettings(t *testing.T) {
@@ -72,7 +77,7 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 		Convey("Should be able to override via command line", func() {
-			if runtime.GOOS == "windows" {
+			if runtime.GOOS == windows {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
@@ -106,7 +111,7 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 		Convey("Defaults can be overridden in specified config file", func() {
-			if runtime.GOOS == "windows" {
+			if runtime.GOOS == windows {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
@@ -128,7 +133,7 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 		Convey("Command line overrides specified config file", func() {
-			if runtime.GOOS == "windows" {
+			if runtime.GOOS == windows {
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
@@ -150,7 +155,7 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 		Convey("Can use environment variables in config values", func() {
-			if runtime.GOOS == "windows" {
+			if runtime.GOOS == windows {
 				os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
 				cfg := NewCfg()
 				cfg.Load(&CommandLineArgs{

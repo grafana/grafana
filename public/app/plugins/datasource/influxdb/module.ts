@@ -1,6 +1,8 @@
 import InfluxDatasource from './datasource';
 import { InfluxQueryCtrl } from './query_ctrl';
 import { InfluxLogsQueryField } from './components/InfluxLogsQueryField';
+import InfluxStartPage from './components/InfluxStartPage';
+
 import {
   createChangeHandler,
   createResetHandler,
@@ -31,4 +33,5 @@ export const plugin = new DataSourcePlugin(InfluxDatasource)
   .setConfigCtrl(InfluxConfigCtrl)
   .setQueryCtrl(InfluxQueryCtrl)
   .setAnnotationQueryCtrl(InfluxAnnotationsQueryCtrl)
-  .setExploreLogsQueryField(InfluxLogsQueryField);
+  .setExploreLogsQueryField(InfluxLogsQueryField)
+  .setExploreStartPage(InfluxStartPage);

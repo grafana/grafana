@@ -2,6 +2,8 @@ import React from 'react';
 import { DataSourceApi, DataQuery, DataSourceJsonData } from '@grafana/ui';
 import { AdHocFilter } from './AdHocFilter';
 
+export const DEFAULT_REMOVE_FILTER_VALUE = '-- remove filter --';
+
 export interface KeyValuePair {
   keys: string[];
   key: string;
@@ -25,21 +27,18 @@ export class AdHocFilterField<
 > extends React.PureComponent<Props<TQuery, TOptions>, State> {
   state: State = { pairs: [] };
 
-  async componentDidMount() {
-    const tagKeys = this.props.datasource.getTagKeys ? await this.props.datasource.getTagKeys({}) : [];
-    const keys = tagKeys.map(tagKey => tagKey.text);
-    const pairs = [{ key: null, operator: null, value: null, keys, values: [] }];
-    this.setState({ pairs });
-  }
-
   onKeyChanged = (index: number) => async (key: string) => {
-    const { datasource, onPairsChanged } = this.props;
-    const tagValues = datasource.getTagValues ? await datasource.getTagValues({ key }) : [];
-    const values = tagValues.map(tagValue => tagValue.text);
-    const newPairs = this.updatePairAt(index, { key, values });
+    if (key !== DEFAULT_REMOVE_FILTER_VALUE) {
+      const { datasource, onPairsChanged } = this.props;
+      const tagValues = datasource.getTagValues ? await datasource.getTagValues({ key }) : [];
+      const values = tagValues.map(tagValue => tagValue.text);
+      const newPairs = this.updatePairAt(index, { key, values });
 
-    this.setState({ pairs: newPairs });
-    onPairsChanged(newPairs);
+      this.setState({ pairs: newPairs });
+      onPairsChanged(newPairs);
+    } else {
+      this.onRemoveFilter(index);
+    }
   };
 
   onValueChanged = (index: number) => (value: string) => {
@@ -75,6 +74,7 @@ export class AdHocFilterField<
     }, []);
 
     this.setState({ pairs: newPairs });
+    this.props.onPairsChanged(newPairs);
   };
 
   private updatePairAt = (index: number, pair: Partial<KeyValuePair>) => {
@@ -104,12 +104,17 @@ export class AdHocFilterField<
     const { pairs } = this.state;
     return (
       <>
+        {pairs.length < 1 && (
+          <button className="gf-form-label gf-form-label--btn query-part" onClick={this.onAddFilter}>
+            <i className="fa fa-plus" />
+          </button>
+        )}
         {pairs.map((pair, index) => {
           const adHocKey = `adhoc-filter-${index}-${pair.key}-${pair.value}`;
           return (
             <div className="align-items-center flex-grow-1" key={adHocKey}>
               <AdHocFilter
-                keys={pair.keys}
+                keys={[DEFAULT_REMOVE_FILTER_VALUE].concat(pair.keys)}
                 values={pair.values}
                 initialKey={pair.key}
                 initialOperator={pair.operator}

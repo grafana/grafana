@@ -67,6 +67,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     sparkline: {
       show: false,
       full: false,
+      ymin: null,
+      ymax: null,
       lineColor: 'rgb(31, 120, 193)',
       fillColor: 'rgba(31, 118, 189, 0.18)',
     },
@@ -548,12 +550,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           lines: {
             show: true,
             fill: 1,
-            zero: false,
             lineWidth: 1,
             fillColor: getColorFromHexRgbOrName(panel.sparkline.fillColor, config.theme.type),
           },
         },
-        yaxes: { show: false },
+        yaxes: {
+          show: false,
+          min: panel.sparkline.ymin,
+          max: panel.sparkline.ymax,
+        },
         xaxis: {
           show: false,
           mode: 'time',
