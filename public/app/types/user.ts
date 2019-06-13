@@ -50,10 +50,6 @@ export interface UserState {
   timeZone: string;
 }
 
-export interface UserAccountState {
-  userProfile: OrgUser;
-}
-
 export interface UserSession {
   id: number;
   createdAt: string;

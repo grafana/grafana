@@ -16,7 +16,7 @@ export class UserPreferences extends PureComponent<Props> {
     const { navModel } = this.props;
     return (
       <Page navModel={navModel}>
-        <UserAccount isAdmin={false} />
+        <UserAccount adminMode={false} />
       </Page>
     );
   }

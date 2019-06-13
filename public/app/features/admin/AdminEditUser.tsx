@@ -16,7 +16,7 @@ export class AdminEditUser extends PureComponent<Props> {
     const { navModel } = this.props;
     return (
       <Page navModel={navModel}>
-        <UserAccount isAdmin={true} />
+        <UserAccount adminMode={true} />
       </Page>
     );
   }
