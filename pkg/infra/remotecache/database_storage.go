@@ -112,6 +112,11 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 		if dc.SQLStore.Dialect.IsUniqueConstraintViolation(err) || dc.SQLStore.Dialect.IsDeadlock(err) {
 			sql := `UPDATE cache_data SET data=?, created_at=?, expires=? WHERE cache_key=?`
 			_, err = session.Exec(sql, data, getTime().Unix(), expiresInSeconds, key)
+			if err != nil && dc.SQLStore.Dialect.IsDeadlock(err) {
+				// most probably somebody else is upserting the key
+				// so it is safe enough not to propagate this error
+				return nil
+			}
 		}
 	}
 
