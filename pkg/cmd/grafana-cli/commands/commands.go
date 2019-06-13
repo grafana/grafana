@@ -66,7 +66,7 @@ var pluginCommands = []cli.Command{
 	}, {
 		Name:   "list-remote",
 		Usage:  "list remote available plugins",
-		Action: runPluginCommand(listremoteCommand),
+		Action: runPluginCommand(listRemoteCommand),
 	}, {
 		Name:   "list-versions",
 		Usage:  "list-versions <plugin id>",

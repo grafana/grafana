@@ -143,7 +143,7 @@ func supportsCurrentArch(version *m.Version) bool {
 		return true
 	}
 	for _, arch := range version.Arch {
-		if arch == osAndArchString() {
+		if arch == osAndArchString() || arch == "any" {
 			return true
 		}
 	}
