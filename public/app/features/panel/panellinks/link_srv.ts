@@ -11,7 +11,7 @@ export class LinkSrv {
 
   getLinkUrl(link: any) {
     const url = this.templateSrv.replace(link.url || '');
-    const params: {[key: string]: any} = {};
+    const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
       const range = this.timeSrv.timeRangeForUrl();
