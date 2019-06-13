@@ -96,12 +96,6 @@ func (dc *databaseCache) Set(key string, value interface{}, expire time.Duration
 	session := dc.SQLStore.NewSession()
 	defer session.Close()
 
-	var cacheHit CacheData
-	_, err = session.Where("cache_key = ?", key).Get(&cacheHit)
-	if err != nil {
-		return err
-	}
-
 	var expiresInSeconds int64
 	if expire != 0 {
 		expiresInSeconds = int64(expire) / int64(time.Second)
