@@ -11,7 +11,9 @@ Contributions take the form of pull requests that will be reviewed by the core t
 
 - Sign our [CLA](http://docs.grafana.org/contribute/cla/).
 
-- For changes in the backend, you can find our style guide and ongoing refactorings in the [root of the pkg folder](https://github.com/grafana/grafana/tree/master/pkg)
+- Make sure to follow the code style guides
+  - [Backend](https://github.com/grafana/grafana/tree/master/pkg)
+  - [Frontend](https://github.com/grafana/grafana/tree/master/style_guides)
 
 ## Steps to Contribute
 
