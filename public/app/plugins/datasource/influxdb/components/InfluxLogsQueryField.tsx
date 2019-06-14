@@ -118,7 +118,13 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
           </Cascader>
         </div>
         <div className="flex-shrink-1 flex-flow-column-nowrap">
-          {measurement && <AdHocFilterField onPairsChanged={this.onPairsChanged} datasource={datasource} />}
+          {measurement && (
+            <AdHocFilterField
+              onPairsChanged={this.onPairsChanged}
+              datasource={datasource}
+              extendedOptions={{ measurement }}
+            />
+          )}
         </div>
       </div>
     );
