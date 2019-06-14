@@ -41,4 +41,4 @@ When Grafana starts all init functions within the services will be called and re
 Grafana will then create a Graph of all dependencies and inject the services that other services depend on. This is solved with [inject library](https://github.com/facebookgo/inject) in https://github.com/grafana/grafana/blob/master/pkg/cmd/grafana-server/server.go#L75
 
 ## Provisionable*
-All new features that require state should be possible to configure using config files. Ex datasources, alert notifiers, dashboards, teams etc. Today its only possible to provision datasources and dashboards but this is something we want to support all over Grafana.
+All new features that require state should be possible to configure using config files. Ex [datasources](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/datasources), [alert notifiers](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/notifiers), [dashboards](https://github.com/grafana/grafana/tree/master/pkg/services/provisioning/dashboards), teams etc. Today its only possible to provision datasources and dashboards but this is something we want to support all over Grafana.
