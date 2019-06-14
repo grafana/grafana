@@ -43,6 +43,11 @@ export class RefreshPicker extends PureComponent<Props> {
       options.unshift(liveOption);
     }
     options.unshift(offOption);
+
+    // Remove the option with the empty string
+    if (this.hasNoIntervals() && intervals[0] === '') {
+      options.pop();
+    }
     return options;
   };
 
@@ -56,7 +61,7 @@ export class RefreshPicker extends PureComponent<Props> {
 
   render() {
     const { onRefresh, intervals, tooltip, value } = this.props;
-    const options = this.intervalsToOptions(this.hasNoIntervals() ? defaultIntervals : intervals);
+    const options = this.intervalsToOptions(intervals);
     const currentValue = value || '';
     const selectedValue = options.find(item => item.value === currentValue) || offOption;
 
