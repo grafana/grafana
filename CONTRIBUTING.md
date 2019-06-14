@@ -33,48 +33,30 @@ To setup a local development environment we recommend reading [Building Grafana 
 
 - Follow [PR and commit messages guidelines](#PR-and-commit-messages-guidelines)
 
-### Pull requests with new features
+### Pull Requests titles and message
 
-Commits should be as small as possible, while ensuring that each commit is correct independently (i.e., each commit should compile and pass tests).
+Pull request titles should follow this format: `Area: Name of the change`.
+Titles are used to generate the changelog so they should be as descriptive as possible in one line.
 
-Make sure to include `Closes #<issue number>` or `Fixes #<issue number>` in the pull request description.
-
-### Pull requests with bug fixes
-
-Please make all changes in one commit if possible. Include `Closes #<issue number>` in bottom of the commit message.
-A commit message for a bug fix should look something like this:
-
-```
-Dashboard: Avoid infinite loop in the dashboard provisioner
-
-If one dashboard with an uid is refered to by two
-provsioners each provisioner overwrite each other.
-filling up dashboard_versions quite fast if using
-default settings.
-
-Closes #12864
-```
-
-For more details about PR naming and commit messages please see [PR and commit messages guidelines](#PR-and-commit-messages-guidelines)
-
-If the pull request needs changes before its merged the new commits should be rebased into one commit before its merged.
-
-## PR and commit messages guidelines
-
-PR title and squash commit messages should follow guidelines below:
-
-```
-Area of changes: Message
-
-Detailed description
-```
-
-The `Area of changes` is related either to functional domain (i.e. Build, Release) or feature domain (i.e. Explore, Plugins, BarGaugePanel).
-
-`Message` should be concise, written in present tense and start with capitalised verb. Detailed description should be provided as commit message body, by entering a blank line between commit title and the description.
-
-### Examples of good PR titles/commit messages:
+Good Examples
 
 - `Explore: Adds Live option for supported datasources`
 - `GraphPanel: Don't sort series when legend table & sort column is not visible`
 - `Build: Support publishing MSI to grafana.com`
+
+The message in the Pull requests should contain a reference so the issue if there is one. Ex `Closes #<issue number>`, `Fixes #<issue number>`, or `Ref #<issue number>` if the change is related to an issue but does not close it. Make sure to explain what problem the pull request is solving and why its implemented this way. As a new contributor its often better to overcommunicate to avoid back and forth communication, as it consumes time and energy.
+
+### GIT commit formating.
+
+Grafana Squash Pull requests when merging them into master. This means the maintainer will be responsible for the title in the git commit message.
+The commit message of the commits in the Pull Request can still be part of the git commit body. So it's always encouraged to write informative commit messages.
+
+The Git commit title should be short, descriptive and include the Pull Request ID.
+
+Good Examples
+
+- `Explore: Live supprt in datasources (#12345)`
+- `GraphPanel: Fix legend sorting issues (#12345)`
+- `Build: Support publishing MSI to grafana.com (#12345)`
+
+Its also good practice to include a reference to the issue in the git commit body when possible.
