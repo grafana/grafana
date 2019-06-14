@@ -28,7 +28,8 @@ Grafanas backend is written in GO using sqlite3/mysql or postgres as storage for
 ## Testing
 We value clean & readable code that is loosely coupled and covered by unit tests. This makes it easier to collaborate and maintain the code. In the sqlstore package we do database operations in tests and while some might say that's not suited for unit tests. We think they are fast enough and provide a lot of value.
 
-The majority of our tests uses go convey but standard library tests are fine as well.
+The majority of our tests uses go convey but thats something we want to avoid going forward.
+For new tests we want to use standard library and `testify/assert`.
 
 ## The Bus
 The bus is our way to introduce indirection between the HTTP handlers and sqlstore (responsible for fetching data from the database). Http handlers and sqlstore don't depend on each other. They only depend on the bus and the domain model(pkg/models). This makes it easier to test the code and avoids coupling. More about this under `current rewrite/refactorings`
