@@ -183,9 +183,9 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Data
 export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   return importPluginModule(meta.module).then(pluginExports => {
     const plugin = pluginExports.plugin ? (pluginExports.plugin as AppPlugin) : new AppPlugin();
-    plugin.setComponentsFromLegacyExports(pluginExports);
     plugin.init(meta);
     plugin.meta = meta;
+    plugin.setComponentsFromLegacyExports(pluginExports);
     return plugin;
   });
 }
