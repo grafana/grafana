@@ -3,6 +3,8 @@ import { PanelCtrl } from 'app/plugins/sdk';
 import Remarkable from 'remarkable';
 import { sanitize } from 'app/core/utils/text';
 import config from 'app/core/config';
+import { auto, ISCEService } from 'angular';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 const defaultContent = `
 # Title
@@ -26,7 +28,12 @@ export class TextPanelCtrl extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private templateSrv, private $sce) {
+  constructor(
+    $scope: any,
+    $injector: auto.IInjectorService,
+    private templateSrv: TemplateSrv,
+    private $sce: ISCEService
+  ) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
