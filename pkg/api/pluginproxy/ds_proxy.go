@@ -71,8 +71,9 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	}
 
 	reverseProxy := &httputil.ReverseProxy{
-		Director:      proxy.getDirector(),
-		FlushInterval: time.Millisecond * 200,
+		Director:       proxy.getDirector(),
+		FlushInterval:  time.Millisecond * 200,
+		ModifyResponse: proxy.getModifyResponse(),
 	}
 
 	var err error
@@ -234,6 +235,48 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 		if proxy.ds.JsonData != nil && proxy.ds.JsonData.Get("oauthPassThru").MustBool() {
 			addOAuthPassThruAuth(proxy.ctx, req)
 		}
+	}
+}
+
+func (proxy *DataSourceProxy) getModifyResponse() func(*http.Response) error {
+	return func(res *http.Response) error {
+		// Rewrite the Location header if it matches the
+		// targetURL of the datasource.
+		locationString := res.Header.Get("Location")
+		if locationString == "" {
+			return nil
+		}
+		location, err := url.Parse(locationString)
+		if err != nil {
+			return nil
+		}
+		targetURL, _ := url.Parse(proxy.ds.Url)
+		if location.Scheme != "" && location.Scheme != targetURL.Scheme {
+			return nil
+		}
+		if location.User != nil {
+			if targetURL.User == nil {
+				return nil
+			}
+			if location.User.String() != targetURL.User.String() {
+				return nil
+			}
+		}
+		if location.Host != "" && location.Host != targetURL.Host {
+			return nil
+		}
+		if !strings.HasPrefix(location.Path, targetURL.Path) {
+			return nil
+		}
+
+		location.Scheme = ""
+		location.User = nil
+		location.Host = ""
+		proxyRoot := fmt.Sprintf("/api/datasources/proxy/%d", proxy.ds.Id)
+		location.Path = util.JoinURLFragments(proxyRoot, strings.TrimPrefix(location.Path, targetURL.Path))
+		res.Header.Set("Location", location.String())
+
+		return nil
 	}
 }
 

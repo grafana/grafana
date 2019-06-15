@@ -389,6 +389,63 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 
+		Convey("When proxying redirect responses", func() {
+			plugin := &plugins.DataSourcePlugin{}
+			ds := &m.DataSource{
+				Id:   5,
+				Type: "redirecting-datasource",
+				Url:  "http://host/root/",
+			}
+			ctx := &m.ReqContext{}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
+
+			Convey("Relative location headers matching the target URL should be rewritten", func() {
+				res := &http.Response{Header: http.Header{"Location": []string{"/root/redirect/"}}}
+				proxy.getModifyResponse()(res)
+
+				So(res.Header.Get("Location"), ShouldEqual, "/api/datasources/proxy/5/redirect/")
+			})
+
+			Convey("Absolute location headers matching the target URL should be rewritten", func() {
+				res := &http.Response{Header: http.Header{"Location": []string{"http://host/root/redirect/"}}}
+				proxy.getModifyResponse()(res)
+
+				So(res.Header.Get("Location"), ShouldEqual, "/api/datasources/proxy/5/redirect/")
+			})
+
+			Convey("Location header with a different URL scheme should be left alone", func() {
+				location := "https://host/root/redirect"
+				res := &http.Response{Header: http.Header{"Location": []string{location}}}
+				proxy.getModifyResponse()(res)
+
+				So(res.Header.Get("Location"), ShouldEqual, location)
+			})
+
+			Convey("Location header with a different host should be left alone", func() {
+				location := "http://otherhost/root/redirect"
+				res := &http.Response{Header: http.Header{"Location": []string{location}}}
+				proxy.getModifyResponse()(res)
+
+				So(res.Header.Get("Location"), ShouldEqual, location)
+			})
+
+			Convey("Location header with a different Userinfo should be left alone", func() {
+				location := "http://user@host/root/redirect"
+				res := &http.Response{Header: http.Header{"Location": []string{location}}}
+				proxy.getModifyResponse()(res)
+
+				So(res.Header.Get("Location"), ShouldEqual, location)
+			})
+
+			Convey("Location header with different path prefix should be left alone", func() {
+				location := "/otherroot/redirect"
+				res := &http.Response{Header: http.Header{"Location": []string{location}}}
+				proxy.getModifyResponse()(res)
+
+				So(res.Header.Get("Location"), ShouldEqual, location)
+			})
+		})
+
 		Convey("When proxying a datasource that has oauth token pass-thru enabled", func() {
 			social.SocialMap["generic_oauth"] = &social.SocialGenericOAuth{
 				SocialBase: &social.SocialBase{
