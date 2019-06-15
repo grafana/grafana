@@ -19,35 +19,21 @@ export interface Props {
 }
 
 export class RefreshPicker extends PureComponent<Props> {
-  static defaultProps = {
-    intervals: defaultIntervals,
-  };
-
   constructor(props: Props) {
     super(props);
   }
 
-  hasNoIntervals = () => {
-    const { intervals } = this.props;
-    // Current implementaion returns an array with length of 1 consisting of
-    // an empty string when auto-refresh is empty in dashboard settings
-    if (!intervals || intervals.length < 1 || (intervals.length === 1 && intervals[0] === '')) {
-      return true;
-    }
-    return false;
-  };
+  intervalsToOptions = (intervals: string[] | undefined): Array<SelectOptionItem<string>> => {
+    const intervalsOrDefault = intervals || defaultIntervals;
+    const options = intervalsOrDefault
+      .filter(str => str !== '')
+      .map(interval => ({ label: interval, value: interval }));
 
-  intervalsToOptions = (intervals: string[] = defaultIntervals): Array<SelectOptionItem<string>> => {
-    const options = intervals.map(interval => ({ label: interval, value: interval }));
     if (this.props.hasLiveOption) {
       options.unshift(liveOption);
     }
-    options.unshift(offOption);
 
-    // Remove the option with the empty string
-    if (this.hasNoIntervals() && intervals[0] === '') {
-      options.pop();
-    }
+    options.unshift(offOption);
     return options;
   };
 
