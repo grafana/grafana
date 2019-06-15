@@ -2,7 +2,7 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import TimeSeries from 'app/core/time_series2';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
-import { TableTransform } from 'app/types/panel';
+import { TableTransform } from './types';
 import { Column, TableData } from '@grafana/ui';
 
 const transformers: { [key: string]: TableTransform } = {};
