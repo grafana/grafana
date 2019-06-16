@@ -257,6 +257,20 @@
 		<div class="gf-form gf-form--grow">
 			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>
+ <gf-form-switch class="gf-form" label="Top-N" label-class="width-8 query-keyword" checked="ctrl.target.shouldComputeTopN" on-change="ctrl.targetBlur()">
+                </gf-form-switch>
+                 <div class="gf-form" ng-hide="!ctrl.target.shouldComputeTopN">
+                        <label class="gf-form-label query-keyword">Number</label>
+                        <input type="text" class="gf-form-input"
+                                                 ng-disabled="!ctrl.target.shouldComputeTopN"
+                                                 ng-model="ctrl.target.counterTop" spellcheck='false'
+                                                 placeholder="value" ng-model-onblur
+                                                 ng-blur="ctrl.targetBlur()">
+                        </input>
+                </div> 
+                <div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>       
 	</div>
 </query-editor-row>
 
