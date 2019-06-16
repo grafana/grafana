@@ -81,6 +81,28 @@ export default class OpenTsDatasource {
 
         return this.transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
       });
+      if (queries[0] && queries[0].topn) {
+           let arr = [];
+           let cnt = 0;
+           _.each(result, val => {
+
+               _.each(val.datapoints, dt => {
+                    cnt = cnt + dt[0];
+               });
+
+               arr.push({'target': val.target, 'cnt': cnt });
+               cnt = 0;
+           });
+
+           arr = arr.sort(( a , b ) => {
+               return a['cnt'] - b['cnt'];
+           });
+
+           arr = arr.reverse().slice(0,queries[0].counterTop);
+
+           const arrC = arr.map( x => x['target']);
+           result = result.filter( x => arrC.includes(x['target']) );
+      }  
       return { data: result };
     });
   }
