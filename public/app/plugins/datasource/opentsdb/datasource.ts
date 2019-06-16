@@ -72,7 +72,7 @@ export default class OpenTsDatasource {
 
     return this.performTimeSeriesQuery(queries, start, end).then(response => {
       const metricToTargetMapping = this.mapMetricsToTargets(response.data, options, this.tsdbVersion);
-      const result = _.map(response.data, (metricData: any, index: number) => {
+      let result = _.map(response.data, (metricData: any, index: number) => {
         index = metricToTargetMapping[index];
         if (index === -1) {
           index = 0;
