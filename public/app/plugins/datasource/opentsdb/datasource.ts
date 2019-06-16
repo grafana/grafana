@@ -102,7 +102,7 @@ export default class OpenTsDatasource {
 
            const arrC = arr.map( x => x['target']);
            result = result.filter( x => arrC.includes(x['target']) );
-      }  
+      }
       return { data: result };
     });
   }
