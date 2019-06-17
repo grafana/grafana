@@ -1,11 +1,14 @@
 import angular from 'angular';
 import _ from 'lodash';
+import { DataSourceApi } from '@grafana/ui';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import * as queryDef from './query_def';
+import { ElasticsearchQuery } from './components/ElasticsearchQueryField';
 
-export class ElasticDatasource {
+export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery> {
   basicAuth: string;
   withCredentials: boolean;
   url: string;
@@ -17,9 +20,12 @@ export class ElasticDatasource {
   maxConcurrentShardRequests: number;
   queryBuilder: ElasticQueryBuilder;
   indexPattern: IndexPattern;
+  logMessageField?: string;
+  logLevelField?: string;
 
   /** @ngInject */
   constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
+    super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.url = instanceSettings.url;
@@ -34,6 +40,16 @@ export class ElasticDatasource {
       timeField: this.timeField,
       esVersion: this.esVersion,
     });
+    this.logMessageField = instanceSettings.jsonData.logMessageField || '';
+    this.logLevelField = instanceSettings.jsonData.logLevelField || '';
+
+    if (this.logMessageField === '') {
+      this.logMessageField = null;
+    }
+
+    if (this.logLevelField === '') {
+      this.logLevelField = null;
+    }
   }
 
   private request(method, url, data?) {
@@ -200,7 +216,7 @@ export class ElasticDatasource {
   }
 
   testDatasource() {
-    this.timeSrv.setTime({ from: 'now-1m', to: 'now' }, true);
+    // this.timeSrv.setTime({ from: 'now-1m', to: 'now' }, true);
     // validate that the index exist and has date field
     return this.getFields({ type: 'date' }).then(
       dateFields => {
@@ -247,14 +263,11 @@ export class ElasticDatasource {
 
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    let logsResult = false;
 
     for (const target of targets) {
       if (target.hide) {
         continue;
-      }
-
-      if (target.alias) {
-        target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
       }
 
       let queryString = this.templateSrv.replace(target.query, options.scopedVars, 'lucene');
@@ -262,7 +275,21 @@ export class ElasticDatasource {
       if (!queryString || queryString === '') {
         queryString = '*';
       }
-      const queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
+
+      let queryObj;
+      if (target.context && target.context === 'explore') {
+        logsResult = true;
+        target.bucketAggs = [queryDef.defaultBucketAgg()];
+        target.metrics = [queryDef.defaultMetricAgg()];
+        queryObj = this.queryBuilder.getLogsQuery(target, queryString);
+      } else {
+        if (target.alias) {
+          target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
+        }
+
+        queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
+      }
+
       const esQuery = angular.toJson(queryObj);
 
       const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
@@ -270,6 +297,7 @@ export class ElasticDatasource {
       payload += header + '\n';
 
       payload += esQuery + '\n';
+
       sentTargets.push(target);
     }
 
@@ -284,7 +312,12 @@ export class ElasticDatasource {
     const url = this.getMultiSearchUrl();
 
     return this.post(url, payload).then(res => {
-      return new ElasticResponse(sentTargets, res).getTimeSeries();
+      const er = new ElasticResponse(sentTargets, res);
+      if (logsResult) {
+        return er.getLogs(this.logMessageField, this.logLevelField);
+      }
+
+      return er.getTimeSeries();
     });
   }
 
