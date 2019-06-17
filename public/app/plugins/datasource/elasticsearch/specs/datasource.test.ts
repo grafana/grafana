@@ -29,8 +29,8 @@ describe('ElasticDatasource', function(this: any) {
     time: { from: 'now-1h', to: 'now' },
     timeRange: jest.fn(() => {
       return {
-        from: dateMath.parse(this.time.from, false),
-        to: dateMath.parse(this.time.to, true),
+        from: dateMath.parse(timeSrv.time.from, false),
+        to: dateMath.parse(timeSrv.time.to, true),
       };
     }),
     setTime: jest.fn(time => {

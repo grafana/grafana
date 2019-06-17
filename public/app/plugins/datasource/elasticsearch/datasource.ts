@@ -216,7 +216,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery> {
   }
 
   testDatasource() {
-    // this.timeSrv.setTime({ from: 'now-1m', to: 'now' }, true);
     // validate that the index exist and has date field
     return this.getFields({ type: 'date' }).then(
       dateFields => {
