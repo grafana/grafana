@@ -12,14 +12,14 @@ coreModule.directive('jsonTree', [
       },
       link: (scope: any, elem) => {
         let expansionLevel = scope.startExpanded;
-        if (scope.startExpanded === "true" ) {
+        if (scope.startExpanded === 'true') {
           expansionLevel = 2;
-        }else if (scope.startExpanded === "false") {
+        } else if (scope.startExpanded === 'false') {
           expansionLevel = 1;
         }
-        const jsonObject = { [scope.rootName]: scope.object};
+        const jsonObject = { [scope.rootName]: scope.object };
         const jsonExp = new JsonExplorer(jsonObject, expansionLevel, {
-          animateOpen: true ,
+          animateOpen: true,
         });
         const html = jsonExp.render(true);
         elem.append(html);
