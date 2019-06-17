@@ -30,6 +30,11 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setConfigCtrl(ConfigCtrl: any) {
+    this.angularConfigCtrl = ConfigCtrl;
+    return this;
+  }
+
   setQueryCtrl(QueryCtrl: any) {
     this.components.QueryCtrl = QueryCtrl;
     return this;
@@ -47,6 +52,16 @@ export class DataSourcePlugin<
 
   setExploreQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreQueryField = ExploreQueryField;
+    return this;
+  }
+
+  setExploreMetricsQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+    this.components.ExploreMetricsQueryField = ExploreQueryField;
+    return this;
+  }
+
+  setExploreLogsQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+    this.components.ExploreLogsQueryField = ExploreQueryField;
     return this;
   }
 
@@ -109,6 +124,8 @@ export interface DataSourcePluginComponents<
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
   ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreMetricsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreLogsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>;
 }
@@ -188,6 +205,21 @@ export abstract class DataSourceApi<
   ) => Promise<DataQueryResponse>;
 
   /**
+   * Variable query action.
+   */
+  metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
+
+  /**
+   * Get tag keys for adhoc filters
+   */
+  getTagKeys?(options: any): Promise<MetricFindValue[]>;
+
+  /**
+   * Get tag values for adhoc filters
+   */
+  getTagValues?(options: any): Promise<MetricFindValue[]>;
+
+  /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
    * we attach the components to this instance for easy access
    */
@@ -202,14 +234,20 @@ export abstract class DataSourceApi<
    * Used by alerting to check if query contains template variables
    */
   targetContainsTemplate?(query: TQuery): boolean;
-}
 
-export abstract class ExploreDataSourceApi<
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
-> extends DataSourceApi<TQuery, TOptions> {
+  /**
+   * Used in explore
+   */
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
+
+  /**
+   * Used in explore
+   */
   getHighlighterExpression?(query: TQuery): string[];
+
+  /**
+   * Used in explore
+   */
   languageProvider?: any;
 }
 
@@ -378,6 +416,10 @@ export interface QueryHint {
   fix?: QueryFix;
 }
 
+export interface MetricFindValue {
+  text: string;
+}
+
 export interface DataSourceJsonData {
   authType?: string;
   defaultRegion?: string;
@@ -422,6 +464,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
+  database?: string;
 
   /**
    * This is the full Authorization header if basic auth is ennabled.

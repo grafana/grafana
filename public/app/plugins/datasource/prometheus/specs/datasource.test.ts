@@ -12,6 +12,7 @@ import { DataSourceInstanceSettings } from '@grafana/ui';
 import { PromOptions } from '../types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { CustomVariable } from 'app/features/templating/custom_variable';
 
 jest.mock('../metric_find_query');
 
@@ -287,7 +288,7 @@ describe('PrometheusDatasource', () => {
     it('should not escape simple string', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });
-    it('should escape $^*+?.()\\', () => {
+    it('should escape $^*+?.()|\\', () => {
       expect(prometheusSpecialRegexEscape("looking'glass")).toEqual("looking\\\\'glass");
       expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
       expect(prometheusSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
@@ -302,9 +303,57 @@ describe('PrometheusDatasource', () => {
       expect(prometheusSpecialRegexEscape('looking(glass')).toEqual('looking\\\\(glass');
       expect(prometheusSpecialRegexEscape('looking)glass')).toEqual('looking\\\\)glass');
       expect(prometheusSpecialRegexEscape('looking\\glass')).toEqual('looking\\\\\\\\glass');
+      expect(prometheusSpecialRegexEscape('looking|glass')).toEqual('looking\\\\|glass');
     });
     it('should escape multiple special characters', () => {
       expect(prometheusSpecialRegexEscape('+looking$glass?')).toEqual('\\\\+looking\\\\$glass\\\\?');
+    });
+  });
+
+  describe('When interpolating variables', () => {
+    beforeEach(() => {
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
+      ctx.variable = new CustomVariable({}, {});
+    });
+
+    describe('and value is a string', () => {
+      it('should only escape single quotes', () => {
+        expect(ctx.ds.interpolateQueryExpr("abc'$^*{}[]+?.()|", ctx.variable)).toEqual("abc\\\\'$^*{}[]+?.()|");
+      });
+    });
+
+    describe('and value is a number', () => {
+      it('should return a number', () => {
+        expect(ctx.ds.interpolateQueryExpr(1000, ctx.variable)).toEqual(1000);
+      });
+    });
+
+    describe('and variable allows multi-value', () => {
+      beforeEach(() => {
+        ctx.variable.multi = true;
+      });
+
+      it('should regex escape values if the value is a string', () => {
+        expect(ctx.ds.interpolateQueryExpr('looking*glass', ctx.variable)).toEqual('looking\\\\*glass');
+      });
+
+      it('should return pipe separated values if the value is an array of strings', () => {
+        expect(ctx.ds.interpolateQueryExpr(['a|bc', 'de|f'], ctx.variable)).toEqual('a\\\\|bc|de\\\\|f');
+      });
+    });
+
+    describe('and variable allows all', () => {
+      beforeEach(() => {
+        ctx.variable.includeAll = true;
+      });
+
+      it('should regex escape values if the array is a string', () => {
+        expect(ctx.ds.interpolateQueryExpr('looking*glass', ctx.variable)).toEqual('looking\\\\*glass');
+      });
+
+      it('should return pipe separated values if the value is an array of strings', () => {
+        expect(ctx.ds.interpolateQueryExpr(['a|bc', 'de|f'], ctx.variable)).toEqual('a\\\\|bc|de\\\\|f');
+      });
     });
   });
 
@@ -418,7 +467,7 @@ describe('PrometheusDatasource', () => {
       expect(results.data[0].target).toBe('test{job="testjob"}');
     });
   });
-  describe('When querying prometheus with one target which return multiple series', () => {
+  describe('When querying prometheus with one target which returns multiple series', () => {
     let results;
     const start = 60;
     const end = 360;
@@ -1173,6 +1222,60 @@ describe('PrometheusDatasource', () => {
         __interval_ms: {
           text: 5000,
           value: 5000,
+        },
+      });
+    });
+  });
+  describe('The __range, __range_s and __range_ms variables', () => {
+    const response = {
+      status: 'success',
+      data: {
+        data: {
+          resultType: 'matrix',
+          result: [],
+        },
+      },
+    };
+
+    it('should use overridden ranges, not dashboard ranges', async () => {
+      const expectedRangeSecond = 3600;
+      const expectedRangeString = '1h';
+      const query = {
+        range: {
+          from: time({}),
+          to: time({ hours: 1 }),
+        },
+        targets: [
+          {
+            expr: 'test[${__range_s}s]',
+          },
+        ],
+        interval: '60s',
+      };
+      const urlExpected = `proxied/api/v1/query_range?query=${encodeURIComponent(
+        query.targets[0].expr
+      )}&start=0&end=3600&step=60`;
+
+      templateSrv.replace = jest.fn(str => str);
+      backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
+      await ctx.ds.query(query);
+      const res = backendSrv.datasourceRequest.mock.calls[0][0];
+      expect(res.url).toBe(urlExpected);
+
+      // @ts-ignore
+      expect(templateSrv.replace.mock.calls[1][1]).toEqual({
+        __range_s: {
+          text: expectedRangeSecond,
+          value: expectedRangeSecond,
+        },
+        __range: {
+          text: expectedRangeString,
+          value: expectedRangeString,
+        },
+        __range_ms: {
+          text: expectedRangeSecond * 1000,
+          value: expectedRangeSecond * 1000,
         },
       });
     });
