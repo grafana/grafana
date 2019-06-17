@@ -3,7 +3,7 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import Page from 'app/core/components/Page/Page';
-import UserAccount from 'app/core/components/UserAccount/UserAccount';
+import UserEdit from 'app/core/components/UserEdit/UserEdit';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel } from '@grafana/ui';
 
@@ -16,7 +16,7 @@ export class UserPreferences extends PureComponent<Props> {
     const { navModel } = this.props;
     return (
       <Page navModel={navModel}>
-        <UserAccount />
+        <UserEdit />
       </Page>
     );
   }

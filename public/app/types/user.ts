@@ -48,6 +48,7 @@ export interface UsersState {
 export interface UserState {
   orgId: number;
   timeZone: string;
+  profile?: OrgUser;
 }
 
 export interface UserSession {

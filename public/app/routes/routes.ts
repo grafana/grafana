@@ -225,11 +225,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       },
     })
     .when('/profile', {
-      templateUrl: 'public/app/features/profile/partials/profile.html',
-      controller: 'ProfileCtrl',
-      controllerAs: 'ctrl',
-    })
-    .when('/profile/react', {
       template: '<react-container />',
       resolve: {
         component: () => UserPreferences,
