@@ -22,7 +22,8 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { getRouteParamsId } from 'app/core/selectors/location';
 
 // Types
-import { StoreState, UrlQueryMap } from 'app/types/';
+import { StoreState } from 'app/types/';
+import { UrlQueryMap } from '@grafana/runtime';
 import { NavModel, DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
 import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';

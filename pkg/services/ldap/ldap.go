@@ -10,6 +10,7 @@ import (
 
 	"gopkg.in/ldap.v3"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -30,17 +31,16 @@ type IConnection interface {
 type IServer interface {
 	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	Users([]string) ([]*models.ExternalUserInfo, error)
-	InitialBind(string, string) error
+	Auth(string, string) error
 	Dial() error
 	Close()
 }
 
 // Server is basic struct of LDAP authorization
 type Server struct {
-	Config            *ServerConfig
-	Connection        IConnection
-	requireSecondBind bool
-	log               log.Logger
+	Config     *ServerConfig
+	Connection IConnection
+	log        log.Logger
 }
 
 var (
@@ -48,10 +48,6 @@ var (
 	// ErrInvalidCredentials is returned if username and password do not match
 	ErrInvalidCredentials = errors.New("Invalid Username or Password")
 )
-
-var dial = func(network, addr string) (IConnection, error) {
-	return ldap.Dial(network, addr)
-}
 
 // New creates the new LDAP auth
 func New(config *ServerConfig) IServer {
@@ -96,7 +92,7 @@ func (server *Server) Dial() error {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if server.Config.StartTLS {
-				server.Connection, err = dial("tcp", address)
+				server.Connection, err = ldap.Dial("tcp", address)
 				if err == nil {
 					if err = server.Connection.StartTLS(tlsCfg); err == nil {
 						return nil
@@ -106,7 +102,7 @@ func (server *Server) Dial() error {
 				server.Connection, err = ldap.DialTLS("tcp", address, tlsCfg)
 			}
 		} else {
-			server.Connection, err = dial("tcp", address)
+			server.Connection, err = ldap.Dial("tcp", address)
 		}
 
 		if err == nil {
@@ -125,9 +121,8 @@ func (server *Server) Close() {
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
-
-	// Perform initial authentication
-	err := server.InitialBind(query.Username, query.Password)
+	// Authentication
+	err := server.Auth(query.Username, query.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -145,18 +140,9 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		return nil, ErrInvalidCredentials
 	}
 
-	// Check if a second user bind is needed
 	user := users[0]
-
 	if err := server.validateGrafanaUser(user); err != nil {
 		return nil, err
-	}
-
-	if server.requireSecondBind {
-		err = server.secondBind(user, query.Password)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return user, nil
@@ -168,8 +154,8 @@ func (server *Server) Users(logins []string) (
 	error,
 ) {
 	var result *ldap.SearchResult
-	var err error
 	var Config = server.Config
+	var err error
 
 	for _, base := range Config.SearchBaseDNs {
 		result, err = server.Connection.Search(
@@ -184,10 +170,16 @@ func (server *Server) Users(logins []string) (
 		}
 	}
 
+	if len(result.Entries) == 0 {
+		return []*models.ExternalUserInfo{}, nil
+	}
+
 	serializedUsers, err := server.serializeUsers(result)
 	if err != nil {
 		return nil, err
 	}
+
+	server.log.Debug("LDAP users found", "users", spew.Sdump(serializedUsers))
 
 	return serializedUsers, nil
 }
@@ -276,108 +268,71 @@ func (server *Server) getSearchRequest(
 }
 
 // buildGrafanaUser extracts info from UserInfo model to ExternalUserInfo
-func (server *Server) buildGrafanaUser(user *UserInfo) *models.ExternalUserInfo {
+func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserInfo, error) {
+	memberOf, err := server.getMemberOf(user)
+	if err != nil {
+		return nil, err
+	}
+
+	attrs := server.Config.Attr
 	extUser := &models.ExternalUserInfo{
 		AuthModule: models.AuthModuleLDAP,
 		AuthId:     user.DN,
 		Name: strings.TrimSpace(
-			fmt.Sprintf("%s %s", user.FirstName, user.LastName),
+			fmt.Sprintf(
+				"%s %s",
+				getAttribute(attrs.Name, user),
+				getAttribute(attrs.Surname, user),
+			),
 		),
-		Login:    user.Username,
-		Email:    user.Email,
-		Groups:   user.MemberOf,
+		Login:    getAttribute(attrs.Username, user),
+		Email:    getAttribute(attrs.Email, user),
+		Groups:   memberOf,
 		OrgRoles: map[int64]models.RoleType{},
 	}
 
 	for _, group := range server.Config.Groups {
 		// only use the first match for each org
-		if extUser.OrgRoles[group.OrgId] != "" {
+		if extUser.OrgRoles[group.OrgID] != "" {
 			continue
 		}
 
-		if user.isMemberOf(group.GroupDN) {
-			extUser.OrgRoles[group.OrgId] = group.OrgRole
+		if isMemberOf(memberOf, group.GroupDN) {
+			extUser.OrgRoles[group.OrgID] = group.OrgRole
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
 		}
 	}
 
-	return extUser
+	return extUser, nil
 }
 
-func (server *Server) serverBind() error {
-	bindFn := func() error {
-		return server.Connection.Bind(
-			server.Config.BindDN,
-			server.Config.BindPassword,
-		)
-	}
-
-	if server.Config.BindPassword == "" {
-		bindFn = func() error {
-			return server.Connection.UnauthenticatedBind(server.Config.BindDN)
-		}
-	}
-
-	// bind_dn and bind_password to bind
-	if err := bindFn(); err != nil {
-		server.log.Info("LDAP initial bind failed, %v", err)
-
-		if ldapErr, ok := err.(*ldap.Error); ok {
-			if ldapErr.ResultCode == 49 {
-				return ErrInvalidCredentials
-			}
-		}
-		return err
-	}
-
-	return nil
+// shouldBindAdmin checks if we should use
+// admin username & password for LDAP bind
+func (server *Server) shouldBindAdmin() bool {
+	return server.Config.BindPassword != ""
 }
 
-func (server *Server) secondBind(
-	user *models.ExternalUserInfo,
-	userPassword string,
-) error {
-	err := server.Connection.Bind(user.AuthId, userPassword)
-	if err != nil {
-		server.log.Info("Second bind failed", "error", err)
+// Auth authentificates user in LDAP.
+// It might not use passed password and username,
+// since they can be overwritten with admin config values -
+// see "bind_dn" and "bind_password" options in LDAP config
+func (server *Server) Auth(username, password string) error {
+	path := server.Config.BindDN
 
-		if ldapErr, ok := err.(*ldap.Error); ok {
-			if ldapErr.ResultCode == 49 {
-				return ErrInvalidCredentials
-			}
-		}
-		return err
-	}
-
-	return nil
-}
-
-// InitialBind intiates first bind to LDAP server
-func (server *Server) InitialBind(username, userPassword string) error {
-	if server.Config.BindPassword != "" || server.Config.BindDN == "" {
-		userPassword = server.Config.BindPassword
-		server.requireSecondBind = true
-	}
-
-	bindPath := server.Config.BindDN
-	if strings.Contains(bindPath, "%s") {
-		bindPath = fmt.Sprintf(server.Config.BindDN, username)
+	if server.shouldBindAdmin() {
+		password = server.Config.BindPassword
+	} else {
+		path = fmt.Sprintf(path, username)
 	}
 
 	bindFn := func() error {
-		return server.Connection.Bind(bindPath, userPassword)
-	}
-
-	if userPassword == "" {
-		bindFn = func() error {
-			return server.Connection.UnauthenticatedBind(bindPath)
-		}
+		return server.Connection.Bind(path, password)
 	}
 
 	if err := bindFn(); err != nil {
-		server.log.Info("Initial bind failed", "error", err)
+		server.log.Error("Cannot authentificate in LDAP", "err", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
@@ -391,19 +346,23 @@ func (server *Server) InitialBind(username, userPassword string) error {
 }
 
 // requestMemberOf use this function when POSIX LDAP schema does not support memberOf, so it manually search the groups
-func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string, error) {
+func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 	var memberOf []string
+	var config = server.Config
 
-	for _, groupSearchBase := range server.Config.GroupSearchBaseDNs {
+	for _, groupSearchBase := range config.GroupSearchBaseDNs {
 		var filterReplace string
-		if server.Config.GroupSearchFilterUserAttribute == "" {
-			filterReplace = getLDAPAttr(server.Config.Attr.Username, searchResult)
+		if config.GroupSearchFilterUserAttribute == "" {
+			filterReplace = getAttribute(config.Attr.Username, entry)
 		} else {
-			filterReplace = getLDAPAttr(server.Config.GroupSearchFilterUserAttribute, searchResult)
+			filterReplace = getAttribute(
+				config.GroupSearchFilterUserAttribute,
+				entry,
+			)
 		}
 
 		filter := strings.Replace(
-			server.Config.GroupSearchFilter, "%s",
+			config.GroupSearchFilter, "%s",
 			ldap.EscapeFilter(filterReplace),
 			-1,
 		)
@@ -411,7 +370,7 @@ func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string
 		server.log.Info("Searching for user's groups", "filter", filter)
 
 		// support old way of reading settings
-		groupIDAttribute := server.Config.Attr.MemberOf
+		groupIDAttribute := config.Attr.MemberOf
 		// but prefer dn attribute if default settings are used
 		if groupIDAttribute == "" || groupIDAttribute == "memberOf" {
 			groupIDAttribute = "dn"
@@ -431,8 +390,11 @@ func (server *Server) requestMemberOf(searchResult *ldap.SearchResult) ([]string
 		}
 
 		if len(groupSearchResult.Entries) > 0 {
-			for i := range groupSearchResult.Entries {
-				memberOf = append(memberOf, getLDAPAttrN(groupIDAttribute, groupSearchResult, i))
+			for _, group := range groupSearchResult.Entries {
+				memberOf = append(
+					memberOf,
+					getAttribute(groupIDAttribute, group),
+				)
 			}
 			break
 		}
@@ -448,104 +410,32 @@ func (server *Server) serializeUsers(
 ) ([]*models.ExternalUserInfo, error) {
 	var serialized []*models.ExternalUserInfo
 
-	for index := range users.Entries {
-		memberOf, err := server.getMemberOf(users)
+	for _, user := range users.Entries {
+		extUser, err := server.buildGrafanaUser(user)
 		if err != nil {
 			return nil, err
 		}
 
-		userInfo := &UserInfo{
-			DN: getLDAPAttrN(
-				"dn",
-				users,
-				index,
-			),
-			LastName: getLDAPAttrN(
-				server.Config.Attr.Surname,
-				users,
-				index,
-			),
-			FirstName: getLDAPAttrN(
-				server.Config.Attr.Name,
-				users,
-				index,
-			),
-			Username: getLDAPAttrN(
-				server.Config.Attr.Username,
-				users,
-				index,
-			),
-			Email: getLDAPAttrN(
-				server.Config.Attr.Email,
-				users,
-				index,
-			),
-			MemberOf: memberOf,
-		}
-
-		serialized = append(
-			serialized,
-			server.buildGrafanaUser(userInfo),
-		)
+		serialized = append(serialized, extUser)
 	}
 
 	return serialized, nil
 }
 
 // getMemberOf finds memberOf property or request it
-func (server *Server) getMemberOf(search *ldap.SearchResult) (
+func (server *Server) getMemberOf(result *ldap.Entry) (
 	[]string, error,
 ) {
 	if server.Config.GroupSearchFilter == "" {
-		memberOf := getLDAPAttrArray(server.Config.Attr.MemberOf, search)
+		memberOf := getArrayAttribute(server.Config.Attr.MemberOf, result)
 
 		return memberOf, nil
 	}
 
-	memberOf, err := server.requestMemberOf(search)
+	memberOf, err := server.requestMemberOf(result)
 	if err != nil {
 		return nil, err
 	}
 
 	return memberOf, nil
-}
-
-func appendIfNotEmpty(slice []string, values ...string) []string {
-	for _, v := range values {
-		if v != "" {
-			slice = append(slice, v)
-		}
-	}
-	return slice
-}
-
-func getLDAPAttr(name string, result *ldap.SearchResult) string {
-	return getLDAPAttrN(name, result, 0)
-}
-
-func getLDAPAttrN(name string, result *ldap.SearchResult, n int) string {
-	if strings.ToLower(name) == "dn" {
-		return result.Entries[n].DN
-	}
-	for _, attr := range result.Entries[n].Attributes {
-		if attr.Name == name {
-			if len(attr.Values) > 0 {
-				return attr.Values[0]
-			}
-		}
-	}
-	return ""
-}
-
-func getLDAPAttrArray(name string, result *ldap.SearchResult) []string {
-	return getLDAPAttrArrayN(name, result, 0)
-}
-
-func getLDAPAttrArrayN(name string, result *ldap.SearchResult, n int) []string {
-	for _, attr := range result.Entries[n].Attributes {
-		if attr.Name == name {
-			return attr.Values
-		}
-	}
-	return []string{}
 }

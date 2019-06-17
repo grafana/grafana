@@ -67,6 +67,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     sparkline: {
       show: false,
       full: false,
+      ymin: null,
+      ymax: null,
       lineColor: 'rgb(31, 120, 193)',
       fillColor: 'rgba(31, 118, 189, 0.18)',
     },
@@ -548,12 +550,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           lines: {
             show: true,
             fill: 1,
-            zero: false,
             lineWidth: 1,
             fillColor: getColorFromHexRgbOrName(panel.sparkline.fillColor, config.theme.type),
+            zero: false,
           },
         },
-        yaxes: { show: false },
+        yaxis: {
+          show: false,
+          min: panel.sparkline.ymin,
+          max: panel.sparkline.ymax,
+        },
         xaxis: {
           show: false,
           mode: 'time',
@@ -604,6 +610,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           } else {
             elem.css('background-color', '');
           }
+        } else {
+          $panelContainer.css('background-color', '');
+          elem.css('background-color', '');
         }
       } else {
         $panelContainer.css('background-color', '');
