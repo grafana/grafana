@@ -4,7 +4,7 @@
 
 ### Known issues
 * **grafana-cli**: The argument `--pluginsDir` is not working.
-* **docker**: Due to above problem with grafana-cli the docker run will fail to start the container if you're installing plugins using the `GF_INSTALL_PLUGINS` environment variable.
+* **docker**: Due to above problem with grafana-cli the docker run will fail to start the container if you're installing plugins using the `GF_INSTALL_PLUGINS` environment variable. We have removed 6.2.3 tag from docker hub and latest tag now points to 6.2.2.
 
 More details in bug report: https://github.com/grafana/grafana/issues/17613
 
