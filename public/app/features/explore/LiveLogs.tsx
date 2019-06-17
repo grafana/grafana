@@ -11,7 +11,6 @@ import {
 } from '@grafana/ui';
 
 import ElapsedTime from './ElapsedTime';
-import { ButtonSize, ButtonVariant } from '@grafana/ui/src/components/Button/AbstractButton';
 
 const getStyles = (theme: GrafanaTheme) => ({
   logsRowsLive: css`
@@ -110,8 +109,8 @@ class LiveLogs extends PureComponent<Props, State> {
           </span>
           <LinkButton
             onClick={this.props.stopLive}
-            size={ButtonSize.Medium}
-            variant={ButtonVariant.Transparent}
+            size="md"
+            variant="transparent"
             style={{ color: theme.colors.orange }}
           >
             Stop Live
