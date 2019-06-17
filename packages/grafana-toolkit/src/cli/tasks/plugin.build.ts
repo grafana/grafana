@@ -1,6 +1,7 @@
 import { Task, TaskRunner } from './task';
 // @ts-ignore
 import execa = require('execa');
+import path = require('path');
 import * as rollup from 'rollup';
 import * as jestCLI from 'jest-cli';
 import { jestConfig } from '../../config/jest.plugin.config';
@@ -22,7 +23,18 @@ const lintPlugin = async () => {
 };
 
 const testPlugin = async () => {
-  await jestCLI.runCLI(jestConfig as any, [process.cwd()]);
+  const testConfig = jestConfig();
+  // @ts-ignore
+
+  testConfig.setupFiles = [
+    // @ts-ignore
+    path.resolve(__dirname, '../../config/jest-setup.js'),
+    // @ts-ignore
+    path.resolve(__dirname, '../../config/jest-shim.js'),
+  ];
+
+  // @ts-ignore
+  await jestCLI.runCLI(testConfig as any, [process.cwd()]);
 };
 
 const bundlePlugin = async () => {
@@ -35,7 +47,7 @@ const bundlePlugin = async () => {
 
 const pluginBuildRunner: TaskRunner<PrecommitOptions> = async () => {
   await clean();
-  // await testPlugin();
+  await testPlugin();
   // await lintPlugin();
   await bundlePlugin();
 };

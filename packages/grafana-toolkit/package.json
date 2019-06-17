@@ -32,8 +32,6 @@
     "chalk": "^2.4.2",
     "commander": "^2.20.0",
     "concurrently": "4.1.0",
-    "enzyme": "^3.10.0",
-    "enzyme-adapter-react-16": "^1.14.0",
     "execa": "^1.0.0",
     "inquirer": "^6.3.1",
     "jest-cli": "^24.8.0",
@@ -54,6 +52,10 @@
     "simple-git": "^1.112.0",
     "ts-node": "^8.2.0",
     "typescript": "^3.5.1"
+  },
+  "peerDependencies": {
+    "enzyme": "3.10.0",
+    "enzyme-adapter-react-16": "1.14.0"
   },
   "resolutions": {
     "@types/lodash": "4.14.119",
