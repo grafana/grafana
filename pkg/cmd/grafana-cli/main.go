@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -17,6 +18,7 @@ var version = "master"
 func main() {
 	setupLogging()
 
+	flag.Parse()
 	app := cli.NewApp()
 	app.Name = "Grafana cli"
 	app.Usage = ""
