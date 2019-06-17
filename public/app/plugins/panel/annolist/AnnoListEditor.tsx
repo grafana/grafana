@@ -10,12 +10,26 @@ import {
   FormField,
   toIntegerOrUndefined,
   toNumberString,
+  FormLabel,
 } from '@grafana/ui';
 
 // Types
 import { AnnoOptions } from './types';
+import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
-export class AnnoListEditor extends PureComponent<PanelEditorProps<AnnoOptions>> {
+interface State {
+  tag: string;
+}
+
+export class AnnoListEditor extends PureComponent<PanelEditorProps<AnnoOptions>, State> {
+  constructor(props: PanelEditorProps<AnnoOptions>) {
+    super(props);
+
+    this.state = {
+      tag: '',
+    };
+  }
+
   // Display
   //-----------
 
@@ -49,10 +63,6 @@ export class AnnoListEditor extends PureComponent<PanelEditorProps<AnnoOptions>>
     this.props.onOptionsChange({ ...this.props.options, limit: v });
   };
 
-  onTagsChange = (tags: string[]) => {
-    this.props.onOptionsChange({ ...this.props.options, tags });
-  };
-
   onToggleOnlyFromThisDashboard = () =>
     this.props.onOptionsChange({
       ...this.props.options,
@@ -62,8 +72,39 @@ export class AnnoListEditor extends PureComponent<PanelEditorProps<AnnoOptions>>
   onToggleOnlyInTimeRange = () =>
     this.props.onOptionsChange({ ...this.props.options, onlyInTimeRange: !this.props.options.onlyInTimeRange });
 
-  // RENDER
+  // Tags
   //-----------
+
+  onTagTextChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.setState({ tag: event.target.value });
+  };
+
+  onTagClick = (e: React.SyntheticEvent, tag: string) => {
+    e.stopPropagation();
+
+    const tags = this.props.options.tags.filter(item => item !== tag);
+    this.props.onOptionsChange({
+      ...this.props.options,
+      tags,
+    });
+  };
+
+  renderTags = (tags: string[]): JSX.Element => {
+    if (!tags || !tags.length) {
+      return null;
+    }
+    return (
+      <>
+        {tags.map(tag => {
+          return (
+            <span key={tag} onClick={e => this.onTagClick(e, tag)} className="pointer">
+              <TagBadge label={tag} removeIcon={true} count={0} />
+            </span>
+          );
+        })}
+      </>
+    );
+  };
 
   render() {
     const { options } = this.props;
@@ -124,10 +165,31 @@ export class AnnoListEditor extends PureComponent<PanelEditorProps<AnnoOptions>>
             checked={options.onlyInTimeRange}
             onChange={this.onToggleOnlyInTimeRange}
           />
-          <div>TODO: Tags input:</div>
+          <div className="form-field">
+            <FormLabel width={6}>Tags</FormLabel>
+            {this.renderTags(options.tags)}
+            <input
+              type="text"
+              className={`gf-form-input width-${8}`}
+              value={this.state.tag}
+              onChange={this.onTagTextChange}
+              onKeyPress={ev => {
+                if (this.state.tag && ev.key === 'Enter') {
+                  const tags = [...options.tags, this.state.tag];
+                  this.props.onOptionsChange({
+                    ...this.props.options,
+                    tags,
+                  });
+                  this.setState({ tag: '' });
+                  ev.preventDefault();
+                }
+              }}
+            />
+          </div>
+
           <FormField
             label="Limit"
-            labelWidth={labelWidth}
+            labelWidth={6}
             onChange={this.onLimitChange}
             value={toNumberString(options.limit)}
             type="number"
