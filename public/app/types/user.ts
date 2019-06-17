@@ -48,3 +48,16 @@ export interface UserState {
   orgId: number;
   timeZone: string;
 }
+
+export interface UserSession {
+  id: number;
+  createdAt: string;
+  clientIp: string;
+  isActive: boolean;
+  seenAt: string;
+  browser: string;
+  browserVersion: string;
+  os: string;
+  osVersion: string;
+  device: string;
+}
