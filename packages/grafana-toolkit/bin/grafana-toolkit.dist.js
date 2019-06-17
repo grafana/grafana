@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-// This bin is used for cli being used from npm
+// This bin is used for cli installed from npm
 
-require('../compiled/cli/index.js').run();
+require('../src/cli/index.js').run();

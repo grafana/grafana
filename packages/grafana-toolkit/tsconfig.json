@@ -4,7 +4,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "rootDirs": ["."],
-    "outDir": "dist/compiled",
+    "outDir": "dist/src",
     "strict": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
