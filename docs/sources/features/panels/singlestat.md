@@ -57,8 +57,10 @@ Sparklines are a great way of seeing the historical data related to the summary 
 
 1. **Show**: The show checkbox will toggle whether the spark line is shown in the Panel. When unselected, only the Singlestat value will appear.
 2. **Full Height**: Check if you want the sparklines to take up the full panel height, or uncheck if they should be below the main Singlestat value.
-3. **Line Color**: This color selection applies to the color of the sparkline itself.
-4. **Fill Color**: This color selection applies to the area below the sparkline.
+3. **Y-Min**: The minimum Y value. (default auto)
+4. **Y-Max**: The maximum Y value. (default auto)
+5. **Line Color**: This color selection applies to the color of the sparkline itself.
+6. **Fill Color**: This color selection applies to the area below the sparkline.
 
 <div class="clearfix"></div>
 

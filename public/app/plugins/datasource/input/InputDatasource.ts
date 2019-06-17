@@ -5,6 +5,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
+  MetricFindValue,
 } from '@grafana/ui/src/types';
 import { InputQuery, InputOptions } from './types';
 
@@ -27,7 +28,7 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
     return `Shared Data From: ${this.name} (${describeSeriesData(this.data)})`;
   }
 
-  metricFindQuery(query: string, options?: any) {
+  metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
     return new Promise((resolve, reject) => {
       const names = [];
       for (const series of this.data) {
