@@ -77,6 +77,7 @@ describe('when rendering table', () => {
           link: true,
           linkUrl: '/dashboard?param=$__cell&param_1=$__cell_1&param_2=$__cell_2',
           linkTooltip: '$__cell $__cell_1 $__cell_6',
+          linkTooltipPlacement: 'left',
           linkTargetBlank: true,
         },
         {
@@ -291,7 +292,7 @@ describe('when rendering table', () => {
       const expectedHtml = `
         <td class="table-panel-cell-link">
           <a href="/dashboard?param=host1&param_1=1230&param_2=40"
-            target="_blank" data-link-tooltip data-original-title="host1 1230 my.host.com" data-placement="right">
+            target="_blank" data-link-tooltip data-original-title="host1 1230 my.host.org" data-placement="left">
             host1
           </a>
         </td>

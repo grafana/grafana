@@ -270,12 +270,15 @@ export class TableRenderer {
 
       const cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
       const cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
+      const cellLinkTooltipPlacement =
+        column.style.linkTooltipPlacement !== undefined ? column.style.linkTooltipPlacement : 'right';
       const cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push('table-panel-cell-link');
 
       columnHtml += `
-        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right"${textStyle}>
+        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}"
+           data-placement="${cellLinkTooltipPlacement}"${textStyle}>
           ${value}
         </a>
       `;

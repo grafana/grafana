@@ -172,6 +172,12 @@
       <input type="text" class="gf-form-input width-29" ng-model="style.linkTooltip" ng-blur="editor.render()" ng-model-onblur
           data-placement="right">
     </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-9">Tooltip Placement</label>
+      <div class="gf-form-select-wrapper width-10">
+        <select class="gf-form-input" ng-model="style.linkTooltipPlacement" ng-options="c.value as c.text for c in editor.tooltipPlacements" ng-change="editor.render()"></select>
+      </div>
+    </div>
     <gf-form-switch class="gf-form" label-class="width-9" label="Open in new tab" checked="style.linkTargetBlank"></gf-form-switch>
   </div>
 

@@ -14,6 +14,7 @@ export class ColumnOptionsCtrl {
   getColumnNames: any;
   activeStyleIndex: number;
   mappingTypes: any;
+  tooltipPlacements: any;
 
   /** @ngInject */
   constructor($scope: any) {
@@ -44,6 +45,12 @@ export class ColumnOptionsCtrl {
       { text: 'YYYY-MM-DD', value: 'YYYY-MM-DD' },
     ];
     this.mappingTypes = [{ text: 'Value to text', value: 1 }, { text: 'Range to text', value: 2 }];
+    this.tooltipPlacements = [
+      { text: 'Right', value: 'right' },
+      { text: 'Left', value: 'left' },
+      { text: 'Top', value: 'top' },
+      { text: 'Bottom', value: 'bottom' },
+    ];
 
     this.getColumnNames = () => {
       if (!this.panelCtrl.table) {
