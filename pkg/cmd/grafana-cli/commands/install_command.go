@@ -102,7 +102,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 
 		// Plugins which are downloaded just as sourcecode zipball from github do not have checksum
 		if v.CheckSums != nil {
-			checksum = v.CheckSums[osAndArchString()]
+			checksum = v.Md5[osAndArchString()]
 		}
 	}
 

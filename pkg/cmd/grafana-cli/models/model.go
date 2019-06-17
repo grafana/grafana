@@ -36,7 +36,7 @@ type Version struct {
 	// os-arch string for which the version is available
 	Arch []string `json:"arch"`
 	// os-arch to md5 checksum to check when downloading the file
-	CheckSums map[string]string `json:"checksums"`
+	Md5 map[string]string `json:"md5"`
 }
 
 type PluginRepo struct {
