@@ -93,7 +93,7 @@ func (am *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, m
 		alertJSON.SetPath([]string{"annotations", "image"}, evalContext.ImagePublicURL)
 	}
 
-	// Labels (from metrics tags + mandatory alertname).
+	// Labels (from metrics tags + AlertRuleTags + mandatory alertname).
 	tags := make(map[string]string)
 	if match != nil {
 		if len(match.Tags) == 0 {
@@ -103,6 +103,9 @@ func (am *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, m
 				tags[replaceIllegalCharsInLabelname(k)] = v
 			}
 		}
+	}
+	for _, tag := range evalContext.Rule.AlertRuleTags {
+		tags[tag.Key] = tag.Value
 	}
 	tags["alertname"] = evalContext.Rule.Name
 	alertJSON.Set("labels", tags)

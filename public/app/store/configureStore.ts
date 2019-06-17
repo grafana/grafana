@@ -89,6 +89,8 @@ export function configureStore() {
       ? applyMiddleware(toggleLogActionsMiddleware, thunk, epicMiddleware, logger)
       : applyMiddleware(thunk, epicMiddleware);
 
-  setStore(createStore(rootReducer, {}, composeEnhancers(storeEnhancers)));
+  const store = createStore(rootReducer, {}, composeEnhancers(storeEnhancers));
+  setStore(store);
   epicMiddleware.run(rootEpic);
+  return store;
 }

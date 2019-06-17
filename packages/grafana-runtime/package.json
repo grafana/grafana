@@ -16,8 +16,7 @@
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "awesome-typescript-loader": "^5.2.1",
     "lodash": "^4.17.10",

@@ -16,7 +16,7 @@ Grafana cli is a small executable that is bundled with Grafana-server and is sup
 
 The CLI allows you to install, upgrade and manage your plugins on the machine it is running on.
 You can find more information about how to install and manage your plugins in the
-[plugins page]({{< relref "plugins/installation.md" >}}).
+[plugins page]({{< relref "../plugins/installation.md" >}}).
 
 ## Admin
 

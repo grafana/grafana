@@ -33,7 +33,7 @@ The general tab allows customization of a panel's appearance and menu options.
 - **Transparent** - If checked, removes the solid background of the panel (default not checked).
 
 ### Repeat
-Repeat a panel for each value of a variable.  Repeating panels are described in more detail [here]({{< relref "reference/templating.md#repeating-panels" >}}).
+Repeat a panel for each value of a variable.  Repeating panels are described in more detail [here]({{< relref "../../reference/templating.md#repeating-panels" >}}).
 
 ### Drilldown / detail link
 

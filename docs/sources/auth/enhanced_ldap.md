@@ -12,7 +12,7 @@ weight = 3
 
 # Enhanced LDAP Integration
 
-> Enhanced LDAP Integration is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise/index.md" >}}).
+> Enhanced LDAP Integration is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
 
 The enhanced LDAP integration adds additional functionality on top of the [existing LDAP integration]({{< relref "auth/ldap.md" >}}).
 

@@ -303,17 +303,19 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
 }
 
 /**
- * A target is non-empty when it has keys (with non-empty values) other than refId and key.
+ * A target is non-empty when it has keys (with non-empty values) other than refId, key and context.
  */
+const validKeys = ['refId', 'key', 'context'];
 export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery[]): boolean {
   return (
     queries &&
-    queries.some(
-      query =>
-        Object.keys(query)
-          .map(k => query[k])
-          .filter(v => v).length > 2
-    )
+    queries.some(query => {
+      const keys = Object.keys(query)
+        .filter(key => validKeys.indexOf(key) === -1)
+        .map(k => query[k])
+        .filter(v => v);
+      return keys.length > 0;
+    })
   );
 }
 

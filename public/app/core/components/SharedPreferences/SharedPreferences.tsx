@@ -126,7 +126,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             getOptionLabel={i => i.title}
             onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
             options={dashboards}
-            placeholder="Chose default dashboard"
+            placeholder="Choose default dashboard"
             width={20}
           />
         </div>

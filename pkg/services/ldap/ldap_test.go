@@ -1,17 +1,29 @@
 package ldap
 
 import (
+	"errors"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	ldap "gopkg.in/ldap.v3"
+	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestPublicAPI(t *testing.T) {
+	Convey("New()", t, func() {
+		Convey("Should return ", func() {
+			result := New(&ServerConfig{
+				Attr:          AttributeMap{},
+				SearchBaseDNs: []string{"BaseDNHere"},
+			})
+
+			So(result, ShouldImplement, (*IServer)(nil))
+		})
+	})
+
 	Convey("Users()", t, func() {
-		Convey("find one user", func() {
+		Convey("Finds one user", func() {
 			MockConnection := &MockConnection{}
 			entry := ldap.Entry{
 				DN: "dn", Attributes: []*ldap.EntryAttribute{
@@ -49,10 +61,49 @@ func TestPublicAPI(t *testing.T) {
 			// No empty attributes should be added to the search request
 			So(len(MockConnection.SearchAttributes), ShouldEqual, 3)
 		})
+
+		Convey("Handles a error", func() {
+			expected := errors.New("Killa-gorilla")
+			MockConnection := &MockConnection{}
+			MockConnection.setSearchError(expected)
+
+			// Set up attribute map without surname and email
+			server := &Server{
+				Config: &ServerConfig{
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: MockConnection,
+				log:        log.New("test-logger"),
+			}
+
+			_, err := server.Users([]string{"roelgerrits"})
+
+			So(err, ShouldEqual, expected)
+		})
+
+		Convey("Should return empty slice if none were found", func() {
+			MockConnection := &MockConnection{}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
+			MockConnection.setSearchResult(&result)
+
+			// Set up attribute map without surname and email
+			server := &Server{
+				Config: &ServerConfig{
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: MockConnection,
+				log:        log.New("test-logger"),
+			}
+
+			searchResult, err := server.Users([]string{"roelgerrits"})
+
+			So(err, ShouldBeNil)
+			So(searchResult, ShouldBeEmpty)
+		})
 	})
 
-	Convey("InitialBind", t, func() {
-		Convey("Given bind dn and password configured", func() {
+	Convey("Auth()", t, func() {
+		Convey("Should ignore passsed username and password", func() {
 			connection := &MockConnection{}
 			var actualUsername, actualPassword string
 			connection.bindProvider = func(username, password string) error {
@@ -63,14 +114,13 @@ func TestPublicAPI(t *testing.T) {
 			server := &Server{
 				Connection: connection,
 				Config: &ServerConfig{
-					BindDN:       "cn=%s,o=users,dc=grafana,dc=org",
+					BindDN:       "cn=admin,dc=grafana,dc=org",
 					BindPassword: "bindpwd",
 				},
 			}
-			err := server.InitialBind("user", "pwd")
+			err := server.Auth("user", "pwd")
 			So(err, ShouldBeNil)
-			So(server.requireSecondBind, ShouldBeTrue)
-			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
+			So(actualUsername, ShouldEqual, "cn=admin,dc=grafana,dc=org")
 			So(actualPassword, ShouldEqual, "bindpwd")
 		})
 
@@ -88,31 +138,29 @@ func TestPublicAPI(t *testing.T) {
 					BindDN: "cn=%s,o=users,dc=grafana,dc=org",
 				},
 			}
-			err := server.InitialBind("user", "pwd")
+			err := server.Auth("user", "pwd")
 			So(err, ShouldBeNil)
-			So(server.requireSecondBind, ShouldBeFalse)
 			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
 			So(actualPassword, ShouldEqual, "pwd")
 		})
 
-		Convey("Given empty bind dn and password", func() {
+		Convey("Should handle an error", func() {
 			connection := &MockConnection{}
-			unauthenticatedBindWasCalled := false
-			var actualUsername string
-			connection.unauthenticatedBindProvider = func(username string) error {
-				unauthenticatedBindWasCalled = true
-				actualUsername = username
-				return nil
+			expected := &ldap.Error{
+				ResultCode: uint16(25),
+			}
+			connection.bindProvider = func(username, password string) error {
+				return expected
 			}
 			server := &Server{
 				Connection: connection,
-				Config:     &ServerConfig{},
+				Config: &ServerConfig{
+					BindDN: "cn=%s,o=users,dc=grafana,dc=org",
+				},
+				log: log.New("test-logger"),
 			}
-			err := server.InitialBind("user", "pwd")
-			So(err, ShouldBeNil)
-			So(server.requireSecondBind, ShouldBeTrue)
-			So(unauthenticatedBindWasCalled, ShouldBeTrue)
-			So(actualUsername, ShouldBeEmpty)
+			err := server.Auth("user", "pwd")
+			So(err, ShouldEqual, expected)
 		})
 	})
 }
