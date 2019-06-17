@@ -157,10 +157,7 @@ class CellBuilderWithStyle {
     private column: Field,
     private replaceVariables: InterpolateFunction,
     private fmt?: ValueFormatter
-  ) {
-    //
-    console.log('COLUMN', column.name, theme);
-  }
+  ) {}
 
   getColorForValue = (value: any): string | null => {
     const { thresholds, colors } = this.style;

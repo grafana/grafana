@@ -129,5 +129,10 @@ describe('DateMath', () => {
       const date = dateMath.parseDateMath('2', dateTime([2014, 1, 5]));
       expect(date).toEqual(undefined);
     });
+
+    it('should strip whitespace from string', () => {
+      const date = dateMath.parseDateMath(' - 2d', dateTime([2014, 1, 5]));
+      expect(date!.valueOf()).toEqual(dateTime([2014, 1, 3]).valueOf());
+    });
   });
 });

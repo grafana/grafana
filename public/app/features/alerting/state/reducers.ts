@@ -13,9 +13,7 @@ function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
     stateText: stateModel.text,
     stateIcon: stateModel.iconClass,
     stateClass: stateModel.stateClass,
-    stateAge: dateTime(dto.newStateDate)
-      .fromNow()
-      .replace(' ago', ''),
+    stateAge: dateTime(dto.newStateDate).fromNow(true),
   };
 
   if (rule.state !== 'paused') {

@@ -19,7 +19,7 @@ version: 2
 jobs:
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.12.4
+      - image: circleci/golang:1.12.6
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
@@ -39,7 +39,7 @@ jobs:
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.12.4
+      - image: circleci/golang:1.12.6
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
@@ -58,7 +58,7 @@ jobs:
 
   cache-server-test:
     docker:
-      - image: circleci/golang:1.12.4
+      - image: circleci/golang:1.12.6
       - image: circleci/redis:4-alpine
       - image: memcached
     working_directory: /go/src/github.com/grafana/grafana
@@ -73,7 +73,7 @@ jobs:
   end-to-end-test:
       docker:
         - image: circleci/node:8-browsers
-        - image: grafana/grafana:master
+        - image: grafana/grafana-dev:master-$CIRCLE_SHA1
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
           - checkout
@@ -91,6 +91,12 @@ jobs:
               name: run end-to-end tests
               command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
               no_output_timeout: 5m
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theTruth
+                destination: expected-screenshots
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theOutput
+                destination: output-screenshots               
 
   codespell:
     docker:
@@ -110,7 +116,7 @@ jobs:
 
   backend-lint:
     docker:
-      - image: circleci/golang:1.12.4
+      - image: circleci/golang:1.12.6
         environment:
           # we need CGO because of go-sqlite3
           CGO_ENABLED: 1
@@ -142,7 +148,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/golang:1.12.4
+      - image: circleci/golang:1.12.6
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -152,7 +158,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.6
+     - image: grafana/build-container:1.2.7
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -196,7 +202,7 @@ jobs:
 
   build:
     docker:
-     - image: grafana/build-container:1.2.6
+     - image: grafana/build-container:1.2.7
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -222,7 +228,7 @@ jobs:
 
   build-fast-backend:
     docker:
-     - image: grafana/build-container:1.2.6
+     - image: grafana/build-container:1.2.7
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -239,7 +245,7 @@ jobs:
 
   build-fast-frontend:
     docker:
-     - image: grafana/build-container:1.2.6
+     - image: grafana/build-container:1.2.7
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -263,7 +269,7 @@ jobs:
 
   build-fast-package:
     docker:
-     - image: grafana/build-container:1.2.6
+     - image: grafana/build-container:1.2.7
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -290,7 +296,7 @@ jobs:
 
   build-fast-save:
     docker:
-     - image: grafana/build-container:1.2.6
+     - image: grafana/build-container:1.2.7
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -376,7 +382,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.6
+     - image: grafana/build-container:1.2.7
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -408,7 +414,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.6
+    - image: grafana/build-container:1.2.7
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
@@ -599,6 +605,24 @@ jobs:
       - store_artifacts:
           path: ./dist
 
+  trigger-docs-update:
+    docker:
+      - image: circleci/python:3.6.8
+    steps:
+      - checkout
+      - run:
+          name: Trigger Docs update
+          command: |
+            if git diff --name-only HEAD^ | grep -q "^docs"; then
+              echo "Build URL:"
+              curl -s -u "$DOCS_CIRCLE_TOKEN:" \
+                -d build_parameters[CIRCLE_JOB]=pull-submodule-changes \
+                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/staging \
+              | jq .build_url
+            else
+              echo "-- no changes to docs files --"
+            fi
+
 workflows:
   version: 2
   build-master:
@@ -629,7 +653,7 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
-          filters: *filter-only-master
+          filters: *filter-only-master 
       - grafana-docker-master:
           requires:
             - build-all
@@ -662,7 +686,14 @@ workflows:
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
-
+      - end-to-end-test:
+          requires:
+            - grafana-docker-master
+          filters: *filter-only-master
+      - trigger-docs-update:
+          requires:
+            - end-to-end-test
+          filters: *filter-only-master
   release:
     jobs:
       - build-all:

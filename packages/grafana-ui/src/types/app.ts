@@ -48,20 +48,21 @@ export class AppPlugin<T = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
       this.angularConfigCtrl = pluginExports.ConfigCtrl;
     }
 
-    const { meta } = this;
-    if (meta && meta.includes) {
-      for (const include of meta.includes) {
-        const { type, component } = include;
-        if (type === PluginIncludeType.page && component) {
-          const exp = pluginExports[component];
+    if (this.meta && this.meta.includes) {
+      for (const include of this.meta.includes) {
+        if (include.type === PluginIncludeType.page && include.component) {
+          const exp = pluginExports[include.component];
+
           if (!exp) {
-            console.warn('App Page uses unknown component: ', component, meta);
+            console.warn('App Page uses unknown component: ', include.component, this.meta);
             continue;
           }
+
           if (!this.angularPages) {
             this.angularPages = {};
           }
-          this.angularPages[component] = exp;
+
+          this.angularPages[include.component] = exp;
         }
       }
     }
