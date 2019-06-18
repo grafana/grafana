@@ -217,7 +217,7 @@ export abstract class DataSourceApi<
   /**
    * Get tag values for adhoc filters
    */
-  getTagValues?(options: { key: any }): Promise<MetricFindValue[]>;
+  getTagValues?(options: any): Promise<MetricFindValue[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around

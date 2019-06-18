@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -211,16 +210,17 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	}
 
 	// Have to sync grafana and LDAP user during log in
-	user, err := user.Upsert(&user.UpsertArgs{
+	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
 		SignupAllowed: auth.LDAPAllowSignup,
 		ExternalUser:  extUser,
-	})
+	}
+	err = bus.Dispatch(upsert)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
 
-	return user.Id, nil
+	return upsert.Result.Id, nil
 }
 
 // LoginViaHeader logs in user from the header only
@@ -256,16 +256,17 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		}
 	}
 
-	result, err := user.Upsert(&user.UpsertArgs{
+	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
 		SignupAllowed: true,
 		ExternalUser:  extUser,
-	})
+	}
+	err := bus.Dispatch(upsert)
 	if err != nil {
 		return 0, err
 	}
 
-	return result.Id, nil
+	return upsert.Result.Id, nil
 }
 
 // GetSignedUser get full signed user info

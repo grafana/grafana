@@ -182,14 +182,14 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     return this._seriesQuery(interpolated, options).then(_.curry(this.responseParser.parse)(query));
   }
 
-  getTagKeys(options) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
+  getTagKeys(options: any = {}) {
+    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('TAG_KEYS');
     return this.metricFindQuery(query, options);
   }
 
-  getTagValues(options) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
+  getTagValues(options: any = {}) {
+    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('TAG_VALUES', options.key);
     return this.metricFindQuery(query, options);
   }

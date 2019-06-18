@@ -5,6 +5,7 @@ jest.mock('./css/query_editor.css', () => {
 import { AzureMonitorQueryCtrl } from './query_ctrl';
 import Q from 'q';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { auto } from 'angular';
 
 describe('AzureMonitorQueryCtrl', () => {
   let queryCtrl: any;
@@ -21,7 +22,7 @@ describe('AzureMonitorQueryCtrl', () => {
       azureMonitorDatasource: { isConfigured: () => false },
     };
 
-    queryCtrl = new AzureMonitorQueryCtrl({}, {}, new TemplateSrv());
+    queryCtrl = new AzureMonitorQueryCtrl({}, {} as auto.IInjectorService, new TemplateSrv());
   });
 
   describe('init query_ctrl variables', () => {

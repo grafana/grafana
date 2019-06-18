@@ -26,7 +26,10 @@ var (
 	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
-func GetContextHandler(ats m.UserTokenService, remoteCache *remotecache.RemoteCache) macaron.Handler {
+func GetContextHandler(
+	ats m.UserTokenService,
+	remoteCache *remotecache.RemoteCache,
+) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{
 			Context:        c,
@@ -267,8 +270,7 @@ func AddSecurityHeaders(w macaron.ResponseWriter) {
 	}
 
 	if setting.XSSProtectionHeader {
-		w.Header().Add("X-XSS-Protection", "1")
-		w.Header().Add("X-XSS-Protection", "mode=block")
+		w.Header().Add("X-XSS-Protection", "1; mode=block")
 	}
 }
 
