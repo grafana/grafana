@@ -47,7 +47,13 @@ const preparePackage = async (pkg: any) => {
 };
 
 const moveFiles = () => {
-  const files = ['README.md', 'CHANGELOG.md', 'bin/grafana-toolkit.dist.js', 'src/config/tsconfig.plugin.json'];
+  const files = [
+    'README.md',
+    'CHANGELOG.md',
+    'bin/grafana-toolkit.dist.js',
+    'src/config/tsconfig.plugin.json',
+    'src/config/tslint.plugin.json',
+  ];
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
