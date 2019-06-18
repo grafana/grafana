@@ -2191,7 +2191,7 @@
     "@types/prop-types" "*"
     csstype "^2.2.0"
 
-"@types/remarkable@^1.7.4":
+"@types/remarkable@1.7.4":
   version "1.7.4"
   resolved "https://registry.yarnpkg.com/@types/remarkable/-/remarkable-1.7.4.tgz#0faee73dc42cf21d718e20065a0961e53fa8e570"
   integrity sha512-fsFfCxJt0C4DvAxdMR9JcnVY6FfAQrH8ia7NT0MStVbsgR73+a7XYFRhNqRHg2/FC2Sxfbg3ekuiFuY8eMOvMQ==

@@ -270,8 +270,7 @@ func AddSecurityHeaders(w macaron.ResponseWriter) {
 	}
 
 	if setting.XSSProtectionHeader {
-		w.Header().Add("X-XSS-Protection", "1")
-		w.Header().Add("X-XSS-Protection", "mode=block")
+		w.Header().Add("X-XSS-Protection", "1; mode=block")
 	}
 }
 
