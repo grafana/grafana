@@ -27,7 +27,7 @@ func upgradeAllCommand(c utils.CommandLine) error {
 
 	localPlugins := s.GetLocalPlugins(pluginsDir)
 
-	remotePlugins, err := s.ListAllPlugins(c.GlobalString("repo"))
+	remotePlugins, err := c.ApiClient().ListAllPlugins(c.GlobalString("repo"))
 
 	if err != nil {
 		return err

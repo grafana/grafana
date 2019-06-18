@@ -17,7 +17,7 @@ func upgradeCommand(c utils.CommandLine) error {
 		return err
 	}
 
-	plugin, err2 := s.GetPlugin(pluginName, c.RepoDirectory())
+	plugin, err2 := c.ApiClient().GetPlugin(pluginName, c.RepoDirectory())
 
 	if err2 != nil {
 		return err2

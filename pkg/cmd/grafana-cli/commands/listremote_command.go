@@ -2,14 +2,13 @@ package commands
 
 import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
 // listRemoteCommand prints out all plugins in the remote repo with latest version supported on current platform.
 // If there are no supported versions for plugin it is skipped.
 func listRemoteCommand(c utils.CommandLine) error {
-	plugin, err := s.ListAllPlugins(c.RepoDirectory())
+	plugin, err := c.ApiClient().ListAllPlugins(c.RepoDirectory())
 
 	if err != nil {
 		return err

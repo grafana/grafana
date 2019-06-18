@@ -21,7 +21,7 @@ func TestVersionComparsion(t *testing.T) {
 
 		Convey("should return error", func() {
 			for k, v := range upgradeablePlugins {
-				So(shouldUpgrade(k, v), ShouldBeTrue)
+				So(shouldUpgrade(k, &v), ShouldBeTrue)
 			}
 		})
 	})
@@ -39,7 +39,7 @@ func TestVersionComparsion(t *testing.T) {
 
 		Convey("should return error", func() {
 			for k, v := range shouldNotUpgrade {
-				So(shouldUpgrade(k, v), ShouldBeFalse)
+				So(shouldUpgrade(k, &v), ShouldBeFalse)
 			}
 		})
 	})

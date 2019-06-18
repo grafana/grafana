@@ -2,6 +2,8 @@ package utils
 
 import (
 	"github.com/codegangsta/cli"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
 
 type CommandLine interface {
@@ -20,6 +22,13 @@ type CommandLine interface {
 	PluginDirectory() string
 	RepoDirectory() string
 	PluginURL() string
+	ApiClient() ApiClient
+}
+
+type ApiClient interface {
+	GetPlugin(pluginId, repoUrl string) (models.Plugin, error)
+	DownloadFile(pluginName, filePath, url string, checksum string) (content []byte, err error)
+	ListAllPlugins(repoUrl string) (models.PluginRepo, error)
 }
 
 type ContextCommandLine struct {
@@ -48,4 +57,8 @@ func (c *ContextCommandLine) RepoDirectory() string {
 
 func (c *ContextCommandLine) PluginURL() string {
 	return c.GlobalString("pluginUrl")
+}
+
+func (c *ContextCommandLine) ApiClient() ApiClient {
+	return &services.GrafanaComClient{}
 }

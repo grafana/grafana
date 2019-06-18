@@ -3,12 +3,9 @@ package commands
 import (
 	"archive/zip"
 	"bytes"
-	"crypto/md5"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -80,7 +77,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 			// is up to the user to know what she is doing.
 			isInternal = true
 		}
-		plugin, err := s.GetPlugin(pluginName, c.RepoDirectory())
+		plugin, err := c.ApiClient().GetPlugin(pluginName, c.RepoDirectory())
 		if err != nil {
 			return err
 		}
@@ -111,7 +108,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	logger.Infof("into: %v\n", pluginFolder)
 	logger.Info("\n")
 
-	content, err := downloadFile(pluginName, pluginFolder, downloadURL, checksum)
+	content, err := c.ApiClient().DownloadFile(pluginName, pluginFolder, downloadURL, checksum)
 	if err != nil {
 		return errutil.Wrap("Failed to download plugin archive", err)
 	}
@@ -191,44 +188,7 @@ func RemoveGitBuildFromName(pluginName, filename string) string {
 	return r.ReplaceAllString(filename, pluginName+"/")
 }
 
-var retryCount = 0
 var permissionsDeniedMessage = "Could not create %s. Permission denied. Make sure you have write access to plugindir"
-
-func downloadFile(pluginName, filePath, url string, checksum string) (content []byte, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			retryCount++
-			if retryCount < 3 {
-				fmt.Println("Failed downloading. Will retry once.")
-				content, err = downloadFile(pluginName, filePath, url, checksum)
-			} else {
-				failure := fmt.Sprintf("%v", r)
-				if failure == "runtime error: makeslice: len out of range" {
-					err = fmt.Errorf("Corrupt http response from source. Please try again")
-				} else {
-					panic(r)
-				}
-			}
-		}
-	}()
-
-	resp, err := http.Get(url) // #nosec
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	// TODO: this would be better if it was streamed file by file instead of buffered.
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errutil.Wrap("Failed to read response body", err)
-	}
-
-	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", md5.Sum(body)) {
-		return nil, xerrors.New("Expected MD5 checksum does not match the downloaded archive. Please contact security@grafana.com.")
-	}
-	return body, nil
-}
 
 func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks bool) error {
 	r, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
@@ -259,6 +219,7 @@ func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks
 					continue
 				}
 			} else {
+
 				err = extractFile(zf, newFile)
 				if err != nil {
 					logger.Errorf("Failed to extract file: %v \n", err)

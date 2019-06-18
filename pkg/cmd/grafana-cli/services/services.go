@@ -4,13 +4,9 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
-	"net/url"
 	"path"
-	"runtime"
 	"time"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -46,24 +42,6 @@ func Init(version string, skipTLSVerify bool) {
 		Timeout:   10 * time.Second,
 		Transport: tr,
 	}
-}
-
-func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
-	body, err := sendRequest(repoUrl, "repo")
-
-	if err != nil {
-		logger.Info("Failed to send request", "error", err)
-		return m.PluginRepo{}, fmt.Errorf("Failed to send request. error: %v", err)
-	}
-
-	var data m.PluginRepo
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		logger.Info("Failed to unmarshal plugin repo response error:", err)
-		return m.PluginRepo{}, err
-	}
-
-	return data, nil
 }
 
 func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
@@ -119,61 +97,4 @@ func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 	}
 
 	return IoHelper.RemoveAll(pluginDir)
-}
-
-func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
-	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
-	body, err := sendRequest(repoUrl, "repo", pluginId)
-
-	if err != nil {
-		logger.Info("Failed to send request: ", err)
-		if err == ErrNotFoundError {
-			return m.Plugin{}, fmt.Errorf("Failed to find requested plugin, check if the plugin_id is correct. error: %v", err)
-		}
-		return m.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
-	}
-
-	var data m.Plugin
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		logger.Info("Failed to unmarshal plugin repo response error:", err)
-		return m.Plugin{}, err
-	}
-
-	return data, nil
-}
-
-func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
-	u, _ := url.Parse(repoUrl)
-	for _, v := range subPaths {
-		u.Path = path.Join(u.Path, v)
-	}
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
-
-	req.Header.Set("grafana-version", grafanaVersion)
-	req.Header.Set("grafana-os", runtime.GOOS)
-	req.Header.Set("grafana-arch", runtime.GOARCH)
-	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
-
-	if err != nil {
-		return []byte{}, err
-	}
-
-	res, err := HttpClient.Do(req)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	if res.StatusCode == 404 {
-		return []byte{}, ErrNotFoundError
-	}
-	if res.StatusCode/100 != 2 {
-		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
-
-	return body, err
 }
