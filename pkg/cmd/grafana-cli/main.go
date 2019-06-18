@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -18,13 +17,13 @@ var version = "master"
 func main() {
 	setupLogging()
 
-	flag.Parse()
 	app := cli.NewApp()
 	app.Name = "Grafana cli"
 	app.Usage = ""
 	app.Author = "Grafana Project"
 	app.Email = "https://github.com/grafana/grafana"
 	app.Version = version
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "pluginsDir",
