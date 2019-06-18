@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	m "github.com/grafana/grafana/pkg/models"
+	"time"
 )
 
 func GetAPIKeys(c *m.ReqContext) Response {
@@ -16,10 +17,15 @@ func GetAPIKeys(c *m.ReqContext) Response {
 
 	result := make([]*m.ApiKeyDTO, len(query.Result))
 	for i, t := range query.Result {
+		expiration := ""
+		if !t.Expires.IsZero() {
+			expiration = t.Expires.Format(time.UnixDate)
+		}
 		result[i] = &m.ApiKeyDTO{
-			Id:   t.Id,
-			Name: t.Name,
-			Role: t.Role,
+			Id:         t.Id,
+			Name:       t.Name,
+			Role:       t.Role,
+			Expiration: expiration,
 		}
 	}
 
@@ -39,11 +45,19 @@ func DeleteAPIKey(c *m.ReqContext) Response {
 	return Success("API key deleted")
 }
 
-func AddAPIKey(c *m.ReqContext, cmd m.AddApiKeyCommand) Response {
+func (hs *HTTPServer) AddAPIKey(c *m.ReqContext, cmd m.AddApiKeyCommand) Response {
 	if !cmd.Role.IsValid() {
 		return Error(400, "Invalid role specified", nil)
 	}
 
+	if hs.Cfg.ApiKeyMaxSecondsToLive != -1 {
+		if cmd.SecondsToLive == 0 {
+			return Error(400, "Number of seconds before expiration should be set", nil)
+		}
+		if cmd.SecondsToLive > hs.Cfg.ApiKeyMaxSecondsToLive {
+			return Error(400, "Number of seconds before expiration is greater than the global limit", nil)
+		}
+	}
 	cmd.OrgId = c.OrgId
 
 	newKeyInfo := apikeygen.New(cmd.OrgId, cmd.Name)

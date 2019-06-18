@@ -123,6 +123,12 @@ func initContextWithApiKey(ctx *m.ReqContext) bool {
 		return true
 	}
 
+	// check for expiration
+	if !apikey.Expires.IsZero() && apikey.Expires.Before(time.Now()) {
+		ctx.JsonApiErr(401, "Expired API key", err)
+		return true
+	}
+
 	ctx.IsSignedIn = true
 	ctx.SignedInUser = &m.SignedInUser{}
 	ctx.OrgRole = apikey.Role

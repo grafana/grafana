@@ -155,3 +155,12 @@ func (db *Postgres) IsUniqueConstraintViolation(err error) bool {
 func (db *Postgres) IsDeadlock(err error) bool {
 	return db.isThisError(err, "40P01")
 }
+
+func (db *Postgres) ToTimestamp(d1 string, modifier string) string {
+	isColumnName := !strings.HasPrefix(d1, "'")
+	if isColumnName {
+		return d1
+	}
+	format := "YYYY-MM-DD\"T\"HH24:MI:SS"
+	return "TO_TIMESTAMP(" + d1 + ", '" + format + "')"
+}

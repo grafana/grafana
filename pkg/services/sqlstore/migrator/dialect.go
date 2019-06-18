@@ -49,6 +49,9 @@ type Dialect interface {
 
 	IsUniqueConstraintViolation(err error) bool
 	IsDeadlock(err error) bool
+
+	// modifier is only useful for sqlite
+	ToTimestamp(d1 string, modifier string) string
 }
 
 func NewDialect(engine *xorm.Engine) Dialect {

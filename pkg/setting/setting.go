@@ -259,6 +259,8 @@ type Cfg struct {
 	RemoteCacheOptions *RemoteCacheOptions
 
 	EditorsCanAdmin bool
+
+	ApiKeyMaxSecondsToLive int64
 }
 
 type CommandLineArgs struct {
@@ -975,6 +977,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		Name:    dbName,
 		ConnStr: connStr,
 	}
+
+	quota := cfg.Raw.Section("quota")
+	cfg.ApiKeyMaxSecondsToLive = quota.Key("global_api_key_max_seconds_to_live").MustInt64(-1)
 
 	return nil
 }
