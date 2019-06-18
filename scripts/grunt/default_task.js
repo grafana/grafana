@@ -35,7 +35,6 @@ module.exports = function(grunt) {
     var files = grunt.file.expand(
       'public/**/*@(_specs|.test).@(ts|js|tsx|jsx)',
       'packages/grafana-data/**/*@(_specs|.test).@(ts|js|tsx|jsx)',
-      'packages/grafana-ui/**/*@(_specs|.test).@(ts|js|tsx|jsx)',
       'packages/**/*@(_specs|.test).@(ts|js|tsx|jsx)'
     );
     grepFiles(files, '.only(', 'found only statement in test: ');
