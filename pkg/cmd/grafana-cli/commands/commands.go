@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"flag"
 	"os"
 
 	"github.com/codegangsta/cli"
@@ -23,7 +22,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		cfg.Load(&setting.CommandLineArgs{
 			Config:   cmd.String("config"),
 			HomePath: cmd.String("homepath"),
-			Args:     flag.Args(),
+			Args:     context.Args(),
 		})
 
 		cfg.LogConfigSources()
