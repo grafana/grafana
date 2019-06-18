@@ -10,7 +10,7 @@ import { StatsPicker } from '../StatsPicker/StatsPicker';
 import { FieldDisplayOptions, DEFAULT_FIELD_DISPLAY_VALUES_LIMIT } from '../../utils/fieldDisplay';
 import { Field } from '../../types/data';
 import Select, { SelectOptionItem } from '../Select/Select';
-import { toNumberString, toIntegerOrUndefined } from '../../utils';
+import { toNumberString, toIntegerOrUndefined } from '@grafana/data';
 import { ReducerID } from '../../utils/fieldReducer';
 
 const showOptions: Array<SelectOptionItem<boolean>> = [

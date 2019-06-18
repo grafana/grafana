@@ -1,11 +1,9 @@
 {
-  "name": "@grafana/runtime",
+  "name": "@grafana/data",
   "version": "6.3.0-alpha.0",
-  "description": "Grafana Runtime Library",
+  "description": "Grafana Data Library",
   "keywords": [
-    "typescript",
-    "react",
-    "react-component"
+    "typescript"
   ],
   "main": "src/index.ts",
   "scripts": {
@@ -18,6 +16,13 @@
   "license": "Apache-2.0",
   "dependencies": {},
   "devDependencies": {
+    "@types/jest": "23.3.14",
+    "@types/jquery": "1.10.35",
+    "@types/lodash": "4.14.123",
+    "@types/node": "10.14.1",
+    "@types/papaparse": "4.5.9",
+    "@types/pretty-format": "20.0.1",
+    "@types/react": "16.8.16",
     "awesome-typescript-loader": "^5.2.1",
     "lodash": "^4.17.10",
     "pretty-format": "^24.5.0",
