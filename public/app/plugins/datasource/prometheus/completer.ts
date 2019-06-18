@@ -1,5 +1,24 @@
 import { PrometheusDatasource } from './datasource';
 import _ from 'lodash';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
+export interface CompleterPosition {
+  row: number;
+  column: number;
+}
+
+export interface CompleterToken {
+  type: string;
+  value: string;
+  row: number;
+  column: number;
+  index: number;
+}
+
+export interface CompleterSession {
+  getTokenAt: (row: number, column: number) => CompleterToken;
+  getTokens: (row: number) => CompleterToken[];
+}
 
 export class PromCompleter {
   labelQueryCache: any;
@@ -9,11 +28,11 @@ export class PromCompleter {
 
   identifierRegexps = [/\[/, /[a-zA-Z0-9_:]/];
 
-  constructor(private datasource: PrometheusDatasource, private templateSrv) {
+  constructor(private datasource: PrometheusDatasource, private templateSrv: TemplateSrv) {
     this.labelQueryCache = {};
     this.labelNameCache = {};
     this.labelValueCache = {};
-    this.templateVariableCompletions = this.templateSrv.variables.map(variable => {
+    this.templateVariableCompletions = this.templateSrv.variables.map((variable: any) => {
       return {
         caption: '$' + variable.name,
         value: '$' + variable.name,
@@ -23,8 +42,8 @@ export class PromCompleter {
     });
   }
 
-  getCompletions(editor, session, pos, prefix, callback) {
-    const wrappedCallback = (err, completions) => {
+  getCompletions(editor: any, session: CompleterSession, pos: CompleterPosition, prefix: string, callback: Function) {
+    const wrappedCallback = (err: any, completions: any[]) => {
       completions = completions.concat(this.templateVariableCompletions);
       return callback(err, completions);
     };
@@ -79,7 +98,7 @@ export class PromCompleter {
 
     const query = prefix;
 
-    return this.datasource.performSuggestQuery(query, true).then(metricNames => {
+    return this.datasource.performSuggestQuery(query, true).then((metricNames: string[]) => {
       wrappedCallback(
         null,
         metricNames.map(name => {
@@ -98,7 +117,7 @@ export class PromCompleter {
     });
   }
 
-  getCompletionsForLabelMatcherName(session, pos) {
+  getCompletionsForLabelMatcherName(session: CompleterSession, pos: CompleterPosition) {
     const metricName = this.findMetricName(session, pos.row, pos.column);
     if (!metricName) {
       return Promise.resolve(this.transformToCompletions(['__name__', 'instance', 'job'], 'label name'));
@@ -112,7 +131,7 @@ export class PromCompleter {
       const labelNames = this.transformToCompletions(
         _.uniq(
           _.flatten(
-            result.map(r => {
+            result.map((r: any) => {
               return Object.keys(r);
             })
           )
@@ -124,7 +143,7 @@ export class PromCompleter {
     });
   }
 
-  getCompletionsForLabelMatcherValue(session, pos) {
+  getCompletionsForLabelMatcherValue(session: CompleterSession, pos: CompleterPosition) {
     const metricName = this.findMetricName(session, pos.row, pos.column);
     if (!metricName) {
       return Promise.resolve([]);
@@ -150,7 +169,7 @@ export class PromCompleter {
     return this.getLabelNameAndValueForExpression(metricName, 'metricName').then(result => {
       const labelValues = this.transformToCompletions(
         _.uniq(
-          result.map(r => {
+          result.map((r: any) => {
             return r[labelName];
           })
         ),
@@ -162,12 +181,12 @@ export class PromCompleter {
     });
   }
 
-  getCompletionsForBinaryOperator(session, pos) {
+  getCompletionsForBinaryOperator(session: CompleterSession, pos: CompleterPosition) {
     const keywordOperatorToken = this.findToken(session, pos.row, pos.column, 'keyword.control', null, 'identifier');
     if (!keywordOperatorToken) {
       return Promise.resolve([]);
     }
-    let rparenToken, expr;
+    let rparenToken: CompleterToken, expr: string;
     switch (keywordOperatorToken.value) {
       case 'by':
       case 'without':
@@ -190,7 +209,7 @@ export class PromCompleter {
           const labelNames = this.transformToCompletions(
             _.uniq(
               _.flatten(
-                result.map(r => {
+                result.map((r: any) => {
                   return Object.keys(r);
                 })
               )
@@ -232,7 +251,7 @@ export class PromCompleter {
             const labelNames = this.transformToCompletions(
               _.uniq(
                 _.flatten(
-                  result.map(r => {
+                  result.map((r: any) => {
                     return Object.keys(r);
                   })
                 )
@@ -248,7 +267,7 @@ export class PromCompleter {
             const labelNames = this.transformToCompletions(
               _.uniq(
                 _.flatten(
-                  result.map(r => {
+                  result.map((r: any) => {
                     return Object.keys(r);
                   })
                 )
@@ -278,27 +297,27 @@ export class PromCompleter {
     }
     const { start, end } = this.datasource.getTimeRange();
     const url = '/api/v1/series?match[]=' + encodeURIComponent(query) + '&start=' + start + '&end=' + end;
-    return this.datasource.metadataRequest(url).then(response => {
+    return this.datasource.metadataRequest(url).then((response: any) => {
       this.labelQueryCache[expr] = response.data.data;
       return response.data.data;
     });
   }
 
-  transformToCompletions(words, meta) {
+  transformToCompletions(words: string[], meta: any) {
     return words.map(name => {
       return {
         caption: name,
         value: name,
-        meta: meta,
+        meta,
         score: Number.MAX_VALUE,
       };
     });
   }
 
-  findMetricName(session, row, column) {
+  findMetricName(session: CompleterSession, row: number, column: number) {
     let metricName = '';
 
-    let tokens;
+    let tokens: CompleterToken[];
     const nameLabelNameToken = this.findToken(
       session,
       row,
@@ -324,11 +343,11 @@ export class PromCompleter {
     return metricName;
   }
 
-  findToken(session, row, column, target, value, guard) {
-    let tokens, idx;
+  findToken(session: CompleterSession, row: number, column: number, target: string, value: string, guard: string) {
+    let tokens: CompleterToken[], idx: number;
     // find index and get column of previous token
     for (let r = row; r >= 0; r--) {
-      let c;
+      let c: number;
       tokens = session.getTokens(r);
       if (r === row) {
         // current row
@@ -368,8 +387,8 @@ export class PromCompleter {
     return null;
   }
 
-  findExpressionMatchedParen(session, row, column) {
-    let tokens, idx;
+  findExpressionMatchedParen(session: CompleterSession, row: number, column: number) {
+    let tokens: CompleterToken[], idx: number;
     let deep = 1;
     let expression = ')';
     for (let r = row; r >= 0; r--) {
