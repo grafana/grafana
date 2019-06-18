@@ -12,9 +12,35 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, Input } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
+import { DeleteButton, EventsWithValidation, Input, ValidationEvents } from '@grafana/ui';
+import { toIntegerOrUndefined, NavModel } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+
+// Utils
+import { isValidTimeSpan } from '@grafana/ui/src/utils/rangeutil';
+import { DurationUnit, toDuration } from '@grafana/ui/src/utils/moment_wrapper';
+
+const timeRangeValidationEvents: ValidationEvents = {
+  [EventsWithValidation.onBlur]: [
+    {
+      rule: value => {
+        if (!value) {
+          return true;
+        }
+        // if it's just number (of seconds)
+        if (!isNaN(Number(value))) {
+          return true;
+        }
+        return isValidTimeSpan(value);
+      },
+      errorMessage: 'Not a valid duration',
+    },
+  ],
+};
+
+const emptyOrUndefinedToNull = (value: string | undefined) => {
+  return !value || value === '' ? null : value;
+};
 
 export interface Props {
   navModel: NavModel;
@@ -36,11 +62,13 @@ export interface State {
 enum ApiKeyStateProps {
   Name = 'name',
   Role = 'role',
+  SecondsToLive = 'secondsToLive',
 }
 
 const initialApiKeyState = {
   name: '',
   role: OrgRole.Viewer,
+  secondsToLive: '',
 };
 
 export class ApiKeysPage extends PureComponent<Props, any> {
@@ -81,6 +109,9 @@ export class ApiKeysPage extends PureComponent<Props, any> {
       });
     };
 
+    // make sure that secondsToLive is number or null
+    this.state.newApiKey['secondsToLive'] = toIntegerOrUndefined(this.state.newApiKey['secondsToLive']);
+    this.state.newApiKey['secondsToLive'] = emptyOrUndefinedToNull(this.state.newApiKey['secondsToLive']);
     this.props.addApiKey(this.state.newApiKey, openModal);
     this.setState((prevState: State) => {
       return {
@@ -91,8 +122,29 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     });
   };
 
-  onApiKeyStateUpdate = (evt, prop: string) => {
-    const value = evt.currentTarget.value;
+  transformToSecondsToLive = (v: any) => {
+    if (!isValidTimeSpan(v)) {
+      return v;
+    }
+
+    const parts = /^(\d+)(\w)/.exec(v);
+    if (parts) {
+      const unit = parts[2];
+      const amount = parseInt(parts[1], 10);
+      if (isNaN(Number(unit))) {
+        return toDuration(amount, unit as DurationUnit).asSeconds();
+      } else {
+        return Number(v);
+      }
+    }
+    return Number(v);
+  };
+
+  onApiKeyStateUpdate = (evt, prop: string, callback?: (v: any) => any) => {
+    let value = evt.currentTarget.value;
+    if (callback) {
+      value = callback(value);
+    }
     this.setState((prevState: State) => {
       const newApiKey = {
         ...prevState.newApiKey,
@@ -170,6 +222,19 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                   </select>
                 </span>
               </div>
+              <div className="gf-form max-width-21">
+                <span className="gf-form-label">Seconds to live</span>
+                <Input
+                  type="text"
+                  className="gf-form-input"
+                  placeholder="1d"
+                  validationEvents={timeRangeValidationEvents}
+                  value={newApiKey.secondsToLive}
+                  onChange={evt =>
+                    this.onApiKeyStateUpdate(evt, ApiKeyStateProps.SecondsToLive, this.transformToSecondsToLive)
+                  }
+                />
+              </div>
               <div className="gf-form">
                 <button className="btn gf-form-btn btn-primary">Add</button>
               </div>
@@ -211,6 +276,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
             <tr>
               <th>Name</th>
               <th>Role</th>
+              <th>Expires</th>
               <th style={{ width: '34px' }} />
             </tr>
           </thead>
@@ -221,6 +287,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                   <tr key={key.id}>
                     <td>{key.name}</td>
                     <td>{key.role}</td>
+                    <td>{key.expiration}</td>
                     <td>
                       <DeleteButton onConfirm={() => this.onDeleteApiKey(key)} />
                     </td>
