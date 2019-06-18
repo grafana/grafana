@@ -3,7 +3,7 @@ export interface Bucket {
     y: any;
     bounds: any;
     values: any[];
-    points: any[];
+    points?: any[];
     count: number;
   };
 }
@@ -32,4 +32,11 @@ export interface HeatmapCard {
 export interface HeatmapCardStats {
   min: number;
   max: number;
+}
+
+export interface HeatmapData {
+  [key: string]: {
+    x: number;
+    buckets: Bucket;
+  };
 }
