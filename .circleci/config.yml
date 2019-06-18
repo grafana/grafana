@@ -72,7 +72,7 @@ jobs:
 
   end-to-end-test:
       docker:
-        - image: circleci/node:8-browsers
+        - image: circleci/node:10-browsers
         - image: grafana/grafana-dev:master-$CIRCLE_SHA1
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
