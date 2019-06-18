@@ -1,7 +1,7 @@
 import LokiDatasource from './datasource';
 import { LokiQuery } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { SeriesData } from '@grafana/ui';
+import { SeriesData, DataSourceApi } from '@grafana/ui';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -26,8 +26,8 @@ describe('LokiDatasource', () => {
     const backendSrv = (backendSrvMock as unknown) as BackendSrv;
 
     const templateSrvMock = ({
-      getAdhocFilters: () => [],
-      replace: a => a,
+      getAdhocFilters: (): any[] => [],
+      replace: (a: string) => a,
     } as unknown) as TemplateSrv;
 
     test('should use default max lines when no limit given', () => {
@@ -75,8 +75,8 @@ describe('LokiDatasource', () => {
   });
 
   describe('when performing testDataSource', () => {
-    let ds;
-    let result;
+    let ds: DataSourceApi<any, any>;
+    let result: any;
 
     describe('and call succeeds', () => {
       beforeEach(async () => {
