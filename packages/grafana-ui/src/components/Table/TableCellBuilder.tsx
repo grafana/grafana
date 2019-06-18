@@ -3,15 +3,15 @@ import _ from 'lodash';
 import React, { ReactElement } from 'react';
 import { GridCellProps } from 'react-virtualized';
 import { Table, Props } from './Table';
-import moment from 'moment';
-import { ValueFormatter } from '../../utils/index';
+import { ValueFormatter, getValueFormat, getColorFromHexRgbOrName } from '../../utils/index';
 import { GrafanaTheme } from '../../types/theme';
-import { getValueFormat, getColorFromHexRgbOrName, Column } from '@grafana/ui';
 import { InterpolateFunction } from '../../types/panel';
+import { Field } from '../../types/data';
+import { dateTime } from '../../utils/moment_wrapper';
 
 export interface TableCellBuilderOptions {
   value: any;
-  column?: Column;
+  column?: Field;
   row?: any[];
   table?: Table;
   className?: string;
@@ -74,7 +74,7 @@ export interface ColumnStyle {
 // private replaceVariables: InterpolateFunction,
 // private fmt?:ValueFormatter) {
 
-export function getCellBuilder(schema: Column, style: ColumnStyle | null, props: Props): TableCellBuilder {
+export function getCellBuilder(schema: Field, style: ColumnStyle | null, props: Props): TableCellBuilder {
   if (!style) {
     return simpleCellBuilder;
   }
@@ -96,7 +96,7 @@ export function getCellBuilder(schema: Column, style: ColumnStyle | null, props:
         if (_.isArray(v)) {
           v = v[0];
         }
-        let date = moment(v);
+        let date = dateTime(v);
         if (false) {
           // TODO?????? this.props.isUTC) {
           date = date.utc();
@@ -154,13 +154,10 @@ class CellBuilderWithStyle {
     private mapper: ValueMapper,
     private style: ColumnStyle,
     private theme: GrafanaTheme,
-    private column: Column,
+    private column: Field,
     private replaceVariables: InterpolateFunction,
     private fmt?: ValueFormatter
-  ) {
-    //
-    console.log('COLUMN', column.text, theme);
-  }
+  ) {}
 
   getColorForValue = (value: any): string | null => {
     const { thresholds, colors } = this.style;

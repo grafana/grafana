@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import $ from 'jquery';
-import moment from 'moment';
 import * as d3 from 'd3';
 import { appEvents, contextSrv } from 'app/core/core';
 import * as ticksUtils from 'app/core/utils/ticks';
@@ -8,6 +7,7 @@ import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
 import { GrafanaThemeType, getColorFromHexRgbOrName, getValueFormat } from '@grafana/ui';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,
@@ -529,7 +529,7 @@ export class HeatmapRenderer {
     const minValueAuto = Math.min(cardStats.min, 0);
     const maxValue = _.isNil(this.panel.color.max) ? maxValueAuto : this.panel.color.max;
     const minValue = _.isNil(this.panel.color.min) ? minValueAuto : this.panel.color.min;
-    const colorScheme = _.find(this.ctrl.colorSchemes, {
+    const colorScheme: any = _.find(this.ctrl.colorSchemes, {
       value: this.panel.color.colorScheme,
     });
     this.colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
@@ -594,7 +594,8 @@ export class HeatmapRenderer {
       yGridSize = Math.floor((this.yScale(1) - this.yScale(base)) / splitFactor);
     }
 
-    this.cardWidth = xGridSize - this.cardPadding * 2;
+    const cardWidth = xGridSize - this.cardPadding * 2;
+    this.cardWidth = Math.max(cardWidth, MIN_CARD_SIZE);
     this.cardHeight = yGridSize ? yGridSize - this.cardPadding * 2 : 0;
   }
 
@@ -611,16 +612,13 @@ export class HeatmapRenderer {
   }
 
   getCardWidth(d) {
-    let w;
+    let w = this.cardWidth;
     if (this.xScale(d.x) < 0) {
       // Cut card left to prevent overlay
-      const cuttedWidth = this.xScale(d.x) + this.cardWidth;
-      w = cuttedWidth > 0 ? cuttedWidth : 0;
+      w = this.xScale(d.x) + this.cardWidth;
     } else if (this.xScale(d.x) + this.cardWidth > this.chartWidth) {
       // Cut card right to prevent overlay
       w = this.chartWidth - this.xScale(d.x) - this.cardPadding;
-    } else {
-      w = this.cardWidth;
     }
 
     // Card width should be MIN_CARD_SIZE at least, but cut cards shouldn't be displayed
@@ -715,8 +713,8 @@ export class HeatmapRenderer {
       const timeTo = this.xScale.invert(Math.max(this.selection.x1, this.selection.x2) - this.yAxisWidth);
 
       this.ctrl.timeSrv.setTime({
-        from: moment.utc(timeFrom),
-        to: moment.utc(timeTo),
+        from: toUtc(timeFrom),
+        to: toUtc(timeTo),
       });
     }
 

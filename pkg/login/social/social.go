@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -29,8 +29,9 @@ type SocialConnector interface {
 	IsSignupAllowed() bool
 
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
-	Exchange(ctx context.Context, code string) (*oauth2.Token, error)
+	Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error)
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
+	TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource
 }
 
 type SocialBase struct {

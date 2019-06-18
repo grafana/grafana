@@ -6,6 +6,7 @@
 
 .panel-wrapper {
   height: 100%;
+  position: relative;
 
   &--edit {
     height: 40%;
@@ -81,10 +82,6 @@
 
   .submenu-controls {
     padding: 0 $dashboard-padding $space-sm $dashboard-padding;
-  }
-
-  .panel-editor-container__panel {
-    margin: 0 $dashboard-padding;
   }
 
   .search-container {

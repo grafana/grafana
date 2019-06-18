@@ -23,6 +23,7 @@ func main() {
 	app.Author = "Grafana Project"
 	app.Email = "https://github.com/grafana/grafana"
 	app.Version = version
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "pluginsDir",
@@ -66,7 +67,7 @@ func main() {
 
 func setupLogging() {
 	for _, f := range os.Args {
-		if f == "-D" || f == "--debug" || f == "-debug" {
+		if f == "-d" || f == "--debug" || f == "-debug" {
 			logger.SetDebug(true)
 		}
 	}

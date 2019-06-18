@@ -132,7 +132,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	authTypes := map[string]bool{}
 	authTypes["anonymous"] = setting.AnonymousEnabled
 	authTypes["basic_auth"] = setting.BasicAuthEnabled
-	authTypes["ldap"] = setting.LdapEnabled
+	authTypes["ldap"] = setting.LDAPEnabled
 	authTypes["auth_proxy"] = setting.AuthProxyEnabled
 
 	for provider, enabled := range oauthProviders {
@@ -166,12 +166,17 @@ func (uss *UsageStatsService) updateTotalStats() {
 	metrics.M_StatActive_Users.Set(float64(statsQuery.Result.ActiveUsers))
 	metrics.M_StatTotal_Playlists.Set(float64(statsQuery.Result.Playlists))
 	metrics.M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
+	metrics.StatsTotalViewers.Set(float64(statsQuery.Result.Viewers))
+	metrics.StatsTotalActiveViewers.Set(float64(statsQuery.Result.ActiveViewers))
+	metrics.StatsTotalEditors.Set(float64(statsQuery.Result.Editors))
+	metrics.StatsTotalActiveEditors.Set(float64(statsQuery.Result.ActiveEditors))
+	metrics.StatsTotalAdmins.Set(float64(statsQuery.Result.Admins))
+	metrics.StatsTotalActiveAdmins.Set(float64(statsQuery.Result.ActiveAdmins))
 }
 
 func getEdition() string {
 	if setting.IsEnterprise {
 		return "enterprise"
-	} else {
-		return "oss"
 	}
+	return "oss"
 }

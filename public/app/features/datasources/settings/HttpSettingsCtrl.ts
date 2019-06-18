@@ -1,4 +1,5 @@
 import { coreModule } from 'app/core/core';
+import { createChangeHandler, createResetHandler, PasswordFieldEnum } from '../utils/passwordHandlers';
 
 coreModule.directive('datasourceHttpSettings', () => {
   return {
@@ -20,6 +21,9 @@ coreModule.directive('datasourceHttpSettings', () => {
         $scope.getSuggestUrls = () => {
           return [$scope.suggestUrl];
         };
+
+        $scope.onBasicAuthPasswordReset = createResetHandler($scope, PasswordFieldEnum.BasicAuthPassword);
+        $scope.onBasicAuthPasswordChange = createChangeHandler($scope, PasswordFieldEnum.BasicAuthPassword);
       },
     },
   };

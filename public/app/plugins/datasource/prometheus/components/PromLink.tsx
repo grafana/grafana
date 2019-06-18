@@ -5,6 +5,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
+import { DataQueryRequest } from '@grafana/ui';
 
 interface Props {
   datasource: PrometheusDatasource;
@@ -23,7 +24,7 @@ export default class PromLink extends Component<Props> {
     const options = {
       // TODO Should be the dynamically calculated interval from the panel ctrl
       interval: datasource.interval,
-    };
+    } as DataQueryRequest<PromQuery>;
     // TODO update expr when template variables change
     const queryOptions = datasource.createQuery(query, options, start, end);
     const expr = {

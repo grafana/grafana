@@ -13,7 +13,6 @@ func main() {
 	var releaseNotesURL string
 	var dryRun bool
 	var enterprise bool
-	var fromLocal bool
 	var nightly bool
 	var apiKey string
 
@@ -23,10 +22,8 @@ func main() {
 	flag.StringVar(&apiKey, "apikey", "", "Grafana.com API key (ex: --apikey ABCDEF)")
 	flag.BoolVar(&dryRun, "dry-run", false, "--dry-run")
 	flag.BoolVar(&enterprise, "enterprise", false, "--enterprise")
-	flag.BoolVar(&fromLocal, "from-local", false, "--from-local (builds will be tagged as nightly)")
+	flag.BoolVar(&nightly, "nightly", false, "--nightly (default: false)")
 	flag.Parse()
-
-	nightly = fromLocal
 
 	if len(os.Args) == 1 {
 		fmt.Println("Usage: go run publisher.go main.go --version <v> --wn <what's new url> --rn <release notes url> --apikey <api key> --dry-run false --enterprise false --nightly false")
@@ -64,18 +61,10 @@ func main() {
 		baseURL = createBaseURL(archiveProviderRoot, "oss", product, nightly)
 	}
 
-	if fromLocal {
-		path, _ := os.Getwd()
-		builder = releaseLocalSources{
-			path:                   path,
-			artifactConfigurations: buildArtifacts,
-		}
-	} else {
-		builder = releaseFromExternalContent{
-			getter:                 getHTTPContents{},
-			rawVersion:             version,
-			artifactConfigurations: buildArtifacts,
-		}
+	builder = releaseFromExternalContent{
+		getter:                 getHTTPContents{},
+		rawVersion:             version,
+		artifactConfigurations: buildArtifacts,
 	}
 
 	p := publisher{

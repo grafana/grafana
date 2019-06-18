@@ -1,33 +1,42 @@
-import { VizOrientation, ValueMapping, Threshold } from '@grafana/ui';
+import { VizOrientation, ReducerID, SingleStatBaseOptions, FieldDisplayOptions } from '@grafana/ui';
 
-export interface SingleStatBaseOptions {
-  valueMappings: ValueMapping[];
-  thresholds: Threshold[];
-  valueOptions: SingleStatValueOptions;
-  orientation: VizOrientation;
+export interface SparklineOptions {
+  show: boolean;
+  full: boolean; // full height
+  fillColor: string;
+  lineColor: string;
 }
 
-export interface SingleStatValueOptions {
-  unit: string;
-  suffix: string;
-  stat: string;
-  prefix: string;
-  decimals?: number | null;
-}
-
+// Structure copied from angular
 export interface SingleStatOptions extends SingleStatBaseOptions {
-  // TODO, fill in with options from angular
+  prefixFontSize?: string;
+  valueFontSize?: string;
+  postfixFontSize?: string;
+
+  colorBackground?: boolean;
+  colorValue?: boolean;
+  colorPrefix?: boolean;
+  colorPostfix?: boolean;
+
+  sparkline: SparklineOptions;
 }
+
+export const standardFieldDisplayOptions: FieldDisplayOptions = {
+  values: false,
+  calcs: [ReducerID.mean],
+  defaults: {},
+  override: {},
+  mappings: [],
+  thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
+};
 
 export const defaults: SingleStatOptions = {
-  valueOptions: {
-    prefix: '',
-    suffix: '',
-    decimals: null,
-    stat: 'avg',
-    unit: 'none',
+  sparkline: {
+    show: true,
+    full: false,
+    lineColor: 'rgb(31, 120, 193)',
+    fillColor: 'rgba(31, 118, 189, 0.18)',
   },
-  valueMappings: [],
-  thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
+  fieldOptions: standardFieldDisplayOptions,
   orientation: VizOrientation.Auto,
 };

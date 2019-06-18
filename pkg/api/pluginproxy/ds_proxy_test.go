@@ -5,14 +5,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
+
+	"golang.org/x/oauth2"
 	macaron "gopkg.in/macaron.v1"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -271,12 +277,6 @@ func TestDSRouteRule(t *testing.T) {
 			Convey("Should add db to url", func() {
 				So(req.URL.Path, ShouldEqual, "/db/site/")
 			})
-
-			Convey("Should add username and password", func() {
-				queryVals := req.URL.Query()
-				So(queryVals["u"][0], ShouldEqual, "user")
-				So(queryVals["p"][0], ShouldEqual, "password")
-			})
 		})
 
 		Convey("When proxying a data source with no keepCookies specified", func() {
@@ -389,6 +389,54 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 
+		Convey("When proxying a datasource that has oauth token pass-thru enabled", func() {
+			social.SocialMap["generic_oauth"] = &social.SocialGenericOAuth{
+				SocialBase: &social.SocialBase{
+					Config: &oauth2.Config{},
+				},
+			}
+
+			bus.AddHandler("test", func(query *m.GetAuthInfoQuery) error {
+				query.Result = &m.UserAuth{
+					Id:                1,
+					UserId:            1,
+					AuthModule:        "generic_oauth",
+					OAuthAccessToken:  "testtoken",
+					OAuthRefreshToken: "testrefreshtoken",
+					OAuthTokenType:    "Bearer",
+					OAuthExpiry:       time.Now().AddDate(0, 0, 1),
+				}
+				return nil
+			})
+
+			plugin := &plugins.DataSourcePlugin{}
+			ds := &m.DataSource{
+				Type: "custom-datasource",
+				Url:  "http://host/root/",
+				JsonData: simplejson.NewFromAny(map[string]interface{}{
+					"oauthPassThru": true,
+				}),
+			}
+
+			req, _ := http.NewRequest("GET", "http://localhost/asd", nil)
+			ctx := &m.ReqContext{
+				SignedInUser: &m.SignedInUser{UserId: 1},
+				Context: &macaron.Context{
+					Req: macaron.Request{Request: req},
+				},
+			}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{})
+			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+
+			So(err, ShouldBeNil)
+
+			proxy.getDirector()(req)
+
+			Convey("Should have access token in header", func() {
+				So(req.Header.Get("Authorization"), ShouldEqual, fmt.Sprintf("%s %s", "Bearer", "testtoken"))
+			})
+		})
+
 		Convey("When SendUserHeader config is enabled", func() {
 			req := getDatasourceProxiedRequest(
 				&m.ReqContext{
@@ -430,7 +478,91 @@ func TestDSRouteRule(t *testing.T) {
 				So(req.Header.Get("X-Grafana-User"), ShouldEqual, "")
 			})
 		})
+
+		Convey("When proxying data source proxy should handle authentication", func() {
+			tests := []*Test{
+				createAuthTest(m.DS_INFLUXDB_08, AUTHTYPE_PASSWORD, AUTHCHECK_QUERY, false),
+				createAuthTest(m.DS_INFLUXDB_08, AUTHTYPE_PASSWORD, AUTHCHECK_QUERY, true),
+				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_PASSWORD, AUTHCHECK_HEADER, true),
+				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_PASSWORD, AUTHCHECK_HEADER, false),
+				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_BASIC, AUTHCHECK_HEADER, true),
+				createAuthTest(m.DS_INFLUXDB, AUTHTYPE_BASIC, AUTHCHECK_HEADER, false),
+
+				// These two should be enough for any other datasource at the moment. Proxy has special handling
+				// only for Influx, others have the same path and only BasicAuth. Non BasicAuth datasources
+				// do not go through proxy but through TSDB API which is not tested here.
+				createAuthTest(m.DS_ES, AUTHTYPE_BASIC, AUTHCHECK_HEADER, false),
+				createAuthTest(m.DS_ES, AUTHTYPE_BASIC, AUTHCHECK_HEADER, true),
+			}
+			for _, test := range tests {
+				runDatasourceAuthTest(test)
+			}
+		})
+
+		Convey("HandleRequest()", func() {
+			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.SetCookie(w, &http.Cookie{Name: "flavor", Value: "chocolateChip"})
+				w.WriteHeader(200)
+				w.Write([]byte("I am the backend"))
+			}))
+			defer backend.Close()
+
+			plugin := &plugins.DataSourcePlugin{}
+			ds := &m.DataSource{Url: backend.URL, Type: m.DS_GRAPHITE}
+
+			responseRecorder := &CloseNotifierResponseRecorder{
+				ResponseRecorder: httptest.NewRecorder(),
+			}
+			defer responseRecorder.Close()
+
+			setupCtx := func(fn func(http.ResponseWriter)) *m.ReqContext {
+				responseWriter := macaron.NewResponseWriter("GET", responseRecorder)
+				if fn != nil {
+					fn(responseWriter)
+				}
+
+				return &m.ReqContext{
+					SignedInUser: &m.SignedInUser{},
+					Context: &macaron.Context{
+						Req: macaron.Request{
+							Request: httptest.NewRequest("GET", "/render", nil),
+						},
+						Resp: responseWriter,
+					},
+				}
+			}
+
+			Convey("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func() {
+				ctx := setupCtx(nil)
+				proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+				proxy.HandleRequest()
+				So(proxy.ctx.Resp.Header().Get("Set-Cookie"), ShouldBeEmpty)
+			})
+
+			Convey("When response header Set-Cookie is set should remove proxied Set-Cookie header and restore the original Set-Cookie header", func() {
+				ctx := setupCtx(func(w http.ResponseWriter) {
+					w.Header().Set("Set-Cookie", "important_cookie=important_value")
+				})
+				proxy := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+				proxy.HandleRequest()
+				So(proxy.ctx.Resp.Header().Get("Set-Cookie"), ShouldEqual, "important_cookie=important_value")
+			})
+		})
 	})
+}
+
+type CloseNotifierResponseRecorder struct {
+	*httptest.ResponseRecorder
+	closeChan chan bool
+}
+
+func (r *CloseNotifierResponseRecorder) CloseNotify() <-chan bool {
+	r.closeChan = make(chan bool)
+	return r.closeChan
+}
+
+func (r *CloseNotifierResponseRecorder) Close() {
+	close(r.closeChan)
 }
 
 // getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
@@ -472,4 +604,91 @@ func newFakeHTTPClient(fakeBody []byte) httpClient {
 	return &httpClientStub{
 		fakeBody: fakeBody,
 	}
+}
+
+type Test struct {
+	datasource *m.DataSource
+	checkReq   func(req *http.Request)
+}
+
+const (
+	AUTHTYPE_PASSWORD = "password"
+	AUTHTYPE_BASIC    = "basic"
+)
+
+const (
+	AUTHCHECK_QUERY  = "query"
+	AUTHCHECK_HEADER = "header"
+)
+
+func createAuthTest(dsType string, authType string, authCheck string, useSecureJsonData bool) *Test {
+	// Basic user:password
+	base64AthHeader := "Basic dXNlcjpwYXNzd29yZA=="
+
+	test := &Test{
+		datasource: &m.DataSource{
+			Type:     dsType,
+			JsonData: simplejson.New(),
+		},
+	}
+	var message string
+	if authType == AUTHTYPE_PASSWORD {
+		message = fmt.Sprintf("%v should add username and password", dsType)
+		test.datasource.User = "user"
+		if useSecureJsonData {
+			test.datasource.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
+				"password": "password",
+			})
+		} else {
+			test.datasource.Password = "password"
+		}
+	} else {
+		message = fmt.Sprintf("%v should add basic auth username and password", dsType)
+		test.datasource.BasicAuth = true
+		test.datasource.BasicAuthUser = "user"
+		if useSecureJsonData {
+			test.datasource.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
+				"basicAuthPassword": "password",
+			})
+		} else {
+			test.datasource.BasicAuthPassword = "password"
+		}
+	}
+
+	if useSecureJsonData {
+		message += " from securejsondata"
+	}
+
+	if authCheck == AUTHCHECK_QUERY {
+		message += " to query params"
+		test.checkReq = func(req *http.Request) {
+			Convey(message, func() {
+				queryVals := req.URL.Query()
+				So(queryVals["u"][0], ShouldEqual, "user")
+				So(queryVals["p"][0], ShouldEqual, "password")
+			})
+		}
+	} else {
+		message += " to auth header"
+		test.checkReq = func(req *http.Request) {
+			Convey(message, func() {
+				So(req.Header.Get("Authorization"), ShouldEqual, base64AthHeader)
+			})
+		}
+	}
+
+	return test
+}
+
+func runDatasourceAuthTest(test *Test) {
+	plugin := &plugins.DataSourcePlugin{}
+	ctx := &m.ReqContext{}
+	proxy := NewDataSourceProxy(test.datasource, plugin, ctx, "", &setting.Cfg{})
+
+	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
+	So(err, ShouldBeNil)
+
+	proxy.getDirector()(req)
+
+	test.checkReq(req)
 }

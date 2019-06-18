@@ -13,7 +13,7 @@ export class TemplateSrv {
   private regex = variableRegex;
   private index = {};
   private grafanaVariables = {};
-  private builtIns = {};
+  private builtIns: any = {};
   private timeRange: TimeRange = null;
 
   constructor() {
@@ -26,6 +26,10 @@ export class TemplateSrv {
     this.variables = variables;
     this.timeRange = timeRange;
     this.updateIndex();
+  }
+
+  getBuiltInIntervalValue() {
+    return this.builtIns.__interval.value;
   }
 
   updateIndex() {
@@ -309,7 +313,7 @@ export class TemplateSrv {
   }
 
   distributeVariable(value, variable) {
-    value = _.map(value, (val, index) => {
+    value = _.map(value, (val: any, index: number) => {
       if (index !== 0) {
         return variable + '=' + val;
       } else {

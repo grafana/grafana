@@ -1,13 +1,13 @@
 import React, { PureComponent } from 'react';
-import { Select } from '@grafana/ui';
+import { Select, SelectOptionItem } from '@grafana/ui';
 import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
 import { FolderInfo } from 'app/types';
 
-const setClassNameHelper = inherited => {
+const setClassNameHelper = (inherited: boolean) => {
   return inherited ? 'gf-form-disabled' : '';
 };
 
-function ItemAvatar({ item }) {
+function ItemAvatar({ item }: { item: DashboardAcl }) {
   if (item.userAvatarUrl) {
     return <img className="filter-table__avatar" src={item.userAvatarUrl} />;
   }
@@ -21,7 +21,7 @@ function ItemAvatar({ item }) {
   return <i style={{ width: '25px', height: '25px' }} className="gicon gicon-viewer" />;
 }
 
-function ItemDescription({ item }) {
+function ItemDescription({ item }: { item: DashboardAcl }) {
   if (item.userId) {
     return <span className="filter-table__weak-italic">(User)</span>;
   }
@@ -39,8 +39,8 @@ interface Props {
 }
 
 export default class PermissionsListItem extends PureComponent<Props> {
-  onPermissionChanged = option => {
-    this.props.onPermissionChanged(this.props.item, option.value as PermissionLevel);
+  onPermissionChanged = (option: SelectOptionItem<PermissionLevel>) => {
+    this.props.onPermissionChanged(this.props.item, option.value);
   };
 
   onRemoveItem = () => {

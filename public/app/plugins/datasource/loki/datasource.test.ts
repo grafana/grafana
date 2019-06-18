@@ -1,6 +1,9 @@
 import LokiDatasource from './datasource';
 import { LokiQuery } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
+import { SeriesData, DataSourceApi } from '@grafana/ui';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('LokiDatasource', () => {
   const instanceSettings: any = {
@@ -20,14 +23,15 @@ describe('LokiDatasource', () => {
 
   describe('when querying', () => {
     const backendSrvMock = { datasourceRequest: jest.fn() };
+    const backendSrv = (backendSrvMock as unknown) as BackendSrv;
 
-    const templateSrvMock = {
-      getAdhocFilters: () => [],
-      replace: a => a,
-    };
+    const templateSrvMock = ({
+      getAdhocFilters: (): any[] => [],
+      replace: (a: string) => a,
+    } as unknown) as TemplateSrv;
 
     test('should use default max lines when no limit given', () => {
-      const ds = new LokiDatasource(instanceSettings, backendSrvMock, templateSrvMock);
+      const ds = new LokiDatasource(instanceSettings, backendSrv, templateSrvMock);
       backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
       const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B' }] });
 
@@ -40,7 +44,7 @@ describe('LokiDatasource', () => {
     test('should use custom max lines if limit is set', () => {
       const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
       const customSettings = { ...instanceSettings, jsonData: customData };
-      const ds = new LokiDatasource(customSettings, backendSrvMock, templateSrvMock);
+      const ds = new LokiDatasource(customSettings, backendSrv, templateSrvMock);
       backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
 
       const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B' }] });
@@ -50,42 +54,33 @@ describe('LokiDatasource', () => {
       expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain('limit=20');
     });
 
-    test('should return log streams when resultFormat is undefined', async done => {
-      const ds = new LokiDatasource(instanceSettings, backendSrvMock, templateSrvMock);
+    test('should return series data', async done => {
+      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
+      const customSettings = { ...instanceSettings, jsonData: customData };
+      const ds = new LokiDatasource(customSettings, backendSrv, templateSrvMock);
       backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
 
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'foo', refId: 'B' }],
+        targets: [{ expr: '{} foo', refId: 'B' }],
       });
 
       const res = await ds.query(options);
 
-      expect(res.data[0].entries[0].line).toBe('hello');
-      done();
-    });
-
-    test('should return time series when resultFormat is time_series', async done => {
-      const ds = new LokiDatasource(instanceSettings, backendSrvMock, templateSrvMock);
-      backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
-
-      const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'foo', refId: 'B', resultFormat: 'time_series' }],
-      });
-
-      const res = await ds.query(options);
-
-      expect(res.data[0].datapoints).toBeDefined();
+      const seriesData = res.data[0] as SeriesData;
+      expect(seriesData.rows[0][1]).toBe('hello');
+      expect(seriesData.meta.limit).toBe(20);
+      expect(seriesData.meta.searchWords).toEqual(['(?i)foo']);
       done();
     });
   });
 
   describe('when performing testDataSource', () => {
-    let ds;
-    let result;
+    let ds: DataSourceApi<any, any>;
+    let result: any;
 
     describe('and call succeeds', () => {
       beforeEach(async () => {
-        const backendSrv = {
+        const backendSrv = ({
           async datasourceRequest() {
             return Promise.resolve({
               status: 200,
@@ -94,8 +89,8 @@ describe('LokiDatasource', () => {
               },
             });
           },
-        };
-        ds = new LokiDatasource(instanceSettings, backendSrv, {});
+        } as unknown) as BackendSrv;
+        ds = new LokiDatasource(instanceSettings, backendSrv, {} as TemplateSrv);
         result = await ds.testDatasource();
       });
 
@@ -106,7 +101,7 @@ describe('LokiDatasource', () => {
 
     describe('and call fails with 401 error', () => {
       beforeEach(async () => {
-        const backendSrv = {
+        const backendSrv = ({
           async datasourceRequest() {
             return Promise.reject({
               statusText: 'Unauthorized',
@@ -116,8 +111,8 @@ describe('LokiDatasource', () => {
               },
             });
           },
-        };
-        ds = new LokiDatasource(instanceSettings, backendSrv, {});
+        } as unknown) as BackendSrv;
+        ds = new LokiDatasource(instanceSettings, backendSrv, {} as TemplateSrv);
         result = await ds.testDatasource();
       });
 
@@ -129,7 +124,7 @@ describe('LokiDatasource', () => {
 
     describe('and call fails with 404 error', () => {
       beforeEach(async () => {
-        const backendSrv = {
+        const backendSrv = ({
           async datasourceRequest() {
             return Promise.reject({
               statusText: 'Not found',
@@ -137,8 +132,8 @@ describe('LokiDatasource', () => {
               data: '404 page not found',
             });
           },
-        };
-        ds = new LokiDatasource(instanceSettings, backendSrv, {});
+        } as unknown) as BackendSrv;
+        ds = new LokiDatasource(instanceSettings, backendSrv, {} as TemplateSrv);
         result = await ds.testDatasource();
       });
 
@@ -150,7 +145,7 @@ describe('LokiDatasource', () => {
 
     describe('and call fails with 502 error', () => {
       beforeEach(async () => {
-        const backendSrv = {
+        const backendSrv = ({
           async datasourceRequest() {
             return Promise.reject({
               statusText: 'Bad Gateway',
@@ -158,8 +153,8 @@ describe('LokiDatasource', () => {
               data: '',
             });
           },
-        };
-        ds = new LokiDatasource(instanceSettings, backendSrv, {});
+        } as unknown) as BackendSrv;
+        ds = new LokiDatasource(instanceSettings, backendSrv, {} as TemplateSrv);
         result = await ds.testDatasource();
       });
 

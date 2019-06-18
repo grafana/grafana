@@ -5,6 +5,12 @@
       <select class="gf-form-input service-dropdown" ng-model="ctrl.annotation.queryType" ng-options="f as f for f in ['Application Insights', 'Azure Monitor', 'Azure Log Analytics']"></select>
     </div>
   </div>
+  <div class="gf-form" ng-show="ctrl.annotation.queryType === 'Azure Log Analytics'">
+    <label class="gf-form-label query-keyword width-9">Subscription</label>
+    <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
+      <select class="gf-form-input service-dropdown" ng-model="ctrl.annotation.subscription" ng-options="f.value as f.text for f in ctrl.subscriptions" ng-change="ctrl.onSubscriptionChange()"></select>
+    </div>
+  </div>
   <div ng-show="ctrl.annotation.queryType === 'Azure Log Analytics'">
     <div class="gf-form-inline">
       <div class="gf-form">
@@ -23,8 +29,13 @@
         <label class="gf-form-label">(Run Query: Shift+Enter, Trigger Suggestion: Ctrl+Space)</label>
       </div>
     </div>
-    <kusto-monaco-editor content="ctrl.annotation.rawQuery" get-schema="ctrl.datasource.azureLogAnalyticsDatasource.getSchema(ctrl.annotation.workspace)"
-      default-time-field="TimeGenerated" plugin-base-url={{ctrl.datasource.meta.baseUrl}}></kusto-monaco-editor>
+    <kusto-editor
+        class="gf-form gf-form--grow"
+        query="ctrl.annotation.rawQuery"
+        variables="ctrl.templateVariables"
+        change="ctrl.onLogAnalyticsQueryChange"
+        getSchema="ctrl.getAzureLogAnalyticsSchema"
+      />
   </div>
 
   <div class="gf-form-inline" ng-show="ctrl.annotation.queryType !== 'Azure Log Analytics'">
@@ -56,8 +67,8 @@ Macros:
     - $__timeFilter(datetimeColumn) -&gt;  datetimeColumn  &ge; datetime(2018-06-05T18:09:58.907Z) and datetimeColumn &le; datetime(2018-06-05T20:09:58.907Z)
 
     Or build your own conditionals using these built-in variables which just return the values:
-    - $__from -&gt;  datetime(2018-06-05T18:09:58.907Z)
-    - $__to -&gt; datetime(2018-06-05T20:09:58.907Z)
+    - $__timeFrom -&gt;  datetime(2018-06-05T18:09:58.907Z)
+    - $__timeTo -&gt; datetime(2018-06-05T20:09:58.907Z)
     - $__interval -&gt; 5m
 </pre>
   </div>

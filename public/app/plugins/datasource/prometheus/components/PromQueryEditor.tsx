@@ -3,32 +3,32 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { FormLabel, Select, SelectOptionItem, Switch } from '@grafana/ui';
-import { QueryEditorProps } from '@grafana/ui/src/types';
+import { QueryEditorProps, PanelData, DataSourceStatus } from '@grafana/ui/src/types';
 
 import { PrometheusDatasource } from '../datasource';
-import { PromQuery } from '../types';
+import { PromQuery, PromOptions } from '../types';
 
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
 
-export type Props = QueryEditorProps<PrometheusDatasource, PromQuery>;
+export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
 
-const FORMAT_OPTIONS: SelectOptionItem[] = [
+const FORMAT_OPTIONS: Array<SelectOptionItem<string>> = [
   { label: 'Time series', value: 'time_series' },
   { label: 'Table', value: 'table' },
   { label: 'Heatmap', value: 'heatmap' },
 ];
 
-const INTERVAL_FACTOR_OPTIONS: SelectOptionItem[] = _.map([1, 2, 3, 4, 5, 10], (value: number) => ({
+const INTERVAL_FACTOR_OPTIONS: Array<SelectOptionItem<number>> = _.map([1, 2, 3, 4, 5, 10], (value: number) => ({
   value,
   label: '1/' + value,
 }));
 
 interface State {
   legendFormat: string;
-  formatOption: SelectOptionItem;
+  formatOption: SelectOptionItem<string>;
   interval: string;
-  intervalFactorOption: SelectOptionItem;
+  intervalFactorOption: SelectOptionItem<number>;
   instant: boolean;
 }
 
@@ -58,7 +58,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     this.query.expr = query.expr;
   };
 
-  onFormatChange = (option: SelectOptionItem) => {
+  onFormatChange = (option: SelectOptionItem<string>) => {
     this.query.format = option.value;
     this.setState({ formatOption: option }, this.onRunQuery);
   };
@@ -75,7 +75,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     this.setState({ interval });
   };
 
-  onIntervalFactorChange = (option: SelectOptionItem) => {
+  onIntervalFactorChange = (option: SelectOptionItem<number>) => {
     this.query.intervalFactor = option.value;
     this.setState({ intervalFactorOption: option }, this.onRunQuery);
   };
@@ -102,10 +102,11 @@ export class PromQueryEditor extends PureComponent<Props, State> {
           <PromQueryField
             datasource={datasource}
             query={query}
-            onBlur={this.onRunQuery}
-            onExecuteQuery={this.onRunQuery}
-            onQueryChange={this.onFieldChange}
+            onRunQuery={this.onRunQuery}
+            onChange={this.onFieldChange}
             history={[]}
+            panelData={{} as PanelData} // TODO replace with real panelData
+            datasourceStatus={DataSourceStatus.Connected} // TODO replace with real DataSourceStatus
           />
         </div>
 

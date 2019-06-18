@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import classnames from 'classnames';
-import { LogLabelStatsModel } from 'app/core/logs_model';
+import { LogLabelStatsModel } from '@grafana/ui';
 
 function LogLabelStatsRow(logLabelStatsModel: LogLabelStatsModel) {
   const { active, count, proportion, value } = logLabelStatsModel;

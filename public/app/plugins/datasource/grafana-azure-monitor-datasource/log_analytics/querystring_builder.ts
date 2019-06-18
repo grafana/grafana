@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export default class LogAnalyticsQuerystringBuilder {
   constructor(public rawQueryString, public options, public defaultTimeField) {}
@@ -21,12 +21,16 @@ export default class LogAnalyticsQuerystringBuilder {
         if (p1 === 'timeFilter') {
           return this.getTimeFilter(p2, this.options);
         }
+        if (p1 === 'timeFrom') {
+          return this.getFrom(this.options);
+        }
+        if (p1 === 'timeTo') {
+          return this.getUntil(this.options);
+        }
 
         return match;
       });
       queryString = queryString.replace(/\$__interval/gi, this.options.interval);
-      queryString = queryString.replace(/\$__from/gi, this.getFrom(this.options));
-      queryString = queryString.replace(/\$__to/gi, this.getUntil(this.options));
     }
     const rawQuery = queryString;
     queryString = encodeURIComponent(queryString);
@@ -37,17 +41,20 @@ export default class LogAnalyticsQuerystringBuilder {
 
   getFrom(options) {
     const from = options.range.from;
-    return `datetime(${moment(from)
+    return `datetime(${dateTime(from)
       .startOf('minute')
       .toISOString()})`;
   }
 
   getUntil(options) {
     if (options.rangeRaw.to === 'now') {
-      return 'now()';
+      const now = Date.now();
+      return `datetime(${dateTime(now)
+        .startOf('minute')
+        .toISOString()})`;
     } else {
       const until = options.range.to;
-      return `datetime(${moment(until)
+      return `datetime(${dateTime(until)
         .startOf('minute')
         .toISOString()})`;
     }
