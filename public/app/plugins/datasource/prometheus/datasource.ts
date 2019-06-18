@@ -25,12 +25,24 @@ import {
   DataQueryError,
   DataStreamObserver,
   LoadingState,
+  DataQueryResponseData,
 } from '@grafana/ui/src/types';
 import { ExploreUrlState } from 'app/types/explore';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TimeRange } from '@grafana/ui/src';
+import { TimeRange, DateTime } from '@grafana/ui/src';
+
+export interface PromDataQueryResponse {
+  data: {
+    status: string;
+    data: {
+      resultType: string;
+      results?: DataQueryResponseData[];
+      result?: DataQueryResponseData[];
+    };
+  };
+}
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -106,7 +118,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     } else {
       options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      options.transformRequest = data => {
+      options.transformRequest = (data: any) => {
         return $.param(data);
       };
       options.data = data;
@@ -279,9 +291,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     });
 
     const allPromise = this.$q.all(allQueryPromise).then((responseList: any) => {
-      let result = [];
+      let result: any[] = [];
 
-      _.each(responseList, (response, index) => {
+      _.each(responseList, (response, index: number) => {
         if (response.cancelled) {
           return;
         }
@@ -361,7 +373,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return query;
   }
 
-  adjustInterval(interval, minInterval, range, intervalFactor) {
+  adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
     // Prometheus will drop queries that might return more than 11000 data points.
     // Calibrate interval if it is too small.
     if (interval !== 0 && range / intervalFactor / interval > 11000) {
@@ -370,35 +382,39 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return Math.max(interval * intervalFactor, minInterval, 1);
   }
 
-  performTimeSeriesQuery(query, start, end) {
+  performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
     if (start > end) {
       throw { message: 'Invalid time range' };
     }
 
     const url = '/api/v1/query_range';
-    const data = {
+    const data: any = {
       query: query.expr,
-      start: start,
-      end: end,
+      start,
+      end,
       step: query.step,
     };
+
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
+
     return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) =>
       this.handleErrors(err, query)
     );
   }
 
-  performInstantQuery(query, time) {
+  performInstantQuery(query: PromQueryRequest, time: number) {
     const url = '/api/v1/query';
-    const data = {
+    const data: any = {
       query: query.expr,
-      time: time,
+      time,
     };
+
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
     }
+
     return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) =>
       this.handleErrors(err, query)
     );
@@ -432,7 +448,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     throw error;
   };
 
-  performSuggestQuery(query, cache = false) {
+  performSuggestQuery(query: string, cache = false) {
     const url = '/api/v1/label/__name__/values';
 
     if (cache && this.metricsNameCache && this.metricsNameCache.expire > Date.now()) {
@@ -443,7 +459,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       );
     }
 
-    return this.metadataRequest(url).then(result => {
+    return this.metadataRequest(url).then((result: PromDataQueryResponse) => {
       this.metricsNameCache = {
         data: result.data.data,
         expire: Date.now() + 60 * 1000,
@@ -454,7 +470,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     });
   }
 
-  metricFindQuery(query) {
+  metricFindQuery(query: string) {
     if (!query) {
       return this.$q.when([]);
     }
@@ -481,7 +497,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
   }
 
-  annotationQuery(options) {
+  annotationQuery(options: any) {
     const annotation = options.annotation;
     const expr = annotation.expr || '';
     let tagKeys = annotation.tagKeys || '';
@@ -504,8 +520,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const query = this.createQuery({ expr, interval: minStep, refId: 'X' }, queryOptions, start, end);
 
     const self = this;
-    return this.performTimeSeriesQuery(query, query.start, query.end).then(results => {
-      const eventList = [];
+    return this.performTimeSeriesQuery(query, query.start, query.end).then((results: PromDataQueryResponse) => {
+      const eventList: AnnotationEvent[] = [];
       tagKeys = tagKeys.split(',');
 
       _.each(results.data.data.result, series => {
@@ -515,7 +531,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           })
           .value();
 
-        const dupCheck = {};
+        const dupCheck: { [key: number]: boolean } = {};
         for (const value of series.values) {
           const valueIsTrue = value[1] === '1'; // e.g. ALERTS
           if (valueIsTrue || annotation.useValueForTime) {
@@ -546,18 +562,18 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     });
   }
 
-  getTagKeys(options) {
+  getTagKeys(options: any = {}) {
     const url = '/api/v1/labels';
-    return this.metadataRequest(url).then(result => {
+    return this.metadataRequest(url).then((result: any) => {
       return _.map(result.data.data, value => {
         return { text: value };
       });
     });
   }
 
-  getTagValues(options) {
+  getTagValues(options: any = {}) {
     const url = '/api/v1/label/' + options.key + '/values';
-    return this.metadataRequest(url).then(result => {
+    return this.metadataRequest(url).then((result: any) => {
       return _.map(result.data.data, value => {
         return { text: value };
       });
@@ -566,7 +582,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   testDatasource() {
     const now = new Date().getTime();
-    return this.performInstantQuery({ expr: '1+1' }, now / 1000).then(response => {
+    const query = { expr: '1+1' } as PromQueryRequest;
+    return this.performInstantQuery(query, now / 1000).then((response: any) => {
       if (response.data.status === 'success') {
         return { status: 'success', message: 'Data source is working' };
       } else {
@@ -601,14 +618,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   loadRules() {
     this.metadataRequest('/api/v1/rules')
-      .then(res => res.data || res.json())
-      .then(body => {
+      .then((res: any) => res.data || res.json())
+      .then((body: any) => {
         const groups = _.get(body, ['data', 'groups']);
         if (groups) {
           this.ruleMappings = extractRuleMappingFromGroups(groups);
         }
       })
-      .catch(e => {
+      .catch((e: any) => {
         console.log('Rules API is experimental. Ignore next error.');
         console.error(e);
       });
@@ -645,7 +662,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return { ...query, expr: expression };
   }
 
-  getPrometheusTime(date, roundUp) {
+  getPrometheusTime(date: string | DateTime, roundUp: boolean) {
     if (_.isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
@@ -660,7 +677,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
   }
 
-  getOriginalMetricName(labelData) {
+  getOriginalMetricName(labelData: { [key: string]: string }) {
     return this.resultTransformer.getOriginalMetricName(labelData);
   }
 }
@@ -685,9 +702,9 @@ export function extractRuleMappingFromGroups(groups: any[]) {
   return groups.reduce(
     (mapping, group) =>
       group.rules
-        .filter(rule => rule.type === 'recording')
+        .filter((rule: any) => rule.type === 'recording')
         .reduce(
-          (acc, rule) => ({
+          (acc: { [key: string]: string }, rule: any) => ({
             ...acc,
             [rule.name]: rule.query,
           }),
@@ -697,14 +714,14 @@ export function extractRuleMappingFromGroups(groups: any[]) {
   );
 }
 
-export function prometheusRegularEscape(value) {
+export function prometheusRegularEscape(value: any) {
   if (typeof value === 'string') {
     return value.replace(/'/g, "\\\\'");
   }
   return value;
 }
 
-export function prometheusSpecialRegexEscape(value) {
+export function prometheusSpecialRegexEscape(value: any) {
   if (typeof value === 'string') {
     return prometheusRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
   }

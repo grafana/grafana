@@ -10,7 +10,7 @@ jest.mock('../datasource');
 jest.mock('@grafana/ui');
 
 describe('Prometheus editor completer', () => {
-  function getSessionStub(data) {
+  function getSessionStub(data: any) {
     return {
       getTokenAt: jest.fn(() => data.currentToken),
       getTokens: jest.fn(() => data.tokens),
@@ -37,14 +37,14 @@ describe('Prometheus editor completer', () => {
   });
   datasourceStub.performSuggestQuery = jest.fn(() => Promise.resolve(['node_cpu']));
 
-  const templateSrv = {
+  const templateSrv: TemplateSrv = ({
     variables: [
       {
         name: 'var_name',
         options: [{ text: 'foo', value: 'foo', selected: false }, { text: 'bar', value: 'bar', selected: true }],
       },
     ],
-  };
+  } as any) as TemplateSrv;
   const completer = new PromCompleter(datasourceStub, templateSrv);
 
   describe('When inside brackets', () => {
@@ -55,7 +55,7 @@ describe('Prometheus editor completer', () => {
         line: 'node_cpu[',
       });
 
-      return completer.getCompletions(editor, session, { row: 0, column: 10 }, '[', (s, res) => {
+      return completer.getCompletions(editor, session, { row: 0, column: 10 }, '[', (s: any, res: any) => {
         expect(res[0].caption).toEqual('$__interval');
         expect(res[0].value).toEqual('[$__interval');
         expect(res[0].meta).toEqual('range vector');
@@ -86,7 +86,7 @@ describe('Prometheus editor completer', () => {
         line: 'node_cpu{j}',
       });
 
-      return completer.getCompletions(editor, session, { row: 0, column: 10 }, 'j', (s, res) => {
+      return completer.getCompletions(editor, session, { row: 0, column: 10 }, 'j', (s: any, res: any) => {
         expect(res[0].meta).toEqual('label name');
       });
     });
@@ -118,7 +118,7 @@ describe('Prometheus editor completer', () => {
         line: '{__name__=~"node_cpu",j}',
       });
 
-      return completer.getCompletions(editor, session, { row: 0, column: 23 }, 'j', (s, res) => {
+      return completer.getCompletions(editor, session, { row: 0, column: 23 }, 'j', (s: any, res: any) => {
         expect(res[0].meta).toEqual('label name');
       });
     });
@@ -149,7 +149,7 @@ describe('Prometheus editor completer', () => {
         line: 'node_cpu{job="n"}',
       });
 
-      return completer.getCompletions(editor, session, { row: 0, column: 15 }, 'n', (s, res) => {
+      return completer.getCompletions(editor, session, { row: 0, column: 15 }, 'n', (s: any, res: any) => {
         expect(res[0].meta).toEqual('label value');
       });
     });
@@ -185,7 +185,7 @@ describe('Prometheus editor completer', () => {
         line: '(count(node_cpu)) by (m)',
       });
 
-      return completer.getCompletions(editor, session, { row: 0, column: 23 }, 'm', (s, res) => {
+      return completer.getCompletions(editor, session, { row: 0, column: 23 }, 'm', (s: any, res: any) => {
         expect(res[0].meta).toEqual('label name');
       });
     });
