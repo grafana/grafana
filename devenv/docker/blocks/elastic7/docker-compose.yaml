@@ -21,3 +21,19 @@
       - ./docker/blocks/elastic7/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
       - /var/log:/var/log:ro
       - ../data/log:/var/log/grafana:ro
+
+  metricbeat7:
+    image: docker.elastic.co/beats/metricbeat-oss:7.0.0
+    network_mode: host
+    command: metricbeat -e -strict.perms=false
+    user: root
+    volumes:
+      - ./docker/blocks/elastic7/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  kibana7:
+    image: docker.elastic.co/kibana/kibana-oss:7.0.0
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch7:9200

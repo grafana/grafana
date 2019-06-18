@@ -2,8 +2,7 @@ package alerting
 
 import "github.com/grafana/grafana/pkg/components/null"
 
-// Job holds state about when the alert rule should
-// be evaluated.
+// Job holds state about when the alert rule should be evaluated.
 type Job struct {
 	Offset     int64
 	OffsetWait bool

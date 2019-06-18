@@ -189,13 +189,13 @@
       If using the All option, then check the Include All Option checkbox and in the Custom all value field type in: all. If All is chosen -&gt; 1 == 1
 
     Or build your own conditionals using these built-in variables which just return the values:
-    - $__from -&gt;  datetime(2018-06-05T18:09:58.907Z)
-    - $__to -&gt; datetime(2018-06-05T20:09:58.907Z)
+    - $__timeFrom -&gt;  datetime(2018-06-05T18:09:58.907Z)
+    - $__timeTo -&gt; datetime(2018-06-05T20:09:58.907Z)
     - $__interval -&gt; 5m
 
     Examples:
     - ¡ where $__timeFilter
-    - | where TimeGenerated &ge; $__from and TimeGenerated &le; $__to
+    - | where TimeGenerated &ge; $__timeFrom and TimeGenerated &le; $__timeTo
     - | summarize count() by Category, bin(TimeGenerated, $__interval)
       </pre>
     </div>

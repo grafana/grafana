@@ -257,7 +257,11 @@ export class ElasticDatasource {
         target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
       }
 
-      const queryString = this.templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');
+      let queryString = this.templateSrv.replace(target.query, options.scopedVars, 'lucene');
+      // Elasticsearch queryString should always be '*' if empty string
+      if (!queryString || queryString === '') {
+        queryString = '*';
+      }
       const queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
       const esQuery = angular.toJson(queryObj);
 

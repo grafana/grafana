@@ -69,6 +69,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     lines: true,
     // fill factor
     fill: 1,
+    // fill factor
+    fillGradient: 0,
     // line width in pixels
     linewidth: 1,
     // show/hide dashed line

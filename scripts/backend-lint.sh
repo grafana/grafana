@@ -28,12 +28,16 @@ exit_if_fail golangci-lint run --deadline 10m --disable-all \
   --enable=deadcode\
   --enable=gofmt\
   --enable=gosimple\
+  --enable=govet\
   --enable=ineffassign\
   --enable=structcheck\
+  --enable=typecheck\
   --enable=unconvert\
+  --enable=unused\
   --enable=varcheck
 
 exit_if_fail go vet ./pkg/...
 
 exit_if_fail make revive
+exit_if_fail make revive-alerting
 exit_if_fail make gosec

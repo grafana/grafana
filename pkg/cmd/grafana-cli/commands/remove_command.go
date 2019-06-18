@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	services "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
 var removePlugin func(pluginPath, id string) error = services.RemoveInstalledPlugin
 
-func removeCommand(c CommandLine) error {
+func removeCommand(c utils.CommandLine) error {
 	pluginPath := c.PluginDirectory()
 
 	plugin := c.Args().First()

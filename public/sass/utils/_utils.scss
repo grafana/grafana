@@ -95,6 +95,11 @@ button.close {
   flex-shrink: 0;
 }
 
+.flex-flow-column-nowrap {
+  display: flex;
+  flex-flow: column nowrap;
+}
+
 .center-vh {
   height: 100%;
   display: flex;
@@ -102,4 +107,10 @@ button.close {
   align-items: center;
   justify-content: center;
   justify-items: center;
+}
+
+.align-items-center {
+  display: flex;
+  flex-direction: row nowrap;
+  align-items: center;
 }
