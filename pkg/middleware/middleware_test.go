@@ -190,6 +190,25 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
+		middlewareScenario(t, "Valid api key, but expired", func(sc *scenarioContext) {
+			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+
+			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
+
+				// api key expired one second before
+				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash,
+					Expires: time.Now().Add(-time.Duration(1) * time.Second)}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/").withValidApiKey().exec()
+
+			Convey("Should return 401", func() {
+				So(sc.resp.Code, ShouldEqual, 401)
+				So(sc.respJson["message"], ShouldEqual, "Expired API key")
+			})
+		})
+
 		middlewareScenario(t, "Valid api key via Basic auth", func(sc *scenarioContext) {
 			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 
