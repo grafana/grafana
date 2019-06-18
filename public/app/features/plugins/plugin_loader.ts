@@ -30,7 +30,7 @@ import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 import * as grafanaData from '@grafana/data';
 import * as grafanaUI from '@grafana/ui';
-import * as grafanaRT from '@grafana/runtime';
+import * as grafanaRuntime from '@grafana/runtime';
 
 // rxjs
 import { Observable, Subject } from 'rxjs';
@@ -71,7 +71,7 @@ function exposeToPlugin(name: string, component: any) {
 
 exposeToPlugin('@grafana/data', grafanaData);
 exposeToPlugin('@grafana/ui', grafanaUI);
-exposeToPlugin('@grafana/runtime', grafanaRT);
+exposeToPlugin('@grafana/runtime', grafanaRuntime);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
