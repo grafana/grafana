@@ -370,7 +370,7 @@ export interface DataQueryError {
 }
 
 export interface ScopedVar {
-  text: any;
+  text?: any;
   value: any;
   [key: string]: any;
 }
