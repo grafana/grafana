@@ -16,6 +16,12 @@ import TableModel from 'app/core/table_model';
 
 const BASE_FONT_SIZE = 38;
 
+interface DataFormat {
+  value: string | number;
+  valueFormatted: string;
+  valueRounded: number;
+}
+
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
@@ -160,7 +166,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     tableData.rows.forEach(row => {
       const datapoint: any = {};
 
-      row.forEach((value: any, columnIndex: any) => {
+      row.forEach((value: any, columnIndex: number) => {
         const key = columnNames[columnIndex];
         datapoint[key] = value;
       });
@@ -181,7 +187,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
   }
 
-  setTableValues(tableData: any[], data: { value: string | number; valueFormatted: string; valueRounded: number }) {
+  setTableValues(tableData: any[], data: DataFormat) {
     if (!tableData || tableData.length === 0) {
       return;
     }
@@ -303,7 +309,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.setValueMapping(data);
   }
 
-  setValueMapping(data: { value: any; valueFormatted: any; valueRounded: any }) {
+  setValueMapping(data: DataFormat) {
     // check value to text mappings if its enabled
     if (this.panel.mappingType === 1) {
       for (let i = 0; i < this.panel.valueMaps.length; i++) {
