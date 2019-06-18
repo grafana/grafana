@@ -12,91 +12,97 @@ import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { toolkitBuildTask } from './tasks/toolkit.build';
 
-export const run = () => {
-  program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','));
-
-  program
-    .command('core:start')
-    .option('-h, --hot', 'Run front-end with HRM enabled')
-    .option('-t, --watchTheme', 'Watch for theme changes and regenerate variables.scss files')
-    .description('Starts Grafana front-end in development mode with watch enabled')
-    .action(async cmd => {
-      await execTask(startTask)({
-        watchThemes: cmd.watchTheme,
-        hot: cmd.hot,
+export const run = (includeInternalScripts = false) => {
+  if (includeInternalScripts) {
+    program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','));
+    program
+      .command('core:start')
+      .option('-h, --hot', 'Run front-end with HRM enabled')
+      .option('-t, --watchTheme', 'Watch for theme changes and regenerate variables.scss files')
+      .description('Starts Grafana front-end in development mode with watch enabled')
+      .action(async cmd => {
+        await execTask(startTask)({
+          watchThemes: cmd.watchTheme,
+          hot: cmd.hot,
+        });
       });
-    });
 
-  program
-    .command('gui:build')
-    .description('Builds @grafana/ui package to packages/grafana-ui/dist')
-    .action(async cmd => {
-      await execTask(buildTask)();
-    });
-
-  program
-    .command('gui:release')
-    .description('Prepares @grafana/ui release (and publishes to npm on demand)')
-    .option('-p, --publish', 'Publish @grafana/ui to npm registry')
-    .option('-u, --usePackageJsonVersion', 'Use version specified in package.json')
-    .option('--createVersionCommit', 'Create and push version commit')
-    .action(async cmd => {
-      await execTask(releaseTask)({
-        publishToNpm: !!cmd.publish,
-        usePackageJsonVersion: !!cmd.usePackageJsonVersion,
-        createVersionCommit: !!cmd.createVersionCommit,
+    program
+      .command('gui:build')
+      .description('Builds @grafana/ui package to packages/grafana-ui/dist')
+      .action(async cmd => {
+        await execTask(buildTask)();
       });
-    });
 
-  program
-    .command('changelog')
-    .option('-m, --milestone <milestone>', 'Specify milestone')
-    .description('Builds changelog markdown')
-    .action(async cmd => {
-      if (!cmd.milestone) {
-        console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
-        return;
-      }
-
-      await execTask(changelogTask)({
-        milestone: cmd.milestone,
+    program
+      .command('gui:release')
+      .description('Prepares @grafana/ui release (and publishes to npm on demand)')
+      .option('-p, --publish', 'Publish @grafana/ui to npm registry')
+      .option('-u, --usePackageJsonVersion', 'Use version specified in package.json')
+      .option('--createVersionCommit', 'Create and push version commit')
+      .action(async cmd => {
+        await execTask(releaseTask)({
+          publishToNpm: !!cmd.publish,
+          usePackageJsonVersion: !!cmd.usePackageJsonVersion,
+          createVersionCommit: !!cmd.createVersionCommit,
+        });
       });
-    });
 
-  program
-    .command('cherrypick')
-    .description('Helps find commits to cherry pick')
-    .action(async cmd => {
-      await execTask(cherryPickTask)({});
-    });
+    program
+      .command('changelog')
+      .option('-m, --milestone <milestone>', 'Specify milestone')
+      .description('Builds changelog markdown')
+      .action(async cmd => {
+        if (!cmd.milestone) {
+          console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
+          return;
+        }
 
-  program
-    .command('precommit')
-    .description('Executes checks')
-    .action(async cmd => {
-      await execTask(precommitTask)({});
-    });
+        await execTask(changelogTask)({
+          milestone: cmd.milestone,
+        });
+      });
 
-  program
-    .command('debug:template')
-    .description('Just testing')
-    .action(async cmd => {
-      await execTask(templateTask)({});
-    });
+    program
+      .command('cherrypick')
+      .description('Helps find commits to cherry pick')
+      .action(async cmd => {
+        await execTask(cherryPickTask)({});
+      });
+
+    program
+      .command('precommit')
+      .description('Executes checks')
+      .action(async cmd => {
+        await execTask(precommitTask)({});
+      });
+
+    program
+      .command('debug:template')
+      .description('Just testing')
+      .action(async cmd => {
+        await execTask(templateTask)({});
+      });
+
+    program
+      .command('toolkit:build')
+      .description('Prepares grafana/toolkit dist package')
+      .action(async cmd => {
+        await execTask(toolkitBuildTask)();
+      });
+  }
 
   program
     .command('plugin:build')
-    .description('Anything')
+    .description('Prepares plugin dist package')
     .action(async cmd => {
       await execTask(pluginBuildTask)({});
     });
 
-  program
-    .command('toolkit:build')
-    .description('Anything')
-    .action(async cmd => {
-      await execTask(toolkitBuildTask)();
-    });
+  program.on('command:*', () => {
+    console.error('Invalid command: %s\nSee --help for a list of available commands.', program.args.join(' '));
+    process.exit(1);
+  });
 
   program.parse(process.argv);
 

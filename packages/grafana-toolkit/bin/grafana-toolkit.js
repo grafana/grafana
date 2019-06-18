@@ -10,4 +10,4 @@ require('ts-node').register({
   project: tsProjectPath
 });
 
-require('../src/cli/index.ts').run();
+require('../src/cli/index.ts').run(true);
