@@ -67,7 +67,7 @@ const testPlugin = useSpinner<void>('Running tests', async () => {
     // @ts-ignore
     path.resolve(__dirname, '../../config/jest-setup.js'),
     // @ts-ignore
-    path.resolve(__dirname, '../../config/jest-shim.ts'),
+    path.resolve(__dirname, '../../config/jest-shim.js'),
   ];
 
   const results = await jestCLI.runCLI(testConfig as any, [process.cwd()]);
