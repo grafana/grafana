@@ -10,8 +10,17 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { GrafanaThemeType, getValueFormat, getColorFromHexRgbOrName, isTableData } from '@grafana/ui';
+import { auto } from 'angular';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import TableModel from 'app/core/table_model';
 
 const BASE_FONT_SIZE = 38;
+
+interface DataFormat {
+  value: string | number;
+  valueFormatted: string;
+  valueRounded: number;
+}
 
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -40,7 +49,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   tableColumnOptions: any;
 
   // Set and populate defaults
-  panelDefaults = {
+  panelDefaults: any = {
     links: [],
     datasource: null,
     maxDataPoints: 100,
@@ -83,7 +92,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private linkSrv, private $sanitize) {
+  constructor($scope: any, $injector: auto.IInjectorService, private linkSrv: LinkSrv, private $sanitize: any) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -103,16 +112,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.unitFormats = kbn.getUnitFormats();
   }
 
-  setUnitFormat(subItem) {
+  setUnitFormat(subItem: { value: any }) {
     this.panel.format = subItem.value;
     this.refresh();
   }
 
-  onDataError(err) {
+  onDataError(err: any) {
     this.onDataReceived([]);
   }
 
-  onDataReceived(dataList) {
+  onDataReceived(dataList: any[]) {
     const data: any = {
       scopedVars: _.extend({}, this.panel.scopedVars),
     };
@@ -131,7 +140,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  seriesHandler(seriesData) {
+  seriesHandler(seriesData: any) {
     const series = new TimeSeries({
       datapoints: seriesData.datapoints || [],
       alias: seriesData.target,
@@ -141,9 +150,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     return series;
   }
 
-  tableHandler(tableData) {
-    const datapoints = [];
-    const columnNames = {};
+  tableHandler(tableData: TableModel) {
+    const datapoints: any[] = [];
+    const columnNames: string[] = [];
 
     tableData.columns.forEach((column, columnIndex) => {
       columnNames[columnIndex] = column.text;
@@ -155,9 +164,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     tableData.rows.forEach(row => {
-      const datapoint = {};
+      const datapoint: any = {};
 
-      row.forEach((value, columnIndex) => {
+      row.forEach((value: any, columnIndex: number) => {
         const key = columnNames[columnIndex];
         datapoint[key] = value;
       });
@@ -168,7 +177,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     return datapoints;
   }
 
-  setTableColumnToSensibleDefault(tableData) {
+  setTableColumnToSensibleDefault(tableData: TableModel) {
     if (tableData.columns.length === 1) {
       this.panel.tableColumn = tableData.columns[0].text;
     } else {
@@ -178,7 +187,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
   }
 
-  setTableValues(tableData, data) {
+  setTableValues(tableData: any[], data: DataFormat) {
     if (!tableData || tableData.length === 0) {
       return;
     }
@@ -213,7 +222,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     return !this.panel.gauge.show;
   }
 
-  setColoring(options) {
+  setColoring(options: { background: any }) {
     if (options.background) {
       this.panel.colorValue = false;
       this.panel.colors = ['rgba(71, 212, 59, 0.4)', 'rgba(245, 150, 40, 0.73)', 'rgba(225, 40, 40, 0.59)'];
@@ -231,24 +240,24 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  onColorChange(panelColorIndex) {
-    return color => {
+  onColorChange(panelColorIndex: number) {
+    return (color: string) => {
       this.panel.colors[panelColorIndex] = color;
       this.render();
     };
   }
 
-  onSparklineColorChange(newColor) {
+  onSparklineColorChange(newColor: string) {
     this.panel.sparkline.lineColor = newColor;
     this.render();
   }
 
-  onSparklineFillChange(newColor) {
+  onSparklineFillChange(newColor: string) {
     this.panel.sparkline.fillColor = newColor;
     this.render();
   }
 
-  setValues(data) {
+  setValues(data: any) {
     data.flotpairs = [];
 
     if (this.series.length > 1) {
@@ -263,7 +272,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     if (this.series && this.series.length > 0) {
-      const lastPoint = _.last(this.series[0].datapoints);
+      const lastPoint: any = _.last(this.series[0].datapoints);
       const lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
       const formatFunc = getValueFormat(this.panel.format);
 
@@ -300,7 +309,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.setValueMapping(data);
   }
 
-  setValueMapping(data) {
+  setValueMapping(data: DataFormat) {
     // check value to text mappings if its enabled
     if (this.panel.mappingType === 1) {
       for (let i = 0; i < this.panel.valueMaps.length; i++) {
@@ -348,7 +357,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
   }
 
-  removeValueMap(map) {
+  removeValueMap(map: any) {
     const index = _.indexOf(this.panel.valueMaps, map);
     this.panel.valueMaps.splice(index, 1);
     this.render();
@@ -358,7 +367,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.panel.valueMaps.push({ value: '', op: '=', text: '' });
   }
 
-  removeRangeMap(rangeMap) {
+  removeRangeMap(rangeMap: any) {
     const index = _.indexOf(this.panel.rangeMaps, rangeMap);
     this.panel.rangeMaps.splice(index, 1);
     this.render();
@@ -368,18 +377,18 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.panel.rangeMaps.push({ from: '', to: '', text: '' });
   }
 
-  link(scope, elem, attrs, ctrl) {
+  link(scope: any, elem: JQuery, attrs: any, ctrl: any) {
     const $location = this.$location;
     const linkSrv = this.linkSrv;
     const $timeout = this.$timeout;
     const $sanitize = this.$sanitize;
     const panel = ctrl.panel;
     const templateSrv = this.templateSrv;
-    let data, linkInfo;
+    let data: any, linkInfo: { target: string; href: string; title: string };
     const $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 
-    function applyColoringThresholds(valueString) {
+    function applyColoringThresholds(valueString: string) {
       const color = getColorForValue(data, data.value);
       if (color) {
         return '<span style="color:' + color + '">' + valueString + '</span>';
@@ -388,7 +397,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return valueString;
     }
 
-    function getSpan(className, fontSizePercent, applyColoring, value) {
+    function getSpan(className: string, fontSizePercent: string, applyColoring: any, value: string) {
       value = $sanitize(templateSrv.replace(value, data.scopedVars));
       value = applyColoring ? applyColoringThresholds(value) : value;
       const pixelSize = (parseInt(fontSizePercent, 10) / 100) * BASE_FONT_SIZE;
@@ -467,7 +476,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       const thresholdMarkersWidth = gaugeWidth / 5;
       const thresholdLabelFontSize = fontSize / 2.5;
 
-      const options = {
+      const options: any = {
         series: {
           gauges: {
             gauge: {
@@ -586,12 +595,12 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       data = ctrl.data;
 
       // get thresholds
-      data.thresholds = panel.thresholds.split(',').map(strVale => {
+      data.thresholds = panel.thresholds.split(',').map((strVale: string) => {
         return Number(strVale.trim());
       });
 
       // Map panel colors to hex or rgb/a values
-      data.colorMap = panel.colors.map(color =>
+      data.colorMap = panel.colors.map((color: string) =>
         getColorFromHexRgbOrName(
           color,
           config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
@@ -695,7 +704,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 }
 
-function getColorForValue(data, value) {
+function getColorForValue(data: any, value: number) {
   if (!_.isFinite(value)) {
     return null;
   }
