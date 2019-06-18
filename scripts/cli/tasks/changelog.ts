@@ -45,13 +45,20 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) 
 
   const notBugs = _.sortBy(issues.filter(item => !bugs.find(bug => bug === item)), 'title');
 
-  let markdown = '### Features / Enhancements\n';
+  let markdown = '';
+
+  if (notBugs.length > 0) {
+    markdown = '### Features / Enhancements\n';
+  }
 
   for (const item of notBugs) {
     markdown += getMarkdownLineForIssue(item);
   }
 
-  markdown += '\n### Bug Fixes\n';
+  if (bugs.length > 0) {
+    markdown += '\n### Bug Fixes\n';
+  }
+
   for (const item of bugs) {
     markdown += getMarkdownLineForIssue(item);
   }
