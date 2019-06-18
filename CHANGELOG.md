@@ -1,6 +1,6 @@
 # 6.3.0 (unreleased)
 
-# 6.2.3 (2018-06-17)
+# 6.2.3 (2019-06-17)
 
 ### Known issues
 * **grafana-cli**: The argument `--pluginsDir` is not working.
