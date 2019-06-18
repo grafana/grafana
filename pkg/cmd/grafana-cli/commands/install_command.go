@@ -178,9 +178,8 @@ func SelectVersion(plugin *m.Plugin, version string) (*m.Version, error) {
 	latestForArch := latestSupportedVersion(plugin)
 	if latestForArch.Version == ver.Version {
 		return ver, nil
-	} else {
-		return nil, xerrors.Errorf("Version you want is not supported on your architecture. Latest suitable version is %v", latestForArch.Version)
 	}
+	return nil, xerrors.Errorf("Version you want is not supported on your architecture. Latest suitable version is %v", latestForArch.Version)
 }
 
 func RemoveGitBuildFromName(pluginName, filename string) string {
