@@ -33,6 +33,7 @@
     "commander": "^2.20.0",
     "concurrently": "4.1.0",
     "execa": "^1.0.0",
+    "glob": "^7.1.4",
     "inquirer": "^6.3.1",
     "jest-cli": "^24.8.0",
     "lodash": "4.17.11",
@@ -60,5 +61,8 @@
   "resolutions": {
     "@types/lodash": "4.14.119",
     "rollup-plugin-typescript2": "0.21.1"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.1"
   }
 }
