@@ -101,8 +101,8 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 		)
 
 		// Plugins which are downloaded just as sourcecode zipball from github do not have checksum
-		if v.CheckSums != nil {
-			checksum = v.Md5[osAndArchString()]
+		if v.Arch != nil {
+			checksum = v.Arch[osAndArchString()].Md5
 		}
 	}
 
@@ -142,7 +142,7 @@ func supportsCurrentArch(version *m.Version) bool {
 	if version.Arch == nil {
 		return true
 	}
-	for _, arch := range version.Arch {
+	for arch := range version.Arch {
 		if arch == osAndArchString() || arch == "any" {
 			return true
 		}
@@ -236,7 +236,11 @@ func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks
 		return err
 	}
 	for _, zf := range r.File {
-		newFile := path.Join(filePath, RemoveGitBuildFromName(pluginName, zf.Name))
+		newFileName := RemoveGitBuildFromName(pluginName, zf.Name)
+		if !isPathSafe(newFileName, path.Join(filePath, pluginName)) {
+			return xerrors.Errorf("filepath: %v tries to write outside of plugin directory: %v. This can be a security risk.", zf.Name, path.Join(filePath, pluginName))
+		}
+		newFile := path.Join(filePath, newFileName)
 
 		if zf.FileInfo().IsDir() {
 			err := os.Mkdir(newFile, 0755)
@@ -246,21 +250,18 @@ func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks
 		} else {
 			if isSymlink(zf) {
 				if !allowSymlinks {
-					logger.Errorf("%v: plugin archive contains symlink which is not allowed. Skipping", zf.Name)
+					logger.Errorf("%v: plugin archive contains symlink which is not allowed. Skipping \n", zf.Name)
 					continue
 				}
 				err = extractSymlink(zf, newFile)
 				if err != nil {
-					logger.Errorf("Failed to extract symlink: %v", err)
+					logger.Errorf("Failed to extract symlink: %v \n", err)
 					continue
 				}
 			} else {
-				if !isPathSafe(newFile, path.Join(filePath, pluginName)) {
-					return xerrors.Errorf("%v: filepath tries to write outside of plugin directory. This can be a security risk.", newFile)
-				}
 				err = extractFile(zf, newFile)
 				if err != nil {
-					logger.Errorf("Failed to extract file: %v", err)
+					logger.Errorf("Failed to extract file: %v \n", err)
 					continue
 				}
 			}
@@ -331,5 +332,5 @@ func extractFile(file *zip.File, filePath string) (err error) {
 // Based on https://github.com/mholt/archiver/pull/65/files#diff-635e4219ee55ef011b2b32bba065606bR109
 func isPathSafe(filePath string, destination string) bool {
 	destpath := filepath.Join(destination, filePath)
-	return !strings.HasPrefix(destpath, destination)
+	return strings.HasPrefix(destpath, destination)
 }
