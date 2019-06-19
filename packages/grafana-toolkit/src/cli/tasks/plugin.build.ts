@@ -71,7 +71,7 @@ const testPlugin = useSpinner<void>('Running tests', async () => {
   ];
 
   const results = await jestCLI.runCLI(testConfig as any, [process.cwd()]);
-  if (results.results.numFailedTests > 0) {
+  if (results.results.numFailedTests > 0 || results.results.numFailedTestSuites > 0) {
     throw new Error('Tests failed');
   }
 });
