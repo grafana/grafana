@@ -114,7 +114,7 @@ describe('linkSrv', () => {
         linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?$${DataLinkBuiltInVars.valueTime}`,
+            url: `/d/1?time=$${DataLinkBuiltInVars.valueTime}`,
           },
           {},
           dataPointMock
