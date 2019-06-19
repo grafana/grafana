@@ -11,7 +11,7 @@ import { precommitTask } from './tasks/precommit';
 import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { toolkitBuildTask } from './tasks/toolkit.build';
-import { pluginTestTask } from './tasks/plugin.test';
+import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 
 export const run = (includeInternalScripts = false) => {
