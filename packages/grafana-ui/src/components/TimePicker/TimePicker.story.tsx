@@ -24,7 +24,7 @@ TimePickerStories.add('default', () => {
       {(value, updateValue) => {
         return (
           <TimePicker
-            isTimezoneUtc={false}
+            timeZone="browser"
             value={value}
             tooltipContent="TimePicker tooltip"
             selectOptions={[

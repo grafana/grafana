@@ -1,35 +1,33 @@
-import { TimeOption, TimeRange, TIME_FORMAT, RawTimeRange } from '../../types/time';
+import { TimeOption, TimeRange, TIME_FORMAT, RawTimeRange, TimeZone } from '../../types/time';
 import { describeTimeRange } from '../../utils/rangeutil';
 import * as dateMath from '../../utils/datemath';
 import { dateTime, DateTime, toUtc } from '../../utils/moment_wrapper';
 
-export const mapTimeOptionToTimeRange = (
-  timeOption: TimeOption,
-  isTimezoneUtc: boolean,
-  timezone?: dateMath.Timezone
-): TimeRange => {
-  const fromMoment = stringToDateTimeType(timeOption.from, isTimezoneUtc, false, timezone);
-  const toMoment = stringToDateTimeType(timeOption.to, isTimezoneUtc, true, timezone);
+export const mapTimeOptionToTimeRange = (timeOption: TimeOption, timeZone?: TimeZone): TimeRange => {
+  const fromMoment = stringToDateTimeType(timeOption.from, false, timeZone);
+  const toMoment = stringToDateTimeType(timeOption.to, true, timeZone);
 
-  return { from: fromMoment, to: toMoment, raw: { from: timeOption.from, to: timeOption.to } };
+  return {
+    from: fromMoment,
+    to: toMoment,
+    raw: {
+      from: timeOption.from,
+      to: timeOption.to,
+    },
+  };
 };
 
-export const stringToDateTimeType = (
-  value: string,
-  isTimezoneUtc: boolean,
-  roundUp?: boolean,
-  timezone?: dateMath.Timezone
-): DateTime => {
+export const stringToDateTimeType = (value: string, roundUp?: boolean, timeZone?: TimeZone): DateTime => {
   if (value.indexOf('now') !== -1) {
     if (!dateMath.isValid(value)) {
       return dateTime();
     }
 
-    const parsed = dateMath.parse(value, roundUp, timezone);
+    const parsed = dateMath.parse(value, roundUp, timeZone);
     return parsed || dateTime();
   }
 
-  if (isTimezoneUtc) {
+  if (timeZone === 'utc') {
     return toUtc(value, TIME_FORMAT);
   }
 

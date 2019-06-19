@@ -21,19 +21,9 @@ export interface IntervalValues {
   intervalMs: number;
 }
 
-export interface TimeZone {
-  raw: string;
-  isUtc: boolean;
-}
+export type TimeZone = 'utc' | 'browser';
 
-export const parseTimeZone = (raw: string): TimeZone => {
-  return {
-    raw,
-    isUtc: raw === 'utc',
-  };
-};
-
-export const DefaultTimeZone = parseTimeZone('browser');
+export const DefaultTimeZone: TimeZone = 'browser';
 
 export interface TimeOption {
   from: string;

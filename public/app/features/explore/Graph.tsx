@@ -151,7 +151,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         max: max,
         label: 'Datetime',
         ticks: ticks,
-        timezone: timeZone.raw,
+        timezone: timeZone,
         timeformat: time_format(ticks, min, max),
       },
     };

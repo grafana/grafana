@@ -124,17 +124,18 @@ export class DashNavTimeControls extends Component<Props> {
     const { dashboard } = this.props;
     const intervals = dashboard.timepicker.refresh_intervals;
     const timePickerValue = this.timeSrv.timeRange();
-    const isUtc = dashboard.isTimezoneUtc();
+    const timeZone = dashboard.getTimezone();
+
     return (
       <>
         <TimePicker
-          isTimezoneUtc={isUtc}
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
+          timeZone={timeZone}
           tooltipContent={
             <TimePickerTooltipContent
               dashboard={dashboard}
-              rawTimeRange={getRawTimeRangeToShow(isUtc, timePickerValue)}
+              rawTimeRange={getRawTimeRangeToShow(timeZone === 'utc', timePickerValue)}
             />
           }
           onMoveBackward={this.onMoveBack}

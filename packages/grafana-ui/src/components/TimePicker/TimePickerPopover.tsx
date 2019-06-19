@@ -1,16 +1,14 @@
 import React, { Component } from 'react';
-import { TimeRange, TimeOption } from '../../types/time';
+import { TimeRange, TimeOption, TimeZone } from '../../types/time';
 
 import { TimePickerCalendar } from './TimePickerCalendar';
 import { TimePickerInput } from './TimePickerInput';
 import { mapTimeOptionToTimeRange } from './time';
-import { Timezone } from '../../utils/datemath';
 import { DateTime } from '../../utils/moment_wrapper';
 
 export interface Props {
   value: TimeRange;
-  isTimezoneUtc: boolean;
-  timezone?: Timezone;
+  timeZone?: TimeZone;
   onChange?: (timeRange: TimeRange) => void;
 }
 
@@ -22,6 +20,7 @@ export interface State {
 
 export class TimePickerPopover extends Component<Props, State> {
   static popoverClassName = 'time-picker-popover';
+
   constructor(props: Props) {
     super(props);
     this.state = { value: props.value, isFromInputValid: true, isToInputValid: true };
@@ -54,10 +53,10 @@ export class TimePickerPopover extends Component<Props, State> {
   };
 
   onTimeOptionClick = (timeOption: TimeOption) => {
-    const { isTimezoneUtc, timezone, onChange } = this.props;
+    const { timeZone, onChange } = this.props;
 
     if (onChange) {
-      onChange(mapTimeOptionToTimeRange(timeOption, isTimezoneUtc, timezone));
+      onChange(mapTimeOptionToTimeRange(timeOption, timeZone));
     }
   };
 
@@ -69,8 +68,9 @@ export class TimePickerPopover extends Component<Props, State> {
   };
 
   render() {
-    const { isTimezoneUtc, timezone } = this.props;
+    const { timeZone } = this.props;
     const { isFromInputValid, isToInputValid, value } = this.state;
+
     const isValid = isFromInputValid && isToInputValid;
 
     return (
@@ -81,9 +81,8 @@ export class TimePickerPopover extends Component<Props, State> {
               <div className="gf-form">
                 <label className="gf-form-label">From</label>
                 <TimePickerInput
-                  isTimezoneUtc={isTimezoneUtc}
                   roundup={false}
-                  timezone={timezone}
+                  timeZone={timeZone}
                   value={value.raw.from}
                   onChange={this.onFromInputChanged}
                   tabIndex={1}
@@ -92,9 +91,8 @@ export class TimePickerPopover extends Component<Props, State> {
             </div>
             <div className="time-picker-popover-body-custom-ranges-calendar">
               <TimePickerCalendar
-                isTimezoneUtc={isTimezoneUtc}
+                timeZone={timeZone}
                 roundup={false}
-                timezone={timezone}
                 value={value.raw.from}
                 onChange={this.onFromCalendarChanged}
               />
@@ -105,9 +103,8 @@ export class TimePickerPopover extends Component<Props, State> {
               <div className="gf-form">
                 <label className="gf-form-label">To</label>
                 <TimePickerInput
-                  isTimezoneUtc={isTimezoneUtc}
                   roundup={true}
-                  timezone={timezone}
+                  timeZone={timeZone}
                   value={value.raw.to}
                   onChange={this.onToInputChanged}
                   tabIndex={2}
@@ -116,9 +113,8 @@ export class TimePickerPopover extends Component<Props, State> {
             </div>
             <div className="time-picker-popover-body-custom-ranges-calendar">
               <TimePickerCalendar
-                isTimezoneUtc={isTimezoneUtc}
                 roundup={true}
-                timezone={timezone}
+                timeZone={timeZone}
                 value={value.raw.to}
                 onChange={this.onToCalendarChanged}
               />

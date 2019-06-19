@@ -23,7 +23,7 @@ TimePickerPopoverStories.add('default', () => (
       return (
         <TimePickerPopover
           value={value}
-          isTimezoneUtc={false}
+          timeZone="browser"
           onChange={timeRange => {
             action('onChange fired')(timeRange);
             updateValue(timeRange);

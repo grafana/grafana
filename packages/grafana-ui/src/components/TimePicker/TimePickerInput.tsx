@@ -1,28 +1,27 @@
 import React, { PureComponent, ChangeEvent, MouseEvent } from 'react';
-import { TimeFragment, TIME_FORMAT } from '../../types/time';
+import { TimeFragment, TIME_FORMAT, TimeZone } from '../../types/time';
 import { Input } from '../Input/Input';
 import { stringToDateTimeType, isValidTimeString } from './time';
 import { isDateTime } from '../../utils/moment_wrapper';
 
 export interface Props {
   value: TimeFragment;
-  isTimezoneUtc: boolean;
   roundup?: boolean;
-  timezone?: string;
+  timeZone?: TimeZone;
   onChange: (value: string, isValid: boolean) => void;
   tabIndex?: number;
 }
 
 export class TimePickerInput extends PureComponent<Props> {
   isValid = (value: string) => {
-    const { isTimezoneUtc } = this.props;
+    const { timeZone, roundup } = this.props;
 
     if (value.indexOf('now') !== -1) {
       const isValid = isValidTimeString(value);
       return isValid;
     }
 
-    const parsed = stringToDateTimeType(value, isTimezoneUtc);
+    const parsed = stringToDateTimeType(value, roundup, timeZone);
     const isValid = parsed.isValid();
     return isValid;
   };

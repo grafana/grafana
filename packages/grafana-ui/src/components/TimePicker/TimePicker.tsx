@@ -2,8 +2,7 @@ import React, { PureComponent, createRef } from 'react';
 import { ButtonSelect } from '../Select/ButtonSelect';
 import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
 import { PopperContent } from '../Tooltip/PopperController';
-import { Timezone } from '../../utils/datemath';
-import { TimeRange, TimeOption } from '../../types/time';
+import { TimeRange, TimeOption, TimeZone } from '../../types/time';
 import { SelectOptionItem } from '../Select/Select';
 import { getRawTimeRangeToShow } from '../../utils/date';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -13,9 +12,8 @@ import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper'
 
 export interface Props {
   value: TimeRange;
-  isTimezoneUtc: boolean;
   selectOptions: TimeOption[];
-  timezone?: Timezone;
+  timeZone?: TimeZone;
   onChange: (timeRange: TimeRange) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
@@ -93,7 +91,7 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   onSelectChanged = (item: SelectOptionItem<TimeOption>) => {
-    const { isTimezoneUtc, onChange, timezone } = this.props;
+    const { onChange, timeZone } = this.props;
 
     if (item.value && item.value.from === 'custom') {
       // this is to prevent the ClickOutsideWrapper from directly closing the popover
@@ -104,7 +102,7 @@ export class TimePicker extends PureComponent<Props, State> {
     }
 
     // @ts-ignore
-    onChange(mapTimeOptionToTimeRange(item.value, isTimezoneUtc, timezone));
+    onChange(mapTimeOptionToTimeRange(item.value, timeZone));
   };
 
   onChangeMenuOpenState = (isOpen: boolean) => {
@@ -132,8 +130,7 @@ export class TimePicker extends PureComponent<Props, State> {
       onMoveForward,
       onZoom,
       tooltipContent,
-      isTimezoneUtc,
-      timezone,
+      timeZone,
     } = this.props;
     const { isCustomOpen } = this.state;
 
@@ -143,8 +140,8 @@ export class TimePicker extends PureComponent<Props, State> {
     const label = (
       <>
         {isCustomOpen && <span>Custom time range</span>}
-        {!isCustomOpen && mapTimeRangeToRangeString(getRawTimeRangeToShow(isTimezoneUtc, value.raw))}
-        {isTimezoneUtc && <span className="time-picker-utc">UTC</span>}
+        {!isCustomOpen && mapTimeRangeToRangeString(getRawTimeRangeToShow(timeZone === 'utc', value.raw))}
+        {timeZone === 'utc' && <span className="time-picker-utc">UTC</span>}
       </>
     );
     const isAbsolute = isDateTime(value.raw.to);
@@ -184,12 +181,7 @@ export class TimePicker extends PureComponent<Props, State> {
 
           {isCustomOpen && (
             <ClickOutsideWrapper onClick={this.onCloseCustom}>
-              <TimePickerPopover
-                value={value}
-                isTimezoneUtc={isTimezoneUtc}
-                timezone={timezone}
-                onChange={this.onCustomChange}
-              />
+              <TimePickerPopover value={value} timeZone={timeZone} onChange={this.onCustomChange} />
             </ClickOutsideWrapper>
           )}
         </div>
