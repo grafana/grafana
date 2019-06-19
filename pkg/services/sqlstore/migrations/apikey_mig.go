@@ -79,7 +79,11 @@ func addApiKeyMigrations(mg *Migrator) {
 		{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
 	}))
 
-	mg.AddMigration("Add expires to api_key table", NewAddColumnMigration(apiKeyV1, &Column{
+	mg.AddMigration("Add expires to api_key table", NewAddColumnMigration(apiKeyV2, &Column{
 		Name: "expires", Type: DB_DateTime, Nullable: true,
+	}))
+
+	mg.AddMigration("Add index api_key.expires", NewAddIndexMigration(apiKeyV2, &Index{
+		Cols: []string{"expires"}, Type: IndexType,
 	}))
 }
