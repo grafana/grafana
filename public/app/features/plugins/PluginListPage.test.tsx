@@ -2,7 +2,8 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { PluginListPage, Props } from './PluginListPage';
 import { LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
-import { PluginMeta, NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
+import { PluginMeta } from '@grafana/ui';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

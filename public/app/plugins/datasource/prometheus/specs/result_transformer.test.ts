@@ -1,11 +1,12 @@
 import { ResultTransformer } from '../result_transformer';
+import { DataQueryResponseData } from '@grafana/ui';
 
 describe('Prometheus Result Transformer', () => {
   const ctx: any = {};
 
   beforeEach(() => {
     ctx.templateSrv = {
-      replace: str => str,
+      replace: (str: string) => str,
     };
     ctx.resultTransformer = new ResultTransformer(ctx.templateSrv);
   });
@@ -16,7 +17,7 @@ describe('Prometheus Result Transformer', () => {
         status: 'success',
         data: {
           resultType: '',
-          result: null,
+          result: null as DataQueryResponseData[],
         },
       };
       const series = ctx.resultTransformer.transform({ data: response }, {});
@@ -27,7 +28,7 @@ describe('Prometheus Result Transformer', () => {
         status: 'success',
         data: {
           resultType: '',
-          result: null,
+          result: null as DataQueryResponseData[],
         },
       };
       const table = ctx.resultTransformer.transform({ data: response }, { format: 'table' });
@@ -168,7 +169,7 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('should throw error when data in wrong format', () => {
-      const seriesList = [{ rows: [] }, { datapoints: [] }];
+      const seriesList = [{ rows: [] as any[] }, { datapoints: [] as any[] }];
       expect(() => {
         ctx.resultTransformer.transformToHistogramOverTime(seriesList);
       }).toThrow();
@@ -176,7 +177,7 @@ describe('Prometheus Result Transformer', () => {
 
     it('should throw error when prometheus returned non-timeseries', () => {
       // should be { metric: {}, values: [] } for timeseries
-      const metricData = { metric: {}, value: [] };
+      const metricData = { metric: {}, value: [] as any[] };
       expect(() => {
         ctx.resultTransformer.transformMetricData(metricData, { step: 1 }, 1000, 2000);
       }).toThrow();

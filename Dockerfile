@@ -33,7 +33,7 @@ ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
 # Final container
-FROM debian:stretch-slim
+FROM ubuntu:latest
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 

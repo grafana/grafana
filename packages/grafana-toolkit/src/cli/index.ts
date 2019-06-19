@@ -12,6 +12,7 @@ import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { toolkitBuildTask } from './tasks/toolkit.build';
 import { pluginTestTask } from './tasks/plugin.test';
+import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -90,6 +91,14 @@ export const run = (includeInternalScripts = false) => {
       .description('Prepares grafana/toolkit dist package')
       .action(async cmd => {
         await execTask(toolkitBuildTask)();
+      });
+
+    program
+      .command('searchTestData')
+      .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
+      .description('Setup test data for search')
+      .action(async cmd => {
+        await execTask(searchTestDataSetupTask)({ count: cmd.count });
       });
   }
 

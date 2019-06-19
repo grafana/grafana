@@ -1,9 +1,9 @@
 package login
 
 import (
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/multildap"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -36,15 +36,15 @@ var loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
 		return true, err
 	}
 
-	login, err := user.Upsert(&user.UpsertArgs{
+	upsert := &models.UpsertUserCommand{
 		ExternalUser:  externalUser,
 		SignupAllowed: setting.LDAPAllowSignup,
-	})
+	}
+	err = bus.Dispatch(upsert)
 	if err != nil {
 		return true, err
 	}
-
-	query.User = login
+	query.User = upsert.Result
 
 	return true, nil
 }

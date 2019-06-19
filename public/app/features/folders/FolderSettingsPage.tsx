@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { Input, NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
+import { Input } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
