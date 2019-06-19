@@ -1,20 +1,25 @@
-import angular from 'angular';
+import angular, { IQService } from 'angular';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import _ from 'lodash';
 import { ElasticDatasource } from '../datasource';
 import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { ElasticsearchOptions } from '../types';
 
 describe('ElasticDatasource', function(this: any) {
-  const backendSrv = {
+  const backendSrv: any = {
     datasourceRequest: jest.fn(),
   };
 
-  const $rootScope = {
+  const $rootScope: any = {
     $on: jest.fn(),
     appEvent: jest.fn(),
   };
 
-  const templateSrv = {
+  const templateSrv: any = {
     replace: jest.fn(text => {
       if (text.startsWith('$')) {
         return `resolvedVariable`;
@@ -25,7 +30,7 @@ describe('ElasticDatasource', function(this: any) {
     getAdhocFilters: jest.fn(() => []),
   };
 
-  const timeSrv = {
+  const timeSrv: any = {
     time: { from: 'now-1h', to: 'now' },
     timeRange: jest.fn(() => {
       return {
@@ -43,18 +48,24 @@ describe('ElasticDatasource', function(this: any) {
     backendSrv,
   } as any;
 
-  function createDatasource(instanceSettings) {
-    instanceSettings.jsonData = instanceSettings.jsonData || {};
-    ctx.ds = new ElasticDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);
+  function createDatasource(instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>) {
+    instanceSettings.jsonData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+    ctx.ds = new ElasticDatasource(
+      instanceSettings,
+      {} as IQService,
+      backendSrv as BackendSrv,
+      templateSrv as TemplateSrv,
+      timeSrv as TimeSrv
+    );
   }
 
   describe('When testing datasource with index pattern', () => {
     beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
-        index: '[asd-]YYYY.MM.DD',
-        jsonData: { interval: 'Daily', esVersion: '2' },
-      });
+        database: '[asd-]YYYY.MM.DD',
+        jsonData: { interval: 'Daily', esVersion: 2 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
     });
 
     it('should translate index pattern to current day', () => {
@@ -77,9 +88,9 @@ describe('ElasticDatasource', function(this: any) {
     beforeEach(async () => {
       createDatasource({
         url: 'http://es.com',
-        index: '[asd-]YYYY.MM.DD',
-        jsonData: { interval: 'Daily', esVersion: '2' },
-      });
+        database: '[asd-]YYYY.MM.DD',
+        jsonData: { interval: 'Daily', esVersion: 2 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
@@ -148,9 +159,9 @@ describe('ElasticDatasource', function(this: any) {
     beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
-        index: 'test',
-        jsonData: { esVersion: '2' },
-      });
+        database: 'test',
+        jsonData: { esVersion: 2 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
@@ -187,7 +198,11 @@ describe('ElasticDatasource', function(this: any) {
 
   describe('When getting fields', () => {
     beforeEach(() => {
-      createDatasource({ url: 'http://es.com', index: 'metricbeat', jsonData: { esVersion: 50 } });
+      createDatasource({
+        url: 'http://es.com',
+        database: 'metricbeat',
+        jsonData: { esVersion: 50 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({
@@ -279,7 +294,11 @@ describe('ElasticDatasource', function(this: any) {
 
   describe('When getting fields from ES 7.0', () => {
     beforeEach(() => {
-      createDatasource({ url: 'http://es.com', index: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
+      createDatasource({
+        url: 'http://es.com',
+        database: 'genuine.es7._mapping.response',
+        jsonData: { esVersion: 70 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({
@@ -430,9 +449,9 @@ describe('ElasticDatasource', function(this: any) {
     beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
-        index: 'test',
-        jsonData: { esVersion: '5' },
-      });
+        database: 'test',
+        jsonData: { esVersion: 5 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
@@ -473,9 +492,9 @@ describe('ElasticDatasource', function(this: any) {
     beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
-        index: 'test',
-        jsonData: { esVersion: '5' },
-      });
+        database: 'test',
+        jsonData: { esVersion: 5 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;

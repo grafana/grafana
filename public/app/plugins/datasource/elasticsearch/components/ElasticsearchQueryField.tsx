@@ -9,13 +9,14 @@ import Prism from 'prismjs';
 import QueryField from 'app/features/explore/QueryField';
 import { ExploreQueryFieldProps, DataSourceStatus, DataQuery } from '@grafana/ui';
 import { ElasticDatasource } from '../datasource';
+import { ElasticsearchOptions } from '../types';
 
 export interface ElasticsearchQuery extends DataQuery {
   query: string;
   context: string;
 }
 
-interface Props extends ExploreQueryFieldProps<ElasticDatasource, ElasticsearchQuery> {}
+interface Props extends ExploreQueryFieldProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions> {}
 
 interface State {
   syntaxLoaded: boolean;

@@ -1,14 +1,18 @@
-import angular from 'angular';
+import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import { DataSourceApi } from '@grafana/ui';
+import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/ui';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import * as queryDef from './query_def';
 import { ElasticsearchQuery } from './components/ElasticsearchQueryField';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { ElasticsearchOptions } from './types';
 
-export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery> {
+export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
   basicAuth: string;
   withCredentials: boolean;
   url: string;
@@ -24,24 +28,32 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery> {
   logLevelField?: string;
 
   /** @ngInject */
-  constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
+    private $q: IQService,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
-    this.index = instanceSettings.index;
-    this.timeField = instanceSettings.jsonData.timeField;
-    this.esVersion = instanceSettings.jsonData.esVersion;
-    this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
-    this.interval = instanceSettings.jsonData.timeInterval;
-    this.maxConcurrentShardRequests = instanceSettings.jsonData.maxConcurrentShardRequests;
+    this.index = instanceSettings.database;
+    const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+
+    this.timeField = settingsData.timeField;
+    this.esVersion = settingsData.esVersion;
+    this.indexPattern = new IndexPattern(this.index, settingsData.interval);
+    this.interval = settingsData.timeInterval;
+    this.maxConcurrentShardRequests = settingsData.maxConcurrentShardRequests;
     this.queryBuilder = new ElasticQueryBuilder({
       timeField: this.timeField,
       esVersion: this.esVersion,
     });
-    this.logMessageField = instanceSettings.jsonData.logMessageField || '';
-    this.logLevelField = instanceSettings.jsonData.logLevelField || '';
+    this.logMessageField = settingsData.logMessageField || '';
+    this.logLevelField = settingsData.logLevelField || '';
 
     if (this.logMessageField === '') {
       this.logMessageField = null;
@@ -412,8 +424,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery> {
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
-    esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
-    esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
+    esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf().toString());
+    esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf().toString());
     esQuery = header + '\n' + esQuery + '\n';
 
     const url = this.getMultiSearchUrl();
