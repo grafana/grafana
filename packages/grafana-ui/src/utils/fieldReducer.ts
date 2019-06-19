@@ -2,7 +2,7 @@
 import isNumber from 'lodash/isNumber';
 
 import { SeriesData, NullValueMode } from '../types/index';
-import { Extension, ExtensionRegistry } from './extensions';
+import { Extension, ExtensionRegistry } from '@grafana/data';
 
 export enum ReducerID {
   sum = 'sum',

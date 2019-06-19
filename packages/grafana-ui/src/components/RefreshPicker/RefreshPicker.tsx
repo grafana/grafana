@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { SelectOptionItem } from '../Select/Select';
+import { SelectOptionItem } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { ButtonSelect } from '../Select/ButtonSelect';
 

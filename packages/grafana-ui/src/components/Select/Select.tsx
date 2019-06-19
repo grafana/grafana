@@ -19,14 +19,8 @@ import resetSelectStyles from './resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { PopperContent } from '../Tooltip/PopperController';
 import { Tooltip } from '../Tooltip/Tooltip';
-
-export interface SelectOptionItem<T> {
-  label?: string;
-  value?: T;
-  imgUrl?: string;
-  description?: string;
-  [key: string]: any;
-}
+import { SelectOptionItem } from '@grafana/data';
+export { SelectOptionItem }; // for simplicity
 
 export interface CommonProps<T> {
   defaultValue?: any;

@@ -4,7 +4,7 @@ import { action } from '@storybook/addon-actions';
 import { withKnobs, object, text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { SelectOptionItem } from './Select';
+import { SelectOptionItem } from '@grafana/data';
 import { ButtonSelect } from './ButtonSelect';
 
 const ButtonSelectStories = storiesOf('UI/Select/ButtonSelect', module);

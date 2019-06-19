@@ -1,4 +1,4 @@
-import { SelectOptionItem } from '../components/index';
+import { SelectOptionItem } from '../types/select';
 
 export interface Extension {
   id: string; // Unique Key -- saved in configs
