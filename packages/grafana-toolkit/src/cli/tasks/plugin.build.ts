@@ -5,12 +5,11 @@ import path = require('path');
 import fs = require('fs');
 import glob = require('glob');
 import * as rollup from 'rollup';
-import * as jestCLI from 'jest-cli';
-import { jestConfig } from '../../config/jest.plugin.config';
 import { inputOptions, outputOptions } from '../../config/rollup.plugin.config';
 
 import { useSpinner } from '../utils/useSpinner';
 import { Linter, Configuration, RuleFailure } from 'tslint';
+import { testPlugin } from './plugin/test';
 interface PrecommitOptions {}
 
 // @ts-ignore
@@ -56,23 +55,6 @@ const lintPlugin = useSpinner<void>('Linting', async () => {
     });
     console.log('\n');
     throw new Error(`${failures.length} linting errors found in ${lintResults.length} files`);
-  }
-});
-
-const testPlugin = useSpinner<void>('Running tests', async () => {
-  const testConfig = jestConfig();
-  // @ts-ignore
-
-  testConfig.setupFiles = [
-    // @ts-ignore
-    path.resolve(__dirname, '../../config/jest-setup.js'),
-    // @ts-ignore
-    path.resolve(__dirname, '../../config/jest-shim.js'),
-  ];
-
-  const results = await jestCLI.runCLI(testConfig as any, [process.cwd()]);
-  if (results.results.numFailedTests > 0 || results.results.numFailedTestSuites > 0) {
-    throw new Error('Tests failed');
   }
 });
 

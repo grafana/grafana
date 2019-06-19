@@ -11,6 +11,7 @@ import { precommitTask } from './tasks/precommit';
 import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { toolkitBuildTask } from './tasks/toolkit.build';
+import { pluginTestTask } from './tasks/plugin.test';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -97,6 +98,13 @@ export const run = (includeInternalScripts = false) => {
     .description('Prepares plugin dist package')
     .action(async cmd => {
       await execTask(pluginBuildTask)({});
+    });
+
+  program
+    .command('plugin:test')
+    .description('Executes plugin tests')
+    .action(async cmd => {
+      await execTask(pluginTestTask)({});
     });
 
   program.on('command:*', () => {

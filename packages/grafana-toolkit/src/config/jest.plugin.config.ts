@@ -8,7 +8,6 @@ export const jestConfig = () => {
     moduleDirectories: ['node_modules', 'src'],
     rootDir: process.cwd(),
     roots: ['<rootDir>/src'],
-    testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
     setupFiles: [],
     snapshotSerializers: ['enzyme-to-json/serializer'],
