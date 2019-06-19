@@ -142,7 +142,7 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       margin-right: 10px;
       color: ${theme.colors.linkDisabled};
       position: relative;
-      top: 3px;
+      top: 4px;
     `,
   };
 };
