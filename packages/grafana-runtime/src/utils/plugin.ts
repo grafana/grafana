@@ -1,7 +1,7 @@
 import { config } from '../config';
 
 /* tslint:disable:import-blacklist */
-import System from 'systemjs/dist/system.js';
+import System from 'systemjs';
 
 export interface PluginCssOptions {
   light: string;
