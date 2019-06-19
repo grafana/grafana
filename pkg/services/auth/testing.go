@@ -2,9 +2,77 @@ package auth
 
 import (
 	"context"
+	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+func CreateTestContext(t *testing.T) *testContext {
+	t.Helper()
+
+	sqlstore := sqlstore.InitTestDB(t)
+	tokenService := &UserAuthTokenService{
+		SQLStore: sqlstore,
+		Cfg: &setting.Cfg{
+			LoginMaxInactiveLifetimeDays: 7,
+			LoginMaxLifetimeDays:         30,
+			TokenRotationIntervalMinutes: 10,
+		},
+		log: log.New("test-logger"),
+	}
+
+	return &testContext{
+		SQLstore:     sqlstore,
+		TokenService: tokenService,
+	}
+}
+
+type testContext struct {
+	SQLstore     *sqlstore.SqlStore
+	TokenService *UserAuthTokenService
+}
+
+func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
+	sess := c.SQLstore.NewSession()
+	var t userAuthToken
+	found, err := sess.ID(id).Get(&t)
+	if err != nil || !found {
+		return nil, err
+	}
+
+	return &t, nil
+}
+
+func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
+	sess := c.SQLstore.NewSession()
+	res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.SQLstore.Dialect.BooleanStr(true), id)
+	if err != nil {
+		return false, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rowsAffected == 1, nil
+}
+
+func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
+	sess := c.SQLstore.NewSession()
+	res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
+	if err != nil {
+		return false, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rowsAffected == 1, nil
+}
 
 type FakeUserAuthTokenService struct {
 	CreateTokenProvider         func(ctx context.Context, userId int64, clientIP, userAgent string) (*models.UserToken, error)

@@ -7,18 +7,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/setting"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestUserAuthToken(t *testing.T) {
 	Convey("Test user auth token", t, func() {
-		ctx := createTestContext(t)
-		userAuthTokenService := ctx.tokenService
+		ctx := CreateTestContext(t)
+		userAuthTokenService := ctx.TokenService
 		userID := int64(10)
 
 		t := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
@@ -488,68 +485,4 @@ func TestUserAuthToken(t *testing.T) {
 			getTime = time.Now
 		})
 	})
-}
-
-func createTestContext(t *testing.T) *testContext {
-	t.Helper()
-
-	sqlstore := sqlstore.InitTestDB(t)
-	tokenService := &UserAuthTokenService{
-		SQLStore: sqlstore,
-		Cfg: &setting.Cfg{
-			LoginMaxInactiveLifetimeDays: 7,
-			LoginMaxLifetimeDays:         30,
-			TokenRotationIntervalMinutes: 10,
-		},
-		log: log.New("test-logger"),
-	}
-
-	return &testContext{
-		sqlstore:     sqlstore,
-		tokenService: tokenService,
-	}
-}
-
-type testContext struct {
-	sqlstore     *sqlstore.SqlStore
-	tokenService *UserAuthTokenService
-}
-
-func (c *testContext) getAuthTokenByID(id int64) (*userAuthToken, error) {
-	sess := c.sqlstore.NewSession()
-	var t userAuthToken
-	found, err := sess.ID(id).Get(&t)
-	if err != nil || !found {
-		return nil, err
-	}
-
-	return &t, nil
-}
-
-func (c *testContext) markAuthTokenAsSeen(id int64) (bool, error) {
-	sess := c.sqlstore.NewSession()
-	res, err := sess.Exec("UPDATE user_auth_token SET auth_token_seen = ? WHERE id = ?", c.sqlstore.Dialect.BooleanStr(true), id)
-	if err != nil {
-		return false, err
-	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return rowsAffected == 1, nil
-}
-
-func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
-	sess := c.sqlstore.NewSession()
-	res, err := sess.Exec("UPDATE user_auth_token SET rotated_at = ? WHERE id = ?", rotatedAt, id)
-	if err != nil {
-		return false, err
-	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return false, err
-	}
-	return rowsAffected == 1, nil
 }

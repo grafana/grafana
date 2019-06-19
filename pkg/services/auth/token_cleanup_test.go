@@ -12,13 +12,13 @@ import (
 func TestUserAuthTokenCleanup(t *testing.T) {
 
 	Convey("Test user auth token cleanup", t, func() {
-		ctx := createTestContext(t)
-		ctx.tokenService.Cfg.LoginMaxInactiveLifetimeDays = 7
-		ctx.tokenService.Cfg.LoginMaxLifetimeDays = 30
+		ctx := CreateTestContext(t)
+		ctx.TokenService.Cfg.LoginMaxInactiveLifetimeDays = 7
+		ctx.TokenService.Cfg.LoginMaxLifetimeDays = 30
 
 		insertToken := func(token string, prev string, createdAt, rotatedAt int64) {
 			ut := userAuthToken{AuthToken: token, PrevAuthToken: prev, CreatedAt: createdAt, RotatedAt: rotatedAt, UserAgent: "", ClientIp: ""}
-			_, err := ctx.sqlstore.NewSession().Insert(&ut)
+			_, err := ctx.SQLstore.NewSession().Insert(&ut)
 			So(err, ShouldBeNil)
 		}
 
@@ -41,7 +41,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 				insertToken(fmt.Sprintf("newA%d", i), fmt.Sprintf("newB%d", i), from.Unix(), from.Unix())
 			}
 
-			affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 7*24*time.Hour, 30*24*time.Hour)
+			affected, err := ctx.TokenService.deleteExpiredTokens(context.Background(), 7*24*time.Hour, 30*24*time.Hour)
 			So(err, ShouldBeNil)
 			So(affected, ShouldEqual, 3)
 		})
@@ -61,7 +61,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 				insertToken(fmt.Sprintf("newA%d", i), fmt.Sprintf("newB%d", i), from.Unix(), fromRotate.Unix())
 			}
 
-			affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 7*24*time.Hour, 30*24*time.Hour)
+			affected, err := ctx.TokenService.deleteExpiredTokens(context.Background(), 7*24*time.Hour, 30*24*time.Hour)
 			So(err, ShouldBeNil)
 			So(affected, ShouldEqual, 3)
 		})
