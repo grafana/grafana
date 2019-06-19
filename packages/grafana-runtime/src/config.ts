@@ -11,35 +11,35 @@ export interface BuildInfo {
 }
 
 export class Settings {
-  datasources: { [str: string]: DataSourceInstanceSettings };
-  panels: { [key: string]: PanelPluginMeta };
-  appSubUrl: string;
-  windowTitlePrefix: string;
-  buildInfo: BuildInfo;
-  newPanelTitle: string;
+  datasources: { [str: string]: DataSourceInstanceSettings } = {};
+  panels: { [key: string]: PanelPluginMeta } = {};
+  appSubUrl: string = '';
+  windowTitlePrefix: string = '';
+  buildInfo: BuildInfo = {} as BuildInfo;
+  newPanelTitle: string = '';
   bootData: any;
-  externalUserMngLinkUrl: string;
-  externalUserMngLinkName: string;
-  externalUserMngInfo: string;
-  allowOrgCreate: boolean;
-  disableLoginForm: boolean;
-  defaultDatasource: string;
-  alertingEnabled: boolean;
-  alertingErrorOrTimeout: string;
-  alertingNoDataOrNullValues: string;
-  authProxyEnabled: boolean;
-  exploreEnabled: boolean;
-  ldapEnabled: boolean;
+  externalUserMngLinkUrl: string = '';
+  externalUserMngLinkName: string = '';
+  externalUserMngInfo: string = '';
+  allowOrgCreate: boolean = false;
+  disableLoginForm: boolean = false;
+  defaultDatasource: string = '';
+  alertingEnabled: boolean = false;
+  alertingErrorOrTimeout: string = '';
+  alertingNoDataOrNullValues: string = '';
+  authProxyEnabled: boolean = false;
+  exploreEnabled: boolean = false;
+  ldapEnabled: boolean = false;
   oauth: any;
-  disableUserSignUp: boolean;
+  disableUserSignUp: boolean = false;
   loginHint: any;
   passwordHint: any;
   loginError: any;
-  viewersCanEdit: boolean;
-  editorsCanAdmin: boolean;
-  disableSanitizeHtml: boolean;
+  viewersCanEdit: boolean = false;
+  editorsCanAdmin: boolean = false;
+  disableSanitizeHtml: boolean = false;
   theme: GrafanaTheme;
-  pluginsToPreload: string[];
+  pluginsToPreload: string[] = [];
 
   constructor(options: Settings) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
