@@ -107,7 +107,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             history={[]}
             panelData={panelData}
             queryResponse={queryResponse}
-            datasourceStatus={DataSourceStatus.Connected} // TODO replace with real DataSourceStatus
+            datasourceStatus={DataSourceStatus.Connected} // TODO: replace with real DataSourceStatus
           />
         </div>
 
@@ -166,6 +166,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               <PromLink
                 datasource={datasource}
                 query={this.query} // Use modified query
+                panelData={panelData}
               />
             </FormLabel>
           </div>
