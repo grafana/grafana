@@ -5,7 +5,7 @@ import Prism from 'prismjs';
 // Components
 import { css } from 'emotion';
 import { DataLink, ThemeContext } from '../../index';
-import { Button, ButtonVariant } from '../index';
+import { Button } from '../index';
 import { DataLinkEditor } from './DataLinkEditor';
 import { VariableSuggestion } from './DataLinkSuggestions';
 
@@ -66,7 +66,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
       )}
 
       {(!value || (value && value.length < (maxLinks || 1))) && (
-        <Button variant={ButtonVariant.Inverse} icon="fa fa-plus" onClick={() => onAdd()}>
+        <Button variant="inverse" icon="fa fa-plus" onClick={() => onAdd()}>
           Create link
         </Button>
       )}

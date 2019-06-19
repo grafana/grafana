@@ -66,9 +66,9 @@ export class LinkSrv implements LinkService {
   /** @ngInject */
   constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
 
-  getLinkUrl(link) {
+  getLinkUrl(link: any) {
     const url = this.templateSrv.replace(link.url || '');
-    const params = {};
+    const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
       const range = this.timeSrv.timeRangeForUrl();

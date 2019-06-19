@@ -22,16 +22,20 @@ import { updateLocation } from 'app/core/actions';
 // Types
 import { KioskUrlValue } from 'app/types';
 import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { UtilSrv } from 'app/core/services/util_srv';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { BridgeSrv } from 'app/core/services/bridge_srv';
+import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
+import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
 
 export class GrafanaCtrl {
   /** @ngInject */
   constructor(
-    $scope,
-    utilSrv,
-    $rootScope,
-    $controller,
-    contextSrv,
-    bridgeSrv,
+    $scope: any,
+    utilSrv: UtilSrv,
+    $rootScope: any,
+    contextSrv: ContextSrv,
+    bridgeSrv: BridgeSrv,
     backendSrv: BackendSrv,
     timeSrv: TimeSrv,
     linkSrv: LinkSrv,
@@ -65,7 +69,7 @@ export class GrafanaCtrl {
 
     $rootScope.colors = colors;
 
-    $rootScope.onAppEvent = function(name, callback, localScope) {
+    $rootScope.onAppEvent = function(name: string, callback: () => void, localScope: any) {
       const unbind = $rootScope.$on(name, callback);
       let callerScope = this;
       if (callerScope.$id === 1 && !localScope) {
@@ -77,7 +81,7 @@ export class GrafanaCtrl {
       callerScope.$on('$destroy', unbind);
     };
 
-    $rootScope.appEvent = (name, payload) => {
+    $rootScope.appEvent = (name: string, payload: any) => {
       $rootScope.$emit(name, payload);
       appEvents.emit(name, payload);
     };
@@ -106,11 +110,17 @@ function setViewModeBodyClass(body: JQuery, mode: KioskUrlValue) {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope, $location) {
+export function grafanaAppDirective(
+  playlistSrv: PlaylistSrv,
+  contextSrv: ContextSrv,
+  $timeout: ITimeoutService,
+  $rootScope: IRootScopeService,
+  $location: ILocationService
+) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
-    link: (scope, elem) => {
+    link: (scope: any, elem: JQuery) => {
       const body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
@@ -141,8 +151,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
       // tooltip removal fix
       // manage page classes
-      let pageClass;
-      scope.$on('$routeChangeSuccess', (evt, data) => {
+      let pageClass: string;
+      scope.$on('$routeChangeSuccess', (evt: any, data: any) => {
         if (pageClass) {
           body.removeClass(pageClass);
         }

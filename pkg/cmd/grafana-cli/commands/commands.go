@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"flag"
 	"os"
 
 	"github.com/codegangsta/cli"
@@ -19,11 +18,14 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 		cmd := &utils.ContextCommandLine{Context: context}
 
 		cfg := setting.NewCfg()
+
 		cfg.Load(&setting.CommandLineArgs{
 			Config:   cmd.String("config"),
 			HomePath: cmd.String("homepath"),
-			Args:     flag.Args(),
+			Args:     context.Args(),
 		})
+
+		cfg.LogConfigSources()
 
 		engine := &sqlstore.SqlStore{}
 		engine.Cfg = cfg
@@ -93,21 +95,23 @@ var pluginCommands = []cli.Command{
 	},
 }
 
+var dbCommandFlags = []cli.Flag{
+	cli.StringFlag{
+		Name:  "homepath",
+		Usage: "path to grafana install/home path, defaults to working directory",
+	},
+	cli.StringFlag{
+		Name:  "config",
+		Usage: "path to config file",
+	},
+}
+
 var adminCommands = []cli.Command{
 	{
 		Name:   "reset-admin-password",
 		Usage:  "reset-admin-password <new password>",
 		Action: runDbCommand(resetPasswordCommand),
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "homepath",
-				Usage: "path to grafana install/home path, defaults to working directory",
-			},
-			cli.StringFlag{
-				Name:  "config",
-				Usage: "path to config file",
-			},
-		},
+		Flags:  dbCommandFlags,
 	},
 	{
 		Name:  "data-migration",
@@ -117,6 +121,7 @@ var adminCommands = []cli.Command{
 				Name:   "encrypt-datasource-passwords",
 				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
 				Action: runDbCommand(datamigrations.EncryptDatasourcePaswords),
+				Flags:  dbCommandFlags,
 			},
 		},
 	},
