@@ -1,10 +1,11 @@
+// @ts-ignore
 import Plain from 'slate-plain-serializer';
 
 import LanguageProvider from '../language_provider';
 
 describe('Language completion provider', () => {
   const datasource = {
-    metadataRequest: () => ({ data: { data: [] } }),
+    metadataRequest: () => ({ data: { data: [] as any[] } }),
   };
 
   describe('empty query suggestions', () => {

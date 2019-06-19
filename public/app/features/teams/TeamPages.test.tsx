@@ -4,7 +4,7 @@ import { TeamPages, Props } from './TeamPages';
 import { Team, TeamMember, OrgRole } from '../../types';
 import { getMockTeam } from './__mocks__/teamMocks';
 import { User } from 'app/core/services/context_srv';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 
 jest.mock('app/core/config', () => ({
   buildInfo: { isEnterprise: true },
