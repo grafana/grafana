@@ -1,5 +1,11 @@
 # 6.3.0 (unreleased)
 
+# 6.2.4 (2019-06-18)
+
+### Bug Fixes
+* **Grafana-CLI**: Fix receiving flags via command line . [#17617](https://github.com/grafana/grafana/pull/17617), [@gotjosh](https://github.com/gotjosh)
+* **HTTPServer**: Fix X-XSS-Protection header formatting. [#17620](https://github.com/grafana/grafana/pull/17620), [@yverry](https://github.com/yverry)
+
 # 6.2.3 (2019-06-17)
 
 ### Known issues

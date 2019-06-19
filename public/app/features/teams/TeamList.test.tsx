@@ -4,7 +4,7 @@ import { Props, TeamList } from './TeamList';
 import { Team, OrgRole } from '../../types';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 import { User } from 'app/core/services/context_srv';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
