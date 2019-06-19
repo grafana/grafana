@@ -1,5 +1,6 @@
 export const jestConfig = () => {
   return {
+    preset: 'ts-jest',
     verbose: false,
     transform: {
       '^.+\\.(ts|tsx)$': 'ts-jest',
