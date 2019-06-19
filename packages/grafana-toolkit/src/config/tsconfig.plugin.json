@@ -3,7 +3,6 @@
     "moduleResolution": "node",
     "target": "es5",
     "lib": ["es6", "dom"],
-
     "module": "esnext",
     "strict": true,
     "alwaysStrict": true,
@@ -11,7 +10,6 @@
     "strictNullChecks": true,
     "skipLibCheck": true,
     "removeComments": false,
-
     "jsx": "react",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -32,6 +30,5 @@
     "outDir": "dist/lib",
     "typeRoots": ["node_modules/@types"],
     "baseUrl": "./src"
-  },
-  "include": ["src"]
+  }
 }
