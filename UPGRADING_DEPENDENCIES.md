@@ -60,7 +60,7 @@ Our builds run on CircleCI through our build script.
 
 The main build step (in CircleCI) is built using a custom build container that comes pre-baked with some of the necessary dependencies.
 
-Link: [grafana-build-container](https://github.com/grafana/grafana-build-container)
+Link: [grafana/build-container](https://github.com/grafana/grafana/tree/master/scripts/build/ci-build)
 
 #### Dependencies
 
