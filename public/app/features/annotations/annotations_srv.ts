@@ -153,10 +153,7 @@ export class AnnotationsSrv {
 
   deleteAnnotationEvent(annotation) {
     this.globalAnnotationsPromise = null;
-    let deleteUrl = `/api/annotations/${annotation.id}`;
-    if (annotation.isRegion) {
-      deleteUrl = `/api/annotations/region/${annotation.regionId}`;
-    }
+    const deleteUrl = `/api/annotations/${annotation.id}`;
 
     return this.backendSrv.delete(deleteUrl);
   }

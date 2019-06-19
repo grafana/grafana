@@ -144,8 +144,8 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	}
 
 	if query.From > 0 && query.To > 0 {
-		sql.WriteString(` AND annotation.epoch BETWEEN ? AND ?`)
-		params = append(params, query.From, query.To)
+		sql.WriteString(` AND annotation.epoch <= ? AND annotation.epoch_end >= ?`)
+		params = append(params, query.To, query.From)
 	}
 
 	if query.Type == "alert" {
