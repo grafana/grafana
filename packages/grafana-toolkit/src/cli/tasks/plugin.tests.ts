@@ -1,8 +1,5 @@
 import { Task, TaskRunner } from './task';
-// @ts-ignore
-import execa = require('execa');
-import { useSpinner } from '../utils/useSpinner';
-import { testPlugin } from './plugin/test';
+import { testPlugin } from './plugin/tests';
 
 interface PluginTestOptions {}
 

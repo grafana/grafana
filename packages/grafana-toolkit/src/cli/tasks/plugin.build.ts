@@ -9,7 +9,7 @@ import { inputOptions, outputOptions } from '../../config/rollup.plugin.config';
 
 import { useSpinner } from '../utils/useSpinner';
 import { Linter, Configuration, RuleFailure } from 'tslint';
-import { testPlugin } from './plugin/test';
+import { testPlugin } from './plugin/tests';
 interface PrecommitOptions {}
 
 // @ts-ignore
