@@ -1,5 +1,5 @@
 import React from 'react';
-import config, { Settings } from 'app/core/config';
+import { config, Settings } from '@grafana/runtime';
 import { GrafanaThemeType, ThemeContext, getTheme } from '@grafana/ui';
 
 export const ConfigContext = React.createContext<Settings>(config);
