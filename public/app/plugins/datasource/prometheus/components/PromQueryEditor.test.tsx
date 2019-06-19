@@ -1,6 +1,6 @@
 import React from 'react';
-import moment from 'moment';
 import { shallow } from 'enzyme';
+import { dateTime } from '@grafana/ui';
 
 import { PromQueryEditor } from './PromQueryEditor';
 import { PrometheusDatasource } from '../datasource';
@@ -10,8 +10,8 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => {
   return {
     getTimeSrv: () => ({
       timeRange: () => ({
-        from: moment(),
-        to: moment(),
+        from: dateTime(),
+        to: dateTime(),
       }),
     }),
   };

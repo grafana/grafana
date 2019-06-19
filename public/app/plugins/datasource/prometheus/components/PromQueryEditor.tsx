@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { FormLabel, Select, SelectOptionItem, Switch } from '@grafana/ui';
-import { QueryEditorProps, PanelData, DataSourceStatus } from '@grafana/ui/src/types';
+import { QueryEditorProps, DataSourceStatus } from '@grafana/ui/src/types';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
@@ -93,7 +93,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query } = this.props;
+    const { datasource, query, panelData, queryResponse } = this.props;
     const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
 
     return (
@@ -105,7 +105,8 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             onRunQuery={this.onRunQuery}
             onChange={this.onFieldChange}
             history={[]}
-            panelData={{} as PanelData} // TODO replace with real panelData
+            panelData={panelData}
+            queryResponse={queryResponse}
             datasourceStatus={DataSourceStatus.Connected} // TODO replace with real DataSourceStatus
           />
         </div>

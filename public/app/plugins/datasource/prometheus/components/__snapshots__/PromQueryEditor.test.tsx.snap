@@ -21,7 +21,6 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
       history={Array []}
       onChange={[Function]}
       onRunQuery={[Function]}
-      panelData={Object {}}
       query={
         Object {
           "expr": "",
