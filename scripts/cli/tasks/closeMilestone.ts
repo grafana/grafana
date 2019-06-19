@@ -1,8 +1,5 @@
 import axios from 'axios';
-import _ from 'lodash';
 import { Task, TaskRunner } from './task';
-
-// const githubGrafanaUrl = 'https://github.com/grafana/grafana';
 
 interface CloseMilestoneOptions {
   milestone: string;
