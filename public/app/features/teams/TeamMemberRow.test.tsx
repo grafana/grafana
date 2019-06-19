@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import { TeamMember, TeamPermissionLevel } from '../../types';
 import { getMockTeamMember } from './__mocks__/teamMocks';
 import { TeamMemberRow, Props } from './TeamMemberRow';
-import { SelectOptionItem } from '@grafana/ui';
+import { SelectOptionItem } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

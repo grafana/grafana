@@ -5,7 +5,7 @@ import difference from 'lodash/difference';
 
 import { Select } from '../index';
 
-import { SelectOptionItem } from '../Select/Select';
+import { SelectOptionItem } from '@grafana/data';
 import { fieldReducers } from '../../utils';
 
 interface Props {

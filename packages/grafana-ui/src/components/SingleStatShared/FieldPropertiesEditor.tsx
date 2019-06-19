@@ -9,7 +9,7 @@ import { UnitPicker } from '../UnitPicker/UnitPicker';
 // Types
 import { Field } from '../../types/data';
 import { toIntegerOrUndefined } from '@grafana/data';
-import { SelectOptionItem } from '../Select/Select';
+import { SelectOptionItem } from '@grafana/data';
 
 import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
 

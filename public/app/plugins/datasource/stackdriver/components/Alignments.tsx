@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { SelectOptionItem } from '@grafana/ui';
+import { SelectOptionItem } from '@grafana/data';
 
 export interface Props {
   onChange: (perSeriesAligner) => void;

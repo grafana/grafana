@@ -6,7 +6,7 @@ import { TimePickerOptionGroup } from './TimePickerOptionGroup';
 import { PopperContent } from '../Tooltip/PopperController';
 import { Timezone } from '../../utils/datemath';
 import { TimeRange, TimeOption, TimeOptions } from '../../types/time';
-import { SelectOptionItem } from '../Select/Select';
+import { SelectOptionItem } from '@grafana/data';
 import { isDateTime } from '../../utils/moment_wrapper';
 
 export interface Props {
