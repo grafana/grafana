@@ -5,17 +5,16 @@ import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 // Types
 import { DashboardModel } from '../../state';
 import { LocationState } from 'app/types';
-import { TimeRange, RawTimeRange, TimeOption } from '@grafana/ui';
+import { TimeRange, TimeOption } from '@grafana/ui';
 
 // State
 import { updateLocation } from 'app/core/actions';
 
 // Components
-import { TimePicker, RefreshPicker } from '@grafana/ui';
+import { TimePicker, RefreshPicker, RawTimeRange } from '@grafana/ui';
 
 // Utils & Services
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getRawTimeRangeToShow } from '@grafana/ui';
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
 
 export interface Props {
@@ -25,19 +24,13 @@ export interface Props {
   location: LocationState;
 }
 
-const TimePickerTooltipContent = ({
-  dashboard,
-  rawTimeRange,
-}: {
-  dashboard: DashboardModel;
-  rawTimeRange: RawTimeRange;
-}) => (
+const TimePickerTooltipContent = ({ dashboard, timeRange }: { dashboard: DashboardModel; timeRange: TimeRange }) => (
   <>
-    {dashboard.formatDate(rawTimeRange.from)}
+    {dashboard.formatDate(timeRange.from)}
     <br />
     to
     <br />
-    {dashboard.formatDate(rawTimeRange.to)}
+    {dashboard.formatDate(timeRange.to)}
   </>
 );
 
@@ -132,12 +125,7 @@ export class DashNavTimeControls extends Component<Props> {
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
           timeZone={timeZone}
-          tooltipContent={
-            <TimePickerTooltipContent
-              dashboard={dashboard}
-              rawTimeRange={getRawTimeRangeToShow(timeZone === 'utc', timePickerValue)}
-            />
-          }
+          tooltipContent={<TimePickerTooltipContent dashboard={dashboard} timeRange={timePickerValue} />}
           onMoveBackward={this.onMoveBack}
           onMoveForward={this.onMoveForward}
           onZoom={this.onZoom}

@@ -1,14 +1,21 @@
+// Libraries
 import React, { PureComponent, createRef } from 'react';
+
+// Components
 import { ButtonSelect } from '../Select/ButtonSelect';
-import { mapTimeOptionToTimeRange, mapTimeRangeToRangeString } from './time';
+import { Tooltip } from '../Tooltip/Tooltip';
+import { TimePickerPopover } from './TimePickerPopover';
+import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
+
+// Utils & Services
+import { isDateTime } from '../../utils/moment_wrapper';
+import * as rangeUtil from '../../utils/rangeutil';
+import { mapTimeOptionToTimeRange } from './time';
+
+// Types
 import { PopperContent } from '../Tooltip/PopperController';
 import { TimeRange, TimeOption, TimeZone } from '../../types/time';
 import { SelectOptionItem } from '../Select/Select';
-import { getRawTimeRangeToShow } from '../../utils/date';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { isDateTime } from '../../utils/moment_wrapper';
-import { TimePickerPopover } from './TimePickerPopover';
-import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 export interface Props {
   value: TimeRange;
@@ -101,8 +108,9 @@ export class TimePicker extends PureComponent<Props, State> {
       return;
     }
 
-    // @ts-ignore
-    onChange(mapTimeOptionToTimeRange(item.value, timeZone));
+    if (item.value) {
+      onChange(mapTimeOptionToTimeRange(item.value, timeZone));
+    }
   };
 
   onChangeMenuOpenState = (isOpen: boolean) => {
@@ -133,14 +141,14 @@ export class TimePicker extends PureComponent<Props, State> {
       timeZone,
     } = this.props;
     const { isCustomOpen } = this.state;
-
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
+    const rangeString = rangeUtil.describeTimeRange(value.raw);
 
     const label = (
       <>
         {isCustomOpen && <span>Custom time range</span>}
-        {!isCustomOpen && mapTimeRangeToRangeString(getRawTimeRangeToShow(timeZone === 'utc', value.raw))}
+        {!isCustomOpen && <span>{rangeString}</span>}
         {timeZone === 'utc' && <span className="time-picker-utc">UTC</span>}
       </>
     );

@@ -73,7 +73,7 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
       initialRange: range.raw,
       refreshInterval: '',
     };
-  } //Temp solution... How do detect if ds supports table format?
+  }
 
   static getDerivedStateFromProps(props: TimePickerProps, state: TimePickerState) {
     if (
@@ -102,8 +102,10 @@ export default class TimePicker extends PureComponent<TimePickerProps, TimePicke
       from: toUtc(origRange.from),
       to: toUtc(origRange.to),
     };
+
     const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
     let to, from;
+
     if (direction === -1) {
       to = range.to.valueOf() - timespan;
       from = range.from.valueOf() - timespan;
