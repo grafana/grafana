@@ -26,10 +26,12 @@ To add or update a new dependency, use the `go get` command:
 
 ```bash
 # Pick the latest tagged release.
-go get example.com/some/module/pkg
+# The GO111MODULE variable can be omitted when the code isn't located in GOPATH.
+GO111MODULE=on go get example.com/some/module/pkg
 
 # Pick a specific version.
-go get example.com/some/module/pkg@vX.Y.Z
+# The GO111MODULE variable can be omitted when the code isn't located in GOPATH.
+GO111MODULE=on go get example.com/some/module/pkg@vX.Y.Z
 ```
 
 Tidy up the `go.mod` and `go.sum` files and copy the new/updated dependency to the `vendor/` directory:
