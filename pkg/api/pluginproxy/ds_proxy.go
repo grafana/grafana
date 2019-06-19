@@ -43,6 +43,11 @@ type httpClient interface {
 func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *m.ReqContext, proxyPath string) *DataSourceProxy {
 	targetURL, _ := url.Parse(ds.Url)
 	if targetURL.Scheme == "unix" {
+		/*
+			Unix schemes do not have "host" (eg unix:///var/run/mysqld/mysqld.sock)
+			Host is required by HTTP but not used when sending over unix socket.
+			Setting to "localhost" to create valid http request.
+		*/
 		targetURL, _ = url.Parse("http://localhost")
 	}
 
