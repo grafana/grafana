@@ -1,3 +1,3 @@
 export * from './services';
-export { config, Settings } from './config';
+export * from './config';
 export { loadPluginCss } from './utils/plugin';

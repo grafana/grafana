@@ -1,5 +1,5 @@
-import { config } from '@grafana/runtime';
+import { config, GrafanaBootConfig } from '@grafana/runtime';
 
 // Legacy binding paths
-export { config };
+export { config, GrafanaBootConfig as Settings };
 export default config;

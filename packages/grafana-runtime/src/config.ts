@@ -10,7 +10,7 @@ export interface BuildInfo {
   hasUpdate: boolean;
 }
 
-export class Settings {
+export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
   appSubUrl = '';
@@ -41,7 +41,7 @@ export class Settings {
   theme: GrafanaTheme;
   pluginsToPreload: string[] = [];
 
-  constructor(options: Settings) {
+  constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
 
     const defaults = {
@@ -75,4 +75,4 @@ const bootData = (window as any).grafanaBootData || {
 const options = bootData.settings;
 options.bootData = bootData;
 
-export const config = new Settings(options);
+export const config = new GrafanaBootConfig(options);
