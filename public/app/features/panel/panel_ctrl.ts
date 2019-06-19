@@ -267,7 +267,7 @@ export class PanelCtrl {
         const info = linkSrv.getDataLinkUIModel(link, this.panel.scopedVars);
         html +=
           '<li><a class="panel-menu-link" href="' +
-          info.url +
+          info.href +
           '" target="' +
           info.target +
           '">' +

@@ -48,7 +48,7 @@ export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
 type LinkTarget = '_blank' | '_self';
 
 interface LinkModel {
-  url: string;
+  href: string;
   title: string;
   target: LinkTarget;
 }
@@ -116,7 +116,7 @@ export class LinkSrv implements LinkService {
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
     const info: LinkModel = {
-      url: link.url,
+      href: link.url,
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
     };
@@ -125,7 +125,7 @@ export class LinkSrv implements LinkService {
 
     const variablesQuery = toUrlParams(params);
 
-    info.url = this.templateSrv.replace(link.url, {
+    info.href = this.templateSrv.replace(link.url, {
       ...scopedVars,
       [DataLinkBuiltInVars.keepTime]: {
         text: timeRangeUrl,
@@ -138,8 +138,8 @@ export class LinkSrv implements LinkService {
     });
 
     if (dataPoint) {
-      info.url = this.templateSrv.replace(
-        info.url,
+      info.href = this.templateSrv.replace(
+        info.href,
         this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint[0]))
       );
     }

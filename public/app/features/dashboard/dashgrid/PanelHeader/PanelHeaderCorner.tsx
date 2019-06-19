@@ -56,7 +56,7 @@ export class PanelHeaderCorner extends Component<Props> {
               const info = linkSrv.getDataLinkUIModel(link, panel.scopedVars);
               return (
                 <li key={idx}>
-                  <a className="panel-menu-link" href={info.url} target={info.target}>
+                  <a className="panel-menu-link" href={info.href} target={info.target}>
                     {info.title}
                   </a>
                 </li>

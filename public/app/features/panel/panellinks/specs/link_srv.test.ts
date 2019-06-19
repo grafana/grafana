@@ -81,7 +81,7 @@ describe('linkSrv', () => {
             url: `/d/1?$${DataLinkBuiltInVars.keepTime}`,
           },
           {}
-        ).url
+        ).href
       ).toEqual('/d/1?from=now-1h&to=now');
     });
 
@@ -93,7 +93,7 @@ describe('linkSrv', () => {
             url: `/d/1?$${DataLinkBuiltInVars.includeVars}`,
           },
           {}
-        ).url
+        ).href
       ).toEqual('/d/1?var-test1=val1&var-test2=val2');
     });
 
@@ -106,7 +106,7 @@ describe('linkSrv', () => {
           },
           {},
           dataPointMock
-        ).url
+        ).href
       ).toEqual('/d/1?series=A-series');
     });
     it('should interpolate time range based on datapoint timestamp', () => {
@@ -118,7 +118,7 @@ describe('linkSrv', () => {
           },
           {},
           dataPointMock
-        ).url
+        ).href
       ).toEqual('/d/1?time=1000000000');
     });
   });

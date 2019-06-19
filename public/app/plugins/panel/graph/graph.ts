@@ -203,7 +203,7 @@ class GraphElement {
                 });
                 return {
                   label: linkUiModel.title,
-                  url: linkUiModel.url,
+                  url: linkUiModel.href,
                   target: linkUiModel.target,
                   icon: `fa ${linkUiModel.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
                 };
