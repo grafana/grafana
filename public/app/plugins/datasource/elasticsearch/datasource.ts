@@ -270,11 +270,10 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   query(options: DataQueryRequest<ElasticsearchQuery>): Promise<DataQueryResponse> {
     let payload = '';
     const targets = _.cloneDeep(options.targets);
-    const sentTargets = [];
+    const sentTargets: ElasticsearchQuery[] = [];
 
     // add global adhoc filters to timeFilter
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    let logsResult = false;
 
     for (const target of targets) {
       if (target.hide) {
@@ -289,7 +288,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
       let queryObj;
       if (target.context && target.context === 'explore') {
-        logsResult = true;
+        target.isLogsQuery = true;
         target.bucketAggs = [queryDef.defaultBucketAgg()];
         target.metrics = [queryDef.defaultMetricAgg()];
         queryObj = this.queryBuilder.getLogsQuery(target, queryString);
@@ -324,7 +323,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     return this.post(url, payload).then(res => {
       const er = new ElasticResponse(sentTargets, res);
-      if (logsResult) {
+      if (sentTargets.some(target => target.isLogsQuery)) {
         return er.getLogs(this.logMessageField, this.logLevelField);
       }
 

@@ -14,6 +14,7 @@ import { ElasticsearchOptions } from '../types';
 export interface ElasticsearchQuery extends DataQuery {
   query: string;
   context: string;
+  isLogsQuery: boolean;
   bucketAggs?: any[];
   metrics?: any[];
   alias?: string;
@@ -44,7 +45,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.onChangeQuery('');
+    this.onChangeQuery('', true);
   }
 
   componentWillUnmount() {}
@@ -62,7 +63,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
     // Send text change to parent
     const { query, onChange, onRunQuery } = this.props;
     if (onChange) {
-      const nextQuery: ElasticsearchQuery = { ...query, query: value, context: 'explore' };
+      const nextQuery: ElasticsearchQuery = { ...query, query: value, context: 'explore', isLogsQuery: true };
       onChange(nextQuery);
 
       if (override && onRunQuery) {
