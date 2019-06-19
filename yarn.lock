@@ -1664,7 +1664,14 @@
     react-input-autosize "^2.2.1"
     react-transition-group "^2.2.1"
 
-"@types/angular@1.6.54":
+"@types/angular-route@1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@types/angular-route/-/angular-route-1.7.0.tgz#ba12d09df1aac3c88e3684500001daedfc97fb69"
+  integrity sha512-gctkSXUY7hDwFeW8il7f3+sdMmds0JaMnHvrZmqX79DHXf2D72+SHxJHIt5i6+0BrhoqdWdpgziSxuKnkAUAQw==
+  dependencies:
+    "@types/angular" "*"
+
+"@types/angular@*", "@types/angular@1.6.54":
   version "1.6.54"
   resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.54.tgz#f9d5a03e4da7b021a6dabe5d63e899ed4567a5bd"
 

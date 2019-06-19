@@ -19,7 +19,7 @@ interface State {
 export class TextPanel extends PureComponent<Props, State> {
   remarkable: Remarkable;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
