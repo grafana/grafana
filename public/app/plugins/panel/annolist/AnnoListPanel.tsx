@@ -6,7 +6,8 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { AnnoOptions } from './types';
-import { PanelProps, Annotation, Tooltip, dateTime, DurationUnit } from '@grafana/ui';
+import { Annotation } from '@grafana/data';
+import { PanelProps, Tooltip, dateTime, DurationUnit } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
