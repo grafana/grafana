@@ -38,6 +38,19 @@ config_file = /etc/grafana/ldap.toml
 # Allow sign up should almost always be true (default) to allow new Grafana users to be created (if ldap authentication is ok). If set to
 # false only pre-existing Grafana users will be able to login (if ldap authentication is ok).
 allow_sign_up = true
+
+# Grafana Enterprise only.
+# Actively syncs grafana users with LDAP server(s) in the background. It will map the groups with the already existing users, disable removed LDAP users and etc.
+# You can use the Cron syntax or several predefined shedulers - 
+# @yearly (or @annually) | Run once a year, midnight, Jan. 1st        | 0 0 0 1 1 *
+# @monthly               | Run once a month, midnight, first of month | 0 0 0 1 * *
+# @weekly                | Run once a week, midnight between Sat/Sun  | 0 0 0 * * 0
+# @daily (or @midnight)  | Run once a day, midnight                   | 0 0 0 * * *
+# @hourly                | Run once an hour, beginning of hour        | 0 0 * * * * 
+sync_cron = "@hourly"
+# This cron expression format uses 6 space-separated fields (including seconds), for example
+# sync_cron = "* */10 * * * *" 
+# This will run the LDAP Synchronization every 10th minute, which is also the minimal interval between the grafana sync times i.e. you cannot set it for every 9th minute
 ```
 
 ## Grafana LDAP Configuration

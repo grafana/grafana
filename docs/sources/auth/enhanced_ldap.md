@@ -41,3 +41,11 @@ a user as member of a team and it will not be removed when the user signs in. Th
 5. Click on `Add group` button to save.
 
 <div class="clearfix"></div>
+
+## Active LDAP Synchronization
+
+With the open source version of grafana LDAP users will be sync only during the log in process.
+
+With this feature you can configure grafana to actively sync grafana users with LDAP server(s) in the background. It will map the groups with the already existing grafana users, disable removed LDAP users and etc; after certain configurable period.
+
+See the configuration [example](https://grafana.com/docs/auth/ldap/#enable-ldap) on how to use this feature. 
