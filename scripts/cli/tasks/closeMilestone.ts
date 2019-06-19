@@ -13,10 +13,7 @@ const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ mil
   const gitHubToken = process.env.GITHUB_ACCESS_TOKEN;
 
   if (!gitHubUsername || !gitHubToken) {
-    console.log(
-      'the close milestone operation needs a GITHUB_USERNAME and \
-    GITHUB_ACCESS_TOKEN environment variables'
-    );
+    console.log('the close milestone operation needs a GITHUB_USERNAME and  GITHUB_ACCESS_TOKEN environment variables');
     return;
   }
 
