@@ -4,6 +4,9 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
 
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { auto } from 'angular';
+
 export interface ResultFormat {
   text: string;
   value: string;
@@ -103,7 +106,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   subscriptions: Array<{ text: string; value: string }>;
 
   /** @ngInject */
-  constructor($scope, $injector, private templateSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService, private templateSrv: TemplateSrv) {
     super($scope, $injector);
 
     _.defaultsDeep(this.target, this.defaults);
@@ -360,7 +363,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   getAutoInterval() {
     if (this.target.azureMonitor.timeGrain === 'auto') {
       return TimegrainConverter.findClosestTimeGrain(
-        this.templateSrv.builtIns.__interval.value,
+        this.templateSrv.getBuiltInIntervalValue(),
         _.map(this.target.azureMonitor.timeGrains, o =>
           TimegrainConverter.createKbnUnitFromISO8601Duration(o.value)
         ) || ['1m', '5m', '15m', '30m', '1h', '6h', '12h', '1d']
@@ -407,7 +410,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   /* Application Insights Section */
 
   getAppInsightsAutoInterval() {
-    const interval = this.templateSrv.builtIns.__interval.value;
+    const interval = this.templateSrv.getBuiltInIntervalValue();
     if (interval[interval.length - 1] === 's') {
       return '1m';
     }

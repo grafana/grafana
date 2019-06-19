@@ -3,7 +3,7 @@ export class PrometheusConfigCtrl {
   current: any;
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope: any) {
     this.current.jsonData.httpMethod = this.current.jsonData.httpMethod || 'GET';
   }
 }

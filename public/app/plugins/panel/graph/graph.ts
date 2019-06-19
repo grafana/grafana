@@ -411,6 +411,7 @@ class GraphElement {
           show: panel.lines,
           zero: false,
           fill: this.translateFillOption(panel.fill),
+          fillColor: this.getFillGradient(panel.fillGradient),
           lineWidth: panel.dashes ? 0 : panel.linewidth,
           steps: panel.steppedLine,
         },
@@ -473,7 +474,17 @@ class GraphElement {
     }
   }
 
-  translateFillOption(fill) {
+  getFillGradient(amount: number) {
+    if (!amount) {
+      return null;
+    }
+
+    return {
+      colors: [{ opacity: 0.0 }, { opacity: amount / 10 }],
+    };
+  }
+
+  translateFillOption(fill: number) {
     if (this.panel.percentage && this.panel.stack) {
       return fill === 0 ? 0.001 : fill / 10;
     } else {

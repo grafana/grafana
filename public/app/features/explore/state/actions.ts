@@ -122,6 +122,7 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
  */
 export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
   return dispatch => {
+    dispatch(clearQueries(exploreId));
     dispatch(changeModeAction({ exploreId, mode }));
     dispatch(runQueries(exploreId));
   };

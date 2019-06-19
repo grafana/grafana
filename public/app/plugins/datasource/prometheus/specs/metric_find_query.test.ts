@@ -1,5 +1,6 @@
 import { PrometheusDatasource } from '../datasource';
 import PrometheusMetricFindQuery from '../metric_find_query';
+//@ts-ignore
 import q from 'q';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import { DataSourceInstanceSettings } from '@grafana/ui';
@@ -22,7 +23,7 @@ describe('PrometheusMetricFindQuery', () => {
       datasourceRequest: jest.fn(() => Promise.resolve({})),
     },
     templateSrvMock: {
-      replace: a => a,
+      replace: (a: string) => a,
     },
     timeSrvMock: {
       timeRange: () => ({

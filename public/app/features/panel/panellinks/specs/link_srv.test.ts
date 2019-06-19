@@ -1,5 +1,7 @@
 import { LinkSrv } from '../link_srv';
 import _ from 'lodash';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 jest.mock('angular', () => {
   const AngularJSMock = require('test/mocks/angular');
@@ -12,7 +14,7 @@ describe('linkSrv', () => {
   const timeSrvMock = {};
 
   beforeEach(() => {
-    linkSrv = new LinkSrv(templateSrvMock, timeSrvMock);
+    linkSrv = new LinkSrv(templateSrvMock as TemplateSrv, timeSrvMock as TimeSrv);
   });
 
   describe('when appending query strings', () => {

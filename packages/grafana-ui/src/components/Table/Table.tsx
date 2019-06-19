@@ -21,7 +21,7 @@ import {
   TableCellBuilderOptions,
   simpleCellBuilder,
 } from './TableCellBuilder';
-import { stringToJsRegex } from '../../utils/index';
+import { stringToJsRegex } from '@grafana/data';
 import { SeriesData } from '../../types/data';
 import { InterpolateFunction } from '../../types/panel';
 

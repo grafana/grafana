@@ -192,6 +192,8 @@ github.com/smartystreets/goconvey/convey/gotest
 github.com/stretchr/testify/assert
 # github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 github.com/teris-io/shortid
+# github.com/ua-parser/uap-go v0.0.0-20190303233514-1004ccd816b3
+github.com/ua-parser/uap-go/uaparser
 # github.com/uber/jaeger-client-go v2.16.0+incompatible
 github.com/uber/jaeger-client-go/config
 github.com/uber/jaeger-client-go/zipkin
