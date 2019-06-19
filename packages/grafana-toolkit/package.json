@@ -51,12 +51,12 @@
     "semver": "^6.1.1",
     "simple-git": "^1.112.0",
     "ts-node": "^8.2.0",
-    "tslint": "5.14.0",
-    "typescript": "^3.5.1"
+    "tslint": "5.14.0"
   },
   "peerDependencies": {
     "enzyme": "3.9.0",
-    "enzyme-adapter-react-16": "1.11.2"
+    "enzyme-adapter-react-16": "1.11.2",
+    "typescript": "3.5.1"
   },
   "resolutions": {
     "@types/lodash": "4.14.119",
