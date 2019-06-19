@@ -1,6 +1,6 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/ui';
+import { DataSourceApi, DataSourceInstanceSettings, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
@@ -267,7 +267,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return angular.toJson(queryHeader);
   }
 
-  query(options) {
+  query(options: DataQueryRequest<ElasticsearchQuery>): Promise<DataQueryResponse> {
     let payload = '';
     const targets = _.cloneDeep(options.targets);
     const sentTargets = [];
@@ -313,11 +313,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     }
 
     if (sentTargets.length === 0) {
-      return this.$q.when([]);
+      return Promise.resolve({ data: [] });
     }
 
-    payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
-    payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
+    payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf().toString());
+    payload = payload.replace(/\$timeTo/g, options.range.to.valueOf().toString());
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
     const url = this.getMultiSearchUrl();

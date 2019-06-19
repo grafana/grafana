@@ -14,6 +14,9 @@ import { ElasticsearchOptions } from '../types';
 export interface ElasticsearchQuery extends DataQuery {
   query: string;
   context: string;
+  bucketAggs?: any[];
+  metrics?: any[];
+  alias?: string;
 }
 
 interface Props extends ExploreQueryFieldProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions> {}
