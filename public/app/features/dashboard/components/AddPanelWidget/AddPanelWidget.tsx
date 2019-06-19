@@ -60,7 +60,6 @@ export class AddPanelWidget extends React.Component<Props, State> {
 
   handleCloseAddPanel(evt) {
     evt.preventDefault();
-    console.log(this.props.panel);
     this.props.dashboard.removePanel(this.props.panel);
   }
 
