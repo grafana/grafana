@@ -7,7 +7,6 @@ import { PluginMeta, AppPlugin, Button } from '@grafana/ui';
 
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { ButtonVariant } from '@grafana/ui/src/components/Button/AbstractButton';
 import { css } from 'emotion';
 
 interface Props {
@@ -71,17 +70,17 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
         {model && (
           <div className="gf-form">
             {!model.enabled && (
-              <Button variant={ButtonVariant.Primary} onClick={this.enable} className={withRightMargin}>
+              <Button variant="primary" onClick={this.enable} className={withRightMargin}>
                 Enable
               </Button>
             )}
             {model.enabled && (
-              <Button variant={ButtonVariant.Primary} onClick={this.update} className={withRightMargin}>
+              <Button variant="primary" onClick={this.update} className={withRightMargin}>
                 Update
               </Button>
             )}
             {model.enabled && (
-              <Button variant={ButtonVariant.Danger} onClick={this.disable} className={withRightMargin}>
+              <Button variant="danger" onClick={this.disable} className={withRightMargin}>
                 Disable
               </Button>
             )}

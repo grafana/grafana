@@ -4,6 +4,7 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import { PromCompleter } from './completer';
 import './mode-prometheus';
 import './snippets/prometheus';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -18,7 +19,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
   linkToPrometheus: any;
 
   /** @ngInject */
-  constructor($scope, $injector, private templateSrv) {
+  constructor($scope: any, $injector: angular.auto.IInjectorService, private templateSrv: TemplateSrv) {
     super($scope, $injector);
 
     const target = this.target;
@@ -42,7 +43,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
     this.updateLink();
   }
 
-  getCompleter(query) {
+  getCompleter(query: string) {
     return new PromCompleter(this.datasource, this.templateSrv);
   }
 
