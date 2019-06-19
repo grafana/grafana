@@ -6,7 +6,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   esVersion: number;
   interval: string;
   timeInterval: string;
-  maxConcurrentShardRequests: number;
+  maxConcurrentShardRequests?: number;
   logMessageField?: string;
   logLevelField?: string;
 }
