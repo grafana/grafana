@@ -214,7 +214,7 @@ export class TableRenderer {
     const row = this.table.rows[rowIndex];
     for (let i = 0; i < row.length; i++) {
       cellVariable = `__cell_${i}`;
-      scopedVars[cellVariable] = { value: row[i] };
+      scopedVars[cellVariable] = { value: row[i], text: _.toString(row[i]) };
     }
     return scopedVars;
   }
@@ -266,7 +266,7 @@ export class TableRenderer {
     if (column.style && column.style.link) {
       // Render cell as link
       const scopedVars = this.renderRowVariables(rowIndex);
-      scopedVars['__cell'] = { value: value };
+      scopedVars['__cell'] = { value: value, text: _.toString(value) };
 
       const cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
       const cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
