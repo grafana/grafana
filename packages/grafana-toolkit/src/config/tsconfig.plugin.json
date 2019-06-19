@@ -7,6 +7,11 @@
     "strict": true,
     "alwaysStrict": true,
     "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitUseStrict": false,
+    "noUnusedLocals": true,
+    "noEmitOnError": true,
     "strictNullChecks": true,
     "skipLibCheck": true,
     "removeComments": false,
@@ -18,17 +23,9 @@
     "noEmitHelpers": true,
     "inlineSourceMap": false,
     "sourceMap": true,
-    "noEmitOnError": false,
     "emitDecoratorMetadata": false,
     "experimentalDecorators": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitUseStrict": false,
     "downlevelIteration": true,
-    "noUnusedLocals": true,
-    "pretty": true,
-    "outDir": "dist/lib",
-    "typeRoots": ["node_modules/@types"],
-    "baseUrl": "./src"
+    "pretty": true
   }
 }
