@@ -4,15 +4,16 @@ import SignIn from './SignIn';
 import BottomNavLinks from './BottomNavLinks';
 import { contextSrv } from 'app/core/services/context_srv';
 import config from '../../config';
+import { NavModelItem } from '@grafana/data';
 
 export default function BottomSection() {
-  const navTree = _.cloneDeep(config.bootData.navTree);
-  const bottomNav = _.filter(navTree, item => item.hideFromMenu);
+  const navTree: NavModelItem[] = _.cloneDeep(config.bootData.navTree);
+  const bottomNav: NavModelItem[] = _.filter(navTree, item => item.hideFromMenu);
   const isSignedIn = contextSrv.isSignedIn;
   const user = contextSrv.user;
 
   if (user && user.orgCount > 1) {
-    const profileNode = _.find(bottomNav, { id: 'profile' });
+    const profileNode: any = _.find(bottomNav, { id: 'profile' });
     if (profileNode) {
       profileNode.showOrgSwitcher = true;
     }

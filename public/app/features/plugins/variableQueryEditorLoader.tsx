@@ -1,24 +1,26 @@
 import coreModule from 'app/core/core_module';
-import { importPluginModule } from './plugin_loader';
+import { importDataSourcePlugin } from './plugin_loader';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import DefaultVariableQueryEditor from '../templating/DefaultVariableQueryEditor';
+import { DataSourcePluginMeta } from '@grafana/ui';
+import { TemplateSrv } from '../templating/template_srv';
 
-async function loadComponent(module) {
-  const component = await importPluginModule(module);
-  if (component && component.VariableQueryEditor) {
-    return component.VariableQueryEditor;
+async function loadComponent(meta: DataSourcePluginMeta) {
+  const dsPlugin = await importDataSourcePlugin(meta);
+  if (dsPlugin.components.VariableQueryEditor) {
+    return dsPlugin.components.VariableQueryEditor;
   } else {
     return DefaultVariableQueryEditor;
   }
 }
 
 /** @ngInject */
-function variableQueryEditorLoader(templateSrv) {
+function variableQueryEditorLoader(templateSrv: TemplateSrv) {
   return {
     restrict: 'E',
     link: async (scope, elem) => {
-      const Component = await loadComponent(scope.currentDatasource.meta.module);
+      const Component = await loadComponent(scope.currentDatasource.meta);
       const props = {
         datasource: scope.currentDatasource,
         query: scope.current.query,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { FormLabel } from '@grafana/ui';
+import { FormLabel, Input } from '@grafana/ui';
 
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { updateTeam } from './state/actions';
@@ -52,7 +52,7 @@ export class TeamSettings extends React.Component<Props, State> {
         <form name="teamDetailsForm" className="gf-form-group" onSubmit={this.onUpdate}>
           <div className="gf-form max-width-30">
             <FormLabel>Name</FormLabel>
-            <input
+            <Input
               type="text"
               required
               value={name}
@@ -65,7 +65,7 @@ export class TeamSettings extends React.Component<Props, State> {
             <FormLabel tooltip="This is optional and is primarily used to set the team profile avatar (via gravatar service)">
               Email
             </FormLabel>
-            <input
+            <Input
               type="email"
               className="gf-form-input max-width-22"
               value={email}

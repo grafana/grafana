@@ -1,9 +1,8 @@
-import _ from 'lodash';
-import moment from 'moment';
 import angular from 'angular';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
+import _ from 'lodash';
 import { ElasticDatasource } from '../datasource';
-
-import * as dateMath from 'app/core/utils/datemath';
+import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('ElasticDatasource', function(this: any) {
   const backendSrv = {
@@ -67,15 +66,15 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.testDatasource();
 
-      const today = moment.utc().format('YYYY.MM.DD');
+      const today = toUtc().format('YYYY.MM.DD');
       expect(requestOptions.url).toBe('http://es.com/asd-' + today + '/_mapping');
     });
   });
 
   describe('When issuing metric query with interval pattern', () => {
-    let requestOptions, parts, header, query;
+    let requestOptions, parts, header, query, result;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       createDatasource({
         url: 'http://es.com',
         index: '[asd-]YYYY.MM.DD',
@@ -84,25 +83,42 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
-        return Promise.resolve({ data: { responses: [] } });
+        return Promise.resolve({
+          data: {
+            responses: [
+              {
+                aggregations: {
+                  '1': {
+                    buckets: [
+                      {
+                        doc_count: 10,
+                        key: 1000,
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
+        });
       });
 
       query = {
         range: {
-          from: moment.utc([2015, 4, 30, 10]),
-          to: moment.utc([2015, 5, 1, 10]),
+          from: toUtc([2015, 4, 30, 10]),
+          to: toUtc([2015, 5, 1, 10]),
         },
         targets: [
           {
             alias: '$varAlias',
-            bucketAggs: [],
-            metrics: [{ type: 'raw_document' }],
+            bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+            metrics: [{ type: 'count', id: '1' }],
             query: 'escape\\:test',
           },
         ],
       };
 
-      ctx.ds.query(query);
+      result = await ctx.ds.query(query);
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
@@ -112,8 +128,12 @@ describe('ElasticDatasource', function(this: any) {
       expect(header.index).toEqual(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
     });
 
-    it('should resolve the alias variable', () => {
-      expect(query.targets[0].alias).toEqual('resolvedVariable');
+    it('should not resolve the variable in the original alias field in the query', () => {
+      expect(query.targets[0].alias).toEqual('$varAlias');
+    });
+
+    it('should resolve the alias variable for the alias/target in the result', () => {
+      expect(result.data[0].target).toEqual('resolvedVariable');
     });
 
     it('should json escape lucene query', () => {
@@ -139,8 +159,8 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.query({
         range: {
-          from: moment([2015, 4, 30, 10]),
-          to: moment([2015, 5, 1, 10]),
+          from: dateTime([2015, 4, 30, 10]),
+          to: dateTime([2015, 5, 1, 10]),
         },
         targets: [
           {
@@ -167,7 +187,7 @@ describe('ElasticDatasource', function(this: any) {
 
   describe('When getting fields', () => {
     beforeEach(() => {
-      createDatasource({ url: 'http://es.com', index: 'metricbeat' });
+      createDatasource({ url: 'http://es.com', index: 'metricbeat', jsonData: { esVersion: 50 } });
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({
@@ -216,49 +236,191 @@ describe('ElasticDatasource', function(this: any) {
       });
     });
 
-    it('should return nested fields', () => {
-      ctx.ds
-        .getFields({
-          find: 'fields',
-          query: '*',
-        })
-        .then(fieldObjects => {
-          const fields = _.map(fieldObjects, 'text');
-          expect(fields).toEqual([
-            '@timestamp',
-            'beat.name.raw',
-            'beat.name',
-            'beat.hostname',
-            'system.cpu.system',
-            'system.cpu.user',
-            'system.process.cpu.total',
-            'system.process.name',
-          ]);
-        });
+    it('should return nested fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+      });
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual([
+        '@timestamp',
+        'beat.name.raw',
+        'beat.name',
+        'beat.hostname',
+        'system.cpu.system',
+        'system.cpu.user',
+        'system.process.cpu.total',
+        'system.process.name',
+      ]);
     });
 
-    it('should return fields related to query type', () => {
-      ctx.ds
-        .getFields({
-          find: 'fields',
-          query: '*',
-          type: 'number',
-        })
-        .then(fieldObjects => {
-          const fields = _.map(fieldObjects, 'text');
-          expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
-        });
+    it('should return number fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+        type: 'number',
+      });
 
-      ctx.ds
-        .getFields({
-          find: 'fields',
-          query: '*',
-          type: 'date',
-        })
-        .then(fieldObjects => {
-          const fields = _.map(fieldObjects, 'text');
-          expect(fields).toEqual(['@timestamp']);
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
+    });
+
+    it('should return date fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+        type: 'date',
+      });
+
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual(['@timestamp']);
+    });
+  });
+
+  describe('When getting fields from ES 7.0', () => {
+    beforeEach(() => {
+      createDatasource({ url: 'http://es.com', index: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
+
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+        return Promise.resolve({
+          data: {
+            'genuine.es7._mapping.response': {
+              mappings: {
+                properties: {
+                  '@timestamp_millis': {
+                    type: 'date',
+                    format: 'epoch_millis',
+                  },
+                  classification_terms: {
+                    type: 'keyword',
+                  },
+                  domains: {
+                    type: 'keyword',
+                  },
+                  ip_address: {
+                    type: 'ip',
+                  },
+                  justification_blob: {
+                    properties: {
+                      criterion: {
+                        type: 'text',
+                        fields: {
+                          keyword: {
+                            type: 'keyword',
+                            ignore_above: 256,
+                          },
+                        },
+                      },
+                      overall_vote_score: {
+                        type: 'float',
+                      },
+                      shallow: {
+                        properties: {
+                          jsi: {
+                            properties: {
+                              sdb: {
+                                properties: {
+                                  dsel2: {
+                                    properties: {
+                                      'bootlegged-gille': {
+                                        properties: {
+                                          botness: {
+                                            type: 'float',
+                                          },
+                                          general_algorithm_score: {
+                                            type: 'float',
+                                          },
+                                        },
+                                      },
+                                      'uncombed-boris': {
+                                        properties: {
+                                          botness: {
+                                            type: 'float',
+                                          },
+                                          general_algorithm_score: {
+                                            type: 'float',
+                                          },
+                                        },
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  overall_vote_score: {
+                    type: 'float',
+                  },
+                  ua_terms_long: {
+                    type: 'keyword',
+                  },
+                  ua_terms_short: {
+                    type: 'keyword',
+                  },
+                },
+              },
+            },
+          },
         });
+      });
+    });
+
+    it('should return nested fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+      });
+
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual([
+        '@timestamp_millis',
+        'classification_terms',
+        'domains',
+        'ip_address',
+        'justification_blob.criterion.keyword',
+        'justification_blob.criterion',
+        'justification_blob.overall_vote_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+        'overall_vote_score',
+        'ua_terms_long',
+        'ua_terms_short',
+      ]);
+    });
+
+    it('should return number fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+        type: 'number',
+      });
+
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual([
+        'justification_blob.overall_vote_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+        'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+        'overall_vote_score',
+      ]);
+    });
+
+    it('should return date fields', async () => {
+      const fieldObjects = await ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+        type: 'date',
+      });
+
+      const fields = _.map(fieldObjects, 'text');
+      expect(fields).toEqual(['@timestamp_millis']);
     });
   });
 
@@ -279,8 +441,8 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.query({
         range: {
-          from: moment([2015, 4, 30, 10]),
-          to: moment([2015, 5, 1, 10]),
+          from: dateTime([2015, 4, 30, 10]),
+          to: dateTime([2015, 5, 1, 10]),
         },
         targets: [
           {

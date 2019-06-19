@@ -27,7 +27,7 @@ installation.
 
 ```bash
 wget <debian package url>
-sudo apt-get install -y adduser libfontconfig
+sudo apt-get install -y adduser libfontconfig1
 sudo dpkg -i grafana_<version>_amd64.deb
 ```
 
@@ -35,28 +35,33 @@ Example:
 
 ```bash
 wget https://dl.grafana.com/oss/release/grafana_5.4.2_amd64.deb
-sudo apt-get install -y adduser libfontconfig
+sudo apt-get install -y adduser libfontconfig1
 sudo dpkg -i grafana_5.4.2_amd64.deb
 ```
 
 ## APT Repository
 
-Create a file `/etc/apt/sources.list.d/grafana.list` and add the following to it.
+The command `add-apt-repository` isn't a default app on Debian 9 and requires
+```bash
+apt-get install -y software-properties-common
+```
+
+Install the repository for stable releases
 
 ```bash
-deb https://packages.grafana.com/oss/deb stable main
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
 ```
 
 There is a separate repository if you want beta releases.
 
 ```bash
-deb https://packages.grafana.com/oss/deb beta main
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 ```
 
 Use the above line even if you are on Ubuntu or another Debian version. Then add our gpg key. This allows you to install signed packages.
 
 ```bash
-curl https://packages.grafana.com/gpg.key | sudo apt-key add -
+sudo wget -q -O - https://packages.grafana.com/gpg.key | apt-key add -
 ```
 
 Update your Apt repositories and install Grafana
@@ -146,10 +151,10 @@ those options.
 
 ### Adding data sources
 
-- [Graphite]({{< relref "features/datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "features/datasources/prometheus.md" >}})
+- [Graphite]({{< relref "../features/datasources/graphite.md" >}})
+- [InfluxDB]({{< relref "../features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "../features/datasources/opentsdb.md" >}})
+- [Prometheus]({{< relref "../features/datasources/prometheus.md" >}})
 
 ## Installing from binary tar file
 

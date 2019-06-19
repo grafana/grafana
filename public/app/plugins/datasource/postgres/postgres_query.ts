@@ -149,11 +149,11 @@ export default class PostgresQuery {
   buildValueColumn(column) {
     let query = '';
 
-    const columnName = _.find(column, (g: any) => g.type === 'column');
+    const columnName: any = _.find(column, (g: any) => g.type === 'column');
     query = columnName.params[0];
 
-    const aggregate = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
-    const windows = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
+    const aggregate: any = _.find(column, (g: any) => g.type === 'aggregate' || g.type === 'percentile');
+    const windows: any = _.find(column, (g: any) => g.type === 'window' || g.type === 'moving_window');
 
     if (aggregate) {
       const func = aggregate.params[0];
@@ -218,7 +218,7 @@ export default class PostgresQuery {
       }
     }
 
-    const alias = _.find(column, (g: any) => g.type === 'alias');
+    const alias: any = _.find(column, (g: any) => g.type === 'alias');
     if (alias) {
       query += ' AS ' + this.quoteIdentifier(alias.params[0]);
     }

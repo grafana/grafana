@@ -18,9 +18,10 @@ import (
 )
 
 var (
-	IoHelper       m.IoUtil = IoUtilImp{}
-	HttpClient     http.Client
-	grafanaVersion string
+	IoHelper         m.IoUtil = IoUtilImp{}
+	HttpClient       http.Client
+	grafanaVersion   string
+	ErrNotFoundError = errors.New("404 not found error")
 )
 
 func Init(version string, skipTLSVerify bool) {
@@ -31,7 +32,6 @@ func Init(version string, skipTLSVerify bool) {
 		DialContext: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
-			DualStack: true,
 		}).DialContext,
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
@@ -54,10 +54,6 @@ func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
 	if err != nil {
 		logger.Info("Failed to send request", "error", err)
 		return m.PluginRepo{}, fmt.Errorf("Failed to send request. error: %v", err)
-	}
-
-	if err != nil {
-		return m.PluginRepo{}, err
 	}
 
 	var data m.PluginRepo
@@ -126,15 +122,15 @@ func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 }
 
 func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
+	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
 	body, err := sendRequest(repoUrl, "repo", pluginId)
 
 	if err != nil {
-		logger.Info("Failed to send request", "error", err)
+		logger.Info("Failed to send request: ", err)
+		if err == ErrNotFoundError {
+			return m.Plugin{}, fmt.Errorf("Failed to find requested plugin, check if the plugin_id is correct. error: %v", err)
+		}
 		return m.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
-	}
-
-	if err != nil {
-		return m.Plugin{}, err
 	}
 
 	var data m.Plugin
@@ -169,6 +165,9 @@ func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 		return []byte{}, err
 	}
 
+	if res.StatusCode == 404 {
+		return []byte{}, ErrNotFoundError
+	}
 	if res.StatusCode/100 != 2 {
 		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)
 	}

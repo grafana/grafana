@@ -32,6 +32,7 @@ Name | Description
 *Database* | Name of your influxdb database
 *User* | Name of your database user
 *Password* | Database user's password
+*HTTP mode* | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
@@ -123,7 +124,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -212,4 +213,6 @@ datasources:
     user: grafana
     password: grafana
     url: http://localhost:8086
+    jsonData:
+      httpMode: GET
 ```

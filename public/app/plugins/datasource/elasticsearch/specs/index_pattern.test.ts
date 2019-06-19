@@ -1,13 +1,13 @@
 ///<amd-dependency path="test/specs/helpers" name="helpers" />
 
-import moment from 'moment';
 import { IndexPattern } from '../index_pattern';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('IndexPattern', () => {
   describe('when getting index for today', () => {
     test('should return correct index name', () => {
       const pattern = new IndexPattern('[asd-]YYYY.MM.DD', 'Daily');
-      const expected = 'asd-' + moment.utc().format('YYYY.MM.DD');
+      const expected = 'asd-' + toUtc().format('YYYY.MM.DD');
 
       expect(pattern.getIndexForToday()).toBe(expected);
     });

@@ -1,58 +1,62 @@
 package commands
 
 import (
-	"flag"
 	"os"
 
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func runDbCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
+func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
-		cmd := &contextCommandLine{context}
+		cmd := &utils.ContextCommandLine{Context: context}
 
 		cfg := setting.NewCfg()
+
 		cfg.Load(&setting.CommandLineArgs{
 			Config:   cmd.String("config"),
 			HomePath: cmd.String("homepath"),
-			Args:     flag.Args(),
+			Args:     context.Args(),
 		})
+
+		cfg.LogConfigSources()
 
 		engine := &sqlstore.SqlStore{}
 		engine.Cfg = cfg
 		engine.Bus = bus.GetBus()
 		engine.Init()
 
-		if err := command(cmd); err != nil {
+		if err := command(cmd, engine); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s\n\n", err)
 
 			cmd.ShowHelp()
 			os.Exit(1)
-		} else {
-			logger.Info("\n\n")
 		}
+
+		logger.Info("\n\n")
 	}
 }
 
-func runPluginCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
+func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
 
-		cmd := &contextCommandLine{context}
+		cmd := &utils.ContextCommandLine{Context: context}
 		if err := command(cmd); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))
 			logger.Errorf("%s %s\n\n", color.RedString("✗"), err)
 
 			cmd.ShowHelp()
 			os.Exit(1)
-		} else {
-			logger.Info("\nRestart grafana after installing plugins . <service grafana-server restart>\n\n")
 		}
+
+		logger.Info("\nRestart grafana after installing plugins . <service grafana-server restart>\n\n")
 	}
 }
 
@@ -91,19 +95,33 @@ var pluginCommands = []cli.Command{
 	},
 }
 
+var dbCommandFlags = []cli.Flag{
+	cli.StringFlag{
+		Name:  "homepath",
+		Usage: "path to grafana install/home path, defaults to working directory",
+	},
+	cli.StringFlag{
+		Name:  "config",
+		Usage: "path to config file",
+	},
+}
+
 var adminCommands = []cli.Command{
 	{
 		Name:   "reset-admin-password",
 		Usage:  "reset-admin-password <new password>",
 		Action: runDbCommand(resetPasswordCommand),
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "homepath",
-				Usage: "path to grafana install/home path, defaults to working directory",
-			},
-			cli.StringFlag{
-				Name:  "config",
-				Usage: "path to config file",
+		Flags:  dbCommandFlags,
+	},
+	{
+		Name:  "data-migration",
+		Usage: "Runs a script that migrates or cleanups data in your db",
+		Subcommands: []cli.Command{
+			{
+				Name:   "encrypt-datasource-passwords",
+				Usage:  "Migrates passwords from unsecured fields to secure_json_data field. Return ok unless there is an error. Safe to execute multiple times.",
+				Action: runDbCommand(datamigrations.EncryptDatasourcePaswords),
+				Flags:  dbCommandFlags,
 			},
 		},
 	},

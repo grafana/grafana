@@ -122,7 +122,7 @@
   }
 
   .modal-content-confirm-text {
-    margin-bottom: 2rem;
+    margin-bottom: $space-xl;
     span {
       text-align: center;
     }
@@ -143,17 +143,20 @@
 
   .share-modal-big-icon {
     margin-bottom: 10px;
-    margin-right: 2rem;
-    .fa,
-    .icon-gf {
+    margin-right: $space-xl;
+    .fa {
       font-size: 50px;
+    }
+    .gicon {
+      width: 48px;
+      height: 48px;
     }
   }
 
   .share-modal-info-text {
     margin-top: 5px;
     strong {
-      color: $headings-color;
+      color: $text-color-emphasis;
       font-weight: 500;
     }
   }

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 )
 
@@ -42,7 +42,8 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
-		"--web-security=false",
+		"--web-security=true",
+		"--local-url-access=false",
 		phantomDebugArg,
 		scriptPath,
 		fmt.Sprintf("url=%v", url),

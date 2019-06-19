@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
-import { NavModel, ApiKey, NewApiKey, OrgRole } from 'app/types';
+import { ApiKey, NewApiKey, OrgRole } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getApiKeys, getApiKeysCount } from './state/selectors';
 import { loadApiKeys, deleteApiKey, setSearchQuery, addApiKey } from './state/actions';
@@ -12,7 +12,8 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton } from '@grafana/ui';
+import { DeleteButton, Input } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
@@ -113,7 +114,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
           <EmptyListCTA
             model={{
               title: "You haven't added any API Keys yet.",
-              buttonIcon: 'fa fa-plus',
+              buttonIcon: 'gicon gicon-apikeys',
               buttonLink: '#',
               onClick: this.onToggleAdding,
               buttonTitle: ' New API Key',
@@ -143,7 +144,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
             <div className="gf-form-inline">
               <div className="gf-form max-width-21">
                 <span className="gf-form-label">Key name</span>
-                <input
+                <Input
                   type="text"
                   className="gf-form-input"
                   value={newApiKey.name}

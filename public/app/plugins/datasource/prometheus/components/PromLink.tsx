@@ -1,30 +1,47 @@
 import _ from 'lodash';
 import React, { Component } from 'react';
 
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
+import { DataQueryRequest, PanelData, dateTime } from '@grafana/ui';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
   datasource: PrometheusDatasource;
   query: PromQuery;
+  panelData: PanelData;
 }
 
-export default class PromLink extends Component<Props> {
-  getExternalLink(): string {
-    const { datasource, query } = this.props;
-    const range = getTimeSrv().timeRange();
-    const start = datasource.getPrometheusTime(range.from, false);
-    const end = datasource.getPrometheusTime(range.to, true);
+interface State {
+  href: string;
+}
+
+export default class PromLink extends Component<Props, State> {
+  state: State = { href: null };
+  async componentDidUpdate(prevProps: Props) {
+    if (prevProps.panelData !== this.props.panelData && this.props.panelData.request) {
+      const href = await this.getExternalLink();
+      this.setState({ href });
+    }
+  }
+
+  async getExternalLink(): Promise<string> {
+    const { query, panelData } = this.props;
+    const target = panelData.request.targets.length > 0 ? panelData.request.targets[0] : { datasource: null };
+    const datasourceName = target.datasource;
+    const datasource: PrometheusDatasource = datasourceName
+      ? (((await getDatasourceSrv().get(datasourceName)) as any) as PrometheusDatasource)
+      : (this.props.datasource as PrometheusDatasource);
+    const start = panelData.request.startTime;
+    const end = panelData.request.endTime;
 
     const rangeDiff = Math.ceil(end - start);
-    const endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
+    const endTime = dateTime(end)
+      .utc()
+      .format('YYYY-MM-DD HH:mm');
     const options = {
-      // TODO Should be the dynamically calculated interval from the panel ctrl
-      interval: datasource.interval,
-    };
-    // TODO update expr when template variables change
+      interval: panelData.request.interval,
+    } as DataQueryRequest<PromQuery>;
     const queryOptions = datasource.createQuery(query, options, start, end);
     const expr = {
       'g0.expr': queryOptions.expr,
@@ -41,7 +58,7 @@ export default class PromLink extends Component<Props> {
   }
 
   render() {
-    const href = this.getExternalLink();
+    const { href } = this.state;
     return (
       <a href={href} target="_blank">
         <i className="fa fa-share-square-o" /> Prometheus

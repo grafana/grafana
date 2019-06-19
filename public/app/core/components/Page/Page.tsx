@@ -1,7 +1,6 @@
 // Libraries
 import React, { Component } from 'react';
 import config from 'app/core/config';
-import { NavModel } from 'app/types';
 import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 
 // Components
@@ -9,6 +8,7 @@ import PageHeader from '../PageHeader/PageHeader';
 import Footer from '../Footer/Footer';
 import PageContents from './PageContents';
 import { CustomScrollbar } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import { isEqual } from 'lodash';
 
 interface Props {

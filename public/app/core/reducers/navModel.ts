@@ -1,5 +1,5 @@
 import { Action, ActionTypes } from 'app/core/actions/navModel';
-import { NavIndex, NavModelItem } from 'app/types';
+import { NavIndex, NavModelItem } from '@grafana/data';
 import config from 'app/core/config';
 
 export function buildInitialState(): NavIndex {
@@ -27,7 +27,7 @@ export const initialState: NavIndex = buildInitialState();
 export const navIndexReducer = (state = initialState, action: Action): NavIndex => {
   switch (action.type) {
     case ActionTypes.UpdateNavIndex:
-      const newPages = {};
+      const newPages: NavIndex = {};
       const payload = action.payload;
 
       for (const node of payload.children) {

@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "PieChart v2",
+  "id": "piechart",
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icon_piechart.svg",
+      "large": "img/icon_piechart.svg"
+    }
+  }
+}

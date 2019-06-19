@@ -112,6 +112,7 @@ export class CloudWatchQueryParameterCtrl {
         query = $scope.datasource.getDimensionKeys($scope.target.namespace, $scope.target.region);
       } else if (segment.type === 'value') {
         const dimensionKey = $scope.dimSegments[$index - 2].value;
+        delete target.dimensions[dimensionKey];
         query = $scope.datasource.getDimensionValues(
           target.region,
           target.namespace,

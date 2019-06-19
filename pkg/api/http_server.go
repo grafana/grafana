@@ -16,17 +16,18 @@ import (
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/session"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -41,6 +42,13 @@ func init() {
 	})
 }
 
+type ProvisioningService interface {
+	ProvisionDatasources() error
+	ProvisionNotifications() error
+	ProvisionDashboards() error
+	GetDashboardProvisionerResolvedPath(name string) string
+}
+
 type HTTPServer struct {
 	log           log.Logger
 	macaron       *macaron.Macaron
@@ -48,15 +56,18 @@ type HTTPServer struct {
 	streamManager *live.StreamManager
 	httpSrv       *http.Server
 
-	RouteRegister    routing.RouteRegister    `inject:""`
-	Bus              bus.Bus                  `inject:""`
-	RenderService    rendering.Service        `inject:""`
-	Cfg              *setting.Cfg             `inject:""`
-	HooksService     *hooks.HooksService      `inject:""`
-	CacheService     *cache.CacheService      `inject:""`
-	DatasourceCache  datasources.CacheService `inject:""`
-	AuthTokenService models.UserTokenService  `inject:""`
-	QuotaService     *quota.QuotaService      `inject:""`
+	RouteRegister       routing.RouteRegister    `inject:""`
+	Bus                 bus.Bus                  `inject:""`
+	RenderService       rendering.Service        `inject:""`
+	Cfg                 *setting.Cfg             `inject:""`
+	HooksService        *hooks.HooksService      `inject:""`
+	CacheService        *localcache.CacheService `inject:""`
+	DatasourceCache     datasources.CacheService `inject:""`
+	AuthTokenService    models.UserTokenService  `inject:""`
+	QuotaService        *quota.QuotaService      `inject:""`
+	RemoteCacheService  *remotecache.RemoteCache `inject:""`
+	ProvisioningService ProvisioningService      `inject:""`
+	Login               *login.LoginService      `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
@@ -65,8 +76,6 @@ func (hs *HTTPServer) Init() error {
 	hs.streamManager = live.NewStreamManager()
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
-
-	session.Init(&setting.SessionOptions, setting.SessionConnMaxLifetime)
 
 	return nil
 }
@@ -218,6 +227,12 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
+	m.Use(middleware.AddDefaultResponseHeaders())
+
+	if setting.ServeFromSubPath && setting.AppSubUrl != "" {
+		m.SetURLPrefix(setting.AppSubUrl)
+	}
+
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
@@ -226,7 +241,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(hs.healthHandler)
 	m.Use(hs.metricsEndpoint)
-	m.Use(middleware.GetContextHandler(hs.AuthTokenService))
+	m.Use(middleware.GetContextHandler(
+		hs.AuthTokenService,
+		hs.RemoteCacheService,
+	))
 	m.Use(middleware.OrgRedirect())
 
 	// needs to be after context handler
@@ -235,7 +253,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.HandleNoCacheHeader())
-	m.Use(middleware.AddDefaultResponseHeaders())
 }
 
 func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
@@ -243,7 +260,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 		return
 	}
 
-	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/metrics" {
+	if ctx.Req.Method != http.MethodGet || ctx.Req.URL.Path != "/metrics" {
 		return
 	}
 

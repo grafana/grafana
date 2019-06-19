@@ -22,6 +22,11 @@
   .ds-picker {
     min-width: 200px;
     max-width: 200px;
+
+    .gf-form-select-box__img-value {
+      max-width: 150px;
+      overflow: hidden;
+    }
   }
 }
 
@@ -41,6 +46,14 @@
 .explore-toolbar-item {
   position: relative;
   align-self: center;
+
+  &:first-child {
+    padding-left: 34px;
+
+    @include media-breakpoint-up(md) {
+      padding-left: 0;
+    }
+  }
 }
 
 .explore-toolbar.splitted {
@@ -66,11 +79,6 @@
   min-height: 55px;
   line-height: 55px;
   justify-content: space-between;
-  margin-left: $space-xl;
-}
-
-.explore-toolbar-header {
-  justify-content: space-between;
   align-items: center;
 }
 
@@ -93,6 +101,7 @@
 .explore-toolbar-content-item:first-child {
   padding-left: $dashboard-padding;
   margin-right: auto;
+  display: flex;
 }
 
 @media only screen and (max-width: 1545px) {
@@ -126,12 +135,6 @@
   }
 }
 
-@media only screen and (max-width: 803px) {
-  .btn-title {
-    display: none;
-  }
-}
-
 @media only screen and (max-width: 702px) {
   .explore-toolbar-content-item:first-child {
     padding-left: 2px;
@@ -139,16 +142,14 @@
   }
 }
 
-@media only screen and (max-width: 544px) {
-  .explore-toolbar-header-title {
-    .navbar-page-btn {
-      margin-left: $dashboard-padding;
-    }
-  }
+.explore {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
 }
 
-.explore {
-  flex: 1 1 auto;
+.explore.explore-live {
+  flex-direction: column-reverse;
 }
 
 .explore + .explore {
@@ -156,7 +157,14 @@
 }
 
 .explore-container {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   padding: $dashboard-padding;
+}
+
+.explore-container.explore-live {
+  flex-direction: column-reverse;
 }
 
 .explore-wrapper {
@@ -176,12 +184,9 @@
 }
 
 .explore-panel__header {
-  padding: $panel-padding;
-  padding-top: 5px;
-  padding-bottom: 0;
+  padding: $space-sm $space-md 0 $space-md;
   display: flex;
-  cursor: pointer;
-  margin-bottom: 5px;
+  cursor: inherit;
   transition: all 0.1s linear;
 }
 
@@ -193,9 +198,20 @@
 }
 
 .explore-panel__header-buttons {
-  margin-right: $space-sm;
-  font-size: $font-size-lg;
-  line-height: $font-size-h6;
+  display: none;
+}
+
+.explore-panel--collapsible {
+  .explore-panel__header {
+    cursor: pointer;
+  }
+
+  .explore-panel__header-buttons {
+    margin-right: $space-sm;
+    font-size: $font-size-lg;
+    line-height: $font-size-h6;
+    display: inherit;
+  }
 }
 
 .time-series-disclaimer {
@@ -221,9 +237,9 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 3.5rem;
+  top: 48px;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 11px;
 }
 
 .graph-legend {
@@ -269,7 +285,7 @@
   align-items: flex-start;
 
   & + & {
-    margin-top: 0.5rem;
+    margin-top: $space-sm;
   }
 }
 
@@ -430,4 +446,22 @@
 .cheat-sheet-item__expression {
   margin: $space-xs 0;
   cursor: pointer;
+}
+
+.query-type-toggle {
+  margin-left: 5px;
+
+  .toggle-button-group {
+    padding-top: 2px;
+  }
+
+  .btn.active {
+    background-color: $input-bg;
+    background-image: none;
+    background-clip: padding-box;
+    border: $input-border;
+    border-radius: $input-border-radius;
+    @include box-shadow($input-box-shadow);
+    color: $input-color;
+  }
 }
