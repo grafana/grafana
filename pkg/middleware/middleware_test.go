@@ -21,6 +21,39 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
+func TestMiddleWareSecurityHeaders(t *testing.T) {
+	setting.ERR_TEMPLATE_NAME = "error-template"
+
+	Convey("Given the grafana middleware", t, func() {
+
+		middlewareScenario(t, "middleware should get correct x-xss-protection header", func(sc *scenarioContext) {
+			setting.XSSProtectionHeader = true
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("X-XSS-Protection"), ShouldEqual, "1; mode=block")
+		})
+
+		middlewareScenario(t, "middleware should not get x-xss-protection when disabled", func(sc *scenarioContext) {
+			setting.XSSProtectionHeader = false
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("X-XSS-Protection"), ShouldBeEmpty)
+		})
+
+		middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(sc *scenarioContext) {
+			setting.StrictTransportSecurity = true
+			setting.Protocol = setting.HTTPS
+			setting.StrictTransportSecurityMaxAge = 64000
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000")
+			setting.StrictTransportSecurityPreload = true
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000; preload")
+			setting.StrictTransportSecuritySubDomains = true
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000; preload; includeSubDomains")
+		})
+	})
+}
+
 func TestMiddlewareContext(t *testing.T) {
 	setting.ERR_TEMPLATE_NAME = "error-template"
 
