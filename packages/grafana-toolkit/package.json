@@ -51,6 +51,7 @@
     "semver": "^6.1.1",
     "simple-git": "^1.112.0",
     "ts-node": "^8.2.0",
+    "tslint": "^5.17.0",
     "typescript": "^3.5.1"
   },
   "peerDependencies": {
