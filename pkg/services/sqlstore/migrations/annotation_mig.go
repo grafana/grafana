@@ -109,4 +109,23 @@ func addAnnotationMig(mg *Migrator) {
 	//
 	updateEpochSql := "UPDATE annotation SET epoch = (epoch*1000) where epoch < 9999999999"
 	mg.AddMigration("Convert existing annotations from seconds to milliseconds", NewRawSqlMigration(updateEpochSql))
+
+	//
+	// 6.3: Make Regions a single annotiaon
+	//
+	mg.AddMigration("Add epoch_end column", NewAddColumnMigration(table, &Column{
+		Name: "epoch_end", Type: DB_BigInt, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("Add index for epoch_end", NewAddIndexMigration(table, &Index{
+		Cols: []string{"epoch_end"}, Type: IndexType,
+	}))
+	mg.AddMigration("Move old epoch to epoch_end", NewRawSqlMigration(
+		`UPDATE annotation SET epoch_end = 
+			(SELECT epoch
+				FROM annotation as b
+				WHERE b.region_id = annotation.id AND b.id is not annotation.id) 
+			where region_id = id`))
+	mg.AddMigration("Remove region annotations", NewRawSqlMigration("DELETE FROM annotation WHERE region_id > 0 AND id is not region_id"))
+
+	// TODO! drop region_id column!
 }

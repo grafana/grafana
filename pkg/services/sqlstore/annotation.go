@@ -52,12 +52,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		)
 		existing := new(annotations.Item)
 
-		if item.Id == 0 && item.RegionId != 0 {
-			// Update region end time
-			isExist, err = sess.Table("annotation").Where("region_id=? AND id!=? AND org_id=?", item.RegionId, item.RegionId, item.OrgId).Get(existing)
-		} else {
-			isExist, err = sess.Table("annotation").Where("id=? AND org_id=?", item.Id, item.OrgId).Get(existing)
-		}
+		isExist, err = sess.Table("annotation").Where("id=? AND org_id=?", item.Id, item.OrgId).Get(existing)
 
 		if err != nil {
 			return err
@@ -69,9 +64,6 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		existing.Updated = time.Now().UnixNano() / int64(time.Millisecond)
 		existing.Epoch = item.Epoch
 		existing.Text = item.Text
-		if item.RegionId != 0 {
-			existing.RegionId = item.RegionId
-		}
 
 		if item.Tags != nil {
 			tags, err := EnsureTagsExist(sess, models.ParseTagPairs(item.Tags))
@@ -90,7 +82,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 
 		existing.Tags = item.Tags
 
-		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "region_id", "updated", "tags").Update(existing)
+		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "epoch_end", "updated", "tags").Update(existing)
 		return err
 	})
 }
@@ -103,12 +95,12 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		SELECT
 			annotation.id,
 			annotation.epoch as time,
+			annotation.epoch_end as time_end,
 			annotation.dashboard_id,
 			annotation.panel_id,
 			annotation.new_state,
 			annotation.prev_state,
 			annotation.alert_id,
-			annotation.region_id,
 			annotation.text,
 			annotation.tags,
 			annotation.data,
@@ -129,11 +121,6 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		// fmt.Print("annotation query")
 		sql.WriteString(` AND annotation.id = ?`)
 		params = append(params, query.AnnotationId)
-	}
-
-	if query.RegionId != 0 {
-		sql.WriteString(` AND annotation.region_id = ?`)
-		params = append(params, query.RegionId)
 	}
 
 	if query.AlertId != 0 {
@@ -224,11 +211,7 @@ func (r *SqlAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 		)
 
 		sqlog.Info("delete", "orgId", params.OrgId)
-		if params.RegionId != 0 {
-			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE region_id = ? AND org_id = ?)"
-			sql = "DELETE FROM annotation WHERE region_id = ? AND org_id = ?"
-			queryParams = []interface{}{params.RegionId, params.OrgId}
-		} else if params.Id != 0 {
+		if params.Id != 0 {
 			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE id = ? AND org_id = ?)"
 			sql = "DELETE FROM annotation WHERE id = ? AND org_id = ?"
 			queryParams = []interface{}{params.Id, params.OrgId}

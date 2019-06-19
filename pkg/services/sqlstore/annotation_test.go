@@ -43,8 +43,8 @@ func TestAnnotations(t *testing.T) {
 				Text:        "hello",
 				Type:        "alert",
 				Epoch:       20,
+				EpochEnd:    20,
 				Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
-				RegionId:    1,
 			}
 			err = repo.Save(annotation2)
 			So(err, ShouldBeNil)
@@ -100,17 +100,6 @@ func TestAnnotations(t *testing.T) {
 				items, err := repo.Find(&annotations.ItemQuery{
 					OrgId:        1,
 					AnnotationId: annotation2.Id,
-				})
-
-				So(err, ShouldBeNil)
-				So(items, ShouldHaveLength, 1)
-				So(items[0].Id, ShouldEqual, annotation2.Id)
-			})
-
-			Convey("Can query for annotation by region id", func() {
-				items, err := repo.Find(&annotations.ItemQuery{
-					OrgId:    1,
-					RegionId: annotation2.RegionId,
 				})
 
 				So(err, ShouldBeNil)

@@ -9,7 +9,6 @@ type PostAnnotationsCmd struct {
 	Text        string           `json:"text"`
 	Tags        []string         `json:"tags"`
 	Data        *simplejson.Json `json:"data"`
-	IsRegion    bool             `json:"isRegion"`
 	TimeEnd     int64            `json:"timeEnd"`
 }
 
