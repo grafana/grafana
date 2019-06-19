@@ -131,6 +131,32 @@ exports[`Render should render CTA if there are no API keys 1`] = `
               </span>
             </div>
             <div
+              className="gf-form max-width-21"
+            >
+              <span
+                className="gf-form-label"
+              >
+                Seconds to live
+              </span>
+              <Input
+                className="gf-form-input"
+                onChange={[Function]}
+                placeholder="1d"
+                type="text"
+                validationEvents={
+                  Object {
+                    "onBlur": Array [
+                      Object {
+                        "errorMessage": "Not a valid duration",
+                        "rule": [Function],
+                      },
+                    ],
+                  }
+                }
+                value=""
+              />
+            </div>
+            <div
               className="gf-form"
             >
               <button
