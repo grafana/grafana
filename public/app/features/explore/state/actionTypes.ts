@@ -14,6 +14,7 @@ import {
   TimeSeries,
   DataQueryResponseData,
   LoadingState,
+  AbsoluteTimeRange,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -273,10 +274,13 @@ export interface LimitMessageRatePayload {
 export interface ChangeRangePayload {
   exploreId: ExploreId;
   range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
 }
 
 export interface UpdateTimeRangePayload {
   exploreId: ExploreId;
+  rawRange?: RawTimeRange;
+  absoluteRange?: AbsoluteTimeRange;
 }
 
 /**

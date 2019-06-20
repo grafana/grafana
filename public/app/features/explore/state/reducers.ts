@@ -95,6 +95,10 @@ export const makeExploreItemState = (): ExploreItemState => ({
     to: null,
     raw: DEFAULT_RANGE,
   },
+  absoluteRange: {
+    from: null,
+    to: null,
+  },
   scanning: false,
   scanRange: null,
   showingGraph: true,
@@ -575,9 +579,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: changeRangeAction,
     mapper: (state, action): ExploreItemState => {
+      const { range, absoluteRange } = action.payload;
       return {
         ...state,
-        range: action.payload.range,
+        range,
+        absoluteRange,
       };
     },
   })

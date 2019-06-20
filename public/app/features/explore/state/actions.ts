@@ -24,6 +24,7 @@ import {
   DataSourceSelectItem,
   QueryFixAction,
   LogsDedupStrategy,
+  AbsoluteTimeRange,
 } from '@grafana/ui';
 import { ExploreId, RangeScanner, ExploreUIState, QueryTransaction, ExploreMode } from 'app/types/explore';
 import {
@@ -165,17 +166,16 @@ export function changeSize(
   return changeSizeAction({ exploreId, height, width });
 }
 
-/**
- * Change the time range of Explore. Usually called from the Time picker or a graph interaction.
- */
-export function changeTime(exploreId: ExploreId, rawRange: RawTimeRange): ThunkResult<void> {
-  return (dispatch, getState) => {
-    const timeZone = getTimeZone(getState().user);
-    const range = getTimeRange(timeZone, rawRange);
-    dispatch(changeTimeAction({ exploreId, range }));
-    dispatch(runQueries(exploreId));
+export const updateTimeRange = (options: {
+  exploreId: ExploreId;
+  rawRange?: RawTimeRange;
+  absoluteRange?: AbsoluteTimeRange;
+}): ThunkResult<void> => {
+  return dispatch => {
+    dispatch(updateTimeRangeAction({ ...options }));
+    dispatch(runQueries(options.exploreId));
   };
-}
+};
 
 /**
  * Change the refresh interval of Explore. Called from the Refresh picker.
