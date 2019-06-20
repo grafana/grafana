@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
-import { DataQueryRequest, PanelData, dateTime } from '@grafana/ui';
+import { DataQueryRequest, PanelData } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 interface Props {
@@ -32,13 +32,13 @@ export default class PromLink extends Component<Props, State> {
     const datasource: PrometheusDatasource = datasourceName
       ? (((await getDatasourceSrv().get(datasourceName)) as any) as PrometheusDatasource)
       : (this.props.datasource as PrometheusDatasource);
-    const start = panelData.request.startTime;
-    const end = panelData.request.endTime;
 
+    const range = panelData.request.range;
+    const start = datasource.getPrometheusTime(range.from, false);
+    const end = datasource.getPrometheusTime(range.to, true);
     const rangeDiff = Math.ceil(end - start);
-    const endTime = dateTime(end)
-      .utc()
-      .format('YYYY-MM-DD HH:mm');
+    const endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
+
     const options = {
       interval: panelData.request.interval,
     } as DataQueryRequest<PromQuery>;
