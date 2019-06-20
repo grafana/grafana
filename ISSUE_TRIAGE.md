@@ -29,7 +29,49 @@ Instructions for setting up Gmail filters can be hound [here](#-setting-up-gmail
 
 ## 2. Ensure the issue contains basic information
 
-Before triaging an issue very far, make sure that the issue's author provided the standard issue information. This will help you make an educated recommendation on how to categorize the issue. The Grafana project utilizes [GitHub issue templates](https://help.github.com/en/articles/creating-issue-templates-for-your-repository) to guide  contributors to provide standard information that must be included for each type of template or type of issue, see details [here](#standard-issue-information).
+Before triaging an issue very far, make sure that the issue's author provided the standard issue information. This will help you make an educated recommendation on how to categorize the issue. The Grafana project utilizes [GitHub issue templates](https://help.github.com/en/articles/creating-issue-templates-for-your-repository) to guide  contributors to provide standard information that must be included for each type of template or type of issue.
+
+### Standard issue information that must be included
+
+Given a certain [issue template]([template](https://github.com/grafana/grafana/issues/new/choose)) have been used by the issue author or depending how the issue is perceived by the issue triage responsible, the following should help you understand what standard issue information that must be included.
+
+#### Bug report?
+
+Should explain what happened, what was expected and how to reproduce it together with any additional information that may help giving a complete picture of what happened such as screenshots, [query inspector](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630) output and any environment related information that's applicable and/or maybe related to the reported problem:
+- Grafana version
+- Data source type & version
+- Platform & OS Grafana is installed on
+- User OS & Browser + versions
+- Using docker + what environment
+- Which plugins
+- Configuration database in use (sqlite, mysql, postgres)
+- Reverse proxy in front of Grafana, what version and configuration
+- Non-default configuration settings
+- Development environment like Go and Node versions, if applicable
+
+#### Enhancement request?
+
+Should explain what enhancement or feature that the author wants to be added and why that is needed.
+
+#### Accessibility issue?
+
+This is a mix between a bug report and enhancement request but focused on accessibility issues to help make Grafana improve keyboard navigation, screen-reader support and being accessible to everyone. The report should include relevant WCAG criteria, if applicable.
+
+#### Support request?
+
+In general, if the issue description and title is perceived as a question no more information is needed.
+
+### Good practices
+
+To make it easier for everyone to understand and find issues they're searching for it's suggested as a general rule of thumbs to:
+
+* Make sure that issue titles are named to explain the subject of the issue, has a correct spelling and and doesn't include irrelevant information and/or sensitive information.
+* Make sure that issue descriptions doesn't include irrelevant information, information from template that haven't been filled out and/or sensitive information.
+* Make changes to title and description after best effort or request suggested changes by adding a comment.
+
+Note: Above rules is applicable to both new and existing issues of the Grafana project.
+
+### Do you have all the information needed to categorize an issue?
 
 Depending on the issue, you might not feel all this information is needed. Use your best judgement. If you cannot triage an issue using what its author provided, explain kindly to the author that they must provide the above information to clarify the problem. Label issue with `needs more detail` and add any related `area/*` or `datasource/*` labels.
 
@@ -37,46 +79,126 @@ If the author provides the standard information but you are still unable to tria
 
 If the author does not respond requested information within the timespan of a week, close the issue with a kind note stating that the author can request for the issue to be reopened when the necessary information is provided.
 
-**Some general rule of thumbs to make it easier for everyone to understand and find issues they're searching for:**
-* Make sure that issue titles are named to explain the subject of the issue, has a correct spelling and and doesn't include irrelevant information.
-* Make sure that issue descriptions doesn't include irrelevant information and/or information from template that haven't been filled out.
-* Make changes to title and description as you see fit or request suggested changes in a comment.
-* Above is applicable to both new and existing issues of the Grafana project.
+When you feel you have all the information needed you're ready to [categorizing the issue](#3-categorizing-an-issue).
 
 ## 3. Categorizing an issue
 
-An issue can have multiple of the following labels. Typically, a properly classified issue should have:
+An issue can have multiple of the following labels. Typically, a properly categorized issue should at least have:
 
-* One label identifying its type (`type/*`).
-* One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or core datasource (`datasource/*`).
-* Where applicable, one label categorizing its difficulty (exp/*).
+- One label identifying its type (`type/*`).
+- One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or datasource (`datasource/*`), if applicable.
 
-### type/question
-
-A question about how to use Grafana or a specific datasource.  We preferably want these types of issue on the [community site](https://community.grafana.com/).
-
-**Actions:**
-* Kindly and politely direct the user to the community site and optionally answer if applicable and close the issue.
-* Label issue with `type/question`
-
-### type/bug
-
-A feature isn't working as expected given design or documentation.
-
-**Actions:**
-* Check for duplicates
-* If not perfectly clear that it's a bug, quickly try to reproduce it.
-  * If not reproduceable, ask for more information
-* Label issue with `type/question`
-
-Type | Description
+Label | Description
 ------- | --------
-type/bug | a feature isn't working as expected given design or documentation
-type/feature-request | request for a new feature or enhancement
-type/accessibility | accessibility problem or enhancement
-type/question | a duplicate issue of the same subject have already been open
-type/duplicate | issue is a duplicate of an existing issue
-type/works-as-intended | a reported bug works as intended/by design
+`type/bug` | A feature isn't working as expected given design or documentation.
+`type/feature-request` | Request for a new feature or enhancement.
+`type/docs` | Documentation problem or enhancement.
+`type/accessibility` | Accessibility problem or enhancement.
+`type/question` | Issue is or perceived as a question.
+`type/duplicate` | An existing issue of the same subject/request have already been reported.
+`type/works-as-intended` | A reported bug works as intended/by design.
+`type/build-packaging` | Build or packaging problem or enhancement.
+`area/*` | Subject is related to a functional area of interest or component.
+`datasource/*` | Subject is related to a core datasource plugin.
+
+### Duplicate issue?
+
+Make sure that it's not a duplicate by searching existing issues using related terms from the issue title and description. If you think you know there are an existing issue, but can't find it please reach out to one of the maintainers and ask for help. If you identify that the issue is a duplicate of an existing issue:
+
+1. Add a comment `Duplicate of #<issue number>`. GitHub will recognize this and add some additional context to the issue activity.
+2. Close the issue and label it with `type/duplicate`.
+3. Optionally add any related `area/*` or `datasource/*` labels.
+4. If applicable, add a comment with additional information.
+
+### Bug report?
+
+If it's not perfectly clear that it's an actual bug, quickly try to reproduce it.
+
+**It's a bug/it can be reproduced:**
+
+1. Add a comment describing detailed steps for how to reproduce it, if applicable.
+2. Label the issue `type/bug` and at least one `area/*` or `datasource/*` label.
+3. If you know that maintainers wont be able to put any resources into it for some time then label the issue with `help wanted` and optionally `beginner friendly` together with pointers on which code to update to fix the bug. This should signal to the community that we would appreciate any help we can get to resolve this.
+4. Move on to [prioritizing the issue](#4-prioritization-of-issues).
+
+**It can't be reproduced:**
+1. Either [ask for more information]((#2-ensure-the-issue-contains-basic-information)) needed to investigate it more thoroughly.
+2. Either [delegate further investigations](#investigation-of-issues) to someone else.
+
+**It works as intended/by design:**
+1. Kindly and politely add a comment explaining briefly why we think it works as intended and close the issue.
+2. Label the issue `type/works-as-intended`.
+
+### Enhancement/feature?
+
+1. Label the issue `type/feature-request` and at least one `area/*` or `datasource/*` label.
+2. Move on to [prioritizing the issue](#4-prioritization-of-issues).
+
+### Documentation issue?
+
+First, evaluate if the documentation makes sense to be included in the Grafana project:
+
+- Is this something we want/can maintain as a project?
+- Is this referring to usage of some specific integration/tool and in that case are those a popular use case in combination with Grafana?
+- If unsure, kindly and politely add a comment explaining that we would need upvotes to identify that lots of other users wants/needs this.
+
+Second, label the issue `type/docs` and at least one `area/*` or `datasource/*` label.
+
+**Minor typo/error/lack of information:**
+
+There's a minor typo/error/lack of information that adds a lot of confusion for users and given the amount of work is a big win to make sure fixing it:
+1. Either update the documentation yourself and open a pull request.
+2. Either delegate the work to someone else by assigning that person to the issue and add the issue to next major/minor milestone.
+
+**Major error/lack of information:**
+
+1. Label the issue with `help wanted` and `beginner friendly`, if applicable, to signal that we find this important to fix and we would appreciate any help we can get from the community.
+2. Move on to [prioritizing the issue](#4-prioritization-of-issues).
+
+**Asking issue author to contribute changes:**
+
+In many cases the issue author probably has better and more knowledge and details of what documentation to add/change than a maintainer. Normally this is because the issue author has tried to use the documentation without getting things to work and hopefully has made an effort to get it to work and/or reached out to the [community site](https://community.grafana.com/) and got the needed information. In especially these areas the Grafana project may need help from contributors:
+
+- Database setups
+- Authentication like OAuth providers and LDAP setups
+- Platform specific things
+- Reverse proxy setups
+- Alert notifiers
+
+1. Kindly and politely ask the issue author of interest in contributing the requested change by opening a pull request.
+2. Label the issue with `help wanted`
+
+### Accessibility issue?
+
+1. Label the issue `type/accessibility` and at least one `area/*` or `datasource/*` label.
+
+### Support request?
+
+1. Kindly and politely direct the issue author to the [community site](https://community.grafana.com/) and explain that GitHub is mainly used for tracking bugs and feature requests. If possible, it's usually a good idea to add some pointers to the issue author's question.
+2. Close the issue and label it with `type/question`.
+
+## 4. Prioritization of issues
+
+Label | Description
+------- | --------
+`priority/critical` | Highest priority. Must be actively worked on as someone's top priority right now.
+`priority/support-subscription` | This is important for one or several customers having a paid Grafana support subscription.
+`priority/important-soon` | Must be staffed and worked on either currently, or very soon, ideally in time for the next release.
+`priority/important-longterm` | Important over the long term, but may not be staffed and/or may need multiple releases to complete.
+`priority/nice-to-have` | It's a good idea, but not scheduled for any release.
+`priority/awaiting-more-evidence` | Lowest priority. Possibly useful, but not yet enough interest in it.
+`priority/unscheduled` | Something to look into before and to be discussed during the planning of the next (upcoming) major/minor stable release.
+
+## 5. Requesting help with issues from the community
+
+Depending on the issue and/or priority, it's always a good idea to consider signaling to the communicty that help from community is appreciated and in some cases needed in case an issue is not prioritized to be worked on by maintainers. Use your best judgement. In general, when requesting helo from the community it means a contribution has a good chance of getting accepted and merged.
+
+1. Kindly and politely add a comment to signal to users subscribed to updates of the issue.
+   - Explain that the issue would be nice to get resolved, but it isn't prioritized to work on by maintainers for an unforseen future.
+   - If possible or applicable, try to help contributors getting starting by adding pointers and references to what code/files need to be changed and/or ideas of a good way to solve/implement the issue.
+2. Label the issue with `help wanted`.
+3. If applicable, label the issue with `beginner friendly` to denote that the issue is suitable for a beginner to work on.
+4. If possible, try to estimate the amount of work by adding `effort/small`, `effort/medium` or `effort/large`.
 
 ## Investigation of issues
 
@@ -87,7 +209,6 @@ Investigating issues can be a very time consuming task, especially for the maint
 For some other combinations there may not be possible at all for a maintainer to setup a proper test environment for being able to investigate. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
 
 Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](http://link-here) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
-
 
 ## Appendix
 
@@ -118,32 +239,3 @@ This will give you a structure of labels in the sidebar similar to the following
 * All notifications you’ll need to read/take action on shows up as unread in Github (mine) and its sub-labels.
 * All other notifications you don’t need to take action on shows up as unread in Github (other) and its sub-labels
   * This is convenient for issue triage and to follow the activity in the Grafana project.
-
-### Standard issue information
-
-Given a certain [issue template]([template](https://github.com/grafana/grafana/issues/new/choose)) have been used by the issue author or how the issue is perceived by the issue triage responsible, the following should help you understand what standard issue information that must be included.
-
-#### Bug report?
-
-Should explain what happened, what was expected and how to reproduce it together with any additional information that may help giving a complete picture of what happened such as screenshots, [query inspector](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630) output and any environment related information that's applicable and/or maybe related to the reported problem:
-- Grafana version
-- Data source type & version
-- Platform & OS Grafana is installed on
-- User OS & Browser + versions
-- Using docker + what environment
-- Which plugins
-- Configuration database in use (sqlite, mysql, postgres)
-- Any reverse proxy in front of Grafana
-- Non-default configuration settings
-
-#### Enhancement request?
-
-Should explain what enhancement or feature that the author wants to be added and why that is needed.
-
-#### Accessibility issue?
-
-This is a mix between a bug report and enhancement request but focused on accessibility issues to help make Grafana improve keyboard navigation, screen-reader support and being accessible to everyone. The report should include relevant WCAG criteria, if applicable.
-
-#### Support request?
-
-In general, if the issue description and title is perceived as a question no more information is needed.
