@@ -35,12 +35,13 @@ func TestLoadingSettings(t *testing.T) {
 		Convey("default.ini should have no semi-colon commented entries", func() {
 			file, err := os.Open("../../conf/defaults.ini")
 			if err != nil {
-				t.Error("failed to load defaults.ini file")
+				t.Errorf("failed to load defaults.ini file: %v", err)
 			}
 			defer file.Close()
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
+				// This only catches values commented out with ";" and will not catch those that are commented out with "#".
 				if strings.HasPrefix(scanner.Text(), ";") {
 					t.Errorf("entries in defaults.ini must not be commented or environment variables will not work: %v", scanner.Text())
 				}
