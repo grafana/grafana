@@ -83,8 +83,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 		Body:        file,
 		ContentType: aws.String("image/png"),
 	}
-	_, err = svc.PutObject(params)
-	if err != nil {
+	if _, err = svc.PutObjectWithContext(ctx, params); err != nil {
 		return "", err
 	}
 	return image_url, nil
