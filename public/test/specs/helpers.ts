@@ -14,12 +14,12 @@ export function ControllerTestContext(this: any) {
   this.annotationsSrv = {};
   this.contextSrv = {};
   this.timeSrv = new TimeSrvStub();
-  this.templateSrv = new TemplateSrvStub();
+  this.templateSrv = TemplateSrvStub();
   this.datasourceSrv = {
     getMetricSources: () => {},
     get: () => {
       return {
-        then: callback => {
+        then: (callback: (a: any) => void) => {
           callback(self.datasource);
         },
       };
@@ -84,7 +84,7 @@ export function ControllerTestContext(this: any) {
       self.scope.panel = {};
       self.scope.dashboard = { meta: {} };
       self.scope.dashboardMeta = {};
-      self.scope.dashboardViewState = new DashboardViewStateStub();
+      self.scope.dashboardViewState = DashboardViewStateStub();
       self.scope.appEvent = sinon.spy();
       self.scope.onAppEvent = sinon.spy();
 
@@ -102,14 +102,14 @@ export function ControllerTestContext(this: any) {
     });
   };
 
-  this.setIsUtc = (isUtc = false) => {
+  this.setIsUtc = (isUtc: any = false) => {
     self.isUtc = isUtc;
   };
 }
 
 export function ServiceTestContext(this: any) {
   const self = this;
-  self.templateSrv = new TemplateSrvStub();
+  self.templateSrv = TemplateSrvStub();
   self.timeSrv = new TimeSrvStub();
   self.datasourceSrv = {};
   self.backendSrv = {};

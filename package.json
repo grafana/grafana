@@ -190,6 +190,7 @@
     "@babel/polyfill": "7.2.5",
     "@torkelo/react-select": "2.4.1",
     "@types/angular-route": "1.7.0",
+    "@types/enzyme-adapter-react-16": "1.0.5",
     "@types/react-redux": "^7.0.8",
     "@types/reselect": "2.2.0",
     "angular": "1.6.6",
