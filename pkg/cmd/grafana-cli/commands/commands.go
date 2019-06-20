@@ -17,6 +17,7 @@ import (
 func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
 		cmd := &utils.ContextCommandLine{Context: context}
+		debug := cmd.GlobalBool("debug")
 
 		cfg := setting.NewCfg()
 
@@ -27,7 +28,9 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			Args:     append(configOptions, cmd.Args()...), // tailing arguments have precedence over the options string
 		})
 
-		cfg.LogConfigSources()
+		if debug {
+			cfg.LogConfigSources()
+		}
 
 		engine := &sqlstore.SqlStore{}
 		engine.Cfg = cfg
