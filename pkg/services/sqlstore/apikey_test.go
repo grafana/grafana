@@ -8,6 +8,8 @@ import (
 )
 
 func TestApiKeyDataAccess(t *testing.T) {
+	mockTimeNow()
+	defer resetTimeNow()
 
 	Convey("Testing API Key data access", t, func() {
 		InitTestDB(t)
@@ -55,11 +57,16 @@ func TestApiKeyDataAccess(t *testing.T) {
 			if err != nil {
 				t.Fatalf("expected to be found %v", err)
 			}
-			if query.Result.Expires.Before(time.Now()) {
+			if query.Result.Expires.Before(timeNow()) {
 				t.Fatalf("expected not to expire")
 			}
-			if query.Result.Expires.After(time.Now().Add(time.Duration(2) * time.Hour)) {
-				t.Fatalf("expected to be expired by then")
+			// timeNow() has been called twice since creation; once by AddApiKey and once by GetApiKeyByName
+			// therefore two seconds should be subtracted by next value retuned by timeNow()
+			// that equals the number by which timeSeed has been advanced
+			then := timeNow().Add(-2 * time.Second)
+			expected := then.Add(1 * time.Hour).UTC()
+			if !query.Result.Expires.Equal(expected) {
+				t.Fatalf("expected to be equal to %v but got %v", expected, query.Result.Expires)
 			}
 		})
 
