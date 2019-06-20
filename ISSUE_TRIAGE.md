@@ -25,7 +25,7 @@ The more advanced, but recommended way is to subscribe to all notifications from
 
 It's highly recommened that you setup filters to automatically remove emails from the inbox and label/categorize them accordingly to make it easy for you to understand when you need to act upon a notification or where to look for finding issues that haven't been triaged etc.
 
-Instructions for setting up Gmail filters can be hound [here](#-setting-up-gmail-filters).
+Instructions for setting up Gmail filters can be found [here](#setting-up-gmail-filters).
 
 ## 2. Ensure the issue contains basic information
 
