@@ -3,6 +3,7 @@ package sqlstore
 import (
 	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -32,89 +33,70 @@ func TestApiKeyDataAccess(t *testing.T) {
 		t.Run("Add non expiring key", func(t *testing.T) {
 			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "non-expiring", Key: "asd1", SecondsToLive: 0}
 			err := AddApiKey(&cmd)
-			if err != nil {
-				t.Fatalf("expected to work %v", err)
-			}
+			assert.Nil(t, err)
+
 			query := m.GetApiKeyByNameQuery{KeyName: "non-expiring", OrgId: 1}
 			err = GetApiKeyByName(&query)
-			if err != nil {
-				t.Fatalf("expected to be found")
-			}
-			if !query.Result.Expires.IsZero() {
-				t.Fatalf("expires should be zero date")
-			}
+			assert.Nil(t, err)
+
+			assert.True(t, query.Result.Expires.IsZero())
 		})
 
 		t.Run("Add an expiring key", func(t *testing.T) {
 			//expires in one hour
 			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "expiring-in-an-hour", Key: "asd2", SecondsToLive: 3600}
 			err := AddApiKey(&cmd)
-			if err != nil {
-				t.Fatalf("expected to work %v", err)
-			}
+			assert.Nil(t, err)
+
 			query := m.GetApiKeyByNameQuery{KeyName: "expiring-in-an-hour", OrgId: 1}
 			err = GetApiKeyByName(&query)
-			if err != nil {
-				t.Fatalf("expected to be found %v", err)
-			}
-			if query.Result.Expires.Before(timeNow()) {
-				t.Fatalf("expected not to expire")
-			}
+			assert.Nil(t, err)
+
+			assert.False(t, query.Result.Expires.Before(timeNow()))
+
 			// timeNow() has been called twice since creation; once by AddApiKey and once by GetApiKeyByName
 			// therefore two seconds should be subtracted by next value retuned by timeNow()
 			// that equals the number by which timeSeed has been advanced
 			then := timeNow().Add(-2 * time.Second)
 			expected := then.Add(1 * time.Hour).UTC()
-			if !query.Result.Expires.Equal(expected) {
-				t.Fatalf("expected to be equal to %v but got %v", expected, query.Result.Expires)
-			}
+			assert.Equal(t, query.Result.Expires, expected)
 		})
 
 		t.Run("Add a key with invalid lifespan", func(t *testing.T) {
 			//expires in one day
 			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "key-with-invalid-lifespan", Key: "asd3", SecondsToLive: -3600}
 			err := AddApiKey(&cmd)
-			if err != nil {
-				t.Fatalf("expected to work %v", err)
-			}
+			assert.Nil(t, err)
+
 			query := m.GetApiKeyByNameQuery{KeyName: "key-with-invalid-lifespan", OrgId: 1}
 			err = GetApiKeyByName(&query)
-			if err != nil {
-				t.Fatalf("expected to be found %v", err)
-			}
-			if !query.Result.Expires.IsZero() {
-				t.Fatalf("expires should be a zero date")
-			}
+			assert.Nil(t, err)
+			assert.True(t, query.Result.Expires.IsZero())
 		})
 
 		t.Run("Add keys", func(t *testing.T) {
 			//never expires
 			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "key1", Key: "key1", SecondsToLive: 0}
 			err := AddApiKey(&cmd)
-			if err != nil {
-				t.Fatalf("expected to work %v", err)
-			}
+			assert.Nil(t, err)
+
 			//expires in 1s
 			cmd = m.AddApiKeyCommand{OrgId: 1, Name: "key2", Key: "key2", SecondsToLive: 1}
 			err = AddApiKey(&cmd)
-			if err != nil {
-				t.Fatalf("expected to work %v", err)
-			}
+			assert.Nil(t, err)
+
 			//expires in one hour
 			cmd = m.AddApiKeyCommand{OrgId: 1, Name: "key3", Key: "key3", SecondsToLive: 3600}
 			err = AddApiKey(&cmd)
-			if err != nil {
-				t.Fatalf("expected to work %v", err)
-			}
+			assert.Nil(t, err)
 
 			// sleep for 1s
 			time.Sleep(time.Second)
 
 			query := m.GetApiKeysQuery{OrgId: 1, IncludeInvalid: false}
 			err = GetApiKeys(&query)
-			if err != nil {
-				t.Fatalf("expected to succeed %v", err)
-			}
+			assert.Nil(t, err)
+
 			for _, k := range query.Result {
 				if k.Name == "key2" {
 					t.Fatalf("key2 should not be there")
@@ -123,9 +105,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 
 			query = m.GetApiKeysQuery{OrgId: 1, IncludeInvalid: true}
 			err = GetApiKeys(&query)
-			if err != nil {
-				t.Fatalf("expected to succeed %v", err)
-			}
+			assert.Nil(t, err)
 
 			found := false
 			for _, k := range query.Result {
@@ -133,10 +113,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 					found = true
 				}
 			}
-			if !found {
-				t.Fatalf("key2 should be there")
-			}
-
+			assert.True(t, found)
 		})
 	})
 }
