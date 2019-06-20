@@ -49,7 +49,7 @@ const rootReducers = {
   ...organizationReducers,
 };
 
-export function addRootReducer(reducers) {
+export function addRootReducer(reducers: any) {
   Object.assign(rootReducers, ...reducers);
 }
 
