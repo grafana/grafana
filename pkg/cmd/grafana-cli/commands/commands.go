@@ -2,6 +2,7 @@ package commands
 
 import (
 	"os"
+	"strings"
 
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
@@ -19,10 +20,11 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 
 		cfg := setting.NewCfg()
 
+		configOptions := strings.Split(cmd.GlobalString("optionsString"), " ")
 		cfg.Load(&setting.CommandLineArgs{
-			Args:     context.Args(),
 			Config:   cmd.ConfigFile(),
 			HomePath: cmd.HomePath(),
+			Args:     append(configOptions, cmd.Args()...), // tailing arguments have precedence over the options string
 		})
 
 		cfg.LogConfigSources()
