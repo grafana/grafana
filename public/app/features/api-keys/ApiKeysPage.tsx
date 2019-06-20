@@ -15,10 +15,11 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DeleteButton, EventsWithValidation, FormLabel, Input, ValidationEvents } from '@grafana/ui';
 import { NavModel } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { store } from 'app/store/store';
 
 // Utils
 import { isValidTimeSpan } from '@grafana/ui/src/utils/rangeutil';
-import { DurationUnit, toDuration } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime, DurationUnit, isDateTime, toDuration } from '@grafana/ui/src/utils/moment_wrapper';
 
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
@@ -173,6 +174,14 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     );
   }
 
+  formatDate(date, format?) {
+    date = isDateTime(date) ? date : dateTime(date);
+    format = format || 'YYYY-MM-DD HH:mm:ss';
+    const timezone = store.getState().user.timeZone;
+
+    return timezone === 'browser' ? date.format(format) : date.utc().format(format);
+  }
+
   renderAddApiKeyForm() {
     const { newApiKey, isAdding } = this.state;
 
@@ -276,7 +285,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                   <tr key={key.id}>
                     <td>{key.name}</td>
                     <td>{key.role}</td>
-                    <td>{key.expiration}</td>
+                    <td>{this.formatDate(key.expiration)}</td>
                     <td>
                       <DeleteButton onConfirm={() => this.onDeleteApiKey(key)} />
                     </td>
