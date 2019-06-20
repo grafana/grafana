@@ -97,6 +97,14 @@ func TestDashboardDataAccess(t *testing.T) {
 				})
 
 				So(err, ShouldBeNil)
+
+				versionQuery := m.GetDashboardVersionQuery{
+					DashboardId: dash.Id,
+					Version:     dash.Version,
+				}
+
+				err = getDashboardVersionRecord(&versionQuery)
+				So(err, ShouldBeNil)
 			})
 
 			Convey("Should retry generation of uid once if it fails.", func() {
@@ -457,4 +465,21 @@ func moveDashboard(orgId int64, dashboard *simplejson.Json, newFolderId int64) *
 	So(err, ShouldBeNil)
 
 	return cmd.Result
+}
+
+func getDashboardVersionRecord(query *m.GetDashboardVersionQuery) error {
+	version := m.DashboardVersion{}
+	has, err := x.Where("dashboard_version.dashboard_id=? AND dashboard_version.version=?", query.DashboardId, query.Version).Get(&version)
+
+	if err != nil {
+		return err
+	}
+
+	if !has {
+		return m.ErrDashboardVersionNotFound
+	}
+
+	version.Data.Set("id", version.DashboardId)
+	query.Result = &version
+	return nil
 }
