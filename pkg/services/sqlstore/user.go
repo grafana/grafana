@@ -436,7 +436,14 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 	whereConditions := make([]string, 0)
 	whereParams := make([]interface{}, 0)
 	sess := x.Table("user").Alias("u")
-	sess.Join("LEFT", "user_auth", "user_auth.user_id=u.id")
+
+	// Join with only most recent auth module
+	joinCondition := `(
+		SELECT id from user_auth
+			WHERE user_auth.user_id = u.id
+			ORDER BY user_auth.created DESC `
+	joinCondition = "user_auth.id=" + joinCondition + dialect.Limit(1) + ")"
+	sess.Join("LEFT", "user_auth", joinCondition)
 
 	if query.OrgId > 0 {
 		whereConditions = append(whereConditions, "org_id = ?")
@@ -465,8 +472,7 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
-	sess.Select("u.id, u.email, u.name, u.login, u.is_admin, u.is_disabled, u.last_seen_at, user_auth.auth_module, MAX(user_auth.created)")
-	sess.GroupBy("u.id, u.email, u.name, u.login, u.is_admin, u.is_disabled, u.last_seen_at")
+	sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
 	sess.OrderBy("u.id")
 	if err := sess.Find(&query.Result.Users); err != nil {
 		return err
