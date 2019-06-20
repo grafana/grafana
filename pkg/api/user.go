@@ -30,7 +30,7 @@ func getUserUserProfile(userID int64) Response {
 
 	getAuthQuery := m.GetAuthInfoQuery{UserId: userID}
 	if err := bus.Dispatch(&getAuthQuery); err == nil {
-		query.Result.AuthModule = getAuthQuery.Result.AuthModule
+		query.Result.AuthModule = []string{getAuthQuery.Result.AuthModule}
 	}
 
 	return JSON(200, query.Result)

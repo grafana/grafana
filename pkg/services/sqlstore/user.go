@@ -436,7 +436,14 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 	whereConditions := make([]string, 0)
 	whereParams := make([]interface{}, 0)
 	sess := x.Table("user").Alias("u")
-	sess.Join("LEFT", "user_auth", "user_auth.user_id=u.id")
+
+	// Join with only most recent auth module
+	joinCondition := `(
+		SELECT id from user_auth
+			WHERE user_auth.user_id = u.id
+			ORDER BY user_auth.created DESC `
+	joinCondition = "user_auth.id=" + joinCondition + dialect.Limit(1) + ")"
+	sess.Join("LEFT", "user_auth", joinCondition)
 
 	if query.OrgId > 0 {
 		whereConditions = append(whereConditions, "org_id = ?")
@@ -451,7 +458,7 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 	if query.AuthModule != "" {
 		whereConditions = append(
 			whereConditions,
-			`id IN (SELECT user_id
+			`u.id IN (SELECT user_id
 			FROM user_auth
 			WHERE auth_module=?)`,
 		)
@@ -473,7 +480,7 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 
 	// get total
 	user := models.User{}
-	countSess := x.Table("user")
+	countSess := x.Table("user").Alias("u")
 
 	if len(whereConditions) > 0 {
 		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
