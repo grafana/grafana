@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -34,8 +35,8 @@ type notificationService struct {
 	renderService rendering.Service
 }
 
-func (n *notificationService) SendIfNeeded(context *EvalContext) error {
-	notifierStates, err := n.getNeededNotifiers(context.Rule.OrgID, context.Rule.Notifications, context)
+func (n *notificationService) SendIfNeeded(ectx *EvalContext) error {
+	notifierStates, err := n.getNeededNotifiers(ectx.Rule.OrgID, ectx.Rule.Notifications, ectx)
 	if err != nil {
 		return err
 	}
@@ -45,12 +46,18 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 	}
 
 	if notifierStates.ShouldUploadImage() {
-		if err = n.uploadImage(context); err != nil {
+		// Create a copy of EvalContext and give it a new, shorter, timeout context to upload the image
+		uploadEvalCtx := *ectx
+		var uploadCtxCancel func()
+		uploadEvalCtx.Ctx, uploadCtxCancel = context.WithTimeout(ectx.Ctx, setting.AlertingNotificationTimeout/2)
+		// Try to upload the image without consuming all the time allocated for EvalContext
+		if err = n.uploadImage(&uploadEvalCtx); err != nil {
 			n.log.Error("Failed to upload alert panel image.", "error", err)
 		}
+		uploadCtxCancel()
 	}
 
-	return n.sendNotifications(context, notifierStates)
+	return n.sendNotifications(ectx, notifierStates)
 }
 
 func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, notifierState *notifierState) error {
