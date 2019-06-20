@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import Remarkable from 'remarkable';
+import marked from 'marked';
 import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
@@ -38,8 +38,7 @@ export class UsersListPage extends PureComponent<Props, State> {
     super(props);
 
     if (this.props.externalUserMngInfo) {
-      const markdownRenderer = new Remarkable();
-      this.externalUserMngInfoHtml = markdownRenderer.render(this.props.externalUserMngInfo);
+      this.externalUserMngInfoHtml = marked(this.props.externalUserMngInfo);
     }
 
     this.state = {
