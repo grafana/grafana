@@ -16,10 +16,11 @@ import { DeleteButton, EventsWithValidation, FormLabel, Input, ValidationEvents 
 import { NavModel } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { store } from 'app/store/store';
+import kbn from 'app/core/utils/kbn';
 
 // Utils
 import { isValidTimeSpan } from '@grafana/ui/src/utils/rangeutil';
-import { dateTime, DurationUnit, isDateTime, toDuration } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
@@ -110,7 +111,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     };
 
     // make sure that secondsToLive is number or null
-    this.state.newApiKey['secondsToLive'] = this.transformToSecondsToLive(this.state.newApiKey['secondsToLive']);
+    this.state.newApiKey['secondsToLive'] = kbn.interval_to_seconds(this.state.newApiKey['secondsToLive']);
     this.props.addApiKey(this.state.newApiKey, openModal);
     this.setState((prevState: State) => {
       return {
@@ -119,20 +120,6 @@ export class ApiKeysPage extends PureComponent<Props, any> {
         isAdding: false,
       };
     });
-  };
-
-  transformToSecondsToLive = (v: any) => {
-    const parts = /^(\d+)(\w)/.exec(v);
-    if (parts) {
-      const unit = parts[2];
-      const amount = parseInt(parts[1], 10);
-      if (isNaN(Number(unit))) {
-        return toDuration(amount, unit as DurationUnit).asSeconds();
-      } else {
-        return Number(v);
-      }
-    }
-    return Number(v);
   };
 
   onApiKeyStateUpdate = (evt, prop: string) => {
