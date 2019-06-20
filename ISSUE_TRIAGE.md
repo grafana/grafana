@@ -155,19 +155,6 @@ There's a minor typo/error/lack of information that adds a lot of confusion for 
 1. Label the issue with `help wanted` and `beginner friendly`, if applicable, to signal that we find this important to fix and we would appreciate any help we can get from the community.
 2. Move on to [prioritizing the issue](#4-prioritization-of-issues).
 
-**Asking issue author to contribute changes:**
-
-In many cases the issue author probably has better and more knowledge and details of what documentation to add/change than a maintainer. Normally this is because the issue author has tried to use the documentation without getting things to work and hopefully has made an effort to get it to work and/or reached out to the [community site](https://community.grafana.com/) and got the needed information. In especially these areas the Grafana project may need help from contributors:
-
-- Database setups
-- Authentication like OAuth providers and LDAP setups
-- Platform specific things
-- Reverse proxy setups
-- Alert notifiers
-
-1. Kindly and politely ask the issue author of interest in contributing the requested change by opening a pull request.
-2. Label the issue with `help wanted`
-
 ### Accessibility issue?
 
 1. Label the issue `type/accessibility` and at least one `area/*` or `datasource/*` label.
@@ -191,7 +178,15 @@ Label | Description
 
 ## 5. Requesting help with issues from the community
 
-Depending on the issue and/or priority, it's always a good idea to consider signaling to the communicty that help from community is appreciated and in some cases needed in case an issue is not prioritized to be worked on by maintainers. Use your best judgement. In general, when requesting helo from the community it means a contribution has a good chance of getting accepted and merged.
+Depending on the issue and/or priority, it's always a good idea to consider signaling to the communicty that help from community is appreciated and needed in case an issue is not prioritized to be worked on by maintainers. Use your best judgement. In general, when requesting help from the community it means a contribution has a good chance of getting accepted and merged.
+
+In many cases the issue author or community as a whole is more suitable to contribute changes since they're experts in their domain. It's also quite common that someone has tried to get something to work using the documentation without success and made an effort to get it to work and/or reached out to the [community site](https://community.grafana.com/) to get the missing information. In especially these areas it's more likely that there exists experts in their own domain and usually a good idea to request help from contributors:
+
+- Database setups
+- Authentication like OAuth providers and LDAP setups
+- Platform specific things
+- Reverse proxy setups
+- Alert notifiers
 
 1. Kindly and politely add a comment to signal to users subscribed to updates of the issue.
    - Explain that the issue would be nice to get resolved, but it isn't prioritized to work on by maintainers for an unforseen future.
