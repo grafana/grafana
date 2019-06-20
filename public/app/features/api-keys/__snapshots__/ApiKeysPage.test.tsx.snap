@@ -133,11 +133,11 @@ exports[`Render should render CTA if there are no API keys 1`] = `
             <div
               className="gf-form max-width-21"
             >
-              <span
-                className="gf-form-label"
+              <Component
+                tooltip="The api key life duration. For example 1d if your key is going to last for one day. All the supported units are: s,m,h,d,w,M,y"
               >
-                Seconds to live
-              </span>
+                Time to live
+              </Component>
               <Input
                 className="gf-form-input"
                 onChange={[Function]}

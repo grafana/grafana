@@ -12,8 +12,8 @@ import ApiKeysAddedModal from './ApiKeysAddedModal';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, EventsWithValidation, Input, ValidationEvents } from '@grafana/ui';
-import { toIntegerOrUndefined, NavModel } from '@grafana/data';
+import { DeleteButton, EventsWithValidation, FormLabel, Input, ValidationEvents } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 // Utils
@@ -36,10 +36,6 @@ const timeRangeValidationEvents: ValidationEvents = {
       errorMessage: 'Not a valid duration',
     },
   ],
-};
-
-const emptyOrUndefinedToNull = (value: string | undefined) => {
-  return !value || value === '' ? null : value;
 };
 
 export interface Props {
@@ -70,6 +66,9 @@ const initialApiKeyState = {
   role: OrgRole.Viewer,
   secondsToLive: '',
 };
+
+const tooltipText =
+  'The api key life duration. For example 1d if your key is going to last for one day. All the supported units are: s,m,h,d,w,M,y';
 
 export class ApiKeysPage extends PureComponent<Props, any> {
   constructor(props) {
@@ -110,8 +109,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     };
 
     // make sure that secondsToLive is number or null
-    this.state.newApiKey['secondsToLive'] = toIntegerOrUndefined(this.state.newApiKey['secondsToLive']);
-    this.state.newApiKey['secondsToLive'] = emptyOrUndefinedToNull(this.state.newApiKey['secondsToLive']);
+    this.state.newApiKey['secondsToLive'] = this.transformToSecondsToLive(this.state.newApiKey['secondsToLive']);
     this.props.addApiKey(this.state.newApiKey, openModal);
     this.setState((prevState: State) => {
       return {
@@ -123,10 +121,6 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   };
 
   transformToSecondsToLive = (v: any) => {
-    if (!isValidTimeSpan(v)) {
-      return v;
-    }
-
     const parts = /^(\d+)(\w)/.exec(v);
     if (parts) {
       const unit = parts[2];
@@ -140,11 +134,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     return Number(v);
   };
 
-  onApiKeyStateUpdate = (evt, prop: string, callback?: (v: any) => any) => {
-    let value = evt.currentTarget.value;
-    if (callback) {
-      value = callback(value);
-    }
+  onApiKeyStateUpdate = (evt, prop: string) => {
+    const value = evt.currentTarget.value;
     this.setState((prevState: State) => {
       const newApiKey = {
         ...prevState.newApiKey,
@@ -223,16 +214,14 @@ export class ApiKeysPage extends PureComponent<Props, any> {
                 </span>
               </div>
               <div className="gf-form max-width-21">
-                <span className="gf-form-label">Seconds to live</span>
+                <FormLabel tooltip={tooltipText}>Time to live</FormLabel>
                 <Input
                   type="text"
                   className="gf-form-input"
                   placeholder="1d"
                   validationEvents={timeRangeValidationEvents}
                   value={newApiKey.secondsToLive}
-                  onChange={evt =>
-                    this.onApiKeyStateUpdate(evt, ApiKeyStateProps.SecondsToLive, this.transformToSecondsToLive)
-                  }
+                  onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.SecondsToLive)}
                 />
               </div>
               <div className="gf-form">
