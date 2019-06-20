@@ -119,7 +119,8 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Add index for epoch_end", NewAddIndexMigration(table, &Index{
 		Cols: []string{"epoch_end"}, Type: IndexType,
 	}))
-	mg.AddMigration("Move old epoch to epoch_end", NewRawSqlMigration(
+	mg.AddMigration("Make epoch_end the same as epoch", NewRawSqlMigration("UPDATE annotation SET epoch_end = epoch"))
+	mg.AddMigration("Move existing regions to epoch_end", NewRawSqlMigration(
 		`UPDATE annotation SET epoch_end = 
 			(SELECT epoch
 				FROM annotation as b

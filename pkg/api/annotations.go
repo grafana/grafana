@@ -68,10 +68,18 @@ func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 		DashboardId: cmd.DashboardId,
 		PanelId:     cmd.PanelId,
 		Epoch:       cmd.Time,
-		EpochEnd:    cmd.TimeEnd, // TODO? if missing use cmd.Time???
+		EpochEnd:    cmd.TimeEnd,
 		Text:        cmd.Text,
 		Data:        cmd.Data,
 		Tags:        cmd.Tags,
+	}
+
+	if item.EpochEnd == 0 {
+		item.EpochEnd = item.Epoch
+	} else if item.EpochEnd < item.Epoch {
+		tmp := item.Epoch
+		item.EpochEnd = item.Epoch
+		item.Epoch = tmp
 	}
 
 	if err := repo.Save(&item); err != nil {
@@ -206,6 +214,19 @@ func PatchAnnotation(c *m.ReqContext, cmd dtos.PatchAnnotationsCmd) Response {
 
 	if cmd.Time > 0 && cmd.Time != existing.Epoch {
 		existing.Epoch = cmd.Time
+	}
+
+	if cmd.TimeEnd > 0 && cmd.TimeEnd != existing.EpochEnd {
+		existing.EpochEnd = cmd.TimeEnd
+	}
+
+	// Make sure end > time
+	if existing.EpochEnd == 0 {
+		existing.EpochEnd = existing.Epoch
+	} else if existing.EpochEnd < existing.Epoch {
+		tmp := existing.Epoch
+		existing.EpochEnd = existing.Epoch
+		existing.Epoch = tmp
 	}
 
 	if err := repo.Update(&existing); err != nil {
