@@ -51,6 +51,14 @@ func main() {
 			Name:  "debug, d",
 			Usage: "enable debug logging",
 		},
+		cli.StringFlag{
+			Name:  "homepath",
+			Usage: "path to grafana install/home path, defaults to working directory",
+		},
+		cli.StringFlag{
+			Name:  "config",
+			Usage: "path to config file",
+		},
 	}
 
 	app.Before = func(c *cli.Context) error {
