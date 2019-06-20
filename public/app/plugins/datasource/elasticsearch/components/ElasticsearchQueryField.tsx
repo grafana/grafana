@@ -7,18 +7,9 @@ import Prism from 'prismjs';
 
 // dom also includes Element polyfills
 import QueryField from 'app/features/explore/QueryField';
-import { ExploreQueryFieldProps, DataSourceStatus, DataQuery } from '@grafana/ui';
+import { ExploreQueryFieldProps, DataSourceStatus } from '@grafana/ui';
 import { ElasticDatasource } from '../datasource';
-import { ElasticsearchOptions } from '../types';
-
-export interface ElasticsearchQuery extends DataQuery {
-  query: string;
-  context: string;
-  isLogsQuery: boolean;
-  bucketAggs?: any[];
-  metrics?: any[];
-  alias?: string;
-}
+import { ElasticsearchOptions, ElasticsearchQuery } from '../types';
 
 interface Props extends ExploreQueryFieldProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions> {}
 

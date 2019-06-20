@@ -18,8 +18,11 @@ export interface ElasticsearchAggregation {
 }
 
 export interface ElasticsearchQuery extends DataQuery {
+  context: string;
+  isLogsQuery: boolean;
   alias?: string;
   query?: string;
   bucketAggs?: ElasticsearchAggregation[];
   metricAggs?: ElasticsearchAggregation[];
+  metrics?: any[];
 }

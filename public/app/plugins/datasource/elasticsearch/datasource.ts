@@ -6,11 +6,10 @@ import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import * as queryDef from './query_def';
-import { ElasticsearchQuery } from './components/ElasticsearchQueryField';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ElasticsearchOptions } from './types';
+import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
   basicAuth: string;
@@ -287,8 +286,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
 
       let queryObj;
-      if (target.context && target.context === 'explore') {
-        target.isLogsQuery = true;
+      if (target.isLogsQuery) {
+        console.log('Logs query!!!');
         target.bucketAggs = [queryDef.defaultBucketAgg()];
         target.metrics = [queryDef.defaultMetricAgg()];
         queryObj = this.queryBuilder.getLogsQuery(target, queryString);
