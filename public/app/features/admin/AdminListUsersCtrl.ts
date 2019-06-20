@@ -53,4 +53,11 @@ export default class AdminListUsersCtrl {
       },
     });
   }
+
+  getAuthModule(user: any) {
+    if (user.authModule && user.authModule.length) {
+      return user.authModule[0];
+    }
+    return undefined;
+  }
 }
