@@ -1,15 +1,16 @@
 import { Epic } from 'redux-observable';
 import { map } from 'rxjs/operators';
-import { AbsoluteTimeRange, RawTimeRange, toUtc, dateTime } from '@grafana/ui';
+import { AbsoluteTimeRange, RawTimeRange } from '@grafana/ui';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
 import { updateTimeRangeAction, UpdateTimeRangePayload, changeRangeAction } from '../actionTypes';
-import { getTimeRange } from 'app/core/utils/explore';
-import { getTimeZone } from 'app/features/profile/state/selectors';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-export const timeEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
+export const timeEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (
+  action$,
+  state$,
+  { getTimeSrv, getTimeRange, getTimeZone, toUtc, dateTime }
+) => {
   return action$.ofType(updateTimeRangeAction.type).pipe(
     map((action: ActionOf<UpdateTimeRangePayload>) => {
       const { exploreId, absoluteRange: absRange, rawRange: actionRange } = action.payload;
@@ -36,7 +37,7 @@ export const timeEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$
         time: range.raw,
         refresh: false,
         getTimezone: () => timeZone.raw,
-        timeRangeUpdated: () => console.log('refreshDashboard!'),
+        timeRangeUpdated: () => undefined,
       });
 
       return changeRangeAction({ exploreId, range, absoluteRange });
