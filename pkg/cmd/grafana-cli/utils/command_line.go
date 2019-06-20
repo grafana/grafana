@@ -53,3 +53,7 @@ func (c *ContextCommandLine) RepoDirectory() string {
 func (c *ContextCommandLine) PluginURL() string {
 	return c.GlobalString("pluginUrl")
 }
+
+func (c *ContextCommandLine) OptionsString() string {
+	return c.GlobalString("optionsString")
+}
