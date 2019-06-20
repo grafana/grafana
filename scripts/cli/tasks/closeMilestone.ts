@@ -14,6 +14,8 @@ const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ mil
     return;
   }
 
+  const cherryPickLabel = 'cherry-pick needed';
+
   const client = axios.create({
     baseURL: 'https://api.github.com/repos/grafana/grafana',
     timeout: 10000,
@@ -22,8 +24,6 @@ const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ mil
       password: gitHubToken,
     },
   });
-
-  const cherryPickLabel = 'cherry-pick needed';
 
   if (!/^\d+$/.test(milestone)) {
     console.log('Use milestone number not title, find number in milestone url');
@@ -59,12 +59,14 @@ const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ mil
   }
 
   for (const issue of issuesRes.data) {
+    // the reason for using stdout.write is for achieving 'action -> result' on
+    // the same line
     process.stdout.write(`🔧removing label from issue #${issue.number} 🗑...`);
     const resDelete = await client.delete(`/issues/${issue.number}/labels/${cherryPickLabel}`, {});
     if (resDelete.status === 200) {
       process.stdout.write('done ✅\n');
     } else {
-      console.log('failed ❌\n');
+      console.log('failed ❌');
     }
   }
 
