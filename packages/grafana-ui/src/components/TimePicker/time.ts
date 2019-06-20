@@ -1,23 +1,31 @@
-import { TimeOption, TimeRange, TIME_FORMAT, RawTimeRange, TimeZone } from '../../types/time';
+import { TimeRange, TIME_FORMAT, RawTimeRange, TimeZone } from '../../types/time';
 import { describeTimeRange } from '../../utils/rangeutil';
 import * as dateMath from '../../utils/datemath';
-import { dateTime, DateTime, toUtc } from '../../utils/moment_wrapper';
+import { isDateTime, dateTime, DateTime, toUtc } from '../../utils/moment_wrapper';
 
-export const mapTimeOptionToTimeRange = (timeOption: TimeOption, timeZone?: TimeZone): TimeRange => {
-  const fromMoment = stringToDateTimeType(timeOption.from, false, timeZone);
-  const toMoment = stringToDateTimeType(timeOption.to, true, timeZone);
+export const rawToTimeRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeRange => {
+  let from = stringToDateTimeType(raw.from, false, timeZone);
+  let to = stringToDateTimeType(raw.to, true, timeZone);
 
-  return {
-    from: fromMoment,
-    to: toMoment,
-    raw: {
-      from: timeOption.from,
-      to: timeOption.to,
-    },
-  };
+  if (timeZone === 'utc') {
+    if (isDateTime(raw.from)) {
+      // this looks strange but formating and then parsing as UTC was the only way I
+      // get a local js date handled as UTC (ie not transformed)
+      from = raw.from = toUtc(raw.from.format(TIME_FORMAT));
+    }
+    if (isDateTime(raw.to)) {
+      to = raw.to = toUtc(raw.to.format(TIME_FORMAT));
+    }
+  }
+
+  return { from, to, raw };
 };
 
-export const stringToDateTimeType = (value: string, roundUp?: boolean, timeZone?: TimeZone): DateTime => {
+export const stringToDateTimeType = (value: string | DateTime, roundUp?: boolean, timeZone?: TimeZone): DateTime => {
+  if (isDateTime(value)) {
+    return value;
+  }
+
   if (value.indexOf('now') !== -1) {
     if (!dateMath.isValid(value)) {
       return dateTime();

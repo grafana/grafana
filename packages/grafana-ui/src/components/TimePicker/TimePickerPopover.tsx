@@ -1,19 +1,24 @@
+// Libraries
 import React, { Component } from 'react';
-import { TimeRange, TimeOption, TimeZone } from '../../types/time';
 
+// Components
 import { TimePickerCalendar } from './TimePickerCalendar';
 import { TimePickerInput } from './TimePickerInput';
-import { mapTimeOptionToTimeRange } from './time';
+import { rawToTimeRange } from './time';
+
+// Types
 import { DateTime } from '../../utils/moment_wrapper';
+import { TimeRange, TimeZone } from '../../types/time';
 
 export interface Props {
   value: TimeRange;
   timeZone?: TimeZone;
-  onChange?: (timeRange: TimeRange) => void;
+  onChange: (timeRange: TimeRange) => void;
 }
 
 export interface State {
-  value: TimeRange;
+  from: DateTime | string;
+  to: DateTime | string;
   isFromInputValid: boolean;
   isToInputValid: boolean;
 }
@@ -23,53 +28,41 @@ export class TimePickerPopover extends Component<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.state = { value: props.value, isFromInputValid: true, isToInputValid: true };
+
+    this.state = {
+      from: props.value.raw.from,
+      to: props.value.raw.to,
+      isFromInputValid: true,
+      isToInputValid: true,
+    };
   }
 
   onFromInputChanged = (value: string, valid: boolean) => {
-    this.setState({
-      value: { ...this.state.value, raw: { ...this.state.value.raw, from: value } },
-      isFromInputValid: valid,
-    });
+    this.setState({ from: value, isFromInputValid: valid });
   };
 
   onToInputChanged = (value: string, valid: boolean) => {
-    this.setState({
-      value: { ...this.state.value, raw: { ...this.state.value.raw, to: value } },
-      isToInputValid: valid,
-    });
+    this.setState({ to: value, isToInputValid: valid });
   };
 
   onFromCalendarChanged = (value: DateTime) => {
-    this.setState({
-      value: { ...this.state.value, raw: { ...this.state.value.raw, from: value } },
-    });
+    this.setState({ from: value });
   };
 
   onToCalendarChanged = (value: DateTime) => {
-    this.setState({
-      value: { ...this.state.value, raw: { ...this.state.value.raw, to: value } },
-    });
-  };
-
-  onTimeOptionClick = (timeOption: TimeOption) => {
-    const { timeZone, onChange } = this.props;
-
-    if (onChange) {
-      onChange(mapTimeOptionToTimeRange(timeOption, timeZone));
-    }
+    this.setState({ to: value });
   };
 
   onApplyClick = () => {
-    const { onChange } = this.props;
-    if (onChange) {
-      onChange(this.state.value);
-    }
+    const { onChange, timeZone } = this.props;
+    const { from, to } = this.state;
+
+    onChange(rawToTimeRange({ from, to }, timeZone));
   };
 
   render() {
     const { timeZone } = this.props;
-    const { isFromInputValid, isToInputValid, value } = this.state;
+    const { isFromInputValid, isToInputValid, from, to } = this.state;
 
     const isValid = isFromInputValid && isToInputValid;
 
@@ -83,7 +76,7 @@ export class TimePickerPopover extends Component<Props, State> {
                 <TimePickerInput
                   roundup={false}
                   timeZone={timeZone}
-                  value={value.raw.from}
+                  value={from}
                   onChange={this.onFromInputChanged}
                   tabIndex={1}
                 />
@@ -93,7 +86,7 @@ export class TimePickerPopover extends Component<Props, State> {
               <TimePickerCalendar
                 timeZone={timeZone}
                 roundup={false}
-                value={value.raw.from}
+                value={from}
                 onChange={this.onFromCalendarChanged}
               />
             </div>
@@ -105,19 +98,14 @@ export class TimePickerPopover extends Component<Props, State> {
                 <TimePickerInput
                   roundup={true}
                   timeZone={timeZone}
-                  value={value.raw.to}
+                  value={to}
                   onChange={this.onToInputChanged}
                   tabIndex={2}
                 />
               </div>
             </div>
             <div className="time-picker-popover-body-custom-ranges-calendar">
-              <TimePickerCalendar
-                roundup={true}
-                timeZone={timeZone}
-                value={value.raw.to}
-                onChange={this.onToCalendarChanged}
-              />
+              <TimePickerCalendar roundup={true} timeZone={timeZone} value={to} onChange={this.onToCalendarChanged} />
             </div>
           </div>
         </div>

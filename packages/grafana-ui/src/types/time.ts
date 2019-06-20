@@ -21,7 +21,9 @@ export interface IntervalValues {
   intervalMs: number;
 }
 
-export type TimeZone = 'utc' | 'browser';
+export type TimeZoneUtc = 'utc';
+export type TimeZoneBrowser = 'browser';
+export type TimeZone = TimeZoneBrowser | TimeZoneUtc | string;
 
 export const DefaultTimeZone: TimeZone = 'browser';
 

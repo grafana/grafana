@@ -10,7 +10,7 @@ import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper'
 // Utils & Services
 import { isDateTime } from '../../utils/moment_wrapper';
 import * as rangeUtil from '../../utils/rangeutil';
-import { mapTimeOptionToTimeRange } from './time';
+import { rawToTimeRange } from './time';
 
 // Types
 import { PopperContent } from '../Tooltip/PopperController';
@@ -109,7 +109,7 @@ export class TimePicker extends PureComponent<Props, State> {
     }
 
     if (item.value) {
-      onChange(mapTimeOptionToTimeRange(item.value, timeZone));
+      onChange(rawToTimeRange({ from: item.value.from, to: item.value.to }, timeZone));
     }
   };
 
