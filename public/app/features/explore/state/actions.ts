@@ -34,7 +34,6 @@ import {
   ChangeRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
-  changeTimeAction,
   clearQueriesAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
@@ -545,7 +544,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     if (update.range) {
-      dispatch(changeTimeAction({ exploreId, range }));
+      dispatch(updateTimeRangeAction({ exploreId, rawRange: range.raw }));
     }
 
     // need to refresh ui state

@@ -74,11 +74,6 @@ export interface ChangeSizePayload {
   height: number;
 }
 
-export interface ChangeTimePayload {
-  exploreId: ExploreId;
-  range: TimeRange;
-}
-
 export interface ChangeRefreshIntervalPayload {
   exploreId: ExploreId;
   refreshInterval: string;
@@ -309,11 +304,6 @@ export const changeQueryAction = actionCreatorFactory<ChangeQueryPayload>('explo
  * The width will be used to calculate graph intervals (number of datapoints).
  */
 export const changeSizeAction = actionCreatorFactory<ChangeSizePayload>('explore/CHANGE_SIZE').create();
-
-/**
- * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
- */
-export const changeTimeAction = actionCreatorFactory<ChangeTimePayload>('explore/CHANGE_TIME').create();
 
 /**
  * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
