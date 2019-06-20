@@ -61,6 +61,7 @@ import {
   scanRangeAction,
   runQueriesAction,
   stateSaveAction,
+  updateTimeRangeAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -402,12 +403,8 @@ export function modifyQueries(
  */
 export function runQueries(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { range } = getState().explore[exploreId];
-
-    const timeZone = getTimeZone(getState().user);
-    const updatedRange = getTimeRange(timeZone, range.raw);
-
-    dispatch(runQueriesAction({ exploreId, range: updatedRange }));
+    dispatch(updateTimeRangeAction({ exploreId }));
+    dispatch(runQueriesAction({ exploreId }));
   };
 }
 

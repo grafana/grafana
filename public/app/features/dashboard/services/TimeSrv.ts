@@ -112,6 +112,9 @@ export class TimeSrv {
 
   private routeUpdated() {
     const params = this.$location.search();
+    if (params.left) {
+      return; // explore handles this;
+    }
     const urlRange = this.timeRangeForUrl();
     // check if url has time range
     if (params.from && params.to) {

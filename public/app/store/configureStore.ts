@@ -33,6 +33,7 @@ import { Observable } from 'rxjs';
 import { getQueryResponse } from 'app/core/utils/explore';
 import { StoreState } from 'app/types/store';
 import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
+import { timeEpic } from 'app/features/explore/state/epics/timeEpic';
 
 const rootReducers = {
   ...sharedReducers,
@@ -59,7 +60,8 @@ export const rootEpic: any = combineEpics(
   runQueriesEpic,
   runQueriesBatchEpic,
   processQueryResultsEpic,
-  processQueryErrorsEpic
+  processQueryErrorsEpic,
+  timeEpic
 );
 
 export interface EpicDependencies {

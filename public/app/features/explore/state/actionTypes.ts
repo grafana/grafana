@@ -233,7 +233,6 @@ export interface LoadExploreDataSourcesPayload {
 
 export interface RunQueriesPayload {
   exploreId: ExploreId;
-  range: TimeRange;
 }
 
 export interface ResetQueryErrorPayload {
@@ -274,6 +273,10 @@ export interface LimitMessageRatePayload {
 export interface ChangeRangePayload {
   exploreId: ExploreId;
   range: TimeRange;
+}
+
+export interface UpdateTimeRangePayload {
+  exploreId: ExploreId;
 }
 
 /**
@@ -489,6 +492,8 @@ export const limitMessageRatePayloadAction = actionCreatorFactory<LimitMessageRa
 ).create();
 
 export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explore/CHANGE_RANGE').create();
+
+export const updateTimeRangeAction = actionCreatorFactory<UpdateTimeRangePayload>('explore/UPDATE_TIMERANGE').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>
