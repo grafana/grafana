@@ -163,8 +163,16 @@ export default class AdminEditUserCtrl {
       });
     };
 
-    $scope.disableUser = () => {
+    $scope.disableUser = event => {
       const user = $scope.user;
+
+      // External user can not be disabled
+      if (user.authModule) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
       const actionEndpoint = user.isDisabled ? '/enable' : '/disable';
       backendSrv.post('/api/admin/users/' + user.id + actionEndpoint).then(() => {
         $location.path('/admin/users');

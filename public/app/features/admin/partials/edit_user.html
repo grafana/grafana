@@ -24,16 +24,16 @@
 				<button type="submit" class="btn btn-primary" ng-click="update()" ng-show="!createMode">Update</button>
 				<button type="submit" class="btn btn-danger"
 					ng-if="!user.isDisabled"
-					ng-click="disableUser()"
-					bs-tooltip="user.authModule ? 'External user can not be deactivated' : 'Deactivate user'"
-					ng-disabled="user.authModule">
+					ng-click="disableUser($event)"
+					bs-tooltip="user.authModule ? 'External user cannot be activated or deactivated' : 'Deactivate user'"
+					ng-class="{'disabled': user.authModule}">
 					Deactivate
 				</button>
 				<button type="submit" class="btn btn-primary"
 					ng-if="user.isDisabled"
-					ng-click="disableUser()"
-					bs-tooltip="user.authModule ? 'External user can not be deactivated' : 'Activate user'"
-					ng-disabled="user.authModule">
+					ng-click="disableUser($event)"
+					bs-tooltip="user.authModule ? 'External user cannot be activated or deactivated' : 'Activate user'"
+					ng-class="{'disabled': user.authModule}">
 					Activate
 				</button>
 			</div>
