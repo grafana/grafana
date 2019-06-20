@@ -54,7 +54,7 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	randomFileName := util.GetRandomString(30) + ".png"
 	// upload image
 	az.log.Debug("Uploading image to azure_blob", "container_name", az.container_name, "blob_name", randomFileName)
-	resp, err := blob.FileUpload(az.container_name, randomFileName, file)
+	resp, err := blob.FileUpload(ctx, az.container_name, randomFileName, file)
 	if err != nil {
 		return "", err
 	}
@@ -157,7 +157,7 @@ func copyHeadersToRequest(req *http.Request, headers map[string]string) {
 	}
 }
 
-func (c *StorageClient) FileUpload(container, blobName string, body io.Reader) (*http.Response, error) {
+func (c *StorageClient) FileUpload(ctx context.Context, container, blobName string, body io.Reader) (*http.Response, error) {
 	blobName = escape(blobName)
 	extension := strings.ToLower(path.Ext(blobName))
 	contentType := mime.TypeByExtension(extension)
@@ -170,6 +170,9 @@ func (c *StorageClient) FileUpload(container, blobName string, body io.Reader) (
 	)
 	if err != nil {
 		return nil, err
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
 	}
 
 	copyHeadersToRequest(req, map[string]string{
