@@ -122,7 +122,7 @@ If it's not perfectly clear that it's an actual bug, quickly try to reproduce it
 4. Move on to [prioritizing the issue](#4-prioritization-of-issues).
 
 **It can't be reproduced:**
-1. Either [ask for more information]((#2-ensure-the-issue-contains-basic-information)) needed to investigate it more thoroughly.
+1. Either [ask for more information](#2-ensure-the-issue-contains-basic-information) needed to investigate it more thoroughly.
 2. Either [delegate further investigations](#investigation-of-issues) to someone else.
 
 **It works as intended/by design:**
