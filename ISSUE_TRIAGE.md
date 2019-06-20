@@ -166,6 +166,8 @@ There's a minor typo/error/lack of information that adds a lot of confusion for 
 
 ## 4. Prioritization of issues
 
+In general bugs and enhancement issues should be labeled with a priority. In any case there are uncertainty around the priorization of an issue, please ask the maintainers for help.
+
 Label | Description
 ------- | --------
 `priority/critical` | Highest priority. Must be actively worked on as someone's top priority right now.
@@ -176,7 +178,45 @@ Label | Description
 `priority/awaiting-more-evidence` | Lowest priority. Possibly useful, but not yet enough interest in it.
 `priority/unscheduled` | Something to look into before and to be discussed during the planning of the next (upcoming) major/minor stable release.
 
-## 5. Requesting help with issues from the community
+**Critical bug?**
+
+1. If a bug have been categorized and any of the following problems applies the bug should be labeled as critical and must be actively worked on as someone's top priority right now.
+
+   - Results in any data loss
+   - Critical security or performance issues
+   - Problem that makes a feature unusable
+   - Multiple users experience a severe problem affecting their business, users etc.
+
+2. Label the issue `priority/critical`.
+3. If applicable, label the issue `priority/support-subscription`.
+4. Add the issue to the next upcoming patch release milestone. Create a new milestone if there are none.
+5. Escalate the problem to the maintainers.
+6. Assign or ask a maintainer for help assigning someone to make this issue their top priority right now.
+
+**Important short-term?**
+
+1. Label the issue `priority/important-soon`.
+2. If applicable, label the issue `priority/support-subscription`.
+3. Add the issue to the next upcoming patch or major/minor stable release milestone. Ask maintainers for help if unsure if it's a patch or not. Create a new milestone if there are none.
+4. Make sure to add the issue to a suitable backlog of a GitHub project and prioritize it or assign someone to work on it now or very soon.
+5. Consider requesting [help from the community](#5-requesting-help-from-the-community), even though it may be problematic given a short amount of time until it should be released.
+
+**Important long-term?**
+
+1. Label the issue `priority/important-longterm`.
+2. Consider requesting [help from the community](#5-requesting-help-from-the-community).
+
+**Nice to have?**
+
+1. Label the issue `priority/nice-to-have`.
+2. Consider requesting [help from the community](#5-requesting-help-from-the-community).
+
+**Not critical, but unsure?**
+
+1. Label the issue `priority/unscheduled`.
+2. Consider requesting [help from the community](#5-requesting-help-from-the-community).
+
+## 5. Requesting help from the community
 
 Depending on the issue and/or priority, it's always a good idea to consider signaling to the communicty that help from community is appreciated and needed in case an issue is not prioritized to be worked on by maintainers. Use your best judgement. In general, when requesting help from the community it means a contribution has a good chance of getting accepted and merged.
 
