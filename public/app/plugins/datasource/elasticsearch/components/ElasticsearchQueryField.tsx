@@ -7,7 +7,7 @@ import Prism from 'prismjs';
 
 // dom also includes Element polyfills
 import QueryField from 'app/features/explore/QueryField';
-import { ExploreQueryFieldProps, DataSourceStatus } from '@grafana/ui';
+import { ExploreQueryFieldProps } from '@grafana/ui';
 import { ElasticDatasource } from '../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../types';
 
@@ -42,11 +42,9 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
   componentWillUnmount() {}
 
   componentDidUpdate(prevProps: Props) {
-    const reconnected =
-      prevProps.datasourceStatus === DataSourceStatus.Disconnected &&
-      this.props.datasourceStatus === DataSourceStatus.Connected;
-    if (!reconnected) {
-      return;
+    // if query changed from the outside (i.e. cleared via explore toolbar)
+    if (!this.props.query.isLogsQuery) {
+      this.onChangeQuery('', true);
     }
   }
 
