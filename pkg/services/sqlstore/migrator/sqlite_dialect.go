@@ -102,11 +102,3 @@ func (db *Sqlite3) IsUniqueConstraintViolation(err error) bool {
 func (db *Sqlite3) IsDeadlock(err error) bool {
 	return false // No deadlock
 }
-
-func (db *Sqlite3) ToTimestamp(d1 string, modifier string) string {
-	format := "%s"
-	if modifier == "" {
-		return "strftime('" + format + "', " + d1 + ")"
-	}
-	return "strftime('" + format + "', " + d1 + ", '" + modifier + "')"
-}

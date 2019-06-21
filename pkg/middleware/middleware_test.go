@@ -21,6 +21,19 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
+func mockGetTime() {
+	var timeSeed int64
+	getTime = func() time.Time {
+		fakeNow := time.Unix(timeSeed, 0)
+		timeSeed++
+		return fakeNow
+	}
+}
+
+func resetGetTime() {
+	getTime = time.Now
+}
+
 func TestMiddleWareSecurityHeaders(t *testing.T) {
 	setting.ERR_TEMPLATE_NAME = "error-template"
 
@@ -191,13 +204,17 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Valid api key, but expired", func(sc *scenarioContext) {
+			mockGetTime()
+			defer resetGetTime()
+
 			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 
 			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
 
 				// api key expired one second before
+				expires := getTime().Add(-1 * time.Second).Unix()
 				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash,
-					Expires: time.Now().Add(-time.Duration(1) * time.Second)}
+					Expires: &expires}
 				return nil
 			})
 

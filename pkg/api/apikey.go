@@ -18,8 +18,9 @@ func GetAPIKeys(c *m.ReqContext) Response {
 	result := make([]*m.ApiKeyDTO, len(query.Result))
 	for i, t := range query.Result {
 		var expiration *time.Time = nil
-		if !t.Expires.IsZero() {
-			expiration = &t.Expires
+		if t.Expires != nil {
+			v := time.Unix(*t.Expires, 0)
+			expiration = &v
 		}
 		result[i] = &m.ApiKeyDTO{
 			Id:         t.Id,

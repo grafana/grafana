@@ -39,7 +39,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 			err = GetApiKeyByName(&query)
 			assert.Nil(t, err)
 
-			assert.True(t, query.Result.Expires.IsZero())
+			assert.Nil(t, query.Result.Expires)
 		})
 
 		t.Run("Add an expiring key", func(t *testing.T) {
@@ -52,14 +52,14 @@ func TestApiKeyDataAccess(t *testing.T) {
 			err = GetApiKeyByName(&query)
 			assert.Nil(t, err)
 
-			assert.False(t, query.Result.Expires.Before(timeNow()))
+			assert.True(t, *query.Result.Expires >= timeNow().Unix())
 
 			// timeNow() has been called twice since creation; once by AddApiKey and once by GetApiKeyByName
 			// therefore two seconds should be subtracted by next value retuned by timeNow()
 			// that equals the number by which timeSeed has been advanced
 			then := timeNow().Add(-2 * time.Second)
-			expected := then.Add(1 * time.Hour).UTC()
-			assert.Equal(t, query.Result.Expires, expected)
+			expected := then.Add(1 * time.Hour).UTC().Unix()
+			assert.Equal(t, *query.Result.Expires, expected)
 		})
 
 		t.Run("Add a key with invalid lifespan", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 			query := m.GetApiKeyByNameQuery{KeyName: "key-with-invalid-lifespan", OrgId: 1}
 			err = GetApiKeyByName(&query)
 			assert.Nil(t, err)
-			assert.True(t, query.Result.Expires.IsZero())
+			assert.Nil(t, query.Result.Expires)
 		})
 
 		t.Run("Add keys", func(t *testing.T) {

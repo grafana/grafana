@@ -15,7 +15,7 @@ type ApiKey struct {
 	Role    RoleType
 	Created time.Time
 	Updated time.Time
-	Expires time.Time
+	Expires *int64
 }
 
 // ---------------------

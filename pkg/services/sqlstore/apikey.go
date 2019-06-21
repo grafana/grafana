@@ -17,10 +17,8 @@ func init() {
 }
 
 func GetApiKeys(query *m.GetApiKeysQuery) error {
-	now := "'" + timeNow().Format("2006-01-02T15:04:05") + "'"
-	hasNotExpired := dialect.ToTimestamp("expires", "") + " >= " + dialect.ToTimestamp(now, "utc")
-	sess := x.Limit(100, 0).Where("org_id=? and ( expires IS NULL or "+hasNotExpired+")",
-		query.OrgId).Asc("name")
+	sess := x.Limit(100, 0).Where("org_id=? and ( expires IS NULL or expires >= ?)",
+		query.OrgId, timeNow().Unix()).Asc("name")
 	if query.IncludeInvalid {
 		sess = x.Limit(100, 0).Where("org_id=?", query.OrgId).Asc("name")
 	}
@@ -40,9 +38,10 @@ func DeleteApiKeyCtx(ctx context.Context, cmd *m.DeleteApiKeyCommand) error {
 func AddApiKey(cmd *m.AddApiKeyCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		updated := timeNow()
-		var expires time.Time
+		var expires *int64 = nil
 		if cmd.SecondsToLive > 0 {
-			expires = updated.Add(time.Second * time.Duration(cmd.SecondsToLive))
+			v := updated.Add(time.Second * time.Duration(cmd.SecondsToLive)).Unix()
+			expires = &v
 		}
 		t := m.ApiKey{
 			OrgId:   cmd.OrgId,

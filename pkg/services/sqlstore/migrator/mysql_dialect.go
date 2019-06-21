@@ -151,7 +151,3 @@ func (db *Mysql) IsUniqueConstraintViolation(err error) bool {
 func (db *Mysql) IsDeadlock(err error) bool {
 	return db.isThisError(err, mysqlerr.ER_LOCK_DEADLOCK)
 }
-
-func (db *Mysql) ToTimestamp(d1 string, modifier string) string {
-	return "UNIX_TIMESTAMP(" + d1 + ")"
-}

@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var getTime = time.Now
+
 var (
 	ReqGrafanaAdmin = Auth(&AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	ReqSignedIn     = Auth(&AuthOptions{ReqSignedIn: true})
@@ -124,7 +126,7 @@ func initContextWithApiKey(ctx *m.ReqContext) bool {
 	}
 
 	// check for expiration
-	if !apikey.Expires.IsZero() && apikey.Expires.Before(time.Now()) {
+	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
 		ctx.JsonApiErr(401, "Expired API key", err)
 		return true
 	}
