@@ -62,16 +62,15 @@ func TestApiKeyDataAccess(t *testing.T) {
 			assert.Equal(t, *query.Result.Expires, expected)
 		})
 
-		t.Run("Add a key with invalid lifespan", func(t *testing.T) {
+		t.Run("Add a key with negative lifespan", func(t *testing.T) {
 			//expires in one day
-			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "key-with-invalid-lifespan", Key: "asd3", SecondsToLive: -3600}
+			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "key-with-negative-lifespan", Key: "asd3", SecondsToLive: -3600}
 			err := AddApiKey(&cmd)
-			assert.Nil(t, err)
+			assert.EqualError(t, err, "Negative value for SecondsToLive")
 
-			query := m.GetApiKeyByNameQuery{KeyName: "key-with-invalid-lifespan", OrgId: 1}
+			query := m.GetApiKeyByNameQuery{KeyName: "key-with-negative-lifespan", OrgId: 1}
 			err = GetApiKeyByName(&query)
-			assert.Nil(t, err)
-			assert.Nil(t, query.Result.Expires)
+			assert.EqualError(t, err, "Invalid API Key")
 		})
 
 		t.Run("Add keys", func(t *testing.T) {

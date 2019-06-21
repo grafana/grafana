@@ -65,6 +65,9 @@ func (hs *HTTPServer) AddAPIKey(c *m.ReqContext, cmd m.AddApiKeyCommand) Respons
 	cmd.Key = newKeyInfo.HashedKey
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err.Error() == "Negative value for SecondsToLive" {
+			return Error(400, err.Error(), nil)
+		}
 		return Error(500, "Failed to add API key", err)
 	}
 

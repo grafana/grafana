@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -42,6 +43,8 @@ func AddApiKey(cmd *m.AddApiKeyCommand) error {
 		if cmd.SecondsToLive > 0 {
 			v := updated.Add(time.Second * time.Duration(cmd.SecondsToLive)).Unix()
 			expires = &v
+		} else if cmd.SecondsToLive < 0 {
+			return fmt.Errorf("Negative value for SecondsToLive")
 		}
 		t := m.ApiKey{
 			OrgId:   cmd.OrgId,
