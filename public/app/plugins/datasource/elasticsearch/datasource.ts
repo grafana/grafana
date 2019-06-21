@@ -287,7 +287,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
       let queryObj;
       if (target.isLogsQuery) {
-        console.log('Logs query!!!');
         target.bucketAggs = [queryDef.defaultBucketAgg()];
         target.metrics = [queryDef.defaultMetricAgg()];
         queryObj = this.queryBuilder.getLogsQuery(target, queryString);

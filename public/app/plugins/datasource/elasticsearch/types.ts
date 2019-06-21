@@ -15,14 +15,13 @@ export interface ElasticsearchAggregation {
   id: string;
   type: string;
   settings?: any;
+  field?: string;
 }
 
 export interface ElasticsearchQuery extends DataQuery {
-  context: string;
   isLogsQuery: boolean;
   alias?: string;
   query?: string;
   bucketAggs?: ElasticsearchAggregation[];
-  metricAggs?: ElasticsearchAggregation[];
-  metrics?: any[];
+  metrics?: ElasticsearchAggregation[];
 }

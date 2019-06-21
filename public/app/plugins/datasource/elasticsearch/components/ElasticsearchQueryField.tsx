@@ -54,7 +54,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
     // Send text change to parent
     const { query, onChange, onRunQuery } = this.props;
     if (onChange) {
-      const nextQuery: ElasticsearchQuery = { ...query, query: value, context: 'explore', isLogsQuery: true };
+      const nextQuery: ElasticsearchQuery = { ...query, query: value, isLogsQuery: true };
       onChange(nextQuery);
 
       if (override && onRunQuery) {
