@@ -111,7 +111,8 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     };
 
     // make sure that secondsToLive is number or null
-    this.state.newApiKey['secondsToLive'] = kbn.interval_to_seconds(this.state.newApiKey['secondsToLive']);
+    const secondsToLive = this.state.newApiKey['secondsToLive'];
+    this.state.newApiKey['secondsToLive'] = secondsToLive ? kbn.interval_to_seconds(secondsToLive) : null;
     this.props.addApiKey(this.state.newApiKey, openModal);
     this.setState((prevState: State) => {
       return {
@@ -162,6 +163,9 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   }
 
   formatDate(date, format?) {
+    if (!date) {
+      return '';
+    }
     date = isDateTime(date) ? date : dateTime(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
     const timezone = store.getState().user.timeZone;
