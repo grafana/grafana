@@ -28,8 +28,10 @@ import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
+import * as grafanaData from '@grafana/data';
 import * as grafanaUI from '@grafana/ui';
-import * as grafanaRT from '@grafana/runtime';
+import * as grafanaRuntime from '@grafana/runtime';
+export { loadPluginCss } from '@grafana/runtime';
 
 // rxjs
 import { Observable, Subject } from 'rxjs';
@@ -68,8 +70,9 @@ function exposeToPlugin(name: string, component: any) {
   });
 }
 
+exposeToPlugin('@grafana/data', grafanaData);
 exposeToPlugin('@grafana/ui', grafanaUI);
-exposeToPlugin('@grafana/runtime', grafanaRT);
+exposeToPlugin('@grafana/runtime', grafanaRuntime);
 exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
@@ -183,9 +186,9 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Data
 export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   return importPluginModule(meta.module).then(pluginExports => {
     const plugin = pluginExports.plugin ? (pluginExports.plugin as AppPlugin) : new AppPlugin();
-    plugin.setComponentsFromLegacyExports(pluginExports);
     plugin.init(meta);
     plugin.meta = meta;
+    plugin.setComponentsFromLegacyExports(pluginExports);
     return plugin;
   });
 }
@@ -227,12 +230,4 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
       console.log('Error loading panel plugin', err);
       return getPanelPluginNotFound(id);
     });
-}
-
-export function loadPluginCss(options) {
-  if (config.bootData.user.lightTheme) {
-    System.import(options.light + '!css');
-  } else {
-    System.import(options.dark + '!css');
-  }
 }

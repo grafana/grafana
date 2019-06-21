@@ -1,14 +1,17 @@
 import angular from 'angular';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { ScopedVars } from '@grafana/ui/src/types/datasource';
 
 export class LinkSrv {
   /** @ngInject */
-  constructor(private templateSrv, private timeSrv) {}
+  constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
 
-  getLinkUrl(link) {
+  getLinkUrl(link: any) {
     const url = this.templateSrv.replace(link.url || '');
-    const params = {};
+    const params: { [key: string]: any } = {};
 
     if (link.keepTime) {
       const range = this.timeSrv.timeRangeForUrl();
@@ -23,8 +26,8 @@ export class LinkSrv {
     return this.addParamsToUrl(url, params);
   }
 
-  addParamsToUrl(url, params) {
-    const paramsArray = [];
+  addParamsToUrl(url: string, params: any) {
+    const paramsArray: Array<string | number> = [];
 
     _.each(params, (value, key) => {
       if (value === null) {
@@ -48,7 +51,7 @@ export class LinkSrv {
     return this.appendToQueryString(url, paramsArray.join('&'));
   }
 
-  appendToQueryString(url, stringToAppend) {
+  appendToQueryString(url: string, stringToAppend: string) {
     if (!_.isUndefined(stringToAppend) && stringToAppend !== null && stringToAppend !== '') {
       const pos = url.indexOf('?');
       if (pos !== -1) {
@@ -64,14 +67,14 @@ export class LinkSrv {
     return url;
   }
 
-  getAnchorInfo(link) {
+  getAnchorInfo(link: any) {
     const info: any = {};
     info.href = this.getLinkUrl(link);
     info.title = this.templateSrv.replace(link.title || '');
     return info;
   }
 
-  getPanelLinkAnchorInfo(link, scopedVars) {
+  getPanelLinkAnchorInfo(link: any, scopedVars: ScopedVars) {
     const info: any = {};
     info.target = link.targetBlank ? '_blank' : '';
     if (link.type === 'absolute') {
@@ -90,7 +93,7 @@ export class LinkSrv {
       info.href = 'dashboard/db/' + slug + '?';
     }
 
-    const params = {};
+    const params: any = {};
 
     if (link.keepTime) {
       const range = this.timeSrv.timeRangeForUrl();

@@ -26,7 +26,10 @@ var (
 	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
 )
 
-func GetContextHandler(ats m.UserTokenService, remoteCache *remotecache.RemoteCache) macaron.Handler {
+func GetContextHandler(
+	ats m.UserTokenService,
+	remoteCache *remotecache.RemoteCache,
+) macaron.Handler {
 	return func(c *macaron.Context) {
 		ctx := &m.ReqContext{
 			Context:        c,
@@ -252,14 +255,14 @@ func AddDefaultResponseHeaders() macaron.Handler {
 // AddSecurityHeaders adds various HTTP(S) response headers that enable various security protections behaviors in the client's browser.
 func AddSecurityHeaders(w macaron.ResponseWriter) {
 	if setting.Protocol == setting.HTTPS && setting.StrictTransportSecurity {
-		strictHeader := "Strict-Transport-Security"
-		w.Header().Add(strictHeader, fmt.Sprintf("max-age=%v", setting.StrictTransportSecurityMaxAge))
+		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", setting.StrictTransportSecurityMaxAge)}
 		if setting.StrictTransportSecurityPreload {
-			w.Header().Add(strictHeader, "preload")
+			strictHeaderValues = append(strictHeaderValues, "preload")
 		}
 		if setting.StrictTransportSecuritySubDomains {
-			w.Header().Add(strictHeader, "includeSubDomains")
+			strictHeaderValues = append(strictHeaderValues, "includeSubDomains")
 		}
+		w.Header().Add("Strict-Transport-Security", strings.Join(strictHeaderValues, "; "))
 	}
 
 	if setting.ContentTypeProtectionHeader {
@@ -267,8 +270,7 @@ func AddSecurityHeaders(w macaron.ResponseWriter) {
 	}
 
 	if setting.XSSProtectionHeader {
-		w.Header().Add("X-XSS-Protection", "1")
-		w.Header().Add("X-XSS-Protection", "mode=block")
+		w.Header().Add("X-XSS-Protection", "1; mode=block")
 	}
 }
 

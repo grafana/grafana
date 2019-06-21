@@ -63,6 +63,12 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     this.setState({ measurements });
   }
 
+  componentDidUpdate(prevProps: Props) {
+    if (prevProps.query.measurement && !this.props.query.measurement) {
+      this.setState({ measurement: null, field: null });
+    }
+  }
+
   onMeasurementsChange = async (values: string[]) => {
     const { query } = this.props;
     const measurement = values[0];
@@ -105,14 +111,20 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
         <div className="gf-form flex-shrink-0">
-          <Cascader options={measurements} onChange={this.onMeasurementsChange}>
+          <Cascader options={measurements} value={[measurement, field]} onChange={this.onMeasurementsChange}>
             <button className="gf-form-label gf-form-label--btn">
               {cascadeText} <i className="fa fa-caret-down" />
             </button>
           </Cascader>
         </div>
         <div className="flex-shrink-1 flex-flow-column-nowrap">
-          {measurement && <AdHocFilterField onPairsChanged={this.onPairsChanged} datasource={datasource} />}
+          {measurement && (
+            <AdHocFilterField
+              onPairsChanged={this.onPairsChanged}
+              datasource={datasource}
+              extendedOptions={{ measurement }}
+            />
+          )}
         </div>
       </div>
     );

@@ -1,5 +1,3 @@
-import { SelectOptionItem } from './../components/Select/Select';
-
 export function stringToJsRegex(str: string): RegExp {
   if (str[0] !== '/') {
     return new RegExp('^' + str + '$');
@@ -41,13 +39,6 @@ export function stringToMs(str: string): number {
       }
       throw new Error('Not supported unit: ' + unit);
   }
-}
-
-export function getIntervalFromString(strInterval: string): SelectOptionItem<number> {
-  return {
-    label: strInterval,
-    value: stringToMs(strInterval),
-  };
 }
 
 export function toNumberString(value: number | undefined | null): string {
