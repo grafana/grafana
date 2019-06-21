@@ -44,8 +44,24 @@ a user as member of a team and it will not be removed when the user signs in. Th
 
 ## Active LDAP Synchronization
 
-With the open source version of grafana LDAP users will be sync only during the log in process.
+With the open source version of Grafana, user data from LDAP will be synchronized only during the login process when authenticating using LDAP.
 
-With this feature you can configure grafana to actively sync grafana users with LDAP server(s) in the background. After certain configurable period it will map the groups with the already existing grafana users, disable removed LDAP users and etc.
+With this feature you can configure grafana to actively sync Grafana users with LDAP server(s) in the background. After certain configurable period it will map the groups with the already existing Grafana users, disable removed LDAP users and etc.
 
-See the configuration [example](https://grafana.com/docs/auth/ldap/#enable-ldap) on how to use this feature. 
+```bash
+[auth.ldap]
+...
+
+# Grafana Enterprise only.
+# Actively syncs grafana users with LDAP server(s) in the background. It will map the groups with the already existing users, disable removed LDAP users and etc.
+# You can use the Cron syntax or several predefined shedulers - 
+# @yearly (or @annually) | Run once a year, midnight, Jan. 1st        | 0 0 0 1 1 *
+# @monthly               | Run once a month, midnight, first of month | 0 0 0 1 * *
+# @weekly                | Run once a week, midnight between Sat/Sun  | 0 0 0 * * 0
+# @daily (or @midnight)  | Run once a day, midnight                   | 0 0 0 * * *
+# @hourly                | Run once an hour, beginning of hour        | 0 0 * * * * 
+sync_cron = "@hourly"
+# This cron expression format uses 6 space-separated fields (including seconds), for example
+# sync_cron = "* */10 * * * *" 
+# This will run the LDAP Synchronization every 10th minute, which is also the minimal interval between the grafana sync times i.e. you cannot set it for every 9th minute
+```
