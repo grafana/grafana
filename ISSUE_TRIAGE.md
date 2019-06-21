@@ -25,7 +25,7 @@ The more advanced, but recommended way is to subscribe to all notifications from
 
 It's highly recommened that you setup filters to automatically remove emails from the inbox and label/categorize them accordingly to make it easy for you to understand when you need to act upon a notification or where to look for finding issues that haven't been triaged etc.
 
-Instructions for setting up Gmail filters can be found [here](#setting-up-gmail-filters).
+Instructions for setting up filters in Gmail can be found [here](#setting-up-gmail-filters). Another alternative is to use [Trailer](https://github.com/ptsochantaris/trailer) or similar software.
 
 ## 2. Ensure the issue contains basic information
 
@@ -67,7 +67,7 @@ To make it easier for everyone to understand and find issues they're searching f
 
 * Make sure that issue titles are named to explain the subject of the issue, has a correct spelling and and doesn't include irrelevant information and/or sensitive information.
 * Make sure that issue descriptions doesn't include irrelevant information, information from template that haven't been filled out and/or sensitive information.
-* Make changes to title and description after best effort or request suggested changes by adding a comment.
+* Do your best effort to change title and description or request suggested changes by adding a comment.
 
 Note: Above rules is applicable to both new and existing issues of the Grafana project.
 
@@ -166,7 +166,13 @@ There's a minor typo/error/lack of information that adds a lot of confusion for 
 
 ## 4. Prioritization of issues
 
-In general bugs and enhancement issues should be labeled with a priority. In any case there are uncertainty around the priorization of an issue, please ask the maintainers for help.
+In general bugs and enhancement issues should be labeled with a priority.
+
+This is the most difficult thing with triaging issues since it requires a lot of knowledge, context and experience before being able to think of and start feel comfortable adding a certain priority label.
+
+The key here is asking for help and discuss issues to understand how more experienced project members thinks and reason. By doing that you learn more and eventually be more and more comfortable with prioritizing issues.
+
+In any case there are uncertainty around the priorization of an issue, please ask the maintainers for help.
 
 Label | Description
 ------- | --------
