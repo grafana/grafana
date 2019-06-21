@@ -51,7 +51,7 @@ func (n *notificationService) SendIfNeeded(ectx *EvalContext) error {
 		var uploadCtxCancel func()
 		uploadEvalCtx.Ctx, uploadCtxCancel = context.WithTimeout(ectx.Ctx, setting.AlertingNotificationTimeout/2)
 		// Try to upload the image without consuming all the time allocated for EvalContext
-		if err = n.uploadImage(&uploadEvalCtx); err != nil {
+		if err = n.renderAndUploadImage(&uploadEvalCtx); err != nil {
 			n.log.Error("Failed to upload alert panel image.", "error", err)
 		}
 		uploadCtxCancel()
@@ -120,7 +120,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 	return nil
 }
 
-func (n *notificationService) uploadImage(context *EvalContext) (err error) {
+func (n *notificationService) renderAndUploadImage(context *EvalContext) (err error) {
 	uploader, err := imguploader.NewImageUploader()
 	if err != nil {
 		return err
