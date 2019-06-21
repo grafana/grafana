@@ -11,6 +11,48 @@ The core maintainers of the Grafana project is responsible for categorizing all 
 * Streamlining the development process by preventing duplicate discussions.
 * If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
 
+**Simplified flowchart diagram of the issue triage process:**
+<!-- https://textik.com/#610afa78553def29 -->
+```
+                        +--------------------------+
+       +----------------+  New issue opened/       |
+       |                |  more information added  |
+       |                +-------------+------------+
+       |  Ask for more                |
+       |  information   +-------------+------------+
+       |                | All information needed   |
+       |       +--------+ to categorize the issue? +--------+
+       |       |        |                          |        |
+       |       |   NO   +--------------------------+  YES   |
+       |       |                                            |
++------+-------+-------------+                 +------------+---------+        +----------------------------+
+|                            |                 |                      |        |                            |
+| label: needs more details  |                 | Needs investigation? +--YES---+ label: needs investigation |
+|                            |                 |                      |        |                            |
++----------------------------+                 +----------------+-----+        +--------------+-------------+
+                                                             NO |                             |
+                                                                |               Investigate   |
+                                                    +-----------+----------+                  |
+                                                    | label: type/*        |                  |
+                                                    | label: area/*        +------------------+
+                                                    | label: datasource/*  |
+                                                    +-----|----------+-----+
+                                                          |          |
+                                                          |          |
+                                                          |       +--+--------------------+         +--------------------+
+                                                          |       |                       |         | label: priority/*  |
+                                                          |       |    Needs priority?    +--YES---+| milestone?         |
+                                                          |       |                       |         |                    |
+                                                          |       +--------------------+--+         +----+---------------+
+                                                          |                        NO  |                 |
+                                                          |                            |                 |
+                                                     +----+-------------+          +---+----------+      |
+                                                     |                  |          |              |      |
+                                                     |   Close issue    +----------+     Done     +------+
+                                                     |                  |          |              |
+                                                     +------------------+          +--------------+
+```
+
 ## 1. Find uncategorized issues
 
 To get started with issue triage and finding issues that haven't been triaged you have two alternatives.
