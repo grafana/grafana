@@ -182,7 +182,7 @@ First, evaluate if the documentation makes sense to be included in the Grafana p
 
 - Is this something we want/can maintain as a project?
 - Is this referring to usage of some specific integration/tool and in that case are those a popular use case in combination with Grafana?
-- If unsure, kindly and politely add a comment explaining that we would need upvotes to identify that lots of other users wants/needs this.
+- If unsure, kindly and politely add a comment explaining that we would need [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) to identify that lots of other users wants/needs this.
 
 Second, label the issue `type/docs` and at least one `area/*` or `datasource/*` label.
 
@@ -285,13 +285,13 @@ In many cases the issue author or community as a whole is more suitable to contr
 
 ## Investigation of issues
 
-When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending of the perceived severity and/or number of upvotes, the investigation will either be delegated to another maintainer for further investigation or either put on hold until someone else (maintainer or contributor) picks it up and eventually start investigating it.
+When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending of the perceived severity and/or number of [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments), the investigation will either be delegated to another maintainer for further investigation or either put on hold until someone else (maintainer or contributor) picks it up and eventually start investigating it.
 
 Investigating issues can be a very time consuming task, especially for the maintainers given the huge number of combinations of plugins, datasources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services etc that are being used with Grafana. There are a certain amount of combinations that are more common than others and these are in general easier for maintainers to investigate.
 
 For some other combinations there may not be possible at all for a maintainer to setup a proper test environment for being able to investigate. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
 
-Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](http://link-here) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
+Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
 
 ## Appendix
 
