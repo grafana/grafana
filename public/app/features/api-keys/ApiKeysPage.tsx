@@ -19,7 +19,6 @@ import { store } from 'app/store/store';
 import kbn from 'app/core/utils/kbn';
 
 // Utils
-import { isValidTimeSpan } from '@grafana/ui/src/utils/rangeutil';
 import { dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 const timeRangeValidationEvents: ValidationEvents = {
@@ -29,11 +28,12 @@ const timeRangeValidationEvents: ValidationEvents = {
         if (!value) {
           return true;
         }
-        // if it's just number (of seconds)
-        if (!isNaN(Number(value))) {
+        try {
+          kbn.interval_to_seconds(value);
           return true;
+        } catch {
+          return false;
         }
-        return isValidTimeSpan(value);
       },
       errorMessage: 'Not a valid duration',
     },
