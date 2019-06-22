@@ -259,10 +259,6 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'AdminEditUserCtrl',
     })
     .when('/admin/users/edit/:id', {
-      templateUrl: 'public/app/features/admin/partials/edit_user.html',
-      controller: 'AdminEditUserCtrl',
-    })
-    .when('/admin/users/react/edit/:id', {
       template: '<react-container />',
       resolve: {
         component: () => AdminEditUser,

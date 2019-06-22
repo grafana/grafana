@@ -1,12 +1,9 @@
-import { OrgUser, ThunkResult } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
+import { OrgUser, ThunkResult } from 'app/types';
 import { updateLocation } from 'app/core/actions';
 
 export enum ActionTypes {
   LoadUser = 'LOAD_USER',
-  SetUserName = 'SET_USER_NAME',
-  SetUserEmail = 'SET_USER_EMAIL',
-  SetUserLogin = 'SET_USER_LOGIN',
 }
 
 interface LoadUserAction {
@@ -14,42 +11,12 @@ interface LoadUserAction {
   payload: OrgUser;
 }
 
-interface SetUserNameAction {
-  type: ActionTypes.SetUserName;
-  payload: string;
-}
-
-interface SetUserEmailAction {
-  type: ActionTypes.SetUserEmail;
-  payload: string;
-}
-
-interface SetUserLoginAction {
-  type: ActionTypes.SetUserLogin;
-  payload: string;
-}
-
 const userLoaded = (user: OrgUser) => ({
   type: ActionTypes.LoadUser,
   payload: user,
 });
 
-export const setUserName = (name: string) => ({
-  type: ActionTypes.SetUserName,
-  payload: name,
-});
-
-export const setUserEmail = (email: string) => ({
-  type: ActionTypes.SetUserEmail,
-  payload: email,
-});
-
-export const setUserLogin = (login: string) => ({
-  type: ActionTypes.SetUserLogin,
-  payload: login,
-});
-
-export type Action = LoadUserAction | SetUserNameAction | SetUserEmailAction | SetUserLoginAction;
+export type Action = LoadUserAction;
 
 export function loadUser(id?: number): ThunkResult<any> {
   return async dispatch => {
@@ -66,15 +33,21 @@ export function loadUser(id?: number): ThunkResult<any> {
   };
 }
 
-export function updateUser(id?: number): ThunkResult<any> {
-  return async (dispatch, getStore) => {
-    const profile = getStore().user.profile;
+export function updateUser(updates: object, id?: number): ThunkResult<any> {
+  return async dispatch => {
     if (id) {
-      await getBackendSrv().put('/api/users/' + id, profile);
+      await getBackendSrv().put('/api/users/' + id, updates);
       dispatch(updateLocation({ path: '/admin/users' }));
     } else {
-      await getBackendSrv().put('/api/user/', profile);
+      await getBackendSrv().put('/api/user/', updates);
       dispatch(loadUser());
     }
+  };
+}
+
+export function updateUserPermissions(permissions: object, id: number): ThunkResult<any> {
+  return async dispatch => {
+    await getBackendSrv().put('/api/admin/users/' + id + '/permissions', permissions);
+    dispatch(updateLocation({ path: '/admin/users' }));
   };
 }

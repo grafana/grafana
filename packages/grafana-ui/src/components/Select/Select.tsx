@@ -34,6 +34,7 @@ export interface CommonProps<T> {
   getOptionValue?: (item: SelectOptionItem<T>) => string;
   onChange: (item: SelectOptionItem<T>) => {} | void;
   placeholder?: string;
+  inputId?: string;
   width?: number;
   value?: SelectOptionItem<T>;
   className?: string;
@@ -138,6 +139,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       onChange,
       options,
       placeholder,
+      inputId,
       width,
       value,
       className,
@@ -177,6 +179,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
         isSearchable={isSearchable}
         onChange={onChange}
         options={options}
+        inputId={inputId}
         placeholder={placeholder || 'Choose'}
         styles={resetSelectStyles()}
         isDisabled={isDisabled}
@@ -221,6 +224,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
       getOptionValue,
       onChange,
       placeholder,
+      inputId,
       width,
       value,
       className,
@@ -268,6 +272,7 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
         isLoading={isLoading}
         defaultOptions={defaultOptions}
         placeholder={placeholder || 'Choose'}
+        inputId={inputId}
         styles={resetSelectStyles()}
         loadingMessage={loadingMessage}
         noOptionsMessage={noOptionsMessage}

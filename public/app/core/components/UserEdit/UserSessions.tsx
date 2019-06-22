@@ -1,12 +1,12 @@
 import React, { PureComponent } from 'react';
-import { UserSession } from 'app/types';
 import { getBackendSrv } from '@grafana/runtime';
+import { UserSession } from 'app/types';
 import { Button, dateTime } from '@grafana/ui';
 import { ButtonVariant, ButtonSize } from '@grafana/ui/src/components/Button/AbstractButton';
 
 export interface Props {
-  adminMode: boolean;
-  uid: number;
+  adminMode?: boolean;
+  userId?: number;
 }
 
 export interface State {
@@ -26,7 +26,7 @@ export class UserSessions extends PureComponent<Props, State> {
     await this.loadUserSessions();
   }
 
-  sortSessions(sessions) {
+  sortSessions(sessions: UserSession[]) {
     sessions.reverse();
 
     const found = sessions.findIndex((session: UserSession) => {
@@ -42,18 +42,18 @@ export class UserSessions extends PureComponent<Props, State> {
     return sessions;
   }
 
-  async revokeAllUserTokens() {
-    const { uid } = this.props;
-    await getBackendSrv().post('/api/admin/users/' + uid + '/logout', {});
+  async revokeAllUserSessions() {
+    const { userId } = this.props;
+    await getBackendSrv().post('/api/admin/users/' + userId + '/logout', {});
     this.setState({ sessions: [] });
   }
 
-  async revokeUserToken(tokenId: number) {
-    const { uid } = this.props;
-    let sessions;
+  async revokeUserSession(tokenId: number) {
+    const { userId } = this.props;
+    let sessions: UserSession[];
 
-    if (uid) {
-      await getBackendSrv().post('/api/admin/users/' + uid + '/revoke-auth-token', {
+    if (userId) {
+      await getBackendSrv().post('/api/admin/users/' + userId + '/revoke-auth-token', {
         authTokenId: tokenId,
       });
     } else {
@@ -73,11 +73,11 @@ export class UserSessions extends PureComponent<Props, State> {
   }
 
   async loadUserSessions() {
-    const { uid } = this.props;
-    let sessions = [];
+    const { userId } = this.props;
+    let sessions: UserSession[] = [];
 
-    if (uid) {
-      sessions = await getBackendSrv().get('/api/admin/users/' + uid + '/auth-tokens');
+    if (userId) {
+      sessions = await getBackendSrv().get('/api/admin/users/' + userId + '/auth-tokens');
     } else {
       sessions = await getBackendSrv().get('/api/user/auth-tokens');
     }
@@ -113,7 +113,7 @@ export class UserSessions extends PureComponent<Props, State> {
               </tr>
             </thead>
             <tbody>
-              {sessions.map((session, index) => {
+              {sessions.map((session: UserSession, index) => {
                 return (
                   <tr key={index}>
                     <td>{session.isActive ? 'Now' : session.seenAt}</td>
@@ -127,7 +127,7 @@ export class UserSessions extends PureComponent<Props, State> {
                         variant={ButtonVariant.Danger}
                         size={ButtonSize.Small}
                         onClick={() => {
-                          this.revokeUserToken(session.id);
+                          this.revokeUserSession(session.id);
                         }}
                       >
                         <i className="fa fa-power-off" />
@@ -138,17 +138,19 @@ export class UserSessions extends PureComponent<Props, State> {
               })}
             </tbody>
           </table>
-          {adminMode && (
+        </div>
+        {adminMode && (
+          <div className="gf-form-group">
             <Button
               variant={ButtonVariant.Danger}
               onClick={() => {
-                this.revokeAllUserTokens();
+                this.revokeAllUserSessions();
               }}
             >
               Logout user from all devices
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </>
     );
   }

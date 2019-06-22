@@ -2,16 +2,13 @@ import React, { ChangeEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { OrgUser, StoreState } from 'app/types';
-import { Input, Button } from '@grafana/ui';
-import { setUserName, setUserEmail, setUserLogin, updateUser } from './state/actions';
+import { updateUser } from './state/actions';
+import { Input, Button, FormLabel } from '@grafana/ui';
 
 export interface Props {
-  adminMode: boolean;
-  uid: number;
+  adminMode?: boolean;
+  userId?: number;
   user: OrgUser;
-  setUserName: typeof setUserName;
-  setUserEmail: typeof setUserEmail;
-  setUserLogin: typeof setUserLogin;
   updateUser: typeof updateUser;
 }
 
@@ -33,25 +30,29 @@ export class UserProfile extends PureComponent<Props, State> {
     };
   }
 
-  onNameChange = name => {
+  onNameChange = (name: string) => {
     this.setState({ name });
   };
 
-  onEmailChange = email => {
+  onEmailChange = (email: string) => {
     this.setState({ email });
   };
 
-  onLoginChange = login => {
+  onLoginChange = (login: string) => {
     this.setState({ login });
   };
 
   onUpdateUser = () => {
-    const { uid } = this.props;
+    const { userId } = this.props;
     const { name, email, login } = this.state;
-    this.props.setUserName(name);
-    this.props.setUserEmail(email);
-    this.props.setUserLogin(login);
-    this.props.updateUser(uid);
+    this.props.updateUser(
+      {
+        name,
+        email,
+        login,
+      },
+      userId
+    );
   };
 
   render() {
@@ -62,7 +63,7 @@ export class UserProfile extends PureComponent<Props, State> {
         <h3 className="page-sub-heading">{adminMode ? 'Edit User' : 'Edit Profile'}</h3>
         <form name="profileForm" className="gf-form-group">
           <div className="gf-form max-width-30">
-            <span className="gf-form-label width-8">Name</span>
+            <FormLabel className="width-8">Name</FormLabel>
             <Input
               className="gf-form-input max-width-22"
               type="text"
@@ -71,7 +72,7 @@ export class UserProfile extends PureComponent<Props, State> {
             />
           </div>
           <div className="gf-form max-width-30">
-            <span className="gf-form-label width-8">Email</span>
+            <FormLabel className="width-8">Email</FormLabel>
             <Input
               className="gf-form-input max-width-22"
               type="text"
@@ -80,7 +81,7 @@ export class UserProfile extends PureComponent<Props, State> {
             />
           </div>
           <div className="gf-form max-width-30">
-            <span className="gf-form-label width-8">Username</span>
+            <FormLabel className="width-8">Username</FormLabel>
             <Input
               className="gf-form-input max-width-22"
               type="text"
@@ -112,9 +113,6 @@ function mapStateToProps(state: StoreState) {
 
 const mapDispatchToProps = {
   updateUser,
-  setUserName,
-  setUserEmail,
-  setUserLogin,
 };
 
 export default hot(module)(

@@ -8,6 +8,7 @@ export interface OrgUser {
   orgId: number;
   role: string;
   userId: number;
+  isGrafanaAdmin: boolean;
 }
 
 export interface User {

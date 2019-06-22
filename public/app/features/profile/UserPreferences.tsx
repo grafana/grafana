@@ -1,22 +1,38 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { StoreState } from 'app/types';
-import Page from 'app/core/components/Page/Page';
-import UserEdit from 'app/core/components/UserEdit/UserEdit';
+import { StoreState, OrgUser } from 'app/types';
+import { loadUser } from 'app/core/components/UserEdit/state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel } from '@grafana/ui';
+import Page from 'app/core/components/Page/Page';
+import UserProfile from 'app/core/components/UserEdit/UserProfile';
+import UserSessions from 'app/core/components/UserEdit/UserSessions';
+import UserTeams from 'app/core/components/UserEdit/UserTeams';
+import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 
 export interface Props {
   navModel: NavModel;
+  user: OrgUser;
+  loadUser: typeof loadUser;
 }
 
 export class UserPreferences extends PureComponent<Props> {
+  async componentDidMount() {
+    await this.props.loadUser();
+  }
+
   render() {
-    const { navModel } = this.props;
+    const { navModel, user } = this.props;
+    const isLoading = Object.keys(user).length === 0;
     return (
       <Page navModel={navModel}>
-        <UserEdit />
+        <Page.Contents isLoading={isLoading}>
+          {!isLoading && <UserProfile />}
+          <SharedPreferences resourceUri="user" />
+          <UserTeams />
+          <UserSessions />
+        </Page.Contents>
       </Page>
     );
   }
@@ -25,10 +41,13 @@ export class UserPreferences extends PureComponent<Props> {
 function mapStateToProps(state: StoreState) {
   return {
     navModel: getNavModel(state.navIndex, `profile-settings`),
+    user: state.user.profile,
   };
 }
 
-const mapDispatchToProps = {};
+const mapDispatchToProps = {
+  loadUser,
+};
 
 export default hot(module)(
   connect(
