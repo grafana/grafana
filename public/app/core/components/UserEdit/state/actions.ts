@@ -29,6 +29,13 @@ export function loadUser(id?: number): ThunkResult<any> {
     }
 
     dispatch(userLoaded(userResponse));
+  };
+}
+
+export function clearUser(): ThunkResult<any> {
+  return async dispatch => {
+    const userResponse = {} as OrgUser;
+    dispatch(userLoaded(userResponse));
     return userResponse;
   };
 }

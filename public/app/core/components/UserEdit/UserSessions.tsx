@@ -101,55 +101,61 @@ export class UserSessions extends PureComponent<Props, State> {
     return (
       <>
         <h3 className="page-sub-heading">Sessions</h3>
-        <div className="gf-form-group">
-          <table className="filter-table form-inline">
-            <thead>
-              <tr>
-                <th>Last seen</th>
-                <th>Logged on</th>
-                <th>IP address</th>
-                <th>Browser &amp; OS</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.map((session: UserSession, index) => {
-                return (
-                  <tr key={index}>
-                    <td>{session.isActive ? 'Now' : session.seenAt}</td>
-                    <td>{session.createdAt}</td>
-                    <td>{session.clientIp}</td>
-                    <td>
-                      {session.browser} on {session.os} {session.osVersion}
-                    </td>
-                    <td>
-                      <Button
-                        variant={ButtonVariant.Danger}
-                        size={ButtonSize.Small}
-                        onClick={() => {
-                          this.revokeUserSession(session.id);
-                        }}
-                      >
-                        <i className="fa fa-power-off" />
-                      </Button>
-                    </td>
+        {sessions.length ? (
+          <div>
+            <div className="gf-form-group">
+              <table className="filter-table form-inline">
+                <thead>
+                  <tr>
+                    <th>Last seen</th>
+                    <th>Logged on</th>
+                    <th>IP address</th>
+                    <th>Browser &amp; OS</th>
+                    <th />
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        {adminMode && (
-          <div className="gf-form-group">
-            <Button
-              variant={ButtonVariant.Danger}
-              onClick={() => {
-                this.revokeAllUserSessions();
-              }}
-            >
-              Logout user from all devices
-            </Button>
+                </thead>
+                <tbody>
+                  {sessions.map((session: UserSession, index) => {
+                    return (
+                      <tr key={index}>
+                        <td>{session.isActive ? 'Now' : session.seenAt}</td>
+                        <td>{session.createdAt}</td>
+                        <td>{session.clientIp}</td>
+                        <td>
+                          {session.browser} on {session.os} {session.osVersion}
+                        </td>
+                        <td>
+                          <Button
+                            variant={ButtonVariant.Danger}
+                            size={ButtonSize.Small}
+                            onClick={() => {
+                              this.revokeUserSession(session.id);
+                            }}
+                          >
+                            <i className="fa fa-power-off" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {adminMode && (
+              <div className="gf-form-group">
+                <Button
+                  variant={ButtonVariant.Danger}
+                  onClick={() => {
+                    this.revokeAllUserSessions();
+                  }}
+                >
+                  Logout user from all devices
+                </Button>
+              </div>
+            )}
           </div>
+        ) : (
+          <p>No sessions found.</p>
         )}
       </>
     );

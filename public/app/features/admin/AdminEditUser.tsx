@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { StoreState, OrgUser } from 'app/types';
-import { loadUser } from 'app/core/components/UserEdit/state/actions';
+import { loadUser, clearUser } from 'app/core/components/UserEdit/state/actions';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel } from '@grafana/ui';
@@ -18,12 +18,17 @@ export interface Props {
   userId: number;
   user: OrgUser;
   loadUser: typeof loadUser;
+  clearUser: typeof clearUser;
 }
 
 export class AdminEditUser extends PureComponent<Props> {
   async componentDidMount() {
     const { userId } = this.props;
     await this.props.loadUser(userId);
+  }
+
+  componentWillUnmount() {
+    this.props.clearUser();
   }
 
   render() {
@@ -34,10 +39,14 @@ export class AdminEditUser extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           {!isLoading && <UserProfile adminMode={adminMode} userId={userId} />}
-          <NewUserPassword userId={userId} />
-          {!isLoading && <UserPermissions userId={userId} />}
-          <UserOrganizations userId={userId} />
-          <UserSessions adminMode={adminMode} userId={userId} />
+          {userId && (
+            <>
+              <NewUserPassword userId={userId} />
+              {!isLoading && <UserPermissions userId={userId} />}
+              <UserOrganizations userId={userId} />
+              <UserSessions adminMode={adminMode} userId={userId} />
+            </>
+          )}
         </Page.Contents>
       </Page>
     );
@@ -54,6 +63,7 @@ function mapStateToProps(state: StoreState) {
 
 const mapDispatchToProps = {
   loadUser,
+  clearUser,
 };
 
 export default hot(module)(

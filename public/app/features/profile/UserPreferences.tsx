@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { StoreState, OrgUser } from 'app/types';
-import { loadUser } from 'app/core/components/UserEdit/state/actions';
+import { loadUser, clearUser } from 'app/core/components/UserEdit/state/actions';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
@@ -15,11 +15,16 @@ export interface Props {
   navModel: NavModel;
   user: OrgUser;
   loadUser: typeof loadUser;
+  clearUser: typeof clearUser;
 }
 
 export class UserPreferences extends PureComponent<Props> {
   async componentDidMount() {
     await this.props.loadUser();
+  }
+
+  componentWillUnmount() {
+    this.props.clearUser();
   }
 
   render() {
@@ -47,6 +52,7 @@ function mapStateToProps(state: StoreState) {
 
 const mapDispatchToProps = {
   loadUser,
+  clearUser,
 };
 
 export default hot(module)(

@@ -1,6 +1,7 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { getBackendSrv } from '@grafana/runtime';
 import { OrgUser, StoreState } from 'app/types';
 import { updateUser } from './state/actions';
 import { Input, Button, FormLabel } from '@grafana/ui';
@@ -11,23 +12,56 @@ export interface Props {
   user: OrgUser;
   updateUser: typeof updateUser;
 }
-
 export interface State {
+  mode: string;
   name: string;
   email: string;
   login: string;
+  password: string;
 }
 
 export class UserProfile extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const { user } = props;
+    const { user, userId, adminMode } = props;
+    const { name, email, login } = user;
+    let mode = '';
+
+    if (adminMode && userId) {
+      mode = 'edit';
+    } else if (adminMode) {
+      mode = 'new';
+    } else {
+      mode = 'profile';
+    }
+
     this.state = {
-      name: user.name,
-      email: user.email,
-      login: user.login,
+      mode,
+      name,
+      email,
+      login,
+      password: '',
     };
+  }
+
+  pageHeader() {
+    const { mode } = this.state;
+    let header: string;
+
+    switch (mode) {
+      case 'edit':
+        header = 'Edit User';
+        break;
+      case 'new':
+        header = 'Add New User';
+        break;
+      case 'new':
+        header = 'Edit Profile';
+        break;
+    }
+
+    return header;
   }
 
   onNameChange = (name: string) => {
@@ -42,10 +76,25 @@ export class UserProfile extends PureComponent<Props, State> {
     this.setState({ login });
   };
 
-  onUpdateUser = () => {
+  onPasswordChange = (password: string) => {
+    this.setState({ password });
+  };
+
+  async onCreateUser() {
+    const { name, email, login, password } = this.state;
+
+    await getBackendSrv().post('/api/admin/users', {
+      name,
+      email,
+      login,
+      password,
+    });
+  }
+
+  async onUpdateUser() {
     const { userId } = this.props;
     const { name, email, login } = this.state;
-    this.props.updateUser(
+    await this.props.updateUser(
       {
         name,
         email,
@@ -53,14 +102,13 @@ export class UserProfile extends PureComponent<Props, State> {
       },
       userId
     );
-  };
+  }
 
   render() {
-    const { adminMode } = this.props;
-    const { email, name, login } = this.state;
+    const { email, name, login, password, mode } = this.state;
     return (
       <>
-        <h3 className="page-sub-heading">{adminMode ? 'Edit User' : 'Edit Profile'}</h3>
+        <h3 className="page-sub-heading">{this.pageHeader()}</h3>
         <form name="profileForm" className="gf-form-group">
           <div className="gf-form max-width-30">
             <FormLabel className="width-8">Name</FormLabel>
@@ -89,11 +137,26 @@ export class UserProfile extends PureComponent<Props, State> {
               value={login}
             />
           </div>
+          {mode === 'new' && (
+            <div className="gf-form max-width-30">
+              <FormLabel className="width-8">Password</FormLabel>
+              <Input
+                className="gf-form-input max-width-22"
+                type="password"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => this.onPasswordChange(event.target.value)}
+                value={password}
+              />
+            </div>
+          )}
           <div className="gf-form-button-row">
             <Button
               onClick={event => {
                 event.preventDefault();
-                this.onUpdateUser();
+                if (mode === 'new') {
+                  this.onCreateUser();
+                } else {
+                  this.onUpdateUser();
+                }
               }}
             >
               Save
