@@ -187,6 +187,8 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
 	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
 
+	loggersToMute := util.SplitString(cfg.Section("log").Key("mute").String())
+
 	handlers := make([]log15.Handler, 0)
 
 	for _, mode := range modes {
@@ -243,31 +245,72 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 		}
 
 		handler = LogFilterHandler(level, modeFilters, handler)
+
+		if len(loggersToMute) > 0 {
+			handler = muteLoggerHandler(loggersToMute, handler)
+		}
+
 		handlers = append(handlers, handler)
+
 	}
 
 	Root.SetHandler(log15.MultiHandler(handlers...))
 }
 
+func muteLoggerHandler(loggers []string, h log15.Handler) log15.Handler {
+	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
+		loggerName, err := loggerNameFrom(r)
+
+		if err != nil {
+			return true
+		}
+
+		for _, logger := range loggers {
+
+			if logger == loggerName {
+				return false
+			}
+		}
+
+		return true
+	}, h)
+}
+
 func LogFilterHandler(maxLevel log15.Lvl, filters map[string]log15.Lvl, h log15.Handler) log15.Handler {
 	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
-
 		if len(filters) > 0 {
-			for i := 0; i < len(r.Ctx); i += 2 {
-				key, ok := r.Ctx[i].(string)
-				if ok && key == "logger" {
-					loggerName, strOk := r.Ctx[i+1].(string)
-					if strOk {
-						if filterLevel, ok := filters[loggerName]; ok {
-							return r.Lvl <= filterLevel
-						}
-					}
-				}
+			loggerName, _ := loggerNameFrom(r)
+
+			if filterLevel, ok := filters[loggerName]; ok {
+				return r.Lvl <= filterLevel
 			}
 		}
 
 		return r.Lvl <= maxLevel
 	}, h)
+}
+
+func loggerNameFrom(r *log15.Record) (string, error) {
+	for i := 0; i < len(r.Ctx); i += 2 {
+		key, ok := r.Ctx[i].(string)
+
+		if ok != true {
+			return "", fmt.Errorf("failed to parse the key from the log record context")
+		}
+
+		if key == "logger" {
+
+			logger, strOk := r.Ctx[i+1].(string)
+
+			if strOk != true {
+				return "", fmt.Errorf("failed to parse the logger name from the log record context.")
+			}
+
+			return logger, nil
+		}
+	}
+
+	return "", fmt.Errorf("no log record context to determine the logger name")
 }
 
 func Stack(skip int) string {
