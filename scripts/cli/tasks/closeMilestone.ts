@@ -1,29 +1,15 @@
-import axios from 'axios';
 import { Task, TaskRunner } from './task';
+import GithubClient from '../utils/githubClient';
 
 interface CloseMilestoneOptions {
   milestone: string;
 }
 
 const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ milestone }) => {
-  const gitHubUsername = process.env.GITHUB_USERNAME;
-  const gitHubToken = process.env.GITHUB_ACCESS_TOKEN;
-
-  if (!gitHubUsername || !gitHubToken) {
-    console.log('the close milestone operation needs a GITHUB_USERNAME and GITHUB_ACCESS_TOKEN environment variables');
-    return;
-  }
+  const githubClient = new GithubClient(true);
 
   const cherryPickLabel = 'cherry-pick needed';
-
-  const client = axios.create({
-    baseURL: 'https://api.github.com/repos/grafana/grafana',
-    timeout: 10000,
-    auth: {
-      username: gitHubUsername,
-      password: gitHubToken,
-    },
-  });
+  const client = githubClient.client;
 
   if (!/^\d+$/.test(milestone)) {
     console.log('Use milestone number not title, find number in milestone url');

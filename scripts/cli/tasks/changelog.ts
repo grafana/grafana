@@ -1,18 +1,14 @@
-import axios from 'axios';
 import _ from 'lodash';
 import { Task, TaskRunner } from './task';
-
-const githubGrafanaUrl = 'https://github.com/grafana/grafana';
+import GithubClient from '../utils/githubClient';
 
 interface ChangelogOptions {
   milestone: string;
 }
 
 const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) => {
-  const client = axios.create({
-    baseURL: 'https://api.github.com/repos/grafana/grafana',
-    timeout: 10000,
-  });
+  const githubClient = new GithubClient();
+  const client = githubClient.client;
 
   if (!/^\d+$/.test(milestone)) {
     console.log('Use milestone number not title, find number in milestone url');
@@ -67,6 +63,7 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) 
 };
 
 function getMarkdownLineForIssue(item: any) {
+  const githubGrafanaUrl = 'https://github.com/grafana/grafana';
   let markdown = '';
   const title = item.title.replace(/^([^:]*)/, (match, g1) => {
     return `**${g1}**`;
