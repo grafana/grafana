@@ -63,9 +63,9 @@ The easiest and straigt forward way of getting started and finding issues that h
 
 ### Subscribe to all notifications
 
-The more advanced, but recommended way is to subscribe to all notifications from this repository which means that all new issues, pull requests, comments and important status changes are sent to your configure email address. Read this [guide](https://help.github.com/en/articles/watching-and-unwatching-repositories#watching-a-single-repository) for help with setting this up.
+The more advanced, but recommended way is to subscribe to all notifications from this repository which means that all new issues, pull requests, comments and important status changes are sent to your configured email address. Read this [guide](https://help.github.com/en/articles/watching-and-unwatching-repositories#watching-a-single-repository) for help with setting this up.
 
-It's highly recommened that you setup filters to automatically remove emails from the inbox and label/categorize them accordingly to make it easy for you to understand when you need to act upon a notification or where to look for finding issues that haven't been triaged etc.
+It's highly recommended that you setup filters to automatically remove emails from the inbox and label/categorize them accordingly to make it easy for you to understand when you need to act upon a notification or where to look for finding issues that haven't been triaged etc.
 
 Instructions for setting up filters in Gmail can be found [here](#setting-up-gmail-filters). Another alternative is to use [Trailer](https://github.com/ptsochantaris/trailer) or similar software.
 
@@ -107,7 +107,7 @@ In general, if the issue description and title is perceived as a question no mor
 
 To make it easier for everyone to understand and find issues they're searching for it's suggested as a general rule of thumbs to:
 
-* Make sure that issue titles are named to explain the subject of the issue, has a correct spelling and and doesn't include irrelevant information and/or sensitive information.
+* Make sure that issue titles are named to explain the subject of the issue, has a correct spelling and doesn't include irrelevant information and/or sensitive information.
 * Make sure that issue descriptions doesn't include irrelevant information, information from template that haven't been filled out and/or sensitive information.
 * Do your best effort to change title and description or request suggested changes by adding a comment.
 
