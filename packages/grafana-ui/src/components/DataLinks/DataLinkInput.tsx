@@ -37,7 +37,10 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
       return value.indexOf(suggestion.value) > -1;
     })
   );
-  const [linkUrl, setLinkUrl] = useState(makeValue(value));
+  // Using any here as TS has problem pickung up `change` method existance on Value
+  // According to code and documentation `change` is an instance method on Value in slate 0.33.8 that we use
+  // https://github.com/ianstormtaylor/slate/blob/slate%400.33.8/docs/reference/slate/value.md#change
+  const [linkUrl, setLinkUrl] = useState<any>(makeValue(value));
 
   const getStyles = useCallback(() => {
     return {
@@ -126,6 +129,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
 
   const onVariableSelect = (item: VariableSuggestion) => {
     const includeDollarSign = Plain.serialize(linkUrl).slice(-1) !== '$';
+
     const change = linkUrl.change();
 
     if (item.origin === VariableOrigin.BuiltIn) {
