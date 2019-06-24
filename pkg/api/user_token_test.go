@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -75,7 +76,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 		token := &m.UserToken{Id: 1}
 
 		revokeUserAuthTokenInternalScenario("Should be successful", cmd, 200, token, func(sc *scenarioContext) {
-			sc.userAuthTokenService.GetUserTokenProvider = func(userId, userTokenId int64) (*m.UserToken, error) {
+			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*m.UserToken, error) {
 				return &m.UserToken{Id: 2}, nil
 			}
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -93,7 +94,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 		token := &m.UserToken{Id: 2}
 
 		revokeUserAuthTokenInternalScenario("Should not be successful", cmd, TestUserID, token, func(sc *scenarioContext) {
-			sc.userAuthTokenService.GetUserTokenProvider = func(userId, userTokenId int64) (*m.UserToken, error) {
+			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*m.UserToken, error) {
 				return token, nil
 			}
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
@@ -126,7 +127,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 					SeenAt:    time.Now().Unix(),
 				},
 			}
-			sc.userAuthTokenService.GetUserTokensProvider = func(userId int64) ([]*m.UserToken, error) {
+			sc.userAuthTokenService.GetUserTokensProvider = func(ctx context.Context, userId int64) ([]*m.UserToken, error) {
 				return tokens, nil
 			}
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -139,17 +140,27 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 			So(resultOne.Get("id").MustInt64(), ShouldEqual, tokens[0].Id)
 			So(resultOne.Get("isActive").MustBool(), ShouldBeTrue)
 			So(resultOne.Get("clientIp").MustString(), ShouldEqual, "127.0.0.1")
-			So(resultOne.Get("userAgent").MustString(), ShouldEqual, "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36")
 			So(resultOne.Get("createdAt").MustString(), ShouldEqual, time.Unix(tokens[0].CreatedAt, 0).Format(time.RFC3339))
 			So(resultOne.Get("seenAt").MustString(), ShouldEqual, time.Unix(tokens[0].SeenAt, 0).Format(time.RFC3339))
+
+			So(resultOne.Get("device").MustString(), ShouldEqual, "Other")
+			So(resultOne.Get("browser").MustString(), ShouldEqual, "Chrome")
+			So(resultOne.Get("browserVersion").MustString(), ShouldEqual, "72.0")
+			So(resultOne.Get("os").MustString(), ShouldEqual, "Linux")
+			So(resultOne.Get("osVersion").MustString(), ShouldEqual, "")
 
 			resultTwo := result.GetIndex(1)
 			So(resultTwo.Get("id").MustInt64(), ShouldEqual, tokens[1].Id)
 			So(resultTwo.Get("isActive").MustBool(), ShouldBeFalse)
 			So(resultTwo.Get("clientIp").MustString(), ShouldEqual, "127.0.0.2")
-			So(resultTwo.Get("userAgent").MustString(), ShouldEqual, "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1")
 			So(resultTwo.Get("createdAt").MustString(), ShouldEqual, time.Unix(tokens[1].CreatedAt, 0).Format(time.RFC3339))
 			So(resultTwo.Get("seenAt").MustString(), ShouldEqual, time.Unix(tokens[1].SeenAt, 0).Format(time.RFC3339))
+
+			So(resultTwo.Get("device").MustString(), ShouldEqual, "iPhone")
+			So(resultTwo.Get("browser").MustString(), ShouldEqual, "Mobile Safari")
+			So(resultTwo.Get("browserVersion").MustString(), ShouldEqual, "11.0")
+			So(resultTwo.Get("os").MustString(), ShouldEqual, "iOS")
+			So(resultTwo.Get("osVersion").MustString(), ShouldEqual, "11.0")
 		})
 	})
 }
@@ -226,7 +237,7 @@ func logoutUserFromAllDevicesInternalScenario(desc string, userId int64, fn scen
 			sc.context.OrgId = TestOrgID
 			sc.context.OrgRole = m.ROLE_ADMIN
 
-			return hs.logoutUserFromAllDevicesInternal(userId)
+			return hs.logoutUserFromAllDevicesInternal(context.Background(), userId)
 		})
 
 		sc.m.Post("/", sc.defaultHandler)

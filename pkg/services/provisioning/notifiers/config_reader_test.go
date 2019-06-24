@@ -1,9 +1,10 @@
 package notifiers
 
 import (
+	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/notifiers"
@@ -43,8 +44,10 @@ func TestNotificationAsConfig(t *testing.T) {
 		})
 
 		Convey("Can read correct properties", func() {
+			_ = os.Setenv("TEST_VAR", "default")
 			cfgProvifer := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvifer.readConfig(correct_properties)
+			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -63,6 +66,8 @@ func TestNotificationAsConfig(t *testing.T) {
 			So(nt.Settings, ShouldResemble, map[string]interface{}{
 				"recipient": "XXX", "token": "xoxb", "uploadImage": true, "url": "https://slack.com",
 			})
+			So(nt.SendReminder, ShouldBeTrue)
+			So(nt.Frequency, ShouldEqual, "1h")
 
 			nt = nts[1]
 			So(nt.Name, ShouldEqual, "another-not-default-notification")

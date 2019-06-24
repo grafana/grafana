@@ -4,12 +4,13 @@ import coreModule from 'app/core/core_module';
 
 // Services & Utils
 import config from 'app/core/config';
-import { importPluginModule } from './plugin_loader';
+import { importDataSourcePlugin } from './plugin_loader';
+import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
 
 // Types
 import { DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/ui/src/types';
 
-export class DatasourceSrv {
+export class DatasourceSrv implements DataSourceService {
   datasources: { [name: string]: DataSourceApi };
 
   /** @ngInject */
@@ -52,25 +53,27 @@ export class DatasourceSrv {
     }
 
     const deferred = this.$q.defer();
-    const pluginDef = dsConfig.meta;
 
-    importPluginModule(pluginDef.module)
-      .then(plugin => {
+    importDataSourcePlugin(dsConfig.meta)
+      .then(dsPlugin => {
         // check if its in cache now
         if (this.datasources[name]) {
           deferred.resolve(this.datasources[name]);
           return;
         }
 
-        // plugin module needs to export a constructor function named Datasource
-        if (!plugin.Datasource) {
-          throw new Error('Plugin module is missing Datasource constructor');
-        }
+        // If there is only one constructor argument it is instanceSettings
+        const useAngular = dsPlugin.DataSourceClass.length !== 1;
+        const instance: DataSourceApi = useAngular
+          ? this.$injector.instantiate(dsPlugin.DataSourceClass, {
+              instanceSettings: dsConfig,
+            })
+          : new dsPlugin.DataSourceClass(dsConfig);
 
-        const instance: DataSourceApi = this.$injector.instantiate(plugin.Datasource, { instanceSettings: dsConfig });
-        instance.meta = pluginDef;
-        instance.name = name;
-        instance.pluginExports = plugin;
+        instance.components = dsPlugin.components;
+        instance.meta = dsConfig.meta;
+
+        // store in instance cache
         this.datasources[name] = instance;
         deferred.resolve(instance);
       })
@@ -173,14 +176,8 @@ export class DatasourceSrv {
   }
 }
 
-let singleton: DatasourceSrv;
-
-export function setDatasourceSrv(srv: DatasourceSrv) {
-  singleton = srv;
-}
-
 export function getDatasourceSrv(): DatasourceSrv {
-  return singleton;
+  return getDataSourceService() as DatasourceSrv;
 }
 
 coreModule.service('datasourceSrv', DatasourceSrv);

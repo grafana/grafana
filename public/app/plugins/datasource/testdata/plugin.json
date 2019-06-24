@@ -4,17 +4,31 @@
   "id": "testdata",
 
   "metrics": true,
+  "logs": true,
   "alerting": true,
   "annotations": true,
 
+  "queryOptions": {
+    "minInterval": true
+  },
+
   "info": {
+    "description": "Generates test data in different forms",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "../../../../img/grafana_icon.svg",
-      "large": "../../../../img/grafana_icon.svg"
+      "small": "img/testdata.svg",
+      "large": "img/testdata.svg"
     }
-  }
+  },
+
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "Streaming Example",
+      "path": "dashboards/streaming.json"
+    }
+  ]
 }

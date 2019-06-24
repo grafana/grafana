@@ -18,7 +18,11 @@ interface Props extends React.HTMLProps<HTMLInputElement> {
   onChange?: (event: React.ChangeEvent<HTMLInputElement>, status?: InputStatus) => void;
 }
 
-export class Input extends PureComponent<Props> {
+interface State {
+  error: string | null;
+}
+
+export class Input extends PureComponent<Props, State> {
   static defaultProps = {
     className: '',
   };
@@ -72,7 +76,7 @@ export class Input extends PureComponent<Props> {
     const inputElementProps = this.populateEventPropsWithStatus(restProps, validationEvents);
 
     return (
-      <div>
+      <div style={{ flexGrow: 1 }}>
         <input {...inputElementProps} className={inputClassName} />
         {error && !hideErrorMessage && <span>{error}</span>}
       </div>

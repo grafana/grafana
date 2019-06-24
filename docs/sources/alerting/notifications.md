@@ -27,7 +27,7 @@ can configure and setup a new Notification Channel.
 You specify a name and a type, and type specific options. You can also test the notification to make
 sure it's setup correctly.
 
-### Send on all alerts
+### Default (send on all alerts)
 
 When checked, this option will notify for all alert rules - existing and new.
 
@@ -165,25 +165,28 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
-### All supported notifier
+### All supported notifiers
 
-Name | Type |Support images
+Name | Type | Supports images |Support alert rule tags
 -----|------------ | ------
-Slack | `slack` | yes
-Pagerduty | `pagerduty` | yes
-Email | `email` | yes
-Webhook | `webhook` | link
-Kafka | `kafka` | no
-Google Hangouts Chat | `googlechat` | yes
-Hipchat | `hipchat` | yes
-VictorOps | `victorops` | yes
-Sensu | `sensu` | yes
-OpsGenie | `opsgenie` | yes
-Threema | `threema` | yes
-Pushover | `pushover` | no
-Telegram | `telegram` | no
-Line | `line` | no
-Prometheus Alertmanager | `prometheus-alertmanager` | no
+DingDing | `dingding` | yes, external only | no
+Discord | `discord` | yes | no
+Email | `email` | yes | no
+Google Hangouts Chat | `googlechat` | yes, external only | no
+Hipchat | `hipchat` | yes, external only | no
+Kafka | `kafka` | yes, external only | no
+Line | `line` | yes, external only | no
+Microsoft Teams | `teams` | yes, external only | no
+OpsGenie | `opsgenie` | yes, external only | no
+Pagerduty | `pagerduty` | yes, external only | no
+Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
+Pushover | `pushover` | yes | no
+Sensu | `sensu` | yes, external only | no
+Slack | `slack` | yes | no
+Telegram | `telegram` | yes | no
+Threema | `threema` | yes, external only | no
+VictorOps | `victorops` | yes, external only | no
+Webhook | `webhook` | yes, external only | no
 
 # Enable images in notifications {#external-image-store}
 
@@ -192,9 +195,15 @@ Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that u
 
 Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
 
-Currently only the Email Channels attaches images if no external image store is specified. To include images in alert notifications for other channels then you need to set up an external image store.
+Notification services which need public image access are marked as 'external only'.
 
-This is an optional requirement. You can get Slack and email notifications without setting this up.
+# Use alert rule tags in notifications {#alert-rule-tags}
+
+Grafana can include a list of tags (key/value) in the notification.
+It's called alert rule tags to contrast with tags parsed from timeseries.
+It currently supports only the Prometheus Alertmanager notifier.
+
+ This is an optional feature. You can get notifications without using alert rule tags.
 
 # Configure the link back to Grafana from alert notifications
 

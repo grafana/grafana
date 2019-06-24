@@ -10,7 +10,6 @@ import './jquery.flot.events';
 
 import $ from 'jquery';
 import _ from 'lodash';
-import moment from 'moment';
 import { tickStep } from 'app/core/utils/ticks';
 import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
@@ -27,6 +26,7 @@ import { Legend, GraphLegendProps } from './Legend/Legend';
 import { GraphCtrl } from './module';
 import { getValueFormat } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -149,7 +149,7 @@ class GraphElement {
     }
   }
 
-  onPlotSelected(event, ranges) {
+  onPlotSelected(event: JQueryEventObject, ranges) {
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       this.plot.clearSelection();
@@ -164,14 +164,14 @@ class GraphElement {
     } else {
       this.scope.$apply(() => {
         this.timeSrv.setTime({
-          from: moment.utc(ranges.xaxis.from),
-          to: moment.utc(ranges.xaxis.to),
+          from: toUtc(ranges.xaxis.from),
+          to: toUtc(ranges.xaxis.to),
         });
       });
     }
   }
 
-  onPlotClick(event, pos, item) {
+  onPlotClick(event: JQueryEventObject, pos, item) {
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       return;
@@ -411,6 +411,7 @@ class GraphElement {
           show: panel.lines,
           zero: false,
           fill: this.translateFillOption(panel.fill),
+          fillColor: this.getFillGradient(panel.fillGradient),
           lineWidth: panel.dashes ? 0 : panel.linewidth,
           steps: panel.steppedLine,
         },
@@ -461,9 +462,9 @@ class GraphElement {
   sortSeries(series, panel) {
     const sortBy = panel.legend.sort;
     const sortOrder = panel.legend.sortDesc;
-    const haveSortBy = sortBy !== null && sortBy !== undefined;
+    const haveSortBy = sortBy !== null && sortBy !== undefined && panel.legend[sortBy];
     const haveSortOrder = sortOrder !== null && sortOrder !== undefined;
-    const shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
+    const shouldSortBy = panel.stack && haveSortBy && haveSortOrder && panel.legend.alignAsTable;
     const sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
     if (shouldSortBy) {
@@ -473,7 +474,17 @@ class GraphElement {
     }
   }
 
-  translateFillOption(fill) {
+  getFillGradient(amount: number) {
+    if (!amount) {
+      return null;
+    }
+
+    return {
+      colors: [{ opacity: 0.0 }, { opacity: amount / 10 }],
+    };
+  }
+
+  translateFillOption(fill: number) {
     if (this.panel.percentage && this.panel.stack) {
       return fill === 0 ? 0.001 : fill / 10;
     } else {
@@ -574,6 +585,7 @@ class GraphElement {
         return [tickIndex + 1, point[1]];
       });
     });
+    // @ts-ignore, potential bug? is this _.flattenDeep?
     ticks = _.flatten(ticks, true);
 
     options.xaxis = {

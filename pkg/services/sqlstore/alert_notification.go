@@ -213,11 +213,12 @@ func getAlertNotificationWithUidInternal(query *m.GetAlertNotificationsWithUidQu
 func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if cmd.Uid == "" {
-			if uid, uidGenerationErr := generateNewAlertNotificationUid(sess, cmd.OrgId); uidGenerationErr != nil {
+			uid, uidGenerationErr := generateNewAlertNotificationUid(sess, cmd.OrgId)
+			if uidGenerationErr != nil {
 				return uidGenerationErr
-			} else {
-				cmd.Uid = uid
 			}
+
+			cmd.Uid = uid
 		}
 		existingQuery := &m.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
 		err := getAlertNotificationWithUidInternal(existingQuery, sess)
@@ -317,6 +318,10 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.SendReminder = cmd.SendReminder
 		current.DisableResolveMessage = cmd.DisableResolveMessage
 
+		if cmd.Uid != "" {
+			current.Uid = cmd.Uid
+		}
+
 		if current.SendReminder {
 			if cmd.Frequency == "" {
 				return m.ErrNotificationFrequencyNotFound
@@ -356,8 +361,13 @@ func UpdateAlertNotificationWithUid(cmd *m.UpdateAlertNotificationWithUidCommand
 		return fmt.Errorf("Cannot update, alert notification uid %s doesn't exist", cmd.Uid)
 	}
 
+	if cmd.NewUid == "" {
+		cmd.NewUid = cmd.Uid
+	}
+
 	updateNotification := &m.UpdateAlertNotificationCommand{
 		Id:                    current.Id,
+		Uid:                   cmd.NewUid,
 		Name:                  cmd.Name,
 		Type:                  cmd.Type,
 		SendReminder:          cmd.SendReminder,
@@ -372,6 +382,8 @@ func UpdateAlertNotificationWithUid(cmd *m.UpdateAlertNotificationWithUidCommand
 	if err := bus.Dispatch(updateNotification); err != nil {
 		return err
 	}
+
+	cmd.Result = updateNotification.Result
 
 	return nil
 }

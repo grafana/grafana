@@ -2,7 +2,7 @@
 import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
 // Utils
-import { isValidTimeSpan } from 'app/core/utils/rangeutil';
+import { isValidTimeSpan } from '@grafana/ui/src/utils/rangeutil';
 
 // Components
 import { DataSourceSelectItem, EventsWithValidation, Input, InputStatus, Switch, ValidationEvents } from '@grafana/ui';

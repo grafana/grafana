@@ -120,6 +120,10 @@
 
 // fix for phantomjs
 .body--phantomjs {
+  .graph-panel {
+    display: -webkit-box;
+  }
+
   .graph-panel--legend-right {
     .graph-legend {
       display: block;
@@ -300,7 +304,7 @@
   }
 
   .graph-annotation__header {
-    background-color: $popover-border-color;
+    background: $popover-header-bg;
     padding: 6px 10px;
     display: flex;
   }
@@ -348,7 +352,7 @@
 
 .left-yaxis-label {
   top: 50%;
-  left: 2px;
+  left: 8px;
   transform: translateX(-50%) translateY(-50%) rotate(-90deg);
   // this is needed for phantomsjs 2.1
   -webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);
@@ -356,7 +360,7 @@
 
 .right-yaxis-label {
   top: 50%;
-  right: 2px;
+  right: 8px;
   transform: translateX(50%) translateY(-50%) rotate(90deg);
   // this is needed for phantomsjs 2.1
   -webkit-transform: translateX(50%) translateY(-50%) rotate(90deg);

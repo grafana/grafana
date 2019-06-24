@@ -4,8 +4,6 @@
   "id": "table2",
   "state": "alpha",
 
-  "dataFormats": ["table"],
-
   "info": {
     "author": {
       "name": "Grafana Project",

@@ -11,7 +11,7 @@ var (
 	ErrNotificationFrequencyNotFound            = errors.New("Notification frequency not specified")
 	ErrAlertNotificationStateNotFound           = errors.New("alert notification state not found")
 	ErrAlertNotificationStateVersionConflict    = errors.New("alert notification state update version conflict")
-	ErrAlertNotificationStateAlreadyExist       = errors.New("alert notification state already exists.")
+	ErrAlertNotificationStateAlreadyExist       = errors.New("alert notification state already exists")
 	ErrAlertNotificationFailedGenerateUniqueUid = errors.New("Failed to generate unique alert notification uid")
 )
 
@@ -39,7 +39,7 @@ type AlertNotification struct {
 }
 
 type CreateAlertNotificationCommand struct {
-	Uid                   string           `json:"-"`
+	Uid                   string           `json:"uid"`
 	Name                  string           `json:"name"  binding:"Required"`
 	Type                  string           `json:"type"  binding:"Required"`
 	SendReminder          bool             `json:"sendReminder"`
@@ -54,6 +54,7 @@ type CreateAlertNotificationCommand struct {
 
 type UpdateAlertNotificationCommand struct {
 	Id                    int64            `json:"id"  binding:"Required"`
+	Uid                   string           `json:"uid"`
 	Name                  string           `json:"name"  binding:"Required"`
 	Type                  string           `json:"type"  binding:"Required"`
 	SendReminder          bool             `json:"sendReminder"`
@@ -68,6 +69,7 @@ type UpdateAlertNotificationCommand struct {
 
 type UpdateAlertNotificationWithUidCommand struct {
 	Uid                   string           `json:"-"`
+	NewUid                string           `json:"uid"`
 	Name                  string           `json:"name"  binding:"Required"`
 	Type                  string           `json:"type"  binding:"Required"`
 	SendReminder          bool             `json:"sendReminder"`

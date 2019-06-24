@@ -55,6 +55,7 @@ export class DashLinksEditorCtrl {
   }
 
   moveLink(index, dir) {
+    // @ts-ignore
     _.move(this.dashboard.links, index, index + dir);
   }
 

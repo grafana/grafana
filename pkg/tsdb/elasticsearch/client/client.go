@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -67,7 +67,7 @@ var NewClient = func(ctx context.Context, ds *models.DataSource, timeRange *tsdb
 	clientLog.Debug("Creating new client", "version", version, "timeField", timeField, "indices", strings.Join(indices, ", "))
 
 	switch version {
-	case 2, 5, 56, 60:
+	case 2, 5, 56, 60, 70:
 		return &baseClientImpl{
 			ctx:       ctx,
 			ds:        ds,
@@ -115,12 +115,12 @@ type multiRequest struct {
 	interval tsdb.Interval
 }
 
-func (c *baseClientImpl) executeBatchRequest(uriPath string, requests []*multiRequest) (*response, error) {
+func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests []*multiRequest) (*response, error) {
 	bytes, err := c.encodeBatchRequests(requests)
 	if err != nil {
 		return nil, err
 	}
-	return c.executeRequest(http.MethodPost, uriPath, bytes)
+	return c.executeRequest(http.MethodPost, uriPath, uriQuery, bytes)
 }
 
 func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
@@ -153,9 +153,10 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	return payload.Bytes(), nil
 }
 
-func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*response, error) {
+func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*response, error) {
 	u, _ := url.Parse(c.ds.Url)
 	u.Path = path.Join(u.Path, uriPath)
+	u.RawQuery = uriQuery
 
 	var req *http.Request
 	var err error
@@ -184,12 +185,12 @@ func (c *baseClientImpl) executeRequest(method, uriPath string, body []byte) (*r
 
 	if c.ds.BasicAuth {
 		clientLog.Debug("Request configured to use basic authentication")
-		req.SetBasicAuth(c.ds.BasicAuthUser, c.ds.BasicAuthPassword)
+		req.SetBasicAuth(c.ds.BasicAuthUser, c.ds.DecryptedBasicAuthPassword())
 	}
 
 	if !c.ds.BasicAuth && c.ds.User != "" {
 		clientLog.Debug("Request configured to use basic authentication")
-		req.SetBasicAuth(c.ds.User, c.ds.Password)
+		req.SetBasicAuth(c.ds.User, c.ds.DecryptedPassword())
 	}
 
 	httpClient, err := newDatasourceHttpClient(c.ds)
@@ -213,7 +214,8 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	clientLog.Debug("Executing multisearch", "search requests", len(r.Requests))
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
-	clientRes, err := c.executeBatchRequest("_msearch", multiRequests)
+	queryParams := c.getMultiSearchQueryParameters()
+	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +290,7 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 			mr.header["search_type"] = "count"
 		}
 
-		if c.version >= 56 {
+		if c.version >= 56 && c.version < 70 {
 			maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(256)
 			mr.header["max_concurrent_shard_requests"] = maxConcurrentShardRequests
 		}
@@ -297,6 +299,15 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 	}
 
 	return multiRequests
+}
+
+func (c *baseClientImpl) getMultiSearchQueryParameters() string {
+	if c.version >= 70 {
+		maxConcurrentShardRequests := c.getSettings().Get("maxConcurrentShardRequests").MustInt(5)
+		return fmt.Sprintf("max_concurrent_shard_requests=%d", maxConcurrentShardRequests)
+	}
+
+	return ""
 }
 
 func (c *baseClientImpl) MultiSearch() *MultiSearchRequestBuilder {

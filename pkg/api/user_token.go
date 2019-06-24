@@ -1,12 +1,14 @@
 package api
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/ua-parser/uap-go/uaparser"
 )
 
 // GET /api/user/auth-tokens
@@ -19,7 +21,7 @@ func (server *HTTPServer) RevokeUserAuthToken(c *models.ReqContext, cmd models.R
 	return server.revokeUserAuthTokenInternal(c, c.UserId, cmd)
 }
 
-func (server *HTTPServer) logoutUserFromAllDevicesInternal(userID int64) Response {
+func (server *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) Response {
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
@@ -29,7 +31,7 @@ func (server *HTTPServer) logoutUserFromAllDevicesInternal(userID int64) Respons
 		return Error(500, "Could not read user from database", err)
 	}
 
-	err := server.AuthTokenService.RevokeAllUserTokens(userID)
+	err := server.AuthTokenService.RevokeAllUserTokens(ctx, userID)
 	if err != nil {
 		return Error(500, "Failed to logout user", err)
 	}
@@ -49,7 +51,7 @@ func (server *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID
 		return Error(500, "Failed to get user", err)
 	}
 
-	tokens, err := server.AuthTokenService.GetUserTokens(userID)
+	tokens, err := server.AuthTokenService.GetUserTokens(c.Req.Context(), userID)
 	if err != nil {
 		return Error(500, "Failed to get user auth tokens", err)
 	}
@@ -61,13 +63,38 @@ func (server *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID
 			isActive = true
 		}
 
+		parser := uaparser.NewFromSaved()
+		client := parser.Parse(token.UserAgent)
+
+		osVersion := ""
+		if client.Os.Major != "" {
+			osVersion = client.Os.Major
+
+			if client.Os.Minor != "" {
+				osVersion = osVersion + "." + client.Os.Minor
+			}
+		}
+
+		browserVersion := ""
+		if client.UserAgent.Major != "" {
+			browserVersion = client.UserAgent.Major
+
+			if client.UserAgent.Minor != "" {
+				browserVersion = browserVersion + "." + client.UserAgent.Minor
+			}
+		}
+
 		result = append(result, &dtos.UserToken{
-			Id:        token.Id,
-			IsActive:  isActive,
-			ClientIp:  token.ClientIp,
-			UserAgent: token.UserAgent,
-			CreatedAt: time.Unix(token.CreatedAt, 0),
-			SeenAt:    time.Unix(token.SeenAt, 0),
+			Id:                     token.Id,
+			IsActive:               isActive,
+			ClientIp:               token.ClientIp,
+			Device:                 client.Device.ToString(),
+			OperatingSystem:        client.Os.Family,
+			OperatingSystemVersion: osVersion,
+			Browser:                client.UserAgent.Family,
+			BrowserVersion:         browserVersion,
+			CreatedAt:              time.Unix(token.CreatedAt, 0),
+			SeenAt:                 time.Unix(token.SeenAt, 0),
 		})
 	}
 
@@ -84,7 +111,7 @@ func (server *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, user
 		return Error(500, "Failed to get user", err)
 	}
 
-	token, err := server.AuthTokenService.GetUserToken(userID, cmd.AuthTokenId)
+	token, err := server.AuthTokenService.GetUserToken(c.Req.Context(), userID, cmd.AuthTokenId)
 	if err != nil {
 		if err == models.ErrUserTokenNotFound {
 			return Error(404, "User auth token not found", err)
@@ -96,7 +123,7 @@ func (server *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, user
 		return Error(400, "Cannot revoke active user auth token", nil)
 	}
 
-	err = server.AuthTokenService.RevokeToken(token)
+	err = server.AuthTokenService.RevokeToken(c.Req.Context(), token)
 	if err != nil {
 		if err == models.ErrUserTokenNotFound {
 			return Error(404, "User auth token not found", err)

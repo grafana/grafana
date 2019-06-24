@@ -9,6 +9,7 @@ import { store } from 'app/store/store';
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
+import { ILocationService, ITimeoutService } from 'angular';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -17,11 +18,11 @@ export class KeybindingSrv {
 
   /** @ngInject */
   constructor(
-    private $rootScope,
-    private $location,
-    private $timeout,
-    private datasourceSrv,
-    private timeSrv,
+    private $rootScope: any,
+    private $location: ILocationService,
+    private $timeout: ITimeoutService,
+    private datasourceSrv: any,
+    private timeSrv: any,
     private contextSrv: ContextSrv
   ) {
     // clear out all shortcuts on route change
@@ -42,19 +43,9 @@ export class KeybindingSrv {
     this.bind('g h', this.goToHome);
     this.bind('g a', this.openAlerting);
     this.bind('g p', this.goToProfile);
-    this.bind('s s', this.openSearchStarred);
     this.bind('s o', this.openSearch);
-    this.bind('s t', this.openSearchTags);
     this.bind('f', this.openSearch);
     this.bindGlobal('esc', this.exit);
-  }
-
-  openSearchStarred() {
-    appEvents.emit('show-dash-search', { starred: true });
-  }
-
-  openSearchTags() {
-    appEvents.emit('show-dash-search', { tagsMode: true });
   }
 
   openSearch() {
@@ -78,7 +69,7 @@ export class KeybindingSrv {
   }
 
   exit() {
-    const popups = $('.popover.in');
+    const popups = $('.popover.in, .slate-typeahead');
     if (popups.length > 0) {
       return;
     }
@@ -114,10 +105,10 @@ export class KeybindingSrv {
     }
   }
 
-  bind(keyArg, fn) {
+  bind(keyArg: string | string[], fn: () => void) {
     Mousetrap.bind(
       keyArg,
-      evt => {
+      (evt: any) => {
         evt.preventDefault();
         evt.stopPropagation();
         evt.returnValue = false;
@@ -127,10 +118,10 @@ export class KeybindingSrv {
     );
   }
 
-  bindGlobal(keyArg, fn) {
+  bindGlobal(keyArg: string, fn: () => void) {
     Mousetrap.bindGlobal(
       keyArg,
-      evt => {
+      (evt: any) => {
         evt.preventDefault();
         evt.stopPropagation();
         evt.returnValue = false;
@@ -149,14 +140,14 @@ export class KeybindingSrv {
     this.$location.search(search);
   }
 
-  setupDashboardBindings(scope, dashboard) {
+  setupDashboardBindings(scope: any, dashboard: any) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');
       dashboard.startRefresh();
     });
 
-    this.bind('mod+s', e => {
+    this.bind('mod+s', () => {
       scope.appEvent('save-dashboard');
     });
 
@@ -272,7 +263,7 @@ export class KeybindingSrv {
       dashboard.expandRows();
     });
 
-    this.bind('d n', e => {
+    this.bind('d n', () => {
       this.$location.url('/dashboard/new');
     });
 

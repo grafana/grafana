@@ -16,13 +16,13 @@ export class TablePanel extends Component<Props> {
   render() {
     const { data, options } = this.props;
 
-    if (data.length < 1) {
+    if (data.series.length < 1) {
       return <div>No Table Data...</div>;
     }
 
     return (
       <ThemeContext.Consumer>
-        {theme => <Table {...this.props} {...options} theme={theme} data={data[0]} />}
+        {theme => <Table {...this.props} {...options} theme={theme} data={data.series[0]} />}
       </ThemeContext.Consumer>
     );
   }

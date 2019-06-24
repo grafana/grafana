@@ -85,12 +85,20 @@ func (db *Sqlite3) CleanDB() error {
 	return nil
 }
 
-func (db *Sqlite3) IsUniqueConstraintViolation(err error) bool {
+func (db *Sqlite3) isThisError(err error, errcode int) bool {
 	if driverErr, ok := err.(sqlite3.Error); ok {
-		if driverErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+		if int(driverErr.ExtendedCode) == errcode {
 			return true
 		}
 	}
 
 	return false
+}
+
+func (db *Sqlite3) IsUniqueConstraintViolation(err error) bool {
+	return db.isThisError(err, int(sqlite3.ErrConstraintUnique))
+}
+
+func (db *Sqlite3) IsDeadlock(err error) bool {
+	return false // No deadlock
 }

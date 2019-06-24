@@ -1,26 +1,35 @@
 // Libraries
-import moment from 'moment';
 import _ from 'lodash';
 
 // Utils
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 
 // Types
-import { TimeRange } from '@grafana/ui';
+import { TimeRange, RawTimeRange, TimeZone } from '@grafana/ui';
+import { ITimeoutService, ILocationService } from 'angular';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { DashboardModel } from '../state/DashboardModel';
+import { toUtc, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class TimeSrv {
   time: any;
   refreshTimer: any;
-  refresh: boolean;
+  refresh: any;
   oldRefresh: boolean;
-  dashboard: any;
+  dashboard: Partial<DashboardModel>;
   timeAtLoad: any;
   private autoRefreshBlocked: boolean;
 
   /** @ngInject */
-  constructor($rootScope, private $timeout, private $location, private timer, private contextSrv) {
+  constructor(
+    $rootScope: any,
+    private $timeout: ITimeoutService,
+    private $location: ILocationService,
+    private timer: any,
+    private contextSrv: ContextSrv
+  ) {
     // default time
     this.time = { from: '6h', to: 'now' };
 
@@ -35,7 +44,7 @@ export class TimeSrv {
     });
   }
 
-  init(dashboard) {
+  init(dashboard: Partial<DashboardModel>) {
     this.timer.cancelAll();
 
     this.dashboard = dashboard;
@@ -56,27 +65,27 @@ export class TimeSrv {
   private parseTime() {
     // when absolute time is saved in json it is turned to a string
     if (_.isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {
-      this.time.from = moment(this.time.from).utc();
+      this.time.from = dateTime(this.time.from).utc();
     }
     if (_.isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
-      this.time.to = moment(this.time.to).utc();
+      this.time.to = dateTime(this.time.to).utc();
     }
   }
 
-  private parseUrlParam(value) {
+  private parseUrlParam(value: any) {
     if (value.indexOf('now') !== -1) {
       return value;
     }
     if (value.length === 8) {
-      return moment.utc(value, 'YYYYMMDD');
+      return toUtc(value, 'YYYYMMDD');
     }
     if (value.length === 15) {
-      return moment.utc(value, 'YYYYMMDDTHHmmss');
+      return toUtc(value, 'YYYYMMDDTHHmmss');
     }
 
     if (!isNaN(value)) {
       const epoch = parseInt(value, 10);
-      return moment.utc(epoch);
+      return toUtc(epoch);
     }
 
     return null;
@@ -121,9 +130,10 @@ export class TimeSrv {
     return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
-  setAutoRefresh(interval) {
+  setAutoRefresh(interval: any) {
     this.dashboard.refresh = interval;
     this.cancelNextRefresh();
+
     if (interval) {
       const intervalMs = kbn.interval_to_ms(interval);
 
@@ -135,22 +145,24 @@ export class TimeSrv {
       );
     }
 
-    // update url
-    const params = this.$location.search();
-    if (interval) {
-      params.refresh = interval;
-      this.$location.search(params);
-    } else if (params.refresh) {
-      delete params.refresh;
-      this.$location.search(params);
-    }
+    // update url inside timeout to so that a digest happens after (called from react)
+    this.$timeout(() => {
+      const params = this.$location.search();
+      if (interval) {
+        params.refresh = interval;
+        this.$location.search(params);
+      } else if (params.refresh) {
+        delete params.refresh;
+        this.$location.search(params);
+      }
+    });
   }
 
   refreshDashboard() {
     this.dashboard.timeRangeUpdated(this.timeRange());
   }
 
-  private startNextRefreshTimer(afterMs) {
+  private startNextRefreshTimer(afterMs: number) {
     this.cancelNextRefresh();
     this.refreshTimer = this.timer.register(
       this.$timeout(() => {
@@ -168,11 +180,11 @@ export class TimeSrv {
     this.timer.cancel(this.refreshTimer);
   }
 
-  setTime(time, fromRouteUpdate?) {
+  setTime(time: RawTimeRange, fromRouteUpdate?: boolean) {
     _.extend(this.time, time);
 
     // disable refresh if zoom in or zoom out
-    if (moment.isMoment(time.to)) {
+    if (isDateTime(time.to)) {
       this.oldRefresh = this.dashboard.refresh || this.oldRefresh;
       this.setAutoRefresh(false);
     } else if (this.oldRefresh && this.oldRefresh !== this.dashboard.refresh) {
@@ -195,10 +207,10 @@ export class TimeSrv {
   timeRangeForUrl() {
     const range = this.timeRange().raw;
 
-    if (moment.isMoment(range.from)) {
+    if (isDateTime(range.from)) {
       range.from = range.from.valueOf().toString();
     }
-    if (moment.isMoment(range.to)) {
+    if (isDateTime(range.to)) {
       range.to = range.to.valueOf().toString();
     }
 
@@ -208,11 +220,11 @@ export class TimeSrv {
   timeRange(): TimeRange {
     // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
     const raw = {
-      from: moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from,
-      to: moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to,
+      from: isDateTime(this.time.from) ? dateTime(this.time.from) : this.time.from,
+      to: isDateTime(this.time.to) ? dateTime(this.time.to) : this.time.to,
     };
 
-    const timezone = this.dashboard && this.dashboard.getTimezone();
+    const timezone: TimeZone = this.dashboard ? this.dashboard.getTimezone() : undefined;
 
     return {
       from: dateMath.parse(raw.from, false, timezone),
@@ -221,7 +233,7 @@ export class TimeSrv {
     };
   }
 
-  zoomOut(e, factor) {
+  zoomOut(e: any, factor: number) {
     const range = this.timeRange();
 
     const timespan = range.to.valueOf() - range.from.valueOf();
@@ -230,11 +242,11 @@ export class TimeSrv {
     const to = center + (timespan * factor) / 2;
     const from = center - (timespan * factor) / 2;
 
-    this.setTime({ from: moment.utc(from), to: moment.utc(to) });
+    this.setTime({ from: toUtc(from), to: toUtc(to) });
   }
 }
 
-let singleton;
+let singleton: TimeSrv;
 
 export function setTimeSrv(srv: TimeSrv) {
   singleton = srv;

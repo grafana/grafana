@@ -54,7 +54,7 @@ Content-Type: application/json
     "sendReminder": false,
     "disableResolveMessage": false,
     "settings": {
-      "addresses": "carl@grafana.com;dev@grafana.com"
+      "addresses": "dev@grafana.com"
     },
     "created": "2018-04-23T14:44:09+02:00",
     "updated": "2018-08-20T15:47:49+02:00"
@@ -93,7 +93,7 @@ Content-Type: application/json
   "sendReminder": false,
   "disableResolveMessage": false,
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   },
   "created": "2018-04-23T14:44:09+02:00",
   "updated": "2018-08-20T15:47:49+02:00"
@@ -130,7 +130,7 @@ Content-Type: application/json
   "sendReminder": false,
   "disableResolveMessage": false,
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   },
   "created": "2018-04-23T14:44:09+02:00",
   "updated": "2018-08-20T15:47:49+02:00"
@@ -152,12 +152,13 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
+  "uid": "new-alert-notification", // optional
   "name": "new alert notification",  //Required
   "type":  "email", //Required
   "isDefault": false,
   "sendReminder": false,
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   }
 }
 ```
@@ -170,13 +171,13 @@ Content-Type: application/json
 
 {
   "id": 1,
-  "uid": "cIBgcSjkk",
+  "uid": "new-alert-notification",
   "name": "new alert notification",
   "type": "email",
   "isDefault": false,
   "sendReminder": false,
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   },
   "created": "2018-04-23T14:44:09+02:00",
   "updated": "2018-08-20T15:47:49+02:00"
@@ -198,13 +199,14 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
+  "uid": "new-alert-notification", // optional
   "name": "new alert notification",  //Required
   "type":  "email", //Required
   "isDefault": false,
   "sendReminder": true,
   "frequency": "15m",
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   }
 }
 ```
@@ -217,14 +219,14 @@ Content-Type: application/json
 
 {
   "id": 1,
-  "uid": "cIBgcSjkk",
+  "uid": "new-alert-notification",
   "name": "new alert notification",
   "type": "email",
   "isDefault": false,
   "sendReminder": true,
   "frequency": "15m",
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   },
   "created": "2017-01-01 12:34",
   "updated": "2017-01-01 12:34"
@@ -247,14 +249,14 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "id": 1,
-  "uid": "cIBgcSjkk",
+  "uid": "new-alert-notification", // optional
   "name": "new alert notification",  //Required
   "type":  "email", //Required
   "isDefault": false,
   "sendReminder": true,
   "frequency": "15m",
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   }
 }
 ```
@@ -267,14 +269,14 @@ Content-Type: application/json
 
 {
   "id": 1,
-  "uid": "cIBgcSjkk",
+  "uid": "new-alert-notification",
   "name": "new alert notification",
   "type": "email",
   "isDefault": false,
   "sendReminder": true,
   "frequency": "15m",
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   },
   "created": "2017-01-01 12:34",
   "updated": "2017-01-01 12:34"
@@ -351,7 +353,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
   "type":  "email",
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   }
 }
 ```

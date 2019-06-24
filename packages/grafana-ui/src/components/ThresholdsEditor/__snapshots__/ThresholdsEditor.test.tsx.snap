@@ -109,7 +109,7 @@ exports[`Render should render with base threshold 1`] = `
                             },
                             "breakpoints": Object {
                               "lg": "992px",
-                              "md": "768px",
+                              "md": "769px",
                               "sm": "544px",
                               "xl": "1200px",
                               "xs": "0",
@@ -148,10 +148,10 @@ exports[`Render should render with base threshold 1`] = `
                               "grayBlue": "#212327",
                               "greenBase": "#299c46",
                               "greenShade": "#23843b",
-                              "headingColor": "#e3e3e3",
+                              "headingColor": "#d8d9da",
                               "inputBlack": "#09090b",
-                              "link": "#e3e3e3",
-                              "linkDisabled": "#e3e3e3",
+                              "link": "#d8d9da",
+                              "linkDisabled": "#8e8e8e",
                               "linkExternal": "#33b5e5",
                               "linkHover": "#ffffff",
                               "online": "#299c46",
@@ -176,11 +176,14 @@ exports[`Render should render with base threshold 1`] = `
                               "white": "#ffffff",
                               "yellow": "#ecbb13",
                             },
-                            "name": "Grafana Dark",
-                            "panelPadding": Object {
-                              "horizontal": 10,
-                              "vertical": 5,
+                            "height": Object {
+                              "lg": "48px",
+                              "md": "32px",
+                              "sm": "24px",
                             },
+                            "name": "Grafana Dark",
+                            "panelHeaderHeight": 28,
+                            "panelPadding": 8,
                             "spacing": Object {
                               "d": "14px",
                               "gutter": "30px",
@@ -267,7 +270,7 @@ exports[`Render should render with base threshold 1`] = `
                                   },
                                   "breakpoints": Object {
                                     "lg": "992px",
-                                    "md": "768px",
+                                    "md": "769px",
                                     "sm": "544px",
                                     "xl": "1200px",
                                     "xs": "0",
@@ -306,10 +309,10 @@ exports[`Render should render with base threshold 1`] = `
                                     "grayBlue": "#212327",
                                     "greenBase": "#299c46",
                                     "greenShade": "#23843b",
-                                    "headingColor": "#e3e3e3",
+                                    "headingColor": "#d8d9da",
                                     "inputBlack": "#09090b",
-                                    "link": "#e3e3e3",
-                                    "linkDisabled": "#e3e3e3",
+                                    "link": "#d8d9da",
+                                    "linkDisabled": "#8e8e8e",
                                     "linkExternal": "#33b5e5",
                                     "linkHover": "#ffffff",
                                     "online": "#299c46",
@@ -334,11 +337,14 @@ exports[`Render should render with base threshold 1`] = `
                                     "white": "#ffffff",
                                     "yellow": "#ecbb13",
                                   },
-                                  "name": "Grafana Dark",
-                                  "panelPadding": Object {
-                                    "horizontal": 10,
-                                    "vertical": 5,
+                                  "height": Object {
+                                    "lg": "48px",
+                                    "md": "32px",
+                                    "sm": "24px",
                                   },
+                                  "name": "Grafana Dark",
+                                  "panelHeaderHeight": 28,
+                                  "panelPadding": 8,
                                   "spacing": Object {
                                     "d": "14px",
                                     "gutter": "30px",
@@ -467,7 +473,13 @@ exports[`Render should render with base threshold 1`] = `
                     type="text"
                     value="Base"
                   >
-                    <div>
+                    <div
+                      style={
+                        Object {
+                          "flexGrow": 1,
+                        }
+                      }
+                    >
                       <input
                         className="gf-form-input"
                         readOnly={true}

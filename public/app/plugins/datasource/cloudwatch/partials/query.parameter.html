@@ -1,8 +1,18 @@
+<div class="gf-form-inline">
+        <div class="gf-form">
+                <label class="gf-form-label query-keyword width-8">Region</label>
+                <metric-segment segment="regionSegment" get-options="getRegions()" on-change="regionChanged()"></metric-segment>
+        </div>
+
+        <div class="gf-form gf-form--grow">
+                <div class="gf-form-label gf-form-label--grow"></div>
+        </div>
+</div>
+
 <div class="gf-form-inline" ng-if="target.expression.length === 0">
 	<div class="gf-form">
 		<label class="gf-form-label query-keyword width-8">Metric</label>
 
-		<metric-segment segment="regionSegment" get-options="getRegions()" on-change="regionChanged()"></metric-segment>
 		<metric-segment segment="namespaceSegment" get-options="getNamespaces()" on-change="namespaceChanged()"></metric-segment>
 		<metric-segment segment="metricSegment" get-options="getMetrics()" on-change="metricChanged()"></metric-segment>
 	</div>
@@ -66,6 +76,7 @@
 				<li>{{namespace}}</li>
 				<li>{{region}}</li>
 				<li>{{period}}</li>
+				<li>{{label}}</li>
 				<li>{{YOUR_DIMENSION_NAME}}</li>
 			</ul>
 		</info-popover>

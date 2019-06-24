@@ -1,7 +1,7 @@
 import React from 'react';
 import { FolderSettingsPage, Props } from './FolderSettingsPage';
-import { NavModel } from 'app/types';
 import { shallow } from 'enzyme';
+import { NavModel } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

@@ -3,8 +3,9 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
 import { DeleteButton } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { NavModel, Team, OrgRole } from 'app/types';
+import { Team, OrgRole } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
 import { getSearchQuery, getTeams, getTeamsCount, isPermissionTeamAdmin } from './state/selectors';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -73,20 +74,18 @@ export class TeamList extends PureComponent<Props, any> {
 
   renderEmptyList() {
     return (
-      <div className="page-container page-body">
-        <EmptyListCTA
-          model={{
-            title: "You haven't created any teams yet.",
-            buttonIcon: 'fa fa-plus',
-            buttonLink: 'org/teams/new',
-            buttonTitle: ' New team',
-            proTip: 'Assign folder and dashboard permissions to teams instead of users to ease administration.',
-            proTipLink: '',
-            proTipLinkTitle: '',
-            proTipTarget: '_blank',
-          }}
-        />
-      </div>
+      <EmptyListCTA
+        model={{
+          title: "You haven't created any teams yet.",
+          buttonIcon: 'gicon gicon-team',
+          buttonLink: 'org/teams/new',
+          buttonTitle: ' New team',
+          proTip: 'Assign folder and dashboard permissions to teams instead of users to ease administration.',
+          proTipLink: '',
+          proTipLinkTitle: '',
+          proTipTarget: '_blank',
+        }}
+      />
     );
   }
 

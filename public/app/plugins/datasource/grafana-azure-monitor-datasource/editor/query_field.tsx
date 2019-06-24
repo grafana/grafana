@@ -23,7 +23,7 @@ export const makeFragment = text => {
     Block.create({
       type: 'paragraph',
       nodes: [Text.create(line)],
-    })
+    } as any)
   );
 
   const fragment = Document.create({
@@ -245,7 +245,7 @@ class QueryField extends React.Component<any, any> {
 
     // Get the currently selected suggestion
     const flattenedSuggestions = flattenSuggestions(suggestions);
-    const suggestion = _.find(
+    const suggestion: any = _.find(
       flattenedSuggestions,
       suggestion => suggestion.display === item || suggestion.text === item
     );

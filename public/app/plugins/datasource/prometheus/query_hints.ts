@@ -1,12 +1,12 @@
 import _ from 'lodash';
-import { QueryHint } from '@grafana/ui/src/types';
+import { QueryHint, QueryFix } from '@grafana/ui/src/types';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints
  */
 export const SUM_HINT_THRESHOLD_COUNT = 20;
 
-export function getQueryHints(query: string, series?: any[], datasource?: any): QueryHint[] {
+export function getQueryHints(query: string, series?: any[], datasource?: any): QueryHint[] | null {
   const hints = [];
 
   // ..._bucket metric needs a histogram_quantile()
@@ -22,11 +22,11 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
           type: 'ADD_HISTOGRAM_QUANTILE',
           query,
         },
-      },
+      } as QueryFix,
     });
   }
 
-  // Check for monotony on series (table results are being ignored here)
+  // Check for monotonicity on series (table results are being ignored here)
   if (series && series.length > 0) {
     series.forEach(s => {
       const datapoints: number[][] = s.datapoints;
@@ -43,8 +43,8 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
         });
         if (increasing && monotonic) {
           const simpleMetric = query.trim().match(/^\w+$/);
-          let label = 'Time series is monotonously increasing.';
-          let fix;
+          let label = 'Time series is monotonically increasing.';
+          let fix: QueryFix;
           if (simpleMetric) {
             fix = {
               label: 'Fix by adding rate().',
@@ -52,7 +52,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
                 type: 'ADD_RATE',
                 query,
               },
-            };
+            } as QueryFix;
           } else {
             label = `${label} Try applying a rate() function.`;
           }
@@ -83,14 +83,14 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
       hints.push({
         type: 'EXPAND_RULES',
         label,
-        fix: {
+        fix: ({
           label: 'Expand rules',
           action: {
             type: 'EXPAND_RULES',
             query,
             mapping: mappingForQuery,
           },
-        },
+        } as any) as QueryFix,
       });
     }
   }
@@ -108,7 +108,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: any): 
             query: query,
             preventSubmit: true,
           },
-        },
+        } as QueryFix,
       });
     }
   }

@@ -45,7 +45,9 @@ type PluginBase struct {
 	Includes     []*PluginInclude   `json:"includes"`
 	Module       string             `json:"module"`
 	BaseUrl      string             `json:"baseUrl"`
+	Category     string             `json:"category"`
 	HideFromList bool               `json:"hideFromList,omitempty"`
+	Preload      bool               `json:"preload"`
 	State        PluginState        `json:"state,omitempty"`
 
 	IncludedInAppId string `json:"-"`

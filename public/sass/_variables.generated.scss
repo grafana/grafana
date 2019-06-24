@@ -67,7 +67,7 @@ $spacers: (
 $grid-breakpoints: (
   xs: 0,
   sm: 544px,
-  md: 768px,
+  md: 769px,
   lg: 992px,
   xl: 1200px,
 ) !default;
@@ -89,6 +89,12 @@ $container-max-widths: (
 
 $grid-columns: 12 !default;
 $grid-gutter-width: 30px !default;
+
+// Component heights
+// -------------------------
+$height-sm: 24px;
+$height-md: 32px;
+$height-lg: 48px;
 
 // Typography
 // -------------------------
@@ -168,6 +174,7 @@ $zindex-tooltip: 1030;
 $zindex-modal-backdrop: 1040;
 $zindex-modal: 1050;
 $zindex-typeahead: 1060;
+$zindex-timepicker-popover: 1070;
 
 // Buttons
 //
@@ -193,7 +200,9 @@ $side-menu-width: 60px;
 
 // dashboard
 $dashboard-padding: $space-md;
-$panel-padding: 0 $space-md $space-sm $space-md;
+$panel-padding: 8px;
+$panel-header-height: 28px;
+$panel-header-z-index: 10;
 
 // tabs
 $tabs-padding: 10px 15px 9px;

@@ -1,10 +1,10 @@
 import _ from 'lodash';
 import angular from 'angular';
-import moment from 'moment';
 
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
 import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
+import { dateTime, toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 
 export class HistoryListCtrl {
   appending: boolean;
@@ -74,8 +74,8 @@ export class HistoryListCtrl {
   }
 
   formatBasicDate(date) {
-    const now = this.dashboard.timezone === 'browser' ? moment() : moment.utc();
-    const then = this.dashboard.timezone === 'browser' ? moment(date) : moment.utc(date);
+    const now = this.dashboard.timezone === 'browser' ? dateTime() : toUtc();
+    const then = this.dashboard.timezone === 'browser' ? dateTime(date) : toUtc(date);
     return then.from(now);
   }
 

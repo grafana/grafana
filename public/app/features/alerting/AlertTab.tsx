@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 
 // Components
@@ -133,7 +133,7 @@ export class AlertTab extends PureComponent<Props> {
 
     const model = {
       title: 'Panel has no alert rule defined',
-      buttonIcon: 'icon-gf icon-gf-alert',
+      buttonIcon: 'gicon gicon-alert',
       onClick: this.onAddAlert,
       buttonTitle: 'Create Alert',
     };

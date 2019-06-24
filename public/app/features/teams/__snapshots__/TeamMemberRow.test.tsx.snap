@@ -84,6 +84,15 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
           autoFocus={false}
           backspaceRemovesValue={true}
           className="gf-form-select-box__control--menu-right"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
           isClearable={false}
           isDisabled={false}
           isLoading={false}
@@ -106,6 +115,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
               },
             ]
           }
+          tabSelectsValue={true}
           value={
             Object {
               "description": "Is team member",
@@ -113,7 +123,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
               "value": 0,
             }
           }
-          width={null}
         />
       </div>
     </td>
@@ -160,6 +169,15 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
           autoFocus={false}
           backspaceRemovesValue={true}
           className="gf-form-select-box__control--menu-right"
+          components={
+            Object {
+              "Group": [Function],
+              "IndicatorsContainer": [Function],
+              "MenuList": [Function],
+              "Option": [Function],
+              "SingleValue": [Function],
+            }
+          }
           isClearable={false}
           isDisabled={false}
           isLoading={false}
@@ -182,6 +200,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
               },
             ]
           }
+          tabSelectsValue={true}
           value={
             Object {
               "description": "Is team member",
@@ -189,7 +208,6 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
               "value": 0,
             }
           }
-          width={null}
         />
       </div>
     </td>

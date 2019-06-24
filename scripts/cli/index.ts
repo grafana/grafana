@@ -6,6 +6,9 @@ import { buildTask } from './tasks/grafanaui.build';
 import { releaseTask } from './tasks/grafanaui.release';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
+import { closeMilestoneTask } from './tasks/closeMilestone';
+import { precommitTask } from './tasks/precommit';
+import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 
 program.option('-d, --depreciate <scripts>', 'Inform about npm script deprecation', v => v.split(','));
 
@@ -48,7 +51,7 @@ program
   .description('Builds changelog markdown')
   .action(async cmd => {
     if (!cmd.milestone) {
-      console.log('Please specify milestone, example: --m 6.0.1');
+      console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
       return;
     }
 
@@ -62,6 +65,36 @@ program
   .description('Helps find commits to cherry pick')
   .action(async cmd => {
     await execTask(cherryPickTask)({});
+  });
+
+program
+  .command('close-milestone')
+  .option('-m, --milestone <milestone>', 'Specify milestone')
+  .description('Helps ends a milestone by removing the cherry-pick label and closing it')
+  .action(async cmd => {
+    if (!cmd.milestone) {
+      console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
+      return;
+    }
+
+    await execTask(closeMilestoneTask)({
+      milestone: cmd.milestone,
+    });
+  });
+
+program
+  .command('precommit')
+  .description('Executes checks')
+  .action(async cmd => {
+    await execTask(precommitTask)({});
+  });
+
+program
+  .command('searchTestData')
+  .option('-c, --count <number_of_dashboards>', 'Specify number of dashboards')
+  .description('Setup test data for search')
+  .action(async cmd => {
+    await execTask(searchTestDataSetupTask)({ count: cmd.count });
   });
 
 program.parse(process.argv);

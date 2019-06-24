@@ -34,7 +34,7 @@ function renderMenuItem(item, ctrl) {
   }
 
   html += `><i class="${item.icon}"></i>`;
-  html += `<span class="dropdown-item-text">${item.text}</span>`;
+  html += `<span class="dropdown-item-text" aria-label="${item.text} panel menu item">${item.text}</span>`;
 
   if (item.shortcut) {
     html += `<span class="dropdown-menu-item-shortcut">${item.shortcut}</span>`;

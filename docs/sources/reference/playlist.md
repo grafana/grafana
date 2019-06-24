@@ -4,6 +4,7 @@ keywords = ["grafana", "dashboard", "documentation", "playlist"]
 type = "docs"
 [menu.docs]
 parent = "dashboard_features"
+identifier = "feature_playlist"
 weight = 4
 +++
 

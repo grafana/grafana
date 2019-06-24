@@ -6,8 +6,8 @@ import {
   guessFieldTypes,
   guessFieldTypeFromValue,
 } from './processSeriesData';
-import { FieldType, TimeSeries } from '../types/data';
-import moment from 'moment';
+import { FieldType, TimeSeries, SeriesData, TableData } from '../types/data';
+import { dateTime } from './moment_wrapper';
 
 describe('toSeriesData', () => {
   it('converts timeseries to series', () => {
@@ -45,7 +45,7 @@ describe('toSeriesData', () => {
     expect(guessFieldTypeFromValue(true)).toBe(FieldType.boolean);
     expect(guessFieldTypeFromValue(false)).toBe(FieldType.boolean);
     expect(guessFieldTypeFromValue(new Date())).toBe(FieldType.time);
-    expect(guessFieldTypeFromValue(moment())).toBe(FieldType.time);
+    expect(guessFieldTypeFromValue(dateTime())).toBe(FieldType.time);
   });
 
   it('Guess Colum Types from strings', () => {
@@ -98,5 +98,26 @@ describe('SerisData backwards compatibility', () => {
     const roundtrip = toLegacyResponseData(series) as TimeSeries;
     expect(isTableData(roundtrip)).toBeTruthy();
     expect(roundtrip).toMatchObject(table);
+  });
+
+  it('converts SeriesData to TableData to series and back again', () => {
+    const series: SeriesData = {
+      refId: 'Z',
+      meta: {
+        somethign: 8,
+      },
+      fields: [
+        { name: 'T', type: FieldType.time }, // first
+        { name: 'N', type: FieldType.number, filterable: true },
+        { name: 'S', type: FieldType.string, filterable: true },
+      ],
+      rows: [[1, 100, '1'], [2, 200, '2'], [3, 300, '3']],
+    };
+    const table = toLegacyResponseData(series) as TableData;
+    expect(table.meta).toBe(series.meta);
+    expect(table.refId).toBe(series.refId);
+
+    const names = table.columns.map(c => c.text);
+    expect(names).toEqual(['T', 'N', 'S']);
   });
 });

@@ -4,21 +4,9 @@ import { css, cx } from 'emotion';
 import { Themeable, GrafanaTheme } from '../../types';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
-export enum ButtonVariant {
-  Primary = 'primary',
-  Secondary = 'secondary',
-  Danger = 'danger',
-  Inverse = 'inverse',
-  Transparent = 'transparent',
-}
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent';
 
-export enum ButtonSize {
-  ExtraSmall = 'xs',
-  Small = 'sm',
-  Medium = 'md',
-  Large = 'lg',
-  ExtraLarge = 'xl',
-}
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 export interface CommonButtonProps {
   size?: ButtonSize;
@@ -65,48 +53,47 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
     background,
     fontSize,
     iconDistance,
+    height,
     fontWeight = theme.typography.weight.semibold;
 
   switch (size) {
-    case ButtonSize.ExtraSmall:
-      padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
-      fontSize = theme.typography.size.xs;
-      iconDistance = theme.spacing.xs;
-      break;
-    case ButtonSize.Small:
+    case 'sm':
       padding = `${theme.spacing.xs} ${theme.spacing.sm}`;
       fontSize = theme.typography.size.sm;
       iconDistance = theme.spacing.xs;
+      height = theme.height.sm;
       break;
-    case ButtonSize.Large:
+    case 'md':
+      padding = `${theme.spacing.sm} ${theme.spacing.md}`;
+      fontSize = theme.typography.size.md;
+      iconDistance = theme.spacing.sm;
+      height = theme.height.md;
+      break;
+    case 'lg':
       padding = `${theme.spacing.md} ${theme.spacing.lg}`;
       fontSize = theme.typography.size.lg;
       fontWeight = theme.typography.weight.regular;
       iconDistance = theme.spacing.sm;
-      break;
-    case ButtonSize.ExtraLarge:
-      padding = `${theme.spacing.md} ${theme.spacing.lg}`;
-      fontSize = theme.typography.size.lg;
-      fontWeight = theme.typography.weight.regular;
-      iconDistance = theme.spacing.sm;
+      height = theme.height.lg;
       break;
     default:
       padding = `${theme.spacing.sm} ${theme.spacing.md}`;
       iconDistance = theme.spacing.sm;
       fontSize = theme.typography.size.base;
+      height = theme.height.md;
   }
 
   switch (variant) {
-    case ButtonVariant.Primary:
+    case 'primary':
       background = buttonVariantStyles(theme.colors.greenBase, theme.colors.greenShade, theme.colors.white);
       break;
-    case ButtonVariant.Secondary:
+    case 'secondary':
       background = buttonVariantStyles(theme.colors.blueBase, theme.colors.blueShade, theme.colors.white);
       break;
-    case ButtonVariant.Danger:
+    case 'danger':
       background = buttonVariantStyles(theme.colors.redBase, theme.colors.redShade, theme.colors.white);
       break;
-    case ButtonVariant.Inverse:
+    case 'inverse':
       const from = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark6 }, theme.type) as string;
       const to = selectThemeVariant(
         {
@@ -122,7 +109,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
 
       background = buttonVariantStyles(from, to, theme.colors.link, 'rgba(0, 0, 0, 0.1)', true);
       break;
-    case ButtonVariant.Transparent:
+    case 'transparent':
       background = css`
         ${buttonVariantStyles('', '', theme.colors.link, 'rgba(0, 0, 0, 0.1)', true)};
         background: transparent;
@@ -133,7 +120,8 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
   return {
     button: css`
       label: button;
-      display: inline-block;
+      display: flex;
+      align-items: center;
       font-weight: ${fontWeight};
       font-size: ${fontSize};
       font-family: ${theme.typography.fontFamily.sansSerif};
@@ -143,6 +131,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       vertical-align: middle;
       cursor: pointer;
       border: none;
+      height: ${height};
       border-radius: ${borderRadius};
       ${background};
 
@@ -161,6 +150,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
     icon: css`
       label: button-icon;
       margin-right: ${iconDistance};
+      filter: brightness(100);
     `,
   };
 };
@@ -168,8 +158,8 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
 export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
   renderAs,
   theme,
-  size = ButtonSize.Medium,
-  variant = ButtonVariant.Primary,
+  size = 'md',
+  variant = 'primary',
   className,
   icon,
   children,

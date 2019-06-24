@@ -11,10 +11,14 @@ import {
   copyPanel as copyPanelUtil,
   editPanelJson as editPanelJsonUtil,
   sharePanel as sharePanelUtil,
+  calculateInnerPanelHeight,
 } from 'app/features/dashboard/utils/panel';
 
-import { GRID_COLUMN_COUNT, PANEL_HEADER_HEIGHT, PANEL_BORDER } from 'app/core/constants';
+import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
+import { auto } from 'angular';
+import { TemplateSrv } from '../templating/template_srv';
+import { LinkSrv } from './panellinks/link_srv';
 export class PanelCtrl {
   panel: any;
   error: any;
@@ -23,7 +27,7 @@ export class PanelCtrl {
   pluginId: string;
   editorTabs: any;
   $scope: any;
-  $injector: any;
+  $injector: auto.IInjectorService;
   $location: any;
   $timeout: any;
   inspector: any;
@@ -35,7 +39,7 @@ export class PanelCtrl {
   timing: any;
   maxPanelsPerRowOptions: number[];
 
-  constructor($scope, $injector) {
+  constructor($scope: any, $injector: auto.IInjectorService) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
@@ -59,21 +63,21 @@ export class PanelCtrl {
   }
 
   renderingCompleted() {
-    profiler.renderingCompleted(this.panel.id);
+    profiler.renderingCompleted();
   }
 
   refresh() {
     this.panel.refresh();
   }
 
-  publishAppEvent(evtName, evt) {
+  publishAppEvent(evtName: string, evt: any) {
     this.$scope.$root.appEvent(evtName, evt);
   }
 
-  changeView(fullscreen, edit) {
+  changeView(fullscreen: boolean, edit: boolean) {
     this.publishAppEvent('panel-change-view', {
-      fullscreen: fullscreen,
-      edit: edit,
+      fullscreen,
+      edit,
       panelId: this.panel.id,
     });
   }
@@ -98,7 +102,7 @@ export class PanelCtrl {
     }
   }
 
-  addEditorTab(title, directiveFn, index?, icon?) {
+  addEditorTab(title: string, directiveFn: any, index?: number, icon?: any) {
     const editorTab = { title, directiveFn, icon };
 
     if (_.isString(directiveFn)) {
@@ -119,7 +123,7 @@ export class PanelCtrl {
     menu.push({
       text: 'View',
       click: 'ctrl.viewPanel();',
-      icon: 'fa fa-fw fa-eye',
+      icon: 'gicon gicon-viewer',
       shortcut: 'v',
     });
 
@@ -128,7 +132,7 @@ export class PanelCtrl {
         text: 'Edit',
         click: 'ctrl.editPanel();',
         role: 'Editor',
-        icon: 'fa fa-fw fa-edit',
+        icon: 'gicon gicon-editor',
         shortcut: 'e',
       });
     }
@@ -192,7 +196,7 @@ export class PanelCtrl {
   }
 
   // Override in sub-class to add items before extended menu
-  getAdditionalMenuItems() {
+  getAdditionalMenuItems(): any[] {
     return [];
   }
 
@@ -200,12 +204,12 @@ export class PanelCtrl {
     return this.dashboard.meta.fullscreen && !this.panel.fullscreen;
   }
 
-  calculatePanelHeight(containerHeight) {
+  calculatePanelHeight(containerHeight: number) {
     this.containerHeight = containerHeight;
-    this.height = this.containerHeight - (PANEL_BORDER + PANEL_HEADER_HEIGHT);
+    this.height = calculateInnerPanelHeight(this.panel, containerHeight);
   }
 
-  render(payload?) {
+  render(payload?: any) {
     this.events.emit('render', payload);
   }
 
@@ -242,16 +246,16 @@ export class PanelCtrl {
     return '';
   }
 
-  getInfoContent(options) {
+  getInfoContent(options: { mode: string }) {
     let markdown = this.panel.description;
 
     if (options.mode === 'tooltip') {
       markdown = this.error || this.panel.description;
     }
 
-    const linkSrv = this.$injector.get('linkSrv');
-    const sanitize = this.$injector.get('$sanitize');
-    const templateSrv = this.$injector.get('templateSrv');
+    const linkSrv: LinkSrv = this.$injector.get('linkSrv');
+    const sanitize: any = this.$injector.get('$sanitize');
+    const templateSrv: TemplateSrv = this.$injector.get('templateSrv');
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     let html = '<div class="markdown-html">';
 

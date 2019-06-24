@@ -1,12 +1,17 @@
 import _ from 'lodash';
 
-import * as dateMath from 'app/core/utils/datemath';
+import * as dateMath from '@grafana/ui/src/utils/datemath';
 import InfluxSeries from './influx_series';
-import InfluxQuery from './influx_query';
+import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
+import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/ui';
+import { InfluxQuery, InfluxOptions } from './types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { IQService } from 'angular';
 
-export default class InfluxDatasource {
+export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxOptions> {
   type: string;
   urls: any;
   username: string;
@@ -17,9 +22,16 @@ export default class InfluxDatasource {
   withCredentials: any;
   interval: any;
   responseParser: any;
+  httpMode: string;
 
   /** @ngInject */
-  constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
+    private $q: IQService,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv
+  ) {
+    super(instanceSettings);
     this.type = 'influxdb';
     this.urls = _.map(instanceSettings.url.split(','), url => {
       return url.trim();
@@ -31,7 +43,9 @@ export default class InfluxDatasource {
     this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
-    this.interval = (instanceSettings.jsonData || {}).timeInterval;
+    const settingsData = instanceSettings.jsonData || ({} as InfluxOptions);
+    this.interval = settingsData.timeInterval;
+    this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
   }
 
@@ -53,7 +67,7 @@ export default class InfluxDatasource {
       // backward compatibility
       scopedVars.interval = scopedVars.__interval;
 
-      queryModel = new InfluxQuery(target, this.templateSrv, scopedVars);
+      queryModel = new InfluxQueryModel(target, this.templateSrv, scopedVars);
       return queryModel.render(true);
     }).reduce((acc, current) => {
       if (current !== '') {
@@ -168,14 +182,14 @@ export default class InfluxDatasource {
     return this._seriesQuery(interpolated, options).then(_.curry(this.responseParser.parse)(query));
   }
 
-  getTagKeys(options) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
+  getTagKeys(options: any = {}) {
+    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('TAG_KEYS');
     return this.metricFindQuery(query, options);
   }
 
-  getTagValues(options) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
+  getTagValues(options: any = {}) {
+    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('TAG_VALUES', options.key);
     return this.metricFindQuery(query, options);
   }
@@ -190,7 +204,7 @@ export default class InfluxDatasource {
       query = query.replace('$timeFilter', timeFilter);
     }
 
-    return this._influxRequest('GET', '/query', { q: query, epoch: 'ms' }, options);
+    return this._influxRequest(this.httpMode, '/query', { q: query, epoch: 'ms' }, options);
   }
 
   serializeParams(params) {
@@ -245,7 +259,12 @@ export default class InfluxDatasource {
       params.db = this.database;
     }
 
-    if (method === 'GET') {
+    if (method === 'POST' && _.has(data, 'q')) {
+      // verb is POST and 'q' param is defined
+      _.extend(params, _.omit(data, ['q']));
+      data = this.serializeParams(_.pick(data, ['q']));
+    } else if (method === 'GET' || method === 'POST') {
+      // verb is GET, or POST without 'q' param
       _.extend(params, data);
       data = null;
     }
@@ -266,6 +285,10 @@ export default class InfluxDatasource {
     }
     if (this.basicAuth) {
       req.headers.Authorization = this.basicAuth;
+    }
+
+    if (method === 'POST') {
+      req.headers['Content-type'] = 'application/x-www-form-urlencoded';
     }
 
     return this.backendSrv.datasourceRequest(req).then(

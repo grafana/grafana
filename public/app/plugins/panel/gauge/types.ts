@@ -1,25 +1,23 @@
-import { VizOrientation, StatID, SingleStatBaseOptions } from '@grafana/ui';
+import { VizOrientation, FieldDisplayOptions } from '@grafana/ui';
+import { SingleStatBaseOptions } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
+import { standardFieldDisplayOptions } from '../singlestat2/types';
 
 export interface GaugeOptions extends SingleStatBaseOptions {
-  maxValue: number;
-  minValue: number;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
 }
 
+export const standardGaugeFieldOptions: FieldDisplayOptions = {
+  ...standardFieldDisplayOptions,
+  defaults: {
+    min: 0,
+    max: 100,
+  },
+};
+
 export const defaults: GaugeOptions = {
-  minValue: 0,
-  maxValue: 100,
   showThresholdMarkers: true,
   showThresholdLabels: false,
-  valueOptions: {
-    prefix: '',
-    suffix: '',
-    decimals: null,
-    stat: StatID.mean,
-    unit: 'none',
-  },
-  valueMappings: [],
-  thresholds: [{ index: 0, value: -Infinity, color: 'green' }, { index: 1, value: 80, color: 'red' }],
+  fieldOptions: standardGaugeFieldOptions,
   orientation: VizOrientation.Auto,
 };

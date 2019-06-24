@@ -154,6 +154,16 @@ callback URL to be correct).
 > in front of Grafana that exposes it through a subpath. In that
 > case add the subpath to the end of this URL setting.
 
+### serve_from_sub_path
+> Available in 6.3 and above
+
+Serve Grafana from subpath specified in `root_url` setting. By
+default it is set to `false` for compatibility reasons.
+
+By enabling this setting and using a subpath in `root_url` above, e.g.
+`root_url = http://localhost:3000/grafana`, Grafana will be accessible on
+`http://localhost:3000/grafana`.
+
 ### static_root_path
 
 The path to the directory where the front end files (HTML, JS, and CSS
@@ -314,6 +324,36 @@ Set to `true` if you host Grafana behind HTTPS. Default is `false`.
 
 Sets the `SameSite` cookie attribute and prevents the browser from sending this cookie along with cross-site requests. The main goal is mitigate the risk of cross-origin information leakage. It also provides some protection against cross-site request forgery attacks (CSRF),  [read more here](https://www.owasp.org/index.php/SameSite). Valid values are `lax`, `strict` and `none`. Default is `lax`.
 
+### allow_embedding
+
+When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTTP responses which will instruct
+browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
+mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
+
+### strict_transport_security
+
+Set to `true` if you want to enable http `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS. The default value is `false` until the next minor release, `6.3`.
+
+### strict_transport_security_max_age_seconds
+
+Sets how long a browser should cache HSTS in seconds. Only applied if strict_transport_security is enabled. The default value is `86400`.
+
+### strict_transport_security_preload
+
+Set to `true` if to enable HSTS `preloading` option. Only applied if strict_transport_security is enabled. The default value is `false`.
+
+### strict_transport_security_subdomains
+
+Set to `true` if to enable the HSTS includeSubDomains option. Only applied if strict_transport_security is enabled. The default value is `false`.
+
+### x_content_type_options
+
+Set to `true` to enable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `false` until the next minor release, `6.3`.
+
+### x_xss_protection
+
+Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
+
 <hr />
 
 ## [users]
@@ -374,47 +414,14 @@ Text used as placeholder text on login page for password input.
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
 
-- [Authentication Overview]({{< relref "auth/overview.md" >}}) (anonymous access options, hide login and more)
-- [Google OAuth]({{< relref "auth/google.md" >}}) (auth.google)
-- [GitHub OAuth]({{< relref "auth/github.md" >}}) (auth.github)
-- [Gitlab OAuth]({{< relref "auth/gitlab.md" >}}) (auth.gitlab)
-- [Generic OAuth]({{< relref "auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
-- [Basic Authentication]({{< relref "auth/overview.md" >}}) (auth.basic)
-- [LDAP Authentication]({{< relref "auth/ldap.md" >}}) (auth.ldap)
-- [Auth Proxy]({{< relref "auth/auth-proxy.md" >}}) (auth.proxy)
-
-## [session]
-
-### provider
-
-Valid values are `memory`, `file`, `mysql`, `postgres`, `memcache` or `redis`. Default is `file`.
-
-### provider_config
-
-This option should be configured differently depending on what type of
-session provider you have configured.
-
-- **file:** session file path, e.g. `data/sessions`
-- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
-- **memcache:** ex:  `127.0.0.1:11211`
-- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
-
-Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
-
-### cookie_name
-
-The name of the Grafana session cookie.
-
-### cookie_secure
-
-Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
-
-### session_life_time
-
-How long sessions lasts in seconds. Defaults to `86400` (24 hours).
-
-<hr />
+- [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
+- [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
+- [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
+- [Gitlab OAuth]({{< relref "../auth/gitlab.md" >}}) (auth.gitlab)
+- [Generic OAuth]({{< relref "../auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
+- [Basic Authentication]({{< relref "../auth/overview.md" >}}) (auth.basic)
+- [LDAP Authentication]({{< relref "../auth/ldap.md" >}}) (auth.ldap)
+- [Auth Proxy]({{< relref "../auth/auth-proxy.md" >}}) (auth.proxy)
 
 ## [dataproxy]
 
@@ -604,9 +611,9 @@ basic auth password
 Path to JSON key file associated with a Google service account to authenticate and authorize.
 Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
 
-Service Account should have "Storage Object Writer" role.
+Service Account should have "Storage Object Writer" role. The access control model of the bucket needs to be "Set object-level and bucket-level permissions". Grafana itself will make the images public readable.
 
-### bucket name
+### bucket
 Bucket Name on Google Cloud Storage.
 
 ### path
@@ -650,13 +657,67 @@ Alert notifications can include images, but rendering many images at the same ti
 This limit will protect the server from render overloading and make sure notifications are sent out quickly. Default
 value is `5`.
 
+
+### evaluation_timeout_seconds
+
+Default setting for alert calculation timeout. Default value is `30`
+
+### notification_timeout_seconds
+
+Default setting for alert notification timeout. Default value is `30`
+
+### max_attempts
+
+Default setting for max attempts to sending alert notifications. Default value is `3`
+
+
 ## [panels]
 
-### enable_alpha
-Set to true if you want to test panels that are not yet ready for general usage.
-
 ### disable_sanitize_html
+
 If set to true Grafana will allow script tags in text panels. Not recommended as it enable XSS vulnerabilities. Default
 is false. This settings was introduced in Grafana v6.0.
 
+## [plugins]
+
+### enable_alpha
+
+Set to true if you want to test alpha plugins that are not yet ready for general usage.
+
+<hr />
+
+# Removed options
+Please note that these options have been removed.
+
+## [session]
+**Removed starting from Grafana v6.2. Please use [remote_cache](#remote-cache) option instead.**
+
+### provider
+
+Valid values are `memory`, `file`, `mysql`, `postgres`, `memcache` or `redis`. Default is `file`.
+
+### provider_config
+
+This option should be configured differently depending on what type of
+session provider you have configured.
+
+- **file:** session file path, e.g. `data/sessions`
+- **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
+- **postgres:** ex:  `user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full`
+- **memcache:** ex:  `127.0.0.1:11211`
+- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`. For unix socket, use for example: `network=unix,addr=/var/run/redis/redis.sock,pool_size=100,db=grafana`
+
+Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
+
+### cookie_name
+
+The name of the Grafana session cookie.
+
+### cookie_secure
+
+Set to true if you host Grafana behind HTTPS only. Defaults to `false`.
+
+### session_life_time
+
+How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 

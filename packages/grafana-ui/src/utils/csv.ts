@@ -266,7 +266,7 @@ function writeValue(value: any, config: CSVConfig): string {
   const str = value.toString();
   if (str.includes('"')) {
     // Escape the double quote characters
-    return config.quoteChar + str.replace('"', '""') + config.quoteChar;
+    return config.quoteChar + str.replace(/"/gi, '""') + config.quoteChar;
   }
   if (str.includes('\n') || str.includes(config.delimiter)) {
     return config.quoteChar + str + config.quoteChar;
@@ -316,6 +316,10 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
 }
 
 export function toCSV(data: SeriesData[], config?: CSVConfig): string {
+  if (!data) {
+    return '';
+  }
+
   let csv = '';
   config = defaults(config, {
     delimiter: ',',

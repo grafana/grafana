@@ -1,11 +1,11 @@
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
 import _ from 'lodash';
-import moment from 'moment';
+import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('rangeUtil', () => {
   describe('Can get range grouped list of ranges', () => {
     it('when custom settings should return default range list', () => {
-      const groups = rangeUtil.getRelativeTimesList({ time_options: [] }, 'Last 5 minutes');
+      const groups: any = rangeUtil.getRelativeTimesList({ time_options: [] }, 'Last 5 minutes');
       expect(_.keys(groups).length).toBe(4);
       expect(groups[3][0].active).toBe(true);
     });
@@ -69,26 +69,26 @@ describe('rangeUtil', () => {
 
     it('Date range with absolute to now', () => {
       const text = rangeUtil.describeTimeRange({
-        from: moment([2014, 10, 10, 2, 3, 4]),
+        from: dateTime([2014, 10, 10, 2, 3, 4]),
         to: 'now',
       });
-      expect(text).toBe('Nov 10, 2014 02:03:04 to a few seconds ago');
+      expect(text).toBe('2014-11-10 02:03:04 to a few seconds ago');
     });
 
     it('Date range with absolute to relative', () => {
       const text = rangeUtil.describeTimeRange({
-        from: moment([2014, 10, 10, 2, 3, 4]),
+        from: dateTime([2014, 10, 10, 2, 3, 4]),
         to: 'now-1d',
       });
-      expect(text).toBe('Nov 10, 2014 02:03:04 to a day ago');
+      expect(text).toBe('2014-11-10 02:03:04 to a day ago');
     });
 
     it('Date range with relative to absolute', () => {
       const text = rangeUtil.describeTimeRange({
         from: 'now-7d',
-        to: moment([2014, 10, 10, 2, 3, 4]),
+        to: dateTime([2014, 10, 10, 2, 3, 4]),
       });
-      expect(text).toBe('7 days ago to Nov 10, 2014 02:03:04');
+      expect(text).toBe('7 days ago to 2014-11-10 02:03:04');
     });
 
     it('Date range with non matching default ranges', () => {

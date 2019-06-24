@@ -7,8 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -105,6 +105,10 @@ func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response
 			return Error(401, "Invalid username or password", err)
 		}
 
+		if err == login.ErrUserDisabled {
+			return Error(401, "User is disabled", err)
+		}
+
 		return Error(500, "Error while trying to authenticate user", err)
 	}
 
@@ -131,7 +135,7 @@ func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 		hs.log.Error("user login with nil user")
 	}
 
-	userToken, err := hs.AuthTokenService.CreateToken(user.Id, c.RemoteAddr(), c.Req.UserAgent())
+	userToken, err := hs.AuthTokenService.CreateToken(c.Req.Context(), user.Id, c.RemoteAddr(), c.Req.UserAgent())
 	if err != nil {
 		hs.log.Error("failed to create auth token", "error", err)
 	}
@@ -140,7 +144,7 @@ func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 }
 
 func (hs *HTTPServer) Logout(c *m.ReqContext) {
-	if err := hs.AuthTokenService.RevokeToken(c.UserToken); err != nil && err != m.ErrUserTokenNotFound {
+	if err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken); err != nil && err != m.ErrUserTokenNotFound {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 
@@ -164,7 +168,7 @@ func tryGetEncryptedCookie(ctx *m.ReqContext, cookieName string) (string, bool) 
 		return "", false
 	}
 
-	decryptedError, err := util.Decrypt([]byte(decoded), setting.SecretKey)
+	decryptedError, err := util.Decrypt(decoded, setting.SecretKey)
 	return string(decryptedError), err == nil
 }
 
