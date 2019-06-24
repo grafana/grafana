@@ -15,7 +15,7 @@ interface GraphContainerProps {
   exploreId: ExploreId;
   graphResult?: any[];
   loading: boolean;
-  absolutRange: AbsoluteTimeRange;
+  absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   showingGraph: boolean;
   showingTable: boolean;
@@ -43,7 +43,7 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
       loading,
       showingGraph,
       showingTable,
-      absolutRange,
+      absoluteRange,
       split,
       width,
       timeZone,
@@ -58,7 +58,7 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
             height={graphHeight}
             id={`explore-graph-${exploreId}`}
             onChangeTime={this.onChangeTime}
-            range={absolutRange}
+            range={absoluteRange}
             timeZone={timeZone}
             split={split}
             width={width}
@@ -73,7 +73,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const { split } = explore;
   const item: ExploreItemState = explore[exploreId];
-  const { graphResult, loadingState, showingGraph, showingTable, absoluteRange: absolutRange } = item;
+  const { graphResult, loadingState, showingGraph, showingTable, absoluteRange } = item;
   const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   return {
     graphResult,
@@ -82,7 +82,7 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     showingTable,
     split,
     timeZone: getTimeZone(state.user),
-    absolutRange,
+    absoluteRange,
   };
 }
 
