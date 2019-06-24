@@ -123,7 +123,7 @@ Querying and displaying log data from InfluxDB is available via [Explore](/featu
 Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher, <br>
 ![](/img/docs/influxdb/explore_metrics_logs_switch.png)<br>
 and then use the `Measurements/Fields` button <br>
-![](/img/docs/influxdb/explore_measurements_fields_button.png<br>
+![](/img/docs/influxdb/explore_measurements_fields_button.png)<br>
 to display your logs.
 
 ### Log Queries
