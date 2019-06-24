@@ -37,13 +37,13 @@ export const colorModes = {
 export function getColorModes() {
   return _.map(Object.keys(colorModes), key => {
     return {
-      key: key,
+      key,
       value: colorModes[key].title,
     };
   });
 }
 
-function getColor(timeRegion, theme: GrafanaThemeType): TimeRegionColorDefinition {
+function getColor(timeRegion: any, theme: GrafanaThemeType): TimeRegionColorDefinition {
   if (Object.keys(colorModes).indexOf(timeRegion.colorMode) === -1) {
     timeRegion.colorMode = 'red';
   }
@@ -71,14 +71,14 @@ export class TimeRegionManager {
   plot: any;
   timeRegions: any;
 
-  constructor(private panelCtrl, private theme: GrafanaThemeType = GrafanaThemeType.Dark) {}
+  constructor(private panelCtrl: any, private theme: GrafanaThemeType = GrafanaThemeType.Dark) {}
 
-  draw(plot) {
+  draw(plot: any) {
     this.timeRegions = this.panelCtrl.panel.timeRegions;
     this.plot = plot;
   }
 
-  addFlotOptions(options, panel) {
+  addFlotOptions(options: any, panel: any) {
     if (!panel.timeRegions || panel.timeRegions.length === 0) {
       return;
     }

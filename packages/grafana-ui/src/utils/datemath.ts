@@ -1,10 +1,9 @@
 import includes from 'lodash/includes';
 import isDate from 'lodash/isDate';
 import { DateTime, dateTime, toUtc, ISO_8601, isDateTime, DurationUnit } from '../utils/moment_wrapper';
+import { TimeZone } from '../types';
 
 const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
-
-export type Timezone = 'utc';
 
 /**
  * Parses different types input to a moment instance. There is a specific formatting language that can be used
@@ -13,7 +12,7 @@ export type Timezone = 'utc';
  * @param roundUp See parseDateMath function.
  * @param timezone Only string 'utc' is acceptable here, for anything else, local timezone is used.
  */
-export function parse(text: string | DateTime | Date, roundUp?: boolean, timezone?: Timezone): DateTime | undefined {
+export function parse(text: string | DateTime | Date, roundUp?: boolean, timezone?: TimeZone): DateTime | undefined {
   if (!text) {
     return undefined;
   }
