@@ -1,7 +1,6 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/ui';
 
 export interface ElasticsearchOptions extends DataSourceJsonData {
-  index: string;
   timeField: string;
   esVersion: number;
   interval: string;
