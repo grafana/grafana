@@ -21,7 +21,7 @@ The plan is to move all settings to from package level vars in settings package 
 [Injection example](https://github.com/grafana/grafana/blob/df917663e6f358a076ed3daa9b199412e95c11f4/pkg/services/cleanup/cleanup.go#L20)
 
 ## Reduce the use of Goconvey
-We want to migrated away from using Goconvey and use stdlib testing as its the most common approuch in the GO community and we think it will make it easier for new contributors. Read more about how we want to write tests in the [ARCHITECTURE.MD](/ARCHITECTURE.md#Testing) docs.
+We want to migrated away from using Goconvey and use stdlib testing as its the most common approuch in the GO community and we think it will make it easier for new contributors. Read more about how we want to write tests in the [ARCHITECTURE.MD](ARCHITECTURE.md#Testing) docs.
 
 ## Sqlstore refactoring
 The sqlstore handlers all use a global xorm engine variable. This should be refactored to use the Sqlstore instance.
