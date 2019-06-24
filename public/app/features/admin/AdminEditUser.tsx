@@ -5,7 +5,7 @@ import { StoreState, OrgUser } from 'app/types';
 import { loadUser, clearUser } from 'app/core/components/UserEdit/state/actions';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import UserProfile from 'app/core/components/UserEdit/UserProfile';
 import UserSessions from 'app/core/components/UserEdit/UserSessions';

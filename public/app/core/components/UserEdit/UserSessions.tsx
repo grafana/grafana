@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import { UserSession } from 'app/types';
 import { Button, dateTime } from '@grafana/ui';
-import { ButtonVariant, ButtonSize } from '@grafana/ui/src/components/Button/AbstractButton';
 
 export interface Props {
   adminMode?: boolean;
@@ -126,8 +125,8 @@ export class UserSessions extends PureComponent<Props, State> {
                         </td>
                         <td>
                           <Button
-                            variant={ButtonVariant.Danger}
-                            size={ButtonSize.Small}
+                            variant="danger"
+                            size="sm"
                             onClick={() => {
                               this.revokeUserSession(session.id);
                             }}
@@ -144,7 +143,7 @@ export class UserSessions extends PureComponent<Props, State> {
             {adminMode && (
               <div className="gf-form-group">
                 <Button
-                  variant={ButtonVariant.Danger}
+                  variant="danger"
                   onClick={() => {
                     this.revokeAllUserSessions();
                   }}

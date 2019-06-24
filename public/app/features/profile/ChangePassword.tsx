@@ -5,7 +5,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import { Input, FormLabel, Button } from '@grafana/ui';
 

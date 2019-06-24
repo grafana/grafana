@@ -5,7 +5,6 @@ import { connect } from 'react-redux';
 import { getBackendSrv } from '@grafana/runtime';
 import { StoreState, OrgUser } from 'app/types';
 import { FormLabel, Select, Button } from '@grafana/ui';
-import { ButtonVariant, ButtonSize } from '@grafana/ui/src/components/Button/AbstractButton';
 import { OrganizationPicker, OrgOption } from 'app/core/components/Select/OrganizationPicker';
 
 export interface RoleOption {
@@ -159,8 +158,8 @@ export class UserOrganizations extends PureComponent<Props, State> {
                     </td>
                     <td>
                       <Button
-                        variant={ButtonVariant.Danger}
-                        size={ButtonSize.Small}
+                        variant="danger"
+                        size="sm"
                         onClick={() => {
                           this.removeFromOrg(userOrg);
                         }}
