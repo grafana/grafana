@@ -13,8 +13,7 @@ import * as rangeUtil from '../../utils/rangeutil';
 import { rawToTimeRange } from './time';
 
 // Types
-import { PopperContent } from '../Tooltip/PopperController';
-import { TimeRange, TimeOption, TimeZone } from '../../types/time';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT } from '../../types/time';
 import { SelectOptionItem } from '../Select/Select';
 
 export interface Props {
@@ -25,7 +24,6 @@ export interface Props {
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
-  tooltipContent?: PopperContent<any>;
 }
 
 export const defaultSelectOptions: TimeOption[] = [
@@ -122,15 +120,7 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const {
-      selectOptions: selectTimeOptions,
-      value,
-      onMoveBackward,
-      onMoveForward,
-      onZoom,
-      tooltipContent,
-      timeZone,
-    } = this.props;
+    const { selectOptions: selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom, timeZone } = this.props;
     const { isCustomOpen } = this.state;
     const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
@@ -160,8 +150,7 @@ export class TimePicker extends PureComponent<Props, State> {
             options={options}
             onChange={this.onSelectChanged}
             iconClass={'fa fa-clock-o fa-fw'}
-            tooltipContent={tooltipContent}
-            tabSelectsValue={false}
+            tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
           {isAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
@@ -185,6 +174,16 @@ export class TimePicker extends PureComponent<Props, State> {
     );
   }
 }
+
+const TimePickerTooltipContent = ({ timeRange }: { timeRange: TimeRange }) => (
+  <>
+    {timeRange.from.format(TIME_FORMAT)}
+    <br />
+    to
+    <br />
+    {timeRange.to.format(TIME_FORMAT)}
+  </>
+);
 
 function isTimeOptionEqualToTimeRange(option: TimeOption, range: TimeRange): boolean {
   return range.raw.from === option.from && range.raw.to === option.to;

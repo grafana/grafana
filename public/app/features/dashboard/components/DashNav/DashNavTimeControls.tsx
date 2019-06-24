@@ -24,16 +24,6 @@ export interface Props {
   location: LocationState;
 }
 
-const TimePickerTooltipContent = ({ dashboard, timeRange }: { dashboard: DashboardModel; timeRange: TimeRange }) => (
-  <>
-    {dashboard.formatDate(timeRange.from)}
-    <br />
-    to
-    <br />
-    {dashboard.formatDate(timeRange.to)}
-  </>
-);
-
 export class DashNavTimeControls extends Component<Props> {
   timeSrv: TimeSrv = getTimeSrv();
   $rootScope = this.props.$injector.get('$rootScope');
@@ -125,7 +115,6 @@ export class DashNavTimeControls extends Component<Props> {
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
           timeZone={timeZone}
-          tooltipContent={<TimePickerTooltipContent dashboard={dashboard} timeRange={timePickerValue} />}
           onMoveBackward={this.onMoveBack}
           onMoveForward={this.onMoveForward}
           onZoom={this.onZoom}

@@ -26,7 +26,6 @@ TimePickerStories.add('default', () => {
           <TimePicker
             timeZone="browser"
             value={value}
-            tooltipContent="TimePicker tooltip"
             selectOptions={[
               { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },
               { from: 'now-15m', to: 'now', display: 'Last 15 minutes', section: 3 },
