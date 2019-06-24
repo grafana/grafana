@@ -78,6 +78,10 @@ scripts/go/bin/bra: scripts/go/go.mod
 	@cd scripts/go; \
 	$(GO) build -o ./bin/bra github.com/Unknwon/bra
 
+scripts/go/bin/golangci-lint: scripts/go/go.mod
+	@cd scripts/go; \
+	$(GO) build -o ./bin/golangci-lint github.com/golangci/golangci-lint/cmd/golangci-lint
+
 revive: scripts/go/bin/revive
 	@scripts/go/bin/revive \
 		-formatter stylish \
@@ -97,6 +101,11 @@ gosec: scripts/go/bin/gosec
 	@scripts/go/bin/gosec -quiet \
 		-exclude=G104,G107,G201,G202,G204,G301,G304,G401,G402,G501 \
 		-conf=./scripts/go/configs/gosec.json \
+		$(GO_FILES)
+
+golangci-lint: scripts/go/bin/golangci-lint
+	@scripts/go/bin/golangci-lint run \
+		--config ./scripts/go/configs/.golangci.yml \
 		$(GO_FILES)
 
 # create docker-compose file with provided sources and start them
