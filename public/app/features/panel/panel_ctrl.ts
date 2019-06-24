@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import Remarkable from 'remarkable';
-import { sanitize } from 'app/core/utils/text';
+import { sanitize, htmlToText } from 'app/core/utils/text';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -259,7 +259,8 @@ export class PanelCtrl {
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     let html = '<div class="markdown-html">';
 
-    html += new Remarkable().render(interpolatedMarkdown);
+    const md = new Remarkable().render(interpolatedMarkdown);
+    html += config.disableSanitizeHtml ? md : sanitize(md);
 
     if (this.panel.links && this.panel.links.length > 0) {
       html += '<ul>';
@@ -268,17 +269,17 @@ export class PanelCtrl {
 
         html +=
           '<li><a class="panel-menu-link" href="' +
-          info.href +
+          htmlToText(info.href) +
           '" target="' +
-          info.target +
+          htmlToText(info.target) +
           '">' +
-          info.title +
+          htmlToText(info.title) +
           '</a></li>';
       }
       html += '</ul>';
     }
 
     html += '</div>';
-    return config.disableSanitizeHtml ? html : sanitize(html);
+    return html;
   }
 }
