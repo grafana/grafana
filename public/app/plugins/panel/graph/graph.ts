@@ -118,7 +118,7 @@ class GraphElement {
     ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
   }
 
-  onGraphHover(evt) {
+  onGraphHover(evt: any) {
     // ignore other graph hover events if shared tooltip is disabled
     if (!this.dashboard.sharedTooltipModeEnabled()) {
       return;
@@ -148,13 +148,13 @@ class GraphElement {
     ReactDOM.unmountComponentAtNode(this.legendElem);
   }
 
-  onGraphHoverClear(event, info) {
+  onGraphHoverClear(event: any, info: any) {
     if (this.plot) {
       this.tooltip.clear(this.plot);
     }
   }
 
-  onPlotSelected(event, ranges) {
+  onPlotSelected(event, ranges: any) {
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       this.plot.clearSelection();
