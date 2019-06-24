@@ -66,7 +66,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 			//expires in one day
 			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "key-with-negative-lifespan", Key: "asd3", SecondsToLive: -3600}
 			err := AddApiKey(&cmd)
-			assert.EqualError(t, err, "Negative value for SecondsToLive")
+			assert.EqualError(t, err, m.ErrInvalidApiKeyExpiration.Error())
 
 			query := m.GetApiKeyByNameQuery{KeyName: "key-with-negative-lifespan", OrgId: 1}
 			err = GetApiKeyByName(&query)

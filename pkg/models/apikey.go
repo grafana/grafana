@@ -6,6 +6,7 @@ import (
 )
 
 var ErrInvalidApiKey = errors.New("Invalid API Key")
+var ErrInvalidApiKeyExpiration = errors.New("Negative value for SecondsToLive")
 
 type ApiKey struct {
 	Id      int64
