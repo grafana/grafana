@@ -153,6 +153,101 @@ describe('ElasticDatasource', function(this: any) {
     });
   });
 
+  describe('When issuing logs query with interval pattern', () => {
+    let query, queryBuilderSpy;
+
+    beforeEach(async () => {
+      createDatasource({
+        url: 'http://es.com',
+        database: 'mock-index',
+        jsonData: { interval: 'Daily', esVersion: 2, timeField: '@timestamp' } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+        return Promise.resolve({
+          data: {
+            responses: [
+              {
+                aggregations: {
+                  '2': {
+                    buckets: [
+                      {
+                        doc_count: 10,
+                        key: 1000,
+                      },
+                      {
+                        doc_count: 15,
+                        key: 2000,
+                      },
+                    ],
+                  },
+                },
+                hits: {
+                  hits: [
+                    {
+                      '@timestamp': ['2019-06-24T09:51:19.765Z'],
+                      _id: 'fdsfs',
+                      _type: '_doc',
+                      _index: 'mock-index',
+                      _source: {
+                        '@timestamp': '2019-06-24T09:51:19.765Z',
+                        host: 'djisaodjsoad',
+                        message: 'hello, i am a message',
+                      },
+                      fields: {
+                        '@timestamp': ['2019-06-24T09:51:19.765Z'],
+                      },
+                    },
+                    {
+                      '@timestamp': ['2019-06-24T09:52:19.765Z'],
+                      _id: 'kdospaidopa',
+                      _type: '_doc',
+                      _index: 'mock-index',
+                      _source: {
+                        '@timestamp': '2019-06-24T09:52:19.765Z',
+                        host: 'dsalkdakdop',
+                        message: 'hello, i am also message',
+                      },
+                      fields: {
+                        '@timestamp': ['2019-06-24T09:52:19.765Z'],
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        });
+      });
+
+      query = {
+        range: {
+          from: toUtc([2015, 4, 30, 10]),
+          to: toUtc([2019, 7, 1, 10]),
+        },
+        targets: [
+          {
+            alias: '$varAlias',
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
+            metrics: [{ type: 'count', id: '1' }],
+            query: 'escape\\:test',
+            interval: '10s',
+            isLogsQuery: true,
+            timeField: '@timestamp',
+          },
+        ],
+      };
+
+      queryBuilderSpy = jest.spyOn(ctx.ds.queryBuilder, 'getLogsQuery');
+      await ctx.ds.query(query);
+    });
+
+    it('should call getLogsQuery()', () => {
+      expect(queryBuilderSpy).toHaveBeenCalled();
+    });
+  });
+
   describe('When issuing document query', () => {
     let requestOptions, parts, header;
 
