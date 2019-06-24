@@ -149,7 +149,7 @@ class GraphElement {
     }
   }
 
-  onPlotSelected(event, ranges) {
+  onPlotSelected(event: JQueryEventObject, ranges) {
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       this.plot.clearSelection();
@@ -171,7 +171,7 @@ class GraphElement {
     }
   }
 
-  onPlotClick(event, pos, item) {
+  onPlotClick(event: JQueryEventObject, pos, item) {
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       return;

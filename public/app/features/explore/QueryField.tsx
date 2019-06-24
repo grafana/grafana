@@ -52,7 +52,7 @@ export interface QueryFieldState {
   typeaheadIndex: number;
   typeaheadPrefix: string;
   typeaheadText: string;
-  value: Value;
+  value: any;
   lastExecutedValue: Value;
 }
 
