@@ -19,7 +19,7 @@ export function ControllerTestContext(this: any) {
     getMetricSources: () => {},
     get: () => {
       return {
-        then: (callback: (a: any) => void) => {
+        then: (callback: (ds: any) => void) => {
           callback(self.datasource);
         },
       };
