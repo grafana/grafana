@@ -155,6 +155,7 @@ callback URL to be correct).
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
+> Available in 6.3 and above
 
 Serve Grafana from subpath specified in `root_url` setting. By
 default it is set to `false` for compatibility reasons.

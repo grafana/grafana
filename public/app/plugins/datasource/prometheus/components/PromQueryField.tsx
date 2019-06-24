@@ -13,9 +13,10 @@ import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
-import { PromQuery, PromContext } from '../types';
+import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus, QueryHint } from '@grafana/ui';
+import { ExploreQueryFieldProps, DataSourceStatus, QueryHint, isSeriesData, toLegacyResponseData } from '@grafana/ui';
+import { PrometheusDatasource } from '../datasource';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -101,7 +102,7 @@ interface CascaderOption {
   disabled?: boolean;
 }
 
-interface PromQueryFieldProps extends ExploreQueryFieldProps<DataSourceApi<PromQuery>, PromQuery> {
+interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
   history: HistoryItem[];
 }
 
@@ -152,8 +153,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 
   componentDidUpdate(prevProps: PromQueryFieldProps) {
-    const currentHasSeries = this.props.queryResponse.series && this.props.queryResponse.series.length > 0;
-    if (currentHasSeries && prevProps.queryResponse.series !== this.props.queryResponse.series) {
+    const { queryResponse } = this.props;
+    const currentHasSeries = queryResponse && queryResponse.series && queryResponse.series.length > 0 ? true : false;
+    if (currentHasSeries && prevProps.queryResponse && prevProps.queryResponse.series !== queryResponse.series) {
       this.refreshHint();
     }
 
@@ -175,11 +177,14 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   refreshHint = () => {
     const { datasource, query, queryResponse } = this.props;
-    if (queryResponse.series && queryResponse.series.length === 0) {
+    if (!queryResponse || !queryResponse.series || queryResponse.series.length === 0) {
       return;
     }
 
-    const hints = datasource.getQueryHints(query, queryResponse.series);
+    const result = isSeriesData(queryResponse.series[0])
+      ? queryResponse.series.map(toLegacyResponseData)
+      : queryResponse.series;
+    const hints = datasource.getQueryHints(query, result);
     const hint = hints && hints.length > 0 ? hints[0] : null;
     this.setState({ hint });
   };

@@ -91,6 +91,16 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
+  // Limit re-rendering to when a query is finished executing or when the deduplication strategy changes
+  // for performance reasons.
+  shouldComponentUpdate(nextProps: LogsContainerProps): boolean {
+    return (
+      nextProps.loading !== this.props.loading ||
+      nextProps.dedupStrategy !== this.props.dedupStrategy ||
+      nextProps.logsHighlighterExpressions !== this.props.logsHighlighterExpressions
+    );
+  }
+
   render() {
     const {
       exploreId,
