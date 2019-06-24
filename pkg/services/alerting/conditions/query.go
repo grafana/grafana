@@ -50,6 +50,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 		return nil, err
 	}
 
+	// It's my test 
 	emptySerieCount := 0
 	evalMatchCount := 0
 	var matches []*alerting.EvalMatch
