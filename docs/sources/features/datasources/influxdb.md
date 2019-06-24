@@ -121,7 +121,7 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 
 Querying and displaying log data from InfluxDB is available via [Explore](/features/explore).
 Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher, <br>
-![](/img/docs/influxdb/explore_metrics_logs_switch.png<br>
+![](/img/docs/influxdb/explore_metrics_logs_switch.png)<br>
 and then use the `Measurements/Fields` button <br>
 ![](/img/docs/influxdb/explore_measurements_fields_button.png<br>
 to display your logs.
