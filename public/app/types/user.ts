@@ -1,3 +1,5 @@
+import { TimeZone } from '@grafana/ui/src/types';
+
 export interface OrgUser {
   avatarUrl: string;
   email: string;
@@ -48,7 +50,7 @@ export interface UsersState {
 
 export interface UserState {
   orgId: number;
-  timeZone: string;
+  timeZone: TimeZone;
   profile?: OrgUser;
 }
 

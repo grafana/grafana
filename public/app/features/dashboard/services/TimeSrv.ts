@@ -7,7 +7,7 @@ import coreModule from 'app/core/core_module';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 
 // Types
-import { TimeRange, RawTimeRange } from '@grafana/ui';
+import { TimeRange, RawTimeRange, TimeZone } from '@grafana/ui';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
@@ -224,7 +224,7 @@ export class TimeSrv {
       to: isDateTime(this.time.to) ? dateTime(this.time.to) : this.time.to,
     };
 
-    const timezone = this.dashboard && this.dashboard.getTimezone();
+    const timezone: TimeZone = this.dashboard ? this.dashboard.getTimezone() : undefined;
 
     return {
       from: dateMath.parse(raw.from, false, timezone),

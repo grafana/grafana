@@ -57,8 +57,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absRange: AbsoluteTimeRange) => {
     const { exploreId, timeZone, changeTime } = this.props;
     const range = {
-      from: timeZone.isUtc ? toUtc(absRange.from) : dateTime(absRange.from),
-      to: timeZone.isUtc ? toUtc(absRange.to) : dateTime(absRange.to),
+      from: timeZone === 'utc' ? toUtc(absRange.from) : dateTime(absRange.from),
+      to: timeZone === 'utc' ? toUtc(absRange.to) : dateTime(absRange.to),
     };
 
     changeTime(exploreId, range);
