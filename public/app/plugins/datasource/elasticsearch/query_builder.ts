@@ -367,4 +367,31 @@ export class ElasticQueryBuilder {
 
     return query;
   }
+
+  getLogsQuery(target, querystring) {
+    let query: any = {
+      size: 0,
+      query: {
+        bool: {
+          filter: [{ range: this.getRangeFilter() }],
+        },
+      },
+    };
+
+    if (target.query) {
+      query.query.bool.filter.push({
+        query_string: {
+          analyze_wildcard: true,
+          query: target.query,
+        },
+      });
+    }
+
+    query = this.documentQuery(query, 500);
+
+    return {
+      ...query,
+      aggs: this.build(target, null, querystring).aggs,
+    };
+  }
 }

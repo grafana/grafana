@@ -216,7 +216,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
             <div className="explore-toolbar-content-item timepicker">
               {!isLive && (
                 <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
-                  <TimePicker ref={timepickerRef} range={range} isUtc={timeZone.isUtc} onChangeTime={onChangeTime} />
+                  <TimePicker ref={timepickerRef} range={range} timeZone={timeZone} onChangeTime={onChangeTime} />
                 </ClickOutsideWrapper>
               )}
 

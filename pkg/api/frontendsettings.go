@@ -115,11 +115,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			}
 		}
 
-		if ds.Type == m.DS_ES {
-			dsMap["index"] = ds.Database
-		}
-
-		if ds.Type == m.DS_INFLUXDB {
+		if (ds.Type == m.DS_INFLUXDB) || (ds.Type == m.DS_ES) {
 			dsMap["database"] = ds.Database
 		}
 
