@@ -1,4 +1,4 @@
-import React, { PureComponent, ChangeEvent, MouseEvent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 import { TimeFragment, TIME_FORMAT, TimeZone } from '../../types/time';
 import { Input } from '../Input/Input';
 import { stringToDateTimeType, isValidTimeString } from './time';
@@ -41,9 +41,6 @@ export class TimePickerInput extends PureComponent<Props> {
     }
   };
 
-  // Avoid propagate to react-select, since that prevents default behaviour and input's wont be focused
-  stopPropagation = (evt: MouseEvent<HTMLInputElement>) => evt.stopPropagation();
-
   render() {
     const { value, tabIndex } = this.props;
     const valueString = this.valueToString(value);
@@ -56,7 +53,6 @@ export class TimePickerInput extends PureComponent<Props> {
         onBlur={this.onChange}
         hideErrorMessage={true}
         value={valueString}
-        onMouseDown={this.stopPropagation}
         className={`time-picker-input${error ? '-error' : ''}`}
         tabIndex={tabIndex}
       />

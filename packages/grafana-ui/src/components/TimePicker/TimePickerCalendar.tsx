@@ -30,11 +30,15 @@ export class TimePickerCalendar extends PureComponent<Props> {
 
   render() {
     const { value, roundup, timeZone } = this.props;
-    const dateValue = stringToDateTimeType(value, roundup, timeZone).toDate();
+    let date = stringToDateTimeType(value, roundup, timeZone);
+
+    if (!date.isValid()) {
+      date = dateTime();
+    }
 
     return (
       <Calendar
-        value={dateValue}
+        value={date.toDate()}
         next2Label={null}
         prev2Label={null}
         className="time-picker-calendar"
