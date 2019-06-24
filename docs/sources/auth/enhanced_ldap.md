@@ -18,7 +18,7 @@ The enhanced LDAP integration adds additional functionality on top of the [exist
 
 ## LDAP Group Synchronization for Teams
 
-{{< docs-imagebox img="/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
+{{< docs-imagebox img="/static/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
 With the enhanced LDAP integration it's possible to setup synchronization between LDAP groups and teams. This enables LDAP users which are members
 of certain LDAP groups to automatically be added/removed as members to certain teams in Grafana. Currently the synchronization will only happen every
@@ -32,7 +32,7 @@ a user as member of a team and it will not be removed when the user signs in. Th
 
 ### Enable LDAP group synchronization for a team
 
-{{< docs-imagebox img="/img/docs/enterprise/team_add_external_group.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
+{{< docs-imagebox img="/static/img/docs/enterprise/team_add_external_group.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
 1. Navigate to Configuration / Teams.
 2. Select a team.

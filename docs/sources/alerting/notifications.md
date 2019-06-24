@@ -35,7 +35,7 @@ When checked, this option will notify for all alert rules - existing and new.
 
 > Only available in Grafana v5.3 and above.
 
-{{< docs-imagebox max-width="600px" img="/img/docs/v53/alerting_notification_reminders.png" class="docs-image--right" caption="Alerting notification reminders setup" >}}
+{{< docs-imagebox max-width="600px" img="/static/img/docs/v53/alerting_notification_reminders.png" class="docs-image--right" caption="Alerting notification reminders setup" >}}
 
 When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders
 should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h` etc.
@@ -73,7 +73,7 @@ able to access the image.
 
 ### Slack
 
-{{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
+{{< imgbox max-width="40%" img="/static/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
 To set up slack you need to configure an incoming webhook url at slack. You can follow their guide on how
 to do that [here](https://api.slack.com/incoming-webhooks). If you want to include screenshots of the firing alerts

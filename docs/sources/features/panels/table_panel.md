@@ -12,7 +12,7 @@ weight = 2
 
 # Table Panel
 
-<img class="screenshot" src="/assets/img/features/table-panel.png">
+<img class="screenshot" src="/static/assets/img/features/table-panel.png">
 
 The table panel is very flexible, supporting both multiple modes for time series as well as for
 table, annotation and raw JSON data. It also provides date formatting and value formatting and coloring options.
@@ -64,7 +64,7 @@ If you intend for rows to be merged but see them rendered on separate rows, chec
 ## Options overview
 
 The table panel has many ways to manipulate your data for optimal presentation.
-{{< docs-imagebox img="/img/docs/v45/table_options.png" class="docs-image--no-shadow" max-width= "500px" >}}
+{{< docs-imagebox img="/static/img/docs/v45/table_options.png" class="docs-image--no-shadow" max-width= "500px" >}}
 
 
 1. **Data**: Control how your query is transformed into a table.
@@ -73,7 +73,7 @@ The table panel has many ways to manipulate your data for optimal presentation.
 
 ## Data to Table
 
-{{< docs-imagebox img="/img/docs/v45/table_data_options.png" max-width="500px" class="docs-image--right">}}
+{{< docs-imagebox img="/static/img/docs/v45/table_data_options.png" max-width="500px" class="docs-image--right">}}
 
 The data section contains the **To Table Transform (1)**. This is the primary option for how your data/metric
 query should be transformed into a table format.  The **Columns (2)** option allows you to select what columns
@@ -83,26 +83,26 @@ you want in the table. Only applicable for some transforms.
 
 ### Time series to rows
 
-{{< docs-imagebox img="/img/docs/v45/table_ts_to_rows.png"  >}}
+{{< docs-imagebox img="/static/img/docs/v45/table_ts_to_rows.png"  >}}
 
 In the most simple mode you can turn time series to rows. This means you get a **Time**, **Metric** and a **Value** column. Where **Metric** is the name of the time series.
 
 ### Time series to columns
 
-{{< docs-imagebox img="/img/docs/v45/table_ts_to_columns.png" >}}
+{{< docs-imagebox img="/static/img/docs/v45/table_ts_to_columns.png" >}}
 
 
 This transform allows you to take multiple time series and group them by time. Which will result in the primary column being **Time** and a column for each time series.
 
 ### Time series aggregations
 
-{{< docs-imagebox img="/img/docs/v45/table_ts_to_aggregations.png" >}}
+{{< docs-imagebox img="/static/img/docs/v45/table_ts_to_aggregations.png" >}}
 
 This table transformation will lay out your table into rows by metric, allowing columns of **Avg**, **Min**, **Max**, **Total**, **Current** and **Count**. More than one column can be added.
 
 ### Annotations
 
-{{< docs-imagebox img="/img/docs/v45/table_annotations.png" >}}
+{{< docs-imagebox img="/static/img/docs/v45/table_annotations.png" >}}
 
 
 If you have annotations enabled in the dashboard you can have the table show them. If you configure this
@@ -110,17 +110,17 @@ mode then any queries you have in the metrics tab will be ignored.
 
 ### JSON Data
 
-{{< docs-imagebox img="/img/docs/v45/table_json_data.png" max-width="500px" >}}
+{{< docs-imagebox img="/static/img/docs/v45/table_json_data.png" max-width="500px" >}}
 
 If you have an Elasticsearch **Raw Document** query or an Elasticsearch query without a **date histogram** use this
 transform mode and pick the columns using the **Columns** section.
 
 
-{{< docs-imagebox img="/img/docs/v45/elastic_raw_doc.png" >}}
+{{< docs-imagebox img="/static/img/docs/v45/elastic_raw_doc.png" >}}
 
 ## Table Display
 
-{{< docs-imagebox img="/img/docs/v45/table_paging.png" class="docs-image--no-shadow docs-image--right" max-width="350px" >}}
+{{< docs-imagebox img="/static/img/docs/v45/table_paging.png" class="docs-image--no-shadow docs-image--right" max-width="350px" >}}
 
 1. **Rows Per Page**: The table display fields allow you to control how many rows per page there should be. For example, if your table had 95 records with a rows per page value of 10, your table would be split across 10 pages.
 2. **Scroll**: The scroll bar checkbox toggles the ability to scroll within the panel, when unchecked, the panel height will grow to display all rows.
@@ -131,7 +131,7 @@ transform mode and pick the columns using the **Columns** section.
 
 The column styles allow you control how dates and numbers are formatted.
 
-{{< docs-imagebox img="/img/docs/v45/table_column_styles.png" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/static/img/docs/v45/table_column_styles.png" class="docs-image--no-shadow" >}}
 
 1. **Name or regex**: The Name or Regex field controls what columns the rule should be applied to. The regex or name filter will be matched against the column name not against column values.
 2. **Column Header**: Title for the column, when using a Regex the title can include replacement strings like `$1`.
@@ -145,7 +145,7 @@ The column styles allow you control how dates and numbers are formatted.
 
 > Only available in Grafana v5.1+.
 
-{{< docs-imagebox img="/img/docs/v51/table-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
+{{< docs-imagebox img="/static/img/docs/v51/table-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
 
 Value/range to text mapping allows you to translate numeric values into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the numeric values into a context-specific human-readable word or message.
 

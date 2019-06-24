@@ -10,7 +10,7 @@ weight = 2
 
 # Annotations
 
-{{< docs-imagebox img="/img/docs/v46/annotations.png" max-width="800px" >}}
+{{< docs-imagebox img="/static/img/docs/v46/annotations.png" max-width="800px" >}}
 
 Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
 you can get event description and event tags. The text field can include links to other systems with more detail.
@@ -23,15 +23,15 @@ Grafana v4.6+ comes with a native annotation store and the ability to add annota
 
 By holding down **CTRL** or **CMD** + Click. Add tags to the annotation will make it searchable from other dashboards.
 
-{{< docs-imagebox img="/img/docs/annotations/annotation-still.png"
-max-width="600px" animated-gif="/img/docs/annotations/annotation.gif" >}}
+{{< docs-imagebox img="/static/img/docs/annotations/annotation-still.png"
+max-width="600px" animated-gif="/static/img/docs/annotations/annotation.gif" >}}
 
 ### Adding regions events
 
 You can also hold down **CTRL** or **CMD** and select region to create a region annotation.
 
-{{< docs-imagebox img="/img/docs/annotations/region-annotation-still.png"
-max-width="600px" animated-gif="/img/docs/annotations/region-annotation.gif" >}}
+{{< docs-imagebox img="/static/img/docs/annotations/region-annotation-still.png"
+max-width="600px" animated-gif="/static/img/docs/annotations/region-annotation.gif" >}}
 
 ### Built in query
 
@@ -49,7 +49,7 @@ one tag. For example create an annotation query name `outages` and specify a tag
 
 In Grafana v5.3+ it's possible to use template variables in the tag query. So if you have a dashboard showing stats for different services and a template variable that dictates which services to show, you can now use the same template variable in your annotation query to only show annotations for those services.
 
-{{< docs-imagebox img="/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
+{{< docs-imagebox img="/static/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
 
 ## Querying other data sources
 
@@ -57,8 +57,8 @@ Annotation events are fetched via annotation queries. To add a new annotation qu
 open the dashboard settings menu, then select `Annotations`. This will open the dashboard annotations
 settings view. To create a new annotation query hit the `New` button.
 
-<!--![](/img/docs/v50/annotation_new_query.png)-->
-{{< docs-imagebox img="/img/docs/v50/annotation_new_query.png" max-width="600px" >}}
+<!--![](/static/img/docs/v50/annotation_new_query.png)-->
+{{< docs-imagebox img="/static/img/docs/v50/annotation_new_query.png" max-width="600px" >}}
 
 Specify a name for the annotation query. This name is given to the toggle (checkbox) that will allow
 you to enable/disable showing annotation events from this query. For example you might have two

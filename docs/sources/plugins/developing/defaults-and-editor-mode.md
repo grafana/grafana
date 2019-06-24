@@ -59,7 +59,7 @@ If you want your users to be able to change these panel values then you need to 
 
 ## Editor Mode
 
-Editor mode is when a user clicks Edit on a panel. Every panel has a general tab where you change the title and width and some panels have more inbuilt tabs like the Metrics tab or Time Range tab. A panel plugin can add its own tab(s) so that a user can customize the panel. 
+Editor mode is when a user clicks Edit on a panel. Every panel has a general tab where you change the title and width and some panels have more inbuilt tabs like the Metrics tab or Time Range tab. A panel plugin can add its own tab(s) so that a user can customize the panel.
 
 Grafana conventions mean all you need to do is to hook up an Angular template with input fields and Grafana will automatically save the values to the dashboard json and load them on dashboard load.
 
@@ -100,7 +100,7 @@ Then each pair, label and field is wrapped in a div with a gf-form class.
 
 Note that there are some Angular attributes here. *ng-model* will update the panel data. *ng-change* will render the panel when you change the value. This change will occur on the onblur event due to the *ng-model-onblur* attribute. This means you can see the effect of your changes on the panel while editing.
 
-{{< imgbox img="/assets/img/blog/clock-panel-editor.png" caption="Panel Editor" >}}
+{{< imgbox img="/static/assets/img/blog/clock-panel-editor.png" caption="Panel Editor" >}}
 
 On the editor tab we use a drop down for 12/24 hour clock, an input field for font size and a color picker for the background color.
 

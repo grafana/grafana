@@ -50,31 +50,31 @@ The following APIs need to be enabled first:
 
 Click on the links above and click the `Enable` button:
 
-{{< docs-imagebox img="/img/docs/v53/stackdriver_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
+{{< docs-imagebox img="/static/img/docs/v53/stackdriver_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs & Services Credentials page](https://console.cloud.google.com/apis/credentials).
 2. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-    {{< docs-imagebox img="/img/docs/v53/stackdriver_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
+    {{< docs-imagebox img="/static/img/docs/v53/stackdriver_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
 
 3. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-    {{< docs-imagebox img="/img/docs/v53/stackdriver_create_service_account_key.png" class="docs-image--no-shadow" caption="Create service account key" >}}
+    {{< docs-imagebox img="/static/img/docs/v53/stackdriver_create_service_account_key.png" class="docs-image--no-shadow" caption="Create service account key" >}}
 
 4. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-    {{< docs-imagebox img="/img/docs/v53/stackdriver_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
+    {{< docs-imagebox img="/static/img/docs/v53/stackdriver_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
 
 5. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Stackdriver data.
 6. Upload it to Grafana on the datasource Configuration page. You can either upload the file or paste in the contents of the file.
 
-    {{< docs-imagebox img="/img/docs/v53/stackdriver_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
+    {{< docs-imagebox img="/static/img/docs/v53/stackdriver_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
 
 7. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-    {{< docs-imagebox img="/img/docs/v53/stackdriver_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
+    {{< docs-imagebox img="/static/img/docs/v53/stackdriver_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
 ### Using GCE Default Service Account
 
@@ -88,7 +88,7 @@ Read more about creating and enabling service accounts for GCE VM instances [her
 
 ## Metric Query Editor
 
-{{< docs-imagebox img="/img/docs/v53/stackdriver_query_editor.png" max-width= "400px" class="docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v53/stackdriver_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
 The Stackdriver query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
@@ -200,7 +200,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 ## Annotations
 
-{{< docs-imagebox img="/img/docs/v53/stackdriver_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v53/stackdriver_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
 [Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Stackdriver annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Stackdriver.

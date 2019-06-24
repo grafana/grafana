@@ -20,7 +20,7 @@ a permission page that makes it possible to enable permissions and restrict quer
 
 ## Restricting Access - Enable Permissions
 
-{{< docs-imagebox img="/img/docs/enterprise/datasource_permissions_enable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/img/docs/enterprise/datasource_permissions_enable.gif" >}}
+{{< docs-imagebox img="/static/img/docs/enterprise/datasource_permissions_enable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_enable.gif" >}}
 
 By default, permissions are disabled for datasources and a datasource in an organization can be queried by any user in
 that organization. For example a user with `Viewer` role can still issue any possible query to a datasource, not just
@@ -39,7 +39,7 @@ datasource to [admin users](/permissions/organization_roles/#admin-role) in that
 
 ## Allow users and teams to query a datasource
 
-{{< docs-imagebox img="/img/docs/enterprise/datasource_permissions_add_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/img/docs/enterprise/datasource_permissions_add.gif" >}}
+{{< docs-imagebox img="/static/img/docs/enterprise/datasource_permissions_add_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_add.gif" >}}
 
 After you have [enabled permissions](#restricting-access-enable-permissions) for a datasource you can assign query
 permissions to users and teams which will allow access to query the datasource.
@@ -56,7 +56,7 @@ permissions to users and teams which will allow access to query the datasource.
 
 ## Restore Default Access - Disable Permissions
 
-{{< docs-imagebox img="/img/docs/enterprise/datasource_permissions_disable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/img/docs/enterprise/datasource_permissions_disable.gif" >}}
+{{< docs-imagebox img="/static/img/docs/enterprise/datasource_permissions_disable_still.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" animated-gif="/static/img/docs/enterprise/datasource_permissions_disable.gif" >}}
 
 If you have enabled permissions for a datasource and want to return datasource permissions to the default, i.e.
 datasource can be queried by any user in that organization, you can disable permissions with a click of a button.

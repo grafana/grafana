@@ -25,7 +25,7 @@ follow Grafana’s best practices and change the default administrator password.
 
 ## How to add a data source
 
-{{< docs-imagebox img="/img/docs/v52/sidemenu-datasource.png" max-width="250px" class="docs-image--right docs-image--no-shadow">}}
+{{< docs-imagebox img="/static/img/docs/v52/sidemenu-datasource.png" max-width="250px" class="docs-image--right docs-image--no-shadow">}}
 
 Before you create your first dashboard you need to add your data source.
 
@@ -34,12 +34,12 @@ First move your cursor to the cog on the side menu which will show you the confi
 
 Click Add data source and you will come to the settings page of your new data source.
 
-{{< docs-imagebox img="/img/docs/v52/add-datasource.png" max-width="700px" class="docs-image--no-shadow">}}
+{{< docs-imagebox img="/static/img/docs/v52/add-datasource.png" max-width="700px" class="docs-image--no-shadow">}}
 
 First, give the data source a Name and then select which Type of data source you'll want to create, see [Supported data sources](/features/datasources/#supported-data-sources/) for more information and how to configure your data source.
 
 
-{{< docs-imagebox img="/img/docs/v52/datasource-settings.png" max-width="700px" class="docs-image--no-shadow">}}
+{{< docs-imagebox img="/static/img/docs/v52/datasource-settings.png" max-width="700px" class="docs-image--no-shadow">}}
 
 After you have configuered your data source you are ready to save and test.
 
@@ -55,7 +55,7 @@ Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course
 
 Let's start with creating a new Dashboard. You can find the new Dashboard link on the right side of the Dashboard picker. You now have a blank Dashboard.
 
-<img class="no-shadow" src="/img/docs/v50/top_nav_annotated.png" width="580px">
+<img class="no-shadow" src="/static/img/docs/v50/top_nav_annotated.png" width="580px">
 
 The image above shows you the top header for a Dashboard.
 
@@ -71,7 +71,7 @@ The image above shows you the top header for a Dashboard.
 
 Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a grid. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently Graphite, Prometheus, Elasticsearch, InfluxDB, OpenTSDB, MySQL, PostgreSQL, Microsoft SQL Server and AWS Cloudwatch). The [Basic Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
 
-<img src="/img/docs/v50/dashboard_annotated.png" class="no-shadow" width="700px">
+<img src="/static/img/docs/v50/dashboard_annotated.png" class="no-shadow" width="700px">
 
 1. Zoom out time range
 2. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.
@@ -82,7 +82,7 @@ Dashboards are at the core of what Grafana is all about. Dashboards are composed
 
 ## Adding & Editing Graphs and Panels
 
-![](/img/docs/v45/metrics_tab.png)
+![](/static/img/docs/v45/metrics_tab.png)
 
 1. You add panels by clicking the Add panel icon on the top menu.
 2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
@@ -94,7 +94,7 @@ When you click the `Metrics` tab, you are presented with a Query Editor that is 
 
 You can Drag-and-Drop Panels by simply clicking and holding the Panel title, and drag it to its new location. You can also easily resize panels by clicking the (-) and (+) icons.
 
-![](/img/docs/animated_gifs/drag_drop.gif)
+![](/static/img/docs/animated_gifs/drag_drop.gif)
 
 ## Tips and shortcuts
 

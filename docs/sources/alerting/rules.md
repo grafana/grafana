@@ -15,7 +15,7 @@ weight = 1
 
 ## Introduction
 
-{{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
+{{< imgbox max-width="40%" img="/static/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
 
 Alerting in Grafana allows you to attach rules to your dashboard panels. When you save the dashboard
 Grafana will extract the alert rules into a separate alert rule storage and schedule them for evaluation.
@@ -58,9 +58,9 @@ If an alert rule has a configured `For` and the query violates the configured th
 Typically, it's always a good idea to use this setting since it's often worse to get false positive than wait a few minutes before the alert notification triggers. Looking at the `Alert list` or `Alert list panels` you will be able to see alerts in pending state.
 
 Below you can see an example timeline of an alert using the `For` setting. At ~16:04 the alert state changes to `Pending` and after 4 minutes it changes to `Alerting` which is when alert notifications are sent. Once the series falls back to normal the alert rule goes back to `OK`.
-{{< imgbox img="/img/docs/v54/alerting-for-dark-theme.png" caption="Alerting For" >}}
+{{< imgbox img="/static/img/docs/v54/alerting-for-dark-theme.png" caption="Alerting For" >}}
 
-{{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
+{{< imgbox max-width="40%" img="/static/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
 
 ### Conditions
 
@@ -145,7 +145,7 @@ submenu in the alert tab to view & clear state history.
 
 ## Troubleshooting
 
-{{< imgbox max-width="40%" img="/img/docs/v4/alert_test_rule.png" caption="Test Rule" >}}
+{{< imgbox max-width="40%" img="/static/img/docs/v4/alert_test_rule.png" caption="Test Rule" >}}
 
 First level of troubleshooting you can do is hit the **Test Rule** button. You will get result back that you can expand
 to the point where you can see the raw data that was returned from your query.

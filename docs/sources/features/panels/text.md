@@ -16,7 +16,7 @@ The text panel lets you make information and description panels etc. for your da
 
 ## Text Options
 
-{{< docs-imagebox img="/img/docs/v45/text-options.png" max-width="600px" class="docs-image--no-shadow">}}
+{{< docs-imagebox img="/static/img/docs/v45/text-options.png" max-width="600px" class="docs-image--no-shadow">}}
 
 1. **Mode**: Here you can choose between markdown, HTML or text.
 2. **Content**: Here you write your content.

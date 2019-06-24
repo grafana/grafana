@@ -62,7 +62,7 @@ Identifier | Description
 
 ## Query Editor
 
-{{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
+{{< docs-imagebox img="/static/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v45/influxdb_query.gif" >}}
 
 You find the InfluxDB editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
 panel title, then edit. The editor allows you to select metrics and tags.
@@ -79,7 +79,7 @@ will automatically adjust the filter tag condition to use the InfluxDB regex mat
 ### Field & Aggregation functions
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries simplify and unify this part of the query. For example:<br>
-![](/img/docs/influxdb/select_editor.png)<br>
+![](/static/img/docs/influxdb/select_editor.png)<br>
 
 The above will generate the following InfluxDB `SELECT` clause:
 
@@ -112,7 +112,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 
 ### Table query / raw data
 
-![](/assets/img/blog/v2.6/table_influxdb_logs.png)
+![](/static/assets/img/blog/v2.6/table_influxdb_logs.png)
 
 You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
 change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.

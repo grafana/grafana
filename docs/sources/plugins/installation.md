@@ -81,7 +81,7 @@ To manually install a Plugin via the Grafana.com API:
 
 1. Find the plugin you want to download, the plugin id can be found on the Installation Tab on the plugin's page on Grafana.com. In this example, the plugin id is `jdbranham-diagram-panel`:
 
-    {{< imgbox img="/img/docs/installation-tab.png" caption="Installation Tab" >}}
+    {{< imgbox img="/static/img/docs/installation-tab.png" caption="Installation Tab" >}}
 
 2. Use the Grafana API to find the plugin using this url `https://grafana.com/api/plugins/<plugin id from step 1>`. For example: https://grafana.com/api/plugins/jdbranham-diagram-panel should return:
     ```bash

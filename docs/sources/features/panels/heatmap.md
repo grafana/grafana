@@ -11,7 +11,7 @@ weight = 3
 
 # Heatmap Panel
 
-![](/img/docs/v43/heatmap_panel_cover.jpg)
+![](/static/img/docs/v43/heatmap_panel_cover.jpg)
 
 > New panel only available in Grafana v4.3+
 
@@ -28,7 +28,7 @@ and the bar height represents the frequency (i.e. count) of values that fell int
 
 Example Histogram:
 
-![](/img/docs/v43/heatmap_histogram.png)
+![](/static/img/docs/v43/heatmap_histogram.png)
 
 The above histogram shows us that most value distribution of a couple of time series. We can easily see that
 most values land between 240-300 with a peak between 260-280. Histograms just look at value distributions
@@ -43,7 +43,7 @@ the cell proportional to the number of values in the bucket.
 
 Example:
 
-![](/img/docs/v43/heatmap_histogram_over_time.png)
+![](/static/img/docs/v43/heatmap_histogram_over_time.png)
 
 Here we can clearly see what values are more common and how they trend over time.
 
@@ -84,11 +84,11 @@ returns series with names representing bucket bound or returns series sorted by 
 
 With Elasticsearch you control the size of the buckets using the Histogram interval (Y-Axis) and the Date Histogram interval (X-axis).
 
-![Elastic histogram](/img/docs/v43/elastic_histogram.png)
+![Elastic histogram](/static/img/docs/v43/elastic_histogram.png)
 
 With Prometheus you can only control X-axis by adjusting *Min step* and *Resolution* options.
 
-![Prometheus histogram](/img/docs/v51/prometheus_histogram.png)
+![Prometheus histogram](/static/img/docs/v51/prometheus_histogram.png)
 
 ## Display Options
 
@@ -96,7 +96,7 @@ In the heatmap *Display* tab you define how the cells are rendered and what colo
 
 ### Color Mode & Spectrum
 
-{{< imgbox max-width="40%" img="/img/docs/v43/heatmap_scheme.png" caption="Color spectrum" >}}
+{{< imgbox max-width="40%" img="/static/img/docs/v43/heatmap_scheme.png" caption="Color spectrum" >}}
 
 The color spectrum controls the mapping between value count (in each bucket) and the color assigned to each bucket.
 The left most color on the spectrum represents the minimum count and the color on the right most side represents the

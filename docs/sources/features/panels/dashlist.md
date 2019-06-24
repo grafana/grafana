@@ -12,7 +12,7 @@ weight = 4
 
 # Dashboard List Panel
 
-{{< docs-imagebox img="/img/docs/v45/dashboard-list-panels.png" max-width="850px">}}
+{{< docs-imagebox img="/static/img/docs/v45/dashboard-list-panels.png" max-width="850px">}}
 
 The dashboard list panel allows you to display dynamic links to other dashboards. The list can be configured to use starred dashboards, recently viewed dashboards, a search query and/or dashboard tags.
 
@@ -20,7 +20,7 @@ The dashboard list panel allows you to display dynamic links to other dashboards
 
 ## Dashboard List Options
 
-{{< docs-imagebox img="/img/docs/v45/dashboard-list-options.png" class="docs-image--no-shadow docs-image--right">}}
+{{< docs-imagebox img="/static/img/docs/v45/dashboard-list-options.png" class="docs-image--no-shadow docs-image--right">}}
 
 1. **Starred**: The starred dashboard selection displays starred dashboards in alphabetical order.
 2. **Recently Viewed**: The recently viewed dashboard selection displays recently viewed dashboards in alphabetical order.

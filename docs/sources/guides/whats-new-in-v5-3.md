@@ -24,7 +24,7 @@ Grafana v5.3 brings new features, many enhancements and bug fixes. This article 
 
 ## Google Stackdriver
 
-{{< docs-imagebox img="/img/docs/v53/stackdriver-with-heatmap.png"  max-width= "600px" class="docs-image--no-shadow docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v53/stackdriver-with-heatmap.png"  max-width= "600px" class="docs-image--no-shadow docs-image--right" >}}
 
 Grafana v5.3 ships with built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) and enables you to visualize your Stackdriver metrics in Grafana.
 
@@ -43,7 +43,7 @@ Please read [Using Google Stackdriver in Grafana](/features/datasources/stackdri
 
 ## TV and Kiosk Mode
 
-{{< docs-imagebox img="/img/docs/v53/tv_mode_still.png" max-width="600px" class="docs-image--no-shadow docs-image--right" animated-gif="/img/docs/v53/tv_mode.gif" >}}
+{{< docs-imagebox img="/static/img/docs/v53/tv_mode_still.png" max-width="600px" class="docs-image--no-shadow docs-image--right" animated-gif="/static/img/docs/v53/tv_mode.gif" >}}
 
 We've improved the TV & kiosk mode to make it easier to use. There's now an icon in the top bar that will let you cycle through the different view modes.
 
@@ -67,7 +67,7 @@ Learn how to enable and configure reminders [here](/alerting/notifications/#send
 
 Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other datasources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. Learn more about it in the [documentation](/features/datasources/postgres/#query-editor).
 
-{{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
+{{< docs-imagebox img="/static/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v53/postgres_query.gif" >}}
 
 ## Improved OAuth Support for GitLab
 
@@ -79,7 +79,7 @@ Learn how to enable and configure it in the [documentation](/auth/gitlab/).
 Grafana 5.3 brings improved support for [native annotations](/reference/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
 Learn more about it in the [documentation](/reference/annotations/#query-by-tag).
 
-{{< docs-imagebox img="/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
+{{< docs-imagebox img="/static/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
 
 ## Variables
 

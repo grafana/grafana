@@ -12,7 +12,7 @@ weight = 10
 <div class="video-card-container">
   <figure class="video-card">
     <a href="https://youtu.be/iUj6DwfBh88?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-      <img src="/img/docs/v4/screencast_generic.png">
+      <img src="/static/img/docs/v4/screencast_generic.png">
       <i class="fa fa-play"></i>
     </a>
     <figcaption>
@@ -23,7 +23,7 @@ weight = 10
   </figure>
   <figure class="video-card">
     <a href="https://youtu.be/d6KicssNzxM?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-      <img src="/img/docs/v4/screencast_generic.png">
+      <img src="/static/img/docs/v4/screencast_generic.png">
       <i class="fa fa-play"></i>
     </a>
     <figcaption>
@@ -34,7 +34,7 @@ weight = 10
   </figure>
   <figure class="video-card">
     <a href="https://youtu.be/1kJyQKgk_oY?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-      <img src="/img/docs/v4/screencast_generic.png">
+      <img src="/static/img/docs/v4/screencast_generic.png">
       <i class="fa fa-play"></i>
     </a>
     <figcaption>
@@ -45,7 +45,7 @@ weight = 10
   </figure>
   <figure class="video-card">
     <a href="https://youtu.be/sKNZMtoSHN4?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-      <img src="/img/docs/v4/screencast_generic.png">
+      <img src="/static/img/docs/v4/screencast_generic.png">
       <i class="fa fa-play"></i>
     </a>
     <figcaption>
@@ -56,7 +56,7 @@ weight = 10
   </figure>
   <figure class="video-card">
     <a href="https://youtu.be/9ZCMVNxUf6s?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-      <img src="/img/docs/v4/screencast_generic.png">
+      <img src="/static/img/docs/v4/screencast_generic.png">
       <i class="fa fa-play"></i>
     </a>
     <figcaption>
@@ -67,7 +67,7 @@ weight = 10
   </figure>
   <figure class="video-card">
     <a href="https://youtu.be/E-gMFv84FE8?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-      <img src="/img/docs/v4/screencast_generic.png">
+      <img src="/static/img/docs/v4/screencast_generic.png">
       <i class="fa fa-play"></i>
     </a>
     <figcaption>
@@ -78,7 +78,7 @@ weight = 10
   </figure>
   <figure class="video-card">
     <a href="https://youtu.be/JY22EBOR9hQ?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-      <img src="/img/docs/v4/screencast_generic.png">
+      <img src="/static/img/docs/v4/screencast_generic.png">
       <i class="fa fa-play"></i>
     </a>
     <figcaption>
@@ -89,7 +89,7 @@ weight = 10
   </figure>
   <figure class="video-card">
     <a href="https://youtu.be/FC13uhFRsVw?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-      <img src="/img/docs/v4/screencast_generic.png">
+      <img src="/static/img/docs/v4/screencast_generic.png">
       <i class="fa fa-play"></i>
     </a>
     <figcaption>
@@ -100,7 +100,7 @@ weight = 10
   </figure>
   <figure class="video-card">
     <a href="https://youtu.be/FhNUrueWwOk?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-      <img src="/img/docs/v4/screencast_generic.png">
+      <img src="/static/img/docs/v4/screencast_generic.png">
       <i class="fa fa-play"></i>
     </a>
     <figcaption>
@@ -111,7 +111,7 @@ weight = 10
   </figure>
   <figure class="video-card">
     <a href="https://youtu.be/mgcJPREl3CU?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" target="_blank" rel="noopener noreferrer">
-      <img src="/img/docs/v4/screencast_generic.png">
+      <img src="/static/img/docs/v4/screencast_generic.png">
       <i class="fa fa-play"></i>
     </a>
     <figcaption>

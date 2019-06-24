@@ -76,7 +76,7 @@ Make sure the user does not get any unwanted privileges from the public role.
 
 > Only available in Grafana v5.3+.
 
-{{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
+{{< docs-imagebox img="/static/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v53/postgres_query.gif" >}}
 
 You find the PostgreSQL query editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
 panel title, then edit.
@@ -106,7 +106,7 @@ The available functions in the query editor depend on the PostgreSQL version you
 If you use aggregate functions you need to group your resultset. The editor will automatically add a `GROUP BY time` if you add an aggregate function.
 
 The editor tries to simplify and unify this part of the query. For example:<br>
-![](/img/docs/v53/postgres_select_editor.png)<br>
+![](/static/img/docs/v53/postgres_select_editor.png)<br>
 
 The above will generate the following PostgreSQL `SELECT` clause:
 
@@ -168,7 +168,7 @@ If the `Format as` query option is set to `Table` then you can basically do any 
 
 Query editor with example query:
 
-![](/img/docs/v46/postgres_table_query.png)
+![](/static/img/docs/v46/postgres_table_query.png)
 
 
 The query:
@@ -187,7 +187,7 @@ You can control the name of the Table panel columns by using regular `as ` SQL c
 
 The resulting table panel:
 
-![postgres table](/img/docs/v46/postgres_table.png)
+![postgres table](/static/img/docs/v46/postgres_table.png)
 
 ## Time series queries
 

@@ -112,7 +112,7 @@ region = us-west-2
 
 ## Metric Query Editor
 
-![](/img/docs/v43/cloudwatch_editor.png)
+![](/static/img/docs/v43/cloudwatch_editor.png)
 
 You need to specify a namespace, metric, at least one stat, and at least one dimension.
 
@@ -122,7 +122,7 @@ You can now create new time series metrics by operating on top of Cloudwatch met
 
 As an example, if you want to apply arithmetic operator on a metric, you can do it by giving an alias(a unique string) to the raw metric as shown below. Then you can use this alias and apply arithmetic operator to it in the Expression field of created metric.
 
-![](/img/docs/v60/cloudwatch_metric_math.png)
+![](/static/img/docs/v60/cloudwatch_metric_math.png)
 
 ## Templated queries
 

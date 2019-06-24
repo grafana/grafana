@@ -238,7 +238,7 @@ Here available options will let you `Copy JSON to Clipboard` and/or `Save JSON t
 
 Note: The JSON shown in input field and when using `Copy JSON to Clipboard` and/or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
 
-{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/static/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Reusable Dashboard Urls
 

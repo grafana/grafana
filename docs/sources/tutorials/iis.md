@@ -42,11 +42,11 @@ Restart the Grafana server after changing the config file.
 
 1. Open the IIS Manager and click on the parent website
 2. In the admin console for this website, double click on the Url Rewrite option:
-    {{< docs-imagebox img="/img/docs/tutorials/IIS_admin_console.png"  max-width= "800px" >}}
+    {{< docs-imagebox img="/static/img/docs/tutorials/IIS_admin_console.png"  max-width= "800px" >}}
 
 3. Click on the `Add Rule(s)...` action
 4. Choose the Blank Rule template for an Inbound Rule
-    {{< docs-imagebox img="/img/docs/tutorials/IIS_add_inbound_rule.png"  max-width= "800px" >}}
+    {{< docs-imagebox img="/static/img/docs/tutorials/IIS_add_inbound_rule.png"  max-width= "800px" >}}
 
 5. Create an Inbound Rule for the parent website (localhost:8080 in this example) with the following settings:
   - pattern: `grafana(/)?(.*)`
@@ -55,7 +55,7 @@ Restart the Grafana server after changing the config file.
   - check the `Append query string` checkbox
   - check the `Stop processing of subsequent rules` checkbox
 
-    {{< docs-imagebox img="/img/docs/tutorials/IIS_url_rewrite.png"  max-width= "800px" >}}
+    {{< docs-imagebox img="/static/img/docs/tutorials/IIS_url_rewrite.png"  max-width= "800px" >}}
 
 Finally, navigate to `http://localhost:8080/grafana` (replace `http://localhost:8080` with your parent domain) and you should come to the Grafana login page.
 
@@ -70,7 +70,7 @@ When navigating to the grafana url (`http://localhost:8080/grafana` in the examp
 
 ### Grafana Website only shows text with no images or css
 
-{{< docs-imagebox img="/img/docs/tutorials/IIS_proxy_error.png"  max-width= "800px" >}}
+{{< docs-imagebox img="/static/img/docs/tutorials/IIS_proxy_error.png"  max-width= "800px" >}}
 
 1. The `root_url` setting in the Grafana config file does not match the parent url with subpath. This could happen if the root_url is commented out by mistake (`;` is used for commenting out a line in .ini files):
 
@@ -82,8 +82,8 @@ When navigating to the grafana url (`http://localhost:8080/grafana` in the examp
 
     pattern in Inbound Rule: `wrongsubpath(/)?(.*)`
 
-3. or if the Rewrite Url in the Inbound Rule is incorrect. 
+3. or if the Rewrite Url in the Inbound Rule is incorrect.
 
-    The Rewrite Url should not include the subpath. 
+    The Rewrite Url should not include the subpath.
 
     The Rewrite Url should contain the capture group from the pattern matching that returns the part of the url after the subpath. The pattern used above returns 3 capture groups and the third one {R:2} returns the part of the url after `http://localhost:8080/grafana/`.

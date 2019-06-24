@@ -23,14 +23,14 @@ This make is much easier to verify functionally since the data can be shared ver
 
 Once `Grafana TestData` is enabled you can use it as a data source in any metric panel.
 
-![](/img/docs/v41/test_data_add.png)
+![](/static/img/docs/v41/test_data_add.png)
 
 ## CSV
 
 The comma separated values scenario is the most powerful one since it lets you create any kind of graph you like.
 Once you provided the numbers `Grafana TestData` will distribute them evenly based on the time range of your query.
 
-![](/img/docs/v41/test_data_csv_example.png)
+![](/static/img/docs/v41/test_data_csv_example.png)
 
 ## Dashboards
 

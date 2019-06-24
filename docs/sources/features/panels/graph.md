@@ -11,7 +11,7 @@ weight = 1
 
 # Graph Panel
 
-{{< docs-imagebox img="/img/docs/v45/graph_overview.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< docs-imagebox img="/static/img/docs/v45/graph_overview.png" class="docs-image--no-shadow" max-width="850px" >}}
 
 The main panel in Grafana is simply named Graph. It provides a very rich set of graphing options.
 
@@ -22,7 +22,7 @@ options for the panel.
 
 ## General
 
-{{< docs-imagebox img="/img/docs/v51/graph_general.png"  max-width= "800px" >}}
+{{< docs-imagebox img="/static/img/docs/v51/graph_general.png"  max-width= "800px" >}}
 
 The general tab allows customization of a panel's appearance and menu options.
 
@@ -57,7 +57,7 @@ options.
 
 ## Axes
 
-{{< docs-imagebox img="/img/docs/v51/graph_axes_grid_options.png"  max-width= "800px" >}}
+{{< docs-imagebox img="/static/img/docs/v51/graph_axes_grid_options.png"  max-width= "800px" >}}
 
 The Axes tab controls the display of axes.
 
@@ -84,11 +84,11 @@ For **Mode** there are three options:
 
 - The **Series** option means that the data is grouped by series and not by time. The y-axis still represents the value.
 
-    {{< docs-imagebox img="/img/docs/v51/graph-x-axis-mode-series.png" max-width="800px">}}
+    {{< docs-imagebox img="/static/img/docs/v51/graph-x-axis-mode-series.png" max-width="800px">}}
 
 - The **Histogram** option converts the graph into a histogram. A Histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. Histograms and buckets are described in more detail [here](http://docs.grafana.org/features/panels/heatmap/#histograms-and-buckets).
 
-    <img src="/img/docs/v43/heatmap_histogram.png" class="no-shadow">
+    <img src="/static/img/docs/v43/heatmap_histogram.png" class="no-shadow">
 
 
 ### Y-Axes
@@ -98,7 +98,7 @@ For **Mode** there are three options:
 
 ## Legend
 
-{{< docs-imagebox img="/img/docs/v51/graph-legend.png" max-width= "800px" >}}
+{{< docs-imagebox img="/static/img/docs/v51/graph-legend.png" max-width= "800px" >}}
 
 ### Options
 
@@ -133,7 +133,7 @@ Hide series when all values of a series from a metric query are of a specific va
 
 ## Display styles
 
-{{< docs-imagebox img="/img/docs/v51/graph_display_styles.png" max-width= "800px" >}}
+{{< docs-imagebox img="/static/img/docs/v51/graph_display_styles.png" max-width= "800px" >}}
 
 Display styles control visual properties of the graph.
 
@@ -170,7 +170,7 @@ If there are multiple series, they can be displayed as a group.
 
 ### Series overrides
 
-{{< docs-imagebox img="/img/docs/v51/graph_display_overrides.png" max-width= "800px" >}}
+{{< docs-imagebox img="/static/img/docs/v51/graph_display_overrides.png" max-width= "800px" >}}
 
 The section allows a series to be rendered differently from the others. For example, one series can be given
 a thicker line width to make it stand out and/or be moved to the right Y-axis.
@@ -181,7 +181,7 @@ There is an option under Series overrides to draw lines as dashes. Set Dashes to
 
 ### Thresholds
 
-{{< docs-imagebox img="/img/docs/v51/graph_display_thresholds.png" max-width= "800px" >}}
+{{< docs-imagebox img="/static/img/docs/v51/graph_display_thresholds.png" max-width= "800px" >}}
 
 Thresholds allow you to add arbitrary lines or sections to the graph to make it easier to see when
 the graph crosses a particular threshold.
@@ -190,13 +190,13 @@ the graph crosses a particular threshold.
 
 > Only available in Grafana v5.4 and above.
 
-{{< docs-imagebox img="/img/docs/v54/graph_time_regions.png" max-width= "800px" >}}
+{{< docs-imagebox img="/static/img/docs/v54/graph_time_regions.png" max-width= "800px" >}}
 
 Time regions allow you to highlight certain time regions of the graph to make it easier to see for example weekends, business hours and/or off work hours.
 
 ## Time Range
 
-{{< docs-imagebox img="/img/docs/v51/graph-time-range.png"  max-width= "900px" >}}
+{{< docs-imagebox img="/static/img/docs/v51/graph-time-range.png"  max-width= "900px" >}}
 
 The time range tab allows you to override the dashboard time range and specify a panel specific time.
 Either through a relative from now time option or through a timeshift.

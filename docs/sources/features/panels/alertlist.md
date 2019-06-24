@@ -12,13 +12,13 @@ weight = 4
 
 # Alert List Panel
 
-{{< docs-imagebox img="/img/docs/v45/alert-list-panel.png" max-width="850px" >}}
+{{< docs-imagebox img="/static/img/docs/v45/alert-list-panel.png" max-width="850px" >}}
 
 The alert list panel allows you to display your dashboards alerts. The list can be configured to show current state or recent state changes. You can read  more about alerts [here](http://docs.grafana.org/alerting/rules).
 
 ## Alert List Options
 
-{{< docs-imagebox img="/img/docs/v45/alert-list-options.png" max-width="600px" class="docs-image--no-shadow docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v45/alert-list-options.png" max-width="600px" class="docs-image--no-shadow docs-image--right" >}}
 
 1. **Show**: Lets you choose between current state or recent state changes.
 2. **Max Items**: Max items set the maximum of items in a list.

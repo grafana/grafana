@@ -24,7 +24,7 @@ A dashboard snapshot is an instant way to share an interactive dashboard publicl
 (metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard
 snapshots can be accessed by anyone who has the link and can reach the URL.
 
-{{< docs-imagebox img="/img/docs/v50/share_panel_modal.png" max-width="700px" >}}
+{{< docs-imagebox img="/static/img/docs/v50/share_panel_modal.png" max-width="700px" >}}
 
 ### Publish snapshots
 
@@ -72,7 +72,7 @@ Below there should be an interactive Grafana graph embedded in an iframe:
 
 ### Export Panel Data
 
-{{< docs-imagebox img="/img/docs/v50/export_panel_data.png" max-width="500px" >}}
+{{< docs-imagebox img="/static/img/docs/v50/export_panel_data.png" max-width="500px" >}}
 
 The submenu for a panel can be found by clicking on the title of a panel and then on the More submenu.
 

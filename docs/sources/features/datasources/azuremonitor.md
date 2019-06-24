@@ -43,7 +43,7 @@ The datasource can access metrics from four different services. You can configur
    - **Default Subscription Id** (Subscriptions -> Choose subscription -> Overview -> Subscription ID)
 
 4. Paste these four items into the fields in the Azure Monitor API Details section:
-   {{< docs-imagebox img="/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
+   {{< docs-imagebox img="/static/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
 
    - The Subscription Id can be changed per query. Save the datasource and refresh the page to see the list of subscriptions available for the specified Client Id.
 
@@ -58,10 +58,10 @@ The datasource can access metrics from four different services. You can configur
    - API Key
 
 7. Paste these two items into the appropriate fields in the Application Insights API Details section:
-   {{< docs-imagebox img="/img/docs/v62/config_2_app_insights_api_details.png" class="docs-image--no-shadow" caption="Application Insights Configuration Details" >}}
+   {{< docs-imagebox img="/static/img/docs/v62/config_2_app_insights_api_details.png" class="docs-image--no-shadow" caption="Application Insights Configuration Details" >}}
 
 8. Test that the configuration details are correct by clicking on the "Save & Test" button:
-   {{< docs-imagebox img="/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
+   {{< docs-imagebox img="/static/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
 
 Alternatively on step 4 if creating a new Azure Active Directory App, use the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest):
 
@@ -91,7 +91,7 @@ Examples of metrics that you can get from the service are:
 - `Microsoft.Network/networkInterfaces - Bytes sent`
 - `Microsoft.Storage/storageAccounts - Used Capacity`
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-service-query-editor.png" class="docs-image--no-shadow" caption="Azure Monitor Query Editor" >}}
+{{< docs-imagebox img="/static/img/docs/v60/azuremonitor-service-query-editor.png" class="docs-image--no-shadow" caption="Azure Monitor Query Editor" >}}
 
 ### Formatting Legend Keys with Aliases for the Azure Monitor Service
 
@@ -142,7 +142,7 @@ Examples:
 - Chaining template variables: `ResourceNames($rg, $ns)`
 - Do not quote parameters: `MetricNames(hg, Microsoft.Network/publicIPAddresses, grafanaIP)`
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
+{{< docs-imagebox img="/static/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
 
 Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
@@ -155,11 +155,11 @@ Not all metrics returned by the Azure Monitor API have values. The Grafana datas
 
 Grafana alerting is supported for the Azure Monitor service. This is not Azure Alerts support. Read more about how alerting in Grafana works [here]({{< relref "alerting/rules.md" >}}).
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
+{{< docs-imagebox img="/static/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
 ## Querying the Application Insights Service
 
-{{< docs-imagebox img="/img/docs/v60/appinsights-service-query-editor.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
+{{< docs-imagebox img="/static/img/docs/v60/appinsights-service-query-editor.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
 
 ### Formatting Legend Keys with Aliases for the Application Insights Service
 
@@ -210,7 +210,7 @@ Examples:
 - Passing in metric name variable: `AppInsightsGroupBys(requests/count)`
 - Chaining template variables: `AppInsightsGroupBys($metricnames)`
 
-{{< docs-imagebox img="/img/docs/v60/appinsights-service-variables.png" class="docs-image--no-shadow" caption="Nested Application Insights Template Variables" >}}
+{{< docs-imagebox img="/static/img/docs/v60/appinsights-service-variables.png" class="docs-image--no-shadow" caption="Nested Application Insights Template Variables" >}}
 
 ### Application Insights Alerting
 
@@ -240,7 +240,7 @@ AzureActivity
 
 If your credentials give you access to multiple subscriptions then choose the appropriate subscription first.
 
-{{< docs-imagebox img="/img/docs/v60/azureloganalytics-service-query-editor.png" class="docs-image--no-shadow" caption="Azure Log Analytics Query Editor" >}}
+{{< docs-imagebox img="/static/img/docs/v60/azureloganalytics-service-query-editor.png" class="docs-image--no-shadow" caption="Azure Log Analytics Query Editor" >}}
 
 ### Azure Log Analytics Macros
 

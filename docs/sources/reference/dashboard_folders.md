@@ -22,7 +22,7 @@ On the Create Folder page, fill in a unique name for the folder and press Create
 
 ## Manage Dashboards
 
-{{< docs-imagebox img="/img/docs/v50/manage_dashboard_menu.png" max-width="300px" class="docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v50/manage_dashboard_menu.png" max-width="300px" class="docs-image--right" >}}
 
 There is a new Manage Dashboards page where you can carry out a variety of tasks:
 

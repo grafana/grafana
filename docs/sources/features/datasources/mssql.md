@@ -78,7 +78,7 @@ If possible, we recommend you to use the latest service pack available for optim
 
 ## Query Editor
 
-{{< docs-imagebox img="/img/docs/v51/mssql_query_editor.png" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/static/img/docs/v51/mssql_query_editor.png" class="docs-image--no-shadow" >}}
 
 You find the MSSQL query editor in the metrics tab in Graph, Singlestat or Table panel's edit mode. You enter edit mode by clicking the
 panel title, then edit. The editor allows you to define a SQL query to select data to be visualized.
@@ -154,7 +154,7 @@ SELECT
 
 Query editor with example query:
 
-{{< docs-imagebox img="/img/docs/v51/mssql_table_query.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/static/img/docs/v51/mssql_table_query.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 
 The query:
@@ -174,7 +174,7 @@ FROM
 
 The resulting table panel:
 
-{{< docs-imagebox img="/img/docs/v51/mssql_table_result.png" max-width="1489px" class="docs-image--no-shadow" >}}
+{{< docs-imagebox img="/static/img/docs/v51/mssql_table_result.png" max-width="1489px" class="docs-image--no-shadow" >}}
 
 ## Time series queries
 
@@ -210,7 +210,7 @@ INSERT metric_values (time, measurement, valueOne, valueTwo) VALUES('2018-03-15 
 
 ```
 
-{{< docs-imagebox img="/img/docs/v51/mssql_time_series_one.png" class="docs-image--no-shadow docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v51/mssql_time_series_one.png" class="docs-image--no-shadow docs-image--right" >}}
 
 **Example with one `value` and one `metric` column.**
 
@@ -230,7 +230,7 @@ When above query are used in a graph panel the result will be two series named `
 
 <div class="clearfix"></div>
 
-{{< docs-imagebox img="/img/docs/v51/mssql_time_series_two.png" class="docs-image--no-shadow docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v51/mssql_time_series_two.png" class="docs-image--no-shadow docs-image--right" >}}
 
 **Example with multiple `value` columns:**
 
@@ -250,7 +250,7 @@ When above query are used in a graph panel the result will be two series named `
 
 <div class="clearfix"></div>
 
-{{< docs-imagebox img="/img/docs/v51/mssql_time_series_three.png" class="docs-image--no-shadow docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v51/mssql_time_series_three.png" class="docs-image--no-shadow docs-image--right" >}}
 
 **Example using the $__timeGroup macro:**
 
@@ -274,7 +274,7 @@ Any two series lacking a value in a 3 minute window will render a line between t
 
 <div class="clearfix"></div>
 
-{{< docs-imagebox img="/img/docs/v51/mssql_time_series_four.png" class="docs-image--no-shadow docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v51/mssql_time_series_four.png" class="docs-image--no-shadow docs-image--right" >}}
 
 **Example using the $__timeGroup macro with fill parameter set to zero:**
 
@@ -433,7 +433,7 @@ Please note that any macro function will not work inside a stored procedure.
 
 ### Examples
 
-{{< docs-imagebox img="/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v51/mssql_metrics_graph.png" class="docs-image--no-shadow docs-image--right" >}}
 For the following examples the database table defined in [Time series queries](#time-series-queries). Let's say that we want to visualize 4 series in a graph panel, i.e. all combinations of columns `valueOne`, `valueTwo` and `measurement`. Graph panel to the right visualizes what we want to achieve. To solve this we actually need to use two queries:
 
 **First query:**

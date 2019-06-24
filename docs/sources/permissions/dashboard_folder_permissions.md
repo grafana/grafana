@@ -12,7 +12,7 @@ weight = 3
 
 # Dashboard & Folder Permissions
 
-{{< docs-imagebox img="/img/docs/v50/folder_permissions.png" max-width="500px" class="docs-image--right" >}}
+{{< docs-imagebox img="/static/img/docs/v50/folder_permissions.png" max-width="500px" class="docs-image--right" >}}
 
 For dashboards and dashboard folders there is a **Permissions** page that make it possible to
 remove the default role based permissions for Editors and Viewers. On this page you can add and assign permissions to specific **Users** and **Teams**.

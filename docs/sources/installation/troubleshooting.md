@@ -13,7 +13,7 @@ weight = 8
 
 ## Visualization & Query issues
 
-{{< imgbox max-width="40%" img="/img/docs/v45/query_inspector.png" caption="Query Inspector" >}}
+{{< imgbox max-width="40%" img="/static/img/docs/v45/query_inspector.png" caption="Query Inspector" >}}
 
 The most common problems are related to the query & response from you data source. Even if it looks
 like a bug or visualization issue in Grafana it is 99% of time a problem with the data source query or

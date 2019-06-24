@@ -31,11 +31,11 @@ If you just want to explore your data and do not want to create a dashboard then
 
 There is a new Explore icon on the menu bar to the left. This opens a new empty Explore tab.
 
-{{< docs-imagebox img="/img/docs/v60/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
+{{< docs-imagebox img="/static/img/docs/v60/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
 
 If you want to start with an existing query in a panel then choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
 
-{{< docs-imagebox img="/img/docs/v60/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< docs-imagebox img="/static/img/docs/v60/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 Choose your datasource in the dropdown in the top left. Prometheus has a custom Explore implementation, the other datasources (for now) use their standard query editor.
 
@@ -45,7 +45,7 @@ The query field is where you can write your query and explore your data. There a
 
 The Split feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another datasource for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
-{{< docs-imagebox img="/img/docs/v60/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< docs-imagebox img="/static/img/docs/v60/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 You can close the newly created query by clicking on the Close Split button.
 
@@ -57,7 +57,7 @@ The first version of Explore features a custom querying experience for Prometheu
 
 On the left-hand side of the query field is a `Metrics` button, clicking on this opens the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all the Alert Manager metrics will be grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
 
-{{< docs-imagebox img="/img/docs/v60/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< docs-imagebox img="/static/img/docs/v60/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 ### Query Field
 
