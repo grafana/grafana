@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import Remarkable from 'remarkable';
-import { sanitize as XSSsanitize } from 'app/core/utils/text';
+import { sanitize } from 'app/core/utils/text';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -255,7 +255,6 @@ export class PanelCtrl {
     }
 
     const linkSrv: LinkSrv = this.$injector.get('linkSrv');
-    const sanitize: any = this.$injector.get('$sanitize');
     const templateSrv: TemplateSrv = this.$injector.get('templateSrv');
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     let html = '<div class="markdown-html">';
@@ -266,19 +265,20 @@ export class PanelCtrl {
       html += '<ul>';
       for (const link of this.panel.links) {
         const info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
+
         html +=
           '<li><a class="panel-menu-link" href="' +
-          XSSsanitize(info.href) +
+          info.href +
           '" target="' +
-          XSSsanitize(info.target) +
+          info.target +
           '">' +
-          XSSsanitize(info.title) +
+          info.title +
           '</a></li>';
       }
       html += '</ul>';
     }
 
     html += '</div>';
-    return sanitize(html);
+    return config.disableSanitizeHtml ? html : sanitize(html);
   }
 }
