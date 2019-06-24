@@ -25,17 +25,19 @@ import DashboardPage from '../features/dashboard/containers/DashboardPage';
 import PluginPage from '../features/plugins/PluginPage';
 import AppRootPage from 'app/features/plugins/AppRootPage';
 import config from 'app/core/config';
+import { route, ILocationProvider } from 'angular';
 
 // Types
 import { DashboardRouteInfo } from 'app/types';
 
 /** @ngInject */
-export function setupAngularRoutes($routeProvider, $locationProvider) {
+export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
   $locationProvider.html5Mode(true);
 
   $routeProvider
     .when('/', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.Home,
       reloadOnSearch: false,
