@@ -130,7 +130,7 @@ to display your logs.
 
 The Logs Explorer (the `Measurements/Fields` button) next to the query field shows a list of measurements and fields. Choose the desired measurement that contains your log data and then choose which field Explore should use to display the log message.
 <br>
-![](/img/docs/influxdb/explore_measurements_fields_button.png<br>
+![](/img/docs/influxdb/explore_measurements_fields_button.png)<br>
 
 Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
 
