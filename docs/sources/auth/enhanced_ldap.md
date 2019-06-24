@@ -52,7 +52,7 @@ With this feature you can configure Grafana to actively sync Grafana users with 
 [auth.ldap]
 ...
 
-# You can use the Cron syntax or several predefined shedulers - 
+# You can use the Cron syntax or several predefined schedulers - 
 # @yearly (or @annually) | Run once a year, midnight, Jan. 1st        | 0 0 0 1 1 *
 # @monthly               | Run once a month, midnight, first of month | 0 0 0 1 * *
 # @weekly                | Run once a week, midnight between Sat/Sun  | 0 0 0 * * 0
