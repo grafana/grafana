@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import Remarkable from 'remarkable';
+import { sanitize as XSSsanitize } from 'app/core/utils/text';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -267,11 +268,11 @@ export class PanelCtrl {
         const info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
         html +=
           '<li><a class="panel-menu-link" href="' +
-          info.href +
+          XSSsanitize(info.href) +
           '" target="' +
-          info.target +
+          XSSsanitize(info.target) +
           '">' +
-          info.title +
+          XSSsanitize(info.title) +
           '</a></li>';
       }
       html += '</ul>';
