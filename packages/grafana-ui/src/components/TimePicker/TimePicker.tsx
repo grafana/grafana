@@ -70,14 +70,12 @@ const defaultZoomOutTooltip = () => {
 };
 
 export interface State {
-  isMenuOpen: boolean;
   isCustomOpen: boolean;
 }
 export class TimePicker extends PureComponent<Props, State> {
   pickerTriggerRef = createRef<HTMLDivElement>();
 
   state: State = {
-    isMenuOpen: false,
     isCustomOpen: false,
   };
 
@@ -112,13 +110,6 @@ export class TimePicker extends PureComponent<Props, State> {
       onChange(rawToTimeRange({ from: item.value.from, to: item.value.to }, timeZone));
     }
   };
-
-  onChangeMenuOpenState = (isOpen: boolean) => {
-    this.setState({ isMenuOpen: isOpen });
-  };
-
-  onOpenMenu = () => this.onChangeMenuOpenState(true);
-  onCloseMenu = () => this.onChangeMenuOpenState(false);
 
   onCustomChange = (timeRange: TimeRange) => {
     const { onChange } = this.props;
@@ -170,9 +161,6 @@ export class TimePicker extends PureComponent<Props, State> {
             onChange={this.onSelectChanged}
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={tooltipContent}
-            isMenuOpen={this.state.isMenuOpen}
-            onOpenMenu={this.onOpenMenu}
-            onCloseMenu={this.onCloseMenu}
             tabSelectsValue={false}
           />
           {isAbsolute && (

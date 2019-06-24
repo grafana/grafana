@@ -78,13 +78,13 @@ export class ButtonSelect<T> extends PureComponent<Props<T>> {
         options={options}
         onChange={this.onChange}
         value={value}
+        isOpen={isMenuOpen}
+        onOpenMenu={onOpenMenu}
+        onCloseMenu={onCloseMenu}
         maxMenuHeight={maxMenuHeight}
         components={combinedComponents}
         className="gf-form-select-box-button-select"
         tooltipContent={tooltipContent}
-        isOpen={isMenuOpen}
-        onOpenMenu={onOpenMenu}
-        onCloseMenu={onCloseMenu}
         tabSelectsValue={tabSelectsValue}
       />
     );
