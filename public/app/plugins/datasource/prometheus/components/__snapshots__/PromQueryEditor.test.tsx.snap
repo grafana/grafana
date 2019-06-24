@@ -123,6 +123,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             },
           ]
         }
+        tabSelectsValue={true}
         value={
           Object {
             "label": "1/1",
@@ -176,6 +177,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             },
           ]
         }
+        tabSelectsValue={true}
         value={
           Object {
             "label": "Time series",
