@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { TimeFragment } from '../../types/time';
-import { TimeZone } from '../../types';
-import { DateTime, dateTime } from '../../utils/moment_wrapper';
+import { TimeFragment, TimeZone, TIME_FORMAT } from '../../types/time';
+import { DateTime, dateTime, toUtc } from '../../utils/moment_wrapper';
 import { stringToDateTimeType } from './time';
 
 export interface Props {
@@ -14,13 +13,19 @@ export interface Props {
 
 export class TimePickerCalendar extends PureComponent<Props> {
   onCalendarChange = (date: Date | Date[]) => {
-    const { onChange } = this.props;
+    const { onChange, timeZone } = this.props;
 
     if (Array.isArray(date)) {
       return;
     }
 
-    onChange(dateTime(date));
+    let newDate = dateTime(date);
+
+    if (timeZone === 'utc') {
+      newDate = toUtc(newDate.format(TIME_FORMAT));
+    }
+
+    onChange(newDate);
   };
 
   render() {
