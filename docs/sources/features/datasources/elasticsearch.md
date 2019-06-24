@@ -162,6 +162,24 @@ Time | The name of the time field, needs to be date field.
 Text | Event description field.
 Tags | Optional field name to use for event tags (can be an array or a CSV string).
 
+## Querying Logs (BETA)
+
+Querying and displaying log data from Elasticsearch is available via [Explore](/features/explore).
+
+Select the Elasticsearch data source, change to Logs using the Metrics/Logs switcher,
+
+![](/img/docs/elasticsearch/explore_elasticsearch_logs_switch.png)
+
+and then enter your query using [Lucene](https://lucene.apache.org/core/2_9_4/queryparsersyntax.html) syntax into the query field
+
+![](/img/docs/elasticsearch/explore_query_field.png)
+
+and press the `Enter` key or the `Run Query` button to display your logs.
+
+### Log Queries
+
+Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
+
 ## Configure the Datasource with Provisioning
 
 It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
@@ -180,4 +198,24 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
+```
+
+or, for logs:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: elasticsearch-v7-filebeat
+    type: elasticsearch
+    access: proxy
+    database: "[filebeat-]YYYY.MM.DD"
+    url: http://localhost:12200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
+      timeInterval: "10s"
+      logMessageField: message
+      logLevelField: fields.level
 ```
