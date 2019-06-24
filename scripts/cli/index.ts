@@ -6,6 +6,7 @@ import { buildTask } from './tasks/grafanaui.build';
 import { releaseTask } from './tasks/grafanaui.release';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
+import { closeMilestoneTask } from './tasks/closeMilestone';
 import { precommitTask } from './tasks/precommit';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 
@@ -64,6 +65,21 @@ program
   .description('Helps find commits to cherry pick')
   .action(async cmd => {
     await execTask(cherryPickTask)({});
+  });
+
+program
+  .command('close-milestone')
+  .option('-m, --milestone <milestone>', 'Specify milestone')
+  .description('Helps ends a milestone by removing the cherry-pick label and closing it')
+  .action(async cmd => {
+    if (!cmd.milestone) {
+      console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
+      return;
+    }
+
+    await execTask(closeMilestoneTask)({
+      milestone: cmd.milestone,
+    });
   });
 
 program

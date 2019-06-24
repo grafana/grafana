@@ -23,7 +23,7 @@ export const makeFragment = text => {
     Block.create({
       type: 'paragraph',
       nodes: [Text.create(line)],
-    })
+    } as any)
   );
 
   const fragment = Document.create({

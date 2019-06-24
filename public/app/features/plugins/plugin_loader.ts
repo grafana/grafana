@@ -31,6 +31,7 @@ import * as d3 from 'd3';
 import * as grafanaData from '@grafana/data';
 import * as grafanaUI from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
+export { loadPluginCss } from '@grafana/runtime';
 
 // rxjs
 import { Observable, Subject } from 'rxjs';
@@ -229,12 +230,4 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
       console.log('Error loading panel plugin', err);
       return getPanelPluginNotFound(id);
     });
-}
-
-export function loadPluginCss(options) {
-  if (config.bootData.user.lightTheme) {
-    System.import(options.light + '!css');
-  } else {
-    System.import(options.dark + '!css');
-  }
 }

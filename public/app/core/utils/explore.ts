@@ -366,8 +366,8 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourc
 
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
   return {
-    from: dateMath.parse(rawRange.from, false, timeZone.raw as any),
-    to: dateMath.parse(rawRange.to, true, timeZone.raw as any),
+    from: dateMath.parse(rawRange.from, false, timeZone as any),
+    to: dateMath.parse(rawRange.to, true, timeZone as any),
     raw: rawRange,
   };
 };
@@ -406,8 +406,8 @@ export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): Ti
   };
 
   return {
-    from: dateMath.parse(raw.from, false, timeZone.raw as any),
-    to: dateMath.parse(raw.to, true, timeZone.raw as any),
+    from: dateMath.parse(raw.from, false, timeZone as any),
+    to: dateMath.parse(raw.to, true, timeZone as any),
     raw,
   };
 };
