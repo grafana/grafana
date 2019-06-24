@@ -71,10 +71,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
           <div className="gf-form gf-form--grow flex-shrink-1">
             <QueryField
               additionalPlugins={this.plugins}
-              // cleanText={cleanText}
               initialQuery={query.query}
-              // onTypeahead={this.onTypeahead}
-              // onWillApplySuggestion={willApplySuggestion}
               onChange={this.onChangeQuery}
               onRunQuery={this.props.onRunQuery}
               placeholder="Enter a Lucene query"
