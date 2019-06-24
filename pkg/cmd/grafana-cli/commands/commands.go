@@ -21,7 +21,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 
 		cfg := setting.NewCfg()
 
-		configOptions := strings.Split(cmd.GlobalString("optionsString"), " ")
+		configOptions := strings.Split(cmd.GlobalString("configOverrides"), " ")
 		cfg.Load(&setting.CommandLineArgs{
 			Config:   cmd.ConfigFile(),
 			HomePath: cmd.HomePath(),

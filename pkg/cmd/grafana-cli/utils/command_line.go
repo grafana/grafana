@@ -55,5 +55,5 @@ func (c *ContextCommandLine) PluginURL() string {
 }
 
 func (c *ContextCommandLine) OptionsString() string {
-	return c.GlobalString("optionsString")
+	return c.GlobalString("configOverrides")
 }
