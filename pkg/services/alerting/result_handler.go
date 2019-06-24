@@ -30,6 +30,7 @@ func newResultHandler(renderService rendering.Service) *defaultResultHandler {
 }
 
 func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
+	var epochTime int64
 	executionError := ""
 	annotationData := simplejson.New()
 
@@ -44,6 +45,10 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		annotationData.Set("noData", true)
 	}
 
+	for _, match := range evalContext.EvalMatches {
+		epochTime = match.AlertTime
+	}
+	
 	metrics.M_Alerting_Result_State.WithLabelValues(string(evalContext.Rule.State)).Inc()
 	if evalContext.shouldUpdateAlertState() {
 		handler.log.Info("New state change", "alertId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
@@ -88,7 +93,7 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 			Text:        "",
 			NewState:    string(evalContext.Rule.State),
 			PrevState:   string(evalContext.PrevAlertState),
-			Epoch:       time.Now().UnixNano() / int64(time.Millisecond),
+			Epoch:       epochTime,
 			Data:        annotationData,
 		}
 
