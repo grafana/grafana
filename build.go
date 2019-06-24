@@ -232,6 +232,7 @@ type linuxPackageOptions struct {
 	packageType            string
 	packageArch            string
 	homeDir                string
+	homeBinDir             string
 	binPath                string
 	serverBinPath          string
 	cliBinPath             string
@@ -261,6 +262,7 @@ func createDebPackages() {
 		packageType:            "deb",
 		packageArch:            debPkgArch,
 		homeDir:                "/usr/share/grafana",
+		homeBinDir:             "/usr/share/grafana/bin",
 		binPath:                "/usr/sbin",
 		configDir:              "/etc/grafana",
 		etcDefaultPath:         "/etc/default",
@@ -290,6 +292,7 @@ func createRpmPackages() {
 		packageType:            "rpm",
 		packageArch:            rpmPkgArch,
 		homeDir:                "/usr/share/grafana",
+		homeBinDir:             "/usr/share/grafana/bin",
 		binPath:                "/usr/sbin",
 		configDir:              "/etc/grafana",
 		etcDefaultPath:         "/etc/sysconfig",
@@ -328,10 +331,6 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/lib/systemd/system"))
 	runPrint("mkdir", "-p", filepath.Join(packageRoot, "/usr/sbin"))
 
-	// The grafana-cli binary is exposed through a wrapper to ensure a proper
-	// configuration is in place. To enable that, we need to store the original
-	// binary in a separate location to avoid conflicts.
-	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+cliBinary), filepath.Join(packageRoot, options.homeDir, cliBinary))
 	// copy grafana-cli wrapper
 	runPrint("cp", "-p", options.cliBinaryWrapperSrc, filepath.Join(packageRoot, "/usr/sbin/"+cliBinary))
 
@@ -348,6 +347,13 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
 	// remove bin path
 	runPrint("rm", "-rf", filepath.Join(packageRoot, options.homeDir, "bin"))
+
+	// create /bin within home
+	runPrint("mkdir", "-p", filepath.Join(packageRoot, options.homeBinDir))
+	// The grafana-cli binary is exposed through a wrapper to ensure a proper
+	// configuration is in place. To enable that, we need to store the original
+	// binary in a separate location to avoid conflicts.
+	runPrint("cp", "-p", filepath.Join(workingDir, "tmp/bin/"+cliBinary), filepath.Join(packageRoot, options.homeBinDir, cliBinary))
 
 	args := []string{
 		"-s", "dir",

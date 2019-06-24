@@ -16,7 +16,7 @@ LOG_DIR=/var/log/grafana
 CONF_FILE=$CONF_DIR/grafana.ini
 PROVISIONING_CFG_DIR=$CONF_DIR/provisioning
 
-EXECUTABLE=$GRAFANA_HOME/grafana-cli
+EXECUTABLE=$GRAFANA_HOME/bin/grafana-cli
 
 if [ ! -x $EXECUTABLE ]; then
  echo "Program not installed or not executable"
