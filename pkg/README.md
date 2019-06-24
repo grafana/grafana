@@ -29,6 +29,9 @@ The sqlstore handlers all use a global xorm engine variable. This should be refa
 ## Avoid global HTTP Handler functions
 HTTP handlers should be refactored to so the handler methods are on the HttpServer instance or a more detailed handler struct. E.g (AuthHandler). This way they get access to HttpServer service dependencies (& Cfg object) and can avoid global state
 
+## Date comparison
+Newly introduced date columns in the database should be stored as epochs if date comparison is required. This permits to have a unifed approach for comparing dates against all the supported databases instead of handling seperately each one of them. In addition to this, by comparing epochs error pruning transformations from/to other time zones are no more needed.
+
 # Dependency management
 
 The Grafana project uses [Go modules](https://golang.org/cmd/go/#hdr-Modules__module_versions__and_more) to manage dependencies on external packages. This requires a working Go environment with version 1.11 or greater installed.
