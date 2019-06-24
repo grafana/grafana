@@ -170,11 +170,11 @@ Select the Elasticsearch data source, change to Logs using the Metrics/Logs swit
 
 ![](/img/docs/elasticsearch/explore_elasticsearch_logs_switch.png)
 
-and then enter your query using [Lucene](https://lucene.apache.org/core/2_9_4/queryparsersyntax.html) syntax into the query field
+and then optionally enter a [Lucene](https://lucene.apache.org/core/2_9_4/queryparsersyntax.html) query into the query field to filter the log messages.
 
 ![](/img/docs/elasticsearch/explore_query_field.png)
 
-and press the `Enter` key or the `Run Query` button to display your logs.
+Finally, press the `Enter` key or the `Run Query` button to display your logs.
 
 ### Log Queries
 
@@ -210,12 +210,11 @@ datasources:
     type: elasticsearch
     access: proxy
     database: "[filebeat-]YYYY.MM.DD"
-    url: http://localhost:12200
+    url: http://localhost:9200
     jsonData:
       interval: Daily
       timeField: "@timestamp"
       esVersion: 70
-      timeInterval: "10s"
       logMessageField: message
       logLevelField: fields.level
 ```
