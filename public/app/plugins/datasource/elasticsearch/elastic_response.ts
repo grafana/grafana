@@ -440,6 +440,8 @@ export class ElasticResponse {
           ...flattened,
         };
 
+        // Note: the order of for...in is arbitrary amd implementation dependant
+        // and should probably not be relied upon.
         for (propName in hit.fields) {
           if (propNames.indexOf(propName) === -1) {
             propNames.push(propName);
