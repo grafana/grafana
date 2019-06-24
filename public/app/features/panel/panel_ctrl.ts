@@ -267,9 +267,9 @@ export class PanelCtrl {
         const info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
         html +=
           '<li><a class="panel-menu-link" href="' +
-          info.href +
+          escape(info.href) +
           '" target="' +
-          info.target +
+          escape(info.target) +
           '">' +
           info.title +
           '</a></li>';
