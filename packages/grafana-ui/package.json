@@ -37,8 +37,6 @@
     "react-storybook-addon-props-combinations": "1.1.0",
     "react-transition-group": "2.6.1",
     "react-virtualized": "9.21.0",
-    "tether": "1.4.5",
-    "tether-drop": "https://github.com/torkelo/drop/tarball/master",
     "tinycolor2": "1.4.1"
   },
   "devDependencies": {
@@ -64,7 +62,6 @@
     "@types/storybook__addon-info": "4.1.1",
     "@types/storybook__addon-knobs": "4.0.4",
     "@types/storybook__react": "4.0.1",
-    "@types/tether-drop": "1.4.8",
     "@types/tinycolor2": "1.4.1",
     "awesome-typescript-loader": "5.2.1",
     "pretty-format": "24.5.0",
