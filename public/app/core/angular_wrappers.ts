@@ -1,7 +1,6 @@
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 import { QueryEditor as StackdriverQueryEditor } from 'app/plugins/datasource/stackdriver/components/QueryEditor';
 import { AnnotationQueryEditor as StackdriverAnnotationQueryEditor } from 'app/plugins/datasource/stackdriver/components/AnnotationQueryEditor';
-import { PasswordStrength } from './components/PasswordStrength';
 import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import { TagFilter } from './components/TagFilter/TagFilter';
@@ -14,7 +13,6 @@ import { SearchField } from './components/search/SearchField';
 import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
 
 export function registerAngularDirectives() {
-  react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
   react2AngularDirective('appNotificationsList', AppNotificationList, []);

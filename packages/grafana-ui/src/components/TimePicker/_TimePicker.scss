@@ -111,8 +111,9 @@ $arrowPadding: $arrowPaddingToBorder * 3;
 }
 
 .time-picker-calendar {
-  border: 1px solid $popover-border-color;
+  border: 1px solid $input-border-color;
   color: $black;
+  width: 260px;
 
   .react-calendar__navigation__label,
   .react-calendar__navigation__arrow,
@@ -150,6 +151,7 @@ $arrowPadding: $arrowPaddingToBorder * 3;
       background: $panel-editor-viz-item-bg-hover;
       border: $panel-editor-viz-item-border-hover;
       color: $text-color-strong;
+      position: relative;
     }
   }
 

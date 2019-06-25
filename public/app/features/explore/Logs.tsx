@@ -7,7 +7,6 @@ import {
   Switch,
   LogLevel,
   TimeZone,
-  TimeRange,
   AbsoluteTimeRange,
   LogsMetaKind,
   LogsModel,
@@ -58,7 +57,7 @@ interface Props {
   exploreId: string;
   highlighterExpressions: string[];
   loading: boolean;
-  range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -167,7 +166,7 @@ export default class Logs extends PureComponent<Props, State> {
       highlighterExpressions,
       loading = false,
       onClickLabel,
-      range,
+      absoluteRange,
       timeZone,
       scanning,
       scanRange,
@@ -206,10 +205,6 @@ export default class Logs extends PureComponent<Props, State> {
     const timeSeries = data.series
       ? data.series.map(series => new TimeSeries(series))
       : [new TimeSeries({ datapoints: [] })];
-    const absRange = {
-      from: range.from.valueOf(),
-      to: range.to.valueOf(),
-    };
 
     return (
       <div className="logs-panel">
@@ -218,7 +213,7 @@ export default class Logs extends PureComponent<Props, State> {
             data={timeSeries}
             height={100}
             width={width}
-            range={absRange}
+            range={absoluteRange}
             timeZone={timeZone}
             id={`explore-logs-graph-${exploreId}`}
             onChangeTime={this.props.onChangeTime}
