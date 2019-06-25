@@ -3,12 +3,9 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import {
   RawTimeRange,
-  TimeRange,
   LogLevel,
   TimeZone,
   AbsoluteTimeRange,
-  toUtc,
-  dateTime,
   DataSourceApi,
   LogsModel,
   LogRowModel,
@@ -19,7 +16,7 @@ import {
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { changeDedupStrategy, changeTime } from './state/actions';
+import { changeDedupStrategy, updateTimeRange } from './state/actions';
 import Logs from './Logs';
 import Panel from './Panel';
 import { toggleLogLevelAction, changeRefreshIntervalAction } from 'app/features/explore/state/actionTypes';
@@ -39,7 +36,6 @@ interface LogsContainerProps {
   onClickLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
-  range: TimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -48,20 +44,17 @@ interface LogsContainerProps {
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: Set<LogLevel>;
   width: number;
-  changeTime: typeof changeTime;
   isLive: boolean;
   stopLive: typeof changeRefreshIntervalAction;
+  updateTimeRange: typeof updateTimeRange;
+  absoluteRange: AbsoluteTimeRange;
 }
 
 export class LogsContainer extends Component<LogsContainerProps> {
-  onChangeTime = (absRange: AbsoluteTimeRange) => {
-    const { exploreId, timeZone, changeTime } = this.props;
-    const range = {
-      from: timeZone === 'utc' ? toUtc(absRange.from) : dateTime(absRange.from),
-      to: timeZone === 'utc' ? toUtc(absRange.to) : dateTime(absRange.to),
-    };
+  onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
+    const { exploreId, updateTimeRange } = this.props;
 
-    changeTime(exploreId, range);
+    updateTimeRange({ exploreId, absoluteRange });
   };
 
   onStopLive = () => {
@@ -111,7 +104,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
       onClickLabel,
       onStartScanning,
       onStopScanning,
-      range,
+      absoluteRange,
       timeZone,
       scanning,
       scanRange,
@@ -143,7 +136,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
           onStopScanning={onStopScanning}
           onDedupStrategyChange={this.handleDedupStrategyChange}
           onToggleLogLevel={this.hangleToggleLogLevel}
-          range={range}
+          absoluteRange={absoluteRange}
           timeZone={timeZone}
           scanning={scanning}
           scanRange={scanRange}
@@ -165,9 +158,9 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     loadingState,
     scanning,
     scanRange,
-    range,
     datasourceInstance,
     isLive,
+    absoluteRange,
   } = item;
   const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const { dedupStrategy } = exploreItemUIStateSelector(item);
@@ -181,21 +174,21 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     logsResult,
     scanning,
     scanRange,
-    range,
     timeZone,
     dedupStrategy,
     hiddenLogLevels,
     dedupedResult,
     datasourceInstance,
     isLive,
+    absoluteRange,
   };
 }
 
 const mapDispatchToProps = {
   changeDedupStrategy,
   toggleLogLevelAction,
-  changeTime,
   stopLive: changeRefreshIntervalAction,
+  updateTimeRange,
 };
 
 export default hot(module)(

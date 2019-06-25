@@ -36,7 +36,6 @@ import {
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
-  changeTimeAction,
   changeRefreshIntervalAction,
   clearQueriesAction,
   highlightLogsExpressionAction,
@@ -94,6 +93,10 @@ export const makeExploreItemState = (): ExploreItemState => ({
     from: null,
     to: null,
     raw: DEFAULT_RANGE,
+  },
+  absoluteRange: {
+    from: null,
+    to: null,
   },
   scanning: false,
   scanRange: null,
@@ -172,12 +175,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     mapper: (state, action): ExploreItemState => {
       const mode = action.payload.mode;
       return { ...state, mode };
-    },
-  })
-  .addMapper({
-    filter: changeTimeAction,
-    mapper: (state, action): ExploreItemState => {
-      return { ...state, range: action.payload.range };
     },
   })
   .addMapper({
@@ -520,8 +517,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   })
   .addMapper({
     filter: runQueriesAction,
-    mapper: (state, action): ExploreItemState => {
-      const { range } = action.payload;
+    mapper: (state): ExploreItemState => {
+      const { range } = state;
       const { datasourceInstance, containerWidth } = state;
       let interval = '1s';
       if (datasourceInstance && datasourceInstance.interval) {
@@ -575,9 +572,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: changeRangeAction,
     mapper: (state, action): ExploreItemState => {
+      const { range, absoluteRange } = action.payload;
       return {
         ...state,
-        range: action.payload.range,
+        range,
+        absoluteRange,
       };
     },
   })
