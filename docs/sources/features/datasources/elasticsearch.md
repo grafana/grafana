@@ -79,6 +79,11 @@ Identifier | Description
 `s`   | second
 `ms`  | millisecond
 
+### Logs (BETA)
+
+There are two parameters, `Message field name` and `Level field name`, that can be configured from the data source settings page that determine
+which fields will be used for log messages and their priority, respectively.
+
 ## Metric Query editor
 
 ![Elasticsearch Query Editor](/img/docs/elasticsearch/query_editor.png)
@@ -170,7 +175,7 @@ Select the Elasticsearch data source, change to Logs using the Metrics/Logs swit
 
 ![](/img/docs/elasticsearch/explore_elasticsearch_logs_switch.png)
 
-and then optionally enter a [Lucene](https://lucene.apache.org/core/2_9_4/queryparsersyntax.html) query into the query field to filter the log messages.
+and then optionally enter a lucene query into the query field to filter the log messages.
 
 ![](/img/docs/elasticsearch/explore_query_field.png)
 
