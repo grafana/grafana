@@ -23,6 +23,8 @@ import {
   DataStreamObserver,
   LoadingState,
   DataStreamState,
+  DataQueryResponse,
+  DateTime,
 } from '@grafana/ui';
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
@@ -70,7 +72,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     this.subscriptions = {};
   }
 
-  _request(apiUrl: string, data?, options?: any) {
+  _request(apiUrl: string, data?: any, options?: any) {
     const baseUrl = this.instanceSettings.url;
     const params = data ? serializeParams(data) : '';
     const url = `${baseUrl}${apiUrl}?${params}`;
@@ -254,11 +256,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
-  metadataRequest(url) {
+  metadataRequest(url: string) {
     // HACK to get label values for {job=|}, will be replaced when implementing LokiQueryField
     const apiUrl = url.replace('v1', 'prom');
-    return this._request(apiUrl, { silent: true }).then(res => {
-      const data = { data: { data: res.data.values || [] } };
+    return this._request(apiUrl, { silent: true }).then((res: DataQueryResponse) => {
+      const data: any = { data: { data: res.data.values || [] } };
       return data;
     });
   }
@@ -282,7 +284,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return getHighlighterExpressionsFromQuery(query.expr);
   }
 
-  getTime(date, roundUp) {
+  getTime(date: string | DateTime, roundUp: boolean) {
     if (_.isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
@@ -357,7 +359,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
   testDatasource() {
     return this._request('/api/prom/label')
-      .then(res => {
+      .then((res: DataQueryResponse) => {
         if (res && res.data && res.data.values && res.data.values.length > 0) {
           return { status: 'success', message: 'Data source connected and labels found.' };
         }
@@ -367,7 +369,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
             'Data source connected, but no labels received. Verify that Loki and Promtail is configured properly.',
         };
       })
-      .catch(err => {
+      .catch((err: any) => {
         let message = 'Loki: ';
         if (err.statusText) {
           message += err.statusText;

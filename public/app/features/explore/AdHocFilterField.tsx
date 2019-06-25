@@ -156,11 +156,6 @@ export class AdHocFilterField<
                 onValueChanged={this.onValueChanged(index)}
               />
               {index < pairs.length - 1 && <span>&nbsp;AND&nbsp;</span>}
-              {index < pairs.length - 1 && (
-                <button className="gf-form-label gf-form-label--btn" onClick={() => this.onRemoveFilter(index)}>
-                  <i className="fa fa-minus" />
-                </button>
-              )}
               {index === pairs.length - 1 && addFilterButton(this.onAddFilter)}
             </div>
           );

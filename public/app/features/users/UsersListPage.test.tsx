@@ -4,7 +4,7 @@ import { UsersListPage, Props } from './UsersListPage';
 import { Invitee, OrgUser } from 'app/types';
 import { getMockUser } from './__mocks__/userMocks';
 import appEvents from '../../core/app_events';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),

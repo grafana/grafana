@@ -1,5 +1,4 @@
 import { ComponentClass } from 'react';
-import { Value } from 'slate';
 import {
   RawTimeRange,
   DataQuery,
@@ -13,6 +12,7 @@ import {
   LogsModel,
   LogsDedupStrategy,
   LoadingState,
+  AbsoluteTimeRange,
 } from '@grafana/ui';
 
 import { Emitter } from 'app/core/core';
@@ -190,6 +190,8 @@ export interface ExploreItemState {
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
   range: TimeRange;
+
+  absoluteRange: AbsoluteTimeRange;
   /**
    * Scanner function that calculates a new range, triggers a query run, and returns the new range.
    */
@@ -283,7 +285,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
 
 export abstract class LanguageProvider {
   datasource: any;
-  request: (url) => Promise<any>;
+  request: (url: any) => Promise<any>;
   /**
    * Returns startTask that resolves with a task list when main syntax is loaded.
    * Task list consists of secondary promises that load more detailed language features.
@@ -297,7 +299,8 @@ export interface TypeaheadInput {
   prefix: string;
   wrapperClasses: string[];
   labelKey?: string;
-  value?: Value;
+  //Should be Value from slate
+  value?: any;
 }
 
 export interface TypeaheadOutput {
