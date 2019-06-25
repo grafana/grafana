@@ -102,7 +102,7 @@ export function hasAnsiCodes(input: string): boolean {
   return /\u001b\[\d{1,2}m/.test(input);
 }
 
-export function htmlToText(str: string): string {
+export function escapeHtml(str: string): string {
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

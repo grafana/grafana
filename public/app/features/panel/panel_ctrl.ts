@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import Remarkable from 'remarkable';
-import { sanitize, htmlToText } from 'app/core/utils/text';
+import { sanitize, escapeHtml } from 'app/core/utils/text';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -269,11 +269,11 @@ export class PanelCtrl {
 
         html +=
           '<li><a class="panel-menu-link" href="' +
-          htmlToText(info.href) +
+          escapeHtml(info.href) +
           '" target="' +
-          htmlToText(info.target) +
+          escapeHtml(info.target) +
           '">' +
-          htmlToText(info.title) +
+          escapeHtml(info.title) +
           '</a></li>';
       }
       html += '</ul>';
