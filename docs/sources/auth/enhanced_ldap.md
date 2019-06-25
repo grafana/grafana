@@ -46,7 +46,7 @@ a user as member of a team and it will not be removed when the user signs in. Th
 
 In the open source version of Grafana, user data from LDAP will be synchronized only during the login process when authenticating using LDAP.
 
-With this feature you can configure Grafana to actively sync Grafana users with LDAP server(s) in the background. After certain configurable period it will map the groups with the already existing Grafana users, disable removed LDAP users, remove their auth tokens, etc.
+With this feature you can configure Grafana to actively sync users with LDAP server(s) in the background. Role and team membership will be updated, removed users will be disabled and logged out. Only users that have logged into Grafana at least once will be synchronized.```
 
 ```bash
 [auth.ldap]
