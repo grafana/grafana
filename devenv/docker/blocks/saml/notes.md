@@ -13,4 +13,4 @@ admins
 editors
   saml-editor (saml-editor@grafana.com)
 no groups
-  saml-viewer (saml-editor@grafana.com)
+  saml-viewer (saml-viewer@grafana.com)
