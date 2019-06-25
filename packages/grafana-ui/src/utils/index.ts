@@ -10,6 +10,7 @@ export * from './fieldDisplay';
 export * from './deprecationWarning';
 export * from './logs';
 export * from './labels';
+export * from './labels';
 export { getMappedValue } from './valueMappings';
 export * from './validate';
 export { getFlotPairs } from './flotPairs';

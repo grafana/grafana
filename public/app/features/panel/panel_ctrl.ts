@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import Remarkable from 'remarkable';
+import { sanitize, escapeHtml } from 'app/core/utils/text';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -254,30 +255,30 @@ export class PanelCtrl {
     }
 
     const linkSrv: LinkSrv = this.$injector.get('linkSrv');
-    const sanitize: any = this.$injector.get('$sanitize');
     const templateSrv: TemplateSrv = this.$injector.get('templateSrv');
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     let html = '<div class="markdown-html panel-info-content">';
 
-    html += new Remarkable().render(interpolatedMarkdown);
+    const md = new Remarkable().render(interpolatedMarkdown);
+    html += sanitize(md);
 
     if (this.panel.links && this.panel.links.length > 0) {
-      html += '<ul>';
+      html += '<ul class="panel-info-corner-links">';
       for (const link of this.panel.links) {
         const info = linkSrv.getDataLinkUIModel(link, this.panel.scopedVars);
         html +=
           '<li><a class="panel-menu-link" href="' +
-          info.href +
+          escapeHtml(info.href) +
           '" target="' +
-          info.target +
+          escapeHtml(info.target) +
           '">' +
-          info.title +
+          escapeHtml(info.title) +
           '</a></li>';
       }
       html += '</ul>';
     }
 
     html += '</div>';
-    return sanitize(html);
+    return html;
   }
 }

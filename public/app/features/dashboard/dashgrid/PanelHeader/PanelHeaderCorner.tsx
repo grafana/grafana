@@ -49,7 +49,7 @@ export class PanelHeaderCorner extends Component<Props> {
 
     return (
       <div className="markdown-html panel-info-content">
-        <div dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
+        <p dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
         {panel.links && panel.links.length > 0 && (
           <ul className="panel-info-corner-links">
             {panel.links.map((link, idx) => {

@@ -154,7 +154,7 @@ class GraphElement {
     }
   }
 
-  onPlotSelected(event, ranges: any) {
+  onPlotSelected(event: JQueryEventObject, ranges: any) {
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       this.plot.clearSelection();
@@ -214,10 +214,11 @@ class GraphElement {
       : items;
   };
 
-  onPlotClick(event, pos, item) {
+  onPlotClick(event: JQueryEventObject, pos: any, item: any) {
     const scrollContextElement = this.elem.closest('.view') ? this.elem.closest('.view').get()[0] : null;
     const contextMenuSourceItem = item;
     let contextMenuItems;
+
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       return;

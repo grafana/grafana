@@ -1,14 +1,14 @@
 import 'vendor/flot/jquery.flot';
 import _ from 'lodash';
-import { GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { GrafanaThemeType, getColorFromHexRgbOrName, AbsoluteTimeRange } from '@grafana/ui';
+import { dateTime, DateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 type TimeRegionColorDefinition = {
   fill: string;
   line: string;
 };
 
-export const colorModes = {
+export const colorModes: any = {
   gray: {
     themeDependent: true,
     title: 'Gray',
@@ -88,9 +88,15 @@ export class TimeRegionManager {
       to: dateTime(this.panelCtrl.range.to).utc(),
     };
 
-    let i, hRange, timeRegion, regions, fromStart, fromEnd, timeRegionColor: TimeRegionColorDefinition;
+    let i: number,
+      hRange: { from: any; to: any },
+      timeRegion: any,
+      regions: AbsoluteTimeRange[],
+      fromStart: DateTime,
+      fromEnd: DateTime,
+      timeRegionColor: TimeRegionColorDefinition;
 
-    const timeRegionsCopy = panel.timeRegions.map(a => ({ ...a }));
+    const timeRegionsCopy = panel.timeRegions.map((a: any) => ({ ...a }));
 
     for (i = 0; i < timeRegionsCopy.length; i++) {
       timeRegion = timeRegionsCopy[i];
@@ -222,9 +228,9 @@ export class TimeRegionManager {
     }
   }
 
-  parseTimeRange(str) {
+  parseTimeRange(str: string) {
     const timeRegex = /^([\d]+):?(\d{2})?/;
-    const result = { h: null, m: null };
+    const result: any = { h: null, m: null };
     const match = timeRegex.exec(str);
 
     if (!match) {
