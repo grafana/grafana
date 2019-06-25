@@ -175,3 +175,10 @@ this new setting.
 In 6.2 we completely removed the backend session storage since we replaced the previous login session implementation with an auth token.
 If you are using Auth proxy with LDAP an shared cached is used in Grafana so you might want configure [remote_cache] instead. If not
 Grafana will fallback to using the database as an shared cache.
+
+### Upgrading Elasticsearch to v7.0+
+
+The semantics of `max concurrent shard requests` changed in Elasticsearch v7.0, see [release notes](https://www.elastic.co/guide/en/elasticsearch/reference/7.0/breaking-changes-7.0.html#semantics-changed-max-concurrent-shared-requests) for reference.
+
+If you upgrade Elasticsearch to v7.0+ you should make sure to update the datasource configuration in Grafana so that version
+is `7.0+` and `max concurrent shard requests` properly configured. 256 was the default in pre v7.0 versions. In v7.0 and above 5 is the default.
