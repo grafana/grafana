@@ -74,11 +74,11 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 			series.Name = ""
 			reducedValue = null.FloatFromPtr(nil)
 		}
-
+		
 		matches = append(matches, &alerting.EvalMatch{
-			Metric:    series.Name,
-			Value:     reducedValue,
-			Tags:      series.Tags,
+			Metric: series.Name,
+			Value:  reducedValue,
+			Tags:   series.Tags,
 			AlertTime: timeRange.GetToAsMsEpoch(),
 		})
 	}
@@ -219,11 +219,6 @@ func validateToValue(to string) error {
 			return nil
 		}
 	}
-
-	_, err := time.ParseDuration(to)
-	return err
-}
-
 
 	_, err := time.ParseDuration(to)
 	return err
