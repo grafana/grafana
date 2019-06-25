@@ -163,6 +163,21 @@ export default class AdminEditUserCtrl {
       });
     };
 
+    $scope.deleteUser = (user: any) => {
+      $scope.appEvent('confirm-modal', {
+        title: 'Delete',
+        text: 'Do you want to delete ' + user.login + '?',
+        icon: 'fa-trash',
+        yesText: 'Delete',
+        onConfirm: () => {
+          backendSrv.delete('/api/admin/users/' + user.id).then(() => {
+            $location.path('/admin/users');
+            // this.getUsers();
+          });
+        },
+      });
+    };
+
     $scope.disableUser = event => {
       const user = $scope.user;
 
@@ -175,6 +190,7 @@ export default class AdminEditUserCtrl {
 
       const actionEndpoint = user.isDisabled ? '/enable' : '/disable';
       backendSrv.post('/api/admin/users/' + user.id + actionEndpoint).then(() => {
+        // TODO: don't redirect to /admin/users
         $location.path('/admin/users');
       });
     };

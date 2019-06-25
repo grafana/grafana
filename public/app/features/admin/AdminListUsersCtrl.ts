@@ -12,7 +12,7 @@ export default class AdminListUsersCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private $scope: any, private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
+  constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
     this.navModel = navModelSrv.getNav('admin', 'global-users', 0);
     this.query = '';
     this.getUsers();
@@ -38,20 +38,6 @@ export default class AdminListUsersCtrl {
   navigateToPage(page: any) {
     this.page = page.page;
     this.getUsers();
-  }
-
-  deleteUser(user: any) {
-    this.$scope.appEvent('confirm-modal', {
-      title: 'Delete',
-      text: 'Do you want to delete ' + user.login + '?',
-      icon: 'fa-trash',
-      yesText: 'Delete',
-      onConfirm: () => {
-        this.backendSrv.delete('/api/admin/users/' + user.id).then(() => {
-          this.getUsers();
-        });
-      },
-    });
   }
 
   getAuthModule(user: any) {

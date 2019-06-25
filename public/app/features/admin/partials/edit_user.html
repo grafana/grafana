@@ -36,6 +36,7 @@
 					ng-class="{'disabled': user.authModule}">
 					Activate
 				</button>
+				<button type="submit" class="btn btn-danger" ng-click="deleteUser(user)" ng-show="!createMode">Delete</button>
 			</div>
 	</form>
 

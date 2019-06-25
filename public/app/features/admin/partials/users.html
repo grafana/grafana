@@ -57,11 +57,6 @@
           <td class="text-right">
             <span class="label label-tag" ng-class="{'muted': user.isDisabled}" ng-if="ctrl.getAuthModule(user) === 'ldap'">LDAP</span>
           </td>
-          <td class="text-right">
-            <a ng-click="ctrl.deleteUser(user)" class="btn btn-danger btn-small">
-              <i class="fa fa-remove"></i>
-            </a>
-          </td>
         </tr>
       </tbody>
 
