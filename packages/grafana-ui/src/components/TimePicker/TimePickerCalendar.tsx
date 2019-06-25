@@ -28,6 +28,14 @@ export class TimePickerCalendar extends PureComponent<Props> {
     onChange(newDate);
   };
 
+  onDrilldown = (props: any) => {
+    // this is to prevent clickout side wrapper from triggering when drilling down
+    if (window.event) {
+      // @ts-ignore
+      window.event.stopPropagation();
+    }
+  };
+
   render() {
     const { value, roundup, timeZone } = this.props;
     let date = stringToDateTimeType(value, roundup, timeZone);
@@ -44,6 +52,7 @@ export class TimePickerCalendar extends PureComponent<Props> {
         className="time-picker-calendar"
         tileClassName="time-picker-calendar-tile"
         onChange={this.onCalendarChange}
+        onDrillDown={this.onDrilldown}
         nextLabel={<span className="fa fa-angle-right" />}
         prevLabel={<span className="fa fa-angle-left" />}
       />
