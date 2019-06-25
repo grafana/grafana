@@ -7,10 +7,11 @@ import './editor_ctrl';
 import coreModule from 'app/core/core_module';
 
 // Utils & Services
-import { makeRegions, dedupAnnotations } from './events_processing';
+import { dedupAnnotations } from './events_processing';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
+import { AnnotationEvent } from '@grafana/ui';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -50,7 +51,10 @@ export class AnnotationsSrv {
         });
 
         annotations = dedupAnnotations(annotations);
-        annotations = makeRegions(annotations, options);
+        for (let i = 0; i < annotations.length; i++) {
+          const a = annotations[i];
+          a.isRegion = a.time !== a.timeEnd;
+        }
 
         // look for alert state for this panel
         const alertState: any = _.find(results[1], { panelId: options.panel.id });
@@ -70,7 +74,7 @@ export class AnnotationsSrv {
       });
   }
 
-  getAlertStates(options) {
+  getAlertStates(options): Promise<AnnotationEvent[]> {
     if (!options.dashboard.id) {
       return this.$q.when([]);
     }
@@ -94,7 +98,7 @@ export class AnnotationsSrv {
     return this.alertStatesPromise;
   }
 
-  getGlobalAnnotations(options) {
+  getGlobalAnnotations(options): Promise<AnnotationEvent[]> {
     const dashboard = options.dashboard;
 
     if (this.globalAnnotationsPromise) {
@@ -141,17 +145,17 @@ export class AnnotationsSrv {
     return this.globalAnnotationsPromise;
   }
 
-  saveAnnotationEvent(annotation) {
+  saveAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     return this.backendSrv.post('/api/annotations', annotation);
   }
 
-  updateAnnotationEvent(annotation) {
+  updateAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     return this.backendSrv.put(`/api/annotations/${annotation.id}`, annotation);
   }
 
-  deleteAnnotationEvent(annotation) {
+  deleteAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     const deleteUrl = `/api/annotations/${annotation.id}`;
 

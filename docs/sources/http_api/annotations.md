@@ -78,7 +78,6 @@ Content-Type: application/json
         "time": 1507265111000,
         "text": "test",
         "metric": "",
-        "regionId": 1123,
         "type": "event",
         "tags": [
             "tag1",
@@ -106,7 +105,6 @@ Content-Type: application/json
   "dashboardId":468,
   "panelId":1,
   "time":1507037197339,
-  "isRegion":true,
   "timeEnd":1507180805056,
   "tags":["tag1","tag2"],
   "text":"Annotation Description"
@@ -176,7 +174,6 @@ Content-Type: application/json
 
 {
   "time":1507037197339,
-  "isRegion":true,
   "timeEnd":1507180805056,
   "text":"Annotation Description",
   "tags":["tag3","tag4","tag5"]

@@ -104,4 +104,5 @@ export interface AnnotationEvent {
   text?: string;
   type?: string;
   tags?: string[];
+  source?: any; // source.type === 'dashboard' ????
 }
