@@ -83,9 +83,9 @@ interface ExploreProps {
   initialDatasource: string;
   initialQueries: DataQuery[];
   initialRange: RawTimeRange;
+  mode: ExploreMode;
   initialUI: ExploreUIState;
   queryErrors: DataQueryError[];
-  mode: ExploreMode;
   isLive: boolean;
   updateTimeRange: typeof updateTimeRange;
 }
@@ -129,7 +129,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   }
 
   componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, initialUI } = this.props;
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, mode, initialUI } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
@@ -139,6 +139,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         initialDatasource,
         initialQueries,
         initialRange,
+        mode,
         width,
         this.exploreEvents,
         initialUI
@@ -316,14 +317,14 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     urlState,
     update,
     queryErrors,
-    mode,
     isLive,
   } = item;
 
-  const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
+  const { datasource, queries, range: urlRange, mode: urlMode, ui } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
   const initialQueries: DataQuery[] = ensureQueries(queries);
   const initialRange = urlRange ? getTimeRangeFromUrl(urlRange, timeZone).raw : DEFAULT_RANGE;
+  const mode = urlMode || ExploreMode.Metrics;
   const initialUI = ui || DEFAULT_UI_STATE;
 
   return {
@@ -339,10 +340,10 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     update,
     initialDatasource,
     initialQueries,
+    mode,
     initialRange,
     initialUI,
     queryErrors,
-    mode,
     isLive,
   };
 }

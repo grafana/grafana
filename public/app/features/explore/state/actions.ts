@@ -236,6 +236,7 @@ export function initializeExplore(
   datasourceName: string,
   queries: DataQuery[],
   rawRange: RawTimeRange,
+  mode: ExploreMode,
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState
@@ -251,6 +252,7 @@ export function initializeExplore(
         eventBridge,
         queries,
         range,
+        mode,
         ui,
       })
     );
@@ -527,7 +529,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
-    const { datasource, queries, range: urlRange, ui } = urlState;
+    const { datasource, queries, range: urlRange, mode, ui } = urlState;
     const refreshQueries: DataQuery[] = [];
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
@@ -539,7 +541,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     // need to refresh datasource
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
-      dispatch(initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, ui));
+      dispatch(initializeExplore(exploreId, datasource, initialQueries, range, mode, containerWidth, eventBridge, ui));
       return;
     }
 
