@@ -122,7 +122,7 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Add index for epoch_end", NewAddIndexMigration(table, &Index{
 		Cols: []string{"epoch_end"}, Type: IndexType,
 	}))
-	mg.AddMigration("Make epoch_end the same as epoch", NewRawSqlMigration("UPDATE annotation SET epoch_end = 456"))
+	mg.AddMigration("Make epoch_end the same as epoch", NewRawSqlMigration("UPDATE annotation SET epoch_end = epoch"))
 	mg.AddMigration("Move region to single row", &AddMakeRegionSingleRowMigration{})
 
 	// TODO! drop region_id column?
@@ -150,23 +150,12 @@ func (m *AddMakeRegionSingleRowMigration) Exec(sess *xorm.Session, mg *Migrator)
 		return err
 	}
 
-	fmt.Println("MIGRATE: ", len(regions))
-
 	for _, region := range regions {
-		fmt.Println("UPDATE: ", region.RegionId)
 		_, err := sess.Exec("UPDATE annotation SET epoch_end = ? WHERE id = ?", region.Epoch, region.RegionId)
 		if err != nil {
 			return err
 		}
 	}
-
 	sess.Exec("DELETE FROM annotation WHERE region_id > 0 AND id is not region_id")
-
-	regions = make([]*TempRegionInfoDTO, 0)
-	sess.SQL("SELECT id,epoch_end as epoch FROM annotation WHERE region_id>0").Find(&regions)
-	for _, region := range regions {
-		fmt.Println("AFTER: ", region.Epoch)
-	}
-
 	return nil
 }
