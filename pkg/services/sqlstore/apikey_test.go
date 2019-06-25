@@ -88,8 +88,8 @@ func TestApiKeyDataAccess(t *testing.T) {
 			err = AddApiKey(&cmd)
 			assert.Nil(t, err)
 
-			// sleep for 1s
-			time.Sleep(time.Second)
+			// advance mocked getTime by 1s
+			timeNow()
 
 			query := models.GetApiKeysQuery{OrgId: 1, IncludeInvalid: false}
 			err = GetApiKeys(&query)
