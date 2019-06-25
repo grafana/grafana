@@ -865,7 +865,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
-	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
+	AuthProxyLDAPSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 	AuthProxyHeaders = toMap(authProxy.Key("headers").String())
 	AuthProxyWhitelist, err = valueAsString(authProxy, "whitelist", "")
 	if err != nil {
