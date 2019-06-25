@@ -1,10 +1,8 @@
 import { Task, TaskRunner } from './task';
-import { testPlugin } from './plugin/tests';
+import { testPlugin, PluginTestOptions } from './plugin/tests';
 
-interface PluginTestOptions {}
-
-const pluginTestRunner: TaskRunner<PluginTestOptions> = async () => {
-  await testPlugin();
+const pluginTestRunner: TaskRunner<PluginTestOptions> = async options => {
+  await testPlugin(options);
 };
 
 export const pluginTestTask = new Task<PluginTestOptions>('Test plugin', pluginTestRunner);

@@ -69,7 +69,7 @@ const bundlePlugin = useSpinner<void>('Bundling plugin', async () => {
 const pluginBuildRunner: TaskRunner<PrecommitOptions> = async () => {
   await clean();
   await lintPlugin();
-  await testPlugin();
+  await testPlugin({ updateSnapshot: false });
   await bundlePlugin();
 };
 

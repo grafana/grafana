@@ -111,9 +111,10 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:test')
+    .option('-u, --updateSnapshot', 'Run snapshots update')
     .description('Executes plugin tests')
     .action(async cmd => {
-      await execTask(pluginTestTask)({});
+      await execTask(pluginTestTask)({ updateSnapshot: !!cmd.updateSnapshot });
     });
 
   program.on('command:*', () => {
