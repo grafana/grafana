@@ -48,7 +48,7 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 	for _, match := range evalContext.EvalMatches {
 		epochTime = match.AlertTime
 	}
-
+	
 	metrics.M_Alerting_Result_State.WithLabelValues(string(evalContext.Rule.State)).Inc()
 	if evalContext.shouldUpdateAlertState() {
 		handler.log.Info("New state change", "alertId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
