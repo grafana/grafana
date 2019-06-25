@@ -1,6 +1,9 @@
 package migrations
 
 import (
+	"fmt"
+
+	"github.com/go-xorm/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -111,7 +114,7 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Convert existing annotations from seconds to milliseconds", NewRawSqlMigration(updateEpochSql))
 
 	//
-	// 6.3: Make Regions a single annotiaon
+	// 6.3: Make Regions a single annotation row
 	//
 	mg.AddMigration("Add epoch_end column", NewAddColumnMigration(table, &Column{
 		Name: "epoch_end", Type: DB_BigInt, Nullable: false, Default: "0",
@@ -119,14 +122,51 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Add index for epoch_end", NewAddIndexMigration(table, &Index{
 		Cols: []string{"epoch_end"}, Type: IndexType,
 	}))
-	mg.AddMigration("Make epoch_end the same as epoch", NewRawSqlMigration("UPDATE annotation SET epoch_end = epoch"))
-	mg.AddMigration("Move existing regions to epoch_end", NewRawSqlMigration(
-		`UPDATE annotation SET epoch_end = 
-			(SELECT epoch
-				FROM annotation as b
-				WHERE b.region_id = annotation.id AND b.id is not annotation.id) 
-			where region_id = id`))
-	mg.AddMigration("Remove region annotations", NewRawSqlMigration("DELETE FROM annotation WHERE region_id > 0 AND id is not region_id"))
+	mg.AddMigration("Make epoch_end the same as epoch", NewRawSqlMigration("UPDATE annotation SET epoch_end = 456"))
+	mg.AddMigration("Move region to single row", &AddMakeRegionSingleRowMigration{})
 
-	// TODO! drop region_id column!
+	// TODO! drop region_id column?
+}
+
+type AddMakeRegionSingleRowMigration struct {
+	MigrationBase
+}
+
+func (m *AddMakeRegionSingleRowMigration) Sql(dialect Dialect) string {
+	return "code migration"
+}
+
+type TempRegionInfoDTO struct {
+	RegionId int64
+	Epoch    int64
+}
+
+func (m *AddMakeRegionSingleRowMigration) Exec(sess *xorm.Session, mg *Migrator) error {
+	regions := make([]*TempRegionInfoDTO, 0)
+
+	err := sess.SQL(fmt.Sprintf("SELECT region_id, epoch FROM annotation WHERE region_id>0 AND region_id is not id")).Find(&regions)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("MIGRATE: ", len(regions))
+
+	for _, region := range regions {
+		fmt.Println("UPDATE: ", region.RegionId)
+		_, err := sess.Exec("UPDATE annotation SET epoch_end = ? WHERE id = ?", region.Epoch, region.RegionId)
+		if err != nil {
+			return err
+		}
+	}
+
+	sess.Exec("DELETE FROM annotation WHERE region_id > 0 AND id is not region_id")
+
+	regions = make([]*TempRegionInfoDTO, 0)
+	sess.SQL("SELECT id,epoch_end as epoch FROM annotation WHERE region_id>0").Find(&regions)
+	for _, region := range regions {
+		fmt.Println("AFTER: ", region.Epoch)
+	}
+
+	return nil
 }
