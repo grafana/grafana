@@ -1,10 +1,11 @@
+// @ts-ignore
 import Plain from 'slate-plain-serializer';
 
 import LanguageProvider from '../language_provider';
 
 describe('Language completion provider', () => {
   const datasource = {
-    metadataRequest: () => ({ data: { data: [] } }),
+    metadataRequest: () => ({ data: { data: [] as any[] } }),
   };
 
   describe('empty query suggestions', () => {
@@ -79,12 +80,13 @@ describe('Language completion provider', () => {
       expect(result.suggestions).toMatchObject([
         {
           items: [
-            { label: '1m' },
-            { label: '5m' },
-            { label: '10m' },
-            { label: '30m' },
-            { label: '1h' },
-            { label: '1d' },
+            { label: '$__interval', sortText: '$__interval' }, // TODO: figure out why this row and sortText is needed
+            { label: '1m', sortText: '00:01:00' },
+            { label: '5m', sortText: '00:05:00' },
+            { label: '10m', sortText: '00:10:00' },
+            { label: '30m', sortText: '00:30:00' },
+            { label: '1h', sortText: '01:00:00' },
+            { label: '1d', sortText: '24:00:00' },
           ],
           label: 'Range vector',
         },

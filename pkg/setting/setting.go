@@ -87,14 +87,20 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey                        string
-	DisableGravatar                  bool
-	EmailCodeValidMinutes            int
-	DataProxyWhiteList               map[string]bool
-	DisableBruteForceLoginProtection bool
-	CookieSecure                     bool
-	CookieSameSite                   http.SameSite
-	AllowEmbedding                   bool
+	SecretKey                         string
+	DisableGravatar                   bool
+	EmailCodeValidMinutes             int
+	DataProxyWhiteList                map[string]bool
+	DisableBruteForceLoginProtection  bool
+	CookieSecure                      bool
+	CookieSameSite                    http.SameSite
+	AllowEmbedding                    bool
+	XSSProtectionHeader               bool
+	ContentTypeProtectionHeader       bool
+	StrictTransportSecurity           bool
+	StrictTransportSecurityMaxAge     int
+	StrictTransportSecurityPreload    bool
+	StrictTransportSecuritySubDomains bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -697,6 +703,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
+
+	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(false)
+	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(false)
+	StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
+	StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
+	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
+	StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
 
 	// read snapshots settings
 	snapshots := iniFile.Section("snapshots")

@@ -29,4 +29,5 @@ export interface PromQueryRequest extends PromQuery {
   requestId?: string;
   start: number;
   end: number;
+  headers?: any;
 }

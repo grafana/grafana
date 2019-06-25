@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import {
@@ -53,12 +53,12 @@ interface LogsContainerProps {
   stopLive: typeof changeRefreshIntervalAction;
 }
 
-export class LogsContainer extends PureComponent<LogsContainerProps> {
+export class LogsContainer extends Component<LogsContainerProps> {
   onChangeTime = (absRange: AbsoluteTimeRange) => {
     const { exploreId, timeZone, changeTime } = this.props;
     const range = {
-      from: timeZone.isUtc ? toUtc(absRange.from) : dateTime(absRange.from),
-      to: timeZone.isUtc ? toUtc(absRange.to) : dateTime(absRange.to),
+      from: timeZone === 'utc' ? toUtc(absRange.from) : dateTime(absRange.from),
+      to: timeZone === 'utc' ? toUtc(absRange.to) : dateTime(absRange.to),
     };
 
     changeTime(exploreId, range);
@@ -90,6 +90,16 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
     return [];
   };
+
+  // Limit re-rendering to when a query is finished executing or when the deduplication strategy changes
+  // for performance reasons.
+  shouldComponentUpdate(nextProps: LogsContainerProps): boolean {
+    return (
+      nextProps.loading !== this.props.loading ||
+      nextProps.dedupStrategy !== this.props.dedupStrategy ||
+      nextProps.logsHighlighterExpressions !== this.props.logsHighlighterExpressions
+    );
+  }
 
   render() {
     const {
