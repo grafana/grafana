@@ -48,11 +48,6 @@ export interface DateTimeDuration {
   seconds: () => number;
 }
 
-export interface MomentTimeRange {
-  from: any;
-  to: any;
-}
-
 export interface DateTime extends Object {
   add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
   set: (unit: DurationUnit, amount: DateTimeInput) => void;

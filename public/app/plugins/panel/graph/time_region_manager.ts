@@ -1,7 +1,7 @@
 import 'vendor/flot/jquery.flot';
 import _ from 'lodash';
 import { GrafanaThemeType, getColorFromHexRgbOrName, AbsoluteTimeRange } from '@grafana/ui';
-import { dateTime, DateTime, MomentTimeRange } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime, DateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 type TimeRegionColorDefinition = {
   fill: string;
@@ -89,7 +89,7 @@ export class TimeRegionManager {
     };
 
     let i: number,
-      hRange: MomentTimeRange,
+      hRange: { from: any; to: any },
       timeRegion: any,
       regions: AbsoluteTimeRange[],
       fromStart: DateTime,
