@@ -20,6 +20,7 @@ import kbn from 'app/core/utils/kbn';
 
 // Utils
 import { dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { getTimeZone } from 'app/features/profile/state/selectors';
 
 const timeRangeValidationEvents: ValidationEvents = {
   [EventsWithValidation.onBlur]: [
@@ -168,9 +169,9 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     }
     date = isDateTime(date) ? date : dateTime(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
-    const timezone = store.getState().user.timeZone;
+    const timezone = getTimeZone(store.getState().user);
 
-    return timezone === 'browser' ? date.format(format) : date.utc().format(format);
+    return timezone.isUtc ? date.utc().format(format) : date.format(format);
   }
 
   renderAddApiKeyForm() {
