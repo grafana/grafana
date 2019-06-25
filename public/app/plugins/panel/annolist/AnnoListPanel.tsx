@@ -6,8 +6,7 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { AnnoOptions } from './types';
-import { Annotation } from '@grafana/data';
-import { PanelProps, Tooltip, dateTime, DurationUnit } from '@grafana/ui';
+import { PanelProps, Tooltip, dateTime, DurationUnit, AnnotationEvent } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -26,7 +25,7 @@ interface UserInfo {
 
 interface Props extends PanelProps<AnnoOptions> {}
 interface State {
-  annotations: Annotation[];
+  annotations: AnnotationEvent[];
   timeInfo: string;
   loaded: boolean;
   queryUser?: UserInfo;
@@ -109,7 +108,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     });
   }
 
-  onAnnoClick = (e: React.SyntheticEvent, anno: Annotation) => {
+  onAnnoClick = (e: React.SyntheticEvent, anno: AnnotationEvent) => {
     e.stopPropagation();
     const { options } = this.props;
     const dashboardSrv = getDashboardSrv();
@@ -175,7 +174,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     this.setState({ queryTags });
   };
 
-  onUserClick = (e: React.SyntheticEvent, anno: Annotation) => {
+  onUserClick = (e: React.SyntheticEvent, anno: AnnotationEvent) => {
     e.stopPropagation();
     this.setState({
       queryUser: {
@@ -209,7 +208,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     );
   };
 
-  renderItem = (anno: Annotation, index: number): JSX.Element => {
+  renderItem = (anno: AnnotationEvent, index: number): JSX.Element => {
     const { options } = this.props;
     const { showUser, showTags, showTime } = options;
     const dashboard = getDashboardSrv().getCurrent();
