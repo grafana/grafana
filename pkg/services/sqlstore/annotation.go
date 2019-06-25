@@ -23,6 +23,14 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 		if item.Epoch == 0 {
 			item.Epoch = item.Created
 		}
+		if item.EpochEnd == 0 {
+			item.EpochEnd = item.Epoch
+		}
+		if item.EpochEnd > item.Epoch {
+			tmp := item.Epoch
+			item.Epoch = item.EpochEnd
+			item.EpochEnd = tmp
+		}
 
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
@@ -62,8 +70,19 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		}
 
 		existing.Updated = time.Now().UnixNano() / int64(time.Millisecond)
-		existing.Epoch = item.Epoch
 		existing.Text = item.Text
+
+		existing.Epoch = item.Epoch
+		existing.EpochEnd = item.EpochEnd
+
+		if existing.EpochEnd == 0 {
+			existing.EpochEnd = item.Epoch
+		}
+		if existing.EpochEnd > existing.Epoch {
+			tmp := item.Epoch
+			existing.Epoch = existing.EpochEnd
+			existing.EpochEnd = tmp
+		}
 
 		if item.Tags != nil {
 			tags, err := EnsureTagsExist(sess, models.ParseTagPairs(item.Tags))
