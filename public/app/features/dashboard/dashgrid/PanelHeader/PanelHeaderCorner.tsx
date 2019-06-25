@@ -48,15 +48,15 @@ export class PanelHeaderCorner extends Component<Props> {
     const remarkableInterpolatedMarkdown = new Remarkable().render(interpolatedMarkdown);
 
     return (
-      <div className="PA markdown-html">
+      <div className="markdown-html panel-info-content">
         <div dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
         {panel.links && panel.links.length > 0 && (
-          <ul className="text-left">
+          <ul className="panel-info-corner-links">
             {panel.links.map((link, idx) => {
               const info = linkSrv.getDataLinkUIModel(link, panel.scopedVars);
               return (
                 <li key={idx}>
-                  <a className="panel-menu-link" href={info.href} target={info.target}>
+                  <a className="panel-info-corner-links__item" href={info.href} target={info.target}>
                     {info.title}
                   </a>
                 </li>

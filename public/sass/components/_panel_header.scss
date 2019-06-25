@@ -176,6 +176,10 @@ $panel-header-no-title-zindex: 1;
   }
 }
 
+.panel-info-corner-links {
+  list-style: none;
+}
+
 .panel-time-info {
   font-weight: $font-weight-semi-bold;
   float: right;

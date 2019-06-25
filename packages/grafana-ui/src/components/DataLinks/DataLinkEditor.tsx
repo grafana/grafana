@@ -58,11 +58,12 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
           onChange={onTitleChange}
           onBlur={onTitleBlur}
           inputWidth={15}
-          labelWidth={6}
+          labelWidth={5}
         />
 
         <FormField
           label="URL"
+          labelWidth={4}
           inputEl={<DataLinkInput value={value.url} onChange={onUrlChange} suggestions={suggestions} />}
           className={css`
             width: 100%;

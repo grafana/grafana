@@ -257,7 +257,7 @@ export class PanelCtrl {
     const sanitize: any = this.$injector.get('$sanitize');
     const templateSrv: TemplateSrv = this.$injector.get('templateSrv');
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
-    let html = '<div class="markdown-html">';
+    let html = '<div class="markdown-html panel-info-content">';
 
     html += new Remarkable().render(interpolatedMarkdown);
 
