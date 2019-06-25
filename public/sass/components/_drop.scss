@@ -38,9 +38,9 @@ $easing: cubic-bezier(0, 0, 0.265, 1);
 
 .drop-help {
   a {
-    color: $white;
+    color: $gray-6;
     &:hover {
-      color: darken($white, 10%);
+      color: $white;
     }
   }
 }

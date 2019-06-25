@@ -4,7 +4,6 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
   initializeExploreAction,
   InitializeExplorePayload,
-  changeTimeAction,
   updateUIStateAction,
   setQueriesAction,
   testDataSourcePendingAction,
@@ -12,6 +11,7 @@ import {
   testDataSourceFailureAction,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
+  updateTimeRangeAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -118,15 +118,15 @@ describe('refreshExplore', () => {
     });
 
     describe('and update range is set', () => {
-      it('then it should dispatch changeTimeAction', async () => {
+      it('then it should dispatch updateTimeRangeAction', async () => {
         const { exploreId, range, initialState } = setup({ range: true });
 
         const dispatchedActions = await thunkTester(initialState)
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId);
 
-        expect(dispatchedActions[0].type).toEqual(changeTimeAction.type);
-        expect(dispatchedActions[0].payload).toEqual({ exploreId, range });
+        expect(dispatchedActions[0].type).toEqual(updateTimeRangeAction.type);
+        expect(dispatchedActions[0].payload).toEqual({ exploreId, rawRange: range.raw });
       });
     });
 

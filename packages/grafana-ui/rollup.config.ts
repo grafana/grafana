@@ -23,7 +23,7 @@ const buildCjsPackage = ({ env }) => {
         },
       },
     ],
-    external: ['react', 'react-dom'],
+    external: ['react', 'react-dom', '@grafana/data'],
     plugins: [
       commonjs({
         include: /node_modules/,
@@ -44,6 +44,16 @@ const buildCjsPackage = ({ env }) => {
             'omit',
           ],
           '../../node_modules/react-color/lib/components/common': ['Saturation', 'Hue', 'Alpha'],
+          '../../node_modules/immutable/dist/immutable.js': [
+            'Set',
+            'Map',
+            'List',
+            'OrderedSet',
+            'is',
+            'Stack',
+            'Record',
+          ],
+          '../../node_modules/esrever/esrever.js': ['reverse'],
         },
       }),
       resolve(),

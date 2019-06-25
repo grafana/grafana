@@ -24,6 +24,7 @@ import {
   DataSourceSelectItem,
   QueryFixAction,
   LogsDedupStrategy,
+  AbsoluteTimeRange,
 } from '@grafana/ui';
 import { ExploreId, RangeScanner, ExploreUIState, QueryTransaction, ExploreMode } from 'app/types/explore';
 import {
@@ -33,7 +34,6 @@ import {
   ChangeRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
-  changeTimeAction,
   clearQueriesAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
@@ -61,6 +61,7 @@ import {
   scanRangeAction,
   runQueriesAction,
   stateSaveAction,
+  updateTimeRangeAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -164,17 +165,16 @@ export function changeSize(
   return changeSizeAction({ exploreId, height, width });
 }
 
-/**
- * Change the time range of Explore. Usually called from the Time picker or a graph interaction.
- */
-export function changeTime(exploreId: ExploreId, rawRange: RawTimeRange): ThunkResult<void> {
-  return (dispatch, getState) => {
-    const timeZone = getTimeZone(getState().user);
-    const range = getTimeRange(timeZone, rawRange);
-    dispatch(changeTimeAction({ exploreId, range }));
-    dispatch(runQueries(exploreId));
+export const updateTimeRange = (options: {
+  exploreId: ExploreId;
+  rawRange?: RawTimeRange;
+  absoluteRange?: AbsoluteTimeRange;
+}): ThunkResult<void> => {
+  return dispatch => {
+    dispatch(updateTimeRangeAction({ ...options }));
+    dispatch(runQueries(options.exploreId));
   };
-}
+};
 
 /**
  * Change the refresh interval of Explore. Called from the Refresh picker.
@@ -402,12 +402,8 @@ export function modifyQueries(
  */
 export function runQueries(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { range } = getState().explore[exploreId];
-
-    const timeZone = getTimeZone(getState().user);
-    const updatedRange = getTimeRange(timeZone, range.raw);
-
-    dispatch(runQueriesAction({ exploreId, range: updatedRange }));
+    dispatch(updateTimeRangeAction({ exploreId }));
+    dispatch(runQueriesAction({ exploreId }));
   };
 }
 
@@ -548,7 +544,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     if (update.range) {
-      dispatch(changeTimeAction({ exploreId, range }));
+      dispatch(updateTimeRangeAction({ exploreId, rawRange: range.raw }));
     }
 
     // need to refresh ui state
