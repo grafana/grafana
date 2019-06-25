@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -12,20 +11,20 @@ func TestApiKeyDataAccess(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 
-	Convey("Testing API Key data access", t, func() {
+	t.Run("Testing API Key data access", func(t *testing.T) {
 		InitTestDB(t)
 
-		Convey("Given saved api key", func() {
+		t.Run("Given saved api key", func(t *testing.T) {
 			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "hello", Key: "asd"}
 			err := AddApiKey(&cmd)
-			So(err, ShouldBeNil)
+			assert.Nil(t, err)
 
-			Convey("Should be able to get key by name", func() {
+			t.Run("Should be able to get key by name", func(t *testing.T) {
 				query := models.GetApiKeyByNameQuery{KeyName: "hello", OrgId: 1}
 				err = GetApiKeyByName(&query)
 
-				So(err, ShouldBeNil)
-				So(query.Result, ShouldNotBeNil)
+				assert.Nil(t, err)
+				assert.NotNil(t, query.Result)
 			})
 
 		})
