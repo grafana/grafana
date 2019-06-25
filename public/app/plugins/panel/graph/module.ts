@@ -11,9 +11,11 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData } from '@grafana/ui';
+import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData, DataLink, VariableSuggestion } from '@grafana/ui';
 import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
+import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -30,6 +32,8 @@ class GraphCtrl extends MetricsPanelCtrl {
   colors: any = [];
   subTabIndex: number;
   processor: DataProcessor;
+  contextMenuCtrl: GraphContextMenuCtrl;
+  linkVariableSuggestions: VariableSuggestion[] = getDataLinksVariableSuggestions();
 
   panelDefaults = {
     // datasource name, null = default datasource
@@ -120,6 +124,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     seriesOverrides: [],
     thresholds: [],
     timeRegions: [],
+    options: {
+      dataLinks: [],
+    },
   };
 
   /** @ngInject */
@@ -130,9 +137,11 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
+    _.defaults(this.panel.options, this.panelDefaults.options);
 
     this.dataFormat = PanelQueryRunnerFormat.series;
     this.processor = new DataProcessor(this.panel);
+    this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
@@ -140,6 +149,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+
+    this.onDataLinksChange = this.onDataLinksChange.bind(this);
   }
 
   onInitEditMode() {
@@ -147,6 +158,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
+    this.addEditorTab('Data link', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
   }
 
@@ -284,6 +296,13 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   };
 
+  onDataLinksChange(dataLinks: DataLink[]) {
+    this.panel.updateOptions({
+      ...this.panel.options,
+      dataLinks,
+    });
+  }
+
   addSeriesOverride(override) {
     this.panel.seriesOverrides.push(override || {});
   }
@@ -313,6 +332,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       modalClass: 'modal--narrow',
     });
   }
+
+  onContextMenuClose = () => {
+    this.contextMenuCtrl.toggleMenu();
+  };
 }
 
 export { GraphCtrl, GraphCtrl as PanelCtrl };

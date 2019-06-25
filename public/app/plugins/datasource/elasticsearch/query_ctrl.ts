@@ -6,6 +6,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 import { QueryCtrl } from 'app/plugins/sdk';
+import { ElasticsearchAggregation } from './types';
 
 export class ElasticQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -53,7 +54,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
   }
 
   getCollapsedText() {
-    const metricAggs = this.target.metrics;
+    const metricAggs: ElasticsearchAggregation[] = this.target.metrics;
     const bucketAggs = this.target.bucketAggs;
     const metricAggTypes = queryDef.getMetricAggTypes(this.esVersion);
     const bucketAggTypes = queryDef.bucketAggTypes;

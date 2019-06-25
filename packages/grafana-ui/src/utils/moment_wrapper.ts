@@ -50,6 +50,7 @@ export interface DateTimeDuration {
 
 export interface DateTime extends Object {
   add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
+  set: (unit: DurationUnit, amount: DateTimeInput) => void;
   diff: (amount: DateTimeInput, unit?: DurationUnit, truncate?: boolean) => number;
   endOf: (unitOfTime: DurationUnit) => DateTime;
   format: (formatInput?: FormatInput) => string;
@@ -63,9 +64,11 @@ export interface DateTime extends Object {
   subtract: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
   toDate: () => Date;
   toISOString: () => string;
+  isoWeekday: (day?: number | string) => number | string;
   valueOf: () => number;
   unix: () => number;
   utc: () => DateTime;
+  hour?: () => number;
 }
 
 export const setLocale = (language: string) => {

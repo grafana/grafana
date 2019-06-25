@@ -190,26 +190,6 @@ select:-webkit-autofill:focus {
   background-color: $btn-semi-transparent;
 }
 
-.password-strength {
-  display: block;
-  width: 15%;
-  overflow: visible;
-  white-space: nowrap;
-  padding-top: 3px;
-  color: darken($text-color, 20%);
-  border-top: 3px solid $red-base;
-
-  &.password-strength-ok {
-    width: 40%;
-    border-top: 3px solid lighten($yellow, 10%);
-  }
-
-  &.password-strength-good {
-    width: 100%;
-    border-top: 3px solid lighten($green-base, 10%);
-  }
-}
-
 .login-submit-button-row {
   text-align: center;
   margin-top: 30px;

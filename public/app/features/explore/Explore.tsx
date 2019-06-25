@@ -21,13 +21,13 @@ import TimePicker from './TimePicker';
 // Actions
 import {
   changeSize,
-  changeTime,
   initializeExplore,
   modifyQueries,
   scanStart,
   setQueries,
   refreshExplore,
   reconnectDatasource,
+  updateTimeRange,
 } from './state/actions';
 
 // Types
@@ -60,7 +60,6 @@ import { scanStopAction } from './state/actionTypes';
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
   changeSize: typeof changeSize;
-  changeTime: typeof changeTime;
   datasourceError: string;
   datasourceInstance: DataSourceApi;
   datasourceLoading: boolean | null;
@@ -88,6 +87,7 @@ interface ExploreProps {
   queryErrors: DataQueryError[];
   mode: ExploreMode;
   isLive: boolean;
+  updateTimeRange: typeof updateTimeRange;
 }
 
 /**
@@ -158,11 +158,12 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.el = el;
   };
 
-  onChangeTime = (range: RawTimeRange, changedByScanner?: boolean) => {
-    if (this.props.scanning && !changedByScanner) {
+  onChangeTime = (rawRange: RawTimeRange, changedByScanner?: boolean) => {
+    const { updateTimeRange, exploreId, scanning } = this.props;
+    if (scanning && !changedByScanner) {
       this.onStopScanning();
     }
-    this.props.changeTime(this.props.exploreId, range);
+    updateTimeRange({ exploreId, rawRange });
   };
 
   // Use this in help pages to set page to a single query
@@ -348,7 +349,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
 
 const mapDispatchToProps = {
   changeSize,
-  changeTime,
   initializeExplore,
   modifyQueries,
   reconnectDatasource,
@@ -356,6 +356,7 @@ const mapDispatchToProps = {
   scanStart,
   scanStopAction,
   setQueries,
+  updateTimeRange,
 };
 
 export default hot(module)(

@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Block, Document, Text, Value } from 'slate';
 
 const SCHEMA = {
@@ -15,7 +16,7 @@ export const makeFragment = (text: string, syntax?: string) => {
     Block.create({
       type: 'code_line',
       nodes: [Text.create(line)],
-    })
+    } as any)
   );
 
   const block = Block.create({
@@ -24,7 +25,7 @@ export const makeFragment = (text: string, syntax?: string) => {
     },
     type: 'code_block',
     nodes: lines,
-  });
+  } as any);
 
   return Document.create({
     nodes: [block],
@@ -37,5 +38,5 @@ export const makeValue = (text: string, syntax?: string) => {
   return Value.create({
     document: fragment,
     SCHEMA,
-  });
+  } as any);
 };

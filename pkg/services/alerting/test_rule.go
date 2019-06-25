@@ -54,6 +54,7 @@ func testAlertRule(rule *Rule) *EvalContext {
 
 	context := NewEvalContext(context.Background(), rule)
 	context.IsTestRun = true
+	context.IsDebug = true
 
 	handler.Eval(context)
 	context.Rule.State = context.GetNewState()
