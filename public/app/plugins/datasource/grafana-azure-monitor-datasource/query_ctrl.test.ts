@@ -5,6 +5,7 @@ jest.mock('./css/query_editor.css', () => {
 import { AzureMonitorQueryCtrl } from './query_ctrl';
 import Q from 'q';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { auto } from 'angular';
 
 describe('AzureMonitorQueryCtrl', () => {
   let queryCtrl: any;
@@ -21,7 +22,7 @@ describe('AzureMonitorQueryCtrl', () => {
       azureMonitorDatasource: { isConfigured: () => false },
     };
 
-    queryCtrl = new AzureMonitorQueryCtrl({}, {}, new TemplateSrv());
+    queryCtrl = new AzureMonitorQueryCtrl({}, {} as auto.IInjectorService, new TemplateSrv());
   });
 
   describe('init query_ctrl variables', () => {
@@ -189,11 +190,19 @@ describe('AzureMonitorQueryCtrl', () => {
       };
 
       beforeEach(() => {
+        queryCtrl.target.subscription = 'sub1';
         queryCtrl.target.azureMonitor.resourceGroup = 'test';
         queryCtrl.target.azureMonitor.metricDefinition = 'Microsoft.Compute/virtualMachines';
         queryCtrl.target.azureMonitor.resourceName = 'test';
         queryCtrl.target.azureMonitor.metricName = 'Percentage CPU';
-        queryCtrl.datasource.getMetricMetadata = function(resourceGroup, metricDefinition, resourceName, metricName) {
+        queryCtrl.datasource.getMetricMetadata = function(
+          subscription,
+          resourceGroup,
+          metricDefinition,
+          resourceName,
+          metricName
+        ) {
+          expect(subscription).toBe('sub1');
           expect(resourceGroup).toBe('test');
           expect(metricDefinition).toBe('Microsoft.Compute/virtualMachines');
           expect(resourceName).toBe('test');

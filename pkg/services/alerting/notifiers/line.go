@@ -29,9 +29,10 @@ func init() {
 }
 
 const (
-	lineNotifyUrl string = "https://notify-api.line.me/api/notify"
+	lineNotifyURL string = "https://notify-api.line.me/api/notify"
 )
 
+// NewLINENotifier is the constructor for the LINE notifier
 func NewLINENotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	token := model.Settings.Get("token").MustString()
 	if token == "" {
@@ -45,52 +46,55 @@ func NewLINENotifier(model *models.AlertNotification) (alerting.Notifier, error)
 	}, nil
 }
 
+// LineNotifier is responsible for sending
+// alert notifications to LINE.
 type LineNotifier struct {
 	NotifierBase
 	Token string
 	log   log.Logger
 }
 
-func (this *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Executing line notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
+// Notify send an alert notification to LINE
+func (ln *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
+	ln.log.Info("Executing line notification", "ruleId", evalContext.Rule.ID, "notification", ln.Name)
 
 	var err error
 	switch evalContext.Rule.State {
 	case models.AlertStateAlerting:
-		err = this.createAlert(evalContext)
+		err = ln.createAlert(evalContext)
 	}
 	return err
 }
 
-func (this *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
-	this.log.Info("Creating Line notify", "ruleId", evalContext.Rule.Id, "notification", this.Name)
-	ruleUrl, err := evalContext.GetRuleUrl()
+func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
+	ln.log.Info("Creating Line notify", "ruleId", evalContext.Rule.ID, "notification", ln.Name)
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
-		this.log.Error("Failed get rule link", "error", err)
+		ln.log.Error("Failed get rule link", "error", err)
 		return err
 	}
 
 	form := url.Values{}
-	body := fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleUrl, evalContext.Rule.Message)
+	body := fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleURL, evalContext.Rule.Message)
 	form.Add("message", body)
 
-	if evalContext.ImagePublicUrl != "" {
-		form.Add("imageThumbnail", evalContext.ImagePublicUrl)
-		form.Add("imageFullsize", evalContext.ImagePublicUrl)
+	if evalContext.ImagePublicURL != "" {
+		form.Add("imageThumbnail", evalContext.ImagePublicURL)
+		form.Add("imageFullsize", evalContext.ImagePublicURL)
 	}
 
 	cmd := &models.SendWebhookSync{
-		Url:        lineNotifyUrl,
+		Url:        lineNotifyURL,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
-			"Authorization": fmt.Sprintf("Bearer %s", this.Token),
+			"Authorization": fmt.Sprintf("Bearer %s", ln.Token),
 			"Content-Type":  "application/x-www-form-urlencoded;charset=UTF-8",
 		},
 		Body: form.Encode(),
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		this.log.Error("Failed to send notification to LINE", "error", err, "body", body)
+		ln.log.Error("Failed to send notification to LINE", "error", err, "body", body)
 		return err
 	}
 

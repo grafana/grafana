@@ -21,6 +21,39 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
+func TestMiddleWareSecurityHeaders(t *testing.T) {
+	setting.ERR_TEMPLATE_NAME = "error-template"
+
+	Convey("Given the grafana middleware", t, func() {
+
+		middlewareScenario(t, "middleware should get correct x-xss-protection header", func(sc *scenarioContext) {
+			setting.XSSProtectionHeader = true
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("X-XSS-Protection"), ShouldEqual, "1; mode=block")
+		})
+
+		middlewareScenario(t, "middleware should not get x-xss-protection when disabled", func(sc *scenarioContext) {
+			setting.XSSProtectionHeader = false
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("X-XSS-Protection"), ShouldBeEmpty)
+		})
+
+		middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(sc *scenarioContext) {
+			setting.StrictTransportSecurity = true
+			setting.Protocol = setting.HTTPS
+			setting.StrictTransportSecurityMaxAge = 64000
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000")
+			setting.StrictTransportSecurityPreload = true
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000; preload")
+			setting.StrictTransportSecuritySubDomains = true
+			sc.fakeReq("GET", "/api/").exec()
+			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000; preload; includeSubDomains")
+		})
+	})
+}
+
 func TestMiddlewareContext(t *testing.T) {
 	setting.ERR_TEMPLATE_NAME = "error-template"
 
@@ -300,7 +333,7 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.AuthProxyEnabled = true
 			setting.AuthProxyWhitelist = ""
 			setting.AuthProxyAutoSignUp = true
-			setting.LdapEnabled = true
+			setting.LDAPEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
 			name := "markelog"
@@ -326,7 +359,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			middlewareScenario(t, "should create an user from a header", func(sc *scenarioContext) {
-				setting.LdapEnabled = false
+				setting.LDAPEnabled = false
 				setting.AuthProxyAutoSignUp = true
 
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
@@ -354,7 +387,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			middlewareScenario(t, "should get an existing user from header", func(sc *scenarioContext) {
-				setting.LdapEnabled = false
+				setting.LDAPEnabled = false
 
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 					query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
@@ -379,7 +412,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 			middlewareScenario(t, "should allow the request from whitelist IP", func(sc *scenarioContext) {
 				setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
-				setting.LdapEnabled = false
+				setting.LDAPEnabled = false
 
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
@@ -405,7 +438,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 			middlewareScenario(t, "should not allow the request from whitelist IP", func(sc *scenarioContext) {
 				setting.AuthProxyWhitelist = "8.8.8.8"
-				setting.LdapEnabled = false
+				setting.LDAPEnabled = false
 
 				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
 					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}

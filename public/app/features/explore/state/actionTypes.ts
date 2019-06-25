@@ -9,18 +9,24 @@ import {
   LogLevel,
   TimeRange,
   DataQueryError,
+  SeriesData,
+  LogsModel,
+  TimeSeries,
+  DataQueryResponseData,
+  LoadingState,
+  AbsoluteTimeRange,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
   ExploreItemState,
   HistoryItem,
   RangeScanner,
-  ResultType,
-  QueryTransaction,
   ExploreUIState,
   ExploreMode,
+  QueryOptions,
 } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
+import TableModel from 'app/core/table_model';
 
 /**  Higher order actions
  *
@@ -66,11 +72,6 @@ export interface ChangeSizePayload {
   exploreId: ExploreId;
   width: number;
   height: number;
-}
-
-export interface ChangeTimePayload {
-  exploreId: ExploreId;
-  range: TimeRange;
 }
 
 export interface ChangeRefreshIntervalPayload {
@@ -142,21 +143,19 @@ export interface ModifyQueriesPayload {
 export interface QueryFailurePayload {
   exploreId: ExploreId;
   response: DataQueryError;
-  resultType: ResultType;
 }
 
 export interface QueryStartPayload {
   exploreId: ExploreId;
-  resultType: ResultType;
-  rowIndex: number;
-  transaction: QueryTransaction;
 }
 
 export interface QuerySuccessPayload {
   exploreId: ExploreId;
-  result: any;
-  resultType: ResultType;
   latency: number;
+  loadingState: LoadingState;
+  graphResult: TimeSeries[];
+  tableResult: TableModel;
+  logsResult: LogsModel;
 }
 
 export interface HistoryUpdatedPayload {
@@ -237,6 +236,48 @@ export interface ResetQueryErrorPayload {
   refIds: string[];
 }
 
+export interface SetUrlReplacedPayload {
+  exploreId: ExploreId;
+}
+
+export interface ProcessQueryErrorsPayload {
+  exploreId: ExploreId;
+  response: any;
+  datasourceId: string;
+}
+
+export interface ProcessQueryResultsPayload {
+  exploreId: ExploreId;
+  latency: number;
+  datasourceId: string;
+  loadingState: LoadingState;
+  series?: DataQueryResponseData[];
+  delta?: SeriesData[];
+}
+
+export interface RunQueriesBatchPayload {
+  exploreId: ExploreId;
+  queryOptions: QueryOptions;
+}
+
+export interface LimitMessageRatePayload {
+  series: SeriesData[];
+  exploreId: ExploreId;
+  datasourceId: string;
+}
+
+export interface ChangeRangePayload {
+  exploreId: ExploreId;
+  range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
+}
+
+export interface UpdateTimeRangePayload {
+  exploreId: ExploreId;
+  rawRange?: RawTimeRange;
+  absoluteRange?: AbsoluteTimeRange;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -263,11 +304,6 @@ export const changeQueryAction = actionCreatorFactory<ChangeQueryPayload>('explo
  * The width will be used to calculate graph intervals (number of datapoints).
  */
 export const changeSizeAction = actionCreatorFactory<ChangeSizePayload>('explore/CHANGE_SIZE').create();
-
-/**
- * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
- */
-export const changeTimeAction = actionCreatorFactory<ChangeTimePayload>('explore/CHANGE_TIME').create();
 
 /**
  * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
@@ -332,13 +368,6 @@ export const modifyQueriesAction = actionCreatorFactory<ModifyQueriesPayload>('e
  */
 export const queryFailureAction = actionCreatorFactory<QueryFailurePayload>('explore/QUERY_FAILURE').create();
 
-/**
- * Start a query transaction for the given result type.
- * @param exploreId Explore area
- * @param transaction Query options and `done` status.
- * @param resultType Associate the transaction with a result viewer, e.g., Graph
- * @param rowIndex Index is used to associate latency for this transaction with a query row
- */
 export const queryStartAction = actionCreatorFactory<QueryStartPayload>('explore/QUERY_START').create();
 
 /**
@@ -391,6 +420,7 @@ export const splitCloseAction = actionCreatorFactory<SplitCloseActionPayload>('e
  * The copy keeps all query modifications but wipes the query results.
  */
 export const splitOpenAction = actionCreatorFactory<SplitOpenPayload>('explore/SPLIT_OPEN').create();
+
 export const stateSaveAction = noPayloadActionCreatorFactory('explore/STATE_SAVE').create();
 
 /**
@@ -438,6 +468,26 @@ export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSource
 export const historyUpdatedAction = actionCreatorFactory<HistoryUpdatedPayload>('explore/HISTORY_UPDATED').create();
 
 export const resetQueryErrorAction = actionCreatorFactory<ResetQueryErrorPayload>('explore/RESET_QUERY_ERROR').create();
+
+export const setUrlReplacedAction = actionCreatorFactory<SetUrlReplacedPayload>('explore/SET_URL_REPLACED').create();
+
+export const processQueryErrorsAction = actionCreatorFactory<ProcessQueryErrorsPayload>(
+  'explore/PROCESS_QUERY_ERRORS'
+).create();
+
+export const processQueryResultsAction = actionCreatorFactory<ProcessQueryResultsPayload>(
+  'explore/PROCESS_QUERY_RESULTS'
+).create();
+
+export const runQueriesBatchAction = actionCreatorFactory<RunQueriesBatchPayload>('explore/RUN_QUERIES_BATCH').create();
+
+export const limitMessageRatePayloadAction = actionCreatorFactory<LimitMessageRatePayload>(
+  'explore/LIMIT_MESSAGE_RATE_PAYLOAD'
+).create();
+
+export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explore/CHANGE_RANGE').create();
+
+export const updateTimeRangeAction = actionCreatorFactory<UpdateTimeRangePayload>('explore/UPDATE_TIMERANGE').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>

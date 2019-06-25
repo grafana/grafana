@@ -1,6 +1,7 @@
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
-import { getValueFormat, stringToJsRegex, ValueFormatter, DecimalCount } from '@grafana/ui';
+import { getValueFormat, ValueFormatter, DecimalCount } from '@grafana/ui';
+import { stringToJsRegex } from '@grafana/data';
 
 function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
   if (!aliasOrRegex) {
@@ -329,7 +330,7 @@ export default class TimeSeries {
 
   isMsResolutionNeeded() {
     for (let i = 0; i < this.datapoints.length; i++) {
-      if (this.datapoints[i][1] !== null) {
+      if (this.datapoints[i][1] !== null && this.datapoints[i][1] !== undefined) {
         const timestamp = this.datapoints[i][1].toString();
         if (timestamp.length === 13 && timestamp % 1000 !== 0) {
           return true;

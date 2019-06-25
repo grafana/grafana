@@ -1,29 +1,41 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { RawTimeRange, TimeRange, LogLevel, TimeZone, AbsoluteTimeRange, toUtc, dateTime } from '@grafana/ui';
+import {
+  RawTimeRange,
+  LogLevel,
+  TimeZone,
+  AbsoluteTimeRange,
+  DataSourceApi,
+  LogsModel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LoadingState,
+} from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
 import { StoreState } from 'app/types';
 
-import { changeDedupStrategy, changeTime } from './state/actions';
+import { changeDedupStrategy, updateTimeRange } from './state/actions';
 import Logs from './Logs';
 import Panel from './Panel';
-import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
+import { toggleLogLevelAction, changeRefreshIntervalAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
+import { LiveLogsWithTheme } from './LiveLogs';
+import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 interface LogsContainerProps {
+  datasourceInstance: DataSourceApi | null;
   exploreId: ExploreId;
   loading: boolean;
+
   logsHighlighterExpressions?: string[];
   logsResult?: LogsModel;
   dedupedResult?: LogsModel;
   onClickLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
-  range: TimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -32,18 +44,22 @@ interface LogsContainerProps {
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: Set<LogLevel>;
   width: number;
-  changeTime: typeof changeTime;
+  isLive: boolean;
+  stopLive: typeof changeRefreshIntervalAction;
+  updateTimeRange: typeof updateTimeRange;
+  absoluteRange: AbsoluteTimeRange;
 }
 
-export class LogsContainer extends PureComponent<LogsContainerProps> {
-  onChangeTime = (absRange: AbsoluteTimeRange) => {
-    const { exploreId, timeZone, changeTime } = this.props;
-    const range = {
-      from: timeZone.isUtc ? toUtc(absRange.from) : dateTime(absRange.from),
-      to: timeZone.isUtc ? toUtc(absRange.to) : dateTime(absRange.to),
-    };
+export class LogsContainer extends Component<LogsContainerProps> {
+  onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
+    const { exploreId, updateTimeRange } = this.props;
 
-    changeTime(exploreId, range);
+    updateTimeRange({ exploreId, absoluteRange });
+  };
+
+  onStopLive = () => {
+    const { exploreId } = this.props;
+    this.props.stopLive({ exploreId, refreshInterval: offOption.value });
   };
 
   handleDedupStrategyChange = (dedupStrategy: LogsDedupStrategy) => {
@@ -58,6 +74,26 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     });
   };
 
+  getLogRowContext = async (row: LogRowModel, options?: any) => {
+    const { datasourceInstance } = this.props;
+
+    if (datasourceInstance) {
+      return datasourceInstance.getLogRowContext(row, options);
+    }
+
+    return [];
+  };
+
+  // Limit re-rendering to when a query is finished executing or when the deduplication strategy changes
+  // for performance reasons.
+  shouldComponentUpdate(nextProps: LogsContainerProps): boolean {
+    return (
+      nextProps.loading !== this.props.loading ||
+      nextProps.dedupStrategy !== this.props.dedupStrategy ||
+      nextProps.logsHighlighterExpressions !== this.props.logsHighlighterExpressions
+    );
+  }
+
   render() {
     const {
       exploreId,
@@ -68,13 +104,22 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       onClickLabel,
       onStartScanning,
       onStopScanning,
-      range,
+      absoluteRange,
       timeZone,
       scanning,
       scanRange,
       width,
       hiddenLogLevels,
+      isLive,
     } = this.props;
+
+    if (isLive) {
+      return (
+        <Panel label="Logs" loading={false} isOpen>
+          <LiveLogsWithTheme logsResult={logsResult} stopLive={this.onStopLive} />
+        </Panel>
+      );
+    }
 
     return (
       <Panel label="Logs" loading={loading} isOpen>
@@ -91,12 +136,13 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           onStopScanning={onStopScanning}
           onDedupStrategyChange={this.handleDedupStrategyChange}
           onToggleLogLevel={this.hangleToggleLogLevel}
-          range={range}
+          absoluteRange={absoluteRange}
           timeZone={timeZone}
           scanning={scanning}
           scanRange={scanRange}
           width={width}
           hiddenLogLevels={hiddenLogLevels}
+          getRowContext={this.getLogRowContext}
         />
       </Panel>
     );
@@ -106,8 +152,17 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 function mapStateToProps(state: StoreState, { exploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
-  const { logsHighlighterExpressions, logsResult, logIsLoading, scanning, scanRange, range } = item;
-  const loading = logIsLoading;
+  const {
+    logsHighlighterExpressions,
+    logsResult,
+    loadingState,
+    scanning,
+    scanRange,
+    datasourceInstance,
+    isLive,
+    absoluteRange,
+  } = item;
+  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const { dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
   const dedupedResult = deduplicatedLogsSelector(item);
@@ -119,18 +174,21 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     logsResult,
     scanning,
     scanRange,
-    range,
     timeZone,
     dedupStrategy,
     hiddenLogLevels,
     dedupedResult,
+    datasourceInstance,
+    isLive,
+    absoluteRange,
   };
 }
 
 const mapDispatchToProps = {
   changeDedupStrategy,
   toggleLogLevelAction,
-  changeTime,
+  stopLive: changeRefreshIntervalAction,
+  updateTimeRange,
 };
 
 export default hot(module)(

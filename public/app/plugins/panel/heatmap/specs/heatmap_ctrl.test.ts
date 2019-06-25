@@ -1,5 +1,6 @@
 import { HeatmapCtrl } from '../heatmap_ctrl';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 describe('HeatmapCtrl', () => {
   const ctx = {} as any;
@@ -20,7 +21,8 @@ describe('HeatmapCtrl', () => {
   };
 
   beforeEach(() => {
-    ctx.ctrl = new HeatmapCtrl($scope, $injector, {});
+    //@ts-ignore
+    ctx.ctrl = new HeatmapCtrl($scope, $injector, {} as TimeSrv);
   });
 
   describe('when time series are outside range', () => {

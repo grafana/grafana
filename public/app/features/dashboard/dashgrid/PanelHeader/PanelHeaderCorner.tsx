@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Remarkable from 'remarkable';
-import { Tooltip, ScopedVars } from '@grafana/ui';
+import { Tooltip, ScopedVars, DataLink } from '@grafana/ui';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';
@@ -18,7 +18,7 @@ interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  links?: [];
+  links?: DataLink[];
   error?: string;
 }
 
@@ -48,15 +48,15 @@ export class PanelHeaderCorner extends Component<Props> {
     const remarkableInterpolatedMarkdown = new Remarkable().render(interpolatedMarkdown);
 
     return (
-      <div className="markdown-html">
-        <div dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
+      <div className="markdown-html panel-info-content">
+        <p dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
         {panel.links && panel.links.length > 0 && (
-          <ul className="text-left">
+          <ul className="panel-info-corner-links">
             {panel.links.map((link, idx) => {
-              const info = linkSrv.getPanelLinkAnchorInfo(link, panel.scopedVars);
+              const info = linkSrv.getDataLinkUIModel(link, panel.scopedVars);
               return (
                 <li key={idx}>
-                  <a className="panel-menu-link" href={info.href} target={info.target}>
+                  <a className="panel-info-corner-links__item" href={info.href} target={info.target}>
                     {info.title}
                   </a>
                 </li>
@@ -71,7 +71,7 @@ export class PanelHeaderCorner extends Component<Props> {
   renderCornerType(infoMode: InfoMode, content: string | JSX.Element) {
     const theme = infoMode === InfoMode.Error ? 'error' : 'info';
     return (
-      <Tooltip content={content} placement="bottom-start" theme={theme}>
+      <Tooltip content={content} placement="top-start" theme={theme}>
         <div className={`panel-info-corner panel-info-corner--${infoMode.toLowerCase()}`}>
           <i className="fa" />
           <span className="panel-info-corner-inner" />
@@ -91,7 +91,7 @@ export class PanelHeaderCorner extends Component<Props> {
       return this.renderCornerType(infoMode, this.props.error);
     }
 
-    if (infoMode === InfoMode.Info) {
+    if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {
       return this.renderCornerType(infoMode, this.getInfoContent());
     }
 

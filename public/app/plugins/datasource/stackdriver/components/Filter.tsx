@@ -3,7 +3,7 @@ import _ from 'lodash';
 import appEvents from 'app/core/app_events';
 
 import { QueryMeta } from '../types';
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import StackdriverDatasource from '../datasource';
 import '../query_filter_ctrl';

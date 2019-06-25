@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -40,7 +39,7 @@ type AuthProxy struct {
 	header string
 
 	enabled             bool
-	LdapAllowSignup     bool
+	LDAPAllowSignup     bool
 	AuthProxyAutoSignUp bool
 	whitelistIP         string
 	headerType          string
@@ -64,7 +63,7 @@ func newError(message string, err error) *Error {
 
 // Error returns a Error error string
 func (err *Error) Error() string {
-	return fmt.Sprintf("%s", err.Message)
+	return err.Message
 }
 
 // Options for the AuthProxy
@@ -88,8 +87,8 @@ func New(options *Options) *AuthProxy {
 		headerType:          setting.AuthProxyHeaderProperty,
 		headers:             setting.AuthProxyHeaders,
 		whitelistIP:         setting.AuthProxyWhitelist,
-		cacheTTL:            setting.AuthProxyLdapSyncTtl,
-		LdapAllowSignup:     setting.LdapAllowSignup,
+		cacheTTL:            setting.AuthProxyLDAPSyncTtl,
+		LDAPAllowSignup:     setting.LDAPAllowSignup,
 		AuthProxyAutoSignUp: setting.AuthProxyAutoSignUp,
 	}
 }
@@ -98,20 +97,12 @@ func New(options *Options) *AuthProxy {
 func (auth *AuthProxy) IsEnabled() bool {
 
 	// Bail if the setting is not enabled
-	if !auth.enabled {
-		return false
-	}
-
-	return true
+	return auth.enabled
 }
 
 // HasHeader checks if the we have specified header
 func (auth *AuthProxy) HasHeader() bool {
-	if len(auth.header) == 0 {
-		return false
-	}
-
-	return true
+	return len(auth.header) != 0
 }
 
 // IsAllowedIP compares presented IP with the whitelist one
@@ -219,16 +210,17 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	}
 
 	// Have to sync grafana and LDAP user during log in
-	user, err := user.Upsert(&user.UpsertArgs{
+	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
-		SignupAllowed: auth.LdapAllowSignup,
+		SignupAllowed: auth.LDAPAllowSignup,
 		ExternalUser:  extUser,
-	})
+	}
+	err = bus.Dispatch(upsert)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
 
-	return user.Id, nil
+	return upsert.Result.Id, nil
 }
 
 // LoginViaHeader logs in user from the header only
@@ -264,16 +256,17 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		}
 	}
 
-	result, err := user.Upsert(&user.UpsertArgs{
+	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
 		SignupAllowed: true,
 		ExternalUser:  extUser,
-	})
+	}
+	err := bus.Dispatch(upsert)
 	if err != nil {
 		return 0, err
 	}
 
-	return result.Id, nil
+	return upsert.Result.Id, nil
 }
 
 // GetSignedUser get full signed user info
@@ -300,7 +293,7 @@ func (auth *AuthProxy) Remember(id int64) *Error {
 		return nil
 	}
 
-	expiration := time.Duration(-auth.cacheTTL) * time.Minute
+	expiration := time.Duration(auth.cacheTTL) * time.Minute
 
 	err := auth.store.Set(key, id, expiration)
 	if err != nil {

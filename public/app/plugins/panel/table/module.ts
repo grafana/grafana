@@ -94,8 +94,12 @@ class TablePanelCtrl extends MetricsPanelCtrl {
           panel: this.panel,
           range: this.range,
         })
-        .then(annotations => {
-          return { data: annotations };
+        .then((anno: any) => {
+          this.loading = false;
+          this.dataRaw = anno;
+          this.pageIndex = 0;
+          this.render();
+          return { data: this.dataRaw }; // Not used
         });
     }
 

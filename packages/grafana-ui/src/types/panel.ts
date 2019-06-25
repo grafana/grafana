@@ -31,6 +31,7 @@ export interface PanelProps<T = any> {
   options: T;
   onOptionsChange: (options: T) => void;
   renderCounter: number;
+  transparent: boolean;
   width: number;
   height: number;
   replaceVariables: InterpolateFunction;
@@ -144,6 +145,12 @@ export interface ValueMap extends BaseMap {
 export interface RangeMap extends BaseMap {
   from: string;
   to: string;
+}
+
+export interface DataLink {
+  url: string;
+  title: string;
+  targetBlank?: boolean;
 }
 
 export enum VizOrientation {

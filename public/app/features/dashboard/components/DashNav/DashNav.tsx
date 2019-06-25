@@ -3,7 +3,6 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
 // Utils & Services
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 
@@ -36,8 +35,6 @@ export interface StateProps {
 type Props = StateProps & OwnProps;
 
 export class DashNav extends PureComponent<Props> {
-  timePickerEl: HTMLElement;
-  timepickerCmp: AngularComponent;
   playlistSrv: PlaylistSrv;
 
   constructor(props: Props) {
@@ -45,32 +42,14 @@ export class DashNav extends PureComponent<Props> {
     this.playlistSrv = this.props.$injector.get('playlistSrv');
   }
 
-  componentDidMount() {
-    const loader = getAngularLoader();
-    const template =
-      '<gf-time-picker class="gf-timepicker-nav" dashboard="dashboard" ng-if="!dashboard.timepicker.hidden" />';
-    const scopeProps = { dashboard: this.props.dashboard };
+  onDahboardNameClick = () => {
+    appEvents.emit('show-dash-search');
+  };
 
-    this.timepickerCmp = loader.load(this.timePickerEl, scopeProps, template);
-  }
-
-  componentWillUnmount() {
-    if (this.timepickerCmp) {
-      this.timepickerCmp.destroy();
-    }
-  }
-
-  onOpenSearch = () => {
-    const { dashboard } = this.props;
-    const haveFolder = dashboard.meta.folderId > 0;
-    appEvents.emit(
-      'show-dash-search',
-      haveFolder
-        ? {
-            query: 'folder:current',
-          }
-        : null
-    );
+  onFolderNameClick = () => {
+    appEvents.emit('show-dash-search', {
+      query: 'folder:current',
+    });
   };
 
   onClose = () => {
@@ -148,11 +127,20 @@ export class DashNav extends PureComponent<Props> {
     return (
       <>
         <div>
-          <a className="navbar-page-btn" onClick={this.onOpenSearch}>
+          <div className="navbar-page-btn">
             {!this.isInFullscreenOrSettings && <i className="gicon gicon-dashboard" />}
-            {haveFolder && <span className="navbar-page-btn--folder">{folderTitle} / </span>}
-            {dashboard.title} <i className="fa fa-caret-down" />
-          </a>
+            {haveFolder && (
+              <>
+                <a className="navbar-page-btn__folder" onClick={this.onFolderNameClick}>
+                  {folderTitle}
+                </a>
+                <i className="fa fa-chevron-right navbar-page-btn__folder-icon" />
+              </>
+            )}
+            <a onClick={this.onDahboardNameClick}>
+              {dashboard.title} <i className="fa fa-caret-down navbar-page-btn__search" />
+            </a>
+          </div>
         </div>
         {this.isSettings && <span className="navbar-settings-title">&nbsp;/ Settings</span>}
         <div className="navbar__spacer" />
@@ -181,7 +169,7 @@ export class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, onAddPanel, location } = this.props;
+    const { dashboard, onAddPanel, location, $injector } = this.props;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -275,8 +263,12 @@ export class DashNav extends PureComponent<Props> {
 
         {!dashboard.timepicker.hidden && (
           <div className="navbar-buttons">
-            <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
-            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            <DashNavTimeControls
+              $injector={$injector}
+              dashboard={dashboard}
+              location={location}
+              updateLocation={updateLocation}
+            />
           </div>
         )}
       </div>

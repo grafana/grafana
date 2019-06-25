@@ -105,6 +105,10 @@ func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response
 			return Error(401, "Invalid username or password", err)
 		}
 
+		if err == login.ErrUserDisabled {
+			return Error(401, "User is disabled", err)
+		}
+
 		return Error(500, "Error while trying to authenticate user", err)
 	}
 

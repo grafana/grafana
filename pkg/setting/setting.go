@@ -48,10 +48,11 @@ var (
 
 var (
 	// App settings.
-	Env          = DEV
-	AppUrl       string
-	AppSubUrl    string
-	InstanceName string
+	Env              = DEV
+	AppUrl           string
+	AppSubUrl        string
+	ServeFromSubPath bool
+	InstanceName     string
 
 	// build
 	BuildVersion    string
@@ -87,14 +88,20 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey                        string
-	DisableGravatar                  bool
-	EmailCodeValidMinutes            int
-	DataProxyWhiteList               map[string]bool
-	DisableBruteForceLoginProtection bool
-	CookieSecure                     bool
-	CookieSameSite                   http.SameSite
-	AllowEmbedding                   bool
+	SecretKey                         string
+	DisableGravatar                   bool
+	EmailCodeValidMinutes             int
+	DataProxyWhiteList                map[string]bool
+	DisableBruteForceLoginProtection  bool
+	CookieSecure                      bool
+	CookieSameSite                    http.SameSite
+	AllowEmbedding                    bool
+	XSSProtectionHeader               bool
+	ContentTypeProtectionHeader       bool
+	StrictTransportSecurity           bool
+	StrictTransportSecurityMaxAge     int
+	StrictTransportSecurityPreload    bool
+	StrictTransportSecuritySubDomains bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -139,7 +146,7 @@ var (
 	AuthProxyHeaderName     string
 	AuthProxyHeaderProperty string
 	AuthProxyAutoSignUp     bool
-	AuthProxyLdapSyncTtl    int
+	AuthProxyLDAPSyncTtl    int
 	AuthProxyWhitelist      string
 	AuthProxyHeaders        map[string]string
 
@@ -176,11 +183,11 @@ var (
 	GoogleTagManagerId string
 
 	// LDAP
-	LdapEnabled           bool
-	LdapConfigFile        string
-	LdapSyncCron          string
-	LdapAllowSignup       bool
-	LdapActiveSyncEnabled bool
+	LDAPEnabled           bool
+	LDAPConfigFile        string
+	LDAPSyncCron          string
+	LDAPAllowSignup       bool
+	LDAPActiveSyncEnabled bool
 
 	// QUOTA
 	Quota QuotaSettings
@@ -216,8 +223,9 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
-	AppUrl    string
-	AppSubUrl string
+	AppUrl           string
+	AppSubUrl        string
+	ServeFromSubPath bool
 
 	// Paths
 	ProvisioningPath string
@@ -497,9 +505,9 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load specified config file
 	err = loadSpecifedConfigFile(args.Config, parsedFile)
 	if err != nil {
-		err = cfg.initLogging(parsedFile)
-		if err != nil {
-			return nil, err
+		err2 := cfg.initLogging(parsedFile)
+		if err2 != nil {
+			return nil, err2
 		}
 		log.Fatal(3, err.Error())
 	}
@@ -642,8 +650,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
+
 	cfg.AppUrl = AppUrl
 	cfg.AppSubUrl = AppSubUrl
+	cfg.ServeFromSubPath = ServeFromSubPath
 
 	Protocol = HTTP
 	protocolStr, err := valueAsString(server, "protocol", "http")
@@ -724,6 +735,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
+
+	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(false)
+	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(false)
+	StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
+	StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
+	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
+	StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
 
 	// read snapshots settings
 	snapshots := iniFile.Section("snapshots")
@@ -1010,11 +1028,11 @@ type RemoteCacheOptions struct {
 
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
-	LdapConfigFile = ldapSec.Key("config_file").String()
-	LdapSyncCron = ldapSec.Key("sync_cron").String()
-	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
-	LdapActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
-	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
+	LDAPConfigFile = ldapSec.Key("config_file").String()
+	LDAPSyncCron = ldapSec.Key("sync_cron").String()
+	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
+	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
 
 func (cfg *Cfg) readSessionConfig() {

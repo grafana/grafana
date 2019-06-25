@@ -1,9 +1,7 @@
 import { ComponentClass } from 'react';
-import { Value } from 'slate';
 import {
   RawTimeRange,
   DataQuery,
-  DataQueryResponseData,
   DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
@@ -11,10 +9,13 @@ import {
   LogLevel,
   TimeRange,
   DataQueryError,
+  LogsModel,
+  LogsDedupStrategy,
+  LoadingState,
+  AbsoluteTimeRange,
 } from '@grafana/ui';
 
-import { Emitter, TimeSeries } from 'app/core/core';
-import { LogsModel, LogsDedupStrategy } from 'app/core/logs_model';
+import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
 
 export enum ExploreMode {
@@ -179,6 +180,7 @@ export interface ExploreItemState {
    * Log query result to be displayed in the logs result viewer.
    */
   logsResult?: LogsModel;
+
   /**
    * Query intervals for graph queries to determine how many datapoints to return.
    * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.
@@ -188,6 +190,8 @@ export interface ExploreItemState {
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
   range: TimeRange;
+
+  absoluteRange: AbsoluteTimeRange;
   /**
    * Scanner function that calculates a new range, triggers a query run, and returns the new range.
    */
@@ -212,22 +216,8 @@ export interface ExploreItemState {
    * True if table result viewer is expanded. Query runs will contain table queries.
    */
   showingTable: boolean;
-  /**
-   * True if `datasourceInstance` supports graph queries.
-   */
-  supportsGraph: boolean | null;
-  /**
-   * True if `datasourceInstance` supports logs queries.
-   */
-  supportsLogs: boolean | null;
-  /**
-   * True if `datasourceInstance` supports table queries.
-   */
-  supportsTable: boolean | null;
 
-  graphIsLoading: boolean;
-  logIsLoading: boolean;
-  tableIsLoading: boolean;
+  loadingState: LoadingState;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -258,9 +248,13 @@ export interface ExploreItemState {
   update: ExploreUpdateState;
 
   queryErrors: DataQueryError[];
+
   latency: number;
   supportedModes: ExploreMode[];
   mode: ExploreMode;
+
+  isLive: boolean;
+  urlReplaced: boolean;
 }
 
 export interface ExploreUpdateState {
@@ -291,7 +285,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
 
 export abstract class LanguageProvider {
   datasource: any;
-  request: (url) => Promise<any>;
+  request: (url: any) => Promise<any>;
   /**
    * Returns startTask that resolves with a task list when main syntax is loaded.
    * Task list consists of secondary promises that load more detailed language features.
@@ -305,7 +299,8 @@ export interface TypeaheadInput {
   prefix: string;
   wrapperClasses: string[];
   labelKey?: string;
-  value?: Value;
+  //Should be Value from slate
+  value?: any;
 }
 
 export interface TypeaheadOutput {
@@ -321,11 +316,8 @@ export interface QueryIntervals {
 
 export interface QueryOptions {
   interval: string;
-  format: string;
-  hinting?: boolean;
-  instant?: boolean;
-  valueWithRefId?: boolean;
   maxDataPoints?: number;
+  live?: boolean;
 }
 
 export interface QueryTransaction {
@@ -337,17 +329,10 @@ export interface QueryTransaction {
   options: any;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
-  resultType: ResultType;
   scanning?: boolean;
 }
 
 export type RangeScanner = () => RawTimeRange;
-
-export type ResultGetter = (
-  result: DataQueryResponseData,
-  transaction: QueryTransaction,
-  allTransactions: QueryTransaction[]
-) => TimeSeries;
 
 export interface TextMatch {
   text: string;
@@ -355,5 +340,3 @@ export interface TextMatch {
   length: number;
   end: number;
 }
-
-export type ResultType = 'Graph' | 'Logs' | 'Table';

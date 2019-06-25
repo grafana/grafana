@@ -11,9 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// EvalContext is the context object for an alert evaluation.
 type EvalContext struct {
 	Firing         bool
 	IsTestRun      bool
+	IsDebug        bool
 	EvalMatches    []*EvalMatch
 	Logs           []*ResultLogEntry
 	Error          error
@@ -25,7 +27,7 @@ type EvalContext struct {
 
 	dashboardRef *models.DashboardRef
 
-	ImagePublicUrl  string
+	ImagePublicURL  string
 	ImageOnDiskPath string
 	NoDataFound     bool
 	PrevAlertState  models.AlertStateType
@@ -33,6 +35,7 @@ type EvalContext struct {
 	Ctx context.Context
 }
 
+// NewEvalContext is the EvalContext constructor.
 func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
 	return &EvalContext{
 		Ctx:            alertCtx,
@@ -45,12 +48,14 @@ func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
 	}
 }
 
+// StateDescription contains visual information about the alert state.
 type StateDescription struct {
 	Color string
 	Text  string
 	Data  string
 }
 
+// GetStateModel returns the `StateDescription` based on current state.
 func (c *EvalContext) GetStateModel() *StateDescription {
 	switch c.Rule.State {
 	case models.AlertStateOK:
@@ -78,24 +83,27 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 	}
 }
 
-func (c *EvalContext) ShouldUpdateAlertState() bool {
+func (c *EvalContext) shouldUpdateAlertState() bool {
 	return c.Rule.State != c.PrevAlertState
 }
 
-func (a *EvalContext) GetDurationMs() float64 {
-	return float64(a.EndTime.Nanosecond()-a.StartTime.Nanosecond()) / float64(1000000)
+// GetDurationMs returns the duration of the alert evaluation.
+func (c *EvalContext) GetDurationMs() float64 {
+	return float64(c.EndTime.Nanosecond()-c.StartTime.Nanosecond()) / float64(1000000)
 }
 
+// GetNotificationTitle returns the title of the alert rule including alert state.
 func (c *EvalContext) GetNotificationTitle() string {
 	return "[" + c.GetStateModel().Text + "] " + c.Rule.Name
 }
 
+// GetDashboardUID returns the dashboard uid for the alert rule.
 func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 	if c.dashboardRef != nil {
 		return c.dashboardRef, nil
 	}
 
-	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardId}
+	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
 	if err := bus.Dispatch(uidQuery); err != nil {
 		return nil, err
 	}
@@ -106,7 +114,8 @@ func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
 
 const urlFormat = "%s?fullscreen&edit&tab=alert&panelId=%d&orgId=%d"
 
-func (c *EvalContext) GetRuleUrl() (string, error) {
+// GetRuleURL returns the url to the dashboard containing the alert.
+func (c *EvalContext) GetRuleURL() (string, error) {
 	if c.IsTestRun {
 		return setting.AppUrl, nil
 	}
@@ -115,10 +124,10 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelId, c.Rule.OrgId), nil
+	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
 }
 
-// GetNewState returns the new state from the alert rule evaluation
+// GetNewState returns the new state from the alert rule evaluation.
 func (c *EvalContext) GetNewState() models.AlertStateType {
 	ns := getNewStateInternal(c)
 	if ns != models.AlertStateAlerting || c.Rule.For == 0 {
@@ -140,7 +149,7 @@ func (c *EvalContext) GetNewState() models.AlertStateType {
 func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	if c.Error != nil {
 		c.log.Error("Alert Rule Result Error",
-			"ruleId", c.Rule.Id,
+			"ruleId", c.Rule.ID,
 			"name", c.Rule.Name,
 			"error", c.Error,
 			"changing state to", c.Rule.ExecutionErrorState.ToAlertState())
@@ -157,7 +166,7 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 
 	if c.NoDataFound {
 		c.log.Info("Alert Rule returned no data",
-			"ruleId", c.Rule.Id,
+			"ruleId", c.Rule.ID,
 			"name", c.Rule.Name,
 			"changing state to", c.Rule.NoDataState.ToAlertState())
 

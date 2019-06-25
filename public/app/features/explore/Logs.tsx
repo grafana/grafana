@@ -2,16 +2,25 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
-import { RawTimeRange, Switch, LogLevel, TimeZone, TimeRange, AbsoluteTimeRange } from '@grafana/ui';
+import {
+  RawTimeRange,
+  Switch,
+  LogLevel,
+  TimeZone,
+  AbsoluteTimeRange,
+  LogsMetaKind,
+  LogsModel,
+  LogsDedupStrategy,
+  LogRowModel,
+} from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
-
-import { LogsDedupDescription, LogsDedupStrategy, LogsModel, LogsMetaKind } from 'app/core/logs_model';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
 import Graph from './Graph';
 import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
+import { LogsDedupDescription } from 'app/core/logs_model';
 
 const PREVIEW_LIMIT = 100;
 
@@ -48,7 +57,7 @@ interface Props {
   exploreId: string;
   highlighterExpressions: string[];
   loading: boolean;
-  range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -60,6 +69,7 @@ interface Props {
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
   onToggleLogLevel: (hiddenLogLevels: Set<LogLevel>) => void;
+  getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
 }
 
 interface State {
@@ -156,7 +166,7 @@ export default class Logs extends PureComponent<Props, State> {
       highlighterExpressions,
       loading = false,
       onClickLabel,
-      range,
+      absoluteRange,
       timeZone,
       scanning,
       scanRange,
@@ -174,7 +184,7 @@ export default class Logs extends PureComponent<Props, State> {
     const hasLabel = hasData && dedupedData.hasUniqueLabels;
     const dedupCount = dedupedData.rows.reduce((sum, row) => sum + row.duplicates, 0);
     const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
-    const meta = [...data.meta];
+    const meta = data.meta ? [...data.meta] : [];
 
     if (dedupStrategy !== LogsDedupStrategy.none) {
       meta.push({
@@ -192,11 +202,9 @@ export default class Logs extends PureComponent<Props, State> {
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
-    const timeSeries = data.series.map(series => new TimeSeries(series));
-    const absRange = {
-      from: range.from.valueOf(),
-      to: range.to.valueOf(),
-    };
+    const timeSeries = data.series
+      ? data.series.map(series => new TimeSeries(series))
+      : [new TimeSeries({ datapoints: [] })];
 
     return (
       <div className="logs-panel">
@@ -205,7 +213,7 @@ export default class Logs extends PureComponent<Props, State> {
             data={timeSeries}
             height={100}
             width={width}
-            range={absRange}
+            range={absoluteRange}
             timeZone={timeZone}
             id={`explore-logs-graph-${exploreId}`}
             onChangeTime={this.props.onChangeTime}
@@ -252,6 +260,7 @@ export default class Logs extends PureComponent<Props, State> {
               <LogRow
                 key={index}
                 getRows={getRows}
+                getRowContext={this.props.getRowContext}
                 highlighterExpressions={highlighterExpressions}
                 row={row}
                 showDuplicates={showDuplicates}
@@ -268,6 +277,7 @@ export default class Logs extends PureComponent<Props, State> {
               <LogRow
                 key={PREVIEW_LIMIT + index}
                 getRows={getRows}
+                getRowContext={this.props.getRowContext}
                 row={row}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}

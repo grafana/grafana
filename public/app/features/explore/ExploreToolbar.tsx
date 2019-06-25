@@ -10,6 +10,7 @@ import {
   TimeZone,
   TimeRange,
   SelectOptionItem,
+  LoadingState,
 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
@@ -39,15 +40,20 @@ const createResponsiveButton = (options: {
   buttonClassName?: string;
   iconClassName?: string;
   iconSide?: IconSide;
+  disabled?: boolean;
 }) => {
   const defaultOptions = {
     iconSide: IconSide.left,
   };
   const props = { ...options, defaultOptions };
-  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide } = props;
+  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide, disabled } = props;
 
   return (
-    <button className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`} onClick={onClick}>
+    <button
+      className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`}
+      onClick={onClick}
+      disabled={disabled || false}
+    >
       {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
       <span className="btn-title">{!splitted ? title : ''}</span>
       {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
@@ -72,6 +78,8 @@ interface StateProps {
   refreshInterval: string;
   supportedModeOptions: Array<SelectOptionItem<ExploreMode>>;
   selectedModeOption: SelectOptionItem<ExploreMode>;
+  hasLiveOption: boolean;
+  isLive: boolean;
 }
 
 interface DispatchProps {
@@ -134,6 +142,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       split,
       supportedModeOptions,
       selectedModeOption,
+      hasLiveOption,
+      isLive,
     } = this.props;
 
     return (
@@ -199,19 +209,23 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                   onClick: split,
                   iconClassName: 'fa fa-fw fa-columns icon-margin-right',
                   iconSide: IconSide.left,
+                  disabled: isLive,
                 })}
               </div>
             ) : null}
             <div className="explore-toolbar-content-item timepicker">
-              <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
-                <TimePicker ref={timepickerRef} range={range} isUtc={timeZone.isUtc} onChangeTime={onChangeTime} />
-              </ClickOutsideWrapper>
+              {!isLive && (
+                <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
+                  <TimePicker ref={timepickerRef} range={range} timeZone={timeZone} onChangeTime={onChangeTime} />
+                </ClickOutsideWrapper>
+              )}
 
               <RefreshPicker
                 onIntervalChanged={this.onChangeRefreshInterval}
                 onRefresh={this.onRunQuery}
                 value={refreshInterval}
                 tooltip="Refresh"
+                hasLiveOption={hasLiveOption}
               />
               {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
@@ -227,7 +241,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 title: 'Run Query',
                 onClick: this.onRunQuery,
                 buttonClassName: 'navbar-button--secondary',
-                iconClassName: loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
+                iconClassName:
+                  loading && !isLive ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
                 iconSide: IconSide.right,
               })}
             </div>
@@ -247,16 +262,17 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     exploreDatasources,
     range,
     refreshInterval,
-    graphIsLoading,
-    logIsLoading,
-    tableIsLoading,
+    loadingState,
     supportedModes,
     mode,
+    isLive,
   } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
-  const loading = graphIsLoading || logIsLoading || tableIsLoading;
+  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
+  const hasLiveOption =
+    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
 
   const supportedModeOptions: Array<SelectOptionItem<ExploreMode>> = [];
   let selectedModeOption = null;
@@ -296,6 +312,8 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     refreshInterval,
     supportedModeOptions,
     selectedModeOption,
+    hasLiveOption,
+    isLive,
   };
 };
 

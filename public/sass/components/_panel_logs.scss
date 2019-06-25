@@ -73,6 +73,7 @@ $column-horizontal-spacing: 10px;
     padding-right: $column-horizontal-spacing;
     border-top: 1px solid transparent;
     border-bottom: 1px solid transparent;
+    height: 100%;
   }
 
   &:hover {
@@ -251,7 +252,7 @@ $column-horizontal-spacing: 10px;
 }
 
 .logs-stats__header {
-  background-color: $popover-border-color;
+  background: $popover-header-bg;
   padding: 6px 10px;
   display: flex;
 }
