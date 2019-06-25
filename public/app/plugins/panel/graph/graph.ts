@@ -16,22 +16,25 @@ import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
+import { LinkService } from 'app/features/panel/panellinks/link_srv';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Legend, GraphLegendProps } from './Legend/Legend';
+import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat } from '@grafana/ui';
+import { getValueFormat, ContextMenuItem, ContextMenuGroup, DataLink } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
 class GraphElement {
   ctrl: GraphCtrl;
+  contextMenu: GraphContextMenuCtrl;
   tooltip: any;
   dashboard: any;
   annotations: object[];
@@ -45,8 +48,10 @@ class GraphElement {
   timeRegionManager: TimeRegionManager;
   legendElem: HTMLElement;
 
-  constructor(private scope, private elem, private timeSrv) {
+  // @ts-ignore
+  constructor(private scope, private elem, private timeSrv, private linkSrv: LinkService) {
     this.ctrl = scope.ctrl;
+    this.contextMenu = scope.ctrl.contextMenuCtrl;
     this.dashboard = this.ctrl.dashboard;
     this.panel = this.ctrl.panel;
     this.annotations = [];
@@ -113,7 +118,7 @@ class GraphElement {
     ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
   }
 
-  onGraphHover(evt) {
+  onGraphHover(evt: any) {
     // ignore other graph hover events if shared tooltip is disabled
     if (!this.dashboard.sharedTooltipModeEnabled()) {
       return;
@@ -143,13 +148,13 @@ class GraphElement {
     ReactDOM.unmountComponentAtNode(this.legendElem);
   }
 
-  onGraphHoverClear(event, info) {
+  onGraphHoverClear(event: any, info: any) {
     if (this.plot) {
       this.tooltip.clear(this.plot);
     }
   }
 
-  onPlotSelected(event: JQueryEventObject, ranges) {
+  onPlotSelected(event: JQueryEventObject, ranges: any) {
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       this.plot.clearSelection();
@@ -171,7 +176,49 @@ class GraphElement {
     }
   }
 
-  onPlotClick(event: JQueryEventObject, pos, item) {
+  getContextMenuItems = (flotPosition: { x: number; y: number }, item?: FlotDataPoint): ContextMenuGroup[] => {
+    const dataLinks: DataLink[] = this.panel.options.dataLinks || [];
+
+    const items: ContextMenuGroup[] = [
+      {
+        items: [
+          {
+            label: 'Add annotation',
+            icon: 'gicon gicon-annotation',
+            onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
+          },
+        ],
+      },
+    ];
+
+    return item
+      ? [
+          ...items,
+          {
+            items: [
+              ...dataLinks.map<ContextMenuItem>(link => {
+                const linkUiModel = this.linkSrv.getDataLinkUIModel(link, this.panel.scopedVariables, {
+                  seriesName: item.series.alias,
+                  datapoint: item.datapoint,
+                });
+                return {
+                  label: linkUiModel.title,
+                  url: linkUiModel.href,
+                  target: linkUiModel.target,
+                  icon: `fa ${linkUiModel.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
+                };
+              }),
+            ],
+          },
+        ]
+      : items;
+  };
+
+  onPlotClick(event: JQueryEventObject, pos: any, item: any) {
+    const scrollContextElement = this.elem.closest('.view') ? this.elem.closest('.view').get()[0] : null;
+    const contextMenuSourceItem = item;
+    let contextMenuItems;
+
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
       return;
@@ -179,12 +226,23 @@ class GraphElement {
 
     if ((pos.ctrlKey || pos.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
       // Skip if range selected (added in "plotselected" event handler)
-      const isRangeSelection = pos.x !== pos.x1;
-      if (!isRangeSelection) {
-        setTimeout(() => {
-          this.eventManager.updateTime({ from: pos.x, to: null });
-        }, 100);
+      if (pos.x !== pos.x1) {
+        return;
       }
+      setTimeout(() => {
+        this.eventManager.updateTime({ from: pos.x, to: null });
+      }, 100);
+      return;
+    } else {
+      this.tooltip.clear(this.plot);
+      contextMenuItems = this.getContextMenuItems(pos, item);
+      this.scope.$apply(() => {
+        // Setting nearest CustomScrollbar element as a scroll context for graph context menu
+        this.contextMenu.setScrollContextElement(scrollContextElement);
+        this.contextMenu.setSource(contextMenuSourceItem);
+        this.contextMenu.setMenuItems(contextMenuItems);
+        this.contextMenu.toggleMenu(pos);
+      });
     }
   }
 
@@ -447,6 +505,7 @@ class GraphElement {
         color: gridColor,
         margin: { left: 0, right: 0 },
         labelMarginX: 0,
+        mouseActiveRadius: 30,
       },
       selection: {
         mode: 'x',
@@ -787,12 +846,12 @@ class GraphElement {
 }
 
 /** @ngInject */
-function graphDirective(timeSrv, popoverSrv, contextSrv) {
+function graphDirective(timeSrv, popoverSrv, contextSrv, linkSrv) {
   return {
     restrict: 'A',
     template: '',
     link: (scope, elem) => {
-      return new GraphElement(scope, elem, timeSrv);
+      return new GraphElement(scope, elem, timeSrv, linkSrv);
     },
   };
 }
