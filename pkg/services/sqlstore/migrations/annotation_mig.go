@@ -1,8 +1,6 @@
 package migrations
 
 import (
-	"fmt"
-
 	"github.com/go-xorm/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
@@ -144,7 +142,7 @@ type TempRegionInfoDTO struct {
 func (m *AddMakeRegionSingleRowMigration) Exec(sess *xorm.Session, mg *Migrator) error {
 	regions := make([]*TempRegionInfoDTO, 0)
 
-	err := sess.SQL(fmt.Sprintf("SELECT region_id, epoch FROM annotation WHERE region_id>0 AND region_id is not id")).Find(&regions)
+	err := sess.SQL("SELECT region_id, epoch FROM annotation WHERE region_id>0 AND region_id <> id").Find(&regions)
 
 	if err != nil {
 		return err
@@ -156,6 +154,7 @@ func (m *AddMakeRegionSingleRowMigration) Exec(sess *xorm.Session, mg *Migrator)
 			return err
 		}
 	}
-	sess.Exec("DELETE FROM annotation WHERE region_id > 0 AND id is not region_id")
+
+	sess.Exec("DELETE FROM annotation WHERE region_id > 0 AND id <> region_id")
 	return nil
 }
