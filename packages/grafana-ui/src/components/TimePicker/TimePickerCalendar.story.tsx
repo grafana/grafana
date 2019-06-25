@@ -16,7 +16,7 @@ TimePickerCalendarStories.add('default', () => (
     {(value, updateValue) => {
       return (
         <TimePickerCalendar
-          isTimezoneUtc={false}
+          timeZone="browser"
           value={value}
           onChange={timeRange => {
             action('onChange fired')(timeRange);

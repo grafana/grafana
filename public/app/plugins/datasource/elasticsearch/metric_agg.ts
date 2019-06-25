@@ -1,11 +1,12 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
+import { ElasticsearchAggregation } from './types';
 
 export class ElasticMetricAggCtrl {
   /** @ngInject */
   constructor($scope, uiSegmentSrv, $q, $rootScope) {
-    const metricAggs = $scope.target.metrics;
+    const metricAggs: ElasticsearchAggregation[] = $scope.target.metrics;
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
     $scope.extendedStats = queryDef.extendedStats;
     $scope.pipelineAggOptions = [];

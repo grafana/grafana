@@ -6,7 +6,7 @@ import { StoreState } from 'app/types';
 
 export const mockExploreState = (options: any = {}) => {
   const isLive = options.isLive || false;
-  const history = [];
+  const history: any[] = [];
   const eventBridge = {
     emit: jest.fn(),
   };

@@ -66,7 +66,7 @@ export class ResultProcessor {
       return new TableModel();
     }
 
-    const prevTableResults = this.state.tableResult || [];
+    const prevTableResults: any[] | TableModel = this.state.tableResult || [];
     const tablesToMerge = this.replacePreviousResults ? this.tables : [].concat(prevTableResults, this.tables);
 
     return mergeTablesIntoModel(new TableModel(), ...tablesToMerge);
@@ -116,13 +116,17 @@ export class ResultProcessor {
 
   private isSameTimeSeries = (a: TimeSeries | TimeSeries2, b: TimeSeries | TimeSeries2) => {
     if (a.hasOwnProperty('id') && b.hasOwnProperty('id')) {
-      if (a['id'] !== undefined && b['id'] !== undefined && a['id'] === b['id']) {
+      const aValue = (a as TimeSeries2).id;
+      const bValue = (b as TimeSeries2).id;
+      if (aValue !== undefined && bValue !== undefined && aValue === bValue) {
         return true;
       }
     }
 
     if (a.hasOwnProperty('alias') && b.hasOwnProperty('alias')) {
-      if (a['alias'] !== undefined && b['alias'] !== undefined && a['alias'] === b['alias']) {
+      const aValue = (a as TimeSeries2).alias;
+      const bValue = (b as TimeSeries2).alias;
+      if (aValue !== undefined && bValue !== undefined && aValue === bValue) {
         return true;
       }
     }

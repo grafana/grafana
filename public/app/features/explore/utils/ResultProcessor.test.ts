@@ -11,7 +11,7 @@ jest.mock('@grafana/ui/src/utils/moment_wrapper', () => ({
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import { toFixed } from '@grafana/ui';
+import { toFixed, TimeSeries, LogRowModel, LogsMetaItem } from '@grafana/ui';
 
 const testContext = (options: any = {}) => {
   const response = [
@@ -47,9 +47,9 @@ const testContext = (options: any = {}) => {
     mode: ExploreMode.Metrics,
     replacePreviousResults: true,
     result: { data: response },
-    graphResult: [],
+    graphResult: [] as TimeSeries[],
     tableResult: new TableModel(),
-    logsResult: { hasUniqueLabels: false, rows: [] },
+    logsResult: { hasUniqueLabels: false, rows: [] as LogRowModel[] },
   };
   const combinedOptions = { ...defaultOptions, ...options };
   const state = ({
@@ -174,7 +174,7 @@ describe('ResultProcessor', () => {
               labels: undefined,
               logLevel: 'unknown',
               raw: 'This is a message',
-              searchWords: [],
+              searchWords: [] as string[],
               timeEpochMs: 1559038519831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
@@ -187,7 +187,7 @@ describe('ResultProcessor', () => {
               labels: undefined,
               logLevel: 'unknown',
               raw: 'This is a message',
-              searchWords: [],
+              searchWords: [] as string[],
               timeEpochMs: 1559038518831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
@@ -317,7 +317,7 @@ describe('ResultProcessor', () => {
                 labels: { cluster: 'some-cluster' },
                 logLevel: 'unknown',
                 raw: 'This is a previous message 1',
-                searchWords: [],
+                searchWords: [] as string[],
                 timeEpochMs: 1558038519831,
                 timeFromNow: 'fromNow() jest mocked',
                 timeLocal: 'format() jest mocked',
@@ -331,7 +331,7 @@ describe('ResultProcessor', () => {
                 labels: { cluster: 'some-cluster' },
                 logLevel: 'unknown',
                 raw: 'This is a previous message 2',
-                searchWords: [],
+                searchWords: [] as string[],
                 timeEpochMs: 1558038518831,
                 timeFromNow: 'fromNow() jest mocked',
                 timeLocal: 'format() jest mocked',
@@ -362,7 +362,7 @@ describe('ResultProcessor', () => {
         const theResult = resultProcessor.getLogsResult();
         const expected = {
           hasUniqueLabels: false,
-          meta: [],
+          meta: [] as LogsMetaItem[],
           rows: [
             {
               entry: 'This is a previous message 1',
@@ -371,7 +371,7 @@ describe('ResultProcessor', () => {
               labels: { cluster: 'some-cluster' },
               logLevel: 'unknown',
               raw: 'This is a previous message 1',
-              searchWords: [],
+              searchWords: [] as string[],
               timeEpochMs: 1558038519831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
@@ -385,7 +385,7 @@ describe('ResultProcessor', () => {
               labels: { cluster: 'some-cluster' },
               logLevel: 'unknown',
               raw: 'This is a previous message 2',
-              searchWords: [],
+              searchWords: [] as string[],
               timeEpochMs: 1558038518831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
@@ -399,7 +399,7 @@ describe('ResultProcessor', () => {
               labels: undefined,
               logLevel: 'unknown',
               raw: 'This is a message',
-              searchWords: [],
+              searchWords: [] as string[],
               timeEpochMs: 1559038519831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
@@ -413,7 +413,7 @@ describe('ResultProcessor', () => {
               labels: undefined,
               logLevel: 'unknown',
               raw: 'This is a message',
-              searchWords: [],
+              searchWords: [] as string[],
               timeEpochMs: 1559038518831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
@@ -440,7 +440,7 @@ describe('ResultProcessor', () => {
                 [39.91264531864214, 1559038518831],
                 [40.35179822906545, 1559038519831],
               ],
-              unit: undefined,
+              unit: undefined as string,
               valueFormater: toFixed,
             },
           ],

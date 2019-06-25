@@ -1,17 +1,11 @@
 import { Task, TaskRunner } from './task';
-import axios from 'axios';
+import GithubClient from '../utils/githubClient';
 
 interface CherryPickOptions {}
 
 const cherryPickRunner: TaskRunner<CherryPickOptions> = async () => {
-  let client = axios.create({
-    baseURL: 'https://api.github.com/repos/grafana/grafana',
-    timeout: 10000,
-    // auth: {
-    //   username: '<username>',
-    //   password: '<personal access token>',
-    // },
-  });
+  const githubClient = new GithubClient();
+  const client = githubClient.client;
 
   const res = await client.get('/issues', {
     params: {

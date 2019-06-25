@@ -1,45 +1,51 @@
 import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { TimeFragment } from '../../types/time';
-import { Timezone } from '../../utils/datemath';
-import { DateTime, dateTime, isDateTime } from '../../utils/moment_wrapper';
-
+import { TimeFragment, TimeZone, TIME_FORMAT } from '../../types/time';
+import { DateTime, dateTime, toUtc } from '../../utils/moment_wrapper';
 import { stringToDateTimeType } from './time';
 
 export interface Props {
   value: TimeFragment;
-  isTimezoneUtc: boolean;
   roundup?: boolean;
-  timezone?: Timezone;
+  timeZone?: TimeZone;
   onChange: (value: DateTime) => void;
 }
 
 export class TimePickerCalendar extends PureComponent<Props> {
   onCalendarChange = (date: Date | Date[]) => {
-    const { onChange } = this.props;
+    const { onChange, timeZone } = this.props;
 
     if (Array.isArray(date)) {
       return;
     }
 
-    onChange(dateTime(date));
+    let newDate = dateTime(date);
+
+    if (timeZone === 'utc') {
+      newDate = toUtc(newDate.format(TIME_FORMAT));
+    }
+
+    onChange(newDate);
   };
 
   render() {
-    const { value, isTimezoneUtc, roundup, timezone } = this.props;
-    const dateValue = isDateTime(value)
-      ? value.toDate()
-      : stringToDateTimeType(value, isTimezoneUtc, roundup, timezone).toDate();
-    const calendarValue = dateValue instanceof Date && !isNaN(dateValue.getTime()) ? dateValue : dateTime().toDate();
+    const { value, roundup, timeZone } = this.props;
+    let date = stringToDateTimeType(value, roundup, timeZone);
+
+    if (!date.isValid()) {
+      date = dateTime();
+    }
 
     return (
       <Calendar
-        value={calendarValue}
+        value={date.toDate()}
         next2Label={null}
         prev2Label={null}
         className="time-picker-calendar"
         tileClassName="time-picker-calendar-tile"
         onChange={this.onCalendarChange}
+        nextLabel={<span className="fa fa-angle-right" />}
+        prevLabel={<span className="fa fa-angle-left" />}
       />
     );
   }
