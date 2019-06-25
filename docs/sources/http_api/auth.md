@@ -77,8 +77,7 @@ Content-Type: application/json
   {
     "id": 3,
     "name": "API",
-    "role": "Admin",
-    "expiration": null
+    "role": "Admin"
   },
   {
     "id": 1,
