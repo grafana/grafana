@@ -171,13 +171,10 @@ Tags | Optional field name to use for event tags (can be an array or a CSV strin
 
 Querying and displaying log data from Elasticsearch is available via [Explore](/features/explore).
 
-Select the Elasticsearch data source, change to Logs using the Metrics/Logs switcher,
+![](/img/docs/elasticsearch/explore_elasticsearch.png)
 
-![](/img/docs/elasticsearch/explore_elasticsearch_logs_switch.png)
-
-and then optionally enter a lucene query into the query field to filter the log messages.
-
-![](/img/docs/elasticsearch/explore_query_field.png)
+Select the Elasticsearch data source, change to Logs using the Metrics/Logs switcher, and then optionally enter a lucene query
+into the query field to filter the log messages.
 
 Finally, press the `Enter` key or the `Run Query` button to display your logs.
 
