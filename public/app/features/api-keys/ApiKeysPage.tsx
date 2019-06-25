@@ -165,7 +165,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
 
   formatDate(date, format?) {
     if (!date) {
-      return '';
+      return 'No expiration date';
     }
     date = isDateTime(date) ? date : dateTime(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
