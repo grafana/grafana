@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { PanelCtrl } from 'app/plugins/sdk';
 import Remarkable from 'remarkable';
-import { sanitize } from 'app/core/utils/text';
+import { sanitize, escapeHtml } from 'app/core/utils/text';
 import config from 'app/core/config';
 
 const defaultContent = `
@@ -70,12 +70,8 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 
   renderText(content: string) {
-    content = content
-      .replace(/&/g, '&amp;')
-      .replace(/>/g, '&gt;')
-      .replace(/</g, '&lt;')
-      .replace(/\n/g, '<br/>');
-    this.updateContent(content);
+    const safeContent = escapeHtml(content).replace(/\n/g, '<br/>');
+    this.updateContent(safeContent);
   }
 
   renderMarkdown(content: string) {

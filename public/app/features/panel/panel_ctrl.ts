@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import Remarkable from 'remarkable';
+import { sanitize, escapeHtml } from 'app/core/utils/text';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -250,31 +251,32 @@ export class PanelCtrl {
       markdown = this.error || this.panel.description;
     }
 
-    const linkSrv = this.$injector.get('linkSrv');
-    const sanitize = this.$injector.get('$sanitize');
-    const templateSrv = this.$injector.get('templateSrv');
+    const linkSrv: any = this.$injector.get('linkSrv');
+    const templateSrv: any = this.$injector.get('templateSrv');
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     let html = '<div class="markdown-html">';
 
-    html += new Remarkable().render(interpolatedMarkdown);
+    const md = new Remarkable().render(interpolatedMarkdown);
+    html += config.disableSanitizeHtml ? md : sanitize(md);
 
     if (this.panel.links && this.panel.links.length > 0) {
       html += '<ul>';
       for (const link of this.panel.links) {
         const info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
+
         html +=
           '<li><a class="panel-menu-link" href="' +
-          info.href +
+          escapeHtml(info.href) +
           '" target="' +
-          info.target +
+          escapeHtml(info.target) +
           '">' +
-          info.title +
+          escapeHtml(info.title) +
           '</a></li>';
       }
       html += '</ul>';
     }
 
     html += '</div>';
-    return sanitize(html);
+    return html;
   }
 }
