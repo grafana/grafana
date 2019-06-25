@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -249,6 +250,61 @@ func TestUserDataAccess(t *testing.T) {
 						// Otherwise user shouldn't be disabled
 						if !shouldBeDisabled {
 							So(user.IsDisabled, ShouldBeFalse)
+						}
+					}
+				})
+			})
+
+			Convey("When searching users", func() {
+				// Find a user to set tokens on
+				login := "loginuser0"
+
+				// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
+				// Make the first log-in during the past
+				getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
+				query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
+				err = GetUserByAuthInfo(query)
+				getTime = time.Now
+
+				So(err, ShouldBeNil)
+				So(query.Result.Login, ShouldEqual, login)
+
+				// Add a second auth module for this user
+				// Have this module's last log-in be more recent
+				getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
+				query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
+				err = GetUserByAuthInfo(query)
+				getTime = time.Now
+
+				So(err, ShouldBeNil)
+				So(query.Result.Login, ShouldEqual, login)
+
+				Convey("Should return the only most recently used auth_module", func() {
+					searchUserQuery := &models.SearchUsersQuery{}
+					err = SearchUsers(searchUserQuery)
+
+					So(err, ShouldBeNil)
+					So(searchUserQuery.Result.Users, ShouldHaveLength, 5)
+					for _, user := range searchUserQuery.Result.Users {
+						if user.Login == login {
+							So(user.AuthModule, ShouldHaveLength, 1)
+							So(user.AuthModule[0], ShouldEqual, "test2")
+						}
+					}
+
+					// "log in" again with the first auth module
+					updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: query.Result.Id, AuthModule: "test1", AuthId: "test1"}
+					err = UpdateAuthInfo(updateAuthCmd)
+					So(err, ShouldBeNil)
+
+					searchUserQuery = &models.SearchUsersQuery{}
+					err = SearchUsers(searchUserQuery)
+
+					So(err, ShouldBeNil)
+					for _, user := range searchUserQuery.Result.Users {
+						if user.Login == login {
+							So(user.AuthModule, ShouldHaveLength, 1)
+							So(user.AuthModule[0], ShouldEqual, "test1")
 						}
 					}
 				})
