@@ -1,7 +1,7 @@
 package sqlstore
 
 import (
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -16,12 +16,12 @@ func TestApiKeyDataAccess(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Given saved api key", func() {
-			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "hello", Key: "asd"}
+			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "hello", Key: "asd"}
 			err := AddApiKey(&cmd)
 			So(err, ShouldBeNil)
 
 			Convey("Should be able to get key by name", func() {
-				query := m.GetApiKeyByNameQuery{KeyName: "hello", OrgId: 1}
+				query := models.GetApiKeyByNameQuery{KeyName: "hello", OrgId: 1}
 				err = GetApiKeyByName(&query)
 
 				So(err, ShouldBeNil)
@@ -31,11 +31,11 @@ func TestApiKeyDataAccess(t *testing.T) {
 		})
 
 		t.Run("Add non expiring key", func(t *testing.T) {
-			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "non-expiring", Key: "asd1", SecondsToLive: 0}
+			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "non-expiring", Key: "asd1", SecondsToLive: 0}
 			err := AddApiKey(&cmd)
 			assert.Nil(t, err)
 
-			query := m.GetApiKeyByNameQuery{KeyName: "non-expiring", OrgId: 1}
+			query := models.GetApiKeyByNameQuery{KeyName: "non-expiring", OrgId: 1}
 			err = GetApiKeyByName(&query)
 			assert.Nil(t, err)
 
@@ -44,11 +44,11 @@ func TestApiKeyDataAccess(t *testing.T) {
 
 		t.Run("Add an expiring key", func(t *testing.T) {
 			//expires in one hour
-			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "expiring-in-an-hour", Key: "asd2", SecondsToLive: 3600}
+			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "expiring-in-an-hour", Key: "asd2", SecondsToLive: 3600}
 			err := AddApiKey(&cmd)
 			assert.Nil(t, err)
 
-			query := m.GetApiKeyByNameQuery{KeyName: "expiring-in-an-hour", OrgId: 1}
+			query := models.GetApiKeyByNameQuery{KeyName: "expiring-in-an-hour", OrgId: 1}
 			err = GetApiKeyByName(&query)
 			assert.Nil(t, err)
 
@@ -64,35 +64,35 @@ func TestApiKeyDataAccess(t *testing.T) {
 
 		t.Run("Add a key with negative lifespan", func(t *testing.T) {
 			//expires in one day
-			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "key-with-negative-lifespan", Key: "asd3", SecondsToLive: -3600}
+			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "key-with-negative-lifespan", Key: "asd3", SecondsToLive: -3600}
 			err := AddApiKey(&cmd)
-			assert.EqualError(t, err, m.ErrInvalidApiKeyExpiration.Error())
+			assert.EqualError(t, err, models.ErrInvalidApiKeyExpiration.Error())
 
-			query := m.GetApiKeyByNameQuery{KeyName: "key-with-negative-lifespan", OrgId: 1}
+			query := models.GetApiKeyByNameQuery{KeyName: "key-with-negative-lifespan", OrgId: 1}
 			err = GetApiKeyByName(&query)
 			assert.EqualError(t, err, "Invalid API Key")
 		})
 
 		t.Run("Add keys", func(t *testing.T) {
 			//never expires
-			cmd := m.AddApiKeyCommand{OrgId: 1, Name: "key1", Key: "key1", SecondsToLive: 0}
+			cmd := models.AddApiKeyCommand{OrgId: 1, Name: "key1", Key: "key1", SecondsToLive: 0}
 			err := AddApiKey(&cmd)
 			assert.Nil(t, err)
 
 			//expires in 1s
-			cmd = m.AddApiKeyCommand{OrgId: 1, Name: "key2", Key: "key2", SecondsToLive: 1}
+			cmd = models.AddApiKeyCommand{OrgId: 1, Name: "key2", Key: "key2", SecondsToLive: 1}
 			err = AddApiKey(&cmd)
 			assert.Nil(t, err)
 
 			//expires in one hour
-			cmd = m.AddApiKeyCommand{OrgId: 1, Name: "key3", Key: "key3", SecondsToLive: 3600}
+			cmd = models.AddApiKeyCommand{OrgId: 1, Name: "key3", Key: "key3", SecondsToLive: 3600}
 			err = AddApiKey(&cmd)
 			assert.Nil(t, err)
 
 			// sleep for 1s
 			time.Sleep(time.Second)
 
-			query := m.GetApiKeysQuery{OrgId: 1, IncludeInvalid: false}
+			query := models.GetApiKeysQuery{OrgId: 1, IncludeInvalid: false}
 			err = GetApiKeys(&query)
 			assert.Nil(t, err)
 
@@ -102,7 +102,7 @@ func TestApiKeyDataAccess(t *testing.T) {
 				}
 			}
 
-			query = m.GetApiKeysQuery{OrgId: 1, IncludeInvalid: true}
+			query = models.GetApiKeysQuery{OrgId: 1, IncludeInvalid: true}
 			err = GetApiKeys(&query)
 			assert.Nil(t, err)
 
