@@ -35,22 +35,22 @@
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}" ng-class="{'muted': user.isDisabled}">
+            <a href="admin/users/edit/{{user.id}}">
               {{user.login}}
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}" ng-class="{'muted': user.isDisabled}">
+            <a href="admin/users/edit/{{user.id}}">
               {{user.email}}
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}" ng-class="{'muted': user.isDisabled}">
+            <a href="admin/users/edit/{{user.id}}">
               {{user.lastSeenAtAge}}
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}" ng-class="{'muted': user.isDisabled}">
+            <a href="admin/users/edit/{{user.id}}">
               <i class="fa fa-shield" ng-show="user.isAdmin" bs-tooltip="'Grafana Admin'"></i>
             </a>
           </td>
@@ -58,7 +58,7 @@
             <span class="label label-tag" ng-class="{'muted': user.isDisabled}" ng-if="ctrl.getAuthModule(user) === 'ldap'">LDAP</span>
           </td>
           <td class="text-right">
-            <span class="label label-tag label-deactivated muted" ng-if="user.isDisabled">Deactivated</span>
+            <span class="label label-tag label-tag--gray" ng-if="user.isDisabled">Disabled</span>
           </td>
         </tr>
       </tbody>

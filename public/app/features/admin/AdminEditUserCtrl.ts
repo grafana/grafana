@@ -86,9 +86,7 @@ export default class AdminEditUserCtrl {
     $scope.updatePermissions = () => {
       const payload = $scope.permissions;
 
-      backendSrv.put('/api/admin/users/' + $scope.user_id + '/permissions', payload).then(() => {
-        $location.path('/admin/users');
-      });
+      backendSrv.put('/api/admin/users/' + $scope.user_id + '/permissions', payload);
     };
 
     $scope.create = () => {
@@ -189,7 +187,7 @@ export default class AdminEditUserCtrl {
 
       const actionEndpoint = user.isDisabled ? '/enable' : '/disable';
       backendSrv.post('/api/admin/users/' + user.id + actionEndpoint).then(() => {
-        $location.path('/admin/users');
+        $scope.init();
       });
     };
 
