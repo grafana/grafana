@@ -172,7 +172,6 @@ export default class AdminEditUserCtrl {
         onConfirm: () => {
           backendSrv.delete('/api/admin/users/' + user.id).then(() => {
             $location.path('/admin/users');
-            // this.getUsers();
           });
         },
       });
@@ -190,7 +189,6 @@ export default class AdminEditUserCtrl {
 
       const actionEndpoint = user.isDisabled ? '/enable' : '/disable';
       backendSrv.post('/api/admin/users/' + user.id + actionEndpoint).then(() => {
-        // TODO: don't redirect to /admin/users
         $location.path('/admin/users');
       });
     };
