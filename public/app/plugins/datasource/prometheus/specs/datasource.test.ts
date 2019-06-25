@@ -431,7 +431,10 @@ const templateSrv = ({
 
 const timeSrv = ({
   timeRange: () => {
-    return { to: { diff: () => 2000 }, from: '' };
+    return {
+      from: dateTime(1531468681),
+      to: dateTime(1531468681 + 2000),
+    };
   },
 } as unknown) as TimeSrv;
 
