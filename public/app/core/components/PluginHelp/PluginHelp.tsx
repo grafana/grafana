@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import marked from 'marked';
+import { renderMarkdown } from 'app/core/utils/markdown';
 import { getBackendSrv } from '@grafana/runtime';
 
 interface Props {
@@ -38,7 +38,7 @@ export class PluginHelp extends PureComponent<Props, State> {
     getBackendSrv()
       .get(`/api/plugins/${plugin.id}/markdown/${type}`)
       .then((response: string) => {
-        const helpHtml = marked(response);
+        const helpHtml = renderMarkdown(response);
 
         if (response === '' && type === 'help') {
           this.setState({

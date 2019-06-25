@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
-import marked from 'marked';
+import { renderMarkdown } from 'app/core/utils/markdown';
 
 // Utils
 import { sanitize } from 'app/core/utils/text';
@@ -57,7 +57,7 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   prepareMarkdown(content: string): string {
-    return this.prepareHTML(marked(content));
+    return this.prepareHTML(renderMarkdown(content));
   }
 
   processContent(options: TextOptions): string {

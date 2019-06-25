@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import marked from 'marked';
+import { renderMarkdown } from 'app/core/utils/markdown';
 import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
@@ -38,7 +38,7 @@ export class UsersListPage extends PureComponent<Props, State> {
     super(props);
 
     if (this.props.externalUserMngInfo) {
-      this.externalUserMngInfoHtml = marked(this.props.externalUserMngInfo);
+      this.externalUserMngInfoHtml = renderMarkdown(this.props.externalUserMngInfo);
     }
 
     this.state = {

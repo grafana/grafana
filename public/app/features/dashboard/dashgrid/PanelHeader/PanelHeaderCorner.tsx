@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import marked from 'marked';
+import { renderMarkdown } from 'app/core/utils/markdown';
 import { Tooltip, ScopedVars } from '@grafana/ui';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -45,7 +45,7 @@ export class PanelHeaderCorner extends Component<Props> {
     const markdown = panel.description;
     const linkSrv = new LinkSrv(templateSrv, this.timeSrv);
     const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
-    const markedInterpolatedMarkdown = marked(interpolatedMarkdown);
+    const markedInterpolatedMarkdown = renderMarkdown(interpolatedMarkdown);
 
     return (
       <div className="panel-info-content markdown-html">

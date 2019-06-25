@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { sanitize, escapeHtml } from 'app/core/utils/text';
-import marked from 'marked';
+import { renderMarkdown } from 'app/core/utils/markdown';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -259,7 +259,7 @@ export class PanelCtrl {
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     let html = '<div class="markdown-html">';
 
-    const md = marked(interpolatedMarkdown);
+    const md = renderMarkdown(interpolatedMarkdown);
     html += config.disableSanitizeHtml ? md : sanitize(md);
 
     if (this.panel.links && this.panel.links.length > 0) {

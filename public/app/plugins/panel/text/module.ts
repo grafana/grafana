@@ -5,7 +5,7 @@ import { sanitize, escapeHtml } from 'app/core/utils/text';
 import config from 'app/core/config';
 import { auto, ISCEService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import marked from 'marked';
+import { renderMarkdown } from 'app/core/utils/markdown';
 
 const defaultContent = `
 # Title
@@ -83,7 +83,7 @@ export class TextPanelCtrl extends PanelCtrl {
 
   renderMarkdown(content: string) {
     this.$scope.$applyAsync(() => {
-      this.updateContent(marked(content));
+      this.updateContent(renderMarkdown(content));
     });
   }
 
