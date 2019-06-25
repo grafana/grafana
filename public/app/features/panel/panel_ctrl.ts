@@ -262,7 +262,6 @@ export class PanelCtrl {
     const md = renderMarkdown(interpolatedMarkdown);
     html += config.disableSanitizeHtml ? md : sanitize(md);
 
-
     if (this.panel.links && this.panel.links.length > 0) {
       html += '<ul class="panel-info-corner-links">';
       for (const link of this.panel.links) {
