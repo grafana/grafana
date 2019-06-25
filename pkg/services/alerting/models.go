@@ -19,9 +19,8 @@ type ResultLogEntry struct {
 
 // EvalMatch represents the serie violating the threshold.
 type EvalMatch struct {
-	Value     null.Float        `json:"value"`
-	Metric    string            `json:"metric"`
-	Tags      map[string]string `json:"tags"`
-	AlertTime int64             `json:"alerttime"`
+	Value  null.Float        `json:"value"`
+	Metric string            `json:"metric"`
+	Tags   map[string]string `json:"tags"`
+	AlertTime int64          `json:"alerttime"`
 }
-
