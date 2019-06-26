@@ -123,9 +123,8 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
  */
 export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
   return dispatch => {
-    dispatch(clearQueries(exploreId));
+    dispatch(clearQueriesAction({ exploreId }));
     dispatch(changeModeAction({ exploreId, mode }));
-    dispatch(runQueries(exploreId));
   };
 }
 
@@ -557,6 +556,11 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     // need to refresh queries
     if (update.queries) {
       dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
+    }
+
+    // need to refresh mode
+    if (update.mode) {
+      dispatch(changeModeAction({ exploreId, mode }));
     }
 
     // always run queries when refresh is needed

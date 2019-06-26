@@ -261,6 +261,7 @@ export interface ExploreUpdateState {
   datasource: boolean;
   queries: boolean;
   range: boolean;
+  mode: boolean;
   ui: boolean;
 }
 

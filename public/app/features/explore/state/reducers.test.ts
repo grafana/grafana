@@ -104,6 +104,7 @@ describe('Explore item reducer', () => {
             datasource: true,
             queries: true,
             range: true,
+            mode: true,
             ui: true,
           },
         };

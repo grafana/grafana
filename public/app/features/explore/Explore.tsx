@@ -318,13 +318,31 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     update,
     queryErrors,
     isLive,
+    supportedModes,
+    mode,
   } = item;
 
   const { datasource, queries, range: urlRange, mode: urlMode, ui } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
   const initialQueries: DataQuery[] = ensureQueries(queries);
   const initialRange = urlRange ? getTimeRangeFromUrl(urlRange, timeZone).raw : DEFAULT_RANGE;
-  const mode = urlMode || ExploreMode.Metrics;
+
+  let newMode: ExploreMode;
+  if (supportedModes.length) {
+    const urlModeIsValid = supportedModes.includes(urlMode);
+    const modeStateIsValid = supportedModes.includes(mode);
+
+    if (urlModeIsValid) {
+      newMode = urlMode;
+    } else if (modeStateIsValid) {
+      newMode = mode;
+    } else {
+      newMode = supportedModes[0];
+    }
+  } else {
+    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : ExploreMode.Metrics;
+  }
+
   const initialUI = ui || DEFAULT_UI_STATE;
 
   return {
@@ -340,8 +358,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     update,
     initialDatasource,
     initialQueries,
-    mode,
     initialRange,
+    mode: newMode,
     initialUI,
     queryErrors,
     isLive,

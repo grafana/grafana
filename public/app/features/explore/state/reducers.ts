@@ -70,6 +70,7 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   datasource: false,
   queries: false,
   range: false,
+  mode: false,
   ui: false,
 });
 
@@ -600,13 +601,14 @@ export const updateChildRefreshState = (
     return {
       ...state,
       urlState,
-      update: { datasource: false, queries: false, range: false, ui: false },
+      update: { datasource: false, queries: false, range: false, mode: false, ui: false },
     };
   }
 
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;
   const queries = _.isEqual(urlState ? urlState.queries : [], state.urlState.queries) === false;
   const range = _.isEqual(urlState ? urlState.range : DEFAULT_RANGE, state.urlState.range) === false;
+  const mode = _.isEqual(urlState ? urlState.mode : ExploreMode.Metrics, state.urlState.mode) === false;
   const ui = _.isEqual(urlState ? urlState.ui : DEFAULT_UI_STATE, state.urlState.ui) === false;
 
   return {
@@ -617,6 +619,7 @@ export const updateChildRefreshState = (
       datasource,
       queries,
       range,
+      mode,
       ui,
     },
   };

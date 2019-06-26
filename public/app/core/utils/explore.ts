@@ -162,7 +162,7 @@ export function buildQueryTransaction(
 
 export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
 
-const metricProperties = ['expr', 'target', 'datasource'];
+const metricProperties = ['expr', 'target', 'datasource', 'query'];
 const isMetricSegment = (segment: { [key: string]: string }) =>
   metricProperties.some(prop => segment.hasOwnProperty(prop));
 const isUISegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('ui');
