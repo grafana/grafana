@@ -167,8 +167,8 @@ Notifications can be sent by setting up an incoming webhook in Google Hangouts c
 
 ### All supported notifiers
 
-Name | Type | Supports images |Support alert rule tags
------|------------ | ------
+Name | Type | Supports images | Support alert rule tags
+-----|------|---------------- | -----------------------
 DingDing | `dingding` | yes, external only | no
 Discord | `discord` | yes | no
 Email | `email` | yes | no
