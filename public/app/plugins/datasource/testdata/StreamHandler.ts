@@ -18,6 +18,7 @@ export const defaultQuery: StreamingQuery = {
   speed: 250, // ms
   spread: 3.5,
   noise: 2.2,
+  bands: 1,
 };
 
 type StreamWorkers = {
@@ -42,7 +43,7 @@ export class StreamHandler {
       // set stream option defaults
       query.stream = defaults(query.stream, defaultQuery);
       // create stream key
-      const key = req.dashboardId + '/' + req.panelId + '/' + query.refId;
+      const key = req.dashboardId + '/' + req.panelId + '/' + query.refId + '@' + query.stream.bands;
 
       if (this.workers[key]) {
         const existing = this.workers[key];
@@ -146,7 +147,7 @@ export class StreamWorker {
 export class SignalWorker extends StreamWorker {
   value: number;
 
-  bands = 25;
+  bands = 1;
 
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
@@ -154,6 +155,8 @@ export class SignalWorker extends StreamWorker {
       this.stream.series = [this.initBuffer(query.refId)];
       this.looper();
     }, 10);
+
+    this.bands = query.stream.bands ? query.stream.bands : 0;
   }
 
   nextRow = (time: number) => {
