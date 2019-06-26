@@ -74,14 +74,6 @@ func PostAnnotation(c *m.ReqContext, cmd dtos.PostAnnotationsCmd) Response {
 		Tags:        cmd.Tags,
 	}
 
-	if item.EpochEnd == 0 {
-		item.EpochEnd = item.Epoch
-	} else if item.EpochEnd < item.Epoch {
-		tmp := item.Epoch
-		item.EpochEnd = item.Epoch
-		item.Epoch = tmp
-	}
-
 	if err := repo.Save(&item); err != nil {
 		return Error(500, "Failed to save annotation", err)
 	}

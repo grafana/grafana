@@ -35,6 +35,7 @@ func TestAnnotations(t *testing.T) {
 
 			So(err, ShouldBeNil)
 			So(annotation.Id, ShouldBeGreaterThan, 0)
+			So(annotation.Epoch, ShouldEqual, annotation.EpochEnd)
 
 			annotation2 := &annotations.Item{
 				OrgId:       1,
@@ -42,13 +43,15 @@ func TestAnnotations(t *testing.T) {
 				DashboardId: 2,
 				Text:        "hello",
 				Type:        "alert",
-				Epoch:       20,
+				Epoch:       21, // Should swap epoch & epochEnd
 				EpochEnd:    20,
 				Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
 			}
 			err = repo.Save(annotation2)
 			So(err, ShouldBeNil)
 			So(annotation2.Id, ShouldBeGreaterThan, 0)
+			So(annotation2.Epoch, ShouldEqual, 20)
+			So(annotation2.EpochEnd, ShouldEqual, 21)
 
 			globalAnnotation1 := &annotations.Item{
 				OrgId:  1,
