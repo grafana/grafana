@@ -23,6 +23,7 @@ import {
   LogRowModel,
   LogLabelStatsModel,
   LogsParser,
+  TimeZone,
 } from '@grafana/ui';
 import { LogRowContext } from './LogRowContext';
 import tinycolor from 'tinycolor2';
@@ -32,8 +33,7 @@ interface Props {
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;
-  showLocalTime: boolean;
-  showUtc: boolean;
+  timeZone: TimeZone;
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
@@ -202,16 +202,7 @@ export class LogRow extends PureComponent<Props, State> {
     hasMoreContextRows?: HasMoreContextRows,
     updateLimit?: () => void
   ) {
-    const {
-      getRows,
-      highlighterExpressions,
-      onClickLabel,
-      row,
-      showDuplicates,
-      showLabels,
-      showLocalTime,
-      showUtc,
-    } = this.props;
+    const { getRows, highlighterExpressions, onClickLabel, row, showDuplicates, showLabels, timeZone } = this.props;
     const {
       fieldCount,
       fieldLabel,
@@ -229,6 +220,7 @@ export class LogRow extends PureComponent<Props, State> {
     const highlightClassName = classnames('logs-row__match-highlight', {
       'logs-row__match-highlight--preview': previewHighlights,
     });
+    const showUtc = timeZone === 'utc';
 
     return (
       <ThemeContext.Consumer>
@@ -244,11 +236,11 @@ export class LogRow extends PureComponent<Props, State> {
               <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
               {showUtc && (
                 <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-                  {row.timestamp}
+                  {row.timeUtc}
                 </div>
               )}
-              {showLocalTime && (
-                <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
+              {!showUtc && (
+                <div className="logs-row__localtime" title={`${row.timeUtc} (${row.timeFromNow})`}>
                   {row.timeLocal}
                 </div>
               )}
