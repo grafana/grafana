@@ -6,6 +6,11 @@ jest.mock('@grafana/ui/src/utils/moment_wrapper', () => ({
       format: (fmt: string) => 'format() jest mocked',
     };
   },
+  toUtc: (ts: any) => {
+    return {
+      format: (fmt: string) => 'format() jest mocked',
+    };
+  },
 }));
 
 import { ResultProcessor } from './ResultProcessor';
@@ -178,6 +183,7 @@ describe('ResultProcessor', () => {
               timeEpochMs: 1559038519831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
+              timeUtc: 'format() jest mocked',
               timestamp: 1559038519831,
               uniqueLabels: {},
             },
@@ -191,6 +197,7 @@ describe('ResultProcessor', () => {
               timeEpochMs: 1559038518831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
+              timeUtc: 'format() jest mocked',
               timestamp: 1559038518831,
               uniqueLabels: {},
             },
@@ -321,6 +328,7 @@ describe('ResultProcessor', () => {
                 timeEpochMs: 1558038519831,
                 timeFromNow: 'fromNow() jest mocked',
                 timeLocal: 'format() jest mocked',
+                timeUtc: 'format() jest mocked',
                 timestamp: 1558038519831,
                 uniqueLabels: {},
               },
@@ -335,6 +343,7 @@ describe('ResultProcessor', () => {
                 timeEpochMs: 1558038518831,
                 timeFromNow: 'fromNow() jest mocked',
                 timeLocal: 'format() jest mocked',
+                timeUtc: 'format() jest mocked',
                 timestamp: 1558038518831,
                 uniqueLabels: {},
               },
@@ -375,6 +384,7 @@ describe('ResultProcessor', () => {
               timeEpochMs: 1558038519831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
+              timeUtc: 'format() jest mocked',
               timestamp: 1558038519831,
               uniqueLabels: {},
             },
@@ -389,6 +399,7 @@ describe('ResultProcessor', () => {
               timeEpochMs: 1558038518831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
+              timeUtc: 'format() jest mocked',
               timestamp: 1558038518831,
               uniqueLabels: {},
             },
@@ -403,6 +414,7 @@ describe('ResultProcessor', () => {
               timeEpochMs: 1559038519831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
+              timeUtc: 'format() jest mocked',
               timestamp: 1559038519831,
               uniqueLabels: {},
             },
@@ -417,6 +429,7 @@ describe('ResultProcessor', () => {
               timeEpochMs: 1559038518831,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
+              timeUtc: 'format() jest mocked',
               timestamp: 1559038518831,
               uniqueLabels: {},
             },

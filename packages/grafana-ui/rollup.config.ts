@@ -27,6 +27,8 @@ const buildCjsPackage = ({ env }) => {
     plugins: [
       commonjs({
         include: /node_modules/,
+        // When 'rollup-plugin-commonjs' fails to properly convert the CommonJS modules to ES6 one has to manually name the exports
+        // https://github.com/rollup/rollup-plugin-commonjs#custom-named-exports
         namedExports: {
           '../../node_modules/lodash/lodash.js': [
             'flatten',

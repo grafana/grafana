@@ -46,6 +46,7 @@ export interface DateTimeDuration {
   hours: () => number;
   minutes: () => number;
   seconds: () => number;
+  asSeconds: () => number;
 }
 
 export interface DateTime extends Object {
@@ -68,6 +69,7 @@ export interface DateTime extends Object {
   valueOf: () => number;
   unix: () => number;
   utc: () => DateTime;
+  utcOffset: () => number;
   hour?: () => number;
 }
 
