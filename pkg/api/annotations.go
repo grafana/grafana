@@ -220,15 +220,6 @@ func PatchAnnotation(c *m.ReqContext, cmd dtos.PatchAnnotationsCmd) Response {
 		existing.EpochEnd = cmd.TimeEnd
 	}
 
-	// Make sure end > time
-	if existing.EpochEnd == 0 {
-		existing.EpochEnd = existing.Epoch
-	} else if existing.EpochEnd < existing.Epoch {
-		tmp := existing.Epoch
-		existing.EpochEnd = existing.Epoch
-		existing.Epoch = tmp
-	}
-
 	if err := repo.Update(&existing); err != nil {
 		return Error(500, "Failed to update annotation", err)
 	}

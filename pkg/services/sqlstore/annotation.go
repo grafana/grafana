@@ -11,6 +11,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
+// Update the item so that EpochEnd >= Epoch
+func validateTimeRange(item *annotations.Item) error {
+	if item.EpochEnd == 0 {
+		if item.Epoch == 0 {
+			return errors.New("Missing Time Range")
+		}
+		item.EpochEnd = item.Epoch
+	}
+	if item.Epoch == 0 {
+		item.Epoch = item.EpochEnd
+	}
+	if item.EpochEnd < item.Epoch {
+		tmp := item.Epoch
+		item.Epoch = item.EpochEnd
+		item.EpochEnd = tmp
+	}
+	return nil
+}
+
 type SqlAnnotationRepo struct {
 }
 
@@ -23,13 +42,8 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 		if item.Epoch == 0 {
 			item.Epoch = item.Created
 		}
-		if item.EpochEnd == 0 {
-			item.EpochEnd = item.Epoch
-		}
-		if item.EpochEnd > item.Epoch {
-			tmp := item.Epoch
-			item.Epoch = item.EpochEnd
-			item.EpochEnd = tmp
+		if err := validateTimeRange(item); err != nil {
+			return err
 		}
 
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
@@ -74,14 +88,8 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 
 		existing.Epoch = item.Epoch
 		existing.EpochEnd = item.EpochEnd
-
-		if existing.EpochEnd == 0 {
-			existing.EpochEnd = item.Epoch
-		}
-		if existing.EpochEnd > existing.Epoch {
-			tmp := item.Epoch
-			existing.Epoch = existing.EpochEnd
-			existing.EpochEnd = tmp
+		if err := validateTimeRange(existing); err != nil {
+			return err
 		}
 
 		if item.Tags != nil {
