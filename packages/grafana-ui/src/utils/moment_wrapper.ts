@@ -68,6 +68,7 @@ export interface DateTime extends Object {
   valueOf: () => number;
   unix: () => number;
   utc: () => DateTime;
+  utcOffset: () => number;
   hour?: () => number;
 }
 
