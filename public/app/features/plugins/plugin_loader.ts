@@ -27,6 +27,7 @@ import * as ticks from 'app/core/utils/ticks';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
+import corePlugins from '@grafana/core-plugins';
 import * as d3 from 'd3';
 import * as grafanaData from '@grafana/data';
 import * as grafanaUI from '@grafana/ui';
@@ -157,7 +158,11 @@ for (const flotDep of flotDeps) {
 }
 
 export function importPluginModule(path: string): Promise<any> {
-  const builtIn = builtInPlugins[path];
+  let builtIn = builtInPlugins[path];
+  if (builtIn) {
+    return Promise.resolve(builtIn);
+  }
+  builtIn = corePlugins[path];
   if (builtIn) {
     return Promise.resolve(builtIn);
   }
