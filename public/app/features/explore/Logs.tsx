@@ -76,8 +76,7 @@ interface State {
   deferLogs: boolean;
   renderAll: boolean;
   showLabels: boolean;
-  showLocalTime: boolean;
-  showUtc: boolean;
+  showTime: boolean;
 }
 
 export default class Logs extends PureComponent<Props, State> {
@@ -88,8 +87,7 @@ export default class Logs extends PureComponent<Props, State> {
     deferLogs: true,
     renderAll: false,
     showLabels: false,
-    showLocalTime: true,
-    showUtc: false,
+    showTime: true,
   };
 
   componentDidMount() {
@@ -130,17 +128,10 @@ export default class Logs extends PureComponent<Props, State> {
     });
   };
 
-  onChangeLocalTime = (event: React.SyntheticEvent) => {
+  onChangeTime = (event: React.SyntheticEvent) => {
     const target = event.target as HTMLInputElement;
     this.setState({
-      showLocalTime: target.checked,
-    });
-  };
-
-  onChangeUtc = (event: React.SyntheticEvent) => {
-    const target = event.target as HTMLInputElement;
-    this.setState({
-      showUtc: target.checked,
+      showTime: target.checked,
     });
   };
 
@@ -178,7 +169,7 @@ export default class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { deferLogs, renderAll, showLabels, showLocalTime, showUtc } = this.state;
+    const { deferLogs, renderAll, showLabels, showTime } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
     const hasLabel = hasData && dedupedData.hasUniqueLabels;
@@ -223,8 +214,7 @@ export default class Logs extends PureComponent<Props, State> {
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
-            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} transparent />
-            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} transparent />
+            <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
             <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
@@ -265,8 +255,8 @@ export default class Logs extends PureComponent<Props, State> {
                 row={row}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
-                showLocalTime={showLocalTime}
-                showUtc={showUtc}
+                showTime={showTime}
+                timeZone={timeZone}
                 onClickLabel={onClickLabel}
               />
             ))}
@@ -281,8 +271,8 @@ export default class Logs extends PureComponent<Props, State> {
                 row={row}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
-                showLocalTime={showLocalTime}
-                showUtc={showUtc}
+                showTime={showTime}
+                timeZone={timeZone}
                 onClickLabel={onClickLabel}
               />
             ))}
