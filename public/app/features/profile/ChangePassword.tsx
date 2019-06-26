@@ -7,7 +7,7 @@ import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { NavModel } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
-import { Input, FormLabel, Button } from '@grafana/ui';
+import { Input, FormLabel, Button, LinkButton } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;
@@ -42,9 +42,9 @@ export class ChangePassword extends PureComponent<Props, State> {
     this.setState({ confirmNew });
   }
 
-  async onChangePassword() {
+  onChangePassword = async () => {
     await getBackendSrv().put('/api/user/password', this.state);
-  }
+  };
 
   cancel() {
     window.location.href = 'profile';
@@ -91,24 +91,12 @@ export class ChangePassword extends PureComponent<Props, State> {
                 />
               </div>
               <div className="gf-form-button-row">
-                <Button
-                  className="btn btn-primary"
-                  onClick={event => {
-                    event.preventDefault();
-                    this.onChangePassword();
-                  }}
-                >
+                <Button variant="primary" onClick={this.onChangePassword}>
                   Change Password
                 </Button>
-                <a
-                  className="btn-text"
-                  onClick={event => {
-                    event.preventDefault();
-                    this.cancel();
-                  }}
-                >
+                <LinkButton variant="transparent" href={`${config.appSubUrl}/profile`}>
                   Cancel
-                </a>
+                </LinkButton>
               </div>
             </form>
           )}
