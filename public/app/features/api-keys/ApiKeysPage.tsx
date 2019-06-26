@@ -171,7 +171,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     format = format || 'YYYY-MM-DD HH:mm:ss';
     const timezone = getTimeZone(store.getState().user);
 
-    return timezone.isUtc ? date.utc().format(format) : date.format(format);
+    return timezone === 'utc' ? date.utc().format(format) : date.format(format);
   }
 
   renderAddApiKeyForm() {
