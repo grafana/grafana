@@ -44,7 +44,7 @@ import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 import { timeEpic } from 'app/features/explore/state/epics/timeEpic';
 import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { UserState } from 'app/types/user';
-import { getTimeRange } from 'app/core/utils/explore';
+import { getTimeRange, getShiftedTimeRange } from 'app/core/utils/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 
 const rootReducers = {
@@ -87,6 +87,7 @@ export interface EpicDependencies {
   getTimeZone: (state: UserState) => TimeZone;
   toUtc: (input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
   dateTime: (input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
+  getShiftedTimeRange: (direction: number, origRange: TimeRange, timeZone: TimeZone) => RawTimeRange;
 }
 
 const dependencies: EpicDependencies = {
@@ -96,6 +97,7 @@ const dependencies: EpicDependencies = {
   getTimeZone,
   toUtc,
   dateTime,
+  getShiftedTimeRange,
 };
 
 const epicMiddleware = createEpicMiddleware({ dependencies });

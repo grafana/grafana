@@ -5,11 +5,13 @@ import {
   resetQueryErrorAction,
   querySuccessAction,
   scanStopAction,
-  scanRangeAction,
+  updateTimeRangeAction,
+  runQueriesAction,
 } from '../actionTypes';
 import { SeriesData, LoadingState } from '@grafana/ui';
 import { processQueryResultsEpic } from './processQueryResultsEpic';
 import TableModel from 'app/core/table_model';
+import { DEFAULT_RANGE } from 'app/core/utils/explore';
 
 const testContext = () => {
   const serieA: SeriesData = {
@@ -81,7 +83,7 @@ describe('processQueryResultsEpic', () => {
 
         describe('and we do not have a result', () => {
           it('then correct actions are dispatched', () => {
-            const { datasourceId, exploreId, state, scanner } = mockExploreState({ scanning: true });
+            const { datasourceId, exploreId, state } = mockExploreState({ scanning: true });
             const { latency, loadingState } = testContext();
             const graphResult = [];
             const tableResult = new TableModel();
@@ -94,7 +96,8 @@ describe('processQueryResultsEpic', () => {
               .thenResultingActionsEqual(
                 resetQueryErrorAction({ exploreId, refIds: [] }),
                 querySuccessAction({ exploreId, loadingState, graphResult, tableResult, logsResult, latency }),
-                scanRangeAction({ exploreId, range: scanner() })
+                updateTimeRangeAction({ exploreId, rawRange: DEFAULT_RANGE }),
+                runQueriesAction({ exploreId })
               );
           });
         });

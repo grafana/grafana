@@ -24,7 +24,6 @@ import {
   queryFailureAction,
   setUrlReplacedAction,
   querySuccessAction,
-  scanRangeAction,
   scanStopAction,
   resetQueryErrorAction,
   queryStartAction,
@@ -403,15 +402,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: scanRangeAction,
-    mapper: (state, action): ExploreItemState => {
-      return { ...state, scanRange: action.payload.range };
-    },
-  })
-  .addMapper({
     filter: scanStartAction,
     mapper: (state, action): ExploreItemState => {
-      return { ...state, scanning: true, scanner: action.payload.scanner };
+      return { ...state, scanning: true };
     },
   })
   .addMapper({
@@ -421,7 +414,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         scanning: false,
         scanRange: undefined,
-        scanner: undefined,
         update: makeInitialUpdateState(),
       };
     },

@@ -11,6 +11,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LoadingState,
+  TimeRange,
 } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -47,6 +48,7 @@ interface LogsContainerProps {
   isLive: boolean;
   stopLive: typeof changeRefreshIntervalAction;
   updateTimeRange: typeof updateTimeRange;
+  range: TimeRange;
   absoluteRange: AbsoluteTimeRange;
 }
 
@@ -90,7 +92,9 @@ export class LogsContainer extends Component<LogsContainerProps> {
     return (
       nextProps.loading !== this.props.loading ||
       nextProps.dedupStrategy !== this.props.dedupStrategy ||
-      nextProps.logsHighlighterExpressions !== this.props.logsHighlighterExpressions
+      nextProps.logsHighlighterExpressions !== this.props.logsHighlighterExpressions ||
+      nextProps.scanning !== this.props.scanning ||
+      nextProps.isLive !== this.props.isLive
     );
   }
 
@@ -107,7 +111,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
       absoluteRange,
       timeZone,
       scanning,
-      scanRange,
+      range,
       width,
       hiddenLogLevels,
       isLive,
@@ -139,7 +143,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
           absoluteRange={absoluteRange}
           timeZone={timeZone}
           scanning={scanning}
-          scanRange={scanRange}
+          scanRange={range.raw}
           width={width}
           hiddenLogLevels={hiddenLogLevels}
           getRowContext={this.getLogRowContext}
@@ -157,9 +161,9 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     logsResult,
     loadingState,
     scanning,
-    scanRange,
     datasourceInstance,
     isLive,
+    range,
     absoluteRange,
   } = item;
   const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
@@ -173,13 +177,13 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     logsHighlighterExpressions,
     logsResult,
     scanning,
-    scanRange,
     timeZone,
     dedupStrategy,
     hiddenLogLevels,
     dedupedResult,
     datasourceInstance,
     isLive,
+    range,
     absoluteRange,
   };
 }

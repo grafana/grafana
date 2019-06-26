@@ -12,6 +12,7 @@ import { TimePicker, RefreshPicker, RawTimeRange } from '@grafana/ui';
 
 // Utils & Services
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
+import { getShiftedTimeRange } from 'app/core/utils/explore';
 
 export interface Props {
   exploreId: ExploreId;
@@ -23,34 +24,13 @@ export interface Props {
   timeZone: TimeZone;
   onRunQuery: () => void;
   onChangeRefreshInterval: (interval: string) => void;
-  onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
+  onChangeTime: (range: RawTimeRange) => void;
 }
 
 export class ExploreTimeControls extends Component<Props> {
   onMoveTimePicker = (direction: number) => {
     const { range, onChangeTime, timeZone } = this.props;
-    const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
-    let to: number, from: number;
-
-    if (direction === -1) {
-      to = range.to.valueOf() - timespan;
-      from = range.from.valueOf() - timespan;
-    } else if (direction === 1) {
-      to = range.to.valueOf() + timespan;
-      from = range.from.valueOf() + timespan;
-      if (to > Date.now() && range.to.valueOf() < Date.now()) {
-        to = Date.now();
-        from = range.from.valueOf();
-      }
-    } else {
-      to = range.to.valueOf();
-      from = range.from.valueOf();
-    }
-
-    const nextTimeRange = {
-      from: timeZone === 'utc' ? toUtc(from) : dateTime(from),
-      to: timeZone === 'utc' ? toUtc(to) : dateTime(to),
-    };
+    const nextTimeRange = getShiftedTimeRange(direction, range, timeZone);
 
     onChangeTime(nextTimeRange);
   };

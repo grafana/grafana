@@ -211,20 +211,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 onChangeRefreshInterval={this.onChangeRefreshInterval}
                 onRunQuery={this.onRunQuery}
               />
-              {/* {!isLive && (
-                <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
-                  <TimePicker ref={timepickerRef} range={range} timeZone={timeZone} onChangeTime={onChangeTime} />
-                </ClickOutsideWrapper>
-              )}
-
-              <RefreshPicker
-                onIntervalChanged={this.onChangeRefreshInterval}
-                onRefresh={this.onRunQuery}
-                value={refreshInterval}
-                tooltip="Refresh"
-                hasLiveOption={hasLiveOption}
-              />
-              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />} */}
             </div>
 
             <div className="explore-toolbar-content-item">

@@ -34,7 +34,6 @@ import { RawTimeRange, DataQuery, ExploreStartPageProps, DataSourceApi, DataQuer
 import {
   ExploreItemState,
   ExploreUrlState,
-  RangeScanner,
   ExploreId,
   ExploreUpdateState,
   ExploreUIState,
@@ -70,7 +69,6 @@ interface ExploreProps {
   update: ExploreUpdateState;
   reconnectDatasource: typeof reconnectDatasource;
   refreshExplore: typeof refreshExplore;
-  scanner?: RangeScanner;
   scanning?: boolean;
   scanRange?: RawTimeRange;
   scanStart: typeof scanStart;
@@ -152,11 +150,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.el = el;
   };
 
-  onChangeTime = (rawRange: RawTimeRange, changedByScanner?: boolean) => {
-    const { updateTimeRange, exploreId, scanning } = this.props;
-    if (scanning && !changedByScanner) {
-      this.onStopScanning();
-    }
+  onChangeTime = (rawRange: RawTimeRange) => {
+    const { updateTimeRange, exploreId } = this.props;
+
     updateTimeRange({ exploreId, rawRange });
   };
 
@@ -183,15 +179,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
   onStartScanning = () => {
     // Scanner will trigger a query
-    // const scanner = this.scanPreviousRange;
-    // this.props.scanStart(this.props.exploreId, scanner);
-    // TODO: replace this with a dispatch to start scanning
-  };
-
-  scanPreviousRange = () => {
-    // Calling move() on the timepicker will trigger this.onChangeTime()
-    // return this.timepickerRef.current.move(-1, true);
-    // TODO: replace this with a dispatch to updateTimeRange
+    this.props.scanStart(this.props.exploreId);
   };
 
   onStopScanning = () => {
