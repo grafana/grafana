@@ -119,9 +119,11 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 
 ## Querying Logs (BETA)
 
+> Only available in Grafana v6.3+.
+
 Querying and displaying log data from InfluxDB is available via [Explore](/features/explore).
 
-![](/img/docs/influxdb/explore.png)
+![](/img/docs/v63/influxdb_explore_logs.png)
 
 Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher,
 and then use the `Measurements/Fields` button to display your logs.
