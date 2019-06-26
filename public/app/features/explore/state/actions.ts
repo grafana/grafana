@@ -105,9 +105,9 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
     const queries = getState().explore[exploreId].queries;
 
-    await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
-
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
+
+    await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
     if (getState().explore[exploreId].isLive) {
       dispatch(changeRefreshInterval(exploreId, offOption.value));
