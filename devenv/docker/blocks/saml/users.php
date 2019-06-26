@@ -3,7 +3,7 @@ $config = array(
     'admin' => array(
         'core:AdminPassword',
     ),
-    'grafana-userpass' => array(
+    'example-userpass' => array(
         'exampleauth:UserPass',
         'saml-admin:grafana' => array(
             'groups' => array('admins'),
