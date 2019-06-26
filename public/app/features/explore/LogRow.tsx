@@ -33,6 +33,7 @@ interface Props {
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;
+  showTime: boolean;
   timeZone: TimeZone;
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
@@ -202,7 +203,16 @@ export class LogRow extends PureComponent<Props, State> {
     hasMoreContextRows?: HasMoreContextRows,
     updateLimit?: () => void
   ) {
-    const { getRows, highlighterExpressions, onClickLabel, row, showDuplicates, showLabels, timeZone } = this.props;
+    const {
+      getRows,
+      highlighterExpressions,
+      onClickLabel,
+      row,
+      showDuplicates,
+      showLabels,
+      timeZone,
+      showTime,
+    } = this.props;
     const {
       fieldCount,
       fieldLabel,
@@ -234,12 +244,12 @@ export class LogRow extends PureComponent<Props, State> {
                 <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
               )}
               <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
-              {showUtc && (
-                <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+              {showTime && showUtc && (
+                <div className="logs-row__localtime" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
                   {row.timeUtc}
                 </div>
               )}
-              {!showUtc && (
+              {showTime && !showUtc && (
                 <div className="logs-row__localtime" title={`${row.timeUtc} (${row.timeFromNow})`}>
                   {row.timeLocal}
                 </div>

@@ -76,6 +76,7 @@ interface State {
   deferLogs: boolean;
   renderAll: boolean;
   showLabels: boolean;
+  showTime: boolean;
 }
 
 export default class Logs extends PureComponent<Props, State> {
@@ -86,6 +87,7 @@ export default class Logs extends PureComponent<Props, State> {
     deferLogs: true,
     renderAll: false,
     showLabels: false,
+    showTime: true,
   };
 
   componentDidMount() {
@@ -126,6 +128,13 @@ export default class Logs extends PureComponent<Props, State> {
     });
   };
 
+  onChangeTime = (event: React.SyntheticEvent) => {
+    const target = event.target as HTMLInputElement;
+    this.setState({
+      showTime: target.checked,
+    });
+  };
+
   onToggleLogLevel = (rawLevel: string, hiddenRawLevels: Set<string>) => {
     const hiddenLogLevels: Set<LogLevel> = new Set(Array.from(hiddenRawLevels).map(level => LogLevel[level]));
     this.props.onToggleLogLevel(hiddenLogLevels);
@@ -160,7 +169,7 @@ export default class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { deferLogs, renderAll, showLabels } = this.state;
+    const { deferLogs, renderAll, showLabels, showTime } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
     const hasLabel = hasData && dedupedData.hasUniqueLabels;
@@ -205,6 +214,7 @@ export default class Logs extends PureComponent<Props, State> {
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
+            <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
             <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
               {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
@@ -245,6 +255,7 @@ export default class Logs extends PureComponent<Props, State> {
                 row={row}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
+                showTime={showTime}
                 timeZone={timeZone}
                 onClickLabel={onClickLabel}
               />
@@ -260,6 +271,7 @@ export default class Logs extends PureComponent<Props, State> {
                 row={row}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
+                showTime={showTime}
                 timeZone={timeZone}
                 onClickLabel={onClickLabel}
               />
