@@ -2,6 +2,7 @@ package util
 
 import (
 	jose "gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 
 	"crypto/x509"
 	"encoding/base64"
@@ -150,6 +151,14 @@ func (d *JWTDecoder) Decode(text string) (map[string]interface{}, *JWTError) {
 	if d.keys == nil {
 		return nil, newJWTError(JWT_ERROR_NotReadyYet, "Decode not initalized")
 	}
+
+	xxx, err := jwt.ParseSigned(text)
+	if err != nil {
+		return nil, newJWTError(JWT_ERROR_UnableToRead, "Could not parse")
+	}
+
+	expected := jwt.Expected{}.WithTime(time.Now())
+	fmt.Println("JWT:", xxx, expected)
 
 	object, err := jose.ParseSigned(text)
 	if err != nil {
