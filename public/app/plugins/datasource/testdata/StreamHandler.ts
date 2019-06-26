@@ -146,6 +146,8 @@ export class StreamWorker {
 export class SignalWorker extends StreamWorker {
   value: number;
 
+  bands = 25;
+
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
     setTimeout(() => {
@@ -157,27 +159,31 @@ export class SignalWorker extends StreamWorker {
   nextRow = (time: number) => {
     const { spread, noise } = this.query;
     this.value += (Math.random() - 0.5) * spread;
-    return [
-      time,
-      this.value, // Value
-      this.value - Math.random() * noise, // MIN
-      this.value + Math.random() * noise, // MAX
-    ];
+    const row = [time, this.value];
+    for (let i = 0; i < this.bands; i++) {
+      const v = row[row.length - 1];
+      row.push(v - Math.random() * noise); // MIN
+      row.push(v + Math.random() * noise); // MAX
+    }
+    return row;
   };
 
   initBuffer(refId: string): SeriesData {
     const { speed, buffer } = this.query;
     const data = {
-      fields: [
-        { name: 'Time', type: FieldType.time },
-        { name: 'Value', type: FieldType.number },
-        { name: 'Min', type: FieldType.number },
-        { name: 'Max', type: FieldType.number },
-      ],
+      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Value', type: FieldType.number }],
       rows: [],
       refId,
       name: 'Signal ' + refId,
     } as SeriesData;
+
+    for (let i = 0; i < this.bands; i++) {
+      const suffix = this.bands > 1 ? ` ${i + 1}` : '';
+      data.fields.push({ name: 'Min' + suffix, type: FieldType.number });
+      data.fields.push({ name: 'Max' + suffix, type: FieldType.number });
+    }
+
+    console.log('START', data);
 
     const request = this.stream.request;
 
