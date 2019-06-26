@@ -91,7 +91,7 @@ class LiveLogs extends PureComponent<Props, State> {
                 key={`${row.timeEpochMs}-${index}`}
               >
                 {showUtc && (
-                  <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                  <div className="logs-row__localtime" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
                     {row.timeUtc}
                   </div>
                 )}
