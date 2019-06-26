@@ -39,6 +39,9 @@ configure({ adapter: new Adapter() });
 
 grafana-toolkit will use that file as Jest's setup file. You can also setup Jest with shims of your needs by creating `jest-shim.ts` file in the same directory: `[YOUR_APP]/config/jest-shim.ts`
 
+Adidtionaly, you can also provide additional Jest config via package.json file. For more details please refer to [Jest docs](https://jest-bot.github.io/jest/docs/configuration.html#verbose-boolean). Currently we support following properties:
+- [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
+
 ## Prettier [todo]
 
 ## Development mode [todo]
