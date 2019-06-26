@@ -86,8 +86,13 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		existing.Updated = time.Now().UnixNano() / int64(time.Millisecond)
 		existing.Text = item.Text
 
-		existing.Epoch = item.Epoch
-		existing.EpochEnd = item.EpochEnd
+		if item.Epoch != 0 {
+			existing.Epoch = item.Epoch
+		}
+		if item.EpochEnd != 0 {
+			existing.EpochEnd = item.EpochEnd
+		}
+
 		if err := validateTimeRange(existing); err != nil {
 			return err
 		}
