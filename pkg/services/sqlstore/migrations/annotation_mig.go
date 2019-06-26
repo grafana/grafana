@@ -118,7 +118,7 @@ func addAnnotationMig(mg *Migrator) {
 		Name: "epoch_end", Type: DB_BigInt, Nullable: false, Default: "0",
 	}))
 	mg.AddMigration("Add index for epoch_end", NewAddIndexMigration(table, &Index{
-		Cols: []string{"epoch_end"}, Type: IndexType,
+		Cols: []string{"org_id", "epoch", "epoch_end"}, Type: IndexType,
 	}))
 	mg.AddMigration("Make epoch_end the same as epoch", NewRawSqlMigration("UPDATE annotation SET epoch_end = epoch"))
 	mg.AddMigration("Move region to single row", &AddMakeRegionSingleRowMigration{})

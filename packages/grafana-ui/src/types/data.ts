@@ -104,5 +104,7 @@ export interface AnnotationEvent {
   text?: string;
   type?: string;
   tags?: string[];
-  source?: any; // source.type === 'dashboard' ????
+
+  // Currently used to merge annotations from alerts and dashboard
+  source?: any; // source.type === 'dashboard'
 }
