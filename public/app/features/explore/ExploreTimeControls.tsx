@@ -1,0 +1,134 @@
+// Libaries
+import React, { Component } from 'react';
+
+// Types
+import { ExploreId } from 'app/types';
+import { TimeRange, TimeOption, TimeZone, SetInterval, toUtc, dateTime } from '@grafana/ui';
+
+// State
+
+// Components
+import { TimePicker, RefreshPicker, RawTimeRange } from '@grafana/ui';
+
+// Utils & Services
+import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
+
+export interface Props {
+  exploreId: ExploreId;
+  hasLiveOption: boolean;
+  isLive: boolean;
+  loading: boolean;
+  range: TimeRange;
+  refreshInterval: string;
+  timeZone: TimeZone;
+  onRunQuery: () => void;
+  onChangeRefreshInterval: (interval: string) => void;
+  onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
+}
+
+export class ExploreTimeControls extends Component<Props> {
+  onMoveTimePicker = (direction: number) => {
+    const { range, onChangeTime, timeZone } = this.props;
+    const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
+    let to: number, from: number;
+
+    if (direction === -1) {
+      to = range.to.valueOf() - timespan;
+      from = range.from.valueOf() - timespan;
+    } else if (direction === 1) {
+      to = range.to.valueOf() + timespan;
+      from = range.from.valueOf() + timespan;
+      if (to > Date.now() && range.to.valueOf() < Date.now()) {
+        to = Date.now();
+        from = range.from.valueOf();
+      }
+    } else {
+      to = range.to.valueOf();
+      from = range.from.valueOf();
+    }
+
+    const nextTimeRange = {
+      from: timeZone === 'utc' ? toUtc(from) : dateTime(from),
+      to: timeZone === 'utc' ? toUtc(to) : dateTime(to),
+    };
+
+    onChangeTime(nextTimeRange);
+  };
+
+  onMoveForward = () => this.onMoveTimePicker(1);
+  onMoveBack = () => this.onMoveTimePicker(-1);
+
+  onChangeTimePicker = (timeRange: TimeRange) => {
+    this.props.onChangeTime(timeRange.raw);
+  };
+
+  onZoom = () => {
+    const { range, onChangeTime, timeZone } = this.props;
+
+    const timespan = range.to.valueOf() - range.from.valueOf();
+    const center = range.to.valueOf() - timespan / 2;
+
+    const to = center + (timespan * 2) / 2;
+    const from = center - (timespan * 2) / 2;
+
+    const nextTimeRange = {
+      from: timeZone === 'utc' ? toUtc(from) : dateTime(from),
+      to: timeZone === 'utc' ? toUtc(to) : dateTime(to),
+    };
+
+    onChangeTime(nextTimeRange);
+  };
+
+  setActiveTimeOption = (timeOptions: TimeOption[], rawTimeRange: RawTimeRange): TimeOption[] => {
+    return timeOptions.map(option => {
+      if (option.to === rawTimeRange.to && option.from === rawTimeRange.from) {
+        return {
+          ...option,
+          active: true,
+        };
+      }
+      return {
+        ...option,
+        active: false,
+      };
+    });
+  };
+
+  render() {
+    const {
+      hasLiveOption,
+      isLive,
+      loading,
+      range,
+      refreshInterval,
+      timeZone,
+      onRunQuery,
+      onChangeRefreshInterval,
+    } = this.props;
+
+    return (
+      <>
+        {!isLive && (
+          <TimePicker
+            value={range}
+            onChange={this.onChangeTimePicker}
+            timeZone={timeZone}
+            onMoveBackward={this.onMoveBack}
+            onMoveForward={this.onMoveForward}
+            onZoom={this.onZoom}
+            selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
+          />
+        )}
+
+        <RefreshPicker
+          onIntervalChanged={onChangeRefreshInterval}
+          onRefresh={onRunQuery}
+          value={refreshInterval}
+          tooltip="Refresh"
+          hasLiveOption={hasLiveOption}
+        />
+        {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
+      </>
+    );
+  }
+}
