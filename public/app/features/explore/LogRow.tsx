@@ -23,6 +23,7 @@ import {
   LogRowModel,
   LogLabelStatsModel,
   LogsParser,
+  TimeZone,
 } from '@grafana/ui';
 import { LogRowContext } from './LogRowContext';
 import tinycolor from 'tinycolor2';
@@ -32,8 +33,8 @@ interface Props {
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;
-  showLocalTime: boolean;
-  showUtc: boolean;
+  showTime: boolean;
+  timeZone: TimeZone;
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
@@ -209,8 +210,8 @@ export class LogRow extends PureComponent<Props, State> {
       row,
       showDuplicates,
       showLabels,
-      showLocalTime,
-      showUtc,
+      timeZone,
+      showTime,
     } = this.props;
     const {
       fieldCount,
@@ -229,6 +230,7 @@ export class LogRow extends PureComponent<Props, State> {
     const highlightClassName = classnames('logs-row__match-highlight', {
       'logs-row__match-highlight--preview': previewHighlights,
     });
+    const showUtc = timeZone === 'utc';
 
     return (
       <ThemeContext.Consumer>
@@ -242,13 +244,13 @@ export class LogRow extends PureComponent<Props, State> {
                 <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
               )}
               <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
-              {showUtc && (
-                <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-                  {row.timestamp}
+              {showTime && showUtc && (
+                <div className="logs-row__localtime" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                  {row.timeUtc}
                 </div>
               )}
-              {showLocalTime && (
-                <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
+              {showTime && !showUtc && (
+                <div className="logs-row__localtime" title={`${row.timeUtc} (${row.timeFromNow})`}>
                   {row.timeLocal}
                 </div>
               )}

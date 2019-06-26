@@ -116,7 +116,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
     if (isLive) {
       return (
         <Panel label="Logs" loading={false} isOpen>
-          <LiveLogsWithTheme logsResult={logsResult} stopLive={this.onStopLive} />
+          <LiveLogsWithTheme logsResult={logsResult} timeZone={timeZone} stopLive={this.onStopLive} />
         </Panel>
       );
     }
