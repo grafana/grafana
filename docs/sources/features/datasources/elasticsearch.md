@@ -81,8 +81,15 @@ Identifier | Description
 
 ### Logs (BETA)
 
-There are two parameters, `Message field name` and `Level field name`, that can be configured from the data source settings page that determine
-which fields will be used for log messages and their priority, respectively.
+> Only available in Grafana v6.3+.
+
+There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
+which fields will be used for log messages and log levels when visualizing logs in [Explore](/features/explore).
+
+For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch the following configuration should work:
+
+- **Message field name:**  message
+- **Level field name:** fields.level
 
 ## Metric Query editor
 
@@ -169,18 +176,25 @@ Tags | Optional field name to use for event tags (can be an array or a CSV strin
 
 ## Querying Logs (BETA)
 
+> Only available in Grafana v6.3+.
+
 Querying and displaying log data from Elasticsearch is available via [Explore](/features/explore).
 
-![](/img/docs/elasticsearch/explore_elasticsearch.png)
+![](/img/docs/v63/elasticsearch_explore_logs.png)
 
-Select the Elasticsearch data source, change to Logs using the Metrics/Logs switcher, and then optionally enter a lucene query
-into the query field to filter the log messages.
+Select the Elasticsearch data source, change to Logs using the Metrics/Logs switcher, and then optionally enter a lucene query into the query field to filter the log messages.
 
 Finally, press the `Enter` key or the `Run Query` button to display your logs.
 
 ### Log Queries
 
 Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
+
+Note that the fields used for log message and level is based on an [optional datasource configuration](#logs-beta).
+
+### Filter Log Messages
+
+Optionally enter a lucene query into the query field to filter the log messages. For example, using a default Filebeat setup you should be able to use `fields.level:error` to only show error log messages.
 
 ## Configure the Datasource with Provisioning
 
