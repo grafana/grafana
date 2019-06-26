@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { sanitize, escapeHtml } from 'app/core/utils/text';
-import { renderMarkdown } from 'app/core/utils/markdown';
+import { renderMarkdown } from '@grafana/data';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';

@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
-import { renderMarkdown } from 'app/core/utils/markdown';
+import { renderMarkdown } from '@grafana/data';
 
 // Utils
 import { sanitize } from 'app/core/utils/text';
