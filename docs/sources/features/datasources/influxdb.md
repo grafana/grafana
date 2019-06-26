@@ -120,17 +120,15 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 ## Querying Logs (BETA)
 
 Querying and displaying log data from InfluxDB is available via [Explore](/features/explore).
-Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher, <br>
-![](/img/docs/influxdb/explore_metrics_logs_switch.png)<br>
-and then use the `Measurements/Fields` button <br>
-![](/img/docs/influxdb/explore_measurements_fields_button.png)<br>
-to display your logs.
+
+![](/img/docs/influxdb/explore.png)
+
+Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher,
+and then use the `Measurements/Fields` button to display your logs.
 
 ### Log Queries
 
 The Logs Explorer (the `Measurements/Fields` button) next to the query field shows a list of measurements and fields. Choose the desired measurement that contains your log data and then choose which field Explore should use to display the log message.
-<br>
-![](/img/docs/influxdb/explore_measurements_fields_button.png)<br>
 
 Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
 
