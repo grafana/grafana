@@ -13,7 +13,7 @@ import {
 } from './explore';
 import { ExploreUrlState } from 'app/types/explore';
 import store from 'app/core/store';
-import { DataQueryError, LogsDedupStrategy, dateTime, RawTimeRange, toUtc } from '@grafana/ui';
+import { DataQueryError, LogsDedupStrategy, RawTimeRange, toUtc } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
@@ -363,8 +363,8 @@ export const expectRangesAreSame = (rawRange1: RawTimeRange, rawRange2: RawTimeR
 export const setup = (options?: any) => {
   const defaultOptions = {
     range: {
-      from: dateTime('2019-01-01 10:00:00'),
-      to: dateTime('2019-01-01 16:00:00'),
+      from: toUtc('2019-01-01 10:00:00'),
+      to: toUtc('2019-01-01 16:00:00'),
       raw: {
         from: 'now-6h',
         to: 'now',
@@ -383,13 +383,13 @@ describe('getShiftedTimeRange', () => {
       it('then it should return correct result', () => {
         const { range, direction, timeZone } = setup({ direction: -1, timeZone: 'browser' });
         const expectedRange: RawTimeRange = {
-          from: dateTime('2019-01-01 07:00:00'),
-          to: dateTime('2019-01-01 13:00:00'),
+          from: toUtc('2019-01-01 07:00:00'),
+          to: toUtc('2019-01-01 13:00:00'),
         };
 
         const result = getShiftedTimeRange(direction, range, timeZone);
 
-        expectRangesAreSame(result, expectedRange);
+        expectRangesAreSame(expectedRange, result);
       });
     });
 
@@ -397,13 +397,12 @@ describe('getShiftedTimeRange', () => {
       it('then it should return correct result', () => {
         const { range, direction, timeZone } = setup({ direction: -1, timeZone: 'utc' });
         const expectedRange: RawTimeRange = {
-          from: toUtc('2019-01-01 06:00:00'),
-          to: toUtc('2019-01-01 12:00:00'),
+          from: toUtc('2019-01-01 07:00:00'),
+          to: toUtc('2019-01-01 13:00:00'),
         };
 
         const result = getShiftedTimeRange(direction, range, timeZone);
-
-        expectRangesAreSame(result, expectedRange);
+        expectRangesAreSame(expectedRange, result);
       });
     });
   });
@@ -413,13 +412,13 @@ describe('getShiftedTimeRange', () => {
       it('then it should return correct result', () => {
         const { range, direction, timeZone } = setup({ direction: 1, timeZone: 'browser' });
         const expectedRange: RawTimeRange = {
-          from: dateTime('2019-01-01 13:00:00'),
-          to: dateTime('2019-01-01 19:00:00'),
+          from: toUtc('2019-01-01 13:00:00'),
+          to: toUtc('2019-01-01 19:00:00'),
         };
 
         const result = getShiftedTimeRange(direction, range, timeZone);
 
-        expectRangesAreSame(result, expectedRange);
+        expectRangesAreSame(expectedRange, result);
       });
     });
 
@@ -427,13 +426,13 @@ describe('getShiftedTimeRange', () => {
       it('then it should return correct result', () => {
         const { range, direction, timeZone } = setup({ direction: 1, timeZone: 'utc' });
         const expectedRange: RawTimeRange = {
-          from: toUtc('2019-01-01 12:00:00'),
-          to: toUtc('2019-01-01 18:00:00'),
+          from: toUtc('2019-01-01 13:00:00'),
+          to: toUtc('2019-01-01 19:00:00'),
         };
 
         const result = getShiftedTimeRange(direction, range, timeZone);
 
-        expectRangesAreSame(result, expectedRange);
+        expectRangesAreSame(expectedRange, result);
       });
     });
   });
@@ -443,13 +442,13 @@ describe('getShiftedTimeRange', () => {
       it('then it should return correct result', () => {
         const { range, direction, timeZone } = setup({ direction: 0, timeZone: 'browser' });
         const expectedRange: RawTimeRange = {
-          from: dateTime('2019-01-01 10:00:00'),
-          to: dateTime('2019-01-01 16:00:00'),
+          from: toUtc('2019-01-01 10:00:00'),
+          to: toUtc('2019-01-01 16:00:00'),
         };
 
         const result = getShiftedTimeRange(direction, range, timeZone);
 
-        expectRangesAreSame(result, expectedRange);
+        expectRangesAreSame(expectedRange, result);
       });
     });
 
@@ -457,13 +456,13 @@ describe('getShiftedTimeRange', () => {
       it('then it should return correct result', () => {
         const { range, direction, timeZone } = setup({ direction: 0, timeZone: 'utc' });
         const expectedRange: RawTimeRange = {
-          from: toUtc('2019-01-01 09:00:00'),
-          to: toUtc('2019-01-01 15:00:00'),
+          from: toUtc('2019-01-01 10:00:00'),
+          to: toUtc('2019-01-01 16:00:00'),
         };
 
         const result = getShiftedTimeRange(direction, range, timeZone);
 
-        expectRangesAreSame(result, expectedRange);
+        expectRangesAreSame(expectedRange, result);
       });
     });
   });
