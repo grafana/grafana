@@ -29,6 +29,7 @@ export default class GraphiteQuery {
     this.functions = [];
     this.segments = [];
     this.tags = [];
+    this.seriesByTagUsed = false;
     this.error = null;
 
     if (this.target.textEditor) {
@@ -57,17 +58,6 @@ export default class GraphiteQuery {
     }
 
     this.checkOtherSegmentsIndex = this.segments.length - 1;
-    this.checkForSeriesByTag();
-  }
-
-  checkForSeriesByTag() {
-    const seriesByTagFunc: any = _.find(this.functions, func => func.def.name === 'seriesByTag');
-    if (seriesByTagFunc) {
-      this.seriesByTagUsed = true;
-      seriesByTagFunc.hidden = true;
-      const tags = this.splitSeriesByTagParams(seriesByTagFunc);
-      this.tags = tags;
-    }
   }
 
   getSegmentPathUpTo(index) {
@@ -98,6 +88,14 @@ export default class GraphiteQuery {
 
         innerFunc.updateText();
         this.functions.push(innerFunc);
+
+        // extract tags from seriesByTag function and hide function
+        if (innerFunc.def.name === 'seriesByTag' && !this.seriesByTagUsed) {
+          this.seriesByTagUsed = true;
+          innerFunc.hidden = true;
+          this.tags = this.splitSeriesByTagParams(innerFunc);
+        }
+
         break;
       case 'series-ref':
         if (this.segments.length > 0 || this.getSeriesByTagFuncIndex() >= 0) {
@@ -112,7 +110,7 @@ export default class GraphiteQuery {
         this.addFunctionParameter(func, astNode.value);
         break;
       case 'metric':
-        if (this.segments.length > 0) {
+        if (this.segments.length || this.tags.length) {
           this.addFunctionParameter(func, _.join(_.map(astNode.segments, 'value'), '.'));
         } else {
           this.segments = astNode.segments;
