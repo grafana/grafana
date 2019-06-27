@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import Remarkable from 'remarkable';
 import { debounce } from 'lodash';
+import { renderMarkdown } from '@grafana/data';
 
 // Utils
 import { sanitize } from 'app/core/utils/text';
@@ -17,8 +17,6 @@ interface State {
 }
 
 export class TextPanel extends PureComponent<Props, State> {
-  remarkable: Remarkable;
-
   constructor(props: Props) {
     super(props);
 
@@ -59,10 +57,7 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   prepareMarkdown(content: string): string {
-    if (!this.remarkable) {
-      this.remarkable = new Remarkable();
-    }
-    return this.prepareHTML(this.remarkable.render(content));
+    return this.prepareHTML(renderMarkdown(content));
   }
 
   processContent(options: TextOptions): string {

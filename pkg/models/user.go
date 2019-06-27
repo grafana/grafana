@@ -208,29 +208,45 @@ func (user *SignedInUser) HasRole(role RoleType) bool {
 }
 
 type UserProfileDTO struct {
-	Id             int64  `json:"id"`
-	Email          string `json:"email"`
-	Name           string `json:"name"`
-	Login          string `json:"login"`
-	Theme          string `json:"theme"`
-	OrgId          int64  `json:"orgId"`
-	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
-	IsDisabled     bool   `json:"isDisabled"`
+	Id             int64    `json:"id"`
+	Email          string   `json:"email"`
+	Name           string   `json:"name"`
+	Login          string   `json:"login"`
+	Theme          string   `json:"theme"`
+	OrgId          int64    `json:"orgId"`
+	IsGrafanaAdmin bool     `json:"isGrafanaAdmin"`
+	IsDisabled     bool     `json:"isDisabled"`
+	AuthModule     []string `json:"authModule"`
 }
 
 type UserSearchHitDTO struct {
-	Id            int64     `json:"id"`
-	Name          string    `json:"name"`
-	Login         string    `json:"login"`
-	Email         string    `json:"email"`
-	AvatarUrl     string    `json:"avatarUrl"`
-	IsAdmin       bool      `json:"isAdmin"`
-	IsDisabled    bool      `json:"isDisabled"`
-	LastSeenAt    time.Time `json:"lastSeenAt"`
-	LastSeenAtAge string    `json:"lastSeenAtAge"`
+	Id            int64                `json:"id"`
+	Name          string               `json:"name"`
+	Login         string               `json:"login"`
+	Email         string               `json:"email"`
+	AvatarUrl     string               `json:"avatarUrl"`
+	IsAdmin       bool                 `json:"isAdmin"`
+	IsDisabled    bool                 `json:"isDisabled"`
+	LastSeenAt    time.Time            `json:"lastSeenAt"`
+	LastSeenAtAge string               `json:"lastSeenAtAge"`
+	AuthModule    AuthModuleConversion `json:"authModule"`
 }
 
 type UserIdDTO struct {
 	Id      int64  `json:"id"`
 	Message string `json:"message"`
+}
+
+// implement Conversion interface to define custom field mapping (xorm feature)
+type AuthModuleConversion []string
+
+func (auth *AuthModuleConversion) FromDB(data []byte) error {
+	auth_module := string(data)
+	*auth = []string{auth_module}
+	return nil
+}
+
+// Just a stub, we don't wanna write to database
+func (auth *AuthModuleConversion) ToDB() ([]byte, error) {
+	return []byte{}, nil
 }

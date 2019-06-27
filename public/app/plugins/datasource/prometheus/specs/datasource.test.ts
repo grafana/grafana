@@ -219,24 +219,36 @@ describe('PrometheusDatasource', () => {
 
   describe('alignRange', () => {
     it('does not modify already aligned intervals with perfect step', () => {
-      const range = alignRange(0, 3, 3);
+      const range = alignRange(0, 3, 3, 0);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(3);
     });
     it('does modify end-aligned intervals to reflect number of steps possible', () => {
-      const range = alignRange(1, 6, 3);
+      const range = alignRange(1, 6, 3, 0);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(6);
     });
     it('does align intervals that are a multiple of steps', () => {
-      const range = alignRange(1, 4, 3);
+      const range = alignRange(1, 4, 3, 0);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(3);
     });
     it('does align intervals that are not a multiple of steps', () => {
-      const range = alignRange(1, 5, 3);
+      const range = alignRange(1, 5, 3, 0);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(3);
+    });
+    it('does align intervals with local midnight -UTC offset', () => {
+      //week range, location 4+ hours UTC offset, 24h step time
+      const range = alignRange(4 * 60 * 60, (7 * 24 + 4) * 60 * 60, 24 * 60 * 60, -4 * 60 * 60); //04:00 UTC, 7 day range
+      expect(range.start).toEqual(4 * 60 * 60);
+      expect(range.end).toEqual((7 * 24 + 4) * 60 * 60);
+    });
+    it('does align intervals with local midnight +UTC offset', () => {
+      //week range, location 4- hours UTC offset, 24h step time
+      const range = alignRange(20 * 60 * 60, (8 * 24 - 4) * 60 * 60, 24 * 60 * 60, 4 * 60 * 60); //20:00 UTC on day1, 7 days later is 20:00 on day8
+      expect(range.start).toEqual(20 * 60 * 60);
+      expect(range.end).toEqual((8 * 24 - 4) * 60 * 60);
     });
   });
 
@@ -419,7 +431,10 @@ const templateSrv = ({
 
 const timeSrv = ({
   timeRange: () => {
-    return { to: { diff: () => 2000 }, from: '' };
+    return {
+      from: dateTime(1531468681),
+      to: dateTime(1531468681 + 2000),
+    };
   },
 } as unknown) as TimeSrv;
 

@@ -287,7 +287,7 @@ $popover-header-bg: $dark-9;
 $popover-shadow: 0 0 20px black;
 
 $popover-help-bg: $btn-secondary-bg;
-$popover-help-color: $text-color;
+$popover-help-color: $gray-6;
 
 $popover-error-bg: $btn-danger-bg;
 

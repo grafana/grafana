@@ -115,7 +115,7 @@ const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({
     await ensureMasterBranch();
   }
 
-  runChecksAndTests();
+  await runChecksAndTests();
 
   await execTask(buildTask)();
 
