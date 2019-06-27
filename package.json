@@ -193,6 +193,7 @@
     "@types/enzyme-adapter-react-16": "1.0.5",
     "@types/marked": "0.6.5",
     "@types/react-redux": "^7.0.8",
+    "@types/react-test-renderer": "16.8.2",
     "@types/redux-logger": "3.0.7",
     "@types/reselect": "2.2.0",
     "@types/slate": "0.44.11",
