@@ -124,9 +124,13 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:test')
     .option('-u, --updateSnapshot', 'Run snapshots update')
+    .option('--coverage', 'Run code coverage')
     .description('Executes plugin tests')
     .action(async cmd => {
-      await execTask(pluginTestTask)({ updateSnapshot: !!cmd.updateSnapshot });
+      await execTask(pluginTestTask)({
+        updateSnapshot: !!cmd.updateSnapshot,
+        coverage: !!cmd.coverage,
+      });
     });
 
   program.on('command:*', () => {

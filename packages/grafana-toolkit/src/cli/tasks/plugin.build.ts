@@ -76,7 +76,7 @@ const pluginBuildRunner: TaskRunner<PrecommitOptions> = async () => {
   await clean();
   // @ts-ignore
   await lintPlugin();
-  await testPlugin({ updateSnapshot: false });
+  await testPlugin({ updateSnapshot: false, coverage: false });
   // @ts-ignore
   await bundlePlugin();
 };
