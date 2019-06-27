@@ -22,11 +22,14 @@ const typecheckPlugin = useSpinner<void>('Typechecking', async () => {
 
 // @ts-ignore
 const lintPlugin = useSpinner<void>('Linting', async () => {
-  const tsLintConfigPath = path.resolve(__dirname, '../../config/tslint.plugin.json');
+  let tsLintConfigPath = path.resolve(process.cwd(), 'tslint.json');
+  if (!fs.existsSync(tsLintConfigPath)) {
+    tsLintConfigPath = path.resolve(__dirname, '../../config/tslint.plugin.json');
+  }
   const globPattern = path.resolve(process.cwd(), 'src/**/*.+(ts|tsx)');
   const sourcesToLint = glob.sync(globPattern);
   const options = {
-    fix: false,
+    fix: true, // or fail
     formatter: 'json',
   };
 
