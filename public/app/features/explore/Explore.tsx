@@ -83,9 +83,9 @@ interface ExploreProps {
   initialDatasource: string;
   initialQueries: DataQuery[];
   initialRange: RawTimeRange;
+  mode: ExploreMode;
   initialUI: ExploreUIState;
   queryErrors: DataQueryError[];
-  mode: ExploreMode;
   isLive: boolean;
   updateTimeRange: typeof updateTimeRange;
 }
@@ -129,7 +129,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   }
 
   componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, initialUI } = this.props;
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, mode, initialUI } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
@@ -139,6 +139,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         initialDatasource,
         initialQueries,
         initialRange,
+        mode,
         width,
         this.exploreEvents,
         initialUI
@@ -316,14 +317,32 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     urlState,
     update,
     queryErrors,
-    mode,
     isLive,
+    supportedModes,
+    mode,
   } = item;
 
-  const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
+  const { datasource, queries, range: urlRange, mode: urlMode, ui } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
   const initialQueries: DataQuery[] = ensureQueries(queries);
   const initialRange = urlRange ? getTimeRangeFromUrl(urlRange, timeZone).raw : DEFAULT_RANGE;
+
+  let newMode: ExploreMode;
+  if (supportedModes.length) {
+    const urlModeIsValid = supportedModes.includes(urlMode);
+    const modeStateIsValid = supportedModes.includes(mode);
+
+    if (urlModeIsValid) {
+      newMode = urlMode;
+    } else if (modeStateIsValid) {
+      newMode = mode;
+    } else {
+      newMode = supportedModes[0];
+    }
+  } else {
+    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : ExploreMode.Metrics;
+  }
+
   const initialUI = ui || DEFAULT_UI_STATE;
 
   return {
@@ -340,9 +359,9 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialDatasource,
     initialQueries,
     initialRange,
+    mode: newMode,
     initialUI,
     queryErrors,
-    mode,
     isLive,
   };
 }
