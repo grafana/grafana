@@ -15,9 +15,9 @@ import { terser } from 'rollup-plugin-terser';
 // @ts-ignore
 import visualizer from 'rollup-plugin-visualizer';
 // @ts-ignore
-import builtins from 'rollup-plugin-node-builtins';
+// import builtins from 'rollup-plugin-node-builtins';
 // @ts-ignore
-import globals from 'rollup-plugin-node-globals';
+// import globals from 'rollup-plugin-node-globals';
 
 // @ts-ignore
 const replace = require('replace-in-file');
@@ -101,8 +101,8 @@ export const inputOptions = (): InputOptions => {
     plugins: [
       // Allow json resolution
       json(),
-      globals(),
-      builtins(),
+      // globals(),
+      // builtins(),
 
       // Compile TypeScript files
       typescript({
