@@ -44,8 +44,9 @@ import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 import { timeEpic } from 'app/features/explore/state/epics/timeEpic';
 import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { UserState } from 'app/types/user';
-import { getTimeRange, getShiftedTimeRange } from 'app/core/utils/explore';
+import { getTimeRange } from 'app/core/utils/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 const rootReducers = {
   ...sharedReducers,

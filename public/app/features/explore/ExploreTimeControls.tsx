@@ -12,7 +12,7 @@ import { TimePicker, RefreshPicker, RawTimeRange } from '@grafana/ui';
 
 // Utils & Services
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
-import { getShiftedTimeRange } from 'app/core/utils/explore';
+import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 export interface Props {
   exploreId: ExploreId;

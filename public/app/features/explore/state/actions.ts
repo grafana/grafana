@@ -13,7 +13,6 @@ import {
   getTimeRange,
   getTimeRangeFromUrl,
   generateNewKeyAndAddRefIdIfMissing,
-  getShiftedTimeRange,
 } from 'app/core/utils/explore';
 
 // Types
@@ -66,6 +65,7 @@ import {
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 /**
  * Updates UI state and save it to the URL
