@@ -417,9 +417,9 @@ export function scanStart(exploreId: ExploreId): ThunkResult<void> {
     // Register the scanner
     dispatch(scanStartAction({ exploreId }));
     // Scanning must trigger query run, and return the new range
-    const range = getShiftedTimeRange(-1, getState().explore[exploreId].range, getTimeZone(getState().user));
+    const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
     // Set the new range to be displayed
-    dispatch(updateTimeRangeAction({ exploreId, rawRange: range }));
+    dispatch(updateTimeRangeAction({ exploreId, absoluteRange: range }));
     dispatch(runQueriesAction({ exploreId }));
   };
 }

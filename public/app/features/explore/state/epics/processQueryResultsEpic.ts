@@ -68,7 +68,7 @@ export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSt
       if (scanning) {
         if (_.size(result) === 0) {
           const range = getShiftedTimeRange(-1, state$.value.explore[exploreId].range, getTimeZone(state$.value.user));
-          actions.push(updateTimeRangeAction({ exploreId, rawRange: range }));
+          actions.push(updateTimeRangeAction({ exploreId, absoluteRange: range }));
           actions.push(runQueriesAction({ exploreId }));
         } else {
           // We can stop scanning if we have a result

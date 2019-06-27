@@ -1,6 +1,6 @@
-import { TimeRange, TimeZone, RawTimeRange, toUtc, dateTime } from '@grafana/ui';
+import { TimeRange, toUtc, AbsoluteTimeRange } from '@grafana/ui';
 
-export const getShiftedTimeRange = (direction: number, origRange: TimeRange, timeZone: TimeZone): RawTimeRange => {
+export const getShiftedTimeRange = (direction: number, origRange: TimeRange): AbsoluteTimeRange => {
   const range = {
     from: toUtc(origRange.from),
     to: toUtc(origRange.to),
@@ -24,10 +24,15 @@ export const getShiftedTimeRange = (direction: number, origRange: TimeRange, tim
     from = range.from.valueOf();
   }
 
-  const nextTimeRange = {
-    from: timeZone === 'utc' ? toUtc(from) : dateTime(from),
-    to: timeZone === 'utc' ? toUtc(to) : dateTime(to),
-  };
+  return { from, to };
+};
 
-  return nextTimeRange;
+export const getZoomedTimeRange = (range: TimeRange, factor: number): AbsoluteTimeRange => {
+  const timespan = range.to.valueOf() - range.from.valueOf();
+  const center = range.to.valueOf() - timespan / 2;
+
+  const to = center + (timespan * factor) / 2;
+  const from = center - (timespan * factor) / 2;
+
+  return { from, to };
 };

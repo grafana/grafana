@@ -36,6 +36,7 @@ import {
   DateTime,
   toUtc,
   dateTime,
+  AbsoluteTimeRange,
 } from '@grafana/ui';
 import { Observable } from 'rxjs';
 import { getQueryResponse } from 'app/core/utils/explore';
@@ -88,7 +89,7 @@ export interface EpicDependencies {
   getTimeZone: (state: UserState) => TimeZone;
   toUtc: (input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
   dateTime: (input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
-  getShiftedTimeRange: (direction: number, origRange: TimeRange, timeZone: TimeZone) => RawTimeRange;
+  getShiftedTimeRange: (direction: number, origRange: TimeRange, timeZone: TimeZone) => AbsoluteTimeRange;
 }
 
 const dependencies: EpicDependencies = {

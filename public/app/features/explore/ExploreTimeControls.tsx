@@ -12,7 +12,7 @@ import { TimePicker, RefreshPicker, RawTimeRange } from '@grafana/ui';
 
 // Utils & Services
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
-import { getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 
 export interface Props {
   exploreId: ExploreId;
@@ -30,7 +30,11 @@ export interface Props {
 export class ExploreTimeControls extends Component<Props> {
   onMoveTimePicker = (direction: number) => {
     const { range, onChangeTime, timeZone } = this.props;
-    const nextTimeRange = getShiftedTimeRange(direction, range, timeZone);
+    const { from, to } = getShiftedTimeRange(direction, range);
+    const nextTimeRange = {
+      from: timeZone === 'utc' ? toUtc(from) : dateTime(from),
+      to: timeZone === 'utc' ? toUtc(to) : dateTime(to),
+    };
 
     onChangeTime(nextTimeRange);
   };
@@ -44,13 +48,7 @@ export class ExploreTimeControls extends Component<Props> {
 
   onZoom = () => {
     const { range, onChangeTime, timeZone } = this.props;
-
-    const timespan = range.to.valueOf() - range.from.valueOf();
-    const center = range.to.valueOf() - timespan / 2;
-
-    const to = center + (timespan * 2) / 2;
-    const from = center - (timespan * 2) / 2;
-
+    const { from, to } = getZoomedTimeRange(range, 2);
     const nextTimeRange = {
       from: timeZone === 'utc' ? toUtc(from) : dateTime(from),
       to: timeZone === 'utc' ? toUtc(to) : dateTime(to),

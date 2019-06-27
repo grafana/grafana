@@ -45,11 +45,11 @@ export class DashNavTimeControls extends Component<Props> {
 
   onMoveTimePicker = (direction: number) => {
     const range = this.timeSrv.timeRange();
-    const shiftedRange = getShiftedTimeRange(direction, range, this.props.dashboard.getTimezone());
+    const { from, to } = getShiftedTimeRange(direction, range);
 
     this.timeSrv.setTime({
-      from: toUtc(shiftedRange.from),
-      to: toUtc(shiftedRange.to),
+      from: toUtc(from),
+      to: toUtc(to),
     });
   };
 

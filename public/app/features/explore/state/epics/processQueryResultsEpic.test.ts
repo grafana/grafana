@@ -1,5 +1,5 @@
 import { mockExploreState } from 'test/mocks/mockExploreState';
-import { epicTester } from 'test/core/redux/epicTester';
+import { epicTester, MOCKED_ABSOLUTE_RANGE } from 'test/core/redux/epicTester';
 import {
   processQueryResultsAction,
   resetQueryErrorAction,
@@ -11,7 +11,6 @@ import {
 import { SeriesData, LoadingState } from '@grafana/ui';
 import { processQueryResultsEpic } from './processQueryResultsEpic';
 import TableModel from 'app/core/table_model';
-import { DEFAULT_RANGE } from 'app/core/utils/explore';
 
 const testContext = () => {
   const serieA: SeriesData = {
@@ -96,7 +95,7 @@ describe('processQueryResultsEpic', () => {
               .thenResultingActionsEqual(
                 resetQueryErrorAction({ exploreId, refIds: [] }),
                 querySuccessAction({ exploreId, loadingState, graphResult, tableResult, logsResult, latency }),
-                updateTimeRangeAction({ exploreId, rawRange: DEFAULT_RANGE }),
+                updateTimeRangeAction({ exploreId, absoluteRange: MOCKED_ABSOLUTE_RANGE }),
                 runQueriesAction({ exploreId })
               );
           });
