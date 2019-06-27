@@ -61,12 +61,13 @@ export class FieldDisplayEditor extends PureComponent<Props> {
 
     return (
       <>
-        <div className="gf-form">
+        <div className="form-field">
           <FormLabel width={labelWidth}>Show</FormLabel>
           <Select
             options={showOptions}
             value={values ? showOptions[0] : showOptions[1]}
             onChange={this.onShowValuesChange}
+            width={12}
           />
         </div>
         {values ? (
@@ -79,7 +80,7 @@ export class FieldDisplayEditor extends PureComponent<Props> {
             type="number"
           />
         ) : (
-          <div className="gf-form">
+          <div className="form-field">
             <FormLabel width={labelWidth}>Calc</FormLabel>
             <StatsPicker
               width={12}

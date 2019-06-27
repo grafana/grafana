@@ -32,7 +32,7 @@ export const FormField: FunctionComponent<Props> = ({
       <FormLabel width={labelWidth} tooltip={tooltip}>
         {label}
       </FormLabel>
-      {inputEl || <input type="text" className={`gf-form-input width-${inputWidth}`} {...inputProps} />}
+      {inputEl || <input type="text" className={`form-input width-${inputWidth}`} {...inputProps} />}
     </div>
   );
 };

@@ -5,18 +5,18 @@
 
   <form name="ctrl.userForm" class="gf-form-group">
 
-    <div class="gf-form max-width-30">
-      <span class="gf-form-label width-8">Name</span>
-      <input class="gf-form-input max-width-22" type="text" required ng-model="ctrl.user.name">
+    <div class="form-field max-width-30">
+      <label class="form-label">Name</label>
+      <input class="form-input max-width-22" type="text" required ng-model="ctrl.user.name">
     </div>
-    <div class="gf-form max-width-30">
-      <span class="gf-form-label width-8">Email</span>
-      <input class="gf-form-input max-width-22" type="email" ng-readonly="ctrl.readonlyLoginFields" required ng-model="ctrl.user.email">
+    <div class="form-field max-width-30">
+      <span class="form-label">Email</span>
+      <input class="form-input max-width-22" type="email" ng-readonly="ctrl.readonlyLoginFields" required ng-model="ctrl.user.email">
       <i ng-if="ctrl.readonlyLoginFields" class="fa fa-lock gf-form-icon--right-absolute" bs-tooltip="'Login Details Locked - managed in another system.'"></i>
     </div>
-    <div class="gf-form max-width-30">
-      <span class="gf-form-label width-8">Username</span>
-      <input class="gf-form-input max-width-22" type="text" ng-readonly="ctrl.readonlyLoginFields" required ng-model="ctrl.user.login">
+    <div class="form-field max-width-30">
+      <span class="form-label">Username</span>
+      <input class="form-input max-width-22" type="text" ng-readonly="ctrl.readonlyLoginFields" required ng-model="ctrl.user.login">
       <i ng-if="ctrl.readonlyLoginFields" class="fa fa-lock gf-form-icon--right-absolute" bs-tooltip="'Login Details Locked - managed in another system.'"></i>
     </div>
     <div class="gf-form-button-row">

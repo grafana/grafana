@@ -103,8 +103,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
     return (
       <form className="section gf-form-group" onSubmit={this.onSubmitForm}>
         <h3 className="page-heading">Preferences</h3>
-        <div className="gf-form">
-          <span className="gf-form-label width-11">UI Theme</span>
+        <div className="form-field">
+          <FormLabel>UI Theme</FormLabel>
           <Select
             isSearchable={false}
             value={themes.find(item => item.value === theme)}
@@ -113,7 +113,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             width={20}
           />
         </div>
-        <div className="gf-form">
+        <div className="form-field">
           <FormLabel
             width={11}
             tooltip="Not finding dashboard you want? Star it first, then it should appear in this select box."
@@ -130,8 +130,8 @@ export class SharedPreferences extends PureComponent<Props, State> {
             width={20}
           />
         </div>
-        <div className="gf-form">
-          <label className="gf-form-label width-11">Timezone</label>
+        <div className="form-field">
+          <FormLabel>Timezone</FormLabel>
           <Select
             isSearchable={false}
             value={timezones.find(item => item.value === timezone)}

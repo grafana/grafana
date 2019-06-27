@@ -8,6 +8,7 @@ export interface Props {
   labelClass?: string;
   switchClass?: string;
   transparent?: boolean;
+  containerWidth?: string;
   onChange: (event?: React.SyntheticEvent<HTMLInputElement>) => void;
 }
 
@@ -27,14 +28,15 @@ export class Switch extends PureComponent<Props, State> {
   };
 
   render() {
-    const { labelClass = '', switchClass = '', label, checked, transparent, className } = this.props;
+    const { labelClass = '', switchClass = '', label, checked, transparent, className, containerWidth } = this.props;
 
     const labelId = this.state.id;
     const labelClassName = `gf-form-label ${labelClass} ${transparent ? 'gf-form-label--transparent' : ''} pointer`;
     const switchClassName = `gf-form-switch ${switchClass} ${transparent ? 'gf-form-switch--transparent' : ''}`;
+    const containerClassName = `gf-form-switch-container-react width-${containerWidth}'}`;
 
     return (
-      <div className="gf-form-switch-container-react">
+      <div className={containerClassName}>
         <label htmlFor={labelId} className={`gf-form gf-form-switch-container ${className || ''}`}>
           {label && <div className={labelClassName}>{label}</div>}
           <div className={switchClassName}>

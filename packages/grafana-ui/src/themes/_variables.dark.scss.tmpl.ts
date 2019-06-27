@@ -18,6 +18,7 @@ $blue-base: ${theme.colors.blueBase};
 $blue-shade: ${theme.colors.blueShade};
 $red-base: ${theme.colors.redBase};
 $red-shade: ${theme.colors.redShade};
+$red-faint: ${theme.colors.redFaint};
 $green-base: ${theme.colors.greenBase};
 $green-shade: ${theme.colors.greenShade};
 
@@ -197,7 +198,7 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: $gray-4;
-$input-border-color: $dark-6;
+$input-border-color: $dark-10;
 $input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
 $input-border-focus: $dark-6 !default;
 $input-box-shadow-focus: $blue-light !default;

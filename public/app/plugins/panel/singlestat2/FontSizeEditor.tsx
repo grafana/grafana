@@ -34,7 +34,7 @@ export class FontSizeEditor extends PureComponent<Props> {
 
     return (
       <PanelOptionsGroup title="Font Size">
-        <div className="gf-form">
+        <div className="form-field">
           <FormLabel width={labelWidth}>Prefix</FormLabel>
           <Select
             width={12}
@@ -44,7 +44,7 @@ export class FontSizeEditor extends PureComponent<Props> {
           />
         </div>
 
-        <div className="gf-form">
+        <div className="form-field">
           <FormLabel width={labelWidth}>Value</FormLabel>
           <Select
             width={12}
@@ -54,7 +54,7 @@ export class FontSizeEditor extends PureComponent<Props> {
           />
         </div>
 
-        <div className="gf-form">
+        <div className="form-field">
           <FormLabel width={labelWidth}>Postfix</FormLabel>
           <Select
             width={12}

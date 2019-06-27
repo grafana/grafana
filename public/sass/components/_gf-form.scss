@@ -84,6 +84,10 @@ $input-border: 1px solid $input-border-color;
     margin-left: $space-xs;
   }
 
+  .form-field + .form-field {
+    margin-left: $space-md;
+  }
+
   &--nowrap {
     flex-wrap: nowrap;
   }
@@ -440,4 +444,55 @@ select.gf-form-input ~ .gf-form-help-icon {
 .cta-form__bar-header {
   font-size: $font-size-h4;
   padding-right: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.form-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: $font-weight-semi-bold;
+  //color: #000;
+  margin-bottom: 4px;
+
+  &--description {
+    font-weight: $font-weight-regular;
+    color: $text-color-weak;
+  }
+}
+
+.form-input {
+  height: 36px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  border: 1px solid $input-border-color;
+  background: $input-bg;
+  border-radius: 2px;
+  transition: 0.5s ease;
+
+  &:focus {
+    border-color: $blue-base !important;
+    outline: none;
+    background: $blue-faint !important;
+  }
+
+  &:hover {
+    border-color: $text-color-weak;
+    transition: 0.5s ease;
+  }
+}
+
+.form-toggle-button {
+  border: #7a7a7a;
+  color: #7a7a7a;
+  background: #fff;
+  &--active {
+    border: blue;
+    color: blue;
+  }
 }

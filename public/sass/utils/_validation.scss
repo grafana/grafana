@@ -1,6 +1,9 @@
 input.validation-error,
 input.ng-dirty.ng-invalid {
-  box-shadow: inset 0 0px 5px $red;
+  //box-shadow: inset 0 0px 5px $red;
+  border: 1px solid $red-base;
+  background: $red-faint;
+  outline: none;
 }
 
 input.invalid {

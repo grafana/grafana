@@ -13,7 +13,7 @@ interface Props {
 
 export const DataSourceOption: FC<Props> = ({ label, placeholder, name, value, onBlur, onChange, tooltipInfo }) => {
   return (
-    <div className="gf-form gf-form--flex-end">
+    <div className="form-field gf-form--flex-end">
       <FormLabel tooltip={tooltipInfo}>{label}</FormLabel>
       <Input
         type="text"

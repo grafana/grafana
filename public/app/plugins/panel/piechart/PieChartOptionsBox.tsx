@@ -24,7 +24,7 @@ export class PieChartOptionsBox extends PureComponent<PanelEditorProps<PieChartO
 
     return (
       <PanelOptionsGroup title="PieChart">
-        <div className="gf-form">
+        <div className="form-field">
           <FormLabel width={labelWidth}>Type</FormLabel>
           <Select
             width={12}
@@ -33,14 +33,12 @@ export class PieChartOptionsBox extends PureComponent<PanelEditorProps<PieChartO
             value={pieChartOptions.find(option => option.value === pieType)}
           />
         </div>
-        <div className="gf-form">
-          <FormField
-            label="Divider width"
-            labelWidth={labelWidth}
-            onChange={this.onStrokeWidthChange}
-            value={strokeWidth}
-          />
-        </div>
+        <FormField
+          label="Divider width"
+          labelWidth={labelWidth}
+          onChange={this.onStrokeWidthChange}
+          value={strokeWidth}
+        />
       </PanelOptionsGroup>
     );
   }

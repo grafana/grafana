@@ -78,6 +78,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
               labelClass={`width-${this.labelWidth}`}
               checked={showThresholdMarkers}
               onChange={this.onToggleThresholdMarkers}
+              containerWidth={'12'}
             />
           </PanelOptionsGroup>
 

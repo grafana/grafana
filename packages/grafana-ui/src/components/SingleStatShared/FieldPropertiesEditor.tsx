@@ -90,7 +90,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
         placeholder="Auto"
       />
 
-      <div className="gf-form">
+      <div className="form-field">
         <FormLabel width={labelWidth}>Unit</FormLabel>
         <UnitPicker defaultValue={unit} onChange={onUnitChange} />
       </div>
