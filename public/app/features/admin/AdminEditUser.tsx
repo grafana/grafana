@@ -12,6 +12,7 @@ import UserSessions from 'app/core/components/UserEdit/UserSessions';
 import NewUserPassword from 'app/core/components/UserEdit/Admin/NewUserPassword';
 import UserPermissions from 'app/core/components/UserEdit/Admin/UserPermissions';
 import UserOrganizations from 'app/core/components/UserEdit/Admin/UserOrganizations';
+import UserStatus from 'app/core/components/UserEdit/Admin/UserStatus';
 
 export interface Props {
   navModel: NavModel;
@@ -39,14 +40,11 @@ export class AdminEditUser extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           {!isLoading && <UserProfile adminMode={adminMode} userId={userId} />}
-          {userId && (
-            <>
-              <NewUserPassword userId={userId} />
-              {!isLoading && <UserPermissions userId={userId} />}
-              <UserOrganizations userId={userId} />
-              <UserSessions adminMode={adminMode} userId={userId} />
-            </>
-          )}
+          <NewUserPassword userId={userId} />
+          {!isLoading && <UserPermissions userId={userId} />}
+          <UserOrganizations userId={userId} />
+          <UserSessions adminMode={adminMode} userId={userId} />
+          {!isLoading && <UserStatus userId={userId} />}
         </Page.Contents>
       </Page>
     );

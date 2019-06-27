@@ -1,24 +1,19 @@
 import React from 'react';
-// @ts-ignore
-import renderer from 'react-test-renderer';
-import { OrganizationPicker } from './OrganizationPicker';
+import { shallow } from 'enzyme';
+import { OrganizationPicker, Props } from './OrganizationPicker';
 
-jest.mock('app/core/services/backend_srv', () => ({
-  getBackendSrv: () => {
-    return {
-      get: () => {
-        return Promise.resolve([]);
-      },
-    };
-  },
-}));
+const setup = () => {
+  const props: Props = {
+    onSelected: () => {},
+  };
 
-describe('OrganizationPicker', () => {
-  it('renders correctly', () => {
-    const props = {
-      onSelected: () => {},
-    };
-    const tree = renderer.create(<OrganizationPicker {...props} />).toJSON();
-    expect(tree).toMatchSnapshot();
+  return shallow(<OrganizationPicker {...props} />);
+};
+
+describe('Render', () => {
+  it('should render component', () => {
+    const wrapper = setup();
+
+    expect(wrapper).toMatchSnapshot();
   });
 });

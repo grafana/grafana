@@ -11,6 +11,8 @@ export interface OrgUser {
   role: string;
   userId: number;
   isGrafanaAdmin: boolean;
+  isDisabled: boolean;
+  authModule: string;
 }
 
 export interface User {

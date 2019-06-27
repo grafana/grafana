@@ -36,7 +36,6 @@ import {
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
-  changeTimeAction,
   changeRefreshIntervalAction,
   clearQueriesAction,
   highlightLogsExpressionAction,
@@ -94,6 +93,10 @@ export const makeExploreItemState = (): ExploreItemState => ({
     from: null,
     to: null,
     raw: DEFAULT_RANGE,
+  },
+  absoluteRange: {
+    from: null,
+    to: null,
   },
   scanning: false,
   scanRange: null,
@@ -175,12 +178,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: changeTimeAction,
-    mapper: (state, action): ExploreItemState => {
-      return { ...state, range: action.payload.range };
-    },
-  })
-  .addMapper({
     filter: changeRefreshIntervalAction,
     mapper: (state, action): ExploreItemState => {
       const { refreshInterval } = action.payload;
@@ -240,7 +237,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const supportsGraph = datasourceInstance.meta.metrics;
       const supportsLogs = datasourceInstance.meta.logs;
 
-      let mode = ExploreMode.Metrics;
+      let mode = state.mode || ExploreMode.Metrics;
       const supportedModes: ExploreMode[] = [];
 
       if (supportsGraph) {
@@ -520,8 +517,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   })
   .addMapper({
     filter: runQueriesAction,
-    mapper: (state, action): ExploreItemState => {
-      const { range } = action.payload;
+    mapper: (state): ExploreItemState => {
+      const { range } = state;
       const { datasourceInstance, containerWidth } = state;
       let interval = '1s';
       if (datasourceInstance && datasourceInstance.interval) {
@@ -575,9 +572,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: changeRangeAction,
     mapper: (state, action): ExploreItemState => {
+      const { range, absoluteRange } = action.payload;
       return {
         ...state,
-        range: action.payload.range,
+        range,
+        absoluteRange,
       };
     },
   })

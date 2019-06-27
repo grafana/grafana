@@ -1,6 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { OrgUser, ThunkResult } from 'app/types';
-import { updateLocation } from 'app/core/actions';
 
 export enum ActionTypes {
   LoadUser = 'LOAD_USER',
@@ -44,17 +43,23 @@ export function updateUser(updates: object, id?: number): ThunkResult<any> {
   return async dispatch => {
     if (id) {
       await getBackendSrv().put('/api/users/' + id, updates);
-      dispatch(updateLocation({ path: '/admin/users' }));
     } else {
       await getBackendSrv().put('/api/user/', updates);
-      dispatch(loadUser());
     }
+    dispatch(loadUser(id));
   };
 }
 
 export function updateUserPermissions(permissions: object, id: number): ThunkResult<any> {
   return async dispatch => {
     await getBackendSrv().put('/api/admin/users/' + id + '/permissions', permissions);
-    dispatch(updateLocation({ path: '/admin/users' }));
+  };
+}
+
+export function toggleUserStatus(disabled: boolean, id: number): ThunkResult<any> {
+  return async dispatch => {
+    const actionEndpoint = disabled ? '/enable' : '/disable';
+    await getBackendSrv().post('/api/admin/users/' + id + actionEndpoint, {});
+    dispatch(loadUser(id));
   };
 }

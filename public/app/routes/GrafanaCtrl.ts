@@ -21,11 +21,12 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { KioskUrlValue } from 'app/types';
+import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
-import { ILocationService, ITimeoutService, IRootScopeService, IControllerService } from 'angular';
+import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -33,11 +34,11 @@ export class GrafanaCtrl {
     $scope: any,
     utilSrv: UtilSrv,
     $rootScope: any,
-    $controller: IControllerService,
     contextSrv: ContextSrv,
     bridgeSrv: BridgeSrv,
     backendSrv: BackendSrv,
     timeSrv: TimeSrv,
+    linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
     angularLoader: AngularLoader
@@ -47,6 +48,7 @@ export class GrafanaCtrl {
     setBackendSrv(backendSrv);
     setDataSourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);
+    setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
     const store = configureStore();
     setLocationSrv({

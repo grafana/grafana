@@ -19,6 +19,7 @@ import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
 import UsersListPage from 'app/features/users/UsersListPage';
 import UserPreferences from 'app/features/profile/UserPreferences';
 import ChangePassword from 'app/features/profile/ChangePassword';
+import AdminCreateUser from 'app/features/admin/AdminCreateUser';
 import AdminEditUser from 'app/features/admin/AdminEditUser';
 import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
 import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
@@ -262,7 +263,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/admin/users/create', {
       template: '<react-container />',
       resolve: {
-        component: () => AdminEditUser,
+        component: () => AdminCreateUser,
       },
     })
     .when('/admin/users/edit/:id', {
