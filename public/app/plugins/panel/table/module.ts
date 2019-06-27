@@ -95,11 +95,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
           range: this.range,
         })
         .then((anno: any) => {
-          this.loading = false;
-          this.dataRaw = anno;
-          this.pageIndex = 0;
-          this.render();
-          return { data: this.dataRaw }; // Not used
+          return { data: anno };
         });
     }
 

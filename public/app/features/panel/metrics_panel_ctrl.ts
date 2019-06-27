@@ -190,6 +190,12 @@ class MetricsPanelCtrl extends PanelCtrl {
       result = { data: [] };
     }
 
+    // Some data is not an array (like table annotations)
+    if (!Array.isArray(result.data)) {
+      this.events.emit('data-received', result.data);
+      return;
+    }
+
     // Make sure the data is TableData | TimeSeries
     const data = result.data.map(v => {
       if (isSeriesData(v)) {
