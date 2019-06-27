@@ -14,10 +14,6 @@ import copy from 'rollup-plugin-copy-glob';
 import { terser } from 'rollup-plugin-terser';
 // @ts-ignore
 import visualizer from 'rollup-plugin-visualizer';
-// @ts-ignore
-// import builtins from 'rollup-plugin-node-builtins';
-// @ts-ignore
-// import globals from 'rollup-plugin-node-globals';
 
 // @ts-ignore
 const replace = require('replace-in-file');

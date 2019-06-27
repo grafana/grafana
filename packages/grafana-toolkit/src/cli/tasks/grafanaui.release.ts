@@ -52,6 +52,7 @@ const promptConfirm = async (message?: string) => {
 
 // Since Grafana core depends on @grafana/ui highly, we run full check before release
 const runChecksAndTests = async () =>
+  // @ts-ignore
   useSpinner<void>(`Running checks and tests`, async () => {
     try {
       await execa('npm', ['run', 'test']);
@@ -62,6 +63,7 @@ const runChecksAndTests = async () =>
   })();
 
 const bumpVersion = (version: string) =>
+  // @ts-ignore
   useSpinner<void>(`Saving version ${version} to package.json`, async () => {
     changeCwdToGrafanaUi();
     await execa('npm', ['version', version]);
@@ -72,6 +74,7 @@ const bumpVersion = (version: string) =>
   })();
 
 const publishPackage = (name: string, version: string) =>
+  // @ts-ignore
   useSpinner<void>(`Publishing ${name} @ ${version} to npm registry...`, async () => {
     changeCwdToGrafanaUiDist();
     await execa('npm', ['publish', '--access', 'public']);
@@ -88,6 +91,7 @@ const ensureMasterBranch = async () => {
 };
 
 const prepareVersionCommitAndPush = async (version: string) =>
+  // @ts-ignore
   useSpinner<void>('Commiting and pushing @grafana/ui version update', async () => {
     await execa.stdout('git', ['commit', '-a', '-m', `Upgrade @grafana/ui version to v${version}`]);
     await execa.stdout('git', ['push']);
@@ -99,6 +103,7 @@ const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({
   createVersionCommit,
 }) => {
   changeCwdToGrafanaUi();
+  // @ts-ignore
   await clean(); // Clean previous build if exists
   restoreCwd();
 
@@ -110,7 +115,7 @@ const releaseTaskRunner: TaskRunner<ReleaseTaskOptions> = async ({
 
   await runChecksAndTests();
 
-  await execTask(buildTask)();
+  await execTask(buildTask)({} as any);
 
   let releaseConfirmed = false;
   let nextVersion;

@@ -1,4 +1,6 @@
+// @ts-ignore
 import * as execa from 'execa';
+// @ts-ignore
 import * as fs from 'fs';
 import { changeCwdToGrafanaUi, restoreCwd } from '../utils/cwd';
 import chalk from 'chalk';
@@ -16,20 +18,26 @@ const compile = useSpinner<void>('Compiling sources', () => execa('tsc', ['-p', 
 // @ts-ignore
 const rollup = useSpinner<void>('Bundling', () => execa('npm', ['run', 'build']));
 
-export const savePackage = useSpinner<{
+interface SavePackageOptions {
   path: string;
   pkg: {};
-}>('Updating package.json', async ({ path, pkg }) => {
-  return new Promise((resolve, reject) => {
-    fs.writeFile(path, JSON.stringify(pkg, null, 2), err => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve();
+}
+
+// @ts-ignore
+export const savePackage = useSpinner<SavePackageOptions>(
+  'Updating package.json',
+  async ({ path, pkg }: SavePackageOptions) => {
+    return new Promise((resolve, reject) => {
+      fs.writeFile(path, JSON.stringify(pkg, null, 2), err => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
     });
-  });
-});
+  }
+);
 
 const preparePackage = async (pkg: any) => {
   pkg.main = 'index.js';
@@ -42,6 +50,7 @@ const preparePackage = async (pkg: any) => {
 
 const moveFiles = () => {
   const files = ['README.md', 'CHANGELOG.md', 'index.js'];
+  // @ts-ignore
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
@@ -65,10 +74,14 @@ const buildTaskRunner: TaskRunner<void> = async () => {
   const pkg = require(`${cwd}/package.json`);
   console.log(chalk.yellow(`Building ${pkg.name} (package.json version: ${pkg.version})`));
 
+  // @ts-ignore
   await clean();
+  // @ts-ignore
   await compile();
+  // @ts-ignore
   await rollup();
   await preparePackage(pkg);
+  // @ts-ignore
   await moveFiles();
 
   restoreCwd();

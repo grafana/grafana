@@ -15,9 +15,12 @@ interface PrecommitOptions {}
 // @ts-ignore
 export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', ['./dist']));
 
+// @ts-ignore
 const typecheckPlugin = useSpinner<void>('Typechecking', async () => {
   await execa('tsc', ['--noEmit']);
 });
+
+// @ts-ignore
 const lintPlugin = useSpinner<void>('Linting', async () => {
   const tsLintConfigPath = path.resolve(__dirname, '../../config/tslint.plugin.json');
   const globPattern = path.resolve(process.cwd(), 'src/**/*.+(ts|tsx)');
@@ -68,8 +71,10 @@ const bundlePlugin = useSpinner<void>('Bundling plugin', async () => {
 
 const pluginBuildRunner: TaskRunner<PrecommitOptions> = async () => {
   await clean();
+  // @ts-ignore
   await lintPlugin();
   await testPlugin({ updateSnapshot: false });
+  // @ts-ignore
   await bundlePlugin();
 };
 

@@ -54,10 +54,10 @@
     "tslint": "5.14.0"
   },
   "peerDependencies": {
-    "typescript": "3.5.1",
-    "ts-jest": "24.0.2",
     "jest": "24.8.0",
-    "tslib": "1.10.0"
+    "ts-jest": "24.0.2",
+    "tslib": "1.10.0",
+    "typescript": "3.5.1"
   },
   "resolutions": {
     "@types/lodash": "4.14.119",

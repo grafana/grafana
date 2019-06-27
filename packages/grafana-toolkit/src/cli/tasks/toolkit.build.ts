@@ -1,3 +1,4 @@
+// @ts-ignore
 import execa from 'execa';
 import * as fs from 'fs';
 import { changeCwdToGrafanaUi, restoreCwd, changeCwdToGrafanaToolkit } from '../utils/cwd';
@@ -20,9 +21,11 @@ const compile = useSpinner<void>('Compiling sources', async () => {
   }
 });
 
+// @ts-ignore
 export const savePackage = useSpinner<{
   path: string;
   pkg: {};
+  // @ts-ignore
 }>('Updating package.json', async ({ path, pkg }) => {
   return new Promise((resolve, reject) => {
     fs.writeFile(path, JSON.stringify(pkg, null, 2), err => {
@@ -54,6 +57,7 @@ const moveFiles = () => {
     'src/config/tsconfig.plugin.json',
     'src/config/tslint.plugin.json',
   ];
+  // @ts-ignore
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
@@ -76,7 +80,10 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   distDir = `${cwd}/dist`;
   const pkg = require(`${cwd}/package.json`);
   console.log(chalk.yellow(`Building ${pkg.name} (package.json version: ${pkg.version})`));
+
+  // @ts-ignore
   await clean();
+  // @ts-ignore
   await compile();
   await preparePackage(pkg);
   fs.mkdirSync('./dist/bin');
