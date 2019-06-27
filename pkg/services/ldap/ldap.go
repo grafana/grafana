@@ -261,6 +261,7 @@ func (server *Server) getSearchRequest(
 	return &ldap.SearchRequest{
 		BaseDN:       base,
 		Scope:        ldap.ScopeWholeSubtree,
+		SizeLimit:    1000,
 		DerefAliases: ldap.NeverDerefAliases,
 		Attributes:   attributes,
 		Filter:       filter,
