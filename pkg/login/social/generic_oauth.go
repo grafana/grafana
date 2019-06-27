@@ -210,7 +210,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	var rawUserInfoResponse HttpGetResponse
 	var err error
 
-	if !s.extractToken(rawUserInfoResponse.Body, token) {
+	if !s.extractToken(&data, token) {
 		rawUserInfoResponse, err = HttpGet(client, s.apiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting user info: %s", err)
@@ -224,7 +224,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 	name := s.extractName(&data)
 
-	email := s.extractEmail(rawUserInfoResponse.Body)
+	email := s.extractEmail(&data, rawUserInfoResponse.Body)
 	if email == "" {
 		email, err = s.FetchPrivateEmail(client)
 		if err != nil {
@@ -251,12 +251,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) extractToken(userInfoResp []byte, token *oauth2.Token) bool {
-	var data UserInfoJson
-	if err := json.Unmarshal(userInfoResp, &data); err != nil {
-		return false
-	}
-
+func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		s.log.Debug("No id_token found", "token", token)
@@ -282,7 +277,7 @@ func (s *SocialGenericOAuth) extractToken(userInfoResp []byte, token *oauth2.Tok
 		return false
 	}
 
-	email := s.extractEmail(userInfoResp)
+	email := s.extractEmail(&UserInfoJson{}, payload)
 	if email == "" {
 		s.log.Debug("No email found in id_token", "json", string(payload), "data", data)
 		return false
@@ -292,12 +287,7 @@ func (s *SocialGenericOAuth) extractToken(userInfoResp []byte, token *oauth2.Tok
 	return true
 }
 
-func (s *SocialGenericOAuth) extractEmail(userInfoResp []byte) string {
-	var data UserInfoJson
-	if err := json.Unmarshal(userInfoResp, &data); err != nil {
-		return ""
-	}
-
+func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byte) string {
 	if data.Email != "" {
 		return data.Email
 	}
