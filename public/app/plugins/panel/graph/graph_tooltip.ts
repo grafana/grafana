@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 
-export default function GraphTooltip(this: any, elem, dashboard, scope, getSeriesFn) {
+export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
   const ctrl = scope.ctrl;
   const panel = ctrl.panel;
@@ -12,7 +12,7 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
     $tooltip.remove();
   };
 
-  this.findHoverIndexFromDataPoints = (posX, series, last) => {
+  this.findHoverIndexFromDataPoints = (posX: number, series: any, last: number) => {
     const ps = series.datapoints.pointsize;
     const initial = last * ps;
     const len = series.datapoints.points.length;
@@ -30,7 +30,7 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
     return j / ps - 1;
   };
 
-  this.findHoverIndexFromData = (posX, series) => {
+  this.findHoverIndexFromData = (posX: any, series: any) => {
     let lower = 0;
     let upper = series.data.length - 1;
     let middle;
@@ -49,14 +49,14 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
     }
   };
 
-  this.renderAndShow = (absoluteTime, innerHtml, pos, xMode) => {
+  this.renderAndShow = (absoluteTime: string, innerHtml: string, pos: { pageX: number; pageY: any }, xMode: string) => {
     if (xMode === 'time') {
       innerHtml = '<div class="graph-tooltip-time">' + absoluteTime + '</div>' + innerHtml;
     }
     $tooltip.html(innerHtml).place_tt(pos.pageX + 20, pos.pageY);
   };
 
-  this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
+  this.getMultiSeriesPlotHoverInfo = function(seriesList: any[], pos: { x: number }) {
     let value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
     // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
     let results: any = [[], [], []];
@@ -158,7 +158,7 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
     appEvents.emit('graph-hover-clear');
   });
 
-  elem.bind('plothover', (event, pos, item) => {
+  elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {
     self.show(pos, item);
 
     // broadcast to other graph panels that we are hovering!
@@ -166,17 +166,17 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
     appEvents.emit('graph-hover', { pos: pos, panel: panel });
   });
 
-  elem.bind('plotclick', (event, pos, item) => {
+  elem.bind('plotclick', (event: any, pos: any, item: any) => {
     appEvents.emit('graph-click', { pos: pos, panel: panel, item: item });
   });
 
-  this.clear = plot => {
+  this.clear = (plot: { clearCrosshair: () => void; unhighlight: () => void }) => {
     $tooltip.detach();
     plot.clearCrosshair();
     plot.unhighlight();
   };
 
-  this.show = (pos, item) => {
+  this.show = (pos: any, item: any) => {
     const plot = elem.data().plot;
     const plotData = plot.getData();
     const xAxes = plot.getXAxes();
@@ -232,11 +232,11 @@ export default function GraphTooltip(this: any, elem, dashboard, scope, getSerie
       // Dynamically reorder the hovercard for the current time point if the
       // option is enabled.
       if (panel.tooltip.sort === 2) {
-        seriesHoverInfo.sort((a, b) => {
+        seriesHoverInfo.sort((a: { value: number }, b: { value: number }) => {
           return b.value - a.value;
         });
       } else if (panel.tooltip.sort === 1) {
-        seriesHoverInfo.sort((a, b) => {
+        seriesHoverInfo.sort((a: { value: number }, b: { value: number }) => {
           return a.value - b.value;
         });
       }

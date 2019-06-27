@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
+// @ts-ignore
 import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
@@ -58,7 +59,7 @@ interface State {
  * Renders a highlighted field.
  * When hovering, a stats icon is shown.
  */
-const FieldHighlight = onClick => props => {
+const FieldHighlight = (onClick: any) => (props: any) => {
   return (
     <span className={props.className} style={props.style}>
       {props.children}
@@ -86,7 +87,7 @@ const getLogRowWithContextStyles = (theme: GrafanaTheme, state: State) => {
     row: css`
       z-index: 1;
       outline: 9999px solid
-        ${tinycolor(outlineColor)
+        ${tinycolor(outlineColor as tinycolor.ColorInput)
           .setAlpha(0.7)
           .toRgbString()};
     `,
@@ -103,7 +104,7 @@ const getLogRowWithContextStyles = (theme: GrafanaTheme, state: State) => {
 export class LogRow extends PureComponent<Props, State> {
   mouseMessageTimer: NodeJS.Timer;
 
-  state = {
+  state: any = {
     fieldCount: 0,
     fieldLabel: null,
     fieldStats: null,
