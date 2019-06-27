@@ -3,13 +3,10 @@ import $ from 'jquery';
 import _ from 'lodash';
 //@ts-ignore
 import Drop from 'tether-drop';
+import { CreatePlotOverlay } from '@grafana/ui';
 
 /** @ngInject */
-export function createAnnotationToolip(
-  element: any[] | JQLite,
-  event: any,
-  plot: { getOptions: () => { events: { manager: any } } }
-) {
+const createAnnotationToolip: CreatePlotOverlay = (element, event, plot) => {
   const injector = angular.element(document).injector();
   const content = document.createElement('div');
   content.innerHTML = '<annotation-tooltip event="event" on-edit="onEdit()"></annotation-tooltip>';
@@ -50,16 +47,12 @@ export function createAnnotationToolip(
       });
     },
   ]);
-}
+};
 
 let markerElementToAttachTo: any = null;
 
 /** @ngInject */
-export function createEditPopover(
-  element: JQLite,
-  event: any,
-  plot: { getOptions: () => { events: { manager: any } } }
-) {
+const createEditPopover: CreatePlotOverlay = (element, event, plot) => {
   const eventManager = plot.getOptions().events.manager;
   if (eventManager.editorOpen) {
     // update marker element to attach to (needed in case of legend on the right
@@ -120,7 +113,9 @@ export function createEditPopover(
       },
     ]);
   }, 100);
-}
+};
+
+export { createEditPopover, createAnnotationToolip };
 
 /*
  * jquery.flot.events

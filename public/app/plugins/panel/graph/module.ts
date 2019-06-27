@@ -289,7 +289,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   };
 
-  onToggleAxis = (info: { alias: _.PartialDeep<unknown>; yaxis: any }) => {
+  onToggleAxis = (info: { alias: any; yaxis: any }) => {
     let override: any = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
