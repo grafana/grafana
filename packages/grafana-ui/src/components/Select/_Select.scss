@@ -53,7 +53,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 }
 
 .gf-form-select-box__menu {
-  background: $input-bg;
+  background: $menu-dropdown-bg;
   box-shadow: $menu-dropdown-shadow;
   position: absolute;
   z-index: $zindex-dropdown;

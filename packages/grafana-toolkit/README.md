@@ -1,5 +1,7 @@
 # Grafana Toolkit
 
+Make sure to run `yarn install` before trying anything!  Otherwise you may see unknown command grafana-toolkit and spend a while tracking that down.
+
 ## Internal development
 For development use `yarn link`. First, navigate to `packages/grafana-toolkit` and run `yarn link`. Then, in your project use `yarn link @grafana/toolkit` to use linked version.
 

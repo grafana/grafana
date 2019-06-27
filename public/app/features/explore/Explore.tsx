@@ -21,13 +21,13 @@ import TimePicker from './TimePicker';
 // Actions
 import {
   changeSize,
-  changeTime,
   initializeExplore,
   modifyQueries,
   scanStart,
   setQueries,
   refreshExplore,
   reconnectDatasource,
+  updateTimeRange,
 } from './state/actions';
 
 // Types
@@ -60,7 +60,6 @@ import { scanStopAction } from './state/actionTypes';
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
   changeSize: typeof changeSize;
-  changeTime: typeof changeTime;
   datasourceError: string;
   datasourceInstance: DataSourceApi;
   datasourceLoading: boolean | null;
@@ -84,10 +83,11 @@ interface ExploreProps {
   initialDatasource: string;
   initialQueries: DataQuery[];
   initialRange: RawTimeRange;
+  mode: ExploreMode;
   initialUI: ExploreUIState;
   queryErrors: DataQueryError[];
-  mode: ExploreMode;
   isLive: boolean;
+  updateTimeRange: typeof updateTimeRange;
 }
 
 /**
@@ -129,7 +129,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   }
 
   componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, initialUI } = this.props;
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, mode, initialUI } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
@@ -139,6 +139,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         initialDatasource,
         initialQueries,
         initialRange,
+        mode,
         width,
         this.exploreEvents,
         initialUI
@@ -158,11 +159,12 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.el = el;
   };
 
-  onChangeTime = (range: RawTimeRange, changedByScanner?: boolean) => {
-    if (this.props.scanning && !changedByScanner) {
+  onChangeTime = (rawRange: RawTimeRange, changedByScanner?: boolean) => {
+    const { updateTimeRange, exploreId, scanning } = this.props;
+    if (scanning && !changedByScanner) {
       this.onStopScanning();
     }
-    this.props.changeTime(this.props.exploreId, range);
+    updateTimeRange({ exploreId, rawRange });
   };
 
   // Use this in help pages to set page to a single query
@@ -315,14 +317,32 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     urlState,
     update,
     queryErrors,
-    mode,
     isLive,
+    supportedModes,
+    mode,
   } = item;
 
-  const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
+  const { datasource, queries, range: urlRange, mode: urlMode, ui } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
   const initialQueries: DataQuery[] = ensureQueries(queries);
   const initialRange = urlRange ? getTimeRangeFromUrl(urlRange, timeZone).raw : DEFAULT_RANGE;
+
+  let newMode: ExploreMode;
+  if (supportedModes.length) {
+    const urlModeIsValid = supportedModes.includes(urlMode);
+    const modeStateIsValid = supportedModes.includes(mode);
+
+    if (urlModeIsValid) {
+      newMode = urlMode;
+    } else if (modeStateIsValid) {
+      newMode = mode;
+    } else {
+      newMode = supportedModes[0];
+    }
+  } else {
+    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : ExploreMode.Metrics;
+  }
+
   const initialUI = ui || DEFAULT_UI_STATE;
 
   return {
@@ -339,16 +359,15 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialDatasource,
     initialQueries,
     initialRange,
+    mode: newMode,
     initialUI,
     queryErrors,
-    mode,
     isLive,
   };
 }
 
 const mapDispatchToProps = {
   changeSize,
-  changeTime,
   initializeExplore,
   modifyQueries,
   reconnectDatasource,
@@ -356,6 +375,7 @@ const mapDispatchToProps = {
   scanStart,
   scanStopAction,
   setQueries,
+  updateTimeRange,
 };
 
 export default hot(module)(

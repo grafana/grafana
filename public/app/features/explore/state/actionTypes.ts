@@ -14,6 +14,7 @@ import {
   TimeSeries,
   DataQueryResponseData,
   LoadingState,
+  AbsoluteTimeRange,
 } from '@grafana/ui/src/types';
 import {
   ExploreId,
@@ -73,11 +74,6 @@ export interface ChangeSizePayload {
   height: number;
 }
 
-export interface ChangeTimePayload {
-  exploreId: ExploreId;
-  range: TimeRange;
-}
-
 export interface ChangeRefreshIntervalPayload {
   exploreId: ExploreId;
   refreshInterval: string;
@@ -102,6 +98,7 @@ export interface InitializeExplorePayload {
   eventBridge: Emitter;
   queries: DataQuery[];
   range: TimeRange;
+  mode: ExploreMode;
   ui: ExploreUIState;
 }
 
@@ -233,7 +230,6 @@ export interface LoadExploreDataSourcesPayload {
 
 export interface RunQueriesPayload {
   exploreId: ExploreId;
-  range: TimeRange;
 }
 
 export interface ResetQueryErrorPayload {
@@ -274,6 +270,13 @@ export interface LimitMessageRatePayload {
 export interface ChangeRangePayload {
   exploreId: ExploreId;
   range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
+}
+
+export interface UpdateTimeRangePayload {
+  exploreId: ExploreId;
+  rawRange?: RawTimeRange;
+  absoluteRange?: AbsoluteTimeRange;
 }
 
 /**
@@ -302,11 +305,6 @@ export const changeQueryAction = actionCreatorFactory<ChangeQueryPayload>('explo
  * The width will be used to calculate graph intervals (number of datapoints).
  */
 export const changeSizeAction = actionCreatorFactory<ChangeSizePayload>('explore/CHANGE_SIZE').create();
-
-/**
- * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
- */
-export const changeTimeAction = actionCreatorFactory<ChangeTimePayload>('explore/CHANGE_TIME').create();
 
 /**
  * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
@@ -489,6 +487,8 @@ export const limitMessageRatePayloadAction = actionCreatorFactory<LimitMessageRa
 ).create();
 
 export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explore/CHANGE_RANGE').create();
+
+export const updateTimeRangeAction = actionCreatorFactory<UpdateTimeRangePayload>('explore/UPDATE_TIMERANGE').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>

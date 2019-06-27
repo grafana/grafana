@@ -1,11 +1,68 @@
-import angular from 'angular';
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ScopedVars } from '@grafana/ui/src/types/datasource';
+import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
+import coreModule from 'app/core/core_module';
+import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
+import { DataLink, VariableSuggestion, KeyValue, ScopedVars, DateTime, dateTime } from '@grafana/ui';
+import { TimeSeriesValue } from '@grafana/ui';
+import { deprecationWarning, VariableOrigin } from '@grafana/ui';
 
-export class LinkSrv {
+export const DataLinkBuiltInVars = {
+  keepTime: '__url_time_range',
+  includeVars: '__all_variables',
+  seriesName: '__series_name',
+  valueTime: '__value_time',
+};
+
+export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
+  ...templateSrv.variables.map(variable => ({
+    value: variable.name as string,
+    origin: VariableOrigin.Template,
+  })),
+  {
+    value: `${DataLinkBuiltInVars.includeVars}`,
+    documentation: 'Adds current variables',
+    origin: VariableOrigin.BuiltIn,
+  },
+  {
+    value: `${DataLinkBuiltInVars.keepTime}`,
+    documentation: 'Adds current time range',
+    origin: VariableOrigin.BuiltIn,
+  },
+];
+
+export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
+  ...getPanelLinksVariableSuggestions(),
+  {
+    value: `${DataLinkBuiltInVars.seriesName}`,
+    documentation: 'Adds series name',
+    origin: VariableOrigin.BuiltIn,
+  },
+  {
+    value: `${DataLinkBuiltInVars.valueTime}`,
+    documentation: "Adds narrowed down time range relative to data point's timestamp",
+    origin: VariableOrigin.BuiltIn,
+  },
+];
+
+type LinkTarget = '_blank' | '_self';
+
+interface LinkModel {
+  href: string;
+  title: string;
+  target: LinkTarget;
+}
+
+interface LinkDataPoint {
+  datapoint: TimeSeriesValue[];
+  seriesName: string;
+}
+export interface LinkService {
+  getDataLinkUIModel: (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
+  getDataPointVars: (seriesName: string, dataPointTs: DateTime) => ScopedVars;
+}
+
+export class LinkSrv implements LinkService {
   /** @ngInject */
   constructor(private templateSrv: TemplateSrv, private timeSrv: TimeSrv) {}
 
@@ -23,48 +80,7 @@ export class LinkSrv {
       this.templateSrv.fillVariableValuesForUrl(params);
     }
 
-    return this.addParamsToUrl(url, params);
-  }
-
-  addParamsToUrl(url: string, params: any) {
-    const paramsArray: Array<string | number> = [];
-
-    _.each(params, (value, key) => {
-      if (value === null) {
-        return;
-      }
-      if (value === true) {
-        paramsArray.push(key);
-      } else if (_.isArray(value)) {
-        _.each(value, instance => {
-          paramsArray.push(key + '=' + encodeURIComponent(instance));
-        });
-      } else {
-        paramsArray.push(key + '=' + encodeURIComponent(value));
-      }
-    });
-
-    if (paramsArray.length === 0) {
-      return url;
-    }
-
-    return this.appendToQueryString(url, paramsArray.join('&'));
-  }
-
-  appendToQueryString(url: string, stringToAppend: string) {
-    if (!_.isUndefined(stringToAppend) && stringToAppend !== null && stringToAppend !== '') {
-      const pos = url.indexOf('?');
-      if (pos !== -1) {
-        if (url.length - pos > 1) {
-          url += '&';
-        }
-      } else {
-        url += '?';
-      }
-      url += stringToAppend;
-    }
-
-    return url;
+    return appendQueryToUrl(url, toUrlParams(params));
   }
 
   getAnchorInfo(link: any) {
@@ -74,45 +90,82 @@ export class LinkSrv {
     return info;
   }
 
-  getPanelLinkAnchorInfo(link: any, scopedVars: ScopedVars) {
-    const info: any = {};
-    info.target = link.targetBlank ? '_blank' : '';
-    if (link.type === 'absolute') {
-      info.target = link.targetBlank ? '_blank' : '_self';
-      info.href = this.templateSrv.replace(link.url || '', scopedVars);
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-    } else if (link.url) {
-      info.href = link.url;
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-    } else if (link.dashUri) {
-      info.href = 'dashboard/' + link.dashUri + '?';
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-    } else {
-      info.title = this.templateSrv.replace(link.title || '', scopedVars);
-      const slug = kbn.slugifyForUrl(link.dashboard || '');
-      info.href = 'dashboard/db/' + slug + '?';
-    }
+  getDataPointVars = (seriesName: string, valueTime: DateTime) => {
+    // const valueTimeQuery = toUrlParams({
+    //   time: dateTime(valueTime).valueOf(),
+    // });
 
-    const params: any = {};
+    const seriesQuery = toUrlParams({
+      series: seriesName,
+    });
 
-    if (link.keepTime) {
-      const range = this.timeSrv.timeRangeForUrl();
-      params['from'] = range.from;
-      params['to'] = range.to;
-    }
+    return {
+      [DataLinkBuiltInVars.valueTime]: {
+        text: valueTime.valueOf(),
+        value: valueTime.valueOf(),
+      },
+      [DataLinkBuiltInVars.seriesName]: {
+        text: seriesQuery,
+        value: seriesQuery,
+      },
+    };
+  };
 
-    if (link.includeVars) {
-      this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
-    }
+  getDataLinkUIModel = (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => {
+    const params: KeyValue = {};
+    const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
-    info.href = this.addParamsToUrl(info.href, params);
+    const info: LinkModel = {
+      href: link.url,
+      title: this.templateSrv.replace(link.title || '', scopedVars),
+      target: link.targetBlank ? '_blank' : '_self',
+    };
 
-    if (link.params) {
-      info.href = this.appendToQueryString(info.href, this.templateSrv.replace(link.params, scopedVars));
+    this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
+
+    const variablesQuery = toUrlParams(params);
+
+    info.href = this.templateSrv.replace(link.url, {
+      ...scopedVars,
+      [DataLinkBuiltInVars.keepTime]: {
+        text: timeRangeUrl,
+        value: timeRangeUrl,
+      },
+      [DataLinkBuiltInVars.includeVars]: {
+        text: variablesQuery,
+        value: variablesQuery,
+      },
+    });
+
+    if (dataPoint) {
+      info.href = this.templateSrv.replace(
+        info.href,
+        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint[0]))
+      );
     }
 
     return info;
+  };
+
+  /**
+   * getPanelLinkAnchorInfo method is left for plugins compatibility reasons
+   *
+   * @deprecated Drilldown links should be generated using getDataLinkUIModel method
+   */
+  getPanelLinkAnchorInfo(link: DataLink, scopedVars: ScopedVars) {
+    deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDataLinkUIModel');
+    return this.getDataLinkUIModel(link, scopedVars);
   }
 }
 
-angular.module('grafana.services').service('linkSrv', LinkSrv);
+let singleton: LinkService;
+
+export function setLinkSrv(srv: LinkService) {
+  singleton = srv;
+}
+
+export function getLinkSrv(): LinkService {
+  return singleton;
+}
+
+coreModule.service('linkSrv', LinkSrv);

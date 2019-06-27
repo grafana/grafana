@@ -26,6 +26,7 @@ interface SavePackageOptions {
 // @ts-ignore
 export const savePackage = useSpinner<SavePackageOptions>(
   'Updating package.json',
+  // @ts-ignore
   async ({ path, pkg }: SavePackageOptions) => {
     return new Promise((resolve, reject) => {
       fs.writeFile(path, JSON.stringify(pkg, null, 2), err => {
