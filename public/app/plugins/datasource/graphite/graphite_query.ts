@@ -131,18 +131,6 @@ export default class GraphiteQuery {
 
   addFunction(newFunc) {
     this.functions.push(newFunc);
-    this.moveAliasFuncLast();
-  }
-
-  moveAliasFuncLast() {
-    const aliasFunc: any = _.find(this.functions, func => {
-      return func.def.name.startsWith('alias');
-    });
-
-    if (aliasFunc) {
-      this.functions = _.without(this.functions, aliasFunc);
-      this.functions.push(aliasFunc);
-    }
   }
 
   addFunctionParameter(func, value) {
