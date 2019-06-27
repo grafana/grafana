@@ -36,7 +36,7 @@ export class NewUserPassword extends PureComponent<Props, State> {
     const { password } = this.state;
     return (
       <>
-        <h3 className="page-sub-heading">Change Password</h3>
+        <h3 className="page-heading">Change Password</h3>
         <form name="profileForm" className="gf-form-group">
           <div className="gf-form max-width-30">
             <FormLabel className="width-8">New Password</FormLabel>

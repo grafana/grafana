@@ -46,7 +46,7 @@ export class UserPermissions extends PureComponent<Props, State> {
     const { isGrafanaAdmin } = this.state;
     return (
       <>
-        <h3 className="page-sub-heading">Permissions</h3>
+        <h3 className="page-heading">Permissions</h3>
         <form name="profileForm" className="gf-form-group">
           <Switch label="Grafana Admin" onChange={() => this.onIsGrafanaAdminChange()} checked={isGrafanaAdmin} />
           <div className="gf-form-button-row">

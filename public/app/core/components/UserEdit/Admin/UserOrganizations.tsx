@@ -102,7 +102,7 @@ export class UserOrganizations extends PureComponent<Props, State> {
     const { newOrgRole, roles, userOrgs } = this.state;
     return (
       <>
-        <h3 className="page-sub-heading">Organizations</h3>
+        <h3 className="page-heading">Organizations</h3>
         <form name="addOrgForm" className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
@@ -164,7 +164,7 @@ export class UserOrganizations extends PureComponent<Props, State> {
                           this.removeFromOrg(userOrg);
                         }}
                       >
-                        <i className="fa fa-power-off" />
+                        <i className="fa fa-remove" />
                       </Button>
                     </td>
                   </tr>
