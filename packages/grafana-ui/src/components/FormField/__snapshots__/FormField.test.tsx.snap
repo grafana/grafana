@@ -28,7 +28,7 @@ exports[`FormField should render component with default inputEl 1`] = `
     Test
   </Component>
   <input
-    className="gf-form-input width-12"
+    className="form-input width-12"
     onChange={[MockFunction]}
     type="text"
     value={10}
