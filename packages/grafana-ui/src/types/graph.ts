@@ -11,3 +11,7 @@ export interface GraphSeriesXY {
   isVisible: boolean;
   yAxis: number;
 }
+
+export interface CreatePlotOverlay {
+  (element: JQuery, event: any, plot: { getOptions: () => { events: { manager: any } } }): any;
+}

@@ -4,7 +4,6 @@ import {
   exploreReducer,
   makeInitialUpdateState,
   initialExploreState,
-  DEFAULT_RANGE,
 } from './reducers';
 import {
   ExploreId,
@@ -32,7 +31,7 @@ import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, LoadingState, dateTime } from '@grafana/ui';
+import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, LoadingState } from '@grafana/ui';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -105,6 +104,7 @@ describe('Explore item reducer', () => {
             datasource: true,
             queries: true,
             range: true,
+            mode: true,
             ui: true,
           },
         };
@@ -193,16 +193,12 @@ describe('Explore item reducer', () => {
             intervalMs: 1000,
           },
           showingStartPage: false,
-          range: {
-            from: dateTime(),
-            to: dateTime(),
-            raw: DEFAULT_RANGE,
-          },
+          range: null,
         };
 
         reducerTester()
           .givenReducer(itemReducer, initalState)
-          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left, range: expectedState.range }))
+          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left }))
           .thenStateShouldEqual(expectedState);
       });
     });
@@ -218,6 +214,7 @@ export const setup = (urlStateOverrides?: any) => {
       from: '',
       to: '',
     },
+    mode: ExploreMode.Metrics,
     ui: {
       dedupStrategy: LogsDedupStrategy.none,
       showingGraph: false,

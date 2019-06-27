@@ -43,7 +43,7 @@
 				<select
 				  ng-model="ctrl.target.stream.type"
 				  class="gf-form-input"
-					ng-options="type for type in ['signal','logs', 'fetch']"
+				  ng-options="type for type in ['signal','logs', 'fetch']"
 				  ng-change="ctrl.streamChanged()" />
 				</select>
 			</div>
@@ -76,6 +76,16 @@
 				ng-model="ctrl.target.stream.noise"
 				min="0"
 				step="0.1"
+				ng-change="ctrl.streamChanged()" />
+		</div>
+		<div class="gf-form" ng-if="ctrl.target.stream.type === 'signal'">
+			<label class="gf-form-label query-keyword">Bands</label>
+			<input type="number"
+				class="gf-form-input width-5"
+				placeholder="bands"
+				ng-model="ctrl.target.stream.bands"
+				min="0"
+				step="1"
 				ng-change="ctrl.streamChanged()" />
 		</div>
 		<div class="gf-form gf-form--grow" ng-if="ctrl.target.stream.type === 'fetch'">
