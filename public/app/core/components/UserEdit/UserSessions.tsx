@@ -34,8 +34,10 @@ export class UserSessions extends PureComponent<Props, State> {
 
     if (found !== -1) {
       const now = sessions[found];
-      sessions.splice(found, found);
-      sessions.unshift(now);
+      if (sessions.length > 1) {
+        sessions.splice(found, found);
+        sessions.unshift(now);
+      }
     }
 
     return sessions;

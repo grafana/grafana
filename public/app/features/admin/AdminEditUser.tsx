@@ -39,14 +39,10 @@ export class AdminEditUser extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           {!isLoading && <UserProfile adminMode={adminMode} userId={userId} />}
-          {userId && (
-            <>
-              <NewUserPassword userId={userId} />
-              {!isLoading && <UserPermissions userId={userId} />}
-              <UserOrganizations userId={userId} />
-              <UserSessions adminMode={adminMode} userId={userId} />
-            </>
-          )}
+          <NewUserPassword userId={userId} />
+          {!isLoading && <UserPermissions userId={userId} />}
+          <UserOrganizations userId={userId} />
+          <UserSessions adminMode={adminMode} userId={userId} />
         </Page.Contents>
       </Page>
     );

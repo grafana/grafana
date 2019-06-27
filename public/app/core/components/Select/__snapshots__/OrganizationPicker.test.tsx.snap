@@ -91,3 +91,30 @@ exports[`OrganizationPicker renders correctly 1`] = `
   </div>
 </div>
 `;
+
+exports[`Render should render component 1`] = `
+<div
+  className="user-picker"
+>
+  <AsyncSelect
+    autoFocus={false}
+    backspaceRemovesValue={true}
+    className=""
+    components={Object {}}
+    defaultOptions={true}
+    inputId="org-picker"
+    isClearable={false}
+    isDisabled={false}
+    isLoading={false}
+    isMulti={false}
+    isSearchable={true}
+    loadOptions={[Function]}
+    loadingMessage={[Function]}
+    maxMenuHeight={300}
+    noOptionsMessage={[Function]}
+    onChange={[Function]}
+    openMenuOnFocus={false}
+    placeholder="Select an organization"
+  />
+</div>
+`;
