@@ -105,9 +105,9 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
     const queries = getState().explore[exploreId].queries;
 
-    await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
-
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
+
+    await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, newDataSourceInstance));
 
     if (getState().explore[exploreId].isLive) {
       dispatch(changeRefreshInterval(exploreId, offOption.value));
@@ -123,9 +123,8 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
  */
 export function changeMode(exploreId: ExploreId, mode: ExploreMode): ThunkResult<void> {
   return dispatch => {
-    dispatch(clearQueries(exploreId));
+    dispatch(clearQueriesAction({ exploreId }));
     dispatch(changeModeAction({ exploreId, mode }));
-    dispatch(runQueries(exploreId));
   };
 }
 
@@ -236,6 +235,7 @@ export function initializeExplore(
   datasourceName: string,
   queries: DataQuery[],
   rawRange: RawTimeRange,
+  mode: ExploreMode,
   containerWidth: number,
   eventBridge: Emitter,
   ui: ExploreUIState
@@ -251,6 +251,7 @@ export function initializeExplore(
         eventBridge,
         queries,
         range,
+        mode,
         ui,
       })
     );
@@ -527,7 +528,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
-    const { datasource, queries, range: urlRange, ui } = urlState;
+    const { datasource, queries, range: urlRange, mode, ui } = urlState;
     const refreshQueries: DataQuery[] = [];
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
@@ -539,7 +540,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     // need to refresh datasource
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
-      dispatch(initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, ui));
+      dispatch(initializeExplore(exploreId, datasource, initialQueries, range, mode, containerWidth, eventBridge, ui));
       return;
     }
 
@@ -555,6 +556,11 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     // need to refresh queries
     if (update.queries) {
       dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
+    }
+
+    // need to refresh mode
+    if (update.mode) {
+      dispatch(changeModeAction({ exploreId, mode }));
     }
 
     // always run queries when refresh is needed

@@ -33,7 +33,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     });
   }
 
-  pointSelected(option) {
+  pointSelected(option: any) {
     this.selectedPoint = option;
   }
 
@@ -53,7 +53,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   $onInit() {
     return getBackendSrv()
       .get('/api/tsdb/testdata/scenarios')
-      .then(res => {
+      .then((res: any) => {
         this.scenarioList = res;
         this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
       });

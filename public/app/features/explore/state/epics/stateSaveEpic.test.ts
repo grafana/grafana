@@ -15,7 +15,7 @@ describe('stateSaveEpic', () => {
             .whenActionIsDispatched(stateSaveAction())
             .thenResultingActionsEqual(
               updateLocation({
-                query: { left: '["now-6h","now","test",{"ui":[true,true,true,null]}]' },
+                query: { left: '["now-6h","now","test",{"mode":null},{"ui":[true,true,true,null]}]' },
                 replace: true,
               }),
               setUrlReplacedAction({ exploreId })
@@ -32,8 +32,8 @@ describe('stateSaveEpic', () => {
             .thenResultingActionsEqual(
               updateLocation({
                 query: {
-                  left: '["now-6h","now","test",{"ui":[true,true,true,null]}]',
-                  right: '["now-6h","now","test",{"ui":[true,true,true,null]}]',
+                  left: '["now-6h","now","test",{"mode":null},{"ui":[true,true,true,null]}]',
+                  right: '["now-6h","now","test",{"mode":null},{"ui":[true,true,true,null]}]',
                 },
                 replace: true,
               }),
@@ -51,7 +51,7 @@ describe('stateSaveEpic', () => {
           .whenActionIsDispatched(stateSaveAction())
           .thenResultingActionsEqual(
             updateLocation({
-              query: { left: '["now-6h","now","test",{"ui":[true,true,true,null]}]' },
+              query: { left: '["now-6h","now","test",{"mode":null},{"ui":[true,true,true,null]}]' },
               replace: false,
             })
           );

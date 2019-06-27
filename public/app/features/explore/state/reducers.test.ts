@@ -104,6 +104,7 @@ describe('Explore item reducer', () => {
             datasource: true,
             queries: true,
             range: true,
+            mode: true,
             ui: true,
           },
         };
@@ -213,6 +214,7 @@ export const setup = (urlStateOverrides?: any) => {
       from: '',
       to: '',
     },
+    mode: ExploreMode.Metrics,
     ui: {
       dedupStrategy: LogsDedupStrategy.none,
       showingGraph: false,

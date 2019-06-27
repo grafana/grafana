@@ -106,6 +106,7 @@ export const epicTester = (
   };
 
   const getDependencyMock = (dependency: string, method?: string) => {
+    // @ts-ignore
     const dep = theDependencies[dependency];
     let mock = null;
     if (dep instanceof Function) {

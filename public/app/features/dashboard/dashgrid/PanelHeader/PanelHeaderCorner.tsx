@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import Remarkable from 'remarkable';
+
+import { renderMarkdown } from '@grafana/data';
 import { Tooltip, ScopedVars, DataLink } from '@grafana/ui';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -45,11 +46,12 @@ export class PanelHeaderCorner extends Component<Props> {
     const markdown = panel.description;
     const linkSrv = new LinkSrv(templateSrv, this.timeSrv);
     const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
-    const remarkableInterpolatedMarkdown = new Remarkable().render(interpolatedMarkdown);
+    const markedInterpolatedMarkdown = renderMarkdown(interpolatedMarkdown);
 
     return (
-      <div className="markdown-html panel-info-content">
-        <p dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
+      <div className="panel-info-content markdown-html">
+        <div dangerouslySetInnerHTML={{ __html: markedInterpolatedMarkdown }} />
+
         {panel.links && panel.links.length > 0 && (
           <ul className="panel-info-corner-links">
             {panel.links.map((link, idx) => {

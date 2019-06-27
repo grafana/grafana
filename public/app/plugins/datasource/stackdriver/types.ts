@@ -75,3 +75,8 @@ export interface MetricDescriptor {
   displayName: string;
   description: string;
 }
+
+export interface Segment {
+  type: string;
+  value: string;
+}

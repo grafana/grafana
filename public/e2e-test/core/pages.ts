@@ -49,6 +49,7 @@ export class TestPage<T> implements TestPageType<T> {
     }
 
     Object.keys(this.pageObjects).forEach(key => {
+      // @ts-ignore
       const pageObject: PageObject = this.pageObjects[key];
       pageObject.init(page);
     });

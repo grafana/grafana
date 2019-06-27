@@ -98,18 +98,16 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
     return (
       <div>
-        <div className="gf-form-input" style={{ height: 'initial' }}>
-          <PromQueryField
-            datasource={datasource}
-            query={query}
-            onRunQuery={this.onRunQuery}
-            onChange={this.onFieldChange}
-            history={[]}
-            panelData={panelData}
-            queryResponse={queryResponse}
-            datasourceStatus={DataSourceStatus.Connected} // TODO: replace with real DataSourceStatus
-          />
-        </div>
+        <PromQueryField
+          datasource={datasource}
+          query={query}
+          onRunQuery={this.onRunQuery}
+          onChange={this.onFieldChange}
+          history={[]}
+          panelData={panelData}
+          queryResponse={queryResponse}
+          datasourceStatus={DataSourceStatus.Connected} // TODO: replace with real DataSourceStatus
+        />
 
         <div className="gf-form-inline">
           <div className="gf-form">
