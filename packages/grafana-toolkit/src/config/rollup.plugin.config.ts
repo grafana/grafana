@@ -14,6 +14,10 @@ import copy from 'rollup-plugin-copy-glob';
 import { terser } from 'rollup-plugin-terser';
 // @ts-ignore
 import visualizer from 'rollup-plugin-visualizer';
+// @ts-ignore
+import builtins from 'rollup-plugin-node-builtins';
+// @ts-ignore
+import globals from 'rollup-plugin-node-globals';
 
 // @ts-ignore
 const replace = require('replace-in-file');
@@ -21,12 +25,12 @@ const pkg = require(`${process.cwd()}/package.json`);
 const path = require('path');
 const fs = require('fs');
 const tsConfig = require(`${__dirname}/tsconfig.plugin.json`);
-
+import { OutputOptions, InputOptions, GetManualChunk } from 'rollup';
 const { PRODUCTION } = process.env;
 
-export const outputOptions = {
+export const outputOptions: OutputOptions = {
   dir: 'dist',
-  format: 'cjs',
+  format: 'amd',
   sourcemap: true,
   chunkFileNames: '[name].js',
 };
@@ -55,44 +59,50 @@ const getModuleFiles = () => {
   return findModuleTs(path.resolve(process.cwd(), 'src'));
 };
 
-export const inputOptions = () => {
+const getManualChunk: GetManualChunk = (id: string) => {
+  // id == absolute path
+  if (id.endsWith('module.ts')) {
+    const idx = id.indexOf('/src/');
+    if (idx > 0) {
+      const p = id.substring(idx + 5, id.lastIndexOf('.'));
+      console.log('MODULE:', id, p);
+      return p;
+    }
+  }
+  console.log('shared:', id);
+  return 'shared';
+};
+
+const getExternals = () => {
+  // Those are by default exported by Grafana
+  const defaultExternals = [
+    'jquery',
+    'lodash',
+    'moment',
+    'rxjs',
+    'd3',
+    'react',
+    'react-dom',
+    '@grafana/ui',
+    '@grafana/runtime',
+    '@grafana/data',
+  ];
+  const toolkitConfig = require(path.resolve(process.cwd(), 'package.json')).grafanaToolkit;
+  const userDefinedExternals = (toolkitConfig && toolkitConfig.externals) || [];
+  return [...defaultExternals, ...userDefinedExternals];
+};
+
+export const inputOptions = (): InputOptions => {
   const inputFiles = getModuleFiles();
   return {
     input: inputFiles,
-    manualChunks:
-      inputFiles.length > 1
-        ? (id: string) => {
-            // id == absolute path
-            if (id.endsWith('module.ts')) {
-              const idx = id.indexOf('/src/');
-              if (idx > 0) {
-                const p = id.substring(idx + 5, id.lastIndexOf('.'));
-                console.log('MODULE:', id, p);
-                return p;
-              }
-            }
-            console.log('shared:', id);
-            return 'shared';
-          }
-        : null,
-    external: [
-      'jquery', // exported by grafana
-      'lodash', // exported by grafana
-      'moment', // exported by grafana
-      'rxjs', // exported by grafana
-      'd3', // exported by grafana
-      'react', // exported by grafana
-      'react-dom', // exported by grafana
-      '@grafana/ui', // exported by grafana
-      '@grafana/runtime', // exported by grafana
-      '@grafana/data', // exported by grafana,
-    ],
-    watch: {
-      include: 'src/**',
-    },
+    manualChunks: inputFiles.length > 1 ? getManualChunk : undefined,
+    external: getExternals(),
     plugins: [
       // Allow json resolution
       json(),
+      globals(),
+      builtins(),
 
       // Compile TypeScript files
       typescript({
@@ -101,13 +111,13 @@ export const inputOptions = () => {
         tsconfigDefaults: tsConfig,
       }),
 
-      // Allow bundling cjs modules (unlike webpack, rollup doesn't understand cjs)
-      commonjs(),
-
       // Allow node_modules resolution, so you can use 'external' to control
       // which external modules to include in the bundle
       // https://github.com/rollup/rollup-plugin-node-resolve#usage
       resolve(),
+
+      // Allow bundling cjs modules (unlike webpack, rollup doesn't understand cjs)
+      commonjs(),
 
       // Resolve source maps to the original source
       sourceMaps(),

@@ -13,6 +13,7 @@ import { pluginBuildTask } from './tasks/plugin.build';
 import { toolkitBuildTask } from './tasks/toolkit.build';
 import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
+import { pluginDevTask } from './tasks/plugin.dev';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -107,6 +108,15 @@ export const run = (includeInternalScripts = false) => {
     .description('Prepares plugin dist package')
     .action(async cmd => {
       await execTask(pluginBuildTask)({});
+    });
+
+  program
+    .command('plugin:dev')
+    .description('Starts plugin dev mode')
+    .action(async cmd => {
+      await execTask(pluginDevTask)({
+        watch: true,
+      });
     });
 
   program

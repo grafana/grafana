@@ -12,6 +12,7 @@
     "typeRoots": ["./node_modules/@types"],
     "skipLibCheck": true, // Temp workaround for Duplicate identifier tsc errors,
     "removeComments": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "lib": ["es2015", "es2017.string"]
   }
 }
