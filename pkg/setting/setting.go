@@ -259,6 +259,8 @@ type Cfg struct {
 	RemoteCacheOptions *RemoteCacheOptions
 
 	EditorsCanAdmin bool
+
+	ApiKeyMaxSecondsToLive int64
 }
 
 type CommandLineArgs struct {
@@ -795,6 +797,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
 	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
+	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
 	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
 	if cfg.TokenRotationIntervalMinutes < 2 {
