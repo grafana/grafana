@@ -17,6 +17,9 @@ import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryR
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { auto } from 'angular';
+import { AnnotationsSrv } from 'app/features/annotations/all';
+
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
@@ -35,7 +38,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   contextMenuCtrl: GraphContextMenuCtrl;
   linkVariableSuggestions: VariableSuggestion[] = getDataLinksVariableSuggestions();
 
-  panelDefaults = {
+  panelDefaults: any = {
     // datasource name, null = default datasource
     datasource: null,
     // sets client side (flot) or native graphite png renderer (png)
@@ -130,7 +133,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private annotationsSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService, private annotationsSrv: AnnotationsSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
@@ -162,12 +165,12 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.subTabIndex = 0;
   }
 
-  onInitPanelActions(actions) {
+  onInitPanelActions(actions: any[]) {
     actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
     actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
-  issueQueries(datasource) {
+  issueQueries(datasource: any) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations({
       dashboard: this.dashboard,
       panel: this.panel,
@@ -180,16 +183,16 @@ class GraphCtrl extends MetricsPanelCtrl {
      * (but not wait for completion). This resolves
      * issue 11806.
      */
-    return this.annotationsSrv.datasourcePromises.then(r => {
+    return this.annotationsSrv.datasourcePromises.then((r: any) => {
       return super.issueQueries(datasource);
     });
   }
 
-  zoomOut(evt) {
+  zoomOut(evt: any) {
     this.publishAppEvent('zoom-out', 2);
   }
 
-  onDataSnapshotLoad(snapshotData) {
+  onDataSnapshotLoad(snapshotData: any) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations({
       dashboard: this.dashboard,
       panel: this.panel,
@@ -198,7 +201,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.onDataReceived(snapshotData);
   }
 
-  onDataError(err) {
+  onDataError(err: any) {
     this.seriesList = [];
     this.annotations = [];
     this.render([]);
@@ -242,7 +245,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
 
     this.annotationsPromise.then(
-      result => {
+      (result: { alertState: any; annotations: any }) => {
         this.loading = false;
         this.alertState = result.alertState;
         this.annotations = result.annotations;
@@ -269,24 +272,24 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
   }
 
-  onColorChange = (series, color) => {
+  onColorChange = (series: any, color: string) => {
     series.setColor(getColorFromHexRgbOrName(color, config.theme.type));
     this.panel.aliasColors[series.alias] = color;
     this.render();
   };
 
-  onToggleSeries = hiddenSeries => {
+  onToggleSeries = (hiddenSeries: any) => {
     this.hiddenSeries = hiddenSeries;
     this.render();
   };
 
-  onToggleSort = (sortBy, sortDesc) => {
+  onToggleSort = (sortBy: any, sortDesc: any) => {
     this.panel.legend.sort = sortBy;
     this.panel.legend.sortDesc = sortDesc;
     this.render();
   };
 
-  onToggleAxis = info => {
+  onToggleAxis = (info: { alias: any; yaxis: any }) => {
     let override: any = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
@@ -303,11 +306,11 @@ class GraphCtrl extends MetricsPanelCtrl {
     });
   }
 
-  addSeriesOverride(override) {
+  addSeriesOverride(override: any) {
     this.panel.seriesOverrides.push(override || {});
   }
 
-  removeSeriesOverride(override) {
+  removeSeriesOverride(override: any) {
     this.panel.seriesOverrides = _.without(this.panel.seriesOverrides, override);
     this.render();
   }

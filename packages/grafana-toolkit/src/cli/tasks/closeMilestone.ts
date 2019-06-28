@@ -70,6 +70,7 @@ const closeMilestoneTaskRunner: TaskRunner<CloseMilestoneOptions> = async ({ mil
   }
 };
 
-export const closeMilestoneTask = new Task<CloseMilestoneOptions>();
-closeMilestoneTask.setName('Close Milestone generator task');
-closeMilestoneTask.setRunner(closeMilestoneTaskRunner);
+export const closeMilestoneTask = new Task<CloseMilestoneOptions>(
+  'Close Milestone generator task',
+  closeMilestoneTaskRunner
+);

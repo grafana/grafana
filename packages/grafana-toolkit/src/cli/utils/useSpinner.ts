@@ -10,7 +10,7 @@ export const useSpinner = <T>(spinnerLabel: string, fn: FnToSpin<T>, killProcess
       await fn(options);
       spinner.succeed();
     } catch (e) {
-      spinner.fail(e);
+      spinner.fail(e.message || e);
       if (killProcess) {
         process.exit(1);
       }

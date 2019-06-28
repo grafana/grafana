@@ -16,6 +16,7 @@ import { TimePicker, RefreshPicker, RawTimeRange } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
+import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 export interface Props {
   $injector: any;
@@ -44,23 +45,7 @@ export class DashNavTimeControls extends Component<Props> {
 
   onMoveTimePicker = (direction: number) => {
     const range = this.timeSrv.timeRange();
-    const timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
-    let to: number, from: number;
-
-    if (direction === -1) {
-      to = range.to.valueOf() - timespan;
-      from = range.from.valueOf() - timespan;
-    } else if (direction === 1) {
-      to = range.to.valueOf() + timespan;
-      from = range.from.valueOf() + timespan;
-      if (to > Date.now() && range.to.valueOf() < Date.now()) {
-        to = Date.now();
-        from = range.from.valueOf();
-      }
-    } else {
-      to = range.to.valueOf();
-      from = range.from.valueOf();
-    }
+    const { from, to } = getShiftedTimeRange(direction, range);
 
     this.timeSrv.setTime({
       from: toUtc(from),

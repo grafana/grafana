@@ -1,5 +1,4 @@
 import axios from 'axios';
-import _ from 'lodash';
 import { Task, TaskRunner } from './task';
 
 interface SearchTestDataSetupOptions {
@@ -14,7 +13,7 @@ const client = axios.create({
   },
 });
 
-export async function getUser(user): Promise<any> {
+export async function getUser(user: any): Promise<any> {
   console.log('Creating user ' + user.name);
   const search = await client.get('/users/search', {
     params: { query: user.login },
@@ -112,6 +111,7 @@ const searchTestDataSetupRunnner: TaskRunner<SearchTestDataSetupOptions> = async
   }
 };
 
-export const searchTestDataSetupTask = new Task<SearchTestDataSetupOptions>();
-searchTestDataSetupTask.setName('Search test data setup');
-searchTestDataSetupTask.setRunner(searchTestDataSetupRunnner);
+export const searchTestDataSetupTask = new Task<SearchTestDataSetupOptions>(
+  'Search test data setup',
+  searchTestDataSetupRunnner
+);

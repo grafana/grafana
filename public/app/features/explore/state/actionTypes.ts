@@ -16,15 +16,7 @@ import {
   LoadingState,
   AbsoluteTimeRange,
 } from '@grafana/ui/src/types';
-import {
-  ExploreId,
-  ExploreItemState,
-  HistoryItem,
-  RangeScanner,
-  ExploreUIState,
-  ExploreMode,
-  QueryOptions,
-} from 'app/types/explore';
+import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode, QueryOptions } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 import TableModel from 'app/core/table_model';
 
@@ -171,12 +163,6 @@ export interface RemoveQueryRowPayload {
 
 export interface ScanStartPayload {
   exploreId: ExploreId;
-  scanner: RangeScanner;
-}
-
-export interface ScanRangePayload {
-  exploreId: ExploreId;
-  range: RawTimeRange;
 }
 
 export interface ScanStopPayload {
@@ -397,7 +383,6 @@ export const runQueriesAction = actionCreatorFactory<RunQueriesPayload>('explore
  * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
  */
 export const scanStartAction = actionCreatorFactory<ScanStartPayload>('explore/SCAN_START').create();
-export const scanRangeAction = actionCreatorFactory<ScanRangePayload>('explore/SCAN_RANGE').create();
 
 /**
  * Stop any scanning for more results.

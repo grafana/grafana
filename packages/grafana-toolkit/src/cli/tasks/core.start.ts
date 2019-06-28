@@ -1,3 +1,4 @@
+//@ts-ignore
 import concurrently from 'concurrently';
 import { Task, TaskRunner } from './task';
 
@@ -33,6 +34,4 @@ const startTaskRunner: TaskRunner<StartTaskOptions> = async ({ watchThemes, hot 
   }
 };
 
-export const startTask = new Task<StartTaskOptions>();
-startTask.setName('Core startTask');
-startTask.setRunner(startTaskRunner);
+export const startTask = new Task<StartTaskOptions>('Core startTask', startTaskRunner);

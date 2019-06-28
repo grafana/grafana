@@ -20,6 +20,7 @@ describe('GithubClient', () => {
 
   describe('#client', () => {
     it('it should contain a client', () => {
+      // @ts-ignore
       const spy = jest.spyOn(GithubClient.prototype, 'createClient').mockImplementation(() => fakeClient);
 
       const github = new GithubClient();
@@ -40,6 +41,7 @@ describe('GithubClient', () => {
         process.env.GITHUB_USERNAME = username;
         process.env.GITHUB_ACCESS_TOKEN = token;
 
+        // @ts-ignore
         const spy = jest.spyOn(GithubClient.prototype, 'createClient').mockImplementation(() => fakeClient);
 
         const github = new GithubClient(true);
@@ -57,6 +59,7 @@ describe('GithubClient', () => {
       describe('when the credentials are not defined', () => {
         it('should throw an error', () => {
           expect(() => {
+            // tslint:disable-next-line
             new GithubClient(true);
           }).toThrow(/operation needs a GITHUB_USERNAME and GITHUB_ACCESS_TOKEN environment variables/);
         });

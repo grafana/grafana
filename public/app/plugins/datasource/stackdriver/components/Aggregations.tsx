@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 import { getAggregationOptionsByMetric } from '../functions';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { ValueTypes, MetricKind } from '../constants';
 
 export interface Props {
   onChange: (metricDescriptor) => void;
@@ -43,7 +44,10 @@ export class Aggregations extends React.Component<Props, State> {
         {
           label: 'Aggregations',
           expanded: true,
-          options: getAggregationOptionsByMetric(metricDescriptor.valueType, metricDescriptor.metricKind).map(a => ({
+          options: getAggregationOptionsByMetric(
+            metricDescriptor.valueType as ValueTypes,
+            metricDescriptor.metricKind as MetricKind
+          ).map(a => ({
             ...a,
             label: a.text,
           })),

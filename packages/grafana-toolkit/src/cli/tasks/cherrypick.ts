@@ -15,7 +15,7 @@ const cherryPickRunner: TaskRunner<CherryPickOptions> = async () => {
   });
 
   // sort by closed date ASC
-  res.data.sort(function(a, b) {
+  res.data.sort((a: any, b: any) => {
     return new Date(a.closed_at).getTime() - new Date(b.closed_at).getTime();
   });
 
@@ -42,6 +42,4 @@ const cherryPickRunner: TaskRunner<CherryPickOptions> = async () => {
   console.log(commands);
 };
 
-export const cherryPickTask = new Task<CherryPickOptions>();
-cherryPickTask.setName('Cherry pick task');
-cherryPickTask.setRunner(cherryPickRunner);
+export const cherryPickTask = new Task<CherryPickOptions>('Cherry pick task', cherryPickRunner);
