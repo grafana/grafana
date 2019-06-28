@@ -101,7 +101,7 @@ export default class Logs extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     // Staged rendering
     if (prevState.deferLogs && !this.state.deferLogs && !this.state.renderAll) {
       this.renderAllTimer = setTimeout(() => this.setState({ renderAll: true }), 2000);
