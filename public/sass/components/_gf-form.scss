@@ -200,7 +200,7 @@ $input-border: 1px solid $input-border-color;
   }
 
   // Customize the `:focus` state to imitate native WebKit styles.
-  @include form-control-focus();
+  //@include form-control-focus();
 
   // Placeholder
   &::placeholder {
@@ -251,6 +251,17 @@ $input-border: 1px solid $input-border-color;
 
   &--has-help-icon {
     padding-right: $space-xl;
+  }
+
+  &:hover {
+    border-color: $text-color-weak;
+    transition: 0.5s ease;
+  }
+
+  &:focus {
+    border-color: $blue-base !important;
+    outline: none;
+    background: $blue-faint !important;
   }
 }
 
