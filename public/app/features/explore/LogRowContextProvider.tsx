@@ -76,12 +76,12 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   row,
   children,
 }) => {
-  // React Hook that adds a number prop called limit to component state and a setter function called setLimit
+  // React Hook that creates a number state value called limit to component state and a setter function called setLimit
   // The intial value for limit is 10
   // Used for the number of rows to retrieve from backend from a specific point in time
   const [limit, setLimit] = useState(10);
 
-  // React Hook that adds a object prop called result to component state and a setter function called setResult
+  // React Hook that creates an object state value called result to component state and a setter function called setResult
   // The intial value for result is null
   // Used for sorting the response from backend
   const [result, setResult] = useState<{
@@ -89,7 +89,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
     errors: string[];
   }>(null);
 
-  // React Hook that adds a object prop called hasMoreContextRows to component state and a setter function called setHasMoreContextRows
+  // React Hook that creates an object state value called hasMoreContextRows to component state and a setter function called setHasMoreContextRows
   // The intial value for hasMoreContextRows is {before: true, after: true}
   // Used for indicating in UI if there are more rows to load in a given direction
   const [hasMoreContextRows, setHasMoreContextRows] = useState({
@@ -105,8 +105,8 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   }, [limit]);
 
   // React Hook that performs a side effect every time the value (from useAsync hook) prop changes
-  // The side effect changes the result prop with the response from the useAsync hook
-  // The side effect changes the hasMoreContextRows prop if there are more context rows before or after the current result
+  // The side effect changes the result state with the response from the useAsync hook
+  // The side effect changes the hasMoreContextRows state if there are more context rows before or after the current result
   useEffect(() => {
     if (value) {
       setResult(currentResult => {
