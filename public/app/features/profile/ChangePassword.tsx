@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
 import { StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -44,10 +43,6 @@ export class ChangePassword extends PureComponent<Props, State> {
     this.setState({ confirmNew });
   }
 
-  onChangePassword = async () => {
-    await getBackendSrv().put('/api/user/password', this.state);
-  };
-
   render() {
     const { navModel } = this.props;
     const { oldPassword, newPassword, confirmNew } = this.state;
@@ -66,8 +61,6 @@ export class ChangePassword extends PureComponent<Props, State> {
                   <div className="gf-form max-width-30">
                     <PasswordInput
                       label="Old Password"
-                      labelClassName="width-8"
-                      inputClassName="gf-form-input max-width-22"
                       onChange={this.onOldPasswordChange.bind(this)}
                       value={oldPassword}
                     />
@@ -75,8 +68,6 @@ export class ChangePassword extends PureComponent<Props, State> {
                   <div className="gf-form max-width-30">
                     <PasswordInput
                       label="New Password"
-                      labelClassName="width-8"
-                      inputClassName="gf-form-input max-width-22"
                       onChange={this.onNewPasswordChange.bind(this)}
                       value={newPassword}
                     />
@@ -84,8 +75,6 @@ export class ChangePassword extends PureComponent<Props, State> {
                   <div className="gf-form max-width-30">
                     <PasswordInput
                       label="Confirm Password"
-                      labelClassName="width-8"
-                      inputClassName="gf-form-input max-width-22"
                       onChange={this.onConfirmPasswordChange.bind(this)}
                       value={confirmNew}
                     />

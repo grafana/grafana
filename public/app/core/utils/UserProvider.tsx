@@ -1,8 +1,16 @@
 import React, { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 
+export interface UserAPI {
+  changePassword: (ChangePassword: ChangePassword) => void;
+}
+export interface ChangePassword {
+  oldPassword: string;
+  newPassword: string;
+  confirmNew: string;
+}
 export interface Props {
-  children: (props: any) => React.ReactNode;
+  children: (api: UserAPI) => JSX.Element;
 }
 
 export interface State {}
@@ -14,18 +22,18 @@ export class UserProvider extends PureComponent<Props, State> {
     this.state = {};
   }
 
-  changePassword = async payload => {
+  changePassword = async (payload: ChangePassword) => {
     await getBackendSrv().put('/api/user/password', payload);
   };
 
   render() {
     const { children } = this.props;
 
-    const props = {
-      changePassword: this.changePassword.bind(this),
+    const api = {
+      changePassword: this.changePassword,
     };
 
-    return <>{children(props)}</>;
+    return <>{children(api)}</>;
   }
 }
 
