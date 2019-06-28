@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { ChangeEvent, forwardRef } from 'react';
 import { Input, FormLabel } from '@grafana/ui';
 
 export interface Props {
@@ -13,7 +13,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, Props>((props, ref) =>
     <Input
       className="gf-form-input max-width-22"
       type="password"
-      onChange={event => props.onChange(event.target.value)}
+      onChange={(event: ChangeEvent<HTMLInputElement>) => props.onChange(event.target.value)}
       value={props.value}
     />
   </>

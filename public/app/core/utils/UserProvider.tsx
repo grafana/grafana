@@ -2,13 +2,15 @@ import React, { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 
 export interface UserAPI {
-  changePassword: (ChangePassword: ChangePassword) => void;
+  changePassword: (ChangePassword: ChangePasswordFields) => void;
 }
-export interface ChangePassword {
+
+export interface ChangePasswordFields {
   oldPassword: string;
   newPassword: string;
   confirmNew: string;
 }
+
 export interface Props {
   children: (api: UserAPI) => JSX.Element;
 }
@@ -22,7 +24,7 @@ export class UserProvider extends PureComponent<Props, State> {
     this.state = {};
   }
 
-  changePassword = async (payload: ChangePassword) => {
+  changePassword = async (payload: ChangePasswordFields) => {
     await getBackendSrv().put('/api/user/password', payload);
   };
 

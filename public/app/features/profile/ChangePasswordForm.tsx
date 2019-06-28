@@ -1,11 +1,11 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, MouseEvent } from 'react';
 import config from 'app/core/config';
 import { Button, LinkButton } from '@grafana/ui';
-import { ChangePassword } from 'app/core/utils/UserProvider';
+import { ChangePasswordFields } from 'app/core/utils/UserProvider';
 import { PasswordInput } from 'app/core/components/PasswordInput/PasswordInput';
 
 export interface Props {
-  onChangePassword: (payload: ChangePassword) => void;
+  onChangePassword: (payload: ChangePasswordFields) => void;
 }
 
 export interface State {
@@ -63,7 +63,7 @@ export class ChangePasswordForm extends PureComponent<Props, State> {
           <div className="gf-form-button-row">
             <Button
               variant="primary"
-              onClick={event => {
+              onClick={(event: MouseEvent<HTMLInputElement>) => {
                 event.preventDefault();
                 onChangePassword({ oldPassword, newPassword, confirmNew });
               }}
