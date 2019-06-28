@@ -247,8 +247,8 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     const httpOptions: any = {
       method: 'POST',
       url: '/metrics/find',
-      data: `query=${query}`,
       params: {},
+      data: `query=${interpolatedQuery}`,
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },

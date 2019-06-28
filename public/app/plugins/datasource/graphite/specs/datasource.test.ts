@@ -304,15 +304,15 @@ describe('graphiteDatasource', () => {
       expect(results).not.toBe(null);
     });
 
-    it('should not be canceled for long queries', () => {
-      const longQuery = 'a'.repeat(40000);
-      ctx.ds.metricFindQuery(longQuery).then(data => {
+    it('/metrics/find should be POST', () => {
+      ctx.templateSrv.setGrafanaVariable('foo', 'bar');
+      ctx.ds.metricFindQuery('[[foo]]').then(data => {
         results = data;
       });
       expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
       expect(requestOptions.method).toEqual('POST');
       expect(requestOptions.headers).toHaveProperty('Content-Type', 'application/x-www-form-urlencoded');
-      expect(requestOptions.data).toMatch(`query=${longQuery}`);
+      expect(requestOptions.data).toMatch(`query=bar`);
       expect(requestOptions).toHaveProperty('params');
     });
   });
