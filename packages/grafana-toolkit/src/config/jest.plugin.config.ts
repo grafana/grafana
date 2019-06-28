@@ -35,6 +35,7 @@ export const jestConfig = () => {
     coverageReporters: ['json-summary', 'text', 'lcov'],
     collectCoverageFrom: ['src/**/*.{ts,tsx}', '!**/node_modules/**', '!**/vendor/**'],
     updateSnapshot: false,
+    passWithNoTests: true,
   };
 
   return {
