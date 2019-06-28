@@ -3,15 +3,7 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId, ExploreMode } from 'app/types/explore';
-import {
-  DataSourceSelectItem,
-  RawTimeRange,
-  ClickOutsideWrapper,
-  TimeZone,
-  TimeRange,
-  SelectOptionItem,
-  LoadingState,
-} from '@grafana/ui';
+import { DataSourceSelectItem, RawTimeRange, TimeZone, TimeRange, SelectOptionItem, LoadingState } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -23,10 +15,9 @@ import {
   changeRefreshInterval,
   changeMode,
 } from './state/actions';
-import TimePicker from './TimePicker';
 import { getTimeZone } from '../profile/state/selectors';
-import { RefreshPicker, SetInterval } from '@grafana/ui';
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
+import { ExploreTimeControls } from './ExploreTimeControls';
 
 enum IconSide {
   left = 'left',
@@ -63,7 +54,6 @@ const createResponsiveButton = (options: {
 
 interface OwnProps {
   exploreId: ExploreId;
-  timepickerRef: React.RefObject<TimePicker>;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
 }
 
@@ -111,10 +101,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     return this.props.runQueries(this.props.exploreId);
   };
 
-  onCloseTimePicker = () => {
-    this.props.timepickerRef.current.setState({ isOpen: false });
-  };
-
   onChangeRefreshInterval = (item: string) => {
     const { changeRefreshInterval, exploreId } = this.props;
     changeRefreshInterval(exploreId, item);
@@ -136,7 +122,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       timeZone,
       selectedDatasource,
       splitted,
-      timepickerRef,
       refreshInterval,
       onChangeTime,
       split,
@@ -214,20 +199,18 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               </div>
             ) : null}
             <div className="explore-toolbar-content-item timepicker">
-              {!isLive && (
-                <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
-                  <TimePicker ref={timepickerRef} range={range} timeZone={timeZone} onChangeTime={onChangeTime} />
-                </ClickOutsideWrapper>
-              )}
-
-              <RefreshPicker
-                onIntervalChanged={this.onChangeRefreshInterval}
-                onRefresh={this.onRunQuery}
-                value={refreshInterval}
-                tooltip="Refresh"
+              <ExploreTimeControls
+                exploreId={exploreId}
                 hasLiveOption={hasLiveOption}
+                isLive={isLive}
+                loading={loading}
+                range={range}
+                refreshInterval={refreshInterval}
+                timeZone={timeZone}
+                onChangeTime={onChangeTime}
+                onChangeRefreshInterval={this.onChangeRefreshInterval}
+                onRunQuery={this.onRunQuery}
               />
-              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
 
             <div className="explore-toolbar-content-item">

@@ -26,7 +26,7 @@ import {
   LogsDedupStrategy,
   AbsoluteTimeRange,
 } from '@grafana/ui';
-import { ExploreId, RangeScanner, ExploreUIState, QueryTransaction, ExploreMode } from 'app/types/explore';
+import { ExploreId, ExploreUIState, QueryTransaction, ExploreMode } from 'app/types/explore';
 import {
   updateDatasourceInstanceAction,
   changeQueryAction,
@@ -58,7 +58,6 @@ import {
   loadExploreDatasources,
   changeModeAction,
   scanStopAction,
-  scanRangeAction,
   runQueriesAction,
   stateSaveAction,
   updateTimeRangeAction,
@@ -66,6 +65,7 @@ import {
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 /**
  * Updates UI state and save it to the URL
@@ -413,14 +413,15 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
  * @param exploreId Explore area
  * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
  */
-export function scanStart(exploreId: ExploreId, scanner: RangeScanner): ThunkResult<void> {
-  return dispatch => {
+export function scanStart(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
     // Register the scanner
-    dispatch(scanStartAction({ exploreId, scanner }));
+    dispatch(scanStartAction({ exploreId }));
     // Scanning must trigger query run, and return the new range
-    const range = scanner();
+    const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
     // Set the new range to be displayed
-    dispatch(scanRangeAction({ exploreId, range }));
+    dispatch(updateTimeRangeAction({ exploreId, absoluteRange: range }));
+    dispatch(runQueriesAction({ exploreId }));
   };
 }
 
