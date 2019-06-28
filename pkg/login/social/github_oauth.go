@@ -2,6 +2,7 @@ package social
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -21,9 +22,12 @@ type SocialGithub struct {
 }
 
 type GithubTeam struct {
-	Id   int    `json:"id"`
-	Slug string `json:"slug"`
-	URL  string `json:"html_url"`
+	Id           int    `json:"id"`
+	Slug         string `json:"slug"`
+	URL          string `json:"html_url"`
+	Organization struct {
+		Login string `json:"login"`
+	} `json:"organization"`
 }
 
 var (
@@ -209,10 +213,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("Error getting user teams: %s", err)
 	}
 
-	teams := make([]string, len(teamMemberships))
-	for i, team := range teamMemberships {
-		teams[i] = team.URL
-	}
+	teams := convertToGroupList(teamMemberships)
 
 	userInfo := &BasicUserInfo{
 		Name:   data.Login,
@@ -240,4 +241,27 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	}
 
 	return userInfo, nil
+}
+
+func (t *GithubTeam) GetShorthand() (string, error) {
+	if t.Organization.Login == "" || t.Slug == "" {
+		return "", errors.New("Error getting team shorthand")
+	}
+	return fmt.Sprintf("@%s/%s", t.Organization.Login, t.Slug), nil
+}
+
+func convertToGroupList(t []GithubTeam) []string {
+	groups := make([]string, 0)
+	for _, team := range t {
+		// Group shouldn't be empty string, otherwise team sync will not work properly
+		if team.URL != "" {
+			groups = append(groups, team.URL)
+		}
+		teamShorthand, _ := team.GetShorthand()
+		if teamShorthand != "" {
+			groups = append(groups, teamShorthand)
+		}
+	}
+
+	return groups
 }
