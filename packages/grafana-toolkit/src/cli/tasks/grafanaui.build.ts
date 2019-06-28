@@ -1,5 +1,4 @@
-// @ts-ignore
-import * as execa from 'execa';
+import execa = require('execa');
 // @ts-ignore
 import * as fs from 'fs';
 import { changeCwdToGrafanaUi, restoreCwd } from '../utils/cwd';
@@ -75,14 +74,10 @@ const buildTaskRunner: TaskRunner<void> = async () => {
   const pkg = require(`${cwd}/package.json`);
   console.log(chalk.yellow(`Building ${pkg.name} (package.json version: ${pkg.version})`));
 
-  // @ts-ignore
   await clean();
-  // @ts-ignore
   await compile();
-  // @ts-ignore
   await rollup();
   await preparePackage(pkg);
-  // @ts-ignore
   await moveFiles();
 
   restoreCwd();

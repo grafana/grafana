@@ -1,5 +1,4 @@
-// @ts-ignore
-import execa from 'execa';
+import execa = require('execa');
 import { execTask } from '../utils/execTask';
 import { changeCwdToGrafanaUiDist, changeCwdToGrafanaUi, restoreCwd } from '../utils/cwd';
 import { ReleaseType, inc } from 'semver';

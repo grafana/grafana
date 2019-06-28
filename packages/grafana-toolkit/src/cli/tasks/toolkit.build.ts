@@ -1,5 +1,4 @@
-// @ts-ignore
-import execa from 'execa';
+import execa = require('execa');
 import * as fs from 'fs';
 import { changeCwdToGrafanaUi, restoreCwd, changeCwdToGrafanaToolkit } from '../utils/cwd';
 import chalk from 'chalk';
@@ -81,9 +80,7 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   const pkg = require(`${cwd}/package.json`);
   console.log(chalk.yellow(`Building ${pkg.name} (package.json version: ${pkg.version})`));
 
-  // @ts-ignore
   await clean();
-  // @ts-ignore
   await compile();
   await preparePackage(pkg);
   fs.mkdirSync('./dist/bin');
