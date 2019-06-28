@@ -1,7 +1,5 @@
 import { Task, TaskRunner } from './task';
 import chalk from 'chalk';
-// @ts-ignore
-import execa = require('execa');
 import semver from 'semver';
 import fs from 'fs';
 
@@ -54,11 +52,7 @@ const nodeVersionCheckerRunner: TaskRunner<NodeVersionCheckerOptions> = async ()
       console.log(chalk.green(`\tIn ${failure.file} the line ${failure.line} does not satisfy ${expectedVersion}.`));
     }
 
-    const task = execa('exit -1');
-    // @ts-ignore
-    const stream = task.stdout;
-    stream.pipe(process.stdout);
-    return task;
+    throw new Error('Node versions not in sync');
   }
 
   console.log(chalk.yellow('--------------------------------------------------------------------'));
