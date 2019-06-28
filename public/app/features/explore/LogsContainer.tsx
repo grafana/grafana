@@ -68,7 +68,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
     this.props.changeDedupStrategy(this.props.exploreId, dedupStrategy);
   };
 
-  hangleToggleLogLevel = (hiddenLogLevels: Set<LogLevel>) => {
+  handleToggleLogLevel = (hiddenLogLevels: LogLevel[]) => {
     const { exploreId } = this.props;
     this.props.toggleLogLevelAction({
       exploreId,
@@ -93,6 +93,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
       nextProps.loading !== this.props.loading ||
       nextProps.dedupStrategy !== this.props.dedupStrategy ||
       nextProps.logsHighlighterExpressions !== this.props.logsHighlighterExpressions ||
+      nextProps.hiddenLogLevels !== this.props.hiddenLogLevels ||
       nextProps.scanning !== this.props.scanning ||
       nextProps.isLive !== this.props.isLive
     );
@@ -139,7 +140,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
           onStartScanning={onStartScanning}
           onStopScanning={onStopScanning}
           onDedupStrategyChange={this.handleDedupStrategyChange}
-          onToggleLogLevel={this.hangleToggleLogLevel}
+          onToggleLogLevel={this.handleToggleLogLevel}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
           scanning={scanning}
