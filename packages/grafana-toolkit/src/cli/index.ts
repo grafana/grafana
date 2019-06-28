@@ -13,6 +13,7 @@ import { pluginBuildTask } from './tasks/plugin.build';
 import { toolkitBuildTask } from './tasks/toolkit.build';
 import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
+import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
 
 export const run = (includeInternalScripts = false) => {
@@ -102,6 +103,21 @@ export const run = (includeInternalScripts = false) => {
       .description('Setup test data for search')
       .action(async cmd => {
         await execTask(searchTestDataSetupTask)({ count: cmd.count });
+      });
+
+    program
+      .command('close-milestone')
+      .option('-m, --milestone <milestone>', 'Specify milestone')
+      .description('Helps ends a milestone by removing the cherry-pick label and closing it')
+      .action(async cmd => {
+        if (!cmd.milestone) {
+          console.log('Please specify milestone, example: -m <milestone id from github milestone URL>');
+          return;
+        }
+
+        await execTask(closeMilestoneTask)({
+          milestone: cmd.milestone,
+        });
       });
   }
 
