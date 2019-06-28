@@ -175,42 +175,40 @@ export class QueryOptions extends PureComponent<Props, State> {
     const { hideTimeOverride } = this.state;
     const { relativeTime, timeShift } = this.state;
     return (
-      <div>
+      <div className="gf-form-inline">
         {this.renderOptions()}
-        <div className="gf-form-inline">
-          <div className="form-field">
-            <FormLabel width={6}>Relative time</FormLabel>
-            <Input
-              type="text"
-              className="width-6"
-              placeholder="1h"
-              onChange={this.onRelativeTimeChange}
-              onBlur={this.onOverrideTime}
-              validationEvents={timeRangeValidationEvents}
-              hideErrorMessage={true}
-              value={relativeTime}
-            />
-          </div>
-
-          <div className="form-field">
-            <FormLabel>Time shift</FormLabel>
-            <Input
-              type="text"
-              className="width-6"
-              placeholder="1h"
-              onChange={this.onTimeShiftChange}
-              onBlur={this.onTimeShift}
-              validationEvents={timeRangeValidationEvents}
-              hideErrorMessage={true}
-              value={timeShift}
-            />
-          </div>
-          {(timeShift || relativeTime) && (
-            <div className="gf-form-inline">
-              <Switch label="Hide time info" checked={hideTimeOverride} onChange={this.onToggleTimeOverride} />
-            </div>
-          )}
+        <div className="form-field">
+          <FormLabel width={6}>Relative time</FormLabel>
+          <Input
+            type="text"
+            className="width-6"
+            placeholder="1h"
+            onChange={this.onRelativeTimeChange}
+            onBlur={this.onOverrideTime}
+            validationEvents={timeRangeValidationEvents}
+            hideErrorMessage={true}
+            value={relativeTime}
+          />
         </div>
+
+        <div className="form-field">
+          <FormLabel>Time shift</FormLabel>
+          <Input
+            type="text"
+            className="width-6"
+            placeholder="1h"
+            onChange={this.onTimeShiftChange}
+            onBlur={this.onTimeShift}
+            validationEvents={timeRangeValidationEvents}
+            hideErrorMessage={true}
+            value={timeShift}
+          />
+        </div>
+        {(timeShift || relativeTime) && (
+          <div className="gf-form-inline">
+            <Switch label="Hide time info" checked={hideTimeOverride} onChange={this.onToggleTimeOverride} />
+          </div>
+        )}
       </div>
     );
   }

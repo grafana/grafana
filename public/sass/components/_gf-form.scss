@@ -474,6 +474,10 @@ select.gf-form-input ~ .gf-form-help-icon {
     font-weight: $font-weight-regular;
     color: $text-color-weak;
   }
+
+  .gf-form-help-icon {
+    padding-left: 2px;
+  }
 }
 
 .form-input {
