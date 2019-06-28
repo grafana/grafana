@@ -3,7 +3,7 @@ import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 
 // Pages
-import ChangePassword from 'app/features/profile/ChangePassword';
+import ChangePasswordPage from 'app/features/profile/ChangePasswordPage';
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import TeamPages from 'app/features/teams/TeamPages';
@@ -233,7 +233,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/profile/password', {
       template: '<react-container />',
       resolve: {
-        component: () => ChangePassword,
+        component: () => ChangePasswordPage,
       },
     })
     .when('/profile/select-org', {

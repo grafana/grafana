@@ -30,7 +30,7 @@ export class UserProvider extends PureComponent<Props, State> {
     const { children } = this.props;
 
     const api = {
-      changePassword: this.changePassword,
+      changePassword: this.changePassword.bind(this),
     };
 
     return <>{children(api)}</>;
