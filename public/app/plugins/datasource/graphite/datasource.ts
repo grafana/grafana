@@ -245,10 +245,11 @@ export function GraphiteDatasource(this: any, instanceSettings, $q, backendSrv, 
     }
 
     const httpOptions: any = {
-      method: 'GET',
+      method: 'POST',
       url: '/metrics/find',
-      params: {
-        query: interpolatedQuery,
+      data: `query=${query}`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       // for cancellations
       requestId: options.requestId,
