@@ -53,14 +53,9 @@ func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 		return false
 	}
 
-	teamMembershipIds := make([]int, len(teamMemberships))
-	for i, team := range teamMemberships {
-		teamMembershipIds[i] = team.Id
-	}
-
 	for _, teamId := range s.teamIds {
-		for _, membershipId := range teamMembershipIds {
-			if teamId == membershipId {
+		for _, membership := range teamMemberships {
+			if teamId == membership.Id {
 				return true
 			}
 		}
@@ -138,15 +133,7 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]GithubTeam, 
 			return nil, fmt.Errorf("Error getting team memberships: %s", err)
 		}
 
-		newRecords := len(records)
-		existingRecords := len(teams)
-		tempTeams := make([]GithubTeam, (newRecords + existingRecords))
-		copy(tempTeams, teams)
-		teams = tempTeams
-
-		for i, record := range records {
-			teams[i] = record
-		}
+		teams = append(teams, records...)
 
 		url, hasMore = s.HasMoreRecords(response.Headers)
 	}
