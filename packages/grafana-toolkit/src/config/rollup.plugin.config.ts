@@ -14,6 +14,8 @@ import copy from 'rollup-plugin-copy-glob';
 import { terser } from 'rollup-plugin-terser';
 // @ts-ignore
 import visualizer from 'rollup-plugin-visualizer';
+// @ts-ignore
+import postcss from 'rollup-plugin-postcss';
 
 // @ts-ignore
 const replace = require('replace-in-file');
@@ -130,6 +132,10 @@ export const inputOptions = (): InputOptions => {
         title: 'Plugin Stats',
       }),
 
+      // TODO: how to handle multiple (themes) files?
+      postcss({
+        extract: 'dist/css/styles.css',
+      }),
       // Custom callback when we are done
       finish(),
     ],
