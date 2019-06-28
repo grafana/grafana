@@ -598,7 +598,7 @@ jobs:
 
   store-build-artifacts:
     docker:
-      - image: circleci/node:8
+      - image: circleci/node:10
     steps:
       - attach_workspace:
           at: .
