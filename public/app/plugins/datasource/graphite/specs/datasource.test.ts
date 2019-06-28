@@ -313,6 +313,7 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.method).toEqual('POST');
       expect(requestOptions.headers).toHaveProperty('Content-Type', 'application/x-www-form-urlencoded');
       expect(requestOptions.data).toMatch(`query=${longQuery}`);
+      expect(requestOptions).toHaveProperty('params');
     });
   });
 });
