@@ -154,7 +154,7 @@ The default cookie name for storing the auth token is `grafana_session`. you can
 
 ### Ensure encryption of datasource secrets
 
-Datasources store passwords and basic auth passwords in secureJsonData encrypted by default. Existing datasource
+Datasources store passwords and basic auth passwords in secureJsonData encrypted (AES-256 in CFB mode) by default. Existing datasource
 will keep working with unencrypted passwords. If you want to migrate to encrypted storage for your existing datasources
 you can do that by:
 
