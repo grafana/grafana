@@ -1,6 +1,6 @@
 import { has } from 'lodash';
-import { getValueFormat, getValueFormatterIndex, getValueFormats, stringToJsRegex } from '@grafana/ui';
-import deprecationWarning from '@grafana/ui/src/utils/deprecationWarning';
+import { getValueFormat, getValueFormatterIndex, getValueFormats, deprecationWarning } from '@grafana/ui';
+import { stringToJsRegex } from '@grafana/data';
 
 const kbn: any = {};
 
@@ -231,7 +231,7 @@ kbn.slugifyForUrl = str => {
 
 /** deprecated since 6.1, use grafana/ui */
 kbn.stringToJsRegex = str => {
-  deprecationWarning('kbn.ts', 'kbn.stringToJsRegex()', '@grafana/ui');
+  deprecationWarning('kbn.ts', 'kbn.stringToJsRegex()', '@grafana/data');
   return stringToJsRegex(str);
 };
 

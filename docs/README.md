@@ -5,20 +5,20 @@ docs are built using [Hugo](http://gohugo.io/) - a static site generator.
 
 **Prepare the Docker Image**:
 
-Git clone `grafana/grafana.org` repo. Run these commands in the root of that repo. **Note** that you may require ``sudo``
+Git clone `grafana/website` repo. Run these commands in the root of that repo. **Note** that you may require ``sudo``
 when running ``make docs-build`` depending on how your system's docker
 service is configured):
 
 ```
-git clone https://github.com/grafana/grafana.org
-cd grafana.org
+git clone https://github.com/grafana/website
+cd website
 make docs-build
 ```
 
 **Build the Documentation**:
 
 Now that the docker image has been prepared we can build the
-grafana docs and start a docs server. 
+grafana docs and start a docs server.
 
 If you have not cloned the Grafana repository already then:
 
@@ -54,19 +54,19 @@ Open [localhost:3004](http://localhost:3004) to view the docs.
 
 ### Images & Content
 
-All markdown files are located in this repo (main grafana repo). But all images are added to the https://github.com/grafana/grafana.org repo. So the process of adding images is a bit complicated. 
+All markdown files are located in this repo (main grafana repo). But all images are added to the https://github.com/grafana/website repo. So the process of adding images is a bit complicated.
 
-First you need create a feature (PR) branch of https://github.com/grafana/grafana.org so you can make change. Then add the image to the `/static/img/docs` directory. Then make a commit that adds the image. 
+First you need create a feature (PR) branch of https://github.com/grafana/website so you can make change. Then add the image to the `/static/img/docs` directory. Then make a commit that adds the image.
 
 Then run:
 ```
 make docs-build
 ```
 
-This will rebuild the docs docker container. 
+This will rebuild the docs docker container.
 
-To be able to use the image you have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image. 
+To be able to use the image you have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image.
 
 ### Editing content
 
-Changes to the markdown files should automatically cause a docs rebuild and live reload should reload the page in your browser. 
+Changes to the markdown files should automatically cause a docs rebuild and live reload should reload the page in your browser.

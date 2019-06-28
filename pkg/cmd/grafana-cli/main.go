@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"runtime"
@@ -18,13 +17,13 @@ var version = "master"
 func main() {
 	setupLogging()
 
-	flag.Parse()
 	app := cli.NewApp()
 	app.Name = "Grafana cli"
 	app.Usage = ""
 	app.Author = "Grafana Project"
 	app.Email = "https://github.com/grafana/grafana"
 	app.Version = version
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "pluginsDir",
@@ -51,6 +50,18 @@ func main() {
 		cli.BoolFlag{
 			Name:  "debug, d",
 			Usage: "enable debug logging",
+		},
+		cli.StringFlag{
+			Name:  "configOverrides",
+			Usage: "configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+		},
+		cli.StringFlag{
+			Name:  "homepath",
+			Usage: "path to grafana install/home path, defaults to working directory",
+		},
+		cli.StringFlag{
+			Name:  "config",
+			Usage: "path to config file",
 		},
 	}
 
