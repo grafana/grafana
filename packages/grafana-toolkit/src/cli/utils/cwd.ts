@@ -5,6 +5,11 @@ export const changeCwdToGrafanaUi = () => {
   return process.cwd();
 };
 
+export const changeCwdToGrafanaToolkit = () => {
+  process.chdir(`${cwd}/packages/grafana-toolkit`);
+  return process.cwd();
+};
+
 export const changeCwdToGrafanaUiDist = () => {
   process.chdir(`${cwd}/packages/grafana-ui/dist`);
 };

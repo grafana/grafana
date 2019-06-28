@@ -1,4 +1,6 @@
-import _ from 'lodash';
+import axios from 'axios';
+// @ts-ignore
+import * as _ from 'lodash';
 import { Task, TaskRunner } from './task';
 import GithubClient from '../utils/githubClient';
 
@@ -27,11 +29,11 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) 
   const issues = res.data;
 
   const bugs = _.sortBy(
-    issues.filter(item => {
+    issues.filter((item: any) => {
       if (item.title.match(/fix|fixes/i)) {
         return true;
       }
-      if (item.labels.find(label => label.name === 'type/bug')) {
+      if (item.labels.find((label: any) => label.name === 'type/bug')) {
         return true;
       }
       return false;
@@ -39,7 +41,7 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) 
     'title'
   );
 
-  const notBugs = _.sortBy(issues.filter(item => !bugs.find(bug => bug === item)), 'title');
+  const notBugs = _.sortBy(issues.filter((item: any) => !bugs.find((bug: any) => bug === item)), 'title');
 
   let markdown = '';
 
@@ -65,7 +67,7 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) 
 function getMarkdownLineForIssue(item: any) {
   const githubGrafanaUrl = 'https://github.com/grafana/grafana';
   let markdown = '';
-  const title = item.title.replace(/^([^:]*)/, (match, g1) => {
+  const title = item.title.replace(/^([^:]*)/, (_match: any, g1: any) => {
     return `**${g1}**`;
   });
 
@@ -78,6 +80,4 @@ function getMarkdownLineForIssue(item: any) {
   return markdown;
 }
 
-export const changelogTask = new Task<ChangelogOptions>();
-changelogTask.setName('Changelog generator task');
-changelogTask.setRunner(changelogTaskRunner);
+export const changelogTask = new Task<ChangelogOptions>('Changelog generator task', changelogTaskRunner);

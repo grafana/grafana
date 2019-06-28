@@ -1,11 +1,10 @@
 export type TaskRunner<T> = (options: T) => Promise<any>;
 
 export class Task<TOptions> {
-  name: string;
-  runner: (options: TOptions) => Promise<any>;
-  options: TOptions;
+  options: TOptions = {} as any;
 
-  setName = name => {
+  constructor(public name: string, public runner: TaskRunner<TOptions>) {}
+  setName = (name: string) => {
     this.name = name;
   };
 
@@ -13,7 +12,7 @@ export class Task<TOptions> {
     this.runner = runner;
   };
 
-  setOptions = options => {
+  setOptions = (options: TOptions) => {
     this.options = options;
   };
 

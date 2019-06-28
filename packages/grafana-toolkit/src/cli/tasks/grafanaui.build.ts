@@ -1,34 +1,45 @@
-import execa from 'execa';
-import fs from 'fs';
+import execa = require('execa');
+// @ts-ignore
+import * as fs from 'fs';
 import { changeCwdToGrafanaUi, restoreCwd } from '../utils/cwd';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
 
-let distDir, cwd;
+let distDir: string, cwd: string;
 
+// @ts-ignore
 export const clean = useSpinner<void>('Cleaning', async () => await execa('npm', ['run', 'clean']));
 
+// @ts-ignore
 const compile = useSpinner<void>('Compiling sources', () => execa('tsc', ['-p', './tsconfig.build.json']));
 
+// @ts-ignore
 const rollup = useSpinner<void>('Bundling', () => execa('npm', ['run', 'build']));
 
-export const savePackage = useSpinner<{
+interface SavePackageOptions {
   path: string;
   pkg: {};
-}>('Updating package.json', async ({ path, pkg }) => {
-  return new Promise((resolve, reject) => {
-    fs.writeFile(path, JSON.stringify(pkg, null, 2), err => {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve();
-    });
-  });
-});
+}
 
-const preparePackage = async pkg => {
+// @ts-ignore
+export const savePackage = useSpinner<SavePackageOptions>(
+  'Updating package.json',
+  // @ts-ignore
+  async ({ path, pkg }: SavePackageOptions) => {
+    return new Promise((resolve, reject) => {
+      fs.writeFile(path, JSON.stringify(pkg, null, 2), err => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve();
+      });
+    });
+  }
+);
+
+const preparePackage = async (pkg: any) => {
   pkg.main = 'index.js';
   pkg.types = 'index.d.ts';
   await savePackage({
@@ -39,6 +50,7 @@ const preparePackage = async pkg => {
 
 const moveFiles = () => {
   const files = ['README.md', 'CHANGELOG.md', 'index.js'];
+  // @ts-ignore
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
@@ -71,6 +83,4 @@ const buildTaskRunner: TaskRunner<void> = async () => {
   restoreCwd();
 };
 
-export const buildTask = new Task<void>();
-buildTask.setName('@grafana/ui build');
-buildTask.setRunner(buildTaskRunner);
+export const buildTask = new Task<void>('@grafana/ui build', buildTaskRunner);
