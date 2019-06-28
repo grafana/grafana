@@ -98,6 +98,10 @@
   padding: 10px 2px;
 }
 
+.explore-toolbar-content-item.timepicker {
+  z-index: $zindex-timepicker-popover;
+}
+
 .explore-toolbar-content-item:first-child {
   padding-left: $dashboard-padding;
   margin-right: auto;

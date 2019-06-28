@@ -6,6 +6,7 @@ import './editor/editor_component';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { auto } from 'angular';
+import { SeriesData } from '@grafana/ui';
 
 export interface ResultFormat {
   text: string;
@@ -124,7 +125,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
   }
 
-  onDataReceived(dataList) {
+  onDataReceived(dataList: SeriesData[]) {
     this.lastQueryError = undefined;
     this.lastQuery = '';
 
@@ -134,11 +135,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
   }
 
-  onDataError(err) {
+  onDataError(err: any) {
     this.handleQueryCtrlError(err);
   }
 
-  handleQueryCtrlError(err) {
+  handleQueryCtrlError(err: any) {
     if (err.query && err.query.refId && err.query.refId !== this.target.refId) {
       return;
     }
@@ -196,7 +197,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       return;
     }
 
-    return this.datasource.azureMonitorDatasource.getSubscriptions().then(subs => {
+    return this.datasource.azureMonitorDatasource.getSubscriptions().then((subs: any) => {
       this.subscriptions = subs;
       if (!this.target.subscription && this.target.queryType === 'Azure Monitor') {
         this.target.subscription = this.datasource.azureMonitorDatasource.subscriptionId;
@@ -231,7 +232,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   /* Azure Monitor Section */
-  getResourceGroups(query) {
+  getResourceGroups(query: any) {
     if (this.target.queryType !== 'Azure Monitor' || !this.datasource.azureMonitorDatasource.isConfigured()) {
       return;
     }
@@ -243,7 +244,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  getMetricDefinitions(query) {
+  getMetricDefinitions(query: any) {
     if (
       this.target.queryType !== 'Azure Monitor' ||
       !this.target.azureMonitor.resourceGroup ||
@@ -259,7 +260,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  getResourceNames(query) {
+  getResourceNames(query: any) {
     if (
       this.target.queryType !== 'Azure Monitor' ||
       !this.target.azureMonitor.resourceGroup ||
@@ -279,7 +280,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  getMetricNames(query) {
+  getMetricNames(query: any) {
     if (
       this.target.queryType !== 'Azure Monitor' ||
       !this.target.azureMonitor.resourceGroup ||
@@ -345,7 +346,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.replace(this.target.azureMonitor.resourceName),
         this.replace(this.target.azureMonitor.metricName)
       )
-      .then(metadata => {
+      .then((metadata: any) => {
         this.target.azureMonitor.aggOptions = metadata.supportedAggTypes || [metadata.primaryAggType];
         this.target.azureMonitor.aggregation = metadata.primaryAggType;
         this.target.azureMonitor.timeGrains = [{ text: 'auto', value: 'auto' }].concat(metadata.supportedTimeGrains);
@@ -378,7 +379,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   getWorkspaces = () => {
     return this.datasource.azureLogAnalyticsDatasource
       .getWorkspaces(this.target.subscription)
-      .then(list => {
+      .then((list: any[]) => {
         this.workspaces = list;
         if (list.length > 0 && !this.target.azureLogAnalytics.workspace) {
           this.target.azureLogAnalytics.workspace = list[0].value;
@@ -440,7 +441,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     return this.datasource
       .getAppInsightsMetricMetadata(this.replace(this.target.appInsights.metricName))
-      .then(aggData => {
+      .then((aggData: { supportedAggTypes: string[]; supportedGroupBy: string[]; primaryAggType: string }) => {
         this.target.appInsights.aggOptions = aggData.supportedAggTypes;
         this.target.appInsights.groupByOptions = aggData.supportedGroupBy;
         this.target.appInsights.aggregation = aggData.primaryAggType;
@@ -461,7 +462,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     return this.datasource.appInsightsDatasource.getQuerySchema().catch(this.handleQueryCtrlError.bind(this));
   };
 
-  getAppInsightsGroupBySegments(query) {
+  getAppInsightsGroupBySegments(query: any) {
     return _.map(this.target.appInsights.groupByOptions, option => {
       return { text: option, value: option };
     });

@@ -12,7 +12,7 @@ import { UsersState, UserState } from './user';
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
-import { NavIndex } from '@grafana/ui';
+import { NavIndex } from '@grafana/data';
 import { ApplicationState } from './application';
 
 export interface StoreState {

@@ -490,4 +490,10 @@ describe('ElasticQueryBuilder', () => {
     const query = builder6x.getTermsQuery({});
     expect(query.aggs['1'].terms.order._key).toBe('asc');
   });
+
+  it('getTermsQuery should request documents and date histogram', () => {
+    const query = builder.getLogsQuery({});
+    expect(query).toHaveProperty('query.bool.filter');
+    expect(query.aggs['2']).toHaveProperty('date_histogram');
+  });
 });

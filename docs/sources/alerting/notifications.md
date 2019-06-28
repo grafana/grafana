@@ -167,8 +167,8 @@ Notifications can be sent by setting up an incoming webhook in Google Hangouts c
 
 ### All supported notifiers
 
-Name | Type | Supports images |Support alert rule tags
------|------------ | ------
+Name | Type | Supports images | Support alert rule tags
+-----|------|---------------- | -----------------------
 DingDing | `dingding` | yes, external only | no
 Discord | `discord` | yes | no
 Email | `email` | yes | no
@@ -198,6 +198,8 @@ Be aware that some notifiers requires public access to the image to be able to i
 Notification services which need public image access are marked as 'external only'.
 
 # Use alert rule tags in notifications {#alert-rule-tags}
+
+> Only available in Grafana v6.3+.
 
 Grafana can include a list of tags (key/value) in the notification.
 It's called alert rule tags to contrast with tags parsed from timeseries.

@@ -147,6 +147,12 @@ export interface RangeMap extends BaseMap {
   to: string;
 }
 
+export interface DataLink {
+  url: string;
+  title: string;
+  targetBlank?: boolean;
+}
+
 export enum VizOrientation {
   Auto = 'auto',
   Vertical = 'vertical',

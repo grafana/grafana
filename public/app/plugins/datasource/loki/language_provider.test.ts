@@ -1,12 +1,14 @@
+// @ts-ignore
 import Plain from 'slate-plain-serializer';
 
 import LanguageProvider, { LABEL_REFRESH_INTERVAL } from './language_provider';
 import { advanceTo, clear, advanceBy } from 'jest-date-mock';
 import { beforeEach } from 'test/lib/common';
+import { DataQueryResponseData } from '@grafana/ui';
 
 describe('Language completion provider', () => {
   const datasource = {
-    metadataRequest: () => ({ data: { data: [] } }),
+    metadataRequest: () => ({ data: { data: [] as DataQueryResponseData[] } }),
   };
 
   describe('empty query suggestions', () => {
@@ -91,7 +93,7 @@ describe('Language completion provider', () => {
 
 describe('Query imports', () => {
   const datasource = {
-    metadataRequest: () => ({ data: { data: [] } }),
+    metadataRequest: () => ({ data: { data: [] as DataQueryResponseData[] } }),
   };
 
   it('returns empty queries for unknown origin datasource', async () => {
@@ -109,7 +111,8 @@ describe('Query imports', () => {
 
     it('returns empty query from selector query if label is not available', async () => {
       const datasourceWithLabels = {
-        metadataRequest: url => (url === '/api/prom/label' ? { data: { data: ['other'] } } : { data: { data: [] } }),
+        metadataRequest: (url: string) =>
+          url === '/api/prom/label' ? { data: { data: ['other'] } } : { data: { data: [] as DataQueryResponseData[] } },
       };
       const instance = new LanguageProvider(datasourceWithLabels);
       const result = await instance.importPrometheusQuery('{foo="bar"}');
@@ -118,7 +121,8 @@ describe('Query imports', () => {
 
     it('returns selector query from selector query with common labels', async () => {
       const datasourceWithLabels = {
-        metadataRequest: url => (url === '/api/prom/label' ? { data: { data: ['foo'] } } : { data: { data: [] } }),
+        metadataRequest: (url: string) =>
+          url === '/api/prom/label' ? { data: { data: ['foo'] } } : { data: { data: [] as DataQueryResponseData[] } },
       };
       const instance = new LanguageProvider(datasourceWithLabels);
       const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
@@ -127,7 +131,10 @@ describe('Query imports', () => {
 
     it('returns selector query from selector query with all labels if logging label list is empty', async () => {
       const datasourceWithLabels = {
-        metadataRequest: url => (url === '/api/prom/label' ? { data: { data: [] } } : { data: { data: [] } }),
+        metadataRequest: (url: string) =>
+          url === '/api/prom/label'
+            ? { data: { data: [] as DataQueryResponseData[] } }
+            : { data: { data: [] as DataQueryResponseData[] } },
       };
       const instance = new LanguageProvider(datasourceWithLabels);
       const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
@@ -138,7 +145,7 @@ describe('Query imports', () => {
 
 describe('Labels refresh', () => {
   const datasource = {
-    metadataRequest: () => ({ data: { data: [] } }),
+    metadataRequest: () => ({ data: { data: [] as DataQueryResponseData[] } }),
   };
   const instance = new LanguageProvider(datasource);
 

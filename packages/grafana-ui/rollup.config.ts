@@ -23,10 +23,12 @@ const buildCjsPackage = ({ env }) => {
         },
       },
     ],
-    external: ['react', 'react-dom'],
+    external: ['react', 'react-dom', '@grafana/data'],
     plugins: [
       commonjs({
         include: /node_modules/,
+        // When 'rollup-plugin-commonjs' fails to properly convert the CommonJS modules to ES6 one has to manually name the exports
+        // https://github.com/rollup/rollup-plugin-commonjs#custom-named-exports
         namedExports: {
           '../../node_modules/lodash/lodash.js': [
             'flatten',
@@ -44,6 +46,16 @@ const buildCjsPackage = ({ env }) => {
             'omit',
           ],
           '../../node_modules/react-color/lib/components/common': ['Saturation', 'Hue', 'Alpha'],
+          '../../node_modules/immutable/dist/immutable.js': [
+            'Set',
+            'Map',
+            'List',
+            'OrderedSet',
+            'is',
+            'Stack',
+            'Record',
+          ],
+          '../../node_modules/esrever/esrever.js': ['reverse'],
         },
       }),
       resolve(),

@@ -11,6 +11,8 @@ export class ElasticConfigCtrl {
     const defaultMaxConcurrentShardRequests = this.current.jsonData.esVersion >= 70 ? 5 : 256;
     this.current.jsonData.maxConcurrentShardRequests =
       this.current.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests;
+    this.current.jsonData.logMessageField = this.current.jsonData.logMessageField || '';
+    this.current.jsonData.logLevelField = this.current.jsonData.logLevelField || '';
   }
 
   indexPatternTypes = [

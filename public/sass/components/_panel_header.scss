@@ -169,10 +169,16 @@ $panel-header-no-title-zindex: 1;
 
 .panel-info-content {
   a {
-    color: $white;
+    color: $gray-6;
+
     &:hover {
       color: darken($white, 10%);
     }
+  }
+
+  .panel-info-corner-links {
+    list-style: none;
+    padding-left: 0;
   }
 }
 
