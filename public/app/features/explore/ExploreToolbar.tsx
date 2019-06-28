@@ -198,7 +198,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 })}
               </div>
             ) : null}
-            <div className="explore-toolbar-content-item timepicker">
+            <div className="explore-toolbar-content-item">
               <ExploreTimeControls
                 exploreId={exploreId}
                 hasLiveOption={hasLiveOption}

@@ -10,14 +10,6 @@
   transform: rotate(90deg);
 }
 
-.timepicker {
-  display: flex;
-}
-
-.timepicker-rangestring {
-  margin-left: 0.5em;
-}
-
 .datasource-picker {
   .ds-picker {
     min-width: 200px;
@@ -91,15 +83,12 @@
   display: flex;
   flex-flow: row wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .explore-toolbar-content-item {
+  display: flex;
   padding: 10px 2px;
-}
-
-.explore-toolbar-content-item.timepicker {
-  z-index: $zindex-timepicker-popover;
 }
 
 .explore-toolbar-content-item:first-child {
