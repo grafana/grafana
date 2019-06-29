@@ -10,18 +10,32 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/macaron.v1"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/macaron.v1"
 )
 
 var errorTemplate = "error-template"
+
+func mockGetTime() {
+	var timeSeed int64
+	getTime = func() time.Time {
+		fakeNow := time.Unix(timeSeed, 0)
+		timeSeed++
+		return fakeNow
+	}
+}
+
+func resetGetTime() {
+	getTime = time.Now
+}
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
 	setting.ERR_TEMPLATE_NAME = errorTemplate
@@ -85,7 +99,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "middleware should add Cache-Control header for requests with html response", func(sc *scenarioContext) {
-			sc.handler(func(c *m.ReqContext) {
+			sc.handler(func(c *models.ReqContext) {
 				data := &dtos.IndexViewData{
 					User:     &dtos.CurrentUser{},
 					Settings: map[string]interface{}{},
@@ -127,20 +141,20 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Using basic auth", func(sc *scenarioContext) {
 
-			bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
-				query.Result = &m.User{
+			bus.AddHandler("test", func(query *models.GetUserByLoginQuery) error {
+				query.Result = &models.User{
 					Password: util.EncodePassword("myPass", "salt"),
 					Salt:     "salt",
 				}
 				return nil
 			})
 
-			bus.AddHandler("test", func(loginUserQuery *m.LoginUserQuery) error {
+			bus.AddHandler("test", func(loginUserQuery *models.LoginUserQuery) error {
 				return nil
 			})
 
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+				query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
 				return nil
 			})
 
@@ -158,8 +172,8 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario(t, "Valid api key", func(sc *scenarioContext) {
 			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 
-			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
-				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash}
+			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
 				return nil
 			})
 
@@ -172,15 +186,15 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("Should init middleware context", func() {
 				So(sc.context.IsSignedIn, ShouldEqual, true)
 				So(sc.context.OrgId, ShouldEqual, 12)
-				So(sc.context.OrgRole, ShouldEqual, m.ROLE_EDITOR)
+				So(sc.context.OrgRole, ShouldEqual, models.ROLE_EDITOR)
 			})
 		})
 
 		middlewareScenario(t, "Valid api key, but does not match db hash", func(sc *scenarioContext) {
 			keyhash := "something_not_matching"
 
-			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
-				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash}
+			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
 				return nil
 			})
 
@@ -192,11 +206,34 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 		})
 
+		middlewareScenario(t, "Valid api key, but expired", func(sc *scenarioContext) {
+			mockGetTime()
+			defer resetGetTime()
+
+			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+
+			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+
+				// api key expired one second before
+				expires := getTime().Add(-1 * time.Second).Unix()
+				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash,
+					Expires: &expires}
+				return nil
+			})
+
+			sc.fakeReq("GET", "/").withValidApiKey().exec()
+
+			Convey("Should return 401", func() {
+				So(sc.resp.Code, ShouldEqual, 401)
+				So(sc.respJson["message"], ShouldEqual, "Expired API key")
+			})
+		})
+
 		middlewareScenario(t, "Valid api key via Basic auth", func(sc *scenarioContext) {
 			keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 
-			bus.AddHandler("test", func(query *m.GetApiKeyByNameQuery) error {
-				query.Result = &m.ApiKey{OrgId: 12, Role: m.ROLE_EDITOR, Key: keyhash}
+			bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
+				query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
 				return nil
 			})
 
@@ -210,20 +247,20 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("Should init middleware context", func() {
 				So(sc.context.IsSignedIn, ShouldEqual, true)
 				So(sc.context.OrgId, ShouldEqual, 12)
-				So(sc.context.OrgRole, ShouldEqual, m.ROLE_EDITOR)
+				So(sc.context.OrgRole, ShouldEqual, models.ROLE_EDITOR)
 			})
 		})
 
 		middlewareScenario(t, "Non-expired auth token in cookie which not are being rotated", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+				query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
 				return nil
 			})
 
-			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
-				return &m.UserToken{
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+				return &models.UserToken{
 					UserId:        12,
 					UnhashedToken: unhashedToken,
 				}, nil
@@ -246,19 +283,19 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario(t, "Non-expired auth token in cookie which are being rotated", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+				query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
 				return nil
 			})
 
-			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
-				return &m.UserToken{
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+				return &models.UserToken{
 					UserId:        12,
 					UnhashedToken: "",
 				}, nil
 			}
 
-			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *m.UserToken, clientIP, userAgent string) (bool, error) {
+			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *models.UserToken, clientIP, userAgent string) (bool, error) {
 				userToken.UnhashedToken = "rotated"
 				return true, nil
 			}
@@ -293,8 +330,8 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario(t, "Invalid/expired auth token in cookie", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 
-			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*m.UserToken, error) {
-				return nil, m.ErrUserTokenNotFound
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
+				return nil, models.ErrUserTokenNotFound
 			}
 
 			sc.fakeReq("GET", "/").exec()
@@ -309,12 +346,12 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario(t, "When anonymous access is enabled", func(sc *scenarioContext) {
 			setting.AnonymousEnabled = true
 			setting.AnonymousOrgName = "test"
-			setting.AnonymousOrgRole = string(m.ROLE_EDITOR)
+			setting.AnonymousOrgRole = string(models.ROLE_EDITOR)
 
-			bus.AddHandler("test", func(query *m.GetOrgByNameQuery) error {
+			bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
 				So(query.Name, ShouldEqual, "test")
 
-				query.Result = &m.Org{Id: 2, Name: "test"}
+				query.Result = &models.Org{Id: 2, Name: "test"}
 				return nil
 			})
 
@@ -323,7 +360,7 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("should init context with org info", func() {
 				So(sc.context.UserId, ShouldEqual, 0)
 				So(sc.context.OrgId, ShouldEqual, 2)
-				So(sc.context.OrgRole, ShouldEqual, m.ROLE_EDITOR)
+				So(sc.context.OrgRole, ShouldEqual, models.ROLE_EDITOR)
 			})
 
 			Convey("context signed in should be false", func() {
@@ -341,8 +378,8 @@ func TestMiddlewareContext(t *testing.T) {
 			name := "markelog"
 
 			middlewareScenario(t, "should not sync the user if it's in the cache", func(sc *scenarioContext) {
-				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: query.UserId}
+				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+					query.Result = &models.SignedInUser{OrgId: 4, UserId: query.UserId}
 					return nil
 				})
 
@@ -364,16 +401,16 @@ func TestMiddlewareContext(t *testing.T) {
 				setting.LDAPEnabled = false
 				setting.AuthProxyAutoSignUp = true
 
-				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
 					if query.UserId > 0 {
-						query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
+						query.Result = &models.SignedInUser{OrgId: 4, UserId: 33}
 						return nil
 					}
-					return m.ErrUserNotFound
+					return models.ErrUserNotFound
 				})
 
-				bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-					cmd.Result = &m.User{Id: 33}
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					cmd.Result = &models.User{Id: 33}
 					return nil
 				})
 
@@ -391,13 +428,13 @@ func TestMiddlewareContext(t *testing.T) {
 			middlewareScenario(t, "should get an existing user from header", func(sc *scenarioContext) {
 				setting.LDAPEnabled = false
 
-				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-					query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
+				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+					query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-					cmd.Result = &m.User{Id: 12}
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					cmd.Result = &models.User{Id: 12}
 					return nil
 				})
 
@@ -416,13 +453,13 @@ func TestMiddlewareContext(t *testing.T) {
 				setting.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
 				setting.LDAPEnabled = false
 
-				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
+				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+					query.Result = &models.SignedInUser{OrgId: 4, UserId: 33}
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-					cmd.Result = &m.User{Id: 33}
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					cmd.Result = &models.User{Id: 33}
 					return nil
 				})
 
@@ -442,13 +479,13 @@ func TestMiddlewareContext(t *testing.T) {
 				setting.AuthProxyWhitelist = "8.8.8.8"
 				setting.LDAPEnabled = false
 
-				bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
-					query.Result = &m.SignedInUser{OrgId: 4, UserId: 33}
+				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+					query.Result = &models.SignedInUser{OrgId: 4, UserId: 33}
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *m.UpsertUserCommand) error {
-					cmd.Result = &m.User{Id: 33}
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					cmd.Result = &models.User{Id: 33}
 					return nil
 				})
 
@@ -491,7 +528,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 
 		sc.m.Use(OrgRedirect())
 
-		sc.defaultHandler = func(c *m.ReqContext) {
+		sc.defaultHandler = func(c *models.ReqContext) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
@@ -506,7 +543,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 
 type scenarioContext struct {
 	m                    *macaron.Macaron
-	context              *m.ReqContext
+	context              *models.ReqContext
 	resp                 *httptest.ResponseRecorder
 	apiKey               string
 	authHeader           string
@@ -589,4 +626,4 @@ func (sc *scenarioContext) exec() {
 }
 
 type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *m.ReqContext)
+type handlerFunc func(c *models.ReqContext)

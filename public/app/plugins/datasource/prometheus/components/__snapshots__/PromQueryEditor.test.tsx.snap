@@ -2,33 +2,24 @@
 
 exports[`Render PromQueryEditor with basic options should render 1`] = `
 <div>
-  <div
-    className="gf-form-input"
-    style={
+  <PromQueryField
+    datasource={
       Object {
-        "height": "initial",
+        "createQuery": [MockFunction],
+        "getPrometheusTime": [MockFunction],
       }
     }
-  >
-    <PromQueryField
-      datasource={
-        Object {
-          "createQuery": [MockFunction],
-          "getPrometheusTime": [MockFunction],
-        }
+    datasourceStatus={0}
+    history={Array []}
+    onChange={[Function]}
+    onRunQuery={[Function]}
+    query={
+      Object {
+        "expr": "",
+        "refId": "A",
       }
-      datasourceStatus={0}
-      history={Array []}
-      onChange={[Function]}
-      onRunQuery={[Function]}
-      query={
-        Object {
-          "expr": "",
-          "refId": "A",
-        }
-      }
-    />
-  </div>
+    }
+  />
   <div
     className="gf-form-inline"
   >

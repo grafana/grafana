@@ -12,6 +12,7 @@ import {
   LogsModel,
   LogsDedupStrategy,
   LoadingState,
+  AbsoluteTimeRange,
 } from '@grafana/ui';
 
 import { Emitter } from 'app/core/core';
@@ -189,10 +190,8 @@ export interface ExploreItemState {
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
   range: TimeRange;
-  /**
-   * Scanner function that calculates a new range, triggers a query run, and returns the new range.
-   */
-  scanner?: RangeScanner;
+
+  absoluteRange: AbsoluteTimeRange;
   /**
    * True if scanning for more results is active.
    */
@@ -258,6 +257,7 @@ export interface ExploreUpdateState {
   datasource: boolean;
   queries: boolean;
   range: boolean;
+  mode: boolean;
   ui: boolean;
 }
 
@@ -271,6 +271,7 @@ export interface ExploreUIState {
 export interface ExploreUrlState {
   datasource: string;
   queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
+  mode: ExploreMode;
   range: RawTimeRange;
   ui: ExploreUIState;
 }
@@ -328,8 +329,6 @@ export interface QueryTransaction {
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
-
-export type RangeScanner = () => RawTimeRange;
 
 export interface TextMatch {
   text: string;

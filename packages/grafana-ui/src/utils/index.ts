@@ -17,6 +17,7 @@ export { getFlotPairs } from './flotPairs';
 export * from './object';
 export * from './fieldCache';
 export * from './moment_wrapper';
+export * from './slate';
 
 // Names are too general to export
 // rangeutils, datemath

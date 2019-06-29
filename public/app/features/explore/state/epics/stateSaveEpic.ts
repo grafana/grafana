@@ -37,6 +37,7 @@ export const stateSaveEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (ac
         datasource: left.datasourceInstance.name,
         queries: left.queries.map(clearQueryKeys),
         range: toRawTimeRange(left.range),
+        mode: left.mode,
         ui: {
           showingGraph: left.showingGraph,
           showingLogs: true,
@@ -50,6 +51,7 @@ export const stateSaveEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (ac
           datasource: right.datasourceInstance.name,
           queries: right.queries.map(clearQueryKeys),
           range: toRawTimeRange(right.range),
+          mode: right.mode,
           ui: {
             showingGraph: right.showingGraph,
             showingLogs: true,
