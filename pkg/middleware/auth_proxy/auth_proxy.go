@@ -263,7 +263,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 
 	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
-		SignupAllowed: true,
+		SignupAllowed: setting.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
 	}
 	err := bus.Dispatch(upsert)
