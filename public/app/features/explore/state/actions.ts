@@ -238,6 +238,7 @@ export function initializeExplore(
   return async (dispatch, getState) => {
     const timeZone = getTimeZone(getState().user);
     const range = getTimeRange(timeZone, rawRange);
+    const absoluteRange = { from: range.from.valueOf(), to: range.to.valueOf() };
     dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
     dispatch(
       initializeExploreAction({
@@ -246,6 +247,7 @@ export function initializeExplore(
         eventBridge,
         queries,
         range,
+        absoluteRange,
         mode,
         ui,
       })
