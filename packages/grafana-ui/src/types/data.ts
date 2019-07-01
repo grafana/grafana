@@ -55,7 +55,7 @@ export interface Labels {
   [key: string]: string;
 }
 
-export interface SeriesData extends QueryResultBase {
+export interface DataFrame extends QueryResultBase {
   name?: string;
   fields: Field[];
   rows: any[][];

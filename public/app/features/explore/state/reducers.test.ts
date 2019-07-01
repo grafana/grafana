@@ -5,14 +5,7 @@ import {
   makeInitialUpdateState,
   initialExploreState,
 } from './reducers';
-import {
-  ExploreId,
-  ExploreItemState,
-  ExploreUrlState,
-  ExploreState,
-  RangeScanner,
-  ExploreMode,
-} from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUrlState, ExploreState, ExploreMode } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   scanStartAction,
@@ -36,28 +29,23 @@ import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, LoadingState } 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
     it('should start scanning', () => {
-      const scanner = jest.fn();
       const initalState = {
         ...makeExploreItemState(),
         scanning: false,
-        scanner: undefined as RangeScanner,
       };
 
       reducerTester()
         .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
-        .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left, scanner }))
+        .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
           scanning: true,
-          scanner,
         });
     });
     it('should stop scanning', () => {
-      const scanner = jest.fn();
       const initalState = {
         ...makeExploreItemState(),
         scanning: true,
-        scanner,
         scanRange: {},
       };
 
@@ -67,7 +55,6 @@ describe('Explore item reducer', () => {
         .thenStateShouldEqual({
           ...makeExploreItemState(),
           scanning: false,
-          scanner: undefined,
           scanRange: undefined,
         });
     });

@@ -1,6 +1,10 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
 import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
+import { IQService } from 'angular';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export class PostgresDatasource {
   id: any;
@@ -11,7 +15,13 @@ export class PostgresDatasource {
   interval: string;
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q, private templateSrv, private timeSrv) {
+  constructor(
+    instanceSettings: { name: any; id?: any; jsonData?: any },
+    private backendSrv: BackendSrv,
+    private $q: IQService,
+    private templateSrv: TemplateSrv,
+    private timeSrv: TimeSrv
+  ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.jsonData = instanceSettings.jsonData;
@@ -20,7 +30,7 @@ export class PostgresDatasource {
     this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
   }
 
-  interpolateVariable = (value, variable) => {
+  interpolateVariable = (value: string, variable: { multi: any; includeAll: any }) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
         return this.queryModel.quoteLiteral(value);
@@ -39,7 +49,7 @@ export class PostgresDatasource {
     return quotedValues.join(',');
   };
 
-  query(options) {
+  query(options: any) {
     const queries = _.filter(options.targets, target => {
       return target.hide !== true;
     }).map(target => {
@@ -72,7 +82,7 @@ export class PostgresDatasource {
       .then(this.responseParser.processQueryResult);
   }
 
-  annotationQuery(options) {
+  annotationQuery(options: any) {
     if (!options.annotation.rawQuery) {
       return this.$q.reject({
         message: 'Query missing in annotation definition',
@@ -96,10 +106,10 @@ export class PostgresDatasource {
           queries: [query],
         },
       })
-      .then(data => this.responseParser.transformAnnotationResponse(options, data));
+      .then((data: any) => this.responseParser.transformAnnotationResponse(options, data));
   }
 
-  metricFindQuery(query, optionalOptions) {
+  metricFindQuery(query: string, optionalOptions: { variable?: any }) {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
@@ -125,7 +135,7 @@ export class PostgresDatasource {
         method: 'POST',
         data: data,
       })
-      .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
+      .then((data: any) => this.responseParser.parseMetricFindQueryResult(refId, data));
   }
 
   getVersion() {
@@ -138,10 +148,10 @@ export class PostgresDatasource {
 
   testDatasource() {
     return this.metricFindQuery('SELECT 1', {})
-      .then(res => {
+      .then((res: any) => {
         return { status: 'success', message: 'Database Connection OK' };
       })
-      .catch(err => {
+      .catch((err: any) => {
         console.log(err);
         if (err.data && err.data.message) {
           return { status: 'error', message: err.data.message };

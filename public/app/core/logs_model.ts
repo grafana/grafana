@@ -6,7 +6,7 @@ import {
   TimeSeries,
   Labels,
   LogLevel,
-  SeriesData,
+  DataFrame,
   findCommonLabels,
   findUniqueLabels,
   getLogLevel,
@@ -250,15 +250,15 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
   });
 }
 
-function isLogsData(series: SeriesData) {
+function isLogsData(series: DataFrame) {
   return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
 }
 
-export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: number): LogsModel {
-  const metricSeries: SeriesData[] = [];
-  const logSeries: SeriesData[] = [];
+export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number): LogsModel {
+  const metricSeries: DataFrame[] = [];
+  const logSeries: DataFrame[] = [];
 
-  for (const series of seriesData) {
+  for (const series of dataFrame) {
     if (isLogsData(series)) {
       logSeries.push(series);
       continue;
@@ -289,7 +289,7 @@ export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: numb
   };
 }
 
-export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
+export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
   if (logSeries.length === 0) {
     return undefined;
   }
@@ -355,7 +355,7 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
 }
 
 export function processLogSeriesRow(
-  series: SeriesData,
+  series: DataFrame,
   fieldCache: FieldCache,
   rowIndex: number,
   uniqueLabels: Labels
