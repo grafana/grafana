@@ -155,6 +155,7 @@ callback URL to be correct).
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
+> Available in 6.3 and above
 
 Serve Grafana from subpath specified in `root_url` setting. By
 default it is set to `false` for compatibility reasons.
@@ -303,7 +304,7 @@ The number of days the keep me logged in / remember me cookie lasts.
 
 ### secret_key
 
-Used for signing some datasource settings like secrets and passwords. Cannot be changed without requiring an update
+Used for signing some datasource settings like secrets and passwords, the encryption format used is AES-256 in CFB mode. Cannot be changed without requiring an update
 to datasource settings to re-encode them.
 
 ### disable_gravatar

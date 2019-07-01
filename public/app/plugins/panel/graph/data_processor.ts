@@ -9,7 +9,7 @@ type Options = {
 };
 
 export class DataProcessor {
-  constructor(private panel) {}
+  constructor(private panel: any) {}
 
   getSeriesList(options: Options): TimeSeries[] {
     const list: TimeSeries[] = [];
@@ -140,7 +140,7 @@ export class DataProcessor {
     }
   }
 
-  getXAxisValueOptions(options) {
+  getXAxisValueOptions(options: any) {
     switch (this.panel.xaxis.mode) {
       case 'series': {
         return [

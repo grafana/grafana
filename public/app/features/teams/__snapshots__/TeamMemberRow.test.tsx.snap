@@ -115,6 +115,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned off should not ren
               },
             ]
           }
+          tabSelectsValue={true}
           value={
             Object {
               "description": "Is team member",
@@ -199,6 +200,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on should render p
               },
             ]
           }
+          tabSelectsValue={true}
           value={
             Object {
               "description": "Is team member",

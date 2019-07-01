@@ -53,6 +53,7 @@ export interface CommonProps<T> {
   tooltipContent?: PopperContent<any>;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
+  tabSelectsValue?: boolean;
 }
 
 export interface SelectProps<T> extends CommonProps<T> {
@@ -64,26 +65,6 @@ interface AsyncProps<T> extends CommonProps<T> {
   loadOptions: (query: string) => Promise<Array<SelectOptionItem<T>>>;
   loadingMessage?: () => string;
 }
-
-const wrapInTooltip = (
-  component: React.ReactElement,
-  tooltipContent: PopperContent<any> | undefined,
-  isMenuOpen: boolean | undefined
-) => {
-  const showTooltip = isMenuOpen ? false : undefined;
-  if (tooltipContent) {
-    return (
-      <Tooltip show={showTooltip} content={tooltipContent} placement="bottom">
-        <div>
-          {/* div needed for tooltip */}
-          {component}
-        </div>
-      </Tooltip>
-    );
-  } else {
-    return <div>{component}</div>;
-  }
-};
 
 export const MenuList = (props: any) => {
   return (
@@ -107,6 +88,7 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
     isLoading: false,
     backspaceRemovesValue: true,
     maxMenuHeight: 300,
+    tabSelectsValue: true,
     components: {
       Option: SelectOption,
       SingleValue,
@@ -114,20 +96,6 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       MenuList,
       Group: SelectOptionGroup,
     },
-  };
-
-  onOpenMenu = () => {
-    const { onOpenMenu } = this.props;
-    if (onOpenMenu) {
-      onOpenMenu();
-    }
-  };
-
-  onCloseMenu = () => {
-    const { onCloseMenu } = this.props;
-    if (onCloseMenu) {
-      onCloseMenu();
-    }
   };
 
   render() {
@@ -155,6 +123,9 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
       isOpen,
       components,
       tooltipContent,
+      tabSelectsValue,
+      onCloseMenu,
+      onOpenMenu,
     } = this.props;
 
     let widthClass = '';
@@ -164,37 +135,43 @@ export class Select<T> extends PureComponent<SelectProps<T>> {
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
     const selectComponents = { ...Select.defaultProps.components, ...components };
-    return wrapInTooltip(
-      <ReactSelect
-        classNamePrefix="gf-form-select-box"
-        className={selectClassNames}
-        components={selectComponents}
-        defaultValue={defaultValue}
-        value={value}
-        getOptionLabel={getOptionLabel}
-        getOptionValue={getOptionValue}
-        menuShouldScrollIntoView={false}
-        isSearchable={isSearchable}
-        onChange={onChange}
-        options={options}
-        placeholder={placeholder || 'Choose'}
-        styles={resetSelectStyles()}
-        isDisabled={isDisabled}
-        isLoading={isLoading}
-        isClearable={isClearable}
-        autoFocus={autoFocus}
-        onBlur={onBlur}
-        openMenuOnFocus={openMenuOnFocus}
-        maxMenuHeight={maxMenuHeight}
-        noOptionsMessage={noOptionsMessage}
-        isMulti={isMulti}
-        backspaceRemovesValue={backspaceRemovesValue}
-        menuIsOpen={isOpen}
-        onMenuOpen={this.onOpenMenu}
-        onMenuClose={this.onCloseMenu}
-      />,
-      tooltipContent,
-      isOpen
+
+    return (
+      <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
+        {(onOpenMenuInternal, onCloseMenuInternal) => {
+          return (
+            <ReactSelect
+              classNamePrefix="gf-form-select-box"
+              className={selectClassNames}
+              components={selectComponents}
+              defaultValue={defaultValue}
+              value={value}
+              getOptionLabel={getOptionLabel}
+              getOptionValue={getOptionValue}
+              menuShouldScrollIntoView={false}
+              isSearchable={isSearchable}
+              onChange={onChange}
+              options={options}
+              placeholder={placeholder || 'Choose'}
+              styles={resetSelectStyles()}
+              isDisabled={isDisabled}
+              isLoading={isLoading}
+              isClearable={isClearable}
+              autoFocus={autoFocus}
+              onBlur={onBlur}
+              openMenuOnFocus={openMenuOnFocus}
+              maxMenuHeight={maxMenuHeight}
+              noOptionsMessage={noOptionsMessage}
+              isMulti={isMulti}
+              backspaceRemovesValue={backspaceRemovesValue}
+              menuIsOpen={isOpen}
+              onMenuOpen={onOpenMenuInternal}
+              onMenuClose={onCloseMenuInternal}
+              tabSelectsValue={tabSelectsValue}
+            />
+          );
+        }}
+      </WrapInTooltip>
     );
   }
 }
@@ -239,6 +216,9 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
       maxMenuHeight,
       isMulti,
       tooltipContent,
+      onCloseMenu,
+      onOpenMenu,
+      isOpen,
     } = this.props;
 
     let widthClass = '';
@@ -248,42 +228,104 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
 
     const selectClassNames = classNames('gf-form-input', 'gf-form-input--form-dropdown', widthClass, className);
 
-    return wrapInTooltip(
-      <ReactAsyncSelect
-        classNamePrefix="gf-form-select-box"
-        className={selectClassNames}
-        components={{
-          Option: SelectOption,
-          SingleValue,
-          IndicatorsContainer,
-          NoOptionsMessage,
+    return (
+      <WrapInTooltip onCloseMenu={onCloseMenu} onOpenMenu={onOpenMenu} tooltipContent={tooltipContent} isOpen={isOpen}>
+        {(onOpenMenuInternal, onCloseMenuInternal) => {
+          return (
+            <ReactAsyncSelect
+              classNamePrefix="gf-form-select-box"
+              className={selectClassNames}
+              components={{
+                Option: SelectOption,
+                SingleValue,
+                IndicatorsContainer,
+                NoOptionsMessage,
+              }}
+              defaultValue={defaultValue}
+              value={value}
+              getOptionLabel={getOptionLabel}
+              getOptionValue={getOptionValue}
+              menuShouldScrollIntoView={false}
+              onChange={onChange}
+              loadOptions={loadOptions}
+              isLoading={isLoading}
+              defaultOptions={defaultOptions}
+              placeholder={placeholder || 'Choose'}
+              styles={resetSelectStyles()}
+              loadingMessage={loadingMessage}
+              noOptionsMessage={noOptionsMessage}
+              isDisabled={isDisabled}
+              isSearchable={isSearchable}
+              isClearable={isClearable}
+              autoFocus={autoFocus}
+              onBlur={onBlur}
+              openMenuOnFocus={openMenuOnFocus}
+              maxMenuHeight={maxMenuHeight}
+              isMulti={isMulti}
+              backspaceRemovesValue={backspaceRemovesValue}
+            />
+          );
         }}
-        defaultValue={defaultValue}
-        value={value}
-        getOptionLabel={getOptionLabel}
-        getOptionValue={getOptionValue}
-        menuShouldScrollIntoView={false}
-        onChange={onChange}
-        loadOptions={loadOptions}
-        isLoading={isLoading}
-        defaultOptions={defaultOptions}
-        placeholder={placeholder || 'Choose'}
-        styles={resetSelectStyles()}
-        loadingMessage={loadingMessage}
-        noOptionsMessage={noOptionsMessage}
-        isDisabled={isDisabled}
-        isSearchable={isSearchable}
-        isClearable={isClearable}
-        autoFocus={autoFocus}
-        onBlur={onBlur}
-        openMenuOnFocus={openMenuOnFocus}
-        maxMenuHeight={maxMenuHeight}
-        isMulti={isMulti}
-        backspaceRemovesValue={backspaceRemovesValue}
-      />,
-      tooltipContent,
-      false
+      </WrapInTooltip>
     );
+  }
+}
+
+export interface TooltipWrapperProps {
+  children: (onOpenMenu: () => void, onCloseMenu: () => void) => React.ReactNode;
+  onOpenMenu?: () => void;
+  onCloseMenu?: () => void;
+  isOpen?: boolean;
+  tooltipContent?: PopperContent<any>;
+}
+
+export interface TooltipWrapperState {
+  isOpenInternal: boolean;
+}
+
+export class WrapInTooltip extends PureComponent<TooltipWrapperProps, TooltipWrapperState> {
+  state: TooltipWrapperState = {
+    isOpenInternal: false,
+  };
+
+  onOpenMenu = () => {
+    const { onOpenMenu } = this.props;
+    if (onOpenMenu) {
+      onOpenMenu();
+    }
+    this.setState({ isOpenInternal: true });
+  };
+
+  onCloseMenu = () => {
+    const { onCloseMenu } = this.props;
+    if (onCloseMenu) {
+      onCloseMenu();
+    }
+    this.setState({ isOpenInternal: false });
+  };
+
+  render() {
+    const { children, isOpen, tooltipContent } = this.props;
+    const { isOpenInternal } = this.state;
+
+    let showTooltip: boolean | undefined = undefined;
+
+    if (isOpenInternal || isOpen) {
+      showTooltip = false;
+    }
+
+    if (tooltipContent) {
+      return (
+        <Tooltip show={showTooltip} content={tooltipContent} placement="bottom">
+          <div>
+            {/* div needed for tooltip */}
+            {children(this.onOpenMenu, this.onCloseMenu)}
+          </div>
+        </Tooltip>
+      );
+    } else {
+      return <div>{children(this.onOpenMenu, this.onCloseMenu)}</div>;
+    }
   }
 }
 

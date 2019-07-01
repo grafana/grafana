@@ -1,8 +1,11 @@
 import _ from 'lodash';
+import { ElasticsearchOptions } from './types';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { getMaxConcurrenShardRequestOrDefault } from './datasource';
 
 export class ElasticConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/elasticsearch/partials/config.html';
-  current: any;
+  current: DataSourceInstanceSettings<ElasticsearchOptions>;
 
   /** @ngInject */
   constructor($scope) {
@@ -11,6 +14,8 @@ export class ElasticConfigCtrl {
     const defaultMaxConcurrentShardRequests = this.current.jsonData.esVersion >= 70 ? 5 : 256;
     this.current.jsonData.maxConcurrentShardRequests =
       this.current.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests;
+    this.current.jsonData.logMessageField = this.current.jsonData.logMessageField || '';
+    this.current.jsonData.logLevelField = this.current.jsonData.logLevelField || '';
   }
 
   indexPatternTypes = [
@@ -41,5 +46,9 @@ export class ElasticConfigCtrl {
       });
       this.current.database = def.example || 'es-index-name';
     }
+  }
+
+  versionChanged() {
+    this.current.jsonData.maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(this.current.jsonData);
   }
 }

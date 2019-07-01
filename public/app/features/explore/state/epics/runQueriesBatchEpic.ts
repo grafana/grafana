@@ -3,7 +3,14 @@ import { Observable, Subject } from 'rxjs';
 import { mergeMap, catchError, takeUntil, filter } from 'rxjs/operators';
 import _, { isString } from 'lodash';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { DataStreamState, LoadingState, DataQueryResponse, SeriesData, DataQueryResponseData } from '@grafana/ui';
+import {
+  DataStreamState,
+  LoadingState,
+  DataQueryResponse,
+  SeriesData,
+  DataQueryResponseData,
+  AbsoluteTimeRange,
+} from '@grafana/ui';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -115,15 +122,24 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
             if (state === LoadingState.Streaming) {
               if (event.request && event.request.range) {
                 let newRange = event.request.range;
+                let absoluteRange: AbsoluteTimeRange = {
+                  from: newRange.from.valueOf(),
+                  to: newRange.to.valueOf(),
+                };
                 if (isString(newRange.raw.from)) {
                   newRange = {
                     from: dateMath.parse(newRange.raw.from, false),
                     to: dateMath.parse(newRange.raw.to, true),
                     raw: newRange.raw,
                   };
+                  absoluteRange = {
+                    from: newRange.from.valueOf(),
+                    to: newRange.to.valueOf(),
+                  };
                 }
-                outerObservable.next(changeRangeAction({ exploreId, range: newRange }));
+                outerObservable.next(changeRangeAction({ exploreId, range: newRange, absoluteRange }));
               }
+
               outerObservable.next(
                 limitMessageRatePayloadAction({
                   exploreId,
