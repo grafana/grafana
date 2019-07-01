@@ -58,6 +58,10 @@ $select-input-bg-disabled: $input-bg-disabled;
   position: absolute;
   z-index: $zindex-dropdown;
   min-width: 100%;
+  &-notice--no-options {
+    background-color: $input-bg;
+    padding: 10px;
+  }
 }
 
 .gf-form-select-box__menu-list {
