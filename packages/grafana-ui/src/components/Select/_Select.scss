@@ -79,11 +79,20 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__multi-value {
   display: inline;
-  margin: 0 4px;
+  margin: 0 6px;
 }
 
 .gf-form-select-box__multi-value__remove {
   text-align: center;
+  display: inline-block;
+  height: 14px;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+.gf-form-select-box__multi-value__label {
+  display: inline;
+  vertical-align: middle;
 }
 
 .gf-form-select-box__option {
