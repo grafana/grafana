@@ -95,7 +95,8 @@ export const getWebpackConfig: WebpackConfigurationGetter = () => {
       // @ts-ignore
       (context, request, callback) => {
         const prefix = 'app/';
-        if (request.indexOf(prefix) === 0) {
+        const prefix2 = 'grafana/';
+        if (request.indexOf(prefix) === 0 || request.indexOf(prefix2) === 0) {
           return callback(null, request);
         }
         // @ts-ignore
