@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var errorTemplate = "error-template"
+const errorTemplate = "error-template"
 
 func mockGetTime() {
 	var timeSeed int64
