@@ -16,7 +16,6 @@ import GraphContainer from './GraphContainer';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
-import TimePicker from './TimePicker';
 
 // Actions
 import {
@@ -35,7 +34,6 @@ import { RawTimeRange, DataQuery, ExploreStartPageProps, DataSourceApi, DataQuer
 import {
   ExploreItemState,
   ExploreUrlState,
-  RangeScanner,
   ExploreId,
   ExploreUpdateState,
   ExploreUIState,
@@ -71,7 +69,6 @@ interface ExploreProps {
   update: ExploreUpdateState;
   reconnectDatasource: typeof reconnectDatasource;
   refreshExplore: typeof refreshExplore;
-  scanner?: RangeScanner;
   scanning?: boolean;
   scanRange?: RawTimeRange;
   scanStart: typeof scanStart;
@@ -117,15 +114,10 @@ interface ExploreProps {
 export class Explore extends React.PureComponent<ExploreProps> {
   el: any;
   exploreEvents: Emitter;
-  /**
-   * Timepicker to control scanning
-   */
-  timepickerRef: React.RefObject<TimePicker>;
 
   constructor(props: ExploreProps) {
     super(props);
     this.exploreEvents = new Emitter();
-    this.timepickerRef = React.createRef();
   }
 
   componentDidMount() {
@@ -159,11 +151,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.el = el;
   };
 
-  onChangeTime = (rawRange: RawTimeRange, changedByScanner?: boolean) => {
-    const { updateTimeRange, exploreId, scanning } = this.props;
-    if (scanning && !changedByScanner) {
-      this.onStopScanning();
-    }
+  onChangeTime = (rawRange: RawTimeRange) => {
+    const { updateTimeRange, exploreId } = this.props;
+
     updateTimeRange({ exploreId, rawRange });
   };
 
@@ -190,13 +180,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
   onStartScanning = () => {
     // Scanner will trigger a query
-    const scanner = this.scanPreviousRange;
-    this.props.scanStart(this.props.exploreId, scanner);
-  };
-
-  scanPreviousRange = (): RawTimeRange => {
-    // Calling move() on the timepicker will trigger this.onChangeTime()
-    return this.timepickerRef.current.move(-1, true);
+    this.props.scanStart(this.props.exploreId);
   };
 
   onStopScanning = () => {
@@ -244,7 +228,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
     return (
       <div className={exploreClass} ref={this.getRef}>
-        <ExploreToolbar exploreId={exploreId} timepickerRef={this.timepickerRef} onChangeTime={this.onChangeTime} />
+        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
         {datasourceMissing ? this.renderEmptyState() : null}
 

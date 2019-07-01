@@ -54,7 +54,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     };
   }
 
-  onFieldChange = (query: PromQuery, override?) => {
+  onFieldChange = (query: PromQuery, override?: any) => {
     this.query.expr = query.expr;
   };
 

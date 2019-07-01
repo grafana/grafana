@@ -193,10 +193,6 @@ export interface ExploreItemState {
 
   absoluteRange: AbsoluteTimeRange;
   /**
-   * Scanner function that calculates a new range, triggers a query run, and returns the new range.
-   */
-  scanner?: RangeScanner;
-  /**
    * True if scanning for more results is active.
    */
   scanning?: boolean;
@@ -333,8 +329,6 @@ export interface QueryTransaction {
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
-
-export type RangeScanner = () => RawTimeRange;
 
 export interface TextMatch {
   text: string;

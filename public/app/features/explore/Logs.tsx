@@ -68,7 +68,7 @@ interface Props {
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
-  onToggleLogLevel: (hiddenLogLevels: Set<LogLevel>) => void;
+  onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
 }
 
@@ -101,7 +101,7 @@ export default class Logs extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     // Staged rendering
     if (prevState.deferLogs && !this.state.deferLogs && !this.state.renderAll) {
       this.renderAllTimer = setTimeout(() => this.setState({ renderAll: true }), 2000);
@@ -135,8 +135,8 @@ export default class Logs extends PureComponent<Props, State> {
     });
   };
 
-  onToggleLogLevel = (rawLevel: string, hiddenRawLevels: Set<string>) => {
-    const hiddenLogLevels: Set<LogLevel> = new Set(Array.from(hiddenRawLevels).map(level => LogLevel[level]));
+  onToggleLogLevel = (rawLevel: string, hiddenRawLevels: string[]) => {
+    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map(level => LogLevel[level]);
     this.props.onToggleLogLevel(hiddenLogLevels);
   };
 

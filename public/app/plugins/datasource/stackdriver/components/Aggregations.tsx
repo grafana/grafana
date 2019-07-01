@@ -7,7 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ValueTypes, MetricKind } from '../constants';
 
 export interface Props {
-  onChange: (metricDescriptor) => void;
+  onChange: (metricDescriptor: any) => void;
   templateSrv: TemplateSrv;
   metricDescriptor: {
     valueType: string;
@@ -38,7 +38,7 @@ export class Aggregations extends React.Component<Props, State> {
   }
 
   setAggOptions({ metricDescriptor }: Props) {
-    let aggOptions = [];
+    let aggOptions: any[] = [];
     if (metricDescriptor) {
       aggOptions = [
         {
