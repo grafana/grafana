@@ -178,9 +178,7 @@ export class TimePicker extends PureComponent<Props, State> {
 const TimePickerTooltipContent = ({ timeRange }: { timeRange: TimeRange }) => (
   <>
     {timeRange.from.format(TIME_FORMAT)}
-    <br />
-    to
-    <br />
+    <div className="text-center">to</div>
     {timeRange.to.format(TIME_FORMAT)}
   </>
 );
