@@ -15,9 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"gopkg.in/macaron.v1"
 )
 
@@ -392,6 +394,25 @@ func TestMiddlewareContext(t *testing.T) {
 					So(sc.context.UserId, ShouldEqual, 33)
 					So(sc.context.OrgId, ShouldEqual, 4)
 				})
+			})
+
+			middlewareScenario(t, "should respect auto signup option", func(sc *scenarioContext) {
+				setting.LDAPEnabled = false
+				setting.AuthProxyAutoSignUp = false
+				var actualAuthProxyAutoSignUp *bool = nil
+
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					actualAuthProxyAutoSignUp = &cmd.SignupAllowed
+					return login.ErrInvalidCredentials
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.exec()
+
+				assert.False(t, *actualAuthProxyAutoSignUp)
+				assert.Equal(t, sc.resp.Code, 500)
+				assert.Nil(t, sc.context)
 			})
 
 			middlewareScenario(t, "should create an user from a header", func(sc *scenarioContext) {
