@@ -3,6 +3,7 @@ import _ from 'lodash';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { DataQueryRequest } from '@grafana/ui';
 
 export default class OpenTsDatasource {
   type: any;
@@ -39,7 +40,7 @@ export default class OpenTsDatasource {
   }
 
   // Called once per panel (graph)
-  query(options: { rangeRaw: { from: any; to: any }; timezone: any; targets: any[] }) {
+  query(options: DataQueryRequest) {
     const start = this.convertToTSDBTime(options.rangeRaw.from, false, options.timezone);
     const end = this.convertToTSDBTime(options.rangeRaw.to, true, options.timezone);
     const qs: any[] = [];
