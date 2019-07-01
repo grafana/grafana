@@ -601,7 +601,7 @@ describe('VariableSrv', function(this: any) {
     it('sets single value as array if multi choice', async () => {
       const [setValueMock, setFromUrl] = setupSetFromUrlTest(ctx, { multi: true });
       await setFromUrl('one');
-      expect(setValueMock).toHaveBeenCalledWith({ text: 'one', value: ['one'] });
+      expect(setValueMock).toHaveBeenCalledWith({ text: ['one'], value: ['one'] });
     });
 
     it('sets both text and value as array if multiple values in url', async () => {

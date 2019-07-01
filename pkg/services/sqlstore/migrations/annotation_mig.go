@@ -112,7 +112,7 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Convert existing annotations from seconds to milliseconds", NewRawSqlMigration(updateEpochSql))
 
 	//
-	// 6.3: Make Regions a single annotation row
+	// 6.4: Make Regions a single annotation row
 	//
 	mg.AddMigration("Add epoch_end column", NewAddColumnMigration(table, &Column{
 		Name: "epoch_end", Type: DB_BigInt, Nullable: false, Default: "0",

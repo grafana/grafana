@@ -24,7 +24,6 @@ import {
   queryFailureAction,
   setUrlReplacedAction,
   querySuccessAction,
-  scanRangeAction,
   scanStopAction,
   resetQueryErrorAction,
   queryStartAction,
@@ -70,6 +69,7 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   datasource: false,
   queries: false,
   range: false,
+  mode: false,
   ui: false,
 });
 
@@ -215,12 +215,13 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: initializeExploreAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, eventBridge, queries, range, ui } = action.payload;
+      const { containerWidth, eventBridge, queries, range, mode, ui } = action.payload;
       return {
         ...state,
         containerWidth,
         eventBridge,
         range,
+        mode,
         queries,
         initialized: true,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
@@ -403,15 +404,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: scanRangeAction,
-    mapper: (state, action): ExploreItemState => {
-      return { ...state, scanRange: action.payload.range };
-    },
-  })
-  .addMapper({
     filter: scanStartAction,
     mapper: (state, action): ExploreItemState => {
-      return { ...state, scanning: true, scanner: action.payload.scanner };
+      return { ...state, scanning: true };
     },
   })
   .addMapper({
@@ -421,7 +416,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         scanning: false,
         scanRange: undefined,
-        scanner: undefined,
         update: makeInitialUpdateState(),
       };
     },
@@ -599,13 +593,14 @@ export const updateChildRefreshState = (
     return {
       ...state,
       urlState,
-      update: { datasource: false, queries: false, range: false, ui: false },
+      update: { datasource: false, queries: false, range: false, mode: false, ui: false },
     };
   }
 
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;
   const queries = _.isEqual(urlState ? urlState.queries : [], state.urlState.queries) === false;
   const range = _.isEqual(urlState ? urlState.range : DEFAULT_RANGE, state.urlState.range) === false;
+  const mode = _.isEqual(urlState ? urlState.mode : ExploreMode.Metrics, state.urlState.mode) === false;
   const ui = _.isEqual(urlState ? urlState.ui : DEFAULT_UI_STATE, state.urlState.ui) === false;
 
   return {
@@ -616,6 +611,7 @@ export const updateChildRefreshState = (
       datasource,
       queries,
       range,
+      mode,
       ui,
     },
   };

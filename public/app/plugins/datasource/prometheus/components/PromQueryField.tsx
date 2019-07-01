@@ -15,7 +15,7 @@ import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, DataSourceStatus, QueryHint, isSeriesData, toLegacyResponseData } from '@grafana/ui';
+import { ExploreQueryFieldProps, DataSourceStatus, QueryHint, isDataFrame, toLegacyResponseData } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 
 const HISTOGRAM_GROUP = '__histograms__';
@@ -181,7 +181,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       return;
     }
 
-    const result = isSeriesData(queryResponse.series[0])
+    const result = isDataFrame(queryResponse.series[0])
       ? queryResponse.series.map(toLegacyResponseData)
       : queryResponse.series;
     const hints = datasource.getQueryHints(query, result);

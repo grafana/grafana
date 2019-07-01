@@ -16,7 +16,7 @@ import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
-import { LinkService } from 'app/features/panel/panellinks/link_srv';
+import { LinkService, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
@@ -29,6 +29,8 @@ import { getValueFormat, ContextMenuItem, ContextMenuGroup, DataLink } from '@gr
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { ContextSrv } from 'app/core/services/context_srv';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -48,8 +50,7 @@ class GraphElement {
   timeRegionManager: TimeRegionManager;
   legendElem: HTMLElement;
 
-  // @ts-ignore
-  constructor(private scope, private elem, private timeSrv, private linkSrv: LinkService) {
+  constructor(private scope: any, private elem: JQuery, private timeSrv: TimeSrv, private linkSrv: LinkService) {
     this.ctrl = scope.ctrl;
     this.contextMenu = scope.ctrl.contextMenuCtrl;
     this.dashboard = this.ctrl.dashboard;
@@ -60,6 +61,7 @@ class GraphElement {
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
     this.timeRegionManager = new TimeRegionManager(this.ctrl, config.theme.type);
+    // @ts-ignore
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
     });
@@ -80,7 +82,7 @@ class GraphElement {
     }
   }
 
-  onRender(renderData) {
+  onRender(renderData: any[]) {
     this.data = renderData || this.data;
     if (!this.data) {
       return;
@@ -217,7 +219,7 @@ class GraphElement {
   onPlotClick(event: JQueryEventObject, pos: any, item: any) {
     const scrollContextElement = this.elem.closest('.view') ? this.elem.closest('.view').get()[0] : null;
     const contextMenuSourceItem = item;
-    let contextMenuItems;
+    let contextMenuItems: ContextMenuItem[];
 
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
@@ -235,7 +237,7 @@ class GraphElement {
       return;
     } else {
       this.tooltip.clear(this.plot);
-      contextMenuItems = this.getContextMenuItems(pos, item);
+      contextMenuItems = this.getContextMenuItems(pos, item) as ContextMenuItem[];
       this.scope.$apply(() => {
         // Setting nearest CustomScrollbar element as a scroll context for graph context menu
         this.contextMenu.setScrollContextElement(scrollContextElement);
@@ -258,7 +260,7 @@ class GraphElement {
     return false;
   }
 
-  drawHook(plot) {
+  drawHook(plot: any) {
     // add left axis labels
     if (this.panel.yaxes[0].label && this.panel.yaxes[0].show) {
       $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
@@ -281,7 +283,7 @@ class GraphElement {
     this.timeRegionManager.draw(plot);
   }
 
-  processOffsetHook(plot, gridMargin) {
+  processOffsetHook(plot: any, gridMargin: { left: number; right: number }) {
     const left = this.panel.yaxes[0];
     const right = this.panel.yaxes[1];
     if (left.show && left.label) {
@@ -294,14 +296,14 @@ class GraphElement {
     // apply y-axis min/max options
     const yaxis = plot.getYAxes();
     for (let i = 0; i < yaxis.length; i++) {
-      const axis = yaxis[i];
+      const axis: any = yaxis[i];
       const panelOptions = this.panel.yaxes[i];
       axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
       axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
     }
   }
 
-  processRangeHook(plot) {
+  processRangeHook(plot: any) {
     const yAxes = plot.getYAxes();
     const align = this.panel.yaxis.align || false;
 
@@ -314,7 +316,7 @@ class GraphElement {
   // Series could have different timeSteps,
   // let's find the smallest one so that bars are correctly rendered.
   // In addition, only take series which are rendered as bars for this.
-  getMinTimeStepOfSeries(data) {
+  getMinTimeStepOfSeries(data: any[]) {
     let min = Number.MAX_VALUE;
 
     for (let i = 0; i < data.length; i++) {
@@ -364,7 +366,7 @@ class GraphElement {
     this.callPlot(options, true);
   }
 
-  buildFlotPairs(data) {
+  buildFlotPairs(data: any) {
     for (let i = 0; i < data.length; i++) {
       const series = data[i];
       series.data = series.getFlotPairs(series.nullPointMode || this.panel.nullPointMode);
@@ -377,7 +379,7 @@ class GraphElement {
     }
   }
 
-  prepareXAxis(options, panel) {
+  prepareXAxis(options: any, panel: any) {
     switch (panel.xaxis.mode) {
       case 'series': {
         options.series.bars.barWidth = 0.7;
@@ -430,7 +432,7 @@ class GraphElement {
     }
   }
 
-  callPlot(options, incrementRenderCounter) {
+  callPlot(options: any, incrementRenderCounter: boolean) {
     try {
       this.plot = $.plot(this.elem, this.sortedSeries, options);
       if (this.ctrl.renderError) {
@@ -449,13 +451,13 @@ class GraphElement {
     }
   }
 
-  buildFlotOptions(panel) {
+  buildFlotOptions(panel: any) {
     let gridColor = '#c8c8c8';
     if (config.bootData.user.lightTheme === true) {
       gridColor = '#a1a1a1';
     }
     const stack = panel.stack ? true : null;
-    const options = {
+    const options: any = {
       hooks: {
         draw: [this.drawHook.bind(this)],
         processOffset: [this.processOffsetHook.bind(this)],
@@ -518,7 +520,7 @@ class GraphElement {
     return options;
   }
 
-  sortSeries(series, panel) {
+  sortSeries(series: any, panel: any) {
     const sortBy = panel.legend.sort;
     const sortOrder = panel.legend.sortDesc;
     const haveSortBy = sortBy !== null && sortBy !== undefined && panel.legend[sortBy];
@@ -551,7 +553,7 @@ class GraphElement {
     }
   }
 
-  addTimeAxis(options) {
+  addTimeAxis(options: any) {
     const ticks = this.panelWidth / 100;
     const min = _.isUndefined(this.ctrl.range.from) ? null : this.ctrl.range.from.valueOf();
     const max = _.isUndefined(this.ctrl.range.to) ? null : this.ctrl.range.to.valueOf();
@@ -568,7 +570,7 @@ class GraphElement {
     };
   }
 
-  addXSeriesAxis(options) {
+  addXSeriesAxis(options: any) {
     const ticks = _.map(this.data, (series, index) => {
       return [index + 1, series.alias];
     });
@@ -584,7 +586,7 @@ class GraphElement {
     };
   }
 
-  addXHistogramAxis(options, bucketSize) {
+  addXHistogramAxis(options: any, bucketSize: number) {
     let ticks, min, max;
     const defaultTicks = this.panelWidth / 50;
 
@@ -637,7 +639,7 @@ class GraphElement {
     this.configureAxisMode(options.xaxis, 'short');
   }
 
-  addXTableAxis(options) {
+  addXTableAxis(options: any) {
     let ticks = _.map(this.data, (series, seriesIndex) => {
       return _.map(series.datapoints, (point, pointIndex) => {
         const tickIndex = seriesIndex * series.datapoints.length + pointIndex;
@@ -658,7 +660,7 @@ class GraphElement {
     };
   }
 
-  configureYAxisOptions(data, options) {
+  configureYAxisOptions(data: any, options: any) {
     const defaults = {
       position: 'left',
       show: this.panel.yaxes[0].show,
@@ -703,7 +705,7 @@ class GraphElement {
     return _.toNumber(value);
   }
 
-  applyLogScale(axis, data) {
+  applyLogScale(axis: any, data: any) {
     if (axis.logBase === 1) {
       return;
     }
@@ -733,10 +735,10 @@ class GraphElement {
       }
     }
 
-    axis.transform = v => {
+    axis.transform = (v: number) => {
       return v < Number.MIN_VALUE ? null : Math.log(v) / Math.log(axis.logBase);
     };
-    axis.inverseTransform = v => {
+    axis.inverseTransform = (v: any) => {
       return Math.pow(axis.logBase, v);
     };
 
@@ -784,7 +786,7 @@ class GraphElement {
     }
   }
 
-  generateTicksForLogScaleYAxis(min, max, logBase) {
+  generateTicksForLogScaleYAxis(min: any, max: number, logBase: number) {
     let ticks = [];
 
     let nextTick;
@@ -806,7 +808,7 @@ class GraphElement {
     return ticks;
   }
 
-  configureAxisMode(axis, format) {
+  configureAxisMode(axis: { tickFormatter: (val: any, axis: any) => string }, format: string) {
     axis.tickFormatter = (val, axis) => {
       const formatter = getValueFormat(format);
 
@@ -817,7 +819,7 @@ class GraphElement {
     };
   }
 
-  time_format(ticks, min, max) {
+  time_format(ticks: number, min: number, max: number) {
     if (min && max && ticks) {
       const range = max - min;
       const secPerTick = range / ticks / 1000;
@@ -846,11 +848,11 @@ class GraphElement {
 }
 
 /** @ngInject */
-function graphDirective(timeSrv, popoverSrv, contextSrv, linkSrv) {
+function graphDirective(timeSrv: TimeSrv, popoverSrv: any, contextSrv: ContextSrv, linkSrv: LinkSrv) {
   return {
     restrict: 'A',
     template: '',
-    link: (scope, elem) => {
+    link: (scope: any, elem: JQuery) => {
       return new GraphElement(scope, elem, timeSrv, linkSrv);
     },
   };

@@ -193,10 +193,6 @@ export interface ExploreItemState {
 
   absoluteRange: AbsoluteTimeRange;
   /**
-   * Scanner function that calculates a new range, triggers a query run, and returns the new range.
-   */
-  scanner?: RangeScanner;
-  /**
    * True if scanning for more results is active.
    */
   scanning?: boolean;
@@ -261,6 +257,7 @@ export interface ExploreUpdateState {
   datasource: boolean;
   queries: boolean;
   range: boolean;
+  mode: boolean;
   ui: boolean;
 }
 
@@ -274,6 +271,7 @@ export interface ExploreUIState {
 export interface ExploreUrlState {
   datasource: string;
   queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
+  mode: ExploreMode;
   range: RawTimeRange;
   ui: ExploreUIState;
 }
@@ -331,8 +329,6 @@ export interface QueryTransaction {
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
-
-export type RangeScanner = () => RawTimeRange;
 
 export interface TextMatch {
   text: string;

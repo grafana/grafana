@@ -17,7 +17,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   table: any;
   renderer: any;
 
-  panelDefaults = {
+  panelDefaults: any = {
     targets: [{}],
     transform: 'timeseries_to_columns',
     pageSize: null,
@@ -180,7 +180,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   link(scope: any, elem: JQuery, attrs: any, ctrl: TablePanelCtrl) {
-    let data;
+    let data: any;
     const panel = ctrl.panel;
     let pageCount = 0;
 
@@ -194,19 +194,19 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       return panelHeight - 31 + 'px';
     }
 
-    function appendTableRows(tbodyElem) {
+    function appendTableRows(tbodyElem: JQuery) {
       ctrl.renderer.setTable(data);
       tbodyElem.empty();
       tbodyElem.html(ctrl.renderer.render(ctrl.pageIndex));
     }
 
-    function switchPage(e) {
+    function switchPage(e: any) {
       const el = $(e.currentTarget);
       ctrl.pageIndex = parseInt(el.text(), 10) - 1;
       renderPanel();
     }
 
-    function appendPaginationControls(footerElem) {
+    function appendPaginationControls(footerElem: JQuery) {
       footerElem.empty();
 
       const pageSize = panel.pageSize || 100;
@@ -251,7 +251,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       selector: '[data-link-tooltip]',
     });
 
-    function addFilterClicked(e) {
+    function addFilterClicked(e: any) {
       const filterData = $(e.currentTarget).data();
       const options = {
         datasource: panel.datasource,
@@ -272,7 +272,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       unbindDestroy();
     });
 
-    ctrl.events.on('render', renderData => {
+    ctrl.events.on('render', (renderData: any) => {
       data = renderData || data;
       if (data) {
         renderPanel();

@@ -140,10 +140,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  seriesHandler(seriesData: any) {
+  seriesHandler(dataFrame: any) {
     const series = new TimeSeries({
-      datapoints: seriesData.datapoints || [],
-      alias: seriesData.target,
+      datapoints: dataFrame.datapoints || [],
+      alias: dataFrame.target,
     });
 
     series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);

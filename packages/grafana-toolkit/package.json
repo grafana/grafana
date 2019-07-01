@@ -1,0 +1,71 @@
+{
+  "name": "@grafana/toolkit",
+  "version": "6.3.0-alpha.2",
+  "description": "Grafana Toolkit",
+  "keywords": [
+    "typescript",
+    "react",
+    "react-component"
+  ],
+  "bin": {
+    "grafana-toolkit": "./bin/grafana-toolkit.js"
+  },
+  "scripts": {
+    "tslint": "tslint -c tslint.json --project tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "precommit": "npm run tslint & npm run typecheck",
+    "clean": "rimraf ./dist ./compiled"
+  },
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@types/execa": "^0.9.0",
+    "@types/inquirer": "^6.0.3",
+    "@types/jest": "24.0.13",
+    "@types/jest-cli": "^23.6.0",
+    "@types/node": "^12.0.4",
+    "@types/prettier": "^1.16.4",
+    "@types/semver": "^6.0.0",
+    "axios": "0.19.0",
+    "chalk": "^2.4.2",
+    "commander": "^2.20.0",
+    "concurrently": "4.1.0",
+    "execa": "^1.0.0",
+    "glob": "^7.1.4",
+    "inquirer": "^6.3.1",
+    "jest-cli": "^24.8.0",
+    "lodash": "4.17.11",
+    "ora": "^3.4.0",
+    "prettier": "^1.17.1",
+    "replace-in-file": "^4.1.0",
+    "rollup": "^1.14.2",
+    "rollup-plugin-commonjs": "^10.0.0",
+    "rollup-plugin-copy-glob": "^0.3.0",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-globals": "^1.4.0",
+    "rollup-plugin-node-resolve": "^5.1.0",
+    "rollup-plugin-sourcemaps": "^0.4.2",
+    "rollup-plugin-terser": "^5.0.0",
+    "rollup-plugin-typescript2": "^0.21.1",
+    "rollup-plugin-visualizer": "^1.1.1",
+    "semver": "^6.1.1",
+    "simple-git": "^1.112.0",
+    "ts-node": "^8.2.0",
+    "tslint": "5.14.0"
+  },
+  "peerDependencies": {
+    "jest": "24.8.0",
+    "ts-jest": "24.0.2",
+    "tslib": "1.10.0",
+    "typescript": "3.5.1"
+  },
+  "resolutions": {
+    "@types/lodash": "4.14.119",
+    "rollup-plugin-typescript2": "0.21.1"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.1",
+    "rollup-watch": "^4.3.1"
+  }
+}
