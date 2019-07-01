@@ -48,7 +48,7 @@ export class AnnotationsSrv {
       .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
-        let annotations: any[] = _.flattenDeep(results[0]);
+        let annotations: AnnotationEvent[] = _.flattenDeep(results[0]);
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
@@ -154,17 +154,17 @@ export class AnnotationsSrv {
     return this.globalAnnotationsPromise;
   }
 
-  saveAnnotationEvent(annotation: any) {
+  saveAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     return this.backendSrv.post('/api/annotations', annotation);
   }
 
-  updateAnnotationEvent(annotation: { id: any }) {
+  updateAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     return this.backendSrv.put(`/api/annotations/${annotation.id}`, annotation);
   }
 
-  deleteAnnotationEvent(annotation: { id: any; isRegion: any; regionId: any }) {
+  deleteAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     const deleteUrl = `/api/annotations/${annotation.id}`;
 
