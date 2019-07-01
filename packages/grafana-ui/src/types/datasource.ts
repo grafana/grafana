@@ -1,5 +1,5 @@
 import { ComponentType, ComponentClass } from 'react';
-import { TimeRange } from './time';
+import { TimeRange, RawTimeRange } from './time';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
@@ -356,6 +356,8 @@ export interface DataQuery {
    * For non mixed scenarios this is undefined.
    */
   datasource?: string | null;
+
+  metric?: any;
 }
 
 export interface DataQueryError {
@@ -383,6 +385,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
   timezone: string;
   range: TimeRange;
+  rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   targets: TQuery[];
   panelId: number;
