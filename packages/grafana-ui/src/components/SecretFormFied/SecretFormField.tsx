@@ -5,7 +5,7 @@ import { FormField } from '../FormField/FormField';
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled
   // component (or do something else if required).
-  onReset: () => void;
+  onReset: (e: any) => void;
   isConfigured: boolean;
 
   label?: string;
