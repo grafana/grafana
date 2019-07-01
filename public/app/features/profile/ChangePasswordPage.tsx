@@ -19,10 +19,10 @@ export class ChangePasswordPage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <UserProvider>
-          {({ changePassword }) => (
+          {({ changePassword }, states) => (
             <Page.Contents isLoading={isLoading}>
               <h3 className="page-sub-heading">Change Your Password</h3>
-              <ChangePasswordForm onChangePassword={changePassword} />
+              <ChangePasswordForm onChangePassword={changePassword} isLoading={states.changePassword} />
             </Page.Contents>
           )}
         </UserProvider>

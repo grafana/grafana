@@ -1,10 +1,11 @@
 import React, { PureComponent, MouseEvent } from 'react';
 import config from 'app/core/config';
-import { Button, LinkButton } from '@grafana/ui';
+import { Button, LinkButton, LoadingPlaceholder } from '@grafana/ui';
 import { ChangePasswordFields } from 'app/core/utils/UserProvider';
 import { PasswordInput } from 'app/core/components/PasswordInput/PasswordInput';
 
 export interface Props {
+  isLoading: boolean;
   onChangePassword: (payload: ChangePasswordFields) => void;
 }
 
@@ -39,8 +40,12 @@ export class ChangePasswordForm extends PureComponent<Props, State> {
 
   render() {
     const { oldPassword, newPassword, confirmNew } = this.state;
-    const { onChangePassword } = this.props;
+    const { onChangePassword, isLoading } = this.props;
     const { ldapEnabled, authProxyEnabled } = config;
+
+    if (isLoading) {
+      return <LoadingPlaceholder text="Saving..." />;
+    }
 
     if (ldapEnabled && authProxyEnabled) {
       return <p>You cannot change password when ldap or auth proxy authentication is enabled.</p>;
