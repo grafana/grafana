@@ -11,7 +11,6 @@ import 'react';
 import 'react-dom';
 
 import 'vendor/bootstrap/bootstrap';
-import 'vendor/angular-ui/ui-bootstrap-tpls';
 import 'vendor/angular-other/angular-strap';
 
 import $ from 'jquery';
@@ -125,8 +124,6 @@ export class GrafanaApp {
       'ang-drag-drop',
       'grafana',
       'pasvaz.bindonce',
-      'ui.bootstrap',
-      'ui.bootstrap.tpls',
       'react',
     ];
 

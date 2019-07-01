@@ -95,7 +95,7 @@ export class DashNavTimeControls extends Component<Props> {
     const timeZone = dashboard.getTimezone();
 
     return (
-      <>
+      <div className="dashboard-timepicker-wrapper">
         <TimePicker
           value={timePickerValue}
           onChange={this.onChangeTimePicker}
@@ -112,7 +112,7 @@ export class DashNavTimeControls extends Component<Props> {
           intervals={intervals}
           tooltip="Refresh dashboard"
         />
-      </>
+      </div>
     );
   }
 }
