@@ -4,12 +4,11 @@ import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
 import glob = require('glob');
-import * as rollup from 'rollup';
-import { inputOptions, outputOptions } from '../../config/rollup.plugin.config';
 
 import { useSpinner } from '../utils/useSpinner';
 import { Linter, Configuration, RuleFailure } from 'tslint';
 import { testPlugin } from './plugin/tests';
+import { bundlePlugin } from './plugin/bundle';
 interface PrecommitOptions {}
 
 // @ts-ignore
@@ -64,21 +63,12 @@ const lintPlugin = useSpinner<void>('Linting', async () => {
   }
 });
 
-const bundlePlugin = useSpinner<void>('Bundling plugin', async () => {
-  // @ts-ignore
-  const bundle = await rollup.rollup(inputOptions());
-  // TODO: we can work on more verbose output
-  await bundle.generate(outputOptions);
-  await bundle.write(outputOptions);
-});
-
 const pluginBuildRunner: TaskRunner<PrecommitOptions> = async () => {
   await clean();
   // @ts-ignore
   await lintPlugin();
   await testPlugin({ updateSnapshot: false, coverage: false });
-  // @ts-ignore
-  await bundlePlugin();
+  await bundlePlugin({ watch: false });
 };
 
 export const pluginBuildTask = new Task<PrecommitOptions>('Build plugin', pluginBuildRunner);
