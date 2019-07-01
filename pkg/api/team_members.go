@@ -22,11 +22,27 @@ func GetTeamMembers(c *m.ReqContext) Response {
 		member.Labels = []string{}
 
 		if setting.IsEnterprise && setting.LDAPEnabled && member.External {
-			member.Labels = append(member.Labels, "LDAP")
+			authProvider := GetAuthProviderName(member.AuthModule)
+			member.Labels = append(member.Labels, authProvider)
 		}
 	}
 
 	return JSON(200, query.Result)
+}
+
+func GetAuthProviderName(authModule string) string {
+	switch authModule {
+	case "oauth_github":
+		return "GitHub"
+	case "oauth_google":
+		return "Google"
+	case "ldap":
+		return "LDAP"
+	case "":
+		return "LDAP"
+	default:
+		return "OAuth"
+	}
 }
 
 // POST /api/teams/:teamId/members
