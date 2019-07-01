@@ -4,8 +4,8 @@ import defaults from 'lodash/defaults';
 import isNumber from 'lodash/isNumber';
 
 // Types
-import { SeriesData, Field, FieldType } from '../types/index';
-import { guessFieldTypeFromValue } from './processSeriesData';
+import { DataFrame, Field, FieldType } from '../types/index';
+import { guessFieldTypeFromValue } from './processDataFrame';
 
 export enum CSVHeaderStyle {
   full,
@@ -28,7 +28,7 @@ export interface CSVParseCallbacks {
    * This can return a modified table to force any
    * Column configurations
    */
-  onHeader: (table: SeriesData) => void;
+  onHeader: (table: DataFrame) => void;
 
   // Called after each row is read and
   onRow: (row: any[]) => void;
@@ -39,7 +39,7 @@ export interface CSVOptions {
   callback?: CSVParseCallbacks;
 }
 
-export function readCSV(csv: string, options?: CSVOptions): SeriesData[] {
+export function readCSV(csv: string, options?: CSVOptions): DataFrame[] {
   return new CSVReader(options).readCSV(csv);
 }
 
@@ -56,9 +56,9 @@ export class CSVReader {
   callback?: CSVParseCallbacks;
 
   field: FieldParser[];
-  series: SeriesData;
+  series: DataFrame;
   state: ParseState;
-  data: SeriesData[];
+  data: DataFrame[];
 
   constructor(options?: CSVOptions) {
     if (!options) {
@@ -193,7 +193,7 @@ export class CSVReader {
     }
   };
 
-  readCSV(text: string): SeriesData[] {
+  readCSV(text: string): DataFrame[] {
     this.data = [this.series];
 
     const papacfg = {
@@ -315,7 +315,7 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
   return '';
 }
 
-export function toCSV(data: SeriesData[], config?: CSVConfig): string {
+export function toCSV(data: DataFrame[], config?: CSVConfig): string {
   if (!data) {
     return '';
   }

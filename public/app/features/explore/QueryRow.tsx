@@ -197,7 +197,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
   const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
-  const series = graphResult ? graphResult : []; // TODO: use SeriesData
+  const series = graphResult ? graphResult : []; // TODO: use DataFrame
   const queryResponse: PanelData = {
     series,
     state: loadingState,
