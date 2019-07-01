@@ -8,17 +8,17 @@ import {
   updateTimeRangeAction,
   runQueriesAction,
 } from '../actionTypes';
-import { SeriesData, LoadingState } from '@grafana/ui';
+import { DataFrame, LoadingState } from '@grafana/ui';
 import { processQueryResultsEpic } from './processQueryResultsEpic';
 import TableModel from 'app/core/table_model';
 
 const testContext = () => {
-  const serieA: SeriesData = {
+  const serieA: DataFrame = {
     fields: [],
     refId: 'A',
     rows: [],
   };
-  const serieB: SeriesData = {
+  const serieB: DataFrame = {
     fields: [],
     refId: 'B',
     rows: [],

@@ -6,7 +6,7 @@ import './editor/editor_component';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { auto } from 'angular';
-import { SeriesData } from '@grafana/ui';
+import { DataFrame } from '@grafana/ui';
 
 export interface ResultFormat {
   text: string;
@@ -125,7 +125,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
   }
 
-  onDataReceived(dataList: SeriesData[]) {
+  onDataReceived(dataList: DataFrame[]) {
     this.lastQueryError = undefined;
     this.lastQuery = '';
 

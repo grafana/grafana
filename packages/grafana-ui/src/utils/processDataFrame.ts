@@ -4,10 +4,10 @@ import isString from 'lodash/isString';
 import isBoolean from 'lodash/isBoolean';
 
 // Types
-import { SeriesData, Field, TimeSeries, FieldType, TableData, Column } from '../types/index';
+import { DataFrame, Field, TimeSeries, FieldType, TableData, Column } from '../types/index';
 import { isDateTime } from './moment_wrapper';
 
-function convertTableToSeriesData(table: TableData): SeriesData {
+function convertTableToDataFrame(table: TableData): DataFrame {
   return {
     // rename the 'text' to 'name' field
     fields: table.columns.map(c => {
@@ -23,7 +23,7 @@ function convertTableToSeriesData(table: TableData): SeriesData {
   };
 }
 
-function convertTimeSeriesToSeriesData(timeSeries: TimeSeries): SeriesData {
+function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   return {
     name: timeSeries.target,
     fields: [
@@ -84,7 +84,7 @@ export function guessFieldTypeFromValue(v: any): FieldType {
 /**
  * Looks at the data to guess the column type.  This ignores any existing setting
  */
-export function guessFieldTypeFromSeries(series: SeriesData, index: number): FieldType | undefined {
+export function guessFieldTypeFromSeries(series: DataFrame, index: number): FieldType | undefined {
   const column = series.fields[index];
 
   // 1. Use the column name to guess
@@ -111,7 +111,7 @@ export function guessFieldTypeFromSeries(series: SeriesData, index: number): Fie
  * @returns a copy of the series with the best guess for each field type
  * If the series already has field types defined, they will be used
  */
-export const guessFieldTypes = (series: SeriesData): SeriesData => {
+export const guessFieldTypes = (series: DataFrame): DataFrame => {
   for (let i = 0; i < series.fields.length; i++) {
     if (!series.fields[i].type) {
       // Somethign is missing a type return a modified copy
@@ -134,26 +134,26 @@ export const guessFieldTypes = (series: SeriesData): SeriesData => {
   return series;
 };
 
-export const isTableData = (data: any): data is SeriesData => data && data.hasOwnProperty('columns');
+export const isTableData = (data: any): data is DataFrame => data && data.hasOwnProperty('columns');
 
-export const isSeriesData = (data: any): data is SeriesData => data && data.hasOwnProperty('fields');
+export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwnProperty('fields');
 
-export const toSeriesData = (data: any): SeriesData => {
+export const toDataFrame = (data: any): DataFrame => {
   if (data.hasOwnProperty('fields')) {
-    return data as SeriesData;
+    return data as DataFrame;
   }
   if (data.hasOwnProperty('datapoints')) {
-    return convertTimeSeriesToSeriesData(data);
+    return convertTimeSeriesToDataFrame(data);
   }
   if (data.hasOwnProperty('columns')) {
-    return convertTableToSeriesData(data);
+    return convertTableToDataFrame(data);
   }
   // TODO, try to convert JSON/Array to seriesta?
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
 };
 
-export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData => {
+export const toLegacyResponseData = (series: DataFrame): TimeSeries | TableData => {
   const { fields, rows } = series;
 
   if (fields.length === 2) {
@@ -182,7 +182,7 @@ export const toLegacyResponseData = (series: SeriesData): TimeSeries | TableData
   };
 };
 
-export function sortSeriesData(data: SeriesData, sortIndex?: number, reverse = false): SeriesData {
+export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = false): DataFrame {
   if (isNumber(sortIndex)) {
     const copy = {
       ...data,

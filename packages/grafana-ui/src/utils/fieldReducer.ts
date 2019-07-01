@@ -1,7 +1,7 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
 
-import { SeriesData, NullValueMode } from '../types/index';
+import { DataFrame, NullValueMode } from '../types/index';
 
 export enum ReducerID {
   sum = 'sum',
@@ -29,7 +29,7 @@ export interface FieldCalcs {
 }
 
 // Internal function
-type FieldReducer = (data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
+type FieldReducer = (data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 
 export interface FieldReducerInfo {
   id: string;
@@ -64,7 +64,7 @@ export function getFieldReducers(ids?: string[]): FieldReducerInfo[] {
 }
 
 interface ReduceFieldOptions {
-  series: SeriesData;
+  series: DataFrame;
   fieldIndex: number;
   reducers: string[]; // The stats to calculate
   nullValueMode?: NullValueMode;
@@ -222,7 +222,7 @@ function getById(id: string): FieldReducerInfo | undefined {
   return index[id];
 }
 
-function doStandardCalcs(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const calcs = {
     sum: 0,
     max: -Number.MAX_VALUE,
@@ -340,16 +340,16 @@ function doStandardCalcs(data: SeriesData, fieldIndex: number, ignoreNulls: bool
   return calcs;
 }
 
-function calculateFirst(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateFirst(data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   return { first: data.rows[0][fieldIndex] };
 }
 
-function calculateLast(data: SeriesData, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateLast(data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   return { last: data.rows[data.rows.length - 1][fieldIndex] };
 }
 
 function calculateChangeCount(
-  data: SeriesData,
+  data: DataFrame,
   fieldIndex: number,
   ignoreNulls: boolean,
   nullAsZero: boolean
@@ -378,7 +378,7 @@ function calculateChangeCount(
 }
 
 function calculateDistinctCount(
-  data: SeriesData,
+  data: DataFrame,
   fieldIndex: number,
   ignoreNulls: boolean,
   nullAsZero: boolean

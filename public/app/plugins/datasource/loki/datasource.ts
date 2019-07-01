@@ -8,14 +8,14 @@ import { catchError, map } from 'rxjs/operators';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
-import { logStreamToSeriesData } from './result_transformer';
+import { logStreamToDataFrame } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
 // Types
 import {
   PluginMeta,
   DataQueryRequest,
-  SeriesData,
+  DataFrame,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataQueryError,
@@ -147,25 +147,25 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   };
 
-  processResult = (data: any, target: any): SeriesData[] => {
-    const series: SeriesData[] = [];
+  processResult = (data: any, target: any): DataFrame[] => {
+    const series: DataFrame[] = [];
 
     if (Object.keys(data).length === 0) {
       return series;
     }
 
     if (!data.streams) {
-      return [{ ...logStreamToSeriesData(data), refId: target.refId }];
+      return [{ ...logStreamToDataFrame(data), refId: target.refId }];
     }
 
     for (const stream of data.streams || []) {
-      const seriesData = logStreamToSeriesData(stream);
-      seriesData.refId = target.refId;
-      seriesData.meta = {
+      const dataFrame = logStreamToDataFrame(stream);
+      dataFrame.refId = target.refId;
+      dataFrame.meta = {
         searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
         limit: this.maxLines,
       };
-      series.push(seriesData);
+      series.push(dataFrame);
     }
 
     return series;
@@ -233,7 +233,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     );
 
     return Promise.all(queries).then((results: any[]) => {
-      let series: SeriesData[] = [];
+      let series: DataFrame[] = [];
 
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
@@ -328,14 +328,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       (options && options.limit) || 10,
       (options && options.direction) || 'BACKWARD'
     );
-    const series: SeriesData[] = [];
+    const series: DataFrame[] = [];
 
     try {
       const result = await this._request('/api/prom/query', target);
       if (result.data) {
         for (const stream of result.data.streams || []) {
-          const seriesData = logStreamToSeriesData(stream);
-          series.push(seriesData);
+          const dataFrame = logStreamToDataFrame(stream);
+          series.push(dataFrame);
         }
       }
       if (options && options.direction === 'FORWARD') {

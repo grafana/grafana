@@ -11,8 +11,8 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, LegacyResponseData, SeriesData, DataLink, VariableSuggestion } from '@grafana/ui';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
+import { getColorFromHexRgbOrName, LegacyResponseData, DataFrame, DataLink, VariableSuggestion } from '@grafana/ui';
+import { getProcessedDataFrame } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -26,7 +26,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   renderError: boolean;
   hiddenSeries: any = {};
   seriesList: TimeSeries[] = [];
-  dataList: SeriesData[] = [];
+  dataList: DataFrame[] = [];
   annotations: any = [];
   alertState: any;
 
@@ -209,12 +209,12 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   // This should only be called from the snapshot callback
   onDataReceived(dataList: LegacyResponseData[]) {
-    this.handleSeriesData(getProcessedSeriesData(dataList));
+    this.handleDataFrame(getProcessedDataFrame(dataList));
   }
 
-  // Directly support SeriesData skipping event callbacks
-  handleSeriesData(data: SeriesData[]) {
-    super.handleSeriesData(data);
+  // Directly support DataFrame skipping event callbacks
+  handleDataFrame(data: DataFrame[]) {
+    super.handleDataFrame(data);
 
     this.dataList = data;
     this.seriesList = this.processor.getSeriesList({
