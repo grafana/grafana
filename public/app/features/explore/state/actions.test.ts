@@ -1,5 +1,5 @@
 import { refreshExplore, testDatasource, loadDatasource } from './actions';
-import { ExploreId, ExploreUrlState, ExploreUpdateState } from 'app/types';
+import { ExploreId, ExploreUrlState, ExploreUpdateState, ExploreMode } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
   initializeExploreAction,
@@ -55,6 +55,7 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
     datasource: 'some-datasource',
     queries: [],
     range: range.raw,
+    mode: ExploreMode.Metrics,
     ui,
   };
   const updateDefaults = makeInitialUpdateState();

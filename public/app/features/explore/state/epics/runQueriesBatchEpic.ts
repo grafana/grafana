@@ -7,7 +7,7 @@ import {
   DataStreamState,
   LoadingState,
   DataQueryResponse,
-  SeriesData,
+  DataFrame,
   DataQueryResponseData,
   AbsoluteTimeRange,
 } from '@grafana/ui';
@@ -46,7 +46,7 @@ interface ProcessResponseConfig {
   now: number;
   loadingState: LoadingState;
   series?: DataQueryResponseData[];
-  delta?: SeriesData[];
+  delta?: DataFrame[];
 }
 
 const processResponse = (config: ProcessResponseConfig) => {

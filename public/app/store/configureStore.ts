@@ -36,6 +36,7 @@ import {
   DateTime,
   toUtc,
   dateTime,
+  AbsoluteTimeRange,
 } from '@grafana/ui';
 import { Observable } from 'rxjs';
 import { getQueryResponse } from 'app/core/utils/explore';
@@ -46,6 +47,7 @@ import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { UserState } from 'app/types/user';
 import { getTimeRange } from 'app/core/utils/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 const rootReducers = {
   ...sharedReducers,
@@ -87,6 +89,7 @@ export interface EpicDependencies {
   getTimeZone: (state: UserState) => TimeZone;
   toUtc: (input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
   dateTime: (input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
+  getShiftedTimeRange: (direction: number, origRange: TimeRange, timeZone: TimeZone) => AbsoluteTimeRange;
 }
 
 const dependencies: EpicDependencies = {
@@ -96,6 +99,7 @@ const dependencies: EpicDependencies = {
   getTimeZone,
   toUtc,
   dateTime,
+  getShiftedTimeRange,
 };
 
 const epicMiddleware = createEpicMiddleware({ dependencies });

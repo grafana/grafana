@@ -43,8 +43,8 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     });
   };
 
-  onOrientationChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
-  onDisplayModeChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
+  onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
+  onDisplayModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
 
   render() {
     const { options } = this.props;

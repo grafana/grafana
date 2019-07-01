@@ -8,14 +8,14 @@ import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/u
 import { ContextSrv } from 'app/core/services/context_srv';
 import {
   toLegacyResponseData,
-  isSeriesData,
+  isDataFrame,
   LegacyResponseData,
   TimeRange,
   DataSourceApi,
   PanelData,
   LoadingState,
   DataQueryResponse,
-  SeriesData,
+  DataFrame,
 } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -150,7 +150,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         // The result should already be processed, but just in case
         if (!data.legacy) {
           data.legacy = data.series.map(v => {
-            if (isSeriesData(v)) {
+            if (isDataFrame(v)) {
               return toLegacyResponseData(v);
             }
             return v;
@@ -163,7 +163,7 @@ class MetricsPanelCtrl extends PanelCtrl {
           data: data.legacy,
         });
       } else {
-        this.handleSeriesData(data.series);
+        this.handleDataFrame(data.series);
       }
     },
   };
@@ -222,14 +222,14 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
   }
 
-  handleSeriesData(data: SeriesData[]) {
+  handleDataFrame(data: DataFrame[]) {
     this.loading = false;
 
     if (this.dashboard && this.dashboard.snapshot) {
       this.panel.snapshotData = data;
     }
 
-    // Subclasses that asked for SeriesData will override
+    // Subclasses that asked for DataFrame will override
   }
 
   handleQueryResult(result: DataQueryResponse) {

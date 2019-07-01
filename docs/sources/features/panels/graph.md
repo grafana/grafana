@@ -37,6 +37,8 @@ Repeat a panel for each value of a variable.  Repeating panels are described in 
 
 ### Data link
 
+> Only available in Grafana v6.3+.
+
 Data link in graph settings allows adding dynamic links to the visualization. Those links can link to either other dashboard or to an external URL.
 
 {{< docs-imagebox img="/img/docs/data_link.png"  max-width= "800px" >}}

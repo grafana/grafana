@@ -2,6 +2,7 @@ package social
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -18,6 +19,15 @@ type SocialGithub struct {
 	apiUrl               string
 	allowSignup          bool
 	teamIds              []int
+}
+
+type GithubTeam struct {
+	Id           int    `json:"id"`
+	Slug         string `json:"slug"`
+	URL          string `json:"html_url"`
+	Organization struct {
+		Login string `json:"login"`
+	} `json:"organization"`
 }
 
 var (
@@ -48,8 +58,8 @@ func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 	}
 
 	for _, teamId := range s.teamIds {
-		for _, membershipId := range teamMemberships {
-			if teamId == membershipId {
+		for _, membership := range teamMemberships {
+			if teamId == membership.Id {
 				return true
 			}
 		}
@@ -108,14 +118,10 @@ func (s *SocialGithub) FetchPrivateEmail(client *http.Client) (string, error) {
 	return email, nil
 }
 
-func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]int, error) {
-	type Record struct {
-		Id int `json:"id"`
-	}
-
+func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]GithubTeam, error) {
 	url := fmt.Sprintf(s.apiUrl + "/teams?per_page=100")
 	hasMore := true
-	ids := make([]int, 0)
+	teams := make([]GithubTeam, 0)
 
 	for hasMore {
 
@@ -124,27 +130,19 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]int, error) 
 			return nil, fmt.Errorf("Error getting team memberships: %s", err)
 		}
 
-		var records []Record
+		var records []GithubTeam
 
 		err = json.Unmarshal(response.Body, &records)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting team memberships: %s", err)
 		}
 
-		newRecords := len(records)
-		existingRecords := len(ids)
-		tempIds := make([]int, (newRecords + existingRecords))
-		copy(tempIds, ids)
-		ids = tempIds
-
-		for i, record := range records {
-			ids[i] = record.Id
-		}
+		teams = append(teams, records...)
 
 		url, hasMore = s.HasMoreRecords(response.Headers)
 	}
 
-	return ids, nil
+	return teams, nil
 }
 
 func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
@@ -210,11 +208,19 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
+	teamMemberships, err := s.FetchTeamMemberships(client)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting user teams: %s", err)
+	}
+
+	teams := convertToGroupList(teamMemberships)
+
 	userInfo := &BasicUserInfo{
-		Name:  data.Login,
-		Login: data.Login,
-		Id:    fmt.Sprintf("%d", data.Id),
-		Email: data.Email,
+		Name:   data.Login,
+		Login:  data.Login,
+		Id:     fmt.Sprintf("%d", data.Id),
+		Email:  data.Email,
+		Groups: teams,
 	}
 
 	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
@@ -235,4 +241,27 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	}
 
 	return userInfo, nil
+}
+
+func (t *GithubTeam) GetShorthand() (string, error) {
+	if t.Organization.Login == "" || t.Slug == "" {
+		return "", errors.New("Error getting team shorthand")
+	}
+	return fmt.Sprintf("@%s/%s", t.Organization.Login, t.Slug), nil
+}
+
+func convertToGroupList(t []GithubTeam) []string {
+	groups := make([]string, 0)
+	for _, team := range t {
+		// Group shouldn't be empty string, otherwise team sync will not work properly
+		if team.URL != "" {
+			groups = append(groups, team.URL)
+		}
+		teamShorthand, _ := team.GetShorthand()
+		if teamShorthand != "" {
+			groups = append(groups, teamShorthand)
+		}
+	}
+
+	return groups
 }
