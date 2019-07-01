@@ -27,7 +27,7 @@ export default class PromLink extends Component<Props, State> {
 
   async getExternalLink(): Promise<string> {
     const { query, panelData } = this.props;
-    const target = panelData.request.targets.length > 0 ? panelData.request.targets[0] : { datasource: null };
+    const target = panelData.request.targets.length > 0 ? panelData.request.targets[0] : ({ datasource: null } as any);
     const datasourceName = target.datasource;
     const datasource: PrometheusDatasource = datasourceName
       ? (((await getDatasourceSrv().get(datasourceName)) as any) as PrometheusDatasource)

@@ -537,3 +537,16 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return false;
   }
 }
+
+export function getMaxConcurrenShardRequestOrDefault(options: ElasticsearchOptions): number {
+  if (options.maxConcurrentShardRequests === 5 && options.esVersion < 70) {
+    return 256;
+  }
+
+  if (options.maxConcurrentShardRequests === 256 && options.esVersion >= 70) {
+    return 5;
+  }
+
+  const defaultMaxConcurrentShardRequests = options.esVersion >= 70 ? 5 : 256;
+  return options.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests;
+}

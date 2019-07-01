@@ -12,7 +12,7 @@ import {
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import { sortSeriesData } from '../../utils/processSeriesData';
+import { sortDataFrame } from '../../utils/processDataFrame';
 
 import {
   TableCellBuilder,
@@ -22,11 +22,11 @@ import {
   simpleCellBuilder,
 } from './TableCellBuilder';
 import { stringToJsRegex } from '@grafana/data';
-import { SeriesData } from '../../types/data';
+import { DataFrame } from '../../types/data';
 import { InterpolateFunction } from '../../types/panel';
 
 export interface Props extends Themeable {
-  data: SeriesData;
+  data: DataFrame;
 
   minColumnWidth: number;
   showHeader: boolean;
@@ -44,7 +44,7 @@ export interface Props extends Themeable {
 interface State {
   sortBy?: number;
   sortDirection?: SortDirectionType;
-  data: SeriesData;
+  data: DataFrame;
 }
 
 interface ColumnRenderInfo {
@@ -115,7 +115,7 @@ export class Table extends Component<Props, State> {
     // Update the data when data or sort changes
     if (dataChanged || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
       this.scrollToTop = true;
-      this.setState({ data: sortSeriesData(data, sortBy, sortDirection === 'DESC') });
+      this.setState({ data: sortDataFrame(data, sortBy, sortDirection === 'DESC') });
     }
   }
 
@@ -170,7 +170,7 @@ export class Table extends Component<Props, State> {
     this.setState({ sortBy: sort, sortDirection: dir });
   };
 
-  /** Converts the grid coordinates to SeriesData coordinates */
+  /** Converts the grid coordinates to DataFrame coordinates */
   getCellRef = (rowIndex: number, columnIndex: number): DataIndex => {
     const { showHeader, rotate } = this.props;
     const rowOffset = showHeader ? -1 : 0;

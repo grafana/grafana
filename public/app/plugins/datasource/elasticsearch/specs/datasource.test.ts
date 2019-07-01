@@ -1,7 +1,7 @@
 import angular, { IQService } from 'angular';
 import * as dateMath from '@grafana/ui/src/utils/datemath';
 import _ from 'lodash';
-import { ElasticDatasource } from '../datasource';
+import { ElasticDatasource, getMaxConcurrenShardRequestOrDefault } from '../datasource';
 import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -643,6 +643,30 @@ describe('ElasticDatasource', function(this: any) {
 
     it('should not set terms aggregation size to 0', () => {
       expect(body['aggs']['1']['terms'].size).not.toBe(0);
+    });
+  });
+});
+
+describe('getMaxConcurrenShardRequestOrDefault', () => {
+  const testCases = [
+    { version: 50, expectedMaxConcurrentShardRequests: 256 },
+    { version: 50, maxConcurrentShardRequests: 50, expectedMaxConcurrentShardRequests: 50 },
+    { version: 56, expectedMaxConcurrentShardRequests: 256 },
+    { version: 56, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 256 },
+    { version: 56, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 256 },
+    { version: 56, maxConcurrentShardRequests: 200, expectedMaxConcurrentShardRequests: 200 },
+    { version: 70, expectedMaxConcurrentShardRequests: 5 },
+    { version: 70, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 5 },
+    { version: 70, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 5 },
+    { version: 70, maxConcurrentShardRequests: 6, expectedMaxConcurrentShardRequests: 6 },
+  ];
+
+  testCases.forEach(tc => {
+    it(`version = ${tc.version}, maxConcurrentShardRequests = ${tc.maxConcurrentShardRequests}`, () => {
+      const options = { esVersion: tc.version, maxConcurrentShardRequests: tc.maxConcurrentShardRequests };
+      expect(getMaxConcurrenShardRequestOrDefault(options as ElasticsearchOptions)).toBe(
+        tc.expectedMaxConcurrentShardRequests
+      );
     });
   });
 });
