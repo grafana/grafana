@@ -16,7 +16,7 @@ import {
   changeMode,
 } from './state/actions';
 import { getTimeZone } from '../profile/state/selectors';
-import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
+import { ToggleButton, ToggleButtonGroup } from '@grafana/ui';
 import { ExploreTimeControls } from './ExploreTimeControls';
 
 enum IconSide {

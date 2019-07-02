@@ -15,7 +15,7 @@ import {
 } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
-import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
+import { ToggleButtonGroup, ToggleButton } from '@grafana/ui';
 
 import Graph from './Graph';
 import { LogLabels } from './LogLabels';

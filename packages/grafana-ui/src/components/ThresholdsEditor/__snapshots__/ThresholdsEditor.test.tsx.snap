@@ -96,6 +96,10 @@ exports[`Render should render with base threshold 1`] = `
                               "dropdown": "#1f1f20",
                               "scrollbar": "#343436",
                               "scrollbar2": "#343436",
+                              "toggleButton": Object {
+                                "active": "#09090B",
+                                "default": "#161719",
+                              },
                             },
                             "border": Object {
                               "radius": Object {
@@ -115,6 +119,7 @@ exports[`Render should render with base threshold 1`] = `
                               "xs": "0",
                             },
                             "colors": Object {
+                              "activeColor": "#5794f2",
                               "black": "#000000",
                               "blue": "#33b5e5",
                               "blueBase": "#3274d9",
@@ -257,6 +262,10 @@ exports[`Render should render with base threshold 1`] = `
                                     "dropdown": "#1f1f20",
                                     "scrollbar": "#343436",
                                     "scrollbar2": "#343436",
+                                    "toggleButton": Object {
+                                      "active": "#09090B",
+                                      "default": "#161719",
+                                    },
                                   },
                                   "border": Object {
                                     "radius": Object {
@@ -276,6 +285,7 @@ exports[`Render should render with base threshold 1`] = `
                                     "xs": "0",
                                   },
                                   "colors": Object {
+                                    "activeColor": "#5794f2",
                                     "black": "#000000",
                                     "blue": "#33b5e5",
                                     "blueBase": "#3274d9",

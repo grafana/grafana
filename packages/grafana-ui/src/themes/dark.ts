@@ -70,11 +70,16 @@ const darkTheme: GrafanaTheme = {
     linkHover: basicColors.white,
     linkExternal: basicColors.blue,
     headingColor: basicColors.gray4,
+    activeColor: basicColors.blueLight,
   },
   background: {
     dropdown: basicColors.dark3,
     scrollbar: basicColors.dark9,
     scrollbar2: basicColors.dark9,
+    toggleButton: {
+      default: basicColors.dark2,
+      active: '#09090B',
+    },
   },
 };
 
