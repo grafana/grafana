@@ -310,13 +310,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return {
         ...commontTargetOptons,
         start: timeEpochNs - contextTimeBuffer,
-        end: row.timestamp,
+        end: timeEpochNs,
         direction,
       };
     } else {
       return {
         ...commontTargetOptons,
-        start: row.timestamp, // start param in Loki API is inclusive so we'll have to filter out the row that this request is based from
+        start: timeEpochNs, // start param in Loki API is inclusive so we'll have to filter out the row that this request is based from
         end: timeEpochNs + contextTimeBuffer,
       };
     }
