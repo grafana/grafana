@@ -86,7 +86,6 @@ export const getWebpackConfig: WebpackConfigurationGetter = () => {
       'slate-react',
       'react',
       'react-dom',
-      'jquery',
       'rxjs',
       'd3',
       '@grafana/ui',
@@ -94,11 +93,15 @@ export const getWebpackConfig: WebpackConfigurationGetter = () => {
       '@grafana/data',
       // @ts-ignore
       (context, request, callback) => {
-        const prefix = 'app/';
-        const prefix2 = 'grafana/';
-        if (request.indexOf(prefix) === 0 || request.indexOf(prefix2) === 0) {
+        let prefix = 'app/';
+        if (request.indexOf(prefix) === 0) {
           return callback(null, request);
         }
+        prefix = 'grafana/';
+        if (request.indexOf(prefix) === 0) {
+          return callback(null, request.substr(prefix.length));
+        }
+
         // @ts-ignore
         callback();
       },
@@ -161,6 +164,10 @@ export const getWebpackConfig: WebpackConfigurationGetter = () => {
               },
             },
           ],
+        },
+        {
+          test: /\.scss$/,
+          use: ['style-loader', 'css-loader', 'sass-loader'],
         },
       ],
     },

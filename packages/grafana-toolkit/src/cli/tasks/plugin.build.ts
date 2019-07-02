@@ -14,6 +14,19 @@ interface PrecommitOptions {}
 // @ts-ignore
 export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', ['./dist']));
 
+export const prepare = useSpinner<void>('Prepareing', async () => {
+  // Make sure a local tsconfig exists.  Otherwise this will work, but have odd behavior
+  const tsConfigPath = path.resolve(process.cwd(), 'tsconfig.json');
+  if (!fs.existsSync(tsConfigPath)) {
+    const defaultTsConfigPath = path.resolve(__dirname, '../../config/tsconfig.plugin.local.json');
+    fs.copyFile(defaultTsConfigPath, tsConfigPath, err => {
+      if (err) throw err;
+      console.log('Created tsconfig.json file');
+    });
+  }
+  return Promise.resolve();
+});
+
 // @ts-ignore
 const typecheckPlugin = useSpinner<void>('Typechecking', async () => {
   await execa('tsc', ['--noEmit']);
@@ -65,6 +78,7 @@ const lintPlugin = useSpinner<void>('Linting', async () => {
 
 const pluginBuildRunner: TaskRunner<PrecommitOptions> = async () => {
   await clean();
+  await prepare();
   // @ts-ignore
   await lintPlugin();
   await testPlugin({ updateSnapshot: false, coverage: false });
