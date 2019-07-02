@@ -109,7 +109,7 @@ go-vet:
 	@echo "lint via go vet"
 	@go vet $(GO_FILES)
 
-lint-go: go-vet revive revive-alerting golangci-lint gosec
+lint-go: go-vet golangci-lint revive revive-alerting gosec
 
 run: scripts/go/bin/bra
 	@scripts/go/bin/bra run

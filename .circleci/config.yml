@@ -124,7 +124,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: backend lint
+          name: Lint Go
           command: 'make -j2 lint-go'
 
   test-frontend:
