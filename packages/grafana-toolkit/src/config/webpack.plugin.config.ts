@@ -136,6 +136,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = () => {
     ],
     resolve: {
       extensions: ['.ts', '.tsx', '.js'],
+      modules: [path.resolve(process.cwd(), 'src'), 'node_modules'],
     },
     module: {
       rules: [
