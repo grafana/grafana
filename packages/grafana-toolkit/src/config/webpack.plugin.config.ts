@@ -115,6 +115,10 @@ export const getWebpackConfig: WebpackConfigurationGetter = () => {
         { from: '../LICENSE', to: '.' },
         { from: 'partials/*', to: '.' },
         { from: 'img/*', to: '.' },
+        { from: '**/*.json', to: '.' },
+        { from: '**/*.svg', to: '.' },
+        { from: '**/*.png', to: '.' },
+        { from: '**/*.html', to: '.' },
       ]),
 
       new ReplaceInFileWebpackPlugin([
@@ -179,5 +183,11 @@ export const getWebpackConfig: WebpackConfigurationGetter = () => {
         },
       ],
     },
+    // optimization: {
+    //   splitChunks: {
+    //     chunks: 'all',
+    //     name: 'shared'
+    //   }
+    // }
   };
 };
