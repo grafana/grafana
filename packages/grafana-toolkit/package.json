@@ -35,10 +35,12 @@
     "commander": "^2.20.0",
     "concurrently": "4.1.0",
     "copy-webpack-plugin": "5.0.3",
+    "css-loader": "^3.0.0",
     "execa": "^1.0.0",
     "glob": "^7.1.4",
     "html-loader": "0.5.5",
     "inquirer": "^6.3.1",
+    "jest": "24.8.0",
     "jest-cli": "^24.8.0",
     "lodash": "4.17.11",
     "ora": "^3.4.0",
@@ -48,16 +50,15 @@
     "sass-loader": "7.1.0",
     "semver": "^6.1.1",
     "simple-git": "^1.112.0",
+    "style-loader": "^0.23.1",
+    "ts-jest": "24.0.2",
     "ts-loader": "6.0.4",
     "ts-node": "^8.2.0",
-    "tslint": "5.14.0",
-    "webpack": "4.35.0"
-  },
-  "peerDependencies": {
-    "jest": "24.8.0",
-    "ts-jest": "24.0.2",
     "tslib": "1.10.0",
-    "typescript": "3.5.1"
+    "tslint": "5.14.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "3.5.1",
+    "webpack": "4.35.0"
   },
   "resolutions": {
     "@types/lodash": "4.14.119"
