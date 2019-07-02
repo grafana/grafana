@@ -28,12 +28,14 @@ func TestSearchJSONForEmail(t *testing.T) {
 				UserInfoJSONResponse: []byte{},
 				EmailAttributePath:   "",
 				ExpectedResult:       "",
+				ErrorExpected:        true,
 			},
 			{
 				Name:                 "Given an empty user info JSON response and valid JMES path",
 				UserInfoJSONResponse: []byte{},
 				EmailAttributePath:   "attributes.email",
 				ExpectedResult:       "",
+				ErrorExpected:        true,
 			},
 			{
 				Name: "Given a simple user info JSON response and valid JMES path",
@@ -75,7 +77,7 @@ func TestSearchJSONForEmail(t *testing.T) {
 		for _, test := range tests {
 			provider.emailAttributePath = test.EmailAttributePath
 			Convey(test.Name, func() {
-				actualResult, err := provider.SearchJSONForEmail(test.UserInfoJSONResponse)
+				actualResult, err := provider.searchJSONForEmail(test.UserInfoJSONResponse)
 				So(actualResult, ShouldEqual, test.ExpectedResult)
 				if test.ErrorExpected {
 					So(err, ShouldNotBeNil)
