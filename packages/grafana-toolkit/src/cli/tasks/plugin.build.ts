@@ -14,13 +14,15 @@ interface PrecommitOptions {}
 // @ts-ignore
 export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', ['./dist']));
 
-export const prepare = useSpinner<void>('Prepareing', async () => {
+export const prepare = useSpinner<void>('Preparing', async () => {
   // Make sure a local tsconfig exists.  Otherwise this will work, but have odd behavior
   const tsConfigPath = path.resolve(process.cwd(), 'tsconfig.json');
   if (!fs.existsSync(tsConfigPath)) {
     const defaultTsConfigPath = path.resolve(__dirname, '../../config/tsconfig.plugin.local.json');
     fs.copyFile(defaultTsConfigPath, tsConfigPath, err => {
-      if (err) throw err;
+      if (err) {
+        throw err;
+      }
       console.log('Created tsconfig.json file');
     });
   }
