@@ -22,7 +22,7 @@ func GetTeamMembers(c *m.ReqContext) Response {
 		member.Labels = []string{}
 
 		if setting.IsEnterprise && setting.LDAPEnabled && member.External {
-			authProvider := GetAuthProviderName(member.AuthModule)
+			authProvider := GetAuthProviderLabel(member.AuthModule)
 			member.Labels = append(member.Labels, authProvider)
 		}
 	}
@@ -30,15 +30,17 @@ func GetTeamMembers(c *m.ReqContext) Response {
 	return JSON(200, query.Result)
 }
 
-func GetAuthProviderName(authModule string) string {
+func GetAuthProviderLabel(authModule string) string {
 	switch authModule {
 	case "oauth_github":
 		return "GitHub"
 	case "oauth_google":
 		return "Google"
-	case "ldap":
-		return "LDAP"
-	case "":
+	case "oauth_gitlab":
+		return "GitLab"
+	case "oauth_grafana_com", "oauth_grafananet":
+		return "grafana.com"
+	case "ldap", "":
 		return "LDAP"
 	default:
 		return "OAuth"
