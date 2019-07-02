@@ -113,7 +113,6 @@ export const getWebpackConfig: WebpackConfigurationGetter = () => {
         { from: 'plugin.json', to: '.' },
         { from: '../README.md', to: '.' },
         { from: '../LICENSE', to: '.' },
-        { from: 'partials/*', to: '.' },
         { from: 'img/*', to: '.' },
         { from: '**/*.json', to: '.' },
         { from: '**/*.svg', to: '.' },
