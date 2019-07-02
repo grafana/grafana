@@ -11,7 +11,18 @@ yarn add babel-loader ts-loader @babel/preset-env @babel/core & yarn link @grafa
 ```
 
 Note, that for development purposes we are adding `babel-loader ts-loader @babel/preset-env @babel/core` packages to your extension. This is due to the specific behavior of `yarn link` which does not install dependencies of linked packages and webpack is having hard time trying to load its extensions.
+
 TODO: Experiment with [yalc](https://github.com/whitecolor/yalc) for linking packages
+
+### Publishing to npm
+The publish process is now manual. Follow the steps to publish @grafana/toolkit to npm
+1. From Grafana root dir: `./node_modules/.bin/grafana-toolkit toolkit:build`
+2. `cd packages/grafana-toolkit/dist`
+3. Open `package.json`, change version according to current version on npm (https://www.npmjs.com/package/@grafana/toolkit)
+4. Run `npm publish --tag next` - for dev purposes we now publish on `next` channel
+
+Note, that for publishing you need to be part of Grafana npm org and you need to be logged in to npm in your terminal (`npm login`).
+
 
 ## Grafana extensions development with grafana-toolkit overview
 
