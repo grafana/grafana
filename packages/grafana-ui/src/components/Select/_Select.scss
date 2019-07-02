@@ -79,7 +79,8 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__multi-value {
   display: inline;
-  margin: 0 6px;
+  margin: 0 6px 0 0;
+  cursor: pointer;
 }
 
 .gf-form-select-box__multi-value__remove {
