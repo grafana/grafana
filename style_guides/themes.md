@@ -1,8 +1,8 @@
-This document provides an overview of how themes are implemented and how to use them. Text taken from #15235
+This document provides an overview of how themes are implemented and how to use them. Text taken from PR #15235
 
 ## Core changes
 
-This PR introduces JS as a primary source of theme variables for Grafana. Theme definitions are located in `@grafana/ui/themes` directory.
+JS is the primary source of theme variables for Grafana. Theme definitions are located in `@grafana/ui/themes` directory.
 
 #### Themes are implemented in pure js.
 
