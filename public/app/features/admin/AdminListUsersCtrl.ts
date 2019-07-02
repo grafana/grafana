@@ -1,5 +1,6 @@
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
+import tags from 'app/core/utils/tags';
 
 export default class AdminListUsersCtrl {
   users: any;
@@ -45,5 +46,44 @@ export default class AdminListUsersCtrl {
       return user.authModule[0];
     }
     return undefined;
+  }
+
+  getAuthLabel(user: any) {
+    const authModule = this.getAuthModule(user);
+
+    switch (authModule) {
+      case 'ldap':
+        return 'LDAP';
+      case 'oauth_github':
+        return 'GitHub';
+      case 'oauth_google':
+        return 'Google';
+      case 'oauth_gitlab':
+        return 'GitLab';
+      case 'oauth_grafana_com':
+      case 'oauth_grafananet':
+        return 'grafana.com';
+      case 'oauth_generic_oauth':
+        return 'OAuth';
+      default:
+        return undefined;
+    }
+  }
+
+  getAuthLabelStyle(label: string) {
+    if (label === 'LDAP') {
+      return {};
+    }
+
+    const { color, borderColor } = tags.getTagColorsFromName(label);
+    return {
+      'background-color': color,
+      'border-color': borderColor,
+    };
+  }
+
+  getUserAuthLabelStyle(user: any) {
+    const label = this.getAuthLabel(user);
+    return this.getAuthLabelStyle(label);
   }
 }
