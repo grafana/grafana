@@ -694,14 +694,32 @@
       }
     }
 
+  , overflowHiddenParent: function(element){
+    var style
+      , parent
+
+    // get first parent element where overflow is hidden
+    element.parents().each((ndx, el) => {
+      style = window.getComputedStyle(el);
+      if (style.overflow === 'hidden') {
+        parent = el;
+        return false; // break jquery each() loop
+      }
+    });
+
+    return parent;
+  }
+
   , applyPlacement: function(offset, placement){
       var $tip = this.tip()
+        , container = this.overflowHiddenParent($tip)
         , width = $tip[0].offsetWidth
         , height = $tip[0].offsetHeight
         , actualWidth
         , actualHeight
         , delta
         , replace
+        , pos
 
       $tip
         .offset(offset)
@@ -710,6 +728,26 @@
 
       actualWidth = $tip[0].offsetWidth
       actualHeight = $tip[0].offsetHeight
+
+      // if tip has right placement and is overflowing the nearest parent with overflow: hidden,
+      // then make it left placement. update actualWidth and actualHeight for arrow. Fixes #16217.
+      if (placement === 'right'
+      && container !== undefined
+      && (($tip[0].offsetLeft + actualWidth) > container.offsetWidth)) {
+
+        pos = this.getPosition();
+
+        placement = 'left';
+        offset = {top: pos.top + pos.height / 2 - height / 2, left: pos.left - width};
+
+        $tip
+          .offset(offset)
+          .removeClass('right')
+          .addClass(placement)
+
+        actualWidth = $tip[0].offsetWidth
+        actualHeight = $tip[0].offsetHeight
+      }
 
       if (placement == 'top' && actualHeight != height) {
         offset.top = offset.top + height - actualHeight
