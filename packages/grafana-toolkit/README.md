@@ -7,10 +7,10 @@ Make sure to run `yarn install` before trying anything!  Otherwise you may see u
 ## Internal development
 For development use `yarn link`. First, navigate to `packages/grafana-toolkit` and run `yarn link`. Then, in your project run
 ```
-yarn add babel-loader ts-loader @babel/preset-env @babel/core & yarn link @grafana/toolkit
+yarn add babel-loader ts-loader style-loader sass-loader html-loader node-sass @babel/preset-env @babel/core & yarn link @grafana/toolkit
 ```
 
-Note, that for development purposes we are adding `babel-loader ts-loader @babel/preset-env @babel/core` packages to your extension. This is due to the specific behavior of `yarn link` which does not install dependencies of linked packages and webpack is having hard time trying to load its extensions.
+Note, that for development purposes we are adding `babel-loader ts-loader style-loader sass-loader html-loader node-sass @babel/preset-env @babel/core` packages to your extension. This is due to the specific behavior of `yarn link` which does not install dependencies of linked packages and webpack is having hard time trying to load its extensions.
 
 TODO: Experiment with [yalc](https://github.com/whitecolor/yalc) for linking packages
 

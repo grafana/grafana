@@ -37,6 +37,7 @@
     "copy-webpack-plugin": "5.0.3",
     "execa": "^1.0.0",
     "glob": "^7.1.4",
+    "html-loader": "0.5.5",
     "inquirer": "^6.3.1",
     "jest-cli": "^24.8.0",
     "lodash": "4.17.11",
