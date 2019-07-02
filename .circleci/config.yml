@@ -125,7 +125,7 @@ jobs:
       - checkout
       - run:
           name: Lint Go
-          command: 'make -j2 lint-go'
+          command: 'make lint-go'
 
   test-frontend:
     docker:
