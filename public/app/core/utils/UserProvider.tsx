@@ -24,15 +24,11 @@ export interface State {
 }
 
 export class UserProvider extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      loadingStates: {
-        changePassword: false,
-      },
-    };
-  }
+  state: State = {
+    loadingStates: {
+      changePassword: false,
+    },
+  };
 
   changePassword = async (payload: ChangePasswordFields) => {
     this.setState({ loadingStates: { ...this.state.loadingStates, changePassword: true } });
