@@ -294,12 +294,10 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byt
 	}
 
 	email, err := s.searchJSONForEmail(userInfoResp)
-	if err != nil {
-		s.log.Debug("Failed to search user info JSON response for e-mail", "err", err.Error())
-	} else {
+	if err == nil {
 		return email, nil
 	}
-	s.log.Debug("No e-mail address found when searching user info JSON response")
+	s.log.Debug("Failed to search user info JSON response for e-mail", "err", err.Error())
 
 	emails, ok := data.Attributes[s.emailAttributeName]
 	if ok && len(emails) != 0 {
@@ -308,11 +306,10 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byt
 
 	if data.Upn != "" {
 		emailAddr, emailErr := mail.ParseAddress(data.Upn)
-		if emailErr != nil {
-			s.log.Debug("Failed to parse e-mail address", "email", emailAddr, "err", emailErr.Error())
-		} else {
+		if emailErr == nil {
 			return emailAddr.Address, nil
 		}
+		s.log.Debug("Failed to parse e-mail address", "email", emailAddr, "err", emailErr.Error())
 	}
 
 	return "", errors.New("Failed to extract e-mail address from user info response")
