@@ -1,10 +1,10 @@
 import _ from 'lodash';
-import { TimeRange, colors, getColorFromHexRgbOrName, FieldCache, FieldType, Field, SeriesData } from '@grafana/ui';
+import { TimeRange, colors, getColorFromHexRgbOrName, FieldCache, FieldType, Field, DataFrame } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 
 type Options = {
-  dataList: SeriesData[];
+  dataList: DataFrame[];
   range?: TimeRange;
 };
 

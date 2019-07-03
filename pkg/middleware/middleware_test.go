@@ -10,16 +10,21 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/macaron.v1"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/macaron.v1"
+	"github.com/stretchr/testify/assert"
 )
+
+const errorTemplate = "error-template"
 
 func mockGetTime() {
 	var timeSeed int64
@@ -35,7 +40,7 @@ func resetGetTime() {
 }
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = "error-template"
+	setting.ERR_TEMPLATE_NAME = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 
@@ -68,7 +73,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 }
 
 func TestMiddlewareContext(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = "error-template"
+	setting.ERR_TEMPLATE_NAME = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 		middlewareScenario(t, "middleware should add context to injector", func(sc *scenarioContext) {
@@ -392,6 +397,25 @@ func TestMiddlewareContext(t *testing.T) {
 					So(sc.context.UserId, ShouldEqual, 33)
 					So(sc.context.OrgId, ShouldEqual, 4)
 				})
+			})
+
+			middlewareScenario(t, "should respect auto signup option", func(sc *scenarioContext) {
+				setting.LDAPEnabled = false
+				setting.AuthProxyAutoSignUp = false
+				var actualAuthProxyAutoSignUp *bool = nil
+
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					actualAuthProxyAutoSignUp = &cmd.SignupAllowed
+					return login.ErrInvalidCredentials
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.exec()
+
+				assert.False(t, *actualAuthProxyAutoSignUp)
+				assert.Equal(t, sc.resp.Code, 500)
+				assert.Nil(t, sc.context)
 			})
 
 			middlewareScenario(t, "should create an user from a header", func(sc *scenarioContext) {

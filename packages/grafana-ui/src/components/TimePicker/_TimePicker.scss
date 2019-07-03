@@ -7,10 +7,6 @@
   }
 }
 
-.time-picker-popover-popper {
-  z-index: $zindex-timepicker-popover;
-}
-
 .time-picker-utc {
   color: $orange;
   font-size: 75%;
@@ -30,10 +26,11 @@
   color: $popover-color;
   box-shadow: $popover-shadow;
   position: absolute;
+  z-index: $zindex-dropdown;
   flex-direction: column;
   max-width: 600px;
-  top: 48px;
-  right: 20px;
+  top: 50px;
+  right: 0px;
 
   .time-picker-popover-body {
     display: flex;
@@ -188,11 +185,6 @@ $arrowPadding: $arrowPaddingToBorder * 3;
 
 @include media-breakpoint-down(md) {
   .time-picker-popover {
-    margin-left: $spacer;
-    display: flex;
-    flex-flow: column nowrap;
-    max-width: 400px;
-
     .time-picker-popover-title {
       font-size: $font-size-md;
     }
@@ -217,6 +209,56 @@ $arrowPadding: $arrowPaddingToBorder * 3;
   }
 
   .time-picker-calendar {
-    width: 100%;
+    width: 320px;
+  }
+}
+
+.time-picker-button-select {
+  .select-button-value {
+    display: none;
+
+    @include media-breakpoint-up(sm) {
+      display: inline-block;
+      max-width: 100px;
+      overflow: hidden;
+    }
+
+    @include media-breakpoint-up(md) {
+      display: inline-block;
+      max-width: 150px;
+      overflow: hidden;
+    }
+
+    @include media-breakpoint-up(lg) {
+      max-width: 300px;
+    }
+  }
+}
+
+// special rules for when within explore toolbar in split
+.explore-toolbar.splitted {
+  .time-picker-button-select {
+    .select-button-value {
+      display: none;
+
+      @include media-breakpoint-up(xl) {
+        display: inline-block;
+        max-width: 100px;
+      }
+
+      @media only screen and (max-width: 1545px) {
+        max-width: 300px;
+      }
+    }
+  }
+}
+
+.dashboard-timepicker-wrapper {
+  position: relative;
+  display: flex;
+
+  .gf-form-select-box__menu {
+    right: 0;
+    left: unset;
   }
 }

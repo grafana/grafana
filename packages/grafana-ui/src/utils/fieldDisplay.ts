@@ -8,7 +8,7 @@ import {
   FieldType,
   NullValueMode,
   GrafanaTheme,
-  SeriesData,
+  DataFrame,
   InterpolateFunction,
   Field,
   ScopedVars,
@@ -36,7 +36,7 @@ export const VAR_FIELD_NAME = '__field_name';
 export const VAR_CALC = '__calc';
 export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates
 
-function getTitleTemplate(title: string | undefined, stats: string[], data?: SeriesData[]): string {
+function getTitleTemplate(title: string | undefined, stats: string[], data?: DataFrame[]): string {
   // If the title exists, use it as a template variable
   if (title) {
     return title;
@@ -72,7 +72,7 @@ export interface FieldDisplay {
 }
 
 export interface GetFieldDisplayValuesOptions {
-  data?: SeriesData[];
+  data?: DataFrame[];
   fieldOptions: FieldDisplayOptions;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
