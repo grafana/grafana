@@ -18,7 +18,8 @@ export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps, Tog
   renderChildren(theme: GrafanaTheme) {
     const styles = getStyles(theme);
     return (
-      <>
+      <div>
+        <span className={styles.label}>{this.props.label}</span>
         {React.Children.map(this.props.children, (child: any, index) => {
           // Set correct style depending on first/middle/last
           const style =
@@ -28,7 +29,7 @@ export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps, Tog
             className: style,
           });
         })}
-      </>
+      </div>
     );
   }
 
@@ -168,6 +169,9 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     last: css`
       border-radius: 0 ${borderRadius}px ${borderRadius}px 0;
+    `,
+    label: css`
+      margin-right: 10px;
     `,
   };
 };

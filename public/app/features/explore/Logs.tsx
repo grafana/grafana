@@ -15,7 +15,7 @@ import {
 } from '@grafana/ui';
 import TimeSeries from 'app/core/time_series2';
 
-import { ToggleButtonGroup, ToggleButton } from '@grafana/ui';
+import { ToggleButtonGroup, ToggleButton, ToggleButtonState } from '@grafana/ui';
 
 import Graph from './Graph';
 import { LogLabels } from './LogLabels';
@@ -113,7 +113,8 @@ export default class Logs extends PureComponent<Props, State> {
     clearTimeout(this.renderAllTimer);
   }
 
-  onChangeDedup = (dedup: LogsDedupStrategy) => {
+  onChangeDedup = (state: ToggleButtonState) => {
+    const dedup: LogsDedupStrategy = state.value;
     const { onDedupStrategyChange } = this.props;
     if (this.props.dedupStrategy === dedup) {
       return onDedupStrategyChange(LogsDedupStrategy.none);
