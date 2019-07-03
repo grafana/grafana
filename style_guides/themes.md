@@ -1,5 +1,3 @@
-This document provides an overview of how themes are implemented and how to use them. Text taken from PR #15235
-
 ## Core changes
 
 JS is the primary source of theme variables for Grafana. Theme definitions are located in `@grafana/ui/themes` directory.
