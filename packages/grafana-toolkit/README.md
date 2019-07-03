@@ -5,14 +5,17 @@ Make sure to run `yarn install` before trying anything!  Otherwise you may see u
 
 
 ## Internal development
-For development use `yarn link`. First, navigate to `packages/grafana-toolkit` and run `yarn link`. Then, in your project run
-```
-yarn add babel-loader ts-loader css-loader style-loader sass-loader html-loader node-sass @babel/preset-env @babel/core & yarn link @grafana/toolkit
-```
+Typically plugins should be developed using the `@grafana/toolkit` import from npm.  However, when working on the toolkit, you may want to use the local version while underdevelopment.  This works, but is a little flakey.
 
-Note, that for development purposes we are adding `babel-loader ts-loader style-loader sass-loader html-loader node-sass @babel/preset-env @babel/core` packages to your extension. This is due to the specific behavior of `yarn link` which does not install dependencies of linked packages and webpack is having hard time trying to load its extensions.
+1. navigate to `packages/grafana-toolkit` and run `yarn link`.
+2. in your plugin, run `npx grafana-toolkit plugin:dev --yarnlink`
+
+Step 2 will add all the same dependencies to your development plugin as the toolkit.  These are typically used from the node_modules folder
+
 
 TODO: Experiment with [yalc](https://github.com/whitecolor/yalc) for linking packages
+
+
 
 ### Publishing to npm
 The publish process is now manual. Follow the steps to publish @grafana/toolkit to npm

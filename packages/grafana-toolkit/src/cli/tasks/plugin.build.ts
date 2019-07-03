@@ -37,7 +37,7 @@ const typecheckPlugin = useSpinner<void>('Typechecking', async () => {
 });
 
 // @ts-ignore
-const lintPlugin = useSpinner<void>('Linting', async () => {
+export const lintPlugin = useSpinner<void>('Linting', async () => {
   let tsLintConfigPath = path.resolve(process.cwd(), 'tslint.json');
   if (!fs.existsSync(tsLintConfigPath)) {
     tsLintConfigPath = path.resolve(__dirname, '../../config/tslint.plugin.json');
