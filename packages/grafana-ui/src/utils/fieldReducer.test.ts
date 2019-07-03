@@ -1,6 +1,7 @@
 import { getFieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import _ from 'lodash';
+import { DataFrame } from '../types/data';
 
 describe('Stats Calculators', () => {
   const basicTable = {
@@ -90,5 +91,25 @@ describe('Stats Calculators', () => {
 
     expect(stats.step).toEqual(100);
     expect(stats.delta).toEqual(300);
+  });
+
+  it('consistent results for last value with null', () => {
+    const data: DataFrame = {
+      fields: [{ name: 'A' }],
+      rows: [[100], [200], [null]], // last value is null
+    };
+    const last1 = reduceField({
+      series: data,
+      fieldIndex: 0,
+      reducers: [ReducerID.last, ReducerID.mean], // uses standard path
+    }).last;
+    const last2 = reduceField({
+      series: data,
+      fieldIndex: 0,
+      reducers: [ReducerID.last], // uses optimized path
+    }).last;
+
+    expect(last1).toEqual(200);
+    expect(last2).toEqual(200);
   });
 });

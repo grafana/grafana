@@ -345,7 +345,15 @@ function calculateFirst(data: DataFrame, fieldIndex: number, ignoreNulls: boolea
 }
 
 function calculateLast(data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  return { last: data.rows[data.rows.length - 1][fieldIndex] };
+  let idx = data.rows.length - 1;
+  while (idx >= 0) {
+    console.log('CHECK', idx);
+    const last = data.rows[idx--][fieldIndex];
+    if (last != null) {
+      return { last };
+    }
+  }
+  return { last: null };
 }
 
 function calculateChangeCount(
