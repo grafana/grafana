@@ -15,7 +15,7 @@
   </div>
   <div class="gf-form-inline">
     <div class="gf-form">
-      <span class="gf-form-label width-10">Tenant Id</span>
+      <span class="gf-form-label width-10">Directory (tenant) ID</span>
       <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.tenantId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
       <info-popover mode="right-absolute">
         <p>In the Azure Portal, navigate to Azure Active Directory -> Properties -> Directory ID.</p>
@@ -26,7 +26,7 @@
   </div>
   <div class="gf-form-inline">
     <div class="gf-form">
-      <span class="gf-form-label width-10">Client Id</span>
+      <span class="gf-form-label width-10">Application (client) ID</span>
       <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.clientId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
       <info-popover mode="right-absolute">
         <p>In the Azure Portal, navigate to Azure Active Directory -> App Registrations -> Choose your app ->
@@ -54,7 +54,7 @@
     <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
     <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.current.secureJsonFields.clientSecret = false">reset</a>
   </div>
-  <div class="gf-form-group">
+  <div class="gf-form-group" ng-show="ctrl.subscriptions.length">
     <div class="gf-form-inline">
       <div class="gf-form">
         <span class="gf-form-label width-10">Default Subscription</span>
@@ -74,10 +74,6 @@
 
 <h3 class="page-heading">Azure Log Analytics API Details</h3>
 
-<div class="grafana-info-box ng-scope">
-  The Azure Log Analytics support is marked as being in a preview development state. This means it is in currently in active development and major changes might be made - depending on feedback from users.
-</div>
-
 <div class="gf-form-group">
   <gf-form-switch class="gf-form" label="Same details as Azure Monitor API" label-class="width-19" switch-class="max-width-6"
     checked="ctrl.current.jsonData.azureLogAnalyticsSameAs" on-change="ctrl.onSameAsToggle()">
@@ -87,7 +83,7 @@
 <div class="gf-form-group" ng-show="!ctrl.current.jsonData.azureLogAnalyticsSameAs">
   <div class="gf-form-inline">
     <div class="gf-form">
-      <span class="gf-form-label width-10">Tenant Id</span>
+      <span class="gf-form-label width-10">Directory (tenant) ID</span>
       <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.logAnalyticsTenantId"
         placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" />
       <info-popover mode="right-absolute">
@@ -99,7 +95,7 @@
   </div>
   <div class="gf-form-inline">
     <div class="gf-form">
-      <span class="gf-form-label width-10">Client Id</span>
+      <span class="gf-form-label width-10">Application (client) ID</span>
       <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.logAnalyticsClientId"
         placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
       <info-popover mode="right-absolute">

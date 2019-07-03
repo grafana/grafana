@@ -25,7 +25,7 @@ export class AzureMonitorConfigCtrl {
   constructor(private backendSrv, private $q, private templateSrv) {
     this.hasRequiredGrafanaVersion = this.hasMinVersion();
     this.current.jsonData.cloudName = this.current.jsonData.cloudName || 'azuremonitor';
-    this.current.jsonData.azureLogAnalyticsSameAs = this.current.jsonData.azureLogAnalyticsSameAs || false;
+    this.current.jsonData.azureLogAnalyticsSameAs = this.current.jsonData.azureLogAnalyticsSameAs || true;
     this.current.secureJsonData = this.current.secureJsonData || {};
     this.current.secureJsonFields = this.current.secureJsonFields || {};
     this.subscriptions = [];
