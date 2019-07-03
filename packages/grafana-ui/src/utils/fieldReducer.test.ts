@@ -96,48 +96,43 @@ describe('Stats Calculators', () => {
   it('consistent results for first/last value with null', () => {
     const info = [
       {
-        rows: [[100], [200], [null]], // last value is null
+        rows: [[null], [200], [null]], // first/last value is null
         result: 200,
-        reducer: ReducerID.last,
       },
       {
         rows: [[null], [null], [null]], // All null
         result: null,
-        reducer: ReducerID.last,
       },
       {
         rows: [], // Empty row
         result: undefined,
-        reducer: ReducerID.last,
-      },
-      {
-        rows: [[null], [200], [null]], // first value is null
-        result: 200,
-        reducer: ReducerID.first,
       },
     ];
     const fields = [{ name: 'A' }];
+    const reducers = [ReducerID.last, ReducerID.first];
 
     for (const input of info) {
-      const v1 = reduceField({
-        series: { rows: input.rows, fields },
-        fieldIndex: 0,
-        reducers: [input.reducer, ReducerID.mean], // uses standard path
-      })[input.reducer];
+      for (const reducer of reducers) {
+        const v1 = reduceField({
+          series: { rows: input.rows, fields },
+          fieldIndex: 0,
+          reducers: [reducer, ReducerID.mean], // uses standard path
+        })[reducer];
 
-      const v2 = reduceField({
-        series: { rows: input.rows, fields },
-        fieldIndex: 0,
-        reducers: [input.reducer], // uses optimized path
-      })[input.reducer];
+        const v2 = reduceField({
+          series: { rows: input.rows, fields },
+          fieldIndex: 0,
+          reducers: [reducer], // uses optimized path
+        })[reducer];
 
-      if (v1 !== v2 || v1 !== input.result) {
-        const msg =
-          `Invalid ${input.reducer} result for: ` +
-          input.rows.join(', ') +
-          ` Expected: ${input.result}` + // configured
-          ` Recieved: Multiple: ${v1}, Single: ${v2}`;
-        expect(msg).toEqual(null);
+        if (v1 !== v2 || v1 !== input.result) {
+          const msg =
+            `Invalid ${reducer} result for: ` +
+            input.rows.join(', ') +
+            ` Expected: ${input.result}` + // configured
+            ` Recieved: Multiple: ${v1}, Single: ${v2}`;
+          expect(msg).toEqual(null);
+        }
       }
     }
   });
