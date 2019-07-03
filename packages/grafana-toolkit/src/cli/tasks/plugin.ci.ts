@@ -1,0 +1,80 @@
+import { Task, TaskRunner } from './task';
+import { pluginBuildRunner } from './plugin.build';
+import { useSpinner } from '../utils/useSpinner';
+import { restoreCwd } from '../utils/cwd';
+
+// @ts-ignore
+import execa = require('execa');
+import path = require('path');
+import fs = require('fs');
+
+export interface PluginCIOptions {
+  dryRun?: boolean;
+}
+
+const calcJavascriptSize = (base: string, files?: string[]): number => {
+  files = files || fs.readdirSync(base);
+  let size = 0;
+
+  if (files) {
+    files.forEach(file => {
+      const newbase = path.join(base, file);
+      const stat = fs.statSync(newbase);
+      if (stat.isDirectory()) {
+        size += calcJavascriptSize(newbase, fs.readdirSync(newbase));
+      } else {
+        if (file.endsWith('.js')) {
+          size += stat.size;
+        }
+      }
+    });
+  }
+  return size;
+};
+
+const pluginCIRunner: TaskRunner<PluginCIOptions> = async ({ dryRun }) => {
+  const start = Date.now();
+  const distDir = `${process.cwd()}/dist`;
+  const artifactsDir = `${process.cwd()}/artifacts`;
+  await execa('rimraf', [`${process.cwd()}/coverage`]);
+  await execa('rimraf', [artifactsDir]);
+
+  // Do regular build process
+  await pluginBuildRunner({ coverage: true });
+  const elapsed = Date.now() - start;
+
+  if (!fs.existsSync(artifactsDir)) {
+    fs.mkdirSync(artifactsDir);
+  }
+
+  // Move coverage to the artifacts folder
+  await execa('mv', [`${process.cwd()}/coverage`, artifactsDir]);
+
+  // TODO? can this typed from @grafana/ui?
+  const pluginInfo = require(`${distDir}/plugin.json`);
+  const zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
+  const zipFile = path.resolve(artifactsDir, zipName);
+  process.chdir(distDir);
+  await execa('zip', ['-r', zipFile, '.']);
+  restoreCwd();
+
+  const stats = {
+    startTime: start,
+    buildTime: elapsed,
+    jsSize: calcJavascriptSize(distDir),
+    zipSize: fs.statSync(zipFile).size,
+    endTime: Date.now(),
+  };
+  fs.writeFile(artifactsDir + '/stats.json', JSON.stringify(stats, null, 2), err => {
+    if (err) {
+      console.log(err);
+    }
+    console.log('Write', stats);
+  });
+
+  if (!dryRun) {
+    console.log('TODO send info to github?');
+  }
+};
+
+export const pluginCITask = new Task<PluginCIOptions>('Plugin CI', pluginCIRunner);
