@@ -103,7 +103,7 @@ func (s *SocialGenericOAuth) searchJSONForEmail(data []byte) (email string, err 
 	if ok {
 		return strVal, nil
 	}
-	return "", errors.New(fmt.Sprintf("E-mail not found when searching JSON with provided path: %s", s.emailAttributePath))
+	return "", fmt.Errorf("E-mail not found when searching JSON with provided path: %s", s.emailAttributePath)
 }
 
 func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
