@@ -287,14 +287,15 @@
 }
 
 .query-row-status {
-  position: absolute;
+  position: relative;
   top: 0;
-  right: 105px;
+  right: 35px;
   z-index: 1015;
   display: flex;
   flex-direction: column;
   justify-content: center;
   height: $input-height;
+  width: 0;
 }
 
 .query-row-field {

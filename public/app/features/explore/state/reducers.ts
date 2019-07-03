@@ -264,7 +264,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         loadingState: LoadingState.NotStarted,
         StartPage,
         showingStartPage: Boolean(StartPage),
-        queryKeys: getQueryKeys(state.queries, datasourceInstance),
+        queryKeys: [],
         supportedModes,
         mode,
       };
