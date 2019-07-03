@@ -165,21 +165,10 @@ func getUsersIteration(logins []string, fn func(int, int) error) error {
 	)
 
 	for i := 1; i < iterations+1; i++ {
-		var previous int
-		current := i * UsersMaxRequest
+		previous := float64(UsersMaxRequest * (i - 1))
+		current := math.Min(float64(i*UsersMaxRequest), float64(lenLogins))
 
-		if i == 1 {
-			previous = 0
-		} else {
-			previous = UsersMaxRequest * (i - 1)
-		}
-
-		if lenLogins < current {
-			previous = (i - 1) * UsersMaxRequest
-			current = lenLogins
-		}
-
-		err := fn(previous, current)
+		err := fn(int(previous), int(current))
 		if err != nil {
 			return err
 		}
