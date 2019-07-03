@@ -130,10 +130,11 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:dev')
+    .option('-w, --watch', 'Run plugin development mode with watch enabled')
     .description('Starts plugin dev mode')
     .action(async cmd => {
       await execTask(pluginDevTask)({
-        watch: true,
+        watch: !!cmd.watch,
       });
     });
 

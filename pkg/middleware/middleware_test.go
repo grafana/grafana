@@ -10,6 +10,9 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/macaron.v1"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -18,10 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
-	"gopkg.in/macaron.v1"
 )
+
+const errorTemplate = "error-template"
 
 func mockGetTime() {
 	var timeSeed int64
@@ -37,7 +40,7 @@ func resetGetTime() {
 }
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = "error-template"
+	setting.ERR_TEMPLATE_NAME = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 
@@ -70,7 +73,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 }
 
 func TestMiddlewareContext(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = "error-template"
+	setting.ERR_TEMPLATE_NAME = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 		middlewareScenario(t, "middleware should add context to injector", func(sc *scenarioContext) {
