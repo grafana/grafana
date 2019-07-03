@@ -6,7 +6,6 @@ import { AbsoluteTimeRange } from '@grafana/ui';
 import { advanceTo, clear, advanceBy } from 'jest-date-mock';
 import { beforeEach } from 'test/lib/common';
 import { DataQueryResponseData } from '@grafana/ui';
-import sinon from 'sinon';
 
 describe('Language completion provider', () => {
   const datasource = {
@@ -123,7 +122,7 @@ describe('Request URL', () => {
       },
     };
 
-    const datasourceSpy = sinon.spy(datasourceWithLabels, 'metadataRequest');
+    const datasourceSpy = jest.spyOn(datasourceWithLabels, 'metadataRequest');
 
     const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
     await instance.refreshLogLabels(rangeMock, true);
@@ -132,7 +131,7 @@ describe('Request URL', () => {
       start: rangeMock.from.valueOf() * NS_IN_MS,
       end: rangeMock.to.valueOf() * NS_IN_MS,
     };
-    expect(datasourceSpy.firstCall.calledWith(expectedUrl, expectedParams)).toBe(true);
+    expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, expectedParams);
   });
 });
 
