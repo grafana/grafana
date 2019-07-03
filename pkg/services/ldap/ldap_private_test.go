@@ -37,7 +37,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					{Name: "memberof", Values: []string{"admins"}},
 				},
 			}
-			users := &ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			users := []*ldap.Entry{&entry}
 
 			result, err := server.serializeUsers(users)
 
@@ -71,7 +71,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					{Name: "memberof", Values: []string{"admins"}},
 				},
 			}
-			users := &ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			users := []*ldap.Entry{&entry}
 
 			result, err := server.serializeUsers(users)
 

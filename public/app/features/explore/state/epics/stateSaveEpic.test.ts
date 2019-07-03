@@ -15,7 +15,7 @@ describe('stateSaveEpic', () => {
             .whenActionIsDispatched(stateSaveAction())
             .thenResultingActionsEqual(
               updateLocation({
-                query: { left: '["now-6h","now","test",{"mode":null},{"ui":[true,true,true,null]}]' },
+                query: { orgId: '1', left: '["now-6h","now","test",{"mode":null},{"ui":[true,true,true,null]}]' },
                 replace: true,
               }),
               setUrlReplacedAction({ exploreId })
@@ -23,7 +23,7 @@ describe('stateSaveEpic', () => {
         });
       });
 
-      describe('and explore is splitted', () => {
+      describe('and explore is split', () => {
         it('then the correct actions are dispatched', () => {
           const { exploreId, state } = mockExploreState({ split: true });
 
@@ -32,6 +32,7 @@ describe('stateSaveEpic', () => {
             .thenResultingActionsEqual(
               updateLocation({
                 query: {
+                  orgId: '1',
                   left: '["now-6h","now","test",{"mode":null},{"ui":[true,true,true,null]}]',
                   right: '["now-6h","now","test",{"mode":null},{"ui":[true,true,true,null]}]',
                 },
@@ -51,7 +52,7 @@ describe('stateSaveEpic', () => {
           .whenActionIsDispatched(stateSaveAction())
           .thenResultingActionsEqual(
             updateLocation({
-              query: { left: '["now-6h","now","test",{"mode":null},{"ui":[true,true,true,null]}]' },
+              query: { orgId: '1', left: '["now-6h","now","test",{"mode":null},{"ui":[true,true,true,null]}]' },
               replace: false,
             })
           );

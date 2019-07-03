@@ -6,11 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/ldap.v3"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -42,6 +43,11 @@ type Server struct {
 	Connection IConnection
 	log        log.Logger
 }
+
+// UsersMaxRequest is a max amount of users we can request via Users().
+// Since many LDAP servers has limitations
+// on how much items can we return in one request
+const UsersMaxRequest = 500
 
 var (
 
@@ -148,9 +154,66 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	return user, nil
 }
 
+// getUsersIteration is a helper function for Users() method.
+// It divides the users by equal parts for the anticipated requests
+func getUsersIteration(logins []string, fn func(int, int) error) error {
+	lenLogins := len(logins)
+	iterations := int(
+		math.Ceil(
+			float64(lenLogins) / float64(UsersMaxRequest),
+		),
+	)
+
+	for i := 1; i < iterations+1; i++ {
+		previous := float64(UsersMaxRequest * (i - 1))
+		current := math.Min(float64(i*UsersMaxRequest), float64(lenLogins))
+
+		err := fn(int(previous), int(current))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Users gets LDAP users
 func (server *Server) Users(logins []string) (
 	[]*models.ExternalUserInfo,
+	error,
+) {
+	var users []*ldap.Entry
+	err := getUsersIteration(logins, func(previous, current int) error {
+		entries, err := server.users(logins[previous:current])
+		if err != nil {
+			return err
+		}
+
+		users = append(users, entries...)
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(users) == 0 {
+		return []*models.ExternalUserInfo{}, nil
+	}
+
+	serializedUsers, err := server.serializeUsers(users)
+	if err != nil {
+		return nil, err
+	}
+
+	server.log.Debug("LDAP users found", "users", spew.Sdump(serializedUsers))
+
+	return serializedUsers, nil
+}
+
+// users is helper method for the Users()
+func (server *Server) users(logins []string) (
+	[]*ldap.Entry,
 	error,
 ) {
 	var result *ldap.SearchResult
@@ -170,18 +233,7 @@ func (server *Server) Users(logins []string) (
 		}
 	}
 
-	if len(result.Entries) == 0 {
-		return []*models.ExternalUserInfo{}, nil
-	}
-
-	serializedUsers, err := server.serializeUsers(result)
-	if err != nil {
-		return nil, err
-	}
-
-	server.log.Debug("LDAP users found", "users", spew.Sdump(serializedUsers))
-
-	return serializedUsers, nil
+	return result.Entries, nil
 }
 
 // validateGrafanaUser validates user access.
@@ -261,7 +313,6 @@ func (server *Server) getSearchRequest(
 	return &ldap.SearchRequest{
 		BaseDN:       base,
 		Scope:        ldap.ScopeWholeSubtree,
-		SizeLimit:    1000,
 		DerefAliases: ldap.NeverDerefAliases,
 		Attributes:   attributes,
 		Filter:       filter,
@@ -407,11 +458,11 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 // serializeUsers serializes the users
 // from LDAP result to ExternalInfo struct
 func (server *Server) serializeUsers(
-	users *ldap.SearchResult,
+	entries []*ldap.Entry,
 ) ([]*models.ExternalUserInfo, error) {
 	var serialized []*models.ExternalUserInfo
 
-	for _, user := range users.Entries {
+	for _, user := range entries {
 		extUser, err := server.buildGrafanaUser(user)
 		if err != nil {
 			return nil, err
