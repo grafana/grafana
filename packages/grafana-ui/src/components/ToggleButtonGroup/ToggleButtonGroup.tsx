@@ -1,20 +1,11 @@
-import React, { ReactNode, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { ThemeContext } from '../../themes/index';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '../../types/theme';
 import tinycolor from 'tinycolor2';
-
-interface ToggleButtonGroupProps {
-  label?: string;
-  children: JSX.Element[];
-  transparent?: boolean;
-  active?: number;
-}
-
-interface ToggleButtonGroupState {
-  active: any;
-}
+import { ToggleButtonGroupProps, ToggleButtonGroupState, ToggleButtonProps, ToggleButtonState } from './types';
+import { increaseContrast } from '../../utils/colors';
 
 export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps, ToggleButtonGroupState> {
   constructor(props: ToggleButtonGroupProps) {
@@ -43,6 +34,79 @@ export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps, Tog
 
   render() {
     return <ThemeContext.Consumer>{theme => this.renderChildren(theme)}</ThemeContext.Consumer>;
+  }
+}
+
+export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonState> {
+  constructor(props: ToggleButtonProps) {
+    super(props);
+    this.state = {
+      untouched: true,
+      selected: props.selected,
+      value: props.value,
+    };
+
+    this.handleBlur = this.handleBlur.bind(this);
+    this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick(e: React.SyntheticEvent) {
+    e.stopPropagation();
+    console.log(e);
+    this.setState(prevState => ({
+      untouched: false,
+      selected: !prevState.selected,
+    }));
+    if (this.props.onChange) {
+      this.props.onChange(this.state);
+    }
+  }
+
+  handleBlur() {
+    this.setState({
+      untouched: true,
+    });
+  }
+
+  componentDidUpdate(prevProps: ToggleButtonProps) {
+    //Override internal select toggle if props are updated
+    if (prevProps.selected !== this.props.selected) {
+      this.setState({
+        selected: this.props.selected,
+      });
+    }
+  }
+
+  renderButton(theme: GrafanaTheme) {
+    const styles = getStyles(theme);
+    const { children, className } = this.props;
+    const activeStyle = this.state.selected ? styles.active : null;
+
+    return (
+      <button
+        onBlur={this.handleBlur}
+        className={cx([styles.button, activeStyle, className, this.state.untouched ? styles.focus : styles.unFocused])}
+        onClick={this.handleClick}
+      >
+        <span>{children}</span>
+      </button>
+    );
+  }
+
+  render() {
+    const { tooltip } = this.props;
+
+    const button = <ThemeContext.Consumer>{theme => this.renderButton(theme)}</ThemeContext.Consumer>;
+
+    if (tooltip) {
+      return (
+        <Tooltip content={tooltip} placement="bottom">
+          {button}
+        </Tooltip>
+      );
+    } else {
+      return button;
+    }
   }
 }
 
@@ -107,148 +171,3 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
   };
 };
-
-interface ToggleButtonProps {
-  onChange?: (value: any) => void;
-  selected: boolean;
-  value?: any;
-  className?: string;
-  children: ReactNode;
-  tooltip?: string;
-  key?: any;
-  untouched?: boolean;
-}
-
-// export const ToggleButton: FC<ToggleButtonProps> = ({
-//   children,
-//   selected,
-//   className = '',
-//   value = null,
-//   tooltip,
-//   onChange,
-//   // To toggle focus styles if the button has been pressed
-
-//   untouched = false,
-// }) => {
-//   const theme = useContext(ThemeContext);
-//   const styles = getStyles(theme);
-//   const [select, setSelect] = useState(selected);
-//   const activeStyle = select ? styles.active : null;
-
-//   const onClick = (event: React.SyntheticEvent) => {
-//     console.log(untouched);
-
-//     untouched = false;
-//     event.stopPropagation();
-//     setSelect(!select);
-
-//     if (onChange) {
-//       onChange(value);
-//     }
-//   };
-
-//   const handleBlur = () => {
-//     console.log('Blurred');
-//     untouched = true;
-//   };
-
-//   const button = (
-//     <button
-//       onBlur={handleBlur}
-//       className={cx([styles.button, activeStyle, className, untouched ? styles.focus : styles.unFocused])}
-//       onClick={onClick}
-//     >
-//       <span>{children}</span>
-//     </button>
-//   );
-
-//   if (tooltip) {
-//     return (
-//       <Tooltip content={tooltip} placement="bottom">
-//         {button}
-//       </Tooltip>
-//     );
-//   } else {
-//     return button;
-//   }
-// };
-
-interface ToggleButtonState {
-  untouched: boolean;
-  selected: boolean;
-  value?: any;
-}
-export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonState> {
-  constructor(props: ToggleButtonProps) {
-    super(props);
-    this.state = {
-      untouched: true,
-      selected: props.selected,
-      value: props.value,
-    };
-
-    this.handleBlur = this.handleBlur.bind(this);
-    this.handleClick = this.handleClick.bind(this);
-  }
-
-  handleClick(e: React.SyntheticEvent) {
-    e.stopPropagation();
-    console.log(e);
-    this.setState({
-      untouched: false,
-      selected: !this.state.selected,
-    });
-    if (this.props.onChange) {
-      this.props.onChange(this.state);
-    }
-  }
-
-  handleBlur() {
-    this.setState({
-      untouched: true,
-    });
-  }
-
-  renderButton(theme: GrafanaTheme) {
-    const styles = getStyles(theme);
-    const { children, className } = this.props;
-    const activeStyle = this.state.selected || this.state.selected ? styles.active : null;
-
-    return (
-      <button
-        onBlur={this.handleBlur}
-        className={cx([styles.button, activeStyle, className, this.state.untouched ? styles.focus : styles.unFocused])}
-        onClick={this.handleClick}
-      >
-        <span>{children}</span>
-      </button>
-    );
-  }
-
-  render() {
-    const { tooltip } = this.props;
-
-    const button = <ThemeContext.Consumer>{theme => this.renderButton(theme)}</ThemeContext.Consumer>;
-
-    if (tooltip) {
-      return (
-        <Tooltip content={tooltip} placement="bottom">
-          {button}
-        </Tooltip>
-      );
-    } else {
-      return button;
-    }
-  }
-}
-
-function increaseContrast(color: any, amount: number): string {
-  if (tinycolor(color).isLight()) {
-    return tinycolor(color)
-      .brighten(amount)
-      .toString();
-  }
-  return tinycolor(color)
-    .darken(amount)
-    .toString();
-}

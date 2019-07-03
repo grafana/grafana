@@ -42,22 +42,26 @@ exports[`Render should render pending invites button 1`] = `
         }
       }
     >
-      <button
-        className="btn toggle-btn active"
-        key="users"
-        onClick={[MockFunction]}
-      >
-        Users
-      </button>
-      <button
-        className="btn toggle-btn"
-        key="pending-invites"
-        onClick={[MockFunction]}
-      >
-        Pending Invites (
-        5
-        )
-      </button>
+      <ToggleButtonGroup>
+        <ToggleButton
+          className="btn toggle-btn active"
+          key="users"
+          onChange={[MockFunction]}
+          selected={true}
+        >
+          Users
+        </ToggleButton>
+        <ToggleButton
+          className="btn toggle-btn"
+          key="pending-invites"
+          onChange={[MockFunction]}
+          selected={false}
+        >
+          Pending Invites (
+          5
+          )
+        </ToggleButton>
+      </ToggleButtonGroup>
     </div>
     <div
       className="page-action-bar__spacer"

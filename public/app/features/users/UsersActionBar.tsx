@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { setUsersSearchQuery } from './state/actions';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
+import { ToggleButton, ToggleButtonGroup } from '@grafana/ui';
 
 export interface Props {
   searchQuery: string;
@@ -53,12 +54,19 @@ export class UsersActionBar extends PureComponent<Props> {
           />
           {pendingInvitesCount > 0 && (
             <div style={{ marginLeft: '1rem' }}>
-              <button className={usersButtonStyle} key="users" onClick={onShowInvites}>
-                Users
-              </button>
-              <button className={pendingInvitesButtonStyle} onClick={onShowInvites} key="pending-invites">
-                Pending Invites ({pendingInvitesCount})
-              </button>
+              <ToggleButtonGroup>
+                <ToggleButton selected={!showInvites} className={usersButtonStyle} key="users" onChange={onShowInvites}>
+                  Users
+                </ToggleButton>
+                <ToggleButton
+                  selected={showInvites}
+                  className={pendingInvitesButtonStyle}
+                  onChange={onShowInvites}
+                  key="pending-invites"
+                >
+                  Pending Invites ({pendingInvitesCount})
+                </ToggleButton>
+              </ToggleButtonGroup>
             </div>
           )}
           <div className="page-action-bar__spacer" />

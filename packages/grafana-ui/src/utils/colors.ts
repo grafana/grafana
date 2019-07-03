@@ -93,4 +93,16 @@ function hslToHex(color: any) {
   return tinycolor(color).toHexString();
 }
 
+// Make dark colors darker and light colors lighter
+export function increaseContrast(color: any, amount: number): string {
+  if (tinycolor(color).isLight()) {
+    return tinycolor(color)
+      .brighten(amount)
+      .toString();
+  }
+  return tinycolor(color)
+    .darken(amount)
+    .toString();
+}
+
 export let sortedColors = sortColorsByHue(colors);
