@@ -5,6 +5,8 @@ import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
 
+const path = require('path');
+
 let distDir: string, cwd: string;
 
 // @ts-ignore
@@ -74,6 +76,27 @@ const moveFiles = () => {
   })();
 };
 
+const copySassFiles = () => {
+  const files = ['_variables.generated.scss', '_variables.dark.generated.scss', '_variables.light.generated.scss'];
+  // @ts-ignore
+  return useSpinner<void>(`Copy scss files ${files.join(', ')} files`, async () => {
+    const sassDir = path.resolve(cwd, '../../public/sass/');
+    const promises = files.map(file => {
+      return new Promise((resolve, reject) => {
+        fs.copyFile(`${sassDir}/${file}`, `${distDir}/sass/${file}`, err => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        });
+      });
+    });
+
+    await Promise.all(promises);
+  })();
+};
+
 const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   cwd = changeCwdToGrafanaToolkit();
   distDir = `${cwd}/dist`;
@@ -84,7 +107,9 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   await compile();
   await preparePackage(pkg);
   fs.mkdirSync('./dist/bin');
+  fs.mkdirSync('./dist/sass');
   await moveFiles();
+  await copySassFiles();
   restoreCwd();
 };
 
