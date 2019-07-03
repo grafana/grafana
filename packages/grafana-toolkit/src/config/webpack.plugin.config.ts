@@ -3,7 +3,10 @@ const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 import * as webpack from 'webpack';
+import { hasThemeStylesheets, getStyleLoaders, getStylesheetEntries } from './webpack/loaders';
 
 interface WebpackConfigurationOptions {
   watch?: boolean;
@@ -48,6 +51,7 @@ const getManualChunk = (id: string) => {
     }
   }
 };
+
 const getEntries = () => {
   const entries: { [key: string]: string } = {};
   const modules = getModuleFiles();
@@ -57,12 +61,19 @@ const getEntries = () => {
     // @ts-ignore
     entries[mod.name] = mod.module;
   });
-  return entries;
+  return {
+    ...entries,
+    ...getStylesheetEntries(),
+  };
 };
 
 const getCommonPlugins = (options: WebpackConfigurationOptions) => {
   const packageJson = require(path.resolve(process.cwd(), 'package.json'));
   return [
+    new MiniCssExtractPlugin({
+      // both options are optional
+      filename: 'styles/[name].css',
+    }),
     new webpack.optimize.OccurrenceOrderPlugin(true),
     new CopyWebpackPlugin(
       [
@@ -102,7 +113,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
   const optimization: { [key: string]: any } = {};
 
   if (options.production) {
-    optimization.minimizer = [new TerserPlugin()];
+    optimization.minimizer = [new TerserPlugin(), new OptimizeCssAssetsPlugin()];
   }
 
   return {
@@ -171,25 +182,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
           ],
           exclude: /(node_modules)/,
         },
-        {
-          test: /\.css$/,
-          use: [
-            {
-              loader: 'style-loader',
-            },
-            {
-              loader: 'css-loader',
-              options: {
-                importLoaders: 1,
-                sourceMap: true,
-              },
-            },
-          ],
-        },
-        {
-          test: /\.scss$/,
-          use: ['style-loader', 'css-loader', 'sass-loader'],
-        },
+        ...getStyleLoaders(),
         {
           test: /\.html$/,
           exclude: [/node_modules/],
