@@ -9,7 +9,9 @@ import { useSpinner } from '../utils/useSpinner';
 import { Linter, Configuration, RuleFailure } from 'tslint';
 import { testPlugin } from './plugin/tests';
 import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
-interface PrecommitOptions {}
+interface PluginBuildOptions {
+  coverage: boolean;
+}
 
 export const bundlePlugin = useSpinner<PluginBundleOptions>('Compiling...', async options => await bundleFn(options));
 
@@ -80,14 +82,13 @@ export const lintPlugin = useSpinner<void>('Linting', async () => {
   }
 });
 
-const pluginBuildRunner: TaskRunner<PrecommitOptions> = async () => {
-  // console.log('asasas')
+export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({ coverage }) => {
   await clean();
   await prepare();
   // @ts-ignore
   await lintPlugin();
-  await testPlugin({ updateSnapshot: false, coverage: false });
+  await testPlugin({ updateSnapshot: false, coverage });
   await bundlePlugin({ watch: false, production: true });
 };
 
-export const pluginBuildTask = new Task<PrecommitOptions>('Build plugin', pluginBuildRunner);
+export const pluginBuildTask = new Task<PluginBuildOptions>('Build plugin', pluginBuildRunner);

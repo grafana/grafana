@@ -126,7 +126,7 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:build')
     .description('Prepares plugin dist package')
     .action(async cmd => {
-      await execTask(pluginBuildTask)({});
+      await execTask(pluginBuildTask)({ coverage: false });
     });
 
   program
@@ -159,7 +159,7 @@ export const run = (includeInternalScripts = false) => {
     .description('Run Plugin CI task')
     .action(async cmd => {
       await execTask(pluginCITask)({
-        dryRun: !!cmd.dryRun,
+        dryRun: cmd.dryRun,
       });
     });
 
