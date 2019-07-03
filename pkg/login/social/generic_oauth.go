@@ -85,8 +85,11 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 // Returns a non-nil error if the provided JSON response could not be decoded,
 // searched, or if an e-mail address is not found.
 func (s *SocialGenericOAuth) searchJSONForEmail(data []byte) (email string, err error) {
-	if s.emailAttributePath == "" || len(data) == 0 {
-		return "", nil
+	if s.emailAttributePath == "" {
+		return "", errors.New("No e-mail attribute path specified")
+	}
+	if len(data) == 0 {
+		return "", errors.New("Empty user info JSON response provided")
 	}
 	var buf interface{}
 	if err := json.Unmarshal(data, &buf); err != nil {
