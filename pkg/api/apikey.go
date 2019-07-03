@@ -68,7 +68,10 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 		if err == models.ErrInvalidApiKeyExpiration {
 			return Error(400, err.Error(), nil)
 		}
-		return Error(500, "Failed to add API key", err)
+		if err.Error() == models.ErrDuplicateApiKey.Error() {
+			return Error(409, "API Key Name Must Be Unique", nil)
+		}
+		return Error(500, "Failed to add API", err)
 	}
 
 	result := &dtos.NewApiKeyResult{
