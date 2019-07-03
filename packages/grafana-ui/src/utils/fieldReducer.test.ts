@@ -1,12 +1,12 @@
 import { ReducerID, reduceField, fieldReducers } from './fieldReducer';
 
 import _ from 'lodash';
-import { SeriesData } from '../types/data';
+import { DataFrame } from '../types/data';
 
 /**
  * Run a reducer and get back the value
  */
-function reduce(series: SeriesData, fieldIndex: number, id: string): any {
+function reduce(series: DataFrame, fieldIndex: number, id: string): any {
   return reduceField({ series, fieldIndex, reducers: [id] })[id];
 }
 
@@ -95,7 +95,7 @@ describe('Stats Calculators', () => {
     const allNull = ({
       fields: [{ name: 'A' }],
       rows: [null, null, null, null],
-    } as unknown) as SeriesData;
+    } as unknown) as DataFrame;
     const allNull2 = {
       fields: [{ name: 'A' }],
       rows: [[null], [null], [null], [null]],
