@@ -4,16 +4,32 @@ import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
 import glob = require('glob');
-import * as rollup from 'rollup';
-import { inputOptions, outputOptions } from '../../config/rollup.plugin.config';
 
 import { useSpinner } from '../utils/useSpinner';
 import { Linter, Configuration, RuleFailure } from 'tslint';
 import { testPlugin } from './plugin/tests';
+import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
 interface PrecommitOptions {}
 
+export const bundlePlugin = useSpinner<PluginBundleOptions>('Compiling...', async options => await bundleFn(options));
+
 // @ts-ignore
-export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', ['./dist']));
+export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', [`${process.cwd()}/dist`]));
+
+export const prepare = useSpinner<void>('Preparing', async () => {
+  // Make sure a local tsconfig exists.  Otherwise this will work, but have odd behavior
+  const tsConfigPath = path.resolve(process.cwd(), 'tsconfig.json');
+  if (!fs.existsSync(tsConfigPath)) {
+    const defaultTsConfigPath = path.resolve(__dirname, '../../config/tsconfig.plugin.local.json');
+    fs.copyFile(defaultTsConfigPath, tsConfigPath, err => {
+      if (err) {
+        throw err;
+      }
+      console.log('Created tsconfig.json file');
+    });
+  }
+  return Promise.resolve();
+});
 
 // @ts-ignore
 const typecheckPlugin = useSpinner<void>('Typechecking', async () => {
@@ -64,21 +80,14 @@ const lintPlugin = useSpinner<void>('Linting', async () => {
   }
 });
 
-const bundlePlugin = useSpinner<void>('Bundling plugin', async () => {
-  // @ts-ignore
-  const bundle = await rollup.rollup(inputOptions());
-  // TODO: we can work on more verbose output
-  await bundle.generate(outputOptions);
-  await bundle.write(outputOptions);
-});
-
 const pluginBuildRunner: TaskRunner<PrecommitOptions> = async () => {
+  // console.log('asasas')
   await clean();
+  await prepare();
   // @ts-ignore
   await lintPlugin();
   await testPlugin({ updateSnapshot: false, coverage: false });
-  // @ts-ignore
-  await bundlePlugin();
+  await bundlePlugin({ watch: false, production: true });
 };
 
 export const pluginBuildTask = new Task<PrecommitOptions>('Build plugin', pluginBuildRunner);
