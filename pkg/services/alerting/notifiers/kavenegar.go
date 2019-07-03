@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -100,14 +101,16 @@ func (sn *KavenegarNotifier) Notify(evalContext *alerting.EvalContext) error {
 		form.Add("sender", sn.Sender)
 	}
 
+	formBody := form.Encode()
+
 	cmd := &models.SendWebhookSync{
-		Url:        apiUrl,
+		Url:        fmt.Sprintf(apiUrl, sn.ApiKey),
 		HttpMethod: "POST",
-		Body:       form.Encode(),
+		Body:       formBody,
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		sn.log.Error("Failed to send notification to LINE", "error", err, "body", sn.Body)
+		sn.log.Error("Failed to send notification to Kavenegar", "error", err, "body", formBody)
 		return err
 	}
 
