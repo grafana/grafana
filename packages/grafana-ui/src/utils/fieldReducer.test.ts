@@ -1,7 +1,6 @@
 import { getFieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import _ from 'lodash';
-import { DataFrame } from '../types/data';
 
 describe('Stats Calculators', () => {
   const basicTable = {
