@@ -53,13 +53,14 @@ interface QueryRowProps extends PropsFromParent {
   mode: ExploreMode;
 }
 
-export class QueryRow extends PureComponent<QueryRowProps, { textEditModeEnabled: boolean }> {
-  constructor(props: QueryRowProps) {
-    super(props);
-    this.state = {
-      textEditModeEnabled: false,
-    };
-  }
+interface QueryRowState {
+  textEditModeEnabled: boolean;
+}
+
+export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
+  state: QueryRowState = {
+    textEditModeEnabled: false,
+  };
 
   onRunQuery = () => {
     const { exploreId } = this.props;
