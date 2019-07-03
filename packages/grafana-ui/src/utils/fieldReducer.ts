@@ -341,13 +341,18 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
 }
 
 function calculateFirst(data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  return { first: data.rows[0][fieldIndex] };
+  for (let idx = 0; idx < data.rows.length; idx++) {
+    const first = data.rows[idx][fieldIndex];
+    if (first != null) {
+      return { first };
+    }
+  }
+  return { first: undefined };
 }
 
 function calculateLast(data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   let idx = data.rows.length - 1;
   while (idx >= 0) {
-    console.log('CHECK', idx);
     const last = data.rows[idx--][fieldIndex];
     if (last != null) {
       return { last };
