@@ -89,16 +89,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = true;
 
     // load datasource service
-    return (
-      this.datasourceSrv
-        .get(this.panel.datasource, this.panel.scopedVars)
-        .then(this.updateTimeRange.bind(this))
-        .then(this.issueQueries.bind(this))
-        // NOTE handleQueryResult is called by panelDataObserver
-        .catch((err: any) => {
-          this.processDataError(err);
-        })
-    );
+    return this.datasourceSrv
+      .get(this.panel.datasource, this.panel.scopedVars)
+      .then(this.updateTimeRange.bind(this))
+      .then(this.issueQueries.bind(this))
+      .catch((err: any) => {
+        this.processDataError(err);
+      });
   }
 
   processDataError(err: any) {
@@ -134,7 +131,11 @@ class MetricsPanelCtrl extends PanelCtrl {
         return;
       }
 
-      this.loading = false;
+      // Ignore data in loading state
+      if (data.state === LoadingState.Loading) {
+        this.loading = true;
+        return;
+      }
 
       if (data.request) {
         const { range, timeInfo } = data.request;
@@ -223,12 +224,9 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   handleDataFrame(data: DataFrame[]) {
-    this.loading = false;
-
     if (this.dashboard && this.dashboard.snapshot) {
       this.panel.snapshotData = data;
     }
-
     // Subclasses that asked for DataFrame will override
   }
 

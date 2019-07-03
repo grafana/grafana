@@ -126,7 +126,6 @@ func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response
 	}
 
 	metrics.M_Api_Login_Post.Inc()
-
 	return JSON(200, result)
 }
 
@@ -139,7 +138,7 @@ func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 	if err != nil {
 		hs.log.Error("failed to create auth token", "error", err)
 	}
-
+	hs.log.Info("Successful Login", "User", user.Email)
 	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetimeDays)
 }
 
@@ -153,6 +152,7 @@ func (hs *HTTPServer) Logout(c *m.ReqContext) {
 	if setting.SignoutRedirectUrl != "" {
 		c.Redirect(setting.SignoutRedirectUrl)
 	} else {
+		hs.log.Info("Successful Logout", "User", c.Email)
 		c.Redirect(setting.AppSubUrl + "/login")
 	}
 }

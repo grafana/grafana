@@ -310,7 +310,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return {
         ...commontTargetOptons,
         start: timeEpochNs - contextTimeBuffer,
-        end: row.timestamp,
+        end: row.timestamp, // using RFC3339Nano format to avoid precision loss
         direction,
       };
     } else {
