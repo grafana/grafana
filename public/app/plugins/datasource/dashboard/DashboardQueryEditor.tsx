@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { Select, SelectOptionItem, DataQuery, SeriesData, DataQueryError, PanelData } from '@grafana/ui';
+import { Select, SelectOptionItem, DataQuery, DataFrame, DataQueryError, PanelData } from '@grafana/ui';
 import { DashboardQuery } from './types';
 import config from 'app/core/config';
 import { css } from 'emotion';
@@ -16,7 +16,7 @@ type ResultInfo = {
   img: string; // The Datasource
   refId: string;
   query: string; // As text
-  data: SeriesData[];
+  data: DataFrame[];
   error?: DataQueryError;
 };
 
