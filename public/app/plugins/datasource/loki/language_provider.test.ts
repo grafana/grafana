@@ -128,8 +128,8 @@ describe('Request URL', () => {
     await instance.refreshLogLabels(rangeMock, true);
     const expectedUrl = '/api/prom/label';
     const expectedParams = {
-      start: rangeMock.from.valueOf() * NS_IN_MS,
-      end: rangeMock.to.valueOf() * NS_IN_MS,
+      start: rangeMock.from * NS_IN_MS,
+      end: rangeMock.to * NS_IN_MS,
     };
     expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, expectedParams);
   });

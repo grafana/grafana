@@ -27,6 +27,7 @@ const NS_IN_MS = 1_000_000;
 export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
 
 const wrapLabel = (label: string) => ({ label });
+const rangeToParams = (range: AbsoluteTimeRange) => ({ start: range.from * NS_IN_MS, end: range.to * NS_IN_MS });
 
 type LokiHistoryItem = HistoryItem<LokiQuery>;
 
@@ -237,11 +238,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const url = '/api/prom/label';
     try {
       this.logLabelFetchTs = Date.now();
-      const params = {
-        start: absoluteRange.from.valueOf() * NS_IN_MS,
-        end: absoluteRange.to.valueOf() * NS_IN_MS,
-      };
-      const res = await this.request(url, params);
+
+      const res = await this.request(url, rangeToParams(absoluteRange));
       const body = await (res.data || res.json());
       const labelKeys = body.data.slice().sort();
       this.labelKeys = {
@@ -269,13 +267,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   async fetchLabelValues(key: string, absoluteRange: AbsoluteTimeRange) {
-    const params = {
-      start: absoluteRange.from.valueOf() * NS_IN_MS,
-      end: absoluteRange.to.valueOf() * NS_IN_MS,
-    };
     const url = `/api/prom/label/${key}/values`;
     try {
-      const res = await this.request(url, params);
+      const res = await this.request(url, rangeToParams(absoluteRange));
       const body = await (res.data || res.json());
       const values = body.data.slice().sort();
 
