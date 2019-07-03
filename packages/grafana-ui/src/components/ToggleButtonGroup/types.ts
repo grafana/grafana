@@ -23,7 +23,3 @@ export interface ToggleButtonGroupProps {
   transparent?: boolean;
   active?: number;
 }
-
-export interface ToggleButtonGroupState {
-  active: any;
-}

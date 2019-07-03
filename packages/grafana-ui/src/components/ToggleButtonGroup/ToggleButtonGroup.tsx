@@ -1,42 +1,28 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, useContext, FC } from 'react';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { ThemeContext } from '../../themes/index';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '../../types/theme';
 import tinycolor from 'tinycolor2';
-import { ToggleButtonGroupProps, ToggleButtonGroupState, ToggleButtonProps, ToggleButtonState } from './types';
+import { ToggleButtonGroupProps, ToggleButtonProps, ToggleButtonState } from './types';
 import { increaseContrast } from '../../utils/colors';
 
-export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps, ToggleButtonGroupState> {
-  constructor(props: ToggleButtonGroupProps) {
-    super(props);
-    this.state = {
-      active: props.active || null,
-    };
-  }
+export const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children }) => {
+  const styles = getStyles(useContext(ThemeContext));
+  return (
+    <div>
+      <span className={styles.label}>{label}</span>
+      {React.Children.map(children, (child: any, index) => {
+        // Set correct style depending on first/middle/last
+        const style = index === 0 ? styles.first : index === children.length - 1 ? styles.last : styles.middle;
 
-  renderChildren(theme: GrafanaTheme) {
-    const styles = getStyles(theme);
-    return (
-      <div>
-        <span className={styles.label}>{this.props.label}</span>
-        {React.Children.map(this.props.children, (child: any, index) => {
-          // Set correct style depending on first/middle/last
-          const style =
-            index === 0 ? styles.first : index === this.props.children.length - 1 ? styles.last : styles.middle;
-
-          return React.cloneElement(child, {
-            className: style,
-          });
-        })}
-      </div>
-    );
-  }
-
-  render() {
-    return <ThemeContext.Consumer>{theme => this.renderChildren(theme)}</ThemeContext.Consumer>;
-  }
-}
+        return React.cloneElement(child, {
+          className: style,
+        });
+      })}
+    </div>
+  );
+};
 
 export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonState> {
   constructor(props: ToggleButtonProps) {
