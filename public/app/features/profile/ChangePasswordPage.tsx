@@ -15,14 +15,13 @@ export interface Props {
 export class ChangePasswordPage extends PureComponent<Props> {
   render() {
     const { navModel } = this.props;
-    const isLoading = false;
     return (
       <Page navModel={navModel}>
         <UserProvider>
           {({ changePassword }, states) => (
-            <Page.Contents isLoading={isLoading}>
+            <Page.Contents>
               <h3 className="page-sub-heading">Change Your Password</h3>
-              <ChangePasswordForm onChangePassword={changePassword} isLoading={states.changePassword} />
+              <ChangePasswordForm onChangePassword={changePassword} isSaving={states.changePassword} />
             </Page.Contents>
           )}
         </UserProvider>

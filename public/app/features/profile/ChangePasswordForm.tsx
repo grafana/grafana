@@ -1,11 +1,11 @@
 import React, { PureComponent, MouseEvent } from 'react';
 import config from 'app/core/config';
-import { Button, LinkButton, LoadingPlaceholder } from '@grafana/ui';
+import { Button, LinkButton } from '@grafana/ui';
 import { ChangePasswordFields } from 'app/core/utils/UserProvider';
 import { PasswordInput } from 'app/core/components/PasswordInput/PasswordInput';
 
 export interface Props {
-  isLoading: boolean;
+  isSaving: boolean;
   onChangePassword: (payload: ChangePasswordFields) => void;
 }
 
@@ -26,26 +26,27 @@ export class ChangePasswordForm extends PureComponent<Props, State> {
     };
   }
 
-  onOldPasswordChange(oldPassword: string) {
+  onOldPasswordChange = (oldPassword: string) => {
     this.setState({ oldPassword });
-  }
+  };
 
-  onNewPasswordChange(newPassword: string) {
+  onNewPasswordChange = (newPassword: string) => {
     this.setState({ newPassword });
-  }
+  };
 
-  onConfirmPasswordChange(confirmNew: string) {
+  onConfirmPasswordChange = (confirmNew: string) => {
     this.setState({ confirmNew });
-  }
+  };
+
+  onSubmitChangePassword = (event: MouseEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    this.props.onChangePassword({ ...this.state });
+  };
 
   render() {
     const { oldPassword, newPassword, confirmNew } = this.state;
-    const { onChangePassword, isLoading } = this.props;
+    const { isSaving } = this.props;
     const { ldapEnabled, authProxyEnabled } = config;
-
-    if (isLoading) {
-      return <LoadingPlaceholder text="Saving..." />;
-    }
 
     if (ldapEnabled || authProxyEnabled) {
       return <p>You cannot change password when ldap or auth proxy authentication is enabled.</p>;
@@ -54,26 +55,16 @@ export class ChangePasswordForm extends PureComponent<Props, State> {
     return (
       <form name="userForm" className="gf-form-group">
         <div className="gf-form max-width-30">
-          <PasswordInput label="Old Password" onChange={this.onOldPasswordChange.bind(this)} value={oldPassword} />
+          <PasswordInput label="Old Password" onChange={this.onOldPasswordChange} value={oldPassword} />
         </div>
         <div className="gf-form max-width-30">
-          <PasswordInput label="New Password" onChange={this.onNewPasswordChange.bind(this)} value={newPassword} />
+          <PasswordInput label="New Password" onChange={this.onNewPasswordChange} value={newPassword} />
         </div>
         <div className="gf-form max-width-30">
-          <PasswordInput
-            label="Confirm Password"
-            onChange={this.onConfirmPasswordChange.bind(this)}
-            value={confirmNew}
-          />
+          <PasswordInput label="Confirm Password" onChange={this.onConfirmPasswordChange} value={confirmNew} />
         </div>
         <div className="gf-form-button-row">
-          <Button
-            variant="primary"
-            onClick={(event: MouseEvent<HTMLInputElement>) => {
-              event.preventDefault();
-              onChangePassword({ oldPassword, newPassword, confirmNew });
-            }}
-          >
+          <Button variant="primary" onClick={this.onSubmitChangePassword} disabled={isSaving}>
             Change Password
           </Button>
           <LinkButton variant="transparent" href={`${config.appSubUrl}/profile`}>

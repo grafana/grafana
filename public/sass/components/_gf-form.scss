@@ -90,14 +90,11 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-button-row {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-content: flex-start;
   padding-top: $spacer * 1.5;
   a,
   button {
     margin-right: $spacer;
+    display: inline-block;
   }
 }
 
