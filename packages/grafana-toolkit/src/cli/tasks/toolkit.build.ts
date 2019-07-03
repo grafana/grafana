@@ -83,7 +83,8 @@ const copySassFiles = () => {
     const sassDir = path.resolve(cwd, '../../public/sass/');
     const promises = files.map(file => {
       return new Promise((resolve, reject) => {
-        fs.copyFile(`${sassDir}/${file}`, `${distDir}/sass/${file}`, err => {
+        const name = file.replace('.generated', '');
+        fs.copyFile(`${sassDir}/${file}`, `${distDir}/sass/${name}`, err => {
           if (err) {
             reject(err);
             return;
