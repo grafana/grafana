@@ -55,8 +55,8 @@
             </a>
           </td>
           <td class="text-right">
-            <span class="label label-tag" ng-class="{'muted': user.isDisabled}" ng-style="ctrl.getUserAuthLabelStyle(user)" ng-if="ctrl.getAuthLabel(user)">
-              {{ctrl.getAuthLabel(user)}}
+            <span class="label label-tag" ng-class="{'muted': user.isDisabled}" ng-style="user.authLabelStyle" ng-if="user.authLabel">
+              {{user.authLabel}}
             </span>
           </td>
           <td class="text-right">

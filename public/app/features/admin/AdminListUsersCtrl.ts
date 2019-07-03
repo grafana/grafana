@@ -33,12 +33,23 @@ export default class AdminListUsersCtrl {
         for (let i = 1; i < this.totalPages + 1; i++) {
           this.pages.push({ page: i, current: i === this.page });
         }
+
+        this.addUsersAuthLabels();
       });
   }
 
   navigateToPage(page: any) {
     this.page = page.page;
     this.getUsers();
+  }
+
+  addUsersAuthLabels() {
+    this.users.forEach(user => {
+      const authModuleLabel = this.getAuthLabel(user);
+      const labelStyle = this.getAuthLabelStyle(authModuleLabel);
+      user.authLabel = authModuleLabel;
+      user.authLabelStyle = labelStyle;
+    });
   }
 
   getAuthModule(user: any) {
@@ -71,7 +82,7 @@ export default class AdminListUsersCtrl {
   }
 
   getAuthLabelStyle(label: string) {
-    if (label === 'LDAP') {
+    if (label === 'LDAP' || !label) {
       return {};
     }
 
@@ -80,10 +91,5 @@ export default class AdminListUsersCtrl {
       'background-color': color,
       'border-color': borderColor,
     };
-  }
-
-  getUserAuthLabelStyle(user: any) {
-    const label = this.getAuthLabel(user);
-    return this.getAuthLabelStyle(label);
   }
 }
