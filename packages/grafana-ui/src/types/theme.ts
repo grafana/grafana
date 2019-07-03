@@ -96,9 +96,6 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     dropdown: string;
     scrollbar: string;
     scrollbar2: string;
-    toggleButton: {
-      active: string;
-    };
   };
   colors: {
     black: string;
@@ -166,7 +163,6 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     textWeak: string;
     textFaint: string;
     textEmphasis: string;
-    activeColor: string;
 
     // TODO: move to background section
     bodyBg: string;

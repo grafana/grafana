@@ -71,15 +71,11 @@ const lightTheme: GrafanaTheme = {
     linkHover: basicColors.dark1,
     linkExternal: basicColors.blueLight,
     headingColor: basicColors.gray1,
-    activeColor: basicColors.blueShade,
   },
   background: {
     dropdown: basicColors.white,
     scrollbar: basicColors.gray5,
     scrollbar2: basicColors.gray5,
-    toggleButton: {
-      active: basicColors.white,
-    },
   },
 };
 

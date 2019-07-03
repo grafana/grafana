@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme) => {
   const borderRadius = 2;
   const bg = theme.colors.bodyBg;
   const activeBg = increaseContrast(theme.colors.bodyBg, 10);
-
+  const activeText = theme.colors.blueBase;
   return {
     button: css`
       border: solid 1px #c7d0d9;
@@ -68,13 +68,14 @@ const getStyles = (theme: GrafanaTheme) => {
       position: relative;
       z-index: 899;
       &:hover {
-        color: ${theme.colors.activeColor};
+        color: ${activeText};
         font-weight: 500;
       }
     `,
     active: css`
       font-weight: 500;
-      background-color: ${activeBg} !important;
+      background-color: ${activeBg};
+      color: ${activeText};
       border-color: ${theme.colors.blueBase};
       /*To priorotize blue overlapping border*/
       z-index: 900;
@@ -84,8 +85,8 @@ const getStyles = (theme: GrafanaTheme) => {
         outline: none;
         z-index: 900;
         font-weight: 500;
-        background-color: ${theme.colors.blueFaint};
-        color: ${theme.colors.activeColor};
+        background-color: ${tinycolor.mix(theme.colors.blueShade, activeBg, 90).toString()};
+        color: ${activeText};
         border-color: ${theme.colors.blueBase};
       }
     `,
@@ -192,7 +193,7 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
 
   handleClick(e: React.SyntheticEvent) {
     e.stopPropagation();
-    console.log(this);
+    console.log(e);
     this.setState({
       untouched: false,
       selected: !this.state.selected,
@@ -211,7 +212,7 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
   renderButton(theme: GrafanaTheme) {
     const styles = getStyles(theme);
     const { children, className } = this.props;
-    const activeStyle = this.props.selected || this.state.selected ? styles.active : null;
+    const activeStyle = this.state.selected || this.state.selected ? styles.active : null;
 
     return (
       <button
@@ -225,7 +226,6 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
   }
 
   render() {
-    console.log(this.state.value, this.props.selected);
     const { tooltip } = this.props;
 
     const button = <ThemeContext.Consumer>{theme => this.renderButton(theme)}</ThemeContext.Consumer>;
@@ -242,7 +242,7 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
   }
 }
 
-function increaseContrast(color: any, amount: number) {
+function increaseContrast(color: any, amount: number): string {
   if (tinycolor(color).isLight()) {
     return tinycolor(color)
       .brighten(amount)
