@@ -25,6 +25,22 @@ Note, that for publishing you need to be part of Grafana npm org and you need to
 
 
 ## Grafana extensions development with grafana-toolkit overview
+### Available tasks
+#### `grafana-toolkit plugin:test`
+Runs Jest against your codebase. See [Tests](#tests) for more details.
+
+Available options:
+- `-u, --updateSnapshot` - performs snapshots update
+- `--coverage` - reports code coverage
+
+#### `grafana-toolkit plugin:dev`
+Compiles plugin in development mode.
+
+Available options:
+- `-w, --watch` - runs `plugin:dev` task in watch mode
+#### `grafana-toolkit plugin:build`
+Compiles plugin in production mode
+
 
 ### Typescript
 To configure Typescript create `tsconfig.json` file in the root dir of your app. grafana-toolkit comes with default tsconfig located in `packages/grafana-toolkit/src/config/tsconfig.plugin.ts`. In order for Typescript to be able to pickup your source files you need to extend that config as follows:
@@ -66,6 +82,7 @@ Adidtionaly, you can also provide additional Jest config via package.json file. 
 ## Prettier [todo]
 
 ## Development mode [todo]
+`grafana-toolkit plugin:dev [--watch]`
 TODO
 - Enable rollup watch on extension sources
 

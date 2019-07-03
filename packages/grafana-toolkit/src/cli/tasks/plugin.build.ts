@@ -8,11 +8,13 @@ import glob = require('glob');
 import { useSpinner } from '../utils/useSpinner';
 import { Linter, Configuration, RuleFailure } from 'tslint';
 import { testPlugin } from './plugin/tests';
-import { bundlePlugin } from './plugin/bundle';
+import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
 interface PrecommitOptions {}
 
+export const bundlePlugin = useSpinner<PluginBundleOptions>('Compiling...', async options => await bundleFn(options));
+
 // @ts-ignore
-export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', ['./dist']));
+export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', [`${process.cwd()}/dist`]));
 
 export const prepare = useSpinner<void>('Preparing', async () => {
   // Make sure a local tsconfig exists.  Otherwise this will work, but have odd behavior
@@ -79,12 +81,13 @@ const lintPlugin = useSpinner<void>('Linting', async () => {
 });
 
 const pluginBuildRunner: TaskRunner<PrecommitOptions> = async () => {
+  // console.log('asasas')
   await clean();
   await prepare();
   // @ts-ignore
   await lintPlugin();
   await testPlugin({ updateSnapshot: false, coverage: false });
-  await bundlePlugin({ watch: false });
+  await bundlePlugin({ watch: false, production: true });
 };
 
 export const pluginBuildTask = new Task<PrecommitOptions>('Build plugin', pluginBuildRunner);

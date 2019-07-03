@@ -2,9 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 import * as webpack from 'webpack';
 
-type WebpackConfigurationGetter = () => webpack.Configuration;
+interface WebpackConfigurationOptions {
+  watch?: boolean;
+  production?: boolean;
+}
+type WebpackConfigurationGetter = (options: WebpackConfigurationOptions) => webpack.Configuration;
 
 const findModuleTs = (base: string, files?: string[], result?: string[]) => {
   files = files || fs.readdirSync(base);
@@ -55,11 +60,53 @@ const getEntries = () => {
   return entries;
 };
 
-export const getWebpackConfig: WebpackConfigurationGetter = () => {
+const getCommonPlugins = (options: WebpackConfigurationOptions) => {
   const packageJson = require(path.resolve(process.cwd(), 'package.json'));
+  return [
+    new webpack.optimize.OccurrenceOrderPlugin(true),
+    new CopyWebpackPlugin(
+      [
+        { from: 'plugin.json', to: '.' },
+        { from: '../README.md', to: '.' },
+        { from: '../LICENSE', to: '.' },
+        { from: 'img/*', to: '.' },
+        { from: '**/*.json', to: '.' },
+        { from: '**/*.svg', to: '.' },
+        { from: '**/*.png', to: '.' },
+        { from: '**/*.html', to: '.' },
+      ],
+      { logLevel: options.watch ? 'silent' : 'warn' }
+    ),
+
+    new ReplaceInFileWebpackPlugin([
+      {
+        dir: 'dist',
+        files: ['plugin.json', 'README.md'],
+        rules: [
+          {
+            search: '%VERSION%',
+            replace: packageJson.version,
+          },
+          {
+            search: '%TODAY%',
+            replace: new Date().toISOString().substring(0, 10),
+          },
+        ],
+      },
+    ]),
+  ];
+};
+
+export const getWebpackConfig: WebpackConfigurationGetter = options => {
+  const plugins = getCommonPlugins(options);
+  const optimization: { [key: string]: any } = {};
+
+  if (options.production) {
+    optimization.minimizer = [new TerserPlugin()];
+  }
 
   return {
-    mode: 'development',
+    mode: options.production ? 'production' : 'development',
     target: 'web',
     node: {
       fs: 'empty',
@@ -106,37 +153,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = () => {
         callback();
       },
     ],
-    plugins: [
-      new webpack.optimize.OccurrenceOrderPlugin(true),
-
-      new CopyWebpackPlugin([
-        { from: 'plugin.json', to: '.' },
-        { from: '../README.md', to: '.' },
-        { from: '../LICENSE', to: '.' },
-        { from: 'img/*', to: '.' },
-        { from: '**/*.json', to: '.' },
-        { from: '**/*.svg', to: '.' },
-        { from: '**/*.png', to: '.' },
-        { from: '**/*.html', to: '.' },
-      ]),
-
-      new ReplaceInFileWebpackPlugin([
-        {
-          dir: 'dist',
-          files: ['plugin.json', 'README.md'],
-          rules: [
-            {
-              search: '%VERSION%',
-              replace: packageJson.version,
-            },
-            {
-              search: '%TODAY%',
-              replace: new Date().toISOString().substring(0, 10),
-            },
-          ],
-        },
-      ]),
-    ],
+    plugins,
     resolve: {
       extensions: ['.ts', '.tsx', '.js'],
       modules: [path.resolve(process.cwd(), 'src'), 'node_modules'],
@@ -182,6 +199,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = () => {
         },
       ],
     },
+    optimization,
     // optimization: {
     //   splitChunks: {
     //     chunks: 'all',
