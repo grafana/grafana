@@ -77,7 +77,6 @@ const darkTheme: GrafanaTheme = {
     scrollbar: basicColors.dark9,
     scrollbar2: basicColors.dark9,
     toggleButton: {
-      default: basicColors.dark2,
       active: '#09090B',
     },
   },

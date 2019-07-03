@@ -78,7 +78,6 @@ const lightTheme: GrafanaTheme = {
     scrollbar: basicColors.gray5,
     scrollbar2: basicColors.gray5,
     toggleButton: {
-      default: basicColors.gray7,
       active: basicColors.white,
     },
   },

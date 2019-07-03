@@ -106,7 +106,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     changeRefreshInterval(exploreId, item);
   };
 
-  onModeChange = (mode: ExploreMode) => {
+  onModeChange = state => {
+    const mode: ExploreMode = state.value;
     const { changeMode, exploreId } = this.props;
     changeMode(exploreId, mode);
   };

@@ -97,7 +97,6 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     scrollbar: string;
     scrollbar2: string;
     toggleButton: {
-      default: string;
       active: string;
     };
   };
