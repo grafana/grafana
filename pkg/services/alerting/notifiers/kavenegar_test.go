@@ -31,7 +31,7 @@ func TestKavenegarNotifier(t *testing.T) {
 				{
 					"apikey": "API_KEY",
 					"sender": "SENDER_NUM",
-					"recipients": "REC1;REC2"
+					"recipients": "REC1;REC2",
 					"template": "MESSAGE CONTENT"
 				}`
 
@@ -58,7 +58,7 @@ func TestKavenegarNotifier(t *testing.T) {
 				json := `
 				{
 					"apikey": "",
-					"recipients": ""
+					"recipients": "",
 					"sender": "",
 					"template": ""
 				}`
@@ -79,7 +79,7 @@ func TestKavenegarNotifier(t *testing.T) {
 				json := `
 				{
 					"apikey": "API_KEY",
-					"recipients": "REC1;REC2"
+					"recipients": "REC1;REC2",
 					"template": "MESSAGE CONTENT"
 				}`
 
