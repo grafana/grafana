@@ -80,8 +80,8 @@ Adidtionaly, you can also provide additional Jest config via package.json file. 
 - [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
 
 
-## Working with CSS
-We support pure css, SASS and CSS in JS approach (via Emotion).
+## Working with CSS & static assets
+We support pure css, SASS and CSS in JS approach (via Emotion). All static assets referenced in your code (i.e. images) should be placed under `src/static` directory and referenced using relative paths.
 
 1. Single css/sass file
 Create your css/sass file and import it in your plugin entry point (typically module.ts):
@@ -91,7 +91,7 @@ import 'path/to/your/css_or_sass
 ```
 The styles will be injected via `style` tag during runtime.
 
-2. Theme css/sass files
+2. Theme specific css/sass files
 If you want to provide different stylesheets for Dark/Light theme, create `dark.[css|scss]` and `light.[css|scss]` files in `src/styles` directory of your plugin. Based on that we will generate stylesheets that will end up in `dist/styles` directory.
 
 TODO: add note about loadPluginCss

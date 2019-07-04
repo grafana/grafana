@@ -38,6 +38,7 @@
     "copy-webpack-plugin": "5.0.3",
     "css-loader": "^3.0.0",
     "execa": "^1.0.0",
+    "file-loader": "^4.0.0",
     "glob": "^7.1.4",
     "html-loader": "0.5.5",
     "inquirer": "^6.3.1",
@@ -65,6 +66,7 @@
     "tslint": "5.14.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "3.5.1",
+    "url-loader": "^2.0.1",
     "webpack": "4.35.0"
   },
   "resolutions": {

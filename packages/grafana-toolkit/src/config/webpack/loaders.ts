@@ -1,3 +1,6 @@
+import { getPluginJson } from '../utils/pluginValidation';
+
+const path = require('path');
 const fs = require('fs');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
@@ -30,7 +33,7 @@ export const getStylesheetEntries = (root: string = process.cwd()) => {
 };
 
 export const hasThemeStylesheets = (root: string = process.cwd()) => {
-  const stylesheetsPaths = [`${root}/src/styles/light`, `${root}/src/styles/dark`];
+  const stylesheetsPaths = getStylesheetPaths(root);
   const stylesheetsSummary: boolean[] = [];
 
   const result = stylesheetsPaths.reduce((acc, current) => {
@@ -68,6 +71,9 @@ export const getStyleLoaders = () => {
   const executiveLoader = shouldExtractCss
     ? {
         loader: MiniCssExtractPlugin.loader,
+        options: {
+          publicPath: '../',
+        },
       }
     : 'style-loader';
 
@@ -87,6 +93,29 @@ export const getStyleLoaders = () => {
     {
       test: /\.scss$/,
       use: [executiveLoader, cssLoader, 'sass-loader'],
+    },
+  ];
+};
+
+export const getFileLoaders = () => {
+  const shouldExtractCss = hasThemeStylesheets();
+  const pluginJson = getPluginJson();
+
+  return [
+    {
+      test: /\.(png|jpe?g|gif|svg)$/,
+      use: [
+        {
+          loader: 'file-loader',
+          options: {
+            outputPath: 'static',
+            name: '[name].[hash:8].[ext]',
+            // When css is extracted the public path of statics is handled by MiniCssExtractPlugin.loader (see getStyleLoaders above)
+            // Otherwise the css is loaded using style-loader and we need to be specific what's the full public path for a given plugin
+            publicPath: shouldExtractCss ? undefined : `/public/plugins/${pluginJson.id}/static`,
+          },
+        },
+      ],
     },
   ];
 };
