@@ -297,7 +297,9 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byt
 	if err == nil {
 		return email, nil
 	}
-	s.log.Debug("Failed to search user info JSON response for e-mail", "err", err.Error())
+	if s.emailAttributePath != "" {
+		s.log.Debug("Failed to search user info JSON response for e-mail", "err", err.Error())
+	}
 
 	emails, ok := data.Attributes[s.emailAttributeName]
 	if ok && len(emails) != 0 {
