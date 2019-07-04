@@ -41,7 +41,7 @@ func getTeamSelectSqlBase() string {
 		team.org_id,
 		team.name as name,
 		team.email as email,
-		(SELECT COUNT(*) from team_member where team_member.team_id = team.id) as member_count 
+		(SELECT COUNT(*) from team_member where team_member.team_id = team.id) as member_count
 		FROM team as team `
 }
 
@@ -365,6 +365,15 @@ func GetTeamMembers(query *m.GetTeamMembersQuery) error {
 	query.Result = make([]*m.TeamMemberDTO, 0)
 	sess := x.Table("team_member")
 	sess.Join("INNER", x.Dialect().Quote("user"), fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quote("user")))
+
+	// Join with only most recent auth module
+	authJoinCondition := `(
+		SELECT id from user_auth
+			WHERE user_auth.user_id = team_member.user_id
+			ORDER BY user_auth.created DESC `
+	authJoinCondition = "user_auth.id=" + authJoinCondition + dialect.Limit(1) + ")"
+	sess.Join("LEFT", "user_auth", authJoinCondition)
+
 	if query.OrgId != 0 {
 		sess.Where("team_member.org_id=?", query.OrgId)
 	}
@@ -377,7 +386,7 @@ func GetTeamMembers(query *m.GetTeamMembersQuery) error {
 	if query.External {
 		sess.Where("team_member.external=?", dialect.BooleanStr(true))
 	}
-	sess.Cols("team_member.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login", "team_member.external", "team_member.permission")
+	sess.Cols("team_member.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login", "team_member.external", "team_member.permission", "user_auth.auth_module")
 	sess.Asc("user.login", "user.email")
 
 	err := sess.Find(&query.Result)
