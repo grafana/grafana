@@ -1,8 +1,7 @@
-/* tslint:disable:import-blacklist */
-import System from 'systemjs/dist/system.js';
 import _ from 'lodash';
 import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
+// tslint:disable:import-blacklist
 import moment from 'moment';
 import angular from 'angular';
 import jquery from 'jquery';
@@ -31,7 +30,6 @@ import * as d3 from 'd3';
 import * as grafanaData from '@grafana/data';
 import * as grafanaUI from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
-export { loadPluginCss } from '@grafana/runtime';
 
 // rxjs
 import { Observable, Subject } from 'rxjs';
@@ -41,9 +39,9 @@ const bust = `?_cache=${Date.now()}`;
 function locate(load) {
   return load.address + bust;
 }
-System.registry.set('plugin-loader', System.newModule({ locate: locate }));
+grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
 
-System.config({
+grafanaRuntime.SystemJS.config({
   baseURL: 'public',
   defaultExtension: 'js',
   packages: {
@@ -65,7 +63,7 @@ System.config({
 });
 
 function exposeToPlugin(name: string, component: any) {
-  System.registerDynamic(name, [], true, (require, exports, module) => {
+  grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require, exports, module) => {
     module.exports = component;
   });
 }
@@ -161,7 +159,7 @@ export function importPluginModule(path: string): Promise<any> {
   if (builtIn) {
     return Promise.resolve(builtIn);
   }
-  return System.import(path);
+  return grafanaRuntime.SystemJS.import(path);
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<DataSourcePlugin<any>> {

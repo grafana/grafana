@@ -1,17 +1,19 @@
 import { config } from '../config';
 
-/* tslint:disable:import-blacklist */
-import System from 'systemjs';
+// @ts-ignore
+import System from 'systemjs/dist/system.js';
 
 export interface PluginCssOptions {
   light: string;
   dark: string;
 }
 
+export const SystemJS = System;
+
 export function loadPluginCss(options: PluginCssOptions) {
   if (config.bootData.user.lightTheme) {
-    System.import(options.light + '!css');
+    SystemJS.import(`${options.light}!css`);
   } else {
-    System.import(options.dark + '!css');
+    SystemJS.import(`${options.dark}!css`);
   }
 }
