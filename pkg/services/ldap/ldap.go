@@ -131,11 +131,11 @@ func (server *Server) Close() {
 // That user should have search privileges.
 // 2. For some configurations it is allowed to search the
 // user without any authenfication, in such case we
-// perform "unauthenticated bind"
+// perform "unauthenticated bind".
 // --
 // After either first or second step is done we find the user DN
 // by its username, after that, we then combine it with user password and
-// then try to authentificate that user.
+// then try to authentificate that user
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
