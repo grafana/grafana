@@ -47,9 +47,6 @@ const pluginCIRunner: TaskRunner<PluginCIOptions> = async ({ dryRun }) => {
     fs.mkdirSync(artifactsDir);
   }
 
-  // Move coverage to the artifacts folder
-  await execa('mv', [`${process.cwd()}/coverage`, artifactsDir]);
-
   // TODO? can this typed from @grafana/ui?
   const pluginInfo = require(`${distDir}/plugin.json`);
   const zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
@@ -67,9 +64,9 @@ const pluginCIRunner: TaskRunner<PluginCIOptions> = async ({ dryRun }) => {
   };
   fs.writeFile(artifactsDir + '/stats.json', JSON.stringify(stats, null, 2), err => {
     if (err) {
-      console.log(err);
+      throw new Error('Unable to write stats');
     }
-    console.log('Write', stats);
+    console.log('Stats', stats);
   });
 
   if (!dryRun) {
