@@ -130,11 +130,11 @@ describe('AzureMonitorDatasource', () => {
     it('should return a list of datapoints', () => {
       return ctx.ds.query(options).then(results => {
         expect(results.data.length).toBe(1);
-        expect(results.data[0].target).toEqual('Percentage CPU');
-        expect(results.data[0].datapoints[0][1]).toEqual(1558278660000);
-        expect(results.data[0].datapoints[0][0]).toEqual(2.2075);
-        expect(results.data[0].datapoints[1][1]).toEqual(1558278720000);
-        expect(results.data[0].datapoints[1][0]).toEqual(2.29);
+        expect(results.data[0].name).toEqual('Percentage CPU');
+        expect(results.data[0].rows[0][1]).toEqual(1558278660000);
+        expect(results.data[0].rows[0][0]).toEqual(2.2075);
+        expect(results.data[0].rows[1][1]).toEqual(1558278720000);
+        expect(results.data[0].rows[1][0]).toEqual(2.29);
       });
     });
   });

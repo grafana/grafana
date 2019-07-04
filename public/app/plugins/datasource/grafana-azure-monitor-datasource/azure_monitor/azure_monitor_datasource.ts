@@ -9,7 +9,13 @@ import {
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
 } from '../types';
-import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
+import {
+  DataQueryRequest,
+  DataQueryResponseData,
+  DataSourceInstanceSettings,
+  TimeSeries,
+  toDataFrame,
+} from '@grafana/ui';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -23,7 +29,7 @@ export default class AzureMonitorDatasource {
   url: string;
   defaultDropdownValue = 'select';
   cloudName: string;
-  supportedMetricNamespaces: any[] = [];
+  supportedMetricNamespaces: string[] = [];
 
   /** @ngInject */
   constructor(
@@ -44,7 +50,7 @@ export default class AzureMonitorDatasource {
     return !!this.subscriptionId && this.subscriptionId.length > 0;
   }
 
-  async query(options: DataQueryRequest<AzureMonitorQuery>) {
+  async query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponseData[]> {
     const queries = _.filter(options.targets, item => {
       return (
         item.hide !== true &&
@@ -97,7 +103,7 @@ export default class AzureMonitorDatasource {
     });
 
     if (!queries || queries.length === 0) {
-      return [];
+      return Promise.resolve([]);
     }
 
     const { data } = await this.backendSrv.datasourceRequest({
@@ -110,26 +116,26 @@ export default class AzureMonitorDatasource {
       },
     });
 
-    const result: any[] = [];
+    const result: DataQueryResponseData[] = [];
     if (data.results) {
       Object['values'](data.results).forEach((queryRes: any) => {
         if (!queryRes.series) {
           return;
         }
         queryRes.series.forEach((series: any) => {
-          const timeSerie: any = {
+          const timeSerie: TimeSeries = {
             target: series.name,
             datapoints: series.points,
             refId: queryRes.refId,
             meta: queryRes.meta,
           };
-          result.push(timeSerie);
+          result.push(toDataFrame(timeSerie));
         });
       });
       return result;
     }
 
-    return [];
+    return Promise.resolve([]);
   }
 
   annotationQuery(options) {}
