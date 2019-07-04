@@ -20,7 +20,7 @@ var isLDAPEnabled = multildap.IsEnabled
 var newLDAP = multildap.New
 
 // logger for the LDAP auth
-var logger = log.New("ldap-login")
+var logger = log.New("login.ldap")
 
 // loginUsingLDAP logs in user using LDAP. It returns whether LDAP is enabled and optional error and query arg will be
 // populated with the logged in user if successful.

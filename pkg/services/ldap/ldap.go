@@ -396,6 +396,7 @@ func (server *Server) AuthAdmin() error {
 	return nil
 }
 
+// auth is helper for several types of LDAP authentification
 func (server *Server) auth(path, password string) error {
 	err := server.Connection.Bind(path, password)
 	if err != nil {
