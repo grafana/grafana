@@ -6,13 +6,13 @@ import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Emitter } from 'app/core/core';
 import {
-  LAST_USED_DATASOURCE_KEY,
   ensureQueries,
   generateEmptyQuery,
   parseUrlState,
   getTimeRange,
   getTimeRangeFromUrl,
   generateNewKeyAndAddRefIdIfMissing,
+  lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
 
 // Types
@@ -271,7 +271,7 @@ export const loadDatasourceReady = (
   const history = store.getObject(historyKey, []);
   // Save last-used datasource
 
-  store.set(`${LAST_USED_DATASOURCE_KEY}.${orgId}`, instance.name);
+  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.name);
 
   return loadDatasourceReadyAction({
     exploreId,
