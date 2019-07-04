@@ -3,6 +3,7 @@ import { QueryCtrl } from 'app/plugins/sdk';
 // import './css/query_editor.css';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
+import kbn from 'app/core/utils/kbn';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { auto } from 'angular';
@@ -30,7 +31,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       dimensionFilter: string;
       timeGrain: string;
       timeGrainUnit: string;
-      timeGrains: any[];
+      timeGrains: Array<{ text: string; value: string }>;
+      allowedTimeGrainsMs: number[];
       dimensions: any[];
       dimension: any;
       aggregation: string;
@@ -175,6 +177,14 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       delete this.target.azureMonitor.timeGrainUnit;
       this.onMetricNameChange();
     }
+
+    if (
+      this.target.azureMonitor.timeGrains &&
+      this.target.azureMonitor.timeGrains.length > 0 &&
+      (!this.target.azureMonitor.allowedTimeGrainsMs || this.target.azureMonitor.allowedTimeGrainsMs.length === 0)
+    ) {
+      this.target.azureMonitor.allowedTimeGrainsMs = this.convertTimeGrainsToMs(this.target.azureMonitor.timeGrains);
+    }
   }
 
   migrateToFromTimes() {
@@ -312,6 +322,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.timeGrain = '';
     this.target.azureMonitor.dimensions = [];
     this.target.azureMonitor.dimension = '';
+    this.refresh();
   }
 
   onMetricDefinitionChange() {
@@ -331,6 +342,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.timeGrain = '';
     this.target.azureMonitor.dimensions = [];
     this.target.azureMonitor.dimension = '';
+    this.refresh();
   }
 
   onMetricNameChange() {
@@ -352,6 +364,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.target.azureMonitor.timeGrains = [{ text: 'auto', value: 'auto' }].concat(metadata.supportedTimeGrains);
         this.target.azureMonitor.timeGrain = 'auto';
 
+        this.target.azureMonitor.allowedTimeGrainsMs = this.convertTimeGrainsToMs(metadata.supportedTimeGrains || []);
+
         this.target.azureMonitor.dimensions = metadata.dimensions;
         if (metadata.dimensions.length > 0) {
           this.target.azureMonitor.dimension = metadata.dimensions[0].value;
@@ -359,6 +373,16 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         return this.refresh();
       })
       .catch(this.handleQueryCtrlError.bind(this));
+  }
+
+  convertTimeGrainsToMs(timeGrains: Array<{ text: string; value: string }>) {
+    const allowedTimeGrainsMs: number[] = [];
+    timeGrains.forEach((tg: any) => {
+      if (tg.value !== 'auto') {
+        allowedTimeGrainsMs.push(kbn.interval_to_ms(TimegrainConverter.createKbnUnitFromISO8601Duration(tg.value)));
+      }
+    });
+    return allowedTimeGrainsMs;
   }
 
   getAutoInterval() {
