@@ -6,13 +6,13 @@ import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Emitter } from 'app/core/core';
 import {
-  LAST_USED_DATASOURCE_KEY,
   ensureQueries,
   generateEmptyQuery,
   parseUrlState,
   getTimeRange,
   getTimeRangeFromUrl,
   generateNewKeyAndAddRefIdIfMissing,
+  lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
 
 // Types
@@ -104,6 +104,7 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
 
     const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
     const queries = getState().explore[exploreId].queries;
+    const orgId = getState().user.orgId;
 
     dispatch(updateDatasourceInstanceAction({ exploreId, datasourceInstance: newDataSourceInstance }));
 
@@ -113,7 +114,7 @@ export function changeDatasource(exploreId: ExploreId, datasource: string): Thun
       dispatch(changeRefreshInterval(exploreId, offOption.value));
     }
 
-    await dispatch(loadDatasource(exploreId, newDataSourceInstance));
+    await dispatch(loadDatasource(exploreId, newDataSourceInstance, orgId));
     dispatch(runQueries(exploreId));
   };
 }
@@ -263,12 +264,14 @@ export function initializeExplore(
  */
 export const loadDatasourceReady = (
   exploreId: ExploreId,
-  instance: DataSourceApi
+  instance: DataSourceApi,
+  orgId: number
 ): ActionOf<LoadDatasourceReadyPayload> => {
   const historyKey = `grafana.explore.history.${instance.meta.id}`;
   const history = store.getObject(historyKey, []);
   // Save last-used datasource
-  store.set(LAST_USED_DATASOURCE_KEY, instance.name);
+
+  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.name);
 
   return loadDatasourceReadyAction({
     exploreId,
@@ -346,7 +349,7 @@ export const reconnectDatasource = (exploreId: ExploreId): ThunkResult<void> => 
 /**
  * Main action to asynchronously load a datasource. Dispatches lots of smaller actions for feedback.
  */
-export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): ThunkResult<void> {
+export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi, orgId: number): ThunkResult<void> {
   return async (dispatch, getState) => {
     const datasourceName = instance.name;
 
@@ -373,7 +376,7 @@ export function loadDatasource(exploreId: ExploreId, instance: DataSourceApi): T
       return;
     }
 
-    dispatch(loadDatasourceReady(exploreId, instance));
+    dispatch(loadDatasourceReady(exploreId, instance, orgId));
   };
 }
 
