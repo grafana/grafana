@@ -92,6 +92,7 @@ export interface GrafanaThemeCommons {
 
 export interface GrafanaTheme extends GrafanaThemeCommons {
   type: GrafanaThemeType;
+  isDark: boolean;
   background: {
     dropdown: string;
     scrollbar: string;
@@ -168,6 +169,9 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     bodyBg: string;
     pageBg: string;
     headingColor: string;
+
+    // inputs
+    inputBorderColor: string;
   };
 }
 

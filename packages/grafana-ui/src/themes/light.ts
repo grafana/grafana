@@ -41,6 +41,7 @@ const basicColors = {
 const lightTheme: GrafanaTheme = {
   ...defaultTheme,
   type: GrafanaThemeType.Light,
+  isDark: false,
   name: 'Grafana Light',
   colors: {
     ...basicColors,
@@ -71,6 +72,7 @@ const lightTheme: GrafanaTheme = {
     linkHover: basicColors.dark1,
     linkExternal: basicColors.blueLight,
     headingColor: basicColors.gray1,
+    inputBorderColor: basicColors.gray6,
   },
   background: {
     dropdown: basicColors.white,

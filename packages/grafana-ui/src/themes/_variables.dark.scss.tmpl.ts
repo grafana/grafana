@@ -197,7 +197,7 @@ $input-bg: $input-black;
 $input-bg-disabled: $dark-6;
 
 $input-color: $gray-4;
-$input-border-color: $dark-6;
+$input-border-color: ${theme.colors.inputBorderColor};
 $input-box-shadow: inset 1px 0px 4px 0px rgba(150, 150, 150, 0.1);
 $input-border-focus: $dark-6 !default;
 $input-box-shadow-focus: $blue-light !default;

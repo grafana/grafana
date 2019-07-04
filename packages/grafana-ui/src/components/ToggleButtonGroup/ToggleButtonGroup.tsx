@@ -104,11 +104,13 @@ const getStyles = (theme: GrafanaTheme) => {
   const borderRadius = 2;
   const bg = theme.colors.bodyBg;
   const activeBg = increaseContrast(theme.colors.bodyBg, 10);
-  const activeText = theme.colors.blueBase;
+  const activeText = theme.colors.blueLight;
+  const borderColor = theme.isDark ? theme.colors.gray1 : theme.colors.gray2;
+
   return {
     button: css`
-      border: solid 1px #c7d0d9;
-      color: ${theme.colors.text};
+      border: 1px solid ${borderColor};
+      color: ${theme.colors.textWeak};
       padding: 0 16px;
       background-color: ${bg};
       border-radius: ${borderRadius}px;
@@ -122,15 +124,13 @@ const getStyles = (theme: GrafanaTheme) => {
       position: relative;
       z-index: 899;
       &:hover {
-        color: ${activeText};
-        font-weight: 500;
+        color: ${theme.colors.blueLight};
       }
     `,
     active: css`
-      font-weight: 500;
       background-color: ${activeBg};
       color: ${activeText};
-      border-color: ${theme.colors.blueBase};
+      border-color: ${theme.colors.blueLight};
       /*To priorotize blue overlapping border*/
       z-index: 900;
     `,
