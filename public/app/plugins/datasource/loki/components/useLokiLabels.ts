@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
-import { AbsoluteTimeRange } from '@grafana/ui';
+import { AbsoluteTimeRange } from '@grafana/data';
 
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';

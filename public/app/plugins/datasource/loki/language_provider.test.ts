@@ -1,8 +1,8 @@
 // @ts-ignore
 import Plain from 'slate-plain-serializer';
 
-import LanguageProvider, { LABEL_REFRESH_INTERVAL } from './language_provider';
-import { AbsoluteTimeRange } from '@grafana/ui';
+import LanguageProvider, { LABEL_REFRESH_INTERVAL, rangeToParams } from './language_provider';
+import { AbsoluteTimeRange } from '@grafana/data';
 import { advanceTo, clear, advanceBy } from 'jest-date-mock';
 import { beforeEach } from 'test/lib/common';
 import { DataQueryResponseData } from '@grafana/ui';
@@ -104,8 +104,6 @@ describe('Language completion provider', () => {
 });
 
 describe('Request URL', () => {
-  const NS_IN_MS = 1_000_000;
-
   it('should contain range params', async () => {
     const rangeMock: AbsoluteTimeRange = {
       from: 1560153109000,
@@ -127,11 +125,7 @@ describe('Request URL', () => {
     const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
     await instance.refreshLogLabels(rangeMock, true);
     const expectedUrl = '/api/prom/label';
-    const expectedParams = {
-      start: rangeMock.from * NS_IN_MS,
-      end: rangeMock.to * NS_IN_MS,
-    };
-    expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, expectedParams);
+    expect(datasourceSpy).toHaveBeenCalledWith(expectedUrl, rangeToParams(rangeMock));
   });
 });
 

@@ -1,6 +1,6 @@
 import { renderHook, act } from 'react-hooks-testing-library';
 import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
-import { AbsoluteTimeRange } from '@grafana/ui';
+import { AbsoluteTimeRange } from '@grafana/data';
 
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiSyntax } from './useLokiSyntax';

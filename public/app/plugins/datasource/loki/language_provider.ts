@@ -15,9 +15,8 @@ import {
   HistoryItem,
 } from 'app/types/explore';
 import { LokiQuery } from './types';
-import { dateTime } from '@grafana/data';
+import { dateTime, AbsoluteTimeRange } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
-import { AbsoluteTimeRange } from '@grafana/ui';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -27,7 +26,7 @@ const NS_IN_MS = 1_000_000;
 export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
 
 const wrapLabel = (label: string) => ({ label });
-const rangeToParams = (range: AbsoluteTimeRange) => ({ start: range.from * NS_IN_MS, end: range.to * NS_IN_MS });
+export const rangeToParams = (range: AbsoluteTimeRange) => ({ start: range.from * NS_IN_MS, end: range.to * NS_IN_MS });
 
 type LokiHistoryItem = HistoryItem<LokiQuery>;
 

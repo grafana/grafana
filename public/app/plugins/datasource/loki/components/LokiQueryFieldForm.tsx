@@ -16,7 +16,8 @@ import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
-import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus, AbsoluteTimeRange } from '@grafana/ui';
+import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus } from '@grafana/ui';
+import { AbsoluteTimeRange } from '@grafana/data';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DataSourceStatus) {
   if (datasourceStatus === DataSourceStatus.Disconnected) {

@@ -2,7 +2,7 @@ import { renderHook, act } from 'react-hooks-testing-library';
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from './useLokiLabels';
 import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
-import { AbsoluteTimeRange } from '@grafana/ui';
+import { AbsoluteTimeRange } from '@grafana/data';
 
 describe('useLokiLabels hook', () => {
   it('should refresh labels', async () => {
