@@ -162,7 +162,7 @@ func TestPublicAPI(t *testing.T) {
 				Connection: connection,
 				Config: &ServerConfig{
 					BindPassword: "pwd",
-					BindDN: dn,
+					BindDN:       dn,
 				},
 			}
 
@@ -188,7 +188,7 @@ func TestPublicAPI(t *testing.T) {
 				Connection: connection,
 				Config: &ServerConfig{
 					BindPassword: "pwd",
-					BindDN: dn,
+					BindDN:       dn,
 				},
 				log: log.New("test-logger"),
 			}

@@ -151,7 +151,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					BindPassword: "test",
 				},
 			}
-			
+
 			result := server.shouldAuthAdmin()
 			So(result, ShouldBeTrue)
 		})
@@ -162,7 +162,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					BindPassword: "",
 				},
 			}
-			
+
 			result := server.shouldAuthAdmin()
 			So(result, ShouldBeFalse)
 		})

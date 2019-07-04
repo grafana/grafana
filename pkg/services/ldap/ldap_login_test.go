@@ -121,7 +121,7 @@ func TestLDAPLogin(t *testing.T) {
 			So(resp.Login, ShouldEqual, "markelog")
 		})
 
-			Convey("Should perform unauthentificate bind without admin", func() {
+		Convey("Should perform unauthentificate bind without admin", func() {
 			connection := &MockConnection{}
 			entry := ldap.Entry{
 				DN: "test",
@@ -160,7 +160,7 @@ func TestLDAPLogin(t *testing.T) {
 			username := ""
 			password := ""
 
-			i := 0 
+			i := 0
 			connection.BindProvider = func(name, pass string) error {
 				i++
 				if i == 1 {
@@ -177,8 +177,8 @@ func TestLDAPLogin(t *testing.T) {
 			}
 			server := &Server{
 				Config: &ServerConfig{
-					BindDN: "killa",
-					BindPassword: "gorilla",
+					BindDN:        "killa",
+					BindPassword:  "gorilla",
 					SearchBaseDNs: []string{"BaseDNHere"},
 				},
 				Connection: connection,
@@ -188,15 +188,15 @@ func TestLDAPLogin(t *testing.T) {
 			user, err := server.Login(defaultLogin)
 
 			So(err, ShouldBeNil)
-			
+
 			So(user.AuthId, ShouldEqual, "test")
 			So(connection.BindCalled, ShouldBeTrue)
 
 			So(adminUsername, ShouldEqual, "killa")
-			So(adminPassword, ShouldEqual, "gorilla") 
+			So(adminPassword, ShouldEqual, "gorilla")
 
 			So(username, ShouldEqual, "test")
-			So(password, ShouldEqual, "pwd") 
+			So(password, ShouldEqual, "pwd")
 		})
 	})
 }
