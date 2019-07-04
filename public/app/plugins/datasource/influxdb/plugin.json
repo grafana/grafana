@@ -7,6 +7,7 @@
   "defaultMatchFormat": "regex values",
   "metrics": true,
   "logs": true,
+  "modesSupportingTextEdit": ["Metrics"],
   "annotations": true,
   "alerting": true,
 

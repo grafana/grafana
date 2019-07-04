@@ -4,10 +4,17 @@
   "id": "graphite",
   "category": "tsdb",
 
-  "includes": [{ "type": "dashboard", "name": "Graphite Carbon Metrics", "path": "dashboards/carbon_metrics.json" }],
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "Graphite Carbon Metrics",
+      "path": "dashboards/carbon_metrics.json"
+    }
+  ],
 
   "hiddenQueries": true,
   "metrics": true,
+  "modesSupportingTextEdit": ["Metrics"],
   "alerting": true,
   "annotations": true,
 
@@ -27,7 +34,10 @@
       "large": "img/graphite_logo.png"
     },
     "links": [
-      { "name": "Graphite", "url": "https://graphiteapp.org/" },
+      {
+        "name": "Graphite",
+        "url": "https://graphiteapp.org/"
+      },
       {
         "name": "Graphite 1.1 Release",
         "url": "https://grafana.com/blog/2018/01/11/graphite-1.1-teaching-an-old-dog-new-tricks/"

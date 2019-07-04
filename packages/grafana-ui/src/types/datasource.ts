@@ -106,6 +106,7 @@ export interface DataSourcePluginMeta extends PluginMeta {
    * DataSource query method
    */
   hiddenQueries?: boolean;
+  modesSupportingTextEdit?: string[];
 }
 
 interface PluginMetaQueryOptions {

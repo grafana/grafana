@@ -247,6 +247,7 @@ export interface ExploreItemState {
 
   latency: number;
   supportedModes: ExploreMode[];
+  modesSupportingTextEdit?: ExploreMode[];
   mode: ExploreMode;
 
   isLive: boolean;

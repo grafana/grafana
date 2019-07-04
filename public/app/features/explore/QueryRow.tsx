@@ -51,6 +51,7 @@ interface QueryRowProps extends PropsFromParent {
   latency: number;
   queryErrors: DataQueryError[];
   mode: ExploreMode;
+  modesSupportingTextEdit: ExploreMode[];
 }
 
 interface QueryRowState {
@@ -128,8 +129,10 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       latency,
       queryErrors,
       mode,
+      modesSupportingTextEdit,
     } = this.props;
-    const canToggleEditorModes = _.has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+
+    const canToggleEditorModes = modesSupportingTextEdit.includes(mode);
     let QueryField;
 
     if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
@@ -214,6 +217,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     latency,
     queryErrors,
     mode,
+    modesSupportingTextEdit,
   } = item;
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
@@ -235,6 +239,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     latency,
     queryErrors,
     mode,
+    modesSupportingTextEdit,
   };
 }
 

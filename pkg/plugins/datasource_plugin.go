@@ -18,18 +18,19 @@ import (
 // DataSourcePlugin contains all metadata about a datasource plugin
 type DataSourcePlugin struct {
 	FrontendPluginBase
-	Annotations   bool              `json:"annotations"`
-	Metrics       bool              `json:"metrics"`
-	Alerting      bool              `json:"alerting"`
-	Explore       bool              `json:"explore"`
-	Table         bool              `json:"tables"`
-	HiddenQueries bool              `json:"hiddenQueries"`
-	Logs          bool              `json:"logs"`
-	QueryOptions  map[string]bool   `json:"queryOptions,omitempty"`
-	BuiltIn       bool              `json:"builtIn,omitempty"`
-	Mixed         bool              `json:"mixed,omitempty"`
-	Routes        []*AppPluginRoute `json:"routes"`
-	Streaming     bool              `json:"streaming"`
+	Annotations             bool              `json:"annotations"`
+	Metrics                 bool              `json:"metrics"`
+	Alerting                bool              `json:"alerting"`
+	Explore                 bool              `json:"explore"`
+	Table                   bool              `json:"tables"`
+	HiddenQueries           bool              `json:"hiddenQueries"`
+	Logs                    bool              `json:"logs"`
+	ModesSupportingTextEdit []string          `json:"modesSupportingTextEdit,omitempty"`
+	QueryOptions            map[string]bool   `json:"queryOptions,omitempty"`
+	BuiltIn                 bool              `json:"builtIn,omitempty"`
+	Mixed                   bool              `json:"mixed,omitempty"`
+	Routes                  []*AppPluginRoute `json:"routes"`
+	Streaming               bool              `json:"streaming"`
 
 	Backend    bool   `json:"backend,omitempty"`
 	Executable string `json:"executable,omitempty"`
