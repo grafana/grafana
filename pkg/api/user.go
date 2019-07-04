@@ -277,6 +277,12 @@ func searchUser(c *m.ReqContext) (*m.SearchUsersQuery, error) {
 
 	for _, user := range query.Result.Users {
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+		user.AuthLabels = make([]string, 0)
+		if user.AuthModule != nil && len(user.AuthModule) > 0 {
+			for _, authModule := range user.AuthModule {
+				user.AuthLabels = append(user.AuthLabels, GetAuthProviderLabel(authModule))
+			}
+		}
 	}
 
 	query.Result.Page = page
@@ -314,4 +320,21 @@ func ClearHelpFlags(c *m.ReqContext) Response {
 	}
 
 	return JSON(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+}
+
+func GetAuthProviderLabel(authModule string) string {
+	switch authModule {
+	case "oauth_github":
+		return "GitHub"
+	case "oauth_google":
+		return "Google"
+	case "oauth_gitlab":
+		return "GitLab"
+	case "oauth_grafana_com", "oauth_grafananet":
+		return "grafana.com"
+	case "ldap", "":
+		return "LDAP"
+	default:
+		return "OAuth"
+	}
 }

@@ -230,6 +230,7 @@ type UserSearchHitDTO struct {
 	LastSeenAt    time.Time            `json:"lastSeenAt"`
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthModule    AuthModuleConversion `json:"authModule"`
+	AuthLabels    []string             `json:"authLabels"`
 }
 
 type UserIdDTO struct {

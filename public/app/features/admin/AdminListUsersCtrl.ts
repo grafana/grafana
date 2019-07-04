@@ -45,51 +45,27 @@ export default class AdminListUsersCtrl {
 
   addUsersAuthLabels() {
     this.users.forEach(user => {
-      const authModuleLabel = this.getAuthLabel(user);
-      const labelStyle = this.getAuthLabelStyle(authModuleLabel);
-      user.authLabel = authModuleLabel;
-      user.authLabelStyle = labelStyle;
+      user.authLabel = getAuthLabel(user);
+      user.authLabelStyle = getAuthLabelStyle(user.authLabel);
     });
   }
+}
 
-  getAuthModule(user: any) {
-    if (user.authModule && user.authModule.length) {
-      return user.authModule[0];
-    }
-    return undefined;
+function getAuthLabel(user: any) {
+  if (user.authLabels && user.authLabels.length) {
+    return user.authLabels[0];
+  }
+  return '';
+}
+
+function getAuthLabelStyle(label: string) {
+  if (label === 'LDAP' || !label) {
+    return {};
   }
 
-  getAuthLabel(user: any) {
-    const authModule = this.getAuthModule(user);
-
-    switch (authModule) {
-      case 'ldap':
-        return 'LDAP';
-      case 'oauth_github':
-        return 'GitHub';
-      case 'oauth_google':
-        return 'Google';
-      case 'oauth_gitlab':
-        return 'GitLab';
-      case 'oauth_grafana_com':
-      case 'oauth_grafananet':
-        return 'grafana.com';
-      case 'oauth_generic_oauth':
-        return 'OAuth';
-      default:
-        return undefined;
-    }
-  }
-
-  getAuthLabelStyle(label: string) {
-    if (label === 'LDAP' || !label) {
-      return {};
-    }
-
-    const { color, borderColor } = tags.getTagColorsFromName(label);
-    return {
-      'background-color': color,
-      'border-color': borderColor,
-    };
-  }
+  const { color, borderColor } = tags.getTagColorsFromName(label);
+  return {
+    'background-color': color,
+    'border-color': borderColor,
+  };
 }
