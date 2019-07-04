@@ -14,7 +14,7 @@ const yarnlink = useSpinner<void>('Linking local toolkit', async () => {
   // await execa('yarn', ['remove', '@grafana/toolkit']);
 
   // Add all the same dependencies as toolkit
-  let args: string[] = ['add'];
+  const args: string[] = ['add'];
   const packages = require(path.resolve(__dirname, '../../../package.json'));
   for (const [key, value] of Object.entries(packages.dependencies)) {
     args.push(`${key}@${value}`);
