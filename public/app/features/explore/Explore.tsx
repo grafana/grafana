@@ -307,7 +307,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   } = item;
 
   const { datasource, queries, range: urlRange, mode: urlMode, ui } = (urlState || {}) as ExploreUrlState;
-  const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
+  const initialDatasource = datasource || store.get(`${LAST_USED_DATASOURCE_KEY}.${state.user.orgId}`);
   const initialQueries: DataQuery[] = ensureQueries(queries);
   const initialRange = urlRange ? getTimeRangeFromUrl(urlRange, timeZone).raw : DEFAULT_RANGE;
 
