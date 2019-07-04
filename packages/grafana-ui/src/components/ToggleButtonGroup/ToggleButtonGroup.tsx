@@ -7,7 +7,7 @@ import tinycolor from 'tinycolor2';
 import { ToggleButtonGroupProps, ToggleButtonProps, ToggleButtonState } from './types';
 import { increaseContrast } from '../../utils/colors';
 
-export const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children }) => {
+const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children }) => {
   const styles = getStyles(useContext(ThemeContext));
   return (
     <div>
@@ -24,6 +24,9 @@ export const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children 
   );
 };
 
+ToggleButtonGroup.displayName = 'ToggleButtonGroup';
+
+export { ToggleButtonGroup };
 export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonState> {
   constructor(props: ToggleButtonProps) {
     super(props);
