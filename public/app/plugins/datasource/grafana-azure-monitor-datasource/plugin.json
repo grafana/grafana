@@ -16,28 +16,13 @@
       "large": "img/logo.jpg"
     },
     "links": [
-      {
-        "name": "Project site",
-        "url": "https://github.com/grafana/azure-monitor-datasource"
-      },
-      {
-        "name": "Apache License",
-        "url": "https://github.com/grafana/azure-monitor-datasource/blob/master/LICENSE"
-      }
+      { "name": "Project site", "url": "https://github.com/grafana/azure-monitor-datasource" },
+      { "name": "Apache License", "url": "https://github.com/grafana/azure-monitor-datasource/blob/master/LICENSE" }
     ],
     "screenshots": [
-      {
-        "name": "Azure Contoso Loans",
-        "path": "img/contoso_loans_grafana_dashboard.png"
-      },
-      {
-        "name": "Azure Monitor Network",
-        "path": "img/azure_monitor_network.png"
-      },
-      {
-        "name": "Azure Monitor CPU",
-        "path": "img/azure_monitor_cpu.png"
-      }
+      { "name": "Azure Contoso Loans", "path": "img/contoso_loans_grafana_dashboard.png" },
+      { "name": "Azure Monitor Network", "path": "img/azure_monitor_network.png" },
+      { "name": "Azure Monitor CPU", "path": "img/azure_monitor_cpu.png" }
     ],
     "version": "0.3.0",
     "updated": "2018-12-06"
@@ -57,12 +42,7 @@
           "resource": "https://management.azure.com/"
         }
       },
-      "headers": [
-        {
-          "name": "x-ms-app",
-          "content": "Grafana"
-        }
-      ]
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
       "path": "govazuremonitor",
@@ -77,12 +57,7 @@
           "resource": "https://management.usgovcloudapi.net/"
         }
       },
-      "headers": [
-        {
-          "name": "x-ms-app",
-          "content": "Grafana"
-        }
-      ]
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
       "path": "germanyazuremonitor",
@@ -97,12 +72,7 @@
           "resource": "https://management.microsoftazure.de/"
         }
       },
-      "headers": [
-        {
-          "name": "x-ms-app",
-          "content": "Grafana"
-        }
-      ]
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
       "path": "chinaazuremonitor",
@@ -117,26 +87,15 @@
           "resource": "https://management.chinacloudapi.cn/"
         }
       },
-      "headers": [
-        {
-          "name": "x-ms-app",
-          "content": "Grafana"
-        }
-      ]
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
       "path": "appinsights",
       "method": "GET",
       "url": "https://api.applicationinsights.io",
       "headers": [
-        {
-          "name": "X-API-Key",
-          "content": "{{.SecureJsonData.appInsightsApiKey}}"
-        },
-        {
-          "name": "x-ms-app",
-          "content": "Grafana"
-        }
+        { "name": "X-API-Key", "content": "{{.SecureJsonData.appInsightsApiKey}}" },
+        { "name": "x-ms-app", "content": "Grafana" }
       ]
     },
     {
@@ -152,12 +111,7 @@
           "resource": "https://management.azure.com/"
         }
       },
-      "headers": [
-        {
-          "name": "x-ms-app",
-          "content": "Grafana"
-        }
-      ]
+      "headers": [{ "name": "x-ms-app", "content": "Grafana" }]
     },
     {
       "path": "loganalyticsazure",
@@ -173,18 +127,9 @@
         }
       },
       "headers": [
-        {
-          "name": "x-ms-app",
-          "content": "Grafana"
-        },
-        {
-          "name": "Cache-Control",
-          "content": "public, max-age=60"
-        },
-        {
-          "name": "Accept-Encoding",
-          "content": "gzip"
-        }
+        { "name": "x-ms-app", "content": "Grafana" },
+        { "name": "Cache-Control", "content": "public, max-age=60" },
+        { "name": "Accept-Encoding", "content": "gzip" }
       ]
     },
     {
@@ -201,18 +146,9 @@
         }
       },
       "headers": [
-        {
-          "name": "x-ms-app",
-          "content": "Grafana"
-        },
-        {
-          "name": "Cache-Control",
-          "content": "public, max-age=60"
-        },
-        {
-          "name": "Accept-Encoding",
-          "content": "gzip"
-        }
+        { "name": "x-ms-app", "content": "Grafana" },
+        { "name": "Cache-Control", "content": "public, max-age=60" },
+        { "name": "Accept-Encoding", "content": "gzip" }
       ]
     }
   ],
@@ -223,7 +159,6 @@
   },
 
   "metrics": true,
-  "modesSupportingTextEdit": ["Metrics"],
   "annotations": true,
   "alerting": true
 }

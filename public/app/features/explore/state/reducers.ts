@@ -110,7 +110,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   latency: 0,
   supportedModes: [],
   mode: null,
-  modesSupportingTextEdit: [],
   isLive: false,
   urlReplaced: false,
 });
@@ -242,10 +241,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       let mode = state.mode || ExploreMode.Metrics;
       const supportedModes: ExploreMode[] = [];
 
-      const modesSupportingTextEdit = datasourceInstance.meta.modesSupportingTextEdit
-        ? datasourceInstance.meta.modesSupportingTextEdit.map(theMode => ExploreMode[theMode])
-        : [];
-
       if (supportsGraph) {
         supportedModes.push(ExploreMode.Metrics);
       }
@@ -271,7 +266,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         showingStartPage: Boolean(StartPage),
         queryKeys: [],
         supportedModes,
-        modesSupportingTextEdit,
         mode,
       };
     },
