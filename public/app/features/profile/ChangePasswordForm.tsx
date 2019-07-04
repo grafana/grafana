@@ -16,15 +16,11 @@ export interface State {
 }
 
 export class ChangePasswordForm extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      oldPassword: '',
-      newPassword: '',
-      confirmNew: '',
-    };
-  }
+  state: State = {
+    oldPassword: '',
+    newPassword: '',
+    confirmNew: '',
+  };
 
   onOldPasswordChange = (oldPassword: string) => {
     this.setState({ oldPassword });

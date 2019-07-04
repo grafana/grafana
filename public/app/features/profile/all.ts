@@ -1,2 +1,2 @@
 import './ProfileCtrl';
-import './PrefControlCtrl';
+import './ReactProfileWrapCtrl';
