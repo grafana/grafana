@@ -1,12 +1,13 @@
 import { GrafanaDatasource } from '../datasource';
+// @ts-ignore
 import q from 'q';
 import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
 
 describe('grafana data source', () => {
   describe('when executing an annotations query', () => {
-    let calledBackendSrvParams;
+    let calledBackendSrvParams: any;
     const backendSrvStub = {
-      get: (url: string, options) => {
+      get: (url: string, options: any) => {
         calledBackendSrvParams = options;
         return q.resolve([]);
       },
@@ -18,7 +19,7 @@ describe('grafana data source', () => {
       },
     };
 
-    const ds = new GrafanaDatasource(backendSrvStub, q, templateSrvStub);
+    const ds = new GrafanaDatasource(backendSrvStub as any, q, templateSrvStub as any);
 
     describe('with tags that have template variables', () => {
       const options = setupAnnotationQueryOptions({ tags: ['tag1:$var'] });
@@ -65,10 +66,10 @@ describe('grafana data source', () => {
   });
 });
 
-function setupAnnotationQueryOptions(annotation, dashboard?) {
+function setupAnnotationQueryOptions(annotation: { tags: string[]; type?: string }, dashboard?: { id: number }) {
   return {
-    annotation: annotation,
-    dashboard: dashboard,
+    annotation,
+    dashboard,
     range: {
       from: dateTime(1432288354),
       to: dateTime(1432288401),
