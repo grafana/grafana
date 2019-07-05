@@ -29,7 +29,7 @@ describe('GraphiteQueryCtrl', () => {
 
     ctx.ctrl = new GraphiteQueryCtrl(
       {},
-      {},
+      {} as any,
       //@ts-ignore
       new uiSegmentSrv({ trustAsHtml: html => html }, { highlightVariablesAsHtml: () => {} }),
       //@ts-ignore
