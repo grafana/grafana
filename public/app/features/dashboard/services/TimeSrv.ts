@@ -4,14 +4,14 @@ import _ from 'lodash';
 // Utils
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import * as dateMath from '@grafana/data/src/utils/datemath';
 
 // Types
-import { TimeRange, RawTimeRange, TimeZone } from '@grafana/ui';
+import { TimeRange, RawTimeRange, TimeZone } from '@grafana/data';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
-import { toUtc, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTime, isDateTime } from '@grafana/data';
 import { getZoomedTimeRange } from 'app/core/utils/timePicker';
 
 export class TimeSrv {

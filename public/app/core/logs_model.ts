@@ -24,7 +24,7 @@ import {
 } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
-import { dateTime, toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime, toUtc } from '@grafana/data';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],

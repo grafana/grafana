@@ -8,12 +8,12 @@ import { TimePickerPopover } from './TimePickerPopover';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
-import { isDateTime } from '../../utils/moment_wrapper';
-import * as rangeUtil from '../../utils/rangeutil';
+import { isDateTime } from '@grafana/data';
+import * as rangeUtil from '@grafana/data/src/utils/rangeutil';
 import { rawToTimeRange } from './time';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT } from '../../types/time';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT } from '@grafana/data';
 import { SelectOptionItem } from '../Select/Select';
 
 export interface Props {

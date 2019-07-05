@@ -6,8 +6,8 @@ import {
   DataStreamState,
   LoadingState,
   ScopedVars,
-} from '@grafana/ui/src/types';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+} from '@grafana/ui';
+import { dateTime } from '@grafana/data';
 
 jest.mock('app/core/services/backend_srv');
 

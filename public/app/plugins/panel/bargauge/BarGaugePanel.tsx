@@ -9,7 +9,7 @@ import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay } from '@gra
 
 // Types
 import { BarGaugeOptions } from './types';
-import { PanelProps } from '@grafana/ui/src/types';
+import { PanelProps } from '@grafana/ui';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {

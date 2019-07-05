@@ -1,11 +1,10 @@
 // Libraries
 import _ from 'lodash';
 import { from } from 'rxjs';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 // Services & Utils
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import * as dateMath from '@grafana/data/src/utils/datemath';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
@@ -13,21 +12,24 @@ import { getNextRefIdChar } from './query';
 
 // Types
 import {
-  TimeRange,
-  RawTimeRange,
-  TimeZone,
-  IntervalValues,
   DataQuery,
   DataSourceApi,
-  TimeFragment,
   DataQueryError,
-  LogRowModel,
-  LogsModel,
-  LogsDedupStrategy,
   DataSourceJsonData,
   DataQueryRequest,
   DataStreamObserver,
 } from '@grafana/ui';
+import {
+  toUtc,
+  TimeRange,
+  RawTimeRange,
+  TimeZone,
+  IntervalValues,
+  TimeFragment,
+  LogRowModel,
+  LogsModel,
+  LogsDedupStrategy,
+} from '@grafana/data';
 import {
   ExploreUrlState,
   HistoryItem,

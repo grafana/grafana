@@ -6,7 +6,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   MetricFindValue,
-} from '@grafana/ui/src/types';
+} from '@grafana/ui';
 import { InputQuery, InputOptions } from './types';
 
 export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {

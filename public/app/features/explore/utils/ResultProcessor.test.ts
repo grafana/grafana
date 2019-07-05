@@ -1,4 +1,4 @@
-jest.mock('@grafana/ui/src/utils/moment_wrapper', () => ({
+jest.mock('@grafana/data', () => ({
   dateTime: (ts: any) => {
     return {
       valueOf: () => ts,

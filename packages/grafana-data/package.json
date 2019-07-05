@@ -23,6 +23,7 @@
     "@types/papaparse": "4.5.9",
     "@types/pretty-format": "20.0.1",
     "@types/react": "16.8.16",
+    "@types/sinon": "^7.0.11",
     "awesome-typescript-loader": "^5.2.1",
     "lodash": "^4.17.10",
     "pretty-format": "^24.5.0",
@@ -33,6 +34,7 @@
     "rollup-plugin-terser": "4.0.4",
     "rollup-plugin-typescript2": "0.19.3",
     "rollup-plugin-visualizer": "0.9.2",
+    "sinon": "1.17.6",
     "typescript": "3.4.1"
   },
   "resolutions": {

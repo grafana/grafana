@@ -4,7 +4,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 
-import { DataSourceApi } from '@grafana/ui/src/types';
+import { DataSourceApi } from '@grafana/ui';
 import { importPanelPlugin, importDataSourcePlugin, importAppPlugin } from './plugin_loader';
 
 /** @ngInject */

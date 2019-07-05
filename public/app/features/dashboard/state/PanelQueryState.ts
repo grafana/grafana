@@ -4,7 +4,7 @@ import isEqual from 'lodash/isEqual';
 
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import * as dateMath from '@grafana/data/src/utils/datemath';
 import { guessFieldTypes, toDataFrame, isDataFrame } from '@grafana/ui/src/utils';
 
 // Types

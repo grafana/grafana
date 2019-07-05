@@ -11,7 +11,7 @@ import {
   DataQueryResponseData,
   AbsoluteTimeRange,
 } from '@grafana/ui';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import * as dateMath from '@grafana/data/src/utils/datemath';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';

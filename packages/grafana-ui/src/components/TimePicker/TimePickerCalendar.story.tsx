@@ -5,7 +5,7 @@ import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import { UseState } from '../../utils/storybook/UseState';
-import { TimeFragment } from '../../types/time';
+import { TimeFragment } from '@grafana/data';
 
 const TimePickerCalendarStories = storiesOf('UI/TimePicker/TimePickerCalendar', module);
 

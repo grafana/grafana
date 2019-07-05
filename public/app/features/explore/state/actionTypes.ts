@@ -15,7 +15,7 @@ import {
   DataQueryResponseData,
   LoadingState,
   AbsoluteTimeRange,
-} from '@grafana/ui/src/types';
+} from '@grafana/ui';
 import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode, QueryOptions } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 import TableModel from 'app/core/table_model';
