@@ -129,7 +129,8 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       queryErrors,
       mode,
     } = this.props;
-    const canToggleEditorModes = _.has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+    const canToggleEditorModes =
+      mode === ExploreMode.Metrics && _.has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     let QueryField;
 
     if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {

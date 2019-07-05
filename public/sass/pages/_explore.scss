@@ -68,8 +68,8 @@
   flex: 1 1 0;
   flex-flow: row nowrap;
   font-size: 18px;
-  min-height: 55px;
-  line-height: 55px;
+  min-height: $navbarHeight;
+  line-height: $navbarHeight;
   justify-content: space-between;
   align-items: center;
 }
@@ -88,13 +88,12 @@
 
 .explore-toolbar-content-item {
   display: flex;
-  padding: 10px 2px;
-}
+  padding: 2px 2px;
 
-.explore-toolbar-content-item:first-child {
-  padding-left: $dashboard-padding;
-  margin-right: auto;
-  display: flex;
+  &:first-child {
+    padding-left: $dashboard-padding;
+    margin-right: auto;
+  }
 }
 
 @media only screen and (max-width: 1545px) {
@@ -121,10 +120,6 @@
       padding: 2px 0;
       margin: 0;
     }
-  }
-
-  .explore-toolbar-content-item {
-    padding: 2px 2px;
   }
 }
 
