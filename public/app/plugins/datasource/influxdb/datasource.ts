@@ -49,12 +49,12 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     this.responseParser = new ResponseParser();
   }
 
-  query(options) {
+  query(options: any) {
     let timeFilter = this.getTimeFilter(options);
     const scopedVars = options.scopedVars;
     const targets = _.cloneDeep(options.targets);
-    const queryTargets = [];
-    let queryModel;
+    const queryTargets: any[] = [];
+    let queryModel: InfluxQueryModel;
     let i, y;
 
     let allQueries = _.map(targets, target => {
@@ -93,7 +93,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
     return this._seriesQuery(allQueries, options).then(
-      (data): any => {
+      (data: any): any => {
         if (!data || !data.results) {
           return [];
         }
@@ -136,7 +136,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     );
   }
 
-  annotationQuery(options) {
+  annotationQuery(options: any) {
     if (!options.annotation.query) {
       return this.$q.reject({
         message: 'Query missing in annotation definition',
@@ -147,7 +147,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, null, 'regex');
 
-    return this._seriesQuery(query, options).then(data => {
+    return this._seriesQuery(query, options).then((data: any) => {
       if (!data || !data.results || !data.results[0]) {
         throw { message: 'No results in response from InfluxDB' };
       }
@@ -158,7 +158,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     });
   }
 
-  targetContainsTemplate(target) {
+  targetContainsTemplate(target: any) {
     for (const group of target.groupBy) {
       for (const param of group.params) {
         if (this.templateSrv.variableExists(param)) {
@@ -207,7 +207,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     return this._influxRequest(this.httpMode, '/query', { q: query, epoch: 'ms' }, options);
   }
 
-  serializeParams(params) {
+  serializeParams(params: any) {
     if (!params) {
       return '';
     }
@@ -230,14 +230,14 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     const query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
 
     return this._seriesQuery(query)
-      .then(res => {
+      .then((res: any) => {
         const error = _.get(res, 'results[0].error');
         if (error) {
           return { status: 'error', message: error };
         }
         return { status: 'success', message: 'Data source is working' };
       })
-      .catch(err => {
+      .catch((err: any) => {
         return { status: 'error', message: err.message };
       });
   }
@@ -292,10 +292,10 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     }
 
     return this.backendSrv.datasourceRequest(req).then(
-      result => {
+      (result: any) => {
         return result.data;
       },
-      err => {
+      (err: any) => {
         if (err.status !== 0 || err.status >= 300) {
           if (err.data && err.data.error) {
             throw {
@@ -315,7 +315,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     );
   }
 
-  getTimeFilter(options) {
+  getTimeFilter(options: any) {
     const from = this.getInfluxTime(options.rangeRaw.from, false, options.timezone);
     const until = this.getInfluxTime(options.rangeRaw.to, true, options.timezone);
     const fromIsAbsolute = from[from.length - 1] === 'ms';
@@ -327,7 +327,7 @@ export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxO
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date, roundUp, timezone) {
+  getInfluxTime(date: any, roundUp: any, timezone: any) {
     if (_.isString(date)) {
       if (date === 'now') {
         return 'now()';
