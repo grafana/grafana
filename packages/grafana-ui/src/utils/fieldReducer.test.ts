@@ -100,7 +100,7 @@ describe('Stats Calculators', () => {
       },
       {
         rows: [[null], [null], [null]], // All null
-        result: null,
+        result: undefined,
       },
       {
         rows: [], // Empty row
@@ -108,8 +108,18 @@ describe('Stats Calculators', () => {
       },
     ];
     const fields = [{ name: 'A' }];
-    const reducers = [ReducerID.last, ReducerID.first];
 
+    const stats = reduceField({
+      series: { rows: info[0].rows, fields },
+      fieldIndex: 0,
+      reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull], // uses standard path
+    });
+    expect(stats[ReducerID.first]).toEqual(null);
+    expect(stats[ReducerID.last]).toEqual(null);
+    expect(stats[ReducerID.firstNotNull]).toEqual(200);
+    expect(stats[ReducerID.lastNotNull]).toEqual(200);
+
+    const reducers = [ReducerID.lastNotNull, ReducerID.firstNotNull];
     for (const input of info) {
       for (const reducer of reducers) {
         const v1 = reduceField({
