@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import ansicolor from 'vendor/ansicolor/ansicolor';
 
+import { colors } from '@grafana/ui';
+
 import {
-  colors,
   TimeSeries,
   Labels,
   LogLevel,
@@ -21,7 +22,7 @@ import {
   LogsParser,
   LogLabelStatsModel,
   LogsDedupStrategy,
-} from '@grafana/ui';
+} from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
 import { dateTime, toUtc } from '@grafana/data';

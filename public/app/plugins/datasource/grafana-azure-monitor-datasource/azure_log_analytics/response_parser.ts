@@ -9,7 +9,7 @@ import {
   KustoSchema,
   KustoColumn,
 } from '../types';
-import { TimeSeries, AnnotationEvent } from '@grafana/ui';
+import { TimeSeries, AnnotationEvent } from '@grafana/data';
 
 export default class ResponseParser {
   columns: string[];

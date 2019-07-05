@@ -1,4 +1,5 @@
-import { DataQuery, DataFrame, DataSourceJsonData } from '@grafana/ui';
+import { DataQuery, DataSourceJsonData } from '@grafana/ui';
+import { DataFrame } from '@grafana/data';
 
 export interface InputQuery extends DataQuery {
   // Data saved in the panel

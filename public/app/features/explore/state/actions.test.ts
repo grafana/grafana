@@ -17,7 +17,7 @@ import { Emitter } from 'app/core/core';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
 import { DataQuery } from '@grafana/ui/src/types/datasource';
-import { DefaultTimeZone, RawTimeRange, LogsDedupStrategy } from '@grafana/ui';
+import { DefaultTimeZone, RawTimeRange, LogsDedupStrategy } from '@grafana/data';
 import { toUtc } from '@grafana/data';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({

@@ -1,6 +1,6 @@
 import { Epic } from 'redux-observable';
 import { mergeMap } from 'rxjs/operators';
-import { RawTimeRange, TimeRange } from '@grafana/ui/src/types/time';
+import { RawTimeRange, TimeRange } from '@grafana/data';
 import { isDateTime } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';

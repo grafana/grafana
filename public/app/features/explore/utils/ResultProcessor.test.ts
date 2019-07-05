@@ -16,7 +16,8 @@ jest.mock('@grafana/data', () => ({
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import { toFixed, TimeSeries, LogRowModel, LogsMetaItem } from '@grafana/ui';
+import { TimeSeries, LogRowModel, LogsMetaItem } from '@grafana/data';
+import { toFixed } from '@grafana/ui';
 
 const testContext = (options: any = {}) => {
   const response = [

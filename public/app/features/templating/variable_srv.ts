@@ -11,7 +11,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 // Types
-import { TimeRange } from '@grafana/ui/src';
+import { TimeRange } from '@grafana/data';
 
 export class VariableSrv {
   dashboard: DashboardModel;

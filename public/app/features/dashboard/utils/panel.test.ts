@@ -1,4 +1,4 @@
-import { TimeRange } from '@grafana/ui';
+import { TimeRange } from '@grafana/data';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { advanceTo, clear } from 'jest-date-mock';
 import { dateTime, DateTime } from '@grafana/data';

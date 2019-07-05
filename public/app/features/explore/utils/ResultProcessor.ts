@@ -1,13 +1,6 @@
-import {
-  DataQueryResponse,
-  TableData,
-  isTableData,
-  LogsModel,
-  toDataFrame,
-  guessFieldTypes,
-  DataQueryResponseData,
-  TimeSeries,
-} from '@grafana/ui';
+import { DataQueryResponse, DataQueryResponseData } from '@grafana/ui';
+
+import { TableData, isTableData, LogsModel, toDataFrame, guessFieldTypes, TimeSeries } from '@grafana/data';
 
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import { getProcessedDataFrame } from 'app/features/dashboard/state/PanelQueryState';

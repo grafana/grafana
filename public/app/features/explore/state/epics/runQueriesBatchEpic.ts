@@ -3,14 +3,9 @@ import { Observable, Subject } from 'rxjs';
 import { mergeMap, catchError, takeUntil, filter } from 'rxjs/operators';
 import _, { isString } from 'lodash';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import {
-  DataStreamState,
-  LoadingState,
-  DataQueryResponse,
-  DataFrame,
-  DataQueryResponseData,
-  AbsoluteTimeRange,
-} from '@grafana/ui';
+import { DataStreamState, DataQueryResponse, DataQueryResponseData } from '@grafana/ui';
+
+import { LoadingState, DataFrame, AbsoluteTimeRange } from '@grafana/data';
 import * as dateMath from '@grafana/data/src/utils/datemath';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';

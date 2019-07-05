@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, FieldType } from '@grafana/ui';
+import { TimeSeries, FieldType } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export class ResultTransformer {
