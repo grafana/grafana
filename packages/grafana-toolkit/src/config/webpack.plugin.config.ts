@@ -5,6 +5,7 @@ const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 import * as webpack from 'webpack';
 import { hasThemeStylesheets, getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
@@ -113,6 +114,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
   const optimization: { [key: string]: any } = {};
 
   if (options.production) {
+    plugins.push(new ngAnnotatePlugin());
     optimization.minimizer = [new TerserPlugin(), new OptimizeCssAssetsPlugin()];
   }
 
@@ -154,11 +156,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       '@grafana/data',
       // @ts-ignore
       (context, request, callback) => {
-        let prefix = 'app/';
-        if (request.indexOf(prefix) === 0) {
-          return callback(null, request);
-        }
-        prefix = 'grafana/';
+        const prefix = 'grafana/';
         if (request.indexOf(prefix) === 0) {
           return callback(null, request.substr(prefix.length));
         }
