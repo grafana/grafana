@@ -140,6 +140,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       'jquery',
       'moment',
       'slate',
+      'emotion',
       'prismjs',
       'slate-plain-serializer',
       'slate-react',
