@@ -138,7 +138,7 @@ export default class AzureMonitorDatasource {
     return Promise.resolve([]);
   }
 
-  annotationQuery(options) {}
+  annotationQuery(options: any) {}
 
   metricFindQuery(query: string) {
     const subscriptionsQuery = query.match(/^Subscriptions\(\)/i);
@@ -236,7 +236,7 @@ export default class AzureMonitorDatasource {
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
       })
-      .then(result => {
+      .then((result: any) => {
         return _.filter(result, t => {
           for (let i = 0; i < this.supportedMetricNamespaces.length; i++) {
             if (t.value.toLowerCase() === this.supportedMetricNamespaces[i].toLowerCase()) {
@@ -247,7 +247,7 @@ export default class AzureMonitorDatasource {
           return false;
         });
       })
-      .then(result => {
+      .then((result: any) => {
         let shouldHardcodeBlobStorage = false;
         for (let i = 0; i < result.length; i++) {
           if (result[i].value === 'Microsoft.Storage/storageAccounts') {
@@ -284,7 +284,7 @@ export default class AzureMonitorDatasource {
       this.apiVersion
     }`;
 
-    return this.doRequest(url).then(result => {
+    return this.doRequest(url).then((result: any) => {
       if (!_.startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
         return ResponseParser.parseResourceNames(result, metricDefinition);
       }
@@ -309,7 +309,7 @@ export default class AzureMonitorDatasource {
       this.apiVersion
     );
 
-    return this.doRequest(url).then(result => {
+    return this.doRequest(url).then((result: any) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
     });
   }
@@ -330,7 +330,7 @@ export default class AzureMonitorDatasource {
       this.apiVersion
     );
 
-    return this.doRequest(url).then(result => {
+    return this.doRequest(url).then((result: any) => {
       return ResponseParser.parseMetadata(result, metricName);
     });
   }
@@ -352,7 +352,7 @@ export default class AzureMonitorDatasource {
 
     const url = `/${this.cloudName}/subscriptions?api-version=2019-03-01`;
     return this.doRequest(url)
-      .then(response => {
+      .then((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
@@ -366,7 +366,7 @@ export default class AzureMonitorDatasource {
           message: 'Returned http status code ' + response.status,
         };
       })
-      .catch(error => {
+      .catch((error: any) => {
         let message = 'Azure Monitor: ';
         message += error.statusText ? error.statusText + ': ' : '';
 
@@ -390,13 +390,13 @@ export default class AzureMonitorDatasource {
     return field && field.length > 0;
   }
 
-  doRequest(url, maxRetries = 1) {
+  doRequest(url: string, maxRetries = 1) {
     return this.backendSrv
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',
       })
-      .catch(error => {
+      .catch((error: any) => {
         if (maxRetries > 0) {
           return this.doRequest(url, maxRetries - 1);
         }
