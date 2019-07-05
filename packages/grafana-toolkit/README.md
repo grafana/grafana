@@ -99,7 +99,29 @@ If you want to provide different stylesheets for dark/light theme, create `dark.
 TODO: add note about loadPluginCss
 
 3. Emotion
-TODO
+Starting from Grafana 6.2 our suggested way of styling plugins is by using [Emotion](https://emotion.sh). It's a css-in-js library that we use internaly at Grafana. The biggest advantage of using Emotion is that you will get access to Grafana Theme variables.
+
+To use start using Emotion you first need to add it to your plugin dependencies:
+
+```
+  yarn add "@emotion/core"@10.0.14
+```
+
+Then, import `css` function from emotion:
+
+```import { css } from 'emotion'```
+
+And start implementing your styles:
+
+```tsx
+const MyComponent = () => {
+  return <div className={css`background: red;`} />
+}
+```
+
+Using themes: TODO, for now please refer to [internal guide](../../style_guides/themes.md)
+
+> NOTE: We do not support Emotion's `css` prop. Use className instead!
 
 ## Prettier [todo]
 
