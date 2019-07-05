@@ -80,15 +80,15 @@ export default class ResponseParser {
     return id.substring(startIndex, endIndex);
   }
 
-  static convertDataToPoints(timeSeriesData) {
+  static convertDataToPoints(timeDataFrame) {
     const dataPoints: any[] = [];
 
-    for (let k = 0; k < timeSeriesData.length; k++) {
-      const epoch = ResponseParser.dateTimeToEpoch(timeSeriesData[k].timeStamp);
-      const aggKey = ResponseParser.getKeyForAggregationField(timeSeriesData[k]);
+    for (let k = 0; k < timeDataFrame.length; k++) {
+      const epoch = ResponseParser.dateTimeToEpoch(timeDataFrame[k].timeStamp);
+      const aggKey = ResponseParser.getKeyForAggregationField(timeDataFrame[k]);
 
       if (aggKey) {
-        dataPoints.push([timeSeriesData[k][aggKey], epoch]);
+        dataPoints.push([timeDataFrame[k][aggKey], epoch]);
       }
     }
 

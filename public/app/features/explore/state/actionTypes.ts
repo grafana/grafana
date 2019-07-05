@@ -9,7 +9,7 @@ import {
   LogLevel,
   TimeRange,
   DataQueryError,
-  SeriesData,
+  DataFrame,
   LogsModel,
   TimeSeries,
   DataQueryResponseData,
@@ -201,7 +201,7 @@ export interface UpdateDatasourceInstancePayload {
 
 export interface ToggleLogLevelPayload {
   exploreId: ExploreId;
-  hiddenLogLevels: Set<LogLevel>;
+  hiddenLogLevels: LogLevel[];
 }
 
 export interface QueriesImportedPayload {
@@ -239,7 +239,7 @@ export interface ProcessQueryResultsPayload {
   datasourceId: string;
   loadingState: LoadingState;
   series?: DataQueryResponseData[];
-  delta?: SeriesData[];
+  delta?: DataFrame[];
 }
 
 export interface RunQueriesBatchPayload {
@@ -248,7 +248,7 @@ export interface RunQueriesBatchPayload {
 }
 
 export interface LimitMessageRatePayload {
-  series: SeriesData[];
+  series: DataFrame[];
   exploreId: ExploreId;
   datasourceId: string;
 }

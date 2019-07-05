@@ -199,6 +199,8 @@ Notification services which need public image access are marked as 'external onl
 
 # Use alert rule tags in notifications {#alert-rule-tags}
 
+> Only available in Grafana v6.3+.
+
 Grafana can include a list of tags (key/value) in the notification.
 It's called alert rule tags to contrast with tags parsed from timeseries.
 It currently supports only the Prometheus Alertmanager notifier.

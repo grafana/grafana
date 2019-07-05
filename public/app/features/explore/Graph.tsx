@@ -79,7 +79,7 @@ interface GraphProps {
   split?: boolean;
   userOptions?: any;
   onChangeTime?: (range: AbsoluteTimeRange) => void;
-  onToggleSeries?: (alias: string, hiddenSeries: Set<string>) => void;
+  onToggleSeries?: (alias: string, hiddenSeries: string[]) => void;
 }
 
 interface GraphState {
@@ -213,13 +213,13 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     // This implementation is more or less a copy of GraphPanel's logic.
     // TODO: we need to use Graph's panel controller or split it into smaller
     // controllers to remove code duplication. Right now we cant easily use that, since Explore
-    // is not using SeriesData for graph yet
+    // is not using DataFrame for graph yet
 
     const exclusive = event.ctrlKey || event.metaKey || event.shiftKey;
 
     this.setState((state, props) => {
-      const { data } = props;
-      let nextHiddenSeries = [];
+      const { data, onToggleSeries } = props;
+      let nextHiddenSeries: string[] = [];
       if (exclusive) {
         // Toggling series with key makes the series itself to toggle
         if (state.hiddenSeries.indexOf(label) > -1) {
@@ -236,6 +236,10 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         } else {
           nextHiddenSeries = difference(allSeriesLabels, [label]);
         }
+      }
+
+      if (onToggleSeries) {
+        onToggleSeries(label, nextHiddenSeries);
       }
 
       return {

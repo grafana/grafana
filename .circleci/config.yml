@@ -114,7 +114,7 @@ jobs:
           name: check documentation spelling errors
           command: 'codespell -I ./words_to_ignore.txt docs/'
 
-  backend-lint:
+  lint-go:
     docker:
       - image: circleci/golang:1.12.6
         environment:
@@ -124,8 +124,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: backend lint
-          command: './scripts/backend-lint.sh'
+          name: Lint Go
+          command: 'make lint-go'
 
   test-frontend:
     docker:
@@ -633,7 +633,7 @@ workflows:
           filters: *filter-only-master
       - codespell:
           filters: *filter-only-master
-      - backend-lint:
+      - lint-go:
           filters: *filter-only-master
       - test-frontend:
           filters: *filter-only-master
@@ -649,7 +649,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
@@ -661,7 +661,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -671,7 +671,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
@@ -682,7 +682,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -702,7 +702,7 @@ workflows:
           filters: *filter-only-release
       - codespell:
           filters: *filter-only-release
-      - backend-lint:
+      - lint-go:
           filters: *filter-only-release
       - test-frontend:
           filters: *filter-only-release
@@ -718,7 +718,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
@@ -730,7 +730,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -741,7 +741,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -751,7 +751,7 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -769,7 +769,7 @@ workflows:
               - build-fast-frontend
         - codespell:
             filters: *filter-not-release-or-master
-        - backend-lint:
+        - lint-go:
             filters: *filter-not-release-or-master
         - test-frontend:
             filters: *filter-not-release-or-master
@@ -787,7 +787,7 @@ workflows:
               - test-backend
               - test-frontend
               - codespell
-              - backend-lint
+              - lint-go
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
@@ -798,7 +798,7 @@ workflows:
               - test-backend
               - test-frontend
               - codespell
-              - backend-lint
+              - lint-go
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test

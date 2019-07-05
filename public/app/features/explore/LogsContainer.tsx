@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import {
@@ -52,7 +52,7 @@ interface LogsContainerProps {
   absoluteRange: AbsoluteTimeRange;
 }
 
-export class LogsContainer extends Component<LogsContainerProps> {
+export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
 
@@ -68,7 +68,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
     this.props.changeDedupStrategy(this.props.exploreId, dedupStrategy);
   };
 
-  hangleToggleLogLevel = (hiddenLogLevels: Set<LogLevel>) => {
+  handleToggleLogLevel = (hiddenLogLevels: LogLevel[]) => {
     const { exploreId } = this.props;
     this.props.toggleLogLevelAction({
       exploreId,
@@ -85,18 +85,6 @@ export class LogsContainer extends Component<LogsContainerProps> {
 
     return [];
   };
-
-  // Limit re-rendering to when a query is finished executing or when the deduplication strategy changes
-  // for performance reasons.
-  shouldComponentUpdate(nextProps: LogsContainerProps): boolean {
-    return (
-      nextProps.loading !== this.props.loading ||
-      nextProps.dedupStrategy !== this.props.dedupStrategy ||
-      nextProps.logsHighlighterExpressions !== this.props.logsHighlighterExpressions ||
-      nextProps.scanning !== this.props.scanning ||
-      nextProps.isLive !== this.props.isLive
-    );
-  }
 
   render() {
     const {
@@ -139,7 +127,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
           onStartScanning={onStartScanning}
           onStopScanning={onStopScanning}
           onDedupStrategyChange={this.handleDedupStrategyChange}
-          onToggleLogLevel={this.hangleToggleLogLevel}
+          onToggleLogLevel={this.handleToggleLogLevel}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
           scanning={scanning}

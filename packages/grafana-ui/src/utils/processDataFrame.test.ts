@@ -1,21 +1,21 @@
 import {
-  isSeriesData,
+  isDataFrame,
   toLegacyResponseData,
   isTableData,
-  toSeriesData,
+  toDataFrame,
   guessFieldTypes,
   guessFieldTypeFromValue,
-} from './processSeriesData';
-import { FieldType, TimeSeries, SeriesData, TableData } from '../types/data';
+} from './processDataFrame';
+import { FieldType, TimeSeries, DataFrame, TableData } from '../types/data';
 import { dateTime } from './moment_wrapper';
 
-describe('toSeriesData', () => {
+describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
     const input1 = {
       target: 'Field Name',
       datapoints: [[100, 1], [200, 2]],
     };
-    let series = toSeriesData(input1);
+    let series = toDataFrame(input1);
     expect(series.fields[0].name).toBe(input1.target);
     expect(series.rows).toBe(input1.datapoints);
 
@@ -25,16 +25,16 @@ describe('toSeriesData', () => {
       target: '',
       datapoints: [[100, 1], [200, 2]],
     };
-    series = toSeriesData(input2);
+    series = toDataFrame(input2);
     expect(series.fields[0].name).toEqual('Value');
   });
 
-  it('keeps seriesData unchanged', () => {
+  it('keeps dataFrame unchanged', () => {
     const input = {
       fields: [{ text: 'A' }, { text: 'B' }, { text: 'C' }],
       rows: [[100, 'A', 1], [200, 'B', 2], [300, 'C', 3]],
     };
-    const series = toSeriesData(input);
+    const series = toDataFrame(input);
     expect(series).toBe(input);
   });
 
@@ -77,12 +77,12 @@ describe('SerisData backwards compatibility', () => {
       target: 'Field Name',
       datapoints: [[100, 1], [200, 2]],
     };
-    const series = toSeriesData(timeseries);
-    expect(isSeriesData(timeseries)).toBeFalsy();
-    expect(isSeriesData(series)).toBeTruthy();
+    const series = toDataFrame(timeseries);
+    expect(isDataFrame(timeseries)).toBeFalsy();
+    expect(isDataFrame(series)).toBeTruthy();
 
     const roundtrip = toLegacyResponseData(series) as TimeSeries;
-    expect(isSeriesData(roundtrip)).toBeFalsy();
+    expect(isDataFrame(roundtrip)).toBeFalsy();
     expect(roundtrip.target).toBe(timeseries.target);
   });
 
@@ -91,17 +91,17 @@ describe('SerisData backwards compatibility', () => {
       columns: [{ text: 'a', unit: 'ms' }, { text: 'b', unit: 'zz' }, { text: 'c', unit: 'yy' }],
       rows: [[100, 1, 'a'], [200, 2, 'a']],
     };
-    const series = toSeriesData(table);
+    const series = toDataFrame(table);
     expect(isTableData(table)).toBeTruthy();
-    expect(isSeriesData(series)).toBeTruthy();
+    expect(isDataFrame(series)).toBeTruthy();
 
     const roundtrip = toLegacyResponseData(series) as TimeSeries;
     expect(isTableData(roundtrip)).toBeTruthy();
     expect(roundtrip).toMatchObject(table);
   });
 
-  it('converts SeriesData to TableData to series and back again', () => {
-    const series: SeriesData = {
+  it('converts DataFrame to TableData to series and back again', () => {
+    const series: DataFrame = {
       refId: 'Z',
       meta: {
         somethign: 8,
