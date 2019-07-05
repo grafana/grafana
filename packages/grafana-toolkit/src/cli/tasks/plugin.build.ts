@@ -11,8 +11,9 @@ import * as prettier from 'prettier';
 import { useSpinner } from '../utils/useSpinner';
 import { testPlugin } from './plugin/tests';
 import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
-
-interface PrecommitOptions {}
+interface PluginBuildOptions {
+  coverage: boolean;
+}
 
 export const bundlePlugin = useSpinner<PluginBundleOptions>('Compiling...', async options => await bundleFn(options));
 
@@ -22,14 +23,25 @@ export const clean = useSpinner<void>('Cleaning', async () => await execa('rimra
 
 export const prepare = useSpinner<void>('Preparing', async () => {
   // Make sure a local tsconfig exists.  Otherwise this will work, but have odd behavior
-  const tsConfigPath = path.resolve(process.cwd(), 'tsconfig.json');
-  if (!fs.existsSync(tsConfigPath)) {
-    const defaultTsConfigPath = path.resolve(__dirname, '../../config/tsconfig.plugin.local.json');
-    fs.copyFile(defaultTsConfigPath, tsConfigPath, err => {
+  let filePath = path.resolve(process.cwd(), 'tsconfig.json');
+  if (!fs.existsSync(filePath)) {
+    const srcFile = path.resolve(__dirname, '../../config/tsconfig.plugin.local.json');
+    fs.copyFile(srcFile, filePath, err => {
       if (err) {
         throw err;
       }
-      console.log('Created tsconfig.json file');
+      console.log(`Created: ${filePath}`);
+    });
+  }
+  // Make sure a local .prettierrc.js exists.  Otherwise this will work, but have odd behavior
+  filePath = path.resolve(process.cwd(), '.prettierrc.js');
+  if (!fs.existsSync(filePath)) {
+    const srcFile = path.resolve(__dirname, '../../config/prettier.plugin.rc.js');
+    fs.copyFile(srcFile, filePath, err => {
+      if (err) {
+        throw err;
+      }
+      console.log(`Created: ${filePath}`);
     });
   }
   return Promise.resolve();
@@ -68,7 +80,8 @@ const prettierCheckPlugin = useSpinner<void>('Prettier check', async () => {
             filepath: s,
           })
         ) {
-          failed = true;
+          console.log('TODO eslint/prettier fix? ' + s);
+          failed = false; //true;
         }
 
         resolve({
@@ -89,7 +102,7 @@ const prettierCheckPlugin = useSpinner<void>('Prettier check', async () => {
 });
 
 // @ts-ignore
-const lintPlugin = useSpinner<void>('Linting', async () => {
+export const lintPlugin = useSpinner<void>('Linting', async () => {
   let tsLintConfigPath = path.resolve(process.cwd(), 'tslint.json');
   if (!fs.existsSync(tsLintConfigPath)) {
     tsLintConfigPath = path.resolve(__dirname, '../../config/tslint.plugin.json');
@@ -131,14 +144,14 @@ const lintPlugin = useSpinner<void>('Linting', async () => {
   }
 });
 
-const pluginBuildRunner: TaskRunner<PrecommitOptions> = async () => {
+export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({ coverage }) => {
   await clean();
   await prepare();
   await prettierCheckPlugin();
   // @ts-ignore
   await lintPlugin();
-  await testPlugin({ updateSnapshot: false, coverage: false });
+  await testPlugin({ updateSnapshot: false, coverage });
   await bundlePlugin({ watch: false, production: true });
 };
 
-export const pluginBuildTask = new Task<PrecommitOptions>('Build plugin', pluginBuildRunner);
+export const pluginBuildTask = new Task<PluginBuildOptions>('Build plugin', pluginBuildRunner);

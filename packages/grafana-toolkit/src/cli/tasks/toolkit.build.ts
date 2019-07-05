@@ -55,6 +55,8 @@ const moveFiles = () => {
     'README.md',
     'CHANGELOG.md',
     'bin/grafana-toolkit.dist.js',
+    'src/config/prettier.plugin.config.json',
+    'src/config/prettier.plugin.rc.js',
     'src/config/tsconfig.plugin.json',
     'src/config/tsconfig.plugin.local.json',
     'src/config/tslint.plugin.json',
