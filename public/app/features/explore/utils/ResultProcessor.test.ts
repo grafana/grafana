@@ -1,4 +1,4 @@
-jest.mock('@grafana/data', () => ({
+jest.mock('@grafana/data/src/utils/moment_wrapper', () => ({
   dateTime: (ts: any) => {
     return {
       valueOf: () => ts,
@@ -16,8 +16,8 @@ jest.mock('@grafana/data', () => ({
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import { TimeSeries, LogRowModel, LogsMetaItem } from '@grafana/data';
 import { toFixed } from '@grafana/ui';
+import { TimeSeries, LogRowModel, LogsMetaItem } from '@grafana/data';
 
 const testContext = (options: any = {}) => {
   const response = [
