@@ -17,6 +17,7 @@ const yarnlink = useSpinner<void>('Linking local toolkit', async () => {
   } catch (e) {
     console.log('\n', e.message, '\n');
   }
+  await execa('yarn', ['link', '@grafana/toolkit']);
 
   // Add all the same dependencies as toolkit
   const args: string[] = ['add'];
@@ -25,7 +26,6 @@ const yarnlink = useSpinner<void>('Linking local toolkit', async () => {
     args.push(`${key}@${value}`);
   }
   await execa('yarn', args);
-  await execa('yarn', ['link', '@grafana/toolkit']);
 
   console.log('Added dependencies required by local @grafana/toolkit.  Do not checkin this package.json!');
 

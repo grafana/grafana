@@ -2,6 +2,7 @@ import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { useSpinner } from '../utils/useSpinner';
 import { restoreCwd } from '../utils/cwd';
+import { getPluginJson } from '../../config/utils/pluginValidation';
 
 // @ts-ignore
 import execa = require('execa');
@@ -48,7 +49,7 @@ const pluginCIRunner: TaskRunner<PluginCIOptions> = async ({ dryRun }) => {
   }
 
   // TODO? can this typed from @grafana/ui?
-  const pluginInfo = require(`${distDir}/plugin.json`);
+  const pluginInfo = getPluginJson(`${distDir}/plugin.json`);
   const zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
   const zipFile = path.resolve(artifactsDir, zipName);
   process.chdir(distDir);
