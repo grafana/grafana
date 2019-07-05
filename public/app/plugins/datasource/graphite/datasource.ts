@@ -15,8 +15,8 @@ export class GraphiteDatasource {
   supportsTags: boolean;
   cacheTimeout: any;
   withCredentials: boolean;
-  funcDefs = null;
-  funcDefsPromise = null;
+  funcDefs: any = null;
+  funcDefsPromise: Promise<any> = null;
   _seriesRefLetters: string;
 
   /** @ngInject */
@@ -107,7 +107,7 @@ export class GraphiteDatasource {
   }
 
   parseTags(tagString: string) {
-    let tags = [];
+    let tags: string[] = [];
     tags = tagString.split(',');
     if (tags.length === 1) {
       tags = tagString.split(' ');
@@ -154,7 +154,7 @@ export class GraphiteDatasource {
     } else {
       // Graphite event as annotation
       const tags = this.templateSrv.replace(options.annotation.tags);
-      return this.events({ range: options.rangeRaw, tags: tags }).then(results => {
+      return this.events({ range: options.rangeRaw, tags: tags }).then((results: any) => {
         const list = [];
         for (let i = 0; i < results.data.length; i++) {
           const e = results.data[i];
@@ -309,7 +309,7 @@ export class GraphiteDatasource {
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions).then(results => {
+    return this.doGraphiteRequest(httpOptions).then((results: any) => {
       return _.map(results.data, tag => {
         return {
           text: tag.tag,
@@ -372,7 +372,7 @@ export class GraphiteDatasource {
       httpOptions.params.until = this.translateTime(options.range.to, true, options.timezone);
     }
 
-    return this.doGraphiteRequest(httpOptions).then(results => {
+    return this.doGraphiteRequest(httpOptions).then((results: any) => {
       if (results.data) {
         return _.map(results.data, tag => {
           return { text: tag };
@@ -478,7 +478,7 @@ export class GraphiteDatasource {
         }
         return this.funcDefs;
       })
-      .catch(err => {
+      .catch((err: any) => {
         console.log('Fetching graphite functions error', err);
         this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
         return this.funcDefs;
@@ -524,7 +524,7 @@ export class GraphiteDatasource {
   buildGraphiteParams(options: any, scopedVars: ScopedVars) {
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
-      targets = {};
+      targets: any = {};
     let target, targetValue, i;
     const regex = /\#([A-Z])/g;
     const intervalFormatFixRegex = /'(\d+)m'/gi;
