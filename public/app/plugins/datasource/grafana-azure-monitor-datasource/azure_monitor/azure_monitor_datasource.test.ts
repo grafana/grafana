@@ -93,216 +93,48 @@ describe('AzureMonitorDatasource', () => {
             metricDefinition: 'Microsoft.Compute/virtualMachines',
             metricName: 'Percentage CPU',
             timeGrain: 'PT1H',
-            alias: '',
+            alias: '{{metric}}',
           },
         },
       ],
     };
 
-    describe('and data field is average', () => {
-      const response = {
-        value: [
-          {
-            timeseries: [
-              {
-                data: [
-                  {
-                    timeStamp: '2017-08-22T21:00:00Z',
-                    average: 1.0503333333333331,
-                  },
-                  {
-                    timeStamp: '2017-08-22T22:00:00Z',
-                    average: 1.045083333333333,
-                  },
-                  {
-                    timeStamp: '2017-08-22T23:00:00Z',
-                    average: 1.0457499999999995,
-                  },
-                ],
-              },
-            ],
-            id:
-              '/subscriptions/xxx/resourceGroups/testRG/providers/Microsoft.Compute/virtualMachines' +
-              '/testRN/providers/Microsoft.Insights/metrics/Percentage CPU',
-            name: {
-              value: 'Percentage CPU',
-              localizedValue: 'Percentage CPU',
-            },
-            type: 'Microsoft.Insights/metrics',
+    const response = {
+      results: {
+        A: {
+          refId: 'A',
+          meta: {
+            rawQuery:
+              'aggregation=Average&api-version=2018-01-01&interval=PT1M' +
+              '&metricnames=Percentage+CPU&timespan=2019-05-19T15%3A11%3A37Z%2F2019-05-19T21%3A11%3A37Z',
             unit: 'Percent',
           },
-        ],
+          series: [
+            {
+              name: 'Percentage CPU',
+              points: [[2.2075, 1558278660000], [2.29, 1558278720000]],
+            },
+          ],
+          tables: null,
+        },
+      },
+    };
+
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+        expect(options.url).toContain('/api/tsdb/query');
+        return ctx.$q.when({ data: response, status: 200 });
       };
-
-      beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
-          expect(options.url).toContain(
-            '/testRG/providers/Microsoft.Compute/virtualMachines/testRN/providers/microsoft.insights/metrics'
-          );
-          return ctx.$q.when({ data: response, status: 200 });
-        };
-      });
-
-      it('should return a list of datapoints', () => {
-        return ctx.ds.query(options).then(results => {
-          expect(results.data.length).toBe(1);
-          expect(results.data[0].target).toEqual('testRN.Percentage CPU');
-          expect(results.data[0].datapoints[0][1]).toEqual(1503435600000);
-          expect(results.data[0].datapoints[0][0]).toEqual(1.0503333333333331);
-          expect(results.data[0].datapoints[2][1]).toEqual(1503442800000);
-          expect(results.data[0].datapoints[2][0]).toEqual(1.0457499999999995);
-        });
-      });
     });
 
-    describe('and data field is total', () => {
-      const response = {
-        value: [
-          {
-            timeseries: [
-              {
-                data: [
-                  {
-                    timeStamp: '2017-08-22T21:00:00Z',
-                    total: 1.0503333333333331,
-                  },
-                  {
-                    timeStamp: '2017-08-22T22:00:00Z',
-                    total: 1.045083333333333,
-                  },
-                  {
-                    timeStamp: '2017-08-22T23:00:00Z',
-                    total: 1.0457499999999995,
-                  },
-                ],
-              },
-            ],
-            id:
-              '/subscriptions/xxx/resourceGroups/testRG/providers/Microsoft.Compute/virtualMachines' +
-              '/testRN/providers/Microsoft.Insights/metrics/Percentage CPU',
-            name: {
-              value: 'Percentage CPU',
-              localizedValue: 'Percentage CPU',
-            },
-            type: 'Microsoft.Insights/metrics',
-            unit: 'Percent',
-          },
-        ],
-      };
-
-      beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
-          expect(options.url).toContain(
-            '/testRG/providers/Microsoft.Compute/virtualMachines/testRN/providers/microsoft.insights/metrics'
-          );
-          return ctx.$q.when({ data: response, status: 200 });
-        };
-      });
-
-      it('should return a list of datapoints', () => {
-        return ctx.ds.query(options).then(results => {
-          expect(results.data.length).toBe(1);
-          expect(results.data[0].target).toEqual('testRN.Percentage CPU');
-          expect(results.data[0].datapoints[0][1]).toEqual(1503435600000);
-          expect(results.data[0].datapoints[0][0]).toEqual(1.0503333333333331);
-          expect(results.data[0].datapoints[2][1]).toEqual(1503442800000);
-          expect(results.data[0].datapoints[2][0]).toEqual(1.0457499999999995);
-        });
-      });
-    });
-
-    describe('and data has a dimension filter', () => {
-      const response = {
-        value: [
-          {
-            timeseries: [
-              {
-                data: [
-                  {
-                    timeStamp: '2017-08-22T21:00:00Z',
-                    total: 1.0503333333333331,
-                  },
-                  {
-                    timeStamp: '2017-08-22T22:00:00Z',
-                    total: 1.045083333333333,
-                  },
-                  {
-                    timeStamp: '2017-08-22T23:00:00Z',
-                    total: 1.0457499999999995,
-                  },
-                ],
-                metadatavalues: [
-                  {
-                    name: {
-                      value: 'blobtype',
-                      localizedValue: 'blobtype',
-                    },
-                    value: 'BlockBlob',
-                  },
-                ],
-              },
-            ],
-            id:
-              '/subscriptions/xxx/resourceGroups/testRG/providers/Microsoft.Compute/virtualMachines' +
-              '/testRN/providers/Microsoft.Insights/metrics/Percentage CPU',
-            name: {
-              value: 'Percentage CPU',
-              localizedValue: 'Percentage CPU',
-            },
-            type: 'Microsoft.Insights/metrics',
-            unit: 'Percent',
-          },
-        ],
-      };
-
-      describe('and with no alias specified', () => {
-        beforeEach(() => {
-          ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
-            const expected =
-              '/testRG/providers/Microsoft.Compute/virtualMachines/testRN/providers/microsoft.insights/metrics';
-            expect(options.url).toContain(expected);
-            return ctx.$q.when({ data: response, status: 200 });
-          };
-        });
-
-        it('should return a list of datapoints', () => {
-          return ctx.ds.query(options).then(results => {
-            expect(results.data.length).toBe(1);
-            expect(results.data[0].target).toEqual('testRN{blobtype=BlockBlob}.Percentage CPU');
-            expect(results.data[0].datapoints[0][1]).toEqual(1503435600000);
-            expect(results.data[0].datapoints[0][0]).toEqual(1.0503333333333331);
-            expect(results.data[0].datapoints[2][1]).toEqual(1503442800000);
-            expect(results.data[0].datapoints[2][0]).toEqual(1.0457499999999995);
-          });
-        });
-      });
-
-      describe('and with an alias specified', () => {
-        beforeEach(() => {
-          options.targets[0].azureMonitor.alias =
-            '{{resourcegroup}} + {{namespace}} + {{resourcename}} + ' +
-            '{{metric}} + {{dimensionname}} + {{dimensionvalue}}';
-
-          ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
-            const expected =
-              '/testRG/providers/Microsoft.Compute/virtualMachines/testRN/providers/microsoft.insights/metrics';
-            expect(options.url).toContain(expected);
-            return ctx.$q.when({ data: response, status: 200 });
-          };
-        });
-
-        it('should return a list of datapoints', () => {
-          return ctx.ds.query(options).then(results => {
-            expect(results.data.length).toBe(1);
-            const expected =
-              'testRG + Microsoft.Compute/virtualMachines + testRN + Percentage CPU + blobtype + BlockBlob';
-            expect(results.data[0].target).toEqual(expected);
-            expect(results.data[0].datapoints[0][1]).toEqual(1503435600000);
-            expect(results.data[0].datapoints[0][0]).toEqual(1.0503333333333331);
-            expect(results.data[0].datapoints[2][1]).toEqual(1503442800000);
-            expect(results.data[0].datapoints[2][0]).toEqual(1.0457499999999995);
-          });
-        });
+    it('should return a list of datapoints', () => {
+      return ctx.ds.query(options).then(results => {
+        expect(results.data.length).toBe(1);
+        expect(results.data[0].name).toEqual('Percentage CPU');
+        expect(results.data[0].rows[0][1]).toEqual(1558278660000);
+        expect(results.data[0].rows[0][0]).toEqual(2.2075);
+        expect(results.data[0].rows[1][1]).toEqual(1558278720000);
+        expect(results.data[0].rows[1][0]).toEqual(2.29);
       });
     });
   });

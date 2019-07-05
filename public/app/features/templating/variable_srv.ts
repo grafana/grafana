@@ -194,7 +194,7 @@ export class VariableSrv {
           }),
           text: _.map(selected, val => {
             return val.text;
-          }).join(' + '),
+          }),
         };
       }
 
