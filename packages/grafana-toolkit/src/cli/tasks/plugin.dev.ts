@@ -11,7 +11,12 @@ const bundlePlugin = useSpinner<PluginBundleOptions>('Bundling plugin in dev mod
 });
 
 const yarnlink = useSpinner<void>('Linking local toolkit', async () => {
-  // await execa('yarn', ['remove', '@grafana/toolkit']);
+  try {
+    // Make sure we are not using package.json defined toolkit
+    await execa('yarn', ['remove', '@grafana/toolkit']);
+  } catch (e) {
+    console.log('\n', e.message, '\n');
+  }
 
   // Add all the same dependencies as toolkit
   const args: string[] = ['add'];
@@ -22,7 +27,7 @@ const yarnlink = useSpinner<void>('Linking local toolkit', async () => {
   await execa('yarn', args);
   await execa('yarn', ['link', '@grafana/toolkit']);
 
-  console.log('Added the same dependencies.  Do not checkin this package.json');
+  console.log('Added dependencies required by local @grafana/toolkit.  Do not checkin this package.json!');
 
   return Promise.resolve();
 });
