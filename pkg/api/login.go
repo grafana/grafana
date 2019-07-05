@@ -38,7 +38,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData.Settings["loginHint"] = setting.LoginHint
 	viewData.Settings["passwordHint"] = setting.PasswordHint
 	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
-	viewData.Settings["samlEnabled"] = isSamlEnabled()
+	viewData.Settings["samlEnabled"] = hs.Cfg.SAMLEnabled
 
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
 		deleteCookie(c, LoginErrorCookieName)
@@ -61,15 +61,6 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	}
 
 	c.Redirect(setting.AppSubUrl + "/")
-}
-
-func isSamlEnabled() bool {
-	enabledCmd := models.IsSAMLEnabledCommand{}
-	if err := bus.Dispatch(&enabledCmd); err != nil {
-		return false
-	}
-
-	return enabledCmd.Result
 }
 
 func tryOAuthAutoLogin(c *models.ReqContext) bool {
