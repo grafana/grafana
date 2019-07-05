@@ -68,6 +68,10 @@
             <i class="btn-service-icon fa fa-sign-in"></i>
             Sign in with {{oauth.generic_oauth.name}}
           </a>
+          <a class="btn btn-medium btn-service btn-service--github login-btn" href="login/saml" target="_self" ng-if="samlEnabled">
+            <i class="btn-service-icon fa fa-key"></i>
+            Sign in with SAML
+          </a>
         </div>
         <div class="login-signup-box" ng-show="!disableUserSignUp">
           <div class="login-signup-title p-r-1">

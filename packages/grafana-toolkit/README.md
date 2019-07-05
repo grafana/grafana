@@ -80,8 +80,8 @@ Adidtionaly, you can also provide additional Jest config via package.json file. 
 - [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
 
 
-## Working with CSS
-We support pure css, SASS and CSS in JS approach (via Emotion).
+## Working with CSS & static assets
+We support pure css, SASS and CSS in JS approach (via Emotion). All static assets referenced in your code (i.e. images) should be placed under `src/static` directory and referenced using relative paths.
 
 1. Single css/sass file
 Create your css/sass file and import it in your plugin entry point (typically module.ts):
@@ -91,13 +91,37 @@ import 'path/to/your/css_or_sass
 ```
 The styles will be injected via `style` tag during runtime.
 
-2. Theme css/sass files
-If you want to provide different stylesheets for Dark/Light theme, create `dark.[css|scss]` and `light.[css|scss]` files in `src/styles` directory of your plugin. Based on that we will generate stylesheets that will end up in `dist/styles` directory.
+Note, that imported static assets will be inlined as base64 URIs. *This can be a subject of change in the future!*
+
+2. Theme specific css/sass files
+If you want to provide different stylesheets for dark/light theme, create `dark.[css|scss]` and `light.[css|scss]` files in `src/styles` directory of your plugin. Based on that we will generate stylesheets that will end up in `dist/styles` directory.
 
 TODO: add note about loadPluginCss
 
 3. Emotion
-TODO
+Starting from Grafana 6.2 our suggested way of styling plugins is by using [Emotion](https://emotion.sh). It's a css-in-js library that we use internaly at Grafana. The biggest advantage of using Emotion is that you will get access to Grafana Theme variables.
+
+To use start using Emotion you first need to add it to your plugin dependencies:
+
+```
+  yarn add "@emotion/core"@10.0.14
+```
+
+Then, import `css` function from emotion:
+
+```import { css } from 'emotion'```
+
+And start implementing your styles:
+
+```tsx
+const MyComponent = () => {
+  return <div className={css`background: red;`} />
+}
+```
+
+Using themes: TODO, for now please refer to [internal guide](../../style_guides/themes.md)
+
+> NOTE: We do not support Emotion's `css` prop. Use className instead!
 
 ## Prettier [todo]
 

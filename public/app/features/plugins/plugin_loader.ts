@@ -27,6 +27,7 @@ import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
+import * as emotion from 'emotion';
 import * as grafanaData from '@grafana/data';
 import * as grafanaUI from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
@@ -90,6 +91,7 @@ exposeToPlugin('slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
+exposeToPlugin('emotion', emotion);
 
 exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressionSrv,

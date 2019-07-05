@@ -4,10 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/ldap.v3"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestLDAPLogin(t *testing.T) {
@@ -24,7 +25,7 @@ func TestLDAPLogin(t *testing.T) {
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 			connection.setSearchResult(&result)
 
-			connection.bindProvider = func(username, password string) error {
+			connection.BindProvider = func(username, password string) error {
 				return &ldap.Error{
 					ResultCode: 49,
 				}
@@ -42,12 +43,12 @@ func TestLDAPLogin(t *testing.T) {
 			So(err, ShouldEqual, ErrInvalidCredentials)
 		})
 
-		Convey("Returns an error when search hasn't find anything", func() {
+		Convey("Returns an error when search didn't find anything", func() {
 			connection := &MockConnection{}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{}}
 			connection.setSearchResult(&result)
 
-			connection.bindProvider = func(username, password string) error {
+			connection.BindProvider = func(username, password string) error {
 				return nil
 			}
 			server := &Server{
@@ -60,7 +61,7 @@ func TestLDAPLogin(t *testing.T) {
 
 			_, err := server.Login(defaultLogin)
 
-			So(err, ShouldEqual, ErrInvalidCredentials)
+			So(err, ShouldEqual, ErrCouldNotFindUser)
 		})
 
 		Convey("When search returns an error", func() {
@@ -68,7 +69,7 @@ func TestLDAPLogin(t *testing.T) {
 			expected := errors.New("Killa-gorilla")
 			connection.setSearchError(expected)
 
-			connection.bindProvider = func(username, password string) error {
+			connection.BindProvider = func(username, password string) error {
 				return nil
 			}
 			server := &Server{
@@ -98,7 +99,7 @@ func TestLDAPLogin(t *testing.T) {
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
 			connection.setSearchResult(&result)
 
-			connection.bindProvider = func(username, password string) error {
+			connection.BindProvider = func(username, password string) error {
 				return nil
 			}
 			server := &Server{
@@ -118,6 +119,84 @@ func TestLDAPLogin(t *testing.T) {
 
 			So(err, ShouldBeNil)
 			So(resp.Login, ShouldEqual, "markelog")
+		})
+
+		Convey("Should perform unauthentificate bind without admin", func() {
+			connection := &MockConnection{}
+			entry := ldap.Entry{
+				DN: "test",
+			}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			connection.setSearchResult(&result)
+
+			connection.UnauthenticatedBindProvider = func() error {
+				return nil
+			}
+			server := &Server{
+				Config: &ServerConfig{
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: connection,
+				log:        log.New("test-logger"),
+			}
+
+			user, err := server.Login(defaultLogin)
+
+			So(err, ShouldBeNil)
+			So(user.AuthId, ShouldEqual, "test")
+			So(connection.UnauthenticatedBindCalled, ShouldBeTrue)
+		})
+
+		Convey("Should perform authentificate binds", func() {
+			connection := &MockConnection{}
+			entry := ldap.Entry{
+				DN: "test",
+			}
+			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			connection.setSearchResult(&result)
+
+			adminUsername := ""
+			adminPassword := ""
+			username := ""
+			password := ""
+
+			i := 0
+			connection.BindProvider = func(name, pass string) error {
+				i++
+				if i == 1 {
+					adminUsername = name
+					adminPassword = pass
+				}
+
+				if i == 2 {
+					username = name
+					password = pass
+				}
+
+				return nil
+			}
+			server := &Server{
+				Config: &ServerConfig{
+					BindDN:        "killa",
+					BindPassword:  "gorilla",
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: connection,
+				log:        log.New("test-logger"),
+			}
+
+			user, err := server.Login(defaultLogin)
+
+			So(err, ShouldBeNil)
+
+			So(user.AuthId, ShouldEqual, "test")
+			So(connection.BindCalled, ShouldBeTrue)
+
+			So(adminUsername, ShouldEqual, "killa")
+			So(adminPassword, ShouldEqual, "gorilla")
+
+			So(username, ShouldEqual, "test")
+			So(password, ShouldEqual, "pwd")
 		})
 	})
 }
