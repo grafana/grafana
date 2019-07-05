@@ -1,6 +1,7 @@
 import React, { PureComponent, ChangeEvent, MouseEvent } from 'react';
 import { Button, FormLabel, Input } from '@grafana/ui';
 import { User } from 'app/types';
+import config from 'app/core/config';
 import { ProfileUpdateFields } from 'app/core/utils/UserProvider';
 
 export interface Props {
@@ -50,6 +51,7 @@ export class UserProfileEditForm extends PureComponent<Props, State> {
   render() {
     const { name, email, login } = this.state;
     const { isSavingUser } = this.props;
+    const { disableLoginForm } = config;
 
     return (
       <>
@@ -61,11 +63,35 @@ export class UserProfileEditForm extends PureComponent<Props, State> {
           </div>
           <div className="gf-form max-width-30">
             <FormLabel className="width-8">Email</FormLabel>
-            <Input className="gf-form-input max-width-22" type="text" onChange={this.onEmailChange} value={email} />
+            <Input
+              className="gf-form-input max-width-22"
+              type="text"
+              onChange={this.onEmailChange}
+              value={email}
+              disabled={disableLoginForm}
+            />
+            {disableLoginForm && (
+              <i
+                className="fa fa-lock gf-form-icon--right-absolute"
+                bs-tooltip="'Login Details Locked - managed in another system.'"
+              />
+            )}
           </div>
           <div className="gf-form max-width-30">
             <FormLabel className="width-8">Username</FormLabel>
-            <Input className="gf-form-input max-width-22" type="text" onChange={this.onLoginChange} value={login} />
+            <Input
+              className="gf-form-input max-width-22"
+              type="text"
+              onChange={this.onLoginChange}
+              value={login}
+              disabled={disableLoginForm}
+            />
+            {disableLoginForm && (
+              <i
+                className="fa fa-lock gf-form-icon--right-absolute"
+                bs-tooltip="'Login Details Locked - managed in another system.'"
+              />
+            )}
           </div>
           <div className="gf-form-button-row">
             <Button variant="primary" onClick={this.onSubmitProfileUpdate} disabled={isSavingUser}>
