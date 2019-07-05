@@ -29,7 +29,7 @@
   z-index: $zindex-dropdown;
   flex-direction: column;
   max-width: 600px;
-  top: 50px;
+  top: 41px;
   right: 0px;
 
   .time-picker-popover-body {
@@ -256,6 +256,8 @@ $arrowPadding: $arrowPaddingToBorder * 3;
 .dashboard-timepicker-wrapper {
   position: relative;
   display: flex;
+  // this is to align popover position with explore  ( .explore-toolbar-content-item class)
+  padding: 2px 2px;
 
   .gf-form-select-box__menu {
     right: 0;
