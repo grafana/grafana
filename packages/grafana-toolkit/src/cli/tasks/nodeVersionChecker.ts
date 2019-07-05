@@ -12,21 +12,19 @@ interface NodeVersionCheckerOptions {}
 
 const pattern = /(circleci\/|FROM )node\:([0-9]+(\.[0-9]+){0,2})/gm;
 const packageJsonFile = 'package.json';
-const circleCiConfigFile = '.circleci/config.yml';
-const dockerFile = 'Dockerfile';
 
-export const nodeVersionFiles = [packageJsonFile, circleCiConfigFile, dockerFile];
-const nodeVersionFilesToCheck = [circleCiConfigFile, dockerFile];
 const failures: FailedVersionCheck[] = [];
 
+export const nodeVersionFiles = [packageJsonFile, 'Dockerfile', '.circleci/config.yml'];
+
 const nodeVersionCheckerRunner: TaskRunner<NodeVersionCheckerOptions> = async () => {
+  // Read version from package json and treat that as the expected version in all other locations
   const packageJson = require(`${process.cwd()}/${packageJsonFile}`);
   const expectedVersion = packageJson.engines.node;
 
   console.log(chalk.yellow(`Specified node version in package.json is: ${expectedVersion}`));
 
-  for (let index = 0; index < nodeVersionFilesToCheck.length; index++) {
-    const file = nodeVersionFilesToCheck[index];
+  for (const file of nodeVersionFiles) {
     const fileContent = readFileSync(`${process.cwd()}/${file}`);
     const matches = fileContent.toString('utf8').match(pattern);
 
