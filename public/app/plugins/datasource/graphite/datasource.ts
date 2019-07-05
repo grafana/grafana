@@ -33,8 +33,6 @@ export class GraphiteDatasource {
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;
     this.withCredentials = instanceSettings.withCredentials;
-    // @ts-ignore
-    this.render_method = instanceSettings.render_method || 'POST';
     this.funcDefs = null;
     this.funcDefsPromise = null;
 
