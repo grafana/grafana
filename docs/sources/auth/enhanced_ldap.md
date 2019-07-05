@@ -44,7 +44,7 @@ a user as member of a team and it will not be removed when the user signs in. Th
 
 ## Active LDAP Synchronization
 
->  Only available in Grafana Enterprise v6.3+
+> Only available in Grafana Enterprise v6.3+
 
 In the open source version of Grafana, user data from LDAP will be synchronized only during the login process when authenticating using LDAP.
 
@@ -60,8 +60,11 @@ With this feature you can configure Grafana to actively sync users with LDAP ser
 # @weekly                | Run once a week, midnight between Sat/Sun  | 0 0 0 * * 0
 # @daily (or @midnight)  | Run once a day, midnight                   | 0 0 0 * * *
 # @hourly                | Run once an hour, beginning of hour        | 0 0 * * * *
-sync_cron = "@hourly"
+sync_cron = "0 0 1 * * *" # This is default value (At 1 am every day)
 # This cron expression format uses 6 space-separated fields (including seconds), for example
 # sync_cron = "* */10 * * * *"
 # This will run the LDAP Synchronization every 10th minute, which is also the minimal interval between the grafana sync times i.e. you cannot set it for every 9th minute
+
+# You can also disable active LDAP synchronization
+active_sync_enabled = true # enabled by default
 ```
