@@ -77,22 +77,35 @@ export const getStyleLoaders = () => {
       }
     : 'style-loader';
 
-  const cssLoader = {
-    loader: 'css-loader',
-    options: {
-      importLoaders: 1,
-      sourceMap: true,
+  const cssLoaders = [
+    {
+      loader: 'css-loader',
+      options: {
+        importLoaders: 1,
+        sourceMap: true,
+      },
     },
-  };
+    {
+      loader: 'postcss-loader',
+      options: {
+        plugins: () => [
+          require('postcss-flexbugs-fixes'),
+          require('postcss-preset-env')({
+            autoprefixer: { flexbox: 'no-2009', grid: true },
+          }),
+        ],
+      },
+    },
+  ];
 
   return [
     {
       test: /\.css$/,
-      use: [executiveLoader, cssLoader],
+      use: [executiveLoader, ...cssLoaders],
     },
     {
       test: /\.scss$/,
-      use: [executiveLoader, cssLoader, 'sass-loader'],
+      use: [executiveLoader, ...cssLoaders, 'sass-loader'],
     },
   ];
 };
