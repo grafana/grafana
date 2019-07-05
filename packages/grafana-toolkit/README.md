@@ -123,7 +123,15 @@ Using themes: TODO, for now please refer to [internal guide](../../style_guides/
 
 > NOTE: We do not support Emotion's `css` prop. Use className instead!
 
-## Prettier [todo]
+## Prettier
+When `plugin:build` task is performed we run Prettier check. In order for your IDE to pickup our Prettier config we suggest creating `.prettierrc.js` file in the root directory of your plugin with following contents:
+
+```js
+module.exports = {
+  ...require("./node_modules/@grafana/toolkit/src/config/prettier.plugin.config.json"),
+};
+```
+
 
 ## Development mode [todo]
 `grafana-toolkit plugin:dev [--watch]`
