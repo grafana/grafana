@@ -23,14 +23,25 @@ export const clean = useSpinner<void>('Cleaning', async () => await execa('rimra
 
 export const prepare = useSpinner<void>('Preparing', async () => {
   // Make sure a local tsconfig exists.  Otherwise this will work, but have odd behavior
-  const tsConfigPath = path.resolve(process.cwd(), 'tsconfig.json');
-  if (!fs.existsSync(tsConfigPath)) {
-    const defaultTsConfigPath = path.resolve(__dirname, '../../config/tsconfig.plugin.local.json');
-    fs.copyFile(defaultTsConfigPath, tsConfigPath, err => {
+  let filePath = path.resolve(process.cwd(), 'tsconfig.json');
+  if (!fs.existsSync(filePath)) {
+    const srcFile = path.resolve(__dirname, '../../config/tsconfig.plugin.local.json');
+    fs.copyFile(srcFile, filePath, err => {
       if (err) {
         throw err;
       }
-      console.log('Created tsconfig.json file');
+      console.log(`Created: ${filePath}`);
+    });
+  }
+  // Make sure a local .prettierrc.js exists.  Otherwise this will work, but have odd behavior
+  filePath = path.resolve(process.cwd(), '.prettierrc.js');
+  if (!fs.existsSync(filePath)) {
+    const srcFile = path.resolve(__dirname, '../../config/prettier.plugin.rc.js');
+    fs.copyFile(srcFile, filePath, err => {
+      if (err) {
+        throw err;
+      }
+      console.log(`Created: ${filePath}`);
     });
   }
   return Promise.resolve();
