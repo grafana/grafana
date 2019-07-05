@@ -44,10 +44,10 @@ export default class AdminListUsersCtrl {
   }
 
   addUsersAuthLabels() {
-    this.users.forEach(user => {
+    for (const user of this.users) {
       user.authLabel = getAuthLabel(user);
       user.authLabelStyle = getAuthLabelStyle(user.authLabel);
-    });
+    }
   }
 }
 
