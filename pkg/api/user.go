@@ -29,8 +29,11 @@ func getUserUserProfile(userID int64) Response {
 	}
 
 	getAuthQuery := m.GetAuthInfoQuery{UserId: userID}
+	query.Result.AuthLabels = []string{}
 	if err := bus.Dispatch(&getAuthQuery); err == nil {
-		query.Result.AuthModule = []string{getAuthQuery.Result.AuthModule}
+		authLabel := GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
+		query.Result.AuthLabels = append(query.Result.AuthLabels, authLabel)
+		query.Result.IsExternal = true
 	}
 
 	return JSON(200, query.Result)

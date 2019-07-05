@@ -158,8 +158,8 @@
         class="btn btn-danger"
         ng-if="!user.isDisabled"
         ng-click="disableUser($event)"
-        bs-tooltip="user.authModule ? 'External user cannot be activated or deactivated' : ''"
-        ng-class="{'disabled': user.authModule}"
+        bs-tooltip="user.isExternal ? 'External user cannot be enabled or disabled' : ''"
+        ng-class="{'disabled': user.isExternal}"
       >
         Disable
       </button>
@@ -168,8 +168,8 @@
         class="btn btn-primary"
         ng-if="user.isDisabled"
         ng-click="disableUser($event)"
-        bs-tooltip="user.authModule ? 'External user cannot be activated or deactivated' : ''"
-        ng-class="{'disabled': user.authModule}"
+        bs-tooltip="user.isExternal ? 'External user cannot be enabled or disabled' : ''"
+        ng-class="{'disabled': user.isExternal}"
       >
         Enable
       </button>
