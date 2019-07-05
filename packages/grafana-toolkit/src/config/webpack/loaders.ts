@@ -99,22 +99,24 @@ export const getStyleLoaders = () => {
 
 export const getFileLoaders = () => {
   const shouldExtractCss = hasThemeStylesheets();
-  const pluginJson = getPluginJson();
+  // const pluginJson = getPluginJson();
 
   return [
     {
       test: /\.(png|jpe?g|gif|svg)$/,
       use: [
-        {
-          loader: 'file-loader',
-          options: {
-            outputPath: 'static',
-            name: '[name].[hash:8].[ext]',
-            // When css is extracted the public path of statics is handled by MiniCssExtractPlugin.loader (see getStyleLoaders above)
-            // Otherwise the css is loaded using style-loader and we need to be specific what's the full public path for a given plugin
-            publicPath: shouldExtractCss ? undefined : `/public/plugins/${pluginJson.id}/static`,
-          },
-        },
+        shouldExtractCss
+          ? {
+              loader: 'file-loader',
+              options: {
+                outputPath: 'static',
+                name: '[name].[hash:8].[ext]',
+              },
+            }
+          : // When using single css import images are inlined as base64 URIs in the result bundle
+            {
+              loader: 'url-loader',
+            },
       ],
     },
   ];
