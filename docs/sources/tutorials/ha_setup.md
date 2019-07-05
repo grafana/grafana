@@ -10,7 +10,7 @@ weight = 10
 # How to setup Grafana for high availability
 
 Setting up Grafana for high availability is fairly simple. You just need a shared database for storing dashboard, users,
-and other persistent data. So the default embedded SQLite database will not work, you will have to migrate to
+and other persistent data. So the default embedded SQLite database will not work, you will have to switch to
 MySQL or Postgres.
 
 <div class="text-center">
