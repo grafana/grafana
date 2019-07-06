@@ -1,5 +1,5 @@
 import { getMappedValue } from './valueMappings';
-import { ValueMapping, MappingType } from '../types/panel';
+import { ValueMapping, MappingType } from '../types';
 
 describe('Format value with value mappings', () => {
   it('should return undefined with no valuemappings', () => {
