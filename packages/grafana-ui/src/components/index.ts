@@ -47,7 +47,7 @@ export { TableInputCSV } from './Table/TableInputCSV';
 export { BigValue } from './BigValue/BigValue';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
-export { GraphLegend } from './Graph/GraphLegend';
+export { GraphLegend, GraphLegendProps } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { BarGauge } from './BarGauge/BarGauge';
 export { VizRepeater } from './VizRepeater/VizRepeater';

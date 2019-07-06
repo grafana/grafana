@@ -11,7 +11,14 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { getColorFromHexRgbOrName, LegacyResponseData, DataFrame, DataLink, VariableSuggestion } from '@grafana/ui';
+import {
+  getColorFromHexRgbOrName,
+  LegacyResponseData,
+  DataFrame,
+  DataLink,
+  VariableSuggestion,
+  LegendItem,
+} from '@grafana/ui';
 import { getProcessedDataFrame } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
@@ -272,30 +279,30 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
   }
 
-  onColorChange = (series: any, color: string) => {
-    series.setColor(getColorFromHexRgbOrName(color, config.theme.type));
-    this.panel.aliasColors[series.alias] = color;
+  onColorChange = (label: string, option: string) => {
+    // series.setColor(getColorFromHexRgbOrName(option, config.theme.type));
+    this.panel.aliasColors[label] = option;
     this.render();
   };
 
-  onToggleSeries = (hiddenSeries: any) => {
-    this.hiddenSeries = hiddenSeries;
+  onToggleSeries = (item: LegendItem) => {
+    this.hiddenSeries = item.label;
     this.render();
   };
 
-  onToggleSort = (sortBy: any, sortDesc: any) => {
+  onToggleSort = (sortBy: string) => {
     this.panel.legend.sort = sortBy;
-    this.panel.legend.sortDesc = sortDesc;
+    this.panel.legend.sortDesc = true;
     this.render();
   };
 
-  onToggleAxis = (info: { alias: any; yaxis: any }) => {
-    let override: any = _.find(this.panel.seriesOverrides, { alias: info.alias });
+  onToggleAxis = (label: string, option: number) => {
+    let override: any = _.find(this.panel.seriesOverrides, { alias: label });
     if (!override) {
-      override = { alias: info.alias };
+      override = { alias: label };
       this.panel.seriesOverrides.push(override);
     }
-    override.yaxis = info.yaxis;
+    // override.yaxis = label.yaxis;
     this.render();
   };
 

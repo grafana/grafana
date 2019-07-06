@@ -1,38 +1,43 @@
-import 'vendor/flot/jquery.flot';
-import 'vendor/flot/jquery.flot.selection';
-import 'vendor/flot/jquery.flot.time';
-import 'vendor/flot/jquery.flot.stack';
-import 'vendor/flot/jquery.flot.stackpercent';
-import 'vendor/flot/jquery.flot.fillbelow';
-import 'vendor/flot/jquery.flot.crosshair';
-import 'vendor/flot/jquery.flot.dashes';
-import './jquery.flot.events';
-
+import {
+  ContextMenuGroup,
+  ContextMenuItem,
+  DataLink,
+  getValueFormat,
+  GraphLegend,
+  GraphLegendProps,
+  LegendDisplayMode,
+} from '@grafana/ui';
+import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import config from 'app/core/config';
+import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { provideTheme } from 'app/core/utils/ConfigProvider';
+import { tickStep } from 'app/core/utils/ticks';
+import { EventManager } from 'app/features/annotations/all';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { LinkService, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import $ from 'jquery';
 import _ from 'lodash';
-import { tickStep } from 'app/core/utils/ticks';
-import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
-import GraphTooltip from './graph_tooltip';
-import { ThresholdManager } from './threshold_manager';
-import { TimeRegionManager } from './time_region_manager';
-import { EventManager } from 'app/features/annotations/all';
-import { LinkService, LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { convertToHistogramData } from './histogram';
-import { alignYLevel } from './align_yaxes';
-import config from 'app/core/config';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { GraphLegendProps, Legend } from './Legend/Legend';
-
+import 'vendor/flot/jquery.flot';
+import 'vendor/flot/jquery.flot.crosshair';
+import 'vendor/flot/jquery.flot.dashes';
+import 'vendor/flot/jquery.flot.fillbelow';
+import 'vendor/flot/jquery.flot.selection';
+import 'vendor/flot/jquery.flot.stack';
+import 'vendor/flot/jquery.flot.stackpercent';
+import 'vendor/flot/jquery.flot.time';
+import { alignYLevel } from './align_yaxes';
+import { FlotDataPoint, GraphContextMenuCtrl } from './GraphContextMenuCtrl';
+import GraphTooltip from './graph_tooltip';
+import { convertToHistogramData } from './histogram';
+import './jquery.flot.events';
 import { GraphCtrl } from './module';
-import { getValueFormat, ContextMenuItem, ContextMenuGroup, DataLink } from '@grafana/ui';
-import { provideTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
-import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ContextSrv } from 'app/core/services/context_srv';
+import { ThresholdManager } from './threshold_manager';
+import { TimeRegionManager } from './time_region_manager';
 
-const LegendWithThemeProvider = provideTheme(Legend);
+const LegendWithThemeProvider = provideTheme(GraphLegend);
 
 class GraphElement {
   ctrl: GraphCtrl;
@@ -101,19 +106,36 @@ class GraphElement {
       return;
     }
 
-    const { values, min, max, avg, current, total } = this.panel.legend;
-    const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
-    const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
-    const valueOptions = { values, min, max, avg, current, total };
+    // const { values, min, max, avg, current, total } = this.panel.legend;
+    // const { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero } = this.panel.legend;
+
+    // const legendOptions = { alignAsTable, rightSide, sideWidth, sort, sortDesc, hideEmpty, hideZero };
+    // const valueOptions = { values, min, max, avg, current, total };
+
+    const items = this.data.map(series => {
+      return {
+        label: series.label,
+        color: series.color,
+        isVisible: true,
+        yAxis: 1,
+        displayValues: [
+          {
+            text: '10',
+            numeric: 10,
+            title: 'Max',
+          },
+        ],
+      };
+    });
+
     const legendProps: GraphLegendProps = {
-      seriesList: this.data,
-      hiddenSeries: this.ctrl.hiddenSeries,
-      ...legendOptions,
-      ...valueOptions,
-      onToggleSeries: this.ctrl.onToggleSeries,
+      items,
+      displayMode: LegendDisplayMode.List,
+      placement: 'under',
+      onLabelClick: this.ctrl.onToggleSeries,
       onToggleSort: this.ctrl.onToggleSort,
-      onColorChange: this.ctrl.onColorChange,
-      onToggleAxis: this.ctrl.onToggleAxis,
+      onSeriesColorChange: this.ctrl.onColorChange,
+      onSeriesAxisToggle: this.ctrl.onToggleAxis,
     };
 
     const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);

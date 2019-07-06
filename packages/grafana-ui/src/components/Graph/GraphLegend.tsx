@@ -10,7 +10,7 @@ import { ThemeContext } from '../../themes/ThemeContext';
 import { css } from 'emotion';
 import { selectThemeVariant } from '../../themes/index';
 
-interface GraphLegendProps extends LegendProps {
+export interface GraphLegendProps extends LegendProps {
   displayMode: LegendDisplayMode;
   sortBy?: string;
   sortDesc?: boolean;
