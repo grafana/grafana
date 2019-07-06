@@ -1,5 +1,5 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import { Threshold } from '../../types';
+import { Threshold } from '@grafana/data';
 import { colors } from '../../utils';
 import { ThemeContext } from '../../themes';
 import { getColorFromHexRgbOrName } from '../../utils';
