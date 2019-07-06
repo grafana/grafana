@@ -5,18 +5,14 @@ import {
   ValueMapping,
   Threshold,
   DisplayValue,
-  FieldType,
-  NullValueMode,
   GrafanaTheme,
-  DataFrame,
   InterpolateFunction,
-  Field,
   ScopedVars,
   GraphSeriesValue,
 } from '../types/index';
 import { getDisplayProcessor } from './displayValue';
 import { getFlotPairs } from './flotPairs';
-import { ReducerID, reduceField } from './fieldReducer';
+import { ReducerID, reduceField, FieldType, NullValueMode, DataFrame, Field } from '@grafana/data';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value

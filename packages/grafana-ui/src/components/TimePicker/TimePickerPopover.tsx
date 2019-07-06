@@ -7,8 +7,7 @@ import { TimePickerInput } from './TimePickerInput';
 import { rawToTimeRange } from './time';
 
 // Types
-import { DateTime } from '../../utils/moment_wrapper';
-import { TimeRange, TimeZone } from '../../types/time';
+import { DateTime, TimeRange, TimeZone } from '@grafana/data';
 
 export interface Props {
   value: TimeRange;

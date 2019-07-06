@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 export default class ResponseParser {
   constructor(private results: any) {}

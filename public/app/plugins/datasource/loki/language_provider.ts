@@ -15,7 +15,7 @@ import {
   HistoryItem,
 } from 'app/types/explore';
 import { LokiQuery } from './types';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];

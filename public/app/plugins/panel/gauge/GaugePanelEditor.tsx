@@ -9,11 +9,11 @@ import {
   ValueMapping,
   FieldDisplayOptions,
   FieldDisplayEditor,
-  Field,
   FieldPropertiesEditor,
   Switch,
   PanelOptionsGroup,
 } from '@grafana/ui';
+import { Field } from '@grafana/data';
 
 import { GaugeOptions } from './types';
 

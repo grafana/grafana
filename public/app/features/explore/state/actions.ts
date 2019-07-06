@@ -17,15 +17,9 @@ import {
 
 // Types
 import { ThunkResult } from 'app/types';
-import {
-  RawTimeRange,
-  DataSourceApi,
-  DataQuery,
-  DataSourceSelectItem,
-  QueryFixAction,
-  LogsDedupStrategy,
-  AbsoluteTimeRange,
-} from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction } from '@grafana/ui';
+
+import { RawTimeRange, LogsDedupStrategy, AbsoluteTimeRange } from '@grafana/data';
 import { ExploreId, ExploreUIState, QueryTransaction, ExploreMode } from 'app/types/explore';
 import {
   updateDatasourceInstanceAction,

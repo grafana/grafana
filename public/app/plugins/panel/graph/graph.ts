@@ -27,7 +27,7 @@ import { GraphLegendProps, Legend } from './Legend/Legend';
 import { GraphCtrl } from './module';
 import { getValueFormat, ContextMenuItem, ContextMenuGroup, DataLink } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc } from '@grafana/data';
 import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';

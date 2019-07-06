@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 import {
   AzureLogsVariable,
   AzureLogsTableData,
@@ -9,7 +9,7 @@ import {
   KustoSchema,
   KustoColumn,
 } from '../types';
-import { TimeSeries, AnnotationEvent } from '@grafana/ui/src/types';
+import { TimeSeries, AnnotationEvent } from '@grafana/data';
 
 export default class ResponseParser {
   columns: string[];

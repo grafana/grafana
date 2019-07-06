@@ -1,7 +1,6 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { DataFrame } from '../../types/data';
-import { CSVConfig, readCSV } from '../../utils/csv';
+import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
 
 interface Props {
   config?: CSVConfig;

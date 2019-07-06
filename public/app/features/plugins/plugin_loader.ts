@@ -18,8 +18,8 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta } from '@grafana/ui/src/types';
-import * as datemath from '@grafana/ui/src/utils/datemath';
+import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta } from '@grafana/ui';
+import * as dateMath from '@grafana/data/src/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
@@ -109,7 +109,7 @@ exposeToPlugin('app/core/services/backend_srv', {
 });
 
 exposeToPlugin('app/plugins/sdk', sdk);
-exposeToPlugin('app/core/utils/datemath', datemath);
+exposeToPlugin('app/core/utils/datemath', dateMath);
 exposeToPlugin('app/core/utils/file_export', fileExport);
 exposeToPlugin('app/core/utils/flatten', flatten);
 exposeToPlugin('app/core/utils/kbn', kbn);

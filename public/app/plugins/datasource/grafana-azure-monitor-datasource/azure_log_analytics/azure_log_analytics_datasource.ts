@@ -2,7 +2,7 @@ import _ from 'lodash';
 import LogAnalyticsQuerystringBuilder from '../log_analytics/querystring_builder';
 import ResponseParser from './response_parser';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from '../types';
-import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui/src/types';
+import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { IQService } from 'angular';

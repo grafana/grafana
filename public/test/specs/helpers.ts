@@ -1,9 +1,10 @@
 import _ from 'lodash';
 import config from 'app/core/config';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import * as dateMath from '@grafana/data/src/utils/datemath';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { PanelPluginMeta, RawTimeRange } from '@grafana/ui';
+import { RawTimeRange } from '@grafana/data';
+import { PanelPluginMeta } from '@grafana/ui';
 
 export function ControllerTestContext(this: any) {
   const self = this;

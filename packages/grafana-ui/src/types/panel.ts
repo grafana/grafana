@@ -1,6 +1,5 @@
 import { ComponentClass, ComponentType } from 'react';
-import { LoadingState, DataFrame } from './data';
-import { TimeRange } from './time';
+import { LoadingState, DataFrame, TimeRange } from '@grafana/data';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 
