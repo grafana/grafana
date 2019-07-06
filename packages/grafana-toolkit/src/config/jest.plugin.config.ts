@@ -27,8 +27,6 @@ export const jestConfig = () => {
       '^.+\\.(ts|tsx)$': 'ts-jest',
     },
     moduleDirectories: ['node_modules', 'src'],
-    rootDir: process.cwd(),
-    roots: ['<rootDir>/src'],
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
     setupFiles,
     globals: { 'ts-jest': { isolatedModules: true } },

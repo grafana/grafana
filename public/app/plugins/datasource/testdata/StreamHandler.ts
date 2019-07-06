@@ -2,7 +2,7 @@ import defaults from 'lodash/defaults';
 import {
   DataQueryRequest,
   FieldType,
-  SeriesData,
+  DataFrame,
   DataQueryResponse,
   DataQueryError,
   DataStreamObserver,
@@ -171,14 +171,14 @@ export class SignalWorker extends StreamWorker {
     return row;
   };
 
-  initBuffer(refId: string): SeriesData {
+  initBuffer(refId: string): DataFrame {
     const { speed, buffer } = this.query;
     const data = {
       fields: [{ name: 'Time', type: FieldType.time }, { name: 'Value', type: FieldType.number }],
       rows: [],
       refId,
       name: 'Signal ' + refId,
-    } as SeriesData;
+    } as DataFrame;
 
     for (let i = 0; i < this.bands; i++) {
       const suffix = this.bands > 1 ? ` ${i + 1}` : '';
@@ -260,7 +260,7 @@ export class FetchWorker extends StreamWorker {
     return this.reader.read().then(this.processChunk);
   };
 
-  onHeader = (series: SeriesData) => {
+  onHeader = (series: DataFrame) => {
     series.refId = this.refId;
     this.stream.series = [series];
   };
@@ -323,14 +323,14 @@ export class LogsWorker extends StreamWorker {
     return [time, '[' + this.getRandomLogLevel() + '] ' + this.getRandomLine()];
   };
 
-  initBuffer(refId: string): SeriesData {
+  initBuffer(refId: string): DataFrame {
     const { speed, buffer } = this.query;
     const data = {
       fields: [{ name: 'Time', type: FieldType.time }, { name: 'Line', type: FieldType.string }],
       rows: [],
       refId,
       name: 'Logs ' + refId,
-    } as SeriesData;
+    } as DataFrame;
 
     const request = this.stream.request;
 

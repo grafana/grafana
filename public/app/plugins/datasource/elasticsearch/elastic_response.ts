@@ -2,7 +2,7 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
-import { SeriesData, DataQueryResponse, toSeriesData, FieldType } from '@grafana/ui';
+import { DataFrame, DataQueryResponse, toDataFrame, FieldType } from '@grafana/ui';
 
 export class ElasticResponse {
   constructor(private targets, private response) {
@@ -414,7 +414,7 @@ export class ElasticResponse {
   }
 
   getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
-    const seriesData: SeriesData[] = [];
+    const dataFrame: DataFrame[] = [];
     const docs: any[] = [];
 
     for (let n = 0; n < this.response.responses.length; n++) {
@@ -462,7 +462,7 @@ export class ElasticResponse {
 
       if (docs.length > 0) {
         propNames = propNames.sort();
-        const series: SeriesData = {
+        const series: DataFrame = {
           fields: [
             {
               name: this.targets[0].timeField,
@@ -527,7 +527,7 @@ export class ElasticResponse {
           series.rows.push(row);
         }
 
-        seriesData.push(series);
+        dataFrame.push(series);
       }
 
       if (response.aggregations) {
@@ -541,13 +541,13 @@ export class ElasticResponse {
         this.nameSeries(tmpSeriesList, target);
 
         for (let y = 0; y < tmpSeriesList.length; y++) {
-          const series = toSeriesData(tmpSeriesList[y]);
+          const series = toDataFrame(tmpSeriesList[y]);
           series.labels = {};
-          seriesData.push(series);
+          dataFrame.push(series);
         }
       }
     }
 
-    return { data: seriesData };
+    return { data: dataFrame };
   }
 }

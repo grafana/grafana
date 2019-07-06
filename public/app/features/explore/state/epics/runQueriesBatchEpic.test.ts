@@ -14,10 +14,10 @@ import {
   clearQueriesAction,
   stateSaveAction,
 } from '../actionTypes';
-import { LoadingState, DataQueryRequest, SeriesData, FieldType } from '@grafana/ui';
+import { LoadingState, DataQueryRequest, DataFrame, FieldType } from '@grafana/ui';
 
 const testContext = () => {
-  const series: SeriesData[] = [
+  const series: DataFrame[] = [
     {
       fields: [
         {

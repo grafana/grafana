@@ -1,5 +1,5 @@
 import { LogLevel } from '../types/logs';
-import { SeriesData, FieldType } from '../types/data';
+import { DataFrame, FieldType } from '../types/data';
 
 /**
  * Returns the log level of a log line.
@@ -32,7 +32,7 @@ export function getLogLevelFromKey(key: string): LogLevel {
   return LogLevel.unknown;
 }
 
-export function addLogLevelToSeries(series: SeriesData, lineIndex: number): SeriesData {
+export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataFrame {
   return {
     ...series, // Keeps Tags, RefID etc
     fields: [...series.fields, { name: 'LogLevel', type: FieldType.string }],

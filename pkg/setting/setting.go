@@ -252,6 +252,9 @@ type Cfg struct {
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
 
+	// SAML Auth
+	SAMLEnabled bool
+
 	// Dataproxy
 	SendUserHeader bool
 
@@ -811,6 +814,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+
+	// SAML auth
+	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
