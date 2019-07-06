@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceJsonData } from '@grafana/ui';
 
 export interface InfluxOptions extends DataSourceJsonData {
   timeInterval: string;

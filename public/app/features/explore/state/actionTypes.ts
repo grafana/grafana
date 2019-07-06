@@ -1,21 +1,24 @@
 // Types
 import { Emitter } from 'app/core/core';
 import {
-  RawTimeRange,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryFixAction,
+  DataQueryError,
+  DataQueryResponseData,
+} from '@grafana/ui';
+
+import {
+  RawTimeRange,
   LogLevel,
   TimeRange,
-  DataQueryError,
   DataFrame,
   LogsModel,
   TimeSeries,
-  DataQueryResponseData,
   LoadingState,
   AbsoluteTimeRange,
-} from '@grafana/ui/src/types';
+} from '@grafana/data';
 import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode, QueryOptions } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 import TableModel from 'app/core/table_model';

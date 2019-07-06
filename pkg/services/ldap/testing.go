@@ -19,14 +19,19 @@ type MockConnection struct {
 	DelParams *ldap.DelRequest
 	DelCalled bool
 
-	bindProvider                func(username, password string) error
-	unauthenticatedBindProvider func(username string) error
+	UnauthenticatedBindCalled bool
+	BindCalled                bool
+
+	BindProvider                func(username, password string) error
+	UnauthenticatedBindProvider func() error
 }
 
 // Bind mocks Bind connection function
 func (c *MockConnection) Bind(username, password string) error {
-	if c.bindProvider != nil {
-		return c.bindProvider(username, password)
+	c.BindCalled = true
+
+	if c.BindProvider != nil {
+		return c.BindProvider(username, password)
 	}
 
 	return nil
@@ -34,8 +39,10 @@ func (c *MockConnection) Bind(username, password string) error {
 
 // UnauthenticatedBind mocks UnauthenticatedBind connection function
 func (c *MockConnection) UnauthenticatedBind(username string) error {
-	if c.unauthenticatedBindProvider != nil {
-		return c.unauthenticatedBindProvider(username)
+	c.UnauthenticatedBindCalled = true
+
+	if c.UnauthenticatedBindProvider != nil {
+		return c.UnauthenticatedBindProvider()
 	}
 
 	return nil

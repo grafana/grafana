@@ -1,4 +1,5 @@
-import { PanelModel, Field, getFieldReducers } from '@grafana/ui';
+import { Field, getFieldReducers } from '@grafana/data';
+import { PanelModel } from '@grafana/ui';
 import { GaugeOptions } from './types';
 import { sharedSingleStatMigrationCheck } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
 import { FieldDisplayOptions } from '@grafana/ui/src/utils/fieldDisplay';

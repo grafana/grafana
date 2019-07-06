@@ -1,4 +1,5 @@
-import { VizOrientation, ReducerID, SingleStatBaseOptions, FieldDisplayOptions } from '@grafana/ui';
+import { VizOrientation, SingleStatBaseOptions, FieldDisplayOptions } from '@grafana/ui';
+import { ReducerID } from '@grafana/data';
 
 export interface SparklineOptions {
   show: boolean;

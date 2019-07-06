@@ -1,7 +1,9 @@
 import _ from 'lodash';
 import queryPart from './query_part';
 import kbn from 'app/core/utils/kbn';
-import { InfluxQuery } from './types';
+import { InfluxQuery, InfluxQueryTag } from './types';
+import { ScopedVars } from '@grafana/ui';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 export default class InfluxQueryModel {
   target: InfluxQuery;
@@ -13,7 +15,7 @@ export default class InfluxQueryModel {
   refId: string;
 
   /** @ngInject */
-  constructor(target: InfluxQuery, templateSrv?, scopedVars?) {
+  constructor(target: InfluxQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.target = target;
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
@@ -51,7 +53,7 @@ export default class InfluxQueryModel {
     return _.find(this.target.groupBy, (g: any) => g.type === 'fill');
   }
 
-  addGroupBy(value) {
+  addGroupBy(value: string) {
     const stringParts = value.match(/^(\w+)\((.*)\)$/);
     const typePart = stringParts[1];
     const arg = stringParts[2];
@@ -75,7 +77,7 @@ export default class InfluxQueryModel {
     this.updateProjection();
   }
 
-  removeGroupByPart(part, index) {
+  removeGroupByPart(part: { def: { type: string } }, index: number) {
     const categories = queryPart.getCategories();
 
     if (part.def.type === 'time') {
@@ -105,7 +107,7 @@ export default class InfluxQueryModel {
     this.updateProjection();
   }
 
-  removeSelectPart(selectParts, part) {
+  removeSelectPart(selectParts: any[], part: any) {
     // if we remove the field remove the whole statement
     if (part.def.type === 'field') {
       if (this.selectModels.length > 1) {
@@ -120,13 +122,13 @@ export default class InfluxQueryModel {
     this.updatePersistedParts();
   }
 
-  addSelectPart(selectParts, type) {
+  addSelectPart(selectParts: any[], type: string) {
     const partModel = queryPart.create({ type: type });
     partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();
   }
 
-  private renderTagCondition(tag, index, interpolate) {
+  private renderTagCondition(tag: InfluxQueryTag, index: number, interpolate: boolean) {
     let str = '';
     let operator = tag.operator;
     let value = tag.value;
@@ -157,7 +159,7 @@ export default class InfluxQueryModel {
     return str + '"' + tag.key + '" ' + operator + ' ' + value;
   }
 
-  getMeasurementAndPolicy(interpolate) {
+  getMeasurementAndPolicy(interpolate: any) {
     let policy = this.target.policy;
     let measurement = this.target.measurement || 'measurement';
 
@@ -176,7 +178,7 @@ export default class InfluxQueryModel {
     return policy + measurement;
   }
 
-  interpolateQueryStr(value, variable, defaultFormatFn) {
+  interpolateQueryStr(value: any[], variable: { multi: any; includeAll: any }, defaultFormatFn: any) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return value;
@@ -190,7 +192,7 @@ export default class InfluxQueryModel {
     return '(' + escapedValues.join('|') + ')';
   }
 
-  render(interpolate?) {
+  render(interpolate?: boolean) {
     const target = this.target;
 
     if (target.rawQuery) {
@@ -265,7 +267,7 @@ export default class InfluxQueryModel {
     return query;
   }
 
-  renderAdhocFilters(filters) {
+  renderAdhocFilters(filters: any[]) {
     const conditions = _.map(filters, (tag, index) => {
       return this.renderTagCondition(tag, index, false);
     });
