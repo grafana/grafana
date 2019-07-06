@@ -1,6 +1,5 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { FieldType } from '../types/data';
-import { ReducerID } from './fieldReducer';
+import { FieldType, ReducerID } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 

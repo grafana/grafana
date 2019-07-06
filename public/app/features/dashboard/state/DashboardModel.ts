@@ -13,10 +13,10 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { PanelModel, GridPos } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { TimeRange, TimeZone } from '@grafana/ui';
+import { TimeRange, TimeZone } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
 import { KIOSK_MODE_TV, DashboardMeta } from 'app/types';
-import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/data';
 
 export interface CloneOptions {
   saveVariables?: boolean;

@@ -9,7 +9,7 @@ import { toggleTable } from './state/actions';
 import Table from './Table';
 import Panel from './Panel';
 import TableModel from 'app/core/table_model';
-import { LoadingState } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
 
 interface TableContainerProps {
   exploreId: ExploreId;

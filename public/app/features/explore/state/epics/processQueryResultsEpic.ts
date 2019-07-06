@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { Epic } from 'redux-observable';
 import { mergeMap } from 'rxjs/operators';
 import { NEVER } from 'rxjs';
-import { LoadingState } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';

@@ -1,13 +1,8 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
-import {
-  PanelData,
-  DataQueryRequest,
-  DataStreamObserver,
-  DataStreamState,
-  LoadingState,
-  ScopedVars,
-} from '@grafana/ui/src/types';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { PanelData, DataQueryRequest, DataStreamObserver, DataStreamState, ScopedVars } from '@grafana/ui';
+
+import { LoadingState } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 
 jest.mock('app/core/services/backend_srv');
 

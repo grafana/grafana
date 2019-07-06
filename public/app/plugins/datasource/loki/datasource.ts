@@ -5,7 +5,7 @@ import { webSocket } from 'rxjs/webSocket';
 import { catchError, map } from 'rxjs/operators';
 
 // Services & Utils
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import * as dateMath from '@grafana/data/src/utils/datemath';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -14,18 +14,16 @@ import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './q
 // Types
 import {
   PluginMeta,
-  DataQueryRequest,
-  DataFrame,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataQueryError,
-  LogRowModel,
+  DataQueryRequest,
   DataStreamObserver,
-  LoadingState,
   DataStreamState,
   DataQueryResponse,
-  DateTime,
 } from '@grafana/ui';
+
+import { DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';

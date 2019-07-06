@@ -8,8 +8,8 @@ import {
   DataStreamObserver,
   DataQueryResponse,
   DataStreamState,
-  DefaultTimeZone,
 } from '@grafana/ui';
+import { DefaultTimeZone } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';

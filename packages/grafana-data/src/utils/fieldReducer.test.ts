@@ -1,4 +1,4 @@
-import { getFieldReducers, ReducerID, reduceField } from './fieldReducer';
+import { getFieldReducers, ReducerID, reduceField } from './index';
 
 import _ from 'lodash';
 

@@ -7,7 +7,7 @@ import kbn from 'app/core/utils/kbn';
 
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { auto } from 'angular';
-import { DataFrame } from '@grafana/ui';
+import { DataFrame } from '@grafana/data';
 
 export interface ResultFormat {
   text: string;

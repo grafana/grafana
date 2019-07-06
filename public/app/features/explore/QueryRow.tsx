@@ -13,15 +13,8 @@ import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/act
 
 // Types
 import { StoreState } from 'app/types';
-import {
-  TimeRange,
-  DataQuery,
-  DataSourceApi,
-  QueryFixAction,
-  DataSourceStatus,
-  PanelData,
-  DataQueryError,
-} from '@grafana/ui';
+import { TimeRange } from '@grafana/data';
+import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData, DataQueryError } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';

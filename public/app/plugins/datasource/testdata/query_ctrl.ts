@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { defaultQuery } from './StreamHandler';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 export class TestDataQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';

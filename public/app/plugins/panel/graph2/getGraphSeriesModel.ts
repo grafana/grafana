@@ -1,16 +1,13 @@
 import {
   GraphSeriesXY,
-  NullValueMode,
-  reduceField,
   colors,
   getFlotPairs,
   getColorFromHexRgbOrName,
   getDisplayProcessor,
   DisplayValue,
   PanelData,
-  FieldCache,
-  FieldType,
 } from '@grafana/ui';
+import { NullValueMode, reduceField, FieldCache, FieldType } from '@grafana/data';
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 

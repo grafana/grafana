@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { dateTime } from '@grafana/ui';
+import { dateTime } from '@grafana/data';
 
 import { PromQueryEditor } from './PromQueryEditor';
 import { PrometheusDatasource } from '../datasource';
