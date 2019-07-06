@@ -1,6 +1,6 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import * as dateMath from '@grafana/data/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataQueryRequest } from '@grafana/ui';

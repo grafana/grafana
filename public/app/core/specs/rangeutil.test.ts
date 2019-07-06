@@ -1,4 +1,4 @@
-import * as rangeUtil from '@grafana/data/src/utils/rangeutil';
+import { rangeUtil } from '@grafana/data';
 import _ from 'lodash';
 import { dateTime } from '@grafana/data';
 

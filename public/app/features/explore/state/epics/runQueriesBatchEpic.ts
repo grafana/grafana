@@ -6,7 +6,7 @@ import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { DataStreamState, DataQueryResponse, DataQueryResponseData } from '@grafana/ui';
 
 import { LoadingState, DataFrame, AbsoluteTimeRange } from '@grafana/data';
-import * as dateMath from '@grafana/data/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
