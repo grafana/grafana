@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -21,7 +21,7 @@ const (
 	LoginErrorCookieName = "login_error"
 )
 
-func (hs *HTTPServer) LoginView(c *m.ReqContext) {
+func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
@@ -38,6 +38,7 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 	viewData.Settings["loginHint"] = setting.LoginHint
 	viewData.Settings["passwordHint"] = setting.PasswordHint
 	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
+	viewData.Settings["samlEnabled"] = hs.Cfg.SAMLEnabled
 
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
 		deleteCookie(c, LoginErrorCookieName)
@@ -62,7 +63,7 @@ func (hs *HTTPServer) LoginView(c *m.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/")
 }
 
-func tryOAuthAutoLogin(c *m.ReqContext) bool {
+func tryOAuthAutoLogin(c *models.ReqContext) bool {
 	if !setting.OAuthAutoLogin {
 		return false
 	}
@@ -80,7 +81,7 @@ func tryOAuthAutoLogin(c *m.ReqContext) bool {
 	return false
 }
 
-func (hs *HTTPServer) LoginAPIPing(c *m.ReqContext) Response {
+func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) Response {
 	if c.IsSignedIn || c.IsAnonymous {
 		return JSON(200, "Logged in")
 	}
@@ -88,12 +89,12 @@ func (hs *HTTPServer) LoginAPIPing(c *m.ReqContext) Response {
 	return Error(401, "Unauthorized", nil)
 }
 
-func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response {
+func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Response {
 	if setting.DisableLoginForm {
 		return Error(401, "Login is disabled", nil)
 	}
 
-	authQuery := &m.LoginUserQuery{
+	authQuery := &models.LoginUserQuery{
 		ReqContext: c,
 		Username:   cmd.User,
 		Password:   cmd.Password,
@@ -126,11 +127,10 @@ func (hs *HTTPServer) LoginPost(c *m.ReqContext, cmd dtos.LoginCommand) Response
 	}
 
 	metrics.M_Api_Login_Post.Inc()
-
 	return JSON(200, result)
 }
 
-func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
+func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) {
 	if user == nil {
 		hs.log.Error("user login with nil user")
 	}
@@ -139,12 +139,12 @@ func (hs *HTTPServer) loginUserWithUser(user *m.User, c *m.ReqContext) {
 	if err != nil {
 		hs.log.Error("failed to create auth token", "error", err)
 	}
-
+	hs.log.Info("Successful Login", "User", user.Email)
 	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetimeDays)
 }
 
-func (hs *HTTPServer) Logout(c *m.ReqContext) {
-	if err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken); err != nil && err != m.ErrUserTokenNotFound {
+func (hs *HTTPServer) Logout(c *models.ReqContext) {
+	if err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken); err != nil && err != models.ErrUserTokenNotFound {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 
@@ -153,11 +153,12 @@ func (hs *HTTPServer) Logout(c *m.ReqContext) {
 	if setting.SignoutRedirectUrl != "" {
 		c.Redirect(setting.SignoutRedirectUrl)
 	} else {
+		hs.log.Info("Successful Logout", "User", c.Email)
 		c.Redirect(setting.AppSubUrl + "/login")
 	}
 }
 
-func tryGetEncryptedCookie(ctx *m.ReqContext, cookieName string) (string, bool) {
+func tryGetEncryptedCookie(ctx *models.ReqContext, cookieName string) (string, bool) {
 	cookie := ctx.GetCookie(cookieName)
 	if cookie == "" {
 		return "", false
@@ -172,11 +173,11 @@ func tryGetEncryptedCookie(ctx *m.ReqContext, cookieName string) (string, bool) 
 	return string(decryptedError), err == nil
 }
 
-func deleteCookie(ctx *m.ReqContext, cookieName string) {
+func deleteCookie(ctx *models.ReqContext, cookieName string) {
 	ctx.SetCookie(cookieName, "", -1, setting.AppSubUrl+"/")
 }
 
-func (hs *HTTPServer) trySetEncryptedCookie(ctx *m.ReqContext, cookieName string, value string, maxAge int) error {
+func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
 	encryptedError, err := util.Encrypt([]byte(value), setting.SecretKey)
 	if err != nil {
 		return err

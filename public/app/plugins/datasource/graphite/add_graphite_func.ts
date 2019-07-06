@@ -1,11 +1,14 @@
 import _ from 'lodash';
 import $ from 'jquery';
+// @ts-ignore
 import rst2html from 'rst2html';
+// @ts-ignore
 import Drop from 'tether-drop';
 import coreModule from 'app/core/core_module';
+import { FuncDef } from './gfunc';
 
 /** @ngInject */
-export function graphiteAddFunc($compile) {
+export function graphiteAddFunc($compile: any) {
   const inputTemplate =
     '<input type="text"' + ' class="gf-form-input"' + ' spellcheck="false" style="display:none"></input>';
 
@@ -15,7 +18,7 @@ export function graphiteAddFunc($compile) {
     '<i class="fa fa-plus"></i></a>';
 
   return {
-    link: function($scope, elem) {
+    link: function($scope: any, elem: JQuery) {
       const ctrl = $scope.ctrl;
 
       const $input = $(inputTemplate);
@@ -24,7 +27,7 @@ export function graphiteAddFunc($compile) {
       $input.appendTo(elem);
       $button.appendTo(elem);
 
-      ctrl.datasource.getFuncDefs().then(funcDefs => {
+      ctrl.datasource.getFuncDefs().then((funcDefs: FuncDef[]) => {
         const allFunctions = _.map(funcDefs, 'name').sort();
 
         $scope.functionMenu = createFunctionDropDownMenu(funcDefs);
@@ -34,7 +37,7 @@ export function graphiteAddFunc($compile) {
           source: allFunctions,
           minLength: 1,
           items: 10,
-          updater: value => {
+          updater: (value: any) => {
             let funcDef: any = ctrl.datasource.getFuncDef(value);
             if (!funcDef) {
               // try find close match
@@ -81,7 +84,7 @@ export function graphiteAddFunc($compile) {
         $compile(elem.contents())($scope);
       });
 
-      let drop;
+      let drop: any;
       const cleanUpDrop = () => {
         if (drop) {
           drop.destroy();
@@ -132,8 +135,8 @@ export function graphiteAddFunc($compile) {
 
 coreModule.directive('graphiteAddFunc', graphiteAddFunc);
 
-function createFunctionDropDownMenu(funcDefs) {
-  const categories = {};
+function createFunctionDropDownMenu(funcDefs: FuncDef[]) {
+  const categories: any = {};
 
   _.forEach(funcDefs, funcDef => {
     if (!funcDef.category) {

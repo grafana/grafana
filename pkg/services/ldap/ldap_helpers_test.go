@@ -25,6 +25,85 @@ func TestLDAPHelpers(t *testing.T) {
 		})
 	})
 
+	Convey("getUsersIteration()", t, func() {
+		Convey("it should execute twice for 600 users", func() {
+			logins := make([]string, 600)
+			i := 0
+
+			result := getUsersIteration(logins, func(previous, current int) error {
+				i++
+
+				if i == 1 {
+					So(previous, ShouldEqual, 0)
+					So(current, ShouldEqual, 500)
+				} else {
+					So(previous, ShouldEqual, 500)
+					So(current, ShouldEqual, 600)
+				}
+
+				return nil
+			})
+
+			So(i, ShouldEqual, 2)
+			So(result, ShouldBeNil)
+		})
+
+		Convey("it should execute three times for 1500 users", func() {
+			logins := make([]string, 1500)
+			i := 0
+
+			result := getUsersIteration(logins, func(previous, current int) error {
+				i++
+				if i == 1 {
+					So(previous, ShouldEqual, 0)
+					So(current, ShouldEqual, 500)
+				} else if i == 2 {
+					So(previous, ShouldEqual, 500)
+					So(current, ShouldEqual, 1000)
+				} else {
+					So(previous, ShouldEqual, 1000)
+					So(current, ShouldEqual, 1500)
+				}
+
+				return nil
+			})
+
+			So(i, ShouldEqual, 3)
+			So(result, ShouldBeNil)
+		})
+
+		Convey("it should execute once for 400 users", func() {
+			logins := make([]string, 400)
+			i := 0
+
+			result := getUsersIteration(logins, func(previous, current int) error {
+				i++
+				if i == 1 {
+					So(previous, ShouldEqual, 0)
+					So(current, ShouldEqual, 400)
+				}
+
+				return nil
+			})
+
+			So(i, ShouldEqual, 1)
+			So(result, ShouldBeNil)
+		})
+
+		Convey("it should not execute for 0 users", func() {
+			logins := make([]string, 0)
+			i := 0
+
+			result := getUsersIteration(logins, func(previous, current int) error {
+				i++
+				return nil
+			})
+
+			So(i, ShouldEqual, 0)
+			So(result, ShouldBeNil)
+		})
+	})
+
 	Convey("getAttribute()", t, func() {
 		Convey("Should get username", func() {
 			value := []string{"roelgerrits"}
