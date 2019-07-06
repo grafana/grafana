@@ -1,6 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
-import * as dateMath from '@grafana/data/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
 import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';

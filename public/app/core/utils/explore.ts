@@ -4,7 +4,7 @@ import { from } from 'rxjs';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 // Services & Utils
-import * as dateMath from '@grafana/data/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';

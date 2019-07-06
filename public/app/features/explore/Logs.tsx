@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import * as rangeUtil from '@grafana/data/src/utils/rangeutil';
+import { rangeUtil } from '@grafana/data';
 import { Switch } from '@grafana/ui';
 import {
   RawTimeRange,

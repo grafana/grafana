@@ -5,7 +5,7 @@ import { webSocket } from 'rxjs/webSocket';
 import { catchError, map } from 'rxjs/operators';
 
 // Services & Utils
-import * as dateMath from '@grafana/data/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
