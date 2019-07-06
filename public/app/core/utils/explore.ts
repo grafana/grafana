@@ -28,7 +28,14 @@ import {
   DataQueryRequest,
   DataStreamObserver,
 } from '@grafana/ui';
-import { ExploreUrlState, HistoryItem, QueryTransaction, QueryIntervals, QueryOptions } from 'app/types/explore';
+import {
+  ExploreUrlState,
+  HistoryItem,
+  QueryTransaction,
+  QueryIntervals,
+  QueryOptions,
+  ExploreMode,
+} from 'app/types/explore';
 import { config } from '../config';
 
 export const DEFAULT_RANGE = {
@@ -46,6 +53,7 @@ export const DEFAULT_UI_STATE = {
 const MAX_HISTORY_ITEMS = 100;
 
 export const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
+export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
 
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
@@ -155,10 +163,8 @@ export function buildQueryTransaction(
 
 export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
 
-const metricProperties = ['expr', 'target', 'datasource'];
-const isMetricSegment = (segment: { [key: string]: string }) =>
-  metricProperties.some(prop => segment.hasOwnProperty(prop));
-const isUISegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('ui');
+const isSegment = (segment: { [key: string]: string }, ...props: string[]) =>
+  props.some(prop => segment.hasOwnProperty(prop));
 
 enum ParseUrlStateIndex {
   RangeFrom = 0,
@@ -207,6 +213,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     queries: [],
     range: DEFAULT_RANGE,
     ui: DEFAULT_UI_STATE,
+    mode: null,
   };
 
   if (!parsed) {
@@ -228,8 +235,12 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter(segment => isMetricSegment(segment));
-  const uiState = parsedSegments.filter(segment => isUISegment(segment))[0];
+  const metricProperties = ['expr', 'target', 'datasource', 'query'];
+  const queries = parsedSegments.filter(segment => isSegment(segment, ...metricProperties));
+  const modeObj = parsedSegments.filter(segment => isSegment(segment, 'mode'))[0];
+  const mode = modeObj ? modeObj.mode : ExploreMode.Metrics;
+
+  const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
   const ui = uiState
     ? {
         showingGraph: uiState.ui[ParseUiStateIndex.Graph],
@@ -239,7 +250,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
       }
     : DEFAULT_UI_STATE;
 
-  return { datasource, queries, range, ui };
+  return { datasource, queries, range, ui, mode };
 }
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
@@ -249,6 +260,7 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
       urlState.range.to,
       urlState.datasource,
       ...urlState.queries,
+      { mode: urlState.mode },
       {
         ui: [
           !!urlState.ui.showingGraph,

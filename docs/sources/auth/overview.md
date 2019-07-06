@@ -47,6 +47,13 @@ An active authenticated user that gets it token rotated will extend the `login_m
 This means that a user can close its browser and come back before `now + login_maximum_inactive_lifetime_days` and still being authenticated.
  This is true as long as the time since user login is less than `login_maximum_lifetime_days`.
 
+#### Remote logout
+
+You can logout from other devices by removing login sessions from the bottom of your profile page. If you are
+a Grafana admin user you can also do the same for any user from the Server Admin / Edit User view.
+
+## Settings
+
 Example:
 
 ```bash
@@ -63,6 +70,9 @@ login_maximum_lifetime_days = 30
 
 # How often should auth tokens be rotated for authenticated users when being active. The default is each 10 minutes.
 token_rotation_interval_minutes = 10
+
+# The maximum lifetime (seconds) an api key can be used. If it is set all the api keys should have limited lifetime that is lower than this value.
+api_key_max_seconds_to_live = -1
 ```
 
 ### Anonymous authentication

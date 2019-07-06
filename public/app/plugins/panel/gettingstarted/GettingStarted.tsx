@@ -80,7 +80,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         check: () => {
           return getBackendSrv()
             .get('/api/org/users')
-            .then(res => {
+            .then((res: any) => {
               return res.length > 1;
             });
         },
@@ -93,7 +93,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         check: () => {
           return getBackendSrv()
             .get('/api/plugins', { embedded: 0, core: 0 })
-            .then(plugins => {
+            .then((plugins: any[]) => {
               return plugins.length > 0;
             });
         },
@@ -108,7 +108,7 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     });
   }
 
-  nextStep() {
+  nextStep(): any {
     if (this.stepIndex === this.steps.length - 1) {
       return Promise.resolve();
     }

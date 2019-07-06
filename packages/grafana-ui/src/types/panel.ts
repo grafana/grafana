@@ -1,5 +1,5 @@
 import { ComponentClass, ComponentType } from 'react';
-import { LoadingState, SeriesData } from './data';
+import { LoadingState, DataFrame } from './data';
 import { TimeRange } from './time';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
 import { PluginMeta, GrafanaPlugin } from './plugin';
@@ -14,7 +14,7 @@ export interface PanelPluginMeta extends PluginMeta {
 
 export interface PanelData {
   state: LoadingState;
-  series: SeriesData[];
+  series: DataFrame[];
   request?: DataQueryRequest;
   error?: DataQueryError;
 
@@ -145,6 +145,12 @@ export interface ValueMap extends BaseMap {
 export interface RangeMap extends BaseMap {
   from: string;
   to: string;
+}
+
+export interface DataLink {
+  url: string;
+  title: string;
+  targetBlank?: boolean;
 }
 
 export enum VizOrientation {

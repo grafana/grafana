@@ -1,8 +1,8 @@
 // Types
-import { NullValueMode, GraphSeriesValue, SeriesData } from '../types/index';
+import { NullValueMode, GraphSeriesValue, DataFrame } from '../types/index';
 
 export interface FlotPairsOptions {
-  series: SeriesData;
+  series: DataFrame;
   xIndex: number;
   yIndex: number;
   nullValueMode?: NullValueMode;

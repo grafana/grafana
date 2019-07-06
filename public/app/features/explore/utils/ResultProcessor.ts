@@ -3,17 +3,17 @@ import {
   TableData,
   isTableData,
   LogsModel,
-  toSeriesData,
+  toDataFrame,
   guessFieldTypes,
   DataQueryResponseData,
   TimeSeries,
 } from '@grafana/ui';
 
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrame } from 'app/features/dashboard/state/PanelQueryState';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult } from 'app/core/utils/explore';
-import { seriesDataToLogsModel } from 'app/core/logs_model';
+import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { default as TimeSeries2 } from 'app/core/time_series2';
 import { DataProcessor } from 'app/plugins/panel/graph/data_processor';
 
@@ -77,8 +77,8 @@ export class ResultProcessor {
       return null;
     }
     const graphInterval = this.state.queryIntervals.intervalMs;
-    const seriesData = this.rawData.map(result => guessFieldTypes(toSeriesData(result)));
-    const newResults = this.rawData ? seriesDataToLogsModel(seriesData, graphInterval) : null;
+    const dataFrame = this.rawData.map(result => guessFieldTypes(toDataFrame(result)));
+    const newResults = this.rawData ? dataFrameToLogsModel(dataFrame, graphInterval) : null;
 
     if (this.replacePreviousResults) {
       return newResults;
@@ -107,7 +107,7 @@ export class ResultProcessor {
   };
 
   private makeTimeSeriesList = (rawData: any[]) => {
-    const dataList = getProcessedSeriesData(rawData);
+    const dataList = getProcessedDataFrame(rawData);
     const dataProcessor = new DataProcessor({ xaxis: {}, aliasColors: [] }); // Hack before we use GraphSeriesXY instead
     const timeSeries = dataProcessor.getSeriesList({ dataList });
 

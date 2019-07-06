@@ -36,7 +36,9 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.onChangeQuery('', true);
+    if (!this.props.query.isLogsQuery) {
+      this.onChangeQuery('', true);
+    }
   }
 
   componentWillUnmount() {}

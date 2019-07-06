@@ -37,7 +37,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					{Name: "memberof", Values: []string{"admins"}},
 				},
 			}
-			users := &ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			users := []*ldap.Entry{&entry}
 
 			result, err := server.serializeUsers(users)
 
@@ -71,7 +71,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 					{Name: "memberof", Values: []string{"admins"}},
 				},
 			}
-			users := &ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
+			users := []*ldap.Entry{&entry}
 
 			result, err := server.serializeUsers(users)
 
@@ -143,4 +143,29 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			So(result, ShouldBeNil)
 		})
 	})
+
+	Convey("shouldAuthAdmin()", t, func() {
+		Convey("it should require admin auth", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					BindPassword: "test",
+				},
+			}
+
+			result := server.shouldAuthAdmin()
+			So(result, ShouldBeTrue)
+		})
+
+		Convey("it should not require admin auth", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					BindPassword: "",
+				},
+			}
+
+			result := server.shouldAuthAdmin()
+			So(result, ShouldBeFalse)
+		})
+	})
+
 }

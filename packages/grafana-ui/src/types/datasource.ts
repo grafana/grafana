@@ -1,7 +1,7 @@
 import { ComponentType, ComponentClass } from 'react';
-import { TimeRange } from './time';
+import { TimeRange, RawTimeRange } from './time';
 import { PluginMeta, GrafanaPlugin } from './plugin';
-import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
+import { TableData, TimeSeries, DataFrame, LoadingState } from './data';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 
@@ -284,11 +284,11 @@ export interface ExploreStartPageProps {
 }
 
 /**
- * Starting in v6.2 SeriesData can represent both TimeSeries and TableData
+ * Starting in v6.2 DataFrame can represent both TimeSeries and TableData
  */
 export type LegacyResponseData = TimeSeries | TableData | any;
 
-export type DataQueryResponseData = SeriesData | LegacyResponseData;
+export type DataQueryResponseData = DataFrame | LegacyResponseData;
 
 export type DataStreamObserver = (event: DataStreamState) => void;
 
@@ -313,7 +313,7 @@ export interface DataStreamState {
   /**
    * Series data may not be known yet
    */
-  series?: SeriesData[];
+  series?: DataFrame[];
 
   /**
    * Error in stream (but may still be running)
@@ -323,7 +323,7 @@ export interface DataStreamState {
   /**
    * Optionally return only the rows that changed in this event
    */
-  delta?: SeriesData[];
+  delta?: DataFrame[];
 
   /**
    * Stop listening to this stream
@@ -356,6 +356,8 @@ export interface DataQuery {
    * For non mixed scenarios this is undefined.
    */
   datasource?: string | null;
+
+  metric?: any;
 }
 
 export interface DataQueryError {
@@ -383,6 +385,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
   timezone: string;
   range: TimeRange;
+  rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   targets: TQuery[];
   panelId: number;

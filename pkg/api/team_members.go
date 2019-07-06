@@ -21,12 +21,30 @@ func GetTeamMembers(c *m.ReqContext) Response {
 		member.AvatarUrl = dtos.GetGravatarUrl(member.Email)
 		member.Labels = []string{}
 
-		if setting.IsEnterprise && setting.LDAPEnabled && member.External {
-			member.Labels = append(member.Labels, "LDAP")
+		if setting.IsEnterprise && member.External {
+			authProvider := GetAuthProviderLabel(member.AuthModule)
+			member.Labels = append(member.Labels, authProvider)
 		}
 	}
 
 	return JSON(200, query.Result)
+}
+
+func GetAuthProviderLabel(authModule string) string {
+	switch authModule {
+	case "oauth_github":
+		return "GitHub"
+	case "oauth_google":
+		return "Google"
+	case "oauth_gitlab":
+		return "GitLab"
+	case "oauth_grafana_com", "oauth_grafananet":
+		return "grafana.com"
+	case "ldap", "":
+		return "LDAP"
+	default:
+		return "OAuth"
+	}
 }
 
 // POST /api/teams/:teamId/members

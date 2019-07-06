@@ -69,6 +69,10 @@ $select-input-bg-disabled: $input-bg-disabled;
   position: absolute;
   z-index: $zindex-dropdown;
   min-width: 100%;
+  &-notice--no-options {
+    background-color: $input-bg;
+    padding: 10px;
+  }
 }
 
 .gf-form-select-box__menu-list {
@@ -86,6 +90,21 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box__multi-value {
   display: inline;
+  margin: 0 6px 0 0;
+  cursor: pointer;
+}
+
+.gf-form-select-box__multi-value__remove {
+  text-align: center;
+  display: inline-block;
+  height: 14px;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+.gf-form-select-box__multi-value__label {
+  display: inline;
+  vertical-align: middle;
 }
 
 .gf-form-select-box__option {
@@ -118,6 +137,7 @@ $select-input-bg-disabled: $input-bg-disabled;
   vertical-align: middle;
   > div {
     display: inline-block;
+    vertical-align: middle;
   }
 }
 
@@ -204,4 +224,8 @@ $select-input-bg-disabled: $input-bg-disabled;
 
 .gf-form-select-box-button-select {
   height: auto;
+}
+
+.select-button {
+  display: flex;
 }

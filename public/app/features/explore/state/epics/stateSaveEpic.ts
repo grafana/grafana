@@ -31,12 +31,14 @@ export const stateSaveEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (ac
   return action$.ofType(stateSaveAction.type).pipe(
     mergeMap(() => {
       const { left, right, split } = state$.value.explore;
+      const orgId = state$.value.user.orgId.toString();
       const replace = left && left.urlReplaced === false;
-      const urlStates: { [index: string]: string } = {};
+      const urlStates: { [index: string]: string } = { orgId };
       const leftUrlState: ExploreUrlState = {
         datasource: left.datasourceInstance.name,
         queries: left.queries.map(clearQueryKeys),
         range: toRawTimeRange(left.range),
+        mode: left.mode,
         ui: {
           showingGraph: left.showingGraph,
           showingLogs: true,
@@ -50,6 +52,7 @@ export const stateSaveEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (ac
           datasource: right.datasourceInstance.name,
           queries: right.queries.map(clearQueryKeys),
           range: toRawTimeRange(right.range),
+          mode: right.mode,
           ui: {
             showingGraph: right.showingGraph,
             showingLogs: true,

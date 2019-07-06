@@ -79,6 +79,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
       {'$' + VAR_CELL_PREFIX + '{N}'} / {'$' + VAR_CALC}
     </div>
   );
+
   return (
     <>
       <FormField

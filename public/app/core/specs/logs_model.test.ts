@@ -1,11 +1,11 @@
-import { SeriesData, FieldType, LogsModel, LogsMetaKind, LogsDedupStrategy, LogLevel } from '@grafana/ui';
+import { DataFrame, FieldType, LogsModel, LogsMetaKind, LogsDedupStrategy, LogLevel } from '@grafana/ui';
 import {
   dedupLogRows,
   calculateFieldStats,
   calculateLogsLabelStats,
   getParser,
   LogsParsers,
-  seriesDataToLogsModel,
+  dataFrameToLogsModel,
 } from '../logs_model';
 
 describe('dedupLogRows()', () => {
@@ -337,23 +337,23 @@ const emptyLogsModel = {
   series: [],
 };
 
-describe('seriesDataToLogsModel', () => {
+describe('dataFrameToLogsModel', () => {
   it('given empty series should return empty logs model', () => {
-    expect(seriesDataToLogsModel([] as SeriesData[], 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel([] as DataFrame[], 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without correct series name should return empty logs model', () => {
-    const series: SeriesData[] = [
+    const series: DataFrame[] = [
       {
         fields: [],
         rows: [],
       },
     ];
-    expect(seriesDataToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a time field should return empty logs model', () => {
-    const series: SeriesData[] = [
+    const series: DataFrame[] = [
       {
         fields: [
           {
@@ -364,11 +364,11 @@ describe('seriesDataToLogsModel', () => {
         rows: [],
       },
     ];
-    expect(seriesDataToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a string field should return empty logs model', () => {
-    const series: SeriesData[] = [
+    const series: DataFrame[] = [
       {
         fields: [
           {
@@ -379,11 +379,11 @@ describe('seriesDataToLogsModel', () => {
         rows: [],
       },
     ];
-    expect(seriesDataToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given one series should return expected logs model', () => {
-    const series: SeriesData[] = [
+    const series: DataFrame[] = [
       {
         labels: {
           filename: '/var/log/grafana/grafana.log',
@@ -414,7 +414,7 @@ describe('seriesDataToLogsModel', () => {
         },
       },
     ];
-    const logsModel = seriesDataToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0);
     expect(logsModel.hasUniqueLabels).toBeFalsy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
@@ -449,7 +449,7 @@ describe('seriesDataToLogsModel', () => {
   });
 
   it('given one series without labels should return expected logs model', () => {
-    const series: SeriesData[] = [
+    const series: DataFrame[] = [
       {
         fields: [
           {
@@ -468,7 +468,7 @@ describe('seriesDataToLogsModel', () => {
         rows: [['1970-01-01T00:00:01Z', 'WARN boooo', 'dbug']],
       },
     ];
-    const logsModel = seriesDataToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0);
     expect(logsModel.rows).toHaveLength(1);
     expect(logsModel.rows).toMatchObject([
       {
@@ -481,7 +481,7 @@ describe('seriesDataToLogsModel', () => {
   });
 
   it('given multiple series should return expected logs model', () => {
-    const series: SeriesData[] = [
+    const series: DataFrame[] = [
       {
         labels: {
           foo: 'bar',
@@ -520,7 +520,7 @@ describe('seriesDataToLogsModel', () => {
         rows: [['1970-01-01T00:00:00Z', 'INFO 1'], ['1970-01-01T00:00:02Z', 'INFO 2']],
       },
     ];
-    const logsModel = seriesDataToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0);
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([

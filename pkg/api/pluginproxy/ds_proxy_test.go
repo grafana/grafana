@@ -65,7 +65,7 @@ func TestDSRouteRule(t *testing.T) {
 				},
 			}
 
-			setting.SecretKey = "password"
+			setting.SecretKey = "password" //nolint:goconst
 			key, _ := util.Encrypt([]byte("123"), "password")
 
 			ds := &m.DataSource{
