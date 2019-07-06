@@ -1,4 +1,5 @@
 import AzureMonitorDatasource from '../datasource';
+// @ts-ignore
 import Q from 'q';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
@@ -42,7 +43,7 @@ describe('AzureMonitorDatasource', () => {
       });
 
       it('should return error status and a detailed error message', () => {
-        return ctx.ds.testDatasource().then(results => {
+        return ctx.ds.testDatasource().then((results: any) => {
           expect(results.status).toEqual('error');
           expect(results.message).toEqual(
             '1. Azure Monitor: Bad Request: InvalidApiVersionParameter. An error message. '
@@ -69,7 +70,7 @@ describe('AzureMonitorDatasource', () => {
       });
 
       it('should return success status', () => {
-        return ctx.ds.testDatasource().then(results => {
+        return ctx.ds.testDatasource().then((results: any) => {
           expect(results.status).toEqual('success');
         });
       });
@@ -99,7 +100,7 @@ describe('AzureMonitorDatasource', () => {
       ],
     };
 
-    const response = {
+    const response: any = {
       results: {
         A: {
           refId: 'A',
@@ -128,7 +129,7 @@ describe('AzureMonitorDatasource', () => {
     });
 
     it('should return a list of datapoints', () => {
-      return ctx.ds.query(options).then(results => {
+      return ctx.ds.query(options).then((results: any) => {
         expect(results.data.length).toBe(1);
         expect(results.data[0].name).toEqual('Percentage CPU');
         expect(results.data[0].rows[0][1]).toEqual(1558278660000);
@@ -362,7 +363,7 @@ describe('AzureMonitorDatasource', () => {
           .metricFindQuery(
             'resourceNames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components )'
           )
-          .then(results => {
+          .then((results: any) => {
             expect(results.length).toEqual(1);
             expect(results[0].text).toEqual('nodeapp');
             expect(results[0].value).toEqual('nodeapp');
@@ -886,7 +887,7 @@ describe('AzureMonitorDatasource', () => {
           'resource1',
           'Transactions'
         )
-        .then(results => {
+        .then((results: any) => {
           expect(results.dimensions.length).toEqual(4);
           expect(results.dimensions[0].text).toEqual('None');
           expect(results.dimensions[0].value).toEqual('None');
@@ -904,7 +905,7 @@ describe('AzureMonitorDatasource', () => {
           'resource1',
           'FreeCapacity'
         )
-        .then(results => {
+        .then((results: any) => {
           expect(results.dimensions.length).toEqual(0);
         });
     });
