@@ -19,5 +19,12 @@ export * from './fieldCache';
 export * from './moment_wrapper';
 export * from './slate';
 
-// Names are too general to export
-// rangeutils, datemath
+// Names are too general to export globally
+
+import * as dateMath from './datemath';
+import * as rangeUtil from './rangeutil';
+
+export const utils = {
+  dateMath: dateMath,
+  rangeUtil: rangeUtil,
+};
