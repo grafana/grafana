@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { TimeRange } from '@grafana/ui';
+import { TimeRange } from '@grafana/data';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PrometheusDatasource, PromDataQueryResponse } from './datasource';
 import { PromQueryRequest } from './types';

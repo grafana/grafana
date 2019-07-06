@@ -1,9 +1,7 @@
 import { ComponentType, ComponentClass } from 'react';
-import { TimeRange, RawTimeRange } from './time';
+import { TimeRange, RawTimeRange, TableData, TimeSeries, DataFrame, LogRowModel, LoadingState } from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
-import { TableData, TimeSeries, DataFrame, LoadingState } from './data';
 import { PanelData } from './panel';
-import { LogRowModel } from './logs';
 
 // NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {

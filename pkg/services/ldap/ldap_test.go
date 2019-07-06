@@ -103,10 +103,10 @@ func TestPublicAPI(t *testing.T) {
 	})
 
 	Convey("Auth()", t, func() {
-		Convey("Should ignore passsed username and password", func() {
+		Convey("Should use provided DN and password", func() {
 			connection := &MockConnection{}
 			var actualUsername, actualPassword string
-			connection.bindProvider = func(username, password string) error {
+			connection.BindProvider = func(username, password string) error {
 				actualUsername = username
 				actualPassword = password
 				return nil
@@ -114,33 +114,15 @@ func TestPublicAPI(t *testing.T) {
 			server := &Server{
 				Connection: connection,
 				Config: &ServerConfig{
-					BindDN:       "cn=admin,dc=grafana,dc=org",
-					BindPassword: "bindpwd",
+					BindDN: "cn=admin,dc=grafana,dc=org",
 				},
 			}
-			err := server.Auth("user", "pwd")
-			So(err, ShouldBeNil)
-			So(actualUsername, ShouldEqual, "cn=admin,dc=grafana,dc=org")
-			So(actualPassword, ShouldEqual, "bindpwd")
-		})
 
-		Convey("Given bind dn configured", func() {
-			connection := &MockConnection{}
-			var actualUsername, actualPassword string
-			connection.bindProvider = func(username, password string) error {
-				actualUsername = username
-				actualPassword = password
-				return nil
-			}
-			server := &Server{
-				Connection: connection,
-				Config: &ServerConfig{
-					BindDN: "cn=%s,o=users,dc=grafana,dc=org",
-				},
-			}
-			err := server.Auth("user", "pwd")
+			dn := "cn=user,ou=users,dc=grafana,dc=org"
+			err := server.Auth(dn, "pwd")
+
 			So(err, ShouldBeNil)
-			So(actualUsername, ShouldEqual, "cn=user,o=users,dc=grafana,dc=org")
+			So(actualUsername, ShouldEqual, dn)
 			So(actualPassword, ShouldEqual, "pwd")
 		})
 
@@ -149,17 +131,69 @@ func TestPublicAPI(t *testing.T) {
 			expected := &ldap.Error{
 				ResultCode: uint16(25),
 			}
-			connection.bindProvider = func(username, password string) error {
+			connection.BindProvider = func(username, password string) error {
 				return expected
 			}
 			server := &Server{
 				Connection: connection,
 				Config: &ServerConfig{
-					BindDN: "cn=%s,o=users,dc=grafana,dc=org",
+					BindDN: "cn=%s,ou=users,dc=grafana,dc=org",
 				},
 				log: log.New("test-logger"),
 			}
 			err := server.Auth("user", "pwd")
+			So(err, ShouldEqual, expected)
+		})
+	})
+
+	Convey("AuthAdmin()", t, func() {
+		Convey("Should use admin DN and password", func() {
+			connection := &MockConnection{}
+			var actualUsername, actualPassword string
+			connection.BindProvider = func(username, password string) error {
+				actualUsername = username
+				actualPassword = password
+				return nil
+			}
+
+			dn := "cn=admin,dc=grafana,dc=org"
+
+			server := &Server{
+				Connection: connection,
+				Config: &ServerConfig{
+					BindPassword: "pwd",
+					BindDN:       dn,
+				},
+			}
+
+			err := server.AuthAdmin()
+
+			So(err, ShouldBeNil)
+			So(actualUsername, ShouldEqual, dn)
+			So(actualPassword, ShouldEqual, "pwd")
+		})
+
+		Convey("Should handle an error", func() {
+			connection := &MockConnection{}
+			expected := &ldap.Error{
+				ResultCode: uint16(25),
+			}
+			connection.BindProvider = func(username, password string) error {
+				return expected
+			}
+
+			dn := "cn=admin,dc=grafana,dc=org"
+
+			server := &Server{
+				Connection: connection,
+				Config: &ServerConfig{
+					BindPassword: "pwd",
+					BindDN:       dn,
+				},
+				log: log.New("test-logger"),
+			}
+
+			err := server.AuthAdmin()
 			So(err, ShouldEqual, expected)
 		})
 	})

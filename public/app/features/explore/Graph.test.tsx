@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { Graph } from './Graph';
 import { mockData } from './__mocks__/mockData';
-import { DefaultTimeZone } from '@grafana/ui';
+import { DefaultTimeZone } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props = {

@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, LogsModel, LogsMetaKind, LogsDedupStrategy, LogLevel } from '@grafana/ui';
+import { DataFrame, FieldType, LogsModel, LogsMetaKind, LogsDedupStrategy, LogLevel } from '@grafana/data';
 import {
   dedupLogRows,
   calculateFieldStats,

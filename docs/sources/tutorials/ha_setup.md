@@ -9,10 +9,9 @@ weight = 10
 
 # How to setup Grafana for high availability
 
-Setting up Grafana for high availability is fairly simple. It comes down to two things:
-
-  1. Use a shared database for storing dashboard, users, and other persistent data
-  2. Decide how to store session data.
+Setting up Grafana for high availability is fairly simple. You just need a shared database for storing dashboard, users,
+and other persistent data. So the default embedded SQLite database will not work, you will have to switch to
+MySQL or Postgres.
 
 <div class="text-center">
   <img src="/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center" />

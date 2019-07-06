@@ -7,8 +7,9 @@ import {
   ClickOutsideWrapper,
   CustomScrollbar,
   DataQueryError,
-  LogRowModel,
 } from '@grafana/ui';
+
+import { LogRowModel } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { LogRowContextRows, HasMoreContextRows, LogRowContextQueryErrors } from './LogRowContextProvider';
 import { Alert } from './Error';

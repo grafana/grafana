@@ -12,7 +12,8 @@ import {
 } from './explore';
 import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { DataQueryError, LogsDedupStrategy } from '@grafana/ui';
+import { LogsDedupStrategy } from '@grafana/data';
+import { DataQueryError } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
