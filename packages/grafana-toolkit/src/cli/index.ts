@@ -15,6 +15,7 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
+import { pluginCITask } from './tasks/plugin.ci';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -125,16 +126,18 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:build')
     .description('Prepares plugin dist package')
     .action(async cmd => {
-      await execTask(pluginBuildTask)({});
+      await execTask(pluginBuildTask)({ coverage: false });
     });
 
   program
     .command('plugin:dev')
     .option('-w, --watch', 'Run plugin development mode with watch enabled')
+    .option('--yarnlink', 'symlink this project to the local grafana/toolkit')
     .description('Starts plugin dev mode')
     .action(async cmd => {
       await execTask(pluginDevTask)({
         watch: !!cmd.watch,
+        yarnlink: !!cmd.yarnlink,
       });
     });
 
@@ -147,6 +150,16 @@ export const run = (includeInternalScripts = false) => {
       await execTask(pluginTestTask)({
         updateSnapshot: !!cmd.updateSnapshot,
         coverage: !!cmd.coverage,
+      });
+    });
+
+  program
+    .command('plugin:ci')
+    .option('--dryRun', "Dry run (don't post results)")
+    .description('Run Plugin CI task')
+    .action(async cmd => {
+      await execTask(pluginCITask)({
+        dryRun: cmd.dryRun,
       });
     });
 

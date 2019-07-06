@@ -1,5 +1,7 @@
 import _ from 'lodash';
 import { Parser } from './parser';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { ScopedVars } from '@grafana/ui';
 
 export default class GraphiteQuery {
   datasource: any;
@@ -15,7 +17,7 @@ export default class GraphiteQuery {
   scopedVars: any;
 
   /** @ngInject */
-  constructor(datasource, target, templateSrv?, scopedVars?) {
+  constructor(datasource: any, target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.datasource = datasource;
     this.target = target;
     this.templateSrv = templateSrv;
@@ -60,7 +62,7 @@ export default class GraphiteQuery {
     this.checkOtherSegmentsIndex = this.segments.length - 1;
   }
 
-  getSegmentPathUpTo(index) {
+  getSegmentPathUpTo(index: number) {
     const arr = this.segments.slice(0, index);
 
     return _.reduce(
@@ -72,7 +74,7 @@ export default class GraphiteQuery {
     );
   }
 
-  parseTargetRecursive(astNode, func) {
+  parseTargetRecursive(astNode: any, func: any): any {
     if (astNode === null) {
       return null;
     }
@@ -119,7 +121,7 @@ export default class GraphiteQuery {
     }
   }
 
-  updateSegmentValue(segment, index) {
+  updateSegmentValue(segment: any, index: number) {
     this.segments[index].value = segment.value;
   }
 
@@ -127,28 +129,28 @@ export default class GraphiteQuery {
     this.segments.push({ value: 'select metric' });
   }
 
-  addFunction(newFunc) {
+  addFunction(newFunc: any) {
     this.functions.push(newFunc);
   }
 
-  addFunctionParameter(func, value) {
+  addFunctionParameter(func: any, value: string) {
     if (func.params.length >= func.def.params.length && !_.get(_.last(func.def.params), 'multiple', false)) {
       throw { message: 'too many parameters for function ' + func.def.name };
     }
     func.params.push(value);
   }
 
-  removeFunction(func) {
+  removeFunction(func: any) {
     this.functions = _.without(this.functions, func);
   }
 
-  moveFunction(func, offset) {
+  moveFunction(func: any, offset: number) {
     const index = this.functions.indexOf(func);
     // @ts-ignore
     _.move(this.functions, index, index + offset);
   }
 
-  updateModelTarget(targets) {
+  updateModelTarget(targets: any) {
     const wrapFunction = (target: string, func: any) => {
       return func.render(target, (value: string) => {
         return this.templateSrv.replace(value, this.scopedVars);
@@ -170,7 +172,7 @@ export default class GraphiteQuery {
     }
   }
 
-  updateRenderedTarget(target, targets) {
+  updateRenderedTarget(target: { refId: string | number; target: any; targetFull: any }, targets: any) {
     // render nested query
     const targetsByRefId = _.keyBy(targets, 'refId');
 
@@ -181,7 +183,7 @@ export default class GraphiteQuery {
     let targetWithNestedQueries = target.target;
 
     // Use ref count to track circular references
-    function countTargetRefs(targetsByRefId, refId) {
+    function countTargetRefs(targetsByRefId: any, refId: string) {
       let refCount = 0;
       _.each(targetsByRefId, (t, id) => {
         if (id !== refId) {
@@ -199,7 +201,7 @@ export default class GraphiteQuery {
     // Keep interpolating until there are no query references
     // The reason for the loop is that the referenced query might contain another reference to another query
     while (targetWithNestedQueries.match(nestedSeriesRefRegex)) {
-      const updated = targetWithNestedQueries.replace(nestedSeriesRefRegex, (match, g1) => {
+      const updated = targetWithNestedQueries.replace(nestedSeriesRefRegex, (match: string, g1: string) => {
         const t = targetsByRefId[g1];
         if (!t) {
           return match;
@@ -227,7 +229,7 @@ export default class GraphiteQuery {
     }
   }
 
-  splitSeriesByTagParams(func) {
+  splitSeriesByTagParams(func: { params: any }) {
     const tagPattern = /([^\!=~]+)(\!?=~?)(.*)/;
     return _.flatten(
       _.map(func.params, (param: string) => {
@@ -260,18 +262,18 @@ export default class GraphiteQuery {
     }
   }
 
-  addTag(tag) {
+  addTag(tag: { key: any; operator: string; value: string }) {
     const newTagParam = renderTagString(tag);
     this.getSeriesByTagFunc().params.push(newTagParam);
     this.tags.push(tag);
   }
 
-  removeTag(index) {
+  removeTag(index: number) {
     this.getSeriesByTagFunc().params.splice(index, 1);
     this.tags.splice(index, 1);
   }
 
-  updateTag(tag, tagIndex) {
+  updateTag(tag: { key: string }, tagIndex: number) {
     this.error = null;
 
     if (tag.key === this.removeTagValue) {
@@ -296,6 +298,6 @@ export default class GraphiteQuery {
   }
 }
 
-function renderTagString(tag) {
+function renderTagString(tag: { key: any; operator?: any; value?: any }) {
   return tag.key + tag.operator + tag.value;
 }

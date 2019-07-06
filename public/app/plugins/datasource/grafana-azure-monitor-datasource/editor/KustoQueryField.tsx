@@ -1,4 +1,5 @@
 import _ from 'lodash';
+// @ts-ignore
 import Plain from 'slate-plain-serializer';
 
 import QueryField from './query_field';
@@ -38,21 +39,21 @@ interface KustoDBSchema {
   Tables?: any;
 }
 
-const defaultSchema = () => ({
+const defaultSchema: any = () => ({
   Databases: {
     Default: {},
   },
 });
 
 const cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
-const wrapText = text => ({ text });
+const wrapText = (text: string) => ({ text });
 
 export default class KustoQueryField extends QueryField {
   fields: any;
   events: any;
   schema: KustoSchema;
 
-  constructor(props, context) {
+  constructor(props: any, context: any) {
     super(props, context);
     this.schema = defaultSchema();
 
@@ -197,7 +198,7 @@ export default class KustoQueryField extends QueryField {
     }
   };
 
-  applyTypeahead(change, suggestion) {
+  applyTypeahead(change: any, suggestion: { text: any; type: string; deleteBackwards: any }) {
     const { typeaheadPrefix, typeaheadContext, typeaheadText } = this.state;
     let suggestionText = suggestion.text || suggestion;
     const move = 0;
@@ -425,7 +426,7 @@ export default class KustoQueryField extends QueryField {
 /**
  * Cast schema from App Insights to default Kusto schema
  */
-function castSchema(schema) {
+function castSchema(schema: any) {
   const defaultSchemaTemplate = defaultSchema();
   defaultSchemaTemplate.Databases.Default = schema;
   return defaultSchemaTemplate;

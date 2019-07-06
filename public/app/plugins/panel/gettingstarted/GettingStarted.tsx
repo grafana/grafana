@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-import { PanelProps } from '@grafana/ui/src/types';
+import { PanelProps } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/core';

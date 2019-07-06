@@ -9,7 +9,7 @@ import config from 'app/core/config';
 
 // Types
 import { TextOptions } from './types';
-import { PanelProps } from '@grafana/ui/src/types';
+import { PanelProps } from '@grafana/ui';
 
 interface Props extends PanelProps<TextOptions> {}
 interface State {

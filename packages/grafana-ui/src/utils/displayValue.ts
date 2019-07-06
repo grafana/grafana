@@ -15,9 +15,8 @@ import {
   GrafanaTheme,
   GrafanaThemeType,
   DecimalCount,
-  Field,
 } from '../types';
-import { DateTime, dateTime } from './moment_wrapper';
+import { DateTime, dateTime, Field } from '@grafana/data';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 

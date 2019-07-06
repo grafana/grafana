@@ -1,7 +1,7 @@
 import InfluxQueryModel from '../influx_query_model';
 
 describe('InfluxQuery', () => {
-  const templateSrv = { replace: val => val };
+  const templateSrv: any = { replace: (val: any) => val };
 
   describe('render series with mesurement only', () => {
     it('should generate correct query', () => {

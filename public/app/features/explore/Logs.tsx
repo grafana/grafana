@@ -1,10 +1,10 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
+import * as rangeUtil from '@grafana/data/src/utils/rangeutil';
+import { Switch } from '@grafana/ui';
 import {
   RawTimeRange,
-  Switch,
   LogLevel,
   TimeZone,
   AbsoluteTimeRange,
@@ -12,7 +12,7 @@ import {
   LogsModel,
   LogsDedupStrategy,
   LogRowModel,
-} from '@grafana/ui';
+} from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';

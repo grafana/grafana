@@ -8,7 +8,7 @@ import { importDataSourcePlugin } from './plugin_loader';
 import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
 
 // Types
-import { DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/ui/src/types';
+import { DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/ui';
 
 export class DatasourceSrv implements DataSourceService {
   datasources: { [name: string]: DataSourceApi };

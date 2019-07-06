@@ -1,5 +1,5 @@
 import { DataQueryRequest, DataQuery } from '@grafana/ui';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 export function getQueryOptions<TQuery extends DataQuery>(
   options: Partial<DataQueryRequest<TQuery>>

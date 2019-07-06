@@ -235,7 +235,7 @@ export default class SupportedNamespaces {
 
   constructor(private cloudName: string) {}
 
-  get() {
+  get(): string[] {
     return this.supportedMetricNamespaces[this.cloudName];
   }
 }

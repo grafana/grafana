@@ -9,7 +9,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { FormLabel, Select, SelectOptionItem } from '@grafana/ui';
 
 // Types
-import { QueryEditorProps } from '@grafana/ui/src/types';
+import { QueryEditorProps } from '@grafana/ui';
 import { TestDataDatasource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
 

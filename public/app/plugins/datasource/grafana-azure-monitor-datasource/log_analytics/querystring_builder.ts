@@ -1,7 +1,7 @@
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 export default class LogAnalyticsQuerystringBuilder {
-  constructor(public rawQueryString, public options, public defaultTimeField) {}
+  constructor(public rawQueryString: string, public options: any, public defaultTimeField: any) {}
 
   generate() {
     let queryString = this.rawQueryString;
@@ -39,14 +39,14 @@ export default class LogAnalyticsQuerystringBuilder {
     return { uriString, rawQuery };
   }
 
-  getFrom(options) {
+  getFrom(options: any) {
     const from = options.range.from;
     return `datetime(${dateTime(from)
       .startOf('minute')
       .toISOString()})`;
   }
 
-  getUntil(options) {
+  getUntil(options: any) {
     if (options.rangeRaw.to === 'now') {
       const now = Date.now();
       return `datetime(${dateTime(now)
@@ -60,7 +60,7 @@ export default class LogAnalyticsQuerystringBuilder {
     }
   }
 
-  getTimeFilter(timeFieldArg, options) {
+  getTimeFilter(timeFieldArg: any, options: any) {
     const timeField = timeFieldArg || this.defaultTimeField;
     if (options.rangeRaw.to === 'now') {
       return `${timeField} >= ${this.getFrom(options)}`;

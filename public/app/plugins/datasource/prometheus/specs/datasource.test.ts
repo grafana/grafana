@@ -8,7 +8,7 @@ import {
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
 } from '../datasource';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 import { DataSourceInstanceSettings, DataQueryResponseData } from '@grafana/ui';
 import { PromOptions } from '../types';
 import { TemplateSrv } from 'app/features/templating/template_srv';

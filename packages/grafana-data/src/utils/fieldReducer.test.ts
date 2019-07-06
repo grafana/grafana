@@ -1,4 +1,4 @@
-import { ReducerID, reduceField, fieldReducers } from './fieldReducer';
+import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import _ from 'lodash';
 import { DataFrame } from '../types/data';

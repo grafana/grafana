@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { TimeFragment, TimeZone, TIME_FORMAT } from '../../types/time';
-import { DateTime, dateTime, toUtc } from '../../utils/moment_wrapper';
+import { TimeFragment, TimeZone, TIME_FORMAT } from '@grafana/data';
+import { DateTime, dateTime, toUtc } from '@grafana/data';
 import { stringToDateTimeType } from './time';
 
 export interface Props {

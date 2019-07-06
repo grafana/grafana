@@ -12,7 +12,6 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/ldap.v3"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -53,6 +52,9 @@ var (
 
 	// ErrInvalidCredentials is returned if username and password do not match
 	ErrInvalidCredentials = errors.New("Invalid Username or Password")
+
+	// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
+	ErrCouldNotFindUser = errors.New("Can't find user in LDAP")
 )
 
 // New creates the new LDAP auth
@@ -123,14 +125,35 @@ func (server *Server) Close() {
 	server.Connection.Close()
 }
 
-// Login user by searching and serializing it
+// Login the user.
+// There is several cases -
+// 1. First we check if we need to authenticate the admin user.
+// That user should have search privileges.
+// 2. For some configurations it is allowed to search the
+// user without any authenfication, in such case we
+// perform "unauthenticated bind".
+// --
+// After either first or second step is done we find the user DN
+// by its username, after that, we then combine it with user password and
+// then try to authentificate that user
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
-	// Authentication
-	err := server.Auth(query.Username, query.Password)
-	if err != nil {
-		return nil, err
+	var err error
+
+	// Do we need to authenticate the "admin" user first?
+	// Admin user should have access for the user search in LDAP server
+	if server.shouldAuthAdmin() {
+		if err := server.AuthAdmin(); err != nil {
+			return nil, err
+		}
+
+		// Or if anyone can perform the search in LDAP?
+	} else {
+		err := server.Connection.UnauthenticatedBind(server.Config.BindDN)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Find user entry & attributes
@@ -142,12 +165,17 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	// If we couldn't find the user -
 	// we should show incorrect credentials err
 	if len(users) == 0 {
-		server.disableExternalUser(query.Username)
-		return nil, ErrInvalidCredentials
+		return nil, ErrCouldNotFindUser
 	}
 
 	user := users[0]
 	if err := server.validateGrafanaUser(user); err != nil {
+		return nil, err
+	}
+
+	// Authenticate user
+	err = server.Auth(user.AuthId, query.Password)
+	if err != nil {
 		return nil, err
 	}
 
@@ -252,34 +280,6 @@ func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
 	return nil
 }
 
-// disableExternalUser marks external user as disabled in Grafana db
-func (server *Server) disableExternalUser(username string) error {
-	// Check if external user exist in Grafana
-	userQuery := &models.GetExternalUserInfoByLoginQuery{
-		LoginOrEmail: username,
-	}
-
-	if err := bus.Dispatch(userQuery); err != nil {
-		return err
-	}
-
-	userInfo := userQuery.Result
-	if !userInfo.IsDisabled {
-		server.log.Debug("Disabling external user", "user", userQuery.Result.Login)
-		// Mark user as disabled in grafana db
-		disableUserCmd := &models.DisableUserCommand{
-			UserId:     userQuery.Result.UserId,
-			IsDisabled: true,
-		}
-
-		if err := bus.Dispatch(disableUserCmd); err != nil {
-			server.log.Debug("Error disabling external user", "user", userQuery.Result.Login, "message", err.Error())
-			return err
-		}
-	}
-	return nil
-}
-
 // getSearchRequest returns LDAP search request for users
 func (server *Server) getSearchRequest(
 	base string,
@@ -360,32 +360,46 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 	return extUser, nil
 }
 
-// shouldBindAdmin checks if we should use
+// shouldAuthAdmin checks if we should use
 // admin username & password for LDAP bind
-func (server *Server) shouldBindAdmin() bool {
+func (server *Server) shouldAuthAdmin() bool {
 	return server.Config.BindPassword != ""
 }
 
-// Auth authentificates user in LDAP.
-// It might not use passed password and username,
-// since they can be overwritten with admin config values -
-// see "bind_dn" and "bind_password" options in LDAP config
+// Auth authentificates user in LDAP
 func (server *Server) Auth(username, password string) error {
-	path := server.Config.BindDN
-
-	if server.shouldBindAdmin() {
-		password = server.Config.BindPassword
-	} else {
-		path = fmt.Sprintf(path, username)
+	err := server.auth(username, password)
+	if err != nil {
+		server.log.Error(
+			fmt.Sprintf("Cannot authentificate user %s in LDAP", username),
+			"error",
+			err,
+		)
+		return err
 	}
 
-	bindFn := func() error {
-		return server.Connection.Bind(path, password)
+	return nil
+}
+
+// AuthAdmin authentificates LDAP admin user
+func (server *Server) AuthAdmin() error {
+	err := server.auth(server.Config.BindDN, server.Config.BindPassword)
+	if err != nil {
+		server.log.Error(
+			"Cannot authentificate admin user in LDAP",
+			"error",
+			err,
+		)
+		return err
 	}
 
-	if err := bindFn(); err != nil {
-		server.log.Error("Cannot authentificate in LDAP", "err", err)
+	return nil
+}
 
+// auth is helper for several types of LDAP authentification
+func (server *Server) auth(path, password string) error {
+	err := server.Connection.Bind(path, password)
+	if err != nil {
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
 				return ErrInvalidCredentials

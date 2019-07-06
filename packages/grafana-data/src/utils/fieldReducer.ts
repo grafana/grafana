@@ -1,8 +1,8 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
 
-import { DataFrame, NullValueMode } from '../types/index';
-import { Extension, ExtensionRegistry } from '@grafana/data';
+import { DataFrame, NullValueMode } from '../types';
+import { Extension, ExtensionRegistry } from './extensions';
 
 export enum ReducerID {
   sum = 'sum',
