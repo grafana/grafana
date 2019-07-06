@@ -7,8 +7,9 @@ import { getMappedValue } from './valueMappings';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import { Threshold, DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType, DecimalCount, Field } from '../types';
-import { DateTime, dateTime } from './moment_wrapper';
+import { Threshold, DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType, DecimalCount } from '../types';
+
+import { DateTime, dateTime, Field } from '@grafana/data';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 

@@ -8,7 +8,7 @@ import {
   updateTimeRangeAction,
   runQueriesAction,
 } from '../actionTypes';
-import { DataFrame, LoadingState } from '@grafana/ui';
+import { DataFrame, LoadingState } from '@grafana/data';
 import { processQueryResultsEpic } from './processQueryResultsEpic';
 import TableModel from 'app/core/table_model';
 

@@ -10,9 +10,9 @@ import {
   FieldDisplayOptions,
   FieldDisplayEditor,
   FieldPropertiesEditor,
-  Field,
   PanelOptionsGroup,
 } from '@grafana/ui';
+import { Field } from '@grafana/data';
 
 import { SingleStatOptions, SparklineOptions } from './types';
 import { ColoringEditor } from './ColoringEditor';

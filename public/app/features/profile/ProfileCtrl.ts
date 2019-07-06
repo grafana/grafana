@@ -1,6 +1,6 @@
 import config from 'app/core/config';
 import { coreModule } from 'app/core/core';
-import { dateTime } from '@grafana/ui';
+import { dateTime } from '@grafana/data';
 import { UserSession } from 'app/types';
 
 export class ProfileCtrl {

@@ -1,19 +1,22 @@
 import { ComponentClass } from 'react';
 import {
-  RawTimeRange,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
+  DataQueryError,
+} from '@grafana/ui';
+
+import {
+  RawTimeRange,
   LogLevel,
   TimeRange,
-  DataQueryError,
   LogsModel,
   LogsDedupStrategy,
   LoadingState,
   AbsoluteTimeRange,
-} from '@grafana/ui';
+} from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';

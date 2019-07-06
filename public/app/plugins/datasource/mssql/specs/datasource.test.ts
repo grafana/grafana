@@ -3,7 +3,7 @@ import { TemplateSrvStub, TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 // @ts-ignore
 import q from 'q';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 describe('MSSQLDatasource', () => {
   const ctx: any = {

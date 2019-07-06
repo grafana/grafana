@@ -3,12 +3,12 @@ import React, { Component } from 'react';
 
 // Types
 import { ExploreId } from 'app/types';
-import { TimeRange, TimeOption, TimeZone, SetInterval, toUtc, dateTime } from '@grafana/ui';
+import { TimeRange, TimeOption, TimeZone, toUtc, dateTime, RawTimeRange } from '@grafana/data';
 
 // State
 
 // Components
-import { TimePicker, RefreshPicker, RawTimeRange } from '@grafana/ui';
+import { TimePicker, RefreshPicker, SetInterval } from '@grafana/ui';
 
 // Utils & Services
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';

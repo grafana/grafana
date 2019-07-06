@@ -7,9 +7,9 @@ import {
   FieldDisplayEditor,
   FieldDisplayOptions,
   FieldPropertiesEditor,
-  Field,
   PanelOptionsGroup,
 } from '@grafana/ui';
+import { Field } from '@grafana/data';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
 import { PieChartOptions } from './types';

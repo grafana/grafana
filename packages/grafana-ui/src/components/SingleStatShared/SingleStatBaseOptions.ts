@@ -3,8 +3,7 @@ import omit from 'lodash/omit';
 
 import { VizOrientation, PanelModel } from '../../types/panel';
 import { FieldDisplayOptions } from '../../utils/fieldDisplay';
-import { Field, Threshold } from '../../types';
-import { getFieldReducers, sortThresholds } from '../../utils/index';
+import { Field, getFieldReducers } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
   fieldOptions: FieldDisplayOptions;

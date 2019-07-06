@@ -8,10 +8,10 @@ import {
   PanelOptionsGrid,
   FieldDisplayEditor,
   FieldDisplayOptions,
-  Field,
   FieldPropertiesEditor,
   PanelOptionsGroup,
 } from '@grafana/ui';
+import { Field } from '@grafana/data';
 
 // Types
 import { FormLabel, PanelEditorProps, Threshold, Select, ValueMapping } from '@grafana/ui';
