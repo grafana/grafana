@@ -6,7 +6,7 @@ import { single, map, filter, catchError } from 'rxjs/operators';
 
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import * as dateMath from '@grafana/data/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';

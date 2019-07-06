@@ -10,5 +10,7 @@ export * from './object';
 export * from './fieldCache';
 export * from './moment_wrapper';
 
-// Names are too general to export
-// rangeutils, datemath
+// Names are too general to export globally
+import * as dateMath from './datemath';
+import * as rangeUtil from './rangeutil';
+export { dateMath, rangeUtil };

@@ -1,5 +1,5 @@
 import angular, { IQService } from 'angular';
-import * as dateMath from '@grafana/data/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import _ from 'lodash';
 import { ElasticDatasource, getMaxConcurrenShardRequestOrDefault } from '../datasource';
 import { toUtc, dateTime } from '@grafana/data';
