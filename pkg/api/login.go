@@ -21,8 +21,10 @@ const (
 	LoginErrorCookieName = "login_error"
 )
 
+var setIndexViewData = (*HTTPServer).setIndexViewData
+
 func (hs *HTTPServer) LoginView(c *models.ReqContext) {
-	viewData, err := hs.setIndexViewData(c)
+	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
