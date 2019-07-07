@@ -45,6 +45,8 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
 		deleteCookie(c, LoginErrorCookieName)
 		viewData.Settings["loginError"] = loginError
+		c.HTML(200, ViewIndex, viewData)
+		return
 	}
 
 	if tryOAuthAutoLogin(c) {
