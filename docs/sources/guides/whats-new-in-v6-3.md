@@ -14,13 +14,14 @@ weight = -14
 
 For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
-The main highlights are:
+## Highlights
 
 - New Explore features
   - [Loki Live Streaming]({{< relref "#loki-live-streaming" >}})
   - [Loki Context Queries]({{< relref "#loki-context-queries" >}})
   - [Elasticsearch Logs Support]({{< relref "#elasticsearch-logs-support" >}})
   - [InfluxDB Logs Support]({{< relref "#influxdb-logs-support" >}})
+- [Data links]({{< relref "#data-links" >}})
 - [New Time Picker]({{< relref "#new-time-picker" >}})
 - [Graph Area Gradients]({{< relref "#graph-gradients" >}}) - A new graph display option!
 - Grafana Enterprise
@@ -47,18 +48,51 @@ allows you to view lines before and after the line of interest.
 This release adds support for searching & visualizing logs stored in Elasticsearch in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
+{{< docs-imagebox img="/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
+
 ### InfluxDB logs support
 
 This release adds support for searching & visualizing logs stored in InfluxDB in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
-### New Time Picker
+{{< docs-imagebox img="/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
-The time picker has been re-designed and is now a bit quicker to use for the most common quick ranges.
+## Data Links
+
+We have simplified the UI for defining panel drilldown links (and renamed them to Panel links). We have also added a
+new type of link named `Data link`. The reason to have two different types is to make it clear how they are used
+and what variables you can use in the link. Panel links are only shown in the top left corner of
+the panel and you cannot reference series name or any data field.
+
+While `Data links` are used by the actual visualization and can reference data fields.
+
+Example:
+```url
+http://my-grafana.com/d/bPCI6VSZz/other-dashboard?var-server=${__series_name}
+```
+
+You have access to these variables:
+
+Name | Description
+------------ | -------------
+*${__series_name}* | The name of the time series (or table)
+*${__value_time}* | The time of the point your clicking on (in millisecond epoch)
+*${__url_time_range}* | Interpolates as the full time range (i.e. from=21312323412&to=21312312312)
+*${__all_variables}* | Adds all current variables (and current values) to the url
+
+You can then click on point in the Graph.
+
+{{< docs-imagebox img="/img/docs/v63/graph_datalink.png" max-width="400px" caption="New Time Picker" >}}
+
+For now only the Graph panel supports `Data links` but we hope to add these to many visualizations.
+
+## New Time Picker
+
+The time picker has been re-designed and with a more basic design that makes accessing quick ranges more easy.
 
 {{< docs-imagebox img="/img/docs/v63/time_picker.png" max-width="400px" caption="New Time Picker" >}}
 
-### Graph Gradients
+## Graph Gradients
 
 Want more eye candy in your graphs? Then the fill gradient option might be for you! Works really well for
 graphs with only a single series.
@@ -69,12 +103,25 @@ Looks really nice in light theme as well.
 
 {{< docs-imagebox img="/img/docs/v63/graph_gradients_white.png" max-width="800px" caption="Graph Gradient Area" >}}
 
+## Grafana Enterprise
+
+Substantial refactoring and improvements to the external auth systems as gone in to this release making the two features
+listed below possible as well as laying a foundation for future enhancements.
+
 ### LDAP Active Sync
 
 This is a new Enterprise feature that enables background syncing of user information, org role and teams memberships.
-This syncing is otherwise only done at login time. With this feature you can schedule a sync job that
-performs active syncing. For example a user removed from an LDAP group would be automatically removed from a corresponding
-team in Grafanam or if no longer belong to an LDAP group that gives them access to Grafana they would be immediatel
-logged out.
+This syncing is otherwise only done at login time. With this feature you can schedule how often this user synchronization should
+occur.
+
+For example lets say a user is removed from an LDAP group. In previous versions of Grafana an admin would have to
+wait for the user to logout or the session to expire for the Grafana permissions to update, a process that can take days.
+
+With active sync the user would be (on next sync) automatically removed from the corresponding team in Grafanam or if no longer
+belonging to an LDAP group that gives them access to Grafana they would be logged out.
 
 [Read more](../auth/enhanced_ldap/#active-ldap-synchronization)
+
+### SAML Authentication
+
+Built-in support for SAML is now available in Grafana Enterprise.
