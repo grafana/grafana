@@ -11,6 +11,7 @@ import (
 	"html/template"
 	"net"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,25 +26,26 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 	}
 
 	var num int
-	for _, address := range msg.To {
-		m := gomail.NewMessage()
-		m.SetHeader("From", msg.From)
-		m.SetHeader("To", address)
-		m.SetHeader("Subject", msg.Subject)
-		for _, file := range msg.EmbededFiles {
-			m.Embed(file)
-		}
-
-		m.SetBody("text/html", msg.Body)
-
-		e := dialer.DialAndSend(m)
-		if e != nil {
-			err = errutil.Wrapf(e, "Failed to send notification to email address: %s", address)
-			continue
-		}
-
-		num++
+	
+	h := make(map[string][]string)
+	h["To"] = msg.To
+	h["From"] = []string{msg.From}
+	h["Subject"] = []string{msg.Subject}
+	
+	m := gomail.NewMessage()
+	m.SetHeaders(h)
+	for _, file := range msg.EmbededFiles {
+		m.Embed(file)
 	}
+
+	m.SetBody("text/html", msg.Body)
+
+	e := dialer.DialAndSend(m)
+	if e != nil {
+		err = errutil.Wrapf(e, "Failed to send notification to email address: %s", strings.Join(msg.To, ";"))
+	}
+
+	num++	
 
 	return num, err
 }
