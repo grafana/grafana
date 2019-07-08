@@ -44,7 +44,6 @@ exports[`Render should render pending invites button 1`] = `
     >
       <ToggleButtonGroup>
         <ToggleButton
-          className="btn toggle-btn active"
           key="users"
           onChange={[MockFunction]}
           selected={true}
@@ -52,7 +51,6 @@ exports[`Render should render pending invites button 1`] = `
           Users
         </ToggleButton>
         <ToggleButton
-          className="btn toggle-btn"
           key="pending-invites"
           onChange={[MockFunction]}
           selected={false}

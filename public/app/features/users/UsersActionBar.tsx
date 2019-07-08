@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
 import { setUsersSearchQuery } from './state/actions';
 import { getInviteesCount, getUsersSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
@@ -30,18 +29,6 @@ export class UsersActionBar extends PureComponent<Props> {
       showInvites,
     } = this.props;
 
-    const pendingInvitesButtonStyle = classNames({
-      btn: true,
-      'toggle-btn': true,
-      active: showInvites,
-    });
-
-    const usersButtonStyle = classNames({
-      btn: true,
-      'toggle-btn': true,
-      active: !showInvites,
-    });
-
     return (
       <div className="page-action-bar">
         <div className="gf-form gf-form--grow">
@@ -55,15 +42,10 @@ export class UsersActionBar extends PureComponent<Props> {
           {pendingInvitesCount > 0 && (
             <div style={{ marginLeft: '1rem' }}>
               <ToggleButtonGroup>
-                <ToggleButton selected={!showInvites} className={usersButtonStyle} key="users" onChange={onShowInvites}>
+                <ToggleButton selected={!showInvites} key="users" onChange={onShowInvites}>
                   Users
                 </ToggleButton>
-                <ToggleButton
-                  selected={showInvites}
-                  className={pendingInvitesButtonStyle}
-                  onChange={onShowInvites}
-                  key="pending-invites"
-                >
+                <ToggleButton selected={showInvites} onChange={onShowInvites} key="pending-invites">
                   Pending Invites ({pendingInvitesCount})
                 </ToggleButton>
               </ToggleButtonGroup>

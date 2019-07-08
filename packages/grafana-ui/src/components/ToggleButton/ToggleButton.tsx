@@ -3,10 +3,10 @@ import { ButtonSize } from '../Button/AbstractButton';
 import { Button } from '../Button/Button';
 import { GrafanaTheme } from '../../types/theme';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { Tooltip } from '../Tooltip/Tooltip';
 import { cx, css } from 'emotion';
 import tinycolor from 'tinycolor2';
 import { increaseContrast } from '../../utils/colors';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 export interface ToggleButtonState {
   untouched: boolean;
@@ -68,7 +68,7 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
   }
 
   renderButton(theme: GrafanaTheme) {
-    const styles = getStyles(theme, this.props.size);
+    const styles = getStyles(theme);
     const { children, className, tooltip } = this.props;
     const activeStyle = this.state.selected ? styles.active : null;
 
@@ -87,48 +87,21 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
   }
 
   render() {
-    const { tooltip } = this.props;
-
-    const button = <ThemeContext.Consumer>{theme => this.renderButton(theme)}</ThemeContext.Consumer>;
-
-    if (tooltip) {
-      return (
-        <Tooltip content={tooltip} placement="bottom">
-          {button}
-        </Tooltip>
-      );
-    } else {
-      return button;
-    }
+    return <ThemeContext.Consumer>{theme => this.renderButton(theme)}</ThemeContext.Consumer>;
   }
 }
 
-export const getButtonSize = (size: ButtonSize = 'md') => {
-  switch (size) {
-    case 'lg':
-      return { padding: 20, height: 40 };
-    case 'sm':
-      return { padding: 12, height: 32 };
-    case 'xs':
-      return { padding: 8, height: 28 };
-    case 'xl':
-      return { padding: 24, height: 44 };
-    case 'md':
-    default:
-      return { padding: 16, height: 36 };
-  }
-};
-
-const getStyles = (theme: GrafanaTheme, buttonSize?: ButtonSize) => {
+const getStyles = (theme: GrafanaTheme) => {
   const bg = theme.colors.bodyBg;
   const activeBg = increaseContrast(theme.colors.bodyBg, 5);
   const activeText = theme.colors.blueLight;
-  const borderColor = theme.isDark ? theme.colors.gray1 : theme.colors.gray2;
+  const borderColor = selectThemeVariant({ dark: theme.colors.gray1, light: theme.colors.gray3 }, theme.type);
 
   return {
     button: css`
       border: 1px solid ${borderColor};
       color: ${theme.colors.textWeak};
+      text-shadow: none;
 
       background-color: ${bg};
 

@@ -41,7 +41,6 @@ const basicColors = {
 const darkTheme: GrafanaTheme = {
   ...defaultTheme,
   type: GrafanaThemeType.Dark,
-  isDark: true,
   name: 'Grafana Dark',
   colors: {
     ...basicColors,
