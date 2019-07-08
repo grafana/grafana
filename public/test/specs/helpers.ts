@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import config from 'app/core/config';
-import * as dateMath from '@grafana/data/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { RawTimeRange } from '@grafana/data';

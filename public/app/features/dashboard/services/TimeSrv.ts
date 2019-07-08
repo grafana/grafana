@@ -4,7 +4,7 @@ import _ from 'lodash';
 // Utils
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
-import * as dateMath from '@grafana/data/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 
 // Types
 import { TimeRange, RawTimeRange, TimeZone } from '@grafana/data';

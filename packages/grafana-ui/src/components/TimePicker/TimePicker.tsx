@@ -9,7 +9,7 @@ import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper'
 
 // Utils & Services
 import { isDateTime } from '@grafana/data';
-import * as rangeUtil from '@grafana/data/src/utils/rangeutil';
+import { rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
 
 // Types

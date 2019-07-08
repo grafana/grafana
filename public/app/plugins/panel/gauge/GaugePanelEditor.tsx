@@ -3,17 +3,15 @@ import React, { PureComponent } from 'react';
 import {
   PanelEditorProps,
   ThresholdsEditor,
-  Threshold,
   PanelOptionsGrid,
   ValueMappingsEditor,
-  ValueMapping,
   FieldDisplayOptions,
   FieldDisplayEditor,
   FieldPropertiesEditor,
   Switch,
   PanelOptionsGroup,
 } from '@grafana/ui';
-import { Field } from '@grafana/data';
+import { Field, Threshold, ValueMapping } from '@grafana/data';
 
 import { GaugeOptions } from './types';
 

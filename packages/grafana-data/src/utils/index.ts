@@ -9,6 +9,11 @@ export * from './labels';
 export * from './object';
 export * from './fieldCache';
 export * from './moment_wrapper';
+export * from './thresholds';
 
-// Names are too general to export
-// rangeutils, datemath
+export { getMappedValue } from './valueMappings';
+
+// Names are too general to export globally
+import * as dateMath from './datemath';
+import * as rangeUtil from './rangeutil';
+export { dateMath, rangeUtil };
