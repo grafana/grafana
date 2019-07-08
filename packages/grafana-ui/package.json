@@ -3,7 +3,7 @@
   "version": "6.3.0-alpha.1",
   "description": "Grafana Components Library",
   "keywords": [
-    "typescript",
+    "grafana",
     "react",
     "react-component"
   ],

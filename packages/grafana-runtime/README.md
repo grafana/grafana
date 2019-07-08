@@ -1,3 +1,3 @@
 # Grafana Runtime library
 
-Interfaces that let you use the runtime...
+This package allows access to grafana services.  It requires Grafana to be running already and the functions to be imported as externals. 

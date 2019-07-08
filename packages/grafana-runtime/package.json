@@ -3,9 +3,7 @@
   "version": "6.3.0-alpha.0",
   "description": "Grafana Runtime Library",
   "keywords": [
-    "typescript",
-    "react",
-    "react-component"
+    "grafana"
   ],
   "main": "src/index.ts",
   "scripts": {
