@@ -135,34 +135,40 @@ export class DashboardSrv {
     }
   }
 
-  postSave(clone: DashboardModel, data: { version: number; url: string }) {
+  postSave(clone: DashboardModel, data: { version: number; url: string }, redirect = true) {
     this.dashboard.version = data.version;
 
     // important that these happens before location redirect below
     this.$rootScope.appEvent('dashboard-saved', this.dashboard);
     this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
 
-    const newUrl = locationUtil.stripBaseFromUrl(data.url);
-    const currentPath = this.$location.path();
+    if (redirect) {
+      const newUrl = locationUtil.stripBaseFromUrl(data.url);
+      const currentPath = this.$location.path();
 
-    if (newUrl !== currentPath) {
-      this.$location.url(newUrl).replace();
+      if (newUrl !== currentPath) {
+        this.$location.url(newUrl).replace();
+      }
     }
 
     return this.dashboard;
   }
 
-  save(clone: any, options: { overwrite?: any; folderId?: any }) {
+  save(clone: any, options: { overwrite?: any; folderId?: any }, redirect = true) {
     options = options || {};
     options.folderId = options.folderId >= 0 ? options.folderId : this.dashboard.meta.folderId || clone.folderId;
 
     return this.backendSrv
       .saveDashboard(clone, options)
-      .then(this.postSave.bind(this, clone))
+      .then((data: any) => this.postSave(clone, data, redirect))
       .catch(this.handleSaveDashboardError.bind(this, clone, options));
   }
 
-  saveDashboard(options?: { overwrite?: any; folderId?: any; makeEditable?: any }, clone?: DashboardModel) {
+  saveDashboard(
+    options?: { overwrite?: any; folderId?: any; makeEditable?: any },
+    clone?: DashboardModel,
+    redirect = true
+  ) {
     if (clone) {
       this.setCurrent(this.create(clone, this.dashboard.meta));
     }
@@ -180,10 +186,10 @@ export class DashboardSrv {
     }
 
     if (this.dashboard.version > 0) {
-      return this.showSaveModal();
+      return this.showSaveModal(redirect);
     }
 
-    return this.save(this.dashboard.getSaveModelClone(), options);
+    return this.save(this.dashboard.getSaveModelClone(), options, redirect);
   }
 
   saveJSONDashboard(json: string) {
@@ -203,9 +209,9 @@ export class DashboardSrv {
     });
   }
 
-  showSaveModal() {
+  showSaveModal(redirect = true) {
     this.$rootScope.appEvent('show-modal', {
-      templateHtml: '<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>',
+      templateHtml: `<save-dashboard-modal dismiss="dismiss()" redirect="${redirect}"></save-dashboard-modal>`,
       modalClass: 'modal--narrow',
     });
   }

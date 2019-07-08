@@ -199,7 +199,7 @@ export class KeybindingSrv {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
           const datasource = await this.datasourceSrv.get(panel.datasource);
-          const url = await getExploreUrl(panel.targets, datasource, this.datasourceSrv, this.timeSrv);
+          const url = await getExploreUrl(panel, panel.targets, datasource, this.datasourceSrv, this.timeSrv);
           if (url) {
             this.$timeout(() => this.$location.url(url));
           }
