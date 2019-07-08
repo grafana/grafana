@@ -217,9 +217,10 @@ export default class Logs extends PureComponent<Props, State> {
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
             <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
-            <ToggleButtonGroup label="Dedup" transparent={true}>
+            <ToggleButtonGroup label="Dedup">
               {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
                 <ToggleButton
+                  size="sm"
                   key={i}
                   value={dedupType}
                   onChange={this.onChangeDedup}

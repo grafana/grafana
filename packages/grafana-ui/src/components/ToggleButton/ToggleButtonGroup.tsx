@@ -4,8 +4,8 @@ import { css } from 'emotion';
 export interface ToggleButtonGroupProps {
   label?: string;
   children: JSX.Element[];
-  // Set all childrens' propsPriority
-  propsPriority?: boolean;
+  // Set all childrens' controlled
+  controlled?: boolean;
 }
 
 const styles = {
@@ -14,25 +14,30 @@ const styles = {
   `,
   buttons: css`
     display: inline-block;
+    & > button {
+      border-radius: 0;
 
-    &:first-child {
-      border-radius: 2px 0 0 2px;
-      margin-left: 0;
-    }
-    &:last-child {
-      border-radius: 0 2px 2px 0;
+      &:last-child {
+        border-radius: 0 2px 2px 0;
+      }
+
+      &:first-child {
+        border-radius: 2px 0 0 2px;
+        margin-left: 0;
+      }
     }
   `,
 };
 
-const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children, propsPriority }) => {
+const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children, controlled }) => {
   return (
     <div>
-      <span className={styles.label}>{label}</span>
+      {label ? <span className={styles.label}>{label}</span> : null}
+
       <div className={styles.buttons}>
         {React.Children.map(children, (child: any) => {
           return React.cloneElement(child, {
-            propsPriority,
+            controlled,
           });
         })}
       </div>

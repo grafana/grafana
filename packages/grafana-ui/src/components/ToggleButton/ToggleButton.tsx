@@ -1,5 +1,6 @@
 import React, { ReactNode, PureComponent } from 'react';
 import { ButtonSize } from '../Button/AbstractButton';
+import { Button } from '../Button/Button';
 import { GrafanaTheme } from '../../types/theme';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { Tooltip } from '../Tooltip/Tooltip';
@@ -23,7 +24,7 @@ export interface ToggleButtonProps {
   key?: any;
   size?: ButtonSize;
   // To only base the buttons state on the props, rather than internal state
-  propsPriority?: boolean;
+  controlled?: boolean;
 }
 
 export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonState> {
@@ -44,7 +45,7 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
 
     this.setState(prevState => ({
       untouched: false,
-      selected: this.props.propsPriority ? this.props.selected : !prevState.selected,
+      selected: this.props.controlled ? this.props.selected : !prevState.selected,
     }));
     if (this.props.onChange) {
       this.props.onChange(this.state);
@@ -68,17 +69,20 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
 
   renderButton(theme: GrafanaTheme) {
     const styles = getStyles(theme, this.props.size);
-    const { children, className } = this.props;
+    const { children, className, tooltip } = this.props;
     const activeStyle = this.state.selected ? styles.active : null;
 
     return (
-      <button
+      <Button
+        variant="transparent"
         onBlur={this.handleBlur}
         className={cx([styles.button, activeStyle, className, this.state.untouched ? styles.focus : styles.unFocused])}
         onClick={this.handleClick}
+        tooltip={tooltip}
+        {...this.props}
       >
         <span>{children}</span>
-      </button>
+      </Button>
     );
   }
 
@@ -116,23 +120,18 @@ export const getButtonSize = (size: ButtonSize = 'md') => {
 };
 
 const getStyles = (theme: GrafanaTheme, buttonSize?: ButtonSize) => {
-  const borderRadius = 2;
   const bg = theme.colors.bodyBg;
   const activeBg = increaseContrast(theme.colors.bodyBg, 5);
   const activeText = theme.colors.blueLight;
   const borderColor = theme.isDark ? theme.colors.gray1 : theme.colors.gray2;
-  const button = getButtonSize(buttonSize);
 
   return {
     button: css`
       border: 1px solid ${borderColor};
       color: ${theme.colors.textWeak};
-      padding: 0 ${button.padding}px;
+
       background-color: ${bg};
-      border-radius: ${borderRadius}px;
-      height: ${button.height}px;
-      font-size: 14px;
-      font-weight: normal;
+
       /*Make borders overlap*/
       margin-left: -1px;
 

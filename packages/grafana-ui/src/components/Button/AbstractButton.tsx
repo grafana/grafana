@@ -3,6 +3,7 @@ import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
 import { Themeable, GrafanaTheme } from '../../types';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent';
 
@@ -24,6 +25,7 @@ export interface ButtonProps extends CommonButtonProps, ButtonHTMLAttributes<HTM
 
 interface AbstractButtonProps extends CommonButtonProps, Themeable {
   renderAs: React.ComponentType<CommonButtonProps> | string;
+  tooltip?: string;
 }
 
 const buttonVariantStyles = (
@@ -163,6 +165,7 @@ export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
   className,
   icon,
   children,
+  tooltip,
   ...otherProps
 }) => {
   const buttonStyles = getButtonStyles(theme, size, variant, !!icon);
@@ -173,13 +176,20 @@ export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
   };
 
   const finalClassName = cx(buttonStyles.button, className);
-  const finalChildren = icon ? (
+  const iconChildren: any = icon ? (
     <span className={buttonStyles.iconWrap}>
       <i className={cx([icon, buttonStyles.icon])} />
       <span>{children}</span>
     </span>
   ) : (
     children
+  );
+  const finalChildren = tooltip ? (
+    <Tooltip content={tooltip} placement="bottom">
+      {iconChildren}
+    </Tooltip>
+  ) : (
+    iconChildren
   );
 
   const finalProps =
