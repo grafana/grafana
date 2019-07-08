@@ -39,23 +39,23 @@ const calcJavascriptSize = (base: string, files?: string[]): number => {
  *
  *  when platform exists it is building backend, otherwise frontend
  *
- *  Everything in /build folder
+ *  Everything in /ci-work folder
  *
  */
 const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
   const start = Date.now();
   const distDir = `${process.cwd()}/dist`;
-  const buildDir = `${process.cwd()}/build`;
+  const buildDir = `${process.cwd()}/ci-work`;
   const coverageDir = `${process.cwd()}/coverage`;
-  if (!fs.existsSync(buildDir)) {
-    fs.mkdirSync(buildDir);
-  }
+
+  await execa('rimraf', [buildDir]);
+  fs.mkdirSync(buildDir);
 
   if (platform) {
     console.log('TODO, backend support?');
-    const stub = distDir + `/bin_${platform}`;
+    const stub = buildDir + `/bin_${platform}`;
     if (!fs.existsSync(stub)) {
-      fs.mkdirSync(stub);
+      fs.mkdirSync(stub, { recursive: true });
     }
     fs.writeFile(stub + '/README.txt', 'TODO... build it!', err => {
       if (err) {
@@ -65,11 +65,11 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
   } else {
     // Do regular build process
     await pluginBuildRunner({ coverage: true });
-  }
 
-  // Move dist & coverage into 'build'
-  fs.renameSync(distDir, path.resolve(buildDir, 'dist'));
-  fs.renameSync(coverageDir, path.resolve(buildDir, 'coverage'));
+    // Move dist & coverage into workspace
+    fs.renameSync(distDir, path.resolve(buildDir, 'dist'));
+    fs.renameSync(coverageDir, path.resolve(buildDir, 'coverage'));
+  }
 
   const elapsed = Date.now() - start;
   const stats = {
@@ -87,17 +87,17 @@ export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', build
 /**
  * 2. BUNDLE
  *
- *  Take everything from /build/dist and zip it up
+ *  Take everything from /ci-work/dist and zip it up
  *
  */
 const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const start = Date.now();
-  const distDir = `${process.cwd()}/build/dist`;
+  const distDir = `${process.cwd()}/ci-work/dist`;
   if (!fs.existsSync(distDir)) {
     throw new Error('Dist folder does not exist: ' + distDir);
   }
 
-  const artifactsDir = `${process.cwd()}/build/artifacts`;
+  const artifactsDir = `${process.cwd()}/ci-work/artifacts`;
   if (!fs.existsSync(artifactsDir)) {
     fs.mkdirSync(artifactsDir);
   }
@@ -138,7 +138,7 @@ export const ciBundlePluginTask = new Task<PluginCIOptions>('Bundle Plugin', bun
 const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
   const start = Date.now();
 
-  const artifactsDir = `${process.cwd()}/build/artifacts`;
+  const artifactsDir = `${process.cwd()}/ci-work/artifacts`;
   const infoFile = path.resolve(artifactsDir, 'info.json');
   const zipInfo = require(infoFile);
   const zipPath = path.resolve(artifactsDir, zipInfo.name);
@@ -149,13 +149,14 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
 
   await execa('unzip', [zipPath, '-d', pluginFolder]);
 
-  const { stdout } = await execa('ls', ['-Rl', pluginFolder]);
-  console.log(stdout);
+  let ex = await execa('ls', ['-Rl', pluginFolder]);
+  console.log(ex.stdout);
 
-  // Manual cleanup
-  tmpobj.removeCallback();
+  ex = await execa('grafana-cli', ['--version']);
+  console.log('Grafana Version: ' + ex.stdout);
 
-  fs.mkdirSync(pluginFolder, { recursive: true });
+  console.log('TODO, install: ' + pluginFolder);
+  console.log('TODO, puppeteer...');
 
   const elapsed = Date.now() - start;
   const stats = {

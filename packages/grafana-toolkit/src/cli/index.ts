@@ -155,7 +155,7 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-build')
-    .option('--platform', 'For backend task, which backend to run')
+    .option('--platform <platform>', 'For backend task, which backend to run')
     .description('Build the plugin, leaving artifacts in /dist')
     .action(async cmd => {
       await execTask(ciBuildPluginTask)({
