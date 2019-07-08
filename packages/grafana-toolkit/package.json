@@ -1,6 +1,6 @@
 {
   "name": "@grafana/toolkit",
-  "version": "6.3.0-alpha.30",
+  "version": "6.3.0-alpha.31",
   "description": "Grafana Toolkit",
   "keywords": [
     "typescript",
