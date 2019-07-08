@@ -146,7 +146,7 @@
     "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss}\" --write",
     "precommit": "grafana-toolkit precommit",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
-    "packages:versionBump": "lerna version",
+    "packages:versionBump": "lerna version --skip-git",
     "packages:prepare": "lerna run clean && lerna run prep",
     "packages:publish": "lerna publish --contents dist"
   },
