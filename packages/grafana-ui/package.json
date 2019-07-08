@@ -14,7 +14,8 @@
     "storybook": "start-storybook -p 9001 -c .storybook",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",
     "clean": "rimraf ./dist ./compiled",
-    "build": "rollup -c rollup.config.ts"
+    "build": "rollup -c rollup.config.ts",
+    "prepare": "grafana-toolkit package:build --scope=ui"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",

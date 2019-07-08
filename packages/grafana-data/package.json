@@ -10,7 +10,8 @@
     "tslint": "tslint -c tslint.json --project tsconfig.json",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf ./dist ./compiled",
-    "build": "rollup -c rollup.config.ts"
+    "build": "rollup -c rollup.config.ts",
+    "prepare": "grafana-toolkit package:build --scope=data"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
