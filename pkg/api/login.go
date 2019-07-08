@@ -23,6 +23,10 @@ const (
 
 var setIndexViewData = (*HTTPServer).setIndexViewData
 
+var getViewIndex = func() string {
+	return ViewIndex
+}
+
 func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
@@ -45,7 +49,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
 		deleteCookie(c, LoginErrorCookieName)
 		viewData.Settings["loginError"] = loginError
-		c.HTML(200, ViewIndex, viewData)
+		c.HTML(200, getViewIndex(), viewData)
 		return
 	}
 

@@ -30,6 +30,18 @@ func resetSetIndexViewData() {
 	setIndexViewData = (*HTTPServer).setIndexViewData
 }
 
+func mockViewIndex() {
+	getViewIndex = func() string {
+		return "index-template"
+	}
+}
+
+func resetViewIndex() {
+	getViewIndex = func() string {
+		return ViewIndex
+	}
+}
+
 func getBody(resp *httptest.ResponseRecorder) (string, error) {
 	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -41,6 +53,9 @@ func getBody(resp *httptest.ResponseRecorder) (string, error) {
 func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 	mockSetIndexViewData()
 	defer resetSetIndexViewData()
+
+	mockViewIndex()
+	defer resetViewIndex()
 
 	sc := setupScenarioContext("/login")
 	hs := &HTTPServer{
