@@ -1,6 +1,6 @@
 import { ValueMapping, MappingType, ValueMap, RangeMap } from '../types';
 
-export type TimeSeriesValue = string | number | null;
+type TimeSeriesValue = string | number | null;
 
 const addValueToTextMappingText = (
   allValueMappings: ValueMapping[],

@@ -286,7 +286,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
 
 export abstract class LanguageProvider {
   datasource: any;
-  request: (url: any) => Promise<any>;
+  request: (url: string, params?: any) => Promise<any>;
   /**
    * Returns startTask that resolves with a task list when main syntax is loaded.
    * Task list consists of secondary promises that load more detailed language features.
