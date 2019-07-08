@@ -8,7 +8,7 @@ import { ToggleButtonGroupProps, ToggleButtonProps, ToggleButtonState } from './
 import { increaseContrast } from '../../utils/colors';
 import { ButtonSize } from '../Button/AbstractButton';
 
-const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children }) => {
+const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children, propsPriority }) => {
   const styles = getStyles(useContext(ThemeContext));
   return (
     <div>
@@ -19,6 +19,7 @@ const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children }) => {
 
         return React.cloneElement(child, {
           className: style,
+          propsPriority,
         });
       })}
     </div>
@@ -43,10 +44,10 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
 
   handleClick(e: React.SyntheticEvent) {
     e.stopPropagation();
-    console.log(e);
+
     this.setState(prevState => ({
       untouched: false,
-      selected: !prevState.selected,
+      selected: this.props.propsPriority ? this.props.selected : !prevState.selected,
     }));
     if (this.props.onChange) {
       this.props.onChange(this.state);

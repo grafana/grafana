@@ -164,7 +164,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 </div>
                 {supportedModeOptions.length > 1 ? (
                   <div className="query-type-toggle">
-                    <ToggleButtonGroup label="" transparent={true}>
+                    <ToggleButtonGroup propsPriority={true} label="" transparent={true}>
                       <ToggleButton
                         key={ExploreMode.Metrics}
                         value={ExploreMode.Metrics}

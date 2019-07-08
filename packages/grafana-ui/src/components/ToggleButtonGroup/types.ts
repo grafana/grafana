@@ -16,6 +16,8 @@ export interface ToggleButtonProps {
   tooltip?: string;
   key?: any;
   size?: ButtonSize;
+  // To only base the buttons state on the props, rather than internal state
+  propsPriority?: boolean;
 }
 
 export interface ToggleButtonGroupProps {
@@ -23,4 +25,6 @@ export interface ToggleButtonGroupProps {
   children: JSX.Element[];
   transparent?: boolean;
   active?: number;
+  // Set all childrens' propsPriority
+  propsPriority?: boolean;
 }
