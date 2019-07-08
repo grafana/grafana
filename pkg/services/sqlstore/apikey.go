@@ -56,6 +56,9 @@ func AddApiKey(cmd *models.AddApiKeyCommand) error {
 		}
 
 		if _, err := sess.Insert(&t); err != nil {
+			if dialect.IsUniqueConstraintViolation((err)) {
+				return models.ErrDuplicateApiKey
+			}
 			return err
 		}
 		cmd.Result = &t
