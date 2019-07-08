@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit",
     "precommit": "npm run tslint & npm run typecheck",
     "clean": "rimraf ./dist ./compiled",
-    "prepare": "grafana-toolkit toolkit:build"
+    "prep": "grafana-toolkit toolkit:build"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -79,5 +79,6 @@
   "devDependencies": {
     "@types/glob": "^7.1.1",
     "@types/prettier": "^1.16.4"
-  }
+  },
+  "gitHead": "eef02dc9b15ddd8923ec3571955a47e0f40d6562"
 }
