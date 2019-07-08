@@ -3,9 +3,9 @@
   "version": "6.3.0-alpha.2",
   "description": "Grafana Toolkit",
   "keywords": [
-    "typescript",
-    "react",
-    "react-component"
+    "grafana",
+    "cli",
+    "plugins"
   ],
   "bin": {
     "grafana-toolkit": "./bin/grafana-toolkit.js"
