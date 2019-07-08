@@ -47,6 +47,10 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData.Settings["samlEnabled"] = hs.Cfg.SAMLEnabled
 
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
+		//this cookie is only set whenever an OAuth login fails
+		//therefore the loginError should be passed to the view data
+		//and the view should return immediately before attempting
+		//to login again via OAuth and enter to a redirect loop
 		deleteCookie(c, LoginErrorCookieName)
 		viewData.Settings["loginError"] = loginError
 		c.HTML(200, getViewIndex(), viewData)
