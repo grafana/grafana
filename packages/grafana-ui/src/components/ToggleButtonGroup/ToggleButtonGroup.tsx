@@ -121,7 +121,7 @@ const getButtonSize = (size: ButtonSize = 'md') => {
 const getStyles = (theme: GrafanaTheme, buttonSize?: ButtonSize) => {
   const borderRadius = 2;
   const bg = theme.colors.bodyBg;
-  const activeBg = increaseContrast(theme.colors.bodyBg, 10);
+  const activeBg = increaseContrast(theme.colors.bodyBg, 5);
   const activeText = theme.colors.blueLight;
   const borderColor = theme.isDark ? theme.colors.gray1 : theme.colors.gray2;
   const button = getButtonSize(buttonSize);
