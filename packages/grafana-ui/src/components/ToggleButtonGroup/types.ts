@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { ButtonSize } from '../Button/AbstractButton';
 
 export interface ToggleButtonState {
   untouched: boolean;
@@ -14,7 +15,7 @@ export interface ToggleButtonProps {
   children: ReactNode;
   tooltip?: string;
   key?: any;
-  untouched?: boolean;
+  size?: ButtonSize;
 }
 
 export interface ToggleButtonGroupProps {

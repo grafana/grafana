@@ -6,6 +6,7 @@ import { GrafanaTheme } from '../../types/theme';
 import tinycolor from 'tinycolor2';
 import { ToggleButtonGroupProps, ToggleButtonProps, ToggleButtonState } from './types';
 import { increaseContrast } from '../../utils/colors';
+import { ButtonSize } from '../Button/AbstractButton';
 
 const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children }) => {
   const styles = getStyles(useContext(ThemeContext));
@@ -68,7 +69,7 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
   }
 
   renderButton(theme: GrafanaTheme) {
-    const styles = getStyles(theme);
+    const styles = getStyles(theme, this.props.size);
     const { children, className } = this.props;
     const activeStyle = this.state.selected ? styles.active : null;
 
@@ -100,21 +101,38 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
   }
 }
 
-const getStyles = (theme: GrafanaTheme) => {
+const getButtonSize = (size: ButtonSize = 'md') => {
+  switch (size) {
+    case 'lg':
+      return { padding: 20, height: 40 };
+    case 'sm':
+      return { padding: 12, height: 32 };
+    case 'xs':
+      return { padding: 8, height: 28 };
+    case 'xl':
+      return { padding: 24, height: 44 };
+    case 'md':
+    default:
+      return { padding: 16, height: 36 };
+  }
+};
+
+const getStyles = (theme: GrafanaTheme, buttonSize?: ButtonSize) => {
   const borderRadius = 2;
   const bg = theme.colors.bodyBg;
   const activeBg = increaseContrast(theme.colors.bodyBg, 10);
   const activeText = theme.colors.blueLight;
   const borderColor = theme.isDark ? theme.colors.gray1 : theme.colors.gray2;
+  const button = getButtonSize(buttonSize);
 
   return {
     button: css`
       border: 1px solid ${borderColor};
       color: ${theme.colors.textWeak};
-      padding: 0 16px;
+      padding: 0 ${button.padding}px;
       background-color: ${bg};
       border-radius: ${borderRadius}px;
-      height: 36px;
+      height: ${button.height}px;
       font-size: 14px;
       font-weight: normal;
       /*Make borders overlap*/
@@ -161,6 +179,7 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     label: css`
       margin-right: 10px;
+      margin-left: 10px;
     `,
   };
 };
