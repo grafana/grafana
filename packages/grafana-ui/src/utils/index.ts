@@ -9,5 +9,5 @@ export { getFlotPairs } from './flotPairs';
 export * from './slate';
 
 // Export with a namespace
-import * as domUtil from './dom'; // includes Element.closest polyfil
-export { domUtil };
+import * as DOMUtil from './dom'; // includes Element.closest polyfil
+export { DOMUtil };
