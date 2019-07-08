@@ -4,16 +4,13 @@ import { css } from 'emotion';
 export interface ToggleButtonGroupProps {
   label?: string;
   children: JSX.Element[];
-  transparent?: boolean;
-  active?: number;
   // Set all childrens' propsPriority
   propsPriority?: boolean;
 }
 
 const styles = {
   label: css`
-    margin-right: 10px;
-    margin-left: 10px;
+    margin: 0 10px 0 10px;
   `,
   buttons: css`
     display: inline-block;

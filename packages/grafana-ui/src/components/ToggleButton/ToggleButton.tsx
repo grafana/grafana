@@ -165,15 +165,5 @@ const getStyles = (theme: GrafanaTheme, buttonSize?: ButtonSize) => {
         outline: none;
       }
     `,
-    middle: css`
-      border-radius: 0;
-    `,
-    first: css`
-      border-radius: ${borderRadius}px 0 0 ${borderRadius}px;
-      margin-left: 0;
-    `,
-    last: css`
-      border-radius: 0 ${borderRadius}px ${borderRadius}px 0;
-    `,
   };
 };
