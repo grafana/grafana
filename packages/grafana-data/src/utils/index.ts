@@ -9,6 +9,9 @@ export * from './labels';
 export * from './object';
 export * from './fieldCache';
 export * from './moment_wrapper';
+export * from './thresholds';
+
+export { getMappedValue } from './valueMappings';
 
 // Names are too general to export globally
 import * as dateMath from './datemath';

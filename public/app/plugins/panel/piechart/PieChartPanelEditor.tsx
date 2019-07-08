@@ -3,13 +3,12 @@ import {
   PanelEditorProps,
   PanelOptionsGrid,
   ValueMappingsEditor,
-  ValueMapping,
   FieldDisplayEditor,
   FieldDisplayOptions,
   FieldPropertiesEditor,
   PanelOptionsGroup,
 } from '@grafana/ui';
-import { Field } from '@grafana/data';
+import { ValueMapping, Field } from '@grafana/data';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
 import { PieChartOptions } from './types';

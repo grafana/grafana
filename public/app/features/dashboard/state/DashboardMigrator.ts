@@ -9,7 +9,7 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLink } from '@grafana/ui/src/types/panel';
+import { DataLink } from '@grafana/data';
 
 // Constants
 import {

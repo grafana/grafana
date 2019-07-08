@@ -6,7 +6,9 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
-import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin, DataLink } from '@grafana/ui';
+import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
+import { DataLink } from '@grafana/data';
+
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';

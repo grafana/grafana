@@ -1,5 +1,5 @@
 import { Threshold } from './threshold';
-import { ValueMapping } from './panel';
+import { ValueMapping } from './valueMapping';
 
 export enum LoadingState {
   NotStarted = 'NotStarted',

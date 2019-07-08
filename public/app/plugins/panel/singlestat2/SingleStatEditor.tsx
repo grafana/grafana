@@ -3,16 +3,14 @@ import React, { PureComponent } from 'react';
 import {
   PanelEditorProps,
   ThresholdsEditor,
-  Threshold,
   PanelOptionsGrid,
   ValueMappingsEditor,
-  ValueMapping,
   FieldDisplayOptions,
   FieldDisplayEditor,
   FieldPropertiesEditor,
   PanelOptionsGroup,
 } from '@grafana/ui';
-import { Field } from '@grafana/data';
+import { Threshold, ValueMapping, Field } from '@grafana/data';
 
 import { SingleStatOptions, SparklineOptions } from './types';
 import { ColoringEditor } from './ColoringEditor';

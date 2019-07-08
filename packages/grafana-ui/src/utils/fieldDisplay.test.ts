@@ -1,8 +1,7 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { FieldType, ReducerID } from '@grafana/data';
+import { FieldType, ReducerID, Threshold } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
-import { Threshold } from '../types/index';
 
 describe('FieldDisplay', () => {
   it('Construct simple field properties', () => {

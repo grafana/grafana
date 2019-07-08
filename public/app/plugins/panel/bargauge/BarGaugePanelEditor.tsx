@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-// Components
 import {
   ThresholdsEditor,
   ValueMappingsEditor,
@@ -10,11 +9,13 @@ import {
   FieldDisplayOptions,
   FieldPropertiesEditor,
   PanelOptionsGroup,
+  FormLabel,
+  PanelEditorProps,
+  Select,
 } from '@grafana/ui';
 import { Field } from '@grafana/data';
 
-// Types
-import { FormLabel, PanelEditorProps, Threshold, Select, ValueMapping } from '@grafana/ui';
+import { Threshold, ValueMapping } from '@grafana/data';
 import { BarGaugeOptions, orientationOptions, displayModes } from './types';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {

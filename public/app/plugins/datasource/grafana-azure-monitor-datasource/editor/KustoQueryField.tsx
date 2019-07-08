@@ -3,9 +3,7 @@ import _ from 'lodash';
 import Plain from 'slate-plain-serializer';
 
 import QueryField from './query_field';
-// import debounce from './utils/debounce';
-// import {getNextCharacter} from './utils/dom';
-import debounce from 'app/features/explore/utils/debounce';
+import debounce from 'lodash/debounce';
 import { getNextCharacter } from 'app/features/explore/utils/dom';
 
 import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto/kusto';
