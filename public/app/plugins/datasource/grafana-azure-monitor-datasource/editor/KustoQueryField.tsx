@@ -204,7 +204,7 @@ export default class KustoQueryField extends QueryField {
 
     // Modify suggestion based on context
 
-    const nextChar = DOMUtils.getNextCharacter();
+    const nextChar = DOMUtil.getNextCharacter();
     if (suggestion.type === 'function') {
       if (!nextChar || nextChar !== '(') {
         suggestionText += '(';

@@ -72,7 +72,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
   // Modify suggestion based on context
   switch (typeaheadContext) {
     case 'context-labels': {
-      const nextChar = DOMUtils.getNextCharacter();
+      const nextChar = DOMUtil.getNextCharacter();
       if (!nextChar || nextChar === '}' || nextChar === ',') {
         suggestion += '=';
       }
@@ -84,7 +84,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
       if (!typeaheadText.match(/^(!?=~?"|")/)) {
         suggestion = `"${suggestion}`;
       }
-      if (DOMUtils.getNextCharacter() !== '"') {
+      if (DOMUtil.getNextCharacter() !== '"') {
         suggestion = `${suggestion}"`;
       }
       break;
@@ -281,9 +281,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     // Get DOM-dependent context
     const wrapperClasses = Array.from(wrapperNode.classList);
-    const labelKeyNode = DOMUtils.getPreviousCousin(wrapperNode, '.attr-name');
+    const labelKeyNode = DOMUtil.getPreviousCousin(wrapperNode, '.attr-name');
     const labelKey = labelKeyNode && labelKeyNode.textContent;
-    const nextChar = DOMUtils.getNextCharacter();
+    const nextChar = DOMUtil.getNextCharacter();
 
     const result = this.languageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey },
