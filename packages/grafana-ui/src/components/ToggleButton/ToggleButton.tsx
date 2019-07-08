@@ -1,34 +1,31 @@
-import React, { PureComponent, useContext, FC } from 'react';
-import { Tooltip } from '../Tooltip/Tooltip';
-import { ThemeContext } from '../../themes/index';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '../../types/theme';
-import tinycolor from 'tinycolor2';
-import { ToggleButtonGroupProps, ToggleButtonProps, ToggleButtonState } from './types';
-import { increaseContrast } from '../../utils/colors';
+import React, { ReactNode, PureComponent } from 'react';
 import { ButtonSize } from '../Button/AbstractButton';
+import { GrafanaTheme } from '../../types/theme';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { Tooltip } from '../Tooltip/Tooltip';
+import { cx, css } from 'emotion';
+import tinycolor from 'tinycolor2';
+import { increaseContrast } from '../../utils/colors';
 
-const ToggleButtonGroup: FC<ToggleButtonGroupProps> = ({ label, children, propsPriority }) => {
-  const styles = getStyles(useContext(ThemeContext));
-  return (
-    <div>
-      <span className={styles.label}>{label}</span>
-      {React.Children.map(children, (child: any, index) => {
-        // Set correct style depending on first/middle/last
-        const style = index === 0 ? styles.first : index === children.length - 1 ? styles.last : styles.middle;
+export interface ToggleButtonState {
+  untouched: boolean;
+  selected: boolean;
+  value?: any;
+}
 
-        return React.cloneElement(child, {
-          className: style,
-          propsPriority,
-        });
-      })}
-    </div>
-  );
-};
+export interface ToggleButtonProps {
+  onChange?: (value: any) => void;
+  selected: boolean;
+  value?: any;
+  className?: string;
+  children: ReactNode;
+  tooltip?: string;
+  key?: any;
+  size?: ButtonSize;
+  // To only base the buttons state on the props, rather than internal state
+  propsPriority?: boolean;
+}
 
-ToggleButtonGroup.displayName = 'ToggleButtonGroup';
-
-export { ToggleButtonGroup };
 export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonState> {
   constructor(props: ToggleButtonProps) {
     super(props);
@@ -102,7 +99,7 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
   }
 }
 
-const getButtonSize = (size: ButtonSize = 'md') => {
+export const getButtonSize = (size: ButtonSize = 'md') => {
   switch (size) {
     case 'lg':
       return { padding: 20, height: 40 };
@@ -144,6 +141,7 @@ const getStyles = (theme: GrafanaTheme, buttonSize?: ButtonSize) => {
       z-index: 899;
       &:hover {
         color: ${theme.colors.blueLight};
+        background-color: ${tinycolor.mix(theme.colors.blueShade, activeBg, 90).toString()};
       }
     `,
     active: css`
@@ -157,7 +155,6 @@ const getStyles = (theme: GrafanaTheme, buttonSize?: ButtonSize) => {
       &:focus {
         outline: none;
         z-index: 900;
-        font-weight: 500;
         background-color: ${tinycolor.mix(theme.colors.blueShade, activeBg, 90).toString()};
         color: ${activeText};
         border-color: ${theme.colors.blueBase};
@@ -177,10 +174,6 @@ const getStyles = (theme: GrafanaTheme, buttonSize?: ButtonSize) => {
     `,
     last: css`
       border-radius: 0 ${borderRadius}px ${borderRadius}px 0;
-    `,
-    label: css`
-      margin-right: 10px;
-      margin-left: 10px;
     `,
   };
 };

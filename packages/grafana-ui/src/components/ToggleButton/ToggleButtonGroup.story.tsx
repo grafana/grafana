@@ -1,5 +1,6 @@
 import React, { CSSProperties } from 'react';
-import { ToggleButton, ToggleButtonGroup } from './ToggleButtonGroup';
+import { ToggleButtonGroup } from './ToggleButtonGroup';
+import { ToggleButton } from './ToggleButton';
 import { storiesOf } from '@storybook/react';
 
 const wrapperStyle: CSSProperties = {

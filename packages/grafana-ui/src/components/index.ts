@@ -14,8 +14,8 @@ export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export { ButtonSelect } from './Select/ButtonSelect';
-export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
-export * from './ToggleButtonGroup/types';
+export { ToggleButtonGroup } from './ToggleButton/ToggleButtonGroup';
+export * from './ToggleButton/ToggleButton';
 
 // Forms
 export { FormLabel } from './FormLabel/FormLabel';
