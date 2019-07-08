@@ -4,7 +4,7 @@ import Plain from 'slate-plain-serializer';
 
 import QueryField from './query_field';
 import debounce from 'lodash/debounce';
-import { getNextCharacter } from 'app/features/explore/utils/dom';
+import { DOMUtil } from '@grafana/ui';
 
 import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto/kusto';
 // import '../sass/editor.base.scss';
@@ -203,7 +203,7 @@ export default class KustoQueryField extends QueryField {
 
     // Modify suggestion based on context
 
-    const nextChar = getNextCharacter();
+    const nextChar = DOMUtil.getNextCharacter();
     if (suggestion.type === 'function') {
       if (!nextChar || nextChar !== '(') {
         suggestionText += '(';
