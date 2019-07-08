@@ -13,7 +13,7 @@ import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/act
 
 // Types
 import { StoreState } from 'app/types';
-import { TimeRange } from '@grafana/data';
+import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
 import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData, DataQueryError } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -38,6 +38,7 @@ interface QueryRowProps extends PropsFromParent {
   query: DataQuery;
   modifyQueries: typeof modifyQueries;
   range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
@@ -116,6 +117,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       query,
       exploreEvents,
       range,
+      absoluteRange,
       datasourceStatus,
       queryResponse,
       latency,
@@ -148,6 +150,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
               onChange={this.onChange}
               panelData={null}
               queryResponse={queryResponse}
+              absoluteRange={absoluteRange}
             />
           ) : (
             <QueryEditor
@@ -202,6 +205,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     history,
     queries,
     range,
+    absoluteRange,
     datasourceError,
     graphResult,
     loadingState,
@@ -224,6 +228,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     history,
     query,
     range,
+    absoluteRange,
     datasourceStatus,
     queryResponse,
     latency,
