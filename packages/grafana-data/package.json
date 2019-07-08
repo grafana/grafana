@@ -1,6 +1,6 @@
 {
   "name": "@grafana/data",
-  "version": "6.3.0-alpha.0",
+  "version": "6.3.0-alpha.30",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -15,7 +15,6 @@
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
-  "dependencies": {},
   "devDependencies": {
     "@types/jest": "23.3.14",
     "@types/jquery": "1.10.35",
