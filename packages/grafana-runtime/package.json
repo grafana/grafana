@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "rimraf ./dist ./compiled",
     "build": "rollup -c rollup.config.ts",
-    "prep": "grafana-toolkit package:build --scope=runtime"
+    "prepare": "grafana-toolkit package:build --scope=runtime"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
