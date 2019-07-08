@@ -1,7 +1,15 @@
-import { TimeRange, TIME_FORMAT, RawTimeRange, TimeZone } from '@grafana/data';
-import { describeTimeRange } from '@grafana/data/src/utils/rangeutil';
-import { dateMath } from '@grafana/data';
-import { isDateTime, dateTime, DateTime, toUtc } from '@grafana/data';
+import {
+  TimeRange,
+  TIME_FORMAT,
+  RawTimeRange,
+  TimeZone,
+  rangeUtil,
+  dateMath,
+  isDateTime,
+  dateTime,
+  DateTime,
+  toUtc,
+} from '@grafana/data';
 
 export const rawToTimeRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeRange => {
   const from = stringToDateTimeType(raw.from, false, timeZone);
@@ -32,7 +40,7 @@ export const stringToDateTimeType = (value: string | DateTime, roundUp?: boolean
 };
 
 export const mapTimeRangeToRangeString = (timeRange: RawTimeRange): string => {
-  return describeTimeRange(timeRange);
+  return rangeUtil.describeTimeRange(timeRange);
 };
 
 export const isValidTimeString = (text: string) => dateMath.isValid(text);

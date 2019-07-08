@@ -92,6 +92,23 @@ Example queries:
 * `{name="kafka"} tsdb-ops.*io:2003`
 * `{instance=~"kafka-[23]",name="kafka"} kafka.server:type=ReplicaManager`
 
+## Live Tailing
+
+To view your logs live as they are added, choose `Live` from the refresh dropdown, and you should see your logs be displayed in real time.
+
+Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly.
+
+
+> Note: This feature is only available in Grafana v6.3+
+
+## Log Context
+
+When using a search expression as detailed above, you now have the ability to retrieve the context surrounding your filtered results.
+By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
+log message you're interested in.
+
+> Note: This feature is only available in Grafana v6.3+
+
 ## Templating
 
 Template variables are not yet supported by Loki.

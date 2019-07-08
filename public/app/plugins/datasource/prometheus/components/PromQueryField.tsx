@@ -10,12 +10,11 @@ import Prism from 'prismjs';
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 
 // dom also includes Element polyfills
-import { getNextCharacter, getPreviousCousin } from 'app/features/explore/utils/dom';
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, DataSourceStatus, QueryHint } from '@grafana/ui';
+import { ExploreQueryFieldProps, DataSourceStatus, QueryHint, DOMUtil } from '@grafana/ui';
 import { isDataFrame, toLegacyResponseData } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 
@@ -73,7 +72,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
   // Modify suggestion based on context
   switch (typeaheadContext) {
     case 'context-labels': {
-      const nextChar = getNextCharacter();
+      const nextChar = DOMUtil.getNextCharacter();
       if (!nextChar || nextChar === '}' || nextChar === ',') {
         suggestion += '=';
       }
@@ -85,7 +84,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
       if (!typeaheadText.match(/^(!?=~?"|")/)) {
         suggestion = `"${suggestion}`;
       }
-      if (getNextCharacter() !== '"') {
+      if (DOMUtil.getNextCharacter() !== '"') {
         suggestion = `${suggestion}"`;
       }
       break;
@@ -282,9 +281,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     // Get DOM-dependent context
     const wrapperClasses = Array.from(wrapperNode.classList);
-    const labelKeyNode = getPreviousCousin(wrapperNode, '.attr-name');
+    const labelKeyNode = DOMUtil.getPreviousCousin(wrapperNode, '.attr-name');
     const labelKey = labelKeyNode && labelKeyNode.textContent;
-    const nextChar = getNextCharacter();
+    const nextChar = DOMUtil.getNextCharacter();
 
     const result = this.languageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey },
