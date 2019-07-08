@@ -147,7 +147,7 @@
     "precommit": "grafana-toolkit precommit",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "packages:versionBump": "lerna version",
-    "packages:prepare": "lerna run clean && lerna run prepare",
+    "packages:prepare": "lerna run clean && lerna run prep",
     "packages:publish": "lerna publish --contents dist"
   },
   "husky": {
