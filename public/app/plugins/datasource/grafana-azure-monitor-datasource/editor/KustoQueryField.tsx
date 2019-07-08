@@ -5,7 +5,7 @@ import Plain from 'slate-plain-serializer';
 import QueryField from './query_field';
 // import debounce from './utils/debounce';
 import debounce from 'app/features/explore/utils/debounce';
-import { DOMUtils } from '@grafana/ui';
+import { DOMUtil } from '@grafana/ui';
 
 import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto/kusto';
 // import '../sass/editor.base.scss';

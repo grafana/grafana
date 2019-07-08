@@ -14,7 +14,7 @@ import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, DataSourceStatus, QueryHint, DOMUtils } from '@grafana/ui';
+import { ExploreQueryFieldProps, DataSourceStatus, QueryHint, DOMUtil } from '@grafana/ui';
 import { isDataFrame, toLegacyResponseData } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 
