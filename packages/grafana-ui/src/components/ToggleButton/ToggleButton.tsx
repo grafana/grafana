@@ -12,6 +12,7 @@ export interface ToggleButtonState {
   untouched: boolean;
   selected: boolean;
   value?: any;
+  prevPropSelected: boolean;
 }
 
 export interface ToggleButtonProps {
@@ -34,6 +35,7 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
       untouched: true,
       selected: props.selected,
       value: props.value,
+      prevPropSelected: props.selected,
     };
 
     this.handleBlur = this.handleBlur.bind(this);
@@ -58,13 +60,13 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
     });
   }
 
-  componentDidUpdate(prevProps: ToggleButtonProps) {
-    //Override internal select toggle if props are updated
-    if (prevProps.selected !== this.props.selected) {
-      this.setState({
-        selected: this.props.selected,
-      });
+  static getDerivedStateFromProps(props: ToggleButtonProps, state: ToggleButtonState) {
+    if (props.selected !== state.prevPropSelected) {
+      return {
+        selected: props.selected,
+      };
     }
+    return null;
   }
 
   renderButton(theme: GrafanaTheme) {
