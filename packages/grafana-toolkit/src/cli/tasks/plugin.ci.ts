@@ -92,14 +92,18 @@ export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', build
  */
 const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const start = Date.now();
-  const distDir = `${process.cwd()}/ci-work/dist`;
+  let distDir = `${process.cwd()}/ci-work/dist`;
   if (!fs.existsSync(distDir)) {
-    throw new Error('Dist folder does not exist: ' + distDir);
+    distDir = `${process.cwd()}/dist`;
+    if (!fs.existsSync(distDir)) {
+      throw new Error('Dist folder does not exist: ' + distDir);
+    }
   }
 
+  // Create an artifact
   const artifactsDir = `${process.cwd()}/ci-work/artifacts`;
   if (!fs.existsSync(artifactsDir)) {
-    fs.mkdirSync(artifactsDir);
+    fs.mkdirSync(artifactsDir, { recursive: true });
   }
 
   const pluginInfo = getPluginJson(`${distDir}/plugin.json`);
@@ -114,17 +118,14 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     throw new Error('Invalid zip file: ' + zipFile);
   }
 
-  const stats = {
-    name: zipName,
-    size: zipStats.size,
-  };
+  // Set up the docker folder structure
+  const dockerDir = `${process.cwd()}/ci-work/docker`;
+  const pluginFolder = path.resolve(dockerDir, 'plugin');
+  fs.mkdirSync(pluginFolder, { recursive: true });
+  await execa('unzip', [zipFile, '-d', pluginFolder]);
 
-  fs.writeFile(artifactsDir + '/info.json', JSON.stringify(stats, null, 2), err => {
-    if (err) {
-      throw new Error('Unable to write stats');
-    }
-    console.log('Created', stats);
-  });
+  let ex = await execa('ls', ['-Rl', pluginFolder]);
+  console.log('Now load docker from:', ex.stdout);
 };
 
 export const ciBundlePluginTask = new Task<PluginCIOptions>('Bundle Plugin', bundlePluginRunner);
@@ -138,25 +139,27 @@ export const ciBundlePluginTask = new Task<PluginCIOptions>('Bundle Plugin', bun
 const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
   const start = Date.now();
 
-  const artifactsDir = `${process.cwd()}/ci-work/artifacts`;
-  const infoFile = path.resolve(artifactsDir, 'info.json');
-  const zipInfo = require(infoFile);
-  const zipPath = path.resolve(artifactsDir, zipInfo.name);
+  const args = {
+    withCredentials: true,
+    baseURL: 'http://localhost:3000/',
+    responseType: 'json',
+    auth: {
+      username: 'admin',
+      password: 'admin',
+    },
+  };
 
-  const tmpobj = tmp.dirSync();
-  const pluginFolder = tmpobj.name;
-  console.log('Temp Folder', pluginFolder);
+  const axios = require('axios');
+  const frontendSettings = await axios.get('api/frontend/settings', args);
 
-  await execa('unzip', [zipPath, '-d', pluginFolder]);
+  console.log('Grafana Version: ' + JSON.stringify(frontendSettings.data.buildInfo, null, 2));
 
-  let ex = await execa('ls', ['-Rl', pluginFolder]);
-  console.log(ex.stdout);
+  const pluginInfo = getPluginJson(`${process.cwd()}/src/plugin.json`);
+  const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
 
-  ex = await execa('grafana-cli', ['--version']);
-  console.log('Grafana Version: ' + ex.stdout);
+  console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
 
-  console.log('TODO, install: ' + pluginFolder);
-  console.log('TODO, puppeteer...');
+  console.log('TODO puppeteer');
 
   const elapsed = Date.now() - start;
   const stats = {
