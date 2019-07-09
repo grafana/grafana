@@ -26,12 +26,12 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 	}
 
 	var num int
-	
+
 	h := make(map[string][]string)
 	h["To"] = msg.To
 	h["From"] = []string{msg.From}
 	h["Subject"] = []string{msg.Subject}
-	
+
 	m := gomail.NewMessage()
 	m.SetHeaders(h)
 	for _, file := range msg.EmbededFiles {
