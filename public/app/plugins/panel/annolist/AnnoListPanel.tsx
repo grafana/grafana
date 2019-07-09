@@ -1,12 +1,10 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-// /* tslint:disable:import-blacklist ban ban-types */
-// import moment from 'moment';
-
 // Types
 import { AnnoOptions } from './types';
-import { PanelProps, Tooltip, dateTime, DurationUnit, AnnotationEvent } from '@grafana/ui';
+import { dateTime, DurationUnit, AnnotationEvent } from '@grafana/data';
+import { PanelProps, Tooltip } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AbstractList } from '@grafana/ui/src/components/List/AbstractList';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
