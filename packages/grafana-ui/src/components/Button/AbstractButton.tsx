@@ -18,6 +18,7 @@ export interface CommonButtonProps {
    */
   icon?: string;
   className?: string;
+  tooltip?: string;
 }
 
 export interface LinkButtonProps extends CommonButtonProps, AnchorHTMLAttributes<HTMLAnchorElement> {}
@@ -25,7 +26,6 @@ export interface ButtonProps extends CommonButtonProps, ButtonHTMLAttributes<HTM
 
 interface AbstractButtonProps extends CommonButtonProps, Themeable {
   renderAs: React.ComponentType<CommonButtonProps> | string;
-  tooltip?: string;
 }
 
 const buttonVariantStyles = (

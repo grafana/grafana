@@ -64,6 +64,7 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
     if (props.selected !== state.prevPropSelected) {
       return {
         selected: props.selected,
+        prevPropSelected: props.selected,
       };
     }
     return null;
@@ -71,9 +72,9 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
 
   renderButton(theme: GrafanaTheme) {
     const styles = getStyles(theme);
-    const { children, className, tooltip } = this.props;
+    // @ts-ignore
+    const { children, className, tooltip, controlled, ...otherProps } = this.props;
     const activeStyle = this.state.selected ? styles.active : null;
-
     return (
       <Button
         variant="transparent"
@@ -81,7 +82,7 @@ export class ToggleButton extends PureComponent<ToggleButtonProps, ToggleButtonS
         className={cx([styles.button, activeStyle, className, this.state.untouched ? styles.focus : styles.unFocused])}
         onClick={this.handleClick}
         tooltip={tooltip}
-        {...this.props}
+        {...otherProps}
       >
         <span>{children}</span>
       </Button>
