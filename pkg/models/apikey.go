@@ -7,7 +7,7 @@ import (
 
 var ErrInvalidApiKey = errors.New("Invalid API Key")
 var ErrInvalidApiKeyExpiration = errors.New("Negative value for SecondsToLive")
-var ErrDuplicateApiKey = errors.New("UNIQUE constraint failed: api_key.org_id, api_key.name")
+var ErrDuplicateApiKey = errors.New("API Key Organization ID And Name Must Be Unique")
 
 type ApiKey struct {
 	Id      int64
