@@ -32,7 +32,7 @@ $ sudo yum install <rpm package url>
 Example:
 
 ```bash
-$ sudo yum install https://dl.grafana.com/oss/release/grafana-5.4.2-1.x86_64.rpm
+$ sudo yum install https://dl.grafana.com/oss/release/grafana-${VERSION}.x86_64.rpm
 ```
 
 Or install manually using `rpm`. First execute
@@ -44,7 +44,7 @@ $ wget <rpm package url>
 Example:
 
 ```bash
-$ wget https://dl.grafana.com/oss/release/grafana-5.4.2-1.x86_64.rpm
+$ wget https://dl.grafana.com/oss/release/grafana-${VERSION}.x86_64.rpm
 ```
 
 ### On CentOS / Fedora / Redhat:
