@@ -15,14 +15,18 @@ export class ExportDataModalCtrl {
 
   export() {
     const timezone = this.dashboardSrv.getCurrent().timezone;
-
+    const options = {
+      excel: this.excel,
+      dateTimeFormat: this.dateTimeFormat,
+      timezone,
+    };
     if (this.panel === 'table') {
       fileExport.exportTableDataToCsv(this.data, this.excel);
     } else {
       if (this.asRows) {
-        fileExport.exportSeriesListToCsv(this.data, this.dateTimeFormat, this.excel, timezone);
+        fileExport.exportSeriesListToCsv(this.data, options);
       } else {
-        fileExport.exportSeriesListToCsvColumns(this.data, this.dateTimeFormat, this.excel, timezone);
+        fileExport.exportSeriesListToCsvColumns(this.data, options);
       }
     }
 

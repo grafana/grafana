@@ -12,6 +12,18 @@ const END_ROW = '\r\n';
 const QUOTE = '"';
 const EXPORT_FILENAME = 'grafana_data_export.csv';
 
+interface SeriesListToCsvColumnsOptions {
+  dateTimeFormat: string;
+  excel: boolean;
+  timezone: TimeZone;
+}
+
+const defaultOptions: SeriesListToCsvColumnsOptions = {
+  dateTimeFormat: DEFAULT_DATETIME_FORMAT,
+  excel: false,
+  timezone: '',
+};
+
 function csvEscaped(text: string) {
   if (!text) {
     return text;
@@ -58,19 +70,15 @@ function formatRow(row, addEndRowDelimiter = true) {
   return addEndRowDelimiter ? text + END_ROW : text;
 }
 
-export function convertSeriesListToCsv(
-  seriesList,
-  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
-  excel = false,
-  timeZone?: TimeZone
-) {
+export function convertSeriesListToCsv(seriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+  const { dateTimeFormat, excel, timezone } = { ...defaultOptions, ...options };
   let text = formatSpecialHeader(excel) + formatRow(['Series', 'Time', 'Value']);
   for (let seriesIndex = 0; seriesIndex < seriesList.length; seriesIndex += 1) {
     for (let i = 0; i < seriesList[seriesIndex].datapoints.length; i += 1) {
       text += formatRow(
         [
           seriesList[seriesIndex].alias,
-          timeZone === 'utc'
+          timezone === 'utc'
             ? dateTime(seriesList[seriesIndex].datapoints[i][POINT_TIME_INDEX])
                 .utc()
                 .format(dateTimeFormat)
@@ -84,22 +92,13 @@ export function convertSeriesListToCsv(
   return text;
 }
 
-export function exportSeriesListToCsv(
-  seriesList,
-  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
-  excel = false,
-  timeZone?: TimeZone
-) {
-  const text = convertSeriesListToCsv(seriesList, dateTimeFormat, excel, timeZone);
+export function exportSeriesListToCsv(seriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+  const text = convertSeriesListToCsv(seriesList, options);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function convertSeriesListToCsvColumns(
-  seriesList,
-  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
-  excel = false,
-  timeZone: TimeZone
-) {
+export function convertSeriesListToCsvColumns(seriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+  const { dateTimeFormat, excel, timezone } = { ...defaultOptions, ...options };
   // add header
   let text =
     formatSpecialHeader(excel) +
@@ -116,7 +115,7 @@ export function convertSeriesListToCsvColumns(
   // make text
   for (let i = 0; i < extendedDatapointsList[0].length; i += 1) {
     const timestamp =
-      timeZone === 'utc'
+      timezone === 'utc'
         ? dateTime(extendedDatapointsList[0][i][POINT_TIME_INDEX])
             .utc()
             .format(dateTimeFormat)
@@ -168,13 +167,8 @@ function mergeSeriesByTime(seriesList) {
   return result;
 }
 
-export function exportSeriesListToCsvColumns(
-  seriesList,
-  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
-  excel = false,
-  timeZone?: TimeZone
-) {
-  const text = convertSeriesListToCsvColumns(seriesList, dateTimeFormat, excel, timeZone);
+export function exportSeriesListToCsvColumns(seriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+  const text = convertSeriesListToCsvColumns(seriesList, options);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
