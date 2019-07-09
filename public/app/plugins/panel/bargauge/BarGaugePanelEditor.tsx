@@ -1,20 +1,21 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-// Components
 import {
   ThresholdsEditor,
   ValueMappingsEditor,
   PanelOptionsGrid,
   FieldDisplayEditor,
   FieldDisplayOptions,
-  Field,
   FieldPropertiesEditor,
   PanelOptionsGroup,
+  FormLabel,
+  PanelEditorProps,
+  Select,
 } from '@grafana/ui';
+import { Field } from '@grafana/data';
 
-// Types
-import { FormLabel, PanelEditorProps, Threshold, Select, ValueMapping } from '@grafana/ui';
+import { Threshold, ValueMapping } from '@grafana/data';
 import { BarGaugeOptions, orientationOptions, displayModes } from './types';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
@@ -43,8 +44,8 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     });
   };
 
-  onOrientationChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
-  onDisplayModeChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
+  onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
+  onDisplayModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
 
   render() {
     const { options } = this.props;

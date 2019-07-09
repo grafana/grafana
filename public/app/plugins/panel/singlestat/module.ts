@@ -9,7 +9,8 @@ import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import { GrafanaThemeType, getValueFormat, getColorFromHexRgbOrName, isTableData } from '@grafana/ui';
+import { isTableData } from '@grafana/data';
+import { GrafanaThemeType, getValueFormat, getColorFromHexRgbOrName } from '@grafana/ui';
 import { auto } from 'angular';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import TableModel from 'app/core/table_model';
@@ -140,10 +141,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  seriesHandler(seriesData: any) {
+  seriesHandler(dataFrame: any) {
     const series = new TimeSeries({
-      datapoints: seriesData.datapoints || [],
-      alias: seriesData.target,
+      datapoints: dataFrame.datapoints || [],
+      alias: dataFrame.target,
     });
 
     series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
@@ -641,7 +642,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       elem.toggleClass('pointer', panel.links.length > 0);
 
       if (panel.links.length > 0) {
-        linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0], data.scopedVars);
+        linkInfo = linkSrv.getDataLinkUIModel(panel.links[0], data.scopedVars);
       } else {
         linkInfo = null;
       }

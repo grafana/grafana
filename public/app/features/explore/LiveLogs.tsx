@@ -1,14 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import {
-  Themeable,
-  withTheme,
-  GrafanaTheme,
-  selectThemeVariant,
-  LinkButton,
-  LogsModel,
-  LogRowModel,
-} from '@grafana/ui';
+import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, LinkButton } from '@grafana/ui';
+
+import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
 
@@ -42,6 +36,7 @@ const getStyles = (theme: GrafanaTheme) => ({
 
 export interface Props extends Themeable {
   logsResult?: LogsModel;
+  timeZone: TimeZone;
   stopLive: () => void;
 }
 
@@ -73,10 +68,11 @@ class LiveLogs extends PureComponent<Props, State> {
   }
 
   render() {
-    const { theme } = this.props;
+    const { theme, timeZone } = this.props;
     const { renderCount } = this.state;
     const styles = getStyles(theme);
     const rowsToRender: LogRowModel[] = this.props.logsResult ? this.props.logsResult.rows : [];
+    const showUtc = timeZone === 'utc';
 
     return (
       <>
@@ -87,9 +83,16 @@ class LiveLogs extends PureComponent<Props, State> {
                 className={row.fresh ? cx(['logs-row', styles.logsRowFresh]) : cx(['logs-row', styles.logsRowOld])}
                 key={`${row.timeEpochMs}-${index}`}
               >
-                <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
-                  {row.timeLocal}
-                </div>
+                {showUtc && (
+                  <div className="logs-row__localtime" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                    {row.timeUtc}
+                  </div>
+                )}
+                {!showUtc && (
+                  <div className="logs-row__localtime" title={`${row.timeUtc} (${row.timeFromNow})`}>
+                    {row.timeLocal}
+                  </div>
+                )}
                 <div className="logs-row__message">{row.entry}</div>
               </div>
             );

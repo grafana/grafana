@@ -1,6 +1,5 @@
 options:
   formatter: stylish
-
 rules:
   quotes:
     - 0

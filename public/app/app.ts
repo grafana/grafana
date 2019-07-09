@@ -11,7 +11,6 @@ import 'react';
 import 'react-dom';
 
 import 'vendor/bootstrap/bootstrap';
-import 'vendor/angular-ui/ui-bootstrap-tpls';
 import 'vendor/angular-other/angular-strap';
 
 import $ from 'jquery';
@@ -35,7 +34,8 @@ import { setupAngularRoutes } from 'app/routes/routes';
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { setLocale } from '@grafana/ui/src/utils/moment_wrapper';
+import { setLocale } from '@grafana/data';
+import { setMarkdownOptions } from '@grafana/data';
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
@@ -69,6 +69,8 @@ export class GrafanaApp {
     const app = angular.module('grafana', []);
 
     setLocale(config.bootData.user.locale);
+
+    setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 
     app.config(
       (
@@ -122,8 +124,6 @@ export class GrafanaApp {
       'ang-drag-drop',
       'grafana',
       'pasvaz.bindonce',
-      'ui.bootstrap',
-      'ui.bootstrap.tpls',
       'react',
     ];
 

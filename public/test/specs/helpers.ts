@@ -1,9 +1,10 @@
 import _ from 'lodash';
 import config from 'app/core/config';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { angularMocks, sinon } from '../lib/common';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { PanelPluginMeta, RawTimeRange } from '@grafana/ui';
+import { RawTimeRange } from '@grafana/data';
+import { PanelPluginMeta } from '@grafana/ui';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -19,7 +20,7 @@ export function ControllerTestContext(this: any) {
     getMetricSources: () => {},
     get: () => {
       return {
-        then: (callback: (a: any) => void) => {
+        then: (callback: (ds: any) => void) => {
           callback(self.datasource);
         },
       };

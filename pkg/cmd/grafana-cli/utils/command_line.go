@@ -47,6 +47,10 @@ func (c *ContextCommandLine) Application() *cli.App {
 	return c.App
 }
 
+func (c *ContextCommandLine) HomePath() string { return c.GlobalString("homepath") }
+
+func (c *ContextCommandLine) ConfigFile() string { return c.GlobalString("config") }
+
 func (c *ContextCommandLine) PluginDirectory() string {
 	return c.GlobalString("pluginsDir")
 }
@@ -57,6 +61,10 @@ func (c *ContextCommandLine) RepoDirectory() string {
 
 func (c *ContextCommandLine) PluginURL() string {
 	return c.GlobalString("pluginUrl")
+}
+
+func (c *ContextCommandLine) OptionsString() string {
+	return c.GlobalString("configOverrides")
 }
 
 func (c *ContextCommandLine) ApiClient() ApiClient {

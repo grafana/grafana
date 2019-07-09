@@ -37,7 +37,7 @@ export function getAppPluginPageError(meta: AppPluginMeta) {
     return 'Plugin must be an app';
   }
   if (!meta.enabled) {
-    return 'Applicaiton Not Enabled';
+    return 'Application Not Enabled';
   }
   return null;
 }

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateTime } from '@grafana/ui';
+import { dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
@@ -86,9 +86,7 @@ export default class AdminEditUserCtrl {
     $scope.updatePermissions = () => {
       const payload = $scope.permissions;
 
-      backendSrv.put('/api/admin/users/' + $scope.user_id + '/permissions', payload).then(() => {
-        $location.path('/admin/users');
-      });
+      backendSrv.put('/api/admin/users/' + $scope.user_id + '/permissions', payload);
     };
 
     $scope.create = () => {
@@ -160,6 +158,36 @@ export default class AdminEditUserCtrl {
       backendSrv.post('/api/orgs/' + orgInfo.id + '/users/', $scope.newOrg).then(() => {
         $scope.getUser($scope.user_id);
         $scope.getUserOrgs($scope.user_id);
+      });
+    };
+
+    $scope.deleteUser = (user: any) => {
+      $scope.appEvent('confirm-modal', {
+        title: 'Delete',
+        text: 'Do you want to delete ' + user.login + '?',
+        icon: 'fa-trash',
+        yesText: 'Delete',
+        onConfirm: () => {
+          backendSrv.delete('/api/admin/users/' + user.id).then(() => {
+            $location.path('/admin/users');
+          });
+        },
+      });
+    };
+
+    $scope.disableUser = event => {
+      const user = $scope.user;
+
+      // External user can not be disabled
+      if (user.authModule) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
+      const actionEndpoint = user.isDisabled ? '/enable' : '/disable';
+      backendSrv.post('/api/admin/users/' + user.id + actionEndpoint).then(() => {
+        $scope.init();
       });
     };
 

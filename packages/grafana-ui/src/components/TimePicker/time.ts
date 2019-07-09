@@ -1,43 +1,46 @@
-import { TimeOption, TimeRange, TIME_FORMAT } from '../../types/time';
-import { describeTimeRange } from '../../utils/rangeutil';
-import * as dateMath from '../../utils/datemath';
-import { dateTime, DateTime, toUtc } from '../../utils/moment_wrapper';
+import {
+  TimeRange,
+  TIME_FORMAT,
+  RawTimeRange,
+  TimeZone,
+  rangeUtil,
+  dateMath,
+  isDateTime,
+  dateTime,
+  DateTime,
+  toUtc,
+} from '@grafana/data';
 
-export const mapTimeOptionToTimeRange = (
-  timeOption: TimeOption,
-  isTimezoneUtc: boolean,
-  timezone?: dateMath.Timezone
-): TimeRange => {
-  const fromMoment = stringToDateTimeType(timeOption.from, isTimezoneUtc, false, timezone);
-  const toMoment = stringToDateTimeType(timeOption.to, isTimezoneUtc, true, timezone);
+export const rawToTimeRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeRange => {
+  const from = stringToDateTimeType(raw.from, false, timeZone);
+  const to = stringToDateTimeType(raw.to, true, timeZone);
 
-  return { from: fromMoment, to: toMoment, raw: { from: timeOption.from, to: timeOption.to } };
+  return { from, to, raw };
 };
 
-export const stringToDateTimeType = (
-  value: string,
-  isTimezoneUtc: boolean,
-  roundUp?: boolean,
-  timezone?: dateMath.Timezone
-): DateTime => {
+export const stringToDateTimeType = (value: string | DateTime, roundUp?: boolean, timeZone?: TimeZone): DateTime => {
+  if (isDateTime(value)) {
+    return value;
+  }
+
   if (value.indexOf('now') !== -1) {
     if (!dateMath.isValid(value)) {
       return dateTime();
     }
 
-    const parsed = dateMath.parse(value, roundUp, timezone);
+    const parsed = dateMath.parse(value, roundUp, timeZone);
     return parsed || dateTime();
   }
 
-  if (isTimezoneUtc) {
+  if (timeZone === 'utc') {
     return toUtc(value, TIME_FORMAT);
   }
 
   return dateTime(value, TIME_FORMAT);
 };
 
-export const mapTimeRangeToRangeString = (timeRange: TimeRange): string => {
-  return describeTimeRange(timeRange.raw);
+export const mapTimeRangeToRangeString = (timeRange: RawTimeRange): string => {
+  return rangeUtil.describeTimeRange(timeRange);
 };
 
 export const isValidTimeString = (text: string) => dateMath.isValid(text);

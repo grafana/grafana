@@ -5,27 +5,25 @@ import { webSocket } from 'rxjs/webSocket';
 import { catchError, map } from 'rxjs/operators';
 
 // Services & Utils
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
-import { logStreamToSeriesData } from './result_transformer';
+import { logStreamToDataFrame } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 
 // Types
 import {
   PluginMeta,
-  DataQueryRequest,
-  SeriesData,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataQueryError,
-  LogRowModel,
+  DataQueryRequest,
   DataStreamObserver,
-  LoadingState,
   DataStreamState,
   DataQueryResponse,
-  DateTime,
 } from '@grafana/ui';
+
+import { DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -80,6 +78,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       ...options,
       url,
     };
+
     return this.backendSrv.datasourceRequest(req);
   }
 
@@ -147,25 +146,25 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   };
 
-  processResult = (data: any, target: any): SeriesData[] => {
-    const series: SeriesData[] = [];
+  processResult = (data: any, target: any): DataFrame[] => {
+    const series: DataFrame[] = [];
 
     if (Object.keys(data).length === 0) {
       return series;
     }
 
     if (!data.streams) {
-      return [{ ...logStreamToSeriesData(data), refId: target.refId }];
+      return [{ ...logStreamToDataFrame(data), refId: target.refId }];
     }
 
     for (const stream of data.streams || []) {
-      const seriesData = logStreamToSeriesData(stream);
-      seriesData.refId = target.refId;
-      seriesData.meta = {
+      const dataFrame = logStreamToDataFrame(stream);
+      dataFrame.refId = target.refId;
+      dataFrame.meta = {
         searchWords: getHighlighterExpressionsFromQuery(formatQuery(target.query, target.regexp)),
         limit: this.maxLines,
       };
-      series.push(seriesData);
+      series.push(dataFrame);
     }
 
     return series;
@@ -233,7 +232,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     );
 
     return Promise.all(queries).then((results: any[]) => {
-      let series: SeriesData[] = [];
+      let series: DataFrame[] = [];
 
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
@@ -256,10 +255,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
-  metadataRequest(url: string) {
+  metadataRequest(url: string, params?: any) {
     // HACK to get label values for {job=|}, will be replaced when implementing LokiQueryField
     const apiUrl = url.replace('v1', 'prom');
-    return this._request(apiUrl, { silent: true }).then((res: DataQueryResponse) => {
+    return this._request(apiUrl, params, { silent: true }).then((res: DataQueryResponse) => {
       const data: any = { data: { data: res.data.values || [] } };
       return data;
     });
@@ -310,13 +309,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       return {
         ...commontTargetOptons,
         start: timeEpochNs - contextTimeBuffer,
-        end: timeEpochNs,
+        end: row.timestamp, // using RFC3339Nano format to avoid precision loss
         direction,
       };
     } else {
       return {
         ...commontTargetOptons,
-        start: timeEpochNs, // TODO: We should add 1ns here for the original row not no be included in the result
+        start: row.timestamp, // start param in Loki API is inclusive so we'll have to filter out the row that this request is based from
         end: timeEpochNs + contextTimeBuffer,
       };
     }
@@ -328,14 +327,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       (options && options.limit) || 10,
       (options && options.direction) || 'BACKWARD'
     );
-    const series: SeriesData[] = [];
+    const series: DataFrame[] = [];
 
     try {
       const result = await this._request('/api/prom/query', target);
       if (result.data) {
         for (const stream of result.data.streams || []) {
-          const seriesData = logStreamToSeriesData(stream);
-          series.push(seriesData);
+          const dataFrame = logStreamToDataFrame(stream);
+          series.push(dataFrame);
         }
       }
       if (options && options.direction === 'FORWARD') {

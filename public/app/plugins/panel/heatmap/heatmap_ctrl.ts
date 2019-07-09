@@ -319,19 +319,19 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  seriesHandler(seriesData: any) {
-    if (seriesData.datapoints === undefined) {
+  seriesHandler(dataFrame: any) {
+    if (dataFrame.datapoints === undefined) {
       throw new Error('Heatmap error: data should be a time series');
     }
 
     const series = new TimeSeries({
-      datapoints: seriesData.datapoints,
-      alias: seriesData.target,
+      datapoints: dataFrame.datapoints,
+      alias: dataFrame.target,
     });
 
     series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
 
-    const datapoints = seriesData.datapoints || [];
+    const datapoints = dataFrame.datapoints || [];
     if (datapoints && datapoints.length > 0) {
       const last = datapoints[datapoints.length - 1][1];
       const from = this.range.from;

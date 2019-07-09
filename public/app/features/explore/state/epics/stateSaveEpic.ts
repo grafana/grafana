@@ -1,7 +1,7 @@
 import { Epic } from 'redux-observable';
 import { mergeMap } from 'rxjs/operators';
-import { RawTimeRange, TimeRange } from '@grafana/ui/src/types/time';
-import { isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { RawTimeRange, TimeRange } from '@grafana/data';
+import { isDateTime } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
@@ -31,12 +31,14 @@ export const stateSaveEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (ac
   return action$.ofType(stateSaveAction.type).pipe(
     mergeMap(() => {
       const { left, right, split } = state$.value.explore;
+      const orgId = state$.value.user.orgId.toString();
       const replace = left && left.urlReplaced === false;
-      const urlStates: { [index: string]: string } = {};
+      const urlStates: { [index: string]: string } = { orgId };
       const leftUrlState: ExploreUrlState = {
         datasource: left.datasourceInstance.name,
         queries: left.queries.map(clearQueryKeys),
         range: toRawTimeRange(left.range),
+        mode: left.mode,
         ui: {
           showingGraph: left.showingGraph,
           showingLogs: true,
@@ -50,6 +52,7 @@ export const stateSaveEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (ac
           datasource: right.datasourceInstance.name,
           queries: right.queries.map(clearQueryKeys),
           range: toRawTimeRange(right.range),
+          mode: right.mode,
           ui: {
             showingGraph: right.showingGraph,
             showingLogs: true,

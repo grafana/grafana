@@ -1,6 +1,7 @@
 // Libraries
 import _ from 'lodash';
 import $ from 'jquery';
+// @ts-ignore
 import Drop from 'tether-drop';
 
 // Utils and servies
@@ -21,11 +22,12 @@ import { updateLocation } from 'app/core/actions';
 
 // Types
 import { KioskUrlValue } from 'app/types';
+import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { UtilSrv } from 'app/core/services/util_srv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { BridgeSrv } from 'app/core/services/bridge_srv';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
-import { ILocationService, ITimeoutService, IRootScopeService, IControllerService } from 'angular';
+import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -33,11 +35,11 @@ export class GrafanaCtrl {
     $scope: any,
     utilSrv: UtilSrv,
     $rootScope: any,
-    $controller: IControllerService,
     contextSrv: ContextSrv,
     bridgeSrv: BridgeSrv,
     backendSrv: BackendSrv,
     timeSrv: TimeSrv,
+    linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
     angularLoader: AngularLoader
@@ -47,6 +49,7 @@ export class GrafanaCtrl {
     setBackendSrv(backendSrv);
     setDataSourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);
+    setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
     const store = configureStore();
     setLocationSrv({
@@ -284,28 +287,6 @@ export function grafanaAppDirective(
         const popover = elem.find('.popover');
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
-        }
-
-        // hide time picker
-        const timePickerDropDownIsOpen = elem.find('.gf-timepicker-dropdown').length > 0;
-        if (timePickerDropDownIsOpen) {
-          const targetIsInTimePickerDropDown = target.parents('.gf-timepicker-dropdown').length > 0;
-          const targetIsInTimePickerNav = target.parents('.gf-timepicker-nav').length > 0;
-          const targetIsDatePickerRowBtn = target.parents('td[id^="datepicker-"]').length > 0;
-          const targetIsDatePickerHeaderBtn = target.parents('button[id^="datepicker-"]').length > 0;
-
-          if (
-            targetIsInTimePickerNav ||
-            targetIsInTimePickerDropDown ||
-            targetIsDatePickerRowBtn ||
-            targetIsDatePickerHeaderBtn
-          ) {
-            return;
-          }
-
-          scope.$apply(() => {
-            scope.appEvent('closeTimepicker');
-          });
         }
       });
     },

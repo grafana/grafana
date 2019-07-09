@@ -1,5 +1,5 @@
 import { SingleStatCtrl } from '../module';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 
 describe('SingleStatCtrl', () => {

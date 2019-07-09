@@ -6,7 +6,7 @@ import { single, map, filter, catchError } from 'rxjs/operators';
 
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
@@ -20,19 +20,17 @@ import { PromQuery, PromOptions, PromQueryRequest, PromContext } from './types';
 import {
   DataQueryRequest,
   DataSourceApi,
-  AnnotationEvent,
   DataSourceInstanceSettings,
   DataQueryError,
   DataStreamObserver,
-  LoadingState,
   DataStreamState,
   DataQueryResponseData,
-} from '@grafana/ui/src/types';
+} from '@grafana/ui';
 import { ExploreUrlState } from 'app/types/explore';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TimeRange, DateTime } from '@grafana/ui/src';
+import { TimeRange, DateTime, LoadingState, AnnotationEvent } from '@grafana/data';
 
 export interface PromDataQueryResponse {
   data: {
@@ -367,7 +365,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     // Align query interval with step to allow query caching and to ensure
     // that about-same-time query results look the same.
-    const adjusted = alignRange(start, end, query.step);
+    const adjusted = alignRange(start, end, query.step, this.timeSrv.timeRange().to.utcOffset() * 60);
     query.start = adjusted.start;
     query.end = adjusted.end;
     this._addTracingHeaders(query, options);
@@ -694,10 +692,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
  * @param start Timestamp marking the beginning of the range.
  * @param end Timestamp marking the end of the range.
  * @param step Interval to align start and end with.
+ * @param utcOffsetSec Number of seconds current timezone is offset from UTC
  */
-export function alignRange(start: number, end: number, step: number): { end: number; start: number } {
-  const alignedEnd = Math.floor(end / step) * step;
-  const alignedStart = Math.floor(start / step) * step;
+export function alignRange(
+  start: number,
+  end: number,
+  step: number,
+  utcOffsetSec: number
+): { end: number; start: number } {
+  const alignedEnd = Math.floor((end + utcOffsetSec) / step) * step - utcOffsetSec;
+  const alignedStart = Math.floor((start + utcOffsetSec) / step) * step - utcOffsetSec;
   return {
     end: alignedEnd,
     start: alignedStart,

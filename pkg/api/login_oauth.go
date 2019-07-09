@@ -171,6 +171,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
 		OrgRoles:   map[int64]m.RoleType{},
+		Groups:     userInfo.Groups,
 	}
 
 	if userInfo.Role != "" {
@@ -187,6 +188,11 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	err = bus.Dispatch(cmd)
 	if err != nil {
 		hs.redirectWithError(ctx, err)
+		return
+	}
+
+	if cmd.Result.IsDisabled {
+		hs.redirectWithError(ctx, login.ErrUserDisabled)
 		return
 	}
 

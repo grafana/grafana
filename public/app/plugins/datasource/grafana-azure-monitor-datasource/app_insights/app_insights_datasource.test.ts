@@ -1,7 +1,7 @@
 import AzureMonitorDatasource from '../datasource';
 import Q from 'q';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc } from '@grafana/data';
 
 describe('AppInsightsDatasource', () => {
   const ctx: any = {
