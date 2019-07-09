@@ -17,6 +17,9 @@ export enum ReducerID {
   delta = 'delta',
   step = 'step',
 
+  firstNotNull = 'firstNotNull',
+  lastNotNull = 'lastNotNull',
+
   changeCount = 'changeCount',
   distinctCount = 'distinctCount',
 
@@ -132,14 +135,28 @@ function getById(id: string): FieldReducerInfo | undefined {
   if (!hasBuiltIndex) {
     [
       {
-        id: ReducerID.last,
-        name: 'Last',
-        description: 'Last Value (current)',
+        id: ReducerID.lastNotNull,
+        name: 'Last (not null)',
+        description: 'Last non-null value',
         standard: true,
         alias: 'current',
+        reduce: calculateLastNotNull,
+      },
+      {
+        id: ReducerID.last,
+        name: 'Last',
+        description: 'Last Value',
+        standard: true,
         reduce: calculateLast,
       },
       { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
+      {
+        id: ReducerID.firstNotNull,
+        name: 'First (not null)',
+        description: 'First non-null value',
+        standard: true,
+        reduce: calculateFirstNotNull,
+      },
       { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true },
       { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
       { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
@@ -231,6 +248,8 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
     mean: null,
     last: null,
     first: null,
+    lastNotNull: undefined,
+    firstNotNull: undefined,
     count: 0,
     nonNullCount: 0,
     allIsNull: true,
@@ -246,6 +265,10 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
 
   for (let i = 0; i < data.rows.length; i++) {
     let currentValue = data.rows[i][fieldIndex];
+    if (i === 0) {
+      calcs.first = currentValue;
+    }
+    calcs.last = currentValue;
 
     if (currentValue === null) {
       if (ignoreNulls) {
@@ -257,9 +280,9 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
     }
 
     if (currentValue !== null) {
-      const isFirst = calcs.first === null;
+      const isFirst = calcs.firstNotNull === undefined;
       if (isFirst) {
-        calcs.first = currentValue;
+        calcs.firstNotNull = currentValue;
       }
 
       if (isNumber(currentValue)) {
@@ -268,12 +291,12 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
         calcs.nonNullCount++;
 
         if (!isFirst) {
-          const step = currentValue - calcs.last!;
+          const step = currentValue - calcs.lastNotNull!;
           if (calcs.step > step) {
             calcs.step = step; // the minimum interval
           }
 
-          if (calcs.last! > currentValue) {
+          if (calcs.lastNotNull! > currentValue) {
             // counter reset
             calcs.previousDeltaUp = false;
             if (i === data.rows.length - 1) {
@@ -307,7 +330,7 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
         calcs.allIsZero = false;
       }
 
-      calcs.last = currentValue;
+      calcs.lastNotNull = currentValue;
     }
   }
 
@@ -331,10 +354,8 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
     calcs.range = calcs.max - calcs.min;
   }
 
-  if (calcs.first !== null && calcs.last !== null) {
-    if (isNumber(calcs.first) && isNumber(calcs.last)) {
-      calcs.diff = calcs.last - calcs.first;
-    }
+  if (isNumber(calcs.firstNotNull) && isNumber(calcs.lastNotNull)) {
+    calcs.diff = calcs.lastNotNull - calcs.firstNotNull;
   }
 
   return calcs;
@@ -344,8 +365,39 @@ function calculateFirst(data: DataFrame, fieldIndex: number, ignoreNulls: boolea
   return { first: data.rows[0][fieldIndex] };
 }
 
+function calculateFirstNotNull(
+  data: DataFrame,
+  fieldIndex: number,
+  ignoreNulls: boolean,
+  nullAsZero: boolean
+): FieldCalcs {
+  for (let idx = 0; idx < data.rows.length; idx++) {
+    const v = data.rows[idx][fieldIndex];
+    if (v != null) {
+      return { firstNotNull: v };
+    }
+  }
+  return { firstNotNull: undefined };
+}
+
 function calculateLast(data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   return { last: data.rows[data.rows.length - 1][fieldIndex] };
+}
+
+function calculateLastNotNull(
+  data: DataFrame,
+  fieldIndex: number,
+  ignoreNulls: boolean,
+  nullAsZero: boolean
+): FieldCalcs {
+  let idx = data.rows.length - 1;
+  while (idx >= 0) {
+    const v = data.rows[idx--][fieldIndex];
+    if (v != null) {
+      return { lastNotNull: v };
+    }
+  }
+  return { lastNotNull: undefined };
 }
 
 function calculateChangeCount(
