@@ -1,6 +1,6 @@
 {
   "name": "@grafana/toolkit",
-  "version": "6.3.0-alpha.2",
+  "version": "6.3.0-alpha.36",
   "description": "Grafana Toolkit",
   "keywords": [
     "typescript",
@@ -14,7 +14,9 @@
     "tslint": "tslint -c tslint.json --project tsconfig.json",
     "typecheck": "tsc --noEmit",
     "precommit": "npm run tslint & npm run typecheck",
-    "clean": "rimraf ./dist ./compiled"
+    "clean": "rimraf ./dist ./compiled",
+    "build": "grafana-toolkit toolkit:build",
+    "postpublish": "npm run clean"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
