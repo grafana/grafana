@@ -1,7 +1,7 @@
 import { isBoolean, isNumber, sortedUniq, sortedIndexOf, unescape as htmlUnescaped } from 'lodash';
 import { saveAs } from 'file-saver';
 import { isNullOrUndefined } from 'util';
-import { dateTime } from '@grafana/data';
+import { dateTime, TimeZone } from '@grafana/data';
 
 const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 const POINT_TIME_INDEX = 1;
@@ -62,7 +62,7 @@ export function convertSeriesListToCsv(
   seriesList,
   dateTimeFormat = DEFAULT_DATETIME_FORMAT,
   excel = false,
-  timeZone?: string
+  timeZone?: TimeZone
 ) {
   let text = formatSpecialHeader(excel) + formatRow(['Series', 'Time', 'Value']);
   for (let seriesIndex = 0; seriesIndex < seriesList.length; seriesIndex += 1) {
@@ -88,7 +88,7 @@ export function exportSeriesListToCsv(
   seriesList,
   dateTimeFormat = DEFAULT_DATETIME_FORMAT,
   excel = false,
-  timeZone?: string
+  timeZone?: TimeZone
 ) {
   const text = convertSeriesListToCsv(seriesList, dateTimeFormat, excel, timeZone);
   saveSaveBlob(text, EXPORT_FILENAME);
@@ -98,7 +98,7 @@ export function convertSeriesListToCsvColumns(
   seriesList,
   dateTimeFormat = DEFAULT_DATETIME_FORMAT,
   excel = false,
-  timeZone
+  timeZone: TimeZone
 ) {
   // add header
   let text =
@@ -172,7 +172,7 @@ export function exportSeriesListToCsvColumns(
   seriesList,
   dateTimeFormat = DEFAULT_DATETIME_FORMAT,
   excel = false,
-  timeZone?
+  timeZone?: TimeZone
 ) {
   const text = convertSeriesListToCsvColumns(seriesList, dateTimeFormat, excel, timeZone);
   saveSaveBlob(text, EXPORT_FILENAME);
