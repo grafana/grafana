@@ -5,7 +5,7 @@ const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
+
 import * as webpack from 'webpack';
 import { hasThemeStylesheets, getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
@@ -114,7 +114,6 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
   const optimization: { [key: string]: any } = {};
 
   if (options.production) {
-    plugins.push(new ngAnnotatePlugin());
     optimization.minimizer = [new TerserPlugin(), new OptimizeCssAssetsPlugin()];
   }
 
@@ -177,8 +176,12 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
           loaders: [
             {
               loader: 'babel-loader',
-              options: { presets: ['@babel/preset-env'] },
+              options: {
+                presets: ['@babel/preset-env'],
+                plugins: ['angularjs-annotate'],
+              },
             },
+
             'ts-loader',
           ],
           exclude: /(node_modules)/,
