@@ -146,9 +146,9 @@
     "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss}\" --write",
     "precommit": "grafana-toolkit precommit",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
-    "packages:versionBump": "lerna version --no-git-tag-version --no-push",
-    "packages:prepare": "lerna run clean && lerna run prep",
-    "packages:publish": "lerna publish from-package --contents dist --dist-tag next --no-git-tag-version --no-push"
+    "packages:prepare": "npm run test && lerna version --tag-version-prefix=\"packages@\" -m \"Packages: publish %s\" --no-push",
+    "packages:build": "lerna run clean && lerna run build",
+    "packages:publish": "lerna publish from-package --contents dist --tag-version-prefix=\"packages@\" --dist-tag next"
   },
   "husky": {
     "hooks": {

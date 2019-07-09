@@ -10,8 +10,8 @@
     "tslint": "tslint -c tslint.json --project tsconfig.json",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf ./dist ./compiled",
-    "build": "rollup -c rollup.config.ts",
-    "prep": "grafana-toolkit package:build --scope=data"
+    "bundle": "rollup -c rollup.config.ts",
+    "build": "grafana-toolkit package:build --scope=data"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -39,6 +39,5 @@
   },
   "resolutions": {
     "@types/lodash": "4.14.119"
-  },
-  "gitHead": "eef02dc9b15ddd8923ec3571955a47e0f40d6562"
+  }
 }

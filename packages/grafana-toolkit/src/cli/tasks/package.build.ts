@@ -17,7 +17,7 @@ export const clean = useSpinner<void>('Cleaning', async () => await execa('npm',
 const compile = useSpinner<void>('Compiling sources', () => execa('tsc', ['-p', './tsconfig.build.json']));
 
 // @ts-ignore
-const rollup = useSpinner<void>('Bundling', () => execa('npm', ['run', 'build']));
+const rollup = useSpinner<void>('Bundling', () => execa('npm', ['run', 'bundle']));
 
 interface SavePackageOptions {
   path: string;
