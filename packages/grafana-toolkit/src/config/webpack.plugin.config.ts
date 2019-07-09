@@ -83,8 +83,8 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         { from: '../LICENSE', to: '.' },
         { from: 'img/*', to: '.' },
         { from: '**/*.json', to: '.' },
-        // { from: '**/*.svg', to: '.' },
-        // { from: '**/*.png', to: '.' },
+        { from: '**/*.svg', to: '.' },
+        { from: '**/*.png', to: '.' },
         { from: '**/*.html', to: '.' },
       ],
       { logLevel: options.watch ? 'silent' : 'warn' }
