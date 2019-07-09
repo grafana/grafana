@@ -45,7 +45,7 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 		err = errutil.Wrapf(e, "Failed to send notification to email address: %s", strings.Join(msg.To, ";"))
 	}
 
-	num++	
+	num++
 
 	return num, err
 }
