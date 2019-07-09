@@ -1,7 +1,9 @@
 import execa = require('execa');
 // @ts-ignore
 import * as fs from 'fs';
-import { changeCwdToGrafanaUi, restoreCwd } from '../utils/cwd';
+// @ts-ignore
+import * as path from 'path';
+import { changeCwdToGrafanaUi, restoreCwd, changeCwdToPackage } from '../utils/cwd';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
@@ -15,7 +17,7 @@ export const clean = useSpinner<void>('Cleaning', async () => await execa('npm',
 const compile = useSpinner<void>('Compiling sources', () => execa('tsc', ['-p', './tsconfig.build.json']));
 
 // @ts-ignore
-const rollup = useSpinner<void>('Bundling', () => execa('npm', ['run', 'build']));
+const rollup = useSpinner<void>('Bundling', () => execa('npm', ['run', 'bundle']));
 
 interface SavePackageOptions {
   path: string;
@@ -68,19 +70,34 @@ const moveFiles = () => {
   })();
 };
 
-const buildTaskRunner: TaskRunner<void> = async () => {
-  cwd = changeCwdToGrafanaUi();
-  distDir = `${cwd}/dist`;
-  const pkg = require(`${cwd}/package.json`);
-  console.log(chalk.yellow(`Building ${pkg.name} (package.json version: ${pkg.version})`));
+interface PackageBuildOptions {
+  scope: string;
+}
 
-  await clean();
-  await compile();
-  await rollup();
-  await preparePackage(pkg);
-  await moveFiles();
+const buildTaskRunner: TaskRunner<PackageBuildOptions> = async ({ scope }) => {
+  if (!scope) {
+    throw new Error('Provide packages with -s, --scope <packages>');
+  }
 
-  restoreCwd();
+  const scopes = scope.split(',').map(s => {
+    return async () => {
+      cwd = path.resolve(__dirname, `../../../../grafana-${s}`);
+      // Lerna executes this in package's dir context, but for testing purposes I want to be able to run from root:
+      // grafana-toolkit package:build --scope=<package>
+      process.chdir(cwd);
+      distDir = `${cwd}/dist`;
+      const pkg = require(`${cwd}/package.json`);
+      console.log(chalk.yellow(`Building ${pkg.name} (package.json version: ${pkg.version})`));
+
+      await clean();
+      await compile();
+      await rollup();
+      await preparePackage(pkg);
+      await moveFiles();
+    };
+  });
+
+  await Promise.all(scopes.map(s => s()));
 };
 
-export const buildTask = new Task<void>('@grafana/ui build', buildTaskRunner);
+export const buildPackageTask = new Task<PackageBuildOptions>('@grafana/ui build', buildTaskRunner);
