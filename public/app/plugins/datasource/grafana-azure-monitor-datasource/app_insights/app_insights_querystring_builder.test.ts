@@ -65,7 +65,15 @@ describe('AppInsightsQuerystringBuilder', () => {
     });
 
     it('should add datetime filtering and interval to the querystring', () => {
-      const querystring = `timespan=2017-08-22T06:00:00Z/2017-08-22T07:00:00Z&filter=client/city eq 'Boydton'`;
+      const querystring = `timespan=2017-08-22T06:00:00Z/2017-08-22T07:00:00Z&filter=client/city%20eq%20'Boydton'`;
+      expect(builder.generate()).toEqual(querystring);
+    });
+  });
+
+  describe('url encoding', () => {
+    it('should encode spaces', () => {
+      const querystring = `timespan=2017-08-22T06:00:00Z/2017-08-22T07:00:00Z&segment=customDimension/Message%20Type`;
+      builder.setGroupBy('customDimension/Message Type');
       expect(builder.generate()).toEqual(querystring);
     });
   });

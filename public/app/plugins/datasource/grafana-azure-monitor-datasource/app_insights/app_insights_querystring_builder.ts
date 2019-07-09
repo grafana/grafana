@@ -51,6 +51,6 @@ export default class AppInsightsQuerystringBuilder {
       querystring += `&filter=${this.filter}`;
     }
 
-    return querystring;
+    return encodeURI(querystring);
   }
 }
