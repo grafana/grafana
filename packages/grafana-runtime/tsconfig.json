@@ -5,6 +5,7 @@
   "compilerOptions": {
     "rootDirs": ["."],
     "typeRoots": ["./node_modules/@types", "types"],
-    "declarationDir": "dist"
+    "declarationDir": "dist",
+    "outDir": "compiled"
   }
 }
