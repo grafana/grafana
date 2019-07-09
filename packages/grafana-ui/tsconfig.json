@@ -3,6 +3,8 @@
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
-    "rootDirs": [".", "stories"]
+    "rootDirs": [".", "stories"],
+    "typeRoots": ["./node_modules/@types", "types"],
+    "declarationDir": "dist"
   }
 }
