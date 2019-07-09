@@ -172,7 +172,8 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 		not, err := InitNotifier(notification)
 		if err != nil {
 			n.log.Error("Could not create notifier", "notifier", notification.Uid, "error", err)
-			continue
+			//continue
+			return nil, err
 		}
 
 		query := &models.GetOrCreateNotificationStateQuery{
@@ -184,7 +185,8 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 		err = bus.DispatchCtx(evalContext.Ctx, query)
 		if err != nil {
 			n.log.Error("Could not get notification state.", "notifier", notification.Id, "error", err)
-			continue
+			return nil, err
+			//continue
 		}
 
 		if not.ShouldNotify(evalContext.Ctx, evalContext, query.Result) {
