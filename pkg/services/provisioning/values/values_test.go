@@ -1,10 +1,11 @@
 package values
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/yaml.v2"
 	"os"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/yaml.v2"
 )
 
 func TestValues(t *testing.T) {
@@ -60,6 +61,11 @@ func TestValues(t *testing.T) {
 				unmarshalingTest(`val: `, d)
 				So(d.Val.Value(), ShouldEqual, "")
 				So(d.Val.Raw, ShouldEqual, "")
+			})
+			Convey("Should pass literal $", func() {
+				unmarshalingTest(`val: mY,Passwo$rd`, d)
+				So(d.Val.Value(), ShouldEqual, "mY,Passwo$rd")
+				So(d.Val.Raw, ShouldEqual, "mY,Passwo$rd")
 			})
 		})
 
