@@ -1,6 +1,6 @@
 import { Browser, Page, Target } from 'puppeteer-core';
 
-import { e2eScenario } from 'e2e-test/core/scenario';
+import { e2eScenario, constants, takeScreenShot, compareScreenShots } from '@grafana/toolkit';
 import { addDataSourcePage } from 'e2e-test/pages/datasources/addDataSourcePage';
 import { editDataSourcePage } from 'e2e-test/pages/datasources/editDataSourcePage';
 import { dataSourcesPage } from 'e2e-test/pages/datasources/dataSources';
@@ -9,9 +9,7 @@ import { saveDashboardModal } from 'e2e-test/pages/dashboards/saveDashboardModal
 import { dashboardsPageFactory } from 'e2e-test/pages/dashboards/dashboardsPage';
 import { panel } from 'e2e-test/pages/panels/panel';
 import { editPanelPage } from 'e2e-test/pages/panels/editPanel';
-import { constants } from 'e2e-test/core/constants';
 import { sharePanelModal } from 'e2e-test/pages/panels/sharePanelModal';
-import { takeScreenShot, compareScreenShots } from 'e2e-test/core/images';
 
 e2eScenario(
   'Login scenario, create test data source, dashboard, panel, and export scenario',

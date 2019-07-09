@@ -1,11 +1,11 @@
 import {
+  TestPage,
   ClickablePageObjectType,
   PageObjectType,
   ClickablePageObject,
   PageObject,
   Selector,
-} from 'e2e-test/core/pageObjects';
-import { TestPage } from 'e2e-test/core/pages';
+} from '@grafana/toolkit';
 
 export interface EditDataSourcePage {
   saveAndTest: ClickablePageObjectType;

@@ -1,11 +1,11 @@
 import {
+  TestPage,
   SelectPageObjectType,
   SelectPageObject,
   Selector,
   ClickablePageObjectType,
   ClickablePageObject,
-} from 'e2e-test/core/pageObjects';
-import { TestPage } from 'e2e-test/core/pages';
+} from '@grafana/toolkit';
 
 export interface EditPanelPage {
   queriesTab: ClickablePageObjectType;

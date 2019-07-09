@@ -29,7 +29,7 @@ export interface SelectPageObjectType extends PageObjectType {
 }
 
 export class PageObject implements PageObjectType {
-  protected page: Page = null;
+  protected page?: Page;
 
   constructor(protected selector: string) {}
 
@@ -82,6 +82,6 @@ export class SelectPageObject extends PageObject implements SelectPageObjectType
   select = async (text: string): Promise<void> => {
     console.log(`Trying to select text:${text} in dropdown:`, this.selector);
     await expect(this.page).not.toBeNull();
-    await this.page.select(this.selector, text);
+    await this.page!.select(this.selector, text);
   };
 }

@@ -1,15 +1,15 @@
 import { Page } from 'puppeteer-core';
 
 import { constants } from './constants';
-import { loginPage } from 'e2e-test/pages/start/loginPage';
+import { loginPage } from './start/loginPage';
 
 export const login = async (page: Page) => {
   await loginPage.init(page);
   await loginPage.navigateTo();
 
-  await loginPage.pageObjects.username.enter('admin');
-  await loginPage.pageObjects.password.enter('admin');
-  await loginPage.pageObjects.submit.click();
+  await loginPage.pageObjects!.username.enter('admin');
+  await loginPage.pageObjects!.password.enter('admin');
+  await loginPage.pageObjects!.submit.click();
   await loginPage.waitForResponse();
 };
 

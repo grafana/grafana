@@ -17,7 +17,8 @@ export interface TestPageType<T> {
   waitForResponse: () => Promise<void>;
   waitForNavigation: () => Promise<void>;
   waitFor: (milliseconds: number) => Promise<void>;
-  pageObjects: PageObjects<T>;
+
+  pageObjects?: PageObjects<T>;
 }
 
 type PageObjects<T> = { [P in keyof T]: T[P] };
@@ -28,17 +29,15 @@ export interface TestPageConfig<T> {
 }
 
 export class TestPage<T> implements TestPageType<T> {
-  pageObjects: PageObjects<T> = null;
-  private page: Page = null;
-  private pageUrl: string = null;
+  pageObjects?: PageObjects<T>;
+  private page?: Page;
+  private pageUrl?: string;
 
   constructor(config: TestPageConfig<T>) {
     if (config.url) {
       this.pageUrl = `${constants.baseUrl}${config.url}`;
     }
-    if (config.pageObjects) {
-      this.pageObjects = config.pageObjects;
-    }
+    this.pageObjects = config.pageObjects;
   }
 
   init = async (page: Page): Promise<void> => {
@@ -59,7 +58,7 @@ export class TestPage<T> implements TestPageType<T> {
     this.throwIfNotInitialized();
 
     console.log('Trying to navigate to:', this.pageUrl);
-    await this.page.goto(this.pageUrl);
+    await this.page!.goto(this.pageUrl!);
   };
 
   expectSelector = async (config: ExpectSelectorConfig): Promise<void> => {
@@ -75,19 +74,19 @@ export class TestPage<T> implements TestPageType<T> {
   waitForResponse = async (): Promise<void> => {
     this.throwIfNotInitialized();
 
-    await this.page.waitForResponse(response => response.url() === this.pageUrl && response.status() === 200);
+    await this.page!.waitForResponse(response => response.url() === this.pageUrl && response.status() === 200);
   };
 
   waitForNavigation = async (): Promise<void> => {
     this.throwIfNotInitialized();
 
-    await this.page.waitForNavigation();
+    await this.page!.waitForNavigation();
   };
 
   getUrl = async (): Promise<string> => {
     this.throwIfNotInitialized();
 
-    return await this.page.url();
+    return await this.page!.url();
   };
 
   getUrlWithoutBaseUrl = async (): Promise<string> => {
@@ -101,7 +100,7 @@ export class TestPage<T> implements TestPageType<T> {
   waitFor = async (milliseconds: number) => {
     this.throwIfNotInitialized();
 
-    await this.page.waitFor(milliseconds);
+    await this.page!.waitFor(milliseconds);
   };
 
   private throwIfNotInitialized = () => {
