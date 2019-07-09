@@ -198,5 +198,37 @@ func TestLDAPLogin(t *testing.T) {
 			So(username, ShouldEqual, "test")
 			So(password, ShouldEqual, "pwd")
 		})
+		Convey("Should bind with user if %s exists in the bind_dn", func() {
+			connection := &MockConnection{}
+			entry := ldap.Entry{
+				DN: "test",
+			}
+			connection.setSearchResult(&ldap.SearchResult{Entries: []*ldap.Entry{&entry}})
+
+			authBindUser := ""
+			authBindPassword := ""
+
+			connection.BindProvider = func(name, pass string) error {
+				authBindUser = name
+				authBindPassword = pass
+				return nil
+			}
+			server := &Server{
+				Config: &ServerConfig{
+					BindDN:        "cn=%s,ou=users,dc=grafana,dc=org",
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: connection,
+				log:        log.New("test-logger"),
+			}
+
+			_, err := server.Login(defaultLogin)
+
+			So(err, ShouldBeNil)
+
+			So(authBindUser, ShouldEqual, "cn=user,ou=users,dc=grafana,dc=org")
+			So(authBindPassword, ShouldEqual, "pwd")
+			So(connection.BindCalled, ShouldBeTrue)
+		})
 	})
 }

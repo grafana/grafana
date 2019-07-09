@@ -8,7 +8,6 @@ import { getPluginJson } from '../../config/utils/pluginValidation';
 import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
-import tmp = require('tmp');
 
 export interface PluginCIOptions {
   platform?: string;
@@ -124,8 +123,8 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   fs.mkdirSync(pluginFolder, { recursive: true });
   await execa('unzip', [zipFile, '-d', pluginFolder]);
 
-  let ex = await execa('ls', ['-Rl', pluginFolder]);
-  console.log('Now load docker from:', ex.stdout);
+  const exe = await execa('ls', ['-Rl', pluginFolder]);
+  console.log('Now load docker from:', exe.stdout);
 };
 
 export const ciBundlePluginTask = new Task<PluginCIOptions>('Bundle Plugin', bundlePluginRunner);

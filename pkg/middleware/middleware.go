@@ -182,6 +182,10 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 }
 
 func initContextWithToken(authTokenService models.UserTokenService, ctx *models.ReqContext, orgID int64) bool {
+	if setting.LoginCookieName == "" {
+		return false
+	}
+
 	rawToken := ctx.GetCookie(setting.LoginCookieName)
 	if rawToken == "" {
 		return false
