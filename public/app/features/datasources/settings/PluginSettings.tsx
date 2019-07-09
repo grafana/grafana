@@ -70,6 +70,7 @@ export class PluginSettings extends PureComponent<Props> {
   }
 
   onModelChanged = (dataSource: DataSourceSettings) => {
+    console.log('in plugin settings', dataSource);
     this.props.onModelChange(dataSource);
   };
 

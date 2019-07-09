@@ -54,12 +54,16 @@
     <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
     <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.current.secureJsonFields.clientSecret = false">reset</a>
   </div>
-  <div class="gf-form-group" ng-show="ctrl.subscriptions.length">
+  <div class="gf-form-button-row" ng-show="ctrl.subscriptions.length === 0">
+    <button type="button" class="btn btn-secondary gf-form-btn" ng-click="ctrl.saveAndGetSubscriptions()"
+      ng-disabled="!ctrl.hasNecessaryCredentials()">Load Subscriptions</button>
+  </div>
+  <div class="gf-form-group">
     <div class="gf-form-inline">
       <div class="gf-form">
         <span class="gf-form-label width-10">Default Subscription</span>
-        <gf-form-dropdown model="ctrl.current.jsonData.subscriptionId" allow-custom="true" lookup-text="false"
-          get-options="ctrl.subscriptions" css-class="width-30 gf-form-input">
+        <gf-form-dropdown model="crtl.subscriptions" allow-custom="true" lookup-text="false"
+          get-options="ctrl.getSubscriptions()" css-class="width-30 gf-form-input">
         </gf-form-dropdown>
         <info-popover mode="right-absolute">
           <p>Choose the default/preferred Subscription for Azure Metrics.</p>
@@ -76,7 +80,7 @@
 
 <div class="gf-form-group">
   <gf-form-switch class="gf-form" label="Same details as Azure Monitor API" label-class="width-19" switch-class="max-width-6"
-    checked="ctrl.current.jsonData.azureLogAnalyticsSameAs" on-change="ctrl.onSameAsToggle()">
+    checked="ctrl.current.jsonData.azureLogAnalyticsSameAs">
   </gf-form-switch>
 </div>
 
@@ -188,7 +192,7 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <span class="gf-form-label width-9">Application Id</span>
-      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.appInsightsAppId" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></input>
+      <input class="gf-form-input width-30 gf-form-input--has-help-icon" type="text" ng-model="ctrl.current.jsonData.appInsightsAppId" placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"></input>
       <info-popover mode="right-absolute">
         <p>Section 2 of the Quickstart guide shows where to find the Application ID:</p>
         <a target="_blank" href="https://dev.applicationinsights.io/quickstart/">**Click here to open the Application

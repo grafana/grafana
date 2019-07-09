@@ -133,6 +133,8 @@ export class DataSourceSettingsPage extends PureComponent<Props, State> {
 
   onModelChange = (dataSource: DataSourceSettings) => {
     this.setState({ dataSource });
+
+    console.log('in ds settings page', dataSource);
   };
 
   isReadOnly() {
