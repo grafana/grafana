@@ -11,9 +11,14 @@ import { TagBadge } from './TagBadge';
 import { NoOptionsMessage, IndicatorsContainer, resetSelectStyles } from '@grafana/ui';
 import { escapeStringForRegex } from '../FilterInput/FilterInput';
 
+export interface TermCount {
+  term: string;
+  count: number;
+}
+
 export interface Props {
   tags: string[];
-  tagOptions: () => any;
+  tagOptions: () => Promise<TermCount[]>;
   onChange: (tags: string[]) => void;
 }
 
@@ -25,7 +30,7 @@ export class TagFilter extends React.Component<Props, any> {
   }
 
   onLoadOptions = (query: string) => {
-    return this.props.tagOptions().then((options: any[]) => {
+    return this.props.tagOptions().then(options => {
       return options.map(option => ({
         value: option.term,
         label: option.term,

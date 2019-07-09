@@ -3,8 +3,6 @@ import program from 'commander';
 import { execTask } from './utils/execTask';
 import chalk from 'chalk';
 import { startTask } from './tasks/core.start';
-import { buildTask } from './tasks/grafanaui.build';
-import { releaseTask } from './tasks/grafanaui.release';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
 import { precommitTask } from './tasks/precommit';
@@ -16,6 +14,7 @@ import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
 import { pluginCITask } from './tasks/plugin.ci';
+import { buildPackageTask } from './tasks/package.build';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -33,24 +32,12 @@ export const run = (includeInternalScripts = false) => {
       });
 
     program
-      .command('gui:build')
-      .description('Builds @grafana/ui package to packages/grafana-ui/dist')
+      .command('package:build')
+      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit]')
+      .description('Builds @grafana/* package to packages/grafana-*/dist')
       .action(async cmd => {
-        // @ts-ignore
-        await execTask(buildTask)();
-      });
-
-    program
-      .command('gui:release')
-      .description('Prepares @grafana/ui release (and publishes to npm on demand)')
-      .option('-p, --publish', 'Publish @grafana/ui to npm registry')
-      .option('-u, --usePackageJsonVersion', 'Use version specified in package.json')
-      .option('--createVersionCommit', 'Create and push version commit')
-      .action(async cmd => {
-        await execTask(releaseTask)({
-          publishToNpm: !!cmd.publish,
-          usePackageJsonVersion: !!cmd.usePackageJsonVersion,
-          createVersionCommit: !!cmd.createVersionCommit,
+        await execTask(buildPackageTask)({
+          scope: cmd.scope,
         });
       });
 
