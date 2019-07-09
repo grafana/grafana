@@ -50,7 +50,9 @@ export const compareScreenShots = async (fileName: string) =>
       );
 
       if (numDiffPixels !== 0) {
-        const localMessage = `\nCompare the output from expected:[${constants.screenShotsTruthDir}] with outcome:[${constants.screenShotsOutputDir}]`;
+        const localMessage =
+          `\nCompare the output from expected:[${constants.screenShotsTruthDir}] ` +
+          `with outcome:[${constants.screenShotsOutputDir}]`;
         const circleCIMessage = '\nCheck the Artifacts tab in the CircleCi build output for the actual screenshots.';
         const checkMessage = process.env.CIRCLE_SHA1 ? circleCIMessage : localMessage;
         let msg =
