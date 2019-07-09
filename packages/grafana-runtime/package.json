@@ -1,6 +1,6 @@
 {
   "name": "@grafana/runtime",
-  "version": "6.3.0-alpha.36",
+  "version": "6.3.0-alpha.39",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana"
