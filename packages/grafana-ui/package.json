@@ -15,7 +15,8 @@
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",
     "clean": "rimraf ./dist ./compiled",
     "bundle": "rollup -c rollup.config.ts",
-    "build": "grafana-toolkit package:build --scope=ui"
+    "build": "grafana-toolkit package:build --scope=ui",
+    "postpublish": "npm run clean"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
