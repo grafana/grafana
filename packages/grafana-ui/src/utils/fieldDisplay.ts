@@ -1,22 +1,19 @@
 import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
 
+import { DisplayValue, GrafanaTheme, InterpolateFunction, ScopedVars, GraphSeriesValue } from '../types/index';
+import { getDisplayProcessor } from './displayValue';
+import { getFlotPairs } from './flotPairs';
 import {
   ValueMapping,
   Threshold,
-  DisplayValue,
+  ReducerID,
+  reduceField,
   FieldType,
   NullValueMode,
-  GrafanaTheme,
   DataFrame,
-  InterpolateFunction,
   Field,
-  ScopedVars,
-  GraphSeriesValue,
-} from '../types/index';
-import { getDisplayProcessor } from './displayValue';
-import { getFlotPairs } from './flotPairs';
-import { ReducerID, reduceField } from './fieldReducer';
+} from '@grafana/data';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value

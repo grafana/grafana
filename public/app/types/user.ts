@@ -1,4 +1,4 @@
-import { TimeZone } from '@grafana/ui/src/types';
+import { TimeZone } from '@grafana/data';
 
 export interface OrgUser {
   avatarUrl: string;

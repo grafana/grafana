@@ -2,7 +2,7 @@ import '../all';
 import { VariableSrv } from '../variable_srv';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import $q from 'q';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 import { CustomVariable } from '../custom_variable';
 
 describe('VariableSrv', function(this: any) {

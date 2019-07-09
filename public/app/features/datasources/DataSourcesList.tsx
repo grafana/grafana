@@ -6,7 +6,7 @@ import classNames from 'classnames';
 import DataSourcesListItem from './DataSourcesListItem';
 
 // Types
-import { DataSourceSettings } from '@grafana/ui/src/types';
+import { DataSourceSettings } from '@grafana/ui';
 import { LayoutMode, LayoutModes } from '../../core/components/LayoutSelector/LayoutSelector';
 
 export interface Props {

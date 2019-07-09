@@ -8,7 +8,7 @@ import {
   toDurationInMilliseconds,
   toDurationInSeconds,
 } from './dateTimeFormatters';
-import { toUtc, dateTime } from '../moment_wrapper';
+import { toUtc, dateTime } from '@grafana/data';
 
 describe('date time formats', () => {
   const epoch = 1505634997920;

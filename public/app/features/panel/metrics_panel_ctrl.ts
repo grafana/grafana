@@ -6,17 +6,9 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import {
-  toLegacyResponseData,
-  isDataFrame,
-  LegacyResponseData,
-  TimeRange,
-  DataSourceApi,
-  PanelData,
-  LoadingState,
-  DataQueryResponse,
-  DataFrame,
-} from '@grafana/ui';
+import { toLegacyResponseData, isDataFrame, TimeRange, LoadingState, DataFrame } from '@grafana/data';
+
+import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
 import { PanelQueryRunnerFormat } from '../dashboard/state/PanelQueryRunner';

@@ -16,10 +16,10 @@
       </thead>
       <tbody>
         <tr ng-repeat="team in ctrl.teams">
-          <td class="width-4 text-center"><img class="filter-table__avatar" src={{team.avatarUrl}}></td>
-          <td>{{team.name}}</td>
-          <td>{{team.email}}</td>
-          <td>{{team.memberCount}}</td>
+          <td class="width-4 text-center"><img class="filter-table__avatar" ng-src="{{ team.avatarUrl }}" /></td>
+          <td>{{ team.name }}</td>
+          <td>{{ team.email }}</td>
+          <td>{{ team.memberCount }}</td>
         </tr>
       </tbody>
     </table>
@@ -37,13 +37,17 @@
       </thead>
       <tbody>
         <tr ng-repeat="org in ctrl.orgs">
-          <td>{{org.name}}</td>
-          <td>{{org.role}}</td>
+          <td>{{ org.name }}</td>
+          <td>{{ org.role }}</td>
           <td class="text-right">
             <span class="btn btn-primary btn-small" ng-show="org.orgId === contextSrv.user.orgId">
               Current
             </span>
-            <a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-small" ng-show="org.orgId !== contextSrv.user.orgId">
+            <a
+              ng-click="ctrl.setUsingOrg(org)"
+              class="btn btn-inverse btn-small"
+              ng-show="org.orgId !== contextSrv.user.orgId"
+            >
               Select
             </a>
           </td>
@@ -67,10 +71,10 @@
       <tbody>
         <tr ng-repeat="session in ctrl.sessions">
           <td ng-if="session.isActive">Now</td>
-          <td ng-if="!session.isActive">{{session.seenAt}}</td>
-          <td>{{session.createdAt}}</td>
-          <td>{{session.clientIp}}</td>
-          <td>{{session.browser}} on {{session.os}} {{session.osVersion}}</td>
+          <td ng-if="!session.isActive">{{ session.seenAt }}</td>
+          <td>{{ session.createdAt }}</td>
+          <td>{{ session.clientIp }}</td>
+          <td>{{ session.browser }} on {{ session.os }} {{ session.osVersion }}</td>
           <td>
             <button class="btn btn-danger btn-small" ng-click="ctrl.revokeUserSession(session.id)">
               <i class="fa fa-power-off"></i>
@@ -80,3 +84,4 @@
       </tbody>
     </table>
   </div>
+</div>

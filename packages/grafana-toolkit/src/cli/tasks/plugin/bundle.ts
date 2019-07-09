@@ -8,6 +8,7 @@ import clearConsole = require('react-dev-utils/clearConsole');
 export interface PluginBundleOptions {
   watch: boolean;
   production?: boolean;
+  yarnlink?: boolean;
 }
 
 // export const bundlePlugin = useSpinner<PluginBundleOptions>('Bundle plugin', ({ watch }) => {

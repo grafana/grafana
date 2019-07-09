@@ -30,6 +30,7 @@ export class GrafanaBootConfig {
   authProxyEnabled = false;
   exploreEnabled = false;
   ldapEnabled = false;
+  samlEnabled = false;
   oauth: any;
   disableUserSignUp = false;
   loginHint: any;

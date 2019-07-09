@@ -1,6 +1,6 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
