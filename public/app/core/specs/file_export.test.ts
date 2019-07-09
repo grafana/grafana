@@ -28,7 +28,7 @@ describe('file_export', () => {
 
   describe('when exporting series as rows', () => {
     it('should export points in proper order', () => {
-      const text = fileExport.convertSeriesListToCsv(ctx.seriesList, ctx.timeFormat);
+      const text = fileExport.convertSeriesListToCsv(ctx.seriesList, { dateTimeFormat: ctx.timeFormat });
       const expectedText =
         '"Series";"Time";"Value"\r\n' +
         '"series_1";"1500026100";1\r\n' +
@@ -48,7 +48,7 @@ describe('file_export', () => {
 
   describe('when exporting series as columns', () => {
     it('should export points in proper order', () => {
-      const text = fileExport.convertSeriesListToCsvColumns(ctx.seriesList, ctx.timeFormat);
+      const text = fileExport.convertSeriesListToCsvColumns(ctx.seriesList, { dateTimeFormat: ctx.timeFormat });
       const expectedText =
         '"Time";"series_1";"series_2"\r\n' +
         '"1500026100";1;11\r\n' +
@@ -65,7 +65,7 @@ describe('file_export', () => {
       const expectedSeries1DataPoints = ctx.seriesList[0].datapoints.slice();
       const expectedSeries2DataPoints = ctx.seriesList[1].datapoints.slice();
 
-      fileExport.convertSeriesListToCsvColumns(ctx.seriesList, ctx.timeFormat);
+      fileExport.convertSeriesListToCsvColumns(ctx.seriesList, { dateTimeFormat: ctx.timeFormat });
 
       expect(expectedSeries1DataPoints).toEqual(ctx.seriesList[0].datapoints);
       expect(expectedSeries2DataPoints).toEqual(ctx.seriesList[1].datapoints);
