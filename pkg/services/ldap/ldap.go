@@ -140,15 +140,19 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
 	var err error
+	var authAndBind bool
 
-	// Do we need to authenticate the "admin" user first?
-	// Admin user should have access for the user search in LDAP server
+	// Check if we can use a search user
 	if server.shouldAuthAdmin() {
 		if err := server.AuthAdmin(); err != nil {
 			return nil, err
 		}
-
-		// Or if anyone can perform the search in LDAP?
+	} else if server.shouldSingleBind() {
+		authAndBind = true
+		err = server.Auth(server.singleBindDN(query.Username), query.Password)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		err := server.Connection.UnauthenticatedBind(server.Config.BindDN)
 		if err != nil {
@@ -173,13 +177,23 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		return nil, err
 	}
 
-	// Authenticate user
-	err = server.Auth(user.AuthId, query.Password)
-	if err != nil {
-		return nil, err
+	if !authAndBind {
+		// Authenticate user
+		err = server.Auth(user.AuthId, query.Password)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return user, nil
+}
+
+func (server *Server) singleBindDN(username string) string {
+	return fmt.Sprintf(server.Config.BindDN, username)
+}
+
+func (server *Server) shouldSingleBind() bool {
+	return strings.Contains(server.Config.BindDN, "%s")
 }
 
 // getUsersIteration is a helper function for Users() method.
