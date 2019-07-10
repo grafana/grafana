@@ -1,6 +1,3 @@
-import { getPluginJson } from '../utils/pluginValidation';
-
-const path = require('path');
 const fs = require('fs');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
@@ -122,8 +119,8 @@ export const getFileLoaders = () => {
           ? {
               loader: 'file-loader',
               options: {
-                outputPath: 'static',
-                name: '[name].[hash:8].[ext]',
+                outputPath: '/',
+                name: '[path][name].[ext]',
               },
             }
           : // When using single css import images are inlined as base64 URIs in the result bundle

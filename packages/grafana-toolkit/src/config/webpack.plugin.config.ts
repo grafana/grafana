@@ -7,7 +7,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 import * as webpack from 'webpack';
-import { hasThemeStylesheets, getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
+import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
 interface WebpackConfigurationOptions {
   watch?: boolean;
@@ -51,6 +51,7 @@ const getManualChunk = (id: string) => {
       };
     }
   }
+  return null;
 };
 
 const getEntries = () => {
