@@ -114,10 +114,10 @@ This is a new Enterprise feature that enables background syncing of user informa
 This syncing is otherwise only done at login time. With this feature you can schedule how often this user synchronization should
 occur.
 
-For example lets say a user is removed from an LDAP group. In previous versions of Grafana an admin would have to
+For example, lets say a user is removed from an LDAP group. In previous versions of Grafana an admin would have to
 wait for the user to logout or the session to expire for the Grafana permissions to update, a process that can take days.
 
-With active sync the user would be (on next sync) automatically removed from the corresponding team in Grafanam or if no longer
+With active sync the user would be (on next sync) automatically removed from the corresponding team in Grafana or if no longer
 belonging to an LDAP group that gives them access to Grafana they would be logged out.
 
 [Read more](../auth/enhanced_ldap/#active-ldap-synchronization)
