@@ -13,7 +13,8 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
     return {};
   }
 
-  if (!panel.pluginVersion || panel.pluginVersion.startsWith('6.1')) {
+  const previousVersion = panel.pluginVersion || '';
+  if (!previousVersion || previousVersion.startsWith('6.1')) {
     const old = panel.options as any;
     const { valueOptions } = old;
 
@@ -38,7 +39,7 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
     field.max = old.maxValue;
 
     return options;
-  } else if (panel.pluginVersion.startsWith('6.2')) {
+  } else if (previousVersion.startsWith('6.2') || previousVersion.startsWith('6.3')) {
     const old = panel.options as any;
     const { fieldOptions } = old;
     if (fieldOptions) {
