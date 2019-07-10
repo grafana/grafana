@@ -61,8 +61,7 @@ func makeBody(body string) io.ReadCloser {
 func asBadRequestError(t *testing.T, err error) *BadRequestError {
 	if badRequestError, ok := err.(*BadRequestError); ok {
 		return badRequestError
-	} else {
-		assert.FailNow(t, "Error was not of type BadRequestError")
-		return nil
 	}
+	assert.FailNow(t, "Error was not of type BadRequestError")
+	return nil
 }

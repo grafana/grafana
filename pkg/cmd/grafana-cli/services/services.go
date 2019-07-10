@@ -29,9 +29,8 @@ type BadRequestError struct {
 func (e *BadRequestError) Error() string {
 	if len(e.Message) > 0 {
 		return fmt.Sprintf("%s: %s", e.Status, e.Message)
-	} else {
-		return e.Status
 	}
+	return e.Status
 }
 
 func Init(version string, skipTLSVerify bool) {
