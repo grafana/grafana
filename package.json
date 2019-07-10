@@ -79,6 +79,7 @@
     "husky": "1.3.1",
     "jest": "24.8.0",
     "jest-date-mock": "1.0.7",
+    "lerna": "^3.15.0",
     "lint-staged": "8.1.5",
     "load-grunt-tasks": "3.5.2",
     "mini-css-extract-plugin": "0.5.0",
@@ -143,13 +144,11 @@
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
     "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss}\" --write",
-    "gui:tslint": "tslint -c ./packages/grafana-ui/tslint.json --project ./packages/grafana-ui/tsconfig.json",
-    "gui:build": "grafana-toolkit gui:build",
-    "gui:releasePrepare": "grafana-toolkit gui:release",
-    "gui:publish": "cd packages/grafana-ui/dist && npm publish --access public",
-    "gui:release": "grafana-toolkit gui:release -p --createVersionCommit",
     "precommit": "grafana-toolkit precommit",
-    "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts"
+    "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
+    "packages:prepare": "lerna run clean && npm run test && lerna version --tag-version-prefix=\"packages@\" -m \"Packages: publish %s\" --no-push",
+    "packages:build": "lerna run clean && lerna run build",
+    "packages:publish": "lerna publish from-package --contents dist --tag-version-prefix=\"packages@\" --dist-tag next"
   },
   "husky": {
     "hooks": {

@@ -3,7 +3,6 @@ import { getStylesheetEntries, hasThemeStylesheets } from './loaders';
 describe('Loaders', () => {
   describe('stylesheet helpers', () => {
     const logSpy = jest.spyOn(console, 'log').mockImplementation();
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation();
 
     afterAll(() => {
       logSpy.mockRestore();
