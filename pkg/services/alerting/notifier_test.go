@@ -136,6 +136,9 @@ func TestImgRenderTimeout(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, sentNotificationCount, 1)
 
+	// I think I need to logic from notifers/notifer_base here, so maybe this test needs to be moved to that package
+	err = notifier.SendIfNeeded(evalContext)
+
 	assert.Nil(t, err)
 	assert.Equal(t, sentNotificationCount, 1)
 
