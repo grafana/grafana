@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -229,4 +230,71 @@ func GetNotifiers() []*NotifierPlugin {
 	}
 
 	return list
+}
+
+type ShouldNotifyOptions struct {
+	Frequency             time.Duration
+	SendReminder          bool
+	DisableResolveMessage bool
+}
+
+func ShouldNotify(ctx context.Context, context EvalContext, notiferState *models.AlertNotificationState, notifyOptions ShouldNotifyOptions) bool {
+	prevState := context.PrevAlertState
+	newState := context.Rule.State
+
+	// Only notify on state change.
+	if prevState == newState && !notifyOptions.SendReminder {
+		return false
+	}
+
+	if prevState == newState && notifyOptions.SendReminder {
+		// Do not notify if interval has not elapsed
+		lastNotify := time.Unix(notiferState.UpdatedAt, 0)
+		if notiferState.UpdatedAt != 0 && lastNotify.Add(notifyOptions.Frequency).After(time.Now()) {
+			return false
+		}
+
+		// Do not notify if alert state is OK or pending even on repeated notify
+		if newState == models.AlertStateOK || newState == models.AlertStatePending {
+			return false
+		}
+	}
+
+	unknownOrNoData := prevState == models.AlertStateUnknown || prevState == models.AlertStateNoData
+	okOrPending := newState == models.AlertStatePending || newState == models.AlertStateOK
+
+	// Do not notify when new state is ok/pending when previous is unknown or no_data
+	if unknownOrNoData && okOrPending {
+		return false
+	}
+
+	// Do not notify when we become Pending for the first
+	if prevState == models.AlertStateNoData && newState == models.AlertStatePending {
+		return false
+	}
+
+	// Do not notify when we become OK from pending
+	if prevState == models.AlertStatePending && newState == models.AlertStateOK {
+		return false
+	}
+
+	// Do not notify when we OK -> Pending
+	if prevState == models.AlertStateOK && newState == models.AlertStatePending {
+		return false
+	}
+
+	// Do not notify if state pending and it have been updated last minute
+	if notiferState.State == models.AlertNotificationStatePending {
+		lastUpdated := time.Unix(notiferState.UpdatedAt, 0)
+		if lastUpdated.Add(1 * time.Minute).After(time.Now()) {
+			return false
+		}
+	}
+
+	// Do not notify when state is OK if DisableResolveMessage is set to true
+	if newState == models.AlertStateOK && notifyOptions.DisableResolveMessage {
+		return false
+	}
+
+	return true
 }

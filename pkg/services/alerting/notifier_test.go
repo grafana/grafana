@@ -35,7 +35,7 @@ func (f fakeNotifier) NeedsImage() bool {
 
 // ShouldNotify checks this evaluation should send an alert notification
 func (f fakeNotifier) ShouldNotify(ctx context.Context, evalContext *EvalContext, notificationState *models.AlertNotificationState) bool {
-	return true
+	return ShouldNotify(ctx, *evalContext, notificationState, ShouldNotifyOptions{time.Minute, false, true})
 }
 
 func (f fakeNotifier) GetNotifierUID() string {
@@ -127,8 +127,10 @@ func TestImgRenderTimeout(t *testing.T) {
 		Rule: &Rule{
 			OrgID:         1,
 			Notifications: []string{"test"},
+			State:         models.AlertStateAlerting,
 		},
-		Ctx: testContext,
+		Ctx:            testContext,
+		PrevAlertState: models.AlertStateOK,
 	}
 
 	err := notifier.SendIfNeeded(evalContext)
