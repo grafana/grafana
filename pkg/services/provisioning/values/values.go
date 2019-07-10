@@ -11,7 +11,6 @@
 package values
 
 import (
-	"fmt"
 	"os"
 	"reflect"
 	"strconv"
@@ -189,27 +188,12 @@ func transformMap(i map[interface{}]interface{}) interface{} {
 // here but in the future something like interpolation from file could be also done here.
 // For a literal '$', '$$' can be used to avoid interpolation.
 func interpolateValue(val string) string {
-	envPlusEscape := make(map[string]string)
-	// Populate environment variable map
-	for _, v := range os.Environ() {
-		sp := strings.SplitN(v, "=", 2) // os.Environ returns key=value pairs, so need to turn it into a map
-		if len(sp) == 1 {
-			sp = append(sp, "")
-		}
-		envPlusEscape[sp[0]] = sp[1]
+	parts := strings.Split(val, "$$")
+	interpolated := make([]string, len(parts))
+	for i, v := range parts {
+		interpolated[i] = os.ExpandEnv(v)
 	}
-
-	// Add special variable to hold dollar sign
-	escapeKey := "GRAFANA_ESCAPE_DOUBLE_DOLLAR"
-	envPlusEscape[escapeKey] = "$"
-
-	// Turn $$ into a specialEscapeVar for replacement with "$" value
-	escapeVar := fmt.Sprintf("${%v}", escapeKey)
-	val = strings.ReplaceAll(val, "$$", escapeVar)
-
-	return os.Expand(val, func(k string) string {
-		return envPlusEscape[k]
-	})
+	return strings.Join(interpolated, "$")
 }
 
 type interpolated struct {
