@@ -130,7 +130,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     });
 
     const newDash = { panels: newPanels, ...dash };
-    return dashboardSrv.saveDashboard(undefined, newDash, false);
+    return dashboardSrv.saveDashboard(undefined, newDash);
   };
 
   render() {
