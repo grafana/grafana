@@ -1,6 +1,6 @@
 {
   "name": "@grafana/toolkit",
-  "version": "6.3.0-alpha.40",
+  "version": "6.3.0-beta.0",
   "description": "Grafana Toolkit",
   "keywords": [
     "grafana",
