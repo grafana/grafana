@@ -16,6 +16,9 @@ Further documentation can be found at http://docs.grafana.org/installation/docke
 
 ## Changelog
 
+### v6.3.0-beta1
+* Docker: Switch base image to ubuntu:latest from debian:stretch to avoid security issues.
+
 ### v5.4.3
 * Build and publish docker images for armv7 and arm64 #14617, thx @johanneswuerbach
 
