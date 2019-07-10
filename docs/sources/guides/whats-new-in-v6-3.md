@@ -50,12 +50,16 @@ simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
+Please read [Using Elasticsearch in Grafana](/features/datasources/elasticsearch/#querying-logs-beta) for more detailed information on how to get started and use it.
+
 ### InfluxDB logs support
 
 This release adds support for searching & visualizing logs stored in InfluxDB in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
 {{< docs-imagebox img="/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
+
+Please read [Using InfluxDB in Grafana](/features/datasources/influxdb/#querying-logs-beta) for more detailed information on how to get started and use it.
 
 ## Data Links
 
@@ -120,7 +124,7 @@ wait for the user to logout or the session to expire for the Grafana permissions
 With active sync the user would be (on next sync) automatically removed from the corresponding team in Grafana or if no longer
 belonging to an LDAP group that gives them access to Grafana they would be logged out.
 
-[Read more](../auth/enhanced_ldap/#active-ldap-synchronization)
+[Read more](/auth/enhanced_ldap/#active-ldap-synchronization)
 
 ### SAML Authentication
 
