@@ -165,7 +165,7 @@ func setupPluginInstallCmd(t *testing.T, pluginDir string) utils.CommandLine {
 
 	client.DownloadFileFunc = func(pluginName, filePath, url string, checksum string) (content []byte, err error) {
 		assert.Equal(t, "test-plugin-panel", pluginName)
-		assert.Equal(t, fmt.Sprintf("/test-plugin-panel/versions/1.0.0/download?osAndArch=%s-%s", runtime.GOOS, runtime.GOARCH), url)
+		assert.Equal(t, "/test-plugin-panel/versions/1.0.0/download", url)
 		assert.Equal(t, "test", checksum)
 		body, err := ioutil.ReadFile("testdata/grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip")
 		assert.Nil(t, err)
