@@ -1,5 +1,3 @@
-import path = require('path');
-
 // See: packages/grafana-ui/src/types/plugin.ts
 interface PluginJSONSchema {
   id: string;
