@@ -108,14 +108,19 @@ export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', build
 const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const start = Date.now();
   const workDir = getWorkFolder();
-  let distDir = path.resolve(workDir, 'build', 'dist');
-  if (!fs.existsSync(distDir)) {
-    distDir = `${process.cwd()}/dist`;
-    if (!fs.existsSync(distDir)) {
-      throw new Error('Dist folder does not exist: ' + distDir);
+
+  // Copy all `dist` folders to a single dist folder
+  const distDir = path.resolve(workDir, 'dist');
+  fs.mkdirSync(distDir, { recursive: true });
+  const dirs = fs.readdirSync(workDir);
+  for (const dir of dirs) {
+    if (dir.startsWith('build_')) {
+      const contents = path.resolve(dir, 'dist');
+      if (fs.existsSync(contents)) {
+        await execa('cp', ['-rp', contents, distDir]);
+      }
     }
   }
-  // TODO -- merge all the build/xxx/dist folders
 
   // Create an artifact
   const artifactsDir = path.resolve(workDir, 'artifacts');
