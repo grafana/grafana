@@ -1,6 +1,6 @@
 # 6.4.0 (unreleased)
 
-# 6.3.0-beta1
+# 6.3.0-beta1 (2019-07-10)
 ### Features / Enhancements
 * **Alerting**: Add tags to alert rules. [#10989](https://github.com/grafana/grafana/pull/10989), [@Thib17](https://github.com/Thib17)
 * **Alerting**: Attempt to send email notifications to all given email addresses. [#16881](https://github.com/grafana/grafana/pull/16881), [@zhulongcheng](https://github.com/zhulongcheng)
