@@ -13,7 +13,13 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
-import { ciBuildPluginTask, ciBundlePluginTask, ciTestPluginTask, ciDeployPluginTask } from './tasks/plugin.ci';
+import {
+  ciBuildPluginTask,
+  ciBundlePluginTask,
+  ciTestPluginTask,
+  ciDeployPluginTask,
+  ciSetupPluginTask,
+} from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 
 export const run = (includeInternalScripts = false) => {
@@ -157,6 +163,15 @@ export const run = (includeInternalScripts = false) => {
       await execTask(ciBundlePluginTask)({});
     });
 
+  program
+    .command('plugin:ci-setup')
+    .option('--installer <installer>', 'Name of installer to download and run')
+    .description('Install and configure grafana')
+    .action(async cmd => {
+      await execTask(ciSetupPluginTask)({
+        installer: cmd.installer,
+      });
+    });
   program
     .command('plugin:ci-test')
     .description('end-to-end test using bundle in /artifacts')

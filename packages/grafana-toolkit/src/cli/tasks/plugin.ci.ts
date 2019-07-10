@@ -1,6 +1,5 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
-import { useSpinner } from '../utils/useSpinner';
 import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 
@@ -11,6 +10,7 @@ import fs = require('fs');
 
 export interface PluginCIOptions {
   platform?: string;
+  installer?: string;
 }
 
 const calcJavascriptSize = (base: string, files?: string[]): number => {
@@ -33,6 +33,33 @@ const calcJavascriptSize = (base: string, files?: string[]): number => {
   return size;
 };
 
+const getWorkFolder = () => {
+  let dir = `${process.cwd()}/work`;
+  if (process.env.CIRCLE_JOB) {
+    dir = path.resolve(dir, process.env.CIRCLE_JOB);
+  }
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
+};
+
+const writeWorkStats = (startTime: number, workDir: string) => {
+  const elapsed = Date.now() - startTime;
+  const stats = {
+    job: `${process.env.CIRCLE_JOB}`,
+    startTime,
+    buildTime: elapsed,
+    endTime: Date.now(),
+  };
+  const f = path.resolve(workDir, 'stats.json');
+  fs.writeFile(f, JSON.stringify(stats, null, 2), err => {
+    if (err) {
+      throw new Error('Unable to stats: ' + f);
+    }
+  });
+};
+
 /**
  * 1. BUILD
  *
@@ -43,42 +70,31 @@ const calcJavascriptSize = (base: string, files?: string[]): number => {
  */
 const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
   const start = Date.now();
-  const distDir = `${process.cwd()}/dist`;
-  const buildDir = `${process.cwd()}/ci-work`;
-  const coverageDir = `${process.cwd()}/coverage`;
-
-  await execa('rimraf', [buildDir]);
-  fs.mkdirSync(buildDir);
+  const workDir = getWorkFolder();
+  await execa('rimraf', [workDir]);
+  fs.mkdirSync(workDir);
 
   if (platform) {
     console.log('TODO, backend support?');
-    const stub = buildDir + `/bin_${platform}`;
-    if (!fs.existsSync(stub)) {
-      fs.mkdirSync(stub, { recursive: true });
-    }
-    fs.writeFile(stub + '/README.txt', 'TODO... build it!', err => {
+    const file = path.resolve(workDir, 'README.txt');
+    fs.writeFile(workDir + '/README.txt', 'TODO... build it!', err => {
       if (err) {
-        throw new Error('Unable to write: ' + stub);
+        throw new Error('Unable to write: ' + file);
       }
     });
   } else {
-    // Do regular build process
+    // Do regular build process with coverage
     await pluginBuildRunner({ coverage: true });
 
+    const distDir = `${process.cwd()}/dist`;
+    const coverageDir = `${process.cwd()}/coverage`;
+
     // Move dist & coverage into workspace
-    fs.renameSync(distDir, path.resolve(buildDir, 'dist'));
-    fs.renameSync(coverageDir, path.resolve(buildDir, 'coverage'));
+    fs.renameSync(distDir, path.resolve(workDir, 'dist'));
+    fs.renameSync(coverageDir, path.resolve(workDir, 'coverage'));
   }
 
-  const elapsed = Date.now() - start;
-  const stats = {
-    job: `${process.env.CIRCLE_JOB}`,
-    sha1: `${process.env.CIRCLE_SHA1}`,
-    startTime: start,
-    buildTime: elapsed,
-    endTime: Date.now(),
-  };
-  console.log('BUILD Info', stats);
+  writeWorkStats(start, workDir);
 };
 
 export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', buildPluginRunner);
@@ -91,16 +107,18 @@ export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', build
  */
 const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const start = Date.now();
-  let distDir = `${process.cwd()}/ci-work/dist`;
+  const workDir = getWorkFolder();
+  let distDir = path.resolve(workDir, 'build', 'dist');
   if (!fs.existsSync(distDir)) {
     distDir = `${process.cwd()}/dist`;
     if (!fs.existsSync(distDir)) {
       throw new Error('Dist folder does not exist: ' + distDir);
     }
   }
+  // TODO -- merge all the build/xxx/dist folders
 
   // Create an artifact
-  const artifactsDir = `${process.cwd()}/ci-work/artifacts`;
+  const artifactsDir = path.resolve(workDir, 'artifacts');
   if (!fs.existsSync(artifactsDir)) {
     fs.mkdirSync(artifactsDir, { recursive: true });
   }
@@ -116,31 +134,96 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   if (zipStats.size < 100) {
     throw new Error('Invalid zip file: ' + zipFile);
   }
+  await execa('sha1sum', [zipFile, '>', zipFile + '.sha1']);
+  const info = {
+    name: zipName,
+    size: zipStats.size,
+  };
+  const f = path.resolve(artifactsDir, 'info.json');
+  fs.writeFile(f, JSON.stringify(info, null, 2), err => {
+    if (err) {
+      throw new Error('Error writing artifact info: ' + f);
+    }
+  });
 
-  // Set up the docker folder structure
-  const dockerDir = `${process.cwd()}/ci-work/docker`;
-  const pluginFolder = path.resolve(dockerDir, 'plugin');
-  fs.mkdirSync(pluginFolder, { recursive: true });
-  await execa('unzip', [zipFile, '-d', pluginFolder]);
-
-  const exe = await execa('ls', ['-Rl', pluginFolder]);
-  console.log('Now load docker from:', exe.stdout);
+  writeWorkStats(start, workDir);
 };
 
 export const ciBundlePluginTask = new Task<PluginCIOptions>('Bundle Plugin', bundlePluginRunner);
 
 /**
- * 3. Test (end-to-end)
+ * 3. Setup (install grafana and setup provisioning)
+ *
+ *  deploy the zip to a running grafana instance
+ *
+ */
+const setupPluginRunner: TaskRunner<PluginCIOptions> = async ({ installer }) => {
+  const start = Date.now();
+
+  if (!installer) {
+    throw new Error('Missing installer path');
+  }
+
+  // Download the grafana installer
+  const workDir = getWorkFolder();
+  const installFile = path.resolve(workDir, installer);
+  if (!fs.existsSync(installFile)) {
+    console.log('download', installer);
+    const exe = await execa('wget', ['-O', installFile, 'https://dl.grafana.com/oss/release/' + installer]);
+    console.log(exe.stdout);
+  }
+
+  // Find the plugin zip file
+  const artifactsInfo = require(path.resolve(workDir, 'artifacts', 'info.json'));
+  const pluginZip = path.resolve(workDir, 'artifacts', artifactsInfo.name);
+  if (!fs.existsSync(pluginZip)) {
+    throw new Error('Missing zip file:' + pluginZip);
+  }
+
+  // Create a grafana runtime folder
+  const grafanaPluginsDir = path.resolve(require('os').homedir(), 'grafana', 'plugins');
+  await execa('rimraf', [grafanaPluginsDir]);
+  fs.mkdirSync(grafanaPluginsDir, { recursive: true });
+
+  // unzip package.zip -d /opt
+  let exe = await execa('unzip', [pluginZip, '-d', grafanaPluginsDir]);
+  console.log(exe.stdout);
+
+  // Write the custom settings
+  const customIniPath = '/usr/share/grafana/conf/custom.ini';
+  const customIniBody = `[paths] \n` + `plugins = ${grafanaPluginsDir}\n` + '';
+  fs.writeFile(customIniPath, customIniBody, err => {
+    if (err) {
+      throw new Error('Unable to write: ' + customIniPath);
+    }
+  });
+
+  console.log('Install Grafana');
+  exe = await execa('sudo', ['dpkg', 'i', installFile]);
+  console.log(exe.stdout);
+
+  exe = await execa('sudo', ['grafana-server', 'start']);
+  console.log(exe.stdout);
+  exe = await execa('grafana-cli', ['--version']);
+
+  writeWorkStats(start, workDir + '_setup');
+};
+
+export const ciSetupPluginTask = new Task<PluginCIOptions>('Setup Grafana', setupPluginRunner);
+
+/**
+ * 4. Test (end-to-end)
  *
  *  deploy the zip to a running grafana instance
  *
  */
 const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
   const start = Date.now();
+  const workDir = getWorkFolder();
 
   const args = {
     withCredentials: true,
-    baseURL: 'http://localhost:3000/',
+    baseURL: process.env.GRAFANA_URL || 'http://localhost:3000/',
     responseType: 'json',
     auth: {
       username: 'admin',
@@ -168,7 +251,9 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
     buildTime: elapsed,
     endTime: Date.now(),
   };
-  console.log('TODO Test', stats);
+
+  console.log('TODO Puppeteer Tests', stats);
+  writeWorkStats(start, workDir);
 };
 
 export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', testPluginRunner);
@@ -200,7 +285,9 @@ const deployPluginRunner: TaskRunner<PluginCIOptions> = async () => {
     buildTime: elapsed,
     endTime: Date.now(),
   };
-  console.log('TODO DEPLOY', stats);
+  console.log('TODO DEPLOY??', stats);
+  console.log(' if PR => write a comment to github with difference ');
+  console.log(' if master | vXYZ ==> upload artifacts to some repo ');
 };
 
 export const ciDeployPluginTask = new Task<PluginCIOptions>('Deploy plugin', deployPluginRunner);
