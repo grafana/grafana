@@ -31,8 +31,9 @@ type IConnection interface {
 type IServer interface {
 	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	Users([]string) ([]*models.ExternalUserInfo, error)
-	Auth(string, string) error
+	UserBind(string, string) error
 	Dial() error
+	Bind() error
 	Close()
 }
 
@@ -41,6 +42,20 @@ type Server struct {
 	Config     *ServerConfig
 	Connection IConnection
 	log        log.Logger
+}
+
+func (server *Server) Bind() error {
+	if server.shouldAuthAdmin() {
+		if err := server.AuthAdmin(); err != nil {
+			return err
+		}
+	} else {
+		err := server.Connection.UnauthenticatedBind(server.Config.BindDN)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // UsersMaxRequest is a max amount of users we can request via Users().
@@ -149,7 +164,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		}
 	} else if server.shouldSingleBind() {
 		authAndBind = true
-		err = server.Auth(server.singleBindDN(query.Username), query.Password)
+		err = server.UserBind(server.singleBindDN(query.Username), query.Password)
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +194,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 
 	if !authAndBind {
 		// Authenticate user
-		err = server.Auth(user.AuthId, query.Password)
+		err = server.UserBind(user.AuthId, query.Password)
 		if err != nil {
 			return nil, err
 		}
@@ -380,9 +395,9 @@ func (server *Server) shouldAuthAdmin() bool {
 	return server.Config.BindPassword != ""
 }
 
-// Auth authentificates user in LDAP
-func (server *Server) Auth(username, password string) error {
-	err := server.auth(username, password)
+// UserBind authentificates user in LDAP
+func (server *Server) UserBind(username, password string) error {
+	err := server.userBind(username, password)
 	if err != nil {
 		server.log.Error(
 			fmt.Sprintf("Cannot authentificate user %s in LDAP", username),
@@ -397,7 +412,7 @@ func (server *Server) Auth(username, password string) error {
 
 // AuthAdmin authentificates LDAP admin user
 func (server *Server) AuthAdmin() error {
-	err := server.auth(server.Config.BindDN, server.Config.BindPassword)
+	err := server.userBind(server.Config.BindDN, server.Config.BindPassword)
 	if err != nil {
 		server.log.Error(
 			"Cannot authentificate admin user in LDAP",
@@ -410,8 +425,8 @@ func (server *Server) AuthAdmin() error {
 	return nil
 }
 
-// auth is helper for several types of LDAP authentification
-func (server *Server) auth(path, password string) error {
+// userBind is helper for several types of LDAP authentification
+func (server *Server) userBind(path, password string) error {
 	err := server.Connection.Bind(path, password)
 	if err != nil {
 		if ldapErr, ok := err.(*ldap.Error); ok {
