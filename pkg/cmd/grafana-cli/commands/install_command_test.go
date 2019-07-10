@@ -118,6 +118,21 @@ func TestInstallPluginCommand(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestIsPathSafe(t *testing.T) {
+	t.Run("Should be true on nested destinations", func(t *testing.T) {
+		assert.True(t, isPathSafe("dest", "/test/path"))
+		assert.True(t, isPathSafe("dest/one", "/test/path"))
+		assert.True(t, isPathSafe("../path/dest/one", "/test/path"))
+	})
+
+	t.Run("Should be false on destinations outside of path", func(t *testing.T) {
+		assert.False(t, isPathSafe("../dest", "/test/path"))
+		assert.False(t, isPathSafe("../../", "/test/path"))
+		assert.False(t, isPathSafe("../../test", "/test/path"))
+	})
+
+}
+
 func setupPluginInstallCmd(t *testing.T, pluginDir string) utils.CommandLine {
 	cmd := &commandstest.FakeCommandLine{
 		GlobalFlags: &commandstest.FakeFlagger{Data: map[string]interface{}{
