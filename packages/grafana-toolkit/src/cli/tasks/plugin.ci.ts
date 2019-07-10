@@ -65,8 +65,11 @@ const writeWorkStats = (startTime: number, workDir: string) => {
  *
  *  when platform exists it is building backend, otherwise frontend
  *
- *  Everything in /ci-work folder
+ *  Each build writes data:
+ *   ~/work/build_xxx/
  *
+ *  Anything that should be put into the final zip file should be put in:
+ *   ~/work/build_xxx/dist
  */
 const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
   const start = Date.now();
@@ -85,15 +88,13 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
   } else {
     // Do regular build process with coverage
     await pluginBuildRunner({ coverage: true });
-
-    const distDir = `${process.cwd()}/dist`;
-    const coverageDir = `${process.cwd()}/coverage`;
-
-    // Move dist & coverage into workspace
-    fs.renameSync(distDir, path.resolve(workDir, 'dist'));
-    fs.renameSync(coverageDir, path.resolve(workDir, 'coverage'));
   }
 
+  // Move dist to the scoped work folder
+  const distDir = path.resolve(process.cwd(), 'dist');
+  if (fs.existsSync(distDir)) {
+    fs.renameSync(distDir, path.resolve(workDir, 'dist'));
+  }
   writeWorkStats(start, workDir);
 };
 
@@ -102,15 +103,19 @@ export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', build
 /**
  * 2. BUNDLE
  *
- *  Take everything from /ci-work/dist and zip it up
+ *  Take everything from `~/work/build_XXX/dist` and zip it into
+ *  artifacts
  *
  */
 const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const start = Date.now();
   const workDir = getWorkFolder();
 
-  // Copy all `dist` folders to a single dist folder
-  const distDir = path.resolve(workDir, 'dist');
+  // Copy all `dist` folders to the root dist folder
+  const distDir = path.resolve(process.cwd(), 'dist');
+  if (!fs.existsSync(distDir)) {
+    fs.mkdirSync(distDir);
+  }
   fs.mkdirSync(distDir, { recursive: true });
   const dirs = fs.readdirSync(workDir);
   for (const dir of dirs) {
@@ -123,7 +128,7 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   }
 
   // Create an artifact
-  const artifactsDir = path.resolve(workDir, 'artifacts');
+  const artifactsDir = path.resolve(process.cwd(), 'artifacts');
   if (!fs.existsSync(artifactsDir)) {
     fs.mkdirSync(artifactsDir, { recursive: true });
   }
@@ -179,7 +184,8 @@ const setupPluginRunner: TaskRunner<PluginCIOptions> = async ({ installer }) => 
   }
 
   // Find the plugin zip file
-  const artifactsInfo = require(path.resolve(workDir, 'artifacts', 'info.json'));
+  const artifactsDir = path.resolve(process.cwd(), 'artifacts');
+  const artifactsInfo = require(path.resolve(artifactsDir, 'info.json'));
   const pluginZip = path.resolve(workDir, 'artifacts', artifactsInfo.name);
   if (!fs.existsSync(pluginZip)) {
     throw new Error('Missing zip file:' + pluginZip);
