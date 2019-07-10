@@ -62,6 +62,7 @@ type CreateUserCommand struct {
 	Password       string
 	EmailVerified  bool
 	IsAdmin        bool
+	IsDisabled     bool
 	SkipOrgSetup   bool
 	DefaultOrgRole string
 
@@ -145,6 +146,10 @@ type SearchUsersQuery struct {
 	Page       int
 	Limit      int
 	AuthModule string
+
+	// We have to use string not bool, since there is cases when
+	// we don't care if user is disabled or not
+	IsDisabled string
 
 	Result SearchUserQueryResult
 }
