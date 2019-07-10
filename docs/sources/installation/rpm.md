@@ -23,6 +23,8 @@ Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips an
 
 ## Install Stable
 
+See [https://grafana.com/grafana/download?platform=linux](https://grafana.com/grafana/download?platform=linux) for the current download and installation instructions.
+
 You can install Grafana using Yum directly.
 
 ```bash
@@ -32,7 +34,7 @@ $ sudo yum install <rpm package url>
 Example:
 
 ```bash
-$ sudo yum install https://dl.grafana.com/oss/release/grafana-${VERSION}.x86_64.rpm
+$ sudo yum install https://dl.grafana.com/oss/release/grafana-<version>.x86_64.rpm
 ```
 
 Or install manually using `rpm`. First execute
@@ -44,7 +46,7 @@ $ wget <rpm package url>
 Example:
 
 ```bash
-$ wget https://dl.grafana.com/oss/release/grafana-${VERSION}.x86_64.rpm
+$ wget https://dl.grafana.com/oss/release/grafana-<version>.x86_64.rpm
 ```
 
 ### On CentOS / Fedora / Redhat:

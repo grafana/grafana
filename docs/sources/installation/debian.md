@@ -24,6 +24,7 @@ installation.
 
 ## Install Stable
 
+See [https://grafana.com/grafana/download?platform=linux](https://grafana.com/grafana/download?platform=linux) for the current download and installation instructions.
 
 ```bash
 wget <debian package url>
@@ -34,9 +35,9 @@ sudo dpkg -i grafana_<version>_amd64.deb
 Example:
 
 ```bash
-wget https://dl.grafana.com/oss/release/grafana_${VERSION}_amd64.deb
+wget https://dl.grafana.com/oss/release/grafana_<version>_amd64.deb
 sudo apt-get install -y adduser libfontconfig1
-sudo dpkg -i grafana_${VERSION}_amd64.deb
+sudo dpkg -i grafana_<version>_amd64.deb
 ```
 
 ## APT Repository
