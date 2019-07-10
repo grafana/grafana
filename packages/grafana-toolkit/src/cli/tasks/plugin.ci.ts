@@ -9,7 +9,8 @@ import path = require('path');
 import fs = require('fs');
 
 export interface PluginCIOptions {
-  dryRun?: boolean;
+  platform?: string;
+  installer?: string;
 }
 
 const calcJavascriptSize = (base: string, files?: string[]): number => {
@@ -32,22 +33,106 @@ const calcJavascriptSize = (base: string, files?: string[]): number => {
   return size;
 };
 
-const pluginCIRunner: TaskRunner<PluginCIOptions> = async ({ dryRun }) => {
+const getWorkFolder = () => {
+  let dir = `${process.cwd()}/work`;
+  if (process.env.CIRCLE_JOB) {
+    dir = path.resolve(dir, process.env.CIRCLE_JOB);
+  }
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
+};
+
+const writeWorkStats = (startTime: number, workDir: string) => {
+  const elapsed = Date.now() - startTime;
+  const stats = {
+    job: `${process.env.CIRCLE_JOB}`,
+    startTime,
+    buildTime: elapsed,
+    endTime: Date.now(),
+  };
+  const f = path.resolve(workDir, 'stats.json');
+  fs.writeFile(f, JSON.stringify(stats, null, 2), err => {
+    if (err) {
+      throw new Error('Unable to stats: ' + f);
+    }
+  });
+};
+
+/**
+ * 1. BUILD
+ *
+ *  when platform exists it is building backend, otherwise frontend
+ *
+ *  Each build writes data:
+ *   ~/work/build_xxx/
+ *
+ *  Anything that should be put into the final zip file should be put in:
+ *   ~/work/build_xxx/dist
+ */
+const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
   const start = Date.now();
-  const distDir = `${process.cwd()}/dist`;
-  const artifactsDir = `${process.cwd()}/artifacts`;
-  await execa('rimraf', [`${process.cwd()}/coverage`]);
-  await execa('rimraf', [artifactsDir]);
+  const workDir = getWorkFolder();
+  await execa('rimraf', [workDir]);
+  fs.mkdirSync(workDir);
 
-  // Do regular build process
-  await pluginBuildRunner({ coverage: true });
-  const elapsed = Date.now() - start;
-
-  if (!fs.existsSync(artifactsDir)) {
-    fs.mkdirSync(artifactsDir);
+  if (platform) {
+    console.log('TODO, backend support?');
+    const file = path.resolve(workDir, 'README.txt');
+    fs.writeFile(workDir + '/README.txt', 'TODO... build it!', err => {
+      if (err) {
+        throw new Error('Unable to write: ' + file);
+      }
+    });
+  } else {
+    // Do regular build process with coverage
+    await pluginBuildRunner({ coverage: true });
   }
 
-  // TODO? can this typed from @grafana/ui?
+  // Move dist to the scoped work folder
+  const distDir = path.resolve(process.cwd(), 'dist');
+  if (fs.existsSync(distDir)) {
+    fs.renameSync(distDir, path.resolve(workDir, 'dist'));
+  }
+  writeWorkStats(start, workDir);
+};
+
+export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', buildPluginRunner);
+
+/**
+ * 2. BUNDLE
+ *
+ *  Take everything from `~/work/build_XXX/dist` and zip it into
+ *  artifacts
+ *
+ */
+const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
+  const start = Date.now();
+  const workDir = getWorkFolder();
+
+  // Copy all `dist` folders to the root dist folder
+  const distDir = path.resolve(process.cwd(), 'dist');
+  if (!fs.existsSync(distDir)) {
+    fs.mkdirSync(distDir);
+  }
+  fs.mkdirSync(distDir, { recursive: true });
+  const dirs = fs.readdirSync(workDir);
+  for (const dir of dirs) {
+    if (dir.startsWith('build_')) {
+      const contents = path.resolve(dir, 'dist');
+      if (fs.existsSync(contents)) {
+        await execa('cp', ['-rp', contents, distDir]);
+      }
+    }
+  }
+
+  // Create an artifact
+  const artifactsDir = path.resolve(process.cwd(), 'artifacts');
+  if (!fs.existsSync(artifactsDir)) {
+    fs.mkdirSync(artifactsDir, { recursive: true });
+  }
+
   const pluginInfo = getPluginJson(`${distDir}/plugin.json`);
   const zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
   const zipFile = path.resolve(artifactsDir, zipName);
@@ -55,23 +140,165 @@ const pluginCIRunner: TaskRunner<PluginCIOptions> = async ({ dryRun }) => {
   await execa('zip', ['-r', zipFile, '.']);
   restoreCwd();
 
-  const stats = {
-    startTime: start,
-    buildTime: elapsed,
-    jsSize: calcJavascriptSize(distDir),
-    zipSize: fs.statSync(zipFile).size,
-    endTime: Date.now(),
+  const zipStats = fs.statSync(zipFile);
+  if (zipStats.size < 100) {
+    throw new Error('Invalid zip file: ' + zipFile);
+  }
+  await execa('sha1sum', [zipFile, '>', zipFile + '.sha1']);
+  const info = {
+    name: zipName,
+    size: zipStats.size,
   };
-  fs.writeFile(artifactsDir + '/stats.json', JSON.stringify(stats, null, 2), err => {
+  const f = path.resolve(artifactsDir, 'info.json');
+  fs.writeFile(f, JSON.stringify(info, null, 2), err => {
     if (err) {
-      throw new Error('Unable to write stats');
+      throw new Error('Error writing artifact info: ' + f);
     }
-    console.log('Stats', stats);
   });
 
-  if (!dryRun) {
-    console.log('TODO send info to github?');
-  }
+  writeWorkStats(start, workDir);
 };
 
-export const pluginCITask = new Task<PluginCIOptions>('Plugin CI', pluginCIRunner);
+export const ciBundlePluginTask = new Task<PluginCIOptions>('Bundle Plugin', bundlePluginRunner);
+
+/**
+ * 3. Setup (install grafana and setup provisioning)
+ *
+ *  deploy the zip to a running grafana instance
+ *
+ */
+const setupPluginRunner: TaskRunner<PluginCIOptions> = async ({ installer }) => {
+  const start = Date.now();
+
+  if (!installer) {
+    throw new Error('Missing installer path');
+  }
+
+  // Download the grafana installer
+  const workDir = getWorkFolder();
+  const installFile = path.resolve(workDir, installer);
+  if (!fs.existsSync(installFile)) {
+    console.log('download', installer);
+    const exe = await execa('wget', ['-O', installFile, 'https://dl.grafana.com/oss/release/' + installer]);
+    console.log(exe.stdout);
+  }
+
+  // Find the plugin zip file
+  const artifactsDir = path.resolve(process.cwd(), 'artifacts');
+  const artifactsInfo = require(path.resolve(artifactsDir, 'info.json'));
+  const pluginZip = path.resolve(workDir, 'artifacts', artifactsInfo.name);
+  if (!fs.existsSync(pluginZip)) {
+    throw new Error('Missing zip file:' + pluginZip);
+  }
+
+  // Create a grafana runtime folder
+  const grafanaPluginsDir = path.resolve(require('os').homedir(), 'grafana', 'plugins');
+  await execa('rimraf', [grafanaPluginsDir]);
+  fs.mkdirSync(grafanaPluginsDir, { recursive: true });
+
+  // unzip package.zip -d /opt
+  let exe = await execa('unzip', [pluginZip, '-d', grafanaPluginsDir]);
+  console.log(exe.stdout);
+
+  // Write the custom settings
+  const customIniPath = '/usr/share/grafana/conf/custom.ini';
+  const customIniBody = `[paths] \n` + `plugins = ${grafanaPluginsDir}\n` + '';
+  fs.writeFile(customIniPath, customIniBody, err => {
+    if (err) {
+      throw new Error('Unable to write: ' + customIniPath);
+    }
+  });
+
+  console.log('Install Grafana');
+  exe = await execa('sudo', ['dpkg', 'i', installFile]);
+  console.log(exe.stdout);
+
+  exe = await execa('sudo', ['grafana-server', 'start']);
+  console.log(exe.stdout);
+  exe = await execa('grafana-cli', ['--version']);
+
+  writeWorkStats(start, workDir + '_setup');
+};
+
+export const ciSetupPluginTask = new Task<PluginCIOptions>('Setup Grafana', setupPluginRunner);
+
+/**
+ * 4. Test (end-to-end)
+ *
+ *  deploy the zip to a running grafana instance
+ *
+ */
+const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
+  const start = Date.now();
+  const workDir = getWorkFolder();
+
+  const args = {
+    withCredentials: true,
+    baseURL: process.env.GRAFANA_URL || 'http://localhost:3000/',
+    responseType: 'json',
+    auth: {
+      username: 'admin',
+      password: 'admin',
+    },
+  };
+
+  const axios = require('axios');
+  const frontendSettings = await axios.get('api/frontend/settings', args);
+
+  console.log('Grafana Version: ' + JSON.stringify(frontendSettings.data.buildInfo, null, 2));
+
+  const pluginInfo = getPluginJson(`${process.cwd()}/src/plugin.json`);
+  const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
+
+  console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
+
+  console.log('TODO puppeteer');
+
+  const elapsed = Date.now() - start;
+  const stats = {
+    job: `${process.env.CIRCLE_JOB}`,
+    sha1: `${process.env.CIRCLE_SHA1}`,
+    startTime: start,
+    buildTime: elapsed,
+    endTime: Date.now(),
+  };
+
+  console.log('TODO Puppeteer Tests', stats);
+  writeWorkStats(start, workDir);
+};
+
+export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', testPluginRunner);
+
+/**
+ * 4. Deploy
+ *
+ *  deploy the zip to a running grafana instance
+ *
+ */
+const deployPluginRunner: TaskRunner<PluginCIOptions> = async () => {
+  const start = Date.now();
+
+  // TASK Time
+  if (process.env.CIRCLE_INTERNAL_TASK_DATA) {
+    const timingInfo = fs.readdirSync(`${process.env.CIRCLE_INTERNAL_TASK_DATA}`);
+    if (timingInfo) {
+      timingInfo.forEach(file => {
+        console.log('TIMING INFO: ', file);
+      });
+    }
+  }
+
+  const elapsed = Date.now() - start;
+  const stats = {
+    job: `${process.env.CIRCLE_JOB}`,
+    sha1: `${process.env.CIRCLE_SHA1}`,
+    startTime: start,
+    buildTime: elapsed,
+    endTime: Date.now(),
+  };
+  console.log('TODO DEPLOY??', stats);
+  console.log(' if PR => write a comment to github with difference ');
+  console.log(' if master | vXYZ ==> upload artifacts to some repo ');
+};
+
+export const ciDeployPluginTask = new Task<PluginCIOptions>('Deploy plugin', deployPluginRunner);
