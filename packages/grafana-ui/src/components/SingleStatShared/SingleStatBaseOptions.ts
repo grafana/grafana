@@ -57,7 +57,7 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
     // remove old props
     return omit(old, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
   } else if (old.fieldOptions) {
-    // Move mappins & thresholds to field defautls (6.3+)
+    // Move mappins & thresholds to field defautls (6.4+)
     const { mappings, thresholds, ...fieldOptions } = old.fieldOptions;
     fieldOptions.defaults = {
       mappings,
