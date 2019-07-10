@@ -31,9 +31,9 @@ type IConnection interface {
 type IServer interface {
 	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	Users([]string) ([]*models.ExternalUserInfo, error)
+	Bind() error
 	UserBind(string, string) error
 	Dial() error
-	Bind() error
 	Close()
 }
 
@@ -44,6 +44,9 @@ type Server struct {
 	log        log.Logger
 }
 
+// Bind authenticates the connection with the LDAP server
+// - with the username and password setup in the config
+// - or, anonymously
 func (server *Server) Bind() error {
 	if server.shouldAuthAdmin() {
 		if err := server.AuthAdmin(); err != nil {
@@ -395,7 +398,7 @@ func (server *Server) shouldAuthAdmin() bool {
 	return server.Config.BindPassword != ""
 }
 
-// UserBind authentificates user in LDAP
+// UserBind authenticates the connection with the LDAP server
 func (server *Server) UserBind(username, password string) error {
 	err := server.userBind(username, password)
 	if err != nil {
@@ -425,7 +428,7 @@ func (server *Server) AuthAdmin() error {
 	return nil
 }
 
-// userBind is helper for several types of LDAP authentification
+// userBind authenticates the connection with the LDAP server
 func (server *Server) userBind(path, password string) error {
 	err := server.Connection.Bind(path, password)
 	if err != nil {
