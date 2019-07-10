@@ -109,7 +109,7 @@ Looks really nice in light theme as well.
 
 ## Grafana Enterprise
 
-Substantial refactoring and improvements to the external auth systems as gone in to this release making the two features
+Substantial refactoring and improvements to the external auth systems has gone in to this release making the  features
 listed below possible as well as laying a foundation for future enhancements.
 
 ### LDAP Active Sync
@@ -121,11 +121,24 @@ occur.
 For example, lets say a user is removed from an LDAP group. In previous versions of Grafana an admin would have to
 wait for the user to logout or the session to expire for the Grafana permissions to update, a process that can take days.
 
-With active sync the user would be (on next sync) automatically removed from the corresponding team in Grafana or if no longer
-belonging to an LDAP group that gives them access to Grafana they would be logged out.
+With active sync the user would be automatically removed from the corresponding team in Grafana or even logged out and disabled if no longer
+belonging to an LDAP group that gives them access to Grafana.
 
 [Read more](/auth/enhanced_ldap/#active-ldap-synchronization)
 
 ### SAML Authentication
 
 Built-in support for SAML is now available in Grafana Enterprise.
+
+### Team Sync for GitHub OAuth
+
+When setting up OAuth with GitHub it's now possible to sync GitHub teams with Teams in Grafana.
+
+[See docs]({{< relref "auth/github.md" >}})
+
+### Team Sync for Auth Proxy
+
+We've added support for enriching the Auth Proxy headers with Teams information, which makes it possible
+to use Team Sync with Auth Proxy.
+
+[See docs](/auth/auth-proxy/#auth-proxy-authentication)
