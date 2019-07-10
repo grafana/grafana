@@ -70,7 +70,13 @@ func TestValues(t *testing.T) {
 				So(d.Val.Raw, ShouldEqual, "$EMPTYSTRING")
 			})
 
-			Convey("$$ should be a literal $ and not expanded", func() {
+			Convey("$$ should be a literal $", func() {
+				unmarshalingTest(`val: $$`, d)
+				So(d.Val.Value(), ShouldEqual, "$")
+				So(d.Val.Raw, ShouldEqual, "$$")
+			})
+
+			Convey("$$ should be a literal $ and not expanded within a string", func() {
 				unmarshalingTest(`val: mY,Passwo$$rd`, d)
 				So(d.Val.Value(), ShouldEqual, "mY,Passwo$rd")
 				So(d.Val.Raw, ShouldEqual, "mY,Passwo$$rd")
