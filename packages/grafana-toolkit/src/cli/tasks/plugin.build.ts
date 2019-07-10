@@ -4,7 +4,6 @@ import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
 import glob = require('glob');
-import util = require('util');
 import { Linter, Configuration, RuleFailure } from 'tslint';
 import * as prettier from 'prettier';
 
@@ -17,7 +16,6 @@ interface PluginBuildOptions {
 
 export const bundlePlugin = useSpinner<PluginBundleOptions>('Compiling...', async options => await bundleFn(options));
 
-const readFileAsync = util.promisify(fs.readFile);
 // @ts-ignore
 export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', [`${process.cwd()}/dist`]));
 

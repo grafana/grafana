@@ -1,6 +1,5 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
-import { useSpinner } from '../utils/useSpinner';
 import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 
