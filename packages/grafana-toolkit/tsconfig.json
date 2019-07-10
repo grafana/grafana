@@ -1,17 +1,13 @@
 {
+  "extends": "../tsconfig.json",
   "include": ["src/**/*.ts"],
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "module": "commonjs",
     "rootDirs": ["."],
     "outDir": "dist/src",
-    "strict": true,
-    "alwaysStrict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "declaration": false,
     "typeRoots": ["./node_modules/@types"],
-    "skipLibCheck": true, // Temp workaround for Duplicate identifier tsc errors,
-    "removeComments": false,
     "esModuleInterop": true,
     "lib": ["es2015", "es2017.string"]
   }

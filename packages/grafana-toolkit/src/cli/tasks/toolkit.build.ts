@@ -1,6 +1,6 @@
 import execa = require('execa');
 import * as fs from 'fs';
-import { changeCwdToGrafanaUi, restoreCwd, changeCwdToGrafanaToolkit } from '../utils/cwd';
+import { restoreCwd, changeCwdToGrafanaToolkit } from '../utils/cwd';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
