@@ -164,8 +164,9 @@ func scan(pluginDir string) error {
 }
 
 func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
-	// TODO: Based on how we search for plugin.json in grafan-net fetchPluginJson, it should be enough to scan
-	// just /src, /dist or / paths inside the plugin dir
+	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
+	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
+	// is embedded in worldping app.
 
 	if err != nil {
 		return err
