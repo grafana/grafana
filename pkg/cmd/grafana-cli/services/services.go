@@ -30,7 +30,7 @@ func (e *BadRequestError) Error() string {
 	if len(e.Message) > 0 {
 		return fmt.Sprintf("%s: %s", e.Status, e.Message)
 	} else {
-		return fmt.Sprintf("%s", e.Status)
+		return e.Status
 	}
 }
 
