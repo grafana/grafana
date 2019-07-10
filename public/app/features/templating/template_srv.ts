@@ -187,7 +187,7 @@ export class TemplateSrv {
   getVariableName(expression) {
     this.regex.lastIndex = 0;
     const match = this.regex.exec(expression);
-    if (!match) {
+    if (match === null) {
       return null;
     }
     const variableName = match.slice(1).find(match => match !== undefined);

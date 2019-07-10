@@ -188,7 +188,7 @@ export default class GraphiteQuery {
       _.each(targetsByRefId, (t, id) => {
         if (id !== refId) {
           const match = nestedSeriesRefRegex.exec(t.target);
-          const count = match && match.length ? match.length - 1 : 0;
+          const count = match !== null && match.length ? match.length - 1 : 0;
           refCount += count;
         }
       });

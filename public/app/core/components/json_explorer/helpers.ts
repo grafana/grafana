@@ -34,7 +34,7 @@ export function getObjectName(object: object): string {
 
   const funcNameRegex = /function ([^(]*)/;
   const results = funcNameRegex.exec(object.constructor.toString());
-  if (results && results.length > 1) {
+  if (results !== null && results.length > 1) {
     return results[1];
   } else {
     return '';

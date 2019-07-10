@@ -166,7 +166,7 @@ export class QueryVariable implements Variable {
 
       if (regex) {
         matches = regex.exec(value);
-        if (!matches) {
+        if (matches === null) {
           continue;
         }
         if (matches.length > 1) {

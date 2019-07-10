@@ -233,7 +233,7 @@ export class TimeRegionManager {
     const result: any = { h: null, m: null };
     const match = timeRegex.exec(str);
 
-    if (!match) {
+    if (match === null) {
       return result;
     }
 

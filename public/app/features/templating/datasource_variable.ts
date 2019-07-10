@@ -61,7 +61,7 @@ export class DatasourceVariable implements Variable {
         continue;
       }
 
-      if (regex && !regex.exec(source.name)) {
+      if (regex && regex.exec(source.name) === null) {
         continue;
       }
 
