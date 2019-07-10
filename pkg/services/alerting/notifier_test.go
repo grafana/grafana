@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 var (
@@ -62,8 +63,11 @@ func (frs timeoutRenderService) Render(ctx context.Context, opts rendering.Opts)
 }
 
 func TestImgRenderTimeout(t *testing.T) {
+
+	_ = sqlstore.InitTestDB(t)
+
 	// I don't know what the handler names are for?
-	bus.AddHandler("test1", func(query *models.GetAlertNotificationsWithUidToSendQuery) error {
+	bus.AddHandler("GetAlertNotificationsWithUidToSendQuery", func(query *models.GetAlertNotificationsWithUidToSendQuery) error {
 		query.Result = []*models.AlertNotification{
 			{
 				Name:  "TimeoutTest",
@@ -75,19 +79,34 @@ func TestImgRenderTimeout(t *testing.T) {
 		return nil
 	})
 
-	bus.AddHandlerCtx("test2", func(c context.Context, query *models.GetOrCreateNotificationStateQuery) error {
-		query.Result = &models.AlertNotificationState{
-			Id:                           1,
-			OrgId:                        1,
-			AlertId:                      1,
-			NotifierId:                   1,
-			State:                        models.AlertNotificationStatePending,
-			Version:                      1,
-			UpdatedAt:                    1,
-			AlertRuleStateUpdatedVersion: 1,
-		}
-		return nil
-	})
+	//bus.AddHandlerCtx("GetOrCreateNotificationStateQuery", func(c context.Context, query *models.GetOrCreateNotificationStateQuery) error {
+	// query.Result = &models.AlertNotificationState{
+	// 	Id:                           1,
+	// 	OrgId:                        1,
+	// 	AlertId:                      1,
+	// 	NotifierId:                   1,
+	// 	State:                        models.AlertNotificationStatePending,
+	// 	Version:                      1,
+	// 	UpdatedAt:                    1,
+	// 	AlertRuleStateUpdatedVersion: 1,
+	// }
+	//	return sqlstore.GetOrCreateAlertNotificationState(c, query)
+	//return nil
+	//})
+
+	//bus.AddHandlerCtx("SetAlertNotificationStateToPendingCommand", func(c context.Context, query *models.SetAlertNotificationStateToPendingCommand) error {
+	//	return sqlstore.SetAlertNotificationStateToPendingCommand(c, query)
+	//query.Version = query.Version + 1
+	//query.
+	//return nil
+	//})
+
+	//bus.AddHandlerCtx("SetAlertNotificationStateToCompleteCommand", func(c context.Context, query *models.SetAlertNotificationStateToCompleteCommand) error {
+	//	return sqlstore.SetAlertNotificationStateToCompleteCommand(c, query)
+	// query.Version = query.Version + 1
+	// query.
+	// return nil
+	//})
 
 	notifier := newNotificationService(timeoutRenderService{})
 
@@ -103,7 +122,7 @@ func TestImgRenderTimeout(t *testing.T) {
 	defer testContextCancel()
 	evalContext := &EvalContext{
 		Firing:       true,
-		IsTestRun:    true,
+		IsTestRun:    false,
 		dashboardRef: &models.DashboardRef{},
 		Rule: &Rule{
 			OrgID:         1,
@@ -113,6 +132,9 @@ func TestImgRenderTimeout(t *testing.T) {
 	}
 
 	err := notifier.SendIfNeeded(evalContext)
+
+	assert.Nil(t, err)
+	assert.Equal(t, sentNotificationCount, 1)
 
 	assert.Nil(t, err)
 	assert.Equal(t, sentNotificationCount, 1)
