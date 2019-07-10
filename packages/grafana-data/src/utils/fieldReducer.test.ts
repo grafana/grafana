@@ -91,4 +91,58 @@ describe('Stats Calculators', () => {
     expect(stats.step).toEqual(100);
     expect(stats.delta).toEqual(300);
   });
+
+  it('consistent results for first/last value with null', () => {
+    const info = [
+      {
+        rows: [[null], [200], [null]], // first/last value is null
+        result: 200,
+      },
+      {
+        rows: [[null], [null], [null]], // All null
+        result: undefined,
+      },
+      {
+        rows: [], // Empty row
+        result: undefined,
+      },
+    ];
+    const fields = [{ name: 'A' }];
+
+    const stats = reduceField({
+      series: { rows: info[0].rows, fields },
+      fieldIndex: 0,
+      reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull], // uses standard path
+    });
+    expect(stats[ReducerID.first]).toEqual(null);
+    expect(stats[ReducerID.last]).toEqual(null);
+    expect(stats[ReducerID.firstNotNull]).toEqual(200);
+    expect(stats[ReducerID.lastNotNull]).toEqual(200);
+
+    const reducers = [ReducerID.lastNotNull, ReducerID.firstNotNull];
+    for (const input of info) {
+      for (const reducer of reducers) {
+        const v1 = reduceField({
+          series: { rows: input.rows, fields },
+          fieldIndex: 0,
+          reducers: [reducer, ReducerID.mean], // uses standard path
+        })[reducer];
+
+        const v2 = reduceField({
+          series: { rows: input.rows, fields },
+          fieldIndex: 0,
+          reducers: [reducer], // uses optimized path
+        })[reducer];
+
+        if (v1 !== v2 || v1 !== input.result) {
+          const msg =
+            `Invalid ${reducer} result for: ` +
+            input.rows.join(', ') +
+            ` Expected: ${input.result}` + // configured
+            ` Recieved: Multiple: ${v1}, Single: ${v2}`;
+          expect(msg).toEqual(null);
+        }
+      }
+    }
+  });
 });

@@ -106,6 +106,9 @@ export interface AnnotationEvent {
   dashboardId?: number;
   panelId?: number;
   userId?: number;
+  login?: string;
+  email?: string;
+  avatarUrl?: string;
   time?: number;
   timeEnd?: number;
   isRegion?: boolean;

@@ -1,6 +1,6 @@
 {
   "name": "@grafana/runtime",
-  "version": "6.3.0-alpha.0",
+  "version": "6.3.0-alpha.36",
   "description": "Grafana Runtime Library",
   "keywords": [
     "typescript",
@@ -12,7 +12,9 @@
     "tslint": "tslint -c tslint.json --project tsconfig.json",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf ./dist ./compiled",
-    "build": "rollup -c rollup.config.ts"
+    "bundle": "rollup -c rollup.config.ts",
+    "build": "grafana-toolkit package:build --scope=runtime",
+    "postpublish": "npm run clean"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",

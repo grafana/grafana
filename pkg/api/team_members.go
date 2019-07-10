@@ -30,23 +30,6 @@ func GetTeamMembers(c *m.ReqContext) Response {
 	return JSON(200, query.Result)
 }
 
-func GetAuthProviderLabel(authModule string) string {
-	switch authModule {
-	case "oauth_github":
-		return "GitHub"
-	case "oauth_google":
-		return "Google"
-	case "oauth_gitlab":
-		return "GitLab"
-	case "oauth_grafana_com", "oauth_grafananet":
-		return "grafana.com"
-	case "ldap", "":
-		return "LDAP"
-	default:
-		return "OAuth"
-	}
-}
-
 // POST /api/teams/:teamId/members
 func (hs *HTTPServer) AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand) Response {
 	cmd.OrgId = c.OrgId
