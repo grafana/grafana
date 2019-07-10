@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"path"
@@ -19,6 +20,19 @@ var (
 	grafanaVersion   string
 	ErrNotFoundError = errors.New("404 not found error")
 )
+
+type BadRequestError struct {
+	Message string
+	Status  string
+}
+
+func (e *BadRequestError) Error() string {
+	if len(e.Message) > 0 {
+		return fmt.Sprintf("%s: %s", e.Status, e.Message)
+	} else {
+		return fmt.Sprintf("%s", e.Status)
+	}
+}
 
 func Init(version string, skipTLSVerify bool) {
 	grafanaVersion = version

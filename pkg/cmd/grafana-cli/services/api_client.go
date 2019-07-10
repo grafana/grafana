@@ -63,16 +63,11 @@ func (client *GrafanaComClient) DownloadFile(pluginName, filePath, url string, c
 		}
 	}()
 
-	resp, err := http.Get(url) // #nosec
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
 	// TODO: this would be better if it was streamed file by file instead of buffered.
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := sendRequest(url)
+
 	if err != nil {
-		return nil, errutil.Wrap("Failed to read response body", err)
+		return nil, errutil.Wrap("Failed to send request", err)
 	}
 
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", md5.Sum(body)) {
@@ -120,16 +115,35 @@ func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
+	return handleResponse(res)
+}
 
+func handleResponse(res *http.Response) ([]byte, error) {
 	if res.StatusCode == 404 {
 		return []byte{}, ErrNotFoundError
 	}
-	if res.StatusCode/100 != 2 {
+
+	if res.StatusCode/100 != 2 && res.StatusCode/100 != 4 {
 		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
+
+	if res.StatusCode/100 == 4 {
+		if len(body) == 0 {
+			return []byte{}, &BadRequestError{Status: res.Status}
+		}
+		var message string
+		var jsonBody map[string]string
+		err = json.Unmarshal(body, &jsonBody)
+		if err != nil || len(jsonBody["message"]) == 0 {
+			message = string(body)
+		} else {
+			message = jsonBody["message"]
+		}
+		return []byte{}, &BadRequestError{Status: res.Status, Message: message}
+	}
 
 	return body, err
 }

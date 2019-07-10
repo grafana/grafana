@@ -90,11 +90,10 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 		if version == "" {
 			version = v.Version
 		}
-		downloadURL = fmt.Sprintf("%s/%s/versions/%s/download?osAndArch=%s",
+		downloadURL = fmt.Sprintf("%s/%s/versions/%s/download",
 			c.GlobalString("repo"),
 			pluginName,
 			version,
-			osAndArchString(),
 		)
 
 		// Plugins which are downloaded just as sourcecode zipball from github do not have checksum
@@ -176,10 +175,14 @@ func SelectVersion(plugin *m.Plugin, version string) (*m.Version, error) {
 	}
 
 	latestForArch := latestSupportedVersion(plugin)
+	if latestForArch == nil {
+		return nil, xerrors.New("Plugin is not supported on your architecture and os.")
+	}
+
 	if latestForArch.Version == ver.Version {
 		return ver, nil
 	}
-	return nil, xerrors.Errorf("Version you want is not supported on your architecture. Latest suitable version is %v", latestForArch.Version)
+	return nil, xerrors.Errorf("Version you want is not supported on your architecture and os. Latest suitable version is %v", latestForArch.Version)
 }
 
 func RemoveGitBuildFromName(pluginName, filename string) string {
