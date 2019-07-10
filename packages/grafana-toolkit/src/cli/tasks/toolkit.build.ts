@@ -1,6 +1,5 @@
 import execa = require('execa');
 import * as fs from 'fs';
-import { changeCwdToGrafanaUi, restoreCwd, changeCwdToGrafanaToolkit } from '../utils/cwd';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
@@ -102,7 +101,7 @@ const copySassFiles = () => {
 };
 
 const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
-  cwd = changeCwdToGrafanaToolkit();
+  cwd = path.resolve(__dirname, '../../../');
   distDir = `${cwd}/dist`;
   const pkg = require(`${cwd}/package.json`);
   console.log(chalk.yellow(`Building ${pkg.name} (package.json version: ${pkg.version})`));
@@ -114,7 +113,6 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   fs.mkdirSync('./dist/sass');
   await moveFiles();
   await copySassFiles();
-  restoreCwd();
 };
 
 export const toolkitBuildTask = new Task<void>('@grafana/toolkit build', toolkitBuildTaskRunner);
