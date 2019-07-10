@@ -162,7 +162,7 @@ export default class FakeSchemaData {
     };
   }
 
-  static getlogAnalyticsFakeMetadata() {
+  static getlogAnalyticsFakeMetadata(): any {
     return {
       tables: [
         {

@@ -4,14 +4,15 @@ import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
 import { DataFrame, toDataFrame, FieldType } from '@grafana/data';
 import { DataQueryResponse } from '@grafana/ui';
+import { ElasticsearchAggregation } from './types';
 
 export class ElasticResponse {
-  constructor(private targets, private response) {
+  constructor(private targets: any, private response: any) {
     this.targets = targets;
     this.response = response;
   }
 
-  processMetrics(esAgg, target, seriesList, props) {
+  processMetrics(esAgg: any, target: any, seriesList: any, props: any) {
     let metric, y, i, newSeries, bucket, value;
 
     for (y = 0; y < target.metrics.length; y++) {
@@ -113,7 +114,7 @@ export class ElasticResponse {
     }
   }
 
-  processAggregationDocs(esAgg, aggDef, target, table, props) {
+  processAggregationDocs(esAgg: any, aggDef: ElasticsearchAggregation, target: any, table: any, props: any) {
     // add columns
     if (table.columns.length === 0) {
       for (const propKey of _.keys(props)) {
@@ -123,7 +124,7 @@ export class ElasticResponse {
     }
 
     // helper func to add values to value array
-    const addMetricValue = (values, metricName, value) => {
+    const addMetricValue = (values: any[], metricName, value) => {
       table.addColumn({ text: metricName });
       values.push(value);
     };
