@@ -75,9 +75,6 @@
     "url-loader": "^2.0.1",
     "webpack": "4.35.0"
   },
-  "resolutions": {
-    "@types/lodash": "4.14.119"
-  },
   "devDependencies": {
     "@types/glob": "^7.1.1",
     "@types/prettier": "^1.16.4"

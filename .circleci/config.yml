@@ -628,10 +628,6 @@ jobs:
       - image: circleci/node:10
     steps:
       - checkout
-      # - run:
-      #     name: yarn install
-      #     command: 'yarn install --pure-lockfile --no-progress'
-      #     no_output_timeout: 5m
       - run:
           name: boostrap lerna
           command: 'npx lerna bootstrap'
