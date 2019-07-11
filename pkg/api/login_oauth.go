@@ -46,11 +46,7 @@ var joinedOrganizationCount = 0
 	 }else{
     log.Debug("This organization in grafana "+orgName)
     joinedOrganizationCount= joinedOrganizationCount+1
-	   //Set default permissions,The organization is created by the administrator of grafana, others can only join
-	   //OrgRolesMap[listOrgs.Result.Id] = m.ROLE_VIEWER
-    //m.GetExternalUserInfoByLoginQuery{LoginOrEmail:"xxx@xx.com",}
     userQuery := &m.GetExternalUserInfoByLoginQuery{
-     //LoginOrEmail:     "xx@xx.com",
      LoginOrEmail:     email,
 
     }
@@ -250,7 +246,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
-//		SignupAllowed: true,
+
 	err = bus.Dispatch(cmd)
 	if err != nil {
 		hs.redirectWithError(ctx, err)

@@ -19,7 +19,6 @@ type BasicUserInfo struct {
 	Email   string
 	Login   string
 	Company string
- Organizations  []string
 	Role    string
 	Groups  []string
 }

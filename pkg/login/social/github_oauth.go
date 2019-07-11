@@ -238,15 +238,15 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	}
 
 	teams := convertToGroupList(teamMemberships)
+
 	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
- organizations_data, err := s.FetchOrganizations(client, organizationsUrl)
+ organizations, err := s.FetchOrganizations(client, organizationsUrl)
 	userInfo := &BasicUserInfo{
 		Name:   data.Login,
 		Login:  data.Login,
 		Id:     fmt.Sprintf("%d", data.Id),
 		Email:  data.Email,
-		Groups: teams,
-  Organizations: organizations_data,
+		Groups: organizations,
 	}
 
 
