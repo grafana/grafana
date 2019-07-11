@@ -26,7 +26,7 @@
     "classnames": "2.2.6",
     "d3": "5.9.1",
     "jquery": "3.4.1",
-    "lodash": "4.17.11",
+    "lodash": "4.17.14",
     "moment": "2.24.0",
     "papaparse": "4.6.3",
     "react": "16.8.6",
