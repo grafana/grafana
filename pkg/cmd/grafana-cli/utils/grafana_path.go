@@ -10,11 +10,7 @@ import (
 )
 
 func GetGrafanaPluginDir(currentOS string) string {
-	if isDevEnvironment() {
-		rootPath, err := getGrafanaRoot()
-		if err != nil {
-			panic("Could not get root path. Should not happen after isDevEnvironment() but here we are.")
-		}
+	if rootPath, ok := tryGetRootForDevEnvironment(); ok {
 		return filepath.Join(rootPath, "data/plugins")
 	}
 
@@ -40,19 +36,22 @@ func getGrafanaRoot() (string, error) {
 	return filepath.Join(exPath, "../.."), nil
 }
 
-func isDevEnvironment() bool {
-	// if conf/defaults.ini exists, grafana is not installed as package
-	// that its in development environment.
+// tryGetRootForDevEnvironment returns root path if we are in dev environment. It checks if conf/defaults.ini exists
+// which should only exist in dev. Second param is false if we are not in dev or if it wasn't possible to determine it.
+func tryGetRootForDevEnvironment() (string, bool) {
 	rootPath, err := getGrafanaRoot()
 	if err != nil {
 		logger.Error("Could not get executable path. Assuming non dev environment.", err)
-		return false
+		return "", false
 	}
 
 	defaultsPath := filepath.Join(rootPath, "conf/defaults.ini")
 
 	_, err = os.Stat(defaultsPath)
-	return err == nil
+	if err != nil {
+		return "", false
+	}
+	return rootPath, true
 }
 
 func returnOsDefault(currentOs string) string {
