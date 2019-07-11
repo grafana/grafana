@@ -628,8 +628,6 @@ jobs:
       - image: circleci/node:10
     steps:
       - checkout
-      - restore_cache:
-          key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: yarn install
           command: 'yarn install --pure-lockfile --no-progress'
