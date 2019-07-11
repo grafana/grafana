@@ -174,7 +174,6 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   // 1. Check for a local 'dist' folder
   const d = path.resolve(process.cwd(), 'dist');
   if (fs.existsSync(d)) {
-    // await copyDirErrorIfExists(d, distDir);
     await execa('cp', ['-rn', d + '/.', distDir]);
   }
 
