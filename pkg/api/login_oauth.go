@@ -232,7 +232,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		OrgRoles:   map[int64]m.RoleType{},
 	}
 
-//fmt.Println(setting.AllowUserOrgCreate)
+//If set to false(ini>Users>allow_org_create), if there is no corresponding organization in grafana, you will not create your own private organization and you will not be able to log in.
  if setting.AllowUserOrgCreate==false {
    for _, value := range extUser.Organizations{
       log.Debug("Loop printing user's Organizations is "+value)
