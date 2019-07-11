@@ -78,7 +78,7 @@ export class UsersActionBar extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     searchQuery: getUsersSearchQuery(state.users),
     pendingInvitesCount: getInviteesCount(state.users),
