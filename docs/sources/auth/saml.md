@@ -81,8 +81,8 @@ enabled = true
 certificate_path = "/path/to/certificate.cert"
 private_key_path = "/path/to/private_key.pem"
 metadata_path = "/my/metadata.xml"
-max_issue_delay = "90s"
-metadata_valid_duration = "48h"
+max_issue_delay = 90s
+metadata_valid_duration = 48h
 ```
 
 And here is a comprehensive list of the options:
@@ -111,13 +111,13 @@ Currently, we support two ways of specifying the IdP metadata. Without a suffix 
 
 To prevent SAML response replay attacks and internal clock skews between the SP (Grafana) and the IdP. We can set a maximum amount of time between the IdP issuing a response and the SP (Grafana) processing it.
 
-The configuration options is specified as a duration e.g. `max_issue_delay="90s"` or `max_issue_delay="1h"`
+The configuration options is specified as a duration e.g. `max_issue_delay= 90s` or `max_issue_delay= 1h`
 
 ## `metadata_valid_duration`
 
 As an SP, our metadata is likely to expire at some point, e.g. due to a certificate rotation or change of location binding. Grafana allows you to specify for how long should the metadata be valid. Leveraging the standard's `validUntil` field, we can tell consumers until when our metadata is going to be valid. The duration is computed by adding the duration to the current time.
  
-The configuration option is specified as a duration e.g. `metadata_valid_duration="48h"`
+The configuration option is specified as a duration e.g. `metadata_valid_duration = 48h`
 
 # Identity Provider (IdP) registration
 
