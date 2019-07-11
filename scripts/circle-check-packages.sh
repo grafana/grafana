@@ -13,7 +13,7 @@ echo "Commit: ${GIT_BRANCH}"
 echo "Current lerna.json version: ${PACKAGE_VERSION}"
 
 # count packages that changed
-count=`lerna changed --loglevel silent | awk '{c++} END {print c}'`
+count=`./node_modules/.bin/lerna changed --loglevel silent | awk '{c++} END {print c}'`
 
 if [ -z $count ]; then
   echo "No changes in packages, not publishing"
