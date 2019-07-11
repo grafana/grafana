@@ -237,7 +237,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("Error getting user teams: %s", err)
 	}
 
-	teams := convertToGroupList(teamMemberships)
+//	teams := convertToGroupList(teamMemberships)
 
 	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
  organizations, err := s.FetchOrganizations(client, organizationsUrl)
