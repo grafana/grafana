@@ -288,12 +288,15 @@ const setupPluginRunner: TaskRunner<PluginCIOptions> = async ({ installer }) => 
   console.log('Starting Grafana');
   exe = await execa('sudo', ['service', 'grafana-server', 'start']);
   console.log(exe.stdout);
-  exe = await execa('grafana-cli', ['--version', '--homepath', '/usr/share/grafana']);
-  console.log(exe.stdout);
-  exe = await execa('grafana-cli', ['plugins', 'ls', '--homepath', '/usr/share/grafana']);
-  console.log(exe.stdout);
+  // exe = await execa('grafana-cli', ['--version', '--homepath', '/usr/share/grafana']);
+  // console.log(exe.stdout);
+  // exe = await execa('grafana-cli', ['plugins', 'ls', '--homepath', '/usr/share/grafana']);
+  // console.log(exe.stdout);
 
-  writeJobStats(start, getJobFolder() + '_setup');
+  const dir = getJobFolder() + '_setup';
+  await execa('rimraf', [dir]);
+  fs.mkdirSync(dir);
+  writeJobStats(start, dir);
 };
 
 export const ciSetupPluginTask = new Task<PluginCIOptions>('Setup Grafana', setupPluginRunner);
