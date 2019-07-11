@@ -216,6 +216,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		Email:      userInfo.Email,
   Organizations:      userInfo.Organizations,
 		OrgRoles:   map[int64]m.RoleType{},
+  Groups:     userInfo.Groups,
 	}
 
 //If set to false(ini>Users>allow_org_create), if there is no corresponding organization in grafana, you will not create your own private organization and you will not be able to log in.
