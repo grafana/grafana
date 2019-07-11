@@ -275,15 +275,21 @@ const setupPluginRunner: TaskRunner<PluginCIOptions> = async ({ installer }) => 
   }
 
   console.log('Install Grafana');
-  let exe = await execa('sudo', ['dpkg', 'i', installFile]);
+  let exe = await execa('sudo', ['apt-get', 'install', '-y', 'adduser', 'libfontconfig1']);
+  exe = await execa('sudo', ['dpkg', '-i', installFile]);
   console.log(exe.stdout);
 
-  console.log('TODO... Copy custom.ini to the right place');
+  const customIniFile = path.resolve(getCiFolder(), 'grafana-test-env', 'custom.ini');
+  const configDir = '/usr/share/grafana/conf/';
+  await execa('cp', ['-f', customIniFile, configDir]);
 
   console.log('Starting Grafana');
   exe = await execa('sudo', ['grafana-server', 'start']);
   console.log(exe.stdout);
   exe = await execa('grafana-cli', ['--version']);
+  console.log(exe.stdout);
+  exe = await execa('grafana-cli', ['plugins', 'ls']);
+  console.log(exe.stdout);
 
   writeJobStats(start, getJobFolder() + '_setup');
 };
