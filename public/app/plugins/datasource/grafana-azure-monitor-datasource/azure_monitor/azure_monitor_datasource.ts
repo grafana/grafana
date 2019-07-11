@@ -174,6 +174,12 @@ export default class AzureMonitorDatasource {
       return this.getResourceNames(this.subscriptionId, resourceGroup, metricDefinition);
     }
 
+    const resourceNamesQueryByNamespace = query.match(/^ResourceNames\(([^,]+?)\)/i);
+    if (resourceNamesQueryByNamespace) {
+      const metricDefinition = this.toVariable(resourceNamesQueryByNamespace[1]);
+      return this.getResourceNamesByNamespace(metricDefinition);
+    }
+
     const resourceNamesQueryWithSub = query.match(/^ResourceNames\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/i);
     if (resourceNamesQueryWithSub) {
       const subscription = this.toVariable(resourceNamesQueryWithSub[1]);
@@ -281,6 +287,24 @@ export default class AzureMonitorDatasource {
     }`;
 
     return this.doRequest(url).then((result: any) => {
+      if (!_.startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
+        return ResponseParser.parseResourceNames(result, metricDefinition);
+      }
+
+      const list = ResponseParser.parseResourceNames(result, 'Microsoft.Storage/storageAccounts');
+      for (let i = 0; i < list.length; i++) {
+        list[i].text += '/default';
+        list[i].value += '/default';
+      }
+
+      return list;
+    });
+  }
+
+  getResourceNamesByNamespace(metricDefinition: string) {
+    const url = `${this.baseUrl}/resources?$filter=resourceType EQ '${metricDefinition}'&api-version=2018-05-01`;
+
+    return this.doRequest(url).then(result => {
       if (!_.startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
         return ResponseParser.parseResourceNames(result, metricDefinition);
       }
