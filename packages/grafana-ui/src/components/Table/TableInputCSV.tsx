@@ -29,8 +29,7 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
     };
   }
 
-  // @ts-ignore
-  readCSV = debounce(() => {
+  readCSV: any = debounce(() => {
     const { config } = this.props;
     const { text } = this.state;
 
