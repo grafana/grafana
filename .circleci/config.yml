@@ -628,10 +628,8 @@ jobs:
       - image: circleci/node:10
     steps:
       - checkout
-      - run:
-          name: yarn add lerna
-          command: 'yarn add -W lerna'
-          no_output_timeout: 15m
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: prepare bumped versions
           command: './scripts/circle-check-packages.sh'

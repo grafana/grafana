@@ -13,14 +13,14 @@ echo "Commit: ${GIT_BRANCH}"
 echo "Current lerna.json version: ${PACKAGE_VERSION}"
 
 # count packages that changed
-count=`./node_modules/.bin/lerna changed --loglevel silent | awk '{c++} END {print c}'`
+count=`npx lerna changed --loglevel silent | awk '{c++} END {print c}'`
 
 if [ -z $count ]; then
-  echo "No changes in packages, not publishing"
+  echo "No changes in packages, skipping packages publishing"
 else
   echo "Changes detected in ${count} packages"
   echo "Releasing packages under ${PACKAGE_VERSION}-${GIT_BRANCH}"
-  lerna version ${PACKAGE_VERSION}-${GIT_BRANCH} --no-git-tag-version --no-push --force-publish -y
+  npx lerna version ${PACKAGE_VERSION}-${GIT_BRANCH} --no-git-tag-version --no-push --force-publish -y
   git status -s
 fi
 
