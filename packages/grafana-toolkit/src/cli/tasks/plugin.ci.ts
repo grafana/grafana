@@ -254,8 +254,6 @@ export const ciBundlePluginTask = new Task<PluginCIOptions>('Bundle Plugin', bun
  *
  */
 const setupPluginRunner: TaskRunner<PluginCIOptions> = async ({ installer }) => {
-  const start = Date.now();
-
   if (!installer) {
     throw new Error('Missing installer path');
   }
@@ -272,29 +270,9 @@ const setupPluginRunner: TaskRunner<PluginCIOptions> = async ({ installer }) => 
     console.log(exe.stdout);
   }
 
-  console.log('Install Grafana');
-  let exe = await execa('sudo', ['apt-get', 'install', '-y', 'adduser', 'libfontconfig1']);
-  exe = await execa('sudo', ['dpkg', '-i', installFile]);
+  console.log('Show Grafana Installer');
+  const exe = await execa('ls', ['-ld', installFile]);
   console.log(exe.stdout);
-
-  const customIniFile = path.resolve(getCiFolder(), 'grafana-test-env', 'custom.ini');
-  const configDir = '/usr/share/grafana/conf/';
-  exe = await execa('sudo', ['cp', '-f', customIniFile, configDir]);
-  console.log(exe.stdout);
-
-  // sudo service grafana-server start
-  console.log('Starting Grafana');
-  exe = await execa('sudo', ['service', 'grafana-server', 'start']);
-  console.log(exe.stdout);
-  // exe = await execa('grafana-cli', ['--version', '--homepath', '/usr/share/grafana']);
-  // console.log(exe.stdout);
-  // exe = await execa('grafana-cli', ['plugins', 'ls', '--homepath', '/usr/share/grafana']);
-  // console.log(exe.stdout);
-
-  const dir = getJobFolder() + '_setup';
-  await execa('rimraf', [dir]);
-  fs.mkdirSync(dir);
-  writeJobStats(start, dir);
 };
 
 export const ciSetupPluginTask = new Task<PluginCIOptions>('Setup Grafana', setupPluginRunner);
