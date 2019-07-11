@@ -57,12 +57,12 @@ func TestExtractFiles(t *testing.T) {
 		err = extractFiles(body, "grafana-simple-json-datasource", pluginDir, false)
 		assert.Nil(t, err)
 
-		//File in zip has permissions 777
+		//File in zip has permissions 755
 		fileInfo, err := os.Stat(pluginDir + "/grafana-simple-json-datasource/simple-plugin_darwin_amd64")
 		assert.Nil(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
-		//File in zip has permission 664
+		//File in zip has permission 755
 		fileInfo, err = os.Stat(pluginDir + "/grafana-simple-json-datasource/simple-plugin_linux_amd64")
 		assert.Nil(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
