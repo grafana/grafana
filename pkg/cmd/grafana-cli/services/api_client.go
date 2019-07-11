@@ -26,11 +26,10 @@ func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plug
 	body, err := sendRequest(repoUrl, "repo", pluginId)
 
 	if err != nil {
-		logger.Info("Failed to send request: ", err)
 		if err == ErrNotFoundError {
-			return models.Plugin{}, fmt.Errorf("Failed to find requested plugin, check if the plugin_id is correct. error: %v", err)
+			return models.Plugin{}, errutil.Wrap("Failed to find requested plugin, check if the plugin_id is correct", err)
 		}
-		return models.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
+		return models.Plugin{}, errutil.Wrap("Failed to send request", err)
 	}
 
 	var data models.Plugin
@@ -59,13 +58,13 @@ func (client *GrafanaComClient) DownloadFile(pluginName, filePath, url string, c
 		if r := recover(); r != nil {
 			client.retryCount++
 			if client.retryCount < 3 {
-				fmt.Println("Failed downloading. Will retry once.")
+				logger.Info("Failed downloading. Will retry once.")
 				content, err = client.DownloadFile(pluginName, filePath, url, checksum)
 			} else {
 				client.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
 				if failure == "runtime error: makeslice: len out of range" {
-					err = fmt.Errorf("Corrupt http response from source. Please try again")
+					err = xerrors.New("Corrupt http response from source. Please try again")
 				} else {
 					panic(r)
 				}
@@ -91,7 +90,7 @@ func (client *GrafanaComClient) ListAllPlugins(repoUrl string) (models.PluginRep
 
 	if err != nil {
 		logger.Info("Failed to send request", "error", err)
-		return models.PluginRepo{}, fmt.Errorf("Failed to send request. error: %v", err)
+		return models.PluginRepo{}, errutil.Wrap("Failed to send request", err)
 	}
 
 	var data models.PluginRepo

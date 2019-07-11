@@ -255,7 +255,7 @@ func extractSymlink(file *zip.File, filePath string) error {
 	}
 	err = os.Symlink(strings.TrimSpace(buf.String()), filePath)
 	if err != nil {
-		return errutil.Wrap(fmt.Sprintf("failed to make symbolic link for %v", filePath), err)
+		return errutil.Wrapf(err, "failed to make symbolic link for %v", filePath)
 	}
 	return nil
 }
