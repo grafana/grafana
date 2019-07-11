@@ -269,7 +269,10 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		hs.redirectWithError(ctx, err)
 		return
 	}
-
+	if cmd.Result.IsDisabled {
+		hs.redirectWithError(ctx, login.ErrUserDisabled)
+		return
+	}
 	// login
 	hs.loginUserWithUser(cmd.Result, ctx)
 
