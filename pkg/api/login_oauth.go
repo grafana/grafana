@@ -248,7 +248,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
      joinedOrganizationCount= 0
    }
  }else{
-  fmt.Println("is true,no join orgs,create email org")
+  fmt.Println("It's true, join your organization, if it doesn't exist in Grafana, then create your own private organization.")
  }
 
 
