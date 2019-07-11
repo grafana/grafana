@@ -289,7 +289,7 @@ function initTemplateSrv(values: any, multi = false) {
         },
         multi: multi,
       },
-      {}
+      {} as any
     ),
   ]);
   return templateSrv;

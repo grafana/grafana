@@ -326,7 +326,7 @@ describe('PrometheusDatasource', () => {
   describe('When interpolating variables', () => {
     beforeEach(() => {
       ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
-      ctx.variable = new CustomVariable({}, {});
+      ctx.variable = new CustomVariable({}, {} as any);
     });
 
     describe('and value is a string', () => {

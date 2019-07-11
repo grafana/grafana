@@ -1,6 +1,10 @@
 import _ from 'lodash';
 import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
 import { stringToJsRegex } from '@grafana/data';
+import DatasourceSrv from '../plugins/datasource_srv';
+import { TemplateSrv } from './template_srv';
+import { VariableSrv } from './variable_srv';
+import { TimeSrv } from '../dashboard/services/TimeSrv';
 
 function getNoneOption() {
   return { text: 'None', value: '', isNone: true };
@@ -25,7 +29,7 @@ export class QueryVariable implements Variable {
   skipUrlSync: boolean;
   definition: string;
 
-  defaults = {
+  defaults: any = {
     type: 'query',
     label: null,
     query: '',
@@ -49,7 +53,13 @@ export class QueryVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv) {
+  constructor(
+    private model: any,
+    private datasourceSrv: DatasourceSrv,
+    private templateSrv: TemplateSrv,
+    private variableSrv: VariableSrv,
+    private timeSrv: TimeSrv
+  ) {
     // copy model properties to this instance
     assignModelProperties(this, model, this.defaults);
   }
@@ -66,11 +76,11 @@ export class QueryVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: any) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 
@@ -89,9 +99,9 @@ export class QueryVariable implements Variable {
       .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
   }
 
-  updateTags(datasource) {
+  updateTags(datasource: any) {
     if (this.useTags) {
-      return this.metricFindQuery(datasource, this.tagsQuery).then(results => {
+      return this.metricFindQuery(datasource, this.tagsQuery).then((results: any[]) => {
         this.tags = [];
         for (let i = 0; i < results.length; i++) {
           this.tags.push(results[i].text);
@@ -105,10 +115,10 @@ export class QueryVariable implements Variable {
     return datasource;
   }
 
-  getValuesForTag(tagKey) {
+  getValuesForTag(tagKey: string) {
     return this.datasourceSrv.get(this.datasource).then(datasource => {
       const query = this.tagValuesQuery.replace('$tag', tagKey);
-      return this.metricFindQuery(datasource, query).then(results => {
+      return this.metricFindQuery(datasource, query).then((results: any) => {
         return _.map(results, value => {
           return value.text;
         });
@@ -116,8 +126,8 @@ export class QueryVariable implements Variable {
     });
   }
 
-  updateOptionsFromMetricFindQuery(datasource) {
-    return this.metricFindQuery(datasource, this.query).then(results => {
+  updateOptionsFromMetricFindQuery(datasource: any) {
+    return this.metricFindQuery(datasource, this.query).then((results: any) => {
       this.options = this.metricNamesToVariableValues(results);
       if (this.includeAll) {
         this.addAllOption();
@@ -129,8 +139,8 @@ export class QueryVariable implements Variable {
     });
   }
 
-  metricFindQuery(datasource, query) {
-    const options = { range: undefined, variable: this };
+  metricFindQuery(datasource: any, query: string) {
+    const options: any = { range: undefined, variable: this };
 
     if (this.refresh === 2) {
       options.range = this.timeSrv.timeRange();
@@ -143,7 +153,7 @@ export class QueryVariable implements Variable {
     this.options.unshift({ text: 'All', value: '$__all' });
   }
 
-  metricNamesToVariableValues(metricNames) {
+  metricNamesToVariableValues(metricNames: any[]) {
     let regex, options, i, matches;
     options = [];
 
@@ -182,7 +192,7 @@ export class QueryVariable implements Variable {
     return this.sortVariableValues(options, this.sort);
   }
 
-  sortVariableValues(options, sortOrder) {
+  sortVariableValues(options: any[], sortOrder: number) {
     if (sortOrder === 0) {
       return options;
     }
@@ -214,11 +224,11 @@ export class QueryVariable implements Variable {
     return options;
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return containsVariable(this.query, this.datasource, this.regex, variable.name);
   }
 }
-
+// @ts-ignore
 variableTypes['query'] = {
   name: 'Query',
   ctor: QueryVariable,

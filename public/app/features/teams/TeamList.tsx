@@ -154,7 +154,7 @@ export class TeamList extends PureComponent<Props, any> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     navModel: getNavModel(state.navIndex, 'teams'),
     teams: getTeams(state.teams),

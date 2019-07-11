@@ -1,7 +1,9 @@
 import config from 'app/core/config';
-import { coreModule } from 'app/core/core';
+import { coreModule, NavModelSrv } from 'app/core/core';
 import { dateTime } from '@grafana/data';
 import { UserSession } from 'app/types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { ILocationService } from 'angular';
 
 export class ProfileCtrl {
   user: any;
@@ -16,7 +18,12 @@ export class ProfileCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
+  constructor(
+    private backendSrv: BackendSrv,
+    private contextSrv: any,
+    private $location: ILocationService,
+    navModelSrv: NavModelSrv
+  ) {
     this.getUser();
     this.getUserSessions();
     this.getUserTeams();
@@ -25,7 +32,7 @@ export class ProfileCtrl {
   }
 
   getUser() {
-    this.backendSrv.get('/api/user').then(user => {
+    this.backendSrv.get('/api/user').then((user: any) => {
       this.user = user;
       this.user.theme = user.theme || 'dark';
     });
@@ -78,20 +85,20 @@ export class ProfileCtrl {
   }
 
   getUserTeams() {
-    this.backendSrv.get('/api/user/teams').then(teams => {
+    this.backendSrv.get('/api/user/teams').then((teams: any) => {
       this.teams = teams;
       this.showTeamsList = this.teams.length > 0;
     });
   }
 
   getUserOrgs() {
-    this.backendSrv.get('/api/user/orgs').then(orgs => {
+    this.backendSrv.get('/api/user/orgs').then((orgs: any) => {
       this.orgs = orgs;
       this.showOrgsList = orgs.length > 1;
     });
   }
 
-  setUsingOrg(org) {
+  setUsingOrg(org: any) {
     this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
       window.location.href = config.appSubUrl + '/profile';
     });

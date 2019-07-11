@@ -1,6 +1,7 @@
 import '../all';
 import { VariableSrv } from '../variable_srv';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
+// @ts-ignore
 import $q from 'q';
 import { dateTime } from '@grafana/data';
 import { CustomVariable } from '../custom_variable';
@@ -17,16 +18,16 @@ describe('VariableSrv', function(this: any) {
       $on: () => {},
     },
     $injector: {
-      instantiate: (ctr, obj) => new ctr(obj.model),
+      instantiate: (ctr: any, obj: { model: any }) => new ctr(obj.model),
     },
     templateSrv: {
       setGrafanaVariable: jest.fn(),
-      init: vars => {
+      init: (vars: any) => {
         this.variables = vars;
       },
       updateIndex: () => {},
-      replace: str =>
-        str.replace(this.regex, match => {
+      replace: (str: any) =>
+        str.replace(this.regex, (match: string) => {
           return match;
         }),
     },
@@ -35,10 +36,10 @@ describe('VariableSrv', function(this: any) {
     },
   } as any;
 
-  function describeUpdateVariable(desc, fn) {
+  function describeUpdateVariable(desc: string, fn: Function) {
     describe(desc, () => {
       const scenario: any = {};
-      scenario.setup = setupFn => {
+      scenario.setup = (setupFn: Function) => {
         scenario.setupFn = setupFn;
       };
 
@@ -56,7 +57,7 @@ describe('VariableSrv', function(this: any) {
           getMetricSources: () => scenario.metricSources,
         };
 
-        ctx.$injector.instantiate = (ctr, model) => {
+        ctx.$injector.instantiate = (ctr: any, model: any) => {
           return getVarMockConstructor(ctr, model, ctx);
         };
 
@@ -77,7 +78,7 @@ describe('VariableSrv', function(this: any) {
     });
   }
 
-  describeUpdateVariable('interval variable without auto', scenario => {
+  describeUpdateVariable('interval variable without auto', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'interval',
@@ -96,7 +97,7 @@ describe('VariableSrv', function(this: any) {
   //
   // Interval variable update
   //
-  describeUpdateVariable('interval variable with auto', scenario => {
+  describeUpdateVariable('interval variable with auto', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'interval',
@@ -141,7 +142,7 @@ describe('VariableSrv', function(this: any) {
   //
   // Query variable update
   //
-  describeUpdateVariable('query variable with empty current object and refresh', scenario => {
+  describeUpdateVariable('query variable with empty current object and refresh', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -160,7 +161,7 @@ describe('VariableSrv', function(this: any) {
 
   describeUpdateVariable(
     'query variable with multi select and new options does not contain some selected values',
-    scenario => {
+    (scenario: any) => {
       scenario.setup(() => {
         scenario.variableModel = {
           type: 'query',
@@ -183,7 +184,7 @@ describe('VariableSrv', function(this: any) {
 
   describeUpdateVariable(
     'query variable with multi select and new options does not contain any selected values',
-    scenario => {
+    (scenario: any) => {
       scenario.setup(() => {
         scenario.variableModel = {
           type: 'query',
@@ -204,7 +205,7 @@ describe('VariableSrv', function(this: any) {
     }
   );
 
-  describeUpdateVariable('query variable with multi select and $__all selected', scenario => {
+  describeUpdateVariable('query variable with multi select and $__all selected', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -225,7 +226,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('query variable with numeric results', scenario => {
+  describeUpdateVariable('query variable with numeric results', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -243,7 +244,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('basic query variable', scenario => {
+  describeUpdateVariable('basic query variable', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }];
@@ -261,7 +262,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('and existing value still exists in options', scenario => {
+  describeUpdateVariable('and existing value still exists in options', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.current = { value: 'backend2', text: 'backend2' };
@@ -273,7 +274,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('and regex pattern exists', scenario => {
+  describeUpdateVariable('and regex pattern exists', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.regex = '/apps.*(backend_[0-9]+)/';
@@ -288,7 +289,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('and regex pattern exists and no match', scenario => {
+  describeUpdateVariable('and regex pattern exists and no match', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.regex = '/apps.*(backendasd[0-9]+)/';
@@ -304,7 +305,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('regex pattern without slashes', scenario => {
+  describeUpdateVariable('regex pattern without slashes', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.regex = 'backend_01';
@@ -319,7 +320,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('regex pattern remove duplicates', scenario => {
+  describeUpdateVariable('regex pattern remove duplicates', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.regex = '/backend_01/';
@@ -334,7 +335,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('with include All', scenario => {
+  describeUpdateVariable('with include All', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -351,7 +352,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('with include all and custom value', scenario => {
+  describeUpdateVariable('with include all and custom value', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -368,7 +369,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('without sort', scenario => {
+  describeUpdateVariable('without sort', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -386,7 +387,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('with alphabetical sort (asc)', scenario => {
+  describeUpdateVariable('with alphabetical sort (asc)', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -404,7 +405,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('with alphabetical sort (desc)', scenario => {
+  describeUpdateVariable('with alphabetical sort (desc)', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -422,7 +423,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('with numerical sort (asc)', scenario => {
+  describeUpdateVariable('with numerical sort (asc)', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -440,7 +441,7 @@ describe('VariableSrv', function(this: any) {
     });
   });
 
-  describeUpdateVariable('with numerical sort (desc)', scenario => {
+  describeUpdateVariable('with numerical sort (desc)', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'query',
@@ -461,7 +462,7 @@ describe('VariableSrv', function(this: any) {
   //
   // datasource variable update
   //
-  describeUpdateVariable('datasource variable with regex filter', scenario => {
+  describeUpdateVariable('datasource variable with regex filter', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'datasource',
@@ -492,7 +493,7 @@ describe('VariableSrv', function(this: any) {
   //
   // Custom variable update
   //
-  describeUpdateVariable('update custom variable', scenario => {
+  describeUpdateVariable('update custom variable', (scenario: any) => {
     scenario.setup(() => {
       scenario.variableModel = {
         type: 'custom',
@@ -511,7 +512,7 @@ describe('VariableSrv', function(this: any) {
   });
 
   describe('multiple interval variables with auto', () => {
-    let variable1, variable2;
+    let variable1: any, variable2: any;
 
     beforeEach(() => {
       const range = {
@@ -624,7 +625,7 @@ describe('VariableSrv', function(this: any) {
   });
 });
 
-function setupSetFromUrlTest(ctx, model = {}) {
+function setupSetFromUrlTest(ctx: any, model = {}) {
   const variableSrv = new VariableSrv($q, ctx.$location, ctx.$injector, ctx.templateSrv, ctx.timeSrv);
   const finalModel = {
     type: 'custom',
@@ -636,10 +637,10 @@ function setupSetFromUrlTest(ctx, model = {}) {
   // We are mocking the setValue here instead of just checking the final variable.current value because there is lots
   // of stuff going when the setValue is called that is hard to mock out.
   variable.setValue = jest.fn();
-  return [variable.setValue, val => variableSrv.setOptionFromUrl(variable, val)];
+  return [variable.setValue, (val: any) => variableSrv.setOptionFromUrl(variable, val)];
 }
 
-function getVarMockConstructor(variable, model, ctx) {
+function getVarMockConstructor(variable: any, model: any, ctx: any) {
   switch (model.model.type) {
     case 'datasource':
       return new variable(model.model, ctx.datasourceSrv, ctx.variableSrv, ctx.templateSrv);
