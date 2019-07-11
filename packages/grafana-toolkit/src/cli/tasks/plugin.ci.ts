@@ -188,7 +188,6 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
       } catch (er) {
         throw new Error('Duplicate files found in dist folders');
       }
-      //await copyDirErrorIfExists(contents, distDir);
     }
   }
 
