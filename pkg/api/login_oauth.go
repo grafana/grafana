@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+ "strconv"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -35,6 +36,61 @@ func GenStateString() string {
 	return base64.URLEncoding.EncodeToString(rnd)
 }
 
+var OrgRolesMap map[int64]m.RoleType
+var joinedOrganizationCount = 0
+	func GetOrgByNameQuery(orgName string,email string)(){
+	 OrgRolesMap = make(map[int64]m.RoleType)
+	 listOrgs := &m.GetOrgByNameQuery {Name: orgName}
+	 if err := bus.Dispatch(listOrgs); err != nil {
+	 log.Debug("This organization does not exist in grafana "+orgName)
+	 }else{
+    log.Debug("This organization in grafana "+orgName)
+    joinedOrganizationCount= joinedOrganizationCount+1
+	   //Set default permissions,The organization is created by the administrator of grafana, others can only join
+	   //OrgRolesMap[listOrgs.Result.Id] = m.ROLE_VIEWER
+    //m.GetExternalUserInfoByLoginQuery{LoginOrEmail:"xxx@xx.com",}
+    userQuery := &m.GetExternalUserInfoByLoginQuery{
+     //LoginOrEmail:     "xx@xx.com",
+     LoginOrEmail:     email,
+
+    }
+
+    fmt.Println(userQuery)
+    if err := bus.Dispatch(userQuery); err != nil {
+     fmt.Println(err)
+     OrgRolesMap[listOrgs.Result.Id] = m.ROLE_VIEWER
+     //OrgRolesMap[listOrgs.Result.Id] = m.ROLE_EDITOR 
+    }else{
+     userInfo := userQuery.Result
+     fmt.Println(userInfo)
+     //fmt.Println(userInfo.OrgRoles)
+     //fmt.Println(userInfo.Groups)
+     //fmt.Println(userInfo.IsDisabled)
+     //fmt.Println("IsGrafanaAdmin")
+     //fmt.Println(userInfo.IsGrafanaAdmin)
+    }
+    /**
+    userQueryitems := m.GetUserByLoginQuery{LoginOrEmail: email}
+    err := bus.Dispatch(&userQueryitems)
+    if err != nil {
+     fmt.Println(err) 
+    }else{
+      fmt.Println("userQueryitems") 
+      fmt.Println(userQueryitems) 
+    }
+    fmt.Println(userQuery.Result.UserId) 
+    authInfoQuery := &m.GetAuthInfoQuery{UserId: userQuery.Result.UserId}
+    if err := bus.Dispatch(authInfoQuery); err != nil {
+     fmt.Println(err) 
+    }
+**/
+	   for key, value := range OrgRolesMap { fmt.Println("Key:", key, "Value:", value) }
+	   log.Debug("The name of the organization is "+orgName)
+	   log.Debug("The organization number is "+strconv.FormatInt(listOrgs.Result.Id,10))
+    fmt.Println(OrgRolesMap)
+	 }
+	
+	}
 func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	if setting.OAuthService == nil {
 		ctx.Handle(404, "OAuth not enabled", nil)
@@ -163,6 +219,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		return
 	}
 
+
+
 	extUser := &m.ExternalUserInfo{
 		AuthModule: "oauth_" + name,
 		OAuthToken: token,
@@ -170,10 +228,31 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		Name:       userInfo.Name,
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
+  Organizations:      userInfo.Organizations,
 		OrgRoles:   map[int64]m.RoleType{},
-		Groups:     userInfo.Groups,
 	}
 
+//fmt.Println(setting.AllowUserOrgCreate)
+ if setting.AllowUserOrgCreate==false {
+   for _, value := range extUser.Organizations{
+      log.Debug("Loop printing user's Organizations is "+value)
+      GetOrgByNameQuery(value,userInfo.Email)
+    }
+   extUser.OrgRoles = OrgRolesMap
+   if  joinedOrganizationCount== 0 {
+
+     hs.redirectWithError(ctx, login.ErrOrganizationNoCreated)
+     return
+   }else{
+     log.Debug("joinedOrganizationCountcount is "+strconv.Itoa(joinedOrganizationCount))
+     joinedOrganizationCount= 0
+   }
+ }else{
+  fmt.Println("is true,no join orgs,create email org")
+ }
+
+
+  
 	if userInfo.Role != "" {
 		extUser.OrgRoles[1] = m.RoleType(userInfo.Role)
 	}
@@ -184,15 +263,10 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
-
+//		SignupAllowed: true,
 	err = bus.Dispatch(cmd)
 	if err != nil {
 		hs.redirectWithError(ctx, err)
-		return
-	}
-
-	if cmd.Result.IsDisabled {
-		hs.redirectWithError(ctx, login.ErrUserDisabled)
 		return
 	}
 

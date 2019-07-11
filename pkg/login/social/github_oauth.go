@@ -164,7 +164,31 @@ func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
 	return url, true
 
 }
+func (s *SocialGithub) FetchOrganizationsId(client *http.Client, organizationsUrl string) ([]int, error) {
+	type Record struct {
+  Id    int    `json:"id"`
+	}
 
+		response, err := HttpGet(client, organizationsUrl)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
+	}
+
+	var records []Record
+
+	err = json.Unmarshal(response.Body, &records)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
+	}
+	var logins = make([]int, len(records))
+
+for i, record := range records {
+  logins[i] = record.Id
+	}
+
+
+	return logins, nil
+}
 func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl string) ([]string, error) {
 	type Record struct {
 		Login string `json:"login"`
@@ -214,16 +238,17 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	}
 
 	teams := convertToGroupList(teamMemberships)
-
+	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
+ organizations_data, err := s.FetchOrganizations(client, organizationsUrl)
 	userInfo := &BasicUserInfo{
 		Name:   data.Login,
 		Login:  data.Login,
 		Id:     fmt.Sprintf("%d", data.Id),
 		Email:  data.Email,
 		Groups: teams,
+  Organizations: organizations_data,
 	}
 
-	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
 
 	if !s.IsTeamMember(client) {
 		return nil, ErrMissingTeamMembership
