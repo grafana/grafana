@@ -623,6 +623,19 @@ jobs:
               echo "-- no changes to docs files --"
             fi
 
+  release-packages-nightly:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run:
+          name: yarn install lerna
+          command: 'yarn install lerna'
+          no_output_timeout: 15m
+      - run:
+          name: prepare bumped versions
+          command: './scripts/circle-check-packages.sh'
+
 workflows:
   version: 2
   build-master:
@@ -803,3 +816,7 @@ workflows:
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
+        - release-packages-nightly:
+            filters: *filter-not-release-or-master
+            requires:
+              - test-frontend
