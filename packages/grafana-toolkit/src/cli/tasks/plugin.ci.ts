@@ -77,7 +77,7 @@ const getJobFromProcessArgv = () => {
 const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
 
 const getJobFolder = () => {
-  let dir = path.resolve(process.cwd(), 'ci', 'jobs', job);
+  const dir = path.resolve(process.cwd(), 'ci', 'jobs', job);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -85,7 +85,7 @@ const getJobFolder = () => {
 };
 
 const getCiFolder = () => {
-  let dir = path.resolve(process.cwd(), 'ci');
+  const dir = path.resolve(process.cwd(), 'ci');
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
@@ -172,7 +172,7 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   console.log('Build Dist Folder');
 
   // 1. Check for a local 'dist' folder
-  let d = path.resolve(process.cwd(), 'dist');
+  const d = path.resolve(process.cwd(), 'dist');
   if (fs.existsSync(d)) {
     // await copyDirErrorIfExists(d, distDir);
     await execa('cp', ['-rn', d + '/.', distDir]);
