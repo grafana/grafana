@@ -283,8 +283,9 @@ const setupPluginRunner: TaskRunner<PluginCIOptions> = async ({ installer }) => 
   const configDir = '/usr/share/grafana/conf/';
   await execa('sudo', ['cp', '-f', customIniFile, configDir]);
 
+  // sudo service grafana-server start
   console.log('Starting Grafana');
-  exe = await execa('sudo', ['grafana-server', 'start']);
+  exe = await execa('sudo', ['service', 'grafana-server', 'start']);
   console.log(exe.stdout);
   exe = await execa('grafana-cli', ['--version']);
   console.log(exe.stdout);
