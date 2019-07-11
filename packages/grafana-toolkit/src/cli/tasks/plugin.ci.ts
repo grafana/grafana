@@ -281,14 +281,15 @@ const setupPluginRunner: TaskRunner<PluginCIOptions> = async ({ installer }) => 
 
   const customIniFile = path.resolve(getCiFolder(), 'grafana-test-env', 'custom.ini');
   const configDir = '/usr/share/grafana/conf/';
-  await execa('sudo', ['cp', '-f', customIniFile, configDir]);
+  exe = await execa('sudo', ['cp', '-f', customIniFile, configDir]);
+  console.log(exe.stdout);
 
   console.log('Starting Grafana');
-  exe = await execa('sudo', ['grafana-server', 'start']);
+  exe = await execa('sudo', ['service', 'grafana-server', 'start']);
   console.log(exe.stdout);
-  exe = await execa('grafana-cli', ['--version']);
+  exe = await execa('grafana-cli', ['--version', '--homepath', '/usr/share/grafana']);
   console.log(exe.stdout);
-  exe = await execa('grafana-cli', ['plugins', 'ls']);
+  exe = await execa('grafana-cli', ['plugins', 'ls', '--homepath', '/usr/share/grafana']);
   console.log(exe.stdout);
 
   writeJobStats(start, getJobFolder() + '_setup');
