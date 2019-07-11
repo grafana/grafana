@@ -10,6 +10,7 @@ import fs = require('fs');
 
 export interface PluginCIOptions {
   backend?: string;
+  full?: boolean;
 }
 
 const calcJavascriptSize = (base: string, files?: string[]): number => {
@@ -289,9 +290,10 @@ export const ciBundlePluginTask = new Task<PluginCIOptions>('Bundle Plugin', bun
  *  deploy the zip to a running grafana instance
  *
  */
-const testPluginRunner: TaskRunner<PluginCIOptions> = async () => {
+const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
   const start = Date.now();
   const workDir = getJobFolder();
+  const pluginInfo = getPluginJson(`${process.cwd()}/src/plugin.json`);
 
   const args = {
     withCredentials: true,
@@ -308,10 +310,21 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async () => {
 
   console.log('Grafana Version: ' + JSON.stringify(frontendSettings.data.buildInfo, null, 2));
 
-  const pluginInfo = getPluginJson(`${process.cwd()}/src/plugin.json`);
-  const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
+  const allPlugins: any[] = await axios.get('api/plugins', args);
+  for (const plugin of allPlugins) {
+    if (plugin.id === pluginInfo.id) {
+      console.log('------------');
+      console.log(plugin);
+      console.log('------------');
+    } else {
+      console.log('Plugin:', plugin.id, plugin.latestVersion);
+    }
+  }
 
-  console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
+  if (full) {
+    const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
+    console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
+  }
 
   console.log('TODO puppeteer');
 
