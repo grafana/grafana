@@ -69,21 +69,7 @@ var joinedOrganizationCount = 0
      //fmt.Println("IsGrafanaAdmin")
      //fmt.Println(userInfo.IsGrafanaAdmin)
     }
-    /**
-    userQueryitems := m.GetUserByLoginQuery{LoginOrEmail: email}
-    err := bus.Dispatch(&userQueryitems)
-    if err != nil {
-     fmt.Println(err) 
-    }else{
-      fmt.Println("userQueryitems") 
-      fmt.Println(userQueryitems) 
-    }
-    fmt.Println(userQuery.Result.UserId) 
-    authInfoQuery := &m.GetAuthInfoQuery{UserId: userQuery.Result.UserId}
-    if err := bus.Dispatch(authInfoQuery); err != nil {
-     fmt.Println(err) 
-    }
-**/
+
 	   for key, value := range OrgRolesMap { fmt.Println("Key:", key, "Value:", value) }
 	   log.Debug("The name of the organization is "+orgName)
 	   log.Debug("The organization number is "+strconv.FormatInt(listOrgs.Result.Id,10))
