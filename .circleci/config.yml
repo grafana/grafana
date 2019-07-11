@@ -630,7 +630,7 @@ jobs:
       - checkout
       - run:
           name: yarn add lerna
-          command: 'yarn add lerna'
+          command: 'yarn add -W lerna'
           no_output_timeout: 15m
       - run:
           name: prepare bumped versions
