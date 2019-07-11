@@ -26,5 +26,8 @@ else
 
   echo $'\nBuilding packages'
   yarn packages:build
+
+  echo $'\nPublishing packages'
+  yarn packages:publishNext
 fi
 

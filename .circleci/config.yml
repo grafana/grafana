@@ -632,6 +632,9 @@ jobs:
           name: boostrap lerna
           command: 'npx lerna bootstrap'
       - run:
+          name: npm auth
+          command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
+      - run:
           name: prepare bumped versions
           command: './scripts/circle-check-packages.sh'
 
