@@ -59,13 +59,13 @@ export class UsersListPage extends PureComponent<Props, State> {
     return await this.props.loadInvitees();
   }
 
-  onRoleChange = (role: any, user: any) => {
+  onRoleChange = (role: string, user: OrgUser) => {
     const updatedUser = { ...user, role: role };
 
     this.props.updateUser(updatedUser);
   };
 
-  onRemoveUser = (user: any) => {
+  onRemoveUser = (user: OrgUser) => {
     appEvents.emit('confirm-modal', {
       title: 'Delete',
       text: 'Are you sure you want to delete user ' + user.login + '?',

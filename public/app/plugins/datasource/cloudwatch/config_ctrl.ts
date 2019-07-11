@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import CloudWatchDatasource from './datasource';
 export class CloudWatchConfigCtrl {
   static templateUrl = 'partials/config.html';
   current: any;
@@ -72,7 +73,7 @@ export class CloudWatchConfigCtrl {
   getRegions() {
     this.datasourceSrv
       .loadDatasource(this.current.name)
-      .then((ds: any) => {
+      .then((ds: CloudWatchDatasource) => {
         return ds.getRegions();
       })
       .then(

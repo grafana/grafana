@@ -205,21 +205,27 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     return this.doMetricQueryRequest('namespaces', null);
   }
 
-  getMetrics(namespace: string, region: any) {
+  getMetrics(namespace: string, region: string) {
     return this.doMetricQueryRequest('metrics', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
     });
   }
 
-  getDimensionKeys(namespace: string, region: any) {
+  getDimensionKeys(namespace: string, region: string) {
     return this.doMetricQueryRequest('dimension_keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
     });
   }
 
-  getDimensionValues(region: any, namespace: string, metricName: string, dimensionKey: string, filterDimensions: {}) {
+  getDimensionValues(
+    region: string,
+    namespace: string,
+    metricName: string,
+    dimensionKey: string,
+    filterDimensions: {}
+  ) {
     return this.doMetricQueryRequest('dimension_values', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
@@ -229,14 +235,14 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     });
   }
 
-  getEbsVolumeIds(region: any, instanceId: string) {
+  getEbsVolumeIds(region: string, instanceId: string) {
     return this.doMetricQueryRequest('ebs_volume_ids', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       instanceId: this.templateSrv.replace(instanceId),
     });
   }
 
-  getEc2InstanceAttribute(region: any, attributeName: string, filters: any) {
+  getEc2InstanceAttribute(region: string, attributeName: string, filters: any) {
     return this.doMetricQueryRequest('ec2_instance_attribute', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       attributeName: this.templateSrv.replace(attributeName),
@@ -244,7 +250,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     });
   }
 
-  getResourceARNs(region: any, resourceType: string, tags: any) {
+  getResourceARNs(region: string, resourceType: string, tags: any) {
     return this.doMetricQueryRequest('resource_arns', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       resourceType: this.templateSrv.replace(resourceType),
@@ -411,7 +417,7 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
     return this.defaultRegion;
   }
 
-  getActualRegion(region: any) {
+  getActualRegion(region: string) {
     if (region === 'default' || _.isEmpty(region)) {
       return this.getDefaultRegion();
     }
