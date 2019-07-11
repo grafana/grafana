@@ -1,6 +1,6 @@
 {
   "name": "@grafana/data",
-  "version": "6.4.0-alpha.10",
+  "version": "6.4.0-alpha.11",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
