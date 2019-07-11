@@ -21,6 +21,10 @@ else
   echo "Changes detected in ${count} packages"
   echo "Releasing packages under ${PACKAGE_VERSION}-${GIT_BRANCH}"
   npx lerna version ${PACKAGE_VERSION}-${GIT_BRANCH} --no-git-tag-version --no-push --force-publish -y
+  echo $'\nGit status:'
   git status -s
+
+  echo $'\nBuilding packages'
+  yarn packages:build
 fi
 
