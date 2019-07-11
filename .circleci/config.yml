@@ -629,8 +629,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: yarn install lerna
-          command: 'yarn install lerna'
+          name: yarn add lerna
+          command: 'yarn add lerna'
           no_output_timeout: 15m
       - run:
           name: prepare bumped versions
@@ -818,5 +818,4 @@ workflows:
             filters: *filter-not-release-or-master
         - release-packages-nightly:
             filters: *filter-not-release-or-master
-            requires:
-              - test-frontend
+

@@ -1,22 +1,4 @@
-#!/usr/bin/env bash
-
 #!/bin/bash
-
-# function exit_if_fail {
-#     command=$@
-#     echo "Executing '$command'"
-#     eval $command
-#     rc=$?
-#     if [ $rc -ne 0 ]; then
-#         echo "'$command' returned $rc."
-#         exit $rc
-#     fi
-# }
-
-# npm install lerna
-# count=0
-# rc=$?
-
 
 function parse_git_hash() {
   git rev-parse --short HEAD 2> /dev/null | sed "s/\(.*\)/\1/"
