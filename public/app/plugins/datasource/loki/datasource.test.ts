@@ -1,7 +1,8 @@
 import LokiDatasource from './datasource';
 import { LokiQuery } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { SeriesData } from '@grafana/ui';
+import { DataSourceApi } from '@grafana/ui';
+import { DataFrame } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -26,8 +27,8 @@ describe('LokiDatasource', () => {
     const backendSrv = (backendSrvMock as unknown) as BackendSrv;
 
     const templateSrvMock = ({
-      getAdhocFilters: () => [],
-      replace: a => a,
+      getAdhocFilters: (): any[] => [],
+      replace: (a: string) => a,
     } as unknown) as TemplateSrv;
 
     test('should use default max lines when no limit given', () => {
@@ -66,17 +67,17 @@ describe('LokiDatasource', () => {
 
       const res = await ds.query(options);
 
-      const seriesData = res.data[0] as SeriesData;
-      expect(seriesData.rows[0][1]).toBe('hello');
-      expect(seriesData.meta.limit).toBe(20);
-      expect(seriesData.meta.searchWords).toEqual(['(?i)foo']);
+      const dataFrame = res.data[0] as DataFrame;
+      expect(dataFrame.rows[0][1]).toBe('hello');
+      expect(dataFrame.meta.limit).toBe(20);
+      expect(dataFrame.meta.searchWords).toEqual(['(?i)foo']);
       done();
     });
   });
 
   describe('when performing testDataSource', () => {
-    let ds;
-    let result;
+    let ds: DataSourceApi<any, any>;
+    let result: any;
 
     describe('and call succeeds', () => {
       beforeEach(async () => {

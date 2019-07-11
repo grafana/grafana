@@ -1,22 +1,19 @@
 import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
 
+import { DisplayValue, GrafanaTheme, InterpolateFunction, ScopedVars, GraphSeriesValue } from '../types/index';
+import { getDisplayProcessor } from './displayValue';
+import { getFlotPairs } from './flotPairs';
 import {
   ValueMapping,
   Threshold,
-  DisplayValue,
+  ReducerID,
+  reduceField,
   FieldType,
   NullValueMode,
-  GrafanaTheme,
-  SeriesData,
-  InterpolateFunction,
+  DataFrame,
   Field,
-  ScopedVars,
-  GraphSeriesValue,
-} from '../types/index';
-import { getDisplayProcessor } from './displayValue';
-import { getFlotPairs } from './flotPairs';
-import { ReducerID, reduceField } from './fieldReducer';
+} from '@grafana/data';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
@@ -36,7 +33,7 @@ export const VAR_FIELD_NAME = '__field_name';
 export const VAR_CALC = '__calc';
 export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates
 
-function getTitleTemplate(title: string | undefined, stats: string[], data?: SeriesData[]): string {
+function getTitleTemplate(title: string | undefined, stats: string[], data?: DataFrame[]): string {
   // If the title exists, use it as a template variable
   if (title) {
     return title;
@@ -72,7 +69,7 @@ export interface FieldDisplay {
 }
 
 export interface GetFieldDisplayValuesOptions {
-  data?: SeriesData[];
+  data?: DataFrame[];
   fieldOptions: FieldDisplayOptions;
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline

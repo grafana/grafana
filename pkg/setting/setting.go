@@ -87,14 +87,20 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey                        string
-	DisableGravatar                  bool
-	EmailCodeValidMinutes            int
-	DataProxyWhiteList               map[string]bool
-	DisableBruteForceLoginProtection bool
-	CookieSecure                     bool
-	CookieSameSite                   http.SameSite
-	AllowEmbedding                   bool
+	SecretKey                         string
+	DisableGravatar                   bool
+	EmailCodeValidMinutes             int
+	DataProxyWhiteList                map[string]bool
+	DisableBruteForceLoginProtection  bool
+	CookieSecure                      bool
+	CookieSameSite                    http.SameSite
+	AllowEmbedding                    bool
+	XSSProtectionHeader               bool
+	ContentTypeProtectionHeader       bool
+	StrictTransportSecurity           bool
+	StrictTransportSecurityMaxAge     int
+	StrictTransportSecurityPreload    bool
+	StrictTransportSecuritySubDomains bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -246,6 +252,9 @@ type Cfg struct {
 	LoginMaxLifetimeDays         int
 	TokenRotationIntervalMinutes int
 
+	// SAML Auth
+	SAMLEnabled bool
+
 	// Dataproxy
 	SendUserHeader bool
 
@@ -253,6 +262,8 @@ type Cfg struct {
 	RemoteCacheOptions *RemoteCacheOptions
 
 	EditorsCanAdmin bool
+
+	ApiKeyMaxSecondsToLive int64
 }
 
 type CommandLineArgs struct {
@@ -488,9 +499,9 @@ func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
 	// load specified config file
 	err = loadSpecifedConfigFile(args.Config, parsedFile)
 	if err != nil {
-		err = cfg.initLogging(parsedFile)
-		if err != nil {
-			return nil, err
+		err2 := cfg.initLogging(parsedFile)
+		if err2 != nil {
+			return nil, err2
 		}
 		log.Fatal(3, err.Error())
 	}
@@ -698,6 +709,13 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
+	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(false)
+	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(false)
+	StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
+	StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
+	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
+	StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
+
 	// read snapshots settings
 	snapshots := iniFile.Section("snapshots")
 	ExternalSnapshotUrl, err = valueAsString(snapshots, "external_snapshot_url", "")
@@ -782,6 +800,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	LoginMaxLifetimeDays = auth.Key("login_maximum_lifetime_days").MustInt(30)
 	cfg.LoginMaxLifetimeDays = LoginMaxLifetimeDays
+	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
 	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
 	if cfg.TokenRotationIntervalMinutes < 2 {
@@ -795,6 +814,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+
+	// SAML auth
+	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)

@@ -11,7 +11,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 // Types
-import { TimeRange } from '@grafana/ui/src';
+import { TimeRange } from '@grafana/data';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -194,7 +194,7 @@ export class VariableSrv {
           }),
           text: _.map(selected, val => {
             return val.text;
-          }).join(' + '),
+          }),
         };
       }
 
@@ -261,7 +261,7 @@ export class VariableSrv {
       if (variable.multi) {
         // In case variable is multiple choice, we cast to array to preserve the same behaviour as when selecting
         // the option directly, which will return even single value in an array.
-        option = { ...option, value: _.castArray(option.value) };
+        option = { text: _.castArray(option.text), value: _.castArray(option.value) };
       }
 
       return variable.setValue(option);

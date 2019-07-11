@@ -8,22 +8,24 @@ import Typeahead from './typeahead';
 import { getKeybindingSrv, KeybindingSrv } from 'app/core/services/keybindingSrv';
 
 import { Block, Document, Text, Value } from 'slate';
+// @ts-ignore
 import { Editor } from 'slate-react';
+// @ts-ignore
 import Plain from 'slate-plain-serializer';
 import ReactDOM from 'react-dom';
 import React from 'react';
 import _ from 'lodash';
 
-function flattenSuggestions(s) {
-  return s ? s.reduce((acc, g) => acc.concat(g.items), []) : [];
+function flattenSuggestions(s: any) {
+  return s ? s.reduce((acc: any, g: any) => acc.concat(g.items), []) : [];
 }
 
-export const makeFragment = text => {
-  const lines = text.split('\n').map(line =>
+export const makeFragment = (text: string) => {
+  const lines = text.split('\n').map((line: any) =>
     Block.create({
       type: 'paragraph',
       nodes: [Text.create(line)],
-    })
+    } as any)
   );
 
   const fragment = Document.create({
@@ -32,12 +34,12 @@ export const makeFragment = text => {
   return fragment;
 };
 
-export const getInitialValue = query => Value.create({ document: makeFragment(query) });
+export const getInitialValue = (query: string) => Value.create({ document: makeFragment(query) });
 
 class Portal extends React.Component<any, any> {
   node: any;
 
-  constructor(props) {
+  constructor(props: any) {
     super(props);
     const { index = 0, prefix = 'query' } = props;
     this.node = document.createElement('div');
@@ -60,7 +62,7 @@ class QueryField extends React.Component<any, any> {
   resetTimer: any;
   keybindingSrv: KeybindingSrv = getKeybindingSrv();
 
-  constructor(props, context) {
+  constructor(props: any, context: any) {
     super(props, context);
 
     const { prismDefinition = {}, prismLanguage = 'kusto' } = props;
@@ -96,7 +98,7 @@ class QueryField extends React.Component<any, any> {
     this.updateMenu();
   }
 
-  onChange = ({ value }) => {
+  onChange = ({ value }: any) => {
     const changed = value.document !== this.state.value.document;
     this.setState({ value }, () => {
       if (changed) {
@@ -107,7 +109,7 @@ class QueryField extends React.Component<any, any> {
     });
   };
 
-  request = (url?) => {
+  request = (url?: string) => {
     if (this.props.request) {
       return this.props.request(url);
     }
@@ -122,7 +124,7 @@ class QueryField extends React.Component<any, any> {
     }
   };
 
-  onKeyDown = (event, change) => {
+  onKeyDown = (event: any, change: any) => {
     const { typeaheadIndex, suggestions } = this.state;
 
     switch (event.key) {
@@ -192,11 +194,11 @@ class QueryField extends React.Component<any, any> {
     return undefined;
   };
 
-  onTypeahead = (change?, item?) => {
+  onTypeahead = (change?: boolean, item?: any) => {
     return change || this.state.value.change();
   };
 
-  applyTypeahead(change?, suggestion?): { value: object } {
+  applyTypeahead(change?: boolean, suggestion?: any): { value: object } {
     return { value: {} };
   }
 
@@ -237,7 +239,7 @@ class QueryField extends React.Component<any, any> {
     this.keybindingSrv.setupGlobal();
   }
 
-  onClickItem = item => {
+  onClickItem = (item: any) => {
     const { suggestions } = this.state;
     if (!suggestions || suggestions.length === 0) {
       return;
@@ -295,7 +297,7 @@ class QueryField extends React.Component<any, any> {
     }
   };
 
-  menuRef = el => {
+  menuRef = (el: any) => {
     this.menuEl = el;
   };
 

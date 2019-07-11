@@ -5,8 +5,7 @@ import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimePickerPopover } from './TimePickerPopover';
 import { UseState } from '../../utils/storybook/UseState';
-import { popoverOptions } from './TimePicker.story';
-import { dateTime, DateTime } from '../../utils/moment_wrapper';
+import { dateTime, DateTime } from '@grafana/data';
 
 const TimePickerPopoverStories = storiesOf('UI/TimePicker/TimePickerPopover', module);
 
@@ -24,12 +23,11 @@ TimePickerPopoverStories.add('default', () => (
       return (
         <TimePickerPopover
           value={value}
-          isTimezoneUtc={false}
+          timeZone="browser"
           onChange={timeRange => {
             action('onChange fired')(timeRange);
             updateValue(timeRange);
           }}
-          options={popoverOptions}
         />
       );
     }}

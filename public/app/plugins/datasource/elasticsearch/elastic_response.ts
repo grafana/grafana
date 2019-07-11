@@ -1,6 +1,9 @@
 import _ from 'lodash';
+import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
+import { DataFrame, toDataFrame, FieldType } from '@grafana/data';
+import { DataQueryResponse } from '@grafana/ui';
 
 export class ElasticResponse {
   constructor(private targets, private response) {
@@ -409,5 +412,143 @@ export class ElasticResponse {
     }
 
     return { data: seriesList };
+  }
+
+  getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
+    const dataFrame: DataFrame[] = [];
+    const docs: any[] = [];
+
+    for (let n = 0; n < this.response.responses.length; n++) {
+      const response = this.response.responses[n];
+      if (response.error) {
+        throw this.getErrorFromElasticResponse(this.response, response.error);
+      }
+
+      const hits = response.hits;
+      let propNames: string[] = [];
+      let propName, hit, doc, i;
+
+      for (i = 0; i < hits.hits.length; i++) {
+        hit = hits.hits[i];
+        const flattened = hit._source ? flatten(hit._source, null) : {};
+        doc = {};
+        doc[this.targets[0].timeField] = null;
+        doc = {
+          ...doc,
+          _id: hit._id,
+          _type: hit._type,
+          _index: hit._index,
+          ...flattened,
+        };
+
+        // Note: the order of for...in is arbitrary amd implementation dependant
+        // and should probably not be relied upon.
+        for (propName in hit.fields) {
+          if (propNames.indexOf(propName) === -1) {
+            propNames.push(propName);
+          }
+          doc[propName] = hit.fields[propName];
+        }
+
+        for (propName in doc) {
+          if (propNames.indexOf(propName) === -1) {
+            propNames.push(propName);
+          }
+        }
+
+        doc._source = { ...flattened };
+
+        docs.push(doc);
+      }
+
+      if (docs.length > 0) {
+        propNames = propNames.sort();
+        const series: DataFrame = {
+          fields: [
+            {
+              name: this.targets[0].timeField,
+              type: FieldType.time,
+            },
+          ],
+          rows: [],
+        };
+
+        if (logMessageField) {
+          series.fields.push({
+            name: logMessageField,
+            type: FieldType.string,
+          });
+        } else {
+          series.fields.push({
+            name: '_source',
+            type: FieldType.string,
+          });
+        }
+
+        if (logLevelField) {
+          series.fields.push({
+            name: 'level',
+            type: FieldType.string,
+          });
+        }
+
+        for (const propName of propNames) {
+          if (propName === this.targets[0].timeField || propName === '_source') {
+            continue;
+          }
+
+          series.fields.push({
+            name: propName,
+            type: FieldType.string,
+          });
+        }
+
+        for (const doc of docs) {
+          const row: any[] = [];
+          row.push(doc[this.targets[0].timeField][0]);
+
+          if (logMessageField) {
+            row.push(doc[logMessageField] || '');
+          } else {
+            row.push(JSON.stringify(doc._source, null, 2));
+          }
+
+          if (logLevelField) {
+            row.push(doc[logLevelField] || '');
+          }
+
+          for (const propName of propNames) {
+            if (doc.hasOwnProperty(propName)) {
+              row.push(doc[propName]);
+            } else {
+              row.push(null);
+            }
+          }
+
+          series.rows.push(row);
+        }
+
+        dataFrame.push(series);
+      }
+
+      if (response.aggregations) {
+        const aggregations = response.aggregations;
+        const target = this.targets[n];
+        const tmpSeriesList = [];
+        const table = new TableModel();
+
+        this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
+        this.trimDatapoints(tmpSeriesList, target);
+        this.nameSeries(tmpSeriesList, target);
+
+        for (let y = 0; y < tmpSeriesList.length; y++) {
+          const series = toDataFrame(tmpSeriesList[y]);
+          series.labels = {};
+          dataFrame.push(series);
+        }
+      }
+    }
+
+    return { data: dataFrame };
   }
 }

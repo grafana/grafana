@@ -21,8 +21,9 @@ func GetTeamMembers(c *m.ReqContext) Response {
 		member.AvatarUrl = dtos.GetGravatarUrl(member.Email)
 		member.Labels = []string{}
 
-		if setting.IsEnterprise && setting.LDAPEnabled && member.External {
-			member.Labels = append(member.Labels, "LDAP")
+		if setting.IsEnterprise && member.External {
+			authProvider := GetAuthProviderLabel(member.AuthModule)
+			member.Labels = append(member.Labels, authProvider)
 		}
 	}
 

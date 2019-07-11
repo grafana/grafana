@@ -29,10 +29,28 @@ import {
   DataQueryRequest,
   DataStreamObserver,
 } from '@grafana/ui';
+
+import {
+  TimeZone,
+  RawTimeRange,
+  TimeRange,
+  DateTimeInput,
+  FormatInput,
+  DateTime,
+  toUtc,
+  dateTime,
+  AbsoluteTimeRange,
+} from '@grafana/data';
 import { Observable } from 'rxjs';
 import { getQueryResponse } from 'app/core/utils/explore';
 import { StoreState } from 'app/types/store';
 import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
+import { timeEpic } from 'app/features/explore/state/epics/timeEpic';
+import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { UserState } from 'app/types/user';
+import { getTimeRange } from 'app/core/utils/explore';
+import { getTimeZone } from 'app/features/profile/state/selectors';
+import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 const rootReducers = {
   ...sharedReducers,
@@ -49,7 +67,7 @@ const rootReducers = {
   ...organizationReducers,
 };
 
-export function addRootReducer(reducers) {
+export function addRootReducer(reducers: any) {
   Object.assign(rootReducers, ...reducers);
 }
 
@@ -59,7 +77,8 @@ export const rootEpic: any = combineEpics(
   runQueriesEpic,
   runQueriesBatchEpic,
   processQueryResultsEpic,
-  processQueryErrorsEpic
+  processQueryErrorsEpic,
+  timeEpic
 );
 
 export interface EpicDependencies {
@@ -68,10 +87,22 @@ export interface EpicDependencies {
     options: DataQueryRequest<DataQuery>,
     observer?: DataStreamObserver
   ) => Observable<DataQueryResponse>;
+  getTimeSrv: () => TimeSrv;
+  getTimeRange: (timeZone: TimeZone, rawRange: RawTimeRange) => TimeRange;
+  getTimeZone: (state: UserState) => TimeZone;
+  toUtc: (input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
+  dateTime: (input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
+  getShiftedTimeRange: (direction: number, origRange: TimeRange, timeZone: TimeZone) => AbsoluteTimeRange;
 }
 
 const dependencies: EpicDependencies = {
   getQueryResponse,
+  getTimeSrv,
+  getTimeRange,
+  getTimeZone,
+  toUtc,
+  dateTime,
+  getShiftedTimeRange,
 };
 
 const epicMiddleware = createEpicMiddleware({ dependencies });
@@ -89,6 +120,8 @@ export function configureStore() {
       ? applyMiddleware(toggleLogActionsMiddleware, thunk, epicMiddleware, logger)
       : applyMiddleware(thunk, epicMiddleware);
 
-  setStore(createStore(rootReducer, {}, composeEnhancers(storeEnhancers)));
+  const store = createStore(rootReducer, {}, composeEnhancers(storeEnhancers));
+  setStore(store);
   epicMiddleware.run(rootEpic);
+  return store;
 }

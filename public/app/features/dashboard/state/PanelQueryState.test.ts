@@ -1,6 +1,7 @@
-import { toDataQueryError, PanelQueryState, getProcessedSeriesData } from './PanelQueryState';
+import { toDataQueryError, PanelQueryState, getProcessedDataFrame } from './PanelQueryState';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { DataQueryResponse, LoadingState } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
+import { DataQueryResponse } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('PanelQueryState', () => {
@@ -53,7 +54,7 @@ describe('PanelQueryState', () => {
   });
 });
 
-describe('getProcessedSeriesData', () => {
+describe('getProcessedDataFrame', () => {
   it('converts timeseries to table skipping nulls', () => {
     const input1 = {
       target: 'Field Name',
@@ -64,7 +65,7 @@ describe('getProcessedSeriesData', () => {
       target: '',
       datapoints: [[100, 1], [200, 2]],
     };
-    const data = getProcessedSeriesData([null, input1, input2, null, null]);
+    const data = getProcessedDataFrame([null, input1, input2, null, null]);
     expect(data.length).toBe(2);
     expect(data[0].fields[0].name).toBe(input1.target);
     expect(data[0].rows).toBe(input1.datapoints);
@@ -82,10 +83,10 @@ describe('getProcessedSeriesData', () => {
   });
 
   it('supports null values from query OK', () => {
-    expect(getProcessedSeriesData([null, null, null, null])).toEqual([]);
-    expect(getProcessedSeriesData(undefined)).toEqual([]);
-    expect(getProcessedSeriesData((null as unknown) as any[])).toEqual([]);
-    expect(getProcessedSeriesData([])).toEqual([]);
+    expect(getProcessedDataFrame([null, null, null, null])).toEqual([]);
+    expect(getProcessedDataFrame(undefined)).toEqual([]);
+    expect(getProcessedDataFrame((null as unknown) as any[])).toEqual([]);
+    expect(getProcessedDataFrame([])).toEqual([]);
   });
 });
 

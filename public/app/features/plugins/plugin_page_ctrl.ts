@@ -35,7 +35,7 @@ export class AppPageCtrl {
       return;
     }
     if (app.type !== 'app' || !app.enabled) {
-      this.$rootScope.appEvent('alert-error', ['Applicaiton Not Enabled', '']);
+      this.$rootScope.appEvent('alert-error', ['Application Not Enabled', '']);
       this.navModel = this.navModelSrv.getNotFoundNav();
       return;
     }

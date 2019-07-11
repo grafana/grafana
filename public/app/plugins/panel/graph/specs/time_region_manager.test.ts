@@ -1,8 +1,8 @@
 import { TimeRegionManager, colorModes } from '../time_region_manager';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 describe('TimeRegionManager', () => {
-  function plotOptionsScenario(desc, func) {
+  function plotOptionsScenario(desc: string, func: any) {
     describe(desc, () => {
       const ctx: any = {
         panel: {
@@ -19,7 +19,7 @@ describe('TimeRegionManager', () => {
         },
       };
 
-      ctx.setup = (regions, from, to) => {
+      ctx.setup = (regions: any, from: any, to: any) => {
         ctx.panel.timeRegions = regions;
         ctx.panelCtrl.range.from = from;
         ctx.panelCtrl.range.to = to;
@@ -46,7 +46,7 @@ describe('TimeRegionManager', () => {
   }
 
   describe('When colors missing in config', () => {
-    plotOptionsScenario('should not throw an error when fillColor is undefined', ctx => {
+    plotOptionsScenario('should not throw an error when fillColor is undefined', (ctx: any) => {
       const regions = [
         { fromDayOfWeek: 1, toDayOfWeek: 1, fill: true, line: true, lineColor: '#ffffff', colorMode: 'custom' },
       ];
@@ -54,7 +54,7 @@ describe('TimeRegionManager', () => {
       const to = dateTime('2018-01-01T23:59:00+01:00');
       expect(() => ctx.setup(regions, from, to)).not.toThrow();
     });
-    plotOptionsScenario('should not throw an error when lineColor is undefined', ctx => {
+    plotOptionsScenario('should not throw an error when lineColor is undefined', (ctx: any) => {
       const regions = [
         { fromDayOfWeek: 1, toDayOfWeek: 1, fill: true, fillColor: '#ffffff', line: true, colorMode: 'custom' },
       ];
@@ -65,7 +65,7 @@ describe('TimeRegionManager', () => {
   });
 
   describe('When creating plot markings using local time', () => {
-    plotOptionsScenario('for day of week region', ctx => {
+    plotOptionsScenario('for day of week region', (ctx: any) => {
       const regions = [{ fromDayOfWeek: 1, toDayOfWeek: 1, fill: true, line: true, colorMode: 'red' }];
       const from = dateTime('2018-01-01T00:00:00+01:00');
       const to = dateTime('2018-01-01T23:59:00+01:00');
@@ -97,7 +97,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for time from region', ctx => {
+    plotOptionsScenario('for time from region', (ctx: any) => {
       const regions = [{ from: '05:00', fill: true, colorMode: 'red' }];
       const from = dateTime('2018-01-01T00:00+01:00');
       const to = dateTime('2018-01-03T23:59+01:00');
@@ -124,7 +124,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for time to region', ctx => {
+    plotOptionsScenario('for time to region', (ctx: any) => {
       const regions = [{ to: '05:00', fill: true, colorMode: 'red' }];
       const from = dateTime('2018-02-01T00:00+01:00');
       const to = dateTime('2018-02-03T23:59+01:00');
@@ -151,7 +151,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for time from/to region', ctx => {
+    plotOptionsScenario('for time from/to region', (ctx: any) => {
       const regions = [{ from: '00:00', to: '05:00', fill: true, colorMode: 'red' }];
       const from = dateTime('2018-12-01T00:00+01:00');
       const to = dateTime('2018-12-03T23:59+01:00');
@@ -178,7 +178,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for time from/to region crossing midnight', ctx => {
+    plotOptionsScenario('for time from/to region crossing midnight', (ctx: any) => {
       const regions = [{ from: '22:00', to: '00:30', fill: true, colorMode: 'red' }];
       const from = dateTime('2018-12-01T12:00+01:00');
       const to = dateTime('2018-12-04T08:00+01:00');
@@ -205,7 +205,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for day of week from/to region', ctx => {
+    plotOptionsScenario('for day of week from/to region', (ctx: any) => {
       const regions = [{ fromDayOfWeek: 7, toDayOfWeek: 7, fill: true, colorMode: 'red' }];
       const from = dateTime('2018-01-01T18:45:05+01:00');
       const to = dateTime('2018-01-22T08:27:00+01:00');
@@ -232,7 +232,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for day of week from region', ctx => {
+    plotOptionsScenario('for day of week from region', (ctx: any) => {
       const regions = [{ fromDayOfWeek: 7, fill: true, colorMode: 'red' }];
       const from = dateTime('2018-01-01T18:45:05+01:00');
       const to = dateTime('2018-01-22T08:27:00+01:00');
@@ -259,7 +259,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for day of week to region', ctx => {
+    plotOptionsScenario('for day of week to region', (ctx: any) => {
       const regions = [{ toDayOfWeek: 7, fill: true, colorMode: 'red' }];
       const from = dateTime('2018-01-01T18:45:05+01:00');
       const to = dateTime('2018-01-22T08:27:00+01:00');
@@ -286,7 +286,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for day of week from/to time region', ctx => {
+    plotOptionsScenario('for day of week from/to time region', (ctx: any) => {
       const regions = [{ fromDayOfWeek: 7, from: '23:00', toDayOfWeek: 1, to: '01:40', fill: true, colorMode: 'red' }];
       const from = dateTime('2018-12-07T12:51:19+01:00');
       const to = dateTime('2018-12-10T13:51:29+01:00');
@@ -304,7 +304,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for day of week from/to time region', ctx => {
+    plotOptionsScenario('for day of week from/to time region', (ctx: any) => {
       const regions = [{ fromDayOfWeek: 6, from: '03:00', toDayOfWeek: 7, to: '02:00', fill: true, colorMode: 'red' }];
       const from = dateTime('2018-12-07T12:51:19+01:00');
       const to = dateTime('2018-12-10T13:51:29+01:00');
@@ -322,7 +322,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for day of week from/to time region with daylight saving time', ctx => {
+    plotOptionsScenario('for day of week from/to time region with daylight saving time', (ctx: any) => {
       const regions = [{ fromDayOfWeek: 7, from: '20:00', toDayOfWeek: 7, to: '23:00', fill: true, colorMode: 'red' }];
       const from = dateTime('2018-03-17T06:00:00+01:00');
       const to = dateTime('2018-04-03T06:00:00+02:00');
@@ -346,7 +346,7 @@ describe('TimeRegionManager', () => {
       });
     });
 
-    plotOptionsScenario('for each day of week with winter time', ctx => {
+    plotOptionsScenario('for each day of week with winter time', (ctx: any) => {
       const regions = [{ fromDayOfWeek: 7, toDayOfWeek: 7, fill: true, colorMode: 'red' }];
       const from = dateTime('2018-10-20T14:50:11+02:00');
       const to = dateTime('2018-11-07T12:56:23+01:00');

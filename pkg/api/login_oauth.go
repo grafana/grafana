@@ -36,23 +36,17 @@ func GenStateString() string {
 	return base64.URLEncoding.EncodeToString(rnd)
 }
 
-var OrgIdMap map[int64]m.RoleType
-var OrganizationMembership int = 0
+var OrgRolesMap map[int64]m.RoleType
+var joinedOrganizationCount = 0
 	func GetOrgByNameQuery(orgName string,email string)(){
-	 OrgIdMap = make(map[int64]m.RoleType)
+	 OrgRolesMap = make(map[int64]m.RoleType)
 	 listOrgs := &m.GetOrgByNameQuery {Name: orgName}
 	 if err := bus.Dispatch(listOrgs); err != nil {
 	 log.Debug("This organization does not exist in grafana "+orgName)
 	 }else{
     log.Debug("This organization in grafana "+orgName)
-    OrganizationMembership = OrganizationMembership+1
-	   //Set default permissions,The organization is created by the administrator of grafana, others can only join
-	   //OrgIdMap[listOrgs.Result.Id] = m.ROLE_VIEWER
-    //OrgIdMap[listOrgs.Result.Id] = ""
-    //OrgIdMap[listOrgs.Result.Id] = m.ROLE_ADMIN
-    //m.GetExternalUserInfoByLoginQuery{LoginOrEmail:"ying.lv2@hp.com",}
+    joinedOrganizationCount= joinedOrganizationCount+1
     userQuery := &m.GetExternalUserInfoByLoginQuery{
-     //LoginOrEmail:     "ying.lv2@hp.com",
      LoginOrEmail:     email,
 
     }
@@ -60,8 +54,8 @@ var OrganizationMembership int = 0
     fmt.Println(userQuery)
     if err := bus.Dispatch(userQuery); err != nil {
      fmt.Println(err)
-     OrgIdMap[listOrgs.Result.Id] = m.ROLE_VIEWER
-     //OrgIdMap[listOrgs.Result.Id] = m.ROLE_EDITOR 
+     OrgRolesMap[listOrgs.Result.Id] = m.ROLE_VIEWER
+     //OrgRolesMap[listOrgs.Result.Id] = m.ROLE_EDITOR 
     }else{
      userInfo := userQuery.Result
      fmt.Println(userInfo)
@@ -71,25 +65,11 @@ var OrganizationMembership int = 0
      //fmt.Println("IsGrafanaAdmin")
      //fmt.Println(userInfo.IsGrafanaAdmin)
     }
-    /**
-    userQueryitems := m.GetUserByLoginQuery{LoginOrEmail: email}
-    err := bus.Dispatch(&userQueryitems)
-    if err != nil {
-     fmt.Println(err) 
-    }else{
-      fmt.Println("userQueryitems") 
-      fmt.Println(userQueryitems) 
-    }
-    fmt.Println(userQuery.Result.UserId) 
-    authInfoQuery := &m.GetAuthInfoQuery{UserId: userQuery.Result.UserId}
-    if err := bus.Dispatch(authInfoQuery); err != nil {
-     fmt.Println(err) 
-    }
-**/
-	   for key, value := range OrgIdMap { fmt.Println("Key:", key, "Value:", value) }
+
+	   for key, value := range OrgRolesMap { fmt.Println("Key:", key, "Value:", value) }
 	   log.Debug("The name of the organization is "+orgName)
 	   log.Debug("The organization number is "+strconv.FormatInt(listOrgs.Result.Id,10))
-    fmt.Println(OrgIdMap)
+    fmt.Println(OrgRolesMap)
 	 }
 	
 	}
@@ -222,7 +202,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	}
 
 
- //		OrgRoles:   OrgIdMap ,
+
 	extUser := &m.ExternalUserInfo{
 		AuthModule: "oauth_" + name,
 		OAuthToken: token,
@@ -230,41 +210,51 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		Name:       userInfo.Name,
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
-  Organizations:      userInfo.Organizations,
-//		OrgRoles:   map[int64]m.RoleType{2: m.ROLE_VIEWER},
+		OrgRoles:   map[int64]m.RoleType{},
+  Groups:     userInfo.Groups,
 	}
 
+//If set to false(ini>Users>allow_org_create), if there is no corresponding organization in grafana, you will not create your own private organization and you will not be able to log in.
+ if setting.AllowUserOrgCreate==false {
+   for _, value := range extUser.Groups{
+      log.Debug("Loop printing user's Groups is "+value)
+      GetOrgByNameQuery(value,userInfo.Email)
+    }
+   extUser.OrgRoles = OrgRolesMap
+   if  joinedOrganizationCount== 0 {
 
- for _, value := range extUser.Organizations{
-	   log.Debug("Loop printing user's Organizations is "+value)
-	   GetOrgByNameQuery(value,userInfo.Email)
-	 }
- extUser.OrgRoles = OrgIdMap
-  
-//	if userInfo.Role != "" {
-//		extUser.OrgRoles[1] = m.RoleType(userInfo.Role)
-//	}
- if  OrganizationMembership == 0 {
-
-   hs.redirectWithError(ctx, login.ErrMissingOrganizationMembership)
-   return
+     hs.redirectWithError(ctx, login.ErrOrganizationNoCreated)
+     return
+   }else{
+     log.Debug("joinedOrganizationCountcount is "+strconv.Itoa(joinedOrganizationCount))
+     joinedOrganizationCount= 0
+   }
  }else{
-   log.Debug("OrganizationMembership count is "+strconv.Itoa(OrganizationMembership))
-   OrganizationMembership = 0
+  fmt.Println("It's true, join your organization, if it doesn't exist in Grafana, then create your own private organization.")
  }
+
+
+  
+	if userInfo.Role != "" {
+		extUser.OrgRoles[1] = m.RoleType(userInfo.Role)
+	}
+
 	// add/update user in grafana
 	cmd := &m.UpsertUserCommand{
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
-//		SignupAllowed: true,
+
 	err = bus.Dispatch(cmd)
 	if err != nil {
 		hs.redirectWithError(ctx, err)
 		return
 	}
-
+	if cmd.Result.IsDisabled {
+		hs.redirectWithError(ctx, login.ErrUserDisabled)
+		return
+	}
 	// login
 	hs.loginUserWithUser(cmd.Result, ctx)
 

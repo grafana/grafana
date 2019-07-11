@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=debian:stretch-slim
+ARG BASE_IMAGE=ubuntu:latest
 FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
@@ -12,7 +12,7 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 # Change to tar xfzv to make tar print every file it extracts
 RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
-ARG BASE_IMAGE=debian:stretch-slim
+ARG BASE_IMAGE=ubuntu:latest
 FROM ${BASE_IMAGE}
 
 ARG GF_UID="472"
@@ -53,14 +53,6 @@ RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
 EXPOSE 3000
 
 COPY ./run.sh /run.sh
-RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
-RUN apt-get update -y 
-RUN apt-get install python-pip -y 
-RUN apt-get install vim -y 
-RUN pip install --upgrade pip
-#COPY ./pip /usr/bin/pip
-RUN pip install awscli
-#RUN chmod 755 /usr/share/grafana/conf/defaults.ini
 
-#USER grafana
+USER grafana
 ENTRYPOINT [ "/run.sh" ]

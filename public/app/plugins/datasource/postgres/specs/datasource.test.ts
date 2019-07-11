@@ -1,12 +1,14 @@
 import { PostgresDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTime } from '@grafana/data';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { IQService } from 'angular';
 
 describe('PostgreSQLDatasource', () => {
   const instanceSettings = { name: 'postgresql' };
 
   const backendSrv = {};
-  const templateSrv = {
+  const templateSrv: any = {
     replace: jest.fn(text => text),
   };
   const raw = {
@@ -25,11 +27,17 @@ describe('PostgreSQLDatasource', () => {
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new PostgresDatasource(instanceSettings, backendSrv, {}, templateSrv, ctx.timeSrvMock);
+    ctx.ds = new PostgresDatasource(
+      instanceSettings,
+      backendSrv as BackendSrv,
+      {} as IQService,
+      templateSrv,
+      ctx.timeSrvMock
+    );
   });
 
   describe('When performing annotationQuery', () => {
-    let results;
+    let results: any;
 
     const annotationName = 'MyAnno';
 
@@ -66,7 +74,7 @@ describe('PostgreSQLDatasource', () => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.annotationQuery(options).then(data => {
+      ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
       });
     });
@@ -86,7 +94,7 @@ describe('PostgreSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results;
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -109,7 +117,7 @@ describe('PostgreSQLDatasource', () => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.metricFindQuery(query).then(data => {
+      ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
@@ -122,7 +130,7 @@ describe('PostgreSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with key, value columns', () => {
-    let results;
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -145,7 +153,7 @@ describe('PostgreSQLDatasource', () => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.metricFindQuery(query).then(data => {
+      ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
@@ -160,7 +168,7 @@ describe('PostgreSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with key, value columns and with duplicate keys', () => {
-    let results;
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -183,7 +191,7 @@ describe('PostgreSQLDatasource', () => {
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({ data: response, status: 200 });
       });
-      ctx.ds.metricFindQuery(query).then(data => {
+      ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
       //ctx.$rootScope.$apply();

@@ -1,6 +1,7 @@
 // Libraries
 import _ from 'lodash';
 import $ from 'jquery';
+// @ts-ignore
 import Drop from 'tether-drop';
 
 // Utils and servies
@@ -16,20 +17,29 @@ import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
 import { configureStore } from 'app/store/configureStore';
 
+import { LocationUpdate, setLocationSrv } from '@grafana/runtime';
+import { updateLocation } from 'app/core/actions';
+
 // Types
 import { KioskUrlValue } from 'app/types';
+import { setLinkSrv, LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { UtilSrv } from 'app/core/services/util_srv';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { BridgeSrv } from 'app/core/services/bridge_srv';
+import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
+import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
 
 export class GrafanaCtrl {
   /** @ngInject */
   constructor(
-    $scope,
-    utilSrv,
-    $rootScope,
-    $controller,
-    contextSrv,
-    bridgeSrv,
+    $scope: any,
+    utilSrv: UtilSrv,
+    $rootScope: any,
+    contextSrv: ContextSrv,
+    bridgeSrv: BridgeSrv,
     backendSrv: BackendSrv,
     timeSrv: TimeSrv,
+    linkSrv: LinkSrv,
     datasourceSrv: DatasourceSrv,
     keybindingSrv: KeybindingSrv,
     angularLoader: AngularLoader
@@ -39,8 +49,14 @@ export class GrafanaCtrl {
     setBackendSrv(backendSrv);
     setDataSourceSrv(datasourceSrv);
     setTimeSrv(timeSrv);
+    setLinkSrv(linkSrv);
     setKeybindingSrv(keybindingSrv);
-    configureStore();
+    const store = configureStore();
+    setLocationSrv({
+      update: (opt: LocationUpdate) => {
+        store.dispatch(updateLocation(opt));
+      },
+    });
 
     $scope.init = () => {
       $scope.contextSrv = contextSrv;
@@ -54,7 +70,7 @@ export class GrafanaCtrl {
 
     $rootScope.colors = colors;
 
-    $rootScope.onAppEvent = function(name, callback, localScope) {
+    $rootScope.onAppEvent = function(name: string, callback: () => void, localScope: any) {
       const unbind = $rootScope.$on(name, callback);
       let callerScope = this;
       if (callerScope.$id === 1 && !localScope) {
@@ -66,7 +82,7 @@ export class GrafanaCtrl {
       callerScope.$on('$destroy', unbind);
     };
 
-    $rootScope.appEvent = (name, payload) => {
+    $rootScope.appEvent = (name: string, payload: any) => {
       $rootScope.$emit(name, payload);
       appEvents.emit(name, payload);
     };
@@ -95,11 +111,17 @@ function setViewModeBodyClass(body: JQuery, mode: KioskUrlValue) {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope, $location) {
+export function grafanaAppDirective(
+  playlistSrv: PlaylistSrv,
+  contextSrv: ContextSrv,
+  $timeout: ITimeoutService,
+  $rootScope: IRootScopeService,
+  $location: ILocationService
+) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
-    link: (scope, elem) => {
+    link: (scope: any, elem: JQuery) => {
       const body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
@@ -130,8 +152,8 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
       // tooltip removal fix
       // manage page classes
-      let pageClass;
-      scope.$on('$routeChangeSuccess', (evt, data) => {
+      let pageClass: string;
+      scope.$on('$routeChangeSuccess', (evt: any, data: any) => {
         if (pageClass) {
           body.removeClass(pageClass);
         }
@@ -265,28 +287,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         const popover = elem.find('.popover');
         if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
-        }
-
-        // hide time picker
-        const timePickerDropDownIsOpen = elem.find('.gf-timepicker-dropdown').length > 0;
-        if (timePickerDropDownIsOpen) {
-          const targetIsInTimePickerDropDown = target.parents('.gf-timepicker-dropdown').length > 0;
-          const targetIsInTimePickerNav = target.parents('.gf-timepicker-nav').length > 0;
-          const targetIsDatePickerRowBtn = target.parents('td[id^="datepicker-"]').length > 0;
-          const targetIsDatePickerHeaderBtn = target.parents('button[id^="datepicker-"]').length > 0;
-
-          if (
-            targetIsInTimePickerNav ||
-            targetIsInTimePickerDropDown ||
-            targetIsDatePickerRowBtn ||
-            targetIsDatePickerHeaderBtn
-          ) {
-            return;
-          }
-
-          scope.$apply(() => {
-            scope.appEvent('closeTimepicker');
-          });
         }
       });
     },
