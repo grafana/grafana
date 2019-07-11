@@ -148,7 +148,7 @@
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "packages:prepare": "lerna run clean && npm run test && lerna version --tag-version-prefix=\"packages@\" -m \"Packages: publish %s\" --no-push",
     "packages:build": "lerna run clean && lerna run build",
-    "packages:publish": "lerna publish from-package --contents dist --tag-version-prefix=\"packages@\" --dist-tag next"
+    "packages:publish": "lerna publish from-package --contents dist --dist-tag next --tag-version-prefix=\"packages@\""
   },
   "husky": {
     "hooks": {

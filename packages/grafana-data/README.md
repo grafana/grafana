@@ -1,3 +1,3 @@
 # Grafana Data Library
 
-The core data components
+This package holds the root data types and functions used within Grafana.

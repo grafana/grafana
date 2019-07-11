@@ -1,11 +1,9 @@
 {
   "name": "@grafana/runtime",
-  "version": "6.3.0-alpha.36",
+  "version": "6.4.0-alpha.2",
   "description": "Grafana Runtime Library",
   "keywords": [
-    "typescript",
-    "react",
-    "react-component"
+    "grafana"
   ],
   "main": "src/index.ts",
   "scripts": {
