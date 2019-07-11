@@ -33,7 +33,7 @@ ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
 # Final container
-FROM debian:stretch-slim
+FROM ubuntu:latest
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
@@ -79,14 +79,6 @@ COPY tools/phantomjs/render.js ./tools/phantomjs/render.js
 EXPOSE 3000
 
 COPY ./packaging/docker/run.sh /run.sh
-RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
-RUN apt-get update -y 
-RUN apt-get install python-pip -y 
-RUN apt-get install vim -y 
-RUN pip install --upgrade pip
-#COPY ./pip /usr/bin/pip
-RUN pip install awscli
-#RUN chmod 755 /usr/share/grafana/conf/defaults.ini
 
-#USER grafana
+USER grafana
 ENTRYPOINT [ "/run.sh" ]

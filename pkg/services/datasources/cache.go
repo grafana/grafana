@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/cache"
 )
 
 type CacheService interface {
@@ -15,8 +15,8 @@ type CacheService interface {
 }
 
 type CacheServiceImpl struct {
-	Bus          bus.Bus             `inject:""`
-	CacheService *cache.CacheService `inject:""`
+	Bus          bus.Bus                  `inject:""`
+	CacheService *localcache.CacheService `inject:""`
 }
 
 func init() {

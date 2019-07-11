@@ -2,8 +2,10 @@ import _ from 'lodash';
 import alertDef from '../../../features/alerting/state/alertDef';
 import { PanelCtrl } from 'app/plugins/sdk';
 
-import * as dateMath from '@grafana/ui/src/utils/datemath';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateMath } from '@grafana/data';
+import { dateTime } from '@grafana/data';
+import { auto } from 'angular';
+import { BackendSrv } from '@grafana/runtime';
 
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -24,7 +26,7 @@ class AlertListPanel extends PanelCtrl {
   templateSrv: string;
 
   // Set and populate defaults
-  panelDefaults = {
+  panelDefaults: any = {
     show: 'current',
     limit: 10,
     stateFilter: [],
@@ -36,7 +38,7 @@ class AlertListPanel extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private backendSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService, private backendSrv: BackendSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -49,9 +51,10 @@ class AlertListPanel extends PanelCtrl {
     }
   }
 
-  sortResult(alerts) {
+  sortResult(alerts: any[]) {
     if (this.panel.sortOrder === 3) {
       return _.sortBy(alerts, a => {
+        // @ts-ignore
         return alertDef.alertStateSortScore[a.state];
       });
     }

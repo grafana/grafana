@@ -1,15 +1,16 @@
 import _ from 'lodash';
-import { TimeRange, colors, getColorFromHexRgbOrName, FieldCache, FieldType, Field, SeriesData } from '@grafana/ui';
+import { colors, getColorFromHexRgbOrName } from '@grafana/ui';
+import { TimeRange, FieldCache, FieldType, Field, DataFrame } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 
 type Options = {
-  dataList: SeriesData[];
+  dataList: DataFrame[];
   range?: TimeRange;
 };
 
 export class DataProcessor {
-  constructor(private panel) {}
+  constructor(private panel: any) {}
 
   getSeriesList(options: Options): TimeSeries[] {
     const list: TimeSeries[] = [];
@@ -140,7 +141,7 @@ export class DataProcessor {
     }
   }
 
-  getXAxisValueOptions(options) {
+  getXAxisValueOptions(options: any) {
     switch (this.panel.xaxis.mode) {
       case 'series': {
         return [

@@ -7,7 +7,8 @@ import 'vendor/flot/jquery.flot.time';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.stack';
 
-import { TimeZone, AbsoluteTimeRange, GraphLegend, LegendItem, LegendDisplayMode } from '@grafana/ui';
+import { GraphLegend, LegendItem, LegendDisplayMode } from '@grafana/ui';
+import { TimeZone, AbsoluteTimeRange } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -79,7 +80,7 @@ interface GraphProps {
   split?: boolean;
   userOptions?: any;
   onChangeTime?: (range: AbsoluteTimeRange) => void;
-  onToggleSeries?: (alias: string, hiddenSeries: Set<string>) => void;
+  onToggleSeries?: (alias: string, hiddenSeries: string[]) => void;
 }
 
 interface GraphState {
@@ -129,7 +130,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     this.$el.unbind('plotselected', this.onPlotSelected);
   }
 
-  onPlotSelected = (event, ranges) => {
+  onPlotSelected = (event: JQueryEventObject, ranges) => {
     const { onChangeTime } = this.props;
     if (onChangeTime) {
       this.props.onChangeTime({
@@ -151,7 +152,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         max: max,
         label: 'Datetime',
         ticks: ticks,
-        timezone: timeZone.raw,
+        timezone: timeZone,
         timeformat: time_format(ticks, min, max),
       },
     };
@@ -213,13 +214,13 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     // This implementation is more or less a copy of GraphPanel's logic.
     // TODO: we need to use Graph's panel controller or split it into smaller
     // controllers to remove code duplication. Right now we cant easily use that, since Explore
-    // is not using SeriesData for graph yet
+    // is not using DataFrame for graph yet
 
     const exclusive = event.ctrlKey || event.metaKey || event.shiftKey;
 
     this.setState((state, props) => {
-      const { data } = props;
-      let nextHiddenSeries = [];
+      const { data, onToggleSeries } = props;
+      let nextHiddenSeries: string[] = [];
       if (exclusive) {
         // Toggling series with key makes the series itself to toggle
         if (state.hiddenSeries.indexOf(label) > -1) {
@@ -236,6 +237,10 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
         } else {
           nextHiddenSeries = difference(allSeriesLabels, [label]);
         }
+      }
+
+      if (onToggleSeries) {
+        onToggleSeries(label, nextHiddenSeries);
       }
 
       return {

@@ -2,7 +2,7 @@ import '../all';
 import { VariableSrv } from '../variable_srv';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import $q from 'q';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 import { CustomVariable } from '../custom_variable';
 
 describe('VariableSrv', function(this: any) {
@@ -601,7 +601,7 @@ describe('VariableSrv', function(this: any) {
     it('sets single value as array if multi choice', async () => {
       const [setValueMock, setFromUrl] = setupSetFromUrlTest(ctx, { multi: true });
       await setFromUrl('one');
-      expect(setValueMock).toHaveBeenCalledWith({ text: 'one', value: ['one'] });
+      expect(setValueMock).toHaveBeenCalledWith({ text: ['one'], value: ['one'] });
     });
 
     it('sets both text and value as array if multiple values in url', async () => {

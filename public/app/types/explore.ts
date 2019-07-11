@@ -1,19 +1,22 @@
 import { ComponentClass } from 'react';
-import { Value } from 'slate';
 import {
-  RawTimeRange,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
+  DataQueryError,
+} from '@grafana/ui';
+
+import {
+  RawTimeRange,
   LogLevel,
   TimeRange,
-  DataQueryError,
   LogsModel,
   LogsDedupStrategy,
   LoadingState,
-} from '@grafana/ui';
+  AbsoluteTimeRange,
+} from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
@@ -190,10 +193,8 @@ export interface ExploreItemState {
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
   range: TimeRange;
-  /**
-   * Scanner function that calculates a new range, triggers a query run, and returns the new range.
-   */
-  scanner?: RangeScanner;
+
+  absoluteRange: AbsoluteTimeRange;
   /**
    * True if scanning for more results is active.
    */
@@ -259,6 +260,7 @@ export interface ExploreUpdateState {
   datasource: boolean;
   queries: boolean;
   range: boolean;
+  mode: boolean;
   ui: boolean;
 }
 
@@ -272,6 +274,7 @@ export interface ExploreUIState {
 export interface ExploreUrlState {
   datasource: string;
   queries: any[]; // Should be a DataQuery, but we're going to strip refIds, so typing makes less sense
+  mode: ExploreMode;
   range: RawTimeRange;
   ui: ExploreUIState;
 }
@@ -283,7 +286,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
 
 export abstract class LanguageProvider {
   datasource: any;
-  request: (url) => Promise<any>;
+  request: (url: string, params?: any) => Promise<any>;
   /**
    * Returns startTask that resolves with a task list when main syntax is loaded.
    * Task list consists of secondary promises that load more detailed language features.
@@ -297,7 +300,8 @@ export interface TypeaheadInput {
   prefix: string;
   wrapperClasses: string[];
   labelKey?: string;
-  value?: Value;
+  //Should be Value from slate
+  value?: any;
 }
 
 export interface TypeaheadOutput {
@@ -328,8 +332,6 @@ export interface QueryTransaction {
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
-
-export type RangeScanner = () => RawTimeRange;
 
 export interface TextMatch {
   text: string;

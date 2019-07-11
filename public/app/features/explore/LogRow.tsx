@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
+// @ts-ignore
 import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 
@@ -15,15 +16,9 @@ import {
   HasMoreContextRows,
   LogRowContextQueryErrors,
 } from './LogRowContextProvider';
-import {
-  ThemeContext,
-  selectThemeVariant,
-  GrafanaTheme,
-  DataQueryResponse,
-  LogRowModel,
-  LogLabelStatsModel,
-  LogsParser,
-} from '@grafana/ui';
+import { ThemeContext, selectThemeVariant, GrafanaTheme, DataQueryResponse } from '@grafana/ui';
+
+import { LogRowModel, LogLabelStatsModel, LogsParser, TimeZone } from '@grafana/data';
 import { LogRowContext } from './LogRowContext';
 import tinycolor from 'tinycolor2';
 
@@ -32,8 +27,8 @@ interface Props {
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;
-  showLocalTime: boolean;
-  showUtc: boolean;
+  showTime: boolean;
+  timeZone: TimeZone;
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
@@ -57,7 +52,7 @@ interface State {
  * Renders a highlighted field.
  * When hovering, a stats icon is shown.
  */
-const FieldHighlight = onClick => props => {
+const FieldHighlight = (onClick: any) => (props: any) => {
   return (
     <span className={props.className} style={props.style}>
       {props.children}
@@ -85,7 +80,7 @@ const getLogRowWithContextStyles = (theme: GrafanaTheme, state: State) => {
     row: css`
       z-index: 1;
       outline: 9999px solid
-        ${tinycolor(outlineColor)
+        ${tinycolor(outlineColor as tinycolor.ColorInput)
           .setAlpha(0.7)
           .toRgbString()};
     `,
@@ -102,7 +97,7 @@ const getLogRowWithContextStyles = (theme: GrafanaTheme, state: State) => {
 export class LogRow extends PureComponent<Props, State> {
   mouseMessageTimer: NodeJS.Timer;
 
-  state = {
+  state: any = {
     fieldCount: 0,
     fieldLabel: null,
     fieldStats: null,
@@ -209,8 +204,8 @@ export class LogRow extends PureComponent<Props, State> {
       row,
       showDuplicates,
       showLabels,
-      showLocalTime,
-      showUtc,
+      timeZone,
+      showTime,
     } = this.props;
     const {
       fieldCount,
@@ -229,6 +224,7 @@ export class LogRow extends PureComponent<Props, State> {
     const highlightClassName = classnames('logs-row__match-highlight', {
       'logs-row__match-highlight--preview': previewHighlights,
     });
+    const showUtc = timeZone === 'utc';
 
     return (
       <ThemeContext.Consumer>
@@ -242,13 +238,13 @@ export class LogRow extends PureComponent<Props, State> {
                 <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
               )}
               <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
-              {showUtc && (
-                <div className="logs-row__time" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
-                  {row.timestamp}
+              {showTime && showUtc && (
+                <div className="logs-row__localtime" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                  {row.timeUtc}
                 </div>
               )}
-              {showLocalTime && (
-                <div className="logs-row__localtime" title={`${row.timestamp} (${row.timeFromNow})`}>
+              {showTime && !showUtc && (
+                <div className="logs-row__localtime" title={`${row.timeUtc} (${row.timeFromNow})`}>
                   {row.timeLocal}
                 </div>
               )}
@@ -284,6 +280,7 @@ export class LogRow extends PureComponent<Props, State> {
                   <span className={styles}>
                     {parsed && (
                       <Highlighter
+                        style={{ whiteSpace: 'pre-wrap' }}
                         autoEscape
                         highlightTag={FieldHighlight(this.onClickHighlight)}
                         textToHighlight={entry}
@@ -293,6 +290,7 @@ export class LogRow extends PureComponent<Props, State> {
                     )}
                     {!parsed && needsHighlighter && (
                       <Highlighter
+                        style={{ whiteSpace: 'pre-wrap' }}
                         textToHighlight={entry}
                         searchWords={highlights}
                         findChunks={findHighlightChunksInText}

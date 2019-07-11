@@ -19,8 +19,8 @@ type BasicUserInfo struct {
 	Email   string
 	Login   string
 	Company string
- Organizations  []string
 	Role    string
+	Groups  []string
 }
 
 type SocialConnector interface {
@@ -90,7 +90,8 @@ func NewOAuthService() {
 
 		// handle the clients that do not properly support Basic auth headers and require passing client_id/client_secret via POST payload
 		if info.SendClientCredentialsViaPost {
-			oauth2.RegisterBrokenAuthHeaderProvider(info.TokenUrl)
+			// TODO: Fix the staticcheck error
+			oauth2.RegisterBrokenAuthHeaderProvider(info.TokenUrl) //nolint:staticcheck
 		}
 
 		if name == "grafananet" {

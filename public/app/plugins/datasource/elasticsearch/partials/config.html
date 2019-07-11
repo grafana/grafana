@@ -26,7 +26,7 @@
 	<div class="gf-form">
     <span class="gf-form-label width-9">Version</span>
     <span class="gf-form-select-wrapper">
-        <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions"></select>
+        <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions" ng-change="ctrl.versionChanged()"></select>
     </span>
 	</div>
     <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.esVersion>=56">
@@ -49,5 +49,18 @@
 				for example <code>1m</code> if your data is written every minute.
 			</info-popover>
 		</div>
+	</div>
+</div>
+
+<b>Logs</b>
+
+<div class="gf-form-group">
+	<div class="gf-form max-width-30">
+		<span class="gf-form-label width-11">Message field name</span>
+		<input class="gf-form-input" type="text" ng-model='ctrl.current.jsonData.logMessageField' placeholder="_source" />
+	</div>
+	<div class="gf-form max-width-30">
+		<span class="gf-form-label width-11">Level field name</span>
+		<input class="gf-form-input" type="text" ng-model='ctrl.current.jsonData.logLevelField' placeholder="" />
 	</div>
 </div>

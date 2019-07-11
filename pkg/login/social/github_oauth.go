@@ -2,10 +2,13 @@ package social
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
+
 	"github.com/grafana/grafana/pkg/models"
+
 	"golang.org/x/oauth2"
 )
 
@@ -18,7 +21,14 @@ type SocialGithub struct {
 	teamIds              []int
 }
 
-
+type GithubTeam struct {
+	Id           int    `json:"id"`
+	Slug         string `json:"slug"`
+	URL          string `json:"html_url"`
+	Organization struct {
+		Login string `json:"login"`
+	} `json:"organization"`
+}
 
 var (
 	ErrMissingTeamMembership         = &Error{"User not a member of one of the required teams"}
@@ -48,8 +58,8 @@ func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 	}
 
 	for _, teamId := range s.teamIds {
-		for _, membershipId := range teamMemberships {
-			if teamId == membershipId {
+		for _, membership := range teamMemberships {
+			if teamId == membership.Id {
 				return true
 			}
 		}
@@ -57,19 +67,7 @@ func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 
 	return false
 }
-/*
-func exec_shell(s string) {
-    cmd := exec.Command("/bin/bash", "-c", s)
-    var out bytes.Buffer
 
-    cmd.Stdout = &out
-    err := cmd.Run()
-    if err != nil {
-        log.Fatal(err)
-    }
-    fmt.Printf("%s", out.String())
-}
-*/
 func (s *SocialGithub) IsOrganizationMember(client *http.Client, organizationsUrl string) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
@@ -120,14 +118,10 @@ func (s *SocialGithub) FetchPrivateEmail(client *http.Client) (string, error) {
 	return email, nil
 }
 
-func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]int, error) {
-	type Record struct {
-		Id int `json:"id"`
-	}
-
+func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]GithubTeam, error) {
 	url := fmt.Sprintf(s.apiUrl + "/teams?per_page=100")
 	hasMore := true
-	ids := make([]int, 0)
+	teams := make([]GithubTeam, 0)
 
 	for hasMore {
 
@@ -136,27 +130,19 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]int, error) 
 			return nil, fmt.Errorf("Error getting team memberships: %s", err)
 		}
 
-		var records []Record
+		var records []GithubTeam
 
 		err = json.Unmarshal(response.Body, &records)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting team memberships: %s", err)
 		}
 
-		newRecords := len(records)
-		existingRecords := len(ids)
-		tempIds := make([]int, (newRecords + existingRecords))
-		copy(tempIds, ids)
-		ids = tempIds
-
-		for i, record := range records {
-			ids[i] = record.Id
-		}
+		teams = append(teams, records...)
 
 		url, hasMore = s.HasMoreRecords(response.Headers)
 	}
 
-	return ids, nil
+	return teams, nil
 }
 
 func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
@@ -177,31 +163,6 @@ func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
 
 	return url, true
 
-}
-
-func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl string) ([]string, error) {
-	type Record struct {
-		Login string `json:"login"`
-	}
-
-	response, err := HttpGet(client, organizationsUrl)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting organizations: %s", err)
-	}
-
-	var records []Record
-
-	err = json.Unmarshal(response.Body, &records)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting organizations: %s", err)
-	}
-
-	var logins = make([]string, len(records))
-	for i, record := range records {
-		logins[i] = record.Login
-	}
-
-	return logins, nil
 }
 func (s *SocialGithub) FetchOrganizationsId(client *http.Client, organizationsUrl string) ([]int, error) {
 	type Record struct {
@@ -228,7 +189,33 @@ for i, record := range records {
 
 	return logins, nil
 }
+func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl string) ([]string, error) {
+	type Record struct {
+		Login string `json:"login"`
+	}
+
+	response, err := HttpGet(client, organizationsUrl)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
+	}
+
+	var records []Record
+
+	err = json.Unmarshal(response.Body, &records)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
+	}
+
+	var logins = make([]string, len(records))
+	for i, record := range records {
+		logins[i] = record.Login
+	}
+
+	return logins, nil
+}
+
 func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+
 	var data struct {
 		Id    int    `json:"id"`
 		Login string `json:"login"`
@@ -244,22 +231,25 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
-
-	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
- 
-  //Get the name of the organizations
-	organizations_data, err := s.FetchOrganizations(client, organizationsUrl)
-  // Parameter example:  organizations_data := []string{"orgname1","orgname2","orgname3"}
- 	userInfo := &BasicUserInfo{
-		Name:  data.Login,
-		Login: data.Login,
-		Id:    fmt.Sprintf("%d", data.Id),
-		Email: data.Email,
-  Organizations: organizations_data,
-
+/**
+	teamMemberships, err := s.FetchTeamMemberships(client)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting user teams: %s", err)
 	}
- 
- 
+
+	teams := convertToGroupList(teamMemberships)
+**/
+	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs")
+ organizations, err := s.FetchOrganizations(client, organizationsUrl)
+	userInfo := &BasicUserInfo{
+		Name:   data.Login,
+		Login:  data.Login,
+		Id:     fmt.Sprintf("%d", data.Id),
+		Email:  data.Email,
+		Groups: organizations,
+	}
+
+
 	if !s.IsTeamMember(client) {
 		return nil, ErrMissingTeamMembership
 	}
@@ -278,3 +268,25 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	return userInfo, nil
 }
 
+func (t *GithubTeam) GetShorthand() (string, error) {
+	if t.Organization.Login == "" || t.Slug == "" {
+		return "", errors.New("Error getting team shorthand")
+	}
+	return fmt.Sprintf("@%s/%s", t.Organization.Login, t.Slug), nil
+}
+
+func convertToGroupList(t []GithubTeam) []string {
+	groups := make([]string, 0)
+	for _, team := range t {
+		// Group shouldn't be empty string, otherwise team sync will not work properly
+		if team.URL != "" {
+			groups = append(groups, team.URL)
+		}
+		teamShorthand, _ := team.GetShorthand()
+		if teamShorthand != "" {
+			groups = append(groups, teamShorthand)
+		}
+	}
+
+	return groups
+}

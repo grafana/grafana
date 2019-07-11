@@ -1,8 +1,8 @@
 import { SqlPartDef, SqlPart } from 'app/core/components/sql_part/sql_part';
 
-const index = [];
+const index: any[] = [];
 
-function createPart(part): any {
+function createPart(part: any): any {
   const def = index[part.type];
   if (!def) {
     return null;

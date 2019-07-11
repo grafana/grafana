@@ -1,12 +1,17 @@
 import _ from 'lodash';
 
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import InfluxSeries from './influx_series';
-import InfluxQuery from './influx_query';
+import InfluxQueryModel from './influx_query_model';
 import ResponseParser from './response_parser';
 import { InfluxQueryBuilder } from './query_builder';
+import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/ui';
+import { InfluxQuery, InfluxOptions } from './types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { IQService } from 'angular';
 
-export default class InfluxDatasource {
+export default class InfluxDatasource extends DataSourceApi<InfluxQuery, InfluxOptions> {
   type: string;
   urls: any;
   username: string;
@@ -20,7 +25,13 @@ export default class InfluxDatasource {
   httpMode: string;
 
   /** @ngInject */
-  constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
+    private $q: IQService,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv
+  ) {
+    super(instanceSettings);
     this.type = 'influxdb';
     this.urls = _.map(instanceSettings.url.split(','), url => {
       return url.trim();
@@ -32,17 +43,18 @@ export default class InfluxDatasource {
     this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
-    this.interval = (instanceSettings.jsonData || {}).timeInterval;
+    const settingsData = instanceSettings.jsonData || ({} as InfluxOptions);
+    this.interval = settingsData.timeInterval;
+    this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
-    this.httpMode = instanceSettings.jsonData.httpMode || 'GET';
   }
 
-  query(options) {
+  query(options: any) {
     let timeFilter = this.getTimeFilter(options);
     const scopedVars = options.scopedVars;
     const targets = _.cloneDeep(options.targets);
-    const queryTargets = [];
-    let queryModel;
+    const queryTargets: any[] = [];
+    let queryModel: InfluxQueryModel;
     let i, y;
 
     let allQueries = _.map(targets, target => {
@@ -55,7 +67,7 @@ export default class InfluxDatasource {
       // backward compatibility
       scopedVars.interval = scopedVars.__interval;
 
-      queryModel = new InfluxQuery(target, this.templateSrv, scopedVars);
+      queryModel = new InfluxQueryModel(target, this.templateSrv, scopedVars);
       return queryModel.render(true);
     }).reduce((acc, current) => {
       if (current !== '') {
@@ -81,7 +93,7 @@ export default class InfluxDatasource {
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
     return this._seriesQuery(allQueries, options).then(
-      (data): any => {
+      (data: any): any => {
         if (!data || !data.results) {
           return [];
         }
@@ -124,7 +136,7 @@ export default class InfluxDatasource {
     );
   }
 
-  annotationQuery(options) {
+  annotationQuery(options: any) {
     if (!options.annotation.query) {
       return this.$q.reject({
         message: 'Query missing in annotation definition',
@@ -135,7 +147,7 @@ export default class InfluxDatasource {
     let query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, null, 'regex');
 
-    return this._seriesQuery(query, options).then(data => {
+    return this._seriesQuery(query, options).then((data: any) => {
       if (!data || !data.results || !data.results[0]) {
         throw { message: 'No results in response from InfluxDB' };
       }
@@ -146,7 +158,7 @@ export default class InfluxDatasource {
     });
   }
 
-  targetContainsTemplate(target) {
+  targetContainsTemplate(target: any) {
     for (const group of target.groupBy) {
       for (const param of group.params) {
         if (this.templateSrv.variableExists(param)) {
@@ -170,14 +182,14 @@ export default class InfluxDatasource {
     return this._seriesQuery(interpolated, options).then(_.curry(this.responseParser.parse)(query));
   }
 
-  getTagKeys(options) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
+  getTagKeys(options: any = {}) {
+    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('TAG_KEYS');
     return this.metricFindQuery(query, options);
   }
 
-  getTagValues(options) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
+  getTagValues(options: any = {}) {
+    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
     const query = queryBuilder.buildExploreQuery('TAG_VALUES', options.key);
     return this.metricFindQuery(query, options);
   }
@@ -195,7 +207,7 @@ export default class InfluxDatasource {
     return this._influxRequest(this.httpMode, '/query', { q: query, epoch: 'ms' }, options);
   }
 
-  serializeParams(params) {
+  serializeParams(params: any) {
     if (!params) {
       return '';
     }
@@ -218,14 +230,14 @@ export default class InfluxDatasource {
     const query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
 
     return this._seriesQuery(query)
-      .then(res => {
+      .then((res: any) => {
         const error = _.get(res, 'results[0].error');
         if (error) {
           return { status: 'error', message: error };
         }
         return { status: 'success', message: 'Data source is working' };
       })
-      .catch(err => {
+      .catch((err: any) => {
         return { status: 'error', message: err.message };
       });
   }
@@ -280,10 +292,10 @@ export default class InfluxDatasource {
     }
 
     return this.backendSrv.datasourceRequest(req).then(
-      result => {
+      (result: any) => {
         return result.data;
       },
-      err => {
+      (err: any) => {
         if (err.status !== 0 || err.status >= 300) {
           if (err.data && err.data.error) {
             throw {
@@ -303,7 +315,7 @@ export default class InfluxDatasource {
     );
   }
 
-  getTimeFilter(options) {
+  getTimeFilter(options: any) {
     const from = this.getInfluxTime(options.rangeRaw.from, false, options.timezone);
     const until = this.getInfluxTime(options.rangeRaw.to, true, options.timezone);
     const fromIsAbsolute = from[from.length - 1] === 'ms';
@@ -315,7 +327,7 @@ export default class InfluxDatasource {
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date, roundUp, timezone) {
+  getInfluxTime(date: any, roundUp: any, timezone: any) {
     if (_.isString(date)) {
       if (date === 'now') {
         return 'now()';

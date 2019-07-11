@@ -18,7 +18,8 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { DataQuery, DataSourceSelectItem, PanelData, LoadingState } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceSelectItem, PanelData } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';

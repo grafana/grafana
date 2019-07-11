@@ -7,8 +7,7 @@ import { FormLabel } from '../FormLabel/FormLabel';
 import { UnitPicker } from '../UnitPicker/UnitPicker';
 
 // Types
-import { Field } from '../../types/data';
-import { toIntegerOrUndefined } from '../../utils';
+import { toIntegerOrUndefined, Field } from '@grafana/data';
 import { SelectOptionItem } from '../Select/Select';
 
 import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
@@ -79,6 +78,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
       {'$' + VAR_CELL_PREFIX + '{N}'} / {'$' + VAR_CALC}
     </div>
   );
+
   return (
     <>
       <FormField

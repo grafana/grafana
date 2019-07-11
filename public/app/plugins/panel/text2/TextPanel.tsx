@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import Remarkable from 'remarkable';
 import { debounce } from 'lodash';
+import { renderMarkdown } from '@grafana/data';
 
 // Utils
 import { sanitize } from 'app/core/utils/text';
@@ -9,7 +9,7 @@ import config from 'app/core/config';
 
 // Types
 import { TextOptions } from './types';
-import { PanelProps } from '@grafana/ui/src/types';
+import { PanelProps } from '@grafana/ui';
 
 interface Props extends PanelProps<TextOptions> {}
 interface State {
@@ -17,9 +17,7 @@ interface State {
 }
 
 export class TextPanel extends PureComponent<Props, State> {
-  remarkable: Remarkable;
-
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -59,10 +57,7 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   prepareMarkdown(content: string): string {
-    if (!this.remarkable) {
-      this.remarkable = new Remarkable();
-    }
-    return this.prepareHTML(this.remarkable.render(content));
+    return this.prepareHTML(renderMarkdown(content));
   }
 
   processContent(options: TextOptions): string {

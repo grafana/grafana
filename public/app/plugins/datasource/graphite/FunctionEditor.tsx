@@ -1,5 +1,6 @@
 import React from 'react';
 import { PopperController, Popper } from '@grafana/ui';
+// @ts-ignore
 import rst2html from 'rst2html';
 import { FunctionDescriptor, FunctionEditorControlsProps, FunctionEditorControls } from './FunctionEditorControls';
 
@@ -22,7 +23,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
     };
   }
 
-  renderContent = ({ updatePopperPosition }) => {
+  renderContent = ({ updatePopperPosition }: any) => {
     const {
       onMoveLeft,
       onMoveRight,

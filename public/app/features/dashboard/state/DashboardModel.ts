@@ -13,9 +13,10 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { PanelModel, GridPos } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { TimeRange } from '@grafana/ui/src';
-import { UrlQueryValue, KIOSK_MODE_TV, DashboardMeta } from 'app/types';
-import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { TimeRange, TimeZone } from '@grafana/data';
+import { UrlQueryValue } from '@grafana/runtime';
+import { KIOSK_MODE_TV, DashboardMeta } from 'app/types';
+import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/data';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -831,8 +832,8 @@ export class DashboardModel {
     return this.snapshot !== undefined;
   }
 
-  getTimezone() {
-    return this.timezone ? this.timezone : contextSrv.user.timezone;
+  getTimezone(): TimeZone {
+    return (this.timezone ? this.timezone : contextSrv.user.timezone) as TimeZone;
   }
 
   private updateSchema(old: any) {

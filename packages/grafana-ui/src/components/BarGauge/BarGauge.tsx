@@ -3,10 +3,11 @@ import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
-import { getColorFromHexRgbOrName, getThresholdForValue } from '../../utils';
+import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
-import { DisplayValue, Themeable, TimeSeriesValue, Threshold, VizOrientation } from '../../types';
+import { DisplayValue, Themeable, VizOrientation } from '../../types';
+import { Threshold, TimeSeriesValue, getThresholdForValue } from '@grafana/data';
 
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;

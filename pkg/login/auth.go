@@ -20,7 +20,7 @@ var (
 	ErrUsersQuotaReached     = errors.New("Users quota reached")
 	ErrGettingUserQuota      = errors.New("Error getting user quota")
 	ErrUserDisabled          = errors.New("User is disabled")
- ErrMissingOrganizationMembership          = errors.New("User not a member of one of the required organizations,please contact admin to create your organization")
+ ErrOrganizationNoCreated          = errors.New("User not a member of one of the required organizations,please contact admin to create your organization")
 )
 
 func Init() {

@@ -1,7 +1,8 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import { variableRegex } from 'app/features/templating/variable';
-import { TimeRange, ScopedVars } from '@grafana/ui/src';
+import { ScopedVars } from '@grafana/ui';
+import { TimeRange } from '@grafana/data';
 
 function luceneEscape(value) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
@@ -13,7 +14,7 @@ export class TemplateSrv {
   private regex = variableRegex;
   private index = {};
   private grafanaVariables = {};
-  private builtIns = {};
+  private builtIns: any = {};
   private timeRange: TimeRange = null;
 
   constructor() {
@@ -26,6 +27,10 @@ export class TemplateSrv {
     this.variables = variables;
     this.timeRange = timeRange;
     this.updateIndex();
+  }
+
+  getBuiltInIntervalValue() {
+    return this.builtIns.__interval.value;
   }
 
   updateIndex() {

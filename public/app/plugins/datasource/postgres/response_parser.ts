@@ -1,10 +1,11 @@
 import _ from 'lodash';
+import { IQService } from 'angular';
 
 export default class ResponseParser {
-  constructor(private $q) {}
+  constructor(private $q: IQService) {}
 
-  processQueryResult(res) {
-    const data = [];
+  processQueryResult(res: any) {
+    const data: any[] = [];
 
     if (!res.data.results) {
       return { data: data };
@@ -37,7 +38,7 @@ export default class ResponseParser {
     return { data: data };
   }
 
-  parseMetricFindQueryResult(refId, results) {
+  parseMetricFindQueryResult(refId: string, results: any) {
     if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
       return [];
     }
@@ -54,7 +55,7 @@ export default class ResponseParser {
     return this.transformToSimpleList(rows);
   }
 
-  transformToKeyValueList(rows, textColIndex, valueColIndex) {
+  transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number) {
     const res = [];
 
     for (let i = 0; i < rows.length; i++) {
@@ -69,7 +70,7 @@ export default class ResponseParser {
     return res;
   }
 
-  transformToSimpleList(rows) {
+  transformToSimpleList(rows: any[][]) {
     const res = [];
 
     for (let i = 0; i < rows.length; i++) {
@@ -86,7 +87,7 @@ export default class ResponseParser {
     });
   }
 
-  findColIndex(columns, colName) {
+  findColIndex(columns: any[], colName: string) {
     for (let i = 0; i < columns.length; i++) {
       if (columns[i].text === colName) {
         return i;
@@ -96,7 +97,7 @@ export default class ResponseParser {
     return -1;
   }
 
-  containsKey(res, key) {
+  containsKey(res: any, key: any) {
     for (let i = 0; i < res.length; i++) {
       if (res[i].text === key) {
         return true;
@@ -105,7 +106,7 @@ export default class ResponseParser {
     return false;
   }
 
-  transformAnnotationResponse(options, data) {
+  transformAnnotationResponse(options: any, data: any) {
     const table = data.data.results[options.annotation.name].tables[0];
 
     let timeColumnIndex = -1;

@@ -6,17 +6,9 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import {
-  toLegacyResponseData,
-  isSeriesData,
-  LegacyResponseData,
-  TimeRange,
-  DataSourceApi,
-  PanelData,
-  LoadingState,
-  DataQueryResponse,
-  SeriesData,
-} from '@grafana/ui';
+import { toLegacyResponseData, isDataFrame, TimeRange, LoadingState, DataFrame } from '@grafana/data';
+
+import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
 import { PanelQueryRunnerFormat } from '../dashboard/state/PanelQueryRunner';
@@ -89,16 +81,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = true;
 
     // load datasource service
-    return (
-      this.datasourceSrv
-        .get(this.panel.datasource, this.panel.scopedVars)
-        .then(this.updateTimeRange.bind(this))
-        .then(this.issueQueries.bind(this))
-        // NOTE handleQueryResult is called by panelDataObserver
-        .catch((err: any) => {
-          this.processDataError(err);
-        })
-    );
+    return this.datasourceSrv
+      .get(this.panel.datasource, this.panel.scopedVars)
+      .then(this.updateTimeRange.bind(this))
+      .then(this.issueQueries.bind(this))
+      .catch((err: any) => {
+        this.processDataError(err);
+      });
   }
 
   processDataError(err: any) {
@@ -134,7 +123,11 @@ class MetricsPanelCtrl extends PanelCtrl {
         return;
       }
 
-      this.loading = false;
+      // Ignore data in loading state
+      if (data.state === LoadingState.Loading) {
+        this.loading = true;
+        return;
+      }
 
       if (data.request) {
         const { range, timeInfo } = data.request;
@@ -150,7 +143,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         // The result should already be processed, but just in case
         if (!data.legacy) {
           data.legacy = data.series.map(v => {
-            if (isSeriesData(v)) {
+            if (isDataFrame(v)) {
               return toLegacyResponseData(v);
             }
             return v;
@@ -163,7 +156,7 @@ class MetricsPanelCtrl extends PanelCtrl {
           data: data.legacy,
         });
       } else {
-        this.handleSeriesData(data.series);
+        this.handleDataFrame(data.series);
       }
     },
   };
@@ -222,14 +215,11 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
   }
 
-  handleSeriesData(data: SeriesData[]) {
-    this.loading = false;
-
+  handleDataFrame(data: DataFrame[]) {
     if (this.dashboard && this.dashboard.snapshot) {
       this.panel.snapshotData = data;
     }
-
-    // Subclasses that asked for SeriesData will override
+    // Subclasses that asked for DataFrame will override
   }
 
   handleQueryResult(result: DataQueryResponse) {

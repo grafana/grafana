@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"flag"
 	"os"
+	"strings"
 
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
@@ -17,13 +17,20 @@ import (
 func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
 		cmd := &utils.ContextCommandLine{Context: context}
+		debug := cmd.GlobalBool("debug")
 
 		cfg := setting.NewCfg()
+
+		configOptions := strings.Split(cmd.GlobalString("configOverrides"), " ")
 		cfg.Load(&setting.CommandLineArgs{
-			Config:   cmd.String("config"),
-			HomePath: cmd.String("homepath"),
-			Args:     flag.Args(),
+			Config:   cmd.ConfigFile(),
+			HomePath: cmd.HomePath(),
+			Args:     append(configOptions, cmd.Args()...), // tailing arguments have precedence over the options string
 		})
+
+		if debug {
+			cfg.LogConfigSources()
+		}
 
 		engine := &sqlstore.SqlStore{}
 		engine.Cfg = cfg
@@ -98,16 +105,6 @@ var adminCommands = []cli.Command{
 		Name:   "reset-admin-password",
 		Usage:  "reset-admin-password <new password>",
 		Action: runDbCommand(resetPasswordCommand),
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "homepath",
-				Usage: "path to grafana install/home path, defaults to working directory",
-			},
-			cli.StringFlag{
-				Name:  "config",
-				Usage: "path to config file",
-			},
-		},
 	},
 	{
 		Name:  "data-migration",
