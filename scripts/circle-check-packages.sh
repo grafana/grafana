@@ -27,6 +27,9 @@ else
   echo $'\nBuilding packages'
   yarn packages:build
 
+  echo $'\nCleaning repo'
+  git reset --hard
+
   echo $'\nPublishing packages'
   yarn packages:publishNext
 fi
