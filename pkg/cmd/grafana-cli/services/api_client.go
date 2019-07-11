@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"runtime"
 
@@ -43,6 +44,15 @@ func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plug
 }
 
 func (client *GrafanaComClient) DownloadFile(pluginName, filePath, url string, checksum string) (content []byte, err error) {
+	// Try handling url like local file path first
+	if _, err := os.Stat(url); err == nil {
+		bytes, err := ioutil.ReadFile(url)
+		if err != nil {
+			return nil, errutil.Wrap("Failed to read file", err)
+		}
+		return bytes, nil
+	}
+
 	client.retryCount = 0
 
 	defer func() {

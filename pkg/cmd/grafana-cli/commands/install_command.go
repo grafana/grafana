@@ -103,7 +103,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	}
 
 	logger.Infof("installing %v @ %v\n", pluginName, version)
-	logger.Infof("from url: %v\n", downloadURL)
+	logger.Infof("from: %v\n", downloadURL)
 	logger.Infof("into: %v\n", pluginFolder)
 	logger.Info("\n")
 

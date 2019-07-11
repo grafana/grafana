@@ -1,6 +1,6 @@
 {
   "name": "@grafana/ui",
-  "version": "6.3.0-alpha.1",
+  "version": "6.3.0-alpha.36",
   "description": "Grafana Components Library",
   "keywords": [
     "typescript",
@@ -14,7 +14,9 @@
     "storybook": "start-storybook -p 9001 -c .storybook",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",
     "clean": "rimraf ./dist ./compiled",
-    "build": "rollup -c rollup.config.ts"
+    "bundle": "rollup -c rollup.config.ts",
+    "build": "grafana-toolkit package:build --scope=ui",
+    "postpublish": "npm run clean"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -24,7 +26,7 @@
     "classnames": "2.2.6",
     "d3": "5.9.1",
     "jquery": "3.4.1",
-    "lodash": "4.17.11",
+    "lodash": "4.17.14",
     "moment": "2.24.0",
     "papaparse": "4.6.3",
     "react": "16.8.6",
