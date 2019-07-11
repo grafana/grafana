@@ -269,7 +269,7 @@ export default class InfluxQueryModel {
 
   renderAdhocFilters(filters: any[]) {
     const conditions = _.map(filters, (tag, index) => {
-      return this.renderTagCondition(tag, index, false);
+      return this.renderTagCondition(tag, index, true);
     });
     return conditions.join(' ');
   }
