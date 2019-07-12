@@ -35,6 +35,7 @@ var (
 	M_Api_Dashboard_Insert               prometheus.Counter
 	M_Alerting_Result_State              *prometheus.CounterVec
 	M_Alerting_Notification_Sent         *prometheus.CounterVec
+	M_Alerting_Notification_Failed       *prometheus.CounterVec
 	M_Aws_CloudWatch_GetMetricStatistics prometheus.Counter
 	M_Aws_CloudWatch_ListMetrics         prometheus.Counter
 	M_Aws_CloudWatch_GetMetricData       prometheus.Counter
@@ -207,7 +208,13 @@ func init() {
 
 	M_Alerting_Notification_Sent = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name:      "alerting_notification_sent_total",
-		Help:      "counter for how many alert notifications been sent",
+		Help:      "counter for how many alert notifications have been sent",
+		Namespace: exporterName,
+	}, []string{"type"})
+
+	M_Alerting_Notification_Failed = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name:      "alerting_notification_failed_total",
+		Help:      "counter for how many alert notifications have failed",
 		Namespace: exporterName,
 	}, []string{"type"})
 
@@ -373,6 +380,7 @@ func initMetricVars() {
 		M_Api_Dashboard_Insert,
 		M_Alerting_Result_State,
 		M_Alerting_Notification_Sent,
+		M_Alerting_Notification_Failed,
 		M_Aws_CloudWatch_GetMetricStatistics,
 		M_Aws_CloudWatch_ListMetrics,
 		M_Aws_CloudWatch_GetMetricData,
