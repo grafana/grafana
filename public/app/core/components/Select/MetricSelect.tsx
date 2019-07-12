@@ -1,7 +1,8 @@
 import React from 'react';
 import _ from 'lodash';
 
-import { Select, SelectableItem } from '@grafana/ui';
+import { Select } from '@grafana/ui';
+import { SelectableItem } from '@grafana/data';
 import { Variable } from 'app/types/templates';
 
 export interface Props {

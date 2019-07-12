@@ -2,7 +2,8 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { Select, SelectableItem } from '@grafana/ui';
+import { Select } from '@grafana/ui';
+import { SelectableItem } from '@grafana/data';
 
 // Types
 import { DataSourceSelectItem } from '@grafana/ui';

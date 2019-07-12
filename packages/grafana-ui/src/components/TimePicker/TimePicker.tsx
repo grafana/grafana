@@ -13,8 +13,7 @@ import { rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT } from '@grafana/data';
-import { SelectableItem } from '../Select/Select';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableItem } from '@grafana/data';
 
 export interface Props {
   value: TimeRange;

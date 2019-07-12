@@ -6,7 +6,8 @@ import _ from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 
 // Components
-import { FormLabel, Select, SelectableItem } from '@grafana/ui';
+import { FormLabel, Select } from '@grafana/ui';
+import { SelectableItem } from '@grafana/data';
 
 // Types
 import { QueryEditorProps } from '@grafana/ui';

@@ -13,8 +13,7 @@ import { Help } from './Help';
 import { StackdriverQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
-import { SelectableItem } from '@grafana/ui';
-import { TimeSeries } from '@grafana/data';
+import { TimeSeries, SelectableItem } from '@grafana/data';
 
 export interface Props {
   onQueryChange: (target: StackdriverQuery) => void;

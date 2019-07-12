@@ -8,8 +8,8 @@ import { StatsPicker } from '../StatsPicker/StatsPicker';
 
 // Types
 import { FieldDisplayOptions, DEFAULT_FIELD_DISPLAY_VALUES_LIMIT } from '../../utils/fieldDisplay';
-import Select, { SelectableItem } from '../Select/Select';
-import { Field, ReducerID, toNumberString, toIntegerOrUndefined } from '@grafana/data';
+import Select from '../Select/Select';
+import { Field, ReducerID, toNumberString, toIntegerOrUndefined, SelectableItem } from '@grafana/data';
 
 const showOptions: Array<SelectableItem<boolean>> = [
   {

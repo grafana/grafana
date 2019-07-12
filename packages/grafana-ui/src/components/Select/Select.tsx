@@ -20,7 +20,6 @@ import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { PopperContent } from '../Tooltip/PopperController';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { SelectableItem } from '@grafana/data';
-export { SelectableItem }; // for simplicity
 
 export interface CommonProps<T> {
   defaultValue?: any;

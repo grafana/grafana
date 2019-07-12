@@ -1,9 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-// Components
-// import { Select, SelectableItem } from '@grafana/ui';
-
 // Types
 import { QueryEditorProps } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';

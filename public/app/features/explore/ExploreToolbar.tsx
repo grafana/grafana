@@ -3,8 +3,8 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId, ExploreMode } from 'app/types/explore';
-import { DataSourceSelectItem, SelectableItem } from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange, LoadingState } from '@grafana/data';
+import { DataSourceSelectItem } from '@grafana/ui';
+import { RawTimeRange, TimeZone, TimeRange, LoadingState, SelectableItem } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {

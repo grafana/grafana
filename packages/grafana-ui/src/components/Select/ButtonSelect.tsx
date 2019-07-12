@@ -1,6 +1,7 @@
 import React, { PureComponent, ReactElement } from 'react';
-import Select, { SelectableItem } from './Select';
+import Select from './Select';
 import { PopperContent } from '../Tooltip/PopperController';
+import { SelectableItem } from '@grafana/data';
 
 interface ButtonComponentProps {
   label: ReactElement | string | undefined;

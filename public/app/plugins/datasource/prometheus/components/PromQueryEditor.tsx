@@ -2,15 +2,14 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { FormLabel, Select, SelectableItem, Switch } from '@grafana/ui';
-import { QueryEditorProps, DataSourceStatus } from '@grafana/ui';
+import { FormLabel, Select, Switch, QueryEditorProps, DataSourceStatus } from '@grafana/ui';
+import { SelectableItem } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
 
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
-
 export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
 
 const FORMAT_OPTIONS: Array<SelectableItem<string>> = [

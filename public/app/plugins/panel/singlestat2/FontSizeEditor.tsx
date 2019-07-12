@@ -2,10 +2,11 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { FormLabel, Select, PanelOptionsGroup, SelectableItem } from '@grafana/ui';
+import { FormLabel, Select, PanelOptionsGroup } from '@grafana/ui';
 
 // Types
 import { SingleStatOptions } from './types';
+import { SelectableItem } from '@grafana/data';
 
 const labelWidth = 6;
 

@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
-import { Select, GrafanaTheme, ThemeContext, SelectableItem } from '@grafana/ui';
+import { Select, GrafanaTheme, ThemeContext } from '@grafana/ui';
 import { css, cx } from 'emotion';
+import { SelectableItem } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme) => ({
   keyValueContainer: css`
