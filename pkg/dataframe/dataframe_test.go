@@ -14,11 +14,11 @@ func TestLoadingDataFrameFromCSV(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	columnSpecifiers := ColumnSpecifiers{TimeColumnSpecifier{Format: time.RFC3339}, NumberColumnSpecifier{}}
+	schema := Schema{TimeColumnSchema{Format: time.RFC3339}, NumberColumnSchema{}}
 	df, err := FromCSV(
 		bufio.NewReader(data),
 		true,
-		columnSpecifiers)
+		schema)
 	if err != nil {
 		t.Error(err)
 		return

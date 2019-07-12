@@ -6,7 +6,7 @@ import (
 )
 
 // FromCSV is a simple CSV loader, primarily for testing
-func FromCSV(reader io.Reader, hasHeader bool, cs ColumnSpecifiers) (*DataFrame, error) {
+func FromCSV(reader io.Reader, hasHeader bool, schema Schema) (*DataFrame, error) {
 	df := new(DataFrame)
 	csvReader := csv.NewReader(reader)
 	i := 0
@@ -21,11 +21,8 @@ func FromCSV(reader io.Reader, hasHeader bool, cs ColumnSpecifiers) (*DataFrame,
 
 		if i == 0 && hasHeader {
 			for fieldIdx, header := range record {
-				df.Columns = append(df.Columns, Column{
-					Name: header,
-					// TODO check len
-					Type: cs[fieldIdx].ColumnType(),
-				})
+				schema[fieldIdx].SetName(header)
+				df.Schema = append(df.Schema, schema[fieldIdx])
 			}
 			i++
 			continue
@@ -33,7 +30,7 @@ func FromCSV(reader io.Reader, hasHeader bool, cs ColumnSpecifiers) (*DataFrame,
 
 		row := []Field{}
 		for fieldIdx, fieldValue := range record {
-			v, err := cs[fieldIdx].Extract(fieldValue)
+			v, err := schema[fieldIdx].Extract(fieldValue)
 			if err != nil {
 				return nil, err
 			}
