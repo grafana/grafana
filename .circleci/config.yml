@@ -711,8 +711,8 @@ workflows:
           filters: *filter-only-master
       - release-next-packages:
           requires:
+            - build-all
             - test-frontend
-            - build-fast-frontend
           filters: *filter-only-master
   release:
     jobs:
