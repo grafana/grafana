@@ -1,10 +1,11 @@
-import { DataSourceApi, DataQuery, PanelData, LoadingState } from '@grafana/ui';
+import { DataSourceApi, DataQuery, PanelData } from '@grafana/ui';
 import { PanelQueryRunner, QueryRunnerOptions } from 'app/features/dashboard/state/PanelQueryRunner';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
 import { DashboardQuery } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
+import { LoadingState } from '@grafana/data';
 
 export const SHARED_DASHBODARD_QUERY = '-- Dashboard --';
 
