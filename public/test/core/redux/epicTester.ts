@@ -8,14 +8,16 @@ import {
   DataStreamObserver,
   DataQueryResponse,
   DataStreamState,
-  DefaultTimeZone,
 } from '@grafana/ui';
+import { DefaultTimeZone } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
 import { EpicDependencies } from 'app/store/configureStore';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DEFAULT_RANGE } from 'app/core/utils/explore';
+
+export const MOCKED_ABSOLUTE_RANGE = { from: 1, to: 2 };
 
 export const epicTester = (
   epic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDependencies>,
@@ -48,6 +50,8 @@ export const epicTester = (
 
   const getTimeRange = jest.fn().mockReturnValue(DEFAULT_RANGE);
 
+  const getShiftedTimeRange = jest.fn().mockReturnValue(MOCKED_ABSOLUTE_RANGE);
+
   const getTimeZone = jest.fn().mockReturnValue(DefaultTimeZone);
 
   const toUtc = jest.fn().mockReturnValue(null);
@@ -61,6 +65,7 @@ export const epicTester = (
     getTimeZone,
     toUtc,
     dateTime,
+    getShiftedTimeRange,
   };
 
   const theDependencies: EpicDependencies = { ...defaultDependencies, ...dependencies };
@@ -106,6 +111,7 @@ export const epicTester = (
   };
 
   const getDependencyMock = (dependency: string, method?: string) => {
+    // @ts-ignore
     const dep = theDependencies[dependency];
     let mock = null;
     if (dep instanceof Function) {

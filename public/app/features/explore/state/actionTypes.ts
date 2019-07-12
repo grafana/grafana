@@ -1,30 +1,25 @@
 // Types
 import { Emitter } from 'app/core/core';
 import {
-  RawTimeRange,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryFixAction,
+  DataQueryError,
+  DataQueryResponseData,
+} from '@grafana/ui';
+
+import {
+  RawTimeRange,
   LogLevel,
   TimeRange,
-  DataQueryError,
-  SeriesData,
+  DataFrame,
   LogsModel,
   TimeSeries,
-  DataQueryResponseData,
   LoadingState,
   AbsoluteTimeRange,
-} from '@grafana/ui/src/types';
-import {
-  ExploreId,
-  ExploreItemState,
-  HistoryItem,
-  RangeScanner,
-  ExploreUIState,
-  ExploreMode,
-  QueryOptions,
-} from 'app/types/explore';
+} from '@grafana/data';
+import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode, QueryOptions } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 import TableModel from 'app/core/table_model';
 
@@ -98,6 +93,7 @@ export interface InitializeExplorePayload {
   eventBridge: Emitter;
   queries: DataQuery[];
   range: TimeRange;
+  mode: ExploreMode;
   ui: ExploreUIState;
 }
 
@@ -170,12 +166,6 @@ export interface RemoveQueryRowPayload {
 
 export interface ScanStartPayload {
   exploreId: ExploreId;
-  scanner: RangeScanner;
-}
-
-export interface ScanRangePayload {
-  exploreId: ExploreId;
-  range: RawTimeRange;
 }
 
 export interface ScanStopPayload {
@@ -214,7 +204,7 @@ export interface UpdateDatasourceInstancePayload {
 
 export interface ToggleLogLevelPayload {
   exploreId: ExploreId;
-  hiddenLogLevels: Set<LogLevel>;
+  hiddenLogLevels: LogLevel[];
 }
 
 export interface QueriesImportedPayload {
@@ -252,7 +242,7 @@ export interface ProcessQueryResultsPayload {
   datasourceId: string;
   loadingState: LoadingState;
   series?: DataQueryResponseData[];
-  delta?: SeriesData[];
+  delta?: DataFrame[];
 }
 
 export interface RunQueriesBatchPayload {
@@ -261,7 +251,7 @@ export interface RunQueriesBatchPayload {
 }
 
 export interface LimitMessageRatePayload {
-  series: SeriesData[];
+  series: DataFrame[];
   exploreId: ExploreId;
   datasourceId: string;
 }
@@ -396,7 +386,6 @@ export const runQueriesAction = actionCreatorFactory<RunQueriesPayload>('explore
  * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
  */
 export const scanStartAction = actionCreatorFactory<ScanStartPayload>('explore/SCAN_START').create();
-export const scanRangeAction = actionCreatorFactory<ScanRangePayload>('explore/SCAN_RANGE').create();
 
 /**
  * Stop any scanning for more results.

@@ -1,9 +1,9 @@
 {
   "name": "@grafana/ui",
-  "version": "6.3.0-alpha.1",
+  "version": "6.4.0-alpha.12",
   "description": "Grafana Components Library",
   "keywords": [
-    "typescript",
+    "grafana",
     "react",
     "react-component"
   ],
@@ -14,7 +14,9 @@
     "storybook": "start-storybook -p 9001 -c .storybook",
     "storybook:build": "build-storybook -o ./dist/storybook -c .storybook",
     "clean": "rimraf ./dist ./compiled",
-    "build": "rollup -c rollup.config.ts"
+    "bundle": "rollup -c rollup.config.ts",
+    "build": "grafana-toolkit package:build --scope=ui",
+    "postpublish": "npm run clean"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -24,7 +26,7 @@
     "classnames": "2.2.6",
     "d3": "5.9.1",
     "jquery": "3.4.1",
-    "lodash": "4.17.11",
+    "lodash": "4.17.14",
     "moment": "2.24.0",
     "papaparse": "4.6.3",
     "react": "16.8.6",
@@ -57,7 +59,6 @@
     "@types/react-custom-scrollbars": "4.0.5",
     "@types/react-test-renderer": "16.8.1",
     "@types/react-transition-group": "2.0.16",
-    "@types/sinon": "^7.0.11",
     "@types/storybook__addon-actions": "3.4.2",
     "@types/storybook__addon-info": "4.1.1",
     "@types/storybook__addon-knobs": "4.0.4",
@@ -75,7 +76,6 @@
     "rollup-plugin-terser": "4.0.4",
     "rollup-plugin-typescript2": "0.19.3",
     "rollup-plugin-visualizer": "0.9.2",
-    "sinon": "1.17.6",
     "typescript": "3.4.1"
   },
   "resolutions": {

@@ -55,7 +55,9 @@
             </a>
           </td>
           <td class="text-right">
-            <span class="label label-tag" ng-class="{'muted': user.isDisabled}" ng-if="ctrl.getAuthModule(user) === 'ldap'">LDAP</span>
+            <span class="label label-tag" ng-style="user.authLabelStyle" ng-if="user.authLabel">
+              {{user.authLabel}}
+            </span>
           </td>
           <td class="text-right">
             <span class="label label-tag label-tag--gray" ng-if="user.isDisabled">Disabled</span>

@@ -1,6 +1,7 @@
-import InputDatasource, { describeSeriesData } from './InputDatasource';
+import InputDatasource, { describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
-import { readCSV, DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
+import { readCSV } from '@grafana/data';
+import { DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('InputDatasource', () => {
@@ -32,11 +33,11 @@ describe('InputDatasource', () => {
     });
   });
 
-  test('SeriesData descriptions', () => {
-    expect(describeSeriesData([])).toEqual('');
-    expect(describeSeriesData(null)).toEqual('');
+  test('DataFrame descriptions', () => {
+    expect(describeDataFrame([])).toEqual('');
+    expect(describeDataFrame(null)).toEqual('');
     expect(
-      describeSeriesData([
+      describeDataFrame([
         {
           name: 'x',
           fields: [{ name: 'a' }],

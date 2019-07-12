@@ -1,5 +1,5 @@
 import { refreshExplore, testDatasource, loadDatasource } from './actions';
-import { ExploreId, ExploreUrlState, ExploreUpdateState } from 'app/types';
+import { ExploreId, ExploreUrlState, ExploreUpdateState, ExploreMode } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
   initializeExploreAction,
@@ -17,8 +17,8 @@ import { Emitter } from 'app/core/core';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { makeInitialUpdateState } from './reducers';
 import { DataQuery } from '@grafana/ui/src/types/datasource';
-import { DefaultTimeZone, RawTimeRange, LogsDedupStrategy } from '@grafana/ui';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { DefaultTimeZone, RawTimeRange, LogsDedupStrategy } from '@grafana/data';
+import { toUtc } from '@grafana/data';
 
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
@@ -55,6 +55,7 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
     datasource: 'some-datasource',
     queries: [],
     range: range.raw,
+    mode: ExploreMode.Metrics,
     ui,
   };
   const updateDefaults = makeInitialUpdateState();

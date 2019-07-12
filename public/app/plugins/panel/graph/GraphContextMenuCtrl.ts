@@ -21,7 +21,7 @@ export class GraphContextMenuCtrl {
 
   isVisible: boolean;
 
-  constructor($scope) {
+  constructor($scope: any) {
     this.isVisible = false;
     this.menuItems = [];
     this.scope = $scope;

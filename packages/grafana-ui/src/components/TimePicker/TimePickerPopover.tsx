@@ -7,8 +7,7 @@ import { TimePickerInput } from './TimePickerInput';
 import { rawToTimeRange } from './time';
 
 // Types
-import { DateTime } from '../../utils/moment_wrapper';
-import { TimeRange, TimeZone } from '../../types/time';
+import { DateTime, TimeRange, TimeZone } from '@grafana/data';
 
 export interface Props {
   value: TimeRange;
@@ -50,6 +49,9 @@ export class TimePickerPopover extends Component<Props, State> {
   };
 
   onToCalendarChanged = (value: DateTime) => {
+    value.set('h', 23);
+    value.set('m', 59);
+    value.set('s', 0);
     this.setState({ to: value });
   };
 

@@ -1,17 +1,19 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { DataSourceApi } from '@grafana/ui';
+
 import {
   RawTimeRange,
   LogLevel,
   TimeZone,
   AbsoluteTimeRange,
-  DataSourceApi,
   LogsModel,
   LogRowModel,
   LogsDedupStrategy,
   LoadingState,
-} from '@grafana/ui';
+  TimeRange,
+} from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -47,10 +49,11 @@ interface LogsContainerProps {
   isLive: boolean;
   stopLive: typeof changeRefreshIntervalAction;
   updateTimeRange: typeof updateTimeRange;
+  range: TimeRange;
   absoluteRange: AbsoluteTimeRange;
 }
 
-export class LogsContainer extends Component<LogsContainerProps> {
+export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
 
@@ -66,7 +69,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
     this.props.changeDedupStrategy(this.props.exploreId, dedupStrategy);
   };
 
-  hangleToggleLogLevel = (hiddenLogLevels: Set<LogLevel>) => {
+  handleToggleLogLevel = (hiddenLogLevels: LogLevel[]) => {
     const { exploreId } = this.props;
     this.props.toggleLogLevelAction({
       exploreId,
@@ -84,16 +87,6 @@ export class LogsContainer extends Component<LogsContainerProps> {
     return [];
   };
 
-  // Limit re-rendering to when a query is finished executing or when the deduplication strategy changes
-  // for performance reasons.
-  shouldComponentUpdate(nextProps: LogsContainerProps): boolean {
-    return (
-      nextProps.loading !== this.props.loading ||
-      nextProps.dedupStrategy !== this.props.dedupStrategy ||
-      nextProps.logsHighlighterExpressions !== this.props.logsHighlighterExpressions
-    );
-  }
-
   render() {
     const {
       exploreId,
@@ -107,7 +100,7 @@ export class LogsContainer extends Component<LogsContainerProps> {
       absoluteRange,
       timeZone,
       scanning,
-      scanRange,
+      range,
       width,
       hiddenLogLevels,
       isLive,
@@ -135,11 +128,11 @@ export class LogsContainer extends Component<LogsContainerProps> {
           onStartScanning={onStartScanning}
           onStopScanning={onStopScanning}
           onDedupStrategyChange={this.handleDedupStrategyChange}
-          onToggleLogLevel={this.hangleToggleLogLevel}
+          onToggleLogLevel={this.handleToggleLogLevel}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
           scanning={scanning}
-          scanRange={scanRange}
+          scanRange={range.raw}
           width={width}
           hiddenLogLevels={hiddenLogLevels}
           getRowContext={this.getLogRowContext}
@@ -157,9 +150,9 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     logsResult,
     loadingState,
     scanning,
-    scanRange,
     datasourceInstance,
     isLive,
+    range,
     absoluteRange,
   } = item;
   const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
@@ -173,13 +166,13 @@ function mapStateToProps(state: StoreState, { exploreId }) {
     logsHighlighterExpressions,
     logsResult,
     scanning,
-    scanRange,
     timeZone,
     dedupStrategy,
     hiddenLogLevels,
     dedupedResult,
     datasourceInstance,
     isLive,
+    range,
     absoluteRange,
   };
 }

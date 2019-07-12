@@ -1,8 +1,8 @@
 import angular, { IQService } from 'angular';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import _ from 'lodash';
-import { ElasticDatasource } from '../datasource';
-import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { ElasticDatasource, getMaxConcurrenShardRequestOrDefault } from '../datasource';
+import { toUtc, dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -69,7 +69,7 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should translate index pattern to current day', () => {
-      let requestOptions;
+      let requestOptions: any;
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
         return Promise.resolve({ data: {} });
@@ -83,7 +83,7 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing metric query with interval pattern', () => {
-    let requestOptions, parts, header, query, result;
+    let requestOptions: any, parts: any, header: any, query: any, result: any;
 
     beforeEach(async () => {
       createDatasource({
@@ -154,7 +154,7 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing logs query with interval pattern', () => {
-    let query, queryBuilderSpy;
+    let query, queryBuilderSpy: any;
 
     beforeEach(async () => {
       createDatasource({
@@ -249,7 +249,7 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing document query', () => {
-    let requestOptions, parts, header;
+    let requestOptions: any, parts: any, header: any;
 
     beforeEach(() => {
       createDatasource({
@@ -539,7 +539,7 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing aggregation query on es5.x', () => {
-    let requestOptions, parts, header;
+    let requestOptions: any, parts: any, header: any;
 
     beforeEach(() => {
       createDatasource({
@@ -582,7 +582,7 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing metricFind query on es5.x', () => {
-    let requestOptions, parts, header, body, results;
+    let requestOptions: any, parts, header: any, body: any, results: any;
 
     beforeEach(() => {
       createDatasource({
@@ -615,7 +615,7 @@ describe('ElasticDatasource', function(this: any) {
         });
       });
 
-      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then(res => {
+      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then((res: any) => {
         results = res;
       });
 
@@ -643,6 +643,30 @@ describe('ElasticDatasource', function(this: any) {
 
     it('should not set terms aggregation size to 0', () => {
       expect(body['aggs']['1']['terms'].size).not.toBe(0);
+    });
+  });
+});
+
+describe('getMaxConcurrenShardRequestOrDefault', () => {
+  const testCases = [
+    { version: 50, expectedMaxConcurrentShardRequests: 256 },
+    { version: 50, maxConcurrentShardRequests: 50, expectedMaxConcurrentShardRequests: 50 },
+    { version: 56, expectedMaxConcurrentShardRequests: 256 },
+    { version: 56, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 256 },
+    { version: 56, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 256 },
+    { version: 56, maxConcurrentShardRequests: 200, expectedMaxConcurrentShardRequests: 200 },
+    { version: 70, expectedMaxConcurrentShardRequests: 5 },
+    { version: 70, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 5 },
+    { version: 70, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 5 },
+    { version: 70, maxConcurrentShardRequests: 6, expectedMaxConcurrentShardRequests: 6 },
+  ];
+
+  testCases.forEach(tc => {
+    it(`version = ${tc.version}, maxConcurrentShardRequests = ${tc.maxConcurrentShardRequests}`, () => {
+      const options = { esVersion: tc.version, maxConcurrentShardRequests: tc.maxConcurrentShardRequests };
+      expect(getMaxConcurrenShardRequestOrDefault(options as ElasticsearchOptions)).toBe(
+        tc.expectedMaxConcurrentShardRequests
+      );
     });
   });
 });

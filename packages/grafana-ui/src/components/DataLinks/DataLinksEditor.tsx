@@ -4,7 +4,8 @@ import React, { FC, useContext } from 'react';
 import Prism from 'prismjs';
 // Components
 import { css } from 'emotion';
-import { DataLink, ThemeContext } from '../../index';
+import { DataLink } from '@grafana/data';
+import { ThemeContext } from '../../index';
 import { Button } from '../index';
 import { DataLinkEditor } from './DataLinkEditor';
 import { VariableSuggestion } from './DataLinkSuggestions';

@@ -13,15 +13,8 @@ import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/act
 
 // Types
 import { StoreState } from 'app/types';
-import {
-  TimeRange,
-  DataQuery,
-  DataSourceApi,
-  QueryFixAction,
-  DataSourceStatus,
-  PanelData,
-  DataQueryError,
-} from '@grafana/ui';
+import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
+import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData, DataQueryError } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
@@ -45,6 +38,7 @@ interface QueryRowProps extends PropsFromParent {
   query: DataQuery;
   modifyQueries: typeof modifyQueries;
   range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
@@ -53,7 +47,15 @@ interface QueryRowProps extends PropsFromParent {
   mode: ExploreMode;
 }
 
-export class QueryRow extends PureComponent<QueryRowProps> {
+interface QueryRowState {
+  textEditModeEnabled: boolean;
+}
+
+export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
+  state: QueryRowState = {
+    textEditModeEnabled: false,
+  };
+
   onRunQuery = () => {
     const { exploreId } = this.props;
     this.props.runQueries(exploreId);
@@ -95,6 +97,10 @@ export class QueryRow extends PureComponent<QueryRowProps> {
     this.props.runQueries(exploreId);
   };
 
+  onClickToggleEditorMode = () => {
+    this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
+  };
+
   updateLogsHighlights = _.debounce((value: DataQuery) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance.getHighlighterExpression) {
@@ -111,12 +117,15 @@ export class QueryRow extends PureComponent<QueryRowProps> {
       query,
       exploreEvents,
       range,
+      absoluteRange,
       datasourceStatus,
       queryResponse,
       latency,
       queryErrors,
       mode,
     } = this.props;
+    const canToggleEditorModes =
+      mode === ExploreMode.Metrics && _.has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     let QueryField;
 
     if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
@@ -129,9 +138,6 @@ export class QueryRow extends PureComponent<QueryRowProps> {
 
     return (
       <div className="query-row">
-        <div className="query-row-status">
-          <QueryStatus queryResponse={queryResponse} latency={latency} />
-        </div>
         <div className="query-row-field flex-shrink-1">
           {QueryField ? (
             <QueryField
@@ -144,6 +150,7 @@ export class QueryRow extends PureComponent<QueryRowProps> {
               onChange={this.onChange}
               panelData={null}
               queryResponse={queryResponse}
+              absoluteRange={absoluteRange}
             />
           ) : (
             <QueryEditor
@@ -154,10 +161,21 @@ export class QueryRow extends PureComponent<QueryRowProps> {
               initialQuery={query}
               exploreEvents={exploreEvents}
               range={range}
+              textEditModeEnabled={this.state.textEditModeEnabled}
             />
           )}
         </div>
+        <div className="query-row-status">
+          <QueryStatus queryResponse={queryResponse} latency={latency} />
+        </div>
         <div className="gf-form-inline flex-shrink-0">
+          {canToggleEditorModes && (
+            <div className="gf-form">
+              <button className="gf-form-label gf-form-label--btn" onClick={this.onClickToggleEditorMode}>
+                <i className="fa fa-pencil" />
+              </button>
+            </div>
+          )}
           <div className="gf-form">
             <button className="gf-form-label gf-form-label--btn" onClick={this.onClickClearButton}>
               <i className="fa fa-times" />
@@ -187,6 +205,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     history,
     queries,
     range,
+    absoluteRange,
     datasourceError,
     graphResult,
     loadingState,
@@ -197,7 +216,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
   const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
-  const series = graphResult ? graphResult : []; // TODO: use SeriesData
+  const series = graphResult ? graphResult : []; // TODO: use DataFrame
   const queryResponse: PanelData = {
     series,
     state: loadingState,
@@ -209,6 +228,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     history,
     query,
     range,
+    absoluteRange,
     datasourceStatus,
     queryResponse,
     latency,

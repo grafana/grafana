@@ -10,7 +10,7 @@ import {
 
 import { parseSelector, processLabels, processHistogramLabels } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -42,6 +42,7 @@ export function addHistoryMetadata(item: CompletionItem, history: any[]): Comple
 
 export default class PromQlLanguageProvider extends LanguageProvider {
   histogramMetrics?: string[];
+  timeRange?: { start: number; end: number };
   labelKeys?: { [index: string]: string[] }; // metric -> [labelKey,...]
   labelValues?: { [index: string]: { [index: string]: string[] } }; // metric -> labelKey -> [labelValue,...]
   metrics?: string[];
@@ -52,6 +53,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     this.datasource = datasource;
     this.histogramMetrics = [];
+    this.timeRange = { start: 0, end: 0 };
     this.labelKeys = {};
     this.labelValues = {};
     this.metrics = [];
@@ -205,6 +207,18 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     };
   }
 
+  roundToMinutes(seconds: number): number {
+    return Math.floor(seconds / 60);
+  }
+
+  timeRangeChanged(): boolean {
+    const dsRange = this.datasource.getTimeRange();
+    return (
+      this.roundToMinutes(dsRange.end) !== this.roundToMinutes(this.timeRange.end) ||
+      this.roundToMinutes(dsRange.start) !== this.roundToMinutes(this.timeRange.start)
+    );
+  }
+
   getAggregationCompletionItems({ value }: TypeaheadInput): TypeaheadOutput {
     const refresher: Promise<any> = null;
     const suggestions: CompletionItemGroup[] = [];
@@ -253,7 +267,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const selector = parseSelector(selectorString, selectorString.length - 2).selector;
 
     const labelKeys = this.labelKeys[selector];
-    if (labelKeys) {
+    if (labelKeys && !this.timeRangeChanged()) {
       suggestions.push({ label: 'Labels', items: labelKeys.map(wrapLabel) });
     } else {
       result.refresher = this.fetchSeriesLabels(selector);
@@ -304,7 +318,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
 
     // Query labels for selector
-    if (selector && !this.labelValues[selector]) {
+    if (selector && (!this.labelValues[selector] || this.timeRangeChanged())) {
       if (selector === EMPTY_SELECTOR) {
         // Query label values for default labels
         refresher = Promise.all(DEFAULT_KEYS.map(key => this.fetchLabelValues(key)));
@@ -332,10 +346,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   fetchSeriesLabels = async (name: string, withName?: boolean) => {
     try {
-      const data = await this.request(`/api/v1/series?match[]=${name}`);
+      const tRange = this.datasource.getTimeRange();
+      const data = await this.request(`/api/v1/series?match[]=${name}&start=${tRange['start']}&end=${tRange['end']}`);
       const { keys, values } = processLabels(data, withName);
       this.labelKeys[name] = keys;
       this.labelValues[name] = values;
+      this.timeRange = tRange;
     } catch (e) {
       console.error(e);
     }

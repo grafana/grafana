@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { Epic } from 'redux-observable';
 import { mergeMap } from 'rxjs/operators';
 import { NEVER } from 'rxjs';
-import { LoadingState } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
@@ -11,17 +11,22 @@ import {
   processQueryResultsAction,
   ProcessQueryResultsPayload,
   querySuccessAction,
-  scanRangeAction,
   resetQueryErrorAction,
   scanStopAction,
+  updateTimeRangeAction,
+  runQueriesAction,
 } from '../actionTypes';
 import { ResultProcessor } from '../../utils/ResultProcessor';
 
-export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (action$, state$) => {
+export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (
+  action$,
+  state$,
+  { getTimeZone, getShiftedTimeRange }
+) => {
   return action$.ofType(processQueryResultsAction.type).pipe(
     mergeMap((action: ActionOf<ProcessQueryResultsPayload>) => {
       const { exploreId, datasourceId, latency, loadingState, series, delta } = action.payload;
-      const { datasourceInstance, scanning, scanner, eventBridge } = state$.value.explore[exploreId];
+      const { datasourceInstance, scanning, eventBridge } = state$.value.explore[exploreId];
 
       // If datasource already changed, results do not matter
       if (datasourceInstance.meta.id !== datasourceId) {
@@ -62,8 +67,9 @@ export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSt
       // Keep scanning for results if this was the last scanning transaction
       if (scanning) {
         if (_.size(result) === 0) {
-          const range = scanner();
-          actions.push(scanRangeAction({ exploreId, range }));
+          const range = getShiftedTimeRange(-1, state$.value.explore[exploreId].range, getTimeZone(state$.value.user));
+          actions.push(updateTimeRangeAction({ exploreId, absoluteRange: range }));
+          actions.push(runQueriesAction({ exploreId }));
         } else {
           // We can stop scanning if we have a result
           actions.push(scanStopAction({ exploreId }));

@@ -2,8 +2,8 @@ import { DataSourceApi } from '@grafana/ui/src/types/datasource';
 
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { makeExploreItemState } from 'app/features/explore/state/reducers';
-import { StoreState } from 'app/types';
-import { TimeRange, dateTime } from '@grafana/ui';
+import { StoreState, UserState } from 'app/types';
+import { TimeRange, dateTime } from '@grafana/data';
 
 export const mockExploreState = (options: any = {}) => {
   const isLive = options.isLive || false;
@@ -77,8 +77,15 @@ export const mockExploreState = (options: any = {}) => {
     right,
     split,
   };
+
+  const user: UserState = {
+    orgId: 1,
+    timeZone: 'browser',
+  };
+
   const state: Partial<StoreState> = {
     explore,
+    user,
   };
 
   return {

@@ -2,11 +2,16 @@ import StackdriverDataSource from '../datasource';
 import { metricDescriptors } from './testData';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc } from '@grafana/data';
 import { DataSourceInstanceSettings } from '@grafana/ui';
 import { StackdriverOptions } from '../types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
+interface Result {
+  status: any;
+  message?: any;
+}
 
 describe('StackdriverDataSource', () => {
   const instanceSettings = ({
@@ -20,7 +25,7 @@ describe('StackdriverDataSource', () => {
   describe('when performing testDataSource', () => {
     describe('and call to stackdriver api succeeds', () => {
       let ds;
-      let result;
+      let result: Result;
       beforeEach(async () => {
         const backendSrv = ({
           async datasourceRequest() {
@@ -37,7 +42,7 @@ describe('StackdriverDataSource', () => {
 
     describe('and a list of metricDescriptors are returned', () => {
       let ds;
-      let result;
+      let result: Result;
       beforeEach(async () => {
         const backendSrv = ({
           datasourceRequest: async () => Promise.resolve({ status: 200, data: metricDescriptors }),
@@ -52,7 +57,7 @@ describe('StackdriverDataSource', () => {
 
     describe('and call to stackdriver api fails with 400 error', () => {
       let ds;
-      let result;
+      let result: Result;
       beforeEach(async () => {
         const backendSrv = ({
           datasourceRequest: async () =>
@@ -92,8 +97,8 @@ describe('StackdriverDataSource', () => {
     };
 
     describe('and no time series data is returned', () => {
-      let ds;
-      const response = {
+      let ds: StackdriverDataSource;
+      const response: any = {
         results: {
           A: {
             refId: 'A',
@@ -114,7 +119,7 @@ describe('StackdriverDataSource', () => {
       });
 
       it('should return a list of datapoints', () => {
-        return ds.query(options).then(results => {
+        return ds.query(options as any).then(results => {
           expect(results.data.length).toBe(0);
         });
       });
@@ -124,7 +129,7 @@ describe('StackdriverDataSource', () => {
   describe('when performing getMetricTypes', () => {
     describe('and call to stackdriver api succeeds', () => {});
     let ds;
-    let result;
+    let result: any;
     beforeEach(async () => {
       const backendSrv = ({
         async datasourceRequest() {
@@ -145,6 +150,7 @@ describe('StackdriverDataSource', () => {
         },
       } as unknown) as BackendSrv;
       ds = new StackdriverDataSource(instanceSettings, backendSrv, templateSrv, timeSrv);
+      // @ts-ignore
       result = await ds.getMetricTypes();
     });
     it('should return successfully', () => {
@@ -162,7 +168,7 @@ describe('StackdriverDataSource', () => {
   const noopBackendSrv = ({} as unknown) as BackendSrv;
 
   describe('when interpolating a template variable for the filter', () => {
-    let interpolated;
+    let interpolated: any[];
     describe('and is single value variable', () => {
       beforeEach(() => {
         const filterTemplateSrv = initTemplateSrv('filtervalue1');
@@ -190,7 +196,7 @@ describe('StackdriverDataSource', () => {
   });
 
   describe('when interpolating a template variable for group bys', () => {
-    let interpolated;
+    let interpolated: any[];
 
     describe('and is single value variable', () => {
       beforeEach(() => {
@@ -221,7 +227,7 @@ describe('StackdriverDataSource', () => {
   });
 
   describe('unit parsing', () => {
-    let ds, res;
+    let ds: StackdriverDataSource, res: any;
     beforeEach(() => {
       ds = new StackdriverDataSource(instanceSettings, noopBackendSrv, templateSrv, timeSrv);
     });

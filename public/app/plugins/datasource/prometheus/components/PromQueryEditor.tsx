@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { FormLabel, Select, SelectOptionItem, Switch } from '@grafana/ui';
-import { QueryEditorProps, DataSourceStatus } from '@grafana/ui/src/types';
+import { QueryEditorProps, DataSourceStatus } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
@@ -54,7 +54,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     };
   }
 
-  onFieldChange = (query: PromQuery, override?) => {
+  onFieldChange = (query: PromQuery, override?: any) => {
     this.query.expr = query.expr;
   };
 
