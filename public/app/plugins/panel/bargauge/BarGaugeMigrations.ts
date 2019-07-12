@@ -18,7 +18,7 @@ export const barGaugePanelMigrationCheck = (panel: PanelModel<BarGaugeOptions>):
     const { fieldOptions } = old;
     if (fieldOptions) {
       const { mappings, thresholds, ...rest } = fieldOptions;
-      rest.default = {
+      rest.defaults = {
         mappings,
         thresholds: migrateOldThresholds(thresholds),
         ...rest.defaults,
