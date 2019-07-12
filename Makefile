@@ -4,6 +4,7 @@
 
 GO = GO111MODULE=on go
 GO_FILES ?= ./pkg/...
+SH_FILES ?= ./scripts/**/*.sh
 
 all: deps build
 
@@ -110,6 +111,9 @@ go-vet:
 	@$(GO) vet $(GO_FILES)
 
 lint-go: go-vet golangci-lint revive revive-alerting gosec
+
+shellcheck:
+	docker run --rm -v "$$PWD:/mnt" koalaman/shellcheck:stable $(SH_FILES)
 
 run: scripts/go/bin/bra
 	@scripts/go/bin/bra run
