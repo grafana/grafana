@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+
+	"github.com/apache/arrow/go/arrow"
 )
 
 // Schema is a slice of ColumnSchema.
@@ -14,23 +16,29 @@ type ColumnSchema interface {
 	SetName(name string)
 	ColumnType() ColumnType
 	Extract(v string) (interface{}, error)
+	ArrowType() arrow.DataType
 }
 
 type BaseSchema struct {
-	name string
-	Type ColumnType
+	Name          string
+	Type          ColumnType
+	ArrowDataType arrow.DataType
 }
 
-func (b BaseSchema) GetName() string {
-	return b.name
+func (b *BaseSchema) GetName() string {
+	return b.Name
 }
 
-func (b BaseSchema) SetName(name string) {
-	b.name = name
+func (b *BaseSchema) SetName(name string) {
+	b.Name = name
 }
 
-func (b BaseSchema) ColumnType() ColumnType {
+func (b *BaseSchema) ColumnType() ColumnType {
 	return b.Type
+}
+
+func (b *BaseSchema) ArrowType() arrow.DataType {
+	return b.ArrowDataType
 }
 
 type TimeColumnSchema struct {
@@ -38,17 +46,19 @@ type TimeColumnSchema struct {
 	Format string
 }
 
-func NewTimeColumn(format string) (t TimeColumnSchema) {
+func NewTimeColumn(format string) *TimeColumnSchema {
+	t := new(TimeColumnSchema)
 	t.Type = DateTime
 	t.Format = format
-	return
+	t.ArrowDataType = arrow.PrimitiveTypes.Date64
+	return t
 }
 
-func (tcs TimeColumnSchema) ColumnType() ColumnType {
+func (tcs *TimeColumnSchema) ColumnType() ColumnType {
 	return DateTime
 }
 
-func (tcs TimeColumnSchema) Extract(v string) (interface{}, error) {
+func (tcs *TimeColumnSchema) Extract(v string) (interface{}, error) {
 	if v == "" {
 		return nil, nil
 	}
@@ -61,12 +71,15 @@ func (tcs TimeColumnSchema) Extract(v string) (interface{}, error) {
 
 type NumberColumnSchema struct{ BaseSchema }
 
-func NewNumberColumn() (t NumberColumnSchema) {
-	t.Type = Number
-	return
+func NewNumberColumn() *NumberColumnSchema {
+	n := new(NumberColumnSchema)
+	n.Type = Number
+	n.ArrowDataType = &arrow.Float64Type{}
+
+	return n
 }
 
-func (ncs NumberColumnSchema) Extract(v string) (interface{}, error) {
+func (ncs *NumberColumnSchema) Extract(v string) (interface{}, error) {
 	if v == "" {
 		return nil, nil
 	}
@@ -78,14 +91,16 @@ func (ncs NumberColumnSchema) Extract(v string) (interface{}, error) {
 
 }
 
-func NewStringColumn() (t StringColumnSchema) {
-	t.Type = String
-	return
-}
-
 type StringColumnSchema struct{ BaseSchema }
 
-func (scs StringColumnSchema) Extract(v string) (interface{}, error) {
+func NewStringColumn() *StringColumnSchema {
+	s := new(StringColumnSchema)
+	s.Type = String
+	s.ArrowDataType = &arrow.StringType{}
+	return s
+}
+
+func (scs *StringColumnSchema) Extract(v string) (interface{}, error) {
 	return &v, nil
 
 }

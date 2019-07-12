@@ -34,5 +34,36 @@ func TestLoadingDataFrameFromCSV(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	fmt.Println(string(v))
+	_ = v
+	//fmt.Println(string(v))
+	fmt.Println(df.ToArrow())
+}
+
+func TestLoadingNumberDataFrameFromCSV(t *testing.T) {
+	data, err := os.Open("./testdata/stringNumber.csv")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	schema := Schema{
+		NewStringColumn(),
+		NewNumberColumn(),
+	}
+	df, err := FromCSV(
+		bufio.NewReader(data),
+		true,
+		schema)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	df.Type = TimeSeriesFrame
+	v, err := json.MarshalIndent(df, "", "    ")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_ = v
+	//fmt.Println(string(v))
+	fmt.Println(df.ToArrow())
 }
