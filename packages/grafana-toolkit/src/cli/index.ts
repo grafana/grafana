@@ -15,10 +15,11 @@ import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
 import {
   ciBuildPluginTask,
+  ciBuildPluginDocsTask,
   ciBundlePluginTask,
   ciTestPluginTask,
+  ciPluginReportTask,
   ciDeployPluginTask,
-  ciSetupPluginTask,
 } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 
@@ -148,12 +149,19 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-build')
-    .option('--platform <platform>', 'For backend task, which backend to run')
+    .option('--backend <backend>', 'For backend task, which backend to run')
     .description('Build the plugin, leaving artifacts in /dist')
     .action(async cmd => {
       await execTask(ciBuildPluginTask)({
-        platform: cmd.platform,
+        backend: cmd.backend,
       });
+    });
+
+  program
+    .command('plugin:ci-docs')
+    .description('Build the HTML docs')
+    .action(async cmd => {
+      await execTask(ciBuildPluginDocsTask)({});
     });
 
   program
@@ -164,21 +172,20 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:ci-setup')
-    .option('--installer <installer>', 'Name of installer to download and run')
-    .description('Install and configure grafana')
-    .action(async cmd => {
-      await execTask(ciSetupPluginTask)({
-        installer: cmd.installer,
-      });
-    });
-  program
     .command('plugin:ci-test')
+    .option('--full', 'run all the tests (even stuff that will break)')
     .description('end-to-end test using bundle in /artifacts')
     .action(async cmd => {
       await execTask(ciTestPluginTask)({
-        platform: cmd.platform,
+        full: cmd.full,
       });
+    });
+
+  program
+    .command('plugin:ci-report')
+    .description('Build a report for this whole process')
+    .action(async cmd => {
+      await execTask(ciPluginReportTask)({});
     });
 
   program
