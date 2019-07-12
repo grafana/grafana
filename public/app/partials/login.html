@@ -45,33 +45,7 @@
           </div>
         </div>
         <div class="clearfix"></div>
-        <a class="btn btn-medium btn-service btn-service--github login-btn" href="login/saml" target="_self" ng-if="samlEnabled">
-          <i class="btn-service-icon fa fa-key"></i>
-          Sign in with SAML
-        </a>
-        <div class="login-oauth text-center" ng-show="oauthEnabled">
-          <a class="btn btn-medium btn-service btn-service--google login-btn" href="login/google" target="_self" ng-if="oauth.google">
-            <i class="btn-service-icon fa fa-google"></i>
-            Sign in with Google
-          </a>
-          <a class="btn btn-medium btn-service btn-service--github login-btn" href="login/github" target="_self" ng-if="oauth.github">
-            <i class="btn-service-icon fa fa-github"></i>
-            Sign in with GitHub
-          </a>
-          <a class="btn btn-medium btn-service btn-service--gitlab login-btn" href="login/gitlab" target="_self" ng-if="oauth.gitlab">
-            <i class="btn-service-icon fa fa-gitlab"></i>
-            Sign in with GitLab
-          </a>
-          <a class="btn btn-medium btn-service btn-service--grafanacom login-btn" href="login/grafana_com" target="_self"
-            ng-if="oauth.grafana_com">
-            <i class="btn-service-icon"></i>
-            Sign in with Grafana.com
-          </a>
-          <a class="btn btn-medium btn-service btn-service--oauth login-btn" href="login/generic_oauth" target="_self"
-            ng-if="oauth.generic_oauth">
-            <i class="btn-service-icon fa fa-sign-in"></i>
-            Sign in with {{oauth.generic_oauth.name}}
-          </a>
+        <login-form/>
         </div>
         <div class="login-signup-box" ng-show="!disableUserSignUp">
           <div class="login-signup-title p-r-1">
