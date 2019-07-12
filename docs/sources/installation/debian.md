@@ -27,6 +27,8 @@ sudo apt-get install -y adduser libfontconfig1
 sudo dpkg -i grafana_<version>_amd64.deb
 ```
 
+You will find package urls on the [download page](https://grafana.com/grafana/download?platform=linux).
+
 ## APT Repository
 
 The command `add-apt-repository` isn't a default app on Debian 9 and requires

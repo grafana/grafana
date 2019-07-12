@@ -28,22 +28,12 @@ You can install Grafana using Yum directly.
 $ sudo yum install <rpm package url>
 ```
 
-Example:
-
-```bash
-$ sudo yum install https://dl.grafana.com/oss/release/grafana-<version>.x86_64.rpm
-```
+You will find package urls on the [download page](https://grafana.com/grafana/download?platform=linux).
 
 Or install manually using `rpm`. First execute
 
 ```bash
 $ wget <rpm package url>
-```
-
-Example:
-
-```bash
-$ wget https://dl.grafana.com/oss/release/grafana-<version>.x86_64.rpm
 ```
 
 ### On CentOS / Fedora / Redhat:
