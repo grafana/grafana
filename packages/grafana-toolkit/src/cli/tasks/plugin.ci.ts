@@ -9,8 +9,8 @@ import path = require('path');
 import fs = require('fs');
 
 export interface PluginCIOptions {
-  platform?: string;
-  installer?: string;
+  backend?: string;
+  full?: boolean;
 }
 
 const calcJavascriptSize = (base: string, files?: string[]): number => {
@@ -47,32 +47,6 @@ const getJobFromProcessArgv = () => {
   }
   return 'unknown_job';
 };
-
-// /**
-//  * Like cp -rn... BUT error if an destination file exists
-//  */
-// async function copyDirErrorIfExists(src:string,dest:string) {
-//   const entries = await fs.readdirSync(src,{withFileTypes:true});
-//   if(!fs.existsSync(dest)) {
-//     fs.mkdirSync(dest);
-//   }
-//   console.log( 'DIR', src );
-//   for(let entry of entries) {
-//     const srcPath = path.join(src,entry.name);
-//     const destPath = path.join(dest,entry.name);
-//     if(entry.isDirectory()) {
-//       await copyDirErrorIfExists(srcPath,destPath);
-//     } else if(fs.existsSync(destPath)) {
-//       console.log( 'XXXXXXXXXXXXXXX', destPath );
-//       console.log( 'XXXXXXXXXXXXXXX', destPath );
-//       throw new Error('Duplicate entry: '+destPath);
-//     }
-//     else {
-//     //  console.log( 'COPY', destPath );
-//       await fs.copyFileSync(srcPath,destPath);
-//     }
-//   }
-// }
 
 const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
 
@@ -117,17 +91,17 @@ const writeJobStats = (startTime: number, workDir: string) => {
  *  Anything that should be put into the final zip file should be put in:
  *   ~/work/build_xxx/dist
  */
-const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
+const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
   const start = Date.now();
   const workDir = getJobFolder();
   await execa('rimraf', [workDir]);
   fs.mkdirSync(workDir);
 
-  if (platform) {
+  if (backend) {
     console.log('TODO, backend support?');
     fs.mkdirSync(path.resolve(process.cwd(), 'dist'));
-    const file = path.resolve(process.cwd(), 'dist', `README_${platform}.txt`);
-    fs.writeFile(file, `TODO... build ${platform}!`, err => {
+    const file = path.resolve(process.cwd(), 'dist', `README_${backend}.txt`);
+    fs.writeFile(file, `TODO... build bakend plugin: ${backend}!`, err => {
       if (err) {
         throw new Error('Unable to write: ' + file);
       }
@@ -150,6 +124,40 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
 export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', buildPluginRunner);
 
 /**
+ * 2. Build Docs
+ *
+ *  Take /docs/* and format it into /ci/docs/HTML site
+ *
+ */
+const buildPluginDocsRunner: TaskRunner<PluginCIOptions> = async () => {
+  const docsSrc = path.resolve(process.cwd(), 'docs');
+  if (!fs.existsSync(docsSrc)) {
+    throw new Error('Docs folder does not exist!');
+  }
+
+  const start = Date.now();
+  const workDir = getJobFolder();
+  await execa('rimraf', [workDir]);
+  fs.mkdirSync(workDir);
+
+  const docsDest = path.resolve(process.cwd(), 'ci', 'docs');
+  fs.mkdirSync(docsDest);
+
+  const exe = await execa('cp', ['-rv', docsSrc + '/.', docsDest]);
+  console.log(exe.stdout);
+
+  fs.writeFile(path.resolve(docsDest, 'index.html'), `TODO... actually build docs`, err => {
+    if (err) {
+      throw new Error('Unable to docs');
+    }
+  });
+
+  writeJobStats(start, workDir);
+};
+
+export const ciBuildPluginDocsTask = new Task<PluginCIOptions>('Build Plugin Docs', buildPluginDocsRunner);
+
+/**
  * 2. BUNDLE
  *
  *  Take everything from `~/ci/job/{any}/dist` and
@@ -163,6 +171,7 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const ciDir = getCiFolder();
   const artifactsDir = path.resolve(ciDir, 'artifacts');
   const distDir = path.resolve(ciDir, 'dist');
+  const docsDir = path.resolve(ciDir, 'docs');
   const grafanaEnvDir = path.resolve(ciDir, 'grafana-test-env');
   await execa('rimraf', [artifactsDir, distDir, grafanaEnvDir]);
   fs.mkdirSync(artifactsDir);
@@ -192,8 +201,8 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
 
   console.log('Building ZIP');
   const pluginInfo = getPluginJson(`${distDir}/plugin.json`);
-  const zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
-  const zipFile = path.resolve(artifactsDir, zipName);
+  let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
+  let zipFile = path.resolve(artifactsDir, zipName);
   process.chdir(distDir);
   await execa('zip', ['-r', zipFile, '.']);
   restoreCwd();
@@ -202,21 +211,49 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   if (zipStats.size < 100) {
     throw new Error('Invalid zip file: ' + zipFile);
   }
-  let sha1 = undefined;
+
+  const zipInfo: any = {
+    name: zipName,
+    size: zipStats.size,
+  };
+  const info: any = {
+    plugin: zipInfo,
+  };
   try {
     const exe = await execa('shasum', [zipFile]);
     const idx = exe.stdout.indexOf(' ');
-    sha1 = exe.stdout.substring(0, idx);
+    const sha1 = exe.stdout.substring(0, idx);
     fs.writeFile(zipFile + '.sha1', sha1, err => {});
+    zipInfo.sha1 = sha1;
   } catch {
     console.warn('Unable to read SHA1 Checksum');
   }
 
-  const info = {
-    name: zipName,
-    sha1,
-    size: zipStats.size,
-  };
+  // If docs exist, zip them into artifacts
+  if (fs.existsSync(docsDir)) {
+    zipName = pluginInfo.id + '-' + pluginInfo.info.version + '-docs.zip';
+    zipFile = path.resolve(artifactsDir, zipName);
+    process.chdir(docsDir);
+    await execa('zip', ['-r', zipFile, '.']);
+    restoreCwd();
+
+    const zipStats = fs.statSync(zipFile);
+    const zipInfo: any = {
+      name: zipName,
+      size: zipStats.size,
+    };
+    try {
+      const exe = await execa('shasum', [zipFile]);
+      const idx = exe.stdout.indexOf(' ');
+      const sha1 = exe.stdout.substring(0, idx);
+      fs.writeFile(zipFile + '.sha1', sha1, err => {});
+      zipInfo.sha1 = sha1;
+    } catch {
+      console.warn('Unable to read SHA1 Checksum');
+    }
+    info.docs = zipInfo;
+  }
+
   let p = path.resolve(artifactsDir, 'info.json');
   fs.writeFile(p, JSON.stringify(info, null, 2), err => {
     if (err) {
@@ -248,66 +285,15 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
 export const ciBundlePluginTask = new Task<PluginCIOptions>('Bundle Plugin', bundlePluginRunner);
 
 /**
- * 3. Setup (install grafana and setup provisioning)
+ * 3. Test (end-to-end)
  *
  *  deploy the zip to a running grafana instance
  *
  */
-const setupPluginRunner: TaskRunner<PluginCIOptions> = async ({ installer }) => {
-  const start = Date.now();
-
-  if (!installer) {
-    throw new Error('Missing installer path');
-  }
-
-  // Download the grafana installer
-  const installDir = path.resolve(process.cwd(), '.installer');
-  const installFile = path.resolve(installDir, installer);
-  if (!fs.existsSync(installFile)) {
-    if (!fs.existsSync(installDir)) {
-      fs.mkdirSync(installDir);
-    }
-    console.log('download', installer);
-    const exe = await execa('wget', ['-O', installFile, 'https://dl.grafana.com/oss/release/' + installer]);
-    console.log(exe.stdout);
-  }
-
-  console.log('Install Grafana');
-  let exe = await execa('sudo', ['apt-get', 'install', '-y', 'adduser', 'libfontconfig1']);
-  exe = await execa('sudo', ['dpkg', '-i', installFile]);
-  console.log(exe.stdout);
-
-  const customIniFile = path.resolve(getCiFolder(), 'grafana-test-env', 'custom.ini');
-  const configDir = '/usr/share/grafana/conf/';
-  exe = await execa('sudo', ['cp', '-f', customIniFile, configDir]);
-  console.log(exe.stdout);
-
-  // sudo service grafana-server start
-  console.log('Starting Grafana');
-  exe = await execa('sudo', ['service', 'grafana-server', 'start']);
-  console.log(exe.stdout);
-  // exe = await execa('grafana-cli', ['--version', '--homepath', '/usr/share/grafana']);
-  // console.log(exe.stdout);
-  // exe = await execa('grafana-cli', ['plugins', 'ls', '--homepath', '/usr/share/grafana']);
-  // console.log(exe.stdout);
-
-  const dir = getJobFolder() + '_setup';
-  await execa('rimraf', [dir]);
-  fs.mkdirSync(dir);
-  writeJobStats(start, dir);
-};
-
-export const ciSetupPluginTask = new Task<PluginCIOptions>('Setup Grafana', setupPluginRunner);
-
-/**
- * 4. Test (end-to-end)
- *
- *  deploy the zip to a running grafana instance
- *
- */
-const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
+const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
   const start = Date.now();
   const workDir = getJobFolder();
+  const pluginInfo = getPluginJson(`${process.cwd()}/src/plugin.json`);
 
   const args = {
     withCredentials: true,
@@ -324,10 +310,22 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
 
   console.log('Grafana Version: ' + JSON.stringify(frontendSettings.data.buildInfo, null, 2));
 
-  const pluginInfo = getPluginJson(`${process.cwd()}/src/plugin.json`);
-  const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
+  const allPlugins: any[] = await axios.get('api/plugins', args).data;
+  // for (const plugin of allPlugins) {
+  //   if (plugin.id === pluginInfo.id) {
+  //     console.log('------------');
+  //     console.log(plugin);
+  //     console.log('------------');
+  //   } else {
+  //     console.log('Plugin:', plugin.id, plugin.latestVersion);
+  //   }
+  // }
+  console.log('PLUGINS:', allPlugins);
 
-  console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
+  if (full) {
+    const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
+    console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
+  }
 
   console.log('TODO puppeteer');
 
@@ -347,33 +345,39 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ platform }) => {
 export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', testPluginRunner);
 
 /**
- * 4. Deploy
+ * 4. Report
+ *
+ *  Create a report from all the previous steps
+ *
+ */
+const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
+  const start = Date.now();
+  const workDir = getJobFolder();
+  const reportDir = path.resolve(process.cwd(), 'ci', 'report');
+  await execa('rimraf', [reportDir]);
+  fs.mkdirSync(reportDir);
+
+  const file = path.resolve(reportDir, `report.txt`);
+  fs.writeFile(file, `TODO... actually make a report (csv etc)`, err => {
+    if (err) {
+      throw new Error('Unable to write: ' + file);
+    }
+  });
+
+  console.log('TODO... real report');
+  writeJobStats(start, workDir);
+};
+
+export const ciPluginReportTask = new Task<PluginCIOptions>('Deploy plugin', pluginReportRunner);
+
+/**
+ * 5. Deploy
  *
  *  deploy the zip to a running grafana instance
  *
  */
 const deployPluginRunner: TaskRunner<PluginCIOptions> = async () => {
-  const start = Date.now();
-
-  // TASK Time
-  if (process.env.CIRCLE_INTERNAL_TASK_DATA) {
-    const timingInfo = fs.readdirSync(`${process.env.CIRCLE_INTERNAL_TASK_DATA}`);
-    if (timingInfo) {
-      timingInfo.forEach(file => {
-        console.log('TIMING INFO: ', file);
-      });
-    }
-  }
-
-  const elapsed = Date.now() - start;
-  const stats = {
-    job,
-    sha1: `${process.env.CIRCLE_SHA1}`,
-    startTime: start,
-    buildTime: elapsed,
-    endTime: Date.now(),
-  };
-  console.log('TODO DEPLOY??', stats);
+  console.log('TODO DEPLOY??');
   console.log(' if PR => write a comment to github with difference ');
   console.log(' if master | vXYZ ==> upload artifacts to some repo ');
 };
