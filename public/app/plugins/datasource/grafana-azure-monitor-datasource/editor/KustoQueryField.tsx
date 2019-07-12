@@ -43,7 +43,7 @@ const defaultSchema: any = () => ({
   },
 });
 
-const cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
+const cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 const wrapText = (text: string) => ({ text });
 
 export default class KustoQueryField extends QueryField {
@@ -353,11 +353,13 @@ export default class KustoQueryField extends QueryField {
   }
 
   getTableSuggestions(db = 'Default'): SuggestionGroup[] {
+    // @ts-ignore
     if (this.schema.Databases[db]) {
       return [
         {
           prefixMatch: true,
           label: 'Tables',
+          // @ts-ignore
           items: _.map(this.schema.Databases[db].Tables, (t: any) => ({ text: t.Name })),
         },
       ];

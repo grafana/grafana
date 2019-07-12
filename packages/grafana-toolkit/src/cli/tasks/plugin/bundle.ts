@@ -1,5 +1,3 @@
-import path = require('path');
-import fs = require('fs');
 import webpack = require('webpack');
 import { getWebpackConfig } from '../../../config/webpack.plugin.config';
 import formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');

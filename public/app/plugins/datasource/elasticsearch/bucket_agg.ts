@@ -1,10 +1,11 @@
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import * as queryDef from './query_def';
+import { IQService } from 'angular';
 
 export class ElasticBucketAggCtrl {
   /** @ngInject */
-  constructor($scope, uiSegmentSrv, $q, $rootScope) {
+  constructor($scope: any, uiSegmentSrv: any, $q: IQService, $rootScope: any) {
     const bucketAggs = $scope.target.bucketAggs;
 
     $scope.orderByOptions = [];
@@ -158,7 +159,7 @@ export class ElasticBucketAggCtrl {
       $scope.agg.settings.filters.push({ query: '*' });
     };
 
-    $scope.removeFiltersQuery = filter => {
+    $scope.removeFiltersQuery = (filter: any) => {
       $scope.agg.settings.filters = _.without($scope.agg.settings.filters, filter);
     };
 

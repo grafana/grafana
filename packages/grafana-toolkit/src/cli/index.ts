@@ -13,7 +13,14 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
-import { pluginCITask } from './tasks/plugin.ci';
+import {
+  ciBuildPluginTask,
+  ciBuildPluginDocsTask,
+  ciBundlePluginTask,
+  ciTestPluginTask,
+  ciPluginReportTask,
+  ciDeployPluginTask,
+} from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 
 export const run = (includeInternalScripts = false) => {
@@ -141,13 +148,51 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:ci')
-    .option('--dryRun', "Dry run (don't post results)")
-    .description('Run Plugin CI task')
+    .command('plugin:ci-build')
+    .option('--backend <backend>', 'For backend task, which backend to run')
+    .description('Build the plugin, leaving artifacts in /dist')
     .action(async cmd => {
-      await execTask(pluginCITask)({
-        dryRun: cmd.dryRun,
+      await execTask(ciBuildPluginTask)({
+        backend: cmd.backend,
       });
+    });
+
+  program
+    .command('plugin:ci-docs')
+    .description('Build the HTML docs')
+    .action(async cmd => {
+      await execTask(ciBuildPluginDocsTask)({});
+    });
+
+  program
+    .command('plugin:ci-bundle')
+    .description('Create a zip artifact for the plugin')
+    .action(async cmd => {
+      await execTask(ciBundlePluginTask)({});
+    });
+
+  program
+    .command('plugin:ci-test')
+    .option('--full', 'run all the tests (even stuff that will break)')
+    .description('end-to-end test using bundle in /artifacts')
+    .action(async cmd => {
+      await execTask(ciTestPluginTask)({
+        full: cmd.full,
+      });
+    });
+
+  program
+    .command('plugin:ci-report')
+    .description('Build a report for this whole process')
+    .action(async cmd => {
+      await execTask(ciPluginReportTask)({});
+    });
+
+  program
+    .command('plugin:ci-deploy')
+    .description('Publish plugin CI results')
+    .action(async cmd => {
+      await execTask(ciDeployPluginTask)({});
     });
 
   program.on('command:*', () => {

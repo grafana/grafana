@@ -84,7 +84,7 @@ Adidtionaly, you can also provide additional Jest config via package.json file. 
 
 
 ## Working with CSS & static assets
-We support pure css, SASS and CSS in JS approach (via Emotion). All static assets referenced in your code (i.e. images) should be placed under `src/static` directory and referenced using relative paths.
+We support pure css, SASS and CSS in JS approach (via Emotion).
 
 1. Single css/sass file
 Create your css/sass file and import it in your plugin entry point (typically module.ts):
@@ -100,6 +100,8 @@ Note, that imported static assets will be inlined as base64 URIs. *This can be a
 If you want to provide different stylesheets for dark/light theme, create `dark.[css|scss]` and `light.[css|scss]` files in `src/styles` directory of your plugin. Based on that we will generate stylesheets that will end up in `dist/styles` directory.
 
 TODO: add note about loadPluginCss
+
+Note that static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change.
 
 3. Emotion
 Starting from Grafana 6.2 our suggested way of styling plugins is by using [Emotion](https://emotion.sh). It's a css-in-js library that we use internaly at Grafana. The biggest advantage of using Emotion is that you will get access to Grafana Theme variables.

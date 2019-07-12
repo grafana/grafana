@@ -1,3 +1,6 @@
+import { Threshold } from './threshold';
+import { ValueMapping } from './valueMapping';
+
 export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
@@ -49,6 +52,12 @@ export interface Field {
   decimals?: number | null; // Significant digits (for display)
   min?: number | null;
   max?: number | null;
+
+  // Convert input values into a display value
+  mappings?: ValueMapping[];
+
+  // Must be sorted by 'value', first value is always -Infinity
+  thresholds?: Threshold[];
 }
 
 export interface Labels {

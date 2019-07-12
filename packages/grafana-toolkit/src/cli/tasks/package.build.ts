@@ -3,7 +3,6 @@ import execa = require('execa');
 import * as fs from 'fs';
 // @ts-ignore
 import * as path from 'path';
-import { changeCwdToGrafanaUi, restoreCwd, changeCwdToPackage } from '../utils/cwd';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';

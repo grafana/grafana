@@ -1,4 +1,3 @@
-import path = require('path');
 import * as jestCLI from 'jest-cli';
 import { useSpinner } from '../../utils/useSpinner';
 import { jestConfig } from '../../../config/jest.plugin.config';

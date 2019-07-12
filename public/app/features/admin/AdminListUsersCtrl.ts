@@ -1,5 +1,6 @@
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
+import tags from 'app/core/utils/tags';
 
 export default class AdminListUsersCtrl {
   users: any;
@@ -32,6 +33,8 @@ export default class AdminListUsersCtrl {
         for (let i = 1; i < this.totalPages + 1; i++) {
           this.pages.push({ page: i, current: i === this.page });
         }
+
+        this.addUsersAuthLabels();
       });
   }
 
@@ -40,10 +43,29 @@ export default class AdminListUsersCtrl {
     this.getUsers();
   }
 
-  getAuthModule(user: any) {
-    if (user.authModule && user.authModule.length) {
-      return user.authModule[0];
+  addUsersAuthLabels() {
+    for (const user of this.users) {
+      user.authLabel = getAuthLabel(user);
+      user.authLabelStyle = getAuthLabelStyle(user.authLabel);
     }
-    return undefined;
   }
+}
+
+function getAuthLabel(user: any) {
+  if (user.authLabels && user.authLabels.length) {
+    return user.authLabels[0];
+  }
+  return '';
+}
+
+function getAuthLabelStyle(label: string) {
+  if (label === 'LDAP' || !label) {
+    return {};
+  }
+
+  const { color, borderColor } = tags.getTagColorsFromName(label);
+  return {
+    'background-color': color,
+    'border-color': borderColor,
+  };
 }

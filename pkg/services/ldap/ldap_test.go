@@ -102,7 +102,7 @@ func TestPublicAPI(t *testing.T) {
 		})
 	})
 
-	Convey("Auth()", t, func() {
+	Convey("UserBind()", t, func() {
 		Convey("Should use provided DN and password", func() {
 			connection := &MockConnection{}
 			var actualUsername, actualPassword string
@@ -119,7 +119,7 @@ func TestPublicAPI(t *testing.T) {
 			}
 
 			dn := "cn=user,ou=users,dc=grafana,dc=org"
-			err := server.Auth(dn, "pwd")
+			err := server.UserBind(dn, "pwd")
 
 			So(err, ShouldBeNil)
 			So(actualUsername, ShouldEqual, dn)
@@ -141,7 +141,7 @@ func TestPublicAPI(t *testing.T) {
 				},
 				log: log.New("test-logger"),
 			}
-			err := server.Auth("user", "pwd")
+			err := server.UserBind("user", "pwd")
 			So(err, ShouldEqual, expected)
 		})
 	})

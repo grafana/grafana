@@ -179,7 +179,7 @@ export default class AdminEditUserCtrl {
       const user = $scope.user;
 
       // External user can not be disabled
-      if (user.authModule) {
+      if (user.isExternal) {
         event.preventDefault();
         event.stopPropagation();
         return;
