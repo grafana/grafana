@@ -3,11 +3,11 @@ import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
 
 // Utils
-import { getColorFromHexRgbOrName, getThresholdForValue } from '../../utils';
+import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
-import { DisplayValue, Themeable, Threshold, VizOrientation } from '../../types';
-import { TimeSeriesValue } from '@grafana/data';
+import { DisplayValue, Themeable, VizOrientation } from '../../types';
+import { Threshold, TimeSeriesValue, getActiveThreshold } from '@grafana/data';
 
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;
@@ -87,8 +87,14 @@ export class BarGauge extends PureComponent<Props> {
 
   getCellColor(positionValue: TimeSeriesValue): CellColors {
     const { thresholds, theme, value } = this.props;
-    const activeThreshold = getThresholdForValue(thresholds, positionValue);
+    if (positionValue === null) {
+      return {
+        background: 'gray',
+        border: 'gray',
+      };
+    }
 
+    const activeThreshold = getActiveThreshold(positionValue, thresholds);
     if (activeThreshold !== null) {
       const color = getColorFromHexRgbOrName(activeThreshold.color, theme.type);
 
@@ -474,7 +480,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
 export function getValueColor(props: Props): string {
   const { thresholds, theme, value } = props;
 
-  const activeThreshold = getThresholdForValue(thresholds, value.numeric);
+  const activeThreshold = getActiveThreshold(value.numeric, thresholds);
 
   if (activeThreshold !== null) {
     return getColorFromHexRgbOrName(activeThreshold.color, theme.type);

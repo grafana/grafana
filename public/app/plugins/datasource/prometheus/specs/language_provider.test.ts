@@ -6,6 +6,7 @@ import LanguageProvider from '../language_provider';
 describe('Language completion provider', () => {
   const datasource = {
     metadataRequest: () => ({ data: { data: [] as any[] } }),
+    getTimeRange: () => ({ start: 0, end: 1 }),
   };
 
   describe('empty query suggestions', () => {

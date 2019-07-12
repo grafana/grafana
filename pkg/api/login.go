@@ -21,8 +21,14 @@ const (
 	LoginErrorCookieName = "login_error"
 )
 
+var setIndexViewData = (*HTTPServer).setIndexViewData
+
+var getViewIndex = func() string {
+	return ViewIndex
+}
+
 func (hs *HTTPServer) LoginView(c *models.ReqContext) {
-	viewData, err := hs.setIndexViewData(c)
+	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
@@ -41,8 +47,14 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData.Settings["samlEnabled"] = hs.Cfg.SAMLEnabled
 
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
+		//this cookie is only set whenever an OAuth login fails
+		//therefore the loginError should be passed to the view data
+		//and the view should return immediately before attempting
+		//to login again via OAuth and enter to a redirect loop
 		deleteCookie(c, LoginErrorCookieName)
 		viewData.Settings["loginError"] = loginError
+		c.HTML(200, getViewIndex(), viewData)
+		return
 	}
 
 	if tryOAuthAutoLogin(c) {

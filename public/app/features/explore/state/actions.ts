@@ -250,6 +250,7 @@ export function initializeExplore(
         ui,
       })
     );
+    dispatch(updateTimeRangeAction({ exploreId }));
   };
 }
 

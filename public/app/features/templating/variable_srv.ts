@@ -1,5 +1,5 @@
 // Libaries
-import angular from 'angular';
+import angular, { IQService, ILocationService, auto, IPromise } from 'angular';
 import _ from 'lodash';
 
 // Utils & Services
@@ -19,9 +19,9 @@ export class VariableSrv {
 
   /** @ngInject */
   constructor(
-    private $q,
-    private $location,
-    private $injector,
+    private $q: IQService,
+    private $location: ILocationService,
+    private $injector: auto.IInjectorService,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
   ) {}
@@ -71,7 +71,7 @@ export class VariableSrv {
     });
   }
 
-  processVariable(variable, queryParams) {
+  processVariable(variable: any, queryParams: any) {
     const dependencies = [];
 
     for (const otherVariable of this.variables) {
@@ -100,7 +100,8 @@ export class VariableSrv {
       });
   }
 
-  createVariableFromModel(model) {
+  createVariableFromModel(model: any) {
+    // @ts-ignore
     const ctor = variableTypes[model.type].ctor;
     if (!ctor) {
       throw {
@@ -112,24 +113,24 @@ export class VariableSrv {
     return variable;
   }
 
-  addVariable(variable) {
+  addVariable(variable: any) {
     this.variables.push(variable);
     this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
   }
 
-  removeVariable(variable) {
+  removeVariable(variable: any) {
     const index = _.indexOf(this.variables, variable);
     this.variables.splice(index, 1);
     this.templateSrv.updateIndex();
     this.dashboard.updateSubmenuVisibility();
   }
 
-  updateOptions(variable) {
+  updateOptions(variable: any) {
     return variable.updateOptions();
   }
 
-  variableUpdated(variable, emitChangeEvents?) {
+  variableUpdated(variable: any, emitChangeEvents?: any) {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
     if (variable.initLock) {
       return this.$q.when();
@@ -152,7 +153,7 @@ export class VariableSrv {
     });
   }
 
-  selectOptionsForCurrentValue(variable) {
+  selectOptionsForCurrentValue(variable: any) {
     let i, y, value, option;
     const selected: any = [];
 
@@ -176,7 +177,7 @@ export class VariableSrv {
     return selected;
   }
 
-  validateVariableSelectionState(variable) {
+  validateVariableSelectionState(variable: any) {
     if (!variable.current) {
       variable.current = {};
     }
@@ -221,7 +222,7 @@ export class VariableSrv {
    * @param variable Instance of Variable
    * @param urlValue Value of the query parameter
    */
-  setOptionFromUrl(variable: any, urlValue: string | string[]): Promise<any> {
+  setOptionFromUrl(variable: any, urlValue: string | string[]): IPromise<any> {
     let promise = this.$q.when();
 
     if (variable.refresh) {
@@ -268,7 +269,7 @@ export class VariableSrv {
     });
   }
 
-  setOptionAsCurrent(variable, option) {
+  setOptionAsCurrent(variable: any, option: any) {
     variable.current = _.cloneDeep(option);
 
     if (_.isArray(variable.current.text) && variable.current.text.length > 0) {
@@ -298,7 +299,7 @@ export class VariableSrv {
     this.$location.search(params);
   }
 
-  setAdhocFilter(options) {
+  setAdhocFilter(options: any) {
     let variable: any = _.find(this.variables, {
       type: 'adhoc',
       datasource: options.datasource,

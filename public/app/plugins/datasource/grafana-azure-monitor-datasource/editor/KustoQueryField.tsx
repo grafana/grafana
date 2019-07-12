@@ -3,10 +3,8 @@ import _ from 'lodash';
 import Plain from 'slate-plain-serializer';
 
 import QueryField from './query_field';
-// import debounce from './utils/debounce';
-// import {getNextCharacter} from './utils/dom';
-import debounce from 'app/features/explore/utils/debounce';
-import { getNextCharacter } from 'app/features/explore/utils/dom';
+import debounce from 'lodash/debounce';
+import { DOMUtil } from '@grafana/ui';
 
 import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto/kusto';
 // import '../sass/editor.base.scss';
@@ -45,7 +43,7 @@ const defaultSchema: any = () => ({
   },
 });
 
-const cleanText = s => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
+const cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
 const wrapText = (text: string) => ({ text });
 
 export default class KustoQueryField extends QueryField {
@@ -205,7 +203,7 @@ export default class KustoQueryField extends QueryField {
 
     // Modify suggestion based on context
 
-    const nextChar = getNextCharacter();
+    const nextChar = DOMUtil.getNextCharacter();
     if (suggestion.type === 'function') {
       if (!nextChar || nextChar !== '(') {
         suggestionText += '(';
@@ -355,11 +353,13 @@ export default class KustoQueryField extends QueryField {
   }
 
   getTableSuggestions(db = 'Default'): SuggestionGroup[] {
+    // @ts-ignore
     if (this.schema.Databases[db]) {
       return [
         {
           prefixMatch: true,
           label: 'Tables',
+          // @ts-ignore
           items: _.map(this.schema.Databases[db].Tables, (t: any) => ({ text: t.Name })),
         },
       ];
