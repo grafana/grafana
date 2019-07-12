@@ -3,6 +3,8 @@
 // This type is meant to tightly integrated with the DataFrame type in Grafana's Frontend.
 package dataframe
 
+import "fmt"
+
 // DataFrame holds Table data.
 type DataFrame struct {
 	Schema  Schema
@@ -27,6 +29,23 @@ const (
 	OtherFrame
 )
 
+func (ft FrameType) String() string {
+	switch ft {
+	case NumericFrame:
+		return "Number"
+	case TimeSeriesFrame:
+		return "TimeSeries"
+	case HistogramFrame:
+		return "Histogram"
+	default:
+		return "Other"
+	}
+}
+
+func (ft FrameType) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"%v"`, ft.String())), nil
+}
+
 // DataFrames is a collection of DataFrames uniquely identified by key.
 type DataFrames []DataFrame
 
@@ -34,6 +53,4 @@ type DataFrames []DataFrame
 type Fields []Field
 
 // Field represents a unique field within a dataframe identified by its column and record position.
-type Field struct {
-	Value interface{}
-}
+type Field interface{}

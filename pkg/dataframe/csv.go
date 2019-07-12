@@ -21,6 +21,9 @@ func FromCSV(reader io.Reader, hasHeader bool, schema Schema) (*DataFrame, error
 
 		if i == 0 && hasHeader {
 			for fieldIdx, header := range record {
+				if fieldIdx >= len(schema) {
+					break
+				}
 				schema[fieldIdx].SetName(header)
 				df.Schema = append(df.Schema, schema[fieldIdx])
 			}
@@ -30,11 +33,14 @@ func FromCSV(reader io.Reader, hasHeader bool, schema Schema) (*DataFrame, error
 
 		row := []Field{}
 		for fieldIdx, fieldValue := range record {
+			if fieldIdx >= len(schema) {
+				break
+			}
 			v, err := schema[fieldIdx].Extract(fieldValue)
 			if err != nil {
 				return nil, err
 			}
-			row = append(row, Field{v})
+			row = append(row, v)
 		}
 		df.Records = append(df.Records, row)
 	}

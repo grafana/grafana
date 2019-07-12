@@ -2,6 +2,7 @@ package dataframe
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"testing"
@@ -14,7 +15,11 @@ func TestLoadingDataFrameFromCSV(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	schema := Schema{TimeColumnSchema{Format: time.RFC3339}, NumberColumnSchema{}}
+	schema := Schema{
+		NewTimeColumn(time.RFC3339),
+		NewNumberColumn(),
+		NewStringColumn(),
+	}
 	df, err := FromCSV(
 		bufio.NewReader(data),
 		true,
@@ -24,5 +29,10 @@ func TestLoadingDataFrameFromCSV(t *testing.T) {
 		return
 	}
 	df.Type = TimeSeriesFrame
-	fmt.Println(df)
+	v, err := json.MarshalIndent(df, "", "    ")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println(string(v))
 }
