@@ -13,11 +13,6 @@ aliases:
   - &filter-only-master
     branches:
       only: master
-  - &filter-only-master-but-not-release
-    tags:
-      ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
-    branches:
-      only: master
 
 version: 2
 
@@ -718,7 +713,7 @@ workflows:
           requires:
             - test-frontend
             - build-fast-frontend
-          filters: *filter-only-master-but-not-release
+          filters: *filter-only-master
   release:
     jobs:
       - build-all:
