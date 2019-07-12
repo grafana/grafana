@@ -1,5 +1,4 @@
-import { SeriesData, Field } from '../types/data';
-import { KeyValue } from '../types/index';
+import { DataFrame, Field } from '../types';
 
 export interface SeriesFacadeIterator<T> {
   value: T; // object that behaves like T
@@ -16,7 +15,9 @@ export interface FacadeDefinition<T> {
   fields: Field[];
 }
 
-export function getSeriesDataFacade<T>(series: SeriesData, facade: FacadeDefinition<T>) {
+type KeyValue<T = any> = { [s: string]: T };
+
+export function getDataFrameFacade<T>(series: DataFrame, facade: FacadeDefinition<T>) {
   const aditionalFields: Field[] = [];
   const aditionalIndicies: number[] = [];
   let index = 0;
