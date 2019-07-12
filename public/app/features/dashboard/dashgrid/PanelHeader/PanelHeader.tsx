@@ -10,6 +10,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { ClickOutsideWrapper } from '@grafana/ui';
+import { DataLink } from '@grafana/data';
 
 export interface Props {
   panel: PanelModel;
@@ -18,7 +19,7 @@ export interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  links?: [];
+  links?: DataLink[];
   error?: string;
   isFullscreen: boolean;
 }
@@ -81,16 +82,21 @@ export class PanelHeader extends Component<Props, State> {
 
     return (
       <>
-        <PanelHeaderCorner
-          panel={panel}
-          title={panel.title}
-          description={panel.description}
-          scopedVars={panel.scopedVars}
-          links={panel.links}
-          error={error}
-        />
         <div className={panelHeaderClass}>
-          <div className="panel-title-container" onClick={this.onMenuToggle} onMouseDown={this.onMouseDown}>
+          <PanelHeaderCorner
+            panel={panel}
+            title={panel.title}
+            description={panel.description}
+            scopedVars={panel.scopedVars}
+            links={panel.links}
+            error={error}
+          />
+          <div
+            className="panel-title-container"
+            onClick={this.onMenuToggle}
+            onMouseDown={this.onMouseDown}
+            aria-label="Panel Title"
+          >
             <div className="panel-title">
               <span className="icon-gf panel-alert-icon" />
               <span className="panel-title-text">

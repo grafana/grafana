@@ -10,33 +10,38 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 func init() {
 	alerting.RegisterCondition("query", func(model *simplejson.Json, index int) (alerting.Condition, error) {
-		return NewQueryCondition(model, index)
+		return newQueryCondition(model, index)
 	})
 }
 
+// QueryCondition is responsible for issue and query, reduce the
+// timeseries into single values and evaluate if they are firing or not.
 type QueryCondition struct {
 	Index         int
 	Query         AlertQuery
-	Reducer       QueryReducer
+	Reducer       *queryReducer
 	Evaluator     AlertEvaluator
 	Operator      string
 	HandleRequest tsdb.HandleRequestFunc
 }
 
+// AlertQuery contains information about what datasource a query
+// should be sent to and the query object.
 type AlertQuery struct {
 	Model        *simplejson.Json
-	DatasourceId int64
+	DatasourceID int64
 	From         string
 	To           string
 }
 
+// Eval evaluates the `QueryCondition`.
 func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.ConditionResult, error) {
 	timeRange := tsdb.NewTimeRange(c.Query.From, c.Query.To)
 
@@ -100,17 +105,54 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 }
 
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
-	getDsInfo := &m.GetDataSourceByIdQuery{
-		Id:    c.Query.DatasourceId,
-		OrgId: context.Rule.OrgId,
+	getDsInfo := &models.GetDataSourceByIdQuery{
+		Id:    c.Query.DatasourceID,
+		OrgId: context.Rule.OrgID,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
 		return nil, fmt.Errorf("Could not find datasource %v", err)
 	}
 
-	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
+	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
 	result := make(tsdb.TimeSeriesSlice, 0)
+
+	if context.IsDebug {
+		data := simplejson.New()
+		if req.TimeRange != nil {
+			data.Set("from", req.TimeRange.GetFromAsMsEpoch())
+			data.Set("to", req.TimeRange.GetToAsMsEpoch())
+		}
+
+		type queryDto struct {
+			RefId         string           `json:"refId"`
+			Model         *simplejson.Json `json:"model"`
+			Datasource    *simplejson.Json `json:"datasource"`
+			MaxDataPoints int64            `json:"maxDataPoints"`
+			IntervalMs    int64            `json:"intervalMs"`
+		}
+
+		queries := []*queryDto{}
+		for _, q := range req.Queries {
+			queries = append(queries, &queryDto{
+				RefId: q.RefId,
+				Model: q.Model,
+				Datasource: simplejson.NewFromAny(map[string]interface{}{
+					"id":   q.DataSource.Id,
+					"name": q.DataSource.Name,
+				}),
+				MaxDataPoints: q.MaxDataPoints,
+				IntervalMs:    q.IntervalMs,
+			})
+		}
+
+		data.Set("queries", queries)
+
+		context.Logs = append(context.Logs, &alerting.ResultLogEntry{
+			Message: fmt.Sprintf("Condition[%d]: Query", c.Index),
+			Data:    data,
+		})
+	}
 
 	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
 	if err != nil {
@@ -128,10 +170,20 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 
 		result = append(result, v.Series...)
 
+		queryResultData := map[string]interface{}{}
+
 		if context.IsTestRun {
+			queryResultData["series"] = v.Series
+		}
+
+		if context.IsDebug && v.Meta != nil {
+			queryResultData["meta"] = v.Meta
+		}
+
+		if context.IsTestRun || context.IsDebug {
 			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
 				Message: fmt.Sprintf("Condition[%d]: Query Result", c.Index),
-				Data:    v.Series,
+				Data:    simplejson.NewFromAny(queryResultData),
 			})
 		}
 	}
@@ -139,7 +191,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange) *tsdb.TsdbQuery {
+func (c *QueryCondition) getRequestForAlertRule(datasource *models.DataSource, timeRange *tsdb.TimeRange, debug bool) *tsdb.TsdbQuery {
 	req := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
@@ -149,21 +201,22 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRa
 				DataSource: datasource,
 			},
 		},
+		Debug: debug,
 	}
 
 	return req
 }
 
-func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, error) {
+func newQueryCondition(model *simplejson.Json, index int) (*QueryCondition, error) {
 	condition := QueryCondition{}
 	condition.Index = index
 	condition.HandleRequest = tsdb.HandleRequest
 
-	queryJson := model.Get("query")
+	queryJSON := model.Get("query")
 
-	condition.Query.Model = queryJson.Get("model")
-	condition.Query.From = queryJson.Get("params").MustArray()[1].(string)
-	condition.Query.To = queryJson.Get("params").MustArray()[2].(string)
+	condition.Query.Model = queryJSON.Get("model")
+	condition.Query.From = queryJSON.Get("params").MustArray()[1].(string)
+	condition.Query.To = queryJSON.Get("params").MustArray()[2].(string)
 
 	if err := validateFromValue(condition.Query.From); err != nil {
 		return nil, err
@@ -173,20 +226,20 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 		return nil, err
 	}
 
-	condition.Query.DatasourceId = queryJson.Get("datasourceId").MustInt64()
+	condition.Query.DatasourceID = queryJSON.Get("datasourceId").MustInt64()
 
-	reducerJson := model.Get("reducer")
-	condition.Reducer = NewSimpleReducer(reducerJson.Get("type").MustString())
+	reducerJSON := model.Get("reducer")
+	condition.Reducer = newSimpleReducer(reducerJSON.Get("type").MustString())
 
-	evaluatorJson := model.Get("evaluator")
-	evaluator, err := NewAlertEvaluator(evaluatorJson)
+	evaluatorJSON := model.Get("evaluator")
+	evaluator, err := NewAlertEvaluator(evaluatorJSON)
 	if err != nil {
 		return nil, err
 	}
 	condition.Evaluator = evaluator
 
-	operatorJson := model.Get("operator")
-	operator := operatorJson.Get("type").MustString("and")
+	operatorJSON := model.Get("operator")
+	operator := operatorJSON.Get("type").MustString("and")
 	condition.Operator = operator
 
 	return &condition, nil

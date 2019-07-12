@@ -2,12 +2,13 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { InputDatasource } from './InputDatasource';
-import { InputQuery } from './types';
+import { InputDatasource, describeDataFrame } from './InputDatasource';
+import { InputQuery, InputOptions } from './types';
 
-import { FormLabel, Select, QueryEditorProps, SelectOptionItem, SeriesData, TableInputCSV, toCSV } from '@grafana/ui';
+import { FormLabel, Select, QueryEditorProps, SelectOptionItem, TableInputCSV } from '@grafana/ui';
+import { DataFrame, toCSV } from '@grafana/data';
 
-type Props = QueryEditorProps<InputDatasource, InputQuery>;
+type Props = QueryEditorProps<InputDatasource, InputQuery, InputOptions>;
 
 const options = [
   { value: 'panel', label: 'Panel', description: 'Save data in the panel configuration.' },
@@ -31,7 +32,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
 
   onSourceChange = (item: SelectOptionItem<string>) => {
     const { datasource, query, onChange, onRunQuery } = this.props;
-    let data: SeriesData[] | undefined = undefined;
+    let data: DataFrame[] | undefined = undefined;
     if (item.value === 'panel') {
       if (query.data) {
         return;
@@ -51,7 +52,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
-  onSeriesParsed = (data: SeriesData[], text: string) => {
+  onSeriesParsed = (data: DataFrame[], text: string) => {
     const { query, onChange, onRunQuery } = this.props;
     this.setState({ text });
     if (!data) {
@@ -80,10 +81,10 @@ export class InputQueryEditor extends PureComponent<Props, State> {
 
           <div className="btn btn-link">
             {query.data ? (
-              datasource.getDescription(query.data)
+              describeDataFrame(query.data)
             ) : (
               <a href={`datasources/edit/${id}/`}>
-                {name}: {datasource.getDescription(datasource.data)} &nbsp;&nbsp;
+                {name}: {describeDataFrame(datasource.data)} &nbsp;&nbsp;
                 <i className="fa fa-pencil-square-o" />
               </a>
             )}

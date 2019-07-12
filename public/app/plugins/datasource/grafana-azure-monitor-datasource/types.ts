@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceJsonData } from '@grafana/ui';
 
 export interface AzureMonitorQuery extends DataQuery {
   format: string;
@@ -6,6 +6,25 @@ export interface AzureMonitorQuery extends DataQuery {
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
   //   appInsights: any;
+}
+
+export interface AzureDataSourceJsonData extends DataSourceJsonData {
+  subscriptionId: string;
+  cloudName: string;
+
+  // monitor
+  tenantId?: string;
+  clientId?: string;
+
+  // logs
+  logAnalyticsSubscriptionId?: string;
+  logAnalyticsTenantId?: string;
+  logAnalyticsClientId?: string;
+  azureLogAnalyticsSameAs?: string;
+  logAnalyticsDefaultWorkspace?: string;
+
+  // App Insights
+  appInsightsAppId?: string;
 }
 
 export interface AzureMetricQuery {
@@ -16,6 +35,7 @@ export interface AzureMetricQuery {
   timeGrainUnit: string;
   timeGrain: string;
   timeGrains: string[];
+  allowedTimeGrainsMs: number[];
   aggregation: string;
   dimension: string;
   dimensionFilter: string;
@@ -26,6 +46,24 @@ export interface AzureLogsQuery {
   query: string;
   resultFormat: string;
   workspace: string;
+}
+
+// Azure Monitor API Types
+
+export interface AzureMonitorMetricDefinitionsResponse {
+  data: {
+    value: Array<{ name: string; type: string; location?: string }>;
+  };
+  status: number;
+  statusText: string;
+}
+
+export interface AzureMonitorResourceGroupsResponse {
+  data: {
+    value: Array<{ name: string }>;
+  };
+  status: number;
+  statusText: string;
 }
 
 // Azure Log Analytics types

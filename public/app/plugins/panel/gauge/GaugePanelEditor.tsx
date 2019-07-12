@@ -3,16 +3,15 @@ import React, { PureComponent } from 'react';
 import {
   PanelEditorProps,
   ThresholdsEditor,
-  Threshold,
   PanelOptionsGrid,
   ValueMappingsEditor,
-  ValueMapping,
   FieldDisplayOptions,
   FieldDisplayEditor,
-  Field,
   FieldPropertiesEditor,
   Switch,
+  PanelOptionsGroup,
 } from '@grafana/ui';
+import { Field, Threshold, ValueMapping } from '@grafana/data';
 
 import { GaugeOptions } from './types';
 
@@ -28,17 +27,21 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       showThresholdMarkers: !this.props.options.showThresholdMarkers,
     });
 
-  onThresholdsChanged = (thresholds: Threshold[]) =>
-    this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
+  onThresholdsChanged = (thresholds: Threshold[]) => {
+    const current = this.props.options.fieldOptions.defaults;
+    this.onDefaultsChange({
+      ...current,
       thresholds,
     });
+  };
 
-  onValueMappingsChanged = (mappings: ValueMapping[]) =>
-    this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
+  onValueMappingsChanged = (mappings: ValueMapping[]) => {
+    const current = this.props.options.fieldOptions.defaults;
+    this.onDefaultsChange({
+      ...current,
       mappings,
     });
+  };
 
   onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
@@ -56,15 +59,17 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
   render() {
     const { options } = this.props;
     const { fieldOptions, showThresholdLabels, showThresholdMarkers } = options;
+    const { defaults } = fieldOptions;
 
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor
-            onChange={this.onDisplayOptionsChanged}
-            options={fieldOptions}
-            labelWidth={this.labelWidth}
-          >
+          <PanelOptionsGroup title="Display">
+            <FieldDisplayEditor
+              onChange={this.onDisplayOptionsChanged}
+              value={fieldOptions}
+              labelWidth={this.labelWidth}
+            />
             <Switch
               label="Labels"
               labelClass={`width-${this.labelWidth}`}
@@ -77,19 +82,16 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
               checked={showThresholdMarkers}
               onChange={this.onToggleThresholdMarkers}
             />
-          </FieldDisplayEditor>
+          </PanelOptionsGroup>
 
-          <FieldPropertiesEditor
-            title="Field"
-            showMinMax={true}
-            onChange={this.onDefaultsChange}
-            options={fieldOptions.defaults}
-          />
+          <PanelOptionsGroup title="Field">
+            <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
+          </PanelOptionsGroup>
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={fieldOptions.mappings} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
       </>
     );
   }

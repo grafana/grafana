@@ -42,9 +42,10 @@ export class CustomScrollbar extends Component<Props> {
 
   updateScroll() {
     const ref = this.ref.current;
+    const { scrollTop } = this.props;
 
-    if (ref && !isNil(this.props.scrollTop)) {
-      ref.scrollTop(this.props.scrollTop);
+    if (ref && !isNil(scrollTop)) {
+      ref.scrollTop(scrollTop);
     }
   }
 
@@ -70,6 +71,44 @@ export class CustomScrollbar extends Component<Props> {
     this.updateScroll();
   }
 
+  renderTrack = (track: 'track-vertical' | 'track-horizontal', hideTrack: boolean | undefined, passedProps: any) => {
+    return (
+      <div
+        {...passedProps}
+        className={cx(
+          css`
+            visibility: ${hideTrack ? 'none' : 'visible'};
+          `,
+          track
+        )}
+      />
+    );
+  };
+
+  renderThumb = (thumb: 'thumb-horizontal' | 'thumb-vertical', passedProps: any) => {
+    return <div {...passedProps} className={thumb} />;
+  };
+
+  renderTrackHorizontal = (passedProps: any) => {
+    return this.renderTrack('track-horizontal', this.props.hideHorizontalTrack, passedProps);
+  };
+
+  renderTrackVertical = (passedProps: any) => {
+    return this.renderTrack('track-vertical', this.props.hideVerticalTrack, passedProps);
+  };
+
+  renderThumbHorizontal = (passedProps: any) => {
+    return this.renderThumb('thumb-horizontal', passedProps);
+  };
+
+  renderThumbVertical = (passedProps: any) => {
+    return this.renderThumb('thumb-vertical', passedProps);
+  };
+
+  renderView = (passedProps: any) => {
+    return <div {...passedProps} className="view" />;
+  };
+
   render() {
     const {
       className,
@@ -80,8 +119,6 @@ export class CustomScrollbar extends Component<Props> {
       autoHide,
       autoHideTimeout,
       hideTracksWhenNotNeeded,
-      hideHorizontalTrack,
-      hideVerticalTrack,
     } = this.props;
 
     return (
@@ -97,31 +134,11 @@ export class CustomScrollbar extends Component<Props> {
         // Before these where set to inhert but that caused problems with cut of legends in firefox
         autoHeightMax={autoHeightMax}
         autoHeightMin={autoHeightMin}
-        renderTrackHorizontal={props => (
-          <div
-            {...props}
-            className={cx(
-              css`
-                visibility: ${hideHorizontalTrack ? 'none' : 'visible'};
-              `,
-              'track-horizontal'
-            )}
-          />
-        )}
-        renderTrackVertical={props => (
-          <div
-            {...props}
-            className={cx(
-              css`
-                visibility: ${hideVerticalTrack ? 'none' : 'visible'};
-              `,
-              'track-vertical'
-            )}
-          />
-        )}
-        renderThumbHorizontal={props => <div {...props} className="thumb-horizontal" />}
-        renderThumbVertical={props => <div {...props} className="thumb-vertical" />}
-        renderView={props => <div {...props} className="view" />}
+        renderTrackHorizontal={this.renderTrackHorizontal}
+        renderTrackVertical={this.renderTrackVertical}
+        renderThumbHorizontal={this.renderThumbHorizontal}
+        renderThumbVertical={this.renderThumbVertical}
+        renderView={this.renderView}
       >
         {children}
       </Scrollbars>

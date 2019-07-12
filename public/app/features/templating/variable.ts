@@ -16,12 +16,12 @@ export const variableRegexExec = (variableString: string) => {
 };
 
 export interface Variable {
-  setValue(option);
-  updateOptions();
-  dependsOn(variable);
-  setValueFromUrl(urlValue);
-  getValueForUrl();
-  getSaveModel();
+  setValue(option: any): any;
+  updateOptions(): any;
+  dependsOn(variable: any): any;
+  setValueFromUrl(urlValue: any): any;
+  getValueForUrl(): any;
+  getSaveModel(): any;
 }
 
 export let variableTypes = {};

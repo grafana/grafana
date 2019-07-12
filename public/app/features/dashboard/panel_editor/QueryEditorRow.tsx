@@ -5,13 +5,14 @@ import _ from 'lodash';
 
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Emitter } from 'app/core/utils/emitter';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange, PanelData, LoadingState, DataQueryRequest } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
+import { TimeRange, LoadingState } from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {

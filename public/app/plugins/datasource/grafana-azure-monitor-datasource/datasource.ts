@@ -2,20 +2,25 @@ import _ from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import { AzureMonitorQuery } from './types';
-import { DataSourceApi, DataQueryRequest } from '@grafana/ui/src/types';
+import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { IQService } from 'angular';
 
-export default class Datasource implements DataSourceApi<AzureMonitorQuery> {
-  id: number;
-  name: string;
+export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private templateSrv, private $q) {
-    this.name = instanceSettings.name;
-    this.id = instanceSettings.id;
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private backendSrv: BackendSrv,
+    private templateSrv: TemplateSrv,
+    private $q: IQService
+  ) {
+    super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings, this.backendSrv, this.templateSrv);
     this.appInsightsDatasource = new AppInsightsDatasource(
       instanceSettings,
@@ -72,7 +77,7 @@ export default class Datasource implements DataSourceApi<AzureMonitorQuery> {
     });
   }
 
-  async annotationQuery(options) {
+  async annotationQuery(options: any) {
     return this.azureLogAnalyticsDatasource.annotationQuery(options);
   }
 
@@ -179,11 +184,11 @@ export default class Datasource implements DataSourceApi<AzureMonitorQuery> {
     return this.appInsightsDatasource.getMetricNames();
   }
 
-  getAppInsightsMetricMetadata(metricName) {
+  getAppInsightsMetricMetadata(metricName: string) {
     return this.appInsightsDatasource.getMetricMetadata(metricName);
   }
 
-  getAppInsightsColumns(refId) {
+  getAppInsightsColumns(refId: string | number) {
     return this.appInsightsDatasource.logAnalyticsColumns[refId];
   }
 

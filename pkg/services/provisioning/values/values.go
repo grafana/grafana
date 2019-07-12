@@ -1,4 +1,4 @@
-// A set of value types to use in provisioning. They add custom unmarshaling logic that puts the string values
+// Package values is a set of value types to use in provisioning. They add custom unmarshaling logic that puts the string values
 // through os.ExpandEnv.
 // Usage:
 // type Data struct {
@@ -11,10 +11,12 @@
 package values
 
 import (
-	"github.com/pkg/errors"
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type IntValue struct {
@@ -33,7 +35,7 @@ func (val *IntValue) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 	val.Raw = interpolated.raw
 	val.value, err = strconv.Atoi(interpolated.value)
-	return errors.Wrap(err, "cannot convert value int")
+	return errutil.Wrap("cannot convert value int", err)
 }
 
 func (val *IntValue) Value() int {
@@ -184,8 +186,14 @@ func transformMap(i map[interface{}]interface{}) interface{} {
 
 // interpolateValue returns final value after interpolation. At the moment only env var interpolation is done
 // here but in the future something like interpolation from file could be also done here.
+// For a literal '$', '$$' can be used to avoid interpolation.
 func interpolateValue(val string) string {
-	return os.ExpandEnv(val)
+	parts := strings.Split(val, "$$")
+	interpolated := make([]string, len(parts))
+	for i, v := range parts {
+		interpolated[i] = os.ExpandEnv(v)
+	}
+	return strings.Join(interpolated, "$")
 }
 
 type interpolated struct {

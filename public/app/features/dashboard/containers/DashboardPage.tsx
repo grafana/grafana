@@ -61,6 +61,7 @@ export interface State {
   isFullscreen: boolean;
   fullscreenPanel: PanelModel | null;
   scrollTop: number;
+  updateScrollTop: number;
   rememberScrollTop: number;
   showLoadingState: boolean;
 }
@@ -73,6 +74,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     showLoadingState: false,
     fullscreenPanel: null,
     scrollTop: 0,
+    updateScrollTop: null,
     rememberScrollTop: 0,
   };
 
@@ -168,7 +170,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         isEditing: false,
         isFullscreen: false,
         fullscreenPanel: null,
-        scrollTop: this.state.rememberScrollTop,
+        updateScrollTop: this.state.rememberScrollTop,
       },
       this.triggerPanelsRendering.bind(this)
     );
@@ -204,7 +206,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   setScrollTop = (e: MouseEvent<HTMLElement>): void => {
     const target = e.target as HTMLElement;
-    this.setState({ scrollTop: target.scrollTop });
+    this.setState({ scrollTop: target.scrollTop, updateScrollTop: null });
   };
 
   onAddPanel = () => {
@@ -251,7 +253,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   render() {
     const { dashboard, editview, $injector, isInitSlow, initError } = this.props;
-    const { isSettingsOpening, isEditing, isFullscreen, scrollTop } = this.state;
+    const { isSettingsOpening, isEditing, isFullscreen, scrollTop, updateScrollTop } = this.state;
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -285,9 +287,9 @@ export class DashboardPage extends PureComponent<Props, State> {
         />
         <div className="scroll-canvas scroll-canvas--dashboard">
           <CustomScrollbar
-            autoHeightMin={'100%'}
+            autoHeightMin="100%"
             setScrollTop={this.setScrollTop}
-            scrollTop={scrollTop}
+            scrollTop={updateScrollTop}
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >

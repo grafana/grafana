@@ -1,0 +1,206 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Render PromQueryEditor with basic options should render 1`] = `
+<div>
+  <PromQueryField
+    datasource={
+      Object {
+        "createQuery": [MockFunction],
+        "getPrometheusTime": [MockFunction],
+      }
+    }
+    datasourceStatus={0}
+    history={Array []}
+    onChange={[Function]}
+    onRunQuery={[Function]}
+    query={
+      Object {
+        "expr": "",
+        "refId": "A",
+      }
+    }
+  />
+  <div
+    className="gf-form-inline"
+  >
+    <div
+      className="gf-form"
+    >
+      <Component
+        tooltip="Controls the name of the time series, using name or pattern. For example
+        {{hostname}} will be replaced with label value for the label hostname."
+        width={7}
+      >
+        Legend
+      </Component>
+      <input
+        className="gf-form-input"
+        onChange={[Function]}
+        placeholder="legend format"
+        type="text"
+      />
+    </div>
+    <div
+      className="gf-form"
+    >
+      <Component
+        tooltip="Leave blank for auto handling based on time range and panel width.
+            Note that the actual dates used in the query will be adjusted
+        to a multiple of the interval step."
+        width={7}
+      >
+        Min step
+      </Component>
+      <input
+        className="gf-form-input width-8"
+        onChange={[Function]}
+        type="text"
+      />
+    </div>
+    <div
+      className="gf-form"
+    >
+      <div
+        className="gf-form-label"
+      >
+        Resolution
+      </div>
+      <Select
+        autoFocus={false}
+        backspaceRemovesValue={true}
+        className=""
+        components={
+          Object {
+            "Group": [Function],
+            "IndicatorsContainer": [Function],
+            "MenuList": [Function],
+            "Option": [Function],
+            "SingleValue": [Function],
+          }
+        }
+        isClearable={false}
+        isDisabled={false}
+        isLoading={false}
+        isMulti={false}
+        isSearchable={false}
+        maxMenuHeight={300}
+        onChange={[Function]}
+        openMenuOnFocus={false}
+        options={
+          Array [
+            Object {
+              "label": "1/1",
+              "value": 1,
+            },
+            Object {
+              "label": "1/2",
+              "value": 2,
+            },
+            Object {
+              "label": "1/3",
+              "value": 3,
+            },
+            Object {
+              "label": "1/4",
+              "value": 4,
+            },
+            Object {
+              "label": "1/5",
+              "value": 5,
+            },
+            Object {
+              "label": "1/10",
+              "value": 10,
+            },
+          ]
+        }
+        tabSelectsValue={true}
+        value={
+          Object {
+            "label": "1/1",
+            "value": 1,
+          }
+        }
+      />
+    </div>
+    <div
+      className="gf-form"
+    >
+      <div
+        className="gf-form-label"
+      >
+        Format
+      </div>
+      <Select
+        autoFocus={false}
+        backspaceRemovesValue={true}
+        className=""
+        components={
+          Object {
+            "Group": [Function],
+            "IndicatorsContainer": [Function],
+            "MenuList": [Function],
+            "Option": [Function],
+            "SingleValue": [Function],
+          }
+        }
+        isClearable={false}
+        isDisabled={false}
+        isLoading={false}
+        isMulti={false}
+        isSearchable={false}
+        maxMenuHeight={300}
+        onChange={[Function]}
+        openMenuOnFocus={false}
+        options={
+          Array [
+            Object {
+              "label": "Time series",
+              "value": "time_series",
+            },
+            Object {
+              "label": "Table",
+              "value": "table",
+            },
+            Object {
+              "label": "Heatmap",
+              "value": "heatmap",
+            },
+          ]
+        }
+        tabSelectsValue={true}
+        value={
+          Object {
+            "label": "Time series",
+            "value": "time_series",
+          }
+        }
+      />
+      <Switch
+        checked={false}
+        label="Instant"
+        onChange={[Function]}
+      />
+      <Component
+        tooltip="Link to Graph in Prometheus"
+        width={10}
+      >
+        <PromLink
+          datasource={
+            Object {
+              "createQuery": [MockFunction],
+              "getPrometheusTime": [MockFunction],
+            }
+          }
+          query={
+            Object {
+              "expr": "",
+              "refId": "A",
+            }
+          }
+        />
+      </Component>
+    </div>
+  </div>
+</div>
+`;

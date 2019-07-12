@@ -1,5 +1,5 @@
 import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
-import { stringToJsRegex } from '@grafana/ui';
+import { stringToJsRegex } from '@grafana/data';
 
 export class DatasourceVariable implements Variable {
   regex: any;

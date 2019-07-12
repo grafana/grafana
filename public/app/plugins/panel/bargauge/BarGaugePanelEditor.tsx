@@ -1,33 +1,39 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-// Components
 import {
   ThresholdsEditor,
   ValueMappingsEditor,
   PanelOptionsGrid,
   FieldDisplayEditor,
   FieldDisplayOptions,
-  Field,
   FieldPropertiesEditor,
+  PanelOptionsGroup,
+  FormLabel,
+  PanelEditorProps,
+  Select,
 } from '@grafana/ui';
+import { Field } from '@grafana/data';
 
-// Types
-import { FormLabel, PanelEditorProps, Threshold, Select, ValueMapping } from '@grafana/ui';
+import { Threshold, ValueMapping } from '@grafana/data';
 import { BarGaugeOptions, orientationOptions, displayModes } from './types';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onThresholdsChanged = (thresholds: Threshold[]) =>
-    this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
+  onThresholdsChanged = (thresholds: Threshold[]) => {
+    const current = this.props.options.fieldOptions.defaults;
+    this.onDefaultsChange({
+      ...current,
       thresholds,
     });
+  };
 
-  onValueMappingsChanged = (mappings: ValueMapping[]) =>
-    this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
+  onValueMappingsChanged = (mappings: ValueMapping[]) => {
+    const current = this.props.options.fieldOptions.defaults;
+    this.onDefaultsChange({
+      ...current,
       mappings,
     });
+  };
 
   onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
@@ -42,19 +48,21 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     });
   };
 
-  onOrientationChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
-  onDisplayModeChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
+  onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
+  onDisplayModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
 
   render() {
     const { options } = this.props;
     const { fieldOptions } = options;
+    const { defaults } = fieldOptions;
 
     const labelWidth = 6;
 
     return (
       <>
         <PanelOptionsGrid>
-          <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} options={fieldOptions} labelWidth={labelWidth}>
+          <PanelOptionsGroup title="Display">
+            <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={labelWidth} />
             <div className="form-field">
               <FormLabel width={labelWidth}>Orientation</FormLabel>
               <Select
@@ -75,19 +83,15 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
                 value={displayModes.find(item => item.value === options.displayMode)}
               />
             </div>
-          </FieldDisplayEditor>
+          </PanelOptionsGroup>
+          <PanelOptionsGroup title="Field">
+            <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
+          </PanelOptionsGroup>
 
-          <FieldPropertiesEditor
-            title="Field"
-            showMinMax={true}
-            onChange={this.onDefaultsChange}
-            options={fieldOptions.defaults}
-          />
-
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={fieldOptions.mappings} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
       </>
     );
   }

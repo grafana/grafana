@@ -23,7 +23,7 @@ export class TablePanelEditor extends PureComponent<PanelEditorProps<Options>> {
     this.props.onOptionsChange({ ...this.props.options, showToolbar: !this.props.options.showToolbar });
   };
 
-  onFixedColumnsChange = ({ target }) => {
+  onFixedColumnsChange = ({ target }: any) => {
     this.props.onOptionsChange({ ...this.props.options, fixedColumns: target.value });
   };
 

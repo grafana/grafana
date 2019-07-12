@@ -10,9 +10,9 @@ export interface GraphLegendItemProps {
   key?: React.Key;
   item: LegendItem;
   className?: string;
-  onLabelClick: (item: LegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
-  onSeriesColorChange: SeriesColorChangeHandler;
-  onToggleAxis: () => void;
+  onLabelClick?: (item: LegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onSeriesColorChange?: SeriesColorChangeHandler;
+  onToggleAxis?: () => void;
 }
 
 export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> = ({
@@ -21,19 +21,31 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
   onToggleAxis,
   onLabelClick,
 }) => {
+  const theme = useContext(ThemeContext);
+
   return (
     <>
       <LegendSeriesIcon
+        disabled={!onSeriesColorChange}
         color={item.color}
-        onColorChange={color => onSeriesColorChange(item.label, color)}
+        onColorChange={color => {
+          if (onSeriesColorChange) {
+            onSeriesColorChange(item.label, color);
+          }
+        }}
         onToggleAxis={onToggleAxis}
         yAxis={item.yAxis}
       />
       <div
-        onClick={event => onLabelClick(item, event)}
+        onClick={event => {
+          if (onLabelClick) {
+            onLabelClick(item, event);
+          }
+        }}
         className={css`
           cursor: pointer;
           white-space: nowrap;
+          color: ${!item.isVisible && theme.colors.linkDisabled};
         `}
       >
         {item.label}
@@ -74,13 +86,22 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
           `}
         >
           <LegendSeriesIcon
+            disabled={!!onSeriesColorChange}
             color={item.color}
-            onColorChange={color => onSeriesColorChange(item.label, color)}
+            onColorChange={color => {
+              if (onSeriesColorChange) {
+                onSeriesColorChange(item.label, color);
+              }
+            }}
             onToggleAxis={onToggleAxis}
             yAxis={item.yAxis}
           />
           <div
-            onClick={event => onLabelClick(item, event)}
+            onClick={event => {
+              if (onLabelClick) {
+                onLabelClick(item, event);
+              }
+            }}
             className={css`
               cursor: pointer;
               white-space: nowrap;

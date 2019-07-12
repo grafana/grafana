@@ -1,44 +1,22 @@
 // Types
 import {
   DataQueryRequest,
-  SeriesData,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
-} from '@grafana/ui/src/types';
+  MetricFindValue,
+} from '@grafana/ui';
+import { DataFrame } from '@grafana/data';
+
 import { InputQuery, InputOptions } from './types';
 
-export class InputDatasource implements DataSourceApi<InputQuery> {
-  data: SeriesData[];
-
-  // Filled in by grafana plugin system
-  name?: string;
-
-  // Filled in by grafana plugin system
-  id?: number;
+export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
+  data: DataFrame[];
 
   constructor(instanceSettings: DataSourceInstanceSettings<InputOptions>) {
-    if (instanceSettings.jsonData) {
-      this.data = instanceSettings.jsonData.data;
-    }
+    super(instanceSettings);
 
-    if (!this.data) {
-      this.data = [];
-    }
-  }
-
-  getDescription(data: SeriesData[]): string {
-    if (!data) {
-      return '';
-    }
-    if (data.length > 1) {
-      const count = data.reduce((acc, series) => {
-        return acc + series.rows.length;
-      }, 0);
-      return `${data.length} Series, ${count} Rows`;
-    }
-    const series = data[0];
-    return `${series.fields.length} Fields, ${series.rows.length} Rows`;
+    this.data = instanceSettings.jsonData.data ? instanceSettings.jsonData.data : [];
   }
 
   /**
@@ -46,12 +24,12 @@ export class InputDatasource implements DataSourceApi<InputQuery> {
    */
   getQueryDisplayText(query: InputQuery): string {
     if (query.data) {
-      return 'Panel Data: ' + this.getDescription(query.data);
+      return 'Panel Data: ' + describeDataFrame(query.data);
     }
-    return `Shared Data From: ${this.name} (${this.getDescription(this.data)})`;
+    return `Shared Data From: ${this.name} (${describeDataFrame(this.data)})`;
   }
 
-  metricFindQuery(query: string, options?: any) {
+  metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
     return new Promise((resolve, reject) => {
       const names = [];
       for (const series of this.data) {
@@ -67,7 +45,7 @@ export class InputDatasource implements DataSourceApi<InputQuery> {
   }
 
   query(options: DataQueryRequest<InputQuery>): Promise<DataQueryResponse> {
-    const results: SeriesData[] = [];
+    const results: DataFrame[] = [];
     for (const query of options.targets) {
       if (query.hide) {
         continue;
@@ -104,6 +82,23 @@ export class InputDatasource implements DataSourceApi<InputQuery> {
       });
     });
   }
+}
+
+export function describeDataFrame(data: DataFrame[]): string {
+  if (!data || !data.length) {
+    return '';
+  }
+  if (data.length > 1) {
+    const count = data.reduce((acc, series) => {
+      return acc + series.rows.length;
+    }, 0);
+    return `${data.length} Series, ${count} Rows`;
+  }
+  const series = data[0];
+  if (!series.fields) {
+    return 'Missing Fields';
+  }
+  return `${series.fields.length} Fields, ${series.rows.length} Rows`;
 }
 
 export default InputDatasource;

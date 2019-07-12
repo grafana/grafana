@@ -4,9 +4,10 @@ import (
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
-func upgradeCommand(c CommandLine) error {
+func upgradeCommand(c utils.CommandLine) error {
 	pluginsDir := c.PluginDirectory()
 	pluginName := c.Args().First()
 

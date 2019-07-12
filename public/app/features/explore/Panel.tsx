@@ -4,18 +4,27 @@ interface Props {
   isOpen: boolean;
   label: string;
   loading?: boolean;
-  onToggle: (isOpen: boolean) => void;
+  collapsible?: boolean;
+  onToggle?: (isOpen: boolean) => void;
 }
 
 export default class Panel extends PureComponent<Props> {
-  onClickToggle = () => this.props.onToggle(!this.props.isOpen);
+  onClickToggle = () => {
+    const { onToggle, isOpen } = this.props;
+    if (onToggle) {
+      onToggle(!isOpen);
+    }
+  };
 
   render() {
-    const { isOpen, loading } = this.props;
+    const { isOpen, loading, collapsible } = this.props;
+    const panelClass = collapsible
+      ? 'explore-panel explore-panel--collapsible panel-container'
+      : 'explore-panel panel-container';
     const iconClass = isOpen ? 'fa fa-caret-up' : 'fa fa-caret-down';
     const loaderClass = loading ? 'explore-panel__loader explore-panel__loader--active' : 'explore-panel__loader';
     return (
-      <div className="explore-panel panel-container">
+      <div className={panelClass}>
         <div className="explore-panel__header" onClick={this.onClickToggle}>
           <div className="explore-panel__header-buttons">
             <span className={iconClass} />

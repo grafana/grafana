@@ -1,9 +1,13 @@
 package remotecache
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	redis "gopkg.in/redis.v2"
 )
 
@@ -13,12 +17,47 @@ type redisStorage struct {
 	c *redis.Client
 }
 
-func newRedisStorage(opts *setting.RemoteCacheOptions) *redisStorage {
-	opt := &redis.Options{
-		Network: "tcp",
-		Addr:    opts.ConnStr,
+// parseRedisConnStr parses k=v pairs in csv and builds a redis Options object
+func parseRedisConnStr(connStr string) (*redis.Options, error) {
+	keyValueCSV := strings.Split(connStr, ",")
+	options := &redis.Options{Network: "tcp"}
+	for _, rawKeyValue := range keyValueCSV {
+		keyValueTuple := strings.Split(rawKeyValue, "=")
+		if len(keyValueTuple) != 2 {
+			return nil, fmt.Errorf("incorrect redis connection string format detected for '%v', format is key=value,key=value", rawKeyValue)
+		}
+		connKey := keyValueTuple[0]
+		connVal := keyValueTuple[1]
+		switch connKey {
+		case "addr":
+			options.Addr = connVal
+		case "password":
+			options.Password = connVal
+		case "db":
+			i, err := strconv.ParseInt(connVal, 10, 64)
+			if err != nil {
+				return nil, errutil.Wrap("value for db in redis connection string must be a number", err)
+			}
+			options.DB = i
+		case "pool_size":
+			i, err := strconv.Atoi(connVal)
+			if err != nil {
+				return nil, errutil.Wrap("value for pool_size in redis connection string must be a number", err)
+			}
+			options.PoolSize = i
+		default:
+			return nil, fmt.Errorf("unrecorgnized option '%v' in redis connection string", connVal)
+		}
 	}
-	return &redisStorage{c: redis.NewClient(opt)}
+	return options, nil
+}
+
+func newRedisStorage(opts *setting.RemoteCacheOptions) (*redisStorage, error) {
+	opt, err := parseRedisConnStr(opts.ConnStr)
+	if err != nil {
+		return nil, err
+	}
+	return &redisStorage{c: redis.NewClient(opt)}, nil
 }
 
 // Set sets value to given key in session.
@@ -28,7 +67,6 @@ func (s *redisStorage) Set(key string, val interface{}, expires time.Duration) e
 	if err != nil {
 		return err
 	}
-
 	status := s.c.SetEx(key, expires, string(value))
 	return status.Err()
 }
@@ -43,16 +81,10 @@ func (s *redisStorage) Get(key string) (interface{}, error) {
 	if err == nil {
 		return item.Val, nil
 	}
-
 	if err.Error() == "EOF" {
 		return nil, ErrCacheItemNotFound
 	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return item.Val, nil
+	return nil, err
 }
 
 // Delete delete a key from session.

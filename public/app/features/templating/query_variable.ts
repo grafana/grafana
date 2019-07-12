@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
-import { stringToJsRegex } from '@grafana/ui';
+import { stringToJsRegex } from '@grafana/data';
 
 function getNoneOption() {
   return { text: 'None', value: '', isNone: true };

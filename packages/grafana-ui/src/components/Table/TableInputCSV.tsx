@@ -1,19 +1,18 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { SeriesData } from '../../types/data';
-import { CSVConfig, readCSV } from '../../utils/csv';
+import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
 
 interface Props {
   config?: CSVConfig;
   text: string;
   width: string | number;
   height: string | number;
-  onSeriesParsed: (data: SeriesData[], text: string) => void;
+  onSeriesParsed: (data: DataFrame[], text: string) => void;
 }
 
 interface State {
   text: string;
-  data: SeriesData[];
+  data: DataFrame[];
 }
 
 /**

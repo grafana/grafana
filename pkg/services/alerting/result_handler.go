@@ -5,30 +5,31 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
-type ResultHandler interface {
-	Handle(evalContext *EvalContext) error
+type resultHandler interface {
+	handle(evalContext *EvalContext) error
 }
 
-type DefaultResultHandler struct {
-	notifier NotificationService
+type defaultResultHandler struct {
+	notifier *notificationService
 	log      log.Logger
 }
 
-func NewResultHandler(renderService rendering.Service) *DefaultResultHandler {
-	return &DefaultResultHandler{
+func newResultHandler(renderService rendering.Service) *defaultResultHandler {
+	return &defaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
-		notifier: NewNotificationService(renderService),
+		notifier: newNotificationService(renderService),
 	}
 }
 
-func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
+func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 	executionError := ""
 	annotationData := simplejson.New()
 
@@ -44,24 +45,24 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	}
 
 	metrics.M_Alerting_Result_State.WithLabelValues(string(evalContext.Rule.State)).Inc()
-	if evalContext.ShouldUpdateAlertState() {
-		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
+	if evalContext.shouldUpdateAlertState() {
+		handler.log.Info("New state change", "alertId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
-		cmd := &m.SetAlertStateCommand{
-			AlertId:  evalContext.Rule.Id,
-			OrgId:    evalContext.Rule.OrgId,
+		cmd := &models.SetAlertStateCommand{
+			AlertId:  evalContext.Rule.ID,
+			OrgId:    evalContext.Rule.OrgID,
 			State:    evalContext.Rule.State,
 			Error:    executionError,
 			EvalData: annotationData,
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {
-			if err == m.ErrCannotChangeStateOnPausedAlert {
+			if err == models.ErrCannotChangeStateOnPausedAlert {
 				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err
 			}
 
-			if err == m.ErrRequiresNewState {
+			if err == models.ErrRequiresNewState {
 				handler.log.Info("Alert already updated")
 				return nil
 			}
@@ -80,10 +81,10 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 
 		// save annotation
 		item := annotations.Item{
-			OrgId:       evalContext.Rule.OrgId,
-			DashboardId: evalContext.Rule.DashboardId,
-			PanelId:     evalContext.Rule.PanelId,
-			AlertId:     evalContext.Rule.Id,
+			OrgId:       evalContext.Rule.OrgID,
+			DashboardId: evalContext.Rule.DashboardID,
+			PanelId:     evalContext.Rule.PanelID,
+			AlertId:     evalContext.Rule.ID,
 			Text:        "",
 			NewState:    string(evalContext.Rule.State),
 			PrevState:   string(evalContext.PrevAlertState),

@@ -3,9 +3,10 @@ package commands
 import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
-func listremoteCommand(c CommandLine) error {
+func listremoteCommand(c utils.CommandLine) error {
 	plugin, err := s.ListAllPlugins(c.RepoDirectory())
 
 	if err != nil {

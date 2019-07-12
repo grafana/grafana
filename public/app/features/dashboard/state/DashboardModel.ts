@@ -1,5 +1,4 @@
 // Libaries
-import moment, { MomentInput } from 'moment';
 import _ from 'lodash';
 
 // Constants
@@ -14,8 +13,10 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { PanelModel, GridPos } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { TimeRange } from '@grafana/ui/src';
-import { UrlQueryValue, KIOSK_MODE_TV, DashboardMeta } from 'app/types';
+import { TimeRange, TimeZone } from '@grafana/data';
+import { UrlQueryValue } from '@grafana/runtime';
+import { KIOSK_MODE_TV, DashboardMeta } from 'app/types';
+import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/data';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -698,12 +699,12 @@ export class DashboardModel {
     return newPanel;
   }
 
-  formatDate(date: MomentInput, format?: string) {
-    date = moment.isMoment(date) ? date : moment(date);
+  formatDate(date: DateTimeInput, format?: string) {
+    date = isDateTime(date) ? date : dateTime(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
     const timezone = this.getTimezone();
 
-    return timezone === 'browser' ? moment(date).format(format) : moment.utc(date).format(format);
+    return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
   }
 
   destroy() {
@@ -817,10 +818,10 @@ export class DashboardModel {
     return this.graphTooltip === 1;
   }
 
-  getRelativeTime(date: MomentInput) {
-    date = moment.isMoment(date) ? date : moment(date);
+  getRelativeTime(date: DateTimeInput) {
+    date = isDateTime(date) ? date : dateTime(date);
 
-    return this.timezone === 'browser' ? moment(date).fromNow() : moment.utc(date).fromNow();
+    return this.timezone === 'browser' ? dateTime(date).fromNow() : toUtc(date).fromNow();
   }
 
   isTimezoneUtc() {
@@ -831,8 +832,8 @@ export class DashboardModel {
     return this.snapshot !== undefined;
   }
 
-  getTimezone() {
-    return this.timezone ? this.timezone : contextSrv.user.timezone;
+  getTimezone(): TimeZone {
+    return (this.timezone ? this.timezone : contextSrv.user.timezone) as TimeZone;
   }
 
   private updateSchema(old: any) {

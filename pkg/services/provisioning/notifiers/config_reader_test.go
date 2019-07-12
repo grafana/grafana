@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/notifiers"
@@ -66,6 +66,8 @@ func TestNotificationAsConfig(t *testing.T) {
 			So(nt.Settings, ShouldResemble, map[string]interface{}{
 				"recipient": "XXX", "token": "xoxb", "uploadImage": true, "url": "https://slack.com",
 			})
+			So(nt.SendReminder, ShouldBeTrue)
+			So(nt.Frequency, ShouldEqual, "1h")
 
 			nt = nts[1]
 			So(nt.Name, ShouldEqual, "another-not-default-notification")

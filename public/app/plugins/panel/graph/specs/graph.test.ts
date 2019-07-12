@@ -24,24 +24,24 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import config from 'app/core/config';
 
 import TimeSeries from 'app/core/time_series2';
-import moment from 'moment';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
+import { dateTime } from '@grafana/data';
 
 const ctx = {} as any;
-let ctrl;
+let ctrl: any;
 const scope = {
   ctrl: {},
   range: {
-    from: moment([2015, 1, 1]),
-    to: moment([2015, 11, 20]),
+    from: dateTime([2015, 1, 1]),
+    to: dateTime([2015, 11, 20]),
   },
   $on: () => {},
 };
 let link;
 
 describe('grafanaGraph', () => {
-  const setupCtx = (beforeRender?) => {
+  const setupCtx = (beforeRender?: any) => {
     config.bootData = {
       user: {
         lightTheme: false,
@@ -85,8 +85,8 @@ describe('grafanaGraph', () => {
         getTimezone: () => 'browser',
       },
       range: {
-        from: moment([2015, 1, 1, 10]),
-        to: moment([2015, 1, 1, 22]),
+        from: dateTime([2015, 1, 1, 10]),
+        to: dateTime([2015, 1, 1, 22]),
       },
     } as any;
 
@@ -110,15 +110,19 @@ describe('grafanaGraph', () => {
       },
       {
         get: () => {},
-      },
-      {}
+      } as any,
+      {} as any
     );
 
     // @ts-ignore
     $.plot = ctrl.plot = jest.fn();
     scope.ctrl = ctrl;
 
-    link = graphDirective({}, {}, {}).link(scope, { width: () => 500, mouseleave: () => {}, bind: () => {} });
+    link = graphDirective({} as any, {}, {} as any, {} as any).link(scope, {
+      width: () => 500,
+      mouseleave: () => {},
+      bind: () => {},
+    } as any);
     if (typeof beforeRender === 'function') {
       beforeRender();
     }
@@ -167,8 +171,11 @@ describe('grafanaGraph', () => {
   describe('sorting stacked series as legend. min descending order', () => {
     beforeEach(() => {
       setupCtx(() => {
-        ctrl.panel.legend.sort = 'min';
+        const sortKey = 'min';
+        ctrl.panel.legend.sort = sortKey;
         ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.legend.alignAsTable = true;
+        ctrl.panel.legend[sortKey] = true;
         ctrl.panel.stack = true;
       });
     });
@@ -210,8 +217,11 @@ describe('grafanaGraph', () => {
   describe('sorting stacked series as legend. current descending order', () => {
     beforeEach(() => {
       setupCtx(() => {
-        ctrl.panel.legend.sort = 'current';
+        const sortKey = 'current';
+        ctrl.panel.legend.sort = sortKey;
         ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.legend.alignAsTable = true;
+        ctrl.panel.legend[sortKey] = true;
         ctrl.panel.stack = true;
       });
     });
@@ -219,6 +229,23 @@ describe('grafanaGraph', () => {
     it('highest last value should be first', () => {
       expect(ctx.plotData[0].alias).toBe('series2');
       expect(ctx.plotData[1].alias).toBe('series1');
+    });
+  });
+
+  describe('stacked series should not sort if legend is not as table or sort key column is not visible', () => {
+    beforeEach(() => {
+      setupCtx(() => {
+        const sortKey = 'min';
+        ctrl.panel.legend.sort = sortKey;
+        ctrl.panel.legend.sortDesc = true;
+        ctrl.panel.legend.alignAsTable = false;
+        ctrl.panel.legend[sortKey] = false;
+        ctrl.panel.stack = true;
+      });
+    });
+    it('highest value should be first', () => {
+      expect(ctx.plotData[0].alias).toBe('series1');
+      expect(ctx.plotData[1].alias).toBe('series2');
     });
   });
 
@@ -443,8 +470,8 @@ describe('grafanaGraph', () => {
     describe('and the range is less than 24 hours', () => {
       beforeEach(() => {
         setupCtx(() => {
-          ctrl.range.from = moment([2015, 1, 1, 10]);
-          ctrl.range.to = moment([2015, 1, 1, 22]);
+          ctrl.range.from = dateTime([2015, 1, 1, 10]);
+          ctrl.range.to = dateTime([2015, 1, 1, 22]);
         });
       });
 
@@ -457,8 +484,8 @@ describe('grafanaGraph', () => {
     describe('and the range is less than one year', () => {
       beforeEach(() => {
         setupCtx(() => {
-          ctrl.range.from = moment([2015, 1, 1]);
-          ctrl.range.to = moment([2015, 11, 20]);
+          ctrl.range.from = dateTime([2015, 1, 1]);
+          ctrl.range.to = dateTime([2015, 11, 20]);
         });
       });
 
@@ -532,9 +559,9 @@ describe('grafanaGraph', () => {
     });
 
     it('should not contain values lower than min', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(200);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(200);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -553,9 +580,9 @@ describe('grafanaGraph', () => {
     });
 
     it('should not contain values lower than zero', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -574,9 +601,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis min should not affect the histogram', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(-100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -595,9 +622,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis min should not affect the histogram', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(-100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -616,9 +643,9 @@ describe('grafanaGraph', () => {
     });
 
     it('should not contain values greater than max', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(200);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(200);
     });
   });
 
@@ -637,9 +664,9 @@ describe('grafanaGraph', () => {
     });
 
     it('should not contain values greater than zero', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(-100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(-100);
     });
   });
 
@@ -658,9 +685,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis max should not affect the histogram', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(-100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -679,9 +706,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis max should not should node affect the histogram', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(-100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(-100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -701,9 +728,9 @@ describe('grafanaGraph', () => {
     });
 
     it('should not contain values lower than min and greater than max', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(200);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(200);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(200);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(200);
     });
   });
 
@@ -723,9 +750,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis max should be ignored otherwise the bucketSize is zero', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -745,9 +772,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis min and max should not affect the histogram', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -767,9 +794,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis min and max should not affect the histogram', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -789,9 +816,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis max should be ignored otherwise the bucketSize is negative', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(200);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(200);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -811,9 +838,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis min should be ignored otherwise the bucketSize is negative', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -832,9 +859,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis min should be ignored otherwise the bucketSize is zero', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -853,9 +880,9 @@ describe('grafanaGraph', () => {
     });
 
     it('xaxis min should not affect the histogram', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 
@@ -874,9 +901,9 @@ describe('grafanaGraph', () => {
     });
 
     it('should calculate correct histogram', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(100);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
     });
   });
 
@@ -895,7 +922,7 @@ describe('grafanaGraph', () => {
     });
 
     it('should calculate empty histogram', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
       expect(nonZero.length).toBe(0);
     });
   });
@@ -915,9 +942,9 @@ describe('grafanaGraph', () => {
     });
 
     it('should calculate correct histogram', () => {
-      const nonZero = ctx.plotData[0].data.filter(t => t[1] > 0);
-      expect(Math.min.apply(Math, nonZero.map(t => t[0]))).toBe(100);
-      expect(Math.max.apply(Math, nonZero.map(t => t[0]))).toBe(300);
+      const nonZero = ctx.plotData[0].data.filter((t: number[]) => t[1] > 0);
+      expect(Math.min.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(100);
+      expect(Math.max.apply(Math, nonZero.map((t: number[]) => t[0]))).toBe(300);
     });
   });
 });

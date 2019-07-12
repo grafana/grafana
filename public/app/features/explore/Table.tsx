@@ -26,7 +26,7 @@ export default class Table extends PureComponent<TableProps> {
         if (e.target) {
           const link = e.target as HTMLElement;
           if (link.className === 'link') {
-            const columnKey = column.Header;
+            const columnKey = column.Header().props.title;
             const rowValue = rowInfo.row[columnKey];
             this.props.onClickCell(columnKey, rowValue);
           }

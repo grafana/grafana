@@ -11,14 +11,14 @@ import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
-import { getProcessedSeriesData } from '../state/PanelQueryState';
+import { getProcessedDataFrame } from '../state/PanelQueryState';
 import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { LoadingState, PanelData, PanelPlugin } from '@grafana/ui';
-import { ScopedVars } from '@grafana/ui';
+import { ScopedVars, PanelData, PanelPlugin } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -71,7 +71,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       this.setState({
         data: {
           state: LoadingState.Done,
-          series: getProcessedSeriesData(panel.snapshotData),
+          series: getProcessedDataFrame(panel.snapshotData),
         },
         isFirstLoad: false,
       });
@@ -222,7 +222,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   get wantsQueryExecution() {
-    return this.props.plugin.meta.dataFormats.length > 0 && !this.hasPanelSnapshot;
+    return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
 
   renderPanel(width: number, height: number): JSX.Element {
@@ -234,7 +234,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     // image rendering (phantomjs/headless chrome) to know when to capture image
     const loading = data.state;
     if (loading === LoadingState.Done) {
-      profiler.renderingCompleted(panel.id);
+      profiler.renderingCompleted();
     }
 
     // do not render component until we have first data
@@ -250,9 +250,11 @@ export class PanelChrome extends PureComponent<Props, State> {
         {loading === LoadingState.Loading && this.renderLoadingState()}
         <div className="panel-content">
           <PanelComponent
+            id={panel.id}
             data={data}
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
-            options={panel.getOptions(plugin.defaults)}
+            options={panel.getOptions()}
+            transparent={panel.transparent}
             width={width - theme.panelPadding * 2}
             height={innerPanelHeight}
             renderCounter={renderCounter}

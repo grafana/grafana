@@ -6,7 +6,7 @@ import xss from 'xss';
  * See https://github.com/bvaughn/react-highlight-words#props
  */
 export function findHighlightChunksInText({ searchWords, textToHighlight }) {
-  return findMatchesInText(textToHighlight, searchWords.join(' '));
+  return searchWords.reduce((acc, term) => [...acc, ...findMatchesInText(textToHighlight, term)], []);
 }
 
 const cleanNeedle = (needle: string): string => {
@@ -100,4 +100,12 @@ export function sanitize(unsanitizedString: string): string {
 
 export function hasAnsiCodes(input: string): boolean {
   return /\u001b\[\d{1,2}m/.test(input);
+}
+
+export function escapeHtml(str: string): string {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

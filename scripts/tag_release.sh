@@ -1,4 +1,4 @@
-#/bin/bash
+#!/usr/bin/env bash
 
 # abort if we get any error
 set -e
@@ -33,8 +33,9 @@ echo "press [y] to push the tags"
 
 read -n 1 confirm
 
-if [ "${confirm}" == "y" ]; then 
+if [ "${confirm}" == "y" ]; then
     git push origin "${_branch}" --tags
-else 
+else
+    git tag -d "${_tag}"
     echo "Abort! "
 fi

@@ -17,7 +17,7 @@ const template = `
 		<div class="p-t-2">
 			<div class="gf-form">
 				<label class="gf-form-label width-8">New name</label>
-				<input type="text" class="gf-form-input" ng-model="ctrl.clone.title" give-focus="true" required>
+				<input type="text" class="gf-form-input" ng-model="ctrl.clone.title" give-focus="true" required aria-label="Save dashboard title field">
 			</div>
       <folder-picker initial-folder-id="ctrl.folderId"
                        on-change="ctrl.onFolderChange($folder)"
@@ -34,7 +34,14 @@ const template = `
 		</div>
 
 		<div class="gf-form-button-row text-center">
-			<button type="submit" class="btn btn-primary" ng-click="ctrl.save()" ng-disabled="!ctrl.isValidFolderSelection">Save</button>
+      <button
+        type="submit"
+        class="btn btn-primary"
+        ng-click="ctrl.save()"
+        ng-disabled="!ctrl.isValidFolderSelection"
+        aria-label="Save dashboard button">
+        Save
+      </button>
 			<a class="btn-text" ng-click="ctrl.dismiss();">Cancel</a>
 		</div>
 	</form>

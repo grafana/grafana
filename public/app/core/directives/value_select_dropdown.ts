@@ -77,10 +77,17 @@ export class ValueSelectDropdownCtrl {
   }
 
   clearSelections() {
-    _.each(this.options, option => {
-      option.selected = false;
-    });
+    this.selectedValues = _.filter(this.options, { selected: true });
 
+    if (this.selectedValues.length > 1) {
+      _.each(this.options, option => {
+        option.selected = false;
+      });
+    } else {
+      _.each(this.search.options, option => {
+        option.selected = true;
+      });
+    }
     this.selectionsChanged(false);
   }
 

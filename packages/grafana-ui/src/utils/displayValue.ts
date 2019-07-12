@@ -1,31 +1,18 @@
 // Libraries
 import _ from 'lodash';
-import moment from 'moment';
 
 // Utils
 import { getValueFormat } from './valueFormats/valueFormats';
-import { getMappedValue } from './valueMappings';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import {
-  Threshold,
-  ValueMapping,
-  DecimalInfo,
-  DisplayValue,
-  GrafanaTheme,
-  GrafanaThemeType,
-  DecimalCount,
-  Field,
-} from '../types';
+import { DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType, DecimalCount } from '../types';
+import { DateTime, dateTime, Threshold, getMappedValue, Field } from '@grafana/data';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
 export interface DisplayValueOptions {
   field?: Partial<Field>;
-
-  mappings?: ValueMapping[];
-  thresholds?: Threshold[];
 
   // Alternative to empty string
   noValue?: string;
@@ -41,8 +28,9 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
     const formatFunc = getValueFormat(field.unit || 'none');
 
     return (value: any) => {
-      const { mappings, thresholds, theme } = options;
-      let color = field.color;
+      const { theme } = options;
+      const { mappings, thresholds } = field;
+      let color;
 
       let text = _.toString(value);
       let numeric = toNumber(value);
@@ -76,7 +64,7 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
           text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
         }
-        if (thresholds && thresholds.length > 0) {
+        if (thresholds && thresholds.length) {
           color = getColorFromThreshold(numeric, thresholds, theme);
         }
       }
@@ -91,18 +79,18 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
   return toStringProcessor;
 }
 
-function toMoment(value: any, numeric: number, format: string): moment.Moment {
+function toMoment(value: any, numeric: number, format: string): DateTime {
   if (!isNaN(numeric)) {
-    const v = moment(numeric);
+    const v = dateTime(numeric);
     if (v.isValid()) {
       return v;
     }
   }
-  const v = moment(value, format);
+  const v = dateTime(value, format);
   if (v.isValid) {
     return v;
   }
-  return moment(value); // moment will try to parse the format
+  return dateTime(value); // moment will try to parse the format
 }
 
 /** Will return any value as a number or NaN */

@@ -1,4 +1,4 @@
-import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui/src/types';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
 
 export const getDataSources = state => {
   const regex = new RegExp(state.searchQuery, 'i');

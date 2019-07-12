@@ -1,9 +1,9 @@
 import _ from 'lodash';
 
 import { QueryCtrl } from 'app/plugins/sdk';
-import moment from 'moment';
 import { defaultQuery } from './StreamHandler';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { dateTime } from '@grafana/data';
 
 export class TestDataQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -20,20 +20,20 @@ export class TestDataQueryCtrl extends QueryCtrl {
 
     this.target.scenarioId = this.target.scenarioId || 'random_walk';
     this.scenarioList = [];
-    this.newPointTime = moment();
+    this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
   }
 
   getPoints() {
     return _.map(this.target.points, (point, index) => {
       return {
-        text: moment(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
+        text: dateTime(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
         value: index,
       };
     });
   }
 
-  pointSelected(option) {
+  pointSelected(option: any) {
     this.selectedPoint = option;
   }
 
@@ -53,7 +53,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   $onInit() {
     return getBackendSrv()
       .get('/api/tsdb/testdata/scenarios')
-      .then(res => {
+      .then((res: any) => {
         this.scenarioList = res;
         this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
       });

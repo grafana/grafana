@@ -1,15 +1,7 @@
 import defaults from 'lodash/defaults';
-import {
-  DataQueryRequest,
-  FieldType,
-  SeriesData,
-  DataQueryResponse,
-  DataQueryError,
-  DataStreamObserver,
-  DataStreamState,
-  LoadingState,
-  LogLevel,
-} from '@grafana/ui';
+import { DataQueryRequest, DataQueryResponse, DataQueryError, DataStreamObserver, DataStreamState } from '@grafana/ui';
+
+import { FieldType, DataFrame, LoadingState, LogLevel, CSVReader } from '@grafana/data';
 import { TestDataQuery, StreamingQuery } from './types';
 
 export const defaultQuery: StreamingQuery = {
@@ -17,6 +9,7 @@ export const defaultQuery: StreamingQuery = {
   speed: 250, // ms
   spread: 3.5,
   noise: 2.2,
+  bands: 1,
 };
 
 type StreamWorkers = {
@@ -41,7 +34,7 @@ export class StreamHandler {
       // set stream option defaults
       query.stream = defaults(query.stream, defaultQuery);
       // create stream key
-      const key = req.dashboardId + '/' + req.panelId + '/' + query.refId;
+      const key = req.dashboardId + '/' + req.panelId + '/' + query.refId + '@' + query.stream.bands;
 
       if (this.workers[key]) {
         const existing = this.workers[key];
@@ -57,6 +50,8 @@ export class StreamHandler {
         this.workers[key] = new SignalWorker(key, query, req, observer);
       } else if (type === 'logs') {
         this.workers[key] = new LogsWorker(key, query, req, observer);
+      } else if (type === 'fetch') {
+        this.workers[key] = new FetchWorker(key, query, req, observer);
       } else {
         throw {
           message: 'Unknown Stream type: ' + type,
@@ -72,6 +67,7 @@ export class StreamHandler {
  * Manages a single stream request
  */
 export class StreamWorker {
+  refId: string;
   query: StreamingQuery;
   stream: DataStreamState;
   observer: DataStreamObserver;
@@ -85,6 +81,7 @@ export class StreamWorker {
       request,
       unsubscribe: this.unsubscribe,
     };
+    this.refId = query.refId;
     this.query = query.stream;
     this.last = Date.now();
     this.observer = observer;
@@ -141,38 +138,46 @@ export class StreamWorker {
 export class SignalWorker extends StreamWorker {
   value: number;
 
+  bands = 1;
+
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
     setTimeout(() => {
       this.stream.series = [this.initBuffer(query.refId)];
       this.looper();
     }, 10);
+
+    this.bands = query.stream.bands ? query.stream.bands : 0;
   }
 
   nextRow = (time: number) => {
     const { spread, noise } = this.query;
     this.value += (Math.random() - 0.5) * spread;
-    return [
-      time,
-      this.value, // Value
-      this.value - Math.random() * noise, // MIN
-      this.value + Math.random() * noise, // MAX
-    ];
+    const row = [time, this.value];
+    for (let i = 0; i < this.bands; i++) {
+      const v = row[row.length - 1];
+      row.push(v - Math.random() * noise); // MIN
+      row.push(v + Math.random() * noise); // MAX
+    }
+    return row;
   };
 
-  initBuffer(refId: string): SeriesData {
+  initBuffer(refId: string): DataFrame {
     const { speed, buffer } = this.query;
     const data = {
-      fields: [
-        { name: 'Time', type: FieldType.time },
-        { name: 'Value', type: FieldType.number },
-        { name: 'Min', type: FieldType.number },
-        { name: 'Max', type: FieldType.number },
-      ],
+      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Value', type: FieldType.number }],
       rows: [],
       refId,
       name: 'Signal ' + refId,
-    } as SeriesData;
+    } as DataFrame;
+
+    for (let i = 0; i < this.bands; i++) {
+      const suffix = this.bands > 1 ? ` ${i + 1}` : '';
+      data.fields.push({ name: 'Min' + suffix, type: FieldType.number });
+      data.fields.push({ name: 'Max' + suffix, type: FieldType.number });
+    }
+
+    console.log('START', data);
 
     const request = this.stream.request;
 
@@ -204,6 +209,56 @@ export class SignalWorker extends StreamWorker {
 
     this.appendRows([this.nextRow(Date.now())]);
     this.timeoutId = window.setTimeout(this.looper, query.speed);
+  };
+}
+
+export class FetchWorker extends StreamWorker {
+  csv: CSVReader;
+  reader: ReadableStreamReader<Uint8Array>;
+
+  constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
+    super(key, query, request, observer);
+    if (!query.stream.url) {
+      throw new Error('Missing Fetch URL');
+    }
+    if (!query.stream.url.startsWith('http')) {
+      throw new Error('Fetch URL must be absolute');
+    }
+
+    this.csv = new CSVReader({ callback: this });
+    fetch(new Request(query.stream.url)).then(response => {
+      this.reader = response.body.getReader();
+      this.reader.read().then(this.processChunk);
+    });
+  }
+
+  processChunk = (value: ReadableStreamReadResult<Uint8Array>): any => {
+    if (this.observer == null) {
+      return; // Nothing more to do
+    }
+
+    if (value.value) {
+      const text = new TextDecoder().decode(value.value);
+      this.csv.readCSV(text);
+    }
+
+    if (value.done) {
+      console.log('Finished stream');
+      this.stream.state = LoadingState.Done;
+      return;
+    }
+
+    return this.reader.read().then(this.processChunk);
+  };
+
+  onHeader = (series: DataFrame) => {
+    series.refId = this.refId;
+    this.stream.series = [series];
+  };
+
+  onRow = (row: any[]) => {
+    // TODO?? this will send an event for each row, even if the chunk passed a bunch of them
+    this.appendRows([row]);
   };
 }
 
@@ -259,14 +314,14 @@ export class LogsWorker extends StreamWorker {
     return [time, '[' + this.getRandomLogLevel() + '] ' + this.getRandomLine()];
   };
 
-  initBuffer(refId: string): SeriesData {
+  initBuffer(refId: string): DataFrame {
     const { speed, buffer } = this.query;
     const data = {
       fields: [{ name: 'Time', type: FieldType.time }, { name: 'Line', type: FieldType.string }],
       rows: [],
       refId,
       name: 'Logs ' + refId,
-    } as SeriesData;
+    } as DataFrame;
 
     const request = this.stream.request;
 

@@ -1,12 +1,14 @@
-import moment from 'moment';
 import { MssqlDatasource } from '../datasource';
 import { TemplateSrvStub, TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
+// @ts-ignore
 import q from 'q';
+import { dateTime } from '@grafana/data';
 
 describe('MSSQLDatasource', () => {
   const ctx: any = {
     backendSrv: {},
+    // @ts-ignore
     templateSrv: new TemplateSrvStub(),
     timeSrv: new TimeSrvStub(),
   };
@@ -19,7 +21,7 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing annotationQuery', () => {
-    let results;
+    let results: any;
 
     const annotationName = 'MyAnno';
 
@@ -29,8 +31,8 @@ describe('MSSQLDatasource', () => {
         rawQuery: 'select time, text, tags from table;',
       },
       range: {
-        from: moment(1432288354),
-        to: moment(1432288401),
+        from: dateTime(1432288354),
+        to: dateTime(1432288401),
       },
     };
 
@@ -53,11 +55,11 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: any) => {
         return ctx.$q.when({ data: response, status: 200 });
       };
 
-      return ctx.ds.annotationQuery(options).then(data => {
+      return ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
       });
     });
@@ -77,7 +79,7 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results;
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -97,11 +99,11 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: any) => {
         return ctx.$q.when({ data: response, status: 200 });
       };
 
-      return ctx.ds.metricFindQuery(query).then(data => {
+      return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
@@ -114,7 +116,7 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with key, value columns', () => {
-    let results;
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -134,11 +136,11 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: any) => {
         return ctx.$q.when({ data: response, status: 200 });
       };
 
-      return ctx.ds.metricFindQuery(query).then(data => {
+      return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
@@ -153,7 +155,7 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with key, value columns and with duplicate keys', () => {
-    let results;
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -173,11 +175,11 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: any) => {
         return ctx.$q.when({ data: response, status: 200 });
       };
 
-      return ctx.ds.metricFindQuery(query).then(data => {
+      return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
     });
@@ -190,7 +192,7 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results;
+    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -209,14 +211,14 @@ describe('MSSQLDatasource', () => {
       },
     };
     const time = {
-      from: moment(1521545610656),
-      to: moment(1521546251185),
+      from: dateTime(1521545610656),
+      to: dateTime(1521546251185),
     };
 
     beforeEach(() => {
       ctx.timeSrv.setTime(time);
 
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: any) => {
         results = options.data;
         return ctx.$q.when({ data: response, status: 200 });
       };

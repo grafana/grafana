@@ -1,29 +1,19 @@
 import { ComponentClass, ComponentType } from 'react';
-import { LoadingState, SeriesData } from './data';
-import { TimeRange } from './time';
+import { LoadingState, DataFrame, TimeRange } from '@grafana/data';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
 export interface PanelPluginMeta extends PluginMeta {
+  skipDataQuery?: boolean;
   hideFromList?: boolean;
   sort: number;
-
-  // if length>0 the query tab will show up
-  // Before 6.2 this could be table and/or series, but 6.2+ supports both transparently
-  // so it will be deprecated soon
-  dataFormats?: PanelDataFormat[];
-}
-
-export enum PanelDataFormat {
-  Table = 'table',
-  TimeSeries = 'time_series',
 }
 
 export interface PanelData {
   state: LoadingState;
-  series: SeriesData[];
+  series: DataFrame[];
   request?: DataQueryRequest;
   error?: DataQueryError;
 
@@ -32,6 +22,7 @@ export interface PanelData {
 }
 
 export interface PanelProps<T = any> {
+  id: number; // ID within the current dashboard
   data: PanelData;
   // TODO: annotation?: PanelData;
 
@@ -39,6 +30,7 @@ export interface PanelProps<T = any> {
   options: T;
   onOptionsChange: (options: T) => void;
   renderCounter: number;
+  transparent: boolean;
   width: number;
   height: number;
   replaceVariables: InterpolateFunction;
@@ -129,29 +121,6 @@ export interface PanelMenuItem {
   onClick?: () => void;
   shortcut?: string;
   subMenu?: PanelMenuItem[];
-}
-
-export enum MappingType {
-  ValueToText = 1,
-  RangeToText = 2,
-}
-
-interface BaseMap {
-  id: number;
-  operator: string;
-  text: string;
-  type: MappingType;
-}
-
-export type ValueMapping = ValueMap | RangeMap;
-
-export interface ValueMap extends BaseMap {
-  value: string;
-}
-
-export interface RangeMap extends BaseMap {
-  from: string;
-  to: string;
 }
 
 export enum VizOrientation {

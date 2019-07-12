@@ -6,16 +6,13 @@
 }
 
 .singlestat-panel-value-container {
-  line-height: 1;
   display: table-cell;
   vertical-align: middle;
   text-align: center;
   position: relative;
   z-index: 1;
-  font-size: 3em;
   font-weight: $font-weight-semi-bold;
-  // helps make the title feel more centered when there is a panel title
-  padding-bottom: $panel-padding;
+  line-height: 1;
 }
 
 // Helps

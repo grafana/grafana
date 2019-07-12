@@ -4,11 +4,11 @@ import { Table } from './Table';
 import { getTheme } from '../../themes';
 
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
-import { ScopedVars, SeriesData, GrafanaThemeType } from '../../types/index';
+import { ScopedVars, GrafanaThemeType } from '../../types/index';
+import { DataFrame, readCSV } from '@grafana/data';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 import { number, boolean } from '@storybook/addon-knobs';
 import Tables from './Tables';
-import { readCSV } from '../../utils/csv';
 
 const replaceVariables = (value: string, scopedVars?: ScopedVars) => {
   if (scopedVars) {
@@ -31,7 +31,7 @@ export function columnIndexToLeter(column: number) {
   return String.fromCharCode(A + c2);
 }
 
-export function makeDummyTable(columnCount: number, rowCount: number): SeriesData {
+export function makeDummyTable(columnCount: number, rowCount: number): DataFrame {
   return {
     fields: Array.from(new Array(columnCount), (x, i) => {
       return {

@@ -33,6 +33,7 @@ exports[`Render should render with buttons enabled 1`] = `
   className="gf-form-button-row"
 >
   <button
+    aria-label="Save and Test button"
     className="btn btn-primary"
     disabled={false}
     onClick={[Function]}

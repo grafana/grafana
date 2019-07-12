@@ -14,13 +14,14 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
 
-func validateInput(c CommandLine, pluginFolder string) error {
+func validateInput(c utils.CommandLine, pluginFolder string) error {
 	arg := c.Args().First()
 	if arg == "" {
 		return errors.New("please specify plugin to install")
@@ -46,7 +47,7 @@ func validateInput(c CommandLine, pluginFolder string) error {
 	return nil
 }
 
-func installCommand(c CommandLine) error {
+func installCommand(c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
@@ -60,7 +61,7 @@ func installCommand(c CommandLine) error {
 
 // InstallPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugins directory.
-func InstallPlugin(pluginName, version string, c CommandLine) error {
+func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	downloadURL := c.PluginURL()
 	if downloadURL == "" {
@@ -84,7 +85,7 @@ func InstallPlugin(pluginName, version string, c CommandLine) error {
 	}
 
 	logger.Infof("installing %v @ %v\n", pluginName, version)
-	logger.Infof("from url: %v\n", downloadURL)
+	logger.Infof("from: %v\n", downloadURL)
 	logger.Infof("into: %v\n", pluginFolder)
 	logger.Info("\n")
 
@@ -144,18 +145,27 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		}
 	}()
 
-	resp, err := http.Get(url) // #nosec
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+	var bytes []byte
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
+	if _, err := os.Stat(url); err == nil {
+		bytes, err = ioutil.ReadFile(url)
+		if err != nil {
+			return err
+		}
+	} else {
+		resp, err := http.Get(url) // #nosec
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		bytes, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
 	}
 
-	return extractFiles(body, pluginName, filePath)
+	return extractFiles(bytes, pluginName, filePath)
 }
 
 func extractFiles(body []byte, pluginName string, filePath string) error {

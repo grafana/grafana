@@ -50,6 +50,8 @@ github.com/aws/aws-sdk-go/private/protocol/jsonrpc
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 github.com/aws/aws-sdk-go/private/protocol/json/jsonutil
+# github.com/beevik/etree v1.1.0
+github.com/beevik/etree
 # github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
 github.com/benbjohnson/clock
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
@@ -58,6 +60,10 @@ github.com/beorn7/perks/quantile
 github.com/bradfitz/gomemcache/memcache
 # github.com/codegangsta/cli v1.20.0
 github.com/codegangsta/cli
+# github.com/crewjam/saml v0.0.0-20190521120225-344d075952c9
+github.com/crewjam/saml
+github.com/crewjam/saml/logger
+github.com/crewjam/saml/xmlenc
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/denisenkom/go-mssqldb v0.0.0-20190315220205-a8ed825ac853
@@ -124,6 +130,8 @@ github.com/hashicorp/yamux
 github.com/inconshreveable/log15
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
+# github.com/jonboulle/clockwork v0.1.0
+github.com/jonboulle/clockwork
 # github.com/jtolds/gls v4.20.0+incompatible
 github.com/jtolds/gls
 # github.com/klauspost/compress v1.4.1
@@ -177,6 +185,10 @@ github.com/prometheus/procfs/internal/util
 github.com/rainycape/unidecode
 # github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 github.com/robfig/cron
+# github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7
+github.com/russellhaering/goxmldsig
+github.com/russellhaering/goxmldsig/etreeutils
+github.com/russellhaering/goxmldsig/types
 # github.com/sergi/go-diff v1.0.0
 github.com/sergi/go-diff/diffmatchpatch
 # github.com/smartystreets/assertions v0.0.0-20190401211740-f487f9de1cd3
@@ -189,11 +201,15 @@ github.com/smartystreets/goconvey/convey
 github.com/smartystreets/goconvey/convey/reporting
 github.com/smartystreets/goconvey/convey/gotest
 # github.com/stretchr/testify v1.3.0
+github.com/stretchr/testify/require
 github.com/stretchr/testify/assert
 # github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 github.com/teris-io/shortid
+# github.com/ua-parser/uap-go v0.0.0-20190303233514-1004ccd816b3
+github.com/ua-parser/uap-go/uaparser
 # github.com/uber/jaeger-client-go v2.16.0+incompatible
 github.com/uber/jaeger-client-go/config
+github.com/uber/jaeger-client-go/zipkin
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/internal/baggage/remote
 github.com/uber/jaeger-client-go/internal/throttler/remote
@@ -221,6 +237,7 @@ github.com/yudai/golcs
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/md4
+golang.org/x/crypto/ripemd160
 golang.org/x/crypto/ed25519/internal/edwards25519
 # golang.org/x/net v0.0.0-20190415100556-4a65cf94b679
 golang.org/x/net/context/ctxhttp

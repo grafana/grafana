@@ -24,7 +24,7 @@ export interface State {
 export class UserPicker extends Component<Props, State> {
   debouncedSearch: any;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = { isLoading: false };
     this.search = this.search.bind(this);
@@ -45,8 +45,8 @@ export class UserPicker extends Component<Props, State> {
 
     return backendSrv
       .get(`/api/org/users?query=${query}&limit=10`)
-      .then(result => {
-        return result.map(user => ({
+      .then((result: any) => {
+        return result.map((user: any) => ({
           id: user.userId,
           value: user.userId,
           label: user.login === user.email ? user.login : `${user.login} - ${user.email}`,

@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 )
 
-func (server *HTTPServer) ReloadLdapCfg() Response {
+func (server *HTTPServer) ReloadLDAPCfg() Response {
 	if !ldap.IsEnabled() {
 		return Error(400, "LDAP is not enabled", nil)
 	}
@@ -13,5 +13,5 @@ func (server *HTTPServer) ReloadLdapCfg() Response {
 	if err != nil {
 		return Error(500, "Failed to reload ldap config.", err)
 	}
-	return Success("Ldap config reloaded")
+	return Success("LDAP config reloaded")
 }

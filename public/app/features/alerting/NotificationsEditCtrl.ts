@@ -1,5 +1,6 @@
 import _ from 'lodash';
-import { appEvents, coreModule } from 'app/core/core';
+import { appEvents, coreModule, NavModelSrv } from 'app/core/core';
+import { BackendSrv } from 'app/core/services/backend_srv';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
@@ -24,7 +25,13 @@ export class AlertNotificationEditCtrl {
   getFrequencySuggestion: any;
 
   /** @ngInject */
-  constructor(private $routeParams, private backendSrv, private $location, private $templateCache, navModelSrv) {
+  constructor(
+    private $routeParams: any,
+    private backendSrv: BackendSrv,
+    private $location: any,
+    private $templateCache: any,
+    navModelSrv: NavModelSrv
+  ) {
     this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
     this.isNew = !this.$routeParams.id;
 
@@ -34,7 +41,7 @@ export class AlertNotificationEditCtrl {
 
     this.backendSrv
       .get(`/api/alert-notifiers`)
-      .then(notifiers => {
+      .then((notifiers: any) => {
         this.notifiers = notifiers;
 
         // add option templates
@@ -48,14 +55,14 @@ export class AlertNotificationEditCtrl {
           return _.defaults(this.model, this.defaults);
         }
 
-        return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then(result => {
+        return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then((result: any) => {
           this.navModel.breadcrumbs.push({ text: result.name });
           this.navModel.node = { text: result.name };
           result.settings = _.defaults(result.settings, this.defaults.settings);
           return result;
         });
       })
-      .then(model => {
+      .then((model: any) => {
         this.model = model;
         this.notifierTemplateId = this.getNotifierTemplateId(this.model.type);
       });
@@ -69,11 +76,11 @@ export class AlertNotificationEditCtrl {
     if (this.model.id) {
       this.backendSrv
         .put(`/api/alert-notifications/${this.model.id}`, this.model)
-        .then(res => {
+        .then((res: any) => {
           this.model = res;
           appEvents.emit('alert-success', ['Notification updated', '']);
         })
-        .catch(err => {
+        .catch((err: any) => {
           if (err.data && err.data.error) {
             appEvents.emit('alert-error', [err.data.error]);
           }
@@ -81,11 +88,11 @@ export class AlertNotificationEditCtrl {
     } else {
       this.backendSrv
         .post(`/api/alert-notifications`, this.model)
-        .then(res => {
+        .then((res: any) => {
           appEvents.emit('alert-success', ['Notification created', '']);
           this.$location.path('alerting/notifications');
         })
-        .catch(err => {
+        .catch((err: any) => {
           if (err.data && err.data.error) {
             appEvents.emit('alert-error', [err.data.error]);
           }
@@ -93,7 +100,7 @@ export class AlertNotificationEditCtrl {
     }
   }
 
-  getNotifierTemplateId(type) {
+  getNotifierTemplateId(type: string) {
     return `notifier-options-${type}`;
   }
 
@@ -114,7 +121,7 @@ export class AlertNotificationEditCtrl {
       settings: this.model.settings,
     };
 
-    this.backendSrv.post(`/api/alert-notifications/test`, payload).then(res => {
+    this.backendSrv.post(`/api/alert-notifications/test`, payload).then((res: any) => {
       appEvents.emit('alert-success', ['Test notification sent', '']);
     });
   }

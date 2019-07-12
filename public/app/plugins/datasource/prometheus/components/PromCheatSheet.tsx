@@ -27,7 +27,7 @@ export default (props: any) => (
         <div className="cheat-sheet-item__title">{item.title}</div>
         <div
           className="cheat-sheet-item__expression"
-          onClick={e => props.onClickExample({ refId: '1', expr: item.expression })}
+          onClick={e => props.onClickExample({ refId: 'A', expr: item.expression })}
         >
           <code>{item.expression}</code>
         </div>

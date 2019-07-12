@@ -2,9 +2,10 @@
 import { ExampleConfigCtrl } from './legacy/config';
 import { AngularExamplePageCtrl } from './legacy/angular_example_page';
 import { AppPlugin } from '@grafana/ui';
-import { ExampleTab1 } from './config/ExampleTab1';
-import { ExampleTab2 } from './config/ExampleTab2';
+import { ExamplePage1 } from './config/ExamplePage1';
+import { ExamplePage2 } from './config/ExamplePage2';
 import { ExampleRootPage } from './ExampleRootPage';
+import { ExampleAppSettings } from './types';
 
 // Legacy exports just for testing
 export {
@@ -12,17 +13,17 @@ export {
   AngularExamplePageCtrl, // Must match `pages.component` in plugin.json
 };
 
-export const plugin = new AppPlugin()
+export const plugin = new AppPlugin<ExampleAppSettings>()
   .setRootPage(ExampleRootPage)
-  .addConfigTab({
-    title: 'Tab 1',
+  .addConfigPage({
+    title: 'Page 1',
     icon: 'fa fa-info',
-    body: ExampleTab1,
-    id: 'tab1',
+    body: ExamplePage1,
+    id: 'page1',
   })
-  .addConfigTab({
-    title: 'Tab 2',
+  .addConfigPage({
+    title: 'Page 2',
     icon: 'fa fa-user',
-    body: ExampleTab2,
-    id: 'tab2',
+    body: ExamplePage2,
+    id: 'page2',
   });

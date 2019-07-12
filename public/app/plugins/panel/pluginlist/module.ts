@@ -1,5 +1,7 @@
 import _ from 'lodash';
 import { PanelCtrl } from '../../../features/panel/panel_ctrl';
+import { auto } from 'angular';
+import { BackendSrv } from '@grafana/runtime';
 
 class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -12,7 +14,7 @@ class PluginListCtrl extends PanelCtrl {
   panelDefaults = {};
 
   /** @ngInject */
-  constructor($scope, $injector, private backendSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService, private backendSrv: BackendSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
@@ -32,14 +34,14 @@ class PluginListCtrl extends PanelCtrl {
     this.addEditorTab('Options', 'public/app/plugins/panel/pluginlist/editor.html');
   }
 
-  gotoPlugin(plugin, evt) {
+  gotoPlugin(plugin: { id: any }, evt: any) {
     if (evt) {
       evt.stopPropagation();
     }
     this.$location.url(`plugins/${plugin.id}/edit`);
   }
 
-  updateAvailable(plugin, $event) {
+  updateAvailable(plugin: any, $event: any) {
     $event.stopPropagation();
     $event.preventDefault();
 

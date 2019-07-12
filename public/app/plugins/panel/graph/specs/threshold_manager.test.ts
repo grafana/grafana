@@ -3,7 +3,7 @@ import TimeSeries from 'app/core/time_series2';
 import { ThresholdManager } from '../threshold_manager';
 
 describe('ThresholdManager', () => {
-  function plotOptionsScenario(desc, func) {
+  function plotOptionsScenario(desc: string, func: any) {
     describe(desc, () => {
       const ctx: any = {
         panel: {
@@ -15,7 +15,7 @@ describe('ThresholdManager', () => {
         panelCtrl: {},
       };
 
-      ctx.setup = (thresholds, data) => {
+      ctx.setup = (thresholds: any, data: any) => {
         ctx.panel.thresholds = thresholds;
         const manager = new ThresholdManager(ctx.panelCtrl);
         if (data !== undefined) {
@@ -30,7 +30,7 @@ describe('ThresholdManager', () => {
   }
 
   describe('When creating plot markings', () => {
-    plotOptionsScenario('for simple gt threshold', ctx => {
+    plotOptionsScenario('for simple gt threshold', (ctx: any) => {
       ctx.setup([{ op: 'gt', value: 300, fill: true, line: true, colorMode: 'critical' }]);
 
       it('should add fill for threshold with fill: true', () => {
@@ -49,7 +49,7 @@ describe('ThresholdManager', () => {
       });
     });
 
-    plotOptionsScenario('for two gt thresholds', ctx => {
+    plotOptionsScenario('for two gt thresholds', (ctx: any) => {
       ctx.setup([
         { op: 'gt', value: 200, fill: true, colorMode: 'warning' },
         { op: 'gt', value: 300, fill: true, colorMode: 'critical' },
@@ -68,7 +68,7 @@ describe('ThresholdManager', () => {
       });
     });
 
-    plotOptionsScenario('for lt then gt threshold (inside)', ctx => {
+    plotOptionsScenario('for lt then gt threshold (inside)', (ctx: any) => {
       ctx.setup([
         { op: 'lt', value: 300, fill: true, colorMode: 'critical' },
         { op: 'gt', value: 200, fill: true, colorMode: 'critical' },
@@ -87,7 +87,7 @@ describe('ThresholdManager', () => {
       });
     });
 
-    plotOptionsScenario('for gt then lt threshold (outside)', ctx => {
+    plotOptionsScenario('for gt then lt threshold (outside)', (ctx: any) => {
       ctx.setup([
         { op: 'gt', value: 300, fill: true, colorMode: 'critical' },
         { op: 'lt', value: 200, fill: true, colorMode: 'critical' },
@@ -106,7 +106,7 @@ describe('ThresholdManager', () => {
       });
     });
 
-    plotOptionsScenario('for threshold on two Y axes', ctx => {
+    plotOptionsScenario('for threshold on two Y axes', (ctx: any) => {
       const data = new Array(2);
       data[0] = new TimeSeries({
         datapoints: [[0, 1], [300, 2]],

@@ -1,6 +1,7 @@
-import InputDatasource from './InputDatasource';
+import InputDatasource, { describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
-import { readCSV, DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
+import { readCSV } from '@grafana/data';
+import { DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('InputDatasource', () => {
@@ -30,5 +31,19 @@ describe('InputDatasource', () => {
         expect(series.rows).toEqual(data[0].rows);
       });
     });
+  });
+
+  test('DataFrame descriptions', () => {
+    expect(describeDataFrame([])).toEqual('');
+    expect(describeDataFrame(null)).toEqual('');
+    expect(
+      describeDataFrame([
+        {
+          name: 'x',
+          fields: [{ name: 'a' }],
+          rows: [],
+        },
+      ])
+    ).toEqual('1 Fields, 0 Rows');
   });
 });

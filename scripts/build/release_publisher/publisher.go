@@ -174,6 +174,11 @@ var completeBuildArtifactConfigurations = []buildArtifact{
 		arch:       "amd64",
 		urlPostfix: ".windows-amd64.zip",
 	},
+	{
+		os:         "win-installer",
+		arch:       "amd64",
+		urlPostfix: ".windows-amd64.msi",
+	},
 }
 
 type artifactFilter struct {

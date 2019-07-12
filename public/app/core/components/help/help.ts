@@ -13,8 +13,6 @@ export class HelpCtrl {
         { keys: ['g', 'h'], description: 'Go to Home Dashboard' },
         { keys: ['g', 'p'], description: 'Go to Profile' },
         { keys: ['s', 'o'], description: 'Open search' },
-        { keys: ['s', 's'], description: 'Open search with starred filter' },
-        { keys: ['s', 't'], description: 'Open search in tags view' },
         { keys: ['esc'], description: 'Exit edit/setting views' },
       ],
       Dashboard: [

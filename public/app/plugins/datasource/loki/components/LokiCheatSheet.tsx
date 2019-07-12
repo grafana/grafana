@@ -31,7 +31,7 @@ export default (props: any) => (
         {item.expression && (
           <div
             className="cheat-sheet-item__expression"
-            onClick={e => props.onClickExample({ refId: '1', expr: item.expression })}
+            onClick={e => props.onClickExample({ refId: 'A', expr: item.expression })}
           >
             <code>{item.expression}</code>
           </div>

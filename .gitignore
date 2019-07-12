@@ -79,8 +79,12 @@ debug.test
 /scripts/build/release_publisher/release_publisher
 *.patch
 
-
 # Ignoring frontend packages specifics
 /packages/**/dist
 /packages/**/compiled
 /packages/**/.rpt2_cache
+
+theOutput/
+
+# Ignore go local build dependencies
+/scripts/go/bin/**

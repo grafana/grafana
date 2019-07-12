@@ -5,9 +5,14 @@ import { QueryPart } from 'app/core/components/query_part/query_part';
 import alertDef from './state/alertDef';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { DashboardSrv } from '../dashboard/services/DashboardSrv';
+import DatasourceSrv from '../plugins/datasource_srv';
+import { DataQuery } from '@grafana/ui/src/types/datasource';
+import { PanelModel } from 'app/features/dashboard/state';
 
 export class AlertTabCtrl {
-  panel: any;
+  panel: PanelModel;
   panelCtrl: any;
   subTabIndex: number;
   conditionTypes: any;
@@ -17,21 +22,22 @@ export class AlertTabCtrl {
   evalOperators: any;
   noDataModes: any;
   executionErrorModes: any;
-  addNotificationSegment;
-  notifications;
-  alertNotifications;
+  addNotificationSegment: any;
+  notifications: any;
+  alertNotifications: any;
   error: string;
   appSubUrl: string;
   alertHistory: any;
+  newAlertRuleTag: any;
 
   /** @ngInject */
   constructor(
-    private $scope,
-    private backendSrv,
-    private dashboardSrv,
-    private uiSegmentSrv,
-    private $q,
-    private datasourceSrv
+    private $scope: any,
+    private backendSrv: BackendSrv,
+    private dashboardSrv: DashboardSrv,
+    private uiSegmentSrv: any,
+    private $q: any,
+    private datasourceSrv: DatasourceSrv
   ) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
@@ -65,7 +71,7 @@ export class AlertTabCtrl {
     this.alertNotifications = [];
     this.alertHistory = [];
 
-    return this.backendSrv.get('/api/alert-notifications').then(res => {
+    return this.backendSrv.get('/api/alert-notifications').then((res: any) => {
       this.notifications = res;
 
       this.initModel();
@@ -76,7 +82,7 @@ export class AlertTabCtrl {
   getAlertHistory() {
     this.backendSrv
       .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50&type=alert`)
-      .then(res => {
+      .then((res: any) => {
         this.alertHistory = _.map(res, ah => {
           ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
           ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
@@ -86,7 +92,7 @@ export class AlertTabCtrl {
       });
   }
 
-  getNotificationIcon(type): string {
+  getNotificationIcon(type: string): string {
     switch (type) {
       case 'email':
         return 'fa fa-envelope';
@@ -114,18 +120,10 @@ export class AlertTabCtrl {
 
   getNotifications() {
     return this.$q.when(
-      this.notifications.map(item => {
+      this.notifications.map((item: any) => {
         return this.uiSegmentSrv.newSegment(item.name);
       })
     );
-  }
-
-  changeTabIndex(newTabIndex) {
-    this.subTabIndex = newTabIndex;
-
-    if (this.subTabIndex === 2) {
-      this.getAlertHistory();
-    }
   }
 
   notificationAdded() {
@@ -154,11 +152,23 @@ export class AlertTabCtrl {
     this.addNotificationSegment.fake = true;
   }
 
-  removeNotification(an) {
+  removeNotification(an: any) {
     // remove notifiers refeered to by id and uid to support notifiers added
     // before and after we added support for uid
     _.remove(this.alert.notifications, (n: any) => n.uid === an.uid || n.id === an.id);
     _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
+  }
+
+  addAlertRuleTag() {
+    if (this.newAlertRuleTag.name) {
+      this.alert.alertRuleTags[this.newAlertRuleTag.name] = this.newAlertRuleTag.value;
+    }
+    this.newAlertRuleTag.name = '';
+    this.newAlertRuleTag.value = '';
+  }
+
+  removeAlertRuleTag(tagName) {
+    delete this.alert.alertRuleTags[tagName];
   }
 
   initModel() {
@@ -178,6 +188,7 @@ export class AlertTabCtrl {
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
     alert.for = alert.for || '0m';
+    alert.alertRuleTags = alert.alertRuleTags || {};
 
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
@@ -220,7 +231,7 @@ export class AlertTabCtrl {
     this.panelCtrl.render();
   }
 
-  graphThresholdChanged(evt) {
+  graphThresholdChanged(evt: any) {
     for (const condition of this.alert.conditions) {
       if (condition.type === 'query') {
         condition.evaluator.params[evt.handleIndex] = evt.threshold.value;
@@ -234,8 +245,8 @@ export class AlertTabCtrl {
     return {
       type: 'query',
       query: { params: ['A', '5m', 'now'] },
-      reducer: { type: 'avg', params: [] },
-      evaluator: { type: 'gt', params: [null] },
+      reducer: { type: 'avg', params: [] as any[] },
+      evaluator: { type: 'gt', params: [null] as any[] },
       operator: { type: 'and' },
     };
   }
@@ -246,7 +257,7 @@ export class AlertTabCtrl {
     }
 
     let firstTarget;
-    let foundTarget = null;
+    let foundTarget: DataQuery = null;
 
     for (const condition of this.alert.conditions) {
       if (condition.type !== 'query') {
@@ -285,7 +296,7 @@ export class AlertTabCtrl {
     }
   }
 
-  buildConditionModel(source) {
+  buildConditionModel(source: any) {
     const cm: any = { source: source, type: source.type };
 
     cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
@@ -296,7 +307,7 @@ export class AlertTabCtrl {
     return cm;
   }
 
-  handleQueryPartEvent(conditionModel, evt) {
+  handleQueryPartEvent(conditionModel: any, evt: any) {
     switch (evt.name) {
       case 'action-remove-part': {
         break;
@@ -317,7 +328,7 @@ export class AlertTabCtrl {
     }
   }
 
-  handleReducerPartEvent(conditionModel, evt) {
+  handleReducerPartEvent(conditionModel: any, evt: any) {
     switch (evt.name) {
       case 'action': {
         conditionModel.source.reducer.type = evt.action.value;
@@ -336,7 +347,7 @@ export class AlertTabCtrl {
     }
   }
 
-  addCondition(type) {
+  addCondition(type: string) {
     const condition = this.buildDefaultCondition();
     // add to persited model
     this.alert.conditions.push(condition);
@@ -344,7 +355,7 @@ export class AlertTabCtrl {
     this.conditionModels.push(this.buildConditionModel(condition));
   }
 
-  removeCondition(index) {
+  removeCondition(index: number) {
     this.alert.conditions.splice(index, 1);
     this.conditionModels.splice(index, 1);
   }
@@ -378,7 +389,7 @@ export class AlertTabCtrl {
     this.panelCtrl.render();
   }
 
-  evaluatorTypeChanged(evaluator) {
+  evaluatorTypeChanged(evaluator: any) {
     // ensure params array is correct length
     switch (evaluator.type) {
       case 'lt':
@@ -411,7 +422,7 @@ export class AlertTabCtrl {
             dashboardId: this.panelCtrl.dashboard.id,
             panelId: this.panel.id,
           })
-          .then(res => {
+          .then(() => {
             this.alertHistory = [];
             this.panelCtrl.refresh();
           });

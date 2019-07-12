@@ -5,7 +5,6 @@ import angular from 'angular';
 const template = `
 <input type="file" id="dashupload" name="dashupload" class="hide" onchange="angular.element(this).scope().file_selected"/>
 <label class="btn btn-primary" for="dashupload">
-  <i class="fa fa-upload"></i>
   {{btnText}}
 </label>
 `;
@@ -20,7 +19,7 @@ export function uploadDashboardDirective(timer, $location) {
       btnText: '@?',
     },
     link: (scope, elem) => {
-      scope.btnText = angular.isDefined(scope.btnText) ? scope.btnText : 'Upload .json File';
+      scope.btnText = angular.isDefined(scope.btnText) ? scope.btnText : 'Upload .json file';
 
       function file_selected(evt) {
         const files = evt.target.files; // FileList object

@@ -6,7 +6,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { SelectOptionItem } from '@grafana/ui';
 
 export interface Props {
-  onChange: (perSeriesAligner) => void;
+  onChange: (perSeriesAligner: any) => void;
   templateSrv: TemplateSrv;
   alignOptions: Array<SelectOptionItem<string>>;
   perSeriesAligner: string;

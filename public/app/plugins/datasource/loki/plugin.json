@@ -2,16 +2,16 @@
   "type": "datasource",
   "name": "Loki",
   "id": "loki",
+  "category": "logging",
 
-  "metrics": true,
+  "metrics": false,
   "alerting": false,
   "annotations": false,
   "logs": true,
-  "explore": true,
-  "tables": false,
+  "streaming": true,
 
   "info": {
-    "description": "Loki Logging Data Source for Grafana",
+    "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"
@@ -22,7 +22,11 @@
     },
     "links": [
       {
-        "name": "Loki",
+        "name": "Learn more",
+        "url": "https://grafana.com/loki"
+      },
+      {
+        "name": "GitHub Project",
         "url": "https://github.com/grafana/loki"
       }
     ],

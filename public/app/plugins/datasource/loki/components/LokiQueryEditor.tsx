@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 // import { Select, SelectOptionItem } from '@grafana/ui';
 
 // Types
-import { QueryEditorProps } from '@grafana/ui/src/types';
+import { QueryEditorProps } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 // import { LokiQueryField } from './LokiQueryField';

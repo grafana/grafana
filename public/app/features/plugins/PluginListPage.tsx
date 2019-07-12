@@ -8,7 +8,8 @@ import { loadPlugins, setPluginsLayoutMode, setPluginsSearchQuery } from './stat
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getLayoutMode, getPlugins, getPluginsSearchQuery } from './state/selectors';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
-import { PluginMeta, NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
+import { PluginMeta } from '@grafana/ui';
 
 export interface Props {
   navModel: NavModel;

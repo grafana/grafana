@@ -7,7 +7,7 @@ import SharedPreferences from 'app/core/components/SharedPreferences/SharedPrefe
 import { loadOrganization, setOrganizationName, updateOrganization } from './state/actions';
 import { Organization, StoreState } from 'app/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 
 export interface Props {
   navModel: NavModel;

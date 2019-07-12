@@ -16,8 +16,8 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
@@ -171,6 +171,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
 		OrgRoles:   map[int64]m.RoleType{},
+		Groups:     userInfo.Groups,
 	}
 
 	if userInfo.Role != "" {
@@ -187,6 +188,11 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	err = bus.Dispatch(cmd)
 	if err != nil {
 		hs.redirectWithError(ctx, err)
+		return
+	}
+
+	if cmd.Result.IsDisabled {
+		hs.redirectWithError(ctx, login.ErrUserDisabled)
 		return
 	}
 

@@ -2,13 +2,14 @@
   "name": "Graphite",
   "type": "datasource",
   "id": "graphite",
+  "category": "tsdb",
 
   "includes": [{ "type": "dashboard", "name": "Graphite Carbon Metrics", "path": "dashboards/carbon_metrics.json" }],
 
+  "hiddenQueries": true,
   "metrics": true,
   "alerting": true,
   "annotations": true,
-  "tables": false,
 
   "queryOptions": {
     "maxDataPoints": true,
@@ -16,7 +17,7 @@
   },
 
   "info": {
-    "description": "Graphite Data Source for Grafana",
+    "description": "Open source time series database",
     "author": {
       "name": "Grafana Project",
       "url": "https://grafana.com"

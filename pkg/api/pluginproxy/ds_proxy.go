@@ -17,7 +17,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -354,7 +354,7 @@ func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
 	// If the tokens are not the same, update the entry in the DB
 	if token.AccessToken != authInfoQuery.Result.OAuthAccessToken {
 		updateAuthCommand := &m.UpdateAuthInfoCommand{
-			UserId:     authInfoQuery.Result.Id,
+			UserId:     authInfoQuery.Result.UserId,
 			AuthModule: authInfoQuery.Result.AuthModule,
 			AuthId:     authInfoQuery.Result.AuthId,
 			OAuthToken: token,

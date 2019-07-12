@@ -1,13 +1,4 @@
-export interface LocationUpdate {
-  path?: string;
-  query?: UrlQueryMap;
-  routeParams?: UrlQueryMap;
-  partial?: boolean;
-  /*
-   * If true this will replace url state (ie cause no new browser history)
-   */
-  replace?: boolean;
-}
+import { UrlQueryMap } from '@grafana/runtime';
 
 export interface LocationState {
   url: string;
@@ -17,6 +8,3 @@ export interface LocationState {
   replace: boolean;
   lastUpdated: number;
 }
-
-export type UrlQueryValue = string | number | boolean | string[] | number[] | boolean[];
-export type UrlQueryMap = { [s: string]: UrlQueryValue };

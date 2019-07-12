@@ -14,22 +14,25 @@ var (
 	rangedTypes  = []string{"within_range", "outside_range"}
 )
 
+// AlertEvaluator evaluates the reduced value of a timeserie.
+// Returning true if a timeserie is violating the condition
+// ex: ThresholdEvaluator, NoValueEvaluator, RangeEvaluator
 type AlertEvaluator interface {
 	Eval(reducedValue null.Float) bool
 }
 
-type NoValueEvaluator struct{}
+type noValueEvaluator struct{}
 
-func (e *NoValueEvaluator) Eval(reducedValue null.Float) bool {
+func (e *noValueEvaluator) Eval(reducedValue null.Float) bool {
 	return !reducedValue.Valid
 }
 
-type ThresholdEvaluator struct {
+type thresholdEvaluator struct {
 	Type      string
 	Threshold float64
 }
 
-func newThresholdEvaluator(typ string, model *simplejson.Json) (*ThresholdEvaluator, error) {
+func newThresholdEvaluator(typ string, model *simplejson.Json) (*thresholdEvaluator, error) {
 	params := model.Get("params").MustArray()
 	if len(params) == 0 {
 		return nil, fmt.Errorf("Evaluator missing threshold parameter")
@@ -40,12 +43,12 @@ func newThresholdEvaluator(typ string, model *simplejson.Json) (*ThresholdEvalua
 		return nil, fmt.Errorf("Evaluator has invalid parameter")
 	}
 
-	defaultEval := &ThresholdEvaluator{Type: typ}
+	defaultEval := &thresholdEvaluator{Type: typ}
 	defaultEval.Threshold, _ = firstParam.Float64()
 	return defaultEval, nil
 }
 
-func (e *ThresholdEvaluator) Eval(reducedValue null.Float) bool {
+func (e *thresholdEvaluator) Eval(reducedValue null.Float) bool {
 	if !reducedValue.Valid {
 		return false
 	}
@@ -60,13 +63,13 @@ func (e *ThresholdEvaluator) Eval(reducedValue null.Float) bool {
 	return false
 }
 
-type RangedEvaluator struct {
+type rangedEvaluator struct {
 	Type  string
 	Lower float64
 	Upper float64
 }
 
-func newRangedEvaluator(typ string, model *simplejson.Json) (*RangedEvaluator, error) {
+func newRangedEvaluator(typ string, model *simplejson.Json) (*rangedEvaluator, error) {
 	params := model.Get("params").MustArray()
 	if len(params) == 0 {
 		return nil, alerting.ValidationError{Reason: "Evaluator missing threshold parameter"}
@@ -82,13 +85,13 @@ func newRangedEvaluator(typ string, model *simplejson.Json) (*RangedEvaluator, e
 		return nil, alerting.ValidationError{Reason: "Evaluator has invalid second parameter"}
 	}
 
-	rangedEval := &RangedEvaluator{Type: typ}
+	rangedEval := &rangedEvaluator{Type: typ}
 	rangedEval.Lower, _ = firstParam.Float64()
 	rangedEval.Upper, _ = secondParam.Float64()
 	return rangedEval, nil
 }
 
-func (e *RangedEvaluator) Eval(reducedValue null.Float) bool {
+func (e *rangedEvaluator) Eval(reducedValue null.Float) bool {
 	if !reducedValue.Valid {
 		return false
 	}
@@ -105,6 +108,8 @@ func (e *RangedEvaluator) Eval(reducedValue null.Float) bool {
 	return false
 }
 
+// NewAlertEvaluator is a factory function for returning
+// an `AlertEvaluator` depending on the json model.
 func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 	typ := model.Get("type").MustString()
 	if typ == "" {
@@ -120,7 +125,7 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 	}
 
 	if typ == "no_value" {
-		return &NoValueEvaluator{}, nil
+		return &noValueEvaluator{}, nil
 	}
 
 	return nil, fmt.Errorf("Evaluator invalid evaluator type: %s", typ)

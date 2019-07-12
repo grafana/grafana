@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["src/**/*.ts"],
+  "exclude": ["dist", "node_modules"],
+  "compilerOptions": {
+    "module": "commonjs",
+    "rootDirs": ["."],
+    "outDir": "dist/src",
+    "declaration": false,
+    "typeRoots": ["./node_modules/@types"],
+    "esModuleInterop": true,
+    "lib": ["es2015", "es2017.string"]
+  }
+}

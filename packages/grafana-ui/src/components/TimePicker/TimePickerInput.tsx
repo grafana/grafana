@@ -1,28 +1,26 @@
 import React, { PureComponent, ChangeEvent } from 'react';
-import moment from 'moment';
-import { TimeFragment, TIME_FORMAT } from '../../types/time';
-
-import { stringToMoment, isValidTimeString } from './time';
+import { TimeFragment, TIME_FORMAT, TimeZone, isDateTime } from '@grafana/data';
 import { Input } from '../Input/Input';
+import { stringToDateTimeType, isValidTimeString } from './time';
 
 export interface Props {
   value: TimeFragment;
-  isTimezoneUtc: boolean;
   roundup?: boolean;
-  timezone?: string;
+  timeZone?: TimeZone;
   onChange: (value: string, isValid: boolean) => void;
+  tabIndex?: number;
 }
 
 export class TimePickerInput extends PureComponent<Props> {
   isValid = (value: string) => {
-    const { isTimezoneUtc } = this.props;
+    const { timeZone, roundup } = this.props;
 
     if (value.indexOf('now') !== -1) {
       const isValid = isValidTimeString(value);
       return isValid;
     }
 
-    const parsed = stringToMoment(value, isTimezoneUtc);
+    const parsed = stringToDateTimeType(value, roundup, timeZone);
     const isValid = parsed.isValid();
     return isValid;
   };
@@ -35,7 +33,7 @@ export class TimePickerInput extends PureComponent<Props> {
   };
 
   valueToString = (value: TimeFragment) => {
-    if (moment.isMoment(value)) {
+    if (isDateTime(value)) {
       return value.format(TIME_FORMAT);
     } else {
       return value;
@@ -43,7 +41,7 @@ export class TimePickerInput extends PureComponent<Props> {
   };
 
   render() {
-    const { value } = this.props;
+    const { value, tabIndex } = this.props;
     const valueString = this.valueToString(value);
     const error = !this.isValid(valueString);
 
@@ -55,6 +53,7 @@ export class TimePickerInput extends PureComponent<Props> {
         hideErrorMessage={true}
         value={valueString}
         className={`time-picker-input${error ? '-error' : ''}`}
+        tabIndex={tabIndex}
       />
     );
   }

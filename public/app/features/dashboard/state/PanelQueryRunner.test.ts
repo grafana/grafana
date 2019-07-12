@@ -1,13 +1,8 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
-import {
-  PanelData,
-  DataQueryRequest,
-  DataStreamObserver,
-  DataStreamState,
-  LoadingState,
-  ScopedVars,
-} from '@grafana/ui/src/types';
-import moment from 'moment';
+import { PanelData, DataQueryRequest, DataStreamObserver, DataStreamState, ScopedVars } from '@grafana/ui';
+
+import { LoadingState } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -68,8 +63,8 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         widthPixels: ctx.widthPixels,
         maxDataPoints: ctx.maxDataPoints,
         timeRange: {
-          from: moment().subtract(1, 'days'),
-          to: moment(),
+          from: dateTime().subtract(1, 'days'),
+          to: dateTime(),
           raw: { from: '1h', to: 'now' },
         },
         panelId: 0,

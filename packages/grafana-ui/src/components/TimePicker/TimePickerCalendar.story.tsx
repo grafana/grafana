@@ -1,22 +1,22 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
-import { Moment } from 'moment';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimePickerCalendar } from './TimePickerCalendar';
 import { UseState } from '../../utils/storybook/UseState';
+import { TimeFragment } from '@grafana/data';
 
 const TimePickerCalendarStories = storiesOf('UI/TimePicker/TimePickerCalendar', module);
 
 TimePickerCalendarStories.addDecorator(withCenteredStory);
 
 TimePickerCalendarStories.add('default', () => (
-  <UseState initialState={'now-6h' as string | Moment}>
+  <UseState initialState={'now-6h' as TimeFragment}>
     {(value, updateValue) => {
       return (
         <TimePickerCalendar
-          isTimezoneUtc={false}
+          timeZone="browser"
           value={value}
           onChange={timeRange => {
             action('onChange fired')(timeRange);

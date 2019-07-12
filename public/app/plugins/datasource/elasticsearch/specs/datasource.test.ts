@@ -1,20 +1,25 @@
-import angular from 'angular';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import angular, { IQService } from 'angular';
+import { dateMath } from '@grafana/data';
 import _ from 'lodash';
-import moment from 'moment';
-import { ElasticDatasource } from '../datasource';
+import { ElasticDatasource, getMaxConcurrenShardRequestOrDefault } from '../datasource';
+import { toUtc, dateTime } from '@grafana/data';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { ElasticsearchOptions } from '../types';
 
 describe('ElasticDatasource', function(this: any) {
-  const backendSrv = {
+  const backendSrv: any = {
     datasourceRequest: jest.fn(),
   };
 
-  const $rootScope = {
+  const $rootScope: any = {
     $on: jest.fn(),
     appEvent: jest.fn(),
   };
 
-  const templateSrv = {
+  const templateSrv: any = {
     replace: jest.fn(text => {
       if (text.startsWith('$')) {
         return `resolvedVariable`;
@@ -25,12 +30,12 @@ describe('ElasticDatasource', function(this: any) {
     getAdhocFilters: jest.fn(() => []),
   };
 
-  const timeSrv = {
+  const timeSrv: any = {
     time: { from: 'now-1h', to: 'now' },
     timeRange: jest.fn(() => {
       return {
-        from: dateMath.parse(this.time.from, false),
-        to: dateMath.parse(this.time.to, true),
+        from: dateMath.parse(timeSrv.time.from, false),
+        to: dateMath.parse(timeSrv.time.to, true),
       };
     }),
     setTime: jest.fn(time => {
@@ -43,22 +48,28 @@ describe('ElasticDatasource', function(this: any) {
     backendSrv,
   } as any;
 
-  function createDatasource(instanceSettings) {
-    instanceSettings.jsonData = instanceSettings.jsonData || {};
-    ctx.ds = new ElasticDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);
+  function createDatasource(instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>) {
+    instanceSettings.jsonData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+    ctx.ds = new ElasticDatasource(
+      instanceSettings,
+      {} as IQService,
+      backendSrv as BackendSrv,
+      templateSrv as TemplateSrv,
+      timeSrv as TimeSrv
+    );
   }
 
   describe('When testing datasource with index pattern', () => {
     beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
-        index: '[asd-]YYYY.MM.DD',
-        jsonData: { interval: 'Daily', esVersion: '2' },
-      });
+        database: '[asd-]YYYY.MM.DD',
+        jsonData: { interval: 'Daily', esVersion: 2 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
     });
 
     it('should translate index pattern to current day', () => {
-      let requestOptions;
+      let requestOptions: any;
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
         return Promise.resolve({ data: {} });
@@ -66,20 +77,20 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.testDatasource();
 
-      const today = moment.utc().format('YYYY.MM.DD');
+      const today = toUtc().format('YYYY.MM.DD');
       expect(requestOptions.url).toBe('http://es.com/asd-' + today + '/_mapping');
     });
   });
 
   describe('When issuing metric query with interval pattern', () => {
-    let requestOptions, parts, header, query, result;
+    let requestOptions: any, parts: any, header: any, query: any, result: any;
 
     beforeEach(async () => {
       createDatasource({
         url: 'http://es.com',
-        index: '[asd-]YYYY.MM.DD',
-        jsonData: { interval: 'Daily', esVersion: '2' },
-      });
+        database: '[asd-]YYYY.MM.DD',
+        jsonData: { interval: 'Daily', esVersion: 2 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
@@ -105,8 +116,8 @@ describe('ElasticDatasource', function(this: any) {
 
       query = {
         range: {
-          from: moment.utc([2015, 4, 30, 10]),
-          to: moment.utc([2015, 5, 1, 10]),
+          from: toUtc([2015, 4, 30, 10]),
+          to: toUtc([2015, 5, 1, 10]),
         },
         targets: [
           {
@@ -142,15 +153,110 @@ describe('ElasticDatasource', function(this: any) {
     });
   });
 
+  describe('When issuing logs query with interval pattern', () => {
+    let query, queryBuilderSpy: any;
+
+    beforeEach(async () => {
+      createDatasource({
+        url: 'http://es.com',
+        database: 'mock-index',
+        jsonData: { interval: 'Daily', esVersion: 2, timeField: '@timestamp' } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+
+      ctx.backendSrv.datasourceRequest = jest.fn(options => {
+        return Promise.resolve({
+          data: {
+            responses: [
+              {
+                aggregations: {
+                  '2': {
+                    buckets: [
+                      {
+                        doc_count: 10,
+                        key: 1000,
+                      },
+                      {
+                        doc_count: 15,
+                        key: 2000,
+                      },
+                    ],
+                  },
+                },
+                hits: {
+                  hits: [
+                    {
+                      '@timestamp': ['2019-06-24T09:51:19.765Z'],
+                      _id: 'fdsfs',
+                      _type: '_doc',
+                      _index: 'mock-index',
+                      _source: {
+                        '@timestamp': '2019-06-24T09:51:19.765Z',
+                        host: 'djisaodjsoad',
+                        message: 'hello, i am a message',
+                      },
+                      fields: {
+                        '@timestamp': ['2019-06-24T09:51:19.765Z'],
+                      },
+                    },
+                    {
+                      '@timestamp': ['2019-06-24T09:52:19.765Z'],
+                      _id: 'kdospaidopa',
+                      _type: '_doc',
+                      _index: 'mock-index',
+                      _source: {
+                        '@timestamp': '2019-06-24T09:52:19.765Z',
+                        host: 'dsalkdakdop',
+                        message: 'hello, i am also message',
+                      },
+                      fields: {
+                        '@timestamp': ['2019-06-24T09:52:19.765Z'],
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        });
+      });
+
+      query = {
+        range: {
+          from: toUtc([2015, 4, 30, 10]),
+          to: toUtc([2019, 7, 1, 10]),
+        },
+        targets: [
+          {
+            alias: '$varAlias',
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
+            metrics: [{ type: 'count', id: '1' }],
+            query: 'escape\\:test',
+            interval: '10s',
+            isLogsQuery: true,
+            timeField: '@timestamp',
+          },
+        ],
+      };
+
+      queryBuilderSpy = jest.spyOn(ctx.ds.queryBuilder, 'getLogsQuery');
+      await ctx.ds.query(query);
+    });
+
+    it('should call getLogsQuery()', () => {
+      expect(queryBuilderSpy).toHaveBeenCalled();
+    });
+  });
+
   describe('When issuing document query', () => {
-    let requestOptions, parts, header;
+    let requestOptions: any, parts: any, header: any;
 
     beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
-        index: 'test',
-        jsonData: { esVersion: '2' },
-      });
+        database: 'test',
+        jsonData: { esVersion: 2 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
@@ -159,8 +265,8 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.query({
         range: {
-          from: moment([2015, 4, 30, 10]),
-          to: moment([2015, 5, 1, 10]),
+          from: dateTime([2015, 4, 30, 10]),
+          to: dateTime([2015, 5, 1, 10]),
         },
         targets: [
           {
@@ -187,7 +293,11 @@ describe('ElasticDatasource', function(this: any) {
 
   describe('When getting fields', () => {
     beforeEach(() => {
-      createDatasource({ url: 'http://es.com', index: 'metricbeat', jsonData: { esVersion: 50 } });
+      createDatasource({
+        url: 'http://es.com',
+        database: 'metricbeat',
+        jsonData: { esVersion: 50 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({
@@ -279,7 +389,11 @@ describe('ElasticDatasource', function(this: any) {
 
   describe('When getting fields from ES 7.0', () => {
     beforeEach(() => {
-      createDatasource({ url: 'http://es.com', index: 'genuine.es7._mapping.response', jsonData: { esVersion: 70 } });
+      createDatasource({
+        url: 'http://es.com',
+        database: 'genuine.es7._mapping.response',
+        jsonData: { esVersion: 70 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         return Promise.resolve({
@@ -425,14 +539,14 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing aggregation query on es5.x', () => {
-    let requestOptions, parts, header;
+    let requestOptions: any, parts: any, header: any;
 
     beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
-        index: 'test',
-        jsonData: { esVersion: '5' },
-      });
+        database: 'test',
+        jsonData: { esVersion: 5 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
@@ -441,8 +555,8 @@ describe('ElasticDatasource', function(this: any) {
 
       ctx.ds.query({
         range: {
-          from: moment([2015, 4, 30, 10]),
-          to: moment([2015, 5, 1, 10]),
+          from: dateTime([2015, 4, 30, 10]),
+          to: dateTime([2015, 5, 1, 10]),
         },
         targets: [
           {
@@ -468,14 +582,14 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing metricFind query on es5.x', () => {
-    let requestOptions, parts, header, body, results;
+    let requestOptions: any, parts, header: any, body: any, results: any;
 
     beforeEach(() => {
       createDatasource({
         url: 'http://es.com',
-        index: 'test',
-        jsonData: { esVersion: '5' },
-      });
+        database: 'test',
+        jsonData: { esVersion: 5 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
       ctx.backendSrv.datasourceRequest = jest.fn(options => {
         requestOptions = options;
@@ -501,7 +615,7 @@ describe('ElasticDatasource', function(this: any) {
         });
       });
 
-      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then(res => {
+      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then((res: any) => {
         results = res;
       });
 
@@ -529,6 +643,30 @@ describe('ElasticDatasource', function(this: any) {
 
     it('should not set terms aggregation size to 0', () => {
       expect(body['aggs']['1']['terms'].size).not.toBe(0);
+    });
+  });
+});
+
+describe('getMaxConcurrenShardRequestOrDefault', () => {
+  const testCases = [
+    { version: 50, expectedMaxConcurrentShardRequests: 256 },
+    { version: 50, maxConcurrentShardRequests: 50, expectedMaxConcurrentShardRequests: 50 },
+    { version: 56, expectedMaxConcurrentShardRequests: 256 },
+    { version: 56, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 256 },
+    { version: 56, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 256 },
+    { version: 56, maxConcurrentShardRequests: 200, expectedMaxConcurrentShardRequests: 200 },
+    { version: 70, expectedMaxConcurrentShardRequests: 5 },
+    { version: 70, maxConcurrentShardRequests: 256, expectedMaxConcurrentShardRequests: 5 },
+    { version: 70, maxConcurrentShardRequests: 5, expectedMaxConcurrentShardRequests: 5 },
+    { version: 70, maxConcurrentShardRequests: 6, expectedMaxConcurrentShardRequests: 6 },
+  ];
+
+  testCases.forEach(tc => {
+    it(`version = ${tc.version}, maxConcurrentShardRequests = ${tc.maxConcurrentShardRequests}`, () => {
+      const options = { esVersion: tc.version, maxConcurrentShardRequests: tc.maxConcurrentShardRequests };
+      expect(getMaxConcurrenShardRequestOrDefault(options as ElasticsearchOptions)).toBe(
+        tc.expectedMaxConcurrentShardRequests
+      );
     });
   });
 });

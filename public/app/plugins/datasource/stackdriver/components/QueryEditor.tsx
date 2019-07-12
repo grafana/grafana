@@ -14,6 +14,7 @@ import { StackdriverQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
 import { SelectOptionItem } from '@grafana/ui';
+import { TimeSeries } from '@grafana/data';
 
 export interface Props {
   onQueryChange: (target: StackdriverQuery) => void;
@@ -71,8 +72,8 @@ export class QueryEditor extends React.Component<Props, State> {
     this.props.events.off('data-error', this.onDataError);
   }
 
-  onDataReceived(dataList) {
-    const series = dataList.find(item => item.refId === this.props.target.refId);
+  onDataReceived(dataList: TimeSeries[]) {
+    const series = dataList.find((item: any) => item.refId === this.props.target.refId);
     if (series) {
       this.setState({
         lastQuery: decodeURIComponent(series.meta.rawQuery),
@@ -82,7 +83,7 @@ export class QueryEditor extends React.Component<Props, State> {
     }
   }
 
-  onDataError(err) {
+  onDataError(err: any) {
     let lastQuery;
     let lastQueryError;
     if (err.data && err.data.error) {
@@ -123,7 +124,7 @@ export class QueryEditor extends React.Component<Props, State> {
     );
   };
 
-  onPropertyChange(prop, value) {
+  onPropertyChange(prop: string, value: string[]) {
     this.setState({ [prop]: value }, () => {
       this.props.onQueryChange(this.state);
       this.props.onExecuteQuery();

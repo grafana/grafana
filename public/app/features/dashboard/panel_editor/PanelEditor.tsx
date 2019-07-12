@@ -9,7 +9,7 @@ import { AlertTab } from '../../alerting/AlertTab';
 import config from 'app/core/config';
 import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
-import { AngularComponent } from 'app/core/services/AngularLoader';
+import { AngularComponent } from '@grafana/runtime';
 
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
@@ -105,7 +105,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     ];
 
     // handle panels that do not have queries tab
-    if (plugin.meta.dataFormats.length === 0) {
+    if (plugin.meta.skipDataQuery) {
       // remove queries tab
       tabs.shift();
       // switch tab
@@ -145,7 +145,7 @@ function TabItem({ tab, activeTab, onClick }: TabItemParams) {
 
   return (
     <div className="panel-editor-tabs__item" onClick={() => onClick(tab)}>
-      <a className={tabClasses}>
+      <a className={tabClasses} aria-label={`${tab.text} tab button`}>
         <Tooltip content={`${tab.text}`} placement="auto">
           <i className={`gicon gicon-${tab.id}${activeTab === tab.id ? '-active' : ''}`} />
         </Tooltip>

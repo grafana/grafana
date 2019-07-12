@@ -43,14 +43,23 @@ var (
 	// Timers
 	M_DataSource_ProxyReq_Timer prometheus.Summary
 	M_Alerting_Execution_Time   prometheus.Summary
+)
 
-	// StatTotals
+// StatTotals
+var (
 	M_Alerting_Active_Alerts prometheus.Gauge
 	M_StatTotal_Dashboards   prometheus.Gauge
 	M_StatTotal_Users        prometheus.Gauge
 	M_StatActive_Users       prometheus.Gauge
 	M_StatTotal_Orgs         prometheus.Gauge
 	M_StatTotal_Playlists    prometheus.Gauge
+
+	StatsTotalViewers       prometheus.Gauge
+	StatsTotalEditors       prometheus.Gauge
+	StatsTotalAdmins        prometheus.Gauge
+	StatsTotalActiveViewers prometheus.Gauge
+	StatsTotalActiveEditors prometheus.Gauge
+	StatsTotalActiveAdmins  prometheus.Gauge
 
 	// M_Grafana_Version is a gauge that contains build info about this binary
 	//
@@ -274,6 +283,42 @@ func init() {
 		Namespace: exporterName,
 	})
 
+	StatsTotalViewers = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_viewers",
+		Help:      "total amount of viewers",
+		Namespace: exporterName,
+	})
+
+	StatsTotalEditors = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_editors",
+		Help:      "total amount of editors",
+		Namespace: exporterName,
+	})
+
+	StatsTotalAdmins = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_admins",
+		Help:      "total amount of admins",
+		Namespace: exporterName,
+	})
+
+	StatsTotalActiveViewers = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_active_viewers",
+		Help:      "total amount of viewers",
+		Namespace: exporterName,
+	})
+
+	StatsTotalActiveEditors = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_active_editors",
+		Help:      "total amount of active editors",
+		Namespace: exporterName,
+	})
+
+	StatsTotalActiveAdmins = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_active_admins",
+		Help:      "total amount of active admins",
+		Namespace: exporterName,
+	})
+
 	M_Grafana_Version = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "info",
 		Help:      "Information about the Grafana. This metric is deprecated. please use `grafana_build_info`",
@@ -339,6 +384,12 @@ func initMetricVars() {
 		M_StatTotal_Orgs,
 		M_StatTotal_Playlists,
 		M_Grafana_Version,
+		StatsTotalViewers,
+		StatsTotalEditors,
+		StatsTotalAdmins,
+		StatsTotalActiveViewers,
+		StatsTotalActiveEditors,
+		StatsTotalActiveAdmins,
 		grafanaBuildVersion)
 
 }

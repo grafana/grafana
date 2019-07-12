@@ -99,3 +99,18 @@ allow_sign_up = true
 allowed_organizations = github google
 ```
 
+### Team Sync (Enterprise only)
+
+>  Only available in Grafana Enterprise v6.3+
+
+With Team Sync you can map your GitHub org teams to teams in Grafana so that your users will automatically be added to
+the correct teams. 
+
+Your GitHub teams can be referenced in two ways:
+
+- `https://github.com/orgs/<org>/teams/<team name>`
+- `@<org>/<team name>`
+
+Example: `@grafana/developers`
+
+[Learn more about Team Sync]({{< relref "auth/enhanced_ldap.md" >}})

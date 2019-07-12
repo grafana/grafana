@@ -7,6 +7,8 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
 import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
+import { DataLink } from '@grafana/data';
+
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -106,7 +108,7 @@ export class PanelModel {
   maxDataPoints?: number;
   interval?: string;
   description?: string;
-  links?: [];
+  links?: DataLink[];
   transparent: boolean;
 
   // non persisted
@@ -134,7 +136,6 @@ export class PanelModel {
 
     // queries must have refId
     this.ensureQueryIds();
-    this.restoreInfintyForThresholds();
   }
 
   ensureQueryIds() {
@@ -147,18 +148,8 @@ export class PanelModel {
     }
   }
 
-  restoreInfintyForThresholds() {
-    if (this.options && this.options.fieldOptions) {
-      for (const threshold of this.options.fieldOptions.thresholds) {
-        if (threshold.value === null) {
-          threshold.value = -Infinity;
-        }
-      }
-    }
-  }
-
-  getOptions(panelDefaults: any) {
-    return _.defaultsDeep(this.options || {}, panelDefaults);
+  getOptions() {
+    return this.options;
   }
 
   updateOptions(options: object) {
@@ -179,7 +170,6 @@ export class PanelModel {
 
       model[property] = _.cloneDeep(this[property]);
     }
-
     return model;
   }
 
@@ -247,8 +237,17 @@ export class PanelModel {
     });
   }
 
+  private applyPluginOptionDefaults(plugin: PanelPlugin) {
+    if (plugin.angularConfigCtrl) {
+      return;
+    }
+    this.options = _.defaultsDeep({}, this.options || {}, plugin.defaults);
+  }
+
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
+
+    this.applyPluginOptionDefaults(plugin);
 
     if (plugin.panel && plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
@@ -284,7 +283,7 @@ export class PanelModel {
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
-
+    this.applyPluginOptionDefaults(newPlugin);
     // Let panel plugins inspect options from previous panel and keep any that it can use
     if (newPlugin.onPanelTypeChanged) {
       this.options = this.options || {};
@@ -324,7 +323,7 @@ export class PanelModel {
   }
 
   hasTitle() {
-    return !!this.title.length;
+    return this.title && this.title.length > 0;
   }
 
   destroy() {

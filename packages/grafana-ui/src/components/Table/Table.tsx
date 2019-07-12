@@ -12,7 +12,7 @@ import {
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import { sortSeriesData } from '../../utils/processSeriesData';
+import { stringToJsRegex, DataFrame, sortDataFrame } from '@grafana/data';
 
 import {
   TableCellBuilder,
@@ -21,8 +21,6 @@ import {
   TableCellBuilderOptions,
   simpleCellBuilder,
 } from './TableCellBuilder';
-import { stringToJsRegex } from '../../utils/index';
-import { SeriesData } from '../../types/data';
 import { InterpolateFunction } from '../../types/panel';
 
 export interface BaseTableProps extends Themeable {
@@ -39,14 +37,14 @@ export interface BaseTableProps extends Themeable {
   isUTC?: boolean;
 }
 
-interface Props extends BaseTableProps {
-  data: SeriesData;
+export interface Props extends BaseTableProps {
+  data: DataFrame;
 }
 
 interface State {
   sortBy?: number;
   sortDirection?: SortDirectionType;
-  data: SeriesData;
+  data: DataFrame;
 }
 
 interface ColumnRenderInfo {
@@ -117,7 +115,7 @@ export class Table extends Component<Props, State> {
     // Update the data when data or sort changes
     if (dataChanged || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
       this.scrollToTop = true;
-      this.setState({ data: sortSeriesData(data, sortBy, sortDirection === 'DESC') });
+      this.setState({ data: sortDataFrame(data, sortBy, sortDirection === 'DESC') });
     }
   }
 
@@ -172,7 +170,7 @@ export class Table extends Component<Props, State> {
     this.setState({ sortBy: sort, sortDirection: dir });
   };
 
-  /** Converts the grid coordinates to SeriesData coordinates */
+  /** Converts the grid coordinates to DataFrame coordinates */
   getCellRef = (rowIndex: number, columnIndex: number): DataIndex => {
     const { showHeader, rotate } = this.props;
     const rowOffset = showHeader ? -1 : 0;
@@ -284,14 +282,16 @@ export class Table extends Component<Props, State> {
       this.scrollToTop = false;
     }
 
+    // Force MultiGrid to rerender if these options change
+    // See: https://github.com/bvaughn/react-virtualized#pass-thru-props
+    const refreshKeys = {
+      ...this.state, // Includes data and sort parameters
+      d1: this.props.data,
+      s0: this.props.styles,
+    };
     return (
       <MultiGrid
-        {
-          ...this.state /** Force MultiGrid to update when data changes */
-        }
-        {
-          ...this.props /** Force MultiGrid to update when data changes */
-        }
+        {...refreshKeys}
         scrollToRow={scrollToRow}
         columnCount={columnCount}
         scrollToColumn={scrollToColumn}

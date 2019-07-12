@@ -3,7 +3,7 @@ import _ from 'lodash';
 import appEvents from 'app/core/app_events';
 
 import { QueryMeta } from '../types';
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import StackdriverDatasource from '../datasource';
 import '../query_filter_ctrl';
@@ -25,7 +25,7 @@ interface State {
   loading: Promise<any>;
 }
 
-const labelData = {
+const labelData: any = {
   metricLabels: {},
   resourceLabels: {},
   resourceTypes: [],
@@ -43,15 +43,15 @@ export class Filter extends React.Component<Props, State> {
     const { groupBys, filters, hideGroupBys } = this.props;
     const loader = getAngularLoader();
 
-    const filtersChanged = filters => {
+    const filtersChanged = (filters: string[]) => {
       this.props.filtersChanged(filters);
     };
 
-    const groupBysChanged = groupBys => {
+    const groupBysChanged = (groupBys: string[]) => {
       this.props.groupBysChanged(groupBys);
     };
 
-    const scopeProps = {
+    const scopeProps: any = {
       loading: null,
       labelData,
       groupBys,
@@ -91,7 +91,7 @@ export class Filter extends React.Component<Props, State> {
     }
   }
 
-  async loadLabels(scope) {
+  async loadLabels(scope: any) {
     return new Promise(async resolve => {
       try {
         if (!this.props.metricType) {

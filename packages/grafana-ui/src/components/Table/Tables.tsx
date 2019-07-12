@@ -2,11 +2,11 @@
 import _ from 'lodash';
 import React, { Component } from 'react';
 import Table, { BaseTableProps } from './Table';
-import { SeriesData } from '../../types/data';
+import { DataFrame } from '@grafana/data';
 import { AutoSizer } from 'react-virtualized';
 
 interface Props extends BaseTableProps {
-  data: SeriesData[];
+  data: DataFrame[];
 }
 
 interface State {

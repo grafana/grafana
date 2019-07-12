@@ -15,10 +15,11 @@ import ClearPlugin from './slate-plugins/clear';
 import NewlinePlugin from './slate-plugins/newline';
 
 import { TypeaheadWithTheme } from './Typeahead';
-import { makeFragment, makeValue } from './Value';
+import { makeFragment, makeValue } from '@grafana/ui';
 import PlaceholdersBuffer from './PlaceholdersBuffer';
 
 export const TYPEAHEAD_DEBOUNCE = 100;
+export const HIGHLIGHT_WAIT = 500;
 
 function getSuggestionByIndex(suggestions: CompletionItemGroup[], index: number): CompletionItem {
   // Flatten suggestion groups
@@ -36,8 +37,8 @@ export interface QueryFieldProps {
   cleanText?: (text: string) => string;
   disabled?: boolean;
   initialQuery: string | null;
-  onExecuteQuery?: () => void;
-  onQueryChange?: (value: string) => void;
+  onRunQuery?: () => void;
+  onChange?: (value: string) => void;
   onTypeahead?: (typeahead: TypeaheadInput) => TypeaheadOutput;
   onWillApplySuggestion?: (suggestion: string, state: QueryFieldState) => string;
   placeholder?: string;
@@ -52,7 +53,7 @@ export interface QueryFieldState {
   typeaheadIndex: number;
   typeaheadPrefix: string;
   typeaheadText: string;
-  value: Value;
+  value: any;
   lastExecutedValue: Value;
 }
 
@@ -77,11 +78,13 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   plugins: any[];
   resetTimer: any;
   mounted: boolean;
+  updateHighlightsTimer: any;
 
   constructor(props: QueryFieldProps, context: Context<any>) {
     super(props, context);
 
     this.placeholdersBuffer = new PlaceholdersBuffer(props.initialQuery || '');
+    this.updateHighlightsTimer = _.debounce(this.updateLogsHighlights, HIGHLIGHT_WAIT);
 
     // Base plugins
     this.plugins = [ClearPlugin(), NewlinePlugin(), ...(props.additionalPlugins || [])].filter(p => p);
@@ -149,10 +152,10 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       if (documentChanged) {
         const textChanged = Plain.serialize(prevValue) !== Plain.serialize(value);
         if (textChanged && invokeParentOnValueChanged) {
-          this.executeOnQueryChangeAndExecuteQueries();
+          this.executeOnChangeAndRunQueries();
         }
         if (textChanged && !invokeParentOnValueChanged) {
-          this.updateLogsHighlights();
+          this.updateHighlightsTimer();
         }
       }
     });
@@ -167,21 +170,22 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   };
 
   updateLogsHighlights = () => {
-    const { onQueryChange } = this.props;
-    if (onQueryChange) {
-      onQueryChange(Plain.serialize(this.state.value));
+    const { onChange } = this.props;
+
+    if (onChange) {
+      onChange(Plain.serialize(this.state.value));
     }
   };
 
-  executeOnQueryChangeAndExecuteQueries = () => {
+  executeOnChangeAndRunQueries = () => {
     // Send text change to parent
-    const { onQueryChange, onExecuteQuery } = this.props;
-    if (onQueryChange) {
-      onQueryChange(Plain.serialize(this.state.value));
+    const { onChange, onRunQuery } = this.props;
+    if (onChange) {
+      onChange(Plain.serialize(this.state.value));
     }
 
-    if (onExecuteQuery) {
-      onExecuteQuery();
+    if (onRunQuery) {
+      onRunQuery();
       this.setState({ lastExecutedValue: this.state.value });
     }
   };
@@ -329,11 +333,13 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       }
 
       return true;
-    } else {
-      this.executeOnQueryChangeAndExecuteQueries();
+    } else if (!event.shiftKey) {
+      // Run queries if Shift is not pressed, otherwise pass through
+      this.executeOnChangeAndRunQueries();
 
-      return undefined;
+      return true;
     }
+    return undefined;
   };
 
   onKeyDown = (event: KeyboardEvent, change: Change) => {
@@ -413,7 +419,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     this.placeholdersBuffer.clearPlaceholders();
 
     if (previousValue !== currentValue) {
-      this.executeOnQueryChangeAndExecuteQueries();
+      this.executeOnChangeAndRunQueries();
     }
   };
 

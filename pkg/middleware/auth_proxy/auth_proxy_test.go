@@ -1,6 +1,7 @@
 package authproxy
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -8,24 +9,40 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/macaron.v1"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type TestLDAP struct {
-	ldap.Auth
-	ID         int64
-	syncCalled bool
+type TestMultiLDAP struct {
+	multildap.MultiLDAP
+	ID          int64
+	userCalled  bool
+	loginCalled bool
 }
 
-func (stub *TestLDAP) SyncUser(query *models.LoginUserQuery) error {
-	stub.syncCalled = true
-	query.User = &models.User{
-		Id: stub.ID,
+func (stub *TestMultiLDAP) Login(query *models.LoginUserQuery) (
+	*models.ExternalUserInfo, error,
+) {
+	stub.loginCalled = true
+	result := &models.ExternalUserInfo{
+		UserId: stub.ID,
 	}
-	return nil
+	return result, nil
+}
+
+func (stub *TestMultiLDAP) User(login string) (
+	*models.ExternalUserInfo,
+	error,
+) {
+	stub.userCalled = true
+	result := &models.ExternalUserInfo{
+		UserId: stub.ID,
+	}
+	return result, nil
 }
 
 func TestMiddlewareContext(t *testing.T) {
@@ -44,7 +61,7 @@ func TestMiddlewareContext(t *testing.T) {
 			},
 		}
 
-		Convey("gets data from the cache", func() {
+		Convey("logs in user from the cache", func() {
 			store := remotecache.NewFakeStore(t)
 			key := fmt.Sprintf(CachePrefix, name)
 			store.Set(key, int64(33), 0)
@@ -55,53 +72,64 @@ func TestMiddlewareContext(t *testing.T) {
 				OrgID: 4,
 			})
 
-			id, err := auth.GetUserID()
+			id, err := auth.Login()
 
 			So(err, ShouldBeNil)
 			So(id, ShouldEqual, 33)
 		})
 
 		Convey("LDAP", func() {
-			Convey("gets data from the LDAP", func() {
+			Convey("logs in via LDAP", func() {
+				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+					cmd.Result = &models.User{
+						Id: 42,
+					}
+
+					return nil
+				})
+
 				isLDAPEnabled = func() bool {
 					return true
+				}
+
+				stub := &TestMultiLDAP{
+					ID: 42,
 				}
 
 				getLDAPConfig = func() (*ldap.Config, error) {
 					config := &ldap.Config{
 						Servers: []*ldap.ServerConfig{
-							{},
+							{
+								SearchBaseDNs: []string{"BaseDNHere"},
+							},
 						},
 					}
 					return config, nil
 				}
 
+				newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
+					return stub
+				}
+
 				defer func() {
+					newLDAP = multildap.New
 					isLDAPEnabled = ldap.IsEnabled
 					getLDAPConfig = ldap.GetConfig
 				}()
 
 				store := remotecache.NewFakeStore(t)
 
-				auth := New(&Options{
+				server := New(&Options{
 					Store: store,
 					Ctx:   ctx,
 					OrgID: 4,
 				})
 
-				stub := &TestLDAP{
-					ID: 42,
-				}
-
-				auth.LDAP = func(server *ldap.ServerConfig) ldap.IAuth {
-					return stub
-				}
-
-				id, err := auth.GetUserID()
+				id, err := server.Login()
 
 				So(err, ShouldBeNil)
 				So(id, ShouldEqual, 42)
-				So(stub.syncCalled, ShouldEqual, true)
+				So(stub.userCalled, ShouldEqual, true)
 			})
 
 			Convey("gets nice error if ldap is enabled but not configured", func() {
@@ -110,13 +138,11 @@ func TestMiddlewareContext(t *testing.T) {
 				}
 
 				getLDAPConfig = func() (*ldap.Config, error) {
-					config := &ldap.Config{
-						Servers: []*ldap.ServerConfig{},
-					}
-					return config, nil
+					return nil, errors.New("Something went wrong")
 				}
 
 				defer func() {
+					newLDAP = multildap.New
 					isLDAPEnabled = ldap.IsEnabled
 					getLDAPConfig = ldap.GetConfig
 				}()
@@ -129,20 +155,20 @@ func TestMiddlewareContext(t *testing.T) {
 					OrgID: 4,
 				})
 
-				stub := &TestLDAP{
+				stub := &TestMultiLDAP{
 					ID: 42,
 				}
 
-				auth.LDAP = func(server *ldap.ServerConfig) ldap.IAuth {
+				newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
 					return stub
 				}
 
-				id, err := auth.GetUserID()
+				id, err := auth.Login()
 
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "Failed to sync user")
+				So(err.Error(), ShouldContainSubstring, "Failed to get the user")
 				So(id, ShouldNotEqual, 42)
-				So(stub.syncCalled, ShouldEqual, false)
+				So(stub.loginCalled, ShouldEqual, false)
 			})
 
 		})

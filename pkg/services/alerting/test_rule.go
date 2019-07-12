@@ -6,14 +6,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 )
 
+// AlertTestCommand initiates an test evaluation
+// of an alert rule.
 type AlertTestCommand struct {
 	Dashboard *simplejson.Json
-	PanelId   int64
-	OrgId     int64
-	User      *m.SignedInUser
+	PanelID   int64
+	OrgID     int64
+	User      *models.SignedInUser
 
 	Result *EvalContext
 }
@@ -24,16 +26,16 @@ func init() {
 
 func handleAlertTestCommand(cmd *AlertTestCommand) error {
 
-	dash := m.NewDashboardFromJson(cmd.Dashboard)
+	dash := models.NewDashboardFromJson(cmd.Dashboard)
 
-	extractor := NewDashAlertExtractor(dash, cmd.OrgId, cmd.User)
+	extractor := NewDashAlertExtractor(dash, cmd.OrgID, cmd.User)
 	alerts, err := extractor.GetAlerts()
 	if err != nil {
 		return err
 	}
 
 	for _, alert := range alerts {
-		if alert.PanelId == cmd.PanelId {
+		if alert.PanelId == cmd.PanelID {
 			rule, err := NewRuleFromDBAlert(alert)
 			if err != nil {
 				return err
@@ -44,7 +46,7 @@ func handleAlertTestCommand(cmd *AlertTestCommand) error {
 		}
 	}
 
-	return fmt.Errorf("Could not find alert with panel id %d", cmd.PanelId)
+	return fmt.Errorf("Could not find alert with panel id %d", cmd.PanelID)
 }
 
 func testAlertRule(rule *Rule) *EvalContext {
@@ -52,6 +54,7 @@ func testAlertRule(rule *Rule) *EvalContext {
 
 	context := NewEvalContext(context.Background(), rule)
 	context.IsTestRun = true
+	context.IsDebug = true
 
 	handler.Eval(context)
 	context.Rule.State = context.GetNewState()
