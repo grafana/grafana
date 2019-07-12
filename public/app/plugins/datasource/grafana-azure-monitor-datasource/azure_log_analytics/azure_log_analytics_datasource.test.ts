@@ -1,9 +1,10 @@
 import AzureMonitorDatasource from '../datasource';
 import FakeSchemaData from './__mocks__/schema';
+// @ts-ignore
 import Q from 'q';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { KustoSchema } from '../types';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc } from '@grafana/data';
 
 describe('AzureLogAnalyticsDatasource', () => {
   const ctx: any = {
@@ -49,8 +50,8 @@ describe('AzureLogAnalyticsDatasource', () => {
       ],
     };
 
-    let workspacesUrl;
-    let azureLogAnalyticsUrl;
+    let workspacesUrl: string;
+    let azureLogAnalyticsUrl: string;
 
     beforeEach(async () => {
       ctx.instanceSettings.jsonData.subscriptionId = 'xxx';
@@ -101,7 +102,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       });
 
       it('should return error status and a detailed error message', () => {
-        return ctx.ds.testDatasource().then(results => {
+        return ctx.ds.testDatasource().then((results: any) => {
           expect(results.status).toEqual('error');
           expect(results.message).toEqual(
             '1. Azure Log Analytics: Bad Request: InvalidApiVersionParameter. An error message. '
@@ -174,7 +175,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         });
 
         it('should return a list of datapoints', () => {
-          return ctx.ds.query(options).then(results => {
+          return ctx.ds.query(options).then((results: any) => {
             expect(results.data.length).toBe(2);
             expect(results.data[0].datapoints.length).toBe(2);
             expect(results.data[0].target).toEqual('Administrative');
@@ -213,7 +214,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         });
 
         it('should throw an exception', () => {
-          ctx.ds.query(options).catch(err => {
+          ctx.ds.query(options).catch((err: any) => {
             expect(err.message).toContain('The Time Series format requires a time column.');
           });
         });
@@ -230,7 +231,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       });
 
       it('should return a list of columns and rows', () => {
-        return ctx.ds.query(options).then(results => {
+        return ctx.ds.query(options).then((results: any) => {
           expect(results.data[0].type).toBe('table');
           expect(results.data[0].columns.length).toBe(3);
           expect(results.data[0].rows.length).toBe(3);
@@ -300,7 +301,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       ],
     };
 
-    let queryResults;
+    let queryResults: any[];
 
     beforeEach(async () => {
       ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
@@ -359,7 +360,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       ],
     };
 
-    let annotationResults;
+    let annotationResults: any[];
 
     beforeEach(async () => {
       ctx.backendSrv.datasourceRequest = (options: { url: string }) => {

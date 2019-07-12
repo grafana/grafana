@@ -1,6 +1,7 @@
 import { toDataQueryError, PanelQueryState, getProcessedDataFrame } from './PanelQueryState';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { DataQueryResponse, LoadingState } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
+import { DataQueryResponse } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('PanelQueryState', () => {

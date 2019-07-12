@@ -2,7 +2,7 @@ import StackdriverDataSource from '../datasource';
 import { metricDescriptors } from './testData';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariable } from 'app/features/templating/all';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc } from '@grafana/data';
 import { DataSourceInstanceSettings } from '@grafana/ui';
 import { StackdriverOptions } from '../types';
 import { BackendSrv } from 'app/core/services/backend_srv';

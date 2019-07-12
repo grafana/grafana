@@ -6,6 +6,7 @@ import { DataSourceInstanceSettings } from '@grafana/ui';
 import { AzureDataSourceJsonData } from '../types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { IQService } from 'angular';
 
 export interface LogAnalyticsColumn {
   text: string;
@@ -24,7 +25,7 @@ export default class AppInsightsDatasource {
     instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
     private backendSrv: BackendSrv,
     private templateSrv: TemplateSrv,
-    private $q
+    private $q: IQService
   ) {
     this.id = instanceSettings.id;
     this.applicationId = instanceSettings.jsonData.appInsightsAppId;
@@ -36,7 +37,7 @@ export default class AppInsightsDatasource {
     return !!this.applicationId && this.applicationId.length > 0;
   }
 
-  query(options) {
+  query(options: any) {
     const queries = _.filter(options.targets, item => {
       return item.hide !== true;
     }).map(target => {
@@ -106,6 +107,7 @@ export default class AppInsightsDatasource {
     });
 
     if (!queries || queries.length === 0) {
+      // @ts-ignore
       return;
     }
 
@@ -130,16 +132,16 @@ export default class AppInsightsDatasource {
       });
   }
 
-  doQueries(queries) {
+  doQueries(queries: any) {
     return _.map(queries, query => {
       return this.doRequest(query.url)
-        .then(result => {
+        .then((result: any) => {
           return {
             result: result,
             query: query,
           };
         })
-        .catch(err => {
+        .catch((err: any) => {
           throw {
             error: err,
             query: query,
@@ -148,7 +150,7 @@ export default class AppInsightsDatasource {
     });
   }
 
-  annotationQuery(options) {}
+  annotationQuery(options: any) {}
 
   metricFindQuery(query: string) {
     const appInsightsMetricNameQuery = query.match(/^AppInsightsMetricNames\(\)/i);
@@ -168,7 +170,7 @@ export default class AppInsightsDatasource {
   testDatasource() {
     const url = `${this.baseUrl}/metrics/metadata`;
     return this.doRequest(url)
-      .then(response => {
+      .then((response: any) => {
         if (response.status === 200) {
           return {
             status: 'success',
@@ -182,7 +184,7 @@ export default class AppInsightsDatasource {
           message: 'Returned http status code ' + response.status,
         };
       })
-      .catch(error => {
+      .catch((error: any) => {
         let message = 'Application Insights: ';
         message += error.statusText ? error.statusText + ': ' : '';
 
@@ -201,13 +203,13 @@ export default class AppInsightsDatasource {
       });
   }
 
-  doRequest(url, maxRetries = 1) {
+  doRequest(url: any, maxRetries = 1) {
     return this.backendSrv
       .datasourceRequest({
         url: this.url + url,
         method: 'GET',
       })
-      .catch(error => {
+      .catch((error: any) => {
         if (maxRetries > 0) {
           return this.doRequest(url, maxRetries - 1);
         }
@@ -223,20 +225,20 @@ export default class AppInsightsDatasource {
 
   getMetricMetadata(metricName: string) {
     const url = `${this.baseUrl}/metrics/metadata`;
-    return this.doRequest(url).then(result => {
+    return this.doRequest(url).then((result: any) => {
       return new ResponseParser(result).parseMetadata(metricName);
     });
   }
 
   getGroupBys(metricName: string) {
-    return this.getMetricMetadata(metricName).then(result => {
+    return this.getMetricMetadata(metricName).then((result: any) => {
       return new ResponseParser(result).parseGroupBys();
     });
   }
 
   getQuerySchema() {
     const url = `${this.baseUrl}/query/schema`;
-    return this.doRequest(url).then(result => {
+    return this.doRequest(url).then((result: any) => {
       const schema = new ResponseParser(result).parseQuerySchema();
       // console.log(schema);
       return schema;

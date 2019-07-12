@@ -5,8 +5,9 @@ const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+
 import * as webpack from 'webpack';
-import { hasThemeStylesheets, getStyleLoaders, getStylesheetEntries } from './webpack/loaders';
+import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
 interface WebpackConfigurationOptions {
   watch?: boolean;
@@ -50,6 +51,7 @@ const getManualChunk = (id: string) => {
       };
     }
   }
+  return null;
 };
 
 const getEntries = () => {
@@ -131,6 +133,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       filename: '[name].js',
       path: path.join(process.cwd(), 'dist'),
       libraryTarget: 'amd',
+      publicPath: '/',
     },
 
     performance: { hints: false },
@@ -139,6 +142,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       'jquery',
       'moment',
       'slate',
+      'emotion',
       'prismjs',
       'slate-plain-serializer',
       'slate-react',
@@ -146,16 +150,13 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       'react-dom',
       'rxjs',
       'd3',
+      'angular',
       '@grafana/ui',
       '@grafana/runtime',
       '@grafana/data',
       // @ts-ignore
       (context, request, callback) => {
-        let prefix = 'app/';
-        if (request.indexOf(prefix) === 0) {
-          return callback(null, request);
-        }
-        prefix = 'grafana/';
+        const prefix = 'grafana/';
         if (request.indexOf(prefix) === 0) {
           return callback(null, request.substr(prefix.length));
         }
@@ -176,8 +177,12 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
           loaders: [
             {
               loader: 'babel-loader',
-              options: { presets: ['@babel/preset-env'] },
+              options: {
+                presets: ['@babel/preset-env'],
+                plugins: ['angularjs-annotate'],
+              },
             },
+
             'ts-loader',
           ],
           exclude: /(node_modules)/,
@@ -190,6 +195,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
             loader: 'html-loader',
           },
         },
+        ...getFileLoaders(),
       ],
     },
     optimization,

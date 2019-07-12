@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { dateTime } from '@grafana/ui';
+import { dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
@@ -179,7 +179,7 @@ export default class AdminEditUserCtrl {
       const user = $scope.user;
 
       // External user can not be disabled
-      if (user.authModule) {
+      if (user.isExternal) {
         event.preventDefault();
         event.stopPropagation();
         return;

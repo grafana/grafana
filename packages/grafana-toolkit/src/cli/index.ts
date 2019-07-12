@@ -3,8 +3,6 @@ import program from 'commander';
 import { execTask } from './utils/execTask';
 import chalk from 'chalk';
 import { startTask } from './tasks/core.start';
-import { buildTask } from './tasks/grafanaui.build';
-import { releaseTask } from './tasks/grafanaui.release';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
 import { precommitTask } from './tasks/precommit';
@@ -15,6 +13,15 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
+import {
+  ciBuildPluginTask,
+  ciBuildPluginDocsTask,
+  ciBundlePluginTask,
+  ciTestPluginTask,
+  ciPluginReportTask,
+  ciDeployPluginTask,
+} from './tasks/plugin.ci';
+import { buildPackageTask } from './tasks/package.build';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -32,24 +39,12 @@ export const run = (includeInternalScripts = false) => {
       });
 
     program
-      .command('gui:build')
-      .description('Builds @grafana/ui package to packages/grafana-ui/dist')
+      .command('package:build')
+      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit]')
+      .description('Builds @grafana/* package to packages/grafana-*/dist')
       .action(async cmd => {
-        // @ts-ignore
-        await execTask(buildTask)();
-      });
-
-    program
-      .command('gui:release')
-      .description('Prepares @grafana/ui release (and publishes to npm on demand)')
-      .option('-p, --publish', 'Publish @grafana/ui to npm registry')
-      .option('-u, --usePackageJsonVersion', 'Use version specified in package.json')
-      .option('--createVersionCommit', 'Create and push version commit')
-      .action(async cmd => {
-        await execTask(releaseTask)({
-          publishToNpm: !!cmd.publish,
-          usePackageJsonVersion: !!cmd.usePackageJsonVersion,
-          createVersionCommit: !!cmd.createVersionCommit,
+        await execTask(buildPackageTask)({
+          scope: cmd.scope,
         });
       });
 
@@ -125,16 +120,18 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:build')
     .description('Prepares plugin dist package')
     .action(async cmd => {
-      await execTask(pluginBuildTask)({});
+      await execTask(pluginBuildTask)({ coverage: false });
     });
 
   program
     .command('plugin:dev')
     .option('-w, --watch', 'Run plugin development mode with watch enabled')
+    .option('--yarnlink', 'symlink this project to the local grafana/toolkit')
     .description('Starts plugin dev mode')
     .action(async cmd => {
       await execTask(pluginDevTask)({
         watch: !!cmd.watch,
+        yarnlink: !!cmd.yarnlink,
       });
     });
 
@@ -148,6 +145,54 @@ export const run = (includeInternalScripts = false) => {
         updateSnapshot: !!cmd.updateSnapshot,
         coverage: !!cmd.coverage,
       });
+    });
+
+  program
+    .command('plugin:ci-build')
+    .option('--backend <backend>', 'For backend task, which backend to run')
+    .description('Build the plugin, leaving artifacts in /dist')
+    .action(async cmd => {
+      await execTask(ciBuildPluginTask)({
+        backend: cmd.backend,
+      });
+    });
+
+  program
+    .command('plugin:ci-docs')
+    .description('Build the HTML docs')
+    .action(async cmd => {
+      await execTask(ciBuildPluginDocsTask)({});
+    });
+
+  program
+    .command('plugin:ci-bundle')
+    .description('Create a zip artifact for the plugin')
+    .action(async cmd => {
+      await execTask(ciBundlePluginTask)({});
+    });
+
+  program
+    .command('plugin:ci-test')
+    .option('--full', 'run all the tests (even stuff that will break)')
+    .description('end-to-end test using bundle in /artifacts')
+    .action(async cmd => {
+      await execTask(ciTestPluginTask)({
+        full: cmd.full,
+      });
+    });
+
+  program
+    .command('plugin:ci-report')
+    .description('Build a report for this whole process')
+    .action(async cmd => {
+      await execTask(ciPluginReportTask)({});
+    });
+
+  program
+    .command('plugin:ci-deploy')
+    .description('Publish plugin CI results')
+    .action(async cmd => {
+      await execTask(ciDeployPluginTask)({});
     });
 
   program.on('command:*', () => {

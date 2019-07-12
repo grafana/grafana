@@ -1,11 +1,10 @@
 // Libraries
 import _ from 'lodash';
 import { from } from 'rxjs';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 // Services & Utils
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
@@ -13,21 +12,24 @@ import { getNextRefIdChar } from './query';
 
 // Types
 import {
-  TimeRange,
-  RawTimeRange,
-  TimeZone,
-  IntervalValues,
   DataQuery,
   DataSourceApi,
-  TimeFragment,
   DataQueryError,
-  LogRowModel,
-  LogsModel,
-  LogsDedupStrategy,
   DataSourceJsonData,
   DataQueryRequest,
   DataStreamObserver,
 } from '@grafana/ui';
+import {
+  toUtc,
+  TimeRange,
+  RawTimeRange,
+  TimeZone,
+  IntervalValues,
+  TimeFragment,
+  LogRowModel,
+  LogsModel,
+  LogsDedupStrategy,
+} from '@grafana/data';
 import {
   ExploreUrlState,
   HistoryItem,
@@ -53,6 +55,7 @@ export const DEFAULT_UI_STATE = {
 const MAX_HISTORY_ITEMS = 100;
 
 export const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
+export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
 
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
@@ -484,11 +487,11 @@ export const getRefIds = (value: any): string[] => {
 };
 
 const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timeEpochMs < b.timeEpochMs) {
+  if (a.timestamp < b.timestamp) {
     return -1;
   }
 
-  if (a.timeEpochMs > b.timeEpochMs) {
+  if (a.timestamp > b.timestamp) {
     return 1;
   }
 
@@ -496,11 +499,11 @@ const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
 };
 
 const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timeEpochMs > b.timeEpochMs) {
+  if (a.timestamp > b.timestamp) {
     return -1;
   }
 
-  if (a.timeEpochMs < b.timeEpochMs) {
+  if (a.timestamp < b.timestamp) {
     return 1;
   }
 

@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 
 import { renderMarkdown } from '@grafana/data';
-import { Tooltip, ScopedVars, DataLink } from '@grafana/ui';
+import { Tooltip, ScopedVars } from '@grafana/ui';
+import { DataLink } from '@grafana/data';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';

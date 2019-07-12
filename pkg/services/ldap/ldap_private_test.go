@@ -143,4 +143,29 @@ func TestLDAPPrivateMethods(t *testing.T) {
 			So(result, ShouldBeNil)
 		})
 	})
+
+	Convey("shouldAuthAdmin()", t, func() {
+		Convey("it should require admin userBind", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					BindPassword: "test",
+				},
+			}
+
+			result := server.shouldAuthAdmin()
+			So(result, ShouldBeTrue)
+		})
+
+		Convey("it should not require admin userBind", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					BindPassword: "",
+				},
+			}
+
+			result := server.shouldAuthAdmin()
+			So(result, ShouldBeFalse)
+		})
+	})
+
 }

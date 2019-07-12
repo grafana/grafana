@@ -9,7 +9,6 @@ exports[`Render should render with base threshold 1`] = `
           Array [
             Object {
               "color": "#7EB26D",
-              "index": 0,
               "value": -Infinity,
             },
           ],
@@ -48,7 +47,7 @@ exports[`Render should render with base threshold 1`] = `
         >
           <div
             className="thresholds-row"
-            key="0-0"
+            key="100"
           >
             <div
               className="thresholds-row-add-button"

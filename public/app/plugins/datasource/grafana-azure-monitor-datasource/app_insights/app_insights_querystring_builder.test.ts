@@ -1,5 +1,5 @@
 import AppInsightsQuerystringBuilder from './app_insights_querystring_builder';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc } from '@grafana/data';
 
 describe('AppInsightsQuerystringBuilder', () => {
   let builder: AppInsightsQuerystringBuilder;

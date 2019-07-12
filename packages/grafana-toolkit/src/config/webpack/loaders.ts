@@ -30,7 +30,7 @@ export const getStylesheetEntries = (root: string = process.cwd()) => {
 };
 
 export const hasThemeStylesheets = (root: string = process.cwd()) => {
-  const stylesheetsPaths = [`${root}/src/styles/light`, `${root}/src/styles/dark`];
+  const stylesheetsPaths = getStylesheetPaths(root);
   const stylesheetsSummary: boolean[] = [];
 
   const result = stylesheetsPaths.reduce((acc, current) => {
@@ -68,25 +68,66 @@ export const getStyleLoaders = () => {
   const executiveLoader = shouldExtractCss
     ? {
         loader: MiniCssExtractPlugin.loader,
+        options: {
+          publicPath: '../',
+        },
       }
     : 'style-loader';
 
-  const cssLoader = {
-    loader: 'css-loader',
-    options: {
-      importLoaders: 1,
-      sourceMap: true,
+  const cssLoaders = [
+    {
+      loader: 'css-loader',
+      options: {
+        importLoaders: 1,
+        sourceMap: true,
+      },
     },
-  };
+    {
+      loader: 'postcss-loader',
+      options: {
+        plugins: () => [
+          require('postcss-flexbugs-fixes'),
+          require('postcss-preset-env')({
+            autoprefixer: { flexbox: 'no-2009', grid: true },
+          }),
+        ],
+      },
+    },
+  ];
 
   return [
     {
       test: /\.css$/,
-      use: [executiveLoader, cssLoader],
+      use: [executiveLoader, ...cssLoaders],
     },
     {
       test: /\.scss$/,
-      use: [executiveLoader, cssLoader, 'sass-loader'],
+      use: [executiveLoader, ...cssLoaders, 'sass-loader'],
+    },
+  ];
+};
+
+export const getFileLoaders = () => {
+  const shouldExtractCss = hasThemeStylesheets();
+  // const pluginJson = getPluginJson();
+
+  return [
+    {
+      test: /\.(png|jpe?g|gif|svg)$/,
+      use: [
+        shouldExtractCss
+          ? {
+              loader: 'file-loader',
+              options: {
+                outputPath: '/',
+                name: '[path][name].[ext]',
+              },
+            }
+          : // When using single css import images are inlined as base64 URIs in the result bundle
+            {
+              loader: 'url-loader',
+            },
+      ],
     },
   ];
 };

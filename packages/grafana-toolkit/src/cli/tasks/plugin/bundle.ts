@@ -1,5 +1,3 @@
-import path = require('path');
-import fs = require('fs');
 import webpack = require('webpack');
 import { getWebpackConfig } from '../../../config/webpack.plugin.config';
 import formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
@@ -8,6 +6,7 @@ import clearConsole = require('react-dev-utils/clearConsole');
 export interface PluginBundleOptions {
   watch: boolean;
   production?: boolean;
+  yarnlink?: boolean;
 }
 
 // export const bundlePlugin = useSpinner<PluginBundleOptions>('Bundle plugin', ({ watch }) => {
