@@ -143,7 +143,7 @@ const buildPluginDocsRunner: TaskRunner<PluginCIOptions> = async () => {
   const docsDest = path.resolve(process.cwd(), 'ci', 'docs');
   fs.mkdirSync(docsDest);
 
-  const exe = await execa('cp', ['-rv', docsSrc, docsDest]);
+  const exe = await execa('cp', ['-rv', docsSrc + '/.', docsDest]);
   console.log(exe.stdout);
 
   fs.writeFile(path.resolve(docsDest, 'index.html'), `TODO... actually build docs`, err => {
@@ -310,7 +310,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
   console.log('Grafana Version: ' + JSON.stringify(frontendSettings.data.buildInfo, null, 2));
 
-  const allPlugins: any[] = await axios.get('api/plugins', args);
+  const allPlugins: any[] = await axios.get('api/plugins', args).data;
   // for (const plugin of allPlugins) {
   //   if (plugin.id === pluginInfo.id) {
   //     console.log('------------');
