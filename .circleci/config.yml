@@ -7,7 +7,7 @@ aliases:
       only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
   - &filter-not-release-or-master
     tags:
-      ignore: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
+      ignore: /^v[0--9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
     branches:
       ignore: master
   - &filter-only-master
