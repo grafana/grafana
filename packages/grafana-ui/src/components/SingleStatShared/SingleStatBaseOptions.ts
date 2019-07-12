@@ -3,7 +3,7 @@ import omit from 'lodash/omit';
 
 import { VizOrientation, PanelModel } from '../../types/panel';
 import { FieldDisplayOptions } from '../../utils/fieldDisplay';
-import { Field, getFieldReducers } from '@grafana/data';
+import { Field, getFieldReducers, Threshold, sortThresholds } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
   fieldOptions: FieldDisplayOptions;
@@ -39,18 +39,16 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
     const { valueOptions } = old;
 
     const fieldOptions = (old.fieldOptions = {} as FieldDisplayOptions);
-    fieldOptions.mappings = old.valueMappings;
-    fieldOptions.thresholds = old.thresholds;
 
     const field = (fieldOptions.defaults = {} as Field);
-    if (valueOptions) {
-      field.unit = valueOptions.unit;
-      field.decimals = valueOptions.decimals;
+    field.mappings = old.valueMappings;
+    field.thresholds = migrateOldThresholds(old.thresholds);
+    field.unit = valueOptions.unit;
+    field.decimals = valueOptions.decimals;
 
-      // Make sure the stats have a valid name
-      if (valueOptions.stat) {
-        fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
-      }
+    // Make sure the stats have a valid name
+    if (valueOptions.stat) {
+      fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
     }
 
     field.min = old.minValue;
@@ -58,7 +56,33 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
 
     // remove old props
     return omit(old, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
+  } else if (old.fieldOptions) {
+    // Move mappins & thresholds to field defautls (6.4+)
+    const { mappings, thresholds, ...fieldOptions } = old.fieldOptions;
+    fieldOptions.defaults = {
+      mappings,
+      thresholds: migrateOldThresholds(thresholds),
+      ...fieldOptions.defaults,
+    };
+    old.fieldOptions = fieldOptions;
+    return old;
   }
 
   return panel.options;
 };
+
+export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefined {
+  if (!thresholds || !thresholds.length) {
+    return undefined;
+  }
+  const copy = thresholds.map(t => {
+    return {
+      // Drops 'index'
+      value: t.value === null ? -Infinity : t.value,
+      color: t.color,
+    };
+  });
+  sortThresholds(copy);
+  copy[0].value = -Infinity;
+  return copy;
+}
