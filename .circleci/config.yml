@@ -634,13 +634,13 @@ jobs:
     steps:
       - checkout
       - run:
-          name: boostrap lerna
+          name: Boostrap lerna
           command: 'npx lerna bootstrap'
       - run:
-          name: npm auth
+          name: npm - Prepare auth token
           command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
       - run:
-          name: prepare bumped versions
+          name: Release next packages
           command: './scripts/circle-release-next-packages.sh'
 
 workflows:
