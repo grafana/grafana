@@ -1,14 +1,6 @@
 #!/bin/bash
-function exit_if_fail {
-    command=$@
-    echo "Executing '$command'"
-    eval $command
-    rc=$?
-    if [ $rc -ne 0 ]; then
-        echo "'$command' returned $rc."
-        exit $rc
-    fi
-}
+
+source "$(dirname "$0")/helpers/exit-if-fail.sh"
 
 export GRAFANA_TEST_DB=mysql
 
