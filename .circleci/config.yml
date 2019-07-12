@@ -27,7 +27,7 @@ jobs:
       - image: circleci/golang:1.12.6
       - image: circleci/mysql:5.6-ram
         environment:
-          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_ROOT_PASSWORD: rootpasss
           MYSQL_DATABASE: grafana_tests
           MYSQL_USER: grafana
           MYSQL_PASSWORD: password
