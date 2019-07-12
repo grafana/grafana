@@ -1,5 +1,5 @@
 export default class SupportedNamespaces {
-  supportedMetricNamespaces = {
+  supportedMetricNamespaces: any = {
     azuremonitor: [
       'Microsoft.AnalysisServices/servers',
       'Microsoft.ApiManagement/service',
