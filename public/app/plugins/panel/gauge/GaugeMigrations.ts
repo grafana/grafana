@@ -1,7 +1,10 @@
 import { Field, getFieldReducers } from '@grafana/data';
 import { PanelModel } from '@grafana/ui';
 import { GaugeOptions } from './types';
-import { sharedSingleStatMigrationCheck } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
+import {
+  sharedSingleStatMigrationCheck,
+  migrateOldThresholds,
+} from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
 import { FieldDisplayOptions } from '@grafana/ui/src/utils/fieldDisplay';
 
 export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Partial<GaugeOptions> => {
@@ -10,7 +13,8 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
     return {};
   }
 
-  if (!panel.pluginVersion || panel.pluginVersion.startsWith('6.1')) {
+  const previousVersion = panel.pluginVersion || '';
+  if (!previousVersion || previousVersion.startsWith('6.1')) {
     const old = panel.options as any;
     const { valueOptions } = old;
 
@@ -20,23 +24,36 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
     options.orientation = old.orientation;
 
     const fieldOptions = (options.fieldOptions = {} as FieldDisplayOptions);
-    fieldOptions.mappings = old.valueMappings;
-    fieldOptions.thresholds = old.thresholds;
 
     const field = (fieldOptions.defaults = {} as Field);
-    if (valueOptions) {
-      field.unit = valueOptions.unit;
-      field.decimals = valueOptions.decimals;
+    field.mappings = old.valueMappings;
+    field.thresholds = migrateOldThresholds(old.thresholds);
+    field.unit = valueOptions.unit;
+    field.decimals = valueOptions.decimals;
 
-      // Make sure the stats have a valid name
-      if (valueOptions.stat) {
-        fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
-      }
+    // Make sure the stats have a valid name
+    if (valueOptions.stat) {
+      fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
     }
     field.min = old.minValue;
     field.max = old.maxValue;
 
     return options;
+  } else if (previousVersion.startsWith('6.2') || previousVersion.startsWith('6.3')) {
+    const old = panel.options as any;
+    const { fieldOptions } = old;
+    if (fieldOptions) {
+      const { mappings, thresholds, ...rest } = fieldOptions;
+      rest.default = {
+        mappings,
+        thresholds: migrateOldThresholds(thresholds),
+        ...rest.defaults,
+      };
+      return {
+        ...old.options,
+        fieldOptions: rest,
+      };
+    }
   }
 
   // Default to the standard migration path
