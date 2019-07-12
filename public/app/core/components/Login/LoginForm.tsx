@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import config from 'app/core/config';
-import _ from 'lodash';
 import { UserSignup } from './UserSignup';
 
 const loginServices: LoginServices = {
@@ -36,7 +35,7 @@ const loginServices: LoginServices = {
   },
 };
 
-const oauthEnabled = _.keys(config.oauth).length > 0;
+const oauthEnabled = Object.keys(config.oauth).length > 0;
 
 export interface LoginService {
   enabled: boolean;
