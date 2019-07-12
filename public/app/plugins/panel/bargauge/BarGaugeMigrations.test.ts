@@ -12,8 +12,8 @@ describe('BarGauge Panel Migrations', () => {
           calcs: ['mean'],
           defaults: {
             decimals: null,
-            max: 100,
-            min: 0,
+            max: -22,
+            min: 33,
             unit: 'watt',
           },
           mappings: [],

@@ -14,6 +14,7 @@ export const barGaugePanelMigrationCheck = (panel: PanelModel<BarGaugeOptions>):
   // Move thresholds to field
   const previousVersion = panel.pluginVersion || '';
   if (previousVersion.startsWith('6.2') || previousVersion.startsWith('6.3')) {
+    console.log('TRANSFORM', panel.options);
     const old = panel.options as any;
     const { fieldOptions } = old;
     if (fieldOptions) {
@@ -24,7 +25,7 @@ export const barGaugePanelMigrationCheck = (panel: PanelModel<BarGaugeOptions>):
         ...rest.defaults,
       };
       return {
-        ...old.options,
+        ...old,
         fieldOptions: rest,
       };
     }
