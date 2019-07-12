@@ -27,8 +27,9 @@ else
   echo $'\nBuilding packages'
   yarn packages:build
 
-  echo $'\nCleaning repo'
-  git reset --hard
+  echo $'\nCommiting version changes'
+  echo $'\nThis commit will not be checked-in'
+  git commit -am "Version commit"
 
   echo $'\nPublishing packages'
   yarn packages:publishNext
