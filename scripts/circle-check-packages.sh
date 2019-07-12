@@ -4,6 +4,13 @@ function parse_git_hash() {
   git rev-parse --short HEAD 2> /dev/null | sed "s/\(.*\)/\1/"
 }
 
+function prapare_version_commit () {
+  echo $'\nCommiting version changes. This commit will not be checked-in!'
+  git config --global user.email "circleci@grafana.com"
+  git config --global user.name "CirceCI"
+  git commit -am "Version commit"
+}
+
 #Get current version from lerna.json
 PACKAGE_VERSION=`grep '"version"' lerna.json | cut -d '"' -f 4`
 # Get short current commit's has
@@ -27,9 +34,8 @@ else
   echo $'\nBuilding packages'
   yarn packages:build
 
-  echo $'\nCommiting version changes'
-  echo $'\nThis commit will not be checked-in'
-  git commit -am "Version commit"
+  prapare_version_commit
+
 
   echo $'\nPublishing packages'
   yarn packages:publishNext
