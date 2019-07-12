@@ -1,4 +1,4 @@
-import { SelectOptionItem } from '../types/select';
+import { SelectableItem } from '../types/select';
 
 export interface Extension {
   id: string; // Unique Key -- saved in configs
@@ -14,8 +14,8 @@ export interface Extension {
 }
 
 interface ExtensionSelectInfo {
-  options: Array<SelectOptionItem<string>>;
-  current: Array<SelectOptionItem<string>>;
+  options: Array<SelectableItem<string>>;
+  current: Array<SelectableItem<string>>;
 }
 
 export class ExtensionRegistry<T extends Extension> {

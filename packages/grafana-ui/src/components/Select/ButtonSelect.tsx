@@ -1,5 +1,5 @@
 import React, { PureComponent, ReactElement } from 'react';
-import Select, { SelectOptionItem } from './Select';
+import Select, { SelectableItem } from './Select';
 import { PopperContent } from '../Tooltip/PopperController';
 
 interface ButtonComponentProps {
@@ -30,13 +30,13 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
 
 export interface Props<T> {
   className: string | undefined;
-  options: Array<SelectOptionItem<T>>;
-  value?: SelectOptionItem<T>;
+  options: Array<SelectableItem<T>>;
+  value?: SelectableItem<T>;
   label?: ReactElement | string;
   iconClass?: string;
   components?: any;
   maxMenuHeight?: number;
-  onChange: (item: SelectOptionItem<T>) => void;
+  onChange: (item: SelectableItem<T>) => void;
   tooltipContent?: PopperContent<any>;
   isMenuOpen?: boolean;
   onOpenMenu?: () => void;
@@ -45,7 +45,7 @@ export interface Props<T> {
 }
 
 export class ButtonSelect<T> extends PureComponent<Props<T>> {
-  onChange = (item: SelectOptionItem<T>) => {
+  onChange = (item: SelectableItem<T>) => {
     const { onChange } = this.props;
     onChange(item);
   };

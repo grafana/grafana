@@ -27,7 +27,7 @@ header_name = X-WEBAUTH-USER
 header_property = username
 # Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
 auto_sign_up = true
-# If combined with Grafana LDAP integration define sync interval
+# If combined with Grafana LDAP integration define sync interval in minutes
 ldap_sync_ttl = 60
 # Limit where auth proxy requests come from by configuring a list of IP addresses.
 # This can be used to prevent users spoofing the X-WEBAUTH-USER header.

@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Select, SelectOptionItem } from '@grafana/ui';
+import { Select, SelectableItem } from '@grafana/ui';
 import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
 import { FolderInfo } from 'app/types';
 
@@ -39,7 +39,7 @@ interface Props {
 }
 
 export default class PermissionsListItem extends PureComponent<Props> {
-  onPermissionChanged = (option: SelectOptionItem<PermissionLevel>) => {
+  onPermissionChanged = (option: SelectableItem<PermissionLevel>) => {
     this.props.onPermissionChanged(this.props.item, option.value);
   };
 

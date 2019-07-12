@@ -19,17 +19,17 @@ import resetSelectStyles from './resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { PopperContent } from '../Tooltip/PopperController';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { SelectOptionItem } from '@grafana/data';
-export { SelectOptionItem }; // for simplicity
+import { SelectableItem } from '@grafana/data';
+export { SelectableItem }; // for simplicity
 
 export interface CommonProps<T> {
   defaultValue?: any;
-  getOptionLabel?: (item: SelectOptionItem<T>) => string;
-  getOptionValue?: (item: SelectOptionItem<T>) => string;
-  onChange: (item: SelectOptionItem<T>) => {} | void;
+  getOptionLabel?: (item: SelectableItem<T>) => string;
+  getOptionValue?: (item: SelectableItem<T>) => string;
+  onChange: (item: SelectableItem<T>) => {} | void;
   placeholder?: string;
   width?: number;
-  value?: SelectOptionItem<T>;
+  value?: SelectableItem<T>;
   className?: string;
   isDisabled?: boolean;
   isSearchable?: boolean;
@@ -51,12 +51,12 @@ export interface CommonProps<T> {
 }
 
 export interface SelectProps<T> extends CommonProps<T> {
-  options: Array<SelectOptionItem<T>>;
+  options: Array<SelectableItem<T>>;
 }
 
 interface AsyncProps<T> extends CommonProps<T> {
   defaultOptions: boolean;
-  loadOptions: (query: string) => Promise<Array<SelectOptionItem<T>>>;
+  loadOptions: (query: string) => Promise<Array<SelectableItem<T>>>;
   loadingMessage?: () => string;
 }
 

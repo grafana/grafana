@@ -1,5 +1,5 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { FieldType, ReducerID } from '@grafana/data';
+import { FieldType, ReducerID, Threshold } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
@@ -55,8 +55,6 @@ describe('FieldDisplay', () => {
     },
     fieldOptions: {
       calcs: [],
-      mappings: [],
-      thresholds: [],
       override: {},
       defaults: {},
     },
@@ -68,8 +66,6 @@ describe('FieldDisplay', () => {
       ...options,
       fieldOptions: {
         calcs: [ReducerID.first],
-        mappings: [],
-        thresholds: [],
         override: {},
         defaults: {
           title: '$__cell_0 * $__field_name * $__series_name',
@@ -88,8 +84,6 @@ describe('FieldDisplay', () => {
       ...options,
       fieldOptions: {
         calcs: [ReducerID.last],
-        mappings: [],
-        thresholds: [],
         override: {},
         defaults: {},
       },
@@ -104,8 +98,6 @@ describe('FieldDisplay', () => {
         values: true, //
         limit: 1000,
         calcs: [],
-        mappings: [],
-        thresholds: [],
         override: {},
         defaults: {},
       },
@@ -120,12 +112,27 @@ describe('FieldDisplay', () => {
         values: true, //
         limit: 2,
         calcs: [],
-        mappings: [],
-        thresholds: [],
         override: {},
         defaults: {},
       },
     });
     expect(display.map(v => v.display.numeric)).toEqual([1, 3]); // First 2 are from the first field
+  });
+
+  it('should restore -Infinity value for base threshold', () => {
+    const field = getFieldProperties({
+      thresholds: [
+        ({
+          color: '#73BF69',
+          value: null,
+        } as unknown) as Threshold,
+        {
+          color: '#F2495C',
+          value: 50,
+        },
+      ],
+    });
+    expect(field.thresholds!.length).toEqual(2);
+    expect(field.thresholds![0].value).toBe(-Infinity);
   });
 });

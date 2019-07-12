@@ -13,7 +13,7 @@ import { Help } from './Help';
 import { StackdriverQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
-import { SelectOptionItem } from '@grafana/ui';
+import { SelectableItem } from '@grafana/ui';
 import { TimeSeries } from '@grafana/data';
 
 export interface Props {
@@ -26,7 +26,7 @@ export interface Props {
 }
 
 interface State extends StackdriverQuery {
-  alignOptions: Array<SelectOptionItem<string>>;
+  alignOptions: Array<SelectableItem<string>>;
   lastQuery: string;
   lastQueryError: string;
   [key: string]: any;

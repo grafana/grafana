@@ -49,9 +49,9 @@ function addBarGaugeStory(name: string, overrides: Partial<Props>) {
       orientation: VizOrientation.Vertical,
       displayMode: 'basic',
       thresholds: [
-        { index: 0, value: -Infinity, color: 'green' },
-        { index: 1, value: threshold1Value, color: threshold1Color },
-        { index: 1, value: threshold2Value, color: threshold2Color },
+        { value: -Infinity, color: 'green' },
+        { value: threshold1Value, color: threshold1Color },
+        { value: threshold2Value, color: threshold2Color },
       ],
     };
 

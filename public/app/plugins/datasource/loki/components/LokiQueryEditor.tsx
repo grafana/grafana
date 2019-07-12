@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-// import { Select, SelectOptionItem } from '@grafana/ui';
+// import { Select, SelectableItem } from '@grafana/ui';
 
 // Types
 import { QueryEditorProps } from '@grafana/ui';
@@ -37,7 +37,7 @@ export class LokiQueryEditor extends PureComponent<Props> {
   //   });
   // };
   //
-  // onFormatChanged = (option: SelectOptionItem) => {
+  // onFormatChanged = (option: SelectableItem) => {
   //   this.props.onChange({
   //     ...this.state.query,
   //     resultFormat: option.value,
@@ -47,7 +47,7 @@ export class LokiQueryEditor extends PureComponent<Props> {
   render() {
     // const { query } = this.state;
     // const { datasource } = this.props;
-    // const formatOptions: SelectOptionItem[] = [
+    // const formatOptions: SelectableItem[] = [
     //   { label: 'Time Series', value: 'time_series' },
     //   { label: 'Table', value: 'table' },
     // ];

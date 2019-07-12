@@ -1,10 +1,12 @@
-import angular from 'angular';
+import angular, { IQService } from 'angular';
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
 
 export class CloudWatchQueryParameterCtrl {
   /** @ngInject */
-  constructor($scope, templateSrv, uiSegmentSrv, datasourceSrv, $q) {
+  constructor($scope: any, templateSrv: TemplateSrv, uiSegmentSrv: any, datasourceSrv: DatasourceSrv, $q: IQService) {
     $scope.init = () => {
       const target = $scope.target;
       target.namespace = target.namespace || '';
@@ -69,7 +71,7 @@ export class CloudWatchQueryParameterCtrl {
       );
     };
 
-    $scope.statSegmentChanged = (segment, index) => {
+    $scope.statSegmentChanged = (segment: any, index: number) => {
       if (segment.value === $scope.removeStatSegment.value) {
         $scope.statSegments.splice(index, 1);
       } else {
@@ -91,7 +93,7 @@ export class CloudWatchQueryParameterCtrl {
       $scope.onChange();
     };
 
-    $scope.ensurePlusButton = segments => {
+    $scope.ensurePlusButton = (segments: any) => {
       const count = segments.length;
       const lastSegment = segments[Math.max(count - 1, 0)];
 
@@ -100,7 +102,7 @@ export class CloudWatchQueryParameterCtrl {
       }
     };
 
-    $scope.getDimSegments = (segment, $index) => {
+    $scope.getDimSegments = (segment: any, $index: number) => {
       if (segment.type === 'operator') {
         return $q.when([]);
       }
@@ -130,7 +132,7 @@ export class CloudWatchQueryParameterCtrl {
       });
     };
 
-    $scope.dimSegmentChanged = (segment, index) => {
+    $scope.dimSegmentChanged = (segment: any, index: number) => {
       $scope.dimSegments[index] = segment;
 
       if (segment.value === $scope.removeDimSegment.value) {
@@ -148,7 +150,7 @@ export class CloudWatchQueryParameterCtrl {
     };
 
     $scope.syncDimSegmentsWithModel = () => {
-      const dims = {};
+      const dims: any = {};
       const length = $scope.dimSegments.length;
 
       for (let i = 0; i < length - 2; i += 3) {
@@ -165,7 +167,7 @@ export class CloudWatchQueryParameterCtrl {
     $scope.getRegions = () => {
       return $scope.datasource
         .metricFindQuery('regions()')
-        .then(results => {
+        .then((results: any) => {
           results.unshift({ text: 'default' });
           return results;
         })
@@ -197,8 +199,8 @@ export class CloudWatchQueryParameterCtrl {
       $scope.onChange();
     };
 
-    $scope.transformToSegments = addTemplateVars => {
-      return results => {
+    $scope.transformToSegments = (addTemplateVars: any) => {
+      return (results: any) => {
         const segments = _.map(results, segment => {
           return uiSegmentSrv.newSegment({
             value: segment.text,

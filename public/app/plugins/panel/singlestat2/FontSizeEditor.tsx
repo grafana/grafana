@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { FormLabel, Select, PanelOptionsGroup, SelectOptionItem } from '@grafana/ui';
+import { FormLabel, Select, PanelOptionsGroup, SelectableItem } from '@grafana/ui';
 
 // Types
 import { SingleStatOptions } from './types';
@@ -20,13 +20,13 @@ const fontSizeOptions = percents.map(v => {
 });
 
 export class FontSizeEditor extends PureComponent<Props> {
-  setPrefixFontSize = (v: SelectOptionItem<string>) =>
+  setPrefixFontSize = (v: SelectableItem<string>) =>
     this.props.onChange({ ...this.props.options, prefixFontSize: v.value });
 
-  setValueFontSize = (v: SelectOptionItem<string>) =>
+  setValueFontSize = (v: SelectableItem<string>) =>
     this.props.onChange({ ...this.props.options, valueFontSize: v.value });
 
-  setPostfixFontSize = (v: SelectOptionItem<string>) =>
+  setPostfixFontSize = (v: SelectableItem<string>) =>
     this.props.onChange({ ...this.props.options, postfixFontSize: v.value });
 
   render() {

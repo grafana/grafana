@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
-import { Select, SelectOptionItem } from '@grafana/ui';
+import { Select, SelectableItem } from '@grafana/ui';
 import { User } from 'app/types';
 import {
   dashboardPermissionLevels,
@@ -61,7 +61,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     this.setState({ teamId: team && !Array.isArray(team) ? team.id : 0 });
   };
 
-  onPermissionChanged = (permission: SelectOptionItem<PermissionLevel>) => {
+  onPermissionChanged = (permission: SelectableItem<PermissionLevel>) => {
     this.setState({ permission: permission.value });
   };
 
