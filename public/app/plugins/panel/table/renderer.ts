@@ -1,24 +1,27 @@
 import _ from 'lodash';
-import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, stringToJsRegex } from '@grafana/ui';
+import { getValueFormat, getColorFromHexRgbOrName, GrafanaThemeType, ScopedVars } from '@grafana/ui';
+import { stringToJsRegex } from '@grafana/data';
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TableRenderModel, ColumnRender } from './types';
 
 export class TableRenderer {
   formatters: any[];
   colorState: any;
 
   constructor(
-    private panel,
-    private table,
-    private isUtc,
-    private sanitize,
-    private templateSrv,
+    private panel: { styles: ColumnStyle[]; pageSize: number },
+    private table: TableRenderModel,
+    private isUtc: boolean,
+    private sanitize: (v: any) => any,
+    private templateSrv: TemplateSrv,
     private theme?: GrafanaThemeType
   ) {
     this.initColumns();
   }
 
-  setTable(table) {
+  setTable(table: TableRenderModel) {
     this.table = table;
 
     this.initColumns();
@@ -51,7 +54,7 @@ export class TableRenderer {
     }
   }
 
-  getColorForValue(value, style: ColumnStyle) {
+  getColorForValue(value: number, style: ColumnStyle) {
     if (!style.thresholds) {
       return null;
     }
@@ -63,7 +66,7 @@ export class TableRenderer {
     return getColorFromHexRgbOrName(_.first(style.colors), this.theme);
   }
 
-  defaultCellFormatter(v, style: ColumnStyle) {
+  defaultCellFormatter(v: any, style: ColumnStyle) {
     if (v === null || v === void 0 || v === undefined) {
       return '';
     }
@@ -79,19 +82,17 @@ export class TableRenderer {
     }
   }
 
-  createColumnFormatter(column) {
+  createColumnFormatter(column: ColumnRender) {
     if (!column.style) {
       return this.defaultCellFormatter;
     }
 
     if (column.style.type === 'hidden') {
-      return v => {
-        return undefined;
-      };
+      return (v: any): undefined => undefined;
     }
 
     if (column.style.type === 'date') {
-      return v => {
+      return (v: any) => {
         if (v === undefined || v === null) {
           return '-';
         }
@@ -116,7 +117,7 @@ export class TableRenderer {
     }
 
     if (column.style.type === 'string') {
-      return v => {
+      return (v: any): any => {
         if (_.isArray(v)) {
           v = v.join(', ');
         }
@@ -172,7 +173,7 @@ export class TableRenderer {
     if (column.style.type === 'number') {
       const valueFormatter = getValueFormat(column.unit || column.style.unit);
 
-      return v => {
+      return (v: any): any => {
         if (v === null || v === void 0) {
           return '-';
         }
@@ -186,12 +187,12 @@ export class TableRenderer {
       };
     }
 
-    return value => {
+    return (value: any) => {
       return this.defaultCellFormatter(value, column.style);
     };
   }
 
-  setColorState(value, style: ColumnStyle) {
+  setColorState(value: any, style: ColumnStyle) {
     if (!style.colorMode) {
       return;
     }
@@ -208,22 +209,22 @@ export class TableRenderer {
     this.colorState[style.colorMode] = this.getColorForValue(numericValue, style);
   }
 
-  renderRowVariables(rowIndex) {
-    const scopedVars = {};
+  renderRowVariables(rowIndex: number) {
+    const scopedVars: ScopedVars = {};
     let cellVariable;
     const row = this.table.rows[rowIndex];
     for (let i = 0; i < row.length; i++) {
       cellVariable = `__cell_${i}`;
-      scopedVars[cellVariable] = { value: row[i] };
+      scopedVars[cellVariable] = { value: row[i], text: row[i] ? row[i].toString() : '' };
     }
     return scopedVars;
   }
 
-  formatColumnValue(colIndex, value) {
+  formatColumnValue(colIndex: number, value: any) {
     return this.formatters[colIndex] ? this.formatters[colIndex](value) : value;
   }
 
-  renderCell(columnIndex, rowIndex, value, addWidthHack = false) {
+  renderCell(columnIndex: number, rowIndex: number, value: any, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
 
     const column = this.table.columns[columnIndex];
@@ -266,7 +267,7 @@ export class TableRenderer {
     if (column.style && column.style.link) {
       // Render cell as link
       const scopedVars = this.renderRowVariables(rowIndex);
-      scopedVars['__cell'] = { value: value };
+      scopedVars['__cell'] = { value: value, text: value ? value.toString() : '' };
 
       const cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
       const cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
@@ -304,7 +305,7 @@ export class TableRenderer {
     return columnHtml;
   }
 
-  render(page) {
+  render(page: number) {
     const pageSize = this.panel.pageSize || 100;
     const startPos = page * pageSize;
     const endPos = Math.min(startPos + pageSize, this.table.rows.length);

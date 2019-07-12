@@ -1,5 +1,5 @@
 import { deduplicatedLogsSelector } from './selectors';
-import { LogsDedupStrategy } from '@grafana/ui';
+import { LogsDedupStrategy } from '@grafana/data';
 import { ExploreItemState } from 'app/types';
 
 const state = {

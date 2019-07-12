@@ -3,7 +3,7 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import TableInputCSV from './TableInputCSV';
 import { action } from '@storybook/addon-actions';
-import { SeriesData } from '../../types/data';
+import { DataFrame } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 const TableInputStories = storiesOf('UI/Table/Input', module);
@@ -16,7 +16,7 @@ TableInputStories.add('default', () => {
       width={400}
       height={'90vh'}
       text={'a,b,c\n1,2,3'}
-      onSeriesParsed={(data: SeriesData[], text: string) => {
+      onSeriesParsed={(data: DataFrame[], text: string) => {
         console.log('Data', data, text);
         action('Data')(data, text);
       }}

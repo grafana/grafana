@@ -1,15 +1,17 @@
 // Types
 import {
   DataQueryRequest,
-  SeriesData,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
-} from '@grafana/ui/src/types';
+  MetricFindValue,
+} from '@grafana/ui';
+import { DataFrame } from '@grafana/data';
+
 import { InputQuery, InputOptions } from './types';
 
 export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
-  data: SeriesData[];
+  data: DataFrame[];
 
   constructor(instanceSettings: DataSourceInstanceSettings<InputOptions>) {
     super(instanceSettings);
@@ -22,12 +24,12 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
    */
   getQueryDisplayText(query: InputQuery): string {
     if (query.data) {
-      return 'Panel Data: ' + describeSeriesData(query.data);
+      return 'Panel Data: ' + describeDataFrame(query.data);
     }
-    return `Shared Data From: ${this.name} (${describeSeriesData(this.data)})`;
+    return `Shared Data From: ${this.name} (${describeDataFrame(this.data)})`;
   }
 
-  metricFindQuery(query: string, options?: any) {
+  metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
     return new Promise((resolve, reject) => {
       const names = [];
       for (const series of this.data) {
@@ -43,7 +45,7 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
   }
 
   query(options: DataQueryRequest<InputQuery>): Promise<DataQueryResponse> {
-    const results: SeriesData[] = [];
+    const results: DataFrame[] = [];
     for (const query of options.targets) {
       if (query.hide) {
         continue;
@@ -82,7 +84,7 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
   }
 }
 
-export function describeSeriesData(data: SeriesData[]): string {
+export function describeDataFrame(data: DataFrame[]): string {
   if (!data || !data.length) {
     return '';
   }

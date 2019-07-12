@@ -12,7 +12,7 @@ export class MssqlConfigCtrl {
   onPasswordChange: ReturnType<typeof createChangeHandler>;
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope: any) {
     this.current.jsonData.encrypt = this.current.jsonData.encrypt || 'false';
     this.onPasswordReset = createResetHandler(this, PasswordFieldEnum.Password);
     this.onPasswordChange = createChangeHandler(this, PasswordFieldEnum.Password);

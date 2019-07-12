@@ -34,6 +34,17 @@ datasources:
     secureJsonData:
       password: grafana
 
+  - name: gdev-influxdb-telegraf
+    type: influxdb
+    access: proxy
+    database: telegraf
+    user: grafana
+    url: http://localhost:8086
+    jsonData:
+      timeInterval: "10s"
+    secureJsonData:
+      password: grafana
+
   - name: gdev-opentsdb
     type: opentsdb
     access: proxy
@@ -142,6 +153,9 @@ datasources:
       interval: Daily
       timeField: "@timestamp"
       esVersion: 70
+      timeInterval: "10s"
+      logMessageField: message
+      logLevelField: fields.level
 
   - name: gdev-elasticsearch-v7-metricbeat
     type: elasticsearch

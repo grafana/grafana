@@ -7,6 +7,7 @@ import { TemplateSrvStub } from 'test/specs/helpers';
 
 const props: Props = {
   onChange: () => {},
+  // @ts-ignore
   templateSrv: new TemplateSrvStub(),
   metricDescriptor: {
     valueType: '',
@@ -18,7 +19,7 @@ const props: Props = {
 };
 
 describe('Aggregations', () => {
-  let wrapper;
+  let wrapper: any;
   it('renders correctly', () => {
     const tree = renderer.create(<Aggregations {...props} />).toJSON();
     expect(tree).toMatchSnapshot();
@@ -33,7 +34,7 @@ describe('Aggregations', () => {
       it('', () => {
         const options = wrapper.state().aggOptions[0].options;
         expect(options.length).toEqual(11);
-        expect(options.map(o => o.value)).toEqual(
+        expect(options.map((o: any) => o.value)).toEqual(
           expect.not.arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
         );
       });
@@ -51,7 +52,7 @@ describe('Aggregations', () => {
         const options = wrapper.state().aggOptions[0].options;
 
         expect(options.length).toEqual(10);
-        expect(options.map(o => o.value)).toEqual(expect.arrayContaining(['REDUCE_NONE']));
+        expect(options.map((o: any) => o.value)).toEqual(expect.arrayContaining(['REDUCE_NONE']));
       });
     });
   });

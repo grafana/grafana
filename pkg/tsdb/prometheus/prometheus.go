@@ -199,8 +199,9 @@ func parseResponse(value model.Value, query *PrometheusQuery) (*tsdb.QueryResult
 
 	for _, v := range data {
 		series := tsdb.TimeSeries{
-			Name: formatLegend(v.Metric, query),
-			Tags: map[string]string{},
+			Name:   formatLegend(v.Metric, query),
+			Tags:   make(map[string]string, len(v.Metric)),
+			Points: make([]tsdb.TimePoint, 0, len(v.Values)),
 		}
 
 		for k, v := range v.Metric {

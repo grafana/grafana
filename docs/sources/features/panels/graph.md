@@ -33,22 +33,8 @@ The general tab allows customization of a panel's appearance and menu options.
 - **Transparent** - If checked, removes the solid background of the panel (default not checked).
 
 ### Repeat
-Repeat a panel for each value of a variable.  Repeating panels are described in more detail [here]({{< relref "reference/templating.md#repeating-panels" >}}).
+Repeat a panel for each value of a variable.  Repeating panels are described in more detail [here]({{< relref "../../reference/templating.md#repeating-panels" >}}).
 
-### Drilldown / detail link
-
-The drilldown section allows adding dynamic links to the panel that can link to other dashboards
-or URLs.
-
-Each link has a title, a type and params.  A link can be either a ``dashboard`` or ``absolute`` links.
-If it is a dashboard link, the `dashboard` value must be the name of a dashboard.  If it is an
-`absolute` link, the URL is the URL to the link.
-
-``params`` allows adding additional URL params to the links.  The format is the ``name=value`` with
-multiple params separated by ``&``.  Template variables can be added as values using ``$myvar``.
-
-When linking to another dashboard that uses template variables, you can use ``var-myvar=value`` to
-populate the template variable to a desired value from the link.
 
 ## Metrics
 
@@ -201,3 +187,35 @@ Time regions allow you to highlight certain time regions of the graph to make it
 The time range tab allows you to override the dashboard time range and specify a panel specific time.
 Either through a relative from now time option or through a timeshift.
 Panel time overrides & timeshift are described in more detail [here]({{< relref "reference/timerange.md#panel-time-overrides-timeshift" >}}).
+
+### Data link
+
+> Only available in Grafana v6.3+.
+
+Data link in graph settings allows adding dynamic links to the visualization. Those links can link to either other dashboard or to an external URL.
+
+{{< docs-imagebox img="/img/docs/data_link.png"  max-width= "800px" >}}
+
+Data link is defined by title, url and a setting whether or not it should be opened in a new window.
+
+**Title** is a human readable label for the link that will be displayed in the UI. The link itself is accessible in the graph's context menu when user **clicks on a single data point**:
+
+{{< docs-imagebox img="/img/docs/data_link_tooltip.png"  max-width= "800px" >}}
+
+**URL** field allows the URL configuration for a given link. Apart from regular query params it also supports built-in variables and dashboard variables that you can choose from
+available suggestions:
+
+{{< docs-imagebox img="/img/docs/data_link_typeahead.png"  max-width= "800px" >}}
+
+
+Available built-in variables are:
+
+1. ``__all_variables`` - will add all current dashboard's variables to the URL
+2. ``__url_time_range`` - will add current dashboard's time range to the URL (i.e. ``?from=now-6h&to=now``)
+3. ``__series_name`` - will add series name as a query param in the URL (i.e. ``?series=B-series``)
+4. ``__value_time`` - will add datapoint's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
+
+
+#### Template variables in data links
+When linking to another dashboard that uses template variables, you can use ``var-myvar=${myvar}`` syntax (where ``myvar`` is a name of template variable)
+to use current dashboard's variable value.

@@ -27,7 +27,6 @@ the latest master builds [here](https://grafana.com/grafana/download)
 ### Dependencies
 
 - Go (Latest Stable)
-  - bra [`go get github.com/Unknwon/bra`]
 - Node.js LTS
   - yarn [`npm install -g yarn`]
 
@@ -40,23 +39,6 @@ go get github.com/grafana/grafana
 cd $GOPATH/src/github.com/grafana/grafana
 ```
 
-### Building
-
-#### The backend
-
-```bash
-go run build.go setup
-go run build.go build
-```
-
-#### Frontend assets
-
-_For this you need Node.js (LTS version)._
-
-```bash
-yarn install --pure-lockfile
-```
-
 ### Run and rebuild on source change
 
 #### Backend
@@ -64,7 +46,7 @@ yarn install --pure-lockfile
 To run the backend and rebuild on source change:
 
 ```bash
-$GOPATH/bin/bra run
+make run
 ```
 
 #### Frontend
@@ -92,6 +74,23 @@ yarn jest
 ```
 
 **Open grafana in your browser (default: e.g. `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).**
+
+### Building
+
+#### The backend
+
+```bash
+go run build.go setup
+go run build.go build
+```
+
+#### Frontend assets
+
+_For this you need Node.js (LTS version)._
+
+```bash
+yarn install --pure-lockfile
+```
 
 ### Building a Docker image
 
@@ -148,12 +147,34 @@ Writing & watching frontend tests
 ```bash
 # Run Golang tests using sqlite3 as database (default)
 go test ./pkg/...
+```
 
-# Run Golang tests using mysql as database - convenient to use /docker/blocks/mysql_tests
-GRAFANA_TEST_DB=mysql go test ./pkg/...
+##### Running the MySQL or Postgres backend tests:
 
-# Run Golang tests using postgres as database - convenient to use /docker/blocks/postgres_tests
-GRAFANA_TEST_DB=postgres go test ./pkg/...
+Run these by setting `GRAFANA_TEST_DB` in your environment.
+
+- `GRAFANA_TEST_DB=mysql` to test MySQL
+- `GRAFANA_TEST_DB=postgres` to test Postgres
+
+Follow the instructions in `./devenv` to spin up test containers running the appropriate databases with `docker-compose`
+- Use `docker/blocks/mysql_tests` or `docker/blocks/postgres_tests` as appropriate
+
+```bash
+# MySQL
+# Tests can only be ran in one Go package at a time due to clashing db queries. To run MySQL tests for the "pkg/services/sqlstore" package, run:
+GRAFANA_TEST_DB=mysql go test ./pkg/services/sqlstore/...
+
+# Or run all the packages using the circle CI scripts. This method will be slower as the scripts will run all the tests, including the integration tests.
+./scripts/circle-test-mysql.sh 
+```
+
+```bash
+# Postgres
+# Tests can only be ran in one Go package at a time due to clashing db queries. To run Postgres tests for the "pkg/services/sqlstore" package, run:
+GRAFANA_TEST_DB=postgres go test ./pkg/services/sqlstore/...
+
+# Or run all the packages using the circle CI scripts. This method will be slower as the scripts will run all the tests, including the integration tests.
+./scripts/circle-test-postgres.sh
 ```
 
 #### End-to-end

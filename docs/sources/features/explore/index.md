@@ -75,23 +75,12 @@ Suggestions can appear under the query field - click on them to update your quer
 
 Click on the filter button <span title="Filter for label" class="logs-label__icon fa fa-search-plus"></span> in a labels column in the Table panel to add filters to the query expression. This works with multiple queries too - the filter will be added for all the queries.
 
-## Logs Integration - Loki-specific Features
+## Logs Integration
 
-For Grafana 6.0, the first log integration is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. Read more about Grafana Loki [here](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
-
-See the [Loki's data source documentation](../datasources/loki) on how to query for log data.
-
-### Switching from Metrics to Logs
-
-If you switch from a Prometheus query to a logs query (you can do a split first to have your metrics and logs side by side) then it will keep the labels from your query that exist in the logs and use those to query the log streams. For example, the following Prometheus query:
-
-`grafana_alerting_active_alerts{job="grafana"}`
-
-after switching to the Logs datasource, the query changes to:
-
-`{job="grafana"}`
-
-This will return a chunk of logs in the selected time range that can be grepped/text searched.
+Along with metrics, Explore allows you to investigate your logs with the following data sources:
+- [Loki](../datasources/loki)
+- [InfluxDB](../datasources/influxdb)
+- [Elasticsearch](../datasources/elasticsearch)
 
 ### Deduping
 
@@ -108,3 +97,21 @@ There are some other check boxes under the logging graph apart from the Deduping
 * Timestamp: shows/hides the Timestamp column
 * Local time: shows/hides the Local time column
 * Labels: shows/hides the label filters column
+
+### Loki-specific Features
+
+As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. Read more about Grafana Loki [here](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
+
+See [Loki's data source documentation](../datasources/loki) on how to query for log data.
+
+#### Switching from Metrics to Logs
+
+If you switch from a Prometheus query to a logs query (you can do a split first to have your metrics and logs side by side) then it will keep the labels from your query that exist in the logs and use those to query the log streams. For example, the following Prometheus query:
+
+`grafana_alerting_active_alerts{job="grafana"}`
+
+after switching to the Logs datasource, the query changes to:
+
+`{job="grafana"}`
+
+This will return a chunk of logs in the selected time range that can be grepped/text searched.

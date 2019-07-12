@@ -1,5 +1,5 @@
 export default class SupportedNamespaces {
-  supportedMetricNamespaces = {
+  supportedMetricNamespaces: any = {
     azuremonitor: [
       'Microsoft.AnalysisServices/servers',
       'Microsoft.ApiManagement/service',
@@ -235,7 +235,7 @@ export default class SupportedNamespaces {
 
   constructor(private cloudName: string) {}
 
-  get() {
+  get(): string[] {
     return this.supportedMetricNamespaces[this.cloudName];
   }
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/ua-parser/uap-go/uaparser"
 )
 
 // GET /api/user/auth-tokens
@@ -62,13 +63,45 @@ func (server *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID
 			isActive = true
 		}
 
+		parser := uaparser.NewFromSaved()
+		client := parser.Parse(token.UserAgent)
+
+		osVersion := ""
+		if client.Os.Major != "" {
+			osVersion = client.Os.Major
+
+			if client.Os.Minor != "" {
+				osVersion = osVersion + "." + client.Os.Minor
+			}
+		}
+
+		browserVersion := ""
+		if client.UserAgent.Major != "" {
+			browserVersion = client.UserAgent.Major
+
+			if client.UserAgent.Minor != "" {
+				browserVersion = browserVersion + "." + client.UserAgent.Minor
+			}
+		}
+
+		createdAt := time.Unix(token.CreatedAt, 0)
+		seenAt := time.Unix(token.SeenAt, 0)
+
+		if token.SeenAt == 0 {
+			seenAt = createdAt
+		}
+
 		result = append(result, &dtos.UserToken{
-			Id:        token.Id,
-			IsActive:  isActive,
-			ClientIp:  token.ClientIp,
-			UserAgent: token.UserAgent,
-			CreatedAt: time.Unix(token.CreatedAt, 0),
-			SeenAt:    time.Unix(token.SeenAt, 0),
+			Id:                     token.Id,
+			IsActive:               isActive,
+			ClientIp:               token.ClientIp,
+			Device:                 client.Device.ToString(),
+			OperatingSystem:        client.Os.Family,
+			OperatingSystemVersion: osVersion,
+			Browser:                client.UserAgent.Family,
+			BrowserVersion:         browserVersion,
+			CreatedAt:              createdAt,
+			SeenAt:                 seenAt,
 		})
 	}
 

@@ -1,29 +1,25 @@
 // Types
 import { Emitter } from 'app/core/core';
 import {
-  RawTimeRange,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryFixAction,
+  DataQueryError,
+  DataQueryResponseData,
+} from '@grafana/ui';
+
+import {
+  RawTimeRange,
   LogLevel,
   TimeRange,
-  DataQueryError,
-  SeriesData,
+  DataFrame,
   LogsModel,
   TimeSeries,
-  DataQueryResponseData,
   LoadingState,
-} from '@grafana/ui/src/types';
-import {
-  ExploreId,
-  ExploreItemState,
-  HistoryItem,
-  RangeScanner,
-  ExploreUIState,
-  ExploreMode,
-  QueryOptions,
-} from 'app/types/explore';
+  AbsoluteTimeRange,
+} from '@grafana/data';
+import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode, QueryOptions } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 import TableModel from 'app/core/table_model';
 
@@ -73,11 +69,6 @@ export interface ChangeSizePayload {
   height: number;
 }
 
-export interface ChangeTimePayload {
-  exploreId: ExploreId;
-  range: TimeRange;
-}
-
 export interface ChangeRefreshIntervalPayload {
   exploreId: ExploreId;
   refreshInterval: string;
@@ -102,6 +93,7 @@ export interface InitializeExplorePayload {
   eventBridge: Emitter;
   queries: DataQuery[];
   range: TimeRange;
+  mode: ExploreMode;
   ui: ExploreUIState;
 }
 
@@ -174,12 +166,6 @@ export interface RemoveQueryRowPayload {
 
 export interface ScanStartPayload {
   exploreId: ExploreId;
-  scanner: RangeScanner;
-}
-
-export interface ScanRangePayload {
-  exploreId: ExploreId;
-  range: RawTimeRange;
 }
 
 export interface ScanStopPayload {
@@ -218,7 +204,7 @@ export interface UpdateDatasourceInstancePayload {
 
 export interface ToggleLogLevelPayload {
   exploreId: ExploreId;
-  hiddenLogLevels: Set<LogLevel>;
+  hiddenLogLevels: LogLevel[];
 }
 
 export interface QueriesImportedPayload {
@@ -233,7 +219,6 @@ export interface LoadExploreDataSourcesPayload {
 
 export interface RunQueriesPayload {
   exploreId: ExploreId;
-  range: TimeRange;
 }
 
 export interface ResetQueryErrorPayload {
@@ -257,7 +242,7 @@ export interface ProcessQueryResultsPayload {
   datasourceId: string;
   loadingState: LoadingState;
   series?: DataQueryResponseData[];
-  delta?: SeriesData[];
+  delta?: DataFrame[];
 }
 
 export interface RunQueriesBatchPayload {
@@ -266,7 +251,7 @@ export interface RunQueriesBatchPayload {
 }
 
 export interface LimitMessageRatePayload {
-  series: SeriesData[];
+  series: DataFrame[];
   exploreId: ExploreId;
   datasourceId: string;
 }
@@ -274,6 +259,13 @@ export interface LimitMessageRatePayload {
 export interface ChangeRangePayload {
   exploreId: ExploreId;
   range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
+}
+
+export interface UpdateTimeRangePayload {
+  exploreId: ExploreId;
+  rawRange?: RawTimeRange;
+  absoluteRange?: AbsoluteTimeRange;
 }
 
 /**
@@ -302,11 +294,6 @@ export const changeQueryAction = actionCreatorFactory<ChangeQueryPayload>('explo
  * The width will be used to calculate graph intervals (number of datapoints).
  */
 export const changeSizeAction = actionCreatorFactory<ChangeSizePayload>('explore/CHANGE_SIZE').create();
-
-/**
- * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
- */
-export const changeTimeAction = actionCreatorFactory<ChangeTimePayload>('explore/CHANGE_TIME').create();
 
 /**
  * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
@@ -399,7 +386,6 @@ export const runQueriesAction = actionCreatorFactory<RunQueriesPayload>('explore
  * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
  */
 export const scanStartAction = actionCreatorFactory<ScanStartPayload>('explore/SCAN_START').create();
-export const scanRangeAction = actionCreatorFactory<ScanRangePayload>('explore/SCAN_RANGE').create();
 
 /**
  * Stop any scanning for more results.
@@ -489,6 +475,8 @@ export const limitMessageRatePayloadAction = actionCreatorFactory<LimitMessageRa
 ).create();
 
 export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explore/CHANGE_RANGE').create();
+
+export const updateTimeRangeAction = actionCreatorFactory<UpdateTimeRangePayload>('explore/UPDATE_TIMERANGE').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>

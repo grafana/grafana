@@ -1,4 +1,5 @@
 import _ from 'lodash';
+// @ts-ignore
 import q from 'q';
 import {
   alignRange,
@@ -7,8 +8,8 @@ import {
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
 } from '../datasource';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
-import { DataSourceInstanceSettings } from '@grafana/ui';
+import { dateTime } from '@grafana/data';
+import { DataSourceInstanceSettings, DataQueryResponseData } from '@grafana/ui';
 import { PromOptions } from '../types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -17,8 +18,8 @@ import { CustomVariable } from 'app/features/templating/custom_variable';
 jest.mock('../metric_find_query');
 
 const DEFAULT_TEMPLATE_SRV_MOCK = {
-  getAdhocFilters: () => [],
-  replace: a => a,
+  getAdhocFilters: () => [] as any[],
+  replace: (a: string) => a,
 };
 
 describe('PrometheusDatasource', () => {
@@ -179,7 +180,7 @@ describe('PrometheusDatasource', () => {
       ];
 
       ctx.ds.performTimeSeriesQuery = jest.fn().mockReturnValue(responseMock);
-      return ctx.ds.query(ctx.query).then(result => {
+      return ctx.ds.query(ctx.query).then((result: any) => {
         const results = result.data;
         return expect(results).toMatchObject(expected);
       });
@@ -209,7 +210,7 @@ describe('PrometheusDatasource', () => {
       const expected = ['1', '2', '4', '+Inf'];
 
       ctx.ds.performTimeSeriesQuery = jest.fn().mockReturnValue(responseMock);
-      return ctx.ds.query(ctx.query).then(result => {
+      return ctx.ds.query(ctx.query).then((result: any) => {
         const seriesLabels = _.map(result.data, 'target');
         return expect(seriesLabels).toEqual(expected);
       });
@@ -218,24 +219,36 @@ describe('PrometheusDatasource', () => {
 
   describe('alignRange', () => {
     it('does not modify already aligned intervals with perfect step', () => {
-      const range = alignRange(0, 3, 3);
+      const range = alignRange(0, 3, 3, 0);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(3);
     });
     it('does modify end-aligned intervals to reflect number of steps possible', () => {
-      const range = alignRange(1, 6, 3);
+      const range = alignRange(1, 6, 3, 0);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(6);
     });
     it('does align intervals that are a multiple of steps', () => {
-      const range = alignRange(1, 4, 3);
+      const range = alignRange(1, 4, 3, 0);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(3);
     });
     it('does align intervals that are not a multiple of steps', () => {
-      const range = alignRange(1, 5, 3);
+      const range = alignRange(1, 5, 3, 0);
       expect(range.start).toEqual(0);
       expect(range.end).toEqual(3);
+    });
+    it('does align intervals with local midnight -UTC offset', () => {
+      //week range, location 4+ hours UTC offset, 24h step time
+      const range = alignRange(4 * 60 * 60, (7 * 24 + 4) * 60 * 60, 24 * 60 * 60, -4 * 60 * 60); //04:00 UTC, 7 day range
+      expect(range.start).toEqual(4 * 60 * 60);
+      expect(range.end).toEqual((7 * 24 + 4) * 60 * 60);
+    });
+    it('does align intervals with local midnight +UTC offset', () => {
+      //week range, location 4- hours UTC offset, 24h step time
+      const range = alignRange(20 * 60 * 60, (8 * 24 - 4) * 60 * 60, 24 * 60 * 60, 4 * 60 * 60); //20:00 UTC on day1, 7 days later is 20:00 on day8
+      expect(range.start).toEqual(20 * 60 * 60);
+      expect(range.end).toEqual((8 * 24 - 4) * 60 * 60);
     });
   });
 
@@ -412,63 +425,101 @@ const backendSrv = {
 } as any;
 
 const templateSrv = ({
-  getAdhocFilters: () => [],
+  getAdhocFilters: (): any[] => [],
   replace: jest.fn(str => str),
 } as unknown) as TemplateSrv;
 
 const timeSrv = ({
   timeRange: () => {
-    return { to: { diff: () => 2000 }, from: '' };
+    return {
+      from: dateTime(1531468681),
+      to: dateTime(1531468681 + 2000),
+    };
   },
 } as unknown) as TimeSrv;
 
 describe('PrometheusDatasource', () => {
   describe('When querying prometheus with one target using query editor target spec', () => {
-    let results;
-    const query = {
-      range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
-      targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
-      interval: '60s',
-    };
-    // Interval alignment with step
-    const urlExpected =
-      'proxied/api/v1/query_range?query=' + encodeURIComponent('test{job="testjob"}') + '&start=60&end=180&step=60';
-
-    beforeEach(async () => {
-      const response = {
-        data: {
-          status: 'success',
-          data: {
-            resultType: 'matrix',
-            result: [
-              {
-                metric: { __name__: 'test', job: 'testjob' },
-                values: [[60, '3846']],
-              },
-            ],
-          },
-        },
+    describe('and query syntax is valid', () => {
+      let results: any;
+      const query = {
+        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
+        targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
+        interval: '60s',
       };
-      backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
-      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
+      // Interval alignment with step
+      const urlExpected =
+        'proxied/api/v1/query_range?query=' + encodeURIComponent('test{job="testjob"}') + '&start=60&end=180&step=60';
 
-      await ctx.ds.query(query).then(data => {
-        results = data;
+      beforeEach(async () => {
+        const response = {
+          data: {
+            status: 'success',
+            data: {
+              resultType: 'matrix',
+              result: [
+                {
+                  metric: { __name__: 'test', job: 'testjob' },
+                  values: [[60, '3846']],
+                },
+              ],
+            },
+          },
+        };
+        backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
+
+        await ctx.ds.query(query).then((data: any) => {
+          results = data;
+        });
+      });
+
+      it('should generate the correct query', () => {
+        const res = backendSrv.datasourceRequest.mock.calls[0][0];
+        expect(res.method).toBe('GET');
+        expect(res.url).toBe(urlExpected);
+      });
+
+      it('should return series list', async () => {
+        expect(results.data.length).toBe(1);
+        expect(results.data[0].target).toBe('test{job="testjob"}');
       });
     });
 
-    it('should generate the correct query', () => {
-      const res = backendSrv.datasourceRequest.mock.calls[0][0];
-      expect(res.method).toBe('GET');
-      expect(res.url).toBe(urlExpected);
-    });
-    it('should return series list', async () => {
-      expect(results.data.length).toBe(1);
-      expect(results.data[0].target).toBe('test{job="testjob"}');
+    describe('and query syntax is invalid', () => {
+      let results: string;
+      const query = {
+        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
+        targets: [{ expr: 'tes;;t{job="testjob"}', format: 'time_series' }],
+        interval: '60s',
+      };
+
+      const errMessage = 'parse error at char 25: could not parse remaining input';
+      const response = {
+        data: {
+          status: 'error',
+          errorType: 'bad_data',
+          error: errMessage,
+        },
+      };
+
+      beforeEach(async () => {
+        backendSrv.datasourceRequest = jest.fn(() => Promise.reject(response));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
+
+        await ctx.ds.query(query).catch((e: any) => {
+          results = e.message;
+        });
+      });
+
+      it('should generate an error', () => {
+        expect(results).toBe(`"${errMessage}"`);
+      });
     });
   });
+
   describe('When querying prometheus with one target which returns multiple series', () => {
-    let results;
+    let results: any;
     const start = 60;
     const end = 360;
     const step = 60;
@@ -502,7 +553,7 @@ describe('PrometheusDatasource', () => {
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
-      await ctx.ds.query(query).then(data => {
+      await ctx.ds.query(query).then((data: any) => {
         results = data;
       });
     });
@@ -535,8 +586,9 @@ describe('PrometheusDatasource', () => {
       expect(results.data[1].datapoints[3][0]).toBe(null);
     });
   });
+
   describe('When querying prometheus with one target and instant = true', () => {
-    let results;
+    let results: any;
     const urlExpected = 'proxied/api/v1/query?query=' + encodeURIComponent('test{job="testjob"}') + '&time=123';
     const query = {
       range: { from: time({ seconds: 63 }), to: time({ seconds: 123 }) },
@@ -563,7 +615,7 @@ describe('PrometheusDatasource', () => {
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
-      await ctx.ds.query(query).then(data => {
+      await ctx.ds.query(query).then((data: any) => {
         results = data;
       });
     });
@@ -577,8 +629,9 @@ describe('PrometheusDatasource', () => {
       expect(results.data[0].target).toBe('test{job="testjob"}');
     });
   });
+
   describe('When performing annotationQuery', () => {
-    let results;
+    let results: any;
 
     const options: any = {
       annotation: {
@@ -620,7 +673,7 @@ describe('PrometheusDatasource', () => {
         backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
         ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
-        await ctx.ds.annotationQuery(options).then(data => {
+        await ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
         });
       });
@@ -640,7 +693,7 @@ describe('PrometheusDatasource', () => {
         backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
         ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
 
-        await ctx.ds.annotationQuery(options).then(data => {
+        await ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
         });
       });
@@ -725,7 +778,7 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('When resultFormat is table and instant = true', () => {
-    let results;
+    let results: any;
     const query = {
       range: { from: time({ seconds: 63 }), to: time({ seconds: 123 }) },
       targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
@@ -750,7 +803,7 @@ describe('PrometheusDatasource', () => {
 
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query).then(data => {
+      await ctx.ds.query(query).then((data: any) => {
         results = data;
       });
     });
@@ -766,7 +819,7 @@ describe('PrometheusDatasource', () => {
       data: {
         data: {
           resultType: 'matrix',
-          result: [],
+          result: [] as DataQueryResponseData[],
         },
       },
     };
@@ -963,7 +1016,7 @@ describe('PrometheusDatasource', () => {
       data: {
         data: {
           resultType: 'matrix',
-          result: [],
+          result: [] as DataQueryResponseData[],
         },
       },
     };
@@ -1226,6 +1279,61 @@ describe('PrometheusDatasource', () => {
       });
     });
   });
+
+  describe('The __range, __range_s and __range_ms variables', () => {
+    const response = {
+      status: 'success',
+      data: {
+        data: {
+          resultType: 'matrix',
+          result: [] as DataQueryResponseData[],
+        },
+      },
+    };
+
+    it('should use overridden ranges, not dashboard ranges', async () => {
+      const expectedRangeSecond = 3600;
+      const expectedRangeString = '1h';
+      const query = {
+        range: {
+          from: time({}),
+          to: time({ hours: 1 }),
+        },
+        targets: [
+          {
+            expr: 'test[${__range_s}s]',
+          },
+        ],
+        interval: '60s',
+      };
+      const urlExpected = `proxied/api/v1/query_range?query=${encodeURIComponent(
+        query.targets[0].expr
+      )}&start=0&end=3600&step=60`;
+
+      templateSrv.replace = jest.fn(str => str);
+      backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+      ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
+      await ctx.ds.query(query);
+      const res = backendSrv.datasourceRequest.mock.calls[0][0];
+      expect(res.url).toBe(urlExpected);
+
+      // @ts-ignore
+      expect(templateSrv.replace.mock.calls[1][1]).toEqual({
+        __range_s: {
+          text: expectedRangeSecond,
+          value: expectedRangeSecond,
+        },
+        __range: {
+          text: expectedRangeString,
+          value: expectedRangeString,
+        },
+        __range_ms: {
+          text: expectedRangeSecond * 1000,
+          value: expectedRangeSecond * 1000,
+        },
+      });
+    });
+  });
 });
 
 describe('PrometheusDatasource for POST', () => {
@@ -1239,7 +1347,7 @@ describe('PrometheusDatasource for POST', () => {
   } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
   describe('When querying prometheus with one target using query editor target spec', () => {
-    let results;
+    let results: any;
     const urlExpected = 'proxied/api/v1/query_range';
     const dataExpected = {
       query: 'test{job="testjob"}',
@@ -1270,16 +1378,18 @@ describe('PrometheusDatasource for POST', () => {
       };
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
-      await ctx.ds.query(query).then(data => {
+      await ctx.ds.query(query).then((data: any) => {
         results = data;
       });
     });
+
     it('should generate the correct query', () => {
       const res = backendSrv.datasourceRequest.mock.calls[0][0];
       expect(res.method).toBe('POST');
       expect(res.url).toBe(urlExpected);
       expect(res.data).toEqual(dataExpected);
     });
+
     it('should return series list', () => {
       expect(results.data.length).toBe(1);
       expect(results.data[0].target).toBe('test{job="testjob"}');
@@ -1290,7 +1400,7 @@ describe('PrometheusDatasource for POST', () => {
     const options = { dashboardId: 1, panelId: 2 };
 
     const httpOptions = {
-      headers: {},
+      headers: {} as { [key: string]: number | undefined },
     };
 
     it('with proxy access tracing headers should be added', () => {
