@@ -65,7 +65,6 @@ type Field interface{}
 func (d *DataFrame) ToArrow() *array.TableReader {
 	arrowFields := make([]arrow.Field, len(d.Schema))
 	for i, cs := range d.Schema {
-		fmt.Println(cs.ArrowType().ID())
 		arrowFields[i] = arrow.Field{Name: cs.GetName(), Type: cs.ArrowType()}
 	}
 	schema := arrow.NewSchema(arrowFields, nil)
@@ -75,23 +74,29 @@ func (d *DataFrame) ToArrow() *array.TableReader {
 	rb := array.NewRecordBuilder(pool, schema)
 	defer rb.Release()
 
-	records := []array.Record{}
+	records := make([]array.Record, len(d.Records))
 	for rowIdx, row := range d.Records {
 		for fieldIdx, field := range row {
 			switch arrowFields[fieldIdx].Type.(type) {
 			case *arrow.StringType:
 				rb.Field(fieldIdx).(*array.StringBuilder).Append(*(field.(*string)))
+				//rb.Field(fieldIdx).(*array.StringBuilder).AppendValues([]string{*(field.(*string))}, []bool{})
+			case *arrow.Float64Type:
+				rb.Field(fieldIdx).(*array.Float64Builder).Append(*(field.(*float64)))
+				//rb.Field(fieldIdx).(*array.Float64Builder).AppendValues([]float64{*(field.(*float64))}, []bool{})
+			default:
+				fmt.Println("unmatched")
 			}
-			//rb.Field(fieldIdx).(cs[fieldIdx].ArrowBuilderType()).AppendValues(field)
-			//rb.Field(fieldIdx).(cs[fieldIdx].ArrowBuilderType()).AppendValues(field)
-			//rb.Field(fieldIdx).(*(arrowFields[fieldIdx].Type)).Append(field)
 		}
 		rec := rb.NewRecord()
 		defer rec.Release()
-		records[rowIdx] = rb.NewRecord()
+		records[rowIdx] = rec
 	}
 	table := array.NewTableFromRecords(schema, records)
 	defer table.Release()
-	return array.NewTableReader(table, 0)
+	tableReader := array.NewTableReader(table, 3)
+	//tableReader.Retain()
+
+	return tableReader
 
 }
