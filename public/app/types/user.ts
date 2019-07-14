@@ -6,6 +6,7 @@ export interface OrgUser {
   lastSeenAt: string;
   lastSeenAtAge: string;
   login: string;
+  name: string;
   orgId: number;
   role: string;
   userId: number;
