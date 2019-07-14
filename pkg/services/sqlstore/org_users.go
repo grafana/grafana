@@ -124,6 +124,7 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 		"org_user.org_id",
 		"org_user.user_id",
 		"user.email",
+		"user.name",
 		"user.login",
 		"org_user.role",
 		"user.last_seen_at",
