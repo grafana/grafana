@@ -119,13 +119,24 @@ Notice: If you are using Docker for MacOS, be sure to set the memory limit to be
 
 ### Dev config
 
-Create a custom.ini in the conf directory to override default configuration options.
+The environment uses `./conf/default.ini` for settings. Create `./conf/custom.ini` file in the `conf` directory to override default configuration options.
 You only need to add the options you want to override. Config files are applied in the order of:
 
 1. grafana.ini
 1. custom.ini
 
-In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = development`.
+In your custom.ini uncomment (remove the leading `;`) sign. And add `app_mode = development`. For api development one can add `[auth.anonymous]` for easy access to api calls.
+
+Example config `cat custom.ini`:
+```
+app_mode = development
+
+[auth.anonymous]
+# enable anonymous access (for easy api development)
+enabled = true
+```
+
+Learn more about Grafana config options in the [Configuration section](/installation/configuration/)
 
 ### Running tests
 
