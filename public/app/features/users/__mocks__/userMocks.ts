@@ -21,6 +21,7 @@ export const getMockUser = () => {
   return {
     avatarUrl: 'url/to/avatar',
     email: `user@test.com`,
+    name: 'user test',
     lastSeenAt: '2018-10-01',
     lastSeenAtAge: '',
     login: `user`,
