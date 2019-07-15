@@ -15,8 +15,7 @@
     "typecheck": "tsc --noEmit",
     "precommit": "npm run tslint & npm run typecheck",
     "clean": "rimraf ./dist ./compiled",
-    "build": "grafana-toolkit toolkit:build",
-    "postpublish": "npm run clean"
+    "build": "grafana-toolkit toolkit:build"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -74,9 +73,6 @@
     "typescript": "3.5.1",
     "url-loader": "^2.0.1",
     "webpack": "4.35.0"
-  },
-  "resolutions": {
-    "@types/lodash": "4.14.119"
   },
   "devDependencies": {
     "@types/glob": "^7.1.1",

@@ -11,8 +11,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "rimraf ./dist ./compiled",
     "bundle": "rollup -c rollup.config.ts",
-    "build": "grafana-toolkit package:build --scope=data",
-    "postpublish": "npm run clean"
+    "build": "grafana-toolkit package:build --scope=data"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -37,8 +36,5 @@
     "rollup-plugin-visualizer": "0.9.2",
     "sinon": "1.17.6",
     "typescript": "3.4.1"
-  },
-  "resolutions": {
-    "@types/lodash": "4.14.119"
   }
 }
