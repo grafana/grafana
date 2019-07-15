@@ -133,6 +133,15 @@ func TestGetStateFromEvalContext(t *testing.T) {
 			},
 		},
 		{
+			name:     "ok -> no_data(no_data)",
+			expected: models.AlertStateNoData,
+			applyFn: func(ec *EvalContext) {
+				ec.PrevAlertState = models.AlertStateOK
+				ec.Rule.NoDataState = models.NoDataSetNoData
+				ec.NoDataFound = true
+			},
+		},
+		{
 			name:     "ok -> no_data(keep_last)",
 			expected: models.AlertStateOK,
 			applyFn: func(ec *EvalContext) {
@@ -148,6 +157,18 @@ func TestGetStateFromEvalContext(t *testing.T) {
 				ec.PrevAlertState = models.AlertStatePending
 				ec.Rule.NoDataState = models.NoDataKeepState
 				ec.NoDataFound = true
+			},
+		},
+		{
+			name:     "ok -> pending with no_data(no_data), since it has to be pending longer than FOR and prev state is ok",
+			expected: models.AlertStatePending,
+			applyFn: func(ec *EvalContext) {
+				ec.PrevAlertState = models.AlertStateOK
+				ec.Firing = false
+				ec.NoDataFound = true
+				ec.Rule.NoDataState = models.NoDataSetNoData
+				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 2)
+				ec.Rule.For = time.Minute * 5
 			},
 		},
 		{
