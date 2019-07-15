@@ -129,7 +129,7 @@ jobs:
 
   shellcheck:
     machine: true
-    working_directory: /go/src/github.com/grafana/grafana
+    working_directory: ~/go/src/github.com/grafana/grafana
     steps:
       - checkout
       - run:
