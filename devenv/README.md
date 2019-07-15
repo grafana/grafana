@@ -22,8 +22,7 @@ found. The dashboards are located in the `devenv/dev-dashboards` folder.
 # docker-compose with databases
 
 ```bash
-./create_docker_compose.sh influxdb prometheus2 elastic5
-docker-compose up
+make devenv sources=influxdb,prometheus2,elastic5
 ```
 
 This command will create a docker compose file with specified databases configured and ready to run. Each database has
