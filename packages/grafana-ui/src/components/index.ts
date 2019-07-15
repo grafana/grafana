@@ -40,9 +40,7 @@ export { List } from './List/List';
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
 
-// Table
 export { Table } from './Table/Table';
-export { Tables } from './Table/Tables';
 export { TableInputCSV } from './Table/TableInputCSV';
 
 // Visualizations

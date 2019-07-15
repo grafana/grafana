@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import React, { ReactElement } from 'react';
 import { GridCellProps } from 'react-virtualized';
-import { Table, BaseTableProps } from './Table';
+import { Table, Props } from './Table';
 import { ValueFormatter, getValueFormat, getColorFromHexRgbOrName } from '../../utils/index';
 import { GrafanaTheme } from '../../types/theme';
 import { InterpolateFunction } from '../../types/panel';
@@ -73,7 +73,7 @@ export interface ColumnStyle {
 // private replaceVariables: InterpolateFunction,
 // private fmt?:ValueFormatter) {
 
-export function getCellBuilder(schema: Field, style: ColumnStyle | null, props: BaseTableProps): TableCellBuilder {
+export function getCellBuilder(schema: Field, style: ColumnStyle | null, props: Props): TableCellBuilder {
   if (!style) {
     return simpleCellBuilder;
   }

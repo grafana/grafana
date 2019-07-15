@@ -1,8 +1,6 @@
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 
 export interface Options {
-  showToolbar: boolean;
-
   showHeader: boolean;
   fixedHeader: boolean;
   fixedColumns: number;
@@ -12,7 +10,6 @@ export interface Options {
 }
 
 export const defaults: Options = {
-  showToolbar: false,
   showHeader: true,
   fixedHeader: true,
   fixedColumns: 0,

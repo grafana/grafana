@@ -23,7 +23,9 @@ import {
 } from './TableCellBuilder';
 import { InterpolateFunction } from '../../types/panel';
 
-export interface BaseTableProps extends Themeable {
+export interface Props extends Themeable {
+  data: DataFrame;
+
   minColumnWidth: number;
   showHeader: boolean;
   fixedHeader: boolean;
@@ -35,10 +37,6 @@ export interface BaseTableProps extends Themeable {
   width: number;
   height: number;
   isUTC?: boolean;
-}
-
-export interface Props extends BaseTableProps {
-  data: DataFrame;
 }
 
 interface State {
@@ -255,9 +253,8 @@ export class Table extends Component<Props, State> {
   render() {
     const { showHeader, fixedHeader, fixedColumns, rotate, width, height } = this.props;
     const { data } = this.state;
-    if (!data || !data.rows || !data.fields || !data.fields.length) {
-      console.log('EMPTY', data);
-      return <span>Missing Data</span>; // nothing
+    if (!data || !data.fields || !data.fields.length) {
+      return <span>Missing Fields</span>; // nothing
     }
 
     let columnCount = data.fields.length;
