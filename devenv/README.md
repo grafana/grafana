@@ -30,7 +30,7 @@ a prepared image with some fake data ready to use. For available databases see `
 for some databases there are multiple images, for example there is prometheus_mac specifically for Macs or different
 version.
 
-Some of the blocks support dynamic change of the image version used in docker file, you can do it like this -
+Some of the blocks support dynamic change of the image version used in docker file. The signature looks like this - `make devenv sources=postgres,openldap name-of-block_version=9.2` -
 
 ```bash
 make devenv sources=postgres,openldap postgres_version=9.2
