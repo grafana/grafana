@@ -172,6 +172,17 @@ func TestGetStateFromEvalContext(t *testing.T) {
 			},
 		},
 		{
+			name:     "pending -> no_data(no_data) with FOR duration passed",
+			expected: models.AlertStateNoData,
+			applyFn: func(ec *EvalContext) {
+				ec.PrevAlertState = models.AlertStatePending
+				ec.Rule.NoDataState = models.NoDataSetNoData
+				ec.NoDataFound = true
+				ec.Rule.For = time.Minute * 5
+				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 10)
+			},
+		},
+		{
 			name:     "pending -> no_data(alerting) with for duration have not passed",
 			expected: models.AlertStatePending,
 			applyFn: func(ec *EvalContext) {

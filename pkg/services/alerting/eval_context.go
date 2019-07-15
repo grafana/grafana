@@ -136,6 +136,9 @@ func (c *EvalContext) GetNewState() models.AlertStateType {
 
 	since := time.Since(c.Rule.LastStateChange)
 	if c.PrevAlertState == models.AlertStatePending && since > c.Rule.For {
+		if ns == models.AlertStateNoData {
+			return models.AlertStateNoData
+		}
 		return models.AlertStateAlerting
 	}
 
