@@ -19,8 +19,10 @@ GIT_SHA=$(parse_git_hash)
 echo "Commit: ${GIT_SHA}"
 echo "Current lerna.json version: ${PACKAGE_VERSION}"
 
-# count packages that changed
-count=`npx lerna changed --loglevel silent | awk '{c++} END {print c}'`
+# check if there were any changes to packages between current and previous commit
+count=`git diff HEAD~1..HEAD --name-only -- packages | awk '{c++} END {print c}'`
+
+
 
 if [ -z $count ]; then
   echo "No changes in packages, skipping packages publishing"
