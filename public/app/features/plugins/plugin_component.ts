@@ -155,6 +155,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       case 'app-config-ctrl': {
         const model = scope.ctrl.model;
         return importAppPlugin(model).then(appPlugin => {
+          console.log('IMPORT APP PLUGIN', appPlugin, scope);
           return {
             baseUrl: model.baseUrl,
             name: 'app-config-' + model.id,

@@ -124,6 +124,11 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
     this.postUpdateHook = callback;
   };
 
+  // Stub to avoid unknown function in legacy code
+  importDashboards = (): Promise<void> => {
+    return Promise.resolve();
+  };
+
   enable = () => {
     this.model.enabled = true;
     this.model.pinned = true;
