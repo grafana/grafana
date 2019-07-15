@@ -1,5 +1,5 @@
 import { DataProcessor } from '../data_processor';
-import { getProcessedDataFrame } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 
 describe('Graph DataProcessor', () => {
   const panel: any = {
@@ -11,7 +11,7 @@ describe('Graph DataProcessor', () => {
 
   describe('getTimeSeries from LegacyResponseData', () => {
     // Try each type of data
-    const dataList = getProcessedDataFrame([
+    const dataList = getProcessedDataFrames([
       {
         alias: 'First (time_series)',
         datapoints: [[1, 1001], [2, 1002], [3, 1003]],

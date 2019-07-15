@@ -156,7 +156,7 @@ class MetricsPanelCtrl extends PanelCtrl {
           data: data.legacy,
         });
       } else {
-        this.handleDataFrame(data.series);
+        this.handleDataFrames(data.series);
       }
     },
   };
@@ -215,7 +215,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
   }
 
-  handleDataFrame(data: DataFrame[]) {
+  handleDataFrames(data: DataFrame[]) {
     if (this.dashboard && this.dashboard.snapshot) {
       this.panel.snapshotData = data;
     }
