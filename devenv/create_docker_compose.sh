@@ -24,7 +24,7 @@ if [ "$#" == 0 ]; then
     exit 0
 fi
 
-for file in $grafana_config_file $compose_file $env; do
+for file in $grafana_config_file $compose_file $env_file; do
     if [ -e $file ]; then
         echo "Deleting $file"
         rm $file
