@@ -18,7 +18,7 @@ The SAML authentication integration allows your Grafana users to log in by using
 
 # Supported SAML
 
-The SAML single-sign-on (SSO) standard is varied and flexible. Our implementation contains, the subset of features needed to provide a smooth authentication experience into Grafana.
+The SAML single-sign-on (SSO) standard is varied and flexible. Our implementation contains the subset of features needed to provide a smooth authentication experience into Grafana.
 
 > Should you encounter any problems with our implementation, please don't hesitate to contact us.
 
@@ -68,7 +68,7 @@ metadata_valid_duration =
 
 Important to note:
 
-- like any other Gafana configuration, use of [environment variables for these options is supported]({{< relref "installation/configuration/#using-environment-variables"}}
+- like any other Grafana configuration, use of [environment variables for these options is supported]({{< relref "installation/configuration/#using-environment-variables" >}})
 - only one from of configuration option is required. Using multiple forms, e.g. both `certificate` and `certificate_path` will result in an error.
 
 # Grafana SAML Configuration
@@ -93,8 +93,8 @@ And here is a comprehensive list of the options:
 | `certificate|_path`       | Yes      | Base64-encoded string or Path for the SP X.509 certificate                     |         |
 | `private_key|_path`       | Yes      | Base64-encoded string or Path for the SP private key                           |         |
 | `idp_metadata|_path`      | Yes      | Base64-encoded string or Path for the IdP SAML metadata XML                    |         |
-| `max_issue_delay`         | No       | Duration, since the IdP issued a response and the SP is allowed to process it. | `90s`   |
-| `metadata_valid_duration` | No       | Duration, for how long the SP's metadata should be valid.                      | `48h`   |
+| `max_issue_delay`         | No       | Duration, since the IdP issued a response and the SP is allowed to process it  | `90s`   |
+| `metadata_valid_duration` | No       | Duration, for how long the SP's metadata should be valid                       | `48h`   |
 
 ## `certificate` and `private_key`
 
@@ -111,7 +111,7 @@ Currently, we support two ways of specifying the IdP metadata. Without a suffix 
 
 To prevent SAML response replay attacks and internal clock skews between the SP (Grafana) and the IdP. We can set a maximum amount of time between the IdP issuing a response and the SP (Grafana) processing it.
 
-The configuration options is specified as a duration e.g. `max_issue_delay= 90s` or `max_issue_delay= 1h`
+The configuration options is specified as a duration e.g. `max_issue_delay = 90s` or `max_issue_delay = 1h`
 
 ## `metadata_valid_duration`
 
@@ -123,7 +123,7 @@ The configuration option is specified as a duration e.g. `metadata_valid_duratio
 
 Finally, for the SAML integration to work correctly, we need to make the IdP aware of the SP. You need to provide the IdP with the SP's metadata. 
 
-Grafana provides an endpoint for such at `grafana_url.com/saml/metadata`. You can either download the metadata and upload it manually, or make the IdP request it directly from the endpoint.
+Grafana provides an endpoint for such at `/saml/metadata`. You can either download the metadata and upload it manually, or make the IdP request it directly from the endpoint.
 
 
 ## Troubleshooting
