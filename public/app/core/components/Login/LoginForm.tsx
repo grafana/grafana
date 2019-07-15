@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, SyntheticEvent } from 'react';
 import config from 'app/core/config';
 import { UserSignup } from './UserSignup';
 import { LoginServiceButtons } from './LoginServiceButtons';
@@ -33,9 +33,23 @@ export class LoginForm extends PureComponent<Props, State> {
       loggingIn: false,
       valid: false,
     };
+
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleChange = this.handleChange.bind(this);
   }
 
-  handleSubmit() {}
+  handleSubmit(e: SyntheticEvent) {
+    e.preventDefault();
+    console.log(e);
+  }
+
+  handleChange(e: any) {
+    console.log(e.target);
+    // @ts-ignore
+    this.setState({
+      [e.target.name]: e.target.value,
+    });
+  }
 
   validate() {}
 
@@ -45,12 +59,13 @@ export class LoginForm extends PureComponent<Props, State> {
         <div className="login-form">
           <input
             type="text"
-            name="username"
+            name="user"
             className="gf-form-input login-form-input"
             required
             // ng-model="formModel.user"
             placeholder={config.loginHint}
             aria-label="Username input field"
+            onChange={this.handleChange}
           />
         </div>
         <div className="login-form">
@@ -63,6 +78,7 @@ export class LoginForm extends PureComponent<Props, State> {
             id="inputPassword"
             placeholder={config.passwordHint}
             aria-label="Password input field"
+            onChange={this.handleChange}
           />
         </div>
         <div className="login-button-group">
@@ -72,6 +88,7 @@ export class LoginForm extends PureComponent<Props, State> {
               aria-label="Login button"
               className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
               onClick={this.handleSubmit}
+              disabled={!this.state.valid}
             >
               Log In
             </button>
