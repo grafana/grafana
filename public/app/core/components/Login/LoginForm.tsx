@@ -37,6 +37,8 @@ export class LoginForm extends PureComponent<Props, State> {
 
   handleSubmit() {}
 
+  validate() {}
+
   renderLoginForm() {
     return !this.props.disabledLoginForm ? (
       <form name="loginForm" className="login-form-group gf-form-group">
