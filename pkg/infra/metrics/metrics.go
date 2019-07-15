@@ -40,6 +40,10 @@ var (
 	M_Aws_CloudWatch_GetMetricData       prometheus.Counter
 	M_DB_DataSource_QueryById            prometheus.Counter
 
+	// LDAPUsersSyncExecutionTime is a metric for
+	// how much time it took to sync the LDAP users
+	LDAPUsersSyncExecutionTime prometheus.Summary
+
 	// Timers
 	M_DataSource_ProxyReq_Timer prometheus.Summary
 	M_Alerting_Execution_Time   prometheus.Summary
@@ -235,6 +239,12 @@ func init() {
 		Namespace: exporterName,
 	})
 
+	LDAPUsersSyncExecutionTime = prometheus.NewSummary(prometheus.SummaryOpts{
+		Name:      "ldap_users_sync_execution_time",
+		Help:      "summary for LDAP users sync execution duration",
+		Namespace: exporterName,
+	})
+
 	M_DataSource_ProxyReq_Timer = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:      "api_dataproxy_request_all_milliseconds",
 		Help:      "summary for dataproxy request duration",
@@ -377,6 +387,7 @@ func initMetricVars() {
 		M_Aws_CloudWatch_ListMetrics,
 		M_Aws_CloudWatch_GetMetricData,
 		M_DB_DataSource_QueryById,
+		LDAPUsersSyncExecutionTime,
 		M_Alerting_Active_Alerts,
 		M_StatTotal_Dashboards,
 		M_StatTotal_Users,
@@ -390,7 +401,8 @@ func initMetricVars() {
 		StatsTotalActiveViewers,
 		StatsTotalActiveEditors,
 		StatsTotalActiveAdmins,
-		grafanaBuildVersion)
+		grafanaBuildVersion,
+	)
 
 }
 
