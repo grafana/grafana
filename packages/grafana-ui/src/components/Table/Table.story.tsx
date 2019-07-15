@@ -98,7 +98,17 @@ storiesOf('UI/Table', module)
     });
   })
   .add('Multiple Tables', () => {
-    const tables = [readCSV('A,B,C\n1,2,3\n4,5\n,7,8,9,0'), makeDummyTable(4, 20), makeDummyTable(10, 5)];
+    const tables: DataFrame[] = [
+      readCSV('A,B,C\n1,2,3\n4,5\n,7,8,9,0')[0],
+      makeDummyTable(4, 20), // simple
+      makeDummyTable(10, 5), // simple
+    ];
+    tables[0].name = 'from CSV';
+    tables[1].name = 'simple wide';
+    tables[2].name = 'simple tall';
+
+    tables[0].refId = 'A';
+    tables[1].labels = { a: 'AAA', b: 'bbb' };
 
     const showHeader = boolean('Show Header', true);
     const fixedHeader = boolean('Fixed Header', true);

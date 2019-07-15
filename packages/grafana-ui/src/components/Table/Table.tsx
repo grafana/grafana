@@ -255,8 +255,9 @@ export class Table extends Component<Props, State> {
   render() {
     const { showHeader, fixedHeader, fixedColumns, rotate, width, height } = this.props;
     const { data } = this.state;
-    if (!data || !data.fields || !data.fields.length) {
-      return <span>Missing Fields</span>; // nothing
+    if (!data || !data.rows || !data.fields || !data.fields.length) {
+      console.log('EMPTY', data);
+      return <span>Missing Data</span>; // nothing
     }
 
     let columnCount = data.fields.length;

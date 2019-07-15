@@ -4,6 +4,7 @@ import React, { Component } from 'react';
 import Table, { BaseTableProps } from './Table';
 import { DataFrame } from '@grafana/data';
 import { AutoSizer } from 'react-virtualized';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 interface Props extends BaseTableProps {
   data: DataFrame[];
@@ -45,8 +46,45 @@ export class Tables extends Component<Props, State> {
     this.setState({ selected: index });
   };
 
+  renderMetaInfo = (data: DataFrame) => {
+    const rows: Array<{ key: string; value: any }> = [];
+    if (data.refId) {
+      rows.push({ key: 'RefID', value: data.refId });
+    }
+    if (data.labels) {
+      for (const key in data.labels) {
+        rows.push({ key, value: data.labels[key] });
+      }
+    }
+    if (data.meta) {
+      // TODO...
+    }
+
+    if (!rows.length) {
+      return null;
+    }
+
+    const info = (
+      <table>
+        {rows.map((info, index) => {
+          return (
+            <tr key={index}>
+              <td>{info.key}:</td>
+              <td>{info.value}</td>
+            </tr>
+          );
+        })}
+      </table>
+    );
+    return (
+      <Tooltip content={info} theme="info" placement="top">
+        <i className="fa fa-info-circle" />
+      </Tooltip>
+    );
+  };
+
   render() {
-    const { data, width, height } = this.props;
+    const { data, width, height, ...rest } = this.props;
     let { selected } = this.state;
     let series = data[selected];
 
@@ -55,27 +93,27 @@ export class Tables extends Component<Props, State> {
       series = data[selected];
     }
 
-    // TODO, help please :)
-    // How do I get the table on top and a toolbar on the bottom?
-    //  ... css wizardry no doubt!
-
     return (
       <div className="gf-tables" style={{ width, height }}>
         <div className="gf-tables-table">
           <AutoSizer disableWidth>
-            {({ height }) => <Table {...this.props} data={series} height={height - 50} />}
+            {({ height }) => <Table {...rest} data={series} height={height - 50} width={width} />}
           </AutoSizer>
         </div>
         <div className="gf-tables-toolbar">
           <ul>
-            {data.map((table, index) => {
+            {data.map((data, index) => {
+              let name = data.name;
+              if (!name) {
+                name = `Data: ${index}`;
+              }
               return (
                 <li
                   key={index}
                   className={index === selected ? 'selected' : ''}
                   onClick={() => this.onSelectionChange(index)}
                 >
-                  SERIES: {index}
+                  {name} {this.renderMetaInfo(data)}
                 </li>
               );
             })}
