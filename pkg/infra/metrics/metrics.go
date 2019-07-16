@@ -3,80 +3,155 @@ package metrics
 import (
 	"runtime"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const exporterName = "grafana"
 
 var (
-	MInstanceStart       prometheus.Counter
-	MPageStatus          *prometheus.CounterVec
-	MApiStatus           *prometheus.CounterVec
-	MProxyStatus         *prometheus.CounterVec
-	MHttpRequestTotal   *prometheus.CounterVec
+	// MInstanceStart is a metric counter for started instances
+	MInstanceStart prometheus.Counter
+
+	// MPageStatus is a metric page http response status
+	MPageStatus *prometheus.CounterVec
+
+	// MApiStatus is a metric api http response status
+	MApiStatus *prometheus.CounterVec
+
+	// MProxyStatus is a metric proxy http response status
+	MProxyStatus *prometheus.CounterVec
+
+	// MHttpRequestTotal is a metric http request counter
+	MHttpRequestTotal *prometheus.CounterVec
+
+	// MHttpRequestSummary is a metric http request summary
 	MHttpRequestSummary *prometheus.SummaryVec
 
-	MApiUserSignUpStarted   prometheus.Counter
+	// MApiUserSignUpStarted is a metric amount of users who started the signup flow
+	MApiUserSignUpStarted prometheus.Counter
+
+	// MApiUserSignUpCompleted is a metric amount of users who completed the signup flow
 	MApiUserSignUpCompleted prometheus.Counter
-	MApiUserSignUpInvite    prometheus.Counter
-	MApiDashboardSave       prometheus.Summary
-	MApiDashboardGet        prometheus.Summary
-	MApiDashboardSearch     prometheus.Summary
-	MApiAdminUserCreate    prometheus.Counter
-	MApiLoginPost           prometheus.Counter
-	MApiLoginOAuth          prometheus.Counter
-	MApiOrgCreate           prometheus.Counter
 
-	MApiDashboardSnapshotCreate      prometheus.Counter
-	MApiDashboardSnapshotExternal    prometheus.Counter
-	MApiDashboardSnapshotGet         prometheus.Counter
-	MApiDashboardInsert               prometheus.Counter
-	MAlertingResultState              *prometheus.CounterVec
-	MAlertingNotificationSent         *prometheus.CounterVec
+	// MApiUserSignUpInvite is a metric amount of users who have been invited
+	MApiUserSignUpInvite prometheus.Counter
+
+	// MApiDashboardSave is a metric summary for dashboard save duration
+	MApiDashboardSave prometheus.Summary
+
+	// MApiDashboardGet is a metric summary for dashboard get duration
+	MApiDashboardGet prometheus.Summary
+
+	// MApiDashboardSearch is a metric summary for dashboard search duration
+	MApiDashboardSearch prometheus.Summary
+
+	// MApiAdminUserCreate is a metric api admin user created counter
+	MApiAdminUserCreate prometheus.Counter
+
+	// MApiLoginPost is a metric api login post counter
+	MApiLoginPost prometheus.Counter
+
+	// MApiLoginOAuth is a metric api login oauth counter
+	MApiLoginOAuth prometheus.Counter
+
+	// MApiOrgCreate is a metric api org created counter
+	MApiOrgCreate prometheus.Counter
+
+	// MApiDashboardSnapshotCreate is a metric dashboard snapshots created
+	MApiDashboardSnapshotCreate prometheus.Counter
+
+	// MApiDashboardSnapshotExternal is a metric external dashboard snapshots created
+	MApiDashboardSnapshotExternal prometheus.Counter
+
+	// MApiDashboardSnapshotGet is a metric loaded dashboards
+	MApiDashboardSnapshotGet prometheus.Counter
+
+	// MApiDashboardInsert is a metric dashboards inserted
+	MApiDashboardInsert prometheus.Counter
+
+	// MAlertingResultState is a metric alert execution result counter
+	MAlertingResultState *prometheus.CounterVec
+
+	// MAlertingNotificationSent is a metric counter for how many alert notifications been sent
+	MAlertingNotificationSent *prometheus.CounterVec
+
+	// MAwsCloudWatchGetMetricStatistics is a metric counter for getting metric statistics from aws
 	MAwsCloudWatchGetMetricStatistics prometheus.Counter
-	MAwsCloudWatchListMetrics         prometheus.Counter
-	MAwsCloudWatchGetMetricData       prometheus.Counter
-	MDBDataSourceQueryById            prometheus.Counter
 
-	// LDAPUsersSyncExecutionTime is a metric for
-	// how much time it took to sync the LDAP users
+	// MAwsCloudWatchListMetrics is a metric counter for getting list of metrics from aws
+	MAwsCloudWatchListMetrics prometheus.Counter
+
+	// MAwsCloudWatchGetMetricData is a metric counter for getting metric data time series from aws
+	MAwsCloudWatchGetMetricData prometheus.Counter
+
+	// MDBDataSourceQueryById is a metric counter for getting datasource by id
+	MDBDataSourceQueryById prometheus.Counter
+
+	// LDAPUsersSyncExecutionTime is a metric summary for LDAP users sync execution duration
 	LDAPUsersSyncExecutionTime prometheus.Summary
+)
 
-	// Timers
+// Timers
+var (
+	// MDataSourceProxyReqTimer is a metric summary for dataproxy request duration
 	MDataSourceProxyReqTimer prometheus.Summary
-	MAlertingExecutionTime   prometheus.Summary
+
+	// MAlertingExecutionTime is a metric summary of alert exeuction duration
+	MAlertingExecutionTime prometheus.Summary
 )
 
 // StatTotals
 var (
+	// MAlertingActiveAlerts is a metric amount of active alerts
 	MAlertingActiveAlerts prometheus.Gauge
-	MStatTotalDashboards   prometheus.Gauge
-	MStatTotalUsers        prometheus.Gauge
-	MStatActiveUsers       prometheus.Gauge
-	MStatTotalOrgs         prometheus.Gauge
-	MStatTotalPlaylists    prometheus.Gauge
 
-	StatsTotalViewers       prometheus.Gauge
-	StatsTotalEditors       prometheus.Gauge
-	StatsTotalAdmins        prometheus.Gauge
+	// MStatTotalDashboards is a metric total amount of dashboards
+	MStatTotalDashboards prometheus.Gauge
+
+	// MStatTotalUsers is a metric total amount of users
+	MStatTotalUsers prometheus.Gauge
+
+	// MStatActiveUsers is a metric number of active users
+	MStatActiveUsers prometheus.Gauge
+
+	// MStatTotalOrgs is a metric total amount of orgs
+	MStatTotalOrgs prometheus.Gauge
+
+	// MStatTotalPlaylists is a metric total amount of playlists
+	MStatTotalPlaylists prometheus.Gauge
+
+	// StatsTotalViewers is a metric total amount of viewers
+	StatsTotalViewers prometheus.Gauge
+
+	// StatsTotalEditors is a metric total amount of editors
+	StatsTotalEditors prometheus.Gauge
+
+	// StatsTotalAdmins is a metric total amount of admins
+	StatsTotalAdmins prometheus.Gauge
+
+	// StatsTotalActiveViewers is a metric total amount of viewers
 	StatsTotalActiveViewers prometheus.Gauge
-	StatsTotalActiveEditors prometheus.Gauge
-	StatsTotalActiveAdmins  prometheus.Gauge
 
-	// grafanaBuildVersion is a gauge that contains build info about this binary
+	// StatsTotalActiveEditors is a metric total amount of active editors
+	StatsTotalActiveEditors prometheus.Gauge
+
+	// StatsTotalActiveAdmins is a metric total amount of active admins
+	StatsTotalActiveAdmins prometheus.Gauge
+
+	// grafanaBuildVersion is a metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built
 	grafanaBuildVersion *prometheus.GaugeVec
 )
 
 func init() {
+	httpStatusCodes := []string{"200", "404", "500", "unknown"}
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
 		Help:      "counter for started instances",
 		Namespace: exporterName,
 	})
 
-	httpStatusCodes := []string{"200", "404", "500", "unknown"}
 	MPageStatus = newCounterVecStartingAtZero(
 		prometheus.CounterOpts{
 			Name:      "page_response_status_total",
@@ -326,7 +401,7 @@ func init() {
 
 	grafanaBuildVersion = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "build_info",
-		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built.",
+		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built",
 		Namespace: exporterName,
 	}, []string{"version", "revision", "branch", "goversion", "edition"})
 }
