@@ -28,6 +28,7 @@ interface State {
   legendFormat: string;
   formatOption: SelectOptionItem<string>;
   interval: string;
+  stepAlignment: string;
   intervalFactorOption: SelectOptionItem<number>;
   instant: boolean;
 }
@@ -40,10 +41,11 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     super(props);
     const { query } = props;
     this.query = query;
-    // Query target properties that are fullu controlled inputs
+    // Query target properties that are fully controlled inputs
     this.state = {
       // Fully controlled text inputs
       interval: query.interval,
+      stepAlignment: query.stepAlignment,
       legendFormat: query.legendFormat,
       // Select options
       formatOption: FORMAT_OPTIONS.find(option => option.value === query.format) || FORMAT_OPTIONS[0],
@@ -73,6 +75,12 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     const interval = e.currentTarget.value;
     this.query.interval = interval;
     this.setState({ interval });
+  };
+
+  onStepAlignmentChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    const stepAlignment = e.currentTarget.value;
+    this.query.stepAlignment = stepAlignment;
+    this.setState({ stepAlignment });
   };
 
   onIntervalFactorChange = (option: SelectOptionItem<number>) => {
@@ -142,6 +150,22 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               placeholder={interval}
               onChange={this.onIntervalChange}
               value={interval}
+            />
+          </div>
+          
+          
+       <div className="gf-form">
+            <FormLabel
+              width={7}
+              tooltip="Amount of time to offset the query step alignment. Leave blank for no additional offset">
+              Step align
+            </FormLabel>
+            <input
+              type="text"
+              className="gf-form-input width-8"
+              placeholder={stepAlignment}
+              onChange={this.onStepAlignmentChange}
+              value={stepAlignment}
             />
           </div>
 
