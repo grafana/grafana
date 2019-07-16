@@ -2,6 +2,7 @@ import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
+import { DataFrame, toCSV } from '@grafana/data';
 
 // @ts-ignore
 import execa = require('execa');
@@ -354,11 +355,20 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
   const start = Date.now();
   const workDir = getJobFolder();
   const reportDir = path.resolve(process.cwd(), 'ci', 'report');
-  await execa('rimraf', [reportDir]);
-  fs.mkdirSync(reportDir);
+  if (fs.existsSync(reportDir)) {
+    console.log('REMOVE', reportDir);
+    await execa('rimraf', [reportDir]);
+  }
+  fs.mkdirSync(reportDir, { recursive: true });
 
-  const file = path.resolve(reportDir, `report.txt`);
-  fs.writeFile(file, `TODO... actually make a report (csv etc)`, err => {
+  const data: DataFrame = {
+    fields: [{ name: 'aaa' }, { name: 'bbb' }],
+    rows: [['aa', 1], ['bb', 2], ['cc', 3]],
+  };
+
+  const file = path.resolve(reportDir, `report.csv`);
+  const csv = toCSV([data]);
+  fs.writeFile(file, csv, err => {
     if (err) {
       throw new Error('Unable to write: ' + file);
     }

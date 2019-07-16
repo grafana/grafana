@@ -43,6 +43,10 @@ export const savePackage = useSpinner<SavePackageOptions>(
 const preparePackage = async (pkg: any) => {
   pkg.main = 'index.js';
   pkg.types = 'index.d.ts';
+
+  const version = pkg.version;
+  console.log('VERSION', version, pkg.name);
+
   await savePackage({
     path: `${cwd}/dist/package.json`,
     pkg,
