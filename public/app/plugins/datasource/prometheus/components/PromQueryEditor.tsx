@@ -155,7 +155,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
           <div className="gf-form">
             <FormLabel
-              width={7}
+              width={8}
               tooltip="Amount of time to offset the query step alignment. Leave blank for no additional offset">
               Step align
             </FormLabel>
