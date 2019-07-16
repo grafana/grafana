@@ -2,7 +2,7 @@
 import isNumber from 'lodash/isNumber';
 
 import { DataFrame, NullValueMode } from '../types';
-import { Extension, ExtensionRegistry } from './extensions';
+import { Registry, RegistryItem } from './registry';
 
 export enum ReducerID {
   sum = 'sum',
@@ -35,7 +35,7 @@ export interface FieldCalcs {
 // Internal function
 type FieldReducer = (data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 
-export interface FieldReducerInfo extends Extension {
+export interface FieldReducerInfo extends RegistryItem {
   // Internal details
   emptyInputResult?: any; // typically null, but some things like 'count' & 'sum' should be zero
   standard: boolean; // The most common stats can all be calculated in a single pass
@@ -98,7 +98,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
 //
 // ------------------------------------------------------------------------------
 
-export const fieldReducers = new ExtensionRegistry<FieldReducerInfo>(() => [
+export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   {
     id: ReducerID.lastNotNull,
     name: 'Last (not null)',
