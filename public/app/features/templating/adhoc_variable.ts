@@ -78,7 +78,7 @@ export class AdhocVariable implements Variable {
     this.filters = filters;
   }
 }
-// @ts-ignore
+
 variableTypes['adhoc'] = {
   name: 'Ad hoc filters',
   ctor: AdhocVariable,

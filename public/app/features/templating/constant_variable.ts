@@ -50,7 +50,7 @@ export class ConstantVariable implements Variable {
     return this.current.value;
   }
 }
-// @ts-ignore
+
 variableTypes['constant'] = {
   name: 'Constant',
   ctor: ConstantVariable,

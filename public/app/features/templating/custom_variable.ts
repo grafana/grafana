@@ -72,7 +72,6 @@ export class CustomVariable implements Variable {
   }
 }
 
-// @ts-ignore
 variableTypes['custom'] = {
   name: 'Custom',
   ctor: CustomVariable,
