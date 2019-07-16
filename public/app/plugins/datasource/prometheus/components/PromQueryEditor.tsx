@@ -102,7 +102,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const { datasource, query, panelData, queryResponse } = this.props;
-    const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
+    const { formatOption, instant, interval, stepAlignment, intervalFactorOption, legendFormat } = this.state;
 
     return (
       <div>
