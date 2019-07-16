@@ -7,7 +7,7 @@ import { getBackendSrv } from '@grafana/runtime';
 
 // Components
 import { FormLabel, Select } from '@grafana/ui';
-import { SelectableItem } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
 // Types
 import { QueryEditorProps } from '@grafana/ui';
@@ -41,7 +41,7 @@ export class QueryEditor extends PureComponent<Props> {
     this.setState({ scenarioList: scenarioList, current: current });
   }
 
-  onScenarioChange = (item: SelectableItem<string>) => {
+  onScenarioChange = (item: SelectableValue<string>) => {
     this.props.onChange({
       ...this.props.query,
       scenarioId: item.value,

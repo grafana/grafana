@@ -5,7 +5,7 @@ import difference from 'lodash/difference';
 
 import { Select } from '../index';
 
-import { fieldReducers, SelectableItem } from '@grafana/data';
+import { fieldReducers, SelectableValue } from '@grafana/data';
 
 interface Props {
   placeholder?: string;
@@ -53,7 +53,7 @@ export class StatsPicker extends PureComponent<Props> {
     }
   };
 
-  onSelectionChange = (item: SelectableItem<string>) => {
+  onSelectionChange = (item: SelectableValue<string>) => {
     const { onChange } = this.props;
     if (isArray(item)) {
       onChange(item.map(v => v.value));

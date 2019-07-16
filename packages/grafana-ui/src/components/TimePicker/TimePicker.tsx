@@ -13,7 +13,7 @@ import { rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableItem } from '@grafana/data';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue } from '@grafana/data';
 
 export interface Props {
   value: TimeRange;
@@ -76,7 +76,7 @@ export class TimePicker extends PureComponent<Props, State> {
     isCustomOpen: false,
   };
 
-  mapTimeOptionsToSelectableItems = (selectOptions: TimeOption[]) => {
+  mapTimeOptionsToSelectableValues = (selectOptions: TimeOption[]) => {
     const options = selectOptions.map(timeOption => {
       return {
         label: timeOption.display,
@@ -92,7 +92,7 @@ export class TimePicker extends PureComponent<Props, State> {
     return options;
   };
 
-  onSelectChanged = (item: SelectableItem<TimeOption>) => {
+  onSelectChanged = (item: SelectableValue<TimeOption>) => {
     const { onChange, timeZone } = this.props;
 
     if (item.value && item.value.from === 'custom') {
@@ -121,7 +121,7 @@ export class TimePicker extends PureComponent<Props, State> {
   render() {
     const { selectOptions: selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom, timeZone } = this.props;
     const { isCustomOpen } = this.state;
-    const options = this.mapTimeOptionsToSelectableItems(selectTimeOptions);
+    const options = this.mapTimeOptionsToSelectableValues(selectTimeOptions);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
     const rangeString = rangeUtil.describeTimeRange(value.raw);
 

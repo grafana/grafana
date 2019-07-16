@@ -1,7 +1,7 @@
 /**
  * Used in select elements
  */
-export interface SelectableItem<T = any> {
+export interface SelectableValue<T = any> {
   label?: string;
   value?: T;
   imgUrl?: string;

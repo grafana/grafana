@@ -1,7 +1,7 @@
 import React, { PureComponent, ReactElement } from 'react';
 import Select from './Select';
 import { PopperContent } from '../Tooltip/PopperController';
-import { SelectableItem } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
 interface ButtonComponentProps {
   label: ReactElement | string | undefined;
@@ -31,13 +31,13 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
 
 export interface Props<T> {
   className: string | undefined;
-  options: Array<SelectableItem<T>>;
-  value?: SelectableItem<T>;
+  options: Array<SelectableValue<T>>;
+  value?: SelectableValue<T>;
   label?: ReactElement | string;
   iconClass?: string;
   components?: any;
   maxMenuHeight?: number;
-  onChange: (item: SelectableItem<T>) => void;
+  onChange: (item: SelectableValue<T>) => void;
   tooltipContent?: PopperContent<any>;
   isMenuOpen?: boolean;
   onOpenMenu?: () => void;
@@ -46,7 +46,7 @@ export interface Props<T> {
 }
 
 export class ButtonSelect<T> extends PureComponent<Props<T>> {
-  onChange = (item: SelectableItem<T>) => {
+  onChange = (item: SelectableValue<T>) => {
     const { onChange } = this.props;
     onChange(item);
   };

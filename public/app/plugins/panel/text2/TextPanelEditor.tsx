@@ -3,19 +3,19 @@ import React, { PureComponent, ChangeEvent } from 'react';
 
 // Components
 import { PanelEditorProps, PanelOptionsGroup, Select } from '@grafana/ui';
-import { SelectableItem } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
 // Types
 import { TextOptions, TextMode } from './types';
 
 export class TextPanelEditor extends PureComponent<PanelEditorProps<TextOptions>> {
-  modes: Array<SelectableItem<TextMode>> = [
+  modes: Array<SelectableValue<TextMode>> = [
     { value: 'markdown', label: 'Markdown' },
     { value: 'text', label: 'Text' },
     { value: 'html', label: 'HTML' },
   ];
 
-  onModeChange = (item: SelectableItem<TextMode>) =>
+  onModeChange = (item: SelectableValue<TextMode>) =>
     this.props.onOptionsChange({ ...this.props.options, mode: item.value });
 
   onContentChange = (evt: ChangeEvent<HTMLTextAreaElement>) => {

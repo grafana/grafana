@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Components
 import { Select } from '@grafana/ui';
-import { SelectableItem } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 
 // Types
 import { DataSourceSelectItem } from '@grafana/ui';
@@ -29,7 +29,7 @@ export class DataSourcePicker extends PureComponent<Props> {
     super(props);
   }
 
-  onChange = (item: SelectableItem<string>) => {
+  onChange = (item: SelectableValue<string>) => {
     const ds = this.props.datasources.find(ds => ds.name === item.value);
     this.props.onChange(ds);
   };

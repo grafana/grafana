@@ -34,7 +34,7 @@ export class LokiQueryEditor extends PureComponent<Props> {
   //   });
   // };
   //
-  // onFormatChanged = (option: SelectableItem) => {
+  // onFormatChanged = (option: SelectableValue) => {
   //   this.props.onChange({
   //     ...this.state.query,
   //     resultFormat: option.value,
@@ -44,7 +44,7 @@ export class LokiQueryEditor extends PureComponent<Props> {
   render() {
     // const { query } = this.state;
     // const { datasource } = this.props;
-    // const formatOptions: SelectableItem[] = [
+    // const formatOptions: SelectableValue[] = [
     //   { label: 'Time Series', value: 'time_series' },
     //   { label: 'Table', value: 'table' },
     // ];

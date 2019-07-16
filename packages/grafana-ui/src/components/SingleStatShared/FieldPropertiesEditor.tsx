@@ -7,7 +7,7 @@ import { FormLabel } from '../FormLabel/FormLabel';
 import { UnitPicker } from '../UnitPicker/UnitPicker';
 
 // Types
-import { toIntegerOrUndefined, Field, SelectableItem } from '@grafana/data';
+import { toIntegerOrUndefined, Field, SelectableValue } from '@grafana/data';
 
 import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
 
@@ -53,7 +53,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     [value.max, onChange]
   );
 
-  const onUnitChange = (unit: SelectableItem<string>) => {
+  const onUnitChange = (unit: SelectableValue<string>) => {
     onChange({ ...value, unit: unit.value });
   };
 

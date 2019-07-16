@@ -9,9 +9,9 @@ import { StatsPicker } from '../StatsPicker/StatsPicker';
 // Types
 import { FieldDisplayOptions, DEFAULT_FIELD_DISPLAY_VALUES_LIMIT } from '../../utils/fieldDisplay';
 import Select from '../Select/Select';
-import { Field, ReducerID, toNumberString, toIntegerOrUndefined, SelectableItem } from '@grafana/data';
+import { Field, ReducerID, toNumberString, toIntegerOrUndefined, SelectableValue } from '@grafana/data';
 
-const showOptions: Array<SelectableItem<boolean>> = [
+const showOptions: Array<SelectableValue<boolean>> = [
   {
     value: true,
     label: 'All Values',
@@ -31,7 +31,7 @@ export interface Props {
 }
 
 export class FieldDisplayEditor extends PureComponent<Props> {
-  onShowValuesChange = (item: SelectableItem<boolean>) => {
+  onShowValuesChange = (item: SelectableValue<boolean>) => {
     const val = item.value === true;
     this.props.onChange({ ...this.props.value, values: val });
   };

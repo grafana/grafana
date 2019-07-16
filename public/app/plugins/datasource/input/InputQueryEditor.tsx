@@ -6,7 +6,7 @@ import { InputDatasource, describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
 
 import { FormLabel, Select, QueryEditorProps, TableInputCSV } from '@grafana/ui';
-import { DataFrame, toCSV, SelectableItem } from '@grafana/data';
+import { DataFrame, toCSV, SelectableValue } from '@grafana/data';
 
 type Props = QueryEditorProps<InputDatasource, InputQuery, InputOptions>;
 
@@ -30,7 +30,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
     this.setState({ text });
   }
 
-  onSourceChange = (item: SelectableItem<string>) => {
+  onSourceChange = (item: SelectableValue<string>) => {
     const { datasource, query, onChange, onRunQuery } = this.props;
     let data: DataFrame[] | undefined = undefined;
     if (item.value === 'panel') {
