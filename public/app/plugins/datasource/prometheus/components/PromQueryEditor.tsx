@@ -40,7 +40,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     super(props);
     const { query } = props;
     this.query = query;
-    // Query target properties that are fullu controlled inputs
+    // Query target properties that are fully controlled inputs
     this.state = {
       // Fully controlled text inputs
       interval: query.interval,
