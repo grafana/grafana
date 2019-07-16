@@ -12,6 +12,7 @@ export interface PromQuery extends DataQuery {
   instant?: boolean;
   hinting?: boolean;
   interval?: string;
+  stepAlignment?: string;
   intervalFactor?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
