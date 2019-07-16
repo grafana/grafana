@@ -12,7 +12,10 @@ const template = `
   <span class="panel-time-info" ng-if="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>
 </span>`;
 
-function renderMenuItem(item, ctrl) {
+function renderMenuItem(
+  item: { divider: any; submenu: any; click: any; href: any; icon: any; text: any; shortcut: any },
+  ctrl: any
+) {
   let html = '';
   let listItemClass = '';
 
@@ -54,7 +57,7 @@ function renderMenuItem(item, ctrl) {
   return html;
 }
 
-function createMenuTemplate(ctrl) {
+function createMenuTemplate(ctrl: any) {
   let html = '';
 
   for (const item of ctrl.getMenu()) {
@@ -65,16 +68,16 @@ function createMenuTemplate(ctrl) {
 }
 
 /** @ngInject */
-function panelHeader($compile) {
+function panelHeader($compile: any) {
   return {
     restrict: 'E',
     template: template,
-    link: (scope, elem, attrs) => {
+    link: (scope: any, elem: any, attrs: any) => {
       const menuElem = elem.find('.panel-menu');
-      let menuScope;
-      let isDragged;
+      let menuScope: any;
+      let isDragged: boolean;
 
-      elem.click(evt => {
+      elem.click((evt: any) => {
         const targetClass = evt.target.className;
 
         // remove existing scope
@@ -92,20 +95,20 @@ function panelHeader($compile) {
         }
       });
 
-      function togglePanelMenu(e) {
+      function togglePanelMenu(e: any) {
         if (!isDragged) {
           e.stopPropagation();
           elem.find('[data-toggle=dropdown]').dropdown('toggle');
         }
       }
 
-      let mouseX, mouseY;
-      elem.mousedown(e => {
+      let mouseX: number, mouseY: number;
+      elem.mousedown((e: any) => {
         mouseX = e.pageX;
         mouseY = e.pageY;
       });
 
-      elem.mouseup(e => {
+      elem.mouseup((e: any) => {
         if (mouseX === e.pageX && mouseY === e.pageY) {
           isDragged = false;
         } else {
