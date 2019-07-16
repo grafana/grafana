@@ -1,6 +1,14 @@
-import { getFieldReducers, ReducerID, reduceField } from './index';
+import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import _ from 'lodash';
+import { DataFrame } from '../types/data';
+
+/**
+ * Run a reducer and get back the value
+ */
+function reduce(series: DataFrame, fieldIndex: number, id: string): any {
+  return reduceField({ series, fieldIndex, reducers: [id] })[id];
+}
 
 describe('Stats Calculators', () => {
   const basicTable = {
@@ -9,29 +17,16 @@ describe('Stats Calculators', () => {
   };
 
   it('should load all standard stats', () => {
-    const names = [
-      ReducerID.sum,
-      ReducerID.max,
-      ReducerID.min,
-      ReducerID.logmin,
-      ReducerID.mean,
-      ReducerID.last,
-      ReducerID.first,
-      ReducerID.count,
-      ReducerID.range,
-      ReducerID.diff,
-      ReducerID.step,
-      ReducerID.delta,
-      // ReducerID.allIsZero,
-      // ReducerID.allIsNull,
-    ];
-    const stats = getFieldReducers(names);
-    expect(stats.length).toBe(names.length);
+    for (const id of Object.keys(ReducerID)) {
+      const reducer = fieldReducers.getIfExists(id);
+      const found = reducer ? reducer.id : '<NOT FOUND>';
+      expect(found).toEqual(id);
+    }
   });
 
   it('should fail to load unknown stats', () => {
     const names = ['not a stat', ReducerID.max, ReducerID.min, 'also not a stat'];
-    const stats = getFieldReducers(names);
+    const stats = fieldReducers.list(names);
     expect(stats.length).toBe(2);
 
     const found = stats.map(v => v.id);
@@ -90,6 +85,34 @@ describe('Stats Calculators', () => {
 
     expect(stats.step).toEqual(100);
     expect(stats.delta).toEqual(300);
+  });
+
+  it('consistenly check allIsNull/allIsZero', () => {
+    const empty = {
+      fields: [{ name: 'A' }],
+      rows: [],
+    };
+    const allNull = ({
+      fields: [{ name: 'A' }],
+      rows: [null, null, null, null],
+    } as unknown) as DataFrame;
+    const allNull2 = {
+      fields: [{ name: 'A' }],
+      rows: [[null], [null], [null], [null]],
+    };
+    const allZero = {
+      fields: [{ name: 'A' }],
+      rows: [[0], [0], [0], [0]],
+    };
+
+    expect(reduce(empty, 0, ReducerID.allIsNull)).toEqual(true);
+    expect(reduce(allNull, 0, ReducerID.allIsNull)).toEqual(true);
+    expect(reduce(allNull2, 0, ReducerID.allIsNull)).toEqual(true);
+
+    expect(reduce(empty, 0, ReducerID.allIsZero)).toEqual(false);
+    expect(reduce(allNull, 0, ReducerID.allIsZero)).toEqual(false);
+    expect(reduce(allNull2, 0, ReducerID.allIsZero)).toEqual(false);
+    expect(reduce(allZero, 0, ReducerID.allIsZero)).toEqual(true);
   });
 
   it('consistent results for first/last value with null', () => {
