@@ -3,8 +3,8 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId, ExploreMode } from 'app/types/explore';
-import { DataSourceSelectItem, SelectOptionItem } from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange, LoadingState } from '@grafana/data';
+import { DataSourceSelectItem } from '@grafana/ui';
+import { RawTimeRange, TimeZone, TimeRange, LoadingState, SelectableValue } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -67,8 +67,8 @@ interface StateProps {
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
   refreshInterval: string;
-  supportedModeOptions: Array<SelectOptionItem<ExploreMode>>;
-  selectedModeOption: SelectOptionItem<ExploreMode>;
+  supportedModeOptions: Array<SelectableValue<ExploreMode>>;
+  selectedModeOption: SelectableValue<ExploreMode>;
   hasLiveOption: boolean;
   isLive: boolean;
 }
@@ -258,7 +258,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
   const hasLiveOption =
     datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
 
-  const supportedModeOptions: Array<SelectOptionItem<ExploreMode>> = [];
+  const supportedModeOptions: Array<SelectableValue<ExploreMode>> = [];
   let selectedModeOption = null;
   for (const supportedMode of supportedModes) {
     switch (supportedMode) {

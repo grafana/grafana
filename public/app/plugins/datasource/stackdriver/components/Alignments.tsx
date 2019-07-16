@@ -3,12 +3,12 @@ import _ from 'lodash';
 
 import { MetricSelect } from 'app/core/components/Select/MetricSelect';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { SelectOptionItem } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 export interface Props {
   onChange: (perSeriesAligner: any) => void;
   templateSrv: TemplateSrv;
-  alignOptions: Array<SelectOptionItem<string>>;
+  alignOptions: Array<SelectableValue<string>>;
   perSeriesAligner: string;
 }
 
