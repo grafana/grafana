@@ -65,11 +65,6 @@ var (
 	StatsTotalActiveEditors prometheus.Gauge
 	StatsTotalActiveAdmins  prometheus.Gauge
 
-	// M_Grafana_Version is a gauge that contains build info about this binary
-	//
-	// Deprecated: use M_Grafana_Build_Version instead.
-	M_Grafana_Version *prometheus.GaugeVec
-
 	// grafanaBuildVersion is a gauge that contains build info about this binary
 	grafanaBuildVersion *prometheus.GaugeVec
 )
@@ -329,12 +324,6 @@ func init() {
 		Namespace: exporterName,
 	})
 
-	M_Grafana_Version = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name:      "info",
-		Help:      "Information about the Grafana. This metric is deprecated. please use `grafana_build_info`",
-		Namespace: exporterName,
-	}, []string{"version"})
-
 	grafanaBuildVersion = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "build_info",
 		Help:      "A metric with a constant '1' value labeled by version, revision, branch, and goversion from which Grafana was built.",
@@ -344,16 +333,11 @@ func init() {
 
 // SetBuildInformation sets the build information for this binary
 func SetBuildInformation(version, revision, branch string) {
-	// We export this info twice for backwards compatibility.
-	// Once this have been released for some time we should be able to remote `M_Grafana_Version`
-	// The reason we added a new one is that its common practice in the prometheus community
-	// to name this metric `*_build_info` so its easy to do aggregation on all programs.
 	edition := "oss"
 	if setting.IsEnterprise {
 		edition = "enterprise"
 	}
 
-	M_Grafana_Version.WithLabelValues(version).Set(1)
 	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(1)
 }
 
@@ -394,7 +378,6 @@ func initMetricVars() {
 		M_StatActive_Users,
 		M_StatTotal_Orgs,
 		M_StatTotal_Playlists,
-		M_Grafana_Version,
 		StatsTotalViewers,
 		StatsTotalEditors,
 		StatsTotalAdmins,
