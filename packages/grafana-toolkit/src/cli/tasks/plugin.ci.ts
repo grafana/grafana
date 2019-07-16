@@ -237,6 +237,7 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
 
   // If docs exist, zip them into artifacts
   if (fs.existsSync(docsDir)) {
+    console.log('Creating documentation zip');
     zipName = pluginInfo.id + '-' + pluginInfo.info.version + '-docs.zip';
     zipFile = path.resolve(artifactsDir, zipName);
     process.chdir(docsDir);
