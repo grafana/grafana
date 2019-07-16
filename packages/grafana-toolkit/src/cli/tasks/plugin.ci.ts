@@ -229,6 +229,11 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     console.warn('Unable to read SHA1 Checksum');
   }
 
+  console.log('Setup Grafan Environment');
+  let p = path.resolve(grafanaEnvDir, 'plugins', pluginInfo.id);
+  fs.mkdirSync(p, { recursive: true });
+  await execa('unzip', [zipFile, '-d', p]);
+
   // If docs exist, zip them into artifacts
   if (fs.existsSync(docsDir)) {
     zipName = pluginInfo.id + '-' + pluginInfo.info.version + '-docs.zip';
@@ -254,17 +259,12 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     info.docs = zipInfo;
   }
 
-  let p = path.resolve(artifactsDir, 'info.json');
+  p = path.resolve(artifactsDir, 'info.json');
   fs.writeFile(p, JSON.stringify(info, null, 2), err => {
     if (err) {
       throw new Error('Error writing artifact info: ' + p);
     }
   });
-
-  console.log('Setup Grafan Environment');
-  p = path.resolve(grafanaEnvDir, 'plugins', pluginInfo.id);
-  fs.mkdirSync(p, { recursive: true });
-  await execa('unzip', [zipFile, '-d', p]);
 
   // Write the custom settings
   p = path.resolve(grafanaEnvDir, 'custom.ini');
