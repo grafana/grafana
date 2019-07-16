@@ -365,7 +365,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     // Align query interval with step to allow query caching and to ensure
     // that about-same-time query results look the same.
-    const adjusted = alignRange(start, end, query.step, this.timeSrv.timeRange().to.utcOffset() * 60);
+    const adjusted = alignRange(start, end, query.step, this.timeSrv.timeRange().to.utcOffset() * 60, (target.stepAlignment || '0m'));
     query.start = adjusted.start;
     query.end = adjusted.end;
     this._addTracingHeaders(query, options);
@@ -693,15 +693,18 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
  * @param end Timestamp marking the end of the range.
  * @param step Interval to align start and end with.
  * @param utcOffsetSec Number of seconds current timezone is offset from UTC
+ * @param userStepAlignment String time quantity entered by user for additional step alignment offset
  */
 export function alignRange(
   start: number,
   end: number,
   step: number,
-  utcOffsetSec: number
+  utcOffsetSec: number,
+  userStepAlignment: any
 ): { end: number; start: number } {
-  const alignedEnd = Math.floor((end + utcOffsetSec) / step) * step - utcOffsetSec;
-  const alignedStart = Math.floor((start + utcOffsetSec) / step) * step - utcOffsetSec;
+  const stepOffsetSeconds = utcOffsetSec - kbn.interval_to_seconds(userStepAlignment);  //combine UTC offset and user setpoint offset
+  const alignedEnd = Math.floor((end + stepOffsetSeconds) / step) * step - stepOffsetSeconds;
+  const alignedStart = Math.floor((start + stepOffsetSeconds) / step) * step - stepOffsetSeconds;
   return {
     end: alignedEnd,
     start: alignedStart,
