@@ -103,6 +103,15 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
+		Id:   "predictable_square",
+		Name: "Predictable Square",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			return getPredictableSqaure(query, context)
+		},
+		Description: `Predictable Square returns a Square wave where there is a datapoint every minute. The wave cycles every 6 minutes and has a value of 1 for 3 minutes and a value of 2 for 3 minutes. The cycle of the wave is based on absolute time (epoch) which makes it predictable.`,
+	})
+
+	registerScenario(&Scenario{
 		Id:   "random_walk_table",
 		Name: "Random Walk Table",
 
@@ -340,6 +349,45 @@ func init() {
 			return queryRes
 		},
 	})
+}
+
+func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+	from := context.TimeRange.GetFromAsMsEpoch()
+	to := context.TimeRange.GetToAsMsEpoch()
+
+	series := newSeriesForQuery(query)
+
+	points := make(tsdb.TimeSeriesPoints, 0)
+
+	timeStep := int64(60 * 1000)                 // One Minute
+	timeCursor := from - (from % timeStep)       // Truncate Start
+	waveStep := timeStep * 6                     // 6 minute Cycle
+	maxPoints := 10000                           // Don't return too many points
+	onFor := func(mod int64, count int64) bool { // How many items in the cycle should get the on value
+		var i int64
+		for i = 0; i < count; i++ {
+			if mod == i*timeStep {
+				return true
+			}
+		}
+		return false
+	}
+	for i := 0; i < maxPoints && timeCursor < to; i++ {
+		value := 1
+		if onFor(timeCursor%waveStep, 3) {
+			value = 2
+		}
+
+		point := tsdb.NewTimePoint(null.FloatFrom(float64(value)), float64(timeCursor))
+		points = append(points, point)
+
+		timeCursor += timeStep
+	}
+
+	series.Points = points
+	queryRes := tsdb.NewQueryResult()
+	queryRes.Series = append(queryRes.Series, series)
+	return queryRes
 }
 
 func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
