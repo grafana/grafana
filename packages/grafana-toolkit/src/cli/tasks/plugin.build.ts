@@ -158,9 +158,8 @@ export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({ covera
   await clean();
   await prepare();
   await prettierCheckPlugin({ fix: false });
-  // @ts-ignore
   await lintPlugin({ fix: false });
-  await testPlugin({ updateSnapshot: false, coverage });
+  await testPlugin({ updateSnapshot: false, coverage, watch: false });
   await bundlePlugin({ watch: false, production: true });
 };
 
