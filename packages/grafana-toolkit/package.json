@@ -43,6 +43,7 @@
     "file-loader": "^4.0.0",
     "glob": "^7.1.4",
     "html-loader": "0.5.5",
+    "html-webpack-plugin": "^3.2.0",
     "inquirer": "^6.3.1",
     "jest": "24.8.0",
     "jest-cli": "^24.8.0",

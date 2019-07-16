@@ -87,7 +87,7 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 		dash.CreatedBy = userId
 		dash.Updated = time.Now()
 		dash.UpdatedBy = userId
-		metrics.M_Api_Dashboard_Insert.Inc()
+		metrics.MApiDashboardInsert.Inc()
 		affectedRows, err = sess.Insert(dash)
 	} else {
 		dash.SetVersion(dash.Version + 1)

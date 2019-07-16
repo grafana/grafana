@@ -161,11 +161,11 @@ func (uss *UsageStatsService) updateTotalStats() {
 		return
 	}
 
-	metrics.M_StatTotal_Dashboards.Set(float64(statsQuery.Result.Dashboards))
-	metrics.M_StatTotal_Users.Set(float64(statsQuery.Result.Users))
-	metrics.M_StatActive_Users.Set(float64(statsQuery.Result.ActiveUsers))
-	metrics.M_StatTotal_Playlists.Set(float64(statsQuery.Result.Playlists))
-	metrics.M_StatTotal_Orgs.Set(float64(statsQuery.Result.Orgs))
+	metrics.MStatTotalDashboards.Set(float64(statsQuery.Result.Dashboards))
+	metrics.MStatTotalUsers.Set(float64(statsQuery.Result.Users))
+	metrics.MStatActiveUsers.Set(float64(statsQuery.Result.ActiveUsers))
+	metrics.MStatTotalPlaylists.Set(float64(statsQuery.Result.Playlists))
+	metrics.MStatTotalOrgs.Set(float64(statsQuery.Result.Orgs))
 	metrics.StatsTotalViewers.Set(float64(statsQuery.Result.Viewers))
 	metrics.StatsTotalActiveViewers.Set(float64(statsQuery.Result.ActiveViewers))
 	metrics.StatsTotalEditors.Set(float64(statsQuery.Result.Editors))
