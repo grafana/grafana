@@ -86,8 +86,8 @@ var (
 	// MAwsCloudWatchGetMetricData is a metric counter for getting metric data time series from aws
 	MAwsCloudWatchGetMetricData prometheus.Counter
 
-	// MDBDataSourceQueryById is a metric counter for getting datasource by id
-	MDBDataSourceQueryById prometheus.Counter
+	// MDBDataSourceQueryByID is a metric counter for getting datasource by id
+	MDBDataSourceQueryByID prometheus.Counter
 
 	// LDAPUsersSyncExecutionTime is a metric summary for LDAP users sync execution duration
 	LDAPUsersSyncExecutionTime prometheus.Summary
@@ -303,7 +303,7 @@ func init() {
 		Namespace: exporterName,
 	})
 
-	MDBDataSourceQueryById = newCounterStartingAtZero(prometheus.CounterOpts{
+	MDBDataSourceQueryByID = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "db_datasource_query_by_id_total",
 		Help:      "counter for getting datasource by id",
 		Namespace: exporterName,
@@ -445,7 +445,7 @@ func initMetricVars() {
 		MAwsCloudWatchGetMetricStatistics,
 		MAwsCloudWatchListMetrics,
 		MAwsCloudWatchGetMetricData,
-		MDBDataSourceQueryById,
+		MDBDataSourceQueryByID,
 		LDAPUsersSyncExecutionTime,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,

@@ -25,7 +25,7 @@ func init() {
 }
 
 func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
-	metrics.MDBDataSourceQueryById.Inc()
+	metrics.MDBDataSourceQueryByID.Inc()
 
 	datasource := m.DataSource{OrgId: query.OrgId, Id: query.Id}
 	has, err := x.Get(&datasource)
