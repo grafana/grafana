@@ -103,12 +103,13 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "predictable_square",
-		Name: "Predictable Square",
+		Id:          "predictable_square",
+		Name:        "Predictable Square",
+		StringInput: "60,6,3,1,2",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			return getPredictableSqaure(query, context)
 		},
-		Description: `Predictable Square returns a Square wave where there is a datapoint every minute. The wave cycles every 6 minutes and has a value of 1 for 3 minutes and a value of 2 for 3 minutes. The cycle of the wave is based on absolute time (epoch) which makes it predictable.`,
+		Description: PredictableSquareDesc,
 	})
 
 	registerScenario(&Scenario{
@@ -351,7 +352,78 @@ func init() {
 	})
 }
 
+// PredictableSquareDesc is the description for the Predictable Square scenerio.
+const PredictableSquareDesc = `Predictable Square returns a Square wave where there is a datapoint every minute.
+The wave cycles every 6 minutes and has a value of 1 for 3 minutes and a value of 2 for 3 minutes.
+The cycle of the wave is based on absolute time (epoch) which makes it predictable.
+
+The arguments are timeStepSeconds,waveStepMultiple,onCount,onValue,offValue.
+timeStepSeconds is an integer of seconds between datapoints.
+waveStepMultiple is the a multiple of how many datapoints make up a cycle.
+onCount is how many values within a cycle, at the start of the cycle, should have the onValue.
+onValue and ofValue are floats and will be the values for the on/off parts of the cycle, they can be "null".`
+
 func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+	queryRes := tsdb.NewQueryResult()
+
+	// Process Input
+	// timeStepSeconds,waveStepMultiple,onCount,onValue,offValue
+	// Defaults are 60,6,3,1,2
+	inputString := strings.Replace(query.Model.Get("stringInput").MustString(), " ", "", -1) // Remove spaces
+	inputSlice := strings.Split(inputString, ",")
+
+	if len(inputSlice) != 5 {
+		queryRes.ErrorString = "Want 6 options: timeStep,waveStep,onCount,offValue,onValue"
+		return queryRes
+	}
+
+	var timeStep int64
+	var waveStep int64
+	var onCount int64
+	var offValue null.Float
+	var onValue null.Float
+
+	var err error
+	if timeStep, err = strconv.ParseInt(inputSlice[0], 10, 64); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse timeStepSeconds value '%v' into integer: %v", inputSlice[0], err)
+		return queryRes
+	}
+	if waveStep, err = strconv.ParseInt(inputSlice[1], 10, 64); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse waveStepMultiple value '%v' into integer: %v", inputSlice[1], err)
+		return queryRes
+	}
+	if onCount, err = strconv.ParseInt(inputSlice[2], 10, 0); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse onCount value '%v' into integer: %v", inputSlice[2], err)
+		return queryRes
+	}
+
+	if onCount > waveStep {
+		queryRes.Error = fmt.Errorf("onCount value %v may not be greater than waveStep %v", onCount, waveStep)
+		return queryRes
+	}
+
+	if inputSlice[3] == "null" {
+		onValue = null.FloatFromPtr(nil)
+	} else {
+		val, err := strconv.ParseFloat(inputSlice[3], 64)
+		if err != nil {
+			queryRes.Error = fmt.Errorf("failed to parse onValue value '%v' into float: %v", inputSlice[3], err)
+			return queryRes
+		}
+		onValue = null.FloatFrom(val)
+	}
+
+	if inputSlice[4] == "null" {
+		offValue = null.FloatFromPtr(nil)
+	} else {
+		val, err := strconv.ParseFloat(inputSlice[4], 64)
+		if err != nil {
+			queryRes.Error = fmt.Errorf("failed to parse onValue value '%v' into float: %v", inputSlice[4], err)
+			return queryRes
+		}
+		offValue = null.FloatFrom(val)
+	}
+
 	from := context.TimeRange.GetFromAsMsEpoch()
 	to := context.TimeRange.GetToAsMsEpoch()
 
@@ -359,13 +431,13 @@ func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Quer
 
 	points := make(tsdb.TimeSeriesPoints, 0)
 
-	timeStep := int64(60 * 1000)                 // One Minute
-	timeCursor := from - (from % timeStep)       // Truncate Start
-	waveStep := timeStep * 6                     // 6 minute Cycle
-	maxPoints := 10000                           // Don't return too many points
-	onFor := func(mod int64, count int64) bool { // How many items in the cycle should get the on value
+	timeStep = timeStep * 1000             // Seconds to Milliseconds
+	timeCursor := from - (from % timeStep) // Truncate Start
+	waveStep = timeStep * waveStep         // 6 minute Cycle
+	maxPoints := 10000                     // Don't return too many points
+	onFor := func(mod int64) bool {        // How many items in the cycle should get the on value
 		var i int64
-		for i = 0; i < count; i++ {
+		for i = 0; i < onCount; i++ {
 			if mod == i*timeStep {
 				return true
 			}
@@ -373,19 +445,18 @@ func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Quer
 		return false
 	}
 	for i := 0; i < maxPoints && timeCursor < to; i++ {
-		value := 1
-		if onFor(timeCursor%waveStep, 3) {
-			value = 2
+		value := offValue
+		if onFor(timeCursor % waveStep) {
+			value = onValue
 		}
 
-		point := tsdb.NewTimePoint(null.FloatFrom(float64(value)), float64(timeCursor))
+		point := tsdb.NewTimePoint(value, float64(timeCursor))
 		points = append(points, point)
 
 		timeCursor += timeStep
 	}
 
 	series.Points = points
-	queryRes := tsdb.NewQueryResult()
 	queryRes.Series = append(queryRes.Series, series)
 	return queryRes
 }
