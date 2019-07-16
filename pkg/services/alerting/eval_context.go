@@ -146,6 +146,10 @@ func (c *EvalContext) GetNewState() models.AlertStateType {
 		return models.AlertStateAlerting
 	}
 
+	if c.PrevAlertState == models.AlertStateNoData {
+		return models.AlertStateNoData
+	}
+
 	return models.AlertStatePending
 }
 
