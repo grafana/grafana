@@ -80,7 +80,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   onStepAlignmentChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
     const stepAlignment = e.currentTarget.value;
     this.query.stepAlignment = stepAlignment;
-    this.setState({ stepAlignment });
+    this.setState({ stepAlignment }, this.onRunQuery);
   };
 
   onIntervalFactorChange = (option: SelectOptionItem<number>) => {
