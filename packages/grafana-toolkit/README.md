@@ -35,6 +35,9 @@ Runs Jest against your codebase. See [Tests](#tests) for more details.
 Available options:
 - `-u, --updateSnapshot` - performs snapshots update
 - `--coverage` - reports code coverage
+- `--watch` - runs tests in interactive watch mode
+- `--testNamePattern=<regex>` - runs test with names that match provided regex (https://jestjs.io/docs/en/cli#testnamepattern-regex)
+- `--testPathPattern=<regex>` - runs test with paths that match provided regex (https://jestjs.io/docs/en/cli#testpathpattern-regex)
 
 #### `grafana-toolkit plugin:dev`
 Compiles plugin in development mode.
