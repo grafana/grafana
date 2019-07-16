@@ -117,6 +117,70 @@
 		</div>
 	</div>
 
+	<!-- Predictable Square Scenario Options Form -->
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'predictable_square'">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-8">
+				Time Step
+				<info-popover mode="right-normal">The number of seconds between datapoints.</info-popover>
+			</label>
+				<input type="number"
+				class="gf-form-input width-5"
+				placeholder="60"
+				ng-model="ctrl.target.timeStep"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-11">
+				Wave Step Multiple
+				<info-popover mode="right-normal">The number of time steps that make up a cycle.</info-popover>
+			</label>
+			<input type="number"
+				class="gf-form-input width-3"
+				placeholder="6"
+				ng-model="ctrl.target.waveStep"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				On Count
+				<info-popover mode="right-normal">The number of values within a cycle, at the start of the cycle, that should have the onValue. Must not be larger than the wave step.</info-popover>
+			</label>
+			<input type="number"
+				class="gf-form-input width-3"
+				placeholder="3"
+				ng-model="ctrl.target.onCount"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				On Value
+				<info-popover mode="right-normal">The value for "on values", may be a int, float, or null.</info-popover>
+			</label>
+			<input type="string"
+				class="gf-form-input width-5"
+				placeholder="1"
+				ng-model="ctrl.target.onValue"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				Off Value
+				<info-popover mode="right-normal">The value for "off values", may be a int, float, or null.</info-popover>
+			</label>
+			<input type="string"
+				class="gf-form-input width-5"
+				placeholder="1"
+				ng-model="ctrl.target.offValue"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+	</div>
+
 	<div>
 		<p ng-bind="ctrl.scenario.description"></p>
 	</div>
