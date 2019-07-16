@@ -312,7 +312,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
   console.log('Grafana Version: ' + JSON.stringify(frontendSettings.data.buildInfo, null, 2));
 
-  const allPlugins: any[] = await axios.get('api/plugins', args).data;
+  const allPlugins: any[] = (await axios.get('api/plugins', args)).data;
   // for (const plugin of allPlugins) {
   //   if (plugin.id === pluginInfo.id) {
   //     console.log('------------');
