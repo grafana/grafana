@@ -353,9 +353,10 @@ func init() {
 }
 
 // PredictableSquareDesc is the description for the Predictable Square scenerio.
-const PredictableSquareDesc = `Predictable Square returns a Square wave where there is a datapoint every minute.
-The wave cycles every 6 minutes and has a value of 1 for 3 minutes and a value of 2 for 3 minutes.
+const PredictableSquareDesc = `Predictable Square returns a square wave where there is a datapoint every timeStepSeconds.
+The wave cycles at waveStepMultiple*timeStepSeconds and has a value of onValue for onCount and a value of offValue for the remainder of the cycle.
 The cycle of the wave is based on absolute time (epoch) which makes it predictable.
+Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means times will all end in :00 seconds).
 
 The arguments are timeStepSeconds,waveStepMultiple,onCount,onValue,offValue.
 timeStepSeconds is an integer of seconds between datapoints.
