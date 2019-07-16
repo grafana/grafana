@@ -5,6 +5,7 @@ const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 import * as webpack from 'webpack';
 import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
@@ -116,6 +117,8 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
 
   if (options.production) {
     optimization.minimizer = [new TerserPlugin(), new OptimizeCssAssetsPlugin()];
+  } else if (options.watch) {
+    plugins.push(new HtmlWebpackPlugin());
   }
 
   return {
