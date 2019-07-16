@@ -138,7 +138,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
 	}
 
-	metrics.M_Api_Login_Post.Inc()
+	metrics.MApiLoginPost.Inc()
 	return JSON(200, result)
 }
 
