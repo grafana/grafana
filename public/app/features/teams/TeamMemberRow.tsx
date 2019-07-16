@@ -92,7 +92,7 @@ export class TeamMemberRow extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {};
 }
 

@@ -125,7 +125,7 @@ devenv: devenv-down
 
 	@cd devenv; \
 	./create_docker_compose.sh $(targets) || \
-	(rm -rf docker-compose.yaml; exit 1)
+	(rm -rf {docker-compose.yaml,conf.tmp,.env}; exit 1)
 
 	@cd devenv; \
 	docker-compose up -d --build
