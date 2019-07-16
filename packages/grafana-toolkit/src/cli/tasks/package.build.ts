@@ -55,6 +55,7 @@ const preparePackage = async (pkg: any) => {
     deps['@grafana/ui'] = version;
   } else if (name.endsWith('/toolkit')) {
     deps['@grafana/data'] = version;
+    deps['@grafana/ui'] = version;
   }
 
   await savePackage({
