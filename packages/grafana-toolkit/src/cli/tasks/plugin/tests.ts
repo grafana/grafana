@@ -10,10 +10,15 @@ export interface PluginTestOptions {
 export const testPlugin = useSpinner<PluginTestOptions>('Running tests', async ({ updateSnapshot, coverage }) => {
   const testConfig = jestConfig();
 
-  testConfig.updateSnapshot = updateSnapshot;
-  testConfig.coverage = coverage;
+  const cliConfig = {
+    config: JSON.stringify(testConfig),
+    updateSnapshot,
+    coverage,
+    passWithNoTests: true,
+  };
 
-  const results = await jestCLI.runCLI(testConfig as any, [process.cwd()]);
+  // @ts-ignore
+  const results = await jestCLI.runCLI(cliConfig, [process.cwd()]);
 
   if (results.results.numFailedTests > 0 || results.results.numFailedTestSuites > 0) {
     throw new Error('Tests failed');
