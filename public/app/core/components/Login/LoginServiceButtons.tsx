@@ -1,7 +1,7 @@
 import React from 'react';
 import config from 'app/core/config';
 
-const loginServices: LoginServices = {
+const loginServices: () => LoginServices = () => ({
   saml: {
     enabled: config.samlEnabled,
     name: 'SAML',
@@ -32,7 +32,7 @@ const loginServices: LoginServices = {
     icon: 'sign-in',
     hrefName: 'generic_oauth',
   },
-};
+});
 
 export interface LoginService {
   enabled: boolean;
@@ -47,9 +47,9 @@ export interface LoginServices {
 }
 
 export const LoginServiceButtons = () => {
-  const keyNames = Object.keys(loginServices);
+  const keyNames = Object.keys(loginServices());
   const serviceElements = keyNames.map(key => {
-    const service: LoginService = loginServices[key];
+    const service: LoginService = loginServices()[key];
     return service.enabled ? (
       <a
         key={key}

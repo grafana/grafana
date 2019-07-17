@@ -3,7 +3,7 @@ import config from 'app/core/config';
 import { UserSignup } from './UserSignup';
 import { LoginServiceButtons } from './LoginServiceButtons';
 
-const oauthEnabled = Object.keys(config.oauth).length > 0;
+const oauthEnabled = () => Object.keys(config.oauth).length > 0;
 export interface Props {
   disabledLoginForm: boolean;
   passwordHint: string;
@@ -115,7 +115,7 @@ export class LoginForm extends PureComponent<Props, State> {
       <div className="login-out-box">
         <div className="login-inner-box" id="login-view">
           {config.disableLoginForm ? null : this.renderLoginForm()}
-          {oauthEnabled ? (
+          {oauthEnabled() ? (
             <>
               <div className="text-center login-divider">
                 <div>
