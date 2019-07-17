@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -371,7 +373,7 @@ func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Quer
 
 	var err error
 	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
-		queryRes.Error = fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("onCount"), err)
+		queryRes.Error = fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
 		return queryRes
 	}
 	if onCount, err = options.Get("onCount").Int64(); err != nil {
@@ -382,19 +384,33 @@ func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Quer
 		queryRes.Error = fmt.Errorf("failed to parse offCount value '%v' into integer: %v", options.Get("offCount"), err)
 		return queryRes
 	}
-	onRaw := options.Get("onValue").MustString()
-	if onRaw == "null" {
-		onValue = null.FloatFromPtr(nil)
-	} else {
-		val := options.Get("onValue").MustFloat64()
-		onValue = null.FloatFrom(val)
+
+	fromStringOrNumber := func(val *simplejson.Json) (null.Float, error) {
+		switch v := val.Interface().(type) {
+		case float64:
+			return null.FloatFrom(v), nil
+		case string:
+			if v == "null" {
+				return null.FloatFromPtr(nil), nil
+			}
+			fV, err := strconv.ParseFloat(v, 64)
+			if err != nil {
+				return null.Float{}, err
+			}
+			return null.FloatFrom(fV), nil
+		default:
+			return null.Float{}, fmt.Errorf("failed to extract value")
+		}
 	}
-	offRaw := options.Get("offValue").MustString()
-	if offRaw == "null" {
-		offValue = null.FloatFromPtr(nil)
-	} else {
-		val := options.Get("offValue").MustFloat64()
-		offValue = null.FloatFrom(val)
+	onValue, err = fromStringOrNumber(options.Get("onValue"))
+	if err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse onValue value '%v' into float: %v", options.Get("onValue"), err)
+		return queryRes
+	}
+	offValue, err = fromStringOrNumber(options.Get("offValue"))
+	if err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.Get("offValue"), err)
+		return queryRes
 	}
 
 	from := context.TimeRange.GetFromAsMsEpoch()
@@ -405,26 +421,21 @@ func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Quer
 
 	timeStep = timeStep * 1000             // Seconds to Milliseconds
 	timeCursor := from - (from % timeStep) // Truncate Start
-	waveStep := timeStep * (onCount + offCount)
-	maxPoints := 10000              // Don't return too many points
-	onFor := func(mod int64) bool { // How many items in the cycle should get the on value
+	wavePeriod := timeStep * (onCount + offCount)
+	maxPoints := 10000 // Don't return too many points
+
+	onFor := func(mod int64) null.Float { // How many items in the cycle should get the on value
 		var i int64
 		for i = 0; i < onCount; i++ {
 			if mod == i*timeStep {
-				return true
+				return onValue
 			}
 		}
-		return false
+		return offValue
 	}
 	for i := 0; i < maxPoints && timeCursor < to; i++ {
-		value := offValue
-		if onFor(timeCursor % waveStep) {
-			value = onValue
-		}
-
-		point := tsdb.NewTimePoint(value, float64(timeCursor))
+		point := tsdb.NewTimePoint(onFor(timeCursor%wavePeriod), float64(timeCursor))
 		points = append(points, point)
-
 		timeCursor += timeStep
 	}
 
