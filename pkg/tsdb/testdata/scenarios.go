@@ -105,12 +105,12 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
-		Id:   "predictable_square",
-		Name: "Predictable Square",
+		Id:   "predictable_pulse",
+		Name: "Predictable Pulse",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			return getPredictableSqaure(query, context)
+			return getPredictablePulse(query, context)
 		},
-		Description: PredictableSquareDesc,
+		Description: PredictablePulseDesc,
 	})
 
 	registerScenario(&Scenario{
@@ -353,13 +353,13 @@ func init() {
 	})
 }
 
-// PredictableSquareDesc is the description for the Predictable Square scenerio.
-const PredictableSquareDesc = `Predictable Square returns a square wave where there is a datapoint every timeStepSeconds.
+// PredictablePulseDesc is the description for the Predictable Pulse scenerio.
+const PredictablePulseDesc = `Predictable Pulse returns a pulse wave where there is a datapoint every timeStepSeconds.
 The wave cycles at timeStepSeconds*(onCount+offCount).
 The cycle of the wave is based off of absolute time (from the epoch) which makes it predictable.
 Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means times will all end in :00 seconds).`
 
-func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 	queryRes := tsdb.NewQueryResult()
 
 	// Process Input
@@ -369,7 +369,7 @@ func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Quer
 	var onValue null.Float
 	var offValue null.Float
 
-	options := query.Model.Get("squareWave")
+	options := query.Model.Get("pulseWave")
 
 	var err error
 	if timeStep, err = options.Get("timeStep").Int64(); err != nil {

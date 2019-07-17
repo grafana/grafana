@@ -5,7 +5,7 @@ import { defaultQuery } from './StreamHandler';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { dateTime } from '@grafana/data';
 
-export const defaultSquare: any = {
+export const defaultPulse: any = {
   timeStep: 60,
   onCount: 3,
   onValue: 2,
@@ -30,7 +30,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.scenarioList = [];
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
-    this.target.squareWave = _.defaults(this.target.squareWave || {}, defaultSquare);
+    this.target.pulseWave = _.defaults(this.target.pulseWave || {}, defaultPulse);
   }
 
   getPoints() {

@@ -117,8 +117,8 @@
 		</div>
 	</div>
 
-	<!-- Predictable Square Scenario Options Form -->
-	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'predictable_square'">
+	<!-- Predictable Pulse Scenario Options Form -->
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'predictable_pulse'">
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword width-7">
 				Step
@@ -127,7 +127,7 @@
 				<input type="number"
 				class="gf-form-input width-5"
 				placeholder="60"
-				ng-model="ctrl.target.squareWave.timeStep"
+				ng-model="ctrl.target.pulseWave.timeStep"
 				ng-change="ctrl.refresh()"
 				ng-model-onblur />
 		</div>
@@ -139,7 +139,7 @@
 			<input type="number"
 				class="gf-form-input width-3"
 				placeholder="3"
-				ng-model="ctrl.target.squareWave.onCount"
+				ng-model="ctrl.target.pulseWave.onCount"
 				ng-change="ctrl.refresh()"
 				ng-model-onblur />
 		</div>
@@ -151,7 +151,7 @@
 			<input type="number"
 				class="gf-form-input width-3"
 				placeholder="6"
-				ng-model="ctrl.target.squareWave.offCount"
+				ng-model="ctrl.target.pulseWave.offCount"
 				ng-change="ctrl.refresh()"
 				ng-model-onblur />
 		</div>
@@ -163,7 +163,7 @@
 			<input type="string"
 				class="gf-form-input width-5"
 				placeholder="1"
-				ng-model="ctrl.target.squareWave.onValue"
+				ng-model="ctrl.target.pulseWave.onValue"
 				ng-change="ctrl.refresh()"
 				ng-model-onblur />
 		</div>
@@ -175,7 +175,7 @@
 			<input type="string"
 				class="gf-form-input width-5"
 				placeholder="1"
-				ng-model="ctrl.target.squareWave.offValue"
+				ng-model="ctrl.target.pulseWave.offValue"
 				ng-change="ctrl.refresh()"
 				ng-model-onblur />
 		</div>
