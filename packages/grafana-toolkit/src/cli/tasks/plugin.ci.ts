@@ -9,6 +9,7 @@ import path = require('path');
 import fs = require('fs');
 import { getFileSizeReportInFolder } from '../utils/fileHelper';
 import {
+  job,
   getJobFolder,
   writeJobStats,
   getCiFolder,
@@ -241,7 +242,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
   const args = {
     withCredentials: true,
-    baseURL: process.env.GRAFANA_URL || 'http://localhost:3000/',
+    baseURL: process.env.BASE_URL || 'http://localhost:3000/',
     responseType: 'json',
     auth: {
       username: 'admin',
@@ -251,22 +252,10 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
   const axios = require('axios');
   const frontendSettings = await axios.get('api/frontend/settings', args);
+  const buildInfo = frontendSettings.data.buildInfo;
+  const version = buildInfo.version;
 
-  console.log('Grafana Version: ' + JSON.stringify(frontendSettings.data.buildInfo, null, 2));
-
-  // const pluginReq = await axios.get('api/plugins', args);
-  // const allPlugins: any[] = pluginReq.data;
-  // // for (const plugin of allPlugins) {
-  // //   if (plugin.id === pluginInfo.id) {
-  // //     console.log('------------');
-  // //     console.log(plugin);
-  // //     console.log('------------');
-  // //   } else {
-  // //     console.log('Plugin:', plugin.id, plugin.latestVersion);
-  // //   }
-  // // }
-  // console.log('PLUGINS:', pluginReq);
-  // console.log('REQ:', allPlugins);
+  console.log('Grafana: ' + version + ', build: ' + JSON.stringify(buildInfo, null, 2));
 
   if (true) {
     const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
@@ -277,6 +266,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
   const elapsed = Date.now() - start;
   const stats = {
+    job,
     sha1: getGitHash(),
     startTime: start,
     buildTime: elapsed,
