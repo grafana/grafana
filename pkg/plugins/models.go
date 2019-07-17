@@ -112,11 +112,18 @@ type PluginDependencyItem struct {
 	Version string `json:"version"`
 }
 
+type PluginSourceInfo struct {
+	Repo   string `json:"repo,omitempty"`
+	Branch string `json:"branch,omitempty"`
+	Hash   string `json:"hash,omitempty"`
+}
+
 type PluginInfo struct {
 	Author      PluginInfoLink      `json:"author"`
 	Description string              `json:"description"`
 	Links       []PluginInfoLink    `json:"links"`
 	Logos       PluginLogos         `json:"logos"`
+	Source      PluginSourceInfo    `json:"source,omitempty"`
 	Screenshots []PluginScreenshots `json:"screenshots"`
 	Version     string              `json:"version"`
 	Updated     string              `json:"updated"`
