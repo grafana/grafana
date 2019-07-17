@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -100,6 +102,15 @@ func init() {
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			return getRandomWalk(query, context)
 		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "predictable_pulse",
+		Name: "Predictable Pulse",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			return getPredictablePulse(query, context)
+		},
+		Description: PredictablePulseDesc,
 	})
 
 	registerScenario(&Scenario{
@@ -340,6 +351,101 @@ func init() {
 			return queryRes
 		},
 	})
+}
+
+// PredictablePulseDesc is the description for the Predictable Pulse scenerio.
+const PredictablePulseDesc = `Predictable Pulse returns a pulse wave where there is a datapoint every timeStepSeconds.
+The wave cycles at timeStepSeconds*(onCount+offCount).
+The cycle of the wave is based off of absolute time (from the epoch) which makes it predictable.
+Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means times will all end in :00 seconds).`
+
+func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+	queryRes := tsdb.NewQueryResult()
+
+	// Process Input
+	var timeStep int64
+	var onCount int64
+	var offCount int64
+	var onValue null.Float
+	var offValue null.Float
+
+	options := query.Model.Get("pulseWave")
+
+	var err error
+	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
+		return queryRes
+	}
+	if onCount, err = options.Get("onCount").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse onCount value '%v' into integer: %v", options.Get("onCount"), err)
+		return queryRes
+	}
+	if offCount, err = options.Get("offCount").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse offCount value '%v' into integer: %v", options.Get("offCount"), err)
+		return queryRes
+	}
+
+	fromStringOrNumber := func(val *simplejson.Json) (null.Float, error) {
+		switch v := val.Interface().(type) {
+		case json.Number:
+			fV, err := v.Float64()
+			if err != nil {
+				return null.Float{}, err
+			}
+			return null.FloatFrom(fV), nil
+		case string:
+			if v == "null" {
+				return null.FloatFromPtr(nil), nil
+			}
+			fV, err := strconv.ParseFloat(v, 64)
+			if err != nil {
+				return null.Float{}, err
+			}
+			return null.FloatFrom(fV), nil
+		default:
+			return null.Float{}, fmt.Errorf("failed to extract value")
+		}
+	}
+	onValue, err = fromStringOrNumber(options.Get("onValue"))
+	if err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse onValue value '%v' into float: %v", options.Get("onValue"), err)
+		return queryRes
+	}
+	offValue, err = fromStringOrNumber(options.Get("offValue"))
+	if err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.Get("offValue"), err)
+		return queryRes
+	}
+
+	from := context.TimeRange.GetFromAsMsEpoch()
+	to := context.TimeRange.GetToAsMsEpoch()
+
+	series := newSeriesForQuery(query)
+	points := make(tsdb.TimeSeriesPoints, 0)
+
+	timeStep = timeStep * 1000             // Seconds to Milliseconds
+	timeCursor := from - (from % timeStep) // Truncate Start
+	wavePeriod := timeStep * (onCount + offCount)
+	maxPoints := 10000 // Don't return too many points
+
+	onFor := func(mod int64) null.Float { // How many items in the cycle should get the on value
+		var i int64
+		for i = 0; i < onCount; i++ {
+			if mod == i*timeStep {
+				return onValue
+			}
+		}
+		return offValue
+	}
+	for i := 0; i < maxPoints && timeCursor < to; i++ {
+		point := tsdb.NewTimePoint(onFor(timeCursor%wavePeriod), float64(timeCursor))
+		points = append(points, point)
+		timeCursor += timeStep
+	}
+
+	series.Points = points
+	queryRes.Series = append(queryRes.Series, series)
+	return queryRes
 }
 
 func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
