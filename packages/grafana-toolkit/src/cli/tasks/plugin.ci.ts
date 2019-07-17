@@ -2,14 +2,13 @@ import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
-import { DataFrame, toCSV } from '@grafana/data';
 
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
 import { getFileSizeReportInFolder } from '../utils/fileHelper';
-import { getJobFolder, writeJobStats, getCiFolder, agregateWorkflowInfo } from './plugin/ci';
+import { getJobFolder, writeJobStats, getCiFolder, agregateWorkflowInfo, agregateCoverageInfo } from './plugin/ci';
 
 export interface PluginCIOptions {
   backend?: string;
@@ -249,21 +248,21 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
   console.log('Grafana Version: ' + JSON.stringify(frontendSettings.data.buildInfo, null, 2));
 
-  const pluginReq = await axios.get('api/plugins', args);
-  const allPlugins: any[] = pluginReq.data;
-  // for (const plugin of allPlugins) {
-  //   if (plugin.id === pluginInfo.id) {
-  //     console.log('------------');
-  //     console.log(plugin);
-  //     console.log('------------');
-  //   } else {
-  //     console.log('Plugin:', plugin.id, plugin.latestVersion);
-  //   }
-  // }
-  console.log('PLUGINS:', pluginReq);
-  console.log('REQ:', allPlugins);
+  // const pluginReq = await axios.get('api/plugins', args);
+  // const allPlugins: any[] = pluginReq.data;
+  // // for (const plugin of allPlugins) {
+  // //   if (plugin.id === pluginInfo.id) {
+  // //     console.log('------------');
+  // //     console.log(plugin);
+  // //     console.log('------------');
+  // //   } else {
+  // //     console.log('Plugin:', plugin.id, plugin.latestVersion);
+  // //   }
+  // // }
+  // console.log('PLUGINS:', pluginReq);
+  // console.log('REQ:', allPlugins);
 
-  if (full) {
+  if (true) {
     const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
     console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
   }
@@ -292,58 +291,23 @@ export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', t
  */
 const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
   const ciDir = path.resolve(process.cwd(), 'ci');
-  const reportDir = path.resolve(ciDir, 'report');
-  if (fs.existsSync(reportDir)) {
-    console.log('REMOVE', reportDir);
-    await execa('rimraf', [reportDir]);
-  }
-  fs.mkdirSync(reportDir, { recursive: true });
-
   const artifactsInfo = require(path.resolve(ciDir, 'artifacts', 'info.json'));
-  const workflowInfo = agregateWorkflowInfo();
 
   const report = {
     artifacts: artifactsInfo,
-    workflow: workflowInfo,
+    workflow: agregateWorkflowInfo(),
+    coverage: agregateCoverageInfo(),
   };
 
   console.log('REPORT', report);
 
-  let file = path.resolve(reportDir, 'summary.json');
+  const file = path.resolve(ciDir, 'report.json');
   fs.writeFile(file, JSON.stringify(report, null, 2), err => {
     if (err) {
       throw new Error('Unable to write: ' + file);
     }
   });
-
-  const data: DataFrame = {
-    fields: [{ name: 'aaa' }, { name: 'bbb' }],
-    rows: [['aa', 1], ['bb', 2], ['cc', 3]],
-  };
-
-  file = path.resolve(reportDir, 'report.csv');
-  const csv = toCSV([data]);
-  fs.writeFile(file, csv, err => {
-    if (err) {
-      throw new Error('Unable to write: ' + file);
-    }
-  });
-
-  console.log('TODO... real report');
+  console.log('TODO... notify some service');
 };
 
 export const ciPluginReportTask = new Task<PluginCIOptions>('Generate Plugin Report', pluginReportRunner);
-
-/**
- * 5. Deploy
- *
- *  deploy the zip to a running grafana instance
- *
- */
-const deployPluginRunner: TaskRunner<PluginCIOptions> = async () => {
-  console.log('TODO DEPLOY??');
-  console.log(' if PR => write a comment to github with difference ');
-  console.log(' if master | vXYZ ==> upload artifacts to some repo ');
-};
-
-export const ciDeployPluginTask = new Task<PluginCIOptions>('Deploy plugin', deployPluginRunner);

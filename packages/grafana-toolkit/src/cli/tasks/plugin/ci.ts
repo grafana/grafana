@@ -7,7 +7,7 @@ export interface JobInfo {
   endTime: number;
   elapsed: number;
   status?: string;
-  buildNumber?: string;
+  buildNumber?: number;
 }
 
 export interface WorkflowInfo extends JobInfo {
@@ -35,6 +35,13 @@ const getJobFromProcessArgv = () => {
 
 export const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
 
+const getBuildNumber = (): number | undefined => {
+  if (process.env.CIRCLE_BUILD_NUM) {
+    return parseInt(process.env.CIRCLE_BUILD_NUM, 10);
+  }
+  return undefined;
+};
+
 export const getJobFolder = () => {
   const dir = path.resolve(process.cwd(), 'ci', 'jobs', job);
   if (!fs.existsSync(dir)) {
@@ -58,7 +65,7 @@ export const writeJobStats = (startTime: number, workDir: string) => {
     startTime,
     endTime,
     elapsed: endTime - startTime,
-    buildNumber: process.env.CIRCLE_BUILD_NUM,
+    buildNumber: getBuildNumber(),
   };
   const f = path.resolve(workDir, 'job.json');
   fs.writeFile(f, JSON.stringify(stats, null, 2), err => {
@@ -78,7 +85,7 @@ export const agregateWorkflowInfo = (): any => {
     branch: process.env.CIRCLE_BRANCH,
     repo: process.env.CIRCLE_REPOSITORY_URL,
     sha1: process.env.CIRCLE_SHA1,
-    buildNumber: process.env.CIRCLE_BUILD_NUM,
+    buildNumber: getBuildNumber(),
     elapsed: 0,
   };
 
@@ -108,4 +115,49 @@ export const agregateWorkflowInfo = (): any => {
 
   workflow.elapsed = workflow.endTime - workflow.startTime;
   return workflow;
+};
+
+export interface CoverageDetails {
+  total: number;
+  covered: number;
+  skipped: number;
+  pct: number;
+}
+
+export interface CoverageInfo {
+  job: string;
+  summary: { [key: string]: CoverageDetails };
+  report?: string; // path to report
+}
+
+export const agregateCoverageInfo = (): CoverageInfo[] => {
+  const coverage: CoverageInfo[] = [];
+  const ciDir = getCiFolder();
+  const jobsFolder = path.resolve(ciDir, 'jobs');
+  if (fs.existsSync(jobsFolder)) {
+    const files = fs.readdirSync(jobsFolder);
+    if (files && files.length) {
+      files.forEach(file => {
+        const dir = path.resolve(jobsFolder, file, 'coverage');
+        if (fs.existsSync(dir)) {
+          const s = path.resolve(dir, 'coverage-summary.json');
+          const r = path.resolve(dir, 'lcov-report', 'index.html');
+          if (fs.existsSync(s)) {
+            const raw = require(s);
+            const info: CoverageInfo = {
+              job: file,
+              summary: raw.total,
+            };
+            if (fs.existsSync(r)) {
+              info.report = r.substring(ciDir.length);
+            }
+            coverage.push(info);
+          }
+        }
+      });
+    } else {
+      console.log('NO JOBS IN: ', jobsFolder);
+    }
+  }
+  return coverage;
 };

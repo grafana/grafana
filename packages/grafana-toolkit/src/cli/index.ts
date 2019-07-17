@@ -19,7 +19,6 @@ import {
   ciBundlePluginTask,
   ciTestPluginTask,
   ciPluginReportTask,
-  ciDeployPluginTask,
 } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 
@@ -192,13 +191,6 @@ export const run = (includeInternalScripts = false) => {
     .description('Build a report for this whole process')
     .action(async cmd => {
       await execTask(ciPluginReportTask)({});
-    });
-
-  program
-    .command('plugin:ci-deploy')
-    .description('Publish plugin CI results')
-    .action(async cmd => {
-      await execTask(ciDeployPluginTask)({});
     });
 
   program.on('command:*', () => {
