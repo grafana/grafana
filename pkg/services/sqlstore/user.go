@@ -106,6 +106,7 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 			Login:         cmd.Login,
 			Company:       cmd.Company,
 			IsAdmin:       cmd.IsAdmin,
+			IsDisabled:    cmd.IsDisabled,
 			OrgId:         orgId,
 			EmailVerified: cmd.EmailVerified,
 			Created:       time.Now(),
@@ -453,6 +454,11 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 	if query.Query != "" {
 		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
 		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+
+	if query.IsDisabled != nil {
+		whereConditions = append(whereConditions, "is_disabled = ?")
+		whereParams = append(whereParams, query.IsDisabled)
 	}
 
 	if query.AuthModule != "" {

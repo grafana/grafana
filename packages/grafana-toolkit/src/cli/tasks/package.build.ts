@@ -99,4 +99,4 @@ const buildTaskRunner: TaskRunner<PackageBuildOptions> = async ({ scope }) => {
   await Promise.all(scopes.map(s => s()));
 };
 
-export const buildPackageTask = new Task<PackageBuildOptions>('@grafana/ui build', buildTaskRunner);
+export const buildPackageTask = new Task<PackageBuildOptions>('Package build', buildTaskRunner);
