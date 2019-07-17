@@ -52,7 +52,7 @@ npm --add-python-to-path='true' --debug install --global windows-build-tools
 
 ## Build the Frontend Assets
 
-For this you need nodejs (v.6+).
+For this you need nodejs (v.6+):
 
 ```bash
 npm install -g yarn
@@ -76,6 +76,8 @@ Open grafana in your browser (default [http://localhost:3000](http://localhost:3
 
 To add features, customize your config, etc, you'll need to rebuild the backend when you change the source code. We use a tool named `bra` that
 does this.
+
+If you using *nix machine, you can just use the `make run` command, otherwise you need install `bra` binary first:
 
 ```bash
 go get github.com/Unknwon/bra
@@ -104,7 +106,7 @@ that will populate your dev environment for quicker testing end experimenting.
 
 ## Creating optimized release packages
 
-This step builds linux packages and requires that fpm is installed. Install fpm via `gem install fpm`.
+This step builds linux packages and requires that fpm is installed. Install fpm via `gem install fpm`:
 
 ```bash
 go run build.go build package
@@ -134,7 +136,7 @@ Please contribute to the Grafana project and submit a pull request! Build new fe
 **Solution**: delete the node_modules directory. Install [node-gyp](https://github.com/nodejs/node-gyp#installation) properly for your platform. Then run `yarn install --pure-lockfile` again.
 <br><br>
 
-**Problem**: When running `bra run` for the first time you get an error that it is not a recognized command.
+**Problem**: When running `make run` for the first time you get an error that it is not a recognized command.
 
 **Solution**: Add the bin directory in your Go workspace directory to the path. Per default this is `$HOME/go/bin` on Linux and `%USERPROFILE%\go\bin` on Windows or `$GOPATH/bin` (`%GOPATH%\bin` on Windows) if you have set your own workspace directory.
 <br><br>
