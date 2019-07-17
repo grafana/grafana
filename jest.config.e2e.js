@@ -6,10 +6,7 @@ module.exports = {
     '^.+\\.(ts|tsx)$': 'ts-jest',
   },
   moduleDirectories: ['node_modules', 'public'],
-  roots: [
-    '<rootDir>/public/e2e-test',
-// ???    '<rootDir>/packages/grafana-toolkit/src/e2e',
-  ],
+  roots: ['<rootDir>/public/e2e-test'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: [],
