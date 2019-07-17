@@ -147,9 +147,7 @@ type SearchUsersQuery struct {
 	Limit      int
 	AuthModule string
 
-	// We have to use string not bool, since there is cases when
-	// we don't care if user is disabled or not
-	IsDisabled string
+	IsDisabled *bool
 
 	Result SearchUserQueryResult
 }
