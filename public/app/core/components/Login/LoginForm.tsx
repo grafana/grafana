@@ -40,10 +40,14 @@ export class LoginForm extends PureComponent<Props, State> {
 
   handleSubmit(e: SyntheticEvent) {
     e.preventDefault();
-    console.log(e);
+
+    if (this.validate()) {
+      console.log(e);
+    }
   }
 
   handleChange(e: any) {
+    this.validate();
     console.log(e.target);
     // @ts-ignore
     this.setState({
@@ -51,7 +55,19 @@ export class LoginForm extends PureComponent<Props, State> {
     });
   }
 
-  validate() {}
+  validate() {
+    if (this.state.user.length > 0 && this.state.password.length > 0) {
+      this.setState({
+        valid: true,
+      });
+      return true;
+    } else {
+      this.setState({
+        valid: false,
+      });
+      return false;
+    }
+  }
 
   renderLoginForm() {
     return !this.props.disabledLoginForm ? (
