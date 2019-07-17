@@ -3,6 +3,12 @@ import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
 
+export interface PluginSourceInfo {
+  repo?: string;
+  branch?: string;
+  hash?: string;
+}
+
 export interface JobInfo {
   job?: string;
   startTime: number;
@@ -15,9 +21,6 @@ export interface JobInfo {
 export interface WorkflowInfo extends JobInfo {
   workflowId?: string;
   jobs: JobInfo[];
-  branch?: string;
-  repo?: string;
-  sha1?: string;
 }
 
 const getJobFromProcessArgv = () => {
@@ -37,12 +40,18 @@ const getJobFromProcessArgv = () => {
 
 export const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
 
-export const getGitHash = (): string => {
+export const getPluginSourceInfo = async (): Promise<PluginSourceInfo> => {
   if (process.env.CIRCLE_SHA1) {
-    return process.env.CIRCLE_SHA1;
+    return Promise.resolve({
+      repo: process.env.CIRCLE_REPOSITORY_URL,
+      branch: process.env.CIRCLE_BRANCH,
+      hash: process.env.CIRCLE_SHA1,
+    });
   }
-  // execa('git', ['rev-parse', 'HEAD']);
-  return 'UNKNOWN';
+  const exe = await execa('git', ['rev-parse', 'HEAD']);
+  return {
+    hash: exe.stdout,
+  };
 };
 
 const getBuildNumber = (): number | undefined => {
@@ -92,9 +101,6 @@ export const agregateWorkflowInfo = (): WorkflowInfo => {
     startTime: now,
     endTime: now,
     workflowId: process.env.CIRCLE_WORKFLOW_ID,
-    branch: process.env.CIRCLE_BRANCH,
-    repo: process.env.CIRCLE_REPOSITORY_URL,
-    sha1: getGitHash(),
     buildNumber: getBuildNumber(),
     elapsed: 0,
   };
@@ -170,4 +176,32 @@ export const agregateCoverageInfo = (): CoverageInfo[] => {
     }
   }
   return coverage;
+};
+
+export interface TestResultInfo {
+  job: string;
+  grafana: any;
+  status?: string;
+}
+
+export const agregateTestInfo = (): TestResultInfo[] => {
+  const tests: TestResultInfo[] = [];
+  const ciDir = getCiFolder();
+  const jobsFolder = path.resolve(ciDir, 'jobs');
+  if (fs.existsSync(jobsFolder)) {
+    const files = fs.readdirSync(jobsFolder);
+    if (files && files.length) {
+      files.forEach(file => {
+        if (file.startsWith('test_')) {
+          const summary = path.resolve(jobsFolder, file, 'results.json');
+          if (fs.existsSync(summary)) {
+            tests.push(require(summary) as TestResultInfo);
+          }
+        }
+      });
+    } else {
+      console.log('NO Jobs IN: ', jobsFolder);
+    }
+  }
+  return tests;
 };

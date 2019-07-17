@@ -15,7 +15,8 @@ import {
   getCiFolder,
   agregateWorkflowInfo,
   agregateCoverageInfo,
-  getGitHash,
+  getPluginSourceInfo,
+  TestResultInfo,
 } from './plugin/ci';
 
 export interface PluginCIOptions {
@@ -141,8 +142,17 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     }
   }
 
+  console.log('Save the source info in plugin.json');
+  const pluginJsonFile = path.resolve(distDir, 'plugin.json');
+  const pluginInfo = getPluginJson(pluginJsonFile);
+  (pluginInfo.info as any).source = await getPluginSourceInfo();
+  fs.writeFile(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), err => {
+    if (err) {
+      throw new Error('Error writing: ' + pluginJsonFile);
+    }
+  });
+
   console.log('Building ZIP');
-  const pluginInfo = getPluginJson(`${distDir}/plugin.json`);
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
   let zipFile = path.resolve(packagesDir, zipName);
   process.chdir(distDir);
@@ -238,7 +248,7 @@ export const ciPackagePluginTask = new Task<PluginCIOptions>('Bundle Plugin', pa
 const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
   const start = Date.now();
   const workDir = getJobFolder();
-  const pluginInfo = getPluginJson(`${process.cwd()}/src/plugin.json`);
+  const pluginInfo = getPluginJson(`${process.cwd()}/dist/plugin.json`);
 
   const args = {
     withCredentials: true,
@@ -255,21 +265,26 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
   const buildInfo = frontendSettings.data.buildInfo;
   const version = buildInfo.version;
 
+  const results: TestResultInfo = {
+    job,
+    grafana: buildInfo,
+  };
+
   console.log('Grafana: ' + version + ', build: ' + JSON.stringify(buildInfo, null, 2));
 
   const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
   console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
 
-  const elapsed = Date.now() - start;
-  const stats = {
-    job,
-    sha1: getGitHash(),
-    startTime: start,
-    buildTime: elapsed,
-    endTime: Date.now(),
-  };
+  console.log('TODO Puppeteer Tests', workDir);
 
-  console.log('TODO Puppeteer Tests', stats, workDir);
+  results.status = 'TODO... save images and get links';
+  const f = path.resolve(workDir, 'results.json');
+  fs.writeFile(f, JSON.stringify(results, null, 2), err => {
+    if (err) {
+      throw new Error('Error saving: ' + f);
+    }
+  });
+
   writeJobStats(start, workDir);
 };
 
@@ -285,7 +300,10 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
   const ciDir = path.resolve(process.cwd(), 'ci');
   const packageInfo = require(path.resolve(ciDir, 'packages', 'info.json'));
 
+  console.log('Save the source info in plugin.json');
+  const pluginJsonFile = path.resolve(process.cwd(), 'dist', 'plugin.json');
   const report = {
+    plugin: getPluginJson(pluginJsonFile),
     packages: packageInfo,
     workflow: agregateWorkflowInfo(),
     coverage: agregateCoverageInfo(),

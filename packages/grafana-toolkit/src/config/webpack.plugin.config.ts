@@ -9,7 +9,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 import * as webpack from 'webpack';
 import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
-import { getGitHash } from '../cli/tasks/plugin/ci';
 
 interface WebpackConfigurationOptions {
   watch?: boolean;
@@ -105,10 +104,6 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
           {
             search: '%TODAY%',
             replace: new Date().toISOString().substring(0, 10),
-          },
-          {
-            search: '%GITHASH%',
-            replace: getGitHash(),
           },
         ],
       },
