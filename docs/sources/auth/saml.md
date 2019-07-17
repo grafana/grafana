@@ -120,7 +120,7 @@ The configuration options is specified as a duration e.g. `max_issue_delay = 90s
 
 ### Metadata valid duration
 
-As an SP, our metadata is likely to expire at some point, e.g. due to a certificate rotation or change of location binding. Grafana allows you to specify for how long should the metadata be valid. Leveraging the standard's `validUntil` field, you can tell consumers until when your metadata is going to be valid. The duration is computed by adding the duration to the current time.
+As an SP, our metadata is likely to expire at some point, e.g. due to a certificate rotation or change of location binding. Grafana allows you to specify for how long the metadata should be valid. Leveraging the standard's `validUntil` field, you can tell consumers until when your metadata is going to be valid. The duration is computed by adding the duration to the current time.
 
 The configuration option is specified as a duration e.g. `metadata_valid_duration = 48h`
 
