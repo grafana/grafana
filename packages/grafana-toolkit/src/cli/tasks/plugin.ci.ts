@@ -8,7 +8,14 @@ import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
 import { getFileSizeReportInFolder } from '../utils/fileHelper';
-import { getJobFolder, writeJobStats, getCiFolder, agregateWorkflowInfo, agregateCoverageInfo } from './plugin/ci';
+import {
+  getJobFolder,
+  writeJobStats,
+  getCiFolder,
+  agregateWorkflowInfo,
+  agregateCoverageInfo,
+  getGitHash,
+} from './plugin/ci';
 
 export interface PluginCIOptions {
   backend?: string;
@@ -270,7 +277,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
   const elapsed = Date.now() - start;
   const stats = {
-    sha1: `${process.env.CIRCLE_SHA1}`,
+    sha1: getGitHash(),
     startTime: start,
     buildTime: elapsed,
     endTime: Date.now(),

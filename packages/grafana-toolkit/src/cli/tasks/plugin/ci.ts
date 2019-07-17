@@ -37,12 +37,12 @@ const getJobFromProcessArgv = () => {
 
 export const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
 
-export const getGitHash = async (): Promise<string> => {
+export const getGitHash = (): string => {
   if (process.env.CIRCLE_SHA1) {
-    return Promise.resolve(process.env.CIRCLE_SHA1);
+    return process.env.CIRCLE_SHA1;
   }
-  const exe = await execa('git', ['rev-parse', 'HEAD']);
-  return exe.stdout;
+  // execa('git', ['rev-parse', 'HEAD']);
+  return 'UNKNOWN';
 };
 
 const getBuildNumber = (): number | undefined => {
@@ -85,7 +85,7 @@ export const writeJobStats = (startTime: number, workDir: string) => {
   });
 };
 
-export const agregateWorkflowInfo = (): any => {
+export const agregateWorkflowInfo = (): WorkflowInfo => {
   const now = Date.now();
   const workflow: WorkflowInfo = {
     jobs: [],
@@ -94,7 +94,7 @@ export const agregateWorkflowInfo = (): any => {
     workflowId: process.env.CIRCLE_WORKFLOW_ID,
     branch: process.env.CIRCLE_BRANCH,
     repo: process.env.CIRCLE_REPOSITORY_URL,
-    sha1: process.env.CIRCLE_SHA1,
+    sha1: getGitHash(),
     buildNumber: getBuildNumber(),
     elapsed: 0,
   };

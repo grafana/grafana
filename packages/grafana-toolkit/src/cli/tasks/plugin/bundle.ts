@@ -56,11 +56,6 @@ export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) =
         if (err) {
           reject(err.message);
         }
-        if (!stats) {
-          console.log('\n', 'No stats', '\n');
-          resolve();
-          return;
-        }
         if (stats.hasErrors()) {
           stats.compilation.errors.forEach(e => {
             console.log(e.message);
