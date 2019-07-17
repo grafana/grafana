@@ -47,24 +47,16 @@ export class LoginForm extends PureComponent<Props, State> {
   }
 
   handleChange(e: any) {
-    this.validate();
-    console.log(e.target);
     // @ts-ignore
-    this.setState({
-      [e.target.name]: e.target.value,
+    this.setState({ [e.target.name]: e.target.value }, () => {
+      this.setState({ valid: this.validate() });
     });
   }
 
   validate() {
     if (this.state.user.length > 0 && this.state.password.length > 0) {
-      this.setState({
-        valid: true,
-      });
       return true;
     } else {
-      this.setState({
-        valid: false,
-      });
       return false;
     }
   }
