@@ -387,8 +387,12 @@ func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Quer
 
 	fromStringOrNumber := func(val *simplejson.Json) (null.Float, error) {
 		switch v := val.Interface().(type) {
-		case float64:
-			return null.FloatFrom(v), nil
+		case json.Number:
+			fV, err := v.Float64()
+			if err != nil {
+				return null.Float{}, err
+			}
+			return null.FloatFrom(fV), nil
 		case string:
 			if v == "null" {
 				return null.FloatFromPtr(nil), nil
