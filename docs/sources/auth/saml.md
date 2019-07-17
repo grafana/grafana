@@ -71,6 +71,15 @@ max_issue_delay =
 
 # Duration, for how long the SP's metadata should be valid. Defaults to 48 hours
 metadata_valid_duration =
+
+# Friendly name or name of the attribute within the SAML assertion to use as the user's name
+assertion_attribute_name = displayName
+
+# Friendly name or name of the attribute within the SAML assertion to use as the user's login handle
+assertion_attribute_login = mail
+
+# Friendly name or name of the attribute within the SAML assertion to use as the user's email
+assertion_attribute_email = mail
 ```
 
 Important to note:
@@ -102,6 +111,9 @@ And here is a comprehensive list of the options:
 | `idp_metadata|_path|_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML               |         |
 | `max_issue_delay`         | No       | Duration, since the IdP issued a response and the SP is allowed to process it  | `90s`   |
 | `metadata_valid_duration` | No       | Duration, for how long the SP's metadata should be valid                       | `48h`   |
+| `assertion_attribute_name` | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's name  | `displayName`   |
+| `assertion_attribute_login` | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's login handle | `mail`   |
+| `assertion_attribute_email` | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's login handle | `mail`   |
 
 ### Cert and Private Key
 
@@ -132,6 +144,8 @@ The configuration option is specified as a duration e.g. `metadata_valid_duratio
 Finally, for the SAML integration to work correctly, you need to make the IdP aware of the SP. You need to provide the IdP with the SP's metadata. 
 
 Grafana provides an endpoint for such at `/saml/metadata`. You can either download the metadata and upload it manually, or make the IdP request it directly from the endpoint.
+
+## Assertion mapping
 
 ## Troubleshooting
 
