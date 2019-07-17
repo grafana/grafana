@@ -16,7 +16,7 @@ import { pluginDevTask } from './tasks/plugin.dev';
 import {
   ciBuildPluginTask,
   ciBuildPluginDocsTask,
-  ciBundlePluginTask,
+  ciPackagePluginTask,
   ciTestPluginTask,
   ciPluginReportTask,
 } from './tasks/plugin.ci';
@@ -170,10 +170,10 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:ci-bundle')
-    .description('Create a zip artifact for the plugin')
+    .command('plugin:ci-package')
+    .description('Create a zip packages for the plugin')
     .action(async cmd => {
-      await execTask(ciBundlePluginTask)({});
+      await execTask(ciPackagePluginTask)({});
     });
 
   program

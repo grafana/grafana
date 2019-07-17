@@ -1,3 +1,5 @@
+// @ts-ignore
+import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
 
@@ -34,6 +36,14 @@ const getJobFromProcessArgv = () => {
 };
 
 export const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
+
+export const getGitHash = async (): Promise<string> => {
+  if (process.env.CIRCLE_SHA1) {
+    return Promise.resolve(process.env.CIRCLE_SHA1);
+  }
+  const exe = await execa('git', ['rev-parse', 'HEAD']);
+  return exe.stdout;
+};
 
 const getBuildNumber = (): number | undefined => {
   if (process.env.CIRCLE_BUILD_NUM) {

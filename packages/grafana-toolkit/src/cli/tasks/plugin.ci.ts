@@ -93,23 +93,22 @@ const buildPluginDocsRunner: TaskRunner<PluginCIOptions> = async () => {
 export const ciBuildPluginDocsTask = new Task<PluginCIOptions>('Build Plugin Docs', buildPluginDocsRunner);
 
 /**
- * 2. BUNDLE
+ * 2. Package
  *
  *  Take everything from `~/ci/job/{any}/dist` and
  *  1. merge it into: `~/ci/dist`
- *  2. zip it into artifacts in `~/ci/artifacts`
+ *  2. zip it into packages in `~/ci/packages`
  *  3. prepare grafana environment in: `~/ci/grafana-test-env`
- *
  */
-const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
+const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   const start = Date.now();
   const ciDir = getCiFolder();
-  const artifactsDir = path.resolve(ciDir, 'artifacts');
+  const packagesDir = path.resolve(ciDir, 'packages');
   const distDir = path.resolve(ciDir, 'dist');
   const docsDir = path.resolve(ciDir, 'docs');
   const grafanaEnvDir = path.resolve(ciDir, 'grafana-test-env');
-  await execa('rimraf', [artifactsDir, distDir, grafanaEnvDir]);
-  fs.mkdirSync(artifactsDir);
+  await execa('rimraf', [packagesDir, distDir, grafanaEnvDir]);
+  fs.mkdirSync(packagesDir);
   fs.mkdirSync(distDir);
   fs.mkdirSync(grafanaEnvDir);
 
@@ -137,7 +136,7 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   console.log('Building ZIP');
   const pluginInfo = getPluginJson(`${distDir}/plugin.json`);
   let zipName = pluginInfo.id + '-' + pluginInfo.info.version + '.zip';
-  let zipFile = path.resolve(artifactsDir, zipName);
+  let zipFile = path.resolve(packagesDir, zipName);
   process.chdir(distDir);
   await execa('zip', ['-r', zipFile, '.']);
   restoreCwd();
@@ -170,11 +169,11 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   fs.mkdirSync(p, { recursive: true });
   await execa('unzip', [zipFile, '-d', p]);
 
-  // If docs exist, zip them into artifacts
+  // If docs exist, zip them into packages
   if (fs.existsSync(docsDir)) {
     console.log('Creating documentation zip');
     zipName = pluginInfo.id + '-' + pluginInfo.info.version + '-docs.zip';
-    zipFile = path.resolve(artifactsDir, zipName);
+    zipFile = path.resolve(packagesDir, zipName);
     process.chdir(docsDir);
     await execa('zip', ['-r', zipFile, '.']);
     restoreCwd();
@@ -197,10 +196,10 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     info.docs = zipInfo;
   }
 
-  p = path.resolve(artifactsDir, 'info.json');
+  p = path.resolve(packagesDir, 'info.json');
   fs.writeFile(p, JSON.stringify(info, null, 2), err => {
     if (err) {
-      throw new Error('Error writing artifact info: ' + p);
+      throw new Error('Error writing package info: ' + p);
     }
   });
 
@@ -220,7 +219,7 @@ const bundlePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   writeJobStats(start, getJobFolder());
 };
 
-export const ciBundlePluginTask = new Task<PluginCIOptions>('Bundle Plugin', bundlePluginRunner);
+export const ciPackagePluginTask = new Task<PluginCIOptions>('Bundle Plugin', packagePluginRunner);
 
 /**
  * 3. Test (end-to-end)
@@ -291,10 +290,10 @@ export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', t
  */
 const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
   const ciDir = path.resolve(process.cwd(), 'ci');
-  const artifactsInfo = require(path.resolve(ciDir, 'artifacts', 'info.json'));
+  const packageInfo = require(path.resolve(ciDir, 'packages', 'info.json'));
 
   const report = {
-    artifacts: artifactsInfo,
+    packages: packageInfo,
     workflow: agregateWorkflowInfo(),
     coverage: agregateCoverageInfo(),
   };
