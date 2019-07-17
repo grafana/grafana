@@ -1,11 +1,11 @@
+import { TestPage } from '../pages';
 import {
-  TestPage,
-  InputPageObject,
-  ClickablePageObject,
   Selector,
+  InputPageObject,
   InputPageObjectType,
   ClickablePageObjectType,
-} from '../index';
+  ClickablePageObject,
+} from '../pageObjects';
 
 export interface LoginPage {
   username: InputPageObjectType;
