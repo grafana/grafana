@@ -115,7 +115,7 @@ export class DatasourceSrv implements DataSourceService {
     return sources;
   }
 
-  getMetricSources(options?: { skipVariables?: any }) {
+  getMetricSources(options?: { skipVariables?: boolean }) {
     const metricSources: DataSourceSelectItem[] = [];
 
     _.each(config.datasources, (value, key) => {
@@ -155,7 +155,7 @@ export class DatasourceSrv implements DataSourceService {
     return metricSources;
   }
 
-  addDataSourceVariables(list: any) {
+  addDataSourceVariables(list: any[]) {
     // look for data source variables
     for (let i = 0; i < this.templateSrv.variables.length; i++) {
       const variable = this.templateSrv.variables[i];

@@ -123,6 +123,16 @@ export interface PanelMenuItem {
   subMenu?: PanelMenuItem[];
 }
 
+export interface AngularPanelMenuItem {
+  click: Function;
+  icon: string;
+  href: string;
+  divider: boolean;
+  text: string;
+  shortcut: string;
+  submenu: any[];
+}
+
 export enum VizOrientation {
   Auto = 'auto',
   Vertical = 'vertical',

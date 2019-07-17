@@ -1,4 +1,5 @@
 import { coreModule } from 'app/core/core';
+import { AngularPanelMenuItem } from '@grafana/ui';
 
 const template = `
 <span class="panel-title">
@@ -12,10 +13,7 @@ const template = `
   <span class="panel-time-info" ng-if="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>
 </span>`;
 
-function renderMenuItem(
-  item: { divider: any; submenu: any; click: any; href: any; icon: any; text: any; shortcut: any },
-  ctrl: any
-) {
+function renderMenuItem(item: AngularPanelMenuItem, ctrl: any) {
   let html = '';
   let listItemClass = '';
 
