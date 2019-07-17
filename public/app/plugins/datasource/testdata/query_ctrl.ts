@@ -30,7 +30,6 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.scenarioList = [];
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
-    this.target.pulseWave = _.defaults(this.target.pulseWave || {}, defaultPulse);
   }
 
   getPoints() {
@@ -82,6 +81,12 @@ export class TestDataQueryCtrl extends QueryCtrl {
       this.target.stream = _.defaults(this.target.stream || {}, defaultQuery);
     } else {
       delete this.target.stream;
+    }
+
+    if (this.target.scenarioId === 'predictable_pulse') {
+      this.target.pulseWave = _.defaults(this.target.pulseWave || {}, defaultPulse);
+    } else {
+      delete this.target.pulseWave;
     }
 
     this.refresh();
