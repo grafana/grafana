@@ -8,12 +8,12 @@ describe('LoginCtrl', () => {
     });
     it('call login with loginMode true', () => {
       loginCtrl.login = jest.fn();
-      loginCtrl.submit(true);
+      loginCtrl.submit(true, {} as any);
       expect(loginCtrl.login).toBeCalled();
     });
     it('call signiup with loginMode false', () => {
       loginCtrl.signUp = jest.fn();
-      loginCtrl.submit(false);
+      loginCtrl.submit(false, {} as any);
       expect(loginCtrl.signUp).toBeCalled();
     });
   });

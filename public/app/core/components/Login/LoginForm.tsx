@@ -41,8 +41,8 @@ export class LoginForm extends PureComponent<Props, State> {
   handleSubmit(e: SyntheticEvent) {
     e.preventDefault();
 
-    if (this.validate()) {
-      console.log(e);
+    if (!this.validate()) {
+      return;
     }
   }
 

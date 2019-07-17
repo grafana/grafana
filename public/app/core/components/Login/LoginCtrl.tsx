@@ -8,20 +8,22 @@ import { StoreState } from 'app/types';
 import { PureComponent } from 'react';
 import { backendSrv } from 'test/mocks/common';
 
+export interface FormModel {
+  user: string;
+  password: string;
+  email: string;
+}
 interface Props {
   routeParams: any;
   updateLocation: typeof updateLocation;
 }
-interface State {
+
+export class LoginCtrl extends PureComponent<Props> {
   formModel: {
     user: string;
     email: string;
     password: string;
   };
-  validForm: boolean;
-}
-
-export class LoginCtrl extends PureComponent<Props, State> {
   result: any = {};
 
   init() {
@@ -29,12 +31,8 @@ export class LoginCtrl extends PureComponent<Props, State> {
       appEvents.on('alert-warning', ['Login Failed', config.loginError]);
     }
   }
-  signUp() {
-    if (!this.state.validForm) {
-      return;
-    }
-
-    backendSrv.post('/api/user/signup', this.state.formModel).then((result: any) => {
+  signUp(formModel: FormModel) {
+    backendSrv.post('/api/user/signup', formModel).then((result: any) => {
       if (result.status === 'SignUpCreated') {
         // $location.path('/signup').search({ email: $scope.formModel.email });
         this.props.updateLocation({
@@ -46,17 +44,17 @@ export class LoginCtrl extends PureComponent<Props, State> {
     });
   }
 
-  login() {}
+  login(formModel: FormModel) {}
 
   skip() {}
 
   changeView() {}
 
-  submit(loginMode = true) {
+  submit(loginMode = true, formModel: FormModel) {
     if (loginMode) {
-      this.login();
+      this.login(formModel);
     } else {
-      this.signUp();
+      this.signUp(formModel);
     }
   }
 
