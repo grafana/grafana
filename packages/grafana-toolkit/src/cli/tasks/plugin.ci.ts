@@ -257,12 +257,8 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
   console.log('Grafana: ' + version + ', build: ' + JSON.stringify(buildInfo, null, 2));
 
-  if (true) {
-    const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
-    console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
-  }
-
-  console.log('TODO puppeteer');
+  const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
+  console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
 
   const elapsed = Date.now() - start;
   const stats = {
@@ -273,7 +269,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
     endTime: Date.now(),
   };
 
-  console.log('TODO Puppeteer Tests', stats);
+  console.log('TODO Puppeteer Tests', stats, workDir);
   writeJobStats(start, workDir);
 };
 
