@@ -47,7 +47,6 @@ const preparePackage = async (pkg: any) => {
   const version: string = pkg.version;
   const name: string = pkg.name;
   const deps: any = pkg.dependencies;
-  console.log('PREPARE', pkg.name, version);
   if (name.endsWith('/ui')) {
     deps['@grafana/data'] = version;
   } else if (name.endsWith('/runtime')) {
