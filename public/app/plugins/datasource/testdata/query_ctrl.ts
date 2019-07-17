@@ -5,6 +5,14 @@ import { defaultQuery } from './StreamHandler';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { dateTime } from '@grafana/data';
 
+export const defaultSquare: any = {
+  timeStep: 60,
+  onCount: 3,
+  onValue: 2,
+  offCount: 3,
+  offValue: 1,
+};
+
 export class TestDataQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
@@ -22,6 +30,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.scenarioList = [];
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
+    this.target.squareWave = _.defaults(this.target.squareWave || {}, defaultSquare);
   }
 
   getPoints() {

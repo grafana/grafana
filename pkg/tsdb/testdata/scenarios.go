@@ -353,8 +353,8 @@ func init() {
 
 // PredictableSquareDesc is the description for the Predictable Square scenerio.
 const PredictableSquareDesc = `Predictable Square returns a square wave where there is a datapoint every timeStepSeconds.
-The wave cycles at waveStepMultiple*timeStepSeconds and has a value of onValue for onCount and a value of offValue for the remainder of the cycle.
-The cycle of the wave is based on absolute time (epoch) which makes it predictable.
+The wave cycles at timeStepSeconds*(onCount+offCount).
+The cycle of the wave is based off of absolute time (from the epoch) which makes it predictable.
 Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means times will all end in :00 seconds).`
 
 func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -362,51 +362,38 @@ func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Quer
 
 	// Process Input
 	var timeStep int64
-	var waveStep int64
 	var onCount int64
-	var offValue null.Float
+	var offCount int64
 	var onValue null.Float
+	var offValue null.Float
+
+	options := query.Model.Get("squareWave")
 
 	var err error
-	if timeStep, err = query.Model.Get("timeStep").Int64(); err != nil {
-		queryRes.Error = fmt.Errorf("failed to parse timeStepSeconds value '%v' into integer: %v", query.Model.Get("timeStep"), err)
+	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("onCount"), err)
 		return queryRes
 	}
-	if waveStep, err = query.Model.Get("waveStep").Int64(); err != nil {
-		queryRes.Error = fmt.Errorf("failed to parse waveStepMultiple value '%v' into integer: %v", query.Model.Get("waveStep"), err)
+	if onCount, err = options.Get("onCount").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse onCount value '%v' into integer: %v", options.Get("onCount"), err)
 		return queryRes
 	}
-	if onCount, err = query.Model.Get("onCount").Int64(); err != nil {
-		queryRes.Error = fmt.Errorf("failed to parse onCount value '%v' into integer: %v", onCount, err)
+	if offCount, err = options.Get("offCount").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse offCount value '%v' into integer: %v", options.Get("offCount"), err)
 		return queryRes
 	}
-
-	if onCount > waveStep {
-		queryRes.Error = fmt.Errorf("onCount value %v may not be greater than waveStep %v", onCount, waveStep)
-		return queryRes
-	}
-
-	onRaw := query.Model.Get("onValue").MustString()
+	onRaw := options.Get("onValue").MustString()
 	if onRaw == "null" {
 		onValue = null.FloatFromPtr(nil)
 	} else {
-		val, err := strconv.ParseFloat(onRaw, 64)
-		if err != nil {
-			queryRes.Error = fmt.Errorf("failed to parse onValue value '%v' into float: %v", onRaw, err)
-			return queryRes
-		}
+		val := options.Get("onValue").MustFloat64()
 		onValue = null.FloatFrom(val)
 	}
-
-	offRaw := query.Model.Get("offValue").MustString()
+	offRaw := options.Get("offValue").MustString()
 	if offRaw == "null" {
 		offValue = null.FloatFromPtr(nil)
 	} else {
-		val, err := strconv.ParseFloat(offRaw, 64)
-		if err != nil {
-			queryRes.Error = fmt.Errorf("failed to parse offValue value '%v' into float: %v", offRaw, err)
-			return queryRes
-		}
+		val := options.Get("offValue").MustFloat64()
 		offValue = null.FloatFrom(val)
 	}
 
@@ -418,9 +405,9 @@ func getPredictableSqaure(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Quer
 
 	timeStep = timeStep * 1000             // Seconds to Milliseconds
 	timeCursor := from - (from % timeStep) // Truncate Start
-	waveStep = timeStep * waveStep         // 6 minute Cycle
-	maxPoints := 10000                     // Don't return too many points
-	onFor := func(mod int64) bool {        // How many items in the cycle should get the on value
+	waveStep := timeStep * (onCount + offCount)
+	maxPoints := 10000              // Don't return too many points
+	onFor := func(mod int64) bool { // How many items in the cycle should get the on value
 		var i int64
 		for i = 0; i < onCount; i++ {
 			if mod == i*timeStep {
