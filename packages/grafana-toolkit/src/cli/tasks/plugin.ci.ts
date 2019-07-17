@@ -7,7 +7,7 @@ import { getPluginJson } from '../../config/utils/pluginValidation';
 import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
-import { getFileSizeReportInFolder } from '../utils/fileHelper';
+import { getPackageDetails } from '../utils/fileHelper';
 import {
   job,
   getJobFolder,
@@ -17,6 +17,7 @@ import {
   agregateCoverageInfo,
   getPluginSourceInfo,
   TestResultInfo,
+  agregateTestInfo,
 } from './plugin/ci';
 
 export interface PluginCIOptions {
@@ -164,23 +165,9 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     throw new Error('Invalid zip file: ' + zipFile);
   }
 
-  const zipInfo: any = {
-    name: zipName,
-    size: zipStats.size,
-    contents: getFileSizeReportInFolder(distDir),
-  };
   const info: any = {
-    plugin: zipInfo,
+    plugin: await getPackageDetails(zipFile, distDir),
   };
-  try {
-    const exe = await execa('shasum', [zipFile]);
-    const idx = exe.stdout.indexOf(' ');
-    const sha1 = exe.stdout.substring(0, idx);
-    fs.writeFile(zipFile + '.sha1', sha1, err => {});
-    zipInfo.sha1 = sha1;
-  } catch {
-    console.warn('Unable to read SHA1 Checksum');
-  }
 
   console.log('Setup Grafan Environment');
   let p = path.resolve(grafanaEnvDir, 'plugins', pluginInfo.id);
@@ -196,22 +183,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
     await execa('zip', ['-r', zipFile, '.']);
     restoreCwd();
 
-    const zipStats = fs.statSync(zipFile);
-    const zipInfo: any = {
-      name: zipName,
-      size: zipStats.size,
-      contents: getFileSizeReportInFolder(docsDir),
-    };
-    try {
-      const exe = await execa('shasum', [zipFile]);
-      const idx = exe.stdout.indexOf(' ');
-      const sha1 = exe.stdout.substring(0, idx);
-      fs.writeFile(zipFile + '.sha1', sha1, err => {});
-      zipInfo.sha1 = sha1;
-    } catch {
-      console.warn('Unable to read SHA1 Checksum');
-    }
-    info.docs = zipInfo;
+    info.docs = await getPackageDetails(zipFile, docsDir);
   }
 
   p = path.resolve(packagesDir, 'info.json');
@@ -248,8 +220,8 @@ export const ciPackagePluginTask = new Task<PluginCIOptions>('Bundle Plugin', pa
 const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
   const start = Date.now();
   const workDir = getJobFolder();
-  const pluginInfo = getPluginJson(`${process.cwd()}/dist/plugin.json`);
-
+  const pluginInfo = getPluginJson(`${process.cwd()}/ci/dist/plugin.json`);
+  const results: TestResultInfo = { job };
   const args = {
     withCredentials: true,
     baseURL: process.env.BASE_URL || 'http://localhost:3000/',
@@ -260,24 +232,25 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
     },
   };
 
-  const axios = require('axios');
-  const frontendSettings = await axios.get('api/frontend/settings', args);
-  const buildInfo = frontendSettings.data.buildInfo;
-  const version = buildInfo.version;
+  try {
+    const axios = require('axios');
+    const frontendSettings = await axios.get('api/frontend/settings', args);
+    results.grafana = frontendSettings.data.buildInfo;
 
-  const results: TestResultInfo = {
-    job,
-    grafana: buildInfo,
-  };
+    console.log('Grafana: ' + JSON.stringify(results.grafana, null, 2));
 
-  console.log('Grafana: ' + version + ', build: ' + JSON.stringify(buildInfo, null, 2));
+    const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
+    console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
 
-  const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
-  console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
+    console.log('TODO Puppeteer Tests', workDir);
 
-  console.log('TODO Puppeteer Tests', workDir);
+    results.status = 'TODO... puppeteer';
+  } catch (err) {
+    results.error = err;
+    results.status = 'EXCEPTION Thrown';
+    console.log('Test Error', err);
+  }
 
-  results.status = 'TODO... save images and get links';
   const f = path.resolve(workDir, 'results.json');
   fs.writeFile(f, JSON.stringify(results, null, 2), err => {
     if (err) {
@@ -301,12 +274,13 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
   const packageInfo = require(path.resolve(ciDir, 'packages', 'info.json'));
 
   console.log('Save the source info in plugin.json');
-  const pluginJsonFile = path.resolve(process.cwd(), 'dist', 'plugin.json');
+  const pluginJsonFile = path.resolve(ciDir, 'dist', 'plugin.json');
   const report = {
     plugin: getPluginJson(pluginJsonFile),
     packages: packageInfo,
     workflow: agregateWorkflowInfo(),
     coverage: agregateCoverageInfo(),
+    tests: agregateTestInfo(),
   };
 
   console.log('REPORT', report);

@@ -1,9 +1,9 @@
-// @ts-ignore
 import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
 
 export interface PluginSourceInfo {
+  time?: number;
   repo?: string;
   branch?: string;
   hash?: string;
@@ -21,6 +21,8 @@ export interface JobInfo {
 export interface WorkflowInfo extends JobInfo {
   workflowId?: string;
   jobs: JobInfo[];
+  user?: string;
+  repo?: string;
 }
 
 const getJobFromProcessArgv = () => {
@@ -43,6 +45,7 @@ export const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
 export const getPluginSourceInfo = async (): Promise<PluginSourceInfo> => {
   if (process.env.CIRCLE_SHA1) {
     return Promise.resolve({
+      time: Date.now(),
       repo: process.env.CIRCLE_REPOSITORY_URL,
       branch: process.env.CIRCLE_BRANCH,
       hash: process.env.CIRCLE_SHA1,
@@ -50,6 +53,7 @@ export const getPluginSourceInfo = async (): Promise<PluginSourceInfo> => {
   }
   const exe = await execa('git', ['rev-parse', 'HEAD']);
   return {
+    time: Date.now(),
     hash: exe.stdout,
   };
 };
@@ -101,6 +105,8 @@ export const agregateWorkflowInfo = (): WorkflowInfo => {
     startTime: now,
     endTime: now,
     workflowId: process.env.CIRCLE_WORKFLOW_ID,
+    repo: process.env.CIRCLE_PROJECT_REPONAME,
+    user: process.env.CIRCLE_PROJECT_USERNAME,
     buildNumber: getBuildNumber(),
     elapsed: 0,
   };
@@ -180,8 +186,9 @@ export const agregateCoverageInfo = (): CoverageInfo[] => {
 
 export interface TestResultInfo {
   job: string;
-  grafana: any;
+  grafana?: any;
   status?: string;
+  error?: string;
 }
 
 export const agregateTestInfo = (): TestResultInfo[] => {
@@ -192,7 +199,7 @@ export const agregateTestInfo = (): TestResultInfo[] => {
     const files = fs.readdirSync(jobsFolder);
     if (files && files.length) {
       files.forEach(file => {
-        if (file.startsWith('test_')) {
+        if (file.startsWith('test')) {
           const summary = path.resolve(jobsFolder, file, 'results.json');
           if (fs.existsSync(summary)) {
             tests.push(require(summary) as TestResultInfo);
