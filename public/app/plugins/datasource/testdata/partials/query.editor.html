@@ -116,4 +116,68 @@
 			<gf-form-switch class="gf-form" label="Level" label-class="query-keyword width-5" checked="ctrl.target.levelColumn" switch-class="max-width-6" on-change="ctrl.refresh()"></gf-form-switch>
 		</div>
 	</div>
+
+	<!-- Predictable Pulse Scenario Options Form -->
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'predictable_pulse'">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				Step
+				<info-popover mode="right-normal">The number of seconds between datapoints.</info-popover>
+			</label>
+				<input type="number"
+				class="gf-form-input width-5"
+				placeholder="60"
+				ng-model="ctrl.target.pulseWave.timeStep"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				On Count
+				<info-popover mode="right-normal">The number of values within a cycle, at the start of the cycle, that should have the onValue.</info-popover>
+			</label>
+			<input type="number"
+				class="gf-form-input width-3"
+				placeholder="3"
+				ng-model="ctrl.target.pulseWave.onCount"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				Off Count
+				<info-popover mode="right-normal">The number of offValues within the cycle.</info-popover>
+			</label>
+			<input type="number"
+				class="gf-form-input width-3"
+				placeholder="6"
+				ng-model="ctrl.target.pulseWave.offCount"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				On Value
+				<info-popover mode="right-normal">The value for "on values", may be a int, float, or null.</info-popover>
+			</label>
+			<input type="string"
+				class="gf-form-input width-5"
+				placeholder="1"
+				ng-model="ctrl.target.pulseWave.onValue"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				Off Value
+				<info-popover mode="right-normal">The value for "off values", may be a int, float, or null.</info-popover>
+			</label>
+			<input type="string"
+				class="gf-form-input width-5"
+				placeholder="1"
+				ng-model="ctrl.target.pulseWave.offValue"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+	</div>
 </query-editor-row>
