@@ -32,8 +32,6 @@ e2eScenario(
     const expectedUrl = url.substring(1, url.length - 1);
     const selector = `a[href="${expectedUrl}"]`;
 
-    console.log('XXXX', selector);
-
     await dataSourcesPage.init(page);
     await dataSourcesPage.navigateTo();
     await dataSourcesPage.expectSelector({ selector });
