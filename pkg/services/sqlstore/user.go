@@ -456,14 +456,9 @@ func SearchUsers(query *models.SearchUsersQuery) error {
 		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 	}
 
-	if query.IsDisabled != "" {
-		param, err := strconv.ParseBool(query.IsDisabled)
-		if err != nil {
-			return err
-		}
-
+	if query.IsDisabled != nil {
 		whereConditions = append(whereConditions, "is_disabled = ?")
-		whereParams = append(whereParams, param)
+		whereParams = append(whereParams, query.IsDisabled)
 	}
 
 	if query.AuthModule != "" {
