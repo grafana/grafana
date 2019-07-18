@@ -5,7 +5,7 @@ interface Props {
   displayForgotPassword: boolean;
   displayLoginFields: boolean;
   onChange?: (valid: boolean) => void;
-  onSubmit: (data: FormModel) => void;
+  onSubmit: (data: FormModel, valid: boolean) => void;
   loggingIn: boolean;
   passwordHint: string;
   loginHint: string;
@@ -37,7 +37,7 @@ export class LoginFields extends PureComponent<Props, State> {
 
     const { user, password, email } = this.state;
     if (this.state.valid) {
-      this.props.onSubmit({ user, password, email });
+      this.props.onSubmit({ user, password, email }, this.state.valid);
     }
   }
 

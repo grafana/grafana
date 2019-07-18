@@ -6,7 +6,11 @@ import { updateLocation } from 'app/core/actions';
 import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { PureComponent } from 'react';
+import { getBackendSrv } from '@grafana/runtime';
 
+let backendSrv;
+
+console.log(backendSrv);
 export interface FormModel {
   user: string;
   password: string;
@@ -17,9 +21,8 @@ interface Props {
   updateLocation?: typeof updateLocation;
   children: (obj: {
     loggingIn: boolean;
-    submit: Function;
     signUp: Function;
-    login: (data: FormModel) => void;
+    login: (data: FormModel, valid: boolean) => void;
   }) => JSX.Element;
 }
 
@@ -30,57 +33,76 @@ export class LoginCtrl extends PureComponent<Props, { loggingIn: boolean }> {
     this.state = {
       loggingIn: false,
     };
-    this.setState = this.setState.bind(this);
-  }
-
-  init() {
     if (config.loginError) {
       appEvents.on('alert-warning', ['Login Failed', config.loginError]);
     }
+    backendSrv = getBackendSrv();
   }
-  signUp(formModel: FormModel) {}
 
-  login(formModel: FormModel) {
+  init() {}
+  signUp = (formModel: FormModel, valid: boolean) => {};
+
+  login = (formModel: FormModel, valid: boolean) => {
     console.log(formModel);
+    console.log(this);
+    if (!valid) {
+      return;
+    }
     this.setState({
       loggingIn: true,
     });
-  }
+
+    console.log(backendSrv);
+
+    backendSrv
+      .post('/login', formModel)
+      .then((result: any) => {
+        this.result = result;
+        if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
+          this.toGrafana();
+          return;
+        } else {
+          this.changeView();
+        }
+      })
+      .catch(() => {
+        this.setState({
+          loggingIn: false,
+        });
+      });
+  };
 
   skip() {}
 
   changeView() {}
 
-  submit(loginMode = true, formModel: FormModel) {
-    console.log('Submit called');
-    if (loginMode) {
-      this.login(formModel);
-    } else {
-      this.signUp(formModel);
-    }
-  }
-
   toGrafana() {
     const params = this.props.routeParams;
-
     if (params.redirect && params.redirect[0] === '/') {
+      console.log('HEY IM RUNNING!');
       //   window.location.href = config.appSubUrl + params.redirect;
       this.props.updateLocation({
-        // url: config.appSubUrl + params.redirect,
+        path: config.appSubUrl + params.redirect,
       });
     } else if (this.result.redirectUrl) {
-      window.location.href = this.result.redirectUrl;
+      console.log('HEY IM RUNNING!');
+      this.props.updateLocation({
+        path: this.result.redirectUrl,
+      });
     } else {
-      window.location.href = config.appSubUrl + '/';
+      console.log('HEY IM RUNNING!');
+      this.props.updateLocation({
+        path: '/',
+      });
     }
   }
 
   render() {
     const { children } = this.props;
-    const { submit, login, signUp } = this;
     const { loggingIn } = this.state;
+    const { login, signUp } = this;
 
-    return <>{children({ submit, login, signUp, loggingIn })}</>;
+    return <>{children({ login, signUp, loggingIn })}</>;
   }
 }
 
