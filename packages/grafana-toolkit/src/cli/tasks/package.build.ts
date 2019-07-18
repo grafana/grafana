@@ -47,6 +47,9 @@ const preparePackage = async (pkg: any) => {
   const version: string = pkg.version;
   const name: string = pkg.name;
   const deps: any = pkg.dependencies;
+
+  // Below we are adding cross-dependencies to Grafana's packages
+  // with the version being published
   if (name.endsWith('/ui')) {
     deps['@grafana/data'] = version;
   } else if (name.endsWith('/runtime')) {
