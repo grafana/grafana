@@ -28,9 +28,6 @@ export interface QueryResultMeta {
 
   // Used in Explore to show limit applied to search result
   limit?: number;
-
-  // id of any transformations that were applied
-  transformations?: string[];
 }
 
 export interface QueryResultBase {
