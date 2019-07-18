@@ -280,13 +280,17 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
 
   console.log('Save the source info in plugin.json');
   const pluginJsonFile = path.resolve(ciDir, 'dist', 'plugin.json');
-  const report = {
+  const report: any = {
     plugin: getPluginJson(pluginJsonFile),
     packages: packageInfo,
     workflow: agregateWorkflowInfo(),
     coverage: agregateCoverageInfo(),
     tests: agregateTestInfo(),
   };
+  const pr = process.env.CIRCLE_PULL_REQUEST;
+  if (pr) {
+    report.pr = pr;
+  }
 
   console.log('REPORT', report);
 
@@ -296,7 +300,16 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
       throw new Error('Unable to write: ' + file);
     }
   });
-  console.log('TODO... notify some service');
+
+  if (pr) {
+    // TODO, compare the report to master and latest release
+    console.log('TODO... compare and then notify: ', pr);
+  } else if (report.plugin.build) {
+    const branch = report.plugin.build.branch;
+    if (branch) {
+      console.log('TODO, send report to some API');
+    }
+  }
 };
 
 export const ciPluginReportTask = new Task<PluginCIOptions>('Generate Plugin Report', pluginReportRunner);
