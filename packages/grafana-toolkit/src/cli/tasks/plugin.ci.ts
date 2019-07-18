@@ -31,10 +31,10 @@ export interface PluginCIOptions {
  *  when platform exists it is building backend, otherwise frontend
  *
  *  Each build writes data:
- *   ~/work/build_xxx/
+ *   ~/ci/jobs/build_xxx/
  *
  *  Anything that should be put into the final zip file should be put in:
- *   ~/work/build_xxx/dist
+ *   ~/ci/jobs/build_xxx/dist
  */
 const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
   const start = Date.now();
