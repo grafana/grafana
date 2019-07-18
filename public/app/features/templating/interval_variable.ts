@@ -1,6 +1,9 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import { Variable, assignModelProperties, variableTypes } from './variable';
+import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { TemplateSrv } from './template_srv';
+import { VariableSrv } from './variable_srv';
 
 export class IntervalVariable implements Variable {
   name: string;
@@ -13,7 +16,7 @@ export class IntervalVariable implements Variable {
   current: any;
   skipUrlSync: boolean;
 
-  defaults = {
+  defaults: any = {
     type: 'interval',
     name: '',
     hide: 0,
@@ -29,7 +32,12 @@ export class IntervalVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
+  constructor(
+    private model: any,
+    private timeSrv: TimeSrv,
+    private templateSrv: TemplateSrv,
+    private variableSrv: VariableSrv
+  ) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 2;
   }
@@ -39,7 +47,7 @@ export class IntervalVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     this.updateAutoValue();
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
@@ -74,11 +82,11 @@ export class IntervalVariable implements Variable {
     return this.variableSrv.validateVariableSelectionState(this);
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string | string[]) {
     this.updateAutoValue();
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
@@ -88,6 +96,7 @@ export class IntervalVariable implements Variable {
   }
 }
 
+// @ts-ignore
 variableTypes['interval'] = {
   name: 'Interval',
   ctor: IntervalVariable,

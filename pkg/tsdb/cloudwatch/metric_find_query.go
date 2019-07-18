@@ -642,7 +642,7 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 	var resp cloudwatch.ListMetricsOutput
 	err = svc.ListMetricsPages(params,
 		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
-			metrics.M_Aws_CloudWatch_ListMetrics.Inc()
+			metrics.MAwsCloudWatchListMetrics.Inc()
 			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
 			for _, metric := range metrics {
 				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
@@ -722,7 +722,7 @@ func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error)
 	var resp cloudwatch.ListMetricsOutput
 	err = svc.ListMetricsPages(params,
 		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
-			metrics.M_Aws_CloudWatch_ListMetrics.Inc()
+			metrics.MAwsCloudWatchListMetrics.Inc()
 			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
 			for _, metric := range metrics {
 				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))

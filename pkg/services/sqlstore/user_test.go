@@ -194,7 +194,8 @@ func TestUserDataAccess(t *testing.T) {
 					}
 				})
 
-				query := models.SearchUsersQuery{IsDisabled: "false"}
+				isDisabled := false
+				query := models.SearchUsersQuery{IsDisabled: &isDisabled}
 				err := SearchUsers(&query)
 				So(err, ShouldBeNil)
 
@@ -293,7 +294,8 @@ func TestUserDataAccess(t *testing.T) {
 					err := BatchDisableUsers(&disableCmd)
 					So(err, ShouldBeNil)
 
-					query := &models.SearchUsersQuery{IsDisabled: "true"}
+					isDisabled := true
+					query := &models.SearchUsersQuery{IsDisabled: &isDisabled}
 					err = SearchUsers(query)
 
 					So(err, ShouldBeNil)
@@ -319,7 +321,8 @@ func TestUserDataAccess(t *testing.T) {
 					err := BatchDisableUsers(&disableCmd)
 					So(err, ShouldBeNil)
 
-					query := &models.SearchUsersQuery{IsDisabled: "false"}
+					isDisabled := false
+					query := &models.SearchUsersQuery{IsDisabled: &isDisabled}
 					err = SearchUsers(query)
 
 					So(err, ShouldBeNil)

@@ -3,7 +3,7 @@ import omit from 'lodash/omit';
 
 import { VizOrientation, PanelModel } from '../../types/panel';
 import { FieldDisplayOptions } from '../../utils/fieldDisplay';
-import { Field, getFieldReducers, Threshold, sortThresholds } from '@grafana/data';
+import { Field, fieldReducers, Threshold, sortThresholds } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
   fieldOptions: FieldDisplayOptions;
@@ -48,7 +48,10 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
 
     // Make sure the stats have a valid name
     if (valueOptions.stat) {
-      fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
+      const reducer = fieldReducers.get(valueOptions.stat);
+      if (reducer) {
+        fieldOptions.calcs = [reducer.id];
+      }
     }
 
     field.min = old.minValue;

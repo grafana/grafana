@@ -667,6 +667,7 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
   if (action.payload) {
     const { exploreId } = action.payload as any;
     if (exploreId !== undefined) {
+      // @ts-ignore
       const exploreItemState = state[exploreId];
       return { ...state, [exploreId]: itemReducer(exploreItemState, action) };
     }
