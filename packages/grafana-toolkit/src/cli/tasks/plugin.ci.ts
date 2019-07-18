@@ -2,6 +2,7 @@ import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
 import { getPluginJson } from '../../config/utils/pluginValidation';
+import { PluginMeta } from '@grafana/ui';
 
 // @ts-ignore
 import execa = require('execa');
@@ -15,7 +16,7 @@ import {
   getCiFolder,
   agregateWorkflowInfo,
   agregateCoverageInfo,
-  getPluginSourceInfo,
+  getPluginBuildInfo,
   TestResultInfo,
   agregateTestInfo,
 } from './plugin/ci';
@@ -146,7 +147,7 @@ const packagePluginRunner: TaskRunner<PluginCIOptions> = async () => {
   console.log('Save the source info in plugin.json');
   const pluginJsonFile = path.resolve(distDir, 'plugin.json');
   const pluginInfo = getPluginJson(pluginJsonFile);
-  (pluginInfo.info as any).source = await getPluginSourceInfo();
+  pluginInfo.info.build = await getPluginBuildInfo();
   fs.writeFile(pluginJsonFile, JSON.stringify(pluginInfo, null, 2), err => {
     if (err) {
       throw new Error('Error writing: ' + pluginJsonFile);
@@ -239,8 +240,12 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
     console.log('Grafana: ' + JSON.stringify(results.grafana, null, 2));
 
-    const pluginSettings = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
-    console.log('Plugin Info: ' + JSON.stringify(pluginSettings.data, null, 2));
+    const loadedMetaRsp = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
+    const loadedMeta: PluginMeta = loadedMetaRsp.data;
+    console.log('Plugin Info: ' + JSON.stringify(loadedMeta, null, 2));
+    if (loadedMeta.info.build) {
+      console.log('Compage to', pluginInfo.info.build);
+    }
 
     console.log('TODO Puppeteer Tests', workDir);
 

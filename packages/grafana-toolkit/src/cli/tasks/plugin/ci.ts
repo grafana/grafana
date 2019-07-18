@@ -1,13 +1,7 @@
 import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
-
-export interface PluginSourceInfo {
-  time?: number;
-  repo?: string;
-  branch?: string;
-  hash?: string;
-}
+import { PluginBuildInfo } from '@grafana/ui';
 
 export interface JobInfo {
   job?: string;
@@ -42,7 +36,7 @@ const getJobFromProcessArgv = () => {
 
 export const job = process.env.CIRCLE_JOB || getJobFromProcessArgv();
 
-export const getPluginSourceInfo = async (): Promise<PluginSourceInfo> => {
+export const getPluginBuildInfo = async (): Promise<PluginBuildInfo> => {
   if (process.env.CIRCLE_SHA1) {
     return Promise.resolve({
       time: Date.now(),
