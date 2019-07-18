@@ -2,8 +2,8 @@
 
 .PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run clean devenv devenv-down revive-alerting
 
-GO := GO111MODULE=on go
-GO_FILES := ./pkg/...
+GO = GO111MODULE=on go
+GO_FILES ?= ./pkg/...
 
 all: deps build
 
