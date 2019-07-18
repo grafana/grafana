@@ -185,8 +185,10 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
                 plugins: ['angularjs-annotate'],
               },
             },
-
-            'ts-loader',
+            {
+              loader: 'ts-loader',
+              options: { onlyCompileBundledFiles: true },
+            },
           ],
           exclude: /(node_modules)/,
         },
