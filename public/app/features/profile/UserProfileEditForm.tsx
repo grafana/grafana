@@ -20,8 +20,9 @@ export class UserProfileEditForm extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const { user } = props;
-    const { name, email, login } = user;
+    const {
+      user: { name, email, login },
+    } = this.props;
 
     this.state = {
       name,
@@ -44,8 +45,7 @@ export class UserProfileEditForm extends PureComponent<Props, State> {
 
   onSubmitProfileUpdate = (event: MouseEvent<HTMLInputElement>) => {
     event.preventDefault();
-    const { name, email, login } = this.state;
-    this.props.updateProfile({ name, email, login });
+    this.props.updateProfile({ ...this.state });
   };
 
   render() {

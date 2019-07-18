@@ -27,18 +27,17 @@ export interface ProfileUpdateFields {
 }
 
 export interface Props {
-  loadUser?: boolean; // if true, will load user on mount
-  children: (api: UserAPI, states: LoadingStates, user: User) => JSX.Element;
+  userId?: number; // passed, will load user on mount
+  children: (user: User, api: UserAPI, states: LoadingStates) => JSX.Element;
 }
 
 export interface State {
-  user: User;
+  user?: User;
   loadingStates: LoadingStates;
 }
 
 export class UserProvider extends PureComponent<Props, State> {
   state: State = {
-    user: {} as User,
     loadingStates: {
       changePassword: false,
       loadUser: true,
@@ -47,7 +46,7 @@ export class UserProvider extends PureComponent<Props, State> {
   };
 
   componentDidMount() {
-    if (this.props.loadUser) {
+    if (this.props.userId) {
       this.loadUser();
     }
   }
@@ -60,7 +59,7 @@ export class UserProvider extends PureComponent<Props, State> {
 
   loadUser = async () => {
     this.setState({
-      loadingStates: { ...this.state.loadingStates, loadUser: Object.keys(this.state.user).length === 0 },
+      loadingStates: { ...this.state.loadingStates, loadUser: true },
     });
     const user = await getBackendSrv().get('/api/user');
     this.setState({ user, loadingStates: { ...this.state.loadingStates, loadUser: Object.keys(user).length === 0 } });
@@ -83,7 +82,7 @@ export class UserProvider extends PureComponent<Props, State> {
       updateUserProfile: this.updateUserProfile,
     };
 
-    return <>{children(api, loadingStates, user)}</>;
+    return <>{children(user, api, loadingStates)}</>;
   }
 }
 
