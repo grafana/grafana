@@ -1,12 +1,19 @@
 {
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
   "name": "@grafana/toolkit",
   "version": "6.4.0-alpha.22",
   "description": "Grafana Toolkit",
   "keywords": [
     "grafana",
     "cli",
-    "plugins"
+    "plugins",
+    "typescript"
   ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git"
+  },
   "bin": {
     "grafana-toolkit": "./bin/grafana-toolkit.js"
   },
@@ -17,8 +24,6 @@
     "clean": "rimraf ./dist ./compiled",
     "build": "grafana-toolkit toolkit:build"
   },
-  "author": "Grafana Labs",
-  "license": "Apache-2.0",
   "dependencies": {
     "@babel/core": "7.4.5",
     "@babel/preset-env": "7.4.5",

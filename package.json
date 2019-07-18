@@ -1,9 +1,7 @@
 {
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
   "private": true,
-  "author": {
-    "name": "Torkel Ödegaard",
-    "company": "Grafana Labs"
-  },
   "name": "grafana",
   "version": "6.4.0-pre",
   "repository": {
@@ -171,7 +169,6 @@
     "singleQuote": true,
     "printWidth": 120
   },
-  "license": "Apache-2.0",
   "dependencies": {
     "@babel/polyfill": "7.2.5",
     "@torkelo/react-select": "2.4.1",
