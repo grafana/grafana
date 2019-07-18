@@ -55,6 +55,7 @@ interface LinkModel {
 interface LinkDataPoint {
   datapoint: TimeSeriesValue[];
   seriesName: string;
+  [key: number]: any;
 }
 export interface LinkService {
   getDataLinkUIModel: (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;

@@ -63,6 +63,9 @@ idp_metadata =
 # Path to the SAML metadata XML. Used to verify and obtain binding locations from the IdP
 idp_metadata_path =
 
+# URL to fetch SAML IdP metadata. Used to verify and obtain binding locations from the IdP
+idp_metadata_url =
+
 # Duration, since the IdP issued a response and the SP is allowed to process it. Defaults to 90 seconds
 max_issue_delay =
 
@@ -96,7 +99,7 @@ And here is a comprehensive list of the options:
 | `eanbled`                 | No       | Whenever SAML authentication is allowed                                        | `false` |
 | `certificate|_path`       | Yes      | Base64-encoded string or Path for the SP X.509 certificate                     |         |
 | `private_key|_path`       | Yes      | Base64-encoded string or Path for the SP private key                           |         |
-| `idp_metadata|_path`      | Yes      | Base64-encoded string or Path for the IdP SAML metadata XML                    |         |
+| `idp_metadata|_path|_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML               |         |
 | `max_issue_delay`         | No       | Duration, since the IdP issued a response and the SP is allowed to process it  | `90s`   |
 | `metadata_valid_duration` | No       | Duration, for how long the SP's metadata should be valid                       | `48h`   |
 
@@ -110,7 +113,7 @@ Grafana supports two ways of specifying both the `certificate` and `private_key`
 
 Expanding on the above, we'll also need the public part from our IdP for message verification. The SAML IdP metadata XML tells us where and how we should exchange the user information.
 
-Currently, we support two ways of specifying the IdP metadata. Without a suffix `idp_metadata=` Grafana assumes base64-encoded XML file contents, and with the `_path` suffix assumes a file path and attempts to read the file from the file system.
+Currently, we support three ways of specifying the IdP metadata. Without a suffix `idp_metadata=` Grafana assumes base64-encoded XML file contents, with the `_path` suffix assumes a file path and attempts to read the file from the file system and with the `_url` suffix assumes an URL and attempts to load the metadata from the given location.
 
 ### Max Issue Delay
 
