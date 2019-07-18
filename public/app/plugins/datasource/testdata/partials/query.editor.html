@@ -180,4 +180,32 @@
 				ng-model-onblur />
 		</div>
 	</div>
+
+	<!-- Predictable CSV Wave Scenario Options Form -->
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'predictable_csv_wave'">
+			<div class="gf-form">
+				<label class="gf-form-label query-keyword width-7">
+					Step
+					<info-popover mode="right-normal">The number of seconds between datapoints.</info-popover>
+				</label>
+					<input type="number"
+					class="gf-form-input width-5"
+					placeholder="60"
+					ng-model="ctrl.target.csvWave.timeStep"
+					ng-change="ctrl.refresh()"
+					ng-model-onblur />
+			</div>
+			<div class="gf-form gf-form--grow">
+					<label class="gf-form-label query-keyword width-10">
+							CSV Values
+							<info-popover mode="right-normal">Comma separated values. Each value may be an int, float, or null and must not be empty. Whitespace and trailing commas are removed.</info-popover>
+						</label>
+					<input type="string"
+						class="gf-form-input gf-form-label--grow"
+						placeholder="1,2,3,2"
+						ng-model="ctrl.target.csvWave.valuesCSV"
+						ng-change="ctrl.refresh()"
+						ng-model-onblur />
+				</div>
+		</div>
 </query-editor-row>
