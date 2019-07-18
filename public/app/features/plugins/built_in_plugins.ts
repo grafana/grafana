@@ -35,7 +35,7 @@ import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 
 import * as exampleApp from 'app/plugins/app/example-app/module';
 
-const builtInPlugins = {
+const builtInPlugins: any = {
   'app/plugins/datasource/graphite/module': graphitePlugin,
   'app/plugins/datasource/cloudwatch/module': cloudwatchPlugin,
   'app/plugins/datasource/elasticsearch/module': elasticsearchPlugin,
