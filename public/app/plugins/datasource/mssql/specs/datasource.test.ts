@@ -3,7 +3,7 @@ import { TemplateSrvStub, TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 // @ts-ignore
 import q from 'q';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 describe('MSSQLDatasource', () => {
   const ctx: any = {
@@ -236,7 +236,7 @@ describe('MSSQLDatasource', () => {
 
   describe('When interpolating variables', () => {
     beforeEach(() => {
-      ctx.variable = new CustomVariable({}, {});
+      ctx.variable = new CustomVariable({}, {} as any);
     });
 
     describe('and value is a string', () => {

@@ -1,16 +1,7 @@
 import defaults from 'lodash/defaults';
-import {
-  DataQueryRequest,
-  FieldType,
-  DataFrame,
-  DataQueryResponse,
-  DataQueryError,
-  DataStreamObserver,
-  DataStreamState,
-  LoadingState,
-  LogLevel,
-  CSVReader,
-} from '@grafana/ui';
+import { DataQueryRequest, DataQueryResponse, DataQueryError, DataStreamObserver, DataStreamState } from '@grafana/ui';
+
+import { FieldType, DataFrame, LoadingState, LogLevel, CSVReader } from '@grafana/data';
 import { TestDataQuery, StreamingQuery } from './types';
 
 export const defaultQuery: StreamingQuery = {

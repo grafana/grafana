@@ -1,5 +1,5 @@
 import { GraphCtrl } from '../module';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 jest.mock('../graph', () => ({}));
 

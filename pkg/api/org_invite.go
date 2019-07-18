@@ -188,8 +188,8 @@ func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.Comple
 
 	hs.loginUserWithUser(user, c)
 
-	metrics.M_Api_User_SignUpCompleted.Inc()
-	metrics.M_Api_User_SignUpInvite.Inc()
+	metrics.MApiUserSignUpCompleted.Inc()
+	metrics.MApiUserSignUpInvite.Inc()
 
 	return Success("User created and logged in")
 }

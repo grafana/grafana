@@ -19,7 +19,7 @@ import { store } from 'app/store/store';
 import kbn from 'app/core/utils/kbn';
 
 // Utils
-import { dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime, isDateTime } from '@grafana/data';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 
 const timeRangeValidationEvents: ValidationEvents = {

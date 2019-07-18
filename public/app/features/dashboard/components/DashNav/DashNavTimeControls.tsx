@@ -1,17 +1,17 @@
 // Libaries
 import React, { Component } from 'react';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc } from '@grafana/data';
 
 // Types
 import { DashboardModel } from '../../state';
 import { LocationState } from 'app/types';
-import { TimeRange, TimeOption } from '@grafana/ui';
+import { TimeRange, TimeOption, RawTimeRange } from '@grafana/data';
 
 // State
 import { updateLocation } from 'app/core/actions';
 
 // Components
-import { TimePicker, RefreshPicker, RawTimeRange } from '@grafana/ui';
+import { TimePicker, RefreshPicker } from '@grafana/ui';
 
 // Utils & Services
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';

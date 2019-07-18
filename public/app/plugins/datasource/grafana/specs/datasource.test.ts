@@ -1,7 +1,7 @@
 import { GrafanaDatasource } from '../datasource';
 // @ts-ignore
 import q from 'q';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 describe('grafana data source', () => {
   describe('when executing an annotations query', () => {

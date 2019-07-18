@@ -1,12 +1,13 @@
 // Types
 import {
   DataQueryRequest,
-  DataFrame,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   MetricFindValue,
-} from '@grafana/ui/src/types';
+} from '@grafana/ui';
+import { DataFrame } from '@grafana/data';
+
 import { InputQuery, InputOptions } from './types';
 
 export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {

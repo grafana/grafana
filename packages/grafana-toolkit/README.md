@@ -5,14 +5,17 @@ Make sure to run `yarn install` before trying anything!  Otherwise you may see u
 
 
 ## Internal development
-For development use `yarn link`. First, navigate to `packages/grafana-toolkit` and run `yarn link`. Then, in your project run
-```
-yarn add babel-loader ts-loader css-loader style-loader sass-loader html-loader node-sass @babel/preset-env @babel/core & yarn link @grafana/toolkit
-```
+Typically plugins should be developed using the `@grafana/toolkit` import from npm.  However, when working on the toolkit, you may want to use the local version while underdevelopment.  This works, but is a little flakey.
 
-Note, that for development purposes we are adding `babel-loader ts-loader style-loader sass-loader html-loader node-sass @babel/preset-env @babel/core` packages to your extension. This is due to the specific behavior of `yarn link` which does not install dependencies of linked packages and webpack is having hard time trying to load its extensions.
+1. navigate to `packages/grafana-toolkit` and run `yarn link`.
+2. in your plugin, run `npx grafana-toolkit plugin:dev --yarnlink`
+
+Step 2 will add all the same dependencies to your development plugin as the toolkit.  These are typically used from the node_modules folder
+
 
 TODO: Experiment with [yalc](https://github.com/whitecolor/yalc) for linking packages
+
+
 
 ### Publishing to npm
 The publish process is now manual. Follow the steps to publish @grafana/toolkit to npm
@@ -32,6 +35,9 @@ Runs Jest against your codebase. See [Tests](#tests) for more details.
 Available options:
 - `-u, --updateSnapshot` - performs snapshots update
 - `--coverage` - reports code coverage
+- `--watch` - runs tests in interactive watch mode
+- `--testNamePattern=<regex>` - runs test with names that match provided regex (https://jestjs.io/docs/en/cli#testnamepattern-regex)
+- `--testPathPattern=<regex>` - runs test with paths that match provided regex (https://jestjs.io/docs/en/cli#testpathpattern-regex)
 
 #### `grafana-toolkit plugin:dev`
 Compiles plugin in development mode.
@@ -81,9 +87,10 @@ Adidtionaly, you can also provide additional Jest config via package.json file. 
 
 
 ## Working with CSS & static assets
-We support pure css, SASS and CSS in JS approach (via Emotion). All static assets referenced in your code (i.e. images) should be placed under `src/static` directory and referenced using relative paths.
+We support pure css, SASS and CSS in JS approach (via Emotion).
 
 1. Single css/sass file
+
 Create your css/sass file and import it in your plugin entry point (typically module.ts):
 
 ```ts
@@ -94,11 +101,15 @@ The styles will be injected via `style` tag during runtime.
 Note, that imported static assets will be inlined as base64 URIs. *This can be a subject of change in the future!*
 
 2. Theme specific css/sass files
+
 If you want to provide different stylesheets for dark/light theme, create `dark.[css|scss]` and `light.[css|scss]` files in `src/styles` directory of your plugin. Based on that we will generate stylesheets that will end up in `dist/styles` directory.
 
 TODO: add note about loadPluginCss
 
+Note that static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change.
+
 3. Emotion
+
 Starting from Grafana 6.2 our suggested way of styling plugins is by using [Emotion](https://emotion.sh). It's a css-in-js library that we use internaly at Grafana. The biggest advantage of using Emotion is that you will get access to Grafana Theme variables.
 
 To use start using Emotion you first need to add it to your plugin dependencies:
@@ -123,7 +134,15 @@ Using themes: TODO, for now please refer to [internal guide](../../style_guides/
 
 > NOTE: We do not support Emotion's `css` prop. Use className instead!
 
-## Prettier [todo]
+## Prettier
+When `plugin:build` task is performed we run Prettier check. In order for your IDE to pickup our Prettier config we suggest creating `.prettierrc.js` file in the root directory of your plugin with following contents:
+
+```js
+module.exports = {
+  ...require("./node_modules/@grafana/toolkit/src/config/prettier.plugin.config.json"),
+};
+```
+
 
 ## Development mode [todo]
 `grafana-toolkit plugin:dev [--watch]`

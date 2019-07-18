@@ -1,6 +1,6 @@
 import angular from 'angular';
 import config from 'app/core/config';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 
 /** @ngInject */

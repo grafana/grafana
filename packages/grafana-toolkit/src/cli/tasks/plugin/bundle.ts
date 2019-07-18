@@ -1,5 +1,3 @@
-import path = require('path');
-import fs = require('fs');
 import webpack = require('webpack');
 import { getWebpackConfig } from '../../../config/webpack.plugin.config';
 import formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
@@ -8,6 +6,7 @@ import clearConsole = require('react-dev-utils/clearConsole');
 export interface PluginBundleOptions {
   watch: boolean;
   production?: boolean;
+  yarnlink?: boolean;
 }
 
 // export const bundlePlugin = useSpinner<PluginBundleOptions>('Bundle plugin', ({ watch }) => {
@@ -34,12 +33,14 @@ export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) =
         const output = formatWebpackMessages(stats.toJson());
 
         if (!output.errors.length && !output.warnings.length) {
-          console.log('Compiled successfully!');
+          console.log('Compiled successfully!\n');
+          console.log(stats.toString({ colors: true }));
         }
 
         if (output.errors.length) {
           console.log('Compilation failed!');
           output.errors.forEach(e => console.log(e));
+
           if (output.warnings.length) {
             console.log('Warnings:');
             output.warnings.forEach(w => console.log(w));
@@ -62,6 +63,7 @@ export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) =
 
           reject('Build failed');
         }
+        console.log('\n', stats.toString({ colors: true }), '\n');
         resolve();
       });
     }

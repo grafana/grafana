@@ -2,12 +2,19 @@
 import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
 // Utils
-import { isValidTimeSpan } from '@grafana/ui/src/utils/rangeutil';
+import { rangeUtil } from '@grafana/data';
 
 // Components
-import { DataSourceSelectItem, EventsWithValidation, Input, InputStatus, Switch, ValidationEvents } from '@grafana/ui';
+import {
+  DataSourceSelectItem,
+  EventsWithValidation,
+  Input,
+  InputStatus,
+  Switch,
+  ValidationEvents,
+  FormLabel,
+} from '@grafana/ui';
 import { DataSourceOption } from './DataSourceOption';
-import { FormLabel } from '@grafana/ui';
 
 // Types
 import { PanelModel } from '../state';
@@ -19,7 +26,7 @@ const timeRangeValidationEvents: ValidationEvents = {
         if (!value) {
           return true;
         }
-        return isValidTimeSpan(value);
+        return rangeUtil.isValidTimeSpan(value);
       },
       errorMessage: 'Not a valid timespan',
     },

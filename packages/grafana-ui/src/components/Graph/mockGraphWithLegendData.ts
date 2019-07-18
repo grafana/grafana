@@ -1,6 +1,6 @@
 import { GraphWithLegendProps } from './GraphWithLegend';
 import { LegendDisplayMode } from '../Legend/Legend';
-import { dateTime } from '../../utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 // import { LegendList } from '../Legend/LegendList';
 
 export const mockGraphWithLegendData = ({

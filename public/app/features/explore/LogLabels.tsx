@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { LogLabel } from './LogLabel';
-import { Labels, LogRowModel } from '@grafana/ui';
+import { Labels, LogRowModel } from '@grafana/data';
 
 interface Props {
   getRows?: () => LogRowModel[];

@@ -28,6 +28,9 @@ import {
   DataSourceJsonData,
   DataQueryRequest,
   DataStreamObserver,
+} from '@grafana/ui';
+
+import {
   TimeZone,
   RawTimeRange,
   TimeRange,
@@ -37,7 +40,7 @@ import {
   toUtc,
   dateTime,
   AbsoluteTimeRange,
-} from '@grafana/ui';
+} from '@grafana/data';
 import { Observable } from 'rxjs';
 import { getQueryResponse } from 'app/core/utils/explore';
 import { StoreState } from 'app/types/store';

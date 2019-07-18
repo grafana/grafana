@@ -1,6 +1,6 @@
 import { PostgresDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
-import { toUtc, dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { IQService } from 'angular';
 
@@ -206,7 +206,7 @@ describe('PostgreSQLDatasource', () => {
 
   describe('When interpolating variables', () => {
     beforeEach(() => {
-      ctx.variable = new CustomVariable({}, {});
+      ctx.variable = new CustomVariable({}, {} as any);
     });
 
     describe('and value is a string', () => {

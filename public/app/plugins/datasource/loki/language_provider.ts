@@ -15,16 +15,18 @@ import {
   HistoryItem,
 } from 'app/types/explore';
 import { LokiQuery } from './types';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime, AbsoluteTimeRange } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 10;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
+const NS_IN_MS = 1000000;
 export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
 
 const wrapLabel = (label: string) => ({ label });
+export const rangeToParams = (range: AbsoluteTimeRange) => ({ start: range.from * NS_IN_MS, end: range.to * NS_IN_MS });
 
 type LokiHistoryItem = HistoryItem<LokiQuery>;
 
@@ -50,6 +52,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   logLabelOptions: any[];
   logLabelFetchTs?: number;
   started: boolean;
+  initialRange: AbsoluteTimeRange;
 
   constructor(datasource: any, initialValues?: any) {
     super();
@@ -67,13 +70,13 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return syntax;
   }
 
-  request = (url: string) => {
-    return this.datasource.metadataRequest(url);
+  request = (url: string, params?: any) => {
+    return this.datasource.metadataRequest(url, params);
   };
 
   start = () => {
     if (!this.startTask) {
-      this.startTask = this.fetchLogLabels();
+      this.startTask = this.fetchLogLabels(this.initialRange);
     }
     return this.startTask;
   };
@@ -120,7 +123,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return { suggestions };
   }
 
-  getLabelCompletionItems({ text, wrapperClasses, labelKey, value }: TypeaheadInput): TypeaheadOutput {
+  getLabelCompletionItems(
+    { text, wrapperClasses, labelKey, value }: TypeaheadInput,
+    { absoluteRange }: any
+  ): TypeaheadOutput {
     let context: string;
     let refresher: Promise<any> = null;
     const suggestions: CompletionItemGroup[] = [];
@@ -146,7 +152,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
             items: labelValues.map(wrapLabel),
           });
         } else {
-          refresher = this.fetchLabelValues(labelKey);
+          refresher = this.fetchLabelValues(labelKey, absoluteRange);
         }
       }
     } else {
@@ -206,7 +212,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       if (existingKeys && existingKeys.length > 0) {
         // Check for common labels
         for (const key in labels) {
-          if (existingKeys && existingKeys.indexOf(key) > -1) {
+          if (existingKeys && existingKeys.includes(key)) {
             // Should we check for label value equality here?
             labelsToKeep[key] = labels[key];
           }
@@ -227,11 +233,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return '';
   }
 
-  async fetchLogLabels(): Promise<any> {
+  async fetchLogLabels(absoluteRange: AbsoluteTimeRange): Promise<any> {
     const url = '/api/prom/label';
     try {
       this.logLabelFetchTs = Date.now();
-      const res = await this.request(url);
+
+      const res = await this.request(url, rangeToParams(absoluteRange));
       const body = await (res.data || res.json());
       const labelKeys = body.data.slice().sort();
       this.labelKeys = {
@@ -244,7 +251,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       return Promise.all(
         labelKeys
           .filter((key: string) => DEFAULT_KEYS.indexOf(key) > -1)
-          .map((key: string) => this.fetchLabelValues(key))
+          .map((key: string) => this.fetchLabelValues(key, absoluteRange))
       );
     } catch (e) {
       console.error(e);
@@ -252,16 +259,16 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return [];
   }
 
-  async refreshLogLabels(forceRefresh?: boolean) {
+  async refreshLogLabels(absoluteRange: AbsoluteTimeRange, forceRefresh?: boolean) {
     if ((this.labelKeys && Date.now() - this.logLabelFetchTs > LABEL_REFRESH_INTERVAL) || forceRefresh) {
-      await this.fetchLogLabels();
+      await this.fetchLogLabels(absoluteRange);
     }
   }
 
-  async fetchLabelValues(key: string) {
+  async fetchLabelValues(key: string, absoluteRange: AbsoluteTimeRange) {
     const url = `/api/prom/label/${key}/values`;
     try {
-      const res = await this.request(url);
+      const res = await this.request(url, rangeToParams(absoluteRange));
       const body = await (res.data || res.json());
       const values = body.data.slice().sort();
 

@@ -1,6 +1,6 @@
 import { Epic } from 'redux-observable';
 import { map } from 'rxjs/operators';
-import { AbsoluteTimeRange, RawTimeRange } from '@grafana/ui';
+import { AbsoluteTimeRange, RawTimeRange } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';

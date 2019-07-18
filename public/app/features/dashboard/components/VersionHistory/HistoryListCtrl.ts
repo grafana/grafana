@@ -4,7 +4,7 @@ import angular from 'angular';
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
 import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
-import { dateTime, toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime, toUtc } from '@grafana/data';
 
 export class HistoryListCtrl {
   appending: boolean;

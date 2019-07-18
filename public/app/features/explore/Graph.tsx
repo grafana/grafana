@@ -7,7 +7,8 @@ import 'vendor/flot/jquery.flot.time';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.stack';
 
-import { TimeZone, AbsoluteTimeRange, GraphLegend, LegendItem, LegendDisplayMode } from '@grafana/ui';
+import { GraphLegend, LegendItem, LegendDisplayMode } from '@grafana/ui';
+import { TimeZone, AbsoluteTimeRange } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;

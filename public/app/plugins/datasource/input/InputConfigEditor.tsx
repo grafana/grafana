@@ -4,7 +4,8 @@ import React, { PureComponent } from 'react';
 // Types
 import { InputOptions } from './types';
 
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings, DataFrame, TableInputCSV, toCSV } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings, TableInputCSV } from '@grafana/ui';
+import { DataFrame, toCSV } from '@grafana/data';
 
 type InputSettings = DataSourceSettings<InputOptions>;
 

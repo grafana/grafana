@@ -1,7 +1,7 @@
 import { ElasticQueryBuilder } from '../query_builder';
 
 describe('ElasticQueryBuilder', () => {
-  let builder;
+  let builder: any;
 
   beforeEach(() => {
     builder = new ElasticQueryBuilder({ timeField: '@timestamp' });
@@ -103,6 +103,7 @@ describe('ElasticQueryBuilder', () => {
         ],
       },
       100,
+      // @ts-ignore
       1000
     );
 

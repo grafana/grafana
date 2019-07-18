@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Column, TableData } from '@grafana/ui';
+import { Column, TableData } from '@grafana/data';
 
 /**
  * Extends the standard Column class with variables that get

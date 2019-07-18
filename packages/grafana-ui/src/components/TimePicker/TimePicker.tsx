@@ -8,13 +8,12 @@ import { TimePickerPopover } from './TimePickerPopover';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
-import { isDateTime } from '../../utils/moment_wrapper';
-import * as rangeUtil from '../../utils/rangeutil';
+import { isDateTime } from '@grafana/data';
+import { rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT } from '../../types/time';
-import { SelectOptionItem } from '../Select/Select';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue } from '@grafana/data';
 
 export interface Props {
   value: TimeRange;
@@ -77,7 +76,7 @@ export class TimePicker extends PureComponent<Props, State> {
     isCustomOpen: false,
   };
 
-  mapTimeOptionsToSelectOptionItems = (selectOptions: TimeOption[]) => {
+  mapTimeOptionsToSelectableValues = (selectOptions: TimeOption[]) => {
     const options = selectOptions.map(timeOption => {
       return {
         label: timeOption.display,
@@ -93,7 +92,7 @@ export class TimePicker extends PureComponent<Props, State> {
     return options;
   };
 
-  onSelectChanged = (item: SelectOptionItem<TimeOption>) => {
+  onSelectChanged = (item: SelectableValue<TimeOption>) => {
     const { onChange, timeZone } = this.props;
 
     if (item.value && item.value.from === 'custom') {
@@ -122,7 +121,7 @@ export class TimePicker extends PureComponent<Props, State> {
   render() {
     const { selectOptions: selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom, timeZone } = this.props;
     const { isCustomOpen } = this.state;
-    const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
+    const options = this.mapTimeOptionsToSelectableValues(selectTimeOptions);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
     const rangeString = rangeUtil.describeTimeRange(value.raw);
 

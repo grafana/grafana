@@ -30,7 +30,9 @@ import {
 } from './state/actions';
 
 // Types
-import { RawTimeRange, DataQuery, ExploreStartPageProps, DataSourceApi, DataQueryError } from '@grafana/ui';
+import { RawTimeRange } from '@grafana/data';
+
+import { DataQuery, ExploreStartPageProps, DataSourceApi, DataQueryError } from '@grafana/ui';
 import {
   ExploreItemState,
   ExploreUrlState,

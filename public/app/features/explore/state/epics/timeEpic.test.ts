@@ -1,4 +1,4 @@
-import { dateTime, DefaultTimeZone } from '@grafana/ui';
+import { dateTime, DefaultTimeZone } from '@grafana/data';
 
 import { epicTester } from 'test/core/redux/epicTester';
 import { mockExploreState } from 'test/mocks/mockExploreState';

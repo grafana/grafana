@@ -6,7 +6,9 @@ import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
-import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin, DataLink } from '@grafana/ui';
+import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
+import { DataLink } from '@grafana/data';
+
 import config from 'app/core/config';
 
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -134,7 +136,6 @@ export class PanelModel {
 
     // queries must have refId
     this.ensureQueryIds();
-    this.restoreInfintyForThresholds();
   }
 
   ensureQueryIds() {
@@ -142,16 +143,6 @@ export class PanelModel {
       for (const query of this.targets) {
         if (!query.refId) {
           query.refId = getNextRefIdChar(this.targets);
-        }
-      }
-    }
-  }
-
-  restoreInfintyForThresholds() {
-    if (this.options && this.options.fieldOptions) {
-      for (const threshold of this.options.fieldOptions.thresholds) {
-        if (threshold.value === null) {
-          threshold.value = -Infinity;
         }
       }
     }

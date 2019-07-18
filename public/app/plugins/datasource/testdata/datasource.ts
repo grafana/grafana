@@ -1,12 +1,7 @@
 import _ from 'lodash';
-import {
-  DataSourceApi,
-  DataQueryRequest,
-  TableData,
-  TimeSeries,
-  DataSourceInstanceSettings,
-  DataStreamObserver,
-} from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings, DataStreamObserver } from '@grafana/ui';
+
+import { TableData, TimeSeries } from '@grafana/data';
 import { TestDataQuery, Scenario } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { StreamHandler } from './StreamHandler';

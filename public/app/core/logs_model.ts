@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import ansicolor from 'vendor/ansicolor/ansicolor';
 
+import { colors } from '@grafana/ui';
+
 import {
-  colors,
   TimeSeries,
   Labels,
   LogLevel,
@@ -21,10 +22,10 @@ import {
   LogsParser,
   LogLabelStatsModel,
   LogsDedupStrategy,
-} from '@grafana/ui';
+} from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
-import { dateTime, toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime, toUtc } from '@grafana/data';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -323,10 +324,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     }
   }
 
-  const sortedRows = rows.sort((a, b) => {
-    return a.timestamp > b.timestamp ? -1 : 1;
-  });
-
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
   if (_.size(commonLabels) > 0) {
@@ -342,7 +339,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limits[0].meta.limit} (${sortedRows.length} returned)`,
+      value: `${limits[0].meta.limit} (${rows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }
@@ -350,7 +347,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
   return {
     hasUniqueLabels,
     meta,
-    rows: sortedRows,
+    rows,
   };
 }
 

@@ -9,7 +9,7 @@ export * from './Button/Button';
 export { ButtonVariant } from './Button/AbstractButton';
 
 // Select
-export { Select, AsyncSelect, SelectOptionItem } from './Select/Select';
+export { Select, AsyncSelect } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Select/resetSelectStyles';

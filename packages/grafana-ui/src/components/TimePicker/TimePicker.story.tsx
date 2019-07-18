@@ -5,8 +5,7 @@ import { action } from '@storybook/addon-actions';
 import { TimePicker } from './TimePicker';
 import { UseState } from '../../utils/storybook/UseState';
 import { withRighAlignedStory } from '../../utils/storybook/withRightAlignedStory';
-import { TimeFragment } from '../../types/time';
-import { dateTime } from '../../utils/moment_wrapper';
+import { TimeFragment, dateTime } from '@grafana/data';
 
 const TimePickerStories = storiesOf('UI/TimePicker', module);
 

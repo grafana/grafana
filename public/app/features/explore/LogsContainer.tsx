@@ -1,18 +1,19 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { DataSourceApi } from '@grafana/ui';
+
 import {
   RawTimeRange,
   LogLevel,
   TimeZone,
   AbsoluteTimeRange,
-  DataSourceApi,
   LogsModel,
   LogRowModel,
   LogsDedupStrategy,
   LoadingState,
   TimeRange,
-} from '@grafana/ui';
+} from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';

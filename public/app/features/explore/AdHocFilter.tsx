@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
-import { Select, GrafanaTheme, ThemeContext, SelectOptionItem } from '@grafana/ui';
+import { Select, GrafanaTheme, ThemeContext } from '@grafana/ui';
 import { css, cx } from 'emotion';
+import { SelectableValue } from '@grafana/data';
 
 const getStyles = (theme: GrafanaTheme) => ({
   keyValueContainer: css`
@@ -33,7 +34,7 @@ export const AdHocFilter: React.FunctionComponent<Props> = props => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
 
-  const onChange = (changeType: ChangeType) => (item: SelectOptionItem<string>) => {
+  const onChange = (changeType: ChangeType) => (item: SelectableValue<string>) => {
     const { onKeyChanged, onValueChanged, onOperatorChanged } = props;
     switch (changeType) {
       case ChangeType.Key:

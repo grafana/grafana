@@ -1,4 +1,5 @@
-import { DataQueryResponse, DataQueryError, LogRowModel } from '@grafana/ui';
+import { DataQueryResponse, DataQueryError } from '@grafana/ui';
+import { LogRowModel } from '@grafana/data';
 import { useState, useEffect } from 'react';
 import flatten from 'lodash/flatten';
 import useAsync from 'react-use/lib/useAsync';

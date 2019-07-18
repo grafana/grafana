@@ -4,7 +4,7 @@ import defaults from 'lodash/defaults';
 import isNumber from 'lodash/isNumber';
 
 // Types
-import { DataFrame, Field, FieldType } from '../types/index';
+import { DataFrame, Field, FieldType } from '../types';
 import { guessFieldTypeFromValue } from './processDataFrame';
 
 export enum CSVHeaderStyle {

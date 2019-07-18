@@ -109,6 +109,10 @@ func (multiples *MultiLDAP) User(login string) (
 
 		defer server.Close()
 
+		if err := server.Bind(); err != nil {
+			return nil, err
+		}
+
 		users, err := server.Users(search)
 		if err != nil {
 			return nil, err
@@ -141,6 +145,10 @@ func (multiples *MultiLDAP) Users(logins []string) (
 		}
 
 		defer server.Close()
+
+		if err := server.Bind(); err != nil {
+			return nil, err
+		}
 
 		users, err := server.Users(logins)
 		if err != nil {

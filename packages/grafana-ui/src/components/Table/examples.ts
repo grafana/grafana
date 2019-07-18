@@ -1,4 +1,4 @@
-import { DataFrame } from '../../types/data';
+import { DataFrame } from '@grafana/data';
 import { ColumnStyle } from './TableCellBuilder';
 import { getColorDefinitionByName } from '../../utils/namedColorsPalette';
 

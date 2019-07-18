@@ -1,4 +1,5 @@
 {
+  "extends": ["tslint-config-prettier"],
   "rules": {
     "array-type": [true, "array-simple"],
     "arrow-return-shorthand": true,

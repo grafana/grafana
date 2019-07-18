@@ -1,6 +1,5 @@
 import { ComponentClass, ComponentType } from 'react';
-import { LoadingState, DataFrame } from './data';
-import { TimeRange } from './time';
+import { LoadingState, DataFrame, TimeRange } from '@grafana/data';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 
@@ -124,33 +123,14 @@ export interface PanelMenuItem {
   subMenu?: PanelMenuItem[];
 }
 
-export enum MappingType {
-  ValueToText = 1,
-  RangeToText = 2,
-}
-
-interface BaseMap {
-  id: number;
-  operator: string;
+export interface AngularPanelMenuItem {
+  click: Function;
+  icon: string;
+  href: string;
+  divider: boolean;
   text: string;
-  type: MappingType;
-}
-
-export type ValueMapping = ValueMap | RangeMap;
-
-export interface ValueMap extends BaseMap {
-  value: string;
-}
-
-export interface RangeMap extends BaseMap {
-  from: string;
-  to: string;
-}
-
-export interface DataLink {
-  url: string;
-  title: string;
-  targetBlank?: boolean;
+  shortcut: string;
+  submenu: any[];
 }
 
 export enum VizOrientation {

@@ -34,7 +34,7 @@ export interface State {
 export class UsersListPage extends PureComponent<Props, State> {
   externalUserMngInfoHtml: string;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     if (this.props.externalUserMngInfo) {
@@ -59,13 +59,13 @@ export class UsersListPage extends PureComponent<Props, State> {
     return await this.props.loadInvitees();
   }
 
-  onRoleChange = (role, user) => {
+  onRoleChange = (role: string, user: OrgUser) => {
     const updatedUser = { ...user, role: role };
 
     this.props.updateUser(updatedUser);
   };
 
-  onRemoveUser = user => {
+  onRemoveUser = (user: OrgUser) => {
     appEvents.emit('confirm-modal', {
       title: 'Delete',
       text: 'Are you sure you want to delete user ' + user.login + '?',
@@ -119,7 +119,7 @@ export class UsersListPage extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     navModel: getNavModel(state.navIndex, 'users'),
     users: getUsers(state.users),

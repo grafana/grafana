@@ -1,5 +1,5 @@
 import { transformers, transformDataToTable } from '../transformers';
-import { TableData } from '@grafana/ui';
+import { TableData } from '@grafana/data';
 
 describe('when transforming time series table', () => {
   let table: TableData;

@@ -8,7 +8,8 @@ import './../../panel/GeneralTabCtrl';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataLink, PanelOptionsGroup, DataLinksEditor } from '@grafana/ui';
+import { DataLink } from '@grafana/data';
+import { PanelOptionsGroup, DataLinksEditor } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 interface Props {

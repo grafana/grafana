@@ -1,4 +1,5 @@
-import { DataQuery, Labels, DataSourceJsonData } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceJsonData } from '@grafana/ui';
+import { Labels } from '@grafana/data';
 
 export interface LokiQuery extends DataQuery {
   expr: string;

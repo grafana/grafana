@@ -7,7 +7,7 @@ import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
 import { getColorScale, getOpacityScale } from './color_scale';
 import { GrafanaThemeType, getColorFromHexRgbOrName, getValueFormat } from '@grafana/ui';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc } from '@grafana/data';
 
 const MIN_CARD_SIZE = 1,
   CARD_PADDING = 1,

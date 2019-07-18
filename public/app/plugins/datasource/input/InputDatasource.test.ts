@@ -1,6 +1,7 @@
 import InputDatasource, { describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
-import { readCSV, DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
+import { readCSV } from '@grafana/data';
+import { DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('InputDatasource', () => {
