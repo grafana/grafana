@@ -57,6 +57,7 @@ e2eScenario(
     const dashboardTitle = new Date().toISOString();
     await saveDashboardModal.pageObjects.name.enter(dashboardTitle);
     await saveDashboardModal.pageObjects.save.click();
+    await saveDashboardModal.pageObjects.success.exists();
 
     // Share the dashboard
     const dashboardsPage = dashboardsPageFactory(dashboardTitle);
