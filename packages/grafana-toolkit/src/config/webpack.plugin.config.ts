@@ -5,9 +5,10 @@ const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
 import * as webpack from 'webpack';
-import { hasThemeStylesheets, getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
+import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
 interface WebpackConfigurationOptions {
   watch?: boolean;
@@ -51,6 +52,7 @@ const getManualChunk = (id: string) => {
       };
     }
   }
+  return null;
 };
 
 const getEntries = () => {
@@ -83,8 +85,8 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         { from: '../LICENSE', to: '.' },
         { from: 'img/*', to: '.' },
         { from: '**/*.json', to: '.' },
-        // { from: '**/*.svg', to: '.' },
-        // { from: '**/*.png', to: '.' },
+        { from: '**/*.svg', to: '.' },
+        { from: '**/*.png', to: '.' },
         { from: '**/*.html', to: '.' },
       ],
       { logLevel: options.watch ? 'silent' : 'warn' }
@@ -114,8 +116,9 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
   const optimization: { [key: string]: any } = {};
 
   if (options.production) {
-    plugins.push(new ngAnnotatePlugin());
     optimization.minimizer = [new TerserPlugin(), new OptimizeCssAssetsPlugin()];
+  } else if (options.watch) {
+    plugins.push(new HtmlWebpackPlugin());
   }
 
   return {
@@ -177,9 +180,15 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
           loaders: [
             {
               loader: 'babel-loader',
-              options: { presets: ['@babel/preset-env'] },
+              options: {
+                presets: ['@babel/preset-env'],
+                plugins: ['angularjs-annotate'],
+              },
             },
-            'ts-loader',
+            {
+              loader: 'ts-loader',
+              options: { onlyCompileBundledFiles: true },
+            },
           ],
           exclude: /(node_modules)/,
         },

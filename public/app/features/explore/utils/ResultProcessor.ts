@@ -72,9 +72,10 @@ export class ResultProcessor {
     const graphInterval = this.state.queryIntervals.intervalMs;
     const dataFrame = this.rawData.map(result => guessFieldTypes(toDataFrame(result)));
     const newResults = this.rawData ? dataFrameToLogsModel(dataFrame, graphInterval) : null;
+    const sortedNewResults = sortLogsResult(newResults, this.state.refreshInterval);
 
     if (this.replacePreviousResults) {
-      return newResults;
+      return sortedNewResults;
     }
 
     const prevLogsResult: LogsModel = this.state.logsResult || { hasUniqueLabels: false, rows: [] };
@@ -86,17 +87,17 @@ export class ResultProcessor {
     for (const row of rowsInState) {
       processedRows.push({ ...row, fresh: false });
     }
-    for (const row of newResults.rows) {
+    for (const row of sortedNewResults.rows) {
       processedRows.push({ ...row, fresh: true });
     }
 
-    const processedSeries = this.mergeGraphResults(newResults.series, seriesInState);
+    const processedSeries = this.mergeGraphResults(sortedNewResults.series, seriesInState);
 
     const slice = -1000;
     const rows = processedRows.slice(slice);
     const series = processedSeries.slice(slice);
 
-    return { ...newResults, rows, series };
+    return { ...sortedNewResults, rows, series };
   };
 
   private makeTimeSeriesList = (rawData: any[]) => {

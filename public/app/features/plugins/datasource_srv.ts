@@ -9,12 +9,19 @@ import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceSe
 
 // Types
 import { DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/ui';
+import { auto } from 'angular';
+import { TemplateSrv } from '../templating/template_srv';
 
 export class DatasourceSrv implements DataSourceService {
   datasources: { [name: string]: DataSourceApi };
 
   /** @ngInject */
-  constructor(private $q, private $injector, private $rootScope, private templateSrv) {
+  constructor(
+    private $q: any,
+    private $injector: auto.IInjectorService,
+    private $rootScope: any,
+    private templateSrv: TemplateSrv
+  ) {
     this.init();
   }
 
@@ -28,7 +35,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // Interpolation here is to support template variable in data source selection
-    name = this.templateSrv.replace(name, scopedVars, (value, variable) => {
+    name = this.templateSrv.replace(name, scopedVars, (value: any[], variable: any) => {
       if (Array.isArray(value)) {
         return value[0];
       }
@@ -95,7 +102,7 @@ export class DatasourceSrv implements DataSourceService {
   }
 
   getAnnotationSources() {
-    const sources = [];
+    const sources: any[] = [];
 
     this.addDataSourceVariables(sources);
 
@@ -108,7 +115,7 @@ export class DatasourceSrv implements DataSourceService {
     return sources;
   }
 
-  getMetricSources(options?) {
+  getMetricSources(options?: { skipVariables?: boolean }) {
     const metricSources: DataSourceSelectItem[] = [];
 
     _.each(config.datasources, (value, key) => {
@@ -148,7 +155,7 @@ export class DatasourceSrv implements DataSourceService {
     return metricSources;
   }
 
-  addDataSourceVariables(list) {
+  addDataSourceVariables(list: any[]) {
     // look for data source variables
     for (let i = 0; i < this.templateSrv.variables.length; i++) {
       const variable = this.templateSrv.variables[i];

@@ -1,4 +1,6 @@
 import _ from 'lodash';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
+import CloudWatchDatasource from './datasource';
 export class CloudWatchConfigCtrl {
   static templateUrl = 'partials/config.html';
   current: any;
@@ -8,7 +10,7 @@ export class CloudWatchConfigCtrl {
   secretKeyExist = false;
 
   /** @ngInject */
-  constructor($scope, datasourceSrv) {
+  constructor($scope: any, datasourceSrv: DatasourceSrv) {
     this.current.jsonData.timeField = this.current.jsonData.timeField || '@timestamp';
     this.current.jsonData.authType = this.current.jsonData.authType || 'credentials';
 
@@ -32,7 +34,7 @@ export class CloudWatchConfigCtrl {
     { name: 'ARN', value: 'arn' },
   ];
 
-  indexPatternTypes = [
+  indexPatternTypes: any = [
     { name: 'No pattern', value: undefined },
     { name: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
     { name: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
@@ -71,14 +73,14 @@ export class CloudWatchConfigCtrl {
   getRegions() {
     this.datasourceSrv
       .loadDatasource(this.current.name)
-      .then(ds => {
+      .then((ds: CloudWatchDatasource) => {
         return ds.getRegions();
       })
       .then(
-        regions => {
+        (regions: any) => {
           this.regions = _.map(regions, 'value');
         },
-        err => {
+        (err: any) => {
           console.error('failed to get latest regions');
         }
       );

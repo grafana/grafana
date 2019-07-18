@@ -199,7 +199,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	// login
 	hs.loginUserWithUser(cmd.Result, ctx)
 
-	metrics.M_Api_Login_OAuth.Inc()
+	metrics.MApiLoginOAuth.Inc()
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		ctx.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")

@@ -19,7 +19,7 @@ func TestLDAPLogin(t *testing.T) {
 	}
 
 	Convey("Login()", t, func() {
-		Convey("Should get invalid credentials when auth fails", func() {
+		Convey("Should get invalid credentials when userBind fails", func() {
 			connection := &MockConnection{}
 			entry := ldap.Entry{}
 			result := ldap.SearchResult{Entries: []*ldap.Entry{&entry}}

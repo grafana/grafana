@@ -2,33 +2,32 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 // Types
-import { FormLabel, Select, SelectOptionItem, Switch } from '@grafana/ui';
-import { QueryEditorProps, DataSourceStatus } from '@grafana/ui';
+import { FormLabel, Select, Switch, QueryEditorProps, DataSourceStatus } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery, PromOptions } from '../types';
 
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
-
 export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
 
-const FORMAT_OPTIONS: Array<SelectOptionItem<string>> = [
+const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
   { label: 'Time series', value: 'time_series' },
   { label: 'Table', value: 'table' },
   { label: 'Heatmap', value: 'heatmap' },
 ];
 
-const INTERVAL_FACTOR_OPTIONS: Array<SelectOptionItem<number>> = _.map([1, 2, 3, 4, 5, 10], (value: number) => ({
+const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = _.map([1, 2, 3, 4, 5, 10], (value: number) => ({
   value,
   label: '1/' + value,
 }));
 
 interface State {
   legendFormat: string;
-  formatOption: SelectOptionItem<string>;
+  formatOption: SelectableValue<string>;
   interval: string;
-  intervalFactorOption: SelectOptionItem<number>;
+  intervalFactorOption: SelectableValue<number>;
   instant: boolean;
 }
 
@@ -58,7 +57,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     this.query.expr = query.expr;
   };
 
-  onFormatChange = (option: SelectOptionItem<string>) => {
+  onFormatChange = (option: SelectableValue<string>) => {
     this.query.format = option.value;
     this.setState({ formatOption: option }, this.onRunQuery);
   };
@@ -75,7 +74,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     this.setState({ interval });
   };
 
-  onIntervalFactorChange = (option: SelectOptionItem<number>) => {
+  onIntervalFactorChange = (option: SelectableValue<number>) => {
     this.query.intervalFactor = option.value;
     this.setState({ intervalFactorOption: option }, this.onRunQuery);
   };
