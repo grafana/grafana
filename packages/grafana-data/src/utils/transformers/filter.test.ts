@@ -1,7 +1,7 @@
 import { FieldType } from '../../types/data';
-import { SeriesMatcherID } from '../matchers/ids';
-import { transformSeriesData } from './transformers';
-import { SeriesTransformerID } from './ids';
+import { DataMatcherID } from '../matchers/ids';
+import { transformDataFrame } from './transformers';
+import { DataTransformerID } from './ids';
 
 export const simpleSeriesWithTypes = {
   fields: [
@@ -16,13 +16,13 @@ export const simpleSeriesWithTypes = {
 describe('Filter Transformer', () => {
   it('filters by include', () => {
     const cfg = {
-      id: SeriesTransformerID.filter,
+      id: DataTransformerID.filter,
       options: {
-        include: { id: SeriesMatcherID.numericFields },
+        include: { id: DataMatcherID.numericFields },
       },
     };
 
-    const filtered = transformSeriesData([cfg], [simpleSeriesWithTypes])[0];
+    const filtered = transformDataFrame([cfg], [simpleSeriesWithTypes])[0];
     expect(filtered.fields.length).toBe(1);
     expect(filtered.fields[0].name).toBe('D');
   });

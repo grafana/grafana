@@ -1,34 +1,29 @@
-import { SeriesData } from '../../types/data';
-import { DataQueryRequest } from '../../types/index';
-import { Extension, ExtensionRegistry } from '../extensions';
+import { DataFrame } from '../../types/data';
+import { Registry, RegistryItemWithOptions } from '../registry';
 
-export type SeriesTransformer = (series: SeriesData[], request?: DataQueryRequest) => SeriesData[];
+export type DataTransformer = (data: DataFrame[]) => DataFrame[];
 
-export interface SeriesTransformerInfo<TOptions = any> extends Extension<TOptions> {
-  transformer: (options: TOptions) => SeriesTransformer;
+export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOptions {
+  transformer: (options: TOptions) => DataTransformer;
 }
 
-export interface SeriesTransformerConfig<TOptions = any> {
+export interface DataTransformerConfig<TOptions = any> {
   id: string;
   options: TOptions;
 }
 
 // Transformer that does nothing
-export const NoopSeriesTransformer = (series: SeriesData[], request?: DataQueryRequest) => series;
+export const NoopDataTransformer = (data: DataFrame[]) => data;
 
 /**
  * Apply configured transformations to the input data
  */
-export function transformSeriesData(
-  options: SeriesTransformerConfig[],
-  series: SeriesData[],
-  request?: DataQueryRequest
-): SeriesData[] {
-  let processed = series;
+export function transformDataFrame(options: DataTransformerConfig[], data: DataFrame[]): DataFrame[] {
+  let processed = data;
   for (const config of options) {
-    const info = seriesTransformers.get(config.id);
+    const info = dataTransformers.get(config.id);
     const transformer = info.transformer(config.options);
-    const after = transformer(processed, request);
+    const after = transformer(processed);
 
     // Add a key to the metadata if the data changed
     if (after && after !== processed) {
@@ -54,7 +49,7 @@ import { filterTransformer } from './filter';
 import { appendTransformer } from './append';
 import { calcTransformer } from './calc';
 
-export const seriesTransformers = new ExtensionRegistry<SeriesTransformerInfo>(() => [
+export const dataTransformers = new Registry<DataTransformerInfo>(() => [
   filterTransformer,
   appendTransformer,
   calcTransformer,

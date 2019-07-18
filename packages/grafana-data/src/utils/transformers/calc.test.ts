@@ -1,6 +1,6 @@
-import { transformSeriesData } from './transformers';
+import { transformDataFrame } from './transformers';
 import { ReducerID } from '../fieldReducer';
-import { SeriesTransformerID } from './ids';
+import { DataTransformerID } from './ids';
 
 const seriesWithValues = {
   fields: [{ name: 'A' }, { name: 'B' }],
@@ -18,12 +18,12 @@ const seriesWithValues = {
 describe('Calc Transformer', () => {
   it('filters by include', () => {
     const cfg = {
-      id: SeriesTransformerID.calc,
+      id: DataTransformerID.calc,
       options: {
         calcs: [ReducerID.min, ReducerID.max, ReducerID.mean, ReducerID.delta],
       },
     };
-    const filtered = transformSeriesData([cfg], [seriesWithValues])[0];
+    const filtered = transformDataFrame([cfg], [seriesWithValues])[0];
     expect(filtered.fields.length).toBe(5);
     expect(filtered).toMatchSnapshot();
   });

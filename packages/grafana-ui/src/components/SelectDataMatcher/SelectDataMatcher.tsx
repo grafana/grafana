@@ -4,26 +4,25 @@ import cloneDeep from 'lodash/cloneDeep';
 
 import { Select } from '../index';
 
-import { SelectOptionItem } from '../Select/Select';
-import { SeriesMatcherConfig, seriesMatchers } from '../../utils/index';
+import { DataMatcherConfig, dataMatchers, SelectableValue } from '@grafana/data';
 
 interface Props {
   placeholder?: string;
-  onChange: (config: SeriesMatcherConfig) => void;
-  config?: SeriesMatcherConfig;
+  onChange: (config: DataMatcherConfig) => void;
+  config?: DataMatcherConfig;
   width: number;
 }
 
-export class SeriesMatcherPicker extends PureComponent<Props> {
+export class SelectDataMatcher extends PureComponent<Props> {
   static defaultProps = {
     width: 12,
   };
 
-  onSelectionChange = (item: SelectOptionItem<string>) => {
+  onSelectionChange = (item: SelectableValue<string>) => {
     const { onChange } = this.props;
-    const matcher = seriesMatchers.getIfExists(item.value);
+    const matcher = dataMatchers.getIfExists(item.value);
     if (matcher) {
-      const config = { id: matcher.id } as SeriesMatcherConfig;
+      const config = { id: matcher.id } as DataMatcherConfig;
       if (matcher.defaultOptions) {
         config.options = cloneDeep(matcher.defaultOptions);
       }
@@ -34,7 +33,7 @@ export class SeriesMatcherPicker extends PureComponent<Props> {
   render() {
     const { width, placeholder, config } = this.props;
 
-    const select = seriesMatchers.selectOptions(config ? [config.id] : undefined);
+    const select = dataMatchers.selectOptions(config ? [config.id] : undefined);
 
     return (
       <Select

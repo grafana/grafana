@@ -1,21 +1,20 @@
-import { SeriesTransformerInfo, NoopSeriesTransformer } from './transformers';
-import { SeriesData } from '../../types/data';
-import { DataQueryRequest } from '../../types/index';
-import { SeriesMatcherConfig, getSeriesMatcher } from '../matchers/matchers';
-import { SeriesMatcherID } from '../matchers/ids';
-import { SeriesTransformerID } from './ids';
+import { DataTransformerInfo, NoopDataTransformer } from './transformers';
+import { DataFrame } from '../../types/data';
+import { DataMatcherConfig, getDataMatcher } from '../matchers/matchers';
+import { DataMatcherID } from '../matchers/ids';
+import { DataTransformerID } from './ids';
 
 interface FilterOptions {
-  include?: SeriesMatcherConfig;
-  exclude?: SeriesMatcherConfig;
+  include?: DataMatcherConfig;
+  exclude?: DataMatcherConfig;
 }
 
-export const filterTransformer: SeriesTransformerInfo<FilterOptions> = {
-  id: SeriesTransformerID.filter,
+export const filterTransformer: DataTransformerInfo<FilterOptions> = {
+  id: DataTransformerID.filter,
   name: 'Filter',
   description: 'select a subset of fields',
   defaultOptions: {
-    include: { id: SeriesMatcherID.numericFields },
+    include: { id: DataMatcherID.numericFields },
   },
 
   /**
@@ -24,15 +23,15 @@ export const filterTransformer: SeriesTransformerInfo<FilterOptions> = {
    */
   transformer: (options: FilterOptions) => {
     if (!options.include && !options.exclude) {
-      return NoopSeriesTransformer;
+      return NoopDataTransformer;
     }
 
-    const include = options.include ? getSeriesMatcher(options.include) : null;
+    const include = options.include ? getDataMatcher(options.include) : null;
 
-    const exclude = options.exclude ? getSeriesMatcher(options.exclude) : null;
+    const exclude = options.exclude ? getDataMatcher(options.exclude) : null;
 
-    return (data: SeriesData[], request?: DataQueryRequest) => {
-      const processed: SeriesData[] = [];
+    return (data: DataFrame[]) => {
+      const processed: DataFrame[] = [];
       for (const series of data) {
         // Find the matching field indexes
         const mask: number[] = [];

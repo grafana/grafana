@@ -1,7 +1,6 @@
-import { SeriesTransformerInfo } from './transformers';
-import { SeriesData } from '../../types/data';
-import { DataQueryRequest } from '../../types/index';
-import { SeriesTransformerID } from './ids';
+import { DataTransformerInfo } from './transformers';
+import { DataFrame } from '../../types/data';
+import { DataTransformerID } from './ids';
 
 interface AppendOptions {}
 
@@ -9,8 +8,8 @@ interface FieldIndex {
   [field: string]: number;
 }
 
-export const appendTransformer: SeriesTransformerInfo<AppendOptions> = {
-  id: SeriesTransformerID.append,
+export const appendTransformer: DataTransformerInfo<AppendOptions> = {
+  id: DataTransformerID.append,
   name: 'Append',
   description: 'Append all series',
   defaultOptions: {},
@@ -20,12 +19,12 @@ export const appendTransformer: SeriesTransformerInfo<AppendOptions> = {
    * be applied, just return the input series
    */
   transformer: (options: AppendOptions) => {
-    return (data: SeriesData[], request?: DataQueryRequest) => {
+    return (data: DataFrame[]) => {
       if (data.length < 2) {
         return data;
       }
 
-      const processed: SeriesData = {
+      const processed: DataFrame = {
         fields: [],
         rows: [],
       };

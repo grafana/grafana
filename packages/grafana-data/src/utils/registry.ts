@@ -13,6 +13,18 @@ export interface RegistryItem {
   excludeFromPicker?: boolean;
 }
 
+export interface RegistryItemWithOptions<TOptions = any> extends RegistryItem {
+  /**
+   * Convert the options to a string
+   */
+  getOptionsDisplayText?: (options: TOptions) => string;
+
+  /**
+   * Default options used if nothing else is specified
+   */
+  defaultOptions?: TOptions;
+}
+
 interface RegistrySelectInfo {
   options: Array<SelectableValue<string>>;
   current: Array<SelectableValue<string>>;

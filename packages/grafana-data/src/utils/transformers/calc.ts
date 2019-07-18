@@ -1,18 +1,17 @@
-import { SeriesTransformerInfo } from './transformers';
-import { SeriesData, FieldType } from '../../types/data';
-import { DataQueryRequest } from '../../types/index';
-import { SeriesMatcherConfig, getSeriesMatcher } from '../matchers/matchers';
-import { alwaysSeriesMatcher } from '../matchers/predicates';
-import { SeriesTransformerID } from './ids';
+import { DataTransformerInfo } from './transformers';
+import { DataFrame, FieldType } from '../../types/data';
+import { DataMatcherConfig, getDataMatcher } from '../matchers/matchers';
+import { alwaysDataMatcher } from '../matchers/predicates';
+import { DataTransformerID } from './ids';
 import { ReducerID, fieldReducers, reduceField } from '../fieldReducer';
 
 interface CalcOptions {
   calcs: string[];
-  matcher?: SeriesMatcherConfig; // Assume all fields
+  matcher?: DataMatcherConfig; // Assume all fields
 }
 
-export const calcTransformer: SeriesTransformerInfo<CalcOptions> = {
-  id: SeriesTransformerID.calc,
+export const calcTransformer: DataTransformerInfo<CalcOptions> = {
+  id: DataTransformerID.calc,
   name: 'Calculate',
   description: 'calculate...',
   defaultOptions: {
@@ -24,7 +23,7 @@ export const calcTransformer: SeriesTransformerInfo<CalcOptions> = {
    * be applied, just return the input series
    */
   transformer: (options: CalcOptions) => {
-    const matcher = options.matcher ? getSeriesMatcher(options.matcher) : alwaysSeriesMatcher;
+    const matcher = options.matcher ? getDataMatcher(options.matcher) : alwaysDataMatcher;
     const calculators = fieldReducers.list(options.calcs);
     const reducers = calculators.map(c => c.id);
     const fields = [
@@ -39,8 +38,8 @@ export const calcTransformer: SeriesTransformerInfo<CalcOptions> = {
       }),
     ];
 
-    return (data: SeriesData[], request?: DataQueryRequest) => {
-      const processed: SeriesData[] = [];
+    return (data: DataFrame[]) => {
+      const processed: DataFrame[] = [];
       for (const series of data) {
         if (matcher(series)) {
           const sub = {

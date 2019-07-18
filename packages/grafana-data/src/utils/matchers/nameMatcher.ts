@@ -1,18 +1,18 @@
-import { Field, SeriesData } from '../../types/data';
-import { SeriesMatcherInfo } from './matchers';
-import { SeriesMatcherID } from './ids';
+import { Field, DataFrame } from '../../types/data';
+import { DataMatcherInfo } from './matchers';
+import { DataMatcherID } from './ids';
 import { stringToJsRegex } from '../string';
 
 // General Field matcher
-const fieldNameMacher: SeriesMatcherInfo<string> = {
-  id: SeriesMatcherID.fieldName,
+const fieldNameMacher: DataMatcherInfo<string> = {
+  id: DataMatcherID.fieldName,
   name: 'Field Name',
   description: 'match the field name',
   defaultOptions: '/.*/',
 
   matcher: (pattern: string) => {
     const regex = stringToJsRegex(pattern);
-    return (series: SeriesData, field?: Field) => {
+    return (data: DataFrame, field?: Field) => {
       if (!field) {
         return true;
       }
@@ -28,6 +28,6 @@ const fieldNameMacher: SeriesMatcherInfo<string> = {
 /**
  * Registry Initalization
  */
-export function getNameMatchers(): SeriesMatcherInfo[] {
+export function getNameMatchers(): DataMatcherInfo[] {
   return [fieldNameMacher];
 }

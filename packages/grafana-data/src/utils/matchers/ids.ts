@@ -3,7 +3,7 @@
 /**
  * The standard Series matchers.  Other matchers could be registered
  */
-export enum SeriesMatcherID {
+export enum DataMatcherID {
   // Field Type
   numericFields = 'numericFields',
   timeFields = 'timeFields',

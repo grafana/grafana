@@ -1,5 +1,5 @@
-import { getSeriesMatcher } from './matchers';
-import { SeriesMatcherID } from './ids';
+import { getDataMatcher } from './matchers';
+import { DataMatcherID } from './ids';
 
 const seriesWithNames = {
   fields: [{ name: 'A hello world' }, { name: 'AAA' }, { name: 'C' }],
@@ -9,11 +9,11 @@ const seriesWithNames = {
 describe('Field Type Matcher', () => {
   it('Match all with wildcard regex', () => {
     const config = {
-      id: SeriesMatcherID.fieldName,
+      id: DataMatcherID.fieldName,
       options: '/.*/',
     };
 
-    const matcher = getSeriesMatcher(config);
+    const matcher = getDataMatcher(config);
 
     for (const field of seriesWithNames.fields) {
       expect(matcher(seriesWithNames, field)).toBe(true);

@@ -1,5 +1,5 @@
-import { transformSeriesData, seriesTransformers } from './transformers';
-import { SeriesTransformerID } from './ids';
+import { transformDataFrame, dataTransformers } from './transformers';
+import { DataTransformerID } from './ids';
 
 const seriesAB = {
   fields: [{ name: 'A' }, { name: 'B' }],
@@ -20,13 +20,13 @@ const seriesBC = {
 describe('Append Transformer', () => {
   it('filters by include', () => {
     const cfg = {
-      id: SeriesTransformerID.append,
+      id: DataTransformerID.append,
       options: {},
     };
-    const x = seriesTransformers.get(SeriesTransformerID.append);
+    const x = dataTransformers.get(DataTransformerID.append);
     expect(x.id).toBe(cfg.id);
 
-    const filtered = transformSeriesData([cfg], [seriesAB, seriesBC])[0];
+    const filtered = transformDataFrame([cfg], [seriesAB, seriesBC])[0];
     expect(filtered.fields.length).toBe(3);
     expect(filtered).toMatchSnapshot();
   });

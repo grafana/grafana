@@ -1,6 +1,6 @@
 import { FieldType } from '../../types/data';
-import { seriesMatchers } from './matchers';
-import { SeriesMatcherID } from './ids';
+import { dataMatchers } from './matchers';
+import { DataMatcherID } from './ids';
 
 export const simpleSeriesWithTypes = {
   fields: [
@@ -12,7 +12,7 @@ export const simpleSeriesWithTypes = {
 };
 
 describe('Field Type Matcher', () => {
-  const matcher = seriesMatchers.get(SeriesMatcherID.fieldType);
+  const matcher = dataMatchers.get(DataMatcherID.fieldType);
   it('finds numbers', () => {
     for (const field of simpleSeriesWithTypes.fields) {
       expect(matcher.matcher(FieldType.number)(simpleSeriesWithTypes, field)).toBe(field.type === FieldType.number);

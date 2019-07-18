@@ -1,17 +1,17 @@
-import { Field, SeriesData } from '../../types/data';
+import { Field, DataFrame } from '../../types/data';
 import { FieldType } from '../../types/data';
-import { SeriesMatcherInfo } from './matchers';
-import { SeriesMatcherID } from './ids';
+import { DataMatcherInfo } from './matchers';
+import { DataMatcherID } from './ids';
 
 // General Field matcher
-const fieldTypeMacher: SeriesMatcherInfo<FieldType> = {
-  id: SeriesMatcherID.fieldType,
+const fieldTypeMacher: DataMatcherInfo<FieldType> = {
+  id: DataMatcherID.fieldType,
   name: 'Field Type',
   description: 'match based on the field type',
   defaultOptions: FieldType.number,
 
   matcher: (type: FieldType) => {
-    return (series: SeriesData, field?: Field) => {
+    return (series: DataFrame, field?: Field) => {
       if (!field) {
         return true; // Match all series
       }
@@ -26,8 +26,8 @@ const fieldTypeMacher: SeriesMatcherInfo<FieldType> = {
 
 // Numeric Field matcher
 // This gets its own entry so it shows up in the dropdown
-const numericMacher: SeriesMatcherInfo<any> = {
-  id: SeriesMatcherID.numericFields,
+const numericMacher: DataMatcherInfo<any> = {
+  id: DataMatcherID.numericFields,
   name: 'Numeric Fields',
   description: 'Fields with type number',
 
@@ -41,8 +41,8 @@ const numericMacher: SeriesMatcherInfo<any> = {
 };
 
 // Time Field matcher
-const timeMacher: SeriesMatcherInfo<FieldType> = {
-  id: SeriesMatcherID.timeFields,
+const timeMacher: DataMatcherInfo<FieldType> = {
+  id: DataMatcherID.timeFields,
   name: 'Time Fields',
   description: 'Fields with type time',
 
@@ -58,6 +58,6 @@ const timeMacher: SeriesMatcherInfo<FieldType> = {
 /**
  * Registry Initalization
  */
-export function getFieldTypeMatchers(): SeriesMatcherInfo[] {
+export function getFieldTypeMatchers(): DataMatcherInfo[] {
   return [fieldTypeMacher, numericMacher, timeMacher];
 }
