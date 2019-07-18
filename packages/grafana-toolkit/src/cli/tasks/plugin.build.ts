@@ -82,12 +82,19 @@ export const prettierCheckPlugin = useSpinner<Fixable>('Prettier check', async (
         if (!prettier.check(data.toString(), opts)) {
           if (fix) {
             const fixed = prettier.format(data.toString(), opts);
-            fs.writeFile(s, fixed, err => {
-              if (err) {
-                console.log('Error fixing ' + s, err);
-                failed = true;
-              }
-            });
+            if (fixed && fixed.length > 10) {
+              fs.writeFile(s, fixed, err => {
+                if (err) {
+                  console.log('Error fixing ' + s, err);
+                  failed = true;
+                } else {
+                  console.log('Fixed: ' + s);
+                }
+              });
+            } else {
+              console.log('No automatic fix for: ' + s);
+              failed = true;
+            }
           } else {
             failed = true;
           }
