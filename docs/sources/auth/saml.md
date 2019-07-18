@@ -147,6 +147,14 @@ Grafana provides an endpoint for such at `/saml/metadata`. You can either downlo
 
 ## Assertion mapping
 
+During the SAML SSO authentication flow, we receive the ACS (Assertion Customer Service) callback. The callback contains all the relevant information of the user under authentication embedded in the SAML response. Grafana parses the response to create (or update) the user within its internal database.
+
+For Grafana to map the user information, it looks at the individual attributes within the assertion. You can think of these attributes as Key/Value pairs (although, they contain more information than that).
+
+Grafana provides configuration options that let you modify which keys to look at for these values. The data we need to create the user in Grafana is Name, Login handle, and email.
+
+An example is `assertion_attribute_name = "givenName"` where Grafana looks within the assertion for an attribute with a friendly name or name of `givenName`. Both, the friendly name (e.g. `givenName`) or the name (e.g. `urn:oid:2.5.4.42`) can be used interchangeably as the value for the configuration option.
+
 ## Troubleshooting
 
 To troubleshoot and get more log info enable saml debug logging in the [main config file]({{< relref "installation/configuration.md" >}}).
