@@ -29,9 +29,25 @@
     top: 1px;
     padding-right: 4px;
   }
-}
 
-.label-tag:hover {
-  opacity: 0.85;
-  background-color: darken($purple, 10%);
+  &.muted {
+    opacity: 0.85;
+    background-color: darken($purple, 10%);
+    color: $text-muted;
+  }
+
+  &:hover {
+    opacity: 0.85;
+    background-color: darken($purple, 10%);
+  }
+
+  &--gray {
+    opacity: 0.85;
+    background-color: $gray-1;
+    border-color: $gray-2;
+
+    &:hover {
+      background-color: $gray-1;
+    }
+  }
 }

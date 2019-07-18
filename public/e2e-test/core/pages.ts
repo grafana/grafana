@@ -49,6 +49,7 @@ export class TestPage<T> implements TestPageType<T> {
     }
 
     Object.keys(this.pageObjects).forEach(key => {
+      // @ts-ignore
       const pageObject: PageObject = this.pageObjects[key];
       pageObject.init(page);
     });
@@ -57,6 +58,7 @@ export class TestPage<T> implements TestPageType<T> {
   navigateTo = async (): Promise<void> => {
     this.throwIfNotInitialized();
 
+    console.log('Trying to navigate to:', this.pageUrl);
     await this.page.goto(this.pageUrl);
   };
 

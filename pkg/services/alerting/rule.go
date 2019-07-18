@@ -35,6 +35,7 @@ type Rule struct {
 	State               models.AlertStateType
 	Conditions          []Condition
 	Notifications       []string
+	AlertRuleTags       []*models.Tag
 
 	StateChanges int64
 }
@@ -145,6 +146,7 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 			model.Notifications = append(model.Notifications, uid)
 		}
 	}
+	model.AlertRuleTags = ruleDef.GetTagsFromSettings()
 
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {
 		conditionModel := simplejson.NewFromAny(condition)

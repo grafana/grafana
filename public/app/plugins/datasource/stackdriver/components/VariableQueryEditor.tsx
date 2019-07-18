@@ -63,7 +63,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState(state);
   }
 
-  async onQueryTypeChange(event) {
+  async onQueryTypeChange(event: any) {
     const state: any = {
       selectedQueryType: event.target.value,
       ...(await this.getLabels(this.state.selectedMetricType, event.target.value)),
@@ -71,7 +71,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState(state);
   }
 
-  async onServiceChange(event) {
+  async onServiceChange(event: any) {
     const { metricTypes, selectedMetricType } = getMetricTypes(
       this.state.metricDescriptors,
       this.state.selectedMetricType,
@@ -87,12 +87,12 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.setState(state);
   }
 
-  async onMetricTypeChange(event) {
+  async onMetricTypeChange(event: any) {
     const state: any = { selectedMetricType: event.target.value, ...(await this.getLabels(event.target.value)) };
     this.setState(state);
   }
 
-  onLabelKeyChange(event) {
+  onLabelKeyChange(event: any) {
     this.setState({ labelKey: event.target.value });
   }
 
@@ -102,7 +102,7 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     this.props.onChange(queryModel, `Stackdriver - ${query.name}`);
   }
 
-  async getLabels(selectedMetricType, selectedQueryType = this.state.selectedQueryType) {
+  async getLabels(selectedMetricType: string, selectedQueryType = this.state.selectedQueryType) {
     let result = { labels: this.state.labels, labelKey: this.state.labelKey };
     if (selectedMetricType && selectedQueryType === MetricFindQueryTypes.LabelValues) {
       const labels = await getLabelKeys(this.props.datasource, selectedMetricType);
@@ -114,12 +114,15 @@ export class StackdriverVariableQueryEditor extends PureComponent<VariableQueryP
     return result;
   }
 
-  insertTemplateVariables(options) {
-    const templateVariables = this.props.templateSrv.variables.map(v => ({ name: `$${v.name}`, value: `$${v.name}` }));
+  insertTemplateVariables(options: any) {
+    const templateVariables = this.props.templateSrv.variables.map((v: any) => ({
+      name: `$${v.name}`,
+      value: `$${v.name}`,
+    }));
     return [...templateVariables, ...options];
   }
 
-  renderQueryTypeSwitch(queryType) {
+  renderQueryTypeSwitch(queryType: string) {
     switch (queryType) {
       case MetricFindQueryTypes.MetricTypes:
         return (

@@ -45,6 +45,10 @@
           </div>
         </div>
         <div class="clearfix"></div>
+        <a class="btn btn-medium btn-service btn-service--github login-btn" href="login/saml" target="_self" ng-if="samlEnabled">
+          <i class="btn-service-icon fa fa-key"></i>
+          Sign in with SAML
+        </a>
         <div class="login-oauth text-center" ng-show="oauthEnabled">
           <a class="btn btn-medium btn-service btn-service--google login-btn" href="login/google" target="_self" ng-if="oauth.google">
             <i class="btn-service-icon fa fa-google"></i>

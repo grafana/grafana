@@ -28,6 +28,7 @@ export class AlertTabCtrl {
   error: string;
   appSubUrl: string;
   alertHistory: any;
+  newAlertRuleTag: any;
 
   /** @ngInject */
   constructor(
@@ -158,6 +159,18 @@ export class AlertTabCtrl {
     _.remove(this.alertNotifications, (n: any) => n.uid === an.uid || n.id === an.id);
   }
 
+  addAlertRuleTag() {
+    if (this.newAlertRuleTag.name) {
+      this.alert.alertRuleTags[this.newAlertRuleTag.name] = this.newAlertRuleTag.value;
+    }
+    this.newAlertRuleTag.name = '';
+    this.newAlertRuleTag.value = '';
+  }
+
+  removeAlertRuleTag(tagName) {
+    delete this.alert.alertRuleTags[tagName];
+  }
+
   initModel() {
     const alert = (this.alert = this.panel.alert);
     if (!alert) {
@@ -175,6 +188,7 @@ export class AlertTabCtrl {
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
     alert.for = alert.for || '0m';
+    alert.alertRuleTags = alert.alertRuleTags || {};
 
     const defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;

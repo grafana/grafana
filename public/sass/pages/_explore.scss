@@ -10,14 +10,6 @@
   transform: rotate(90deg);
 }
 
-.timepicker {
-  display: flex;
-}
-
-.timepicker-rangestring {
-  margin-left: 0.5em;
-}
-
 .datasource-picker {
   .ds-picker {
     min-width: 200px;
@@ -76,8 +68,8 @@
   flex: 1 1 0;
   flex-flow: row nowrap;
   font-size: 18px;
-  min-height: 55px;
-  line-height: 55px;
+  min-height: $navbarHeight;
+  line-height: $navbarHeight;
   justify-content: space-between;
   align-items: center;
 }
@@ -91,17 +83,17 @@
   display: flex;
   flex-flow: row wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
 .explore-toolbar-content-item {
-  padding: 10px 2px;
-}
-
-.explore-toolbar-content-item:first-child {
-  padding-left: $dashboard-padding;
-  margin-right: auto;
   display: flex;
+  padding: 2px 2px;
+
+  &:first-child {
+    padding-left: $dashboard-padding;
+    margin-right: auto;
+  }
 }
 
 @media only screen and (max-width: 1545px) {
@@ -128,10 +120,6 @@
       padding: 2px 0;
       margin: 0;
     }
-  }
-
-  .explore-toolbar-content-item {
-    padding: 2px 2px;
   }
 }
 
@@ -294,14 +282,15 @@
 }
 
 .query-row-status {
-  position: absolute;
+  position: relative;
   top: 0;
-  right: 105px;
+  right: 35px;
   z-index: 1015;
   display: flex;
   flex-direction: column;
   justify-content: center;
   height: $input-height;
+  width: 0;
 }
 
 .query-row-field {

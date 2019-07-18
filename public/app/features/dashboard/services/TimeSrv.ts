@@ -4,14 +4,15 @@ import _ from 'lodash';
 // Utils
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 
 // Types
-import { TimeRange, RawTimeRange } from '@grafana/ui';
+import { TimeRange, RawTimeRange, TimeZone } from '@grafana/data';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
-import { toUtc, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, dateTime, isDateTime } from '@grafana/data';
+import { getZoomedTimeRange } from 'app/core/utils/timePicker';
 
 export class TimeSrv {
   time: any;
@@ -112,6 +113,9 @@ export class TimeSrv {
 
   private routeUpdated() {
     const params = this.$location.search();
+    if (params.left) {
+      return; // explore handles this;
+    }
     const urlRange = this.timeRangeForUrl();
     // check if url has time range
     if (params.from && params.to) {
@@ -224,7 +228,7 @@ export class TimeSrv {
       to: isDateTime(this.time.to) ? dateTime(this.time.to) : this.time.to,
     };
 
-    const timezone = this.dashboard && this.dashboard.getTimezone();
+    const timezone: TimeZone = this.dashboard ? this.dashboard.getTimezone() : undefined;
 
     return {
       from: dateMath.parse(raw.from, false, timezone),
@@ -235,12 +239,7 @@ export class TimeSrv {
 
   zoomOut(e: any, factor: number) {
     const range = this.timeRange();
-
-    const timespan = range.to.valueOf() - range.from.valueOf();
-    const center = range.to.valueOf() - timespan / 2;
-
-    const to = center + (timespan * factor) / 2;
-    const from = center - (timespan * factor) / 2;
+    const { from, to } = getZoomedTimeRange(range, factor);
 
     this.setTime({ from: toUtc(from), to: toUtc(to) });
   }

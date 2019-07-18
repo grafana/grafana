@@ -7,6 +7,12 @@ $popper-margin-from-ref: 5px;
   .popper__arrow {
     border-color: $backgroundColor;
   }
+
+  code {
+    border: none;
+    background: darken($backgroundColor, 15%);
+    color: lighten($textColor, 20%);
+  }
 }
 
 .popper {
@@ -14,7 +20,6 @@ $popper-margin-from-ref: 5px;
   z-index: $zindex-tooltip;
   color: $tooltipColor;
   max-width: 400px;
-  text-align: center;
 }
 
 .popper__background {

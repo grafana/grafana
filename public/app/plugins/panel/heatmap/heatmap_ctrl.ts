@@ -12,11 +12,13 @@ import {
   calculateBucketSize,
   sortSeriesByLabel,
 } from './heatmap_data_converter';
+import { auto } from 'angular';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
 const Y_BUCKET_NUMBER_DEFAULT = 10;
 
-const panelDefaults = {
+const panelDefaults: any = {
   heatmap: {},
   cards: {
     cardPadding: null,
@@ -117,7 +119,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   scaledDecimals: number;
 
   /** @ngInject */
-  constructor($scope, $injector, timeSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService, timeSrv: TimeSrv) {
     super($scope, $injector);
     this.timeSrv = timeSrv;
     this.selectionActivated = false;
@@ -143,7 +145,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.unitFormats = kbn.getUnitFormats();
   }
 
-  zoomOut(evt) {
+  zoomOut(evt: any) {
     this.publishAppEvent('zoom-out', 2);
   }
 
@@ -275,7 +277,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     }
   }
 
-  onDataReceived(dataList) {
+  onDataReceived(dataList: any) {
     this.series = dataList.map(this.seriesHandler.bind(this));
 
     this.dataWarning = null;
@@ -312,24 +314,24 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  onCardColorChange(newColor) {
+  onCardColorChange(newColor: any) {
     this.panel.color.cardColor = newColor;
     this.render();
   }
 
-  seriesHandler(seriesData) {
-    if (seriesData.datapoints === undefined) {
+  seriesHandler(dataFrame: any) {
+    if (dataFrame.datapoints === undefined) {
       throw new Error('Heatmap error: data should be a time series');
     }
 
     const series = new TimeSeries({
-      datapoints: seriesData.datapoints,
-      alias: seriesData.target,
+      datapoints: dataFrame.datapoints,
+      alias: dataFrame.target,
     });
 
     series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
 
-    const datapoints = seriesData.datapoints || [];
+    const datapoints = dataFrame.datapoints || [];
     if (datapoints && datapoints.length > 0) {
       const last = datapoints[datapoints.length - 1][1];
       const from = this.range.from;
@@ -341,19 +343,19 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     return series;
   }
 
-  parseSeries(series) {
+  parseSeries(series: any[]) {
     const min = _.min(_.map(series, s => s.stats.min));
     const minLog = _.min(_.map(series, s => s.stats.logmin));
     const max = _.max(_.map(series, s => s.stats.max));
 
     return {
-      max: max,
-      min: min,
-      minLog: minLog,
+      max,
+      min,
+      minLog,
     };
   }
 
-  parseHistogramSeries(series) {
+  parseHistogramSeries(series: any[]) {
     const bounds = _.map(series, s => Number(s.alias));
     const min = _.min(bounds);
     const minLog = _.min(bounds);
@@ -366,7 +368,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     };
   }
 
-  link(scope, elem, attrs, ctrl) {
+  link(scope: any, elem: any, attrs: any, ctrl: any) {
     rendering(scope, elem, attrs, ctrl);
   }
 }

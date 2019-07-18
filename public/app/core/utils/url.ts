@@ -71,3 +71,19 @@ export function toUrlParams(a: any) {
 
   return buildParams('', a).join('&');
 }
+
+export function appendQueryToUrl(url, stringToAppend) {
+  if (stringToAppend !== undefined && stringToAppend !== null && stringToAppend !== '') {
+    const pos = url.indexOf('?');
+    if (pos !== -1) {
+      if (url.length - pos > 1) {
+        url += '&';
+      }
+    } else {
+      url += '?';
+    }
+    url += stringToAppend;
+  }
+
+  return url;
+}

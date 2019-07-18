@@ -4,6 +4,7 @@ import {
   createResetHandler,
   PasswordFieldEnum,
 } from '../../../features/datasources/utils/passwordHandlers';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
 
 export class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -15,7 +16,7 @@ export class PostgresConfigCtrl {
   onPasswordChange: ReturnType<typeof createChangeHandler>;
 
   /** @ngInject */
-  constructor($scope, datasourceSrv) {
+  constructor($scope: any, datasourceSrv: DatasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'verify-full';
     this.current.jsonData.postgresVersion = this.current.jsonData.postgresVersion || 903;
@@ -30,13 +31,13 @@ export class PostgresConfigCtrl {
       return;
     }
 
-    this.datasourceSrv.loadDatasource(this.current.name).then(ds => {
-      return ds.getVersion().then(version => {
+    this.datasourceSrv.loadDatasource(this.current.name).then((ds: any) => {
+      return ds.getVersion().then((version: any) => {
         version = Number(version[0].text);
 
         // timescaledb is only available for 9.6+
         if (version >= 906) {
-          ds.getTimescaleDBVersion().then(version => {
+          ds.getTimescaleDBVersion().then((version: any) => {
             if (version.length === 1) {
               this.current.jsonData.timescaledb = true;
             }

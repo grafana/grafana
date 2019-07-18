@@ -1,19 +1,12 @@
-import {
-  DataQueryResponse,
-  TableData,
-  isTableData,
-  LogsModel,
-  toSeriesData,
-  guessFieldTypes,
-  DataQueryResponseData,
-  TimeSeries,
-} from '@grafana/ui';
+import { DataQueryResponse, DataQueryResponseData } from '@grafana/ui';
+
+import { TableData, isTableData, LogsModel, toDataFrame, guessFieldTypes, TimeSeries } from '@grafana/data';
 
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrame } from 'app/features/dashboard/state/PanelQueryState';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult } from 'app/core/utils/explore';
-import { seriesDataToLogsModel } from 'app/core/logs_model';
+import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { default as TimeSeries2 } from 'app/core/time_series2';
 import { DataProcessor } from 'app/plugins/panel/graph/data_processor';
 
@@ -66,7 +59,7 @@ export class ResultProcessor {
       return new TableModel();
     }
 
-    const prevTableResults = this.state.tableResult || [];
+    const prevTableResults: any[] | TableModel = this.state.tableResult || [];
     const tablesToMerge = this.replacePreviousResults ? this.tables : [].concat(prevTableResults, this.tables);
 
     return mergeTablesIntoModel(new TableModel(), ...tablesToMerge);
@@ -77,11 +70,12 @@ export class ResultProcessor {
       return null;
     }
     const graphInterval = this.state.queryIntervals.intervalMs;
-    const seriesData = this.rawData.map(result => guessFieldTypes(toSeriesData(result)));
-    const newResults = this.rawData ? seriesDataToLogsModel(seriesData, graphInterval) : null;
+    const dataFrame = this.rawData.map(result => guessFieldTypes(toDataFrame(result)));
+    const newResults = this.rawData ? dataFrameToLogsModel(dataFrame, graphInterval) : null;
+    const sortedNewResults = sortLogsResult(newResults, this.state.refreshInterval);
 
     if (this.replacePreviousResults) {
-      return newResults;
+      return sortedNewResults;
     }
 
     const prevLogsResult: LogsModel = this.state.logsResult || { hasUniqueLabels: false, rows: [] };
@@ -93,21 +87,21 @@ export class ResultProcessor {
     for (const row of rowsInState) {
       processedRows.push({ ...row, fresh: false });
     }
-    for (const row of newResults.rows) {
+    for (const row of sortedNewResults.rows) {
       processedRows.push({ ...row, fresh: true });
     }
 
-    const processedSeries = this.mergeGraphResults(newResults.series, seriesInState);
+    const processedSeries = this.mergeGraphResults(sortedNewResults.series, seriesInState);
 
     const slice = -1000;
     const rows = processedRows.slice(slice);
     const series = processedSeries.slice(slice);
 
-    return { ...newResults, rows, series };
+    return { ...sortedNewResults, rows, series };
   };
 
   private makeTimeSeriesList = (rawData: any[]) => {
-    const dataList = getProcessedSeriesData(rawData);
+    const dataList = getProcessedDataFrame(rawData);
     const dataProcessor = new DataProcessor({ xaxis: {}, aliasColors: [] }); // Hack before we use GraphSeriesXY instead
     const timeSeries = dataProcessor.getSeriesList({ dataList });
 
@@ -116,13 +110,17 @@ export class ResultProcessor {
 
   private isSameTimeSeries = (a: TimeSeries | TimeSeries2, b: TimeSeries | TimeSeries2) => {
     if (a.hasOwnProperty('id') && b.hasOwnProperty('id')) {
-      if (a['id'] !== undefined && b['id'] !== undefined && a['id'] === b['id']) {
+      const aValue = (a as TimeSeries2).id;
+      const bValue = (b as TimeSeries2).id;
+      if (aValue !== undefined && bValue !== undefined && aValue === bValue) {
         return true;
       }
     }
 
     if (a.hasOwnProperty('alias') && b.hasOwnProperty('alias')) {
-      if (a['alias'] !== undefined && b['alias'] !== undefined && a['alias'] === b['alias']) {
+      const aValue = (a as TimeSeries2).alias;
+      const bValue = (b as TimeSeries2).alias;
+      if (aValue !== undefined && bValue !== undefined && aValue === bValue) {
         return true;
       }
     }

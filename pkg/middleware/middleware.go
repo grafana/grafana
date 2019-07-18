@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -13,23 +14,28 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var getTime = time.Now
+
 var (
 	ReqGrafanaAdmin = Auth(&AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	ReqSignedIn     = Auth(&AuthOptions{ReqSignedIn: true})
-	ReqEditorRole   = RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
-	ReqOrgAdmin     = RoleAuth(m.ROLE_ADMIN)
+	ReqEditorRole   = RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN)
+	ReqOrgAdmin     = RoleAuth(models.ROLE_ADMIN)
 )
 
-func GetContextHandler(ats m.UserTokenService, remoteCache *remotecache.RemoteCache) macaron.Handler {
+func GetContextHandler(
+	ats models.UserTokenService,
+	remoteCache *remotecache.RemoteCache,
+) macaron.Handler {
 	return func(c *macaron.Context) {
-		ctx := &m.ReqContext{
+		ctx := &models.ReqContext{
 			Context:        c,
-			SignedInUser:   &m.SignedInUser{},
+			SignedInUser:   &models.SignedInUser{},
 			IsSignedIn:     false,
 			AllowAnonymous: false,
 			SkipCache:      false,
@@ -64,19 +70,19 @@ func GetContextHandler(ats m.UserTokenService, remoteCache *remotecache.RemoteCa
 		// update last seen every 5min
 		if ctx.ShouldUpdateLastSeenAt() {
 			ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
-			if err := bus.Dispatch(&m.UpdateUserLastSeenAtCommand{UserId: ctx.UserId}); err != nil {
+			if err := bus.Dispatch(&models.UpdateUserLastSeenAtCommand{UserId: ctx.UserId}); err != nil {
 				ctx.Logger.Error("Failed to update last_seen_at", "error", err)
 			}
 		}
 	}
 }
 
-func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
+func initContextWithAnonymousUser(ctx *models.ReqContext) bool {
 	if !setting.AnonymousEnabled {
 		return false
 	}
 
-	orgQuery := m.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
+	orgQuery := models.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
 	if err := bus.Dispatch(&orgQuery); err != nil {
 		log.Error(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
 		return false
@@ -84,14 +90,14 @@ func initContextWithAnonymousUser(ctx *m.ReqContext) bool {
 
 	ctx.IsSignedIn = false
 	ctx.AllowAnonymous = true
-	ctx.SignedInUser = &m.SignedInUser{IsAnonymous: true}
-	ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
+	ctx.SignedInUser = &models.SignedInUser{IsAnonymous: true}
+	ctx.OrgRole = models.RoleType(setting.AnonymousOrgRole)
 	ctx.OrgId = orgQuery.Result.Id
 	ctx.OrgName = orgQuery.Result.Name
 	return true
 }
 
-func initContextWithApiKey(ctx *m.ReqContext) bool {
+func initContextWithApiKey(ctx *models.ReqContext) bool {
 	var keyString string
 	if keyString = getApiKey(ctx); keyString == "" {
 		return false
@@ -105,7 +111,7 @@ func initContextWithApiKey(ctx *m.ReqContext) bool {
 	}
 
 	// fetch key
-	keyQuery := m.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
+	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
 	if err := bus.Dispatch(&keyQuery); err != nil {
 		ctx.JsonApiErr(401, "Invalid API key", err)
 		return true
@@ -119,15 +125,21 @@ func initContextWithApiKey(ctx *m.ReqContext) bool {
 		return true
 	}
 
+	// check for expiration
+	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
+		ctx.JsonApiErr(401, "Expired API key", err)
+		return true
+	}
+
 	ctx.IsSignedIn = true
-	ctx.SignedInUser = &m.SignedInUser{}
+	ctx.SignedInUser = &models.SignedInUser{}
 	ctx.OrgRole = apikey.Role
 	ctx.ApiKeyId = apikey.Id
 	ctx.OrgId = apikey.OrgId
 	return true
 }
 
-func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
+func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 
 	if !setting.BasicAuthEnabled {
 		return false
@@ -144,7 +156,7 @@ func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 		return true
 	}
 
-	loginQuery := m.GetUserByLoginQuery{LoginOrEmail: username}
+	loginQuery := models.GetUserByLoginQuery{LoginOrEmail: username}
 	if err := bus.Dispatch(&loginQuery); err != nil {
 		ctx.JsonApiErr(401, "Basic auth failed", err)
 		return true
@@ -152,13 +164,13 @@ func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 
 	user := loginQuery.Result
 
-	loginUserQuery := m.LoginUserQuery{Username: username, Password: password, User: user}
+	loginUserQuery := models.LoginUserQuery{Username: username, Password: password, User: user}
 	if err := bus.Dispatch(&loginUserQuery); err != nil {
 		ctx.JsonApiErr(401, "Invalid username or password", err)
 		return true
 	}
 
-	query := m.GetSignedInUserQuery{UserId: user.Id, OrgId: orgId}
+	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		ctx.JsonApiErr(401, "Authentication error", err)
 		return true
@@ -169,7 +181,11 @@ func initContextWithBasicAuth(ctx *m.ReqContext, orgId int64) bool {
 	return true
 }
 
-func initContextWithToken(authTokenService m.UserTokenService, ctx *m.ReqContext, orgID int64) bool {
+func initContextWithToken(authTokenService models.UserTokenService, ctx *models.ReqContext, orgID int64) bool {
+	if setting.LoginCookieName == "" {
+		return false
+	}
+
 	rawToken := ctx.GetCookie(setting.LoginCookieName)
 	if rawToken == "" {
 		return false
@@ -182,7 +198,7 @@ func initContextWithToken(authTokenService m.UserTokenService, ctx *m.ReqContext
 		return false
 	}
 
-	query := m.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
+	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
 	if err := bus.Dispatch(&query); err != nil {
 		ctx.Logger.Error("failed to get user with id", "userId", token.UserId, "error", err)
 		return false
@@ -205,7 +221,7 @@ func initContextWithToken(authTokenService m.UserTokenService, ctx *m.ReqContext
 	return true
 }
 
-func WriteSessionCookie(ctx *m.ReqContext, value string, maxLifetimeDays int) {
+func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays int) {
 	if setting.Env == setting.DEV {
 		ctx.Logger.Info("new token", "unhashed token", value)
 	}
@@ -242,7 +258,31 @@ func AddDefaultResponseHeaders() macaron.Handler {
 			if !setting.AllowEmbedding {
 				AddXFrameOptionsDenyHeader(w)
 			}
+
+			AddSecurityHeaders(w)
 		})
+	}
+}
+
+// AddSecurityHeaders adds various HTTP(S) response headers that enable various security protections behaviors in the client's browser.
+func AddSecurityHeaders(w macaron.ResponseWriter) {
+	if setting.Protocol == setting.HTTPS && setting.StrictTransportSecurity {
+		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", setting.StrictTransportSecurityMaxAge)}
+		if setting.StrictTransportSecurityPreload {
+			strictHeaderValues = append(strictHeaderValues, "preload")
+		}
+		if setting.StrictTransportSecuritySubDomains {
+			strictHeaderValues = append(strictHeaderValues, "includeSubDomains")
+		}
+		w.Header().Add("Strict-Transport-Security", strings.Join(strictHeaderValues, "; "))
+	}
+
+	if setting.ContentTypeProtectionHeader {
+		w.Header().Add("X-Content-Type-Options", "nosniff")
+	}
+
+	if setting.XSSProtectionHeader {
+		w.Header().Add("X-XSS-Protection", "1; mode=block")
 	}
 }
 

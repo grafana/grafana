@@ -4,7 +4,7 @@ import SignIn from './SignIn';
 import BottomNavLinks from './BottomNavLinks';
 import { contextSrv } from 'app/core/services/context_srv';
 import config from '../../config';
-import { NavModelItem } from '@grafana/ui';
+import { NavModelItem } from '@grafana/data';
 
 export default function BottomSection() {
   const navTree: NavModelItem[] = _.cloneDeep(config.bootData.navTree);

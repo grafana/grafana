@@ -4,7 +4,7 @@ import { action } from '@storybook/addon-actions';
 import { withKnobs, object, text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { SelectOptionItem } from './Select';
+import { SelectableValue } from '@grafana/data';
 import { ButtonSelect } from './ButtonSelect';
 
 const ButtonSelectStories = storiesOf('UI/Select/ButtonSelect', module);
@@ -12,9 +12,9 @@ const ButtonSelectStories = storiesOf('UI/Select/ButtonSelect', module);
 ButtonSelectStories.addDecorator(withCenteredStory).addDecorator(withKnobs);
 
 ButtonSelectStories.add('default', () => {
-  const intialState: SelectOptionItem<string> = { label: 'A label', value: 'A value' };
-  const value = object<SelectOptionItem<string>>('Selected Value:', intialState);
-  const options = object<Array<SelectOptionItem<string>>>('Options:', [
+  const intialState: SelectableValue<string> = { label: 'A label', value: 'A value' };
+  const value = object<SelectableValue<string>>('Selected Value:', intialState);
+  const options = object<Array<SelectableValue<string>>>('Options:', [
     intialState,
     { label: 'Another label', value: 'Another value' },
   ]);

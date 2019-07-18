@@ -3,7 +3,6 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 
 // Utils & Services
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { PlaylistSrv } from 'app/features/playlist/playlist_srv';
 
@@ -36,28 +35,11 @@ export interface StateProps {
 type Props = StateProps & OwnProps;
 
 export class DashNav extends PureComponent<Props> {
-  timePickerEl: HTMLElement;
-  timepickerCmp: AngularComponent;
   playlistSrv: PlaylistSrv;
 
   constructor(props: Props) {
     super(props);
     this.playlistSrv = this.props.$injector.get('playlistSrv');
-  }
-
-  componentDidMount() {
-    const loader = getAngularLoader();
-    const template =
-      '<gf-time-picker class="gf-timepicker-nav" dashboard="dashboard" ng-if="!dashboard.timepicker.hidden" />';
-    const scopeProps = { dashboard: this.props.dashboard };
-
-    this.timepickerCmp = loader.load(this.timePickerEl, scopeProps, template);
-  }
-
-  componentWillUnmount() {
-    if (this.timepickerCmp) {
-      this.timepickerCmp.destroy();
-    }
   }
 
   onDahboardNameClick = () => {
@@ -187,7 +169,7 @@ export class DashNav extends PureComponent<Props> {
   }
 
   render() {
-    const { dashboard, onAddPanel, location } = this.props;
+    const { dashboard, onAddPanel, location, $injector } = this.props;
     const { canStar, canSave, canShare, showSettings, isStarred } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -281,8 +263,12 @@ export class DashNav extends PureComponent<Props> {
 
         {!dashboard.timepicker.hidden && (
           <div className="navbar-buttons">
-            <div className="gf-timepicker-nav" ref={element => (this.timePickerEl = element)} />
-            <DashNavTimeControls dashboard={dashboard} location={location} updateLocation={updateLocation} />
+            <DashNavTimeControls
+              $injector={$injector}
+              dashboard={dashboard}
+              location={location}
+              updateLocation={updateLocation}
+            />
           </div>
         )}
       </div>

@@ -13,7 +13,7 @@ describe('runQueriesEpic', () => {
             const { exploreId, state, datasourceInterval, containerWidth } = mockExploreState({ queries });
 
             epicTester(runQueriesEpic, state)
-              .whenActionIsDispatched(runQueriesAction({ exploreId, range: null }))
+              .whenActionIsDispatched(runQueriesAction({ exploreId }))
               .thenResultingActionsEqual(
                 runQueriesBatchAction({
                   exploreId,
@@ -33,7 +33,7 @@ describe('runQueriesEpic', () => {
             });
 
             epicTester(runQueriesEpic, state)
-              .whenActionIsDispatched(runQueriesAction({ exploreId, range: null }))
+              .whenActionIsDispatched(runQueriesAction({ exploreId }))
               .thenResultingActionsEqual(
                 runQueriesBatchAction({
                   exploreId,
@@ -50,7 +50,7 @@ describe('runQueriesEpic', () => {
           const { exploreId, state } = mockExploreState({ queries });
 
           epicTester(runQueriesEpic, state)
-            .whenActionIsDispatched(runQueriesAction({ exploreId, range: null }))
+            .whenActionIsDispatched(runQueriesAction({ exploreId }))
             .thenResultingActionsEqual(clearQueriesAction({ exploreId }), stateSaveAction());
         });
       });
@@ -63,7 +63,7 @@ describe('runQueriesEpic', () => {
         });
 
         epicTester(runQueriesEpic, state)
-          .whenActionIsDispatched(runQueriesAction({ exploreId, range: null }))
+          .whenActionIsDispatched(runQueriesAction({ exploreId }))
           .thenNoActionsWhereDispatched();
       });
     });

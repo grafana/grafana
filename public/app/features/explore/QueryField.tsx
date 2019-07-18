@@ -15,10 +15,11 @@ import ClearPlugin from './slate-plugins/clear';
 import NewlinePlugin from './slate-plugins/newline';
 
 import { TypeaheadWithTheme } from './Typeahead';
-import { makeFragment, makeValue } from './Value';
+import { makeFragment, makeValue } from '@grafana/ui';
 import PlaceholdersBuffer from './PlaceholdersBuffer';
 
 export const TYPEAHEAD_DEBOUNCE = 100;
+export const HIGHLIGHT_WAIT = 500;
 
 function getSuggestionByIndex(suggestions: CompletionItemGroup[], index: number): CompletionItem {
   // Flatten suggestion groups
@@ -52,7 +53,7 @@ export interface QueryFieldState {
   typeaheadIndex: number;
   typeaheadPrefix: string;
   typeaheadText: string;
-  value: Value;
+  value: any;
   lastExecutedValue: Value;
 }
 
@@ -77,11 +78,13 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   plugins: any[];
   resetTimer: any;
   mounted: boolean;
+  updateHighlightsTimer: any;
 
   constructor(props: QueryFieldProps, context: Context<any>) {
     super(props, context);
 
     this.placeholdersBuffer = new PlaceholdersBuffer(props.initialQuery || '');
+    this.updateHighlightsTimer = _.debounce(this.updateLogsHighlights, HIGHLIGHT_WAIT);
 
     // Base plugins
     this.plugins = [ClearPlugin(), NewlinePlugin(), ...(props.additionalPlugins || [])].filter(p => p);
@@ -152,7 +155,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
           this.executeOnChangeAndRunQueries();
         }
         if (textChanged && !invokeParentOnValueChanged) {
-          this.updateLogsHighlights();
+          this.updateHighlightsTimer();
         }
       }
     });
@@ -168,6 +171,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
   updateLogsHighlights = () => {
     const { onChange } = this.props;
+
     if (onChange) {
       onChange(Plain.serialize(this.state.value));
     }

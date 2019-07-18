@@ -171,6 +171,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		Login:      userInfo.Login,
 		Email:      userInfo.Email,
 		OrgRoles:   map[int64]m.RoleType{},
+		Groups:     userInfo.Groups,
 	}
 
 	if userInfo.Role != "" {
@@ -190,10 +191,15 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		return
 	}
 
+	if cmd.Result.IsDisabled {
+		hs.redirectWithError(ctx, login.ErrUserDisabled)
+		return
+	}
+
 	// login
 	hs.loginUserWithUser(cmd.Result, ctx)
 
-	metrics.M_Api_Login_OAuth.Inc()
+	metrics.MApiLoginOAuth.Inc()
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		ctx.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")

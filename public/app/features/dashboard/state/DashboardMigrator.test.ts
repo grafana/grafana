@@ -3,6 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
+import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -127,7 +128,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(18);
+      expect(model.schemaVersion).toBe(19);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -380,6 +381,60 @@ describe('DashboardModel', () => {
       };
       const dashboard = new DashboardModel(model);
       expect(dashboard.panels[0].maxPerRow).toBe(3);
+    });
+  });
+
+  describe('when migrating panel links', () => {
+    let model;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            links: [
+              {
+                url: 'http://mylink.com',
+                keepTime: true,
+                title: 'test',
+              },
+              {
+                url: 'http://mylink.com?existingParam',
+                params: 'customParam',
+                title: 'test',
+              },
+              {
+                url: 'http://mylink.com?existingParam',
+                includeVars: true,
+                title: 'test',
+              },
+              {
+                dashboard: 'my other dashboard',
+                title: 'test',
+              },
+              {
+                dashUri: '',
+                title: 'test',
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should add keepTime as variable', () => {
+      expect(model.panels[0].links[0].url).toBe(`http://mylink.com?$${DataLinkBuiltInVars.keepTime}`);
+    });
+
+    it('should add params to url', () => {
+      expect(model.panels[0].links[1].url).toBe('http://mylink.com?existingParam&customParam');
+    });
+
+    it('should add includeVars to url', () => {
+      expect(model.panels[0].links[2].url).toBe(`http://mylink.com?existingParam&$${DataLinkBuiltInVars.includeVars}`);
+    });
+
+    it('should slugify dashboard name', () => {
+      expect(model.panels[0].links[3].url).toBe(`/dashboard/db/my-other-dashboard`);
     });
   });
 });

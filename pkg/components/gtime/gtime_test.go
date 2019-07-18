@@ -15,7 +15,9 @@ func TestParseInterval(t *testing.T) {
 	}{
 		{interval: "1d", duration: time.Hour * 24},
 		{interval: "1w", duration: time.Hour * 24 * 7},
+		{interval: "2w", duration: time.Hour * 24 * 7 * 2},
 		{interval: "1y", duration: time.Hour * 24 * 7 * 365},
+		{interval: "5y", duration: time.Hour * 24 * 7 * 365 * 5},
 		{interval: "1M", err: errors.New("time: unknown unit M in duration 1M")},
 		{interval: "invalid-duration", err: errors.New("time: invalid duration invalid-duration")},
 	}

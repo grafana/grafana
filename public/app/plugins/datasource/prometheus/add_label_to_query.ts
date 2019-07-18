@@ -25,7 +25,7 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
   }
 
   // Add empty selectors to bare metric names
-  let previousWord;
+  let previousWord: string;
   query = query.replace(metricNameRegexp, (match, word, offset) => {
     const insideSelector = isPositionInsideChars(query, offset, '{', '}');
     // Handle "sum by (key) (metric)"

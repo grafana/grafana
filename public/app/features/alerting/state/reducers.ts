@@ -1,7 +1,7 @@
 import { AlertRuleDTO, AlertRule, AlertRulesState } from 'app/types';
 import { Action, ActionTypes } from './actions';
 import alertDef from './alertDef';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 export const initialState: AlertRulesState = { items: [], searchQuery: '', isLoading: false };
 
@@ -13,9 +13,7 @@ function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
     stateText: stateModel.text,
     stateIcon: stateModel.iconClass,
     stateClass: stateModel.stateClass,
-    stateAge: dateTime(dto.newStateDate)
-      .fromNow()
-      .replace(' ago', ''),
+    stateAge: dateTime(dto.newStateDate).fromNow(true),
   };
 
   if (rule.state !== 'paused') {

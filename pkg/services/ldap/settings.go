@@ -42,6 +42,7 @@ type ServerConfig struct {
 	Groups []*GroupToOrgRole `toml:"group_mappings"`
 }
 
+// AttributeMap is a struct representation for LDAP "attributes" setting
 type AttributeMap struct {
 	Username string `toml:"username"`
 	Name     string `toml:"name"`
@@ -50,14 +51,19 @@ type AttributeMap struct {
 	MemberOf string `toml:"member_of"`
 }
 
+// GroupToOrgRole is a struct representation of LDAP
+// config "group_mappings" setting
 type GroupToOrgRole struct {
-	GroupDN        string     `toml:"group_dn"`
-	OrgId          int64      `toml:"org_id"`
-	IsGrafanaAdmin *bool      `toml:"grafana_admin"` // This is a pointer to know if it was set or not (for backwards compatibility)
-	OrgRole        m.RoleType `toml:"org_role"`
+	GroupDN string `toml:"group_dn"`
+	OrgID   int64  `toml:"org_id"`
+
+	// This pointer specifies if setting was set (for backwards compatibility)
+	IsGrafanaAdmin *bool `toml:"grafana_admin"`
+
+	OrgRole m.RoleType `toml:"org_role"`
 }
 
-var config *Config
+// logger for all LDAP stuff
 var logger = log.New("ldap")
 
 // loadingMutex locks the reading of the config so multiple requests for reloading are sequential.
@@ -81,6 +87,10 @@ func ReloadConfig() error {
 	config, err = readConfig(setting.LDAPConfigFile)
 	return err
 }
+
+// We need to define in this space so `GetConfig` fn
+// could be defined as singleton
+var config *Config
 
 // GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
 // the config or it reads it and caches it first.
@@ -129,8 +139,8 @@ func readConfig(configFile string) (*Config, error) {
 		}
 
 		for _, groupMap := range server.Groups {
-			if groupMap.OrgId == 0 {
-				groupMap.OrgId = 1
+			if groupMap.OrgID == 0 {
+				groupMap.OrgID = 1
 			}
 		}
 	}

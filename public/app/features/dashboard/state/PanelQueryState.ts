@@ -4,20 +4,24 @@ import isEqual from 'lodash/isEqual';
 
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
-import { guessFieldTypes, toSeriesData, isSeriesData } from '@grafana/ui/src/utils';
+import { dateMath } from '@grafana/data';
+import {
+  guessFieldTypes,
+  LoadingState,
+  toLegacyResponseData,
+  DataFrame,
+  toDataFrame,
+  isDataFrame,
+} from '@grafana/data';
 
 // Types
 import {
   DataSourceApi,
   DataQueryRequest,
   PanelData,
-  LoadingState,
-  toLegacyResponseData,
   DataQueryError,
   DataStreamObserver,
   DataStreamState,
-  SeriesData,
   DataQueryResponseData,
 } from '@grafana/ui';
 
@@ -131,7 +135,7 @@ export class PanelQueryState {
           this.response = {
             state: LoadingState.Done,
             request: this.request,
-            series: this.sendSeries ? getProcessedSeriesData(resp.data) : [],
+            series: this.sendSeries ? getProcessedDataFrame(resp.data) : [],
             legacy: this.sendLegacy ? translateToLegacyData(resp.data) : undefined,
           };
           resolve(this.validateStreamsAndGetPanelData());
@@ -182,7 +186,7 @@ export class PanelQueryState {
       return;
     }
 
-    const series: SeriesData[] = [];
+    const series: DataFrame[] = [];
 
     for (const stream of this.streams) {
       if (stream.series) {
@@ -278,7 +282,7 @@ export class PanelQueryState {
       response.legacy = response.series.map(v => toLegacyResponseData(v));
     }
     if (sendSeries && !response.series.length && response.legacy) {
-      response.series = response.legacy.map(v => toSeriesData(v));
+      response.series = response.legacy.map(v => toDataFrame(v));
     }
     return this.validateStreamsAndGetPanelData();
   }
@@ -333,7 +337,7 @@ export function toDataQueryError(err: any): DataQueryError {
 
 function translateToLegacyData(data: DataQueryResponseData) {
   return data.map(v => {
-    if (isSeriesData(v)) {
+    if (isDataFrame(v)) {
       return toLegacyResponseData(v);
     }
     return v;
@@ -345,15 +349,15 @@ function translateToLegacyData(data: DataQueryResponseData) {
  *
  * This is also used by PanelChrome for snapshot support
  */
-export function getProcessedSeriesData(results?: any[]): SeriesData[] {
+export function getProcessedDataFrame(results?: any[]): DataFrame[] {
   if (!results) {
     return [];
   }
 
-  const series: SeriesData[] = [];
+  const series: DataFrame[] = [];
   for (const r of results) {
     if (r) {
-      series.push(guessFieldTypes(toSeriesData(r)));
+      series.push(guessFieldTypes(toDataFrame(r)));
     }
   }
 

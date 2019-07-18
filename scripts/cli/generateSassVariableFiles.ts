@@ -1,4 +1,4 @@
-import fs from 'fs';
+import * as fs from 'fs';
 import darkTheme from '@grafana/ui/src/themes/dark';
 import lightTheme from '@grafana/ui/src/themes/light';
 import defaultTheme from '@grafana/ui/src/themes/default';

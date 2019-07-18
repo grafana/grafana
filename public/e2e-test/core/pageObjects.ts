@@ -56,6 +56,7 @@ export class ClickablePageObject extends PageObject implements ClickablePageObje
   }
 
   click = async (): Promise<void> => {
+    console.log('Trying to click on:', this.selector);
     await expect(this.page).not.toBeNull();
     await expect(this.page).toClick(this.selector);
   };
@@ -67,6 +68,7 @@ export class InputPageObject extends PageObject implements InputPageObjectType {
   }
 
   enter = async (text: string): Promise<void> => {
+    console.log(`Trying to enter text:${text} into:`, this.selector);
     await expect(this.page).not.toBeNull();
     await expect(this.page).toFill(this.selector, text);
   };
@@ -78,6 +80,7 @@ export class SelectPageObject extends PageObject implements SelectPageObjectType
   }
 
   select = async (text: string): Promise<void> => {
+    console.log(`Trying to select text:${text} in dropdown:`, this.selector);
     await expect(this.page).not.toBeNull();
     await this.page.select(this.selector, text);
   };

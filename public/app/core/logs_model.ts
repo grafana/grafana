@@ -1,12 +1,13 @@
 import _ from 'lodash';
 import ansicolor from 'vendor/ansicolor/ansicolor';
 
+import { colors } from '@grafana/ui';
+
 import {
-  colors,
   TimeSeries,
   Labels,
   LogLevel,
-  SeriesData,
+  DataFrame,
   findCommonLabels,
   findUniqueLabels,
   getLogLevel,
@@ -21,10 +22,10 @@ import {
   LogsParser,
   LogLabelStatsModel,
   LogsDedupStrategy,
-} from '@grafana/ui';
+} from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime, toUtc } from '@grafana/data';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -250,15 +251,15 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
   });
 }
 
-function isLogsData(series: SeriesData) {
+function isLogsData(series: DataFrame) {
   return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
 }
 
-export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: number): LogsModel {
-  const metricSeries: SeriesData[] = [];
-  const logSeries: SeriesData[] = [];
+export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number): LogsModel {
+  const metricSeries: DataFrame[] = [];
+  const logSeries: DataFrame[] = [];
 
-  for (const series of seriesData) {
+  for (const series of dataFrame) {
     if (isLogsData(series)) {
       logSeries.push(series);
       continue;
@@ -289,7 +290,7 @@ export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: numb
   };
 }
 
-export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
+export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
   if (logSeries.length === 0) {
     return undefined;
   }
@@ -323,10 +324,6 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
     }
   }
 
-  const sortedRows = rows.sort((a, b) => {
-    return a.timestamp > b.timestamp ? -1 : 1;
-  });
-
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
   if (_.size(commonLabels) > 0) {
@@ -342,7 +339,7 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limits[0].meta.limit} (${sortedRows.length} returned)`,
+      value: `${limits[0].meta.limit} (${rows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }
@@ -350,12 +347,12 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
   return {
     hasUniqueLabels,
     meta,
-    rows: sortedRows,
+    rows,
   };
 }
 
 export function processLogSeriesRow(
-  series: SeriesData,
+  series: DataFrame,
   fieldCache: FieldCache,
   rowIndex: number,
   uniqueLabels: Labels
@@ -369,6 +366,7 @@ export function processLogSeriesRow(
   const timeEpochMs = time.valueOf();
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
+  const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
 
   let logLevel = LogLevel.unknown;
   const logLevelField = fieldCache.getFieldByName('level');
@@ -388,6 +386,7 @@ export function processLogSeriesRow(
     timeFromNow,
     timeEpochMs,
     timeLocal,
+    timeUtc,
     uniqueLabels,
     hasAnsi,
     searchWords,

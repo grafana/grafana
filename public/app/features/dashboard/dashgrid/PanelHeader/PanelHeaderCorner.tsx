@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
-import Remarkable from 'remarkable';
+
+import { renderMarkdown } from '@grafana/data';
 import { Tooltip, ScopedVars } from '@grafana/ui';
+import { DataLink } from '@grafana/data';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';
@@ -18,7 +20,7 @@ interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  links?: [];
+  links?: DataLink[];
   error?: string;
 }
 
@@ -45,18 +47,19 @@ export class PanelHeaderCorner extends Component<Props> {
     const markdown = panel.description;
     const linkSrv = new LinkSrv(templateSrv, this.timeSrv);
     const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
-    const remarkableInterpolatedMarkdown = new Remarkable().render(interpolatedMarkdown);
+    const markedInterpolatedMarkdown = renderMarkdown(interpolatedMarkdown);
 
     return (
       <div className="panel-info-content markdown-html">
-        <div dangerouslySetInnerHTML={{ __html: remarkableInterpolatedMarkdown }} />
+        <div dangerouslySetInnerHTML={{ __html: markedInterpolatedMarkdown }} />
+
         {panel.links && panel.links.length > 0 && (
-          <ul className="text-left">
+          <ul className="panel-info-corner-links">
             {panel.links.map((link, idx) => {
-              const info = linkSrv.getPanelLinkAnchorInfo(link, panel.scopedVars);
+              const info = linkSrv.getDataLinkUIModel(link, panel.scopedVars);
               return (
                 <li key={idx}>
-                  <a className="panel-menu-link" href={info.href} target={info.target}>
+                  <a className="panel-info-corner-links__item" href={info.href} target={info.target}>
                     {info.title}
                   </a>
                 </li>

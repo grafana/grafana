@@ -1,4 +1,4 @@
-import { SeriesData } from '../../types/data';
+import { DataFrame } from '@grafana/data';
 import { ColumnStyle } from './TableCellBuilder';
 import { getColorDefinitionByName } from '../../utils/namedColorsPalette';
 
@@ -22,7 +22,7 @@ export const migratedTestTable = {
     { name: 'RangeMappingColored' },
   ],
   rows: [[1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2'], 1, 2, 1, 2]],
-} as SeriesData;
+} as DataFrame;
 
 export const migratedTestStyles: ColumnStyle[] = [
   {

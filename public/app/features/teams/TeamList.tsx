@@ -2,7 +2,8 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
-import { DeleteButton, NavModel } from '@grafana/ui';
+import { DeleteButton } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Team, OrgRole } from 'app/types';
 import { loadTeams, deleteTeam, setSearchQuery } from './state/actions';
@@ -153,7 +154,7 @@ export class TeamList extends PureComponent<Props, any> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     navModel: getNavModel(state.navIndex, 'teams'),
     teams: getTeams(state.teams),

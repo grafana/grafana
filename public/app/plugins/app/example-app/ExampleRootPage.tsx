@@ -2,7 +2,8 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { AppRootProps, NavModelItem } from '@grafana/ui';
+import { NavModelItem } from '@grafana/data';
+import { AppRootProps } from '@grafana/ui';
 
 interface Props extends AppRootProps {}
 

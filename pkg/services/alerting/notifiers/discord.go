@@ -158,7 +158,6 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 func (dn *DiscordNotifier) embedImage(cmd *models.SendWebhookSync, imagePath string, existingJSONBody []byte) error {
 	f, err := os.Open(imagePath)
-	defer f.Close()
 	if err != nil {
 		if os.IsNotExist(err) {
 			cmd.Body = string(existingJSONBody)
@@ -168,6 +167,8 @@ func (dn *DiscordNotifier) embedImage(cmd *models.SendWebhookSync, imagePath str
 			return err
 		}
 	}
+
+	defer f.Close()
 
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)

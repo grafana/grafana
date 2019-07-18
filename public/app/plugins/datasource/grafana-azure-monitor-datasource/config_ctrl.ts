@@ -2,6 +2,9 @@ import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analyti
 import config from 'app/core/config';
 import { isVersionGtOrEq } from 'app/core/utils/version';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { IQService } from 'angular';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 interface AzureCloud {
   key: string;
@@ -22,7 +25,7 @@ export class AzureMonitorConfigCtrl {
   token: string;
 
   /** @ngInject */
-  constructor(private backendSrv, private $q, private templateSrv) {
+  constructor(private backendSrv: BackendSrv, private $q: IQService, private templateSrv: TemplateSrv) {
     this.hasRequiredGrafanaVersion = this.hasMinVersion();
     this.current.jsonData.cloudName = this.current.jsonData.cloudName || 'azuremonitor';
     this.current.jsonData.azureLogAnalyticsSameAs = this.current.jsonData.azureLogAnalyticsSameAs || false;

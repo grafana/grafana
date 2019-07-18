@@ -1,21 +1,22 @@
 import React from 'react';
+// @ts-ignore
 import renderer from 'react-test-renderer';
 import { StackdriverVariableQueryEditor } from './VariableQueryEditor';
 import { VariableQueryProps } from 'app/types/plugins';
 import { MetricFindQueryTypes } from '../types';
 
 jest.mock('../functions', () => ({
-  getMetricTypes: () => ({ metricTypes: [], selectedMetricType: '' }),
-  extractServicesFromMetricDescriptors: () => [],
+  getMetricTypes: (): any => ({ metricTypes: [], selectedMetricType: '' }),
+  extractServicesFromMetricDescriptors: (): any[] => [],
 }));
 
 const props: VariableQueryProps = {
   onChange: (query, definition) => {},
   query: {},
   datasource: {
-    getMetricTypes: async p => [],
+    getMetricTypes: async (p: any): Promise<any[]> => [],
   },
-  templateSrv: { replace: s => s, variables: [] },
+  templateSrv: { replace: (s: string) => s, variables: [] },
 };
 
 describe('VariableQueryEditor', () => {
