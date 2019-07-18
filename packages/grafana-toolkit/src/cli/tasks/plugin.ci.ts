@@ -1,6 +1,7 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
+import { getS3 } from '../utils/aws';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { PluginMeta } from '@grafana/ui';
 
@@ -279,8 +280,9 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
 
   console.log('Save the source info in plugin.json');
   const pluginJsonFile = path.resolve(ciDir, 'dist', 'plugin.json');
+  const pluginMeta = getPluginJson(pluginJsonFile);
   const report: any = {
-    plugin: getPluginJson(pluginJsonFile),
+    plugin: pluginMeta,
     packages: packageInfo,
     workflow: agregateWorkflowInfo(),
     coverage: agregateCoverageInfo(),
@@ -294,10 +296,74 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
   console.log('REPORT', report);
 
   const file = path.resolve(ciDir, 'report.json');
-  fs.writeFile(file, JSON.stringify(report, null, 2), err => {
+  const reportJSON = JSON.stringify(report, null, 2);
+  fs.writeFile(file, reportJSON, err => {
     if (err) {
       throw new Error('Unable to write: ' + file);
     }
+  });
+
+  console.log('Initalizing S3 Client');
+  const s3 = getS3();
+  const bucket = 'grafana-experiments';
+
+  const build = pluginMeta.info.build;
+  const version = (pluginMeta as any).version;
+  let folder = build ? build.branch || 'unknown' : 'unknown';
+  if (pr) {
+    folder = 'PR';
+  }
+  const root = `plugins/dev/${pluginMeta.id}/${folder}`;
+  const sub = `${Date.now()}`;
+  console.log('uploading');
+  s3.putObject(
+    {
+      Bucket: bucket,
+      Key: `${root}/${sub}/job.json`,
+      Body: reportJSON,
+      Tagging: `version=${version}&type=${pluginMeta.type}`,
+      Metadata: {
+        custom1: 'value1',
+        custom2: 'value2',
+      },
+    },
+    (err, data) => {
+      if (err) {
+        console.log('error saving s3 object', err);
+        throw new Error('Could not save info: ' + err);
+      }
+    }
+  );
+
+  const statusKey = `${root}/status.json`;
+  s3.getObject({ Bucket: bucket, Key: statusKey }, (err, data) => {
+    if (err) {
+      // Create a new file in the folder
+      console.log('error reading', err);
+    } else {
+      console.log('OLD', data);
+    }
+
+    const status: any = {
+      path: sub,
+      last: report,
+      size: {},
+      coverage: {},
+      timing: {},
+    };
+    s3.putObject(
+      {
+        Bucket: bucket,
+        Key: statusKey,
+        Body: JSON.stringify(status),
+      },
+      (err, data) => {
+        if (err) {
+          console.log('error saving s3 object', err);
+          throw new Error('Could not save info: ' + err);
+        }
+      }
+    );
   });
 
   if (pr) {
