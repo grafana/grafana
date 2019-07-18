@@ -110,8 +110,10 @@ class MetricsPanelCtrl extends PanelCtrl {
       }
     }
 
-    this.events.emit('data-error', err);
     console.log('Panel data error:', err);
+    return this.$timeout(() => {
+      this.events.emit('data-error', err);
+    });
   }
 
   // Updates the response with information from the stream
