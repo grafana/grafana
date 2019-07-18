@@ -6,6 +6,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelEvents } from '@grafana/data';
 import { promiseToDigest } from '../../../core/utils/promiseToDigest';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 class DashListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -26,7 +27,12 @@ class DashListCtrl extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope: IScope, $injector: auto.IInjectorService, private dashboardSrv: DashboardSrv) {
+  constructor(
+    $scope: IScope,
+    $injector: auto.IInjectorService,
+    private dashboardSrv: DashboardSrv,
+    private templateSrv: TemplateSrv
+  ) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -88,7 +94,9 @@ class DashListCtrl extends PanelCtrl {
     const params = {
       limit: this.panel.limit,
       query: this.panel.query,
-      tag: this.panel.tags,
+      tag: this.panel.tags
+        .map((tag: string) => (/^\$.+/.test(tag) ? this.templateSrv.replaceWithText(tag, {}) : tag))
+        .filter((tag: string) => tag !== ''),
       folderIds: this.panel.folderId,
       type: 'dash-db',
     };
