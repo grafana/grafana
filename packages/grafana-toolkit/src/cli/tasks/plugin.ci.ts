@@ -272,7 +272,6 @@ export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', t
  * 4. Report
  *
  *  Create a report from all the previous steps
- *
  */
 const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
   const ciDir = path.resolve(process.cwd(), 'ci');
@@ -307,7 +306,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
   } else if (report.plugin.build) {
     const branch = report.plugin.build.branch;
     if (branch) {
-      console.log('TODO, send report to some API');
+      console.log('TODO, send report to some API!');
     }
   }
 };
