@@ -124,7 +124,7 @@ type PluginInfo struct {
 	Description string              `json:"description"`
 	Links       []PluginInfoLink    `json:"links"`
 	Logos       PluginLogos         `json:"logos"`
-	Build       PluginBuildInfo     `json:"source"`
+	Build       PluginBuildInfo     `json:"build"`
 	Screenshots []PluginScreenshots `json:"screenshots"`
 	Version     string              `json:"version"`
 	Updated     string              `json:"updated"`
