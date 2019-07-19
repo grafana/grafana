@@ -46,7 +46,7 @@ export async function writeJSONToS3(
     s3.putObject(
       {
         ...req,
-        Body: JSON.stringify(obj),
+        Body: JSON.stringify(obj, null, 2), // Pretty print
         ContentType: 'application/json',
       },
       (err, data) => {
