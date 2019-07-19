@@ -1,8 +1,8 @@
 # Grafana Toolkit
 
+> **@grafana/toolkit is currently in ALPHA**. Core API is unstable and can be a subject of breaking changes!
+
 Make sure to run `yarn install` before trying anything!  Otherwise you may see unknown command grafana-toolkit and spend a while tracking that down.
-
-
 
 ## Internal development
 Typically plugins should be developed using the `@grafana/toolkit` import from npm.  However, when working on the toolkit, you may want to use the local version while underdevelopment.  This works, but is a little flakey.
