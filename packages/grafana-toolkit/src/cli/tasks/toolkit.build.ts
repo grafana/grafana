@@ -123,7 +123,7 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   console.warn('hacking an index.js file for toolkit.  Help!');
   const index = `${distDir}/src/index.js`;
   fs.readFile(index, 'utf8', (err, data) => {
-    const js = data.replace('require("./', 'require("./src/');
+    const js = data.replace(new RegExp('require("./', 'g'), 'require("./src/');
     fs.writeFile(`${distDir}/index.js`, js, err => {
       if (err) {
         throw new Error('Error writing index: ' + err);
