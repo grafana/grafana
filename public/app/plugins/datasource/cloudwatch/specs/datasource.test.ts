@@ -105,7 +105,7 @@ describe('CloudWatchDatasource', () => {
             },
             multi: false,
           },
-          {}
+          {} as any
         ),
       ]);
 
@@ -279,7 +279,7 @@ describe('CloudWatchDatasource', () => {
             },
             multi: false,
           },
-          {}
+          {} as any
         ),
         new CustomVariable(
           {
@@ -289,7 +289,7 @@ describe('CloudWatchDatasource', () => {
             },
             multi: false,
           },
-          {}
+          {} as any
         ),
         new CustomVariable(
           {
@@ -304,7 +304,7 @@ describe('CloudWatchDatasource', () => {
             },
             multi: true,
           },
-          {}
+          {} as any
         ),
       ]);
 

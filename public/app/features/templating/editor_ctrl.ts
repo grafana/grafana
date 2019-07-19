@@ -2,10 +2,13 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import { variableTypes } from './variable';
 import appEvents from 'app/core/app_events';
+import DatasourceSrv from '../plugins/datasource_srv';
+import { VariableSrv } from './all';
+import { TemplateSrv } from './template_srv';
 
 export class VariableEditorCtrl {
   /** @ngInject */
-  constructor($scope, datasourceSrv, variableSrv, templateSrv) {
+  constructor($scope: any, datasourceSrv: DatasourceSrv, variableSrv: VariableSrv, templateSrv: TemplateSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
@@ -36,14 +39,14 @@ export class VariableEditorCtrl {
       $scope.variables = variableSrv.variables;
       $scope.reset();
 
-      $scope.$watch('mode', val => {
+      $scope.$watch('mode', (val: string) => {
         if (val === 'new') {
           $scope.reset();
         }
       });
     };
 
-    $scope.setMode = mode => {
+    $scope.setMode = (mode: any) => {
       $scope.mode = mode;
     };
 
@@ -99,7 +102,7 @@ export class VariableEditorCtrl {
 
     $scope.runQuery = () => {
       $scope.optionsLimit = 20;
-      return variableSrv.updateOptions($scope.current).catch(err => {
+      return variableSrv.updateOptions($scope.current).catch((err: { data: { message: any }; message: string }) => {
         if (err.data && err.data.message) {
           err.message = err.data.message;
         }
@@ -107,13 +110,13 @@ export class VariableEditorCtrl {
       });
     };
 
-    $scope.onQueryChange = (query, definition) => {
+    $scope.onQueryChange = (query: any, definition: any) => {
       $scope.current.query = query;
       $scope.current.definition = definition;
       $scope.runQuery();
     };
 
-    $scope.edit = variable => {
+    $scope.edit = (variable: any) => {
       $scope.current = variable;
       $scope.currentIsNew = false;
       $scope.mode = 'edit';
@@ -123,7 +126,7 @@ export class VariableEditorCtrl {
       });
     };
 
-    $scope.duplicate = variable => {
+    $scope.duplicate = (variable: { getSaveModel: () => void; name: string }) => {
       const clone = _.cloneDeep(variable.getSaveModel());
       $scope.current = variableSrv.createVariableFromModel(clone);
       $scope.current.name = 'copy_of_' + variable.name;
@@ -173,7 +176,7 @@ export class VariableEditorCtrl {
       $scope.validate();
     };
 
-    $scope.removeVariable = variable => {
+    $scope.removeVariable = (variable: any) => {
       variableSrv.removeVariable(variable);
     };
 

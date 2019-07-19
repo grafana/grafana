@@ -24,7 +24,18 @@ export interface Variable {
   getSaveModel(): any;
 }
 
-export let variableTypes = {};
+export type CtorType = new (...args: any[]) => {};
+
+export interface VariableTypes {
+  [key: string]: {
+    name: string;
+    ctor: CtorType;
+    description: string;
+    supportsMulti?: boolean;
+  };
+}
+
+export let variableTypes: VariableTypes = {};
 export { assignModelProperties };
 
 export function containsVariable(...args: any[]) {

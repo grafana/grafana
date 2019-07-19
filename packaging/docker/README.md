@@ -16,6 +16,18 @@ Further documentation can be found at http://docs.grafana.org/installation/docke
 
 ## Changelog
 
+### v6.3.0-beta1
+* Docker: Switch base image to ubuntu:latest from debian:stretch to avoid security issues.
+
+### v5.4.3
+* Build and publish docker images for armv7 and arm64 #14617, thx @johanneswuerbach
+
+### v5.3.2
+* adds curl back into the docker image for utility. #13794
+
+### v5.3.0-beta1
+* Make it possible to set a specific plugin url #12861, thx ClementGautier
+
 ### v5.1.5, v5.2.0-beta2
 * Fix: config keys ending with _FILE are not respected [#170](https://github.com/grafana/grafana-docker/issues/170)
 
