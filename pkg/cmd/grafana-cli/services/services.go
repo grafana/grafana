@@ -15,10 +15,11 @@ import (
 )
 
 var (
-	IoHelper         m.IoUtil = IoUtilImp{}
-	HttpClient       http.Client
-	grafanaVersion   string
-	ErrNotFoundError = errors.New("404 not found error")
+	IoHelper            m.IoUtil = IoUtilImp{}
+	HttpClient          http.Client
+	HttpClientNoTimeout http.Client
+	grafanaVersion      string
+	ErrNotFoundError    = errors.New("404 not found error")
 )
 
 type BadRequestError struct {
@@ -36,6 +37,11 @@ func (e *BadRequestError) Error() string {
 func Init(version string, skipTLSVerify bool) {
 	grafanaVersion = version
 
+	HttpClient = makeHttpClient(skipTLSVerify, 10*time.Second)
+	HttpClientNoTimeout = makeHttpClient(skipTLSVerify, 0)
+}
+
+func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 	tr := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
@@ -51,8 +57,8 @@ func Init(version string, skipTLSVerify bool) {
 		},
 	}
 
-	HttpClient = http.Client{
-		Timeout:   10 * time.Second,
+	return http.Client{
+		Timeout:   timeout,
 		Transport: tr,
 	}
 }

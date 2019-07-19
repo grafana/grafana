@@ -23,7 +23,7 @@ type GrafanaComClient struct {
 
 func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plugin, error) {
 	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
-	body, err := sendRequest(repoUrl, "repo", pluginId)
+	body, err := sendRequest(HttpClient, repoUrl, "repo", pluginId)
 
 	if err != nil {
 		if err == ErrNotFoundError {
@@ -73,7 +73,9 @@ func (client *GrafanaComClient) DownloadFile(pluginName, filePath, url string, c
 	}()
 
 	// TODO: this would be better if it was streamed file by file instead of buffered.
-	body, err := sendRequest(url)
+	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
+	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
+	body, err := sendRequest(HttpClientNoTimeout, url)
 
 	if err != nil {
 		return nil, errutil.Wrap("Failed to send request", err)
@@ -86,7 +88,7 @@ func (client *GrafanaComClient) DownloadFile(pluginName, filePath, url string, c
 }
 
 func (client *GrafanaComClient) ListAllPlugins(repoUrl string) (models.PluginRepo, error) {
-	body, err := sendRequest(repoUrl, "repo")
+	body, err := sendRequest(HttpClient, repoUrl, "repo")
 
 	if err != nil {
 		logger.Info("Failed to send request", "error", err)
@@ -103,7 +105,7 @@ func (client *GrafanaComClient) ListAllPlugins(repoUrl string) (models.PluginRep
 	return data, nil
 }
 
-func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
+func sendRequest(client http.Client, repoUrl string, subPaths ...string) ([]byte, error) {
 	u, _ := url.Parse(repoUrl)
 	for _, v := range subPaths {
 		u.Path = path.Join(u.Path, v)
@@ -120,7 +122,7 @@ func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	res, err := HttpClient.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		return []byte{}, err
 	}
