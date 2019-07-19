@@ -34,7 +34,7 @@ interface State {
 }
 
 export class LoginCtrl extends PureComponent<Props, State> {
-  result: any;
+  result: any = {};
   constructor(props: Props) {
     super(props);
     this.state = {

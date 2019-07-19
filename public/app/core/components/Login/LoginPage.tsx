@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import config from 'app/core/config';
 import { UserSignup } from './UserSignup';
 import { LoginServiceButtons } from './LoginServiceButtons';
-import { LoginCtrl } from './LoginCtrl';
+import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
 
