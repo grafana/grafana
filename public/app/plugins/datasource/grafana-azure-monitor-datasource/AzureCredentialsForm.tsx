@@ -1,5 +1,6 @@
 import React, { ChangeEvent, PureComponent } from 'react';
-import { Input, FormLabel, Select, SelectOptionItem, Button } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
+import { Input, FormLabel, Select, Button } from '@grafana/ui';
 import { CloudOption } from './ConfigEditor';
 
 export interface Props {
@@ -9,7 +10,7 @@ export interface Props {
   clientId: string;
   clientSecret: string;
   clientSecretConfigured: boolean;
-  onAzureCloudChange: (value: SelectOptionItem<string>) => void;
+  onAzureCloudChange: (value: SelectableValue<string>) => void;
   onTenantIdChange: (tenantId: string) => void;
   onClientIdChange: (clientId: string) => void;
   onClientSecretChange: (clientSecret: string) => void;
@@ -40,8 +41,6 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    console.log('UPDATED', nextProps);
-
     const { selectedAzureCloud, tenantId, clientId, clientSecret, clientSecretConfigured } = nextProps;
     return {
       selectedAzureCloud,

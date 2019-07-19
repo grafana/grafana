@@ -1,6 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import { SelectOptionItem } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/ui';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 
@@ -34,27 +34,36 @@ export class ConfigEditor extends PureComponent<Props, State> {
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
+    console.log('next', nextProps);
     nextProps.options.jsonData.cloudName = nextProps.options.jsonData.cloudName || 'azuremonitor';
     nextProps.options.jsonData.azureLogAnalyticsSameAs = nextProps.options.jsonData.azureLogAnalyticsSameAs || true;
-    nextProps.options.secureJsonData = nextProps.options.secureJsonData || { clientSecret: '' };
-    nextProps.options.secureJsonFields = nextProps.options.secureJsonFields || {};
+    // nextProps.options.secureJsonData = nextProps.options.secureJsonData || { clientSecret: '' };
+    // nextProps.options.secureJsonFields = nextProps.options.secureJsonFields || {};
+
+    if (!nextProps.options.hasOwnProperty('secureJsonData')) {
+      // debugger;
+      nextProps.options.secureJsonData = { clientSecret: '' };
+    }
+
+    // if (!('secureJsonData' in nextProps.options)) {
+    //   nextProps.options.secureJsonData = { clientSecret: '' };
+    // }
 
     console.log('UPDATED');
     return { current: nextProps.options };
   }
 
   updateDatasource = () => {
-    const datasource = this.state.current;
-
-    if (!datasource.secureJsonData.clientSecret) {
-      datasource.secureJsonData = {};
+    if (!this.state.current.secureJsonData.clientSecret) {
+      console.log('was here too', this.state.current);
+      this.state.current.secureJsonData = {};
     }
 
-    console.log('updating...', datasource);
-    this.props.onOptionsChange(datasource);
+    console.log('updating...', this.state.current);
+    this.props.onOptionsChange(this.state.current);
   };
 
-  onAzureCloudSelect = (cloudName: SelectOptionItem<string>) => {
+  onAzureCloudSelect = (cloudName: SelectableValue<string>) => {
     this.setState({
       current: { ...this.state.current, jsonData: { ...this.state.current.jsonData, cloudName } },
     });
@@ -79,9 +88,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onClientSecretChange = (clientSecret: string) => {
+    console.log(clientSecret);
+    // debugger;
     this.setState({
-      current: { ...this.state.current, secureJsonData: { ...this.state.current.secureJsonData, clientSecret } },
+      current: {
+        ...this.state.current,
+        secureJsonData: { ...this.state.current.secureJsonData, clientSecret },
+      },
     });
+    console.log('after update', this.state.current);
 
     this.updateDatasource();
   };
