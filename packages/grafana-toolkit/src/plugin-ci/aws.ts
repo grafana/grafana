@@ -64,7 +64,7 @@ export class S3Client {
 
   async writeJSON(
     key: string,
-    obj: Object,
+    obj: {},
     params?: Partial<AWS.S3.Types.PutObjectRequest>
   ): Promise<AWS.S3.Types.PutObjectOutput> {
     return new Promise((resolve, reject) => {

@@ -9,7 +9,7 @@ import { PluginMeta } from '@grafana/ui';
 import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
-import { getPackageDetails } from '../../plugin-ci/utils';
+import { getPackageDetails, findImagesInFolder } from '../../plugin-ci/utils';
 import { job, getJobFolder, writeJobStats, getCiFolder, getPluginBuildInfo } from '../../plugin-ci/env';
 import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugin-ci/workflow';
 import {
@@ -21,6 +21,7 @@ import {
   TestResultsInfo,
 } from '../../plugin-ci/types';
 import { runEndToEndTests } from '../../plugin-ci/e2e/launcher';
+import { getEndToEndSettings } from '../../plugin-ci/index';
 
 export interface PluginCIOptions {
   backend?: string;
@@ -223,8 +224,7 @@ export const ciPackagePluginTask = new Task<PluginCIOptions>('Bundle Plugin', pa
 const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
   const start = Date.now();
   const workDir = getJobFolder();
-  const pluginInfo = getPluginJson(`${process.cwd()}/ci/dist/plugin.json`);
-  const results: TestResultsInfo = { job, results: [] };
+  const results: TestResultsInfo = { job, passed: 0, failed: 0, screenshots: [] };
   const args = {
     withCredentials: true,
     baseURL: process.env.BASE_URL || 'http://localhost:3000/',
@@ -235,6 +235,10 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
     },
   };
 
+  const settings = getEndToEndSettings();
+  await execa('rimraf', [settings.outputFolder]);
+  fs.mkdirSync(settings.outputFolder);
+
   try {
     const axios = require('axios');
     const frontendSettings = await axios.get('api/frontend/settings', args);
@@ -242,25 +246,26 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
 
     console.log('Grafana: ' + JSON.stringify(results.grafana, null, 2));
 
-    const loadedMetaRsp = await axios.get(`api/plugins/${pluginInfo.id}/settings`, args);
+    const loadedMetaRsp = await axios.get(`api/plugins/${settings.plugin.id}/settings`, args);
     const loadedMeta: PluginMeta = loadedMetaRsp.data;
     console.log('Plugin Info: ' + JSON.stringify(loadedMeta, null, 2));
     if (loadedMeta.info.build) {
-      const currentHash = pluginInfo.info.build!.hash;
-      console.log('Check version: ', pluginInfo.info.build);
+      const currentHash = settings.plugin.info.build!.hash;
+      console.log('Check version: ', settings.plugin.info.build);
       if (loadedMeta.info.build.hash !== currentHash) {
         console.warn('Testing wrong plugin version.  Expected: ', currentHash);
         throw new Error('Wrong plugin version');
       }
     }
-    results.results = await runEndToEndTests({
-      plugin: pluginInfo,
-      outputFolderPath: workDir,
-    });
+    await runEndToEndTests(settings.outputFolder, results);
   } catch (err) {
     results.error = err;
     console.log('Test Error', err);
   }
+
+  // Now copy everything to work folder
+  await execa('cp', ['-rv', settings.outputFolder + '/.', workDir]);
+  results.screenshots = findImagesInFolder(workDir);
 
   const f = path.resolve(workDir, 'results.json');
   fs.writeFile(f, JSON.stringify(results, null, 2), err => {

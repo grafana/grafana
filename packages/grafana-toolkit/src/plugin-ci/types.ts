@@ -44,23 +44,13 @@ export interface CoverageInfo {
   report?: string; // path to report
 }
 
-/**
- * Screenshot for a single test item
- */
-export interface SingleTestResult {
-  name: string;
-  time: number;
-  request?: string;
-  screenshot?: string;
-  elapsed?: number;
-  error?: string;
-}
-
 export interface TestResultsInfo {
   job: string;
   grafana?: any;
   error?: string;
-  results: SingleTestResult[];
+  passed: number;
+  failed: number;
+  screenshots: string[];
 }
 
 // Saved at the folder level

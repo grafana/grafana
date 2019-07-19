@@ -59,3 +59,18 @@ export async function getPackageDetails(zipFile: string, zipSrc: string, writeCh
   }
   return info;
 }
+
+export function findImagesInFolder(dir: string, prefix: string = '', append?: string[]): string[] {
+  const imgs = append || [];
+
+  const files = fs.readdirSync(dir);
+  if (files) {
+    files.forEach(file => {
+      if (file.endsWith('.png')) {
+        imgs.push(file);
+      }
+    });
+  }
+
+  return imgs;
+}

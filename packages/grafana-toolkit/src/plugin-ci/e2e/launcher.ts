@@ -1,17 +1,11 @@
 import * as jestCLI from 'jest-cli';
-import { SingleTestResult } from '../types';
-import { PluginMeta } from '@grafana/ui';
+import { TestResultsInfo } from '../types';
 
-export interface EndToEndTestOptions {
-  plugin: PluginMeta;
-  outputFolderPath: string;
-}
-
-export async function runEndToEndTests(options: EndToEndTestOptions): Promise<SingleTestResult[]> {
+export async function runEndToEndTests(outputDirectory: string, results: TestResultsInfo): Promise<void> {
   const jestConfig = {
     preset: 'ts-jest',
     verbose: false,
-    moduleDirectories: ['node_modules'], // TODO dist?
+    moduleDirectories: ['node_modules'], // add the plugin somehow?
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
     setupFiles: [],
     setupFilesAfterEnv: [
@@ -20,18 +14,13 @@ export async function runEndToEndTests(options: EndToEndTestOptions): Promise<Si
     ],
     globals: { 'ts-jest': { isolatedModules: true } },
     testMatch: [
-      '<rootDir>/node_modules/@grafana/toolkit/src/plugin-ci/e2e/common_tests.ts',
+      '<rootDir>/node_modules/@grafana/toolkit/src/plugin-ci/e2e/commonPluginTests.ts',
       '<rootDir>/e2e/test/**/*.test.ts',
     ],
-    providesModuleNodeModules: ['.*'],
-    testPathIgnorePatterns: [
-      // "/node_modules/"
+    reporters: [
+      'default',
+      ['jest-junit', { outputDirectory }], // save junit.xml to folder
     ],
-    transformIgnorePatterns: [
-      // '[/\\\\\\\\]node_modules[/\\\\\\\\].+\\\\.(js|jsx|ts|tsx)$',
-      // '^.+\\\\.module\\\\.(css|sass|scss)$',
-    ],
-    reporters: ['default', 'jest-junit'],
   };
 
   const cliConfig = {
@@ -42,8 +31,8 @@ export async function runEndToEndTests(options: EndToEndTestOptions): Promise<Si
   // @ts-ignore
   const runJest = () => jestCLI.runCLI(cliConfig, [process.cwd()]);
 
-  const results = await runJest();
-
-  console.log('GOT:', results);
-  return [];
+  const jestOutput = await runJest();
+  results.passed = jestOutput.results.numPassedTests;
+  results.failed = jestOutput.results.numFailedTestSuites;
+  return;
 }

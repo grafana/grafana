@@ -10,7 +10,13 @@ export interface Settings {
   outputFolder: string;
 }
 
-export function getSettings() {
+let env: Settings | null = null;
+
+export function getEndToEndSettings() {
+  if (env) {
+    return env;
+  }
+
   let f = path.resolve(process.cwd(), 'ci', 'dist', 'plugin.json');
   if (!fs.existsSync(f)) {
     f = path.resolve(process.cwd(), 'dist', 'plugin.json');
@@ -25,8 +31,8 @@ export function getSettings() {
   constants.screenShotsTruthDir = path.resolve(process.cwd(), 'e2e', 'truth');
   constants.screenShotsOutputDir = outputFolder;
 
-  return {
+  return (env = {
     plugin: require(f) as PluginMeta,
     outputFolder,
-  };
+  });
 }
