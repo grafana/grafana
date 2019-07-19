@@ -1,7 +1,7 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
-import { getS3, writeJSONToS3, readJSONIfExists } from './plugin/ci/aws';
+import { S3Client } from './plugin/ci/aws';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { PluginMeta } from '@grafana/ui';
 
@@ -9,17 +9,9 @@ import { PluginMeta } from '@grafana/ui';
 import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
-import { getPackageDetails } from './plugin/ci/fileHelper';
-import {
-  job,
-  getJobFolder,
-  writeJobStats,
-  getCiFolder,
-  agregateWorkflowInfo,
-  agregateCoverageInfo,
-  getPluginBuildInfo,
-  agregateTestInfo,
-} from './plugin/ci/ci';
+import { getPackageDetails } from './plugin/ci/utils';
+import { job, getJobFolder, writeJobStats, getCiFolder, getPluginBuildInfo } from './plugin/ci/env';
+import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from './plugin/ci/workflow';
 import {
   PluginPackageDetails,
   PluginBuildReport,
@@ -86,7 +78,8 @@ export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', build
 const buildPluginDocsRunner: TaskRunner<PluginCIOptions> = async () => {
   const docsSrc = path.resolve(process.cwd(), 'docs');
   if (!fs.existsSync(docsSrc)) {
-    throw new Error('Docs folder does not exist!');
+    console.log('No docs src');
+    return;
   }
 
   const start = Date.now();
@@ -314,52 +307,44 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
   }
 
   console.log('Initalizing S3 Client');
-  const s3 = getS3();
-  const params = {
-    Bucket: 'grafana-experiments',
-  };
+  const s3 = new S3Client();
 
-  const now = Date.now();
   const build = pluginMeta.info.build;
+  if (!build) {
+    throw new Error('Metadata missing build info');
+  }
   const version = (pluginMeta as any).version || 'unknown';
-  const branch = build ? build.branch || 'unknown' : 'unknown';
-  const root = `plugins/dev/${pluginMeta.id}`;
+  const branch = build.branch || 'unknown';
+  const hash = build.hash!.substring(0, 8);
+  const root = `dev/${pluginMeta.id}`;
 
-  const jobPath = `${branch}/${now}/job.json`;
+  const jobPath = `${branch}/${hash}/job.json`;
+  const jobKey = `${root}/${jobPath}`;
+  if (await s3.exits(jobKey)) {
+    throw new Error('Job already registered: ' + jobKey);
+  }
   const indexKey = `${root}/index.json`;
   console.log('Read', indexKey);
-  const index = await readJSONIfExists(s3, { ...params, Key: indexKey }, {});
+  const index = await s3.readJSON(indexKey, {});
   (index as any)[branch] = {
-    time: now,
+    time: build.time,
     version,
     last: jobPath,
   };
 
-  const jobKey = `${root}/${jobPath}`;
   console.log('Write Job', jobKey);
-  await writeJSONToS3(s3, report, {
-    ...params,
-    Key: jobKey,
+  await s3.writeJSON(jobKey, report, {
     Tagging: `version=${version}&type=${pluginMeta.type}`,
   });
 
   const historyKey = `${root}/${branch}/history.json`;
   console.log('Read', historyKey);
-  const history: PluginHistory = await readJSONIfExists(
-    s3,
-    { ...params, Key: historyKey },
-    defaultPluginHistory // If missing use this
-  );
-  appendPluginHistory(report, `${branch}/${now}`, history);
-  await writeJSONToS3(s3, history, {
-    ...params,
-    Key: historyKey,
-  });
+  const history: PluginHistory = await s3.readJSON(historyKey, defaultPluginHistory);
+  appendPluginHistory(report, `${branch}/${hash}`, history);
+
+  await s3.writeJSON(historyKey, history);
   console.log('wrote history');
-  await writeJSONToS3(s3, index, {
-    ...params,
-    Key: indexKey,
-  });
+  await s3.writeJSON(indexKey, index);
   console.log('wrote index');
 };
 

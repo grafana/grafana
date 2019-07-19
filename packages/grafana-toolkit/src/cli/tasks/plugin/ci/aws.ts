@@ -3,59 +3,87 @@ import AWS from 'aws-sdk';
 import defaults from 'lodash/defaults';
 import clone from 'lodash/clone';
 
-export function getS3(configUpdate?: {}) {
-  if (configUpdate) {
-    AWS.config.update(configUpdate);
-  }
+export class S3Client {
+  readonly bucket: string;
+  readonly prefix: string;
+  readonly s3: AWS.S3;
 
-  // const sts = new AWS.STS({apiVersion: '2011-06-15'});
-  // sts.getCallerIdentity({}, function(err, data) {
-  //   console.log( 'STS!!!');
-  //   if (err) console.log(err, 'ERROR'); // an error occurred
-  //   else     console.log(data);         // successful response
-  // });
+  constructor(bucket?: string) {
+    this.bucket = bucket || 'grafana-experiments';
+    this.prefix = 'plugins/';
 
-  return new AWS.S3({ apiVersion: '2006-03-01' });
-}
-
-export async function readJSONIfExists<T>(s3: AWS.S3, req: AWS.S3.Types.GetObjectRequest, defaultValue: T): Promise<T> {
-  return new Promise((resolve, reject) => {
-    s3.getObject(req, (err, data) => {
+    this.s3 = new AWS.S3({ apiVersion: '2006-03-01' });
+    this.s3.headBucket({ Bucket: this.bucket }, (err, data) => {
       if (err) {
-        resolve(clone(defaultValue));
-      } else {
-        console.log('GOT:', data);
-        try {
-          const v = JSON.parse(data.Body as string);
-          resolve(defaults(v, defaultValue));
-        } catch (e) {
-          console.log('ERROR', e);
-          reject('Error reading response');
-        }
+        throw new Error('Unable to read: ' + this.bucket);
       }
     });
-  });
-}
+  }
 
-export async function writeJSONToS3(
-  s3: AWS.S3,
-  obj: Object,
-  req: AWS.S3.Types.PutObjectRequest
-): Promise<AWS.S3.Types.PutObjectOutput> {
-  return new Promise((resolve, reject) => {
-    s3.putObject(
-      {
-        ...req,
-        Body: JSON.stringify(obj, null, 2), // Pretty print
-        ContentType: 'application/json',
-      },
-      (err, data) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(data);
+  async exits(key: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      this.s3.getObject(
+        {
+          Bucket: this.bucket,
+          Key: this.prefix + key,
+        },
+        (err, data) => {
+          if (err) {
+            resolve(false);
+          } else {
+            resolve(true);
+          }
         }
-      }
-    );
-  });
+      );
+    });
+  }
+
+  async readJSON<T>(key: string, defaultValue: T): Promise<T> {
+    return new Promise((resolve, reject) => {
+      this.s3.getObject(
+        {
+          Bucket: this.bucket,
+          Key: this.prefix + key,
+        },
+        (err, data) => {
+          if (err) {
+            resolve(clone(defaultValue));
+          } else {
+            try {
+              const v = JSON.parse(data.Body as string);
+              resolve(defaults(v, defaultValue));
+            } catch (e) {
+              console.log('ERROR', e);
+              reject('Error reading response');
+            }
+          }
+        }
+      );
+    });
+  }
+
+  async writeJSON(
+    key: string,
+    obj: Object,
+    params?: Partial<AWS.S3.Types.PutObjectRequest>
+  ): Promise<AWS.S3.Types.PutObjectOutput> {
+    return new Promise((resolve, reject) => {
+      this.s3.putObject(
+        {
+          ...params,
+          Key: this.prefix + key,
+          Bucket: this.bucket,
+          Body: JSON.stringify(obj, null, 2), // Pretty print
+          ContentType: 'application/json',
+        },
+        (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(data);
+          }
+        }
+      );
+    });
+  }
 }
