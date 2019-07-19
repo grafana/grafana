@@ -1,5 +1,5 @@
 import path = require('path');
-import fs = require('fs');
+import fs from 'fs';
 import { JobInfo, WorkflowInfo, CoverageInfo, TestResultsInfo } from './types';
 import { getBuildNumber, getCiFolder } from './env';
 

@@ -60,7 +60,7 @@ export async function getPackageDetails(zipFile: string, zipSrc: string, writeCh
   return info;
 }
 
-export function findImagesInFolder(dir: string, prefix: string = '', append?: string[]): string[] {
+export function findImagesInFolder(dir: string, prefix = '', append?: string[]): string[] {
   const imgs = append || [];
 
   const files = fs.readdirSync(dir);

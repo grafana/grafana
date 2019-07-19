@@ -1,6 +1,6 @@
 import execa = require('execa');
 import path = require('path');
-import fs = require('fs');
+import fs from 'fs';
 import { PluginBuildInfo } from '@grafana/ui';
 import { JobInfo } from './types';
 

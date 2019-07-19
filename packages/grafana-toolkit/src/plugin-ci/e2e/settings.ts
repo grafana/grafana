@@ -1,7 +1,7 @@
 import { PluginMeta } from '@grafana/ui';
 
 import path = require('path');
-import fs = require('fs');
+import fs from 'fs';
 
 import { constants } from '../../e2e/constants';
 

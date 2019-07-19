@@ -8,7 +8,7 @@ import { PluginMeta } from '@grafana/ui';
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
-import fs = require('fs');
+import fs from 'fs';
 import { getPackageDetails, findImagesInFolder } from '../../plugin-ci/utils';
 import { job, getJobFolder, writeJobStats, getCiFolder, getPluginBuildInfo } from '../../plugin-ci/env';
 import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugin-ci/workflow';
