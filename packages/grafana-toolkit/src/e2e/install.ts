@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-core';
-import { constants } from 'e2e-test/core/constants';
+import { constants } from './constants';
 
 export const downloadBrowserIfNeeded = async (): Promise<void> => {
   const browserFetcher = puppeteer.createBrowserFetcher();

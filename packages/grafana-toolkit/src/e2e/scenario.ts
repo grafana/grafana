@@ -8,8 +8,8 @@ export const e2eScenario = (
   callback: (browser: Browser, page: Page) => void
 ) => {
   describe(title, () => {
-    let browser: Browser = null;
-    let page: Page = null;
+    let browser: Browser;
+    let page: Page;
 
     beforeAll(async () => {
       browser = await launchBrowser();

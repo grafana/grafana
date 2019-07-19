@@ -1,5 +1,4 @@
-import { ClickablePageObjectType, ClickablePageObject, Selector } from 'e2e-test/core/pageObjects';
-import { TestPage } from 'e2e-test/core/pages';
+import { TestPage, ClickablePageObjectType, ClickablePageObject, Selector } from '@grafana/toolkit';
 
 export interface SharePanelModal {
   directLinkRenderedImage: ClickablePageObjectType;
