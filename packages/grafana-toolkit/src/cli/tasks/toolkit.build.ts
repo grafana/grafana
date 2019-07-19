@@ -118,7 +118,8 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   await copySassFiles();
 
   // RYAN HACK HACK HACK
-  // when Dominik is back from vacation
+  // when Dominik is back from vacation, we can find a better way
+  // This moves the index to the root so plugin e2e tests can import them
   console.warn('hacking an index.js file for toolkit.  Help!');
   const index = `${distDir}/src/index.js`;
   fs.readFile(index, 'utf8', (err, data) => {
