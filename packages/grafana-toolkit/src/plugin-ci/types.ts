@@ -11,7 +11,7 @@ export interface PluginBuildReport {
   packages: PluginPackageDetails;
   workflow: WorkflowInfo;
   coverage: CoverageInfo[];
-  tests: TestResultInfo[];
+  tests: TestResultsInfo[];
   pullRequest?: string;
 }
 
@@ -44,11 +44,23 @@ export interface CoverageInfo {
   report?: string; // path to report
 }
 
-export interface TestResultInfo {
+/**
+ * Screenshot for a single test item
+ */
+export interface SingleTestResult {
+  name: string;
+  time: number;
+  request?: string;
+  screenshot?: string;
+  elapsed?: number;
+  error?: string;
+}
+
+export interface TestResultsInfo {
   job: string;
   grafana?: any;
-  status?: string;
   error?: string;
+  results: SingleTestResult[];
 }
 
 // Saved at the folder level

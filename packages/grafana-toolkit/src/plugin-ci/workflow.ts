@@ -1,6 +1,6 @@
 import path = require('path');
 import fs = require('fs');
-import { JobInfo, WorkflowInfo, CoverageInfo, TestResultInfo } from './types';
+import { JobInfo, WorkflowInfo, CoverageInfo, TestResultsInfo } from './types';
 import { getBuildNumber, getCiFolder } from './env';
 
 export const agregateWorkflowInfo = (): WorkflowInfo => {
@@ -76,8 +76,8 @@ export const agregateCoverageInfo = (): CoverageInfo[] => {
   return coverage;
 };
 
-export const agregateTestInfo = (): TestResultInfo[] => {
-  const tests: TestResultInfo[] = [];
+export const agregateTestInfo = (): TestResultsInfo[] => {
+  const tests: TestResultsInfo[] = [];
   const ciDir = getCiFolder();
   const jobsFolder = path.resolve(ciDir, 'jobs');
   if (fs.existsSync(jobsFolder)) {
@@ -87,7 +87,7 @@ export const agregateTestInfo = (): TestResultInfo[] => {
         if (file.startsWith('test')) {
           const summary = path.resolve(jobsFolder, file, 'results.json');
           if (fs.existsSync(summary)) {
-            tests.push(require(summary) as TestResultInfo);
+            tests.push(require(summary) as TestResultsInfo);
           }
         }
       });

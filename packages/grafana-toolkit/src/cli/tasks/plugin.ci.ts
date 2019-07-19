@@ -1,7 +1,7 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
-import { S3Client } from './plugin/ci/aws';
+import { S3Client } from '../../plugin-ci/aws';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { PluginMeta } from '@grafana/ui';
 
@@ -9,17 +9,18 @@ import { PluginMeta } from '@grafana/ui';
 import execa = require('execa');
 import path = require('path');
 import fs = require('fs');
-import { getPackageDetails } from './plugin/ci/utils';
-import { job, getJobFolder, writeJobStats, getCiFolder, getPluginBuildInfo } from './plugin/ci/env';
-import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from './plugin/ci/workflow';
+import { getPackageDetails } from '../../plugin-ci/utils';
+import { job, getJobFolder, writeJobStats, getCiFolder, getPluginBuildInfo } from '../../plugin-ci/env';
+import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugin-ci/workflow';
 import {
   PluginPackageDetails,
   PluginBuildReport,
   PluginHistory,
   defaultPluginHistory,
   appendPluginHistory,
-  TestResultInfo,
-} from './plugin/ci/types';
+  TestResultsInfo,
+} from '../../plugin-ci/types';
+import { runEndToEndTests } from '../../plugin-ci/e2e/launcher';
 
 export interface PluginCIOptions {
   backend?: string;
@@ -223,7 +224,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
   const start = Date.now();
   const workDir = getJobFolder();
   const pluginInfo = getPluginJson(`${process.cwd()}/ci/dist/plugin.json`);
-  const results: TestResultInfo = { job };
+  const results: TestResultsInfo = { job, results: [] };
   const args = {
     withCredentials: true,
     baseURL: process.env.BASE_URL || 'http://localhost:3000/',
@@ -245,15 +246,19 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
     const loadedMeta: PluginMeta = loadedMetaRsp.data;
     console.log('Plugin Info: ' + JSON.stringify(loadedMeta, null, 2));
     if (loadedMeta.info.build) {
-      console.log('Compage to', pluginInfo.info.build);
+      const currentHash = pluginInfo.info.build!.hash;
+      console.log('Check version: ', pluginInfo.info.build);
+      if (loadedMeta.info.build.hash !== currentHash) {
+        console.warn('Testing wrong plugin version.  Expected: ', currentHash);
+        throw new Error('Wrong plugin version');
+      }
     }
-
-    console.log('TODO Puppeteer Tests', workDir);
-
-    results.status = 'TODO... puppeteer';
+    results.results = await runEndToEndTests({
+      plugin: pluginInfo,
+      outputFolderPath: workDir,
+    });
   } catch (err) {
     results.error = err;
-    results.status = 'EXCEPTION Thrown';
     console.log('Test Error', err);
   }
 
