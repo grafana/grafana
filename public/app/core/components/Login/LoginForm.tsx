@@ -1,24 +1,17 @@
-import React, { PureComponent } from 'react';
-import config from 'app/core/config';
-import { UserSignup } from './UserSignup';
-import { LoginServiceButtons } from './LoginServiceButtons';
-import { LoginCtrl } from './LoginCtrl';
-import { LoginFields } from './LoginFields';
+import React, { PureComponent, SyntheticEvent } from 'react';
+import { FormModel } from './LoginCtrl';
 
-const oauthEnabled = () => Object.keys(config.oauth).length > 0;
-export interface Props {
-  disabledLoginForm: boolean;
+interface Props {
+  displayForgotPassword: boolean;
+  displayLoginFields: boolean;
+  onChange?: (valid: boolean) => void;
+  onSubmit: (data: FormModel, valid: boolean) => void;
+  loggingIn: boolean;
   passwordHint: string;
   loginHint: string;
-  disableUserSignup: boolean;
-  oauthEnabled: boolean;
-  ldapEnabled: boolean;
-  authProxyEnabled: boolean;
-  onSubmit: Function;
 }
 
-export interface State {
-  loggingIn: boolean;
+interface State {
   user: string;
   password: string;
   email: string;
@@ -26,115 +19,101 @@ export interface State {
 }
 
 export class LoginForm extends PureComponent<Props, State> {
-  submit: Function;
   constructor(props: Props) {
     super(props);
     this.state = {
       user: '',
       password: '',
       email: '',
-      loggingIn: false,
       valid: false,
     };
+
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleChange = this.handleChange.bind(this);
   }
 
-  // renderLoginForm(submit) {
-  //   console.log(submit);
-  //   this.submit = submit;
-  //   return !this.props.disabledLoginForm ? (
-  //     <form name="loginForm" className="login-form-group gf-form-group">
-  //       <div className="login-form">
-  //         <input
-  //           type="text"
-  //           name="user"
-  //           className="gf-form-input login-form-input"
-  //           required
-  //           // ng-model="formModel.user"
-  //           placeholder={config.loginHint}
-  //           aria-label="Username input field"
-  //           onChange={this.handleChange}
-  //         />
-  //       </div>
-  //       <div className="login-form">
-  //         <input
-  //           type="password"
-  //           name="password"
-  //           className="gf-form-input login-form-input"
-  //           required
-  //           ng-model="formModel.password"
-  //           id="inputPassword"
-  //           placeholder={config.passwordHint}
-  //           aria-label="Password input field"
-  //           onChange={this.handleChange}
-  //         />
-  //       </div>
-  //       <div className="login-button-group">
-  //         {!this.state.loggingIn ? (
-  //           <button
-  //             type="submit"
-  //             aria-label="Login button"
-  //             className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
-  //             onClick={this.handleSubmit}
-  //             disabled={!this.state.valid}
-  //           >
-  //             Log In
-  //           </button>
-  //         ) : (
-  //           <button type="submit" className="btn btn-large p-x-2 btn-inverse btn-loading">
-  //             Logging In<span>.</span>
-  //             <span>.</span>
-  //             <span>.</span>
-  //           </button>
-  //         )}
+  handleSubmit(e: SyntheticEvent) {
+    e.preventDefault();
 
-  //         {config.ldapEnabled || config.authProxyEnabled ? null : (
-  //           <div className="small login-button-forgot-password" ng-hide="ldapEnabled || authProxyEnabled">
-  //             <a href="user/password/send-reset-email">Forgot your password?</a>
-  //           </div>
-  //         )}
-  //       </div>
-  //     </form>
-  //   ) : null;
-  // }
+    const { user, password, email } = this.state;
+    if (this.state.valid) {
+      this.props.onSubmit({ user, password, email }, this.state.valid);
+    }
+  }
+
+  handleChange(e: SyntheticEvent) {
+    // @ts-ignore
+    this.setState({ [e.target.name]: e.target.value }, () => {
+      this.setState({ valid: this.validate() }, () => {
+        if (this.props.onChange) {
+          this.props.onChange(this.state.valid);
+        }
+      });
+    });
+  }
+
+  validate() {
+    if (this.state.user.length > 0 && this.state.password.length > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   render() {
-    return (
-      <LoginCtrl>
-        {({ login, loggingIn }) => (
-          <div className="login-out-box">
-            <div className="login-inner-box" id="login-view">
-              <LoginFields
-                displayLoginFields={!config.disableLoginForm}
-                displayForgotPassword={!(config.ldapEnabled || config.authProxyEnabled)}
-                onSubmit={login}
-                loginHint={config.loginHint}
-                passwordHint={config.passwordHint}
-                loggingIn={loggingIn}
-              />
-              {oauthEnabled() ? (
-                <>
-                  <div className="text-center login-divider">
-                    <div>
-                      <div className="login-divider-line" />
-                    </div>
-                    <div>
-                      <span className="login-divider-text">{config.disableLoginForm ? null : <span>or</span>}</span>
-                    </div>
-                    <div>
-                      <div className="login-divider-line" />
-                    </div>
-                  </div>
-                  <div className="clearfix" />
+    return this.props.displayLoginFields ? (
+      <form name="loginForm" className="login-form-group gf-form-group">
+        <div className="login-form">
+          <input
+            type="text"
+            name="user"
+            className="gf-form-input login-form-input"
+            required
+            // ng-model="formModel.user"
+            placeholder={this.props.loginHint}
+            aria-label="Username input field"
+            onChange={this.handleChange}
+          />
+        </div>
+        <div className="login-form">
+          <input
+            type="password"
+            name="password"
+            className="gf-form-input login-form-input"
+            required
+            ng-model="formModel.password"
+            id="inputPassword"
+            placeholder={this.props.passwordHint}
+            aria-label="Password input field"
+            onChange={this.handleChange}
+          />
+        </div>
+        <div className="login-button-group">
+          {!this.props.loggingIn ? (
+            <button
+              type="submit"
+              aria-label="Login button"
+              className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
+              onClick={this.handleSubmit}
+              disabled={!this.state.valid}
+            >
+              Log In
+            </button>
+          ) : (
+            <button type="submit" className="btn btn-large p-x-2 btn-inverse btn-loading">
+              Logging In<span>.</span>
+              <span>.</span>
+              <span>.</span>
+            </button>
+          )}
 
-                  <LoginServiceButtons />
-                </>
-              ) : null}
-
-              <UserSignup />
+          {this.props.displayForgotPassword ? (
+            <div className="small login-button-forgot-password">
+              <a href="user/password/send-reset-email">Forgot your password?</a>
             </div>
-          </div>
-        )}
-      </LoginCtrl>
-    );
+          ) : null}
+        </div>
+      </form>
+    ) : null;
   }
 }

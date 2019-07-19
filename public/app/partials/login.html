@@ -6,33 +6,7 @@
     </div>
         <login-form/>
 
-      <div class="login-inner-box remove hidden" id="change-password-view">
-        <div class="text-left login-change-password-info">
-          <h5>Change Password</h5>
-          Before you can get started with awesome dashboards we need you to make your account more secure by changing your password.
-          <br />You can change your password again later.
-        </div>
-        <form class="login-form-group gf-form-group">
-          <div class="login-form">
-            <input type="password" id="newPassword" name="newPassword" class="gf-form-input login-form-input" required ng-model='command.newPassword'
-              placeholder="New password">
-          </div>
-          <div class="login-form">
-            <input type="password" name="confirmNew" class="gf-form-input login-form-input" required ng-model="command.confirmNew" placeholder="Confirm new password">
-          </div>
-          <div class="login-button-group login-button-group--right text-right">
-            <a class="btn btn-link" ng-click="skip();">
-              Skip
-              <info-popover mode="no-padding">
-                If you skip you will be prompted to change password next time you login.
-              </info-popover>
-            </a>
-            <button type="submit" class="btn btn-large p-x-2" ng-click="changePassword();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
-              Save
-            </button>
-          </div>
-        </form>
-      </div>
+
       <div class="clearfix"></div>
     </div>
   </div>

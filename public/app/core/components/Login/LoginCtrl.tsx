@@ -7,10 +7,10 @@ import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
+import { hot } from 'react-hot-loader';
 
 let backendSrv;
 
-console.log(backendSrv);
 export interface FormModel {
   user: string;
   password: string;
@@ -21,17 +21,25 @@ interface Props {
   updateLocation?: typeof updateLocation;
   children: (obj: {
     loggingIn: boolean;
+    changePassword: boolean;
+    toGrafana: Function;
     signUp: Function;
     login: (data: FormModel, valid: boolean) => void;
   }) => JSX.Element;
 }
 
-export class LoginCtrl extends PureComponent<Props, { loggingIn: boolean }> {
+interface State {
+  loggingIn: boolean;
+  changePassword: boolean;
+}
+
+export class LoginCtrl extends PureComponent<Props, State> {
   result: any;
   constructor(props: Props) {
     super(props);
     this.state = {
       loggingIn: false,
+      changePassword: true,
     };
     if (config.loginError) {
       appEvents.on('alert-warning', ['Login Failed', config.loginError]);
@@ -51,8 +59,6 @@ export class LoginCtrl extends PureComponent<Props, { loggingIn: boolean }> {
     this.setState({
       loggingIn: true,
     });
-
-    console.log(backendSrv);
 
     backendSrv
       .post('/login', formModel)
@@ -76,8 +82,10 @@ export class LoginCtrl extends PureComponent<Props, { loggingIn: boolean }> {
 
   changeView() {}
 
-  toGrafana() {
-    const params = this.props.routeParams;
+  toGrafana = () => {
+    console.log('Trying to get to Grafana');
+    const params = this.props.routeParams || {};
+    console.log(this.props);
     if (params.redirect && params.redirect[0] === '/') {
       console.log('HEY IM RUNNING!');
       //   window.location.href = config.appSubUrl + params.redirect;
@@ -95,14 +103,14 @@ export class LoginCtrl extends PureComponent<Props, { loggingIn: boolean }> {
         path: '/',
       });
     }
-  }
+  };
 
   render() {
     const { children } = this.props;
-    const { loggingIn } = this.state;
-    const { login, signUp } = this;
+    const { loggingIn, changePassword } = this.state;
+    const { login, signUp, toGrafana } = this;
 
-    return <>{children({ login, signUp, loggingIn })}</>;
+    return <>{children({ login, signUp, loggingIn, changePassword, toGrafana })}</>;
   }
 }
 
@@ -112,7 +120,9 @@ export const mapStateToProps = (state: StoreState) => ({
 
 const mapDispatchToProps = { updateLocation };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(LoginCtrl);
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(LoginCtrl)
+);

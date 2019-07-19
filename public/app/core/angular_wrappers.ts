@@ -11,7 +11,7 @@ import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField, DataLi
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
 import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
-import { LoginForm } from './components/Login/LoginForm';
+import { LoginPage } from './components/Login/LoginPage';
 
 export function registerAngularDirectives() {
   react2AngularDirective('sidemenu', SideMenu, []);
@@ -80,7 +80,7 @@ export function registerAngularDirectives() {
     ['getContextMenuSource', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
-  react2AngularDirective('loginForm', LoginForm, []);
+  react2AngularDirective('loginForm', LoginPage, []);
 
   // We keep the drilldown terminology here because of as using data-* directive
   // being in conflict with HTML data attributes
