@@ -471,6 +471,104 @@ describe('AzureMonitorDatasource', () => {
           });
       });
     });
+
+    describe('with metric namespace query', () => {
+      const response = {
+        data: {
+          value: [
+            {
+              name: 'Microsoft.Compute-virtualMachines',
+              properties: {
+                metricNamespaceName: 'Microsoft.Compute/virtualMachines',
+              },
+            },
+            {
+              name: 'Telegraf-mem',
+              properties: {
+                metricNamespaceName: 'Telegraf/mem',
+              },
+            },
+          ],
+        },
+        status: 200,
+        statusText: 'OK',
+      };
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+          const baseUrl =
+            'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
+          expect(options.url).toBe(
+            baseUrl +
+              '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
+          );
+          return ctx.$q.when(response);
+        };
+      });
+
+      it('should return a list of metric names', () => {
+        return ctx.ds
+          .metricFindQuery('Metricnamespace(nodeapp, Microsoft.Compute/virtualMachines, rn)')
+          .then((results: Array<{ text: string; value: string }>) => {
+            expect(results.length).toEqual(2);
+            expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
+            expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
+
+            expect(results[1].text).toEqual('Telegraf-mem');
+            expect(results[1].value).toEqual('Telegraf/mem');
+          });
+      });
+    });
+
+    describe('with metric namespace query and specifies a subscription id', () => {
+      const response = {
+        data: {
+          value: [
+            {
+              name: 'Microsoft.Compute-virtualMachines',
+              properties: {
+                metricNamespaceName: 'Microsoft.Compute/virtualMachines',
+              },
+            },
+            {
+              name: 'Telegraf-mem',
+              properties: {
+                metricNamespaceName: 'Telegraf/mem',
+              },
+            },
+          ],
+        },
+        status: 200,
+        statusText: 'OK',
+      };
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+          const baseUrl =
+            'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
+          expect(options.url).toBe(
+            baseUrl +
+              '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
+          );
+          return ctx.$q.when(response);
+        };
+      });
+
+      it('should return a list of metric namespaces', () => {
+        return ctx.ds
+          .metricFindQuery(
+            'Metricnamespace(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, Microsoft.Compute/virtualMachines, rn)'
+          )
+          .then((results: Array<{ text: string; value: string }>) => {
+            expect(results.length).toEqual(2);
+            expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
+            expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
+
+            expect(results[1].text).toEqual('Telegraf-mem');
+            expect(results[1].value).toEqual('Telegraf/mem');
+          });
+      });
+    });
   });
 
   describe('When performing getSubscriptions', () => {

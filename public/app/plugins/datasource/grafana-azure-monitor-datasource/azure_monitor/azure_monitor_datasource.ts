@@ -186,12 +186,24 @@ export default class AzureMonitorDatasource {
       return this.getResourceNames(subscription, resourceGroup, metricDefinition);
     }
 
-    const metricNamespaceQuery = query.match(/^MetricNamespace\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/i);
+    const metricNamespaceQuery = query.match(/^MetricNamespace\(([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i);
     if (metricNamespaceQuery) {
       const resourceGroup = this.toVariable(metricNamespaceQuery[1]);
       const metricDefinition = this.toVariable(metricNamespaceQuery[2]);
       const resourceName = this.toVariable(metricNamespaceQuery[3]);
       return this.getMetricNamespaces(this.subscriptionId, resourceGroup, metricDefinition, resourceName);
+    }
+
+    const metricNamespaceQueryWithSub = query.match(
+      /^metricnamespace\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i
+    );
+    if (metricNamespaceQueryWithSub) {
+      const subscription = this.toVariable(metricNamespaceQueryWithSub[1]);
+      const resourceGroup = this.toVariable(metricNamespaceQueryWithSub[2]);
+      const metricDefinition = this.toVariable(metricNamespaceQueryWithSub[3]);
+      const resourceName = this.toVariable(metricNamespaceQueryWithSub[4]);
+      console.log(metricNamespaceQueryWithSub);
+      return this.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
     }
 
     const metricNamesQuery = query.match(/^MetricNames\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/i);
