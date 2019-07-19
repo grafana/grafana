@@ -24,7 +24,7 @@ COPY packages packages
 
 RUN yarn install --pure-lockfile --no-progress
 
-COPY Gruntfile.js tsconfig.json tslint.json ./
+COPY Gruntfile.js tsconfig.json tslint.json .browserslistrc ./
 COPY public public
 COPY scripts scripts
 COPY emails emails

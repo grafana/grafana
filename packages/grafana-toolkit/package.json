@@ -1,11 +1,11 @@
 {
   "name": "@grafana/toolkit",
-  "version": "6.3.0-alpha.36",
+  "version": "6.4.0-alpha.22",
   "description": "Grafana Toolkit",
   "keywords": [
-    "typescript",
-    "react",
-    "react-component"
+    "grafana",
+    "cli",
+    "plugins"
   ],
   "bin": {
     "grafana-toolkit": "./bin/grafana-toolkit.js"
@@ -15,8 +15,7 @@
     "typecheck": "tsc --noEmit",
     "precommit": "npm run tslint & npm run typecheck",
     "clean": "rimraf ./dist ./compiled",
-    "build": "grafana-toolkit toolkit:build",
-    "postpublish": "npm run clean"
+    "build": "grafana-toolkit toolkit:build"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -30,6 +29,7 @@
     "@types/node": "^12.0.4",
     "@types/react-dev-utils": "^9.0.1",
     "@types/semver": "^6.0.0",
+    "@types/tmp": "^0.1.0",
     "@types/webpack": "4.4.34",
     "axios": "0.19.0",
     "babel-loader": "8.0.6",
@@ -43,6 +43,7 @@
     "file-loader": "^4.0.0",
     "glob": "^7.1.4",
     "html-loader": "0.5.5",
+    "html-webpack-plugin": "^3.2.0",
     "inquirer": "^6.3.1",
     "jest": "24.8.0",
     "jest-cli": "^24.8.0",
@@ -73,9 +74,6 @@
     "typescript": "3.5.1",
     "url-loader": "^2.0.1",
     "webpack": "4.35.0"
-  },
-  "resolutions": {
-    "@types/lodash": "4.14.119"
   },
   "devDependencies": {
     "@types/glob": "^7.1.1",

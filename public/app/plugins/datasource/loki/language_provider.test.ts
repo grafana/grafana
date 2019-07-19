@@ -111,7 +111,7 @@ describe('Request URL', () => {
     };
 
     const datasourceWithLabels = {
-      metadataRequest: url => {
+      metadataRequest: (url: string) => {
         if (url.slice(0, 15) === '/api/prom/label') {
           return { data: { data: ['other'] } };
         } else {
@@ -154,7 +154,7 @@ describe('Query imports', () => {
 
     it('returns empty query from selector query if label is not available', async () => {
       const datasourceWithLabels = {
-        metadataRequest: url =>
+        metadataRequest: (url: string) =>
           url.slice(0, 15) === '/api/prom/label'
             ? { data: { data: ['other'] } }
             : { data: { data: [] as DataQueryResponseData[] } },
@@ -166,7 +166,7 @@ describe('Query imports', () => {
 
     it('returns selector query from selector query with common labels', async () => {
       const datasourceWithLabels = {
-        metadataRequest: url =>
+        metadataRequest: (url: string) =>
           url.slice(0, 15) === '/api/prom/label'
             ? { data: { data: ['foo'] } }
             : { data: { data: [] as DataQueryResponseData[] } },
@@ -178,7 +178,7 @@ describe('Query imports', () => {
 
     it('returns selector query from selector query with all labels if logging label list is empty', async () => {
       const datasourceWithLabels = {
-        metadataRequest: url =>
+        metadataRequest: (url: string) =>
           url.slice(0, 15) === '/api/prom/label'
             ? { data: { data: [] as DataQueryResponseData[] } }
             : { data: { data: [] as DataQueryResponseData[] } },

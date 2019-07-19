@@ -623,6 +623,21 @@ jobs:
               echo "-- no changes to docs files --"
             fi
 
+  release-next-packages:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run:
+          name: Boostrap lerna
+          command: 'npx lerna bootstrap'
+      - run:
+          name: npm - Prepare auth token
+          command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
+      - run:
+          name: Release next packages
+          command: './scripts/circle-release-next-packages.sh'
+
 workflows:
   version: 2
   build-master:
@@ -693,6 +708,11 @@ workflows:
       - trigger-docs-update:
           requires:
             - end-to-end-test
+          filters: *filter-only-master
+      - release-next-packages:
+          requires:
+            - build-all
+            - test-frontend
           filters: *filter-only-master
   release:
     jobs:
@@ -803,3 +823,4 @@ workflows:
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
+

@@ -206,7 +206,7 @@ describe('PostgreSQLDatasource', () => {
 
   describe('When interpolating variables', () => {
     beforeEach(() => {
-      ctx.variable = new CustomVariable({}, {});
+      ctx.variable = new CustomVariable({}, {} as any);
     });
 
     describe('and value is a string', () => {

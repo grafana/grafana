@@ -136,7 +136,6 @@ export class PanelModel {
 
     // queries must have refId
     this.ensureQueryIds();
-    this.restoreInfintyForThresholds();
   }
 
   ensureQueryIds() {
@@ -144,16 +143,6 @@ export class PanelModel {
       for (const query of this.targets) {
         if (!query.refId) {
           query.refId = getNextRefIdChar(this.targets);
-        }
-      }
-    }
-  }
-
-  restoreInfintyForThresholds() {
-    if (this.options && this.options.fieldOptions) {
-      for (const threshold of this.options.fieldOptions.thresholds) {
-        if (threshold.value === null) {
-          threshold.value = -Infinity;
         }
       }
     }

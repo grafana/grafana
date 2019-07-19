@@ -10,6 +10,7 @@ describe('Graphite query model', () => {
       waitForFuncDefsLoaded: jest.fn().mockReturnValue(Promise.resolve(null)),
       createFuncInstance: gfunc.createFuncInstance,
     },
+    // @ts-ignore
     templateSrv: new TemplateSrvStub(),
     targets: [],
   };
