@@ -116,6 +116,19 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   fs.mkdirSync('./dist/sass');
   await copyFiles();
   await copySassFiles();
+
+  // RYAN HACK HACK HACK
+  // when Dominik is back from vacation
+  console.warn('hacking an index.js file for toolkit.  Help!');
+  const index = `${distDir}/src/index.js`;
+  fs.readFile(index, 'utf8', (err, data) => {
+    const js = data.replace('require("./', 'require("./src/');
+    fs.writeFile(`${distDir}/index.js`, js, err => {
+      if (err) {
+        throw new Error('Error writing index: ' + err);
+      }
+    });
+  });
 };
 
 export const toolkitBuildTask = new Task<void>('@grafana/toolkit build', toolkitBuildTaskRunner);
