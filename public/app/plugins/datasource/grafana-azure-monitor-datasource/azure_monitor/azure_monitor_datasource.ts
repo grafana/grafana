@@ -57,8 +57,6 @@ export default class AzureMonitorDatasource {
         item.azureMonitor.resourceName !== this.defaultDropdownValue &&
         item.azureMonitor.metricDefinition &&
         item.azureMonitor.metricDefinition !== this.defaultDropdownValue &&
-        item.azureMonitor.metricNamespace &&
-        item.azureMonitor.metricNamespace !== this.defaultDropdownValue &&
         item.azureMonitor.metricName &&
         item.azureMonitor.metricName !== this.defaultDropdownValue
       );
@@ -93,7 +91,8 @@ export default class AzureMonitorDatasource {
           timeGrain: timeGrain,
           allowedTimeGrainsMs: item.allowedTimeGrainsMs,
           metricName: this.templateSrv.replace(item.metricName, options.scopedVars),
-          metricNamespace: metricNamespace,
+          metricNamespace:
+            metricNamespace && metricNamespace !== this.defaultDropdownValue ? metricNamespace : metricDefinition,
           aggregation: aggregation,
           dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
           dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),

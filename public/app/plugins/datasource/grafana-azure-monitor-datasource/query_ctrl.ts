@@ -120,6 +120,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     this.migrateToFromTimes();
 
+    this.migrateToDefaultNamespace();
+
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
     this.resultFormats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
@@ -192,6 +194,18 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   migrateToFromTimes() {
     this.target.azureLogAnalytics.query = this.target.azureLogAnalytics.query.replace(/\$__from\s/gi, '$__timeFrom() ');
     this.target.azureLogAnalytics.query = this.target.azureLogAnalytics.query.replace(/\$__to\s/gi, '$__timeTo() ');
+  }
+
+  async migrateToDefaultNamespace() {
+    if (
+      this.target.azureMonitor.metricNamespace &&
+      this.target.azureMonitor.metricNamespace !== this.defaultDropdownValue &&
+      this.target.azureMonitor.metricDefinition
+    ) {
+      return;
+    }
+
+    this.target.azureMonitor.metricNamespace = this.target.azureMonitor.metricDefinition;
   }
 
   replace(variable: string) {
