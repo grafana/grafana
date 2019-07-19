@@ -1,6 +1,6 @@
-import execa = require('execa');
-import path = require('path');
-import fs = require('fs');
+import execa from 'execa';
+import path from 'path';
+import fs from 'fs';
 import { ExtensionBytes, ZipFileInfo } from './types';
 
 export function getFileSizeReportInFolder(dir: string, info?: ExtensionBytes): ExtensionBytes {

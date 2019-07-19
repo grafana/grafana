@@ -10,7 +10,7 @@ export async function runEndToEndTests(outputDirectory: string, results: TestRes
     setupFiles: [],
     setupFilesAfterEnv: [
       'expect-puppeteer', // Setup Puppeteer
-      '<rootDir>/node_modules/@grafana/toolkit/src/plugin-ci/e2e/setup.ts', // Loads Chromimum
+      '<rootDir>/node_modules/@grafana/toolkit/src/e2e/install.ts', // Loads Chromimum
     ],
     globals: { 'ts-jest': { isolatedModules: true } },
     testMatch: [
