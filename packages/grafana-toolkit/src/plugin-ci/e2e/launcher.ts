@@ -1,7 +1,14 @@
 import * as jestCLI from 'jest-cli';
 import { TestResultsInfo } from '../types';
+import fs from 'fs';
 
 export async function runEndToEndTests(outputDirectory: string, results: TestResultsInfo): Promise<void> {
+  const setupPath = 'node_modules/@grafana/toolkit/src/e2e/install';
+  let ext = '.js';
+  if (!fs.existsSync(setupPath + ext)) {
+    ext = '.ts'; // When running yarn link
+  }
+
   const jestConfig = {
     preset: 'ts-jest',
     verbose: false,
@@ -10,11 +17,11 @@ export async function runEndToEndTests(outputDirectory: string, results: TestRes
     setupFiles: [],
     setupFilesAfterEnv: [
       'expect-puppeteer', // Setup Puppeteer
-      '<rootDir>/node_modules/@grafana/toolkit/src/e2e/install.ts', // Loads Chromimum
+      '<rootDir>/' + setupPath + ext, // Loads Chromimum
     ],
     globals: { 'ts-jest': { isolatedModules: true } },
     testMatch: [
-      '<rootDir>/node_modules/@grafana/toolkit/src/plugin-ci/e2e/commonPluginTests.ts',
+      '<rootDir>/e2e-temp/**/*.test.ts', // Copied from node_modules
       '<rootDir>/e2e/test/**/*.test.ts',
     ],
     reporters: [

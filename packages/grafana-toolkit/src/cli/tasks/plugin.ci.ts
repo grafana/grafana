@@ -239,6 +239,10 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
   await execa('rimraf', [settings.outputFolder]);
   fs.mkdirSync(settings.outputFolder);
 
+  const tempDir = path.resolve(process.cwd(), 'e2e-temp');
+  await execa('rimraf', [tempDir]);
+  fs.mkdirSync(tempDir);
+
   try {
     const axios = require('axios');
     const frontendSettings = await axios.get('api/frontend/settings', args);
@@ -257,11 +261,22 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
         throw new Error('Wrong plugin version');
       }
     }
+
+    if (!fs.existsSync('e2e-temp')) {
+      fs.mkdirSync(tempDir);
+    }
+
+    await execa('cp', [
+      'node_modules/@grafana/toolkit/src/plugin-ci/e2e/commonPluginTests.txt',
+      path.resolve(tempDir, 'common.test.ts'),
+    ]);
+
     await runEndToEndTests(settings.outputFolder, results);
   } catch (err) {
     results.error = err;
     console.log('Test Error', err);
   }
+  await execa('rimraf', [tempDir]);
 
   // Now copy everything to work folder
   await execa('cp', ['-rv', settings.outputFolder + '/.', workDir]);
