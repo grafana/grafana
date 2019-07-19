@@ -22,7 +22,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 	keyValueCSV := strings.Split(connStr, ",")
 	options := &redis.Options{Network: "tcp"}
 	for _, rawKeyValue := range keyValueCSV {
-		keyValueTuple := strings.Split(rawKeyValue, "=")
+		keyValueTuple := strings.SplitN(rawKeyValue, "=", 2)
 		if len(keyValueTuple) != 2 {
 			return nil, fmt.Errorf("incorrect redis connection string format detected for '%v', format is key=value,key=value", rawKeyValue)
 		}
