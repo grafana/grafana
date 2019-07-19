@@ -267,7 +267,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
     }
 
     await execa('cp', [
-      'node_modules/@grafana/toolkit/src/plugin-ci/e2e/commonPluginTests.txt',
+      'node_modules/@grafana/toolkit/src/plugin-ci/e2e/commonPluginTests.ts',
       path.resolve(tempDir, 'common.test.ts'),
     ]);
 

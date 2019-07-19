@@ -49,7 +49,7 @@ const preparePackage = async (pkg: any) => {
   });
 };
 
-const moveFiles = () => {
+const copyFiles = () => {
   const files = [
     'README.md',
     'CHANGELOG.md',
@@ -59,6 +59,9 @@ const moveFiles = () => {
     'src/config/tsconfig.plugin.json',
     'src/config/tsconfig.plugin.local.json',
     'src/config/tslint.plugin.json',
+
+    // plugin test file
+    'src/plugin-ci/e2e/commonPluginTests.ts',
   ];
   // @ts-ignore
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
@@ -111,7 +114,7 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   await preparePackage(pkg);
   fs.mkdirSync('./dist/bin');
   fs.mkdirSync('./dist/sass');
-  await moveFiles();
+  await copyFiles();
   await copySassFiles();
 };
 
