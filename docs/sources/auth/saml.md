@@ -114,7 +114,7 @@ And here is a comprehensive list of the options:
 
 | Setting                                                     | Required | Description                                                                                        | Default       |
 | ----------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- | ------------- |
-| `eanbled`                                                   | No       | Whenever SAML authentication is allowed                                                            | `false`       |
+| `enabled`                                                   | No       | Whenever SAML authentication is allowed                                                            | `false`       |
 | `certificate` or `certificate_path`                         | Yes      | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
 | `private_key` or `private_key_path`                         | Yes      | Base64-encoded string or Path for the SP private key                                               |               |
 | `idp_metadata` or `idp_metadata_path` or `idp_metadata_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
@@ -122,7 +122,7 @@ And here is a comprehensive list of the options:
 | `metadata_valid_duration`                                   | No       | Duration, for how long the SP's metadata should be valid                                           | `48h`         |
 | `assertion_attribute_name`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's name         | `displayName` |
 | `assertion_attribute_login`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's login handle | `mail`        |
-| `assertion_attribute_email`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's login handle | `mail`        |
+| `assertion_attribute_email`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's email        | `mail`        |
 
 ### Cert and Private Key
 
@@ -138,7 +138,7 @@ Currently, we support three ways of specifying the IdP metadata. Without a suffi
 
 ### Max Issue Delay
 
-Prevention of SAML response replay attacks and internal clock skews between the SP (Grafana) and the IdP is covered. You can set a maximum amount of time between the IdP issuing a response and the SP (Grafana) processing it.
+Prevention of SAML response replay attacks and internal clock skews between the SP (Grafana), and the IdP is covered. You can set a maximum amount of time between the IdP issuing a response and the SP (Grafana) processing it.
 
 The configuration options is specified as a duration e.g. `max_issue_delay = 90s` or `max_issue_delay = 1h`
 
@@ -154,9 +154,9 @@ For the SAML integration to work correctly, you need to make the IdP aware of th
 
 The integration provides two key endpoints as part of Grafana:
 
-- The `/saml/metadata` endpoint. Which contains the SP's metadata. You can either download and upload it manually, or make the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
+- The `/saml/metadata` endpoint. Which contains the SP's metadata. You can either download and upload it manually or make the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
 
-- The `/saml/acs` endpoint. Which is intenteded to receive the ACS (Assertion Customer Service) callback. Some providers name it SSO URL or Reply URL.
+- The `/saml/acs` endpoint. Which is intended to receive the ACS (Assertion Customer Service) callback. Some providers name it SSO URL or Reply URL.
 
 ## Assertion mapping
 
