@@ -3,7 +3,7 @@ import { Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 
 interface Props {
-  onSubmit: Function;
+  onSubmit: (pw: { newPassword: string; confirmNew: string }, valid: boolean) => void;
   onSkip: Function;
 }
 
@@ -25,9 +25,10 @@ export class ChangePassword extends PureComponent<Props, State> {
 
   handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
+
+    const { newPassword, confirmNew } = this.state;
     if (this.state.valid) {
-      console.log('This shouldnt be run');
-      this.props.onSubmit(this.state.newPassword);
+      this.props.onSubmit({ newPassword, confirmNew }, true);
     } else {
       appEvents.on('alert-warning', ['New passwords do not match', '']);
     }
@@ -93,6 +94,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               type="submit"
               className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
               onClick={this.handleSubmit}
+              disabled={!this.state.valid}
             >
               Save
             </button>

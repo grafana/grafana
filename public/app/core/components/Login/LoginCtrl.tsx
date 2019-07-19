@@ -21,7 +21,8 @@ interface Props {
   updateLocation?: typeof updateLocation;
   children: (obj: {
     loggingIn: boolean;
-    changePassword: boolean;
+    changePassword: (pw: { newPassword: string; confirmNew: string }, valid: boolean) => void;
+    needPassword: boolean;
     toGrafana: Function;
     signUp: Function;
     login: (data: FormModel, valid: boolean) => void;
@@ -30,7 +31,7 @@ interface Props {
 
 interface State {
   loggingIn: boolean;
-  changePassword: boolean;
+  needPassword: boolean;
 }
 
 export class LoginCtrl extends PureComponent<Props, State> {
@@ -39,7 +40,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     super(props);
     this.state = {
       loggingIn: false,
-      changePassword: false,
+      needPassword: false,
     };
     if (config.loginError) {
       appEvents.on('alert-warning', ['Login Failed', config.loginError]);
@@ -47,8 +48,21 @@ export class LoginCtrl extends PureComponent<Props, State> {
     backendSrv = getBackendSrv();
   }
 
-  init() {}
   signUp = (formModel: FormModel, valid: boolean) => {};
+
+  changePassword = (pws: { newPassword: string; confirmNew: string }, valid: boolean) => {
+    console.log('Changing PW');
+    if (!valid) {
+      return;
+    }
+
+    backendSrv
+      .put('/api/user/password', pws)
+      .then(() => {
+        this.toGrafana();
+      })
+      .catch((err: any) => console.log(err));
+  };
 
   login = (formModel: FormModel, valid: boolean) => {
     console.log(formModel);
@@ -82,7 +96,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
   changeView = () => {
     // Implement animation
     this.setState({
-      changePassword: true,
+      needPassword: true,
     });
   };
 
@@ -112,10 +126,10 @@ export class LoginCtrl extends PureComponent<Props, State> {
 
   render() {
     const { children } = this.props;
-    const { loggingIn, changePassword } = this.state;
-    const { login, signUp, toGrafana } = this;
+    const { loggingIn, needPassword } = this.state;
+    const { login, signUp, toGrafana, changePassword } = this;
 
-    return <>{children({ login, signUp, loggingIn, changePassword, toGrafana })}</>;
+    return <>{children({ login, signUp, loggingIn, changePassword, toGrafana, needPassword })}</>;
   }
 }
 
