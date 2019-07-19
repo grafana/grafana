@@ -114,9 +114,12 @@ export class LoginCtrl extends PureComponent<Props, State> {
   }
 }
 
-export const mapStateToProps = (state: StoreState) => ({
-  routeParams: state.location.routeParams,
-});
+export const mapStateToProps = (state: StoreState) => {
+  console.log(state);
+  return {
+    routeParams: state.location.routeParams,
+  };
+};
 
 const mapDispatchToProps = { updateLocation };
 

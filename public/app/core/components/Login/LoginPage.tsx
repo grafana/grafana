@@ -41,47 +41,59 @@ export class LoginPage extends PureComponent<Props, State> {
 
   render() {
     return (
-      <LoginCtrl>
-        {({ login, loggingIn, changePassword, toGrafana }) =>
-          changePassword ? (
-            <ChangePassword display={changePassword} onSubmit={() => {}} onSkip={toGrafana} />
-          ) : (
-            <div className="login-out-box">
-              <div className="login-inner-box" id="login-view">
-                <LoginForm
-                  displayLoginFields={!config.disableLoginForm}
-                  displayForgotPassword={!(config.ldapEnabled || config.authProxyEnabled)}
-                  onSubmit={login}
-                  loginHint={config.loginHint}
-                  passwordHint={config.passwordHint}
-                  loggingIn={loggingIn}
-                />
+      <div className="login container">
+        <div className="login-content">
+          <div className="login-branding">
+            <img className="logo-icon" src="public/img/grafana_icon.svg" alt="Grafana" />
+            <div className="logo-wordmark" />
+          </div>
+          <LoginCtrl>
+            {({ login, loggingIn, changePassword, toGrafana }) =>
+              changePassword ? (
+                <ChangePassword display={changePassword} onSubmit={() => {}} onSkip={toGrafana} />
+              ) : (
+                <div className="login-out-box">
+                  <div className="login-inner-box" id="login-view">
+                    <LoginForm
+                      displayLoginFields={!config.disableLoginForm}
+                      displayForgotPassword={!(config.ldapEnabled || config.authProxyEnabled)}
+                      onSubmit={login}
+                      loginHint={config.loginHint}
+                      passwordHint={config.passwordHint}
+                      loggingIn={loggingIn}
+                    />
 
-                {oauthEnabled() ? (
-                  <>
-                    <div className="text-center login-divider">
-                      <div>
-                        <div className="login-divider-line" />
-                      </div>
-                      <div>
-                        <span className="login-divider-text">{config.disableLoginForm ? null : <span>or</span>}</span>
-                      </div>
-                      <div>
-                        <div className="login-divider-line" />
-                      </div>
-                    </div>
-                    <div className="clearfix" />
+                    {oauthEnabled() ? (
+                      <>
+                        <div className="text-center login-divider">
+                          <div>
+                            <div className="login-divider-line" />
+                          </div>
+                          <div>
+                            <span className="login-divider-text">
+                              {config.disableLoginForm ? null : <span>or</span>}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="login-divider-line" />
+                          </div>
+                        </div>
+                        <div className="clearfix" />
 
-                    <LoginServiceButtons />
-                  </>
-                ) : null}
+                        <LoginServiceButtons />
+                      </>
+                    ) : null}
 
-                <UserSignup />
-              </div>
-            </div>
-          )
-        }
-      </LoginCtrl>
+                    <UserSignup />
+                  </div>
+                </div>
+              )
+            }
+          </LoginCtrl>
+
+          <div className="clearfix" />
+        </div>
+      </div>
     );
   }
 }
