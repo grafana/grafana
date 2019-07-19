@@ -1,12 +1,12 @@
 import {
+  TestPage,
   ClickablePageObjectType,
   ClickablePageObject,
   Selector,
   InputPageObjectType,
   InputPageObject,
   PageObject,
-} from 'e2e-test/core/pageObjects';
-import { TestPage } from 'e2e-test/core/pages';
+} from '@grafana/toolkit';
 
 export interface SaveDashboardModal {
   name: InputPageObjectType;

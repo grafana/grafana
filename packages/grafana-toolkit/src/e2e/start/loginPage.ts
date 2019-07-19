@@ -1,11 +1,11 @@
+import { TestPage } from '../pages';
 import {
-  InputPageObject,
-  ClickablePageObject,
   Selector,
+  InputPageObject,
   InputPageObjectType,
   ClickablePageObjectType,
-} from 'e2e-test/core/pageObjects';
-import { TestPage } from 'e2e-test/core/pages';
+  ClickablePageObject,
+} from '../pageObjects';
 
 export interface LoginPage {
   username: InputPageObjectType;

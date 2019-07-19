@@ -19,14 +19,17 @@
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
+  "main": "src/index.ts",
   "dependencies": {
     "@babel/core": "7.4.5",
     "@babel/preset-env": "7.4.5",
     "@types/execa": "^0.9.0",
+    "@types/expect-puppeteer": "3.3.1",
     "@types/inquirer": "^6.0.3",
     "@types/jest": "24.0.13",
     "@types/jest-cli": "^23.6.0",
     "@types/node": "^12.0.4",
+    "@types/puppeteer-core": "1.9.0",
     "@types/react-dev-utils": "^9.0.1",
     "@types/semver": "^6.0.0",
     "@types/tmp": "^0.1.0",
@@ -40,6 +43,7 @@
     "copy-webpack-plugin": "5.0.3",
     "css-loader": "^3.0.0",
     "execa": "^1.0.0",
+    "expect-puppeteer": "4.1.1",
     "file-loader": "^4.0.0",
     "glob": "^7.1.4",
     "html-loader": "0.5.5",
@@ -57,6 +61,7 @@
     "postcss-loader": "3.0.0",
     "postcss-preset-env": "6.6.0",
     "prettier": "^1.18.2",
+    "puppeteer-core": "1.18.1",
     "react-dev-utils": "^9.0.1",
     "replace-in-file": "^4.1.0",
     "replace-in-file-webpack-plugin": "^1.0.6",
@@ -78,5 +83,8 @@
   "devDependencies": {
     "@types/glob": "^7.1.1",
     "@types/prettier": "^1.16.4"
+  },
+  "_moduleAliases": {
+    "puppeteer": "node_modules/puppeteer-core"
   }
 }
