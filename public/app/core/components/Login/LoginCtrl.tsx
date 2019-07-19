@@ -39,7 +39,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     super(props);
     this.state = {
       loggingIn: false,
-      changePassword: true,
+      changePassword: false,
     };
     if (config.loginError) {
       appEvents.on('alert-warning', ['Login Failed', config.loginError]);
@@ -64,6 +64,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
       .post('/login', formModel)
       .then((result: any) => {
         this.result = result;
+        console.log(result);
         if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
           this.toGrafana();
           return;
@@ -78,27 +79,31 @@ export class LoginCtrl extends PureComponent<Props, State> {
       });
   };
 
-  skip() {}
-
-  changeView() {}
+  changeView = () => {
+    // Implement animation
+    this.setState({
+      changePassword: true,
+    });
+  };
 
   toGrafana = () => {
     console.log('Trying to get to Grafana');
-    const params = this.props.routeParams || {};
+    const params = this.props.routeParams;
     console.log(this.props);
     if (params.redirect && params.redirect[0] === '/') {
-      console.log('HEY IM RUNNING!');
       //   window.location.href = config.appSubUrl + params.redirect;
+
+      console.log(`Going to ${params.redirect}`);
       this.props.updateLocation({
         path: config.appSubUrl + params.redirect,
       });
     } else if (this.result.redirectUrl) {
-      console.log('HEY IM RUNNING!');
+      console.log('Going to redirect');
       this.props.updateLocation({
         path: this.result.redirectUrl,
       });
     } else {
-      console.log('HEY IM RUNNING!');
+      console.log('Going to home');
       this.props.updateLocation({
         path: '/',
       });
@@ -114,12 +119,9 @@ export class LoginCtrl extends PureComponent<Props, State> {
   }
 }
 
-export const mapStateToProps = (state: StoreState) => {
-  console.log(state);
-  return {
-    routeParams: state.location.routeParams,
-  };
-};
+export const mapStateToProps = (state: StoreState) => ({
+  routeParams: state.location.routeParams,
+});
 
 const mapDispatchToProps = { updateLocation };
 

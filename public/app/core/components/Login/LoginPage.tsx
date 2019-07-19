@@ -50,7 +50,7 @@ export class LoginPage extends PureComponent<Props, State> {
           <LoginCtrl>
             {({ login, loggingIn, changePassword, toGrafana }) =>
               changePassword ? (
-                <ChangePassword display={changePassword} onSubmit={() => {}} onSkip={toGrafana} />
+                <ChangePassword onSubmit={() => {}} onSkip={toGrafana} />
               ) : (
                 <div className="login-out-box">
                   <div className="login-inner-box" id="login-view">

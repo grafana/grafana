@@ -1,8 +1,8 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, SyntheticEvent } from 'react';
 import { Tooltip } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 
 interface Props {
-  display: boolean;
   onSubmit: Function;
   onSkip: Function;
 }
@@ -22,12 +22,32 @@ export class ChangePassword extends PureComponent<Props, State> {
       valid: false,
     };
   }
-  handleSubmit() {}
 
-  validate() {}
+  handleSubmit = (e: SyntheticEvent) => {
+    e.preventDefault();
+    if (this.state.valid) {
+      console.log('This shouldnt be run');
+      this.props.onSubmit(this.state.newPassword);
+    } else {
+      appEvents.on('alert-warning', ['New passwords do not match', '']);
+    }
+  };
+
+  handleChange = (e: SyntheticEvent) => {
+    // @ts-ignore
+    this.setState({ [e.target.name]: e.target.value }, () => {
+      this.setState({
+        valid: this.validate(),
+      });
+    });
+  };
+
+  validate() {
+    return this.state.newPassword === this.state.confirmNew;
+  }
 
   render() {
-    return this.props.display ? (
+    return (
       <div className="login-inner-box" id="change-password-view">
         <div className="text-left login-change-password-info">
           <h5>Change Password</h5>
@@ -45,6 +65,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               className="gf-form-input login-form-input"
               required
               placeholder="New password"
+              onChange={this.handleChange}
             />
           </div>
           <div className="login-form">
@@ -55,6 +76,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               required
               ng-model="command.confirmNew"
               placeholder="Confirm new password"
+              onChange={this.handleChange}
             />
           </div>
           <div className="login-button-group login-button-group--right text-right">
@@ -70,13 +92,13 @@ export class ChangePassword extends PureComponent<Props, State> {
             <button
               type="submit"
               className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
-              ng-click="changePassword();"
+              onClick={this.handleSubmit}
             >
               Save
             </button>
           </div>
         </form>
       </div>
-    ) : null;
+    );
   }
 }
