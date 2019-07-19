@@ -56,6 +56,9 @@ var (
 	// MApiLoginOAuth is a metric api login oauth counter
 	MApiLoginOAuth prometheus.Counter
 
+	// MApiLoginSAML is a metric api login SAML counter
+	MApiLoginSAML prometheus.Counter
+
 	// MApiOrgCreate is a metric api org created counter
 	MApiOrgCreate prometheus.Counter
 
@@ -240,6 +243,12 @@ func init() {
 	MApiLoginOAuth = newCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "api_login_oauth_total",
 		Help:      "api login oauth counter",
+		Namespace: exporterName,
+	})
+
+	MApiLoginSAML = newCounterStartingAtZero(prometheus.CounterOpts{
+		Name:      "api_login_saml_total",
+		Help:      "api login saml counter",
 		Namespace: exporterName,
 	})
 
@@ -435,6 +444,7 @@ func initMetricVars() {
 		MApiAdminUserCreate,
 		MApiLoginPost,
 		MApiLoginOAuth,
+		MApiLoginSAML,
 		MApiOrgCreate,
 		MApiDashboardSnapshotCreate,
 		MApiDashboardSnapshotExternal,
