@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck source=./scripts/helpers/exit-if-fail.sh
 source "$(dirname "$0")/helpers/exit-if-fail.sh"
 
 echo "building backend with install to cache pkgs"
