@@ -24,7 +24,12 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 	for _, rawKeyValue := range keyValueCSV {
 		keyValueTuple := strings.SplitN(rawKeyValue, "=", 2)
 		if len(keyValueTuple) != 2 {
-			return nil, fmt.Errorf("incorrect redis connection string format detected for '%v', format is key=value,key=value", rawKeyValue)
+			if strings.HasPrefix(rawKeyValue, "password") {
+				// don't log the password
+				return nil, fmt.Errorf("incorrect redis connection string format detected for 'password', format is key=value,key=value")
+			} else {
+				return nil, fmt.Errorf("incorrect redis connection string format detected for '%v', format is key=value,key=value", rawKeyValue)
+			}
 		}
 		connKey := keyValueTuple[0]
 		connVal := keyValueTuple[1]
