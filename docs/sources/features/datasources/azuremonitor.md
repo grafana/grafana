@@ -123,17 +123,19 @@ Note that the Azure Monitor service does not support multiple values yet. If you
 
 The Azure Monitor Datasource Plugin provides the following queries you can specify in the `Query` field in the Variable edit view. They allow you to fill a variable's options list.
 
-| Name                                                                                         | Description                                                                     |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| _Subscriptions()_                                                                            | Returns a list of subscriptions.                                                |
-| _ResourceGroups()_                                                                           | Returns a list of resource groups.                                              |
-| _ResourceGroups(12345678-aaaa-bbbb-cccc-123456789aaa)_                                       | Returns a list of resource groups for a specified subscription.                 |
-| _Namespaces(aResourceGroup)_                                                                 | Returns a list of namespaces for the specified resource group.                  |
-| _Namespaces(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup)_                           | Returns a list of namespaces for the specified resource group and subscription. |
-| _ResourceNames(aResourceGroup, aNamespace)_                                                  | Returns a list of resource names.                                               |
-| _ResourceNames(12345678-aaaa-bbbb-cccc-123456789aaaaResourceGroup, aNamespace)_              | Returns a list of resource names for a specified subscription.                  |
-| _MetricNames(aResourceGroup, aNamespace, aResourceName)_                                     | Returns a list of metric names.                                                 |
-| _MetricNames(12345678-aaaa-bbbb-cccc-123456789aaaaResourceGroup, aNamespace, aResourceName)_ | Returns a list of metric names for a specified subscription.                    |
+| Name                                                                                               | Description                                                                     |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| _Subscriptions()_                                                                                  | Returns a list of subscriptions.                                                |
+| _ResourceGroups()_                                                                                 | Returns a list of resource groups.                                              |
+| _ResourceGroups(12345678-aaaa-bbbb-cccc-123456789aaa)_                                             | Returns a list of resource groups for a specified subscription.                 |
+| _Namespaces(aResourceGroup)_                                                                       | Returns a list of namespaces for the specified resource group.                  |
+| _Namespaces(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup)_                                 | Returns a list of namespaces for the specified resource group and subscription. |
+| _ResourceNames(aResourceGroup, aNamespace)_                                                        | Returns a list of resource names.                                               |
+| _ResourceNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace)_                  | Returns a list of resource names for a specified subscription.                  |
+| _MetricNamespace(aResourceGroup, aNamespace, aResourceName)_                                       | Returns a list of metric namespaces.                                            |
+| _MetricNamespace(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)_ | Returns a list of metric namespaces for a specified subscription.               |
+| _MetricNames(aResourceGroup, aNamespace, aResourceName)_                                           | Returns a list of metric names.                                                 |
+| _MetricNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)_     | Returns a list of metric names for a specified subscription.                    |
 
 Examples:
 
@@ -144,7 +146,7 @@ Examples:
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Azure Monitor Metrics Whitelist
@@ -196,7 +198,7 @@ Examples:
 
 Use the one of the following queries in the `Query` field in the Variable edit view.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 | Name                               | Description                                                |
@@ -268,7 +270,7 @@ To make writing queries easier there are several Grafana macros that can be used
 
 There are also some Grafana variables that can be used in Azure Log Analytics queries:
 
-- `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "reference/templating.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
+- `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. More details on how it works [here]({{< relref "../../reference/templating.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
 
 ### Azure Log Analytics Alerting
 

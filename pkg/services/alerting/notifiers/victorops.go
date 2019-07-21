@@ -70,9 +70,9 @@ type VictoropsNotifier struct {
 
 // Notify sends notification to Victorops via POST to URL endpoint
 func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	vn.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.Id, "notification", vn.Name)
+	vn.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.ID, "notification", vn.Name)
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		vn.log.Error("Failed get rule link", "error", err)
 		return err
@@ -116,8 +116,8 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("error_message", evalContext.Error.Error())
 	}
 
-	if evalContext.ImagePublicUrl != "" {
-		bodyJSON.Set("image_url", evalContext.ImagePublicUrl)
+	if evalContext.ImagePublicURL != "" {
+		bodyJSON.Set("image_url", evalContext.ImagePublicURL)
 	}
 
 	data, _ := bodyJSON.MarshalJSON()

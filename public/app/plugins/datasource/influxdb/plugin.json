@@ -6,9 +6,9 @@
 
   "defaultMatchFormat": "regex values",
   "metrics": true,
+  "logs": true,
   "annotations": true,
   "alerting": true,
-  "tables": true,
 
   "queryOptions": {
     "minInterval": true

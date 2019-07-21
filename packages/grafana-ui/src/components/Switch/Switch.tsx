@@ -22,7 +22,6 @@ export class Switch extends PureComponent<Props, State> {
 
   internalOnChange = (event: React.FormEvent<HTMLInputElement>) => {
     event.stopPropagation();
-
     this.props.onChange(event);
   };
 

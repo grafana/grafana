@@ -14,7 +14,7 @@ import { updateLocation } from 'app/core/actions';
 import { PanelModel } from '../../state';
 import { DashboardModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { LocationUpdate } from 'app/types';
+import { LocationUpdate } from '@grafana/runtime';
 
 export interface Props {
   panel: PanelModel;
@@ -60,7 +60,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
 
   handleCloseAddPanel(evt) {
     evt.preventDefault();
-    this.props.dashboard.removePanel(this.props.dashboard.panels[0]);
+    this.props.dashboard.removePanel(this.props.panel);
   }
 
   onCreateNewPanel = (tab = 'queries') => {

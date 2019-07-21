@@ -4,20 +4,11 @@ import {
   exploreReducer,
   makeInitialUpdateState,
   initialExploreState,
-  DEFAULT_RANGE,
 } from './reducers';
-import {
-  ExploreId,
-  ExploreItemState,
-  ExploreUrlState,
-  ExploreState,
-  RangeScanner,
-  ExploreMode,
-} from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreUrlState, ExploreState, ExploreMode } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {
   scanStartAction,
-  scanStopAction,
   testDataSourcePendingAction,
   testDataSourceSuccessAction,
   testDataSourceFailureAction,
@@ -25,6 +16,7 @@ import {
   splitOpenAction,
   splitCloseAction,
   changeModeAction,
+  scanStopAction,
   runQueriesAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
@@ -32,33 +24,29 @@ import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, dateTime } from '@grafana/ui';
+import { DataSourceApi, DataQuery } from '@grafana/ui';
+import { LogsModel, LogsDedupStrategy, LoadingState } from '@grafana/data';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
     it('should start scanning', () => {
-      const scanner = jest.fn();
       const initalState = {
         ...makeExploreItemState(),
         scanning: false,
-        scanner: undefined as RangeScanner,
       };
 
       reducerTester()
         .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
-        .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left, scanner }))
+        .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
           scanning: true,
-          scanner,
         });
     });
     it('should stop scanning', () => {
-      const scanner = jest.fn();
       const initalState = {
         ...makeExploreItemState(),
         scanning: true,
-        scanner,
         scanRange: {},
       };
 
@@ -68,7 +56,6 @@ describe('Explore item reducer', () => {
         .thenStateShouldEqual({
           ...makeExploreItemState(),
           scanning: false,
-          scanner: undefined,
           scanRange: undefined,
         });
     });
@@ -105,6 +92,7 @@ describe('Explore item reducer', () => {
             datasource: true,
             queries: true,
             range: true,
+            mode: true,
             ui: true,
           },
         };
@@ -144,7 +132,6 @@ describe('Explore item reducer', () => {
             meta: {
               metrics: true,
               logs: true,
-              tables: true,
             },
             components: {
               ExploreStartPage: StartPage,
@@ -154,9 +141,6 @@ describe('Explore item reducer', () => {
           const queryKeys: string[] = [];
           const initalState: Partial<ExploreItemState> = {
             datasourceInstance: null,
-            supportsGraph: false,
-            supportsLogs: false,
-            supportsTable: false,
             StartPage: null,
             showingStartPage: false,
             queries,
@@ -164,18 +148,13 @@ describe('Explore item reducer', () => {
           };
           const expectedState = {
             datasourceInstance,
-            supportsGraph: true,
-            supportsLogs: true,
-            supportsTable: true,
             StartPage,
             showingStartPage: true,
             queries,
             queryKeys,
             supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
             mode: ExploreMode.Metrics,
-            graphIsLoading: false,
-            tableIsLoading: false,
-            logIsLoading: false,
+            loadingState: LoadingState.NotStarted,
             latency: 0,
             queryErrors: [],
           };
@@ -202,16 +181,12 @@ describe('Explore item reducer', () => {
             intervalMs: 1000,
           },
           showingStartPage: false,
-          range: {
-            from: dateTime(),
-            to: dateTime(),
-            raw: DEFAULT_RANGE,
-          },
+          range: null,
         };
 
         reducerTester()
           .givenReducer(itemReducer, initalState)
-          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left, range: expectedState.range }))
+          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left }))
           .thenStateShouldEqual(expectedState);
       });
     });
@@ -227,6 +202,7 @@ export const setup = (urlStateOverrides?: any) => {
       from: '',
       to: '',
     },
+    mode: ExploreMode.Metrics,
     ui: {
       dedupStrategy: LogsDedupStrategy.none,
       showingGraph: false,

@@ -4,12 +4,14 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 
 // Types
-import { StoreState, UrlQueryMap } from 'app/types';
+import { StoreState } from 'app/types';
+import { UrlQueryMap } from '@grafana/runtime';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
-import { AppPlugin, NavModel, AppPluginMeta, PluginType } from '@grafana/ui';
+import { AppPlugin, AppPluginMeta, PluginType } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import { getLoadingNav } from './PluginPage';
 import { getNotFoundNav, getWarningNav } from 'app/core/nav_model_srv';
 import { appEvents } from 'app/core/core';
@@ -35,7 +37,7 @@ export function getAppPluginPageError(meta: AppPluginMeta) {
     return 'Plugin must be an app';
   }
   if (!meta.enabled) {
-    return 'Applicaiton Not Enabled';
+    return 'Application Not Enabled';
   }
   return null;
 }

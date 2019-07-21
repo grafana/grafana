@@ -1,7 +1,9 @@
 import PostgresQuery from '../postgres_query';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('PostgresQuery', () => {
-  const templateSrv = {
+  // @ts-ignore
+  const templateSrv: TemplateSrv = {
     replace: jest.fn(text => text),
   };
 
@@ -142,7 +144,7 @@ describe('PostgresQuery', () => {
   });
 
   describe('When generating complete statement', () => {
-    const target = {
+    const target: any = {
       timeColumn: 't',
       table: 'table',
       select: [[{ type: 'column', params: ['value'] }]],

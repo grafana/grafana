@@ -48,7 +48,7 @@ import { updateLegendValues } from './time_series2';
 import TimeSeries from './time_series2';
 import { searchResultsDirective } from './components/search/search_results';
 import { manageDashboardsDirective } from './components/manage_dashboards/manage_dashboards';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 
 export {
   profiler,

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+//nolint:goconst
 func TestDataSourceCache(t *testing.T) {
 	Convey("When caching a datasource proxy", t, func() {
 		clearCache()

@@ -3,14 +3,8 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId, ExploreMode } from 'app/types/explore';
-import {
-  DataSourceSelectItem,
-  RawTimeRange,
-  ClickOutsideWrapper,
-  TimeZone,
-  TimeRange,
-  SelectOptionItem,
-} from '@grafana/ui';
+import { DataSourceSelectItem } from '@grafana/ui';
+import { RawTimeRange, TimeZone, TimeRange, LoadingState, SelectableValue } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -22,10 +16,9 @@ import {
   changeRefreshInterval,
   changeMode,
 } from './state/actions';
-import TimePicker from './TimePicker';
 import { getTimeZone } from '../profile/state/selectors';
-import { RefreshPicker, SetInterval } from '@grafana/ui';
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
+import { ExploreTimeControls } from './ExploreTimeControls';
 
 enum IconSide {
   left = 'left',
@@ -62,7 +55,6 @@ const createResponsiveButton = (options: {
 
 interface OwnProps {
   exploreId: ExploreId;
-  timepickerRef: React.RefObject<TimePicker>;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
 }
 
@@ -75,8 +67,8 @@ interface StateProps {
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
   refreshInterval: string;
-  supportedModeOptions: Array<SelectOptionItem<ExploreMode>>;
-  selectedModeOption: SelectOptionItem<ExploreMode>;
+  supportedModeOptions: Array<SelectableValue<ExploreMode>>;
+  selectedModeOption: SelectableValue<ExploreMode>;
   hasLiveOption: boolean;
   isLive: boolean;
 }
@@ -110,10 +102,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     return this.props.runQueries(this.props.exploreId);
   };
 
-  onCloseTimePicker = () => {
-    this.props.timepickerRef.current.setState({ isOpen: false });
-  };
-
   onChangeRefreshInterval = (item: string) => {
     const { changeRefreshInterval, exploreId } = this.props;
     changeRefreshInterval(exploreId, item);
@@ -135,7 +123,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       timeZone,
       selectedDatasource,
       splitted,
-      timepickerRef,
       refreshInterval,
       onChangeTime,
       split,
@@ -212,21 +199,19 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 })}
               </div>
             ) : null}
-            <div className="explore-toolbar-content-item timepicker">
-              {!isLive && (
-                <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
-                  <TimePicker ref={timepickerRef} range={range} isUtc={timeZone.isUtc} onChangeTime={onChangeTime} />
-                </ClickOutsideWrapper>
-              )}
-
-              <RefreshPicker
-                onIntervalChanged={this.onChangeRefreshInterval}
-                onRefresh={this.onRunQuery}
-                value={refreshInterval}
-                tooltip="Refresh"
+            <div className="explore-toolbar-content-item">
+              <ExploreTimeControls
+                exploreId={exploreId}
                 hasLiveOption={hasLiveOption}
+                isLive={isLive}
+                loading={loading}
+                range={range}
+                refreshInterval={refreshInterval}
+                timeZone={timeZone}
+                onChangeTime={onChangeTime}
+                onChangeRefreshInterval={this.onChangeRefreshInterval}
+                onRunQuery={this.onRunQuery}
               />
-              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
 
             <div className="explore-toolbar-content-item">
@@ -261,9 +246,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     exploreDatasources,
     range,
     refreshInterval,
-    graphIsLoading,
-    logIsLoading,
-    tableIsLoading,
+    loadingState,
     supportedModes,
     mode,
     isLive,
@@ -271,10 +254,11 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
-  const loading = graphIsLoading || logIsLoading || tableIsLoading;
-  const hasLiveOption = datasourceInstance && datasourceInstance.convertToStreamTargets ? true : false;
+  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
+  const hasLiveOption =
+    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
 
-  const supportedModeOptions: Array<SelectOptionItem<ExploreMode>> = [];
+  const supportedModeOptions: Array<SelectableValue<ExploreMode>> = [];
   let selectedModeOption = null;
   for (const supportedMode of supportedModes) {
     switch (supportedMode) {

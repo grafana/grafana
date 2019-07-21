@@ -13,10 +13,8 @@ jest.mock('app/core/core', () => {
   };
 });
 
-/* tslint:disable:import-blacklist */
-import System from 'systemjs/dist/system.js';
-
-import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/ui';
+import { SystemJS } from '@grafana/runtime';
+import { AppPluginMeta, PluginMetaInfo, PluginType, PluginIncludeType, AppPlugin } from '@grafana/ui';
 import { importAppPlugin } from './plugin_loader';
 
 class MyCustomApp extends AppPlugin {
@@ -34,11 +32,11 @@ describe('Load App', () => {
   const modulePath = 'my/custom/plugin/module';
 
   beforeAll(() => {
-    System.set(modulePath, System.newModule({ plugin: app }));
+    SystemJS.set(modulePath, SystemJS.newModule({ plugin: app }));
   });
 
   afterAll(() => {
-    System.delete(modulePath);
+    SystemJS.delete(modulePath);
   });
 
   it('should call init and set meta', async () => {
@@ -52,7 +50,7 @@ describe('Load App', () => {
     };
 
     // Check that we mocked the import OK
-    const m = await System.import(modulePath);
+    const m = await SystemJS.import(modulePath);
     expect(m.plugin).toBe(app);
 
     const loaded = await importAppPlugin(meta);
@@ -64,5 +62,49 @@ describe('Load App', () => {
     const again = await importAppPlugin(meta);
     expect(again).toBe(app);
     expect(app.calledTwice).toBeTruthy();
+  });
+});
+
+import { ExampleConfigCtrl as ConfigCtrl } from 'app/plugins/app/example-app/legacy/config';
+import { AngularExamplePageCtrl } from 'app/plugins/app/example-app/legacy/angular_example_page';
+
+describe('Load Legacy App', () => {
+  const app = {
+    ConfigCtrl,
+    AngularExamplePageCtrl, // Must match `pages.component` in plugin.json
+  };
+
+  const modulePath = 'my/custom/legacy/plugin/module';
+
+  beforeAll(() => {
+    SystemJS.set(modulePath, SystemJS.newModule(app));
+  });
+
+  afterAll(() => {
+    SystemJS.delete(modulePath);
+  });
+
+  it('should call init and set meta for legacy app', async () => {
+    const meta: AppPluginMeta = {
+      id: 'test-app',
+      module: modulePath,
+      baseUrl: 'xxx',
+      info: {} as PluginMetaInfo,
+      type: PluginType.app,
+      name: 'test',
+      includes: [
+        {
+          type: PluginIncludeType.page,
+          name: 'Example Page',
+          component: 'AngularExamplePageCtrl',
+          role: 'Viewer',
+          addToNav: false,
+        },
+      ],
+    };
+
+    const loaded = await importAppPlugin(meta);
+    expect(loaded).toHaveProperty('angularPages');
+    expect(loaded.angularPages).toHaveProperty('AngularExamplePageCtrl', AngularExamplePageCtrl);
   });
 });

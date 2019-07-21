@@ -85,7 +85,7 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine) error {
 	}
 
 	logger.Infof("installing %v @ %v\n", pluginName, version)
-	logger.Infof("from url: %v\n", downloadURL)
+	logger.Infof("from: %v\n", downloadURL)
 	logger.Infof("into: %v\n", pluginFolder)
 	logger.Info("\n")
 
@@ -145,18 +145,27 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		}
 	}()
 
-	resp, err := http.Get(url) // #nosec
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+	var bytes []byte
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
+	if _, err := os.Stat(url); err == nil {
+		bytes, err = ioutil.ReadFile(url)
+		if err != nil {
+			return err
+		}
+	} else {
+		resp, err := http.Get(url) // #nosec
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		bytes, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
 	}
 
-	return extractFiles(body, pluginName, filePath)
+	return extractFiles(bytes, pluginName, filePath)
 }
 
 func extractFiles(body []byte, pluginName string, filePath string) error {

@@ -10,15 +10,9 @@ import templateSrv from 'app/features/templating/template_srv';
 import { PanelQueryState } from './PanelQueryState';
 
 // Types
-import {
-  PanelData,
-  DataQuery,
-  TimeRange,
-  ScopedVars,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceJsonData,
-} from '@grafana/ui';
+import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
+
+import { TimeRange } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,

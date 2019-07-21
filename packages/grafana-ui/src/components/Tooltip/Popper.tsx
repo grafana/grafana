@@ -26,9 +26,14 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   referenceElement: PopperJS.ReferenceObject;
   wrapperClassName?: string;
   renderArrow?: RenderPopperArrowFn;
+  eventsEnabled?: boolean;
 }
 
 class Popper extends PureComponent<Props> {
+  static defaultProps: Partial<Props> = {
+    eventsEnabled: true,
+  };
+
   render() {
     const {
       content,
@@ -39,6 +44,8 @@ class Popper extends PureComponent<Props> {
       className,
       wrapperClassName,
       renderArrow,
+      referenceElement,
+      eventsEnabled,
     } = this.props;
 
     return (
@@ -49,7 +56,8 @@ class Popper extends PureComponent<Props> {
               <Portal>
                 <ReactPopper
                   placement={placement}
-                  referenceElement={this.props.referenceElement}
+                  referenceElement={referenceElement}
+                  eventsEnabled={eventsEnabled}
                   // TODO: move modifiers config to popper controller
                   modifiers={{ preventOverflow: { enabled: true, boundariesElement: 'window' } }}
                 >

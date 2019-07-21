@@ -1,19 +1,18 @@
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 import { QueryEditor as StackdriverQueryEditor } from 'app/plugins/datasource/stackdriver/components/QueryEditor';
 import { AnnotationQueryEditor as StackdriverAnnotationQueryEditor } from 'app/plugins/datasource/stackdriver/components/AnnotationQueryEditor';
-import { PasswordStrength } from './components/PasswordStrength';
 import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import { TagFilter } from './components/TagFilter/TagFilter';
 import { SideMenu } from './components/sidemenu/SideMenu';
 import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
-import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField } from '@grafana/ui';
+import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField, DataLinksEditor } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
+import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
 
 export function registerAngularDirectives() {
-  react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
   react2AngularDirective('appNotificationsList', AppNotificationList, []);
@@ -70,6 +69,21 @@ export function registerAngularDirectives() {
     'inputWidth',
     'labelWidth',
     ['onReset', { watchDepth: 'reference', wrapApply: true }],
+    ['onChange', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+  react2AngularDirective('graphContextMenu', GraphContextMenu, [
+    'x',
+    'y',
+    'items',
+    ['onClose', { watchDepth: 'reference', wrapApply: true }],
+    ['getContextMenuSource', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+
+  // We keep the drilldown terminology here because of as using data-* directive
+  // being in conflict with HTML data attributes
+  react2AngularDirective('drilldownLinksEditor', DataLinksEditor, [
+    'value',
+    'suggestions',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }

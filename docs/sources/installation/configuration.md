@@ -155,6 +155,7 @@ callback URL to be correct).
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
+> Available in 6.3 and above
 
 Serve Grafana from subpath specified in `root_url` setting. By
 default it is set to `false` for compatibility reasons.
@@ -303,7 +304,7 @@ The number of days the keep me logged in / remember me cookie lasts.
 
 ### secret_key
 
-Used for signing some datasource settings like secrets and passwords. Cannot be changed without requiring an update
+Used for signing some datasource settings like secrets and passwords, the encryption format used is AES-256 in CFB mode. Cannot be changed without requiring an update
 to datasource settings to re-encode them.
 
 ### disable_gravatar
@@ -328,6 +329,30 @@ Sets the `SameSite` cookie attribute and prevents the browser from sending this 
 When `false`, the HTTP header `X-Frame-Options: deny` will be set in Grafana HTTP responses which will instruct
 browsers to not allow rendering Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>`. The main goal is to
 mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking). Default is `false`.
+
+### strict_transport_security
+
+Set to `true` if you want to enable http `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS. The default value is `false` until the next minor release, `6.3`.
+
+### strict_transport_security_max_age_seconds
+
+Sets how long a browser should cache HSTS in seconds. Only applied if strict_transport_security is enabled. The default value is `86400`.
+
+### strict_transport_security_preload
+
+Set to `true` if to enable HSTS `preloading` option. Only applied if strict_transport_security is enabled. The default value is `false`.
+
+### strict_transport_security_subdomains
+
+Set to `true` if to enable the HSTS includeSubDomains option. Only applied if strict_transport_security is enabled. The default value is `false`.
+
+### x_content_type_options
+
+Set to `true` to enable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `false` until the next minor release, `6.3`.
+
+### x_xss_protection
+
+Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
 
 <hr />
 
@@ -389,14 +414,14 @@ Text used as placeholder text on login page for password input.
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
 
-- [Authentication Overview]({{< relref "auth/overview.md" >}}) (anonymous access options, hide login and more)
-- [Google OAuth]({{< relref "auth/google.md" >}}) (auth.google)
-- [GitHub OAuth]({{< relref "auth/github.md" >}}) (auth.github)
-- [Gitlab OAuth]({{< relref "auth/gitlab.md" >}}) (auth.gitlab)
-- [Generic OAuth]({{< relref "auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
-- [Basic Authentication]({{< relref "auth/overview.md" >}}) (auth.basic)
-- [LDAP Authentication]({{< relref "auth/ldap.md" >}}) (auth.ldap)
-- [Auth Proxy]({{< relref "auth/auth-proxy.md" >}}) (auth.proxy)
+- [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
+- [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
+- [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
+- [Gitlab OAuth]({{< relref "../auth/gitlab.md" >}}) (auth.gitlab)
+- [Generic OAuth]({{< relref "../auth/generic-oauth.md" >}}) (auth.generic_oauth, okta2, auth0, bitbucket, azure)
+- [Basic Authentication]({{< relref "../auth/overview.md" >}}) (auth.basic)
+- [LDAP Authentication]({{< relref "../auth/ldap.md" >}}) (auth.ldap)
+- [Auth Proxy]({{< relref "../auth/auth-proxy.md" >}}) (auth.proxy)
 
 ## [dataproxy]
 

@@ -1,16 +1,7 @@
 import defaults from 'lodash/defaults';
-import {
-  DataQueryRequest,
-  FieldType,
-  SeriesData,
-  DataQueryResponse,
-  DataQueryError,
-  DataStreamObserver,
-  DataStreamState,
-  LoadingState,
-  LogLevel,
-  CSVReader,
-} from '@grafana/ui';
+import { DataQueryRequest, DataQueryResponse, DataQueryError, DataStreamObserver, DataStreamState } from '@grafana/ui';
+
+import { FieldType, DataFrame, LoadingState, LogLevel, CSVReader } from '@grafana/data';
 import { TestDataQuery, StreamingQuery } from './types';
 
 export const defaultQuery: StreamingQuery = {
@@ -18,6 +9,7 @@ export const defaultQuery: StreamingQuery = {
   speed: 250, // ms
   spread: 3.5,
   noise: 2.2,
+  bands: 1,
 };
 
 type StreamWorkers = {
@@ -42,7 +34,7 @@ export class StreamHandler {
       // set stream option defaults
       query.stream = defaults(query.stream, defaultQuery);
       // create stream key
-      const key = req.dashboardId + '/' + req.panelId + '/' + query.refId;
+      const key = req.dashboardId + '/' + req.panelId + '/' + query.refId + '@' + query.stream.bands;
 
       if (this.workers[key]) {
         const existing = this.workers[key];
@@ -146,38 +138,46 @@ export class StreamWorker {
 export class SignalWorker extends StreamWorker {
   value: number;
 
+  bands = 1;
+
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
     setTimeout(() => {
       this.stream.series = [this.initBuffer(query.refId)];
       this.looper();
     }, 10);
+
+    this.bands = query.stream.bands ? query.stream.bands : 0;
   }
 
   nextRow = (time: number) => {
     const { spread, noise } = this.query;
     this.value += (Math.random() - 0.5) * spread;
-    return [
-      time,
-      this.value, // Value
-      this.value - Math.random() * noise, // MIN
-      this.value + Math.random() * noise, // MAX
-    ];
+    const row = [time, this.value];
+    for (let i = 0; i < this.bands; i++) {
+      const v = row[row.length - 1];
+      row.push(v - Math.random() * noise); // MIN
+      row.push(v + Math.random() * noise); // MAX
+    }
+    return row;
   };
 
-  initBuffer(refId: string): SeriesData {
+  initBuffer(refId: string): DataFrame {
     const { speed, buffer } = this.query;
     const data = {
-      fields: [
-        { name: 'Time', type: FieldType.time },
-        { name: 'Value', type: FieldType.number },
-        { name: 'Min', type: FieldType.number },
-        { name: 'Max', type: FieldType.number },
-      ],
+      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Value', type: FieldType.number }],
       rows: [],
       refId,
       name: 'Signal ' + refId,
-    } as SeriesData;
+    } as DataFrame;
+
+    for (let i = 0; i < this.bands; i++) {
+      const suffix = this.bands > 1 ? ` ${i + 1}` : '';
+      data.fields.push({ name: 'Min' + suffix, type: FieldType.number });
+      data.fields.push({ name: 'Max' + suffix, type: FieldType.number });
+    }
+
+    console.log('START', data);
 
     const request = this.stream.request;
 
@@ -251,7 +251,7 @@ export class FetchWorker extends StreamWorker {
     return this.reader.read().then(this.processChunk);
   };
 
-  onHeader = (series: SeriesData) => {
+  onHeader = (series: DataFrame) => {
     series.refId = this.refId;
     this.stream.series = [series];
   };
@@ -314,14 +314,14 @@ export class LogsWorker extends StreamWorker {
     return [time, '[' + this.getRandomLogLevel() + '] ' + this.getRandomLine()];
   };
 
-  initBuffer(refId: string): SeriesData {
+  initBuffer(refId: string): DataFrame {
     const { speed, buffer } = this.query;
     const data = {
       fields: [{ name: 'Time', type: FieldType.time }, { name: 'Line', type: FieldType.string }],
       rows: [],
       refId,
       name: 'Logs ' + refId,
-    } as SeriesData;
+    } as DataFrame;
 
     const request = this.stream.request;
 

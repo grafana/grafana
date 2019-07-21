@@ -50,9 +50,9 @@ type TeamsNotifier struct {
 
 // Notify send an alert notification to Microsoft teams.
 func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	tn.log.Info("Executing teams notification", "ruleId", evalContext.Rule.Id, "notification", tn.Name)
+	tn.log.Info("Executing teams notification", "ruleId", evalContext.Rule.ID, "notification", tn.Name)
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		tn.log.Error("Failed get rule link", "error", err)
 		return err
@@ -83,9 +83,9 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	images := make([]map[string]interface{}, 0)
-	if evalContext.ImagePublicUrl != "" {
+	if evalContext.ImagePublicURL != "" {
 		images = append(images, map[string]interface{}{
-			"image": evalContext.ImagePublicUrl,
+			"image": evalContext.ImagePublicURL,
 		})
 	}
 
@@ -122,7 +122,7 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"name":     "View Graph",
 				"targets": []map[string]interface{}{
 					{
-						"os": "default", "uri": evalContext.ImagePublicUrl,
+						"os": "default", "uri": evalContext.ImagePublicURL,
 					},
 				},
 			},

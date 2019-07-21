@@ -13,6 +13,9 @@ var GetConfig = ldap.GetConfig
 // IsEnabled checks if LDAP is enabled
 var IsEnabled = ldap.IsEnabled
 
+// newLDAP return instance of the single LDAP server
+var newLDAP = ldap.New
+
 // ErrInvalidCredentials is returned if username and password do not match
 var ErrInvalidCredentials = ldap.ErrInvalidCredentials
 
@@ -53,12 +56,13 @@ func New(configs []*ldap.ServerConfig) IMultiLDAP {
 func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
+
 	if len(multiples.configs) == 0 {
 		return nil, ErrNoLDAPServers
 	}
 
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
 			return nil, err
@@ -67,7 +71,6 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		defer server.Close()
 
 		user, err := server.Login(query)
-
 		if user != nil {
 			return user, nil
 		}
@@ -80,8 +83,6 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		if err != nil {
 			return nil, err
 		}
-
-		return user, nil
 	}
 
 	// Return invalid credentials if we couldn't find the user anywhere
@@ -100,13 +101,17 @@ func (multiples *MultiLDAP) User(login string) (
 
 	search := []string{login}
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
 			return nil, err
 		}
 
 		defer server.Close()
+
+		if err := server.Bind(); err != nil {
+			return nil, err
+		}
 
 		users, err := server.Users(search)
 		if err != nil {
@@ -133,13 +138,17 @@ func (multiples *MultiLDAP) Users(logins []string) (
 	}
 
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
 			return nil, err
 		}
 
 		defer server.Close()
+
+		if err := server.Bind(); err != nil {
+			return nil, err
+		}
 
 		users, err := server.Users(logins)
 		if err != nil {

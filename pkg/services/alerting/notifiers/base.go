@@ -120,8 +120,8 @@ func (n *NotifierBase) NeedsImage() bool {
 	return n.UploadImage
 }
 
-// GetNotifierUid returns the notifier `uid`.
-func (n *NotifierBase) GetNotifierUid() string {
+// GetNotifierUID returns the notifier `uid`.
+func (n *NotifierBase) GetNotifierUID() string {
 	return n.UID
 }
 

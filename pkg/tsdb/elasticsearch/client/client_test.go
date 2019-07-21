@@ -17,6 +17,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+//nolint:goconst
 func TestClient(t *testing.T) {
 	Convey("Test elasticsearch client", t, func() {
 		Convey("NewClient", func() {

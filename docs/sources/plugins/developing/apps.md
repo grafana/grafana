@@ -37,15 +37,11 @@ export class ConfigCtrl {
 
   postUpdate() {
     if (!this.appModel.enabled) {
-      return this.$q.resolve();
+      return;
     }
-    return this.appEditCtrl.importDashboards().then(() => {
-      this.enabled = true;
-      return {
-        url: "plugins/raintank-kubernetes-app/page/clusters",
-        message: "Kubernetes App enabled!"
-      };
-    });
+
+    // TODO, whatever you want
+    console.log('Post Update:', this);
   }
 }
 ConfigCtrl.templateUrl = 'components/config/config.html';

@@ -3,7 +3,7 @@ import { shallow } from 'enzyme';
 import { Props, ApiKeysPage } from './ApiKeysPage';
 import { ApiKey } from 'app/types';
 import { getMultipleMockKeys, getMockKey } from './__mocks__/apiKeysMock';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

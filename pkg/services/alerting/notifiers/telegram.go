@@ -104,13 +104,13 @@ func (tn *TelegramNotifier) buildMessage(evalContext *alerting.EvalContext, send
 func (tn *TelegramNotifier) buildMessageLinkedImage(evalContext *alerting.EvalContext) *models.SendWebhookSync {
 	message := fmt.Sprintf("<b>%s</b>\nState: %s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err == nil {
 		message = message + fmt.Sprintf("URL: %s\n", ruleURL)
 	}
 
-	if evalContext.ImagePublicUrl != "" {
-		message = message + fmt.Sprintf("Image: %s\n", evalContext.ImagePublicUrl)
+	if evalContext.ImagePublicURL != "" {
+		message = message + fmt.Sprintf("Image: %s\n", evalContext.ImagePublicURL)
 	}
 
 	metrics := generateMetricsMessage(evalContext)
@@ -141,7 +141,7 @@ func (tn *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.EvalCo
 		return nil, err
 	}
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +232,7 @@ func appendIfPossible(message string, extra string, sizeLimit int) string {
 // Notify send an alert notification to Telegram.
 func (tn *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	var cmd *models.SendWebhookSync
-	if evalContext.ImagePublicUrl == "" && tn.UploadImage {
+	if evalContext.ImagePublicURL == "" && tn.UploadImage {
 		cmd = tn.buildMessage(evalContext, true)
 	} else {
 		cmd = tn.buildMessage(evalContext, false)

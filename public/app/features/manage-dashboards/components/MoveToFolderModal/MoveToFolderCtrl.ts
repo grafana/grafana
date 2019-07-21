@@ -1,5 +1,6 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
+import { BackendSrv } from 'app/core/services/backend_srv';
 
 export class MoveToFolderCtrl {
   dashboards: any;
@@ -9,14 +10,14 @@ export class MoveToFolderCtrl {
   isValidFolderSelection = true;
 
   /** @ngInject */
-  constructor(private backendSrv) {}
+  constructor(private backendSrv: BackendSrv) {}
 
-  onFolderChange(folder) {
+  onFolderChange(folder: any) {
     this.folder = folder;
   }
 
   save() {
-    return this.backendSrv.moveDashboards(this.dashboards, this.folder).then(result => {
+    return this.backendSrv.moveDashboards(this.dashboards, this.folder).then((result: any) => {
       if (result.successCount > 0) {
         const header = `Dashboard${result.successCount === 1 ? '' : 's'} Moved`;
         const msg = `${result.successCount} dashboard${result.successCount === 1 ? '' : 's'} moved to ${

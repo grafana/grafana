@@ -241,8 +241,8 @@ func UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error {
 			UserId:     cmd.UserId,
 			AuthModule: cmd.AuthModule,
 		}
-
-		_, err := sess.Update(authUser, cond)
+		upd, err := sess.Update(authUser, cond)
+		sqlog.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_module", cmd.AuthModule, "rows", upd)
 		return err
 	})
 }

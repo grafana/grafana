@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -211,16 +211,17 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	}
 
 	// Have to sync grafana and LDAP user during log in
-	user, err := user.Upsert(&user.UpsertArgs{
+	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
 		SignupAllowed: auth.LDAPAllowSignup,
 		ExternalUser:  extUser,
-	})
+	}
+	err = bus.Dispatch(upsert)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
 
-	return user.Id, nil
+	return upsert.Result.Id, nil
 }
 
 // LoginViaHeader logs in user from the header only
@@ -246,26 +247,31 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		return 0, newError("Auth proxy header property invalid", nil)
 	}
 
-	for _, field := range []string{"Name", "Email", "Login"} {
+	for _, field := range []string{"Name", "Email", "Login", "Groups"} {
 		if auth.headers[field] == "" {
 			continue
 		}
 
 		if val := auth.ctx.Req.Header.Get(auth.headers[field]); val != "" {
-			reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(val)
+			if field == "Groups" {
+				extUser.Groups = util.SplitString(val)
+			} else {
+				reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(val)
+			}
 		}
 	}
 
-	result, err := user.Upsert(&user.UpsertArgs{
+	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
-		SignupAllowed: true,
+		SignupAllowed: setting.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
-	})
+	}
+	err := bus.Dispatch(upsert)
 	if err != nil {
 		return 0, err
 	}
 
-	return result.Id, nil
+	return upsert.Result.Id, nil
 }
 
 // GetSignedUser get full signed user info
@@ -292,7 +298,7 @@ func (auth *AuthProxy) Remember(id int64) *Error {
 		return nil
 	}
 
-	expiration := time.Duration(-auth.cacheTTL) * time.Minute
+	expiration := time.Duration(auth.cacheTTL) * time.Minute
 
 	err := auth.store.Set(key, id, expiration)
 	if err != nil {

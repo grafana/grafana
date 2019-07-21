@@ -143,12 +143,12 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	message := fmt.Sprintf("%s%s\n\n*State:* %s\n*Message:* %s\n",
 		stateEmoji, evalContext.GetNotificationTitle(),
 		evalContext.Rule.Name, evalContext.Rule.Message)
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err == nil {
 		message = message + fmt.Sprintf("*URL:* %s\n", ruleURL)
 	}
-	if evalContext.ImagePublicUrl != "" {
-		message = message + fmt.Sprintf("*Image:* %s\n", evalContext.ImagePublicUrl)
+	if evalContext.ImagePublicURL != "" {
+		message = message + fmt.Sprintf("*Image:* %s\n", evalContext.ImagePublicURL)
 	}
 	data.Set("text", message)
 

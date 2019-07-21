@@ -28,6 +28,8 @@ func (assert *Assert) True(value bool, message string) {
 
 func TestFirst(t *testing.T) {
 
+	anton := "anton"
+	street42 := "Street 42"
 	assert := NewAssert(t)
 
 	testJSON := `{
@@ -68,19 +70,19 @@ func TestFirst(t *testing.T) {
 	assert.True(err == nil, "failed to create json from string")
 
 	s, err := j.GetString("name")
-	assert.True(s == "anton" && err == nil, "name should be a string")
+	assert.True(s == anton && err == nil, "name should be a string")
 
 	s = j.MustGetString("name", "fallback")
-	assert.True(s == "anton", "must get string")
+	assert.True(s == anton, "must get string")
 
 	s = j.MustGetString("adsasdas", "fallback")
 	assert.True(s == "fallback", "must get string return fallback")
 
 	s, err = j.GetString("name")
-	assert.True(s == "anton" && err == nil, "name should match")
+	assert.True(s == anton && err == nil, "name should match")
 
 	s, err = j.GetString("address", "street")
-	assert.True(s == "Street 42" && err == nil, "street should match")
+	assert.True(s == street42 && err == nil, "street should match")
 	//log.Println("s: ", s.String())
 
 	_, err = j.GetNumber("age")
@@ -109,13 +111,13 @@ func TestFirst(t *testing.T) {
 	//log.Println("address: ", address)
 
 	s, err = address.GetString("street")
-	assert.True(s == "Street 42" && err == nil, "street mismatching")
+	assert.True(s == street42 && err == nil, "street mismatching")
 
 	addressAsString, err := j.GetString("address")
 	assert.True(addressAsString == "" && err != nil, "address should not be an string")
 
 	s, err = j.GetString("address", "street")
-	assert.True(s == "Street 42" && err == nil, "street mismatching")
+	assert.True(s == street42 && err == nil, "street mismatching")
 
 	s, err = j.GetString("address", "name2")
 	assert.True(s == "" && err != nil, "nonexistent string fail")
@@ -153,7 +155,7 @@ func TestFirst(t *testing.T) {
 		assert.True(err == nil, "create element fail")
 
 		s, err = element.GetString("street")
-		assert.True(s == "Street 42" && err == nil, "second fail")
+		assert.True(s == street42 && err == nil, "second fail")
 	}
 
 	obj, err := j.GetObject("country")

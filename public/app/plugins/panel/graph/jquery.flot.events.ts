@@ -1,10 +1,12 @@
 import angular from 'angular';
 import $ from 'jquery';
 import _ from 'lodash';
+//@ts-ignore
 import Drop from 'tether-drop';
+import { CreatePlotOverlay } from '@grafana/ui';
 
 /** @ngInject */
-export function createAnnotationToolip(element, event, plot) {
+const createAnnotationToolip: CreatePlotOverlay = (element, event, plot) => {
   const injector = angular.element(document).injector();
   const content = document.createElement('div');
   content.innerHTML = '<annotation-tooltip event="event" on-edit="onEdit()"></annotation-tooltip>';
@@ -45,12 +47,12 @@ export function createAnnotationToolip(element, event, plot) {
       });
     },
   ]);
-}
+};
 
-let markerElementToAttachTo = null;
+let markerElementToAttachTo: any = null;
 
 /** @ngInject */
-export function createEditPopover(element, event, plot) {
+const createEditPopover: CreatePlotOverlay = (element, event, plot) => {
   const eventManager = plot.getOptions().events.manager;
   if (eventManager.editorOpen) {
     // update marker element to attach to (needed in case of legend on the right
@@ -75,7 +77,7 @@ export function createEditPopover(element, event, plot) {
       '$rootScope',
       ($compile, $rootScope) => {
         const scope = $rootScope.$new(true);
-        let drop;
+        let drop: any;
 
         scope.event = event;
         scope.panelCtrl = eventManager.panelCtrl;
@@ -111,7 +113,9 @@ export function createEditPopover(element, event, plot) {
       },
     ]);
   }, 100);
-}
+};
+
+export { createEditPopover, createAnnotationToolip };
 
 /*
  * jquery.flot.events
@@ -141,12 +145,21 @@ export class DrawableEvent {
   _height: any;
 
   /** @ngInject */
-  constructor(object, drawFunc, clearFunc, moveFunc, left, top, width, height) {
+  constructor(
+    object: JQuery,
+    drawFunc: any,
+    clearFunc: any,
+    moveFunc: any,
+    left: number,
+    top: number,
+    width: number,
+    height: number
+  ) {
     this._object = object;
     this._drawFunc = drawFunc;
     this._clearFunc = clearFunc;
     this._moveFunc = moveFunc;
-    this._position = { left: left, top: top };
+    this._position = { left, top };
     this._width = width;
     this._height = height;
   }
@@ -169,7 +182,7 @@ export class DrawableEvent {
   getObject() {
     return this._object;
   }
-  moveTo(position) {
+  moveTo(position: { left: number; top: number }) {
     this._position = position;
     this._moveFunc(this._object, this._position);
   }
@@ -185,7 +198,7 @@ export class VisualEvent {
   _hidden: any;
 
   /** @ngInject */
-  constructor(options, drawableEvent) {
+  constructor(options: any, drawableEvent: DrawableEvent) {
     this._options = options;
     this._drawableEvent = drawableEvent;
     this._hidden = false;
@@ -221,7 +234,7 @@ export class EventMarkers {
   eventsEnabled: any;
 
   /** @ngInject */
-  constructor(plot) {
+  constructor(plot: any) {
     this._events = [];
     this._types = [];
     this._plot = plot;
@@ -232,14 +245,14 @@ export class EventMarkers {
     return this._events;
   }
 
-  setTypes(types) {
+  setTypes(types: any) {
     return (this._types = types);
   }
 
   /**
    * create internal objects for the given events
    */
-  setupEvents(events) {
+  setupEvents(events: any[]) {
     const parts = _.partition(events, 'isRegion');
     const regions = parts[0];
     events = parts[1];
@@ -254,7 +267,7 @@ export class EventMarkers {
       this._events.push(vre);
     });
 
-    this._events.sort((a, b) => {
+    this._events.sort((a: any, b: any) => {
       const ao = a.getOptions(),
         bo = b.getOptions();
       if (ao.min > bo.min) {
@@ -315,7 +328,7 @@ export class EventMarkers {
   /**
    * create a DOM element for the given event
    */
-  _buildDiv(event) {
+  _buildDiv(event: { eventType: any; min: any; editModel: any }) {
     const that = this;
 
     const container = this._plot.getPlaceholder();
@@ -440,13 +453,13 @@ export class EventMarkers {
 
     const drawableEvent = new DrawableEvent(
       line,
-      function drawFunc(obj) {
+      function drawFunc(obj: { show: () => void }) {
         obj.show();
       },
-      obj => {
+      (obj: { remove: () => void }) => {
         obj.remove();
       },
-      (obj, position) => {
+      (obj: any, position: { top: any; left: any }) => {
         obj.css({
           top: position.top,
           left: position.left,
@@ -464,13 +477,19 @@ export class EventMarkers {
   /**
    * create a DOM element for the given region
    */
-  _buildRegDiv(event) {
+  _buildRegDiv(event: { eventType: any; min: number; timeEnd: number; editModel: any }) {
     const that = this;
 
     const container = this._plot.getPlaceholder();
     const o = this._plot.getPlotOffset();
     const xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
-    let top, left, lineWidth, regionWidth, lineStyle, color, markerTooltip;
+    let top,
+      left,
+      lineWidth: number,
+      regionWidth,
+      lineStyle: string | number | cssPropertySetter,
+      color: string,
+      markerTooltip;
 
     // map the eventType to a types object
     const eventTypeId = event.eventType;
@@ -560,13 +579,13 @@ export class EventMarkers {
 
     const drawableEvent = new DrawableEvent(
       region,
-      function drawFunc(obj) {
+      function drawFunc(obj: { show: () => void }) {
         obj.show();
       },
-      obj => {
+      (obj: { remove: () => void }) => {
         obj.remove();
       },
-      (obj, position) => {
+      (obj: { css: (arg0: { top: any; left: any }) => void }, position: { top: any; left: any }) => {
         obj.css({
           top: position.top,
           left: position.left,
@@ -584,7 +603,7 @@ export class EventMarkers {
   /**
    * check if the event is inside visible range
    */
-  _insidePlot(x) {
+  _insidePlot(x: any) {
     const xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
     const xc = xaxis.p2c(x);
     return xc > 0 && xc < xaxis.p2c(xaxis.max);
@@ -596,7 +615,7 @@ export class EventMarkers {
  */
 
 /** @ngInject */
-export function init(this: any, plot) {
+export function init(this: any, plot: any) {
   /*jshint validthis:true */
   const that = this;
   const eventMarkers = new EventMarkers(plot);
@@ -624,20 +643,20 @@ export function init(this: any, plot) {
   };
 
   // change events on an existing plot
-  plot.setEvents = events => {
+  plot.setEvents = (events: any[]) => {
     if (eventMarkers.eventsEnabled) {
       eventMarkers.setupEvents(events);
     }
   };
 
-  plot.hooks.processOptions.push((plot, options) => {
+  plot.hooks.processOptions.push((plot: any, options: any) => {
     // enable the plugin
     if (options.events.data != null) {
       eventMarkers.eventsEnabled = true;
     }
   });
 
-  plot.hooks.draw.push(plot => {
+  plot.hooks.draw.push((plot: any) => {
     const options = plot.getOptions();
 
     if (eventMarkers.eventsEnabled) {
@@ -654,7 +673,7 @@ export function init(this: any, plot) {
   });
 }
 
-const defaultOptions = {
+const defaultOptions: any = {
   events: {
     data: null,
     types: null,

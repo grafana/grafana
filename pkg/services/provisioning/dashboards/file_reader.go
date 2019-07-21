@@ -53,7 +53,9 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 
 // pollChanges periodically runs startWalkingDisk based on interval specified in the config.
 func (fr *fileReader) pollChanges(ctx context.Context) {
-	ticker := time.Tick(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
+
+	// TODO: Fix the staticcheck error
+	ticker := time.Tick(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds)) //nolint:staticcheck
 	for {
 		select {
 		case <-ticker:
@@ -72,9 +74,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	fr.log.Debug("Start walking disk", "path", fr.Path)
 	resolvedPath := fr.resolvedPath()
 	if _, err := os.Stat(resolvedPath); err != nil {
-		if os.IsNotExist(err) {
-			return err
-		}
+		return err
 	}
 
 	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardProvisioningService)

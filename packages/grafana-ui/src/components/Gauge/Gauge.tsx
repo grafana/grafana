@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
 import { getColorFromHexRgbOrName } from '../../utils';
-import { DisplayValue, Threshold, Themeable } from '../../types';
+import { DisplayValue, Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
+import { Threshold } from '@grafana/data';
 
 export interface Props extends Themeable {
   height: number;
@@ -42,12 +43,12 @@ export class Gauge extends PureComponent<Props> {
     const lastThreshold = thresholds[thresholds.length - 1];
 
     return [
-      ...thresholds.map(threshold => {
-        if (threshold.index === 0) {
+      ...thresholds.map((threshold, index) => {
+        if (index === 0) {
           return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
         }
 
-        const previousThreshold = thresholds[threshold.index - 1];
+        const previousThreshold = thresholds[index - 1];
         return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme.type) };
       }),
       { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },

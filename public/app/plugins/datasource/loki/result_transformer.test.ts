@@ -1,6 +1,6 @@
-import { logStreamToSeriesData } from './result_transformer';
+import { logStreamToDataFrame } from './result_transformer';
 
-describe('convert loki response to SeriesData', () => {
+describe('convert loki response to DataFrame', () => {
   const streams = [
     {
       labels: '{foo="bar"}',
@@ -22,7 +22,7 @@ describe('convert loki response to SeriesData', () => {
     },
   ];
   it('converts streams to series', () => {
-    const data = streams.map(stream => logStreamToSeriesData(stream));
+    const data = streams.map(stream => logStreamToDataFrame(stream));
 
     expect(data.length).toBe(2);
     expect(data[0].labels['foo']).toEqual('bar');

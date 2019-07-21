@@ -56,10 +56,6 @@ func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
 		return m.PluginRepo{}, fmt.Errorf("Failed to send request. error: %v", err)
 	}
 
-	if err != nil {
-		return m.PluginRepo{}, err
-	}
-
 	var data m.PluginRepo
 	err = json.Unmarshal(body, &data)
 	if err != nil {
@@ -135,10 +131,6 @@ func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
 			return m.Plugin{}, fmt.Errorf("Failed to find requested plugin, check if the plugin_id is correct. error: %v", err)
 		}
 		return m.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
-	}
-
-	if err != nil {
-		return m.Plugin{}, err
 	}
 
 	var data m.Plugin

@@ -14,7 +14,6 @@ import { PanelProps, VizRepeater } from '@grafana/ui';
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
-    const { fieldOptions } = options;
     const { field, display } = value;
 
     return (
@@ -22,7 +21,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
         value={display}
         width={width}
         height={height}
-        thresholds={fieldOptions.thresholds}
+        thresholds={field.thresholds}
         showThresholdLabels={options.showThresholdLabels}
         showThresholdMarkers={options.showThresholdMarkers}
         minValue={field.min}

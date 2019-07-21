@@ -69,7 +69,7 @@ export class KeybindingSrv {
   }
 
   exit() {
-    const popups = $('.popover.in');
+    const popups = $('.popover.in, .slate-typeahead');
     if (popups.length > 0) {
       return;
     }

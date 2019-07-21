@@ -1,6 +1,7 @@
 import config from 'app/core/config';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { ShareModalCtrl } from './ShareModalCtrl';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('ShareModalCtrl', () => {
   const ctx = {
@@ -49,7 +50,7 @@ describe('ShareModalCtrl', () => {
       {},
       ctx.timeSrv,
       ctx.templateSrv,
-      new LinkSrv({}, ctx.stimeSrv)
+      new LinkSrv({} as TemplateSrv, ctx.stimeSrv)
     );
   });
 

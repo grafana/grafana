@@ -75,6 +75,32 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(q2.Result[0].External, ShouldEqual, true)
 			})
 
+			Convey("Should return latest auth module for users when getting team members", func() {
+				userId := userIds[1]
+				err := SetAuthInfo(&m.SetAuthInfoCommand{UserId: userId, AuthModule: "oauth_github", AuthId: "1234567"})
+				So(err, ShouldBeNil)
+
+				teamQuery := &m.SearchTeamsQuery{OrgId: testOrgId, Name: "group1 name", Page: 1, Limit: 10}
+				err = SearchTeams(teamQuery)
+				So(err, ShouldBeNil)
+				So(teamQuery.Page, ShouldEqual, 1)
+
+				team1 := teamQuery.Result.Teams[0]
+
+				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: team1.Id, UserId: userId, External: true})
+				So(err, ShouldBeNil)
+
+				memberQuery := &m.GetTeamMembersQuery{OrgId: testOrgId, TeamId: team1.Id, External: true}
+				err = GetTeamMembers(memberQuery)
+				So(err, ShouldBeNil)
+				So(memberQuery.Result, ShouldHaveLength, 1)
+				So(memberQuery.Result[0].TeamId, ShouldEqual, team1.Id)
+				So(memberQuery.Result[0].Login, ShouldEqual, "loginuser1")
+				So(memberQuery.Result[0].OrgId, ShouldEqual, testOrgId)
+				So(memberQuery.Result[0].External, ShouldEqual, true)
+				So(memberQuery.Result[0].AuthModule, ShouldEqual, "oauth_github")
+			})
+
 			Convey("Should be able to update users in a team", func() {
 				userId := userIds[0]
 				team := group1.Result

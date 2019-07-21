@@ -17,7 +17,7 @@ import (
 
 func TestEngineTimeouts(t *testing.T) {
 	Convey("Alerting engine timeout tests", t, func() {
-		engine := &AlertingService{}
+		engine := &AlertEngine{}
 		engine.Init()
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3

@@ -4,6 +4,7 @@ import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 export interface SeriesOptions {
   color?: string;
   yAxis?: number;
+  [key: string]: any;
 }
 export interface GraphOptions {
   showBars: boolean;

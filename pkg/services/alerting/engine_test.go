@@ -39,7 +39,7 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 
 func TestEngineProcessJob(t *testing.T) {
 	Convey("Alerting engine job processing", t, func() {
-		engine := &AlertingService{}
+		engine := &AlertEngine{}
 		engine.Init()
 		setting.AlertingEvaluationTimeout = 30 * time.Second
 		setting.AlertingNotificationTimeout = 30 * time.Second

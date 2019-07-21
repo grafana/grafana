@@ -81,9 +81,9 @@ type HipChatNotifier struct {
 
 // Notify sends an alert notification to HipChat
 func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
-	hc.log.Info("Executing hipchat notification", "ruleId", evalContext.Rule.Id, "notification", hc.Name)
+	hc.log.Info("Executing hipchat notification", "ruleId", evalContext.Rule.ID, "notification", hc.Name)
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		hc.log.Error("Failed get rule link", "error", err)
 		return err
@@ -148,10 +148,10 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"date":       evalContext.EndTime.Unix(),
 		"attributes": attributes,
 	}
-	if evalContext.ImagePublicUrl != "" {
+	if evalContext.ImagePublicURL != "" {
 		card["thumbnail"] = map[string]interface{}{
-			"url":    evalContext.ImagePublicUrl,
-			"url@2x": evalContext.ImagePublicUrl,
+			"url":    evalContext.ImagePublicURL,
+			"url@2x": evalContext.ImagePublicURL,
 			"width":  1193,
 			"height": 564,
 		}

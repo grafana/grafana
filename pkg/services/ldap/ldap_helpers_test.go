@@ -5,136 +5,166 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/ldap.v3"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestLDAPHelpers(t *testing.T) {
-	Convey("serializeUsers()", t, func() {
-		Convey("simple case", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Attr: AttributeMap{
-						Username: "username",
-						Name:     "name",
-						MemberOf: "memberof",
-						Email:    "email",
-					},
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: &MockConnection{},
-				log:        log.New("test-logger"),
-			}
-
-			entry := ldap.Entry{
-				DN: "dn", Attributes: []*ldap.EntryAttribute{
-					{Name: "username", Values: []string{"roelgerrits"}},
-					{Name: "surname", Values: []string{"Gerrits"}},
-					{Name: "email", Values: []string{"roel@test.com"}},
-					{Name: "name", Values: []string{"Roel"}},
-					{Name: "memberof", Values: []string{"admins"}},
-				}}
-			users := &ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-
-			result, err := server.serializeUsers(users)
-
-			So(err, ShouldBeNil)
-			So(result[0].Login, ShouldEqual, "roelgerrits")
-			So(result[0].Email, ShouldEqual, "roel@test.com")
-			So(result[0].Groups, ShouldContain, "admins")
+	Convey("isMemberOf()", t, func() {
+		Convey("Wildcard", func() {
+			result := isMemberOf([]string{}, "*")
+			So(result, ShouldBeTrue)
 		})
 
-		Convey("without lastname", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Attr: AttributeMap{
-						Username: "username",
-						Name:     "name",
-						MemberOf: "memberof",
-						Email:    "email",
-					},
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: &MockConnection{},
-				log:        log.New("test-logger"),
-			}
+		Convey("Should find one", func() {
+			result := isMemberOf([]string{"one", "Two", "three"}, "two")
+			So(result, ShouldBeTrue)
+		})
 
-			entry := ldap.Entry{
-				DN: "dn", Attributes: []*ldap.EntryAttribute{
-					{Name: "username", Values: []string{"roelgerrits"}},
-					{Name: "email", Values: []string{"roel@test.com"}},
-					{Name: "name", Values: []string{"Roel"}},
-					{Name: "memberof", Values: []string{"admins"}},
-				}}
-			users := &ldap.SearchResult{Entries: []*ldap.Entry{&entry}}
-
-			result, err := server.serializeUsers(users)
-
-			So(err, ShouldBeNil)
-			So(result[0].Name, ShouldEqual, "Roel")
+		Convey("Should not find one", func() {
+			result := isMemberOf([]string{"one", "Two", "three"}, "twos")
+			So(result, ShouldBeFalse)
 		})
 	})
 
-	Convey("serverBind()", t, func() {
-		Convey("Given bind dn and password configured", func() {
-			connection := &MockConnection{}
-			var actualUsername, actualPassword string
-			connection.bindProvider = func(username, password string) error {
-				actualUsername = username
-				actualPassword = password
+	Convey("getUsersIteration()", t, func() {
+		Convey("it should execute twice for 600 users", func() {
+			logins := make([]string, 600)
+			i := 0
+
+			result := getUsersIteration(logins, func(previous, current int) error {
+				i++
+
+				if i == 1 {
+					So(previous, ShouldEqual, 0)
+					So(current, ShouldEqual, 500)
+				} else {
+					So(previous, ShouldEqual, 500)
+					So(current, ShouldEqual, 600)
+				}
+
 				return nil
-			}
-			server := &Server{
-				Connection: connection,
-				Config: &ServerConfig{
-					BindDN:       "o=users,dc=grafana,dc=org",
-					BindPassword: "bindpwd",
-				},
-			}
-			err := server.serverBind()
-			So(err, ShouldBeNil)
-			So(actualUsername, ShouldEqual, "o=users,dc=grafana,dc=org")
-			So(actualPassword, ShouldEqual, "bindpwd")
+			})
+
+			So(i, ShouldEqual, 2)
+			So(result, ShouldBeNil)
 		})
 
-		Convey("Given bind dn configured", func() {
-			connection := &MockConnection{}
-			unauthenticatedBindWasCalled := false
-			var actualUsername string
-			connection.unauthenticatedBindProvider = func(username string) error {
-				unauthenticatedBindWasCalled = true
-				actualUsername = username
+		Convey("it should execute three times for 1500 users", func() {
+			logins := make([]string, 1500)
+			i := 0
+
+			result := getUsersIteration(logins, func(previous, current int) error {
+				i++
+				if i == 1 {
+					So(previous, ShouldEqual, 0)
+					So(current, ShouldEqual, 500)
+				} else if i == 2 {
+					So(previous, ShouldEqual, 500)
+					So(current, ShouldEqual, 1000)
+				} else {
+					So(previous, ShouldEqual, 1000)
+					So(current, ShouldEqual, 1500)
+				}
+
 				return nil
-			}
-			server := &Server{
-				Connection: connection,
-				Config: &ServerConfig{
-					BindDN: "o=users,dc=grafana,dc=org",
-				},
-			}
-			err := server.serverBind()
-			So(err, ShouldBeNil)
-			So(unauthenticatedBindWasCalled, ShouldBeTrue)
-			So(actualUsername, ShouldEqual, "o=users,dc=grafana,dc=org")
+			})
+
+			So(i, ShouldEqual, 3)
+			So(result, ShouldBeNil)
 		})
 
-		Convey("Given empty bind dn and password", func() {
-			connection := &MockConnection{}
-			unauthenticatedBindWasCalled := false
-			var actualUsername string
-			connection.unauthenticatedBindProvider = func(username string) error {
-				unauthenticatedBindWasCalled = true
-				actualUsername = username
+		Convey("it should execute once for 400 users", func() {
+			logins := make([]string, 400)
+			i := 0
+
+			result := getUsersIteration(logins, func(previous, current int) error {
+				i++
+				if i == 1 {
+					So(previous, ShouldEqual, 0)
+					So(current, ShouldEqual, 400)
+				}
+
 				return nil
+			})
+
+			So(i, ShouldEqual, 1)
+			So(result, ShouldBeNil)
+		})
+
+		Convey("it should not execute for 0 users", func() {
+			logins := make([]string, 0)
+			i := 0
+
+			result := getUsersIteration(logins, func(previous, current int) error {
+				i++
+				return nil
+			})
+
+			So(i, ShouldEqual, 0)
+			So(result, ShouldBeNil)
+		})
+	})
+
+	Convey("getAttribute()", t, func() {
+		Convey("Should get username", func() {
+			value := []string{"roelgerrits"}
+			entry := &ldap.Entry{
+				Attributes: []*ldap.EntryAttribute{
+					{
+						Name: "username", Values: value,
+					},
+				},
 			}
-			server := &Server{
-				Connection: connection,
-				Config:     &ServerConfig{},
+
+			result := getAttribute("username", entry)
+
+			So(result, ShouldEqual, value[0])
+		})
+
+		Convey("Should not get anything", func() {
+			value := []string{"roelgerrits"}
+			entry := &ldap.Entry{
+				Attributes: []*ldap.EntryAttribute{
+					{
+						Name: "killa", Values: value,
+					},
+				},
 			}
-			err := server.serverBind()
-			So(err, ShouldBeNil)
-			So(unauthenticatedBindWasCalled, ShouldBeTrue)
-			So(actualUsername, ShouldBeEmpty)
+
+			result := getAttribute("username", entry)
+
+			So(result, ShouldEqual, "")
+		})
+	})
+
+	Convey("getArrayAttribute()", t, func() {
+		Convey("Should get username", func() {
+			value := []string{"roelgerrits"}
+			entry := &ldap.Entry{
+				Attributes: []*ldap.EntryAttribute{
+					{
+						Name: "username", Values: value,
+					},
+				},
+			}
+
+			result := getArrayAttribute("username", entry)
+
+			So(result, ShouldResemble, value)
+		})
+
+		Convey("Should not get anything", func() {
+			value := []string{"roelgerrits"}
+			entry := &ldap.Entry{
+				Attributes: []*ldap.EntryAttribute{
+					{
+						Name: "username", Values: value,
+					},
+				},
+			}
+
+			result := getArrayAttribute("something", entry)
+
+			So(result, ShouldResemble, []string{})
 		})
 	})
 }

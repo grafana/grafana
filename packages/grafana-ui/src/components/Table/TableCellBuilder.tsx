@@ -6,8 +6,7 @@ import { Table, Props } from './Table';
 import { ValueFormatter, getValueFormat, getColorFromHexRgbOrName } from '../../utils/index';
 import { GrafanaTheme } from '../../types/theme';
 import { InterpolateFunction } from '../../types/panel';
-import { Field } from '../../types/data';
-import { dateTime } from '../../utils/moment_wrapper';
+import { Field, dateTime } from '@grafana/data';
 
 export interface TableCellBuilderOptions {
   value: any;

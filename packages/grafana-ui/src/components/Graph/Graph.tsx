@@ -4,7 +4,8 @@ import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 
 // Types
-import { TimeRange, GraphSeriesXY } from '../../types';
+import { GraphSeriesXY } from '../../types';
+import { TimeRange } from '@grafana/data';
 
 export interface GraphProps {
   series: GraphSeriesXY[];

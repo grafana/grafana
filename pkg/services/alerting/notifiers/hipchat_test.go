@@ -8,6 +8,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+//nolint:goconst
 func TestHipChatNotifier(t *testing.T) {
 	Convey("HipChat notifier tests", t, func() {
 
@@ -29,9 +30,8 @@ func TestHipChatNotifier(t *testing.T) {
 			Convey("from settings", func() {
 				json := `
 				{
-          "url": "http://google.com"
+          			"url": "http://google.com"
 				}`
-
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &models.AlertNotification{
 					Name:     "ops",

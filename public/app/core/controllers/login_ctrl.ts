@@ -20,6 +20,7 @@ export class LoginCtrl {
     $scope.oauthEnabled = _.keys(config.oauth).length > 0;
     $scope.ldapEnabled = config.ldapEnabled;
     $scope.authProxyEnabled = config.authProxyEnabled;
+    $scope.samlEnabled = config.samlEnabled;
 
     $scope.disableLoginForm = config.disableLoginForm;
     $scope.disableUserSignUp = config.disableUserSignUp;

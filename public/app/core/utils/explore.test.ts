@@ -10,14 +10,16 @@ import {
   getFirstQueryErrorWithoutRefId,
   getRefIds,
 } from './explore';
-import { ExploreUrlState } from 'app/types/explore';
+import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { DataQueryError, LogsDedupStrategy } from '@grafana/ui';
+import { LogsDedupStrategy } from '@grafana/data';
+import { DataQueryError } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
   queries: [],
   range: DEFAULT_RANGE,
+  mode: ExploreMode.Metrics,
   ui: {
     showingGraph: true,
     showingTable: true,
@@ -84,6 +86,7 @@ describe('state functions', () => {
       expect(serializeStateToUrlParam(state)).toBe(
         '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}"},' +
           '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"},' +
+          '"mode":"Metrics",' +
           '"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true,"dedupStrategy":"none"}}'
       );
     });
@@ -106,7 +109,7 @@ describe('state functions', () => {
         },
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"ui":[true,true,true,"none"]}]'
+        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"mode":"Metrics"},{"ui":[true,true,true,"none"]}]'
       );
     });
   });
@@ -181,11 +184,11 @@ describe('updateHistory()', () => {
 
 describe('hasNonEmptyQuery', () => {
   test('should return true if one query is non-empty', () => {
-    expect(hasNonEmptyQuery([{ refId: '1', key: '2', expr: 'foo' }])).toBeTruthy();
+    expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'explore', expr: 'foo' }])).toBeTruthy();
   });
 
   test('should return false if query is empty', () => {
-    expect(hasNonEmptyQuery([{ refId: '1', key: '2' }])).toBeFalsy();
+    expect(hasNonEmptyQuery([{ refId: '1', key: '2', context: 'panel' }])).toBeFalsy();
   });
 
   test('should return false if no queries exist', () => {

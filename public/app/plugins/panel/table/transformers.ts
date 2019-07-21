@@ -2,8 +2,10 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import TimeSeries from 'app/core/time_series2';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
+import { TableTransform } from './types';
+import { Column, TableData } from '@grafana/data';
 
-const transformers = {};
+const transformers: { [key: string]: TableTransform } = {};
 
 transformers['timeseries_to_rows'] = {
   description: 'Time series to rows',
@@ -32,7 +34,7 @@ transformers['timeseries_to_columns'] = {
     model.columns.push({ text: 'Time', type: 'date' });
 
     // group by time
-    const points = {};
+    const points: any = {};
 
     for (let i = 0; i < data.length; i++) {
       const series = data[i];
@@ -138,10 +140,10 @@ transformers['table'] = {
     }
 
     // Track column indexes: name -> index
-    const columnNames = {};
+    const columnNames: any = {};
 
     // Union of all columns
-    const columns = data.reduce((acc, series) => {
+    const columns = data.reduce((acc: Column[], series: TableData) => {
       series.columns.forEach(col => {
         const { text } = col;
         if (columnNames[text] === undefined) {
@@ -240,7 +242,7 @@ transformers['json'] = {
   },
 };
 
-function transformDataToTable(data, panel) {
+function transformDataToTable(data: any, panel: any) {
   const model = new TableModel();
 
   if (!data || data.length === 0) {

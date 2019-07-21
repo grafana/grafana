@@ -1,6 +1,7 @@
 import angular from 'angular';
 import * as fileExport from 'app/core/utils/file_export';
 import appEvents from 'app/core/app_events';
+import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 export class ExportDataModalCtrl {
   private data: any[];
@@ -9,14 +10,23 @@ export class ExportDataModalCtrl {
   dateTimeFormat = 'YYYY-MM-DDTHH:mm:ssZ';
   excel = false;
 
+  /** @ngInject */
+  constructor(private dashboardSrv: DashboardSrv) {}
+
   export() {
+    const timezone = this.dashboardSrv.getCurrent().timezone;
+    const options = {
+      excel: this.excel,
+      dateTimeFormat: this.dateTimeFormat,
+      timezone,
+    };
     if (this.panel === 'table') {
       fileExport.exportTableDataToCsv(this.data, this.excel);
     } else {
       if (this.asRows) {
-        fileExport.exportSeriesListToCsv(this.data, this.dateTimeFormat, this.excel);
+        fileExport.exportSeriesListToCsv(this.data, options);
       } else {
-        fileExport.exportSeriesListToCsvColumns(this.data, this.dateTimeFormat, this.excel);
+        fileExport.exportSeriesListToCsvColumns(this.data, options);
       }
     }
 

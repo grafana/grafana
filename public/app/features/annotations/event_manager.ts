@@ -10,7 +10,7 @@ import {
 } from '@grafana/ui';
 
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import { AnnotationEvent } from '@grafana/ui';
+import { AnnotationEvent } from '@grafana/data';
 
 export class EventManager {
   event: AnnotationEvent;
