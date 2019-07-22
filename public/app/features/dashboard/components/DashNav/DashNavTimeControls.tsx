@@ -62,8 +62,8 @@ export class DashNavTimeControls extends Component<Props> {
     const hasDelay = panel.nowDelay && timeRange.raw.to === 'now';
 
     const nextRange = {
-      from: timeRange.raw.from,
-      to: hasDelay ? 'now-' + panel.nowDelay : timeRange.raw.to,
+      from: timeRange.from,
+      to: hasDelay ? 'now-' + panel.nowDelay : timeRange.to,
     };
 
     this.timeSrv.setTime(nextRange);

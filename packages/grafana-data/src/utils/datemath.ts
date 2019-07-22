@@ -19,7 +19,7 @@ export function parse(text: string | DateTime | Date, roundUp?: boolean, timezon
 
   if (typeof text !== 'string') {
     if (isDateTime(text)) {
-      return text;
+      return timezone === 'utc' ? text.utc() : text.local();
     }
     if (isDate(text)) {
       return dateTime(text);
