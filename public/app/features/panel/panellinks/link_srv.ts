@@ -39,7 +39,7 @@ export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
   },
   {
     value: `${DataLinkBuiltInVars.valueTime}`,
-    documentation: "Adds narrowed down time range relative to data point's timestamp",
+    documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.BuiltIn,
   },
 ];
