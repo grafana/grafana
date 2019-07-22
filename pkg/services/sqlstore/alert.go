@@ -300,7 +300,6 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 
 		_, err := sess.ID(alert.Id).Update(&alert)
 		if err != nil {
-			sqlog.Debug("Failed to update AlertState in sql", "alertId", alert.Id, "stateDate", alert.NewStateDate, "state", alert.State, "stateChanges", alert.StateChanges)
 			return err
 		}
 
