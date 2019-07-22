@@ -1,8 +1,11 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { DataSourcePluginOptionsEditorProps } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps, Switch } from '@grafana/ui';
+import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 export interface CloudOption {
   value: string;
@@ -14,6 +17,7 @@ type Props = DataSourcePluginOptionsEditorProps<any>; //DataSourceSettings doesn
 export interface State {
   current: any;
   azureClouds: CloudOption[];
+  subscriptions: [];
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
@@ -21,6 +25,18 @@ export class ConfigEditor extends PureComponent<Props, State> {
     super(props);
 
     const { options } = this.props;
+    console.log('init', options);
+
+    options.jsonData.cloudName = options.jsonData.cloudName || 'azuremonitor';
+    options.jsonData.azureLogAnalyticsSameAs = options.jsonData.azureLogAnalyticsSameAs || true;
+
+    if (!options.hasOwnProperty('secureJsonData')) {
+      options.secureJsonData = { clientSecret: '' };
+    }
+
+    if (!options.hasOwnProperty('secureJsonFields')) {
+      options.secureJsonFields = { clientSecret: false };
+    }
 
     this.state = {
       current: options,
@@ -30,37 +46,21 @@ export class ConfigEditor extends PureComponent<Props, State> {
         { value: 'germanyazuremonitor', label: 'Azure Germany' },
         { value: 'chinaazuremonitor', label: 'Azure China' },
       ],
+      subscriptions: [],
     };
   }
 
-  static getDerivedStateFromProps(nextProps, prevState) {
-    console.log('next', nextProps);
-    nextProps.options.jsonData.cloudName = nextProps.options.jsonData.cloudName || 'azuremonitor';
-    nextProps.options.jsonData.azureLogAnalyticsSameAs = nextProps.options.jsonData.azureLogAnalyticsSameAs || true;
-    // nextProps.options.secureJsonData = nextProps.options.secureJsonData || { clientSecret: '' };
-    // nextProps.options.secureJsonFields = nextProps.options.secureJsonFields || {};
-
-    if (!nextProps.options.hasOwnProperty('secureJsonData')) {
-      // debugger;
-      nextProps.options.secureJsonData = { clientSecret: '' };
-    }
-
-    // if (!('secureJsonData' in nextProps.options)) {
-    //   nextProps.options.secureJsonData = { clientSecret: '' };
-    // }
-
-    console.log('UPDATED');
-    return { current: nextProps.options };
-  }
+  azureMonitorDatasource = null;
 
   updateDatasource = () => {
-    if (!this.state.current.secureJsonData.clientSecret) {
-      console.log('was here too', this.state.current);
-      this.state.current.secureJsonData = {};
+    const datasource = this.state.current;
+    if (!datasource.secureJsonData.clientSecret) {
+      delete datasource.secureJsonData;
     }
 
-    console.log('updating...', this.state.current);
-    this.props.onOptionsChange(this.state.current);
+    console.log('here', this.state.current, datasource);
+
+    this.props.onOptionsChange(datasource);
   };
 
   onAzureCloudSelect = (cloudName: SelectableValue<string>) => {
@@ -88,30 +88,97 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   onClientSecretChange = (clientSecret: string) => {
-    console.log(clientSecret);
-    // debugger;
     this.setState({
       current: {
         ...this.state.current,
         secureJsonData: { ...this.state.current.secureJsonData, clientSecret },
       },
     });
-    console.log('after update', this.state.current);
 
     this.updateDatasource();
   };
 
   onResetClientSecret = () => {
-    const current = this.state.current;
-    current.secureJsonFields.clientSecret = false;
-    this.setState({ current });
+    this.setState({
+      current: {
+        ...this.state.current,
+        secureJsonFields: { ...this.state.current.secureJsonFields, clientSecret: false },
+      },
+    });
+
+    this.updateDatasource();
+  };
+
+  onLoadSubscriptions = async () => {
+    await getBackendSrv()
+      .put(`/api/datasources/${this.state.current.id}`, this.state.current)
+      .then(() => {
+        // this.updateDatasource();
+        this.setState({
+          current: {
+            ...this.state.current,
+            version: this.state.current.version + 1,
+          },
+        });
+        this.getSubscriptions();
+      });
+  };
+
+  getSubscriptions = async () => {
+    // todo: validate
+
+    const datasource = this.state.current;
+    if (datasource.secureJsonData) {
+      datasource.secureJsonData = {};
+    }
+    console.log(datasource);
+
+    this.azureMonitorDatasource = new AzureMonitorDatasource(datasource, getBackendSrv(), new TemplateSrv());
+
+    const subscriptions = (await this.azureMonitorDatasource.getSubscriptions()) || [];
+    console.log(subscriptions);
+    if (subscriptions && subscriptions.length > 0) {
+      this.setState({
+        subscriptions,
+        current: {
+          ...this.state.current,
+          jsonData: {
+            ...this.state.current.jsonData,
+            subscriptionId: this.state.current.jsonData.subscriptionId || subscriptions[0].value,
+          },
+        },
+      });
+    }
+  };
+
+  // async getSubscriptions() {
+  //   if (!this.hasNecessaryCredentials()) {
+  //     return [];
+  //   }
+  //   this.subscriptions = (await this.azureMonitorDatasource.getSubscriptions()) || [];
+  //   if (this.subscriptions && this.subscriptions.length > 0) {
+  //     this.current.jsonData.subscriptionId = this.current.jsonData.subscriptionId || this.subscriptions[0].value;
+  //   }
+
+  //   return this.subscriptions;
+  // }
+
+  onAzureLogAnalyticsSameAsChange = () => {
+    this.setState({
+      current: {
+        ...this.state.current,
+        jsonData: {
+          ...this.state.current.jsonData,
+          azureLogAnalyticsSameAs: !this.state.current.jsonData.azureLogAnalyticsSameAs,
+        },
+      },
+    });
+
     this.updateDatasource();
   };
 
   render() {
     const { azureClouds, current } = this.state;
-    const { options } = this.props;
-    console.log('render', options);
     return (
       <>
         <h3 className="page-heading">Azure Monitor Details</h3>
@@ -127,7 +194,17 @@ export class ConfigEditor extends PureComponent<Props, State> {
           onClientIdChange={this.onClientIdChange}
           onClientSecretChange={this.onClientSecretChange}
           onResetClientSecret={this.onResetClientSecret}
+          onLoadSubscriptions={this.onLoadSubscriptions}
         />
+
+        <h3 className="page-heading">Azure Log Analytics API Details</h3>
+        <Switch
+          label="Same details as Azure Monitor API"
+          checked={current.jsonData.azureLogAnalyticsSameAs}
+          onChange={this.onAzureLogAnalyticsSameAsChange}
+        />
+
+        {!current.jsonData.azureLogAnalyticsSameAs && <h2>HI</h2>}
       </>
     );
   }

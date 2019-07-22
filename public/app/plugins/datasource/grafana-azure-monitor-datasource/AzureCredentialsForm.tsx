@@ -15,6 +15,7 @@ export interface Props {
   onClientIdChange: (clientId: string) => void;
   onClientSecretChange: (clientSecret: string) => void;
   onResetClientSecret: () => void;
+  onLoadSubscriptions?: () => void;
 }
 
 export interface State {
@@ -59,8 +60,10 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
       onClientIdChange,
       onClientSecretChange,
       onResetClientSecret,
+      onLoadSubscriptions,
     } = this.props;
     const { selectedAzureCloud, tenantId, clientId, clientSecret, clientSecretConfigured } = this.state;
+    const hasRequiredFields = tenantId && clientId && (clientSecret || clientSecretConfigured);
     return (
       <>
         <div className="gf-form-group">
@@ -104,29 +107,7 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
               </div>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              console.log(clientSecretConfigured);
-            }}
-          >
-            hi
-          </button>
-          {!clientSecretConfigured ? (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <FormLabel className="width-12">Client Secret</FormLabel>
-                <div className="width-15">
-                  <Input
-                    className="width-30"
-                    placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                    value={clientSecret}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => onClientSecretChange(event.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
+          {clientSecretConfigured ? (
             <div className="gf-form-inline">
               <div className="gf-form">
                 <FormLabel className="width-12">Client Secret</FormLabel>
@@ -140,8 +121,27 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
                 </div>
               </div>
             </div>
+          ) : (
+            <div className="gf-form-inline">
+              <div className="gf-form">
+                <FormLabel className="width-12">Client Secret</FormLabel>
+                <div className="width-15">
+                  <Input
+                    className="width-30"
+                    placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+                    value={clientSecret}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => onClientSecretChange(event.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
           )}
         </div>
+        {hasRequiredFields && (
+          <Button variant="secondary" type="button" onClick={onLoadSubscriptions}>
+            Load Subscriptions
+          </Button>
+        )}
       </>
     );
   }

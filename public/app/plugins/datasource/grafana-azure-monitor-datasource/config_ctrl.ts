@@ -100,6 +100,7 @@ export class AzureMonitorConfigCtrl {
     if (!this.hasNecessaryCredentials()) {
       return;
     }
+    console.log(this.current);
 
     await this.backendSrv.put(`/api/datasources/${this.current.id}`, this.current).then(() => {
       this.getSubscriptions();
