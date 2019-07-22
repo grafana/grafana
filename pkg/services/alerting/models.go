@@ -28,7 +28,6 @@ func (j *Job) SetRunning(b bool) {
 	j.runningLock.Lock()
 	j.running = b
 	j.runningLock.Unlock()
-	return
 }
 
 // ResultLogEntry represents log data for the alert evaluation.
