@@ -41,7 +41,7 @@ import {
 import { config } from '../config';
 
 export const DEFAULT_RANGE = {
-  from: 'now-6h',
+  from: 'now-1h',
   to: 'now',
 };
 
