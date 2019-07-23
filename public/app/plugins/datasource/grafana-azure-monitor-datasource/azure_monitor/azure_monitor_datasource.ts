@@ -252,7 +252,9 @@ export default class AzureMonitorDatasource {
   }
 
   getMetricDefinitions(subscriptionId: string, resourceGroup: string) {
-    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`;
+    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${
+      this.apiVersion
+    }`;
     return this.doRequest(url)
       .then((result: AzureMonitorMetricDefinitionsResponse) => {
         return ResponseParser.parseResponseValues(result, 'type', 'type');
@@ -301,7 +303,9 @@ export default class AzureMonitorDatasource {
   }
 
   getResourceNames(subscriptionId: string, resourceGroup: string, metricDefinition: string) {
-    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${this.apiVersion}`;
+    const url = `${this.baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/resources?api-version=${
+      this.apiVersion
+    }`;
 
     return this.doRequest(url).then((result: any) => {
       if (!_.startsWith(metricDefinition, 'Microsoft.Storage/storageAccounts/')) {
