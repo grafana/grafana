@@ -126,8 +126,8 @@ export class TimePicker extends PureComponent<Props, State> {
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
 
     const isUTC = timeZone === 'utc';
-    const adjustedTo = isUTC ? value.from.utc() : value.from.local();
-    const adjustedFrom = isUTC ? value.to.utc() : value.to.local();
+    const adjustedTo = isUTC ? value.to.utc() : value.to.local();
+    const adjustedFrom = isUTC ? value.from.utc() : value.from.local();
     const adjustedTimeRange = {
       to: isMathString(value.raw.to) ? value.raw.to : adjustedTo,
       from: isMathString(value.raw.from) ? value.raw.from : adjustedFrom,
