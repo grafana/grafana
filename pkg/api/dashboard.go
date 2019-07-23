@@ -331,7 +331,7 @@ func GetHomeDashboard(c *m.ReqContext) Response {
 		addPanelToDashboard(dash.Dashboard, map[string]interface{}{"x": 0, "y": 3, "w": 24, "h": 4}, gettingStartedPanel)
 	}
 
-	if c.HasUserRole(m.ROLE_ADMIN) || c.HasUserRole(m.ROLE_EDITOR) {
+	if c.HasUserRole(m.ROLE_ADMIN) {
 		addPanelToDashboard(dash.Dashboard, map[string]interface{}{"x": 12, "y": 6, "w": 12, "h": 17}, pluginsPanel)
 		addPanelToDashboard(dash.Dashboard, map[string]interface{}{"x": 0, "y": 6, "w": 12, "h": 17}, dashboardsPanel)
 	} else {

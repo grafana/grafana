@@ -252,9 +252,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Get("/datasources/id/:name", Wrap(GetDataSourceIdByName), reqSignedIn)
 
-		apiRoute.Get("/plugins", reqEditorRole, Wrap(hs.GetPluginList))
-		apiRoute.Get("/plugins/:pluginId/settings", reqEditorRole, Wrap(GetPluginSettingByID))
-		apiRoute.Get("/plugins/:pluginId/markdown/:name", reqEditorRole, Wrap(GetPluginMarkdown))
+		apiRoute.Get("/plugins", reqOrgAdmin, Wrap(hs.GetPluginList))
+		apiRoute.Get("/plugins/:pluginId/settings", reqOrgAdmin, Wrap(GetPluginSettingByID))
+		apiRoute.Get("/plugins/:pluginId/markdown/:name", reqOrgAdmin, Wrap(GetPluginMarkdown))
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
