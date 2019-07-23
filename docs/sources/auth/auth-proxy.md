@@ -218,3 +218,18 @@ ProxyPassReverse / http://grafana:3000/
 ### Use grafana.
 
 With our Grafana and Apache containers running, you can now connect to http://localhost/ and log in using the username/password we created in the htpasswd file.
+
+### Team Sync (Enterprise only)
+
+>  Only available in Grafana Enterprise v6.3+
+
+With Team Sync you can feed team ID's to Grafana and map them to Teams in Grafana. This allows you to automatically put your users into specific teams. 
+
+To do this, you need to configure the optional `Groups` header and use that to send your team information.
+
+
+```bash
+# Example `headers = Groups:X-WEBAUTH-GROUPS`
+headers =
+```
+[Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})
