@@ -314,6 +314,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/plugins', {
       template: '<react-container />',
       resolve: {
+        roles: () => ['Admin', 'Editor'],
         component: () => PluginListPage,
       },
     })
@@ -321,9 +322,11 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       reloadOnSearch: false, // tabs from query parameters
       resolve: {
+        roles: () => ['Admin', 'Editor'],
         component: () => PluginPage,
       },
     })
+    // TODO: should also be accessible only by editors but not sure how to do ACL with angular routes.
     .when('/plugins/:pluginId/page/:slug', {
       templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
       controller: 'AppPageCtrl',
