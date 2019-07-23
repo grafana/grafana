@@ -1,7 +1,15 @@
 import AWS from 'aws-sdk';
+import path from 'path';
+import fs from 'fs';
 
+import { PluginPackageDetails, ZipFileInfo } from './types';
 import defaults from 'lodash/defaults';
 import clone from 'lodash/clone';
+
+interface UploadArgs {
+  local: string;
+  remote: string;
+}
 
 export class S3Client {
   readonly bucket: string;
@@ -17,6 +25,43 @@ export class S3Client {
       if (err) {
         throw new Error('Unable to read: ' + this.bucket);
       }
+    });
+  }
+
+  async uploadPackages(packageInfo: PluginPackageDetails, folder: UploadArgs) {
+    await this.uploadPackage(packageInfo.plugin, folder);
+    if (packageInfo.docs) {
+      await this.uploadPackage(packageInfo.docs, folder);
+    }
+  }
+
+  async uploadPackage(file: ZipFileInfo, folder: UploadArgs): Promise<string> {
+    const fpath = path.resolve(process.cwd(), folder.local, file.name);
+    if (!fs.existsSync(fpath)) {
+      return Promise.reject('File not found: ' + fpath);
+    }
+    console.log('Uploading: ' + fpath);
+    const stream = fs.createReadStream(fpath);
+    return new Promise((resolve, reject) => {
+      this.s3.putObject(
+        {
+          Key: this.prefix + folder.remote + '/' + file.name,
+          Bucket: this.bucket,
+          Body: stream,
+          ContentType: getContentTypeForFile(file.name),
+        },
+        (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            if (file.md5 && file.md5 !== data.ETag) {
+              reject('Upload ETag does not match MD5');
+            } else {
+              resolve(data.ETag);
+            }
+          }
+        }
+      );
     });
   }
 
@@ -86,4 +131,18 @@ export class S3Client {
       );
     });
   }
+}
+
+function getContentTypeForFile(name: string): string | undefined {
+  const idx = name.lastIndexOf('.');
+  if (idx > 0) {
+    const ext = name.substring(idx + 1).toLowerCase();
+    if (ext === 'zip') {
+      return 'application/zip';
+    }
+    if (ext === 'json') {
+      return 'application/json';
+    }
+  }
+  return undefined;
 }

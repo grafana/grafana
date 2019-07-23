@@ -310,7 +310,8 @@ export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', t
  */
 const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   const ciDir = path.resolve(process.cwd(), 'ci');
-  const packageInfo = require(path.resolve(ciDir, 'packages', 'info.json'));
+  const packageDir = path.resolve(ciDir, 'packages');
+  const packageInfo = require(path.resolve(packageDir, 'info.json')) as PluginPackageDetails;
 
   const pluginJsonFile = path.resolve(ciDir, 'dist', 'plugin.json');
   console.log('Load info from: ' + pluginJsonFile);
@@ -347,10 +348,9 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   const branch = build.branch || 'unknown';
   const buildNumber = getBuildNumber();
   const root = `dev/${pluginMeta.id}`;
+  const dirKey = pr ? `${root}/pr/${pr}` : `${root}/branch/${branch}/${buildNumber}`;
 
-  const jobPath = pr ? `pr/${pr}/build.json` : `branch/${branch}/${buildNumber}/build.json`;
-
-  const jobKey = `${root}/${jobPath}`;
+  const jobKey = `${dirKey}build.json`;
   if (await s3.exits(jobKey)) {
     throw new Error('Job already registered: ' + jobKey);
   }
@@ -361,20 +361,20 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   });
 
   if (!pr) {
-    const historyKey = `${root}/branch/${branch}/history.json`;
+    const base = `${root}/branch/${branch}/`;
+    const historyKey = base + `history.json`;
     console.log('Read', historyKey);
     const history: PluginHistory = await s3.readJSON(historyKey, defaultPluginHistory);
-    appendPluginHistory(report, `branch/${branch}/${buildNumber}`, history);
+    appendPluginHistory(report, dirKey, history);
 
     await s3.writeJSON(historyKey, history);
     console.log('wrote history');
 
     if (upload) {
-      for (const what of Object.keys(packageInfo)) {
-        const name = packageInfo[what].name;
-        const p = path.resolve(ciDir, 'packages', name);
-        console.log('TODO, upload: ', p);
-      }
+      s3.uploadPackages(packageInfo, {
+        local: packageDir,
+        remote: dirKey,
+      });
     }
   }
 
@@ -388,13 +388,13 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     index['PR'][pr] = {
       time: build.time,
       version,
-      last: jobPath,
+      last: jobKey,
     };
   } else {
     index[branch] = {
       time: build.time,
       version,
-      last: jobPath,
+      last: jobKey,
     };
   }
   await s3.writeJSON(indexKey, index);

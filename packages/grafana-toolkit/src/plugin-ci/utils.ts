@@ -3,6 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import { ExtensionBytes, ZipFileInfo } from './types';
 
+const md5File = require('md5-file');
+
 export function getFileSizeReportInFolder(dir: string, info?: ExtensionBytes): ExtensionBytes {
   if (!info) {
     info = {};
@@ -51,9 +53,7 @@ export async function getPackageDetails(zipFile: string, zipSrc: string, writeCh
     console.warn('Unable to read SHA1 Checksum');
   }
   try {
-    const exe = await execa('md5sum', [zipFile]);
-    const idx = exe.stdout.indexOf(' ');
-    info.md5 = exe.stdout.substring(0, idx);
+    info.md5 = md5File.sync(zipFile);
   } catch {
     console.warn('Unable to read MD5 Checksum');
   }
