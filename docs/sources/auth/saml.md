@@ -12,6 +12,8 @@ weight = 5
 
 # SAML Authentication
 
+> SAML Authentication integration is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
+
 > Only available in Grafana v6.3+
 
 The SAML authentication integration allows your Grafana users to log in by
@@ -35,6 +37,10 @@ At the moment of writing, Grafana supports:
 2. From the Identity Provider (IdP) to the Service Provider (SP)
 
     - `HTTP-POST` binding
+
+3. In terms of security, we currently support signed and encrypted Assertions. However, signed or encrypted requests are not supported.
+
+4. In terms of initiation, only SP-initiated requests are supported. There's no support for IdP-initiated request.
 
 ## Set up SAML Authentication
 
@@ -71,6 +77,15 @@ max_issue_delay =
 
 # Duration, for how long the SP's metadata should be valid. Defaults to 48 hours
 metadata_valid_duration =
+
+# Friendly name or name of the attribute within the SAML assertion to use as the user's name
+assertion_attribute_name = displayName
+
+# Friendly name or name of the attribute within the SAML assertion to use as the user's login handle
+assertion_attribute_login = mail
+
+# Friendly name or name of the attribute within the SAML assertion to use as the user's email
+assertion_attribute_email = mail
 ```
 
 Important to note:
@@ -90,18 +105,24 @@ private_key_path = "/path/to/private_key.pem"
 metadata_path = "/my/metadata.xml"
 max_issue_delay = 90s
 metadata_valid_duration = 48h
+assertion_attribute_name = displayName
+assertion_attribute_login = mail
+assertion_attribute_email = mail
 ```
 
 And here is a comprehensive list of the options:
 
-| Setting                   | Required | Description                                                                    | Default |
-|---------------------------|----------|--------------------------------------------------------------------------------|---------|
-| `eanbled`                 | No       | Whenever SAML authentication is allowed                                        | `false` |
-| `certificate|_path`       | Yes      | Base64-encoded string or Path for the SP X.509 certificate                     |         |
-| `private_key|_path`       | Yes      | Base64-encoded string or Path for the SP private key                           |         |
-| `idp_metadata|_path|_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML               |         |
-| `max_issue_delay`         | No       | Duration, since the IdP issued a response and the SP is allowed to process it  | `90s`   |
-| `metadata_valid_duration` | No       | Duration, for how long the SP's metadata should be valid                       | `48h`   |
+| Setting                                                     | Required | Description                                                                                        | Default       |
+| ----------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------- | ------------- |
+| `enabled`                                                   | No       | Whenever SAML authentication is allowed                                                            | `false`       |
+| `certificate` or `certificate_path`                         | Yes      | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
+| `private_key` or `private_key_path`                         | Yes      | Base64-encoded string or Path for the SP private key                                               |               |
+| `idp_metadata` or `idp_metadata_path` or `idp_metadata_url` | Yes      | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
+| `max_issue_delay`                                           | No       | Duration, since the IdP issued a response and the SP is allowed to process it                      | `90s`         |
+| `metadata_valid_duration`                                   | No       | Duration, for how long the SP's metadata should be valid                                           | `48h`         |
+| `assertion_attribute_name`                                  | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's name         | `displayName` |
+| `assertion_attribute_login`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's login handle | `mail`        |
+| `assertion_attribute_email`                                 | No       | Friendly name or name of the attribute within the SAML assertion to use as the user's email        | `mail`        |
 
 ### Cert and Private Key
 
@@ -117,7 +138,7 @@ Currently, we support three ways of specifying the IdP metadata. Without a suffi
 
 ### Max Issue Delay
 
-Prevention of SAML response replay attacks and internal clock skews between the SP (Grafana) and the IdP is covered. You can set a maximum amount of time between the IdP issuing a response and the SP (Grafana) processing it.
+Prevention of SAML response replay attacks and internal clock skews between the SP (Grafana), and the IdP is covered. You can set a maximum amount of time between the IdP issuing a response and the SP (Grafana) processing it.
 
 The configuration options is specified as a duration e.g. `max_issue_delay = 90s` or `max_issue_delay = 1h`
 
@@ -129,9 +150,23 @@ The configuration option is specified as a duration e.g. `metadata_valid_duratio
 
 ## Identity Provider (IdP) registration
 
-Finally, for the SAML integration to work correctly, you need to make the IdP aware of the SP. You need to provide the IdP with the SP's metadata. 
+For the SAML integration to work correctly, you need to make the IdP aware of the SP.
 
-Grafana provides an endpoint for such at `/saml/metadata`. You can either download the metadata and upload it manually, or make the IdP request it directly from the endpoint.
+The integration provides two key endpoints as part of Grafana:
+
+- The `/saml/metadata` endpoint. Which contains the SP's metadata. You can either download and upload it manually or make the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
+
+- The `/saml/acs` endpoint. Which is intended to receive the ACS (Assertion Customer Service) callback. Some providers name it SSO URL or Reply URL.
+
+## Assertion mapping
+
+During the SAML SSO authentication flow, we receive the ACS (Assertion Customer Service) callback. The callback contains all the relevant information of the user under authentication embedded in the SAML response. Grafana parses the response to create (or update) the user within its internal database.
+
+For Grafana to map the user information, it looks at the individual attributes within the assertion. You can think of these attributes as Key/Value pairs (although, they contain more information than that).
+
+Grafana provides configuration options that let you modify which keys to look at for these values. The data we need to create the user in Grafana is Name, Login handle, and email.
+
+An example is `assertion_attribute_name = "givenName"` where Grafana looks within the assertion for an attribute with a friendly name or name of `givenName`. Both, the friendly name (e.g. `givenName`) or the name (e.g. `urn:oid:2.5.4.42`) can be used interchangeably as the value for the configuration option.
 
 ## Troubleshooting
 
