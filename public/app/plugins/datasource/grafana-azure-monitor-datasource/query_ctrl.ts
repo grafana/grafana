@@ -27,6 +27,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       resourceGroup: string;
       resourceName: string;
       metricDefinition: string;
+      metricNamespace: string;
       metricName: string;
       dimensionFilter: string;
       timeGrain: string;
@@ -66,6 +67,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       resourceGroup: this.defaultDropdownValue,
       metricDefinition: this.defaultDropdownValue,
       resourceName: this.defaultDropdownValue,
+      metricNamespace: this.defaultDropdownValue,
       metricName: this.defaultDropdownValue,
       dimensionFilter: '*',
       timeGrain: 'auto',
@@ -117,6 +119,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.migrateTimeGrains();
 
     this.migrateToFromTimes();
+
+    this.migrateToDefaultNamespace();
 
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
@@ -190,6 +194,18 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   migrateToFromTimes() {
     this.target.azureLogAnalytics.query = this.target.azureLogAnalytics.query.replace(/\$__from\s/gi, '$__timeFrom() ');
     this.target.azureLogAnalytics.query = this.target.azureLogAnalytics.query.replace(/\$__to\s/gi, '$__timeTo() ');
+  }
+
+  async migrateToDefaultNamespace() {
+    if (
+      this.target.azureMonitor.metricNamespace &&
+      this.target.azureMonitor.metricNamespace !== this.defaultDropdownValue &&
+      this.target.azureMonitor.metricDefinition
+    ) {
+      return;
+    }
+
+    this.target.azureMonitor.metricNamespace = this.target.azureMonitor.metricDefinition;
   }
 
   replace(variable: string) {
@@ -290,7 +306,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  getMetricNames(query: any) {
+  getMetricNamespaces() {
     if (
       this.target.queryType !== 'Azure Monitor' ||
       !this.target.azureMonitor.resourceGroup ||
@@ -304,7 +320,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
 
     return this.datasource
-      .getMetricNames(
+      .getMetricNamespaces(
         this.replace(this.target.subscription || this.datasource.azureMonitorDatasource.subscriptionId),
         this.replace(this.target.azureMonitor.resourceGroup),
         this.replace(this.target.azureMonitor.metricDefinition),
@@ -313,9 +329,36 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
+  getMetricNames() {
+    if (
+      this.target.queryType !== 'Azure Monitor' ||
+      !this.target.azureMonitor.resourceGroup ||
+      this.target.azureMonitor.resourceGroup === this.defaultDropdownValue ||
+      !this.target.azureMonitor.metricDefinition ||
+      this.target.azureMonitor.metricDefinition === this.defaultDropdownValue ||
+      !this.target.azureMonitor.resourceName ||
+      this.target.azureMonitor.resourceName === this.defaultDropdownValue ||
+      !this.target.azureMonitor.metricNamespace ||
+      this.target.azureMonitor.metricNamespace === this.defaultDropdownValue
+    ) {
+      return;
+    }
+
+    return this.datasource
+      .getMetricNames(
+        this.replace(this.target.subscription || this.datasource.azureMonitorDatasource.subscriptionId),
+        this.replace(this.target.azureMonitor.resourceGroup),
+        this.replace(this.target.azureMonitor.metricDefinition),
+        this.replace(this.target.azureMonitor.resourceName),
+        this.replace(this.target.azureMonitor.metricNamespace)
+      )
+      .catch(this.handleQueryCtrlError.bind(this));
+  }
+
   onResourceGroupChange() {
     this.target.azureMonitor.metricDefinition = this.defaultDropdownValue;
     this.target.azureMonitor.resourceName = this.defaultDropdownValue;
+    this.target.azureMonitor.metricNamespace = this.defaultDropdownValue;
     this.target.azureMonitor.metricName = this.defaultDropdownValue;
     this.target.azureMonitor.aggregation = '';
     this.target.azureMonitor.timeGrains = [];
@@ -327,6 +370,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   onMetricDefinitionChange() {
     this.target.azureMonitor.resourceName = this.defaultDropdownValue;
+    this.target.azureMonitor.metricNamespace = this.defaultDropdownValue;
     this.target.azureMonitor.metricName = this.defaultDropdownValue;
     this.target.azureMonitor.aggregation = '';
     this.target.azureMonitor.timeGrains = [];
@@ -336,6 +380,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   onResourceNameChange() {
+    this.target.azureMonitor.metricNamespace = this.defaultDropdownValue;
     this.target.azureMonitor.metricName = this.defaultDropdownValue;
     this.target.azureMonitor.aggregation = '';
     this.target.azureMonitor.timeGrains = [];
@@ -343,6 +388,12 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.dimensions = [];
     this.target.azureMonitor.dimension = '';
     this.refresh();
+  }
+
+  onMetricNamespacesChange() {
+    this.target.azureMonitor.metricName = this.defaultDropdownValue;
+    this.target.azureMonitor.dimensions = [];
+    this.target.azureMonitor.dimension = '';
   }
 
   onMetricNameChange() {
@@ -356,6 +407,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.replace(this.target.azureMonitor.resourceGroup),
         this.replace(this.target.azureMonitor.metricDefinition),
         this.replace(this.target.azureMonitor.resourceName),
+        this.replace(this.target.azureMonitor.metricNamespace),
         this.replace(this.target.azureMonitor.metricName)
       )
       .then((metadata: any) => {

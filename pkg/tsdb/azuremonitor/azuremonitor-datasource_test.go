@@ -41,6 +41,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 								"resourceGroup":    "grafanastaging",
 								"resourceName":     "grafana",
 								"metricDefinition": "Microsoft.Compute/virtualMachines",
+								"metricNamespace":  "Microsoft.Compute-virtualMachines",
 								"metricName":       "Percentage CPU",
 								"alias":            "testalias",
 								"queryType":        "Azure Monitor",
@@ -57,8 +58,8 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(len(queries), ShouldEqual, 1)
 				So(queries[0].RefID, ShouldEqual, "A")
 				So(queries[0].URL, ShouldEqual, "12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics")
-				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
-				So(len(queries[0].Params), ShouldEqual, 5)
+				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+				So(len(queries[0].Params), ShouldEqual, 6)
 				So(queries[0].Params["timespan"][0], ShouldEqual, "2018-03-15T13:00:00Z/2018-03-15T13:34:00Z")
 				So(queries[0].Params["api-version"][0], ShouldEqual, "2018-01-01")
 				So(queries[0].Params["aggregation"][0], ShouldEqual, "Average")
@@ -75,6 +76,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"resourceGroup":    "grafanastaging",
 						"resourceName":     "grafana",
 						"metricDefinition": "Microsoft.Compute/virtualMachines",
+						"metricNamespace":  "Microsoft.Compute-virtualMachines",
 						"metricName":       "Percentage CPU",
 						"alias":            "testalias",
 						"queryType":        "Azure Monitor",
@@ -96,6 +98,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"resourceGroup":       "grafanastaging",
 						"resourceName":        "grafana",
 						"metricDefinition":    "Microsoft.Compute/virtualMachines",
+						"metricNamespace":     "Microsoft.Compute-virtualMachines",
 						"metricName":          "Percentage CPU",
 						"alias":               "testalias",
 						"queryType":           "Azure Monitor",
@@ -118,6 +121,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"resourceGroup":    "grafanastaging",
 						"resourceName":     "grafana",
 						"metricDefinition": "Microsoft.Compute/virtualMachines",
+						"metricNamespace":  "Microsoft.Compute-virtualMachines",
 						"metricName":       "Percentage CPU",
 						"alias":            "testalias",
 						"queryType":        "Azure Monitor",
@@ -129,7 +133,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
-				So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+				So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
 
 			})
 
@@ -141,6 +145,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 						"resourceGroup":    "grafanastaging",
 						"resourceName":     "grafana",
 						"metricDefinition": "Microsoft.Compute/virtualMachines",
+						"metricNamespace":  "Microsoft.Compute-virtualMachines",
 						"metricName":       "Percentage CPU",
 						"alias":            "testalias",
 						"queryType":        "Azure Monitor",
@@ -152,7 +157,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
-				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
 
 			})
 		})
