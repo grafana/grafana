@@ -252,14 +252,15 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Get("/datasources/id/:name", Wrap(GetDataSourceIdByName), reqSignedIn)
 
-		apiRoute.Get("/plugins", reqOrgAdmin, Wrap(hs.GetPluginList))
-		apiRoute.Get("/plugins/:pluginId/settings", reqOrgAdmin, Wrap(GetPluginSettingByID))
-		apiRoute.Get("/plugins/:pluginId/markdown/:name", reqOrgAdmin, Wrap(GetPluginMarkdown))
-
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
+			pluginRoute.Get("/", Wrap(hs.GetPluginList))
+			pluginRoute.Get("/plugins/:pluginId/settings", Wrap(GetPluginSettingByID))
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", bind(models.UpdatePluginSettingCmd{}), Wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
+
+		// This is needed for panel info when choosing visualisation for panel
+		apiRoute.Get("/plugins/:pluginId/markdown/:name", Wrap(GetPluginMarkdown))
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)
