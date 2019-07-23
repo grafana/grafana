@@ -47,38 +47,6 @@ func TestLDAPPrivateMethods(t *testing.T) {
 				Controls: nil,
 			})
 		})
-
-		Convey("without lastname", func() {
-			server := &Server{
-				Config: &ServerConfig{
-					Attr: AttributeMap{
-						Username: "username",
-						Name:     "name",
-						MemberOf: "memberof",
-						Email:    "email",
-					},
-					SearchBaseDNs: []string{"BaseDNHere"},
-				},
-				Connection: &MockConnection{},
-				log:        log.New("test-logger"),
-			}
-
-			entry := ldap.Entry{
-				DN: "dn",
-				Attributes: []*ldap.EntryAttribute{
-					{Name: "username", Values: []string{"roelgerrits"}},
-					{Name: "email", Values: []string{"roel@test.com"}},
-					{Name: "name", Values: []string{"Roel"}},
-					{Name: "memberof", Values: []string{"admins"}},
-				},
-			}
-			users := []*ldap.Entry{&entry}
-
-			result, err := server.serializeUsers(users)
-
-			So(err, ShouldBeNil)
-			So(result[0].Name, ShouldEqual, "Roel")
-		})
 	})
 
 	Convey("serializeUsers()", t, func() {
