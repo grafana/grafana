@@ -10,7 +10,15 @@ import execa = require('execa');
 import path = require('path');
 import fs from 'fs';
 import { getPackageDetails, findImagesInFolder } from '../../plugin-ci/utils';
-import { job, getJobFolder, writeJobStats, getCiFolder, getPluginBuildInfo } from '../../plugin-ci/env';
+import {
+  job,
+  getJobFolder,
+  writeJobStats,
+  getCiFolder,
+  getPluginBuildInfo,
+  getBuildNumber,
+  getPullRequestNumber,
+} from '../../plugin-ci/env';
 import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugin-ci/workflow';
 import {
   PluginPackageDetails,
@@ -26,6 +34,7 @@ import { getEndToEndSettings } from '../../plugin-ci/index';
 export interface PluginCIOptions {
   backend?: string;
   full?: boolean;
+  upload?: boolean;
 }
 
 /**
@@ -299,12 +308,12 @@ export const ciTestPluginTask = new Task<PluginCIOptions>('Test Plugin (e2e)', t
  *
  *  Create a report from all the previous steps
  */
-const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
+const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   const ciDir = path.resolve(process.cwd(), 'ci');
   const packageInfo = require(path.resolve(ciDir, 'packages', 'info.json'));
 
-  console.log('Save the source info in plugin.json');
   const pluginJsonFile = path.resolve(ciDir, 'dist', 'plugin.json');
+  console.log('Load info from: ' + pluginJsonFile);
   const pluginMeta = getPluginJson(pluginJsonFile);
   const report: PluginBuildReport = {
     plugin: pluginMeta,
@@ -313,7 +322,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
     coverage: agregateCoverageInfo(),
     tests: agregateTestInfo(),
   };
-  const pr = process.env.CIRCLE_PULL_REQUEST;
+  const pr = getPullRequestNumber();
   if (pr) {
     report.pullRequest = pr;
   }
@@ -326,11 +335,6 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
     }
   });
 
-  if (pr) {
-    console.log('TODO... notify', pr);
-    return;
-  }
-
   console.log('Initalizing S3 Client');
   const s3 = new S3Client();
 
@@ -338,37 +342,61 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async () => {
   if (!build) {
     throw new Error('Metadata missing build info');
   }
+
   const version = (pluginMeta as any).version || 'unknown';
   const branch = build.branch || 'unknown';
-  const hash = build.hash!.substring(0, 8);
+  const buildNumber = getBuildNumber();
   const root = `dev/${pluginMeta.id}`;
 
-  const jobPath = `${branch}/${hash}/job.json`;
+  const jobPath = pr ? `pr/${pr}/build.json` : `branch/${branch}/${buildNumber}/build.json`;
+
   const jobKey = `${root}/${jobPath}`;
   if (await s3.exits(jobKey)) {
     throw new Error('Job already registered: ' + jobKey);
   }
-  const indexKey = `${root}/index.json`;
-  console.log('Read', indexKey);
-  const index = await s3.readJSON(indexKey, {});
-  (index as any)[branch] = {
-    time: build.time,
-    version,
-    last: jobPath,
-  };
 
   console.log('Write Job', jobKey);
   await s3.writeJSON(jobKey, report, {
     Tagging: `version=${version}&type=${pluginMeta.type}`,
   });
 
-  const historyKey = `${root}/${branch}/history.json`;
-  console.log('Read', historyKey);
-  const history: PluginHistory = await s3.readJSON(historyKey, defaultPluginHistory);
-  appendPluginHistory(report, `${branch}/${hash}`, history);
+  if (!pr) {
+    const historyKey = `${root}/branch/${branch}/history.json`;
+    console.log('Read', historyKey);
+    const history: PluginHistory = await s3.readJSON(historyKey, defaultPluginHistory);
+    appendPluginHistory(report, `branch/${branch}/${buildNumber}`, history);
 
-  await s3.writeJSON(historyKey, history);
-  console.log('wrote history');
+    await s3.writeJSON(historyKey, history);
+    console.log('wrote history');
+
+    if (upload) {
+      for (const what of Object.keys(packageInfo)) {
+        const name = packageInfo[what].name;
+        const p = path.resolve(ciDir, 'packages', name);
+        console.log('TODO, upload: ', p);
+      }
+    }
+  }
+
+  const indexKey = `${root}/index.json`;
+  console.log('Read', indexKey);
+  const index: any = await s3.readJSON(indexKey, {});
+  if (pr) {
+    if (!index['PR']) {
+      index['PR'] = {};
+    }
+    index['PR'][pr] = {
+      time: build.time,
+      version,
+      last: jobPath,
+    };
+  } else {
+    index[branch] = {
+      time: build.time,
+      version,
+      last: jobPath,
+    };
+  }
   await s3.writeJSON(indexKey, index);
   console.log('wrote index');
 };

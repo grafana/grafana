@@ -12,7 +12,7 @@ export interface PluginBuildReport {
   workflow: WorkflowInfo;
   coverage: CoverageInfo[];
   tests: TestResultsInfo[];
-  pullRequest?: string;
+  pullRequest?: number;
 }
 
 export interface JobInfo {

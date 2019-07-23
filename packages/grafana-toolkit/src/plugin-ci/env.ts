@@ -46,6 +46,15 @@ export const getBuildNumber = (): number | undefined => {
   return undefined;
 };
 
+export const getPullRequestNumber = (): number | undefined => {
+  if (process.env.CIRCLE_PULL_REQUEST) {
+    const url = process.env.CIRCLE_PULL_REQUEST;
+    const idx = url.lastIndexOf('/') + 1;
+    return parseInt(url.substring(idx), 10);
+  }
+  return undefined;
+};
+
 export const getJobFolder = () => {
   const dir = path.resolve(process.cwd(), 'ci', 'jobs', job);
   if (!fs.existsSync(dir)) {
