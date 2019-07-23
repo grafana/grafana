@@ -5,13 +5,12 @@ _files=$*
 ALL_SIGNED=0
 
 for file in $_files; do
-  if rpm -K "$file" | grep "pgp.*OK" -q; then
+  if rpm -K "$file" | grep "pgp.*OK" -q ; then
+    echo "$file" OK
+  else
     ALL_SIGNED=1
     echo "$file" NOT SIGNED
-  else
-    echo "$file" OK
   fi
 done
-
 
 exit $ALL_SIGNED
