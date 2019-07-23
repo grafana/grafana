@@ -87,7 +87,7 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 		tags[tag.Key] = tag.Value
 	}
 
-	bodyJSON.Set("tags", evalContext.Rule.AlertRuleTags)
+	bodyJSON.Set("tags", tags)
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err == nil {
