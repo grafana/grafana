@@ -20,8 +20,8 @@ You can extend Grafana by writing your own plugins and then share them with othe
 
 Example plugins
 
-- ["Hello World" Panel using Angular](https://github.com/grafana/simple-angular-panel)
-- ["Hello World" Panel using React](https://github.com/grafana/simple-react-panel)
+- ["Hello World" panel using Angular](https://github.com/grafana/simple-angular-panel)
+- ["Hello World" panel using React](https://github.com/grafana/simple-react-panel)
 - [Simple json data source](https://github.com/grafana/simple-json-datasource)
 - [Clock panel](https://github.com/grafana/clock-panel)
 - [Pie chart panel](https://github.com/grafana/piechart-panel)
