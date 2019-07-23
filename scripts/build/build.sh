@@ -9,10 +9,6 @@ CCARMV6=/opt/rpi-tools/arm-bcm2708/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g
 CCARMV7=arm-linux-gnueabihf-gcc
 CCARM64=aarch64-linux-gnu-gcc
 CCX64=/tmp/x86_64-centos6-linux-gnu/bin/x86_64-centos6-linux-gnu-gcc
-##########
-GOPATH=/go
-REPO_PATH=$GOPATH/src/github.com/grafana/grafana
-##########
 
 BUILD_FAST=0
 BUILD_BACKEND=1
@@ -51,8 +47,8 @@ while [ "$1" != "" ]; do
   esac
 done
 
+# shellcheck disable=SC2124
 EXTRA_OPTS="$@"
-
 
 cd /go/src/github.com/grafana/grafana
 echo "current dir: $(pwd)"
@@ -73,7 +69,7 @@ function build_backend_linux_amd64() {
   if [ ! -d "dist" ]; then
     mkdir dist
   fi
-  CC=${CCX64} go run build.go ${OPT} build
+  CC=${CCX64} go run build.go "${OPT}" build
 }
 
 function build_backend() {
@@ -81,9 +77,9 @@ function build_backend() {
     mkdir dist
   fi
 
-  go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
-  go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
-  go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
+  go run build.go -goarch armv6 -cc ${CCARMV6} "${OPT}" build
+  go run build.go -goarch armv7 -cc ${CCARMV7} "${OPT}" build
+  go run build.go -goarch arm64 -cc ${CCARM64} "${OPT}" build
   build_backend_linux_amd64
 }
 
@@ -93,22 +89,22 @@ function build_frontend() {
   fi
   yarn install --pure-lockfile --no-progress
   echo "Building frontend"
-  go run build.go ${OPT} build-frontend
+  go run build.go "${OPT}" build-frontend
   echo "FRONTEND: finished"
 }
 
 function package_linux_amd64() {
   echo "Packaging Linux AMD64"
-  go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
+  go run build.go -goos linux -pkg-arch amd64 "${OPT}" package-only
   go run build.go latest
   echo "PACKAGE LINUX AMD64: finished"
 }
 
 function package_all() {
   echo "Packaging ALL"
-  go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
-  go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
-  go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
+  go run build.go -goos linux -pkg-arch armv6 "${OPT}" -skipRpm package-only
+  go run build.go -goos linux -pkg-arch armv7 "${OPT}" package-only
+  go run build.go -goos linux -pkg-arch arm64 "${OPT}" package-only
   package_linux_amd64
   echo "PACKAGE ALL: finished"
 }
@@ -119,8 +115,9 @@ function package_setup() {
     rm -rf dist
   fi
   mkdir dist
-  go run build.go -gen-version ${OPT} > dist/grafana.version
+  go run build.go -gen-version "${OPT}" > dist/grafana.version
   # Load ruby, needed for packing with fpm
+  # shellcheck disable=SC1091
   source /etc/profile.d/rvm.sh
 }
 
