@@ -11,6 +11,76 @@ import (
 )
 
 func TestLDAPPrivateMethods(t *testing.T) {
+	Convey("getSearchRequest()", t, func() {
+		Convey("with enabled GroupSearchFilterUserAttribute setting", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					Attr: AttributeMap{
+						Username: "username",
+						Name:     "name",
+						MemberOf: "memberof",
+						Email:    "email",
+					},
+					GroupSearchFilterUserAttribute: "gansta",
+					SearchBaseDNs:                  []string{"BaseDNHere"},
+				},
+				log: log.New("test-logger"),
+			}
+
+			result := server.getSearchRequest("killa", []string{"gorilla"})
+
+			So(result, ShouldResemble, &ldap.SearchRequest{
+				BaseDN:       "killa",
+				Scope:        2,
+				DerefAliases: 0,
+				SizeLimit:    0,
+				TimeLimit:    0,
+				TypesOnly:    false,
+				Filter:       "(|)",
+				Attributes: []string{
+					"username",
+					"email",
+					"name",
+					"memberof",
+					"gansta",
+				},
+				Controls: nil,
+			})
+		})
+
+		Convey("without lastname", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					Attr: AttributeMap{
+						Username: "username",
+						Name:     "name",
+						MemberOf: "memberof",
+						Email:    "email",
+					},
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: &MockConnection{},
+				log:        log.New("test-logger"),
+			}
+
+			entry := ldap.Entry{
+				DN: "dn",
+				Attributes: []*ldap.EntryAttribute{
+					{Name: "username", Values: []string{"roelgerrits"}},
+					{Name: "email", Values: []string{"roel@test.com"}},
+					{Name: "name", Values: []string{"Roel"}},
+					{Name: "memberof", Values: []string{"admins"}},
+				},
+			}
+			users := []*ldap.Entry{&entry}
+
+			result, err := server.serializeUsers(users)
+
+			So(err, ShouldBeNil)
+			So(result[0].Name, ShouldEqual, "Roel")
+		})
+	})
+
 	Convey("serializeUsers()", t, func() {
 		Convey("simple case", func() {
 			server := &Server{
