@@ -65,6 +65,21 @@ export interface PluginHistory {
   timing: DataFrame[]; // New frame for each job/workflow
 }
 
+export interface LastBuild {
+  time: number;
+  version?: string;
+  path: string; // path to the build json
+}
+
+export interface DevSummary {
+  [key: string]: LastBuild;
+}
+
+export interface PluginDevSummary {
+  branch: DevSummary;
+  pr: DevSummary;
+}
+
 export const defaultPluginHistory: PluginHistory = {
   last: {
     path: '?',

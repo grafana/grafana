@@ -103,7 +103,7 @@ export async function getCircleDownloadBaseURL(): Promise<string | undefined> {
         idx = url.indexOf('circleci/plugin/ci');
         if (idx > 0) {
           url = url.substring(0, idx);
-          url = `https://${buildNumber}${url}/circleci/plugin/ci`;
+          url = `https://${buildNumber}${url}circleci/plugin/ci`;
           return url;
         }
       }

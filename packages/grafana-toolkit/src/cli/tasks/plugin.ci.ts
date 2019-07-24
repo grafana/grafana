@@ -28,6 +28,9 @@ import {
   defaultPluginHistory,
   appendPluginHistory,
   TestResultsInfo,
+  LastBuild,
+  PluginDevSummary,
+  DevSummary,
 } from '../../plugin-ci/types';
 import { runEndToEndTests } from '../../plugin-ci/e2e/launcher';
 import { getEndToEndSettings } from '../../plugin-ci/index';
@@ -380,26 +383,26 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     }
   }
 
-  const indexKey = `${root}/index.json`;
-  console.log('Read', indexKey);
-  const index: any = await s3.readJSON(indexKey, {});
+  console.log('Update Directory Indexes');
+  const latest: LastBuild = {
+    time: build.time!,
+    version,
+    path: jobKey,
+  };
+
+  let indexKey = `${root}/index.json`;
+  const index: PluginDevSummary = await s3.readJSON(indexKey, { branch: {}, pr: {} });
   if (pr) {
-    if (!index['PR']) {
-      index['PR'] = {};
-    }
-    index['PR'][pr] = {
-      time: build.time,
-      version,
-      last: jobKey,
-    };
+    index.pr[pr] = latest;
   } else {
-    index[branch] = {
-      time: build.time,
-      version,
-      last: jobKey,
-    };
+    index.branch[branch] = latest;
   }
   await s3.writeJSON(indexKey, index);
+
+  indexKey = `dev/index.json`;
+  const pluginIndex: DevSummary = await s3.readJSON(indexKey, {});
+  pluginIndex[pluginMeta.id] = latest;
+  await s3.writeJSON(indexKey, pluginIndex);
   console.log('wrote index');
 };
 
