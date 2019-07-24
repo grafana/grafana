@@ -18,7 +18,6 @@
 
 .time-picker-popover {
   display: flex;
-  flex-flow: row nowrap;
   justify-content: space-around;
   border: 1px solid $popover-border-color;
   border-radius: $border-radius;
@@ -31,41 +30,41 @@
   max-width: 600px;
   top: 41px;
   right: 0px;
+}
 
-  .time-picker-popover-body {
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: space-around;
-    padding: $space-md;
-    padding-bottom: 0;
+.time-picker-popover-body {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-around;
+  padding: $space-md;
+  padding-bottom: 0;
+}
+
+.time-picker-popover-title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semi-bold;
+}
+
+.time-picker-popover-body-custom-ranges:first-child {
+  margin-right: $space-md;
+}
+
+.time-picker-popover-body-custom-ranges-input {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  margin-bottom: $space-sm;
+
+  .time-picker-input-error {
+    box-shadow: inset 0 0px 5px $red;
   }
+}
 
-  .time-picker-popover-title {
-    font-size: $font-size-md;
-    font-weight: $font-weight-semi-bold;
-  }
-
-  .time-picker-popover-body-custom-ranges:first-child {
-    margin-right: $space-md;
-  }
-
-  .time-picker-popover-body-custom-ranges-input {
-    display: flex;
-    flex-flow: row nowrap;
-    align-items: center;
-    margin-bottom: $space-sm;
-
-    .time-picker-input-error {
-      box-shadow: inset 0 0px 5px $red;
-    }
-  }
-
-  .time-picker-popover-footer {
-    display: flex;
-    flex-flow: row nowrap;
-    justify-content: center;
-    padding: $space-md;
-  }
+.time-picker-popover-footer {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  padding: $space-md;
 }
 
 .time-picker-popover-header {
