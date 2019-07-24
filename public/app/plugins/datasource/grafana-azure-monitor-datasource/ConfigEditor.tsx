@@ -1,4 +1,3 @@
-// Libraries
 import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/ui';
@@ -8,6 +7,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
+import { InsightsConfig } from './components/InsightsConfig';
 
 type Props = DataSourcePluginOptionsEditorProps<any>;
 
@@ -15,7 +15,7 @@ export interface State {
   config: any;
   subscriptions: SelectableValue[];
   logAnalyticsSubscriptions: SelectableValue[];
-  workspaces: SelectableValue[];
+  logAnalyticsWorkspaces: SelectableValue[];
 }
 
 export class ConfigEditor extends PureComponent<Props, State> {
@@ -23,13 +23,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
     super(props);
 
     const { options } = this.props;
-    console.log('init', options);
 
     this.state = {
       config: ConfigEditor.keyFill(options),
       subscriptions: [],
       logAnalyticsSubscriptions: [],
-      workspaces: [],
+      logAnalyticsWorkspaces: [],
     };
 
     this.backendSrv = getBackendSrv();
@@ -56,6 +55,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     options.jsonData.clientId = options.jsonData.clientId || '';
     options.jsonData.logAnalyticsTenantId = options.jsonData.logAnalyticsTenantId || '';
     options.jsonData.logAnalyticsClientId = options.jsonData.logAnalyticsClientId || '';
+    options.jsonData.appInsightsAppId = options.jsonData.appInsightsAppId || '';
 
     if (!options.id) {
       options.jsonData.azureLogAnalyticsSameAs = true;
@@ -73,6 +73,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
       options.secureJsonData.logAnalyticsClientSecret = '';
     }
 
+    if (!options.secureJsonData.hasOwnProperty('appInsightsApiKey')) {
+      options.secureJsonData.appInsightsApiKey = '';
+    }
+
     if (!options.hasOwnProperty('secureJsonFields')) {
       options.secureJsonFields = {
         clientSecret: false,
@@ -83,7 +87,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return options;
   };
 
-  //todo type
   backendSrv: BackendSrv = null;
   tplSrv: TemplateSrv = null;
 
@@ -167,9 +170,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         },
       });
 
-      this.setState({
-        subscriptions,
-      });
+      this.setState({ subscriptions });
     }
   };
 
@@ -197,18 +198,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
             this.state.config.jsonData.logAnalyticsSubscriptionId || logAnalyticsSubscriptions[0].value,
         },
       });
-      this.setState({
-        logAnalyticsSubscriptions,
-      });
+
+      this.setState({ logAnalyticsSubscriptions });
     }
   };
 
   getWorkspaces = async () => {
-    console.log('lets get em');
-    // const sameAs = this.state.config.jsonData.azureLogAnalyticsSameAs && this.state.subscriptions.length > 0;
-    // if (!sameAs && this.state.logAnalyticsSubscriptions.length === 0) {
-    //   return;
-    // }
+    const sameAs = this.state.config.jsonData.azureLogAnalyticsSameAs && this.state.subscriptions.length > 0;
+    if (!sameAs && this.state.logAnalyticsSubscriptions.length === 0) {
+      return;
+    }
 
     const azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(
       this.state.config,
@@ -216,21 +215,27 @@ export class ConfigEditor extends PureComponent<Props, State> {
       this.tplSrv
     );
 
-    const workspaces = await azureLogAnalyticsDatasource.getWorkspaces(
+    let logAnalyticsWorkspaces = await azureLogAnalyticsDatasource.getWorkspaces(
       this.state.config.jsonData.logAnalyticsSubscriptionId
     );
-    if (workspaces.length > 0) {
+    logAnalyticsWorkspaces = logAnalyticsWorkspaces.map(workspace => {
+      return {
+        value: workspace.value,
+        label: workspace.text,
+      };
+    });
+
+    if (logAnalyticsWorkspaces.length > 0) {
       this.state.config.jsonData.logAnalyticsDefaultWorkspace =
-        this.state.config.jsonData.logAnalyticsDefaultWorkspace || workspaces[0].value;
-      this.setState({
-        workspaces,
-      });
+        this.state.config.jsonData.logAnalyticsDefaultWorkspace || logAnalyticsWorkspaces[0].value;
+
+      this.setState({ logAnalyticsWorkspaces });
     }
   };
 
   render() {
-    const { config, subscriptions, logAnalyticsSubscriptions } = this.state;
-    console.log(config);
+    const { config, subscriptions, logAnalyticsSubscriptions, logAnalyticsWorkspaces } = this.state;
+
     return (
       <>
         <MonitorConfig
@@ -242,12 +247,13 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
         <AnalyticsConfig
           datasourceConfig={config}
-          logAnalyticsSubscriptions={
-            config.jsonData.azureLogAnalyticsSameAs ? subscriptions : logAnalyticsSubscriptions
-          }
+          logAnalyticsWorkspaces={logAnalyticsWorkspaces}
+          logAnalyticsSubscriptions={logAnalyticsSubscriptions}
           onLoadSubscriptions={this.onLoadSubscriptions}
           onDatasourceUpdate={this.onConfigUpdate}
         />
+
+        <InsightsConfig datasourceConfig={config} onDatasourceUpdate={this.onConfigUpdate} />
       </>
     );
   }

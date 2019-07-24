@@ -1,12 +1,12 @@
-// Libraries
 import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
-import { Switch } from '@grafana/ui';
+import { Switch, FormLabel, Select } from '@grafana/ui';
 
 export interface Props {
   datasourceConfig: any;
   logAnalyticsSubscriptions: SelectableValue[];
+  logAnalyticsWorkspaces: SelectableValue[];
   onDatasourceUpdate: (config: any) => void;
   onLoadSubscriptions: (type?: string) => void;
 }
@@ -14,6 +14,7 @@ export interface Props {
 export interface State {
   config: any;
   logAnalyticsSubscriptions: SelectableValue[];
+  logAnalyticsWorkspaces: SelectableValue[];
 }
 
 export class AnalyticsConfig extends PureComponent<Props, State> {
@@ -25,6 +26,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
     this.state = {
       config: datasourceConfig,
       logAnalyticsSubscriptions: [],
+      logAnalyticsWorkspaces: [],
     };
   }
 
@@ -33,6 +35,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
       ...state,
       config: props.datasourceConfig,
       logAnalyticsSubscriptions: props.logAnalyticsSubscriptions,
+      logAnalyticsWorkspaces: props.logAnalyticsWorkspaces,
     };
   }
 
@@ -84,6 +87,16 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
     });
   };
 
+  onWorkspaceSelectChange = (logAnalyticsDefaultWorkspace: SelectableValue<string>) => {
+    this.props.onDatasourceUpdate({
+      ...this.state.config,
+      jsonData: {
+        ...this.state.config.jsonData,
+        logAnalyticsDefaultWorkspace,
+      },
+    });
+  };
+
   onAzureLogAnalyticsSameAsChange = (azureLogAnalyticsSameAs: boolean) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
@@ -95,7 +108,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
   };
 
   render() {
-    const { config, logAnalyticsSubscriptions } = this.state;
+    const { config, logAnalyticsSubscriptions, logAnalyticsWorkspaces } = this.state;
     return (
       <>
         <h3 className="page-heading">Azure Log Analytics API Details</h3>
@@ -120,6 +133,28 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
             onLoadSubscriptions={() => this.props.onLoadSubscriptions('workspacesloganalytics')}
           />
         )}
+        <div className="gf-form-group">
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <FormLabel
+                className="width-12"
+                tooltip="Choose the default/preferred Workspace for Azure Log Analytics queries."
+              >
+                Default Workspace
+              </FormLabel>
+              <div className="width-25">
+                <Select
+                  value={logAnalyticsWorkspaces.find(
+                    workspace => workspace.value === config.jsonData.logAnalyticsDefaultWorkspace
+                  )}
+                  options={logAnalyticsWorkspaces}
+                  defaultValue={config.jsonData.logAnalyticsDefaultWorkspace}
+                  onChange={this.onWorkspaceSelectChange}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </>
     );
   }

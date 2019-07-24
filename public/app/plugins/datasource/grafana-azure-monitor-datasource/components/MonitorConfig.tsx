@@ -1,4 +1,3 @@
-// Libraries
 import React, { PureComponent } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { AzureCredentialsForm } from './AzureCredentialsForm';

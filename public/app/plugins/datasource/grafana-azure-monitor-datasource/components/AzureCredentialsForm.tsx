@@ -4,15 +4,15 @@ import { Input, FormLabel, Select, Button } from '@grafana/ui';
 
 export interface Props {
   selectedAzureCloud?: string;
-  selectedSubscription: string;
+  selectedSubscription?: string;
   azureCloudOptions?: SelectableValue[];
   tenantId: string;
   clientId: string;
   clientSecret: string;
   clientSecretConfigured: boolean;
-  subscriptionOptions: SelectableValue[];
+  subscriptionOptions?: SelectableValue[];
   onAzureCloudChange?: (value: SelectableValue<string>) => void;
-  onSubscriptionSelectChange: (value: SelectableValue<string>) => void;
+  onSubscriptionSelectChange?: (value: SelectableValue<string>) => void;
   onTenantIdChange: (tenantId: string) => void;
   onClientIdChange: (clientId: string) => void;
   onClientSecretChange: (clientSecret: string) => void;
@@ -84,6 +84,7 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
       clientSecretConfigured,
     } = this.state;
     const hasRequiredFields = tenantId && clientId && (clientSecret || clientSecretConfigured);
+    const hasSubscriptions = onLoadSubscriptions && subscriptionOptions;
     return (
       <>
         <div className="gf-form-group">
@@ -158,29 +159,33 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
               </div>
             </div>
           )}
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <FormLabel className="width-12">Default Subscription</FormLabel>
-              <div className="width-25">
-                <Select
-                  value={subscriptionOptions.find(subscription => subscription.value === selectedSubscription)}
-                  options={subscriptionOptions}
-                  defaultValue={selectedSubscription}
-                  onChange={onSubscriptionSelectChange}
-                />
-              </div>
-            </div>
-          </div>
-          {hasRequiredFields && (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <div className="max-width-30 gf-form-inline">
-                  <Button variant="secondary" size="sm" type="button" onClick={onLoadSubscriptions}>
-                    Load Subscriptions
-                  </Button>
+          {hasSubscriptions && (
+            <>
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <FormLabel className="width-12">Default Subscription</FormLabel>
+                  <div className="width-25">
+                    <Select
+                      value={subscriptionOptions.find(subscription => subscription.value === selectedSubscription)}
+                      options={subscriptionOptions}
+                      defaultValue={selectedSubscription}
+                      onChange={onSubscriptionSelectChange}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+              {hasRequiredFields && (
+                <div className="gf-form-inline">
+                  <div className="gf-form">
+                    <div className="max-width-30 gf-form-inline">
+                      <Button variant="secondary" size="sm" type="button" onClick={onLoadSubscriptions}>
+                        Load Subscriptions
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </>
