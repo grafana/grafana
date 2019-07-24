@@ -1,6 +1,6 @@
 // Libaries
 import React, { Component } from 'react';
-import { toUtc, dateMath } from '@grafana/data';
+import { toUtc } from '@grafana/data';
 
 // Types
 import { DashboardModel } from '../../state';
@@ -61,11 +61,9 @@ export class DashNavTimeControls extends Component<Props> {
     const panel = dashboard.timepicker;
     const hasDelay = panel.nowDelay && timeRange.raw.to === 'now';
 
-    const adjustedFrom = dateMath.isMathString(timeRange.raw.from) ? timeRange.raw.from : timeRange.from;
-    const adjustedTo = dateMath.isMathString(timeRange.raw.to) ? timeRange.raw.to : timeRange.to;
     const nextRange = {
-      from: adjustedFrom,
-      to: hasDelay ? 'now-' + panel.nowDelay : adjustedTo,
+      from: timeRange.raw.from,
+      to: hasDelay ? 'now-' + panel.nowDelay : timeRange.raw.to,
     };
 
     this.timeSrv.setTime(nextRange);
