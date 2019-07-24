@@ -1,10 +1,17 @@
 {
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
   "name": "@grafana/runtime",
   "version": "6.4.0-alpha.22",
   "description": "Grafana Runtime Library",
   "keywords": [
-    "grafana"
+    "grafana",
+    "typescript"
   ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git"
+  },
   "main": "src/index.ts",
   "scripts": {
     "tslint": "tslint -c tslint.json --project tsconfig.json",
@@ -13,11 +20,11 @@
     "bundle": "rollup -c rollup.config.ts",
     "build": "grafana-toolkit package:build --scope=runtime"
   },
-  "author": "Grafana Labs",
-  "license": "Apache-2.0",
   "dependencies": {
     "systemjs": "0.20.19",
-    "systemjs-plugin-css": "0.1.37"
+    "systemjs-plugin-css": "0.1.37",
+    "@grafana/data": "^6.4.0-alpha",
+    "@grafana/ui": "^6.4.0-alpha"
   },
   "devDependencies": {
     "@types/systemjs": "^0.20.6",
