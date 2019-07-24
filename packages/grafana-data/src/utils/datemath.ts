@@ -5,18 +5,6 @@ import { TimeZone } from '../types';
 
 const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
-export function isMathString(text: string | DateTime | Date): boolean {
-  if (!text) {
-    return false;
-  }
-
-  if (typeof text === 'string' && (text.substring(0, 3) === 'now' || text.includes('||'))) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 /**
  * Parses different types input to a moment instance. There is a specific formatting language that can be used
  * if text arg is string. See unit tests for examples.
