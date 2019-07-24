@@ -23,7 +23,7 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 		return Error(500, "Failed to create Team", err)
 	}
 
-	if c.OrgRole == m.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin {
+	if c.OrgRole == m.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin && !c.SignedInUser.IsAnonymous {
 		addMemberCmd := m.AddTeamMemberCommand{
 			UserId:     c.SignedInUser.UserId,
 			OrgId:      cmd.OrgId,

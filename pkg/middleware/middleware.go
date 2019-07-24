@@ -132,7 +132,7 @@ func initContextWithApiKey(ctx *models.ReqContext) bool {
 	}
 
 	ctx.IsSignedIn = true
-	ctx.SignedInUser = &models.SignedInUser{}
+	ctx.SignedInUser = &models.SignedInUser{IsAnonymous: true}
 	ctx.OrgRole = apikey.Role
 	ctx.ApiKeyId = apikey.Id
 	ctx.OrgId = apikey.OrgId
