@@ -270,7 +270,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
       const currentHash = settings.plugin.info.build!.hash;
       console.log('Check version: ', settings.plugin.info.build);
       if (loadedMeta.info.build.hash !== currentHash) {
-        console.warn('Testing wrong plugin version.  Expected: ', currentHash);
+        console.warn(`Testing wrong plugin version.  Expected: ${currentHash}, found: ${loadedMeta.info.build.hash}`);
         throw new Error('Wrong plugin version');
       }
     }
