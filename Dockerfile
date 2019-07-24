@@ -33,7 +33,7 @@ ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
 # Final container
-FROM ubuntu:latest
+FROM ubuntu:18.04
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 
