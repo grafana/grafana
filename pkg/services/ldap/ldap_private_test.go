@@ -11,6 +11,44 @@ import (
 )
 
 func TestLDAPPrivateMethods(t *testing.T) {
+	Convey("getSearchRequest()", t, func() {
+		Convey("with enabled GroupSearchFilterUserAttribute setting", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					Attr: AttributeMap{
+						Username: "username",
+						Name:     "name",
+						MemberOf: "memberof",
+						Email:    "email",
+					},
+					GroupSearchFilterUserAttribute: "gansta",
+					SearchBaseDNs:                  []string{"BaseDNHere"},
+				},
+				log: log.New("test-logger"),
+			}
+
+			result := server.getSearchRequest("killa", []string{"gorilla"})
+
+			So(result, ShouldResemble, &ldap.SearchRequest{
+				BaseDN:       "killa",
+				Scope:        2,
+				DerefAliases: 0,
+				SizeLimit:    0,
+				TimeLimit:    0,
+				TypesOnly:    false,
+				Filter:       "(|)",
+				Attributes: []string{
+					"username",
+					"email",
+					"name",
+					"memberof",
+					"gansta",
+				},
+				Controls: nil,
+			})
+		})
+	})
+
 	Convey("serializeUsers()", t, func() {
 		Convey("simple case", func() {
 			server := &Server{

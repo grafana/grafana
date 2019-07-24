@@ -246,13 +246,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
         [EMPTY_SELECTOR]: labelKeys,
       };
       this.logLabelOptions = labelKeys.map((key: string) => ({ label: key, value: key, isLeaf: false }));
-
-      // Pre-load values for default labels
-      return Promise.all(
-        labelKeys
-          .filter((key: string) => DEFAULT_KEYS.indexOf(key) > -1)
-          .map((key: string) => this.fetchLabelValues(key, absoluteRange))
-      );
     } catch (e) {
       console.error(e);
     }

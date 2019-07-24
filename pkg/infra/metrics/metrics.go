@@ -80,6 +80,9 @@ var (
 	// MAlertingNotificationSent is a metric counter for how many alert notifications been sent
 	MAlertingNotificationSent *prometheus.CounterVec
 
+	// MAlertingNotificationSent is a metric counter for how many alert notifications that failed
+	MAlertingNotificationFailed *prometheus.CounterVec
+
 	// MAwsCloudWatchGetMetricStatistics is a metric counter for getting metric statistics from aws
 	MAwsCloudWatchGetMetricStatistics prometheus.Counter
 
@@ -290,7 +293,13 @@ func init() {
 
 	MAlertingNotificationSent = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name:      "alerting_notification_sent_total",
-		Help:      "counter for how many alert notifications been sent",
+		Help:      "counter for how many alert notifications have been sent",
+		Namespace: exporterName,
+	}, []string{"type"})
+
+	MAlertingNotificationFailed = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name:      "alerting_notification_failed_total",
+		Help:      "counter for how many alert notifications have failed",
 		Namespace: exporterName,
 	}, []string{"type"})
 
@@ -452,6 +461,7 @@ func initMetricVars() {
 		MApiDashboardInsert,
 		MAlertingResultState,
 		MAlertingNotificationSent,
+		MAlertingNotificationFailed,
 		MAwsCloudWatchGetMetricStatistics,
 		MAwsCloudWatchListMetrics,
 		MAwsCloudWatchGetMetricData,

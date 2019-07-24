@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# shellcheck disable=SC2086
+
 #
 #   This script is executed from within the container.
 #
@@ -32,16 +34,16 @@ echo "current dir: $(pwd)"
 
 # build only amd64 for enterprise
 if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
-  go run build.go -goarch armv6 -cc "${CCARMV6}" "${OPT}" build
-  go run build.go -goarch armv7 -cc "${CCARMV7}" "${OPT}" build
-  go run build.go -goarch arm64 -cc "${CCARM64}" "${OPT}" build
-  go run build.go -goos darwin -cc "${CCOSX64}" "${OPT}" build
+  go run build.go -goarch armv6 -cc ${CCARMV6} ${OPT} build
+  go run build.go -goarch armv7 -cc ${CCARMV7} ${OPT} build
+  go run build.go -goarch arm64 -cc ${CCARM64} ${OPT} build
+  go run build.go -goos darwin -cc ${CCOSX64} ${OPT} build
 fi
 
-go run build.go -goos windows -cc "${CCWIN64}" "${OPT}" build
+go run build.go -goos windows -cc ${CCWIN64} ${OPT} build
 
 # Do not remove CC from the linux build, its there for compatibility with Centos6
-CC=${CCX64} go run build.go "${OPT}" build
+CC=${CCX64} go run build.go ${OPT} build
 
 yarn install --pure-lockfile --no-progress
 
@@ -51,36 +53,36 @@ else
   echo "Building frontend and packaging incremental build for $CIRCLE_BRANCH"
 fi
 echo "Building frontend"
-go run build.go "${OPT}" build-frontend
+go run build.go ${OPT} build-frontend
 
 if [ -d "dist" ]; then
   rm -rf dist
 fi
 
 mkdir dist
-go run build.go -gen-version "${OPT}" > dist/grafana.version
+go run build.go -gen-version ${OPT} > dist/grafana.version
 
 # Load ruby, needed for packing with fpm
 # shellcheck disable=SC1091
 source /etc/profile.d/rvm.sh
 
 echo "Packaging"
-go run build.go -goos linux -pkg-arch amd64 "${OPT}" package-only
+go run build.go -goos linux -pkg-arch amd64 ${OPT} package-only
 #removing amd64 phantomjs bin for armv7/arm64 packages
 rm tools/phantomjs/phantomjs
 
 # build only amd64 for enterprise
 if echo "$EXTRA_OPTS" | grep -vq enterprise ; then
-  go run build.go -goos linux -pkg-arch armv6 "${OPT}" -skipRpm package-only
-  go run build.go -goos linux -pkg-arch armv7 "${OPT}" package-only
-  go run build.go -goos linux -pkg-arch arm64 "${OPT}" package-only
+  go run build.go -goos linux -pkg-arch armv6 ${OPT} -skipRpm package-only
+  go run build.go -goos linux -pkg-arch armv7 ${OPT} package-only
+  go run build.go -goos linux -pkg-arch arm64 ${OPT} package-only
 
   if [ -d '/tmp/phantomjs/darwin' ]; then
     cp /tmp/phantomjs/darwin/phantomjs tools/phantomjs/phantomjs
   else
     echo 'PhantomJS binaries for darwin missing!'
   fi
-  go run build.go -goos darwin -pkg-arch amd64 "${OPT}" package-only
+  go run build.go -goos darwin -pkg-arch amd64 ${OPT} package-only
 fi
 
 if [ -d '/tmp/phantomjs/windows' ]; then
@@ -89,6 +91,6 @@ if [ -d '/tmp/phantomjs/windows' ]; then
 else
     echo 'PhantomJS binaries for Windows missing!'
 fi
-go run build.go -goos windows -pkg-arch amd64 "${OPT}" package-only
+go run build.go -goos windows -pkg-arch amd64 ${OPT} package-only
 
 go run build.go latest
