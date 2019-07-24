@@ -55,5 +55,5 @@ If possible a link to a dashboard or custom page should be shown after enabling 
 
 > Our goal is not to have a very extensive documentation but rather have actual
 > code that people can look at. An example implementation of an app can be found
-> in this [example app repo](https://github.com/grafana/example-app)
+> in this [example app repo](https://github.com/grafana/grafana/tree/master/public/app/plugins/app/example-app)
 
