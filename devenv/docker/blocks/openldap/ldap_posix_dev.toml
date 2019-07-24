@@ -22,13 +22,15 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 # If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
 bind_password = 'grafana'
 
-# User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
-search_filter = "(cn=%s)"
-
 # An array of base dns to search through
 search_base_dns = ["dc=grafana,dc=org"]
 
-# Specify names of the ldap attributes your ldap uses
+search_filter = "(uid=%s)"
+
+group_search_filter = "(&(objectClass=posixGroup)(memberUid=%s))"
+group_search_filter_user_attribute = "uid"
+group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
+
 [servers.attributes]
 name = "givenName"
 surname = "sn"
@@ -38,9 +40,10 @@ email =  "email"
 
 # Map ldap groups to grafana org roles
 [[servers.group_mappings]]
-group_dn = "cn=admins,ou=groups,dc=grafana,dc=org"
+group_dn = "cn=posix-admins,ou=groups,dc=grafana,dc=org"
 org_role = "Admin"
 grafana_admin = true
+
 # The Grafana organization database id, optional, if left out the default org (id 1) will be used
 # org_id = 1
 
