@@ -100,9 +100,10 @@ export async function getCircleDownloadBaseURL(): Promise<string | undefined> {
       let idx = s.url.indexOf('-');
       if (idx > 0) {
         url = s.url.substring(idx);
-        idx = s.url.indexOf('circleci/plugin/ci');
+        idx = url.indexOf('circleci/plugin/ci');
         if (idx > 0) {
-          url = `https://${buildNumber}${url.substring(0, idx)}/circleci/plugin/ci`;
+          url = url.substring(0, idx);
+          url = `https://${buildNumber}${url}/circleci/plugin/ci`;
           return url;
         }
       }

@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/ui",
-  "version": "6.4.0-alpha.31",
+  "version": "6.4.0-alpha.32",
   "description": "Grafana Components Library",
   "keywords": [
     "grafana",
