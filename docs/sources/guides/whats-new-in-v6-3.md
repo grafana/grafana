@@ -130,6 +130,8 @@ belonging to an LDAP group that gives them access to Grafana.
 
 Built-in support for SAML is now available in Grafana Enterprise.
 
+[See docs]({{< relref "auth/saml.md" >}})
+
 ### Team Sync for GitHub OAuth
 
 When setting up OAuth with GitHub it's now possible to sync GitHub teams with Teams in Grafana.

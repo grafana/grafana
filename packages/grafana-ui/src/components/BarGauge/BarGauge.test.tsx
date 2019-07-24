@@ -25,11 +25,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
     maxValue: 100,
     minValue: 0,
     displayMode: 'basic',
-    thresholds: [
-      { index: 0, value: -Infinity, color: 'green' },
-      { index: 1, value: 70, color: 'orange' },
-      { index: 2, value: 90, color: 'red' },
-    ],
+    thresholds: [{ value: -Infinity, color: 'green' }, { value: 70, color: 'orange' }, { value: 90, color: 'red' }],
     height: 300,
     width: 300,
     value: {

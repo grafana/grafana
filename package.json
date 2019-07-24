@@ -1,9 +1,7 @@
 {
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
   "private": true,
-  "author": {
-    "name": "Torkel Ödegaard",
-    "company": "Grafana Labs"
-  },
   "name": "grafana",
   "version": "6.4.0-pre",
   "repository": {
@@ -128,7 +126,7 @@
     "zone.js": "0.7.8"
   },
   "scripts": {
-    "dev": "webpack --progress --colors --mode development --config scripts/webpack/webpack.dev.js",
+    "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
     "start": "grafana-toolkit core:start --watchTheme",
     "start:hot": "grafana-toolkit core:start --hot --watchTheme",
     "start:ignoreTheme": "grafana-toolkit core:start --hot",
@@ -148,7 +146,8 @@
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "packages:prepare": "lerna run clean && npm run test && lerna version --tag-version-prefix=\"packages@\" -m \"Packages: publish %s\" --no-push",
     "packages:build": "lerna run clean && lerna run build",
-    "packages:publish": "lerna publish from-package --contents dist --dist-tag next --tag-version-prefix=\"packages@\""
+    "packages:publish": "lerna publish from-package --contents dist",
+    "packages:publishNext": "lerna publish from-package --contents dist --dist-tag next --yes"
   },
   "husky": {
     "hooks": {
@@ -170,7 +169,6 @@
     "singleQuote": true,
     "printWidth": 120
   },
-  "license": "Apache-2.0",
   "dependencies": {
     "@babel/polyfill": "7.2.5",
     "@torkelo/react-select": "2.4.1",
@@ -178,6 +176,7 @@
     "@types/d3-scale-chromatic": "1.3.1",
     "@types/enzyme-adapter-react-16": "1.0.5",
     "@types/marked": "0.6.5",
+    "@types/prismjs": "1.16.0",
     "@types/react-redux": "^7.0.8",
     "@types/react-test-renderer": "16.8.2",
     "@types/redux-logger": "3.0.7",

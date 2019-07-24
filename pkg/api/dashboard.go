@@ -133,7 +133,7 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 		Meta:      meta,
 	}
 
-	c.TimeRequest(metrics.M_Api_Dashboard_Get)
+	c.TimeRequest(metrics.MApiDashboardGet)
 	return JSON(200, dto)
 }
 
@@ -282,7 +282,7 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		}
 	}
 
-	c.TimeRequest(metrics.M_Api_Dashboard_Save)
+	c.TimeRequest(metrics.MApiDashboardSave)
 	return JSON(200, util.DynMap{
 		"status":  "success",
 		"slug":    dashboard.Slug,

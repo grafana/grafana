@@ -13,6 +13,7 @@ jest.mock('app/core/config', () => {
   };
 });
 
+// @ts-ignore
 import q from 'q';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { MetricsPanelCtrl } from '../metrics_panel_ctrl';
@@ -49,7 +50,7 @@ describe('MetricsPanelCtrl', () => {
 
 function setupController({ hasAccessToExplore } = { hasAccessToExplore: false }) {
   const injectorStub = {
-    get: type => {
+    get: (type: any) => {
       switch (type) {
         case '$q': {
           return q;
@@ -64,7 +65,7 @@ function setupController({ hasAccessToExplore } = { hasAccessToExplore: false })
     },
   };
 
-  const scope = {
+  const scope: any = {
     panel: { events: [] },
     appEvent: jest.fn(),
     onAppEvent: jest.fn(),

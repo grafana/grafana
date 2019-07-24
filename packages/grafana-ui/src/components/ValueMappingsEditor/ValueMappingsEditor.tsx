@@ -18,7 +18,7 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const mappings = props.valueMappings;
+    const mappings = props.valueMappings || [];
 
     this.state = {
       valueMappings: mappings,

@@ -1,12 +1,4 @@
-// See: packages/grafana-ui/src/types/plugin.ts
-interface PluginJSONSchema {
-  id: string;
-  info: PluginMetaInfo;
-}
-
-interface PluginMetaInfo {
-  version: string;
-}
+import { PluginMeta } from '@grafana/ui';
 
 export const validatePluginJson = (pluginJson: any) => {
   if (!pluginJson.id) {
@@ -32,7 +24,7 @@ export const validatePluginJson = (pluginJson: any) => {
   }
 };
 
-export const getPluginJson = (path: string): PluginJSONSchema => {
+export const getPluginJson = (path: string): PluginMeta => {
   let pluginJson;
   try {
     pluginJson = require(path);
@@ -42,5 +34,5 @@ export const getPluginJson = (path: string): PluginJSONSchema => {
 
   validatePluginJson(pluginJson);
 
-  return pluginJson as PluginJSONSchema;
+  return pluginJson as PluginMeta;
 };

@@ -23,7 +23,7 @@ interface State {
 const headerTooltip = `Sync LDAP or OAuth groups with your Grafana teams.`;
 
 export class TeamGroupSync extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = { isAdding: false, newGroupId: '' };
   }
@@ -40,11 +40,11 @@ export class TeamGroupSync extends PureComponent<Props, State> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  onNewGroupIdChanged = event => {
+  onNewGroupIdChanged = (event: any) => {
     this.setState({ newGroupId: event.target.value });
   };
 
-  onAddGroup = event => {
+  onAddGroup = (event: any) => {
     event.preventDefault();
     this.props.addTeamGroup(this.state.newGroupId);
     this.setState({ isAdding: false, newGroupId: '' });
@@ -156,7 +156,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     groups: getTeamGroups(state.team),
   };

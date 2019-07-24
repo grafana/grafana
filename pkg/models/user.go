@@ -62,6 +62,7 @@ type CreateUserCommand struct {
 	Password       string
 	EmailVerified  bool
 	IsAdmin        bool
+	IsDisabled     bool
 	SkipOrgSetup   bool
 	DefaultOrgRole string
 
@@ -145,6 +146,8 @@ type SearchUsersQuery struct {
 	Page       int
 	Limit      int
 	AuthModule string
+
+	IsDisabled *bool
 
 	Result SearchUserQueryResult
 }
