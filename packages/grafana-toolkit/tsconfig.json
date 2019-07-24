@@ -6,7 +6,8 @@
     "module": "commonjs",
     "rootDirs": ["."],
     "outDir": "dist/src",
-    "declaration": false,
+    "declaration": true,
+    "declarationDir": "dist",
     "typeRoots": ["./node_modules/@types"],
     "esModuleInterop": true,
     "lib": ["es2015", "es2017.string", "dom"]
