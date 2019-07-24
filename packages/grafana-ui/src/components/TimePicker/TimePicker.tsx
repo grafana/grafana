@@ -147,6 +147,7 @@ export class TimePicker extends PureComponent<Props, State> {
             value={currentOption}
             label={label}
             options={options}
+            maxMenuHeight={600}
             onChange={this.onSelectChanged}
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
