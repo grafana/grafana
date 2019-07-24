@@ -91,22 +91,14 @@ export class LinkSrv implements LinkService {
   }
 
   getDataPointVars = (seriesName: string, valueTime: DateTime) => {
-    // const valueTimeQuery = toUrlParams({
-    //   time: dateTime(valueTime).valueOf(),
-    // });
-
-    const seriesQuery = toUrlParams({
-      series: seriesName,
-    });
-
     return {
       [DataLinkBuiltInVars.valueTime]: {
         text: valueTime.valueOf(),
         value: valueTime.valueOf(),
       },
       [DataLinkBuiltInVars.seriesName]: {
-        text: seriesQuery,
-        value: seriesQuery,
+        text: seriesName,
+        value: seriesName,
       },
     };
   };
