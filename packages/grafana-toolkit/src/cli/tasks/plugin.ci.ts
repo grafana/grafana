@@ -18,6 +18,7 @@ import {
   getPluginBuildInfo,
   getBuildNumber,
   getPullRequestNumber,
+  getCircleDownloadBaseURL,
 } from '../../plugin-ci/env';
 import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugin-ci/workflow';
 import {
@@ -322,6 +323,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     workflow: agregateWorkflowInfo(),
     coverage: agregateCoverageInfo(),
     tests: agregateTestInfo(),
+    artifactsBaseURL: await getCircleDownloadBaseURL(),
   };
   const pr = getPullRequestNumber();
   if (pr) {

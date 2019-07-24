@@ -13,6 +13,7 @@ export interface PluginBuildReport {
   coverage: CoverageInfo[];
   tests: TestResultsInfo[];
   pullRequest?: number;
+  artifactsBaseURL?: string;
 }
 
 export interface JobInfo {

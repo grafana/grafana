@@ -87,3 +87,26 @@ export const writeJobStats = (startTime: number, workDir: string) => {
     }
   });
 };
+
+export async function getCircleDownloadBaseURL(): Promise<string | undefined> {
+  try {
+    const axios = require('axios');
+    const buildNumber = getBuildNumber();
+    const repo = process.env.CIRCLE_PROJECT_REPONAME; // || 'simple-react-panel';
+    const user = process.env.CIRCLE_PROJECT_USERNAME; // || 'grafana';
+    let url = `https://circleci.com/api/v1.1/project/github/${user}/${repo}/latest/artifacts`;
+    const rsp = await axios.get(url);
+    for (const s of rsp.data) {
+      let idx = s.url.indexOf('-');
+      if (idx > 0) {
+        url = s.url.substring(idx);
+        idx = s.url.indexOf('circleci/plugin/ci');
+        if (idx > 0) {
+          url = `https://${buildNumber}${url.substring(0, idx)}/circleci/plugin/ci`;
+          return url;
+        }
+      }
+    }
+  } catch {}
+  return undefined;
+}
