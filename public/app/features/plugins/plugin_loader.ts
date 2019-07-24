@@ -9,7 +9,9 @@ import jquery from 'jquery';
 // Experimental module exports
 import prismjs from 'prismjs';
 import slate from 'slate';
+// @ts-ignore
 import slateReact from 'slate-react';
+// @ts-ignore
 import slatePlain from 'slate-plain-serializer';
 import react from 'react';
 import reactDom from 'react-dom';
@@ -37,7 +39,7 @@ import { Observable, Subject } from 'rxjs';
 
 // add cache busting
 const bust = `?_cache=${Date.now()}`;
-function locate(load) {
+function locate(load: { address: string }) {
   return load.address + bust;
 }
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
@@ -64,7 +66,7 @@ grafanaRuntime.SystemJS.config({
 });
 
 function exposeToPlugin(name: string, component: any) {
-  grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require, exports, module) => {
+  grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
     module.exports = component;
   });
 }
