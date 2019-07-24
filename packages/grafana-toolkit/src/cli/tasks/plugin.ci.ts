@@ -28,7 +28,7 @@ import {
   defaultPluginHistory,
   appendPluginHistory,
   TestResultsInfo,
-  LastBuild,
+  PluginDevInfo,
   PluginDevSummary,
   DevSummary,
 } from '../../plugin-ci/types';
@@ -365,12 +365,23 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     Tagging: `version=${version}&type=${pluginMeta.type}`,
   });
 
-  if (!pr) {
+  const latest: PluginDevInfo = {
+    pluginId: pluginMeta.id,
+    name: pluginMeta.name,
+    logos: pluginMeta.info.logos,
+    build: pluginMeta.info.build!,
+    version: (pluginMeta as any).version,
+  };
+
+  if (pr) {
+    latest.build.pr = pr;
+  } else {
+    latest.build.buildNumber = buildNumber;
     const base = `${root}/branch/${branch}/`;
     const historyKey = base + `history.json`;
     console.log('Read', historyKey);
     const history: PluginHistory = await s3.readJSON(historyKey, defaultPluginHistory);
-    appendPluginHistory(report, dirKey, history);
+    appendPluginHistory(report, latest, history);
 
     await s3.writeJSON(historyKey, history);
     console.log('wrote history');
@@ -384,11 +395,6 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   }
 
   console.log('Update Directory Indexes');
-  const latest: LastBuild = {
-    time: build.time!,
-    version,
-    path: jobKey,
-  };
 
   let indexKey = `${root}/index.json`;
   const index: PluginDevSummary = await s3.readJSON(indexKey, { branch: {}, pr: {} });

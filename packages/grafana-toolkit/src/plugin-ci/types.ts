@@ -1,4 +1,4 @@
-import { PluginMeta } from '@grafana/ui';
+import { PluginMeta, PluginBuildInfo } from '@grafana/ui';
 import { DataFrame } from '@grafana/data';
 
 export interface PluginPackageDetails {
@@ -57,22 +57,32 @@ export interface TestResultsInfo {
 // Saved at the folder level
 export interface PluginHistory {
   last: {
-    path: string;
-    job: PluginBuildReport;
+    info: PluginDevInfo;
+    report: PluginBuildReport;
   };
   size: DataFrame[]; // New frame for each package
   coverage: DataFrame[]; // New frame for each job
   timing: DataFrame[]; // New frame for each job/workflow
 }
 
-export interface LastBuild {
-  time: number;
-  version?: string;
-  path: string; // path to the build json
+export interface ExtendedPluginBuildInfo extends PluginBuildInfo {
+  buildNumber?: number;
+  pr?: number;
+}
+
+export interface PluginDevInfo {
+  pluginId: string;
+  name: string;
+  logos?: {
+    large: string;
+    small: string;
+  };
+  build: ExtendedPluginBuildInfo;
+  version: string;
 }
 
 export interface DevSummary {
-  [key: string]: LastBuild;
+  [key: string]: PluginDevInfo;
 }
 
 export interface PluginDevSummary {
@@ -82,8 +92,8 @@ export interface PluginDevSummary {
 
 export const defaultPluginHistory: PluginHistory = {
   last: {
-    path: '?',
-    job: {} as PluginBuildReport,
+    info: {} as PluginDevInfo,
+    report: {} as PluginBuildReport,
   },
   size: [],
   coverage: [],
@@ -102,13 +112,15 @@ export interface ZipFileInfo {
   md5?: string;
 }
 
-export function appendPluginHistory(job: PluginBuildReport, path: string, history: PluginHistory) {
+export function appendPluginHistory(report: PluginBuildReport, info: PluginDevInfo, history: PluginHistory) {
   history.last = {
-    path,
-    job,
+    info,
+    report,
   };
 
   if (!history.size) {
     history.size = [];
   }
+
+  console.log('TODO, append build stats to the last one');
 }
