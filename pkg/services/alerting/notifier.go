@@ -63,6 +63,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 
 	if err != nil {
 		n.log.Error("failed to send notification", "uid", notifier.GetNotifierUID(), "error", err)
+		metrics.MAlertingNotificationFailed.WithLabelValues(notifier.GetType()).Inc()
 	}
 
 	if evalContext.IsTestRun {

@@ -1,12 +1,19 @@
 {
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
   "name": "@grafana/ui",
   "version": "6.4.0-alpha.22",
   "description": "Grafana Components Library",
   "keywords": [
     "grafana",
     "react",
-    "react-component"
+    "react-component",
+    "typescript"
   ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git"
+  },
   "main": "src/index.ts",
   "scripts": {
     "tslint": "tslint -c tslint.json --project tsconfig.json",
@@ -17,10 +24,8 @@
     "bundle": "rollup -c rollup.config.ts",
     "build": "grafana-toolkit package:build --scope=ui"
   },
-  "author": "Grafana Labs",
-  "license": "Apache-2.0",
   "dependencies": {
-    "@grafana/data": "^6.4.0-alpha.22",
+    "@grafana/data": "^6.4.0-alpha",
     "@torkelo/react-select": "2.1.1",
     "@types/react-color": "2.17.0",
     "classnames": "2.2.6",

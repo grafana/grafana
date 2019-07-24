@@ -105,6 +105,16 @@ func TestLDAPHelpers(t *testing.T) {
 	})
 
 	Convey("getAttribute()", t, func() {
+		Convey("Should get DN", func() {
+			entry := &ldap.Entry{
+				DN: "test",
+			}
+
+			result := getAttribute("dn", entry)
+
+			So(result, ShouldEqual, "test")
+		})
+
 		Convey("Should get username", func() {
 			value := []string{"roelgerrits"}
 			entry := &ldap.Entry{
@@ -137,6 +147,16 @@ func TestLDAPHelpers(t *testing.T) {
 	})
 
 	Convey("getArrayAttribute()", t, func() {
+		Convey("Should get DN", func() {
+			entry := &ldap.Entry{
+				DN: "test",
+			}
+
+			result := getArrayAttribute("dn", entry)
+
+			So(result, ShouldResemble, []string{"test"})
+		})
+
 		Convey("Should get username", func() {
 			value := []string{"roelgerrits"}
 			entry := &ldap.Entry{

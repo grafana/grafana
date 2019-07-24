@@ -266,7 +266,9 @@ func (server *Server) Users(logins []string) (
 		return nil, err
 	}
 
-	server.log.Debug("LDAP users found", "users", spew.Sdump(serializedUsers))
+	server.log.Debug(
+		"LDAP users found", "users", spew.Sdump(serializedUsers),
+	)
 
 	return serializedUsers, nil
 }
@@ -327,6 +329,9 @@ func (server *Server) getSearchRequest(
 		inputs.Email,
 		inputs.Name,
 		inputs.MemberOf,
+
+		// In case for the POSIX LDAP schema server
+		server.Config.GroupSearchFilterUserAttribute,
 	)
 
 	search := ""
@@ -489,6 +494,7 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 
 		if len(groupSearchResult.Entries) > 0 {
 			for _, group := range groupSearchResult.Entries {
+
 				memberOf = append(
 					memberOf,
 					getAttribute(groupIDAttribute, group),
