@@ -350,7 +350,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   const root = `dev/${pluginMeta.id}`;
   const dirKey = pr ? `${root}/pr/${pr}` : `${root}/branch/${branch}/${buildNumber}`;
 
-  const jobKey = `${dirKey}build.json`;
+  const jobKey = `${dirKey}/index.json`;
   if (await s3.exits(jobKey)) {
     throw new Error('Job already registered: ' + jobKey);
   }

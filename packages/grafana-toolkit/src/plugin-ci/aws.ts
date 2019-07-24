@@ -24,6 +24,8 @@ export class S3Client {
     this.s3.headBucket({ Bucket: this.bucket }, (err, data) => {
       if (err) {
         throw new Error('Unable to read: ' + this.bucket);
+      } else {
+        console.log('s3: ' + data);
       }
     });
   }
