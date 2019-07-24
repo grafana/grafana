@@ -3,7 +3,6 @@ import { coreModule, NavModelSrv } from 'app/core/core';
 import { dateTime } from '@grafana/data';
 import { UserSession } from 'app/types';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import { ILocationService } from 'angular';
 
 export class ProfileCtrl {
   user: any;
@@ -18,12 +17,7 @@ export class ProfileCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(
-    private backendSrv: BackendSrv,
-    private contextSrv: any,
-    private $location: ILocationService,
-    navModelSrv: NavModelSrv
-  ) {
+  constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
     this.getUserSessions();
     this.getUserTeams();
     this.getUserOrgs();
