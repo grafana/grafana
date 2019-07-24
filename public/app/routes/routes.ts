@@ -35,6 +35,9 @@ import { DashboardRouteInfo } from 'app/types';
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
   $locationProvider.html5Mode(true);
 
+  // Routes here are guarded both here and server side for react-container routes or just on the server for angular
+  // ones. That means angular ones could be navigated to in case there is a client side link some where.
+
   $routeProvider
     .when('/', {
       template: '<react-container />',
@@ -326,7 +329,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
         component: () => PluginPage,
       },
     })
-    // TODO: should also be accessible only by admins but not sure how to do ACL with angular routes.
     .when('/plugins/:pluginId/page/:slug', {
       templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
       controller: 'AppPageCtrl',
