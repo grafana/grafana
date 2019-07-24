@@ -1,9 +1,7 @@
 {
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
   "private": true,
-  "author": {
-    "name": "Torkel Ödegaard",
-    "company": "Grafana Labs"
-  },
   "name": "grafana",
   "version": "6.4.0-pre",
   "repository": {
@@ -128,7 +126,7 @@
     "zone.js": "0.7.8"
   },
   "scripts": {
-    "dev": "webpack --progress --colors --mode development --config scripts/webpack/webpack.dev.js",
+    "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
     "start": "grafana-toolkit core:start --watchTheme",
     "start:hot": "grafana-toolkit core:start --hot --watchTheme",
     "start:ignoreTheme": "grafana-toolkit core:start --hot",
@@ -171,7 +169,6 @@
     "singleQuote": true,
     "printWidth": 120
   },
-  "license": "Apache-2.0",
   "dependencies": {
     "@babel/polyfill": "7.2.5",
     "@torkelo/react-select": "2.4.1",

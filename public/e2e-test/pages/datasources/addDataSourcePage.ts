@@ -1,5 +1,4 @@
-import { ClickablePageObject, Selector, ClickablePageObjectType } from 'e2e-test/core/pageObjects';
-import { TestPage } from 'e2e-test/core/pages';
+import { TestPage, ClickablePageObject, Selector, ClickablePageObjectType } from '@grafana/toolkit';
 
 export interface AddDataSourcePage {
   testDataDB: ClickablePageObjectType;

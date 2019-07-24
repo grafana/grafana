@@ -29,6 +29,10 @@ With Grafana Enterprise you can set up synchronization between LDAP Groups and T
 
 Datasource permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
 
+### SAML Authentication
+
+Enables your Grafana Enterprise users to authenticate with SAML. [Learn More]({{< relref "auth/saml.md" >}}).
+
 ### Premium Plugins
 
 With a Grafana Enterprise license you will get access to premium plugins, including:

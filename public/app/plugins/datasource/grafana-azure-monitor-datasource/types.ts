@@ -31,6 +31,7 @@ export interface AzureMetricQuery {
   resourceGroup: string;
   resourceName: string;
   metricDefinition: string;
+  metricNamespace: string;
   metricName: string;
   timeGrainUnit: string;
   timeGrain: string;
