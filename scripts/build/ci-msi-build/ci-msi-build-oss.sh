@@ -25,7 +25,7 @@ chmod a+x /tmp/scratch/*.msi
 echo "MSI: Copy to $WORKING_DIRECTORY/dist"
 cp /tmp/scratch/*.msi "$WORKING_DIRECTORY/dist"
 echo "MSI: Generate SHA256"
-MSI_FILE=$(ls "$WORKING_DIRECTORY/dist/*.msi")
+MSI_FILE=$(ls "$WORKING_DIRECTORY"/dist/*.msi)
 SHA256SUM=$(sha256sum "$MSI_FILE" | cut -f1 -d' ')
 echo "$SHA256SUM" > "$MSI_FILE.sha256"
 echo "MSI: SHA256 file content:"
