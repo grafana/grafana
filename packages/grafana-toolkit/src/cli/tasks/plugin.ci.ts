@@ -376,7 +376,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
   if (pr) {
     latest.build.pr = pr;
   } else {
-    latest.build.buildNumber = buildNumber;
+    latest.build.number = buildNumber;
     const base = `${root}/branch/${branch}/`;
     const historyKey = base + `history.json`;
     console.log('Read', historyKey);

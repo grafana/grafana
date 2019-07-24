@@ -65,8 +65,9 @@ export interface PluginHistory {
   timing: DataFrame[]; // New frame for each job/workflow
 }
 
+// See #18260
 export interface ExtendedPluginBuildInfo extends PluginBuildInfo {
-  buildNumber?: number;
+  number?: number;
   pr?: number;
 }
 
