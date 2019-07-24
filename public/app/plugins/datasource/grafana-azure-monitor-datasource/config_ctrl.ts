@@ -3,7 +3,6 @@ import config from 'app/core/config';
 import { isVersionGtOrEq } from 'app/core/utils/version';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import { IQService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 interface AzureCloud {
@@ -25,7 +24,7 @@ export class AzureMonitorConfigCtrl {
   token: string;
 
   /** @ngInject */
-  constructor(private backendSrv: BackendSrv, private $q: IQService, private templateSrv: TemplateSrv) {
+  constructor(private backendSrv: BackendSrv, private templateSrv: TemplateSrv) {
     this.hasRequiredGrafanaVersion = this.hasMinVersion();
     this.current.jsonData.cloudName = this.current.jsonData.cloudName || 'azuremonitor';
     this.current.jsonData.azureLogAnalyticsSameAs = this.current.jsonData.azureLogAnalyticsSameAs || false;
@@ -67,12 +66,7 @@ export class AzureMonitorConfigCtrl {
     await this.getSubscriptions();
     await this.getSubscriptionsForLogsAnalytics();
 
-    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(
-      this.current,
-      this.backendSrv,
-      this.templateSrv,
-      this.$q
-    );
+    this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(this.current, this.backendSrv, this.templateSrv);
     await this.getWorkspaces();
   }
 
