@@ -367,7 +367,7 @@ function getPluginTabsNav(
       }
 
       // Check for the dashboard pages
-      if (find(meta.includes, { type: 'dashboard' })) {
+      if (find(meta.includes, { type: PluginIncludeType.dashboard })) {
         pages.push({
           text: 'Dashboards',
           icon: 'gicon gicon-dashboard',

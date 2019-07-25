@@ -116,7 +116,7 @@
     "tslint": "5.14.0",
     "tslint-loader": "3.5.4",
     "tslint-react": "3.6.0",
-    "typescript": "3.4.1",
+    "typescript": "^3.5",
     "webpack": "4.29.6",
     "webpack-bundle-analyzer": "3.3.2",
     "webpack-cleanup-plugin": "0.5.1",
