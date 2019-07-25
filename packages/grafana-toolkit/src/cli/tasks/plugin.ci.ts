@@ -349,7 +349,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     throw new Error('Metadata missing build info');
   }
 
-  const version = (pluginMeta as any).version || 'unknown';
+  const version = pluginMeta.info.version || 'unknown';
   const branch = build.branch || 'unknown';
   const buildNumber = getBuildNumber();
   const root = `dev/${pluginMeta.id}`;
@@ -370,7 +370,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     name: pluginMeta.name,
     logos: pluginMeta.info.logos,
     build: pluginMeta.info.build!,
-    version: (pluginMeta as any).version,
+    version,
   };
 
   if (pr) {
