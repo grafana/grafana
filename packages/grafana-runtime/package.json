@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "6.4.0-alpha.36",
+  "version": "6.4.0-alpha.37",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
