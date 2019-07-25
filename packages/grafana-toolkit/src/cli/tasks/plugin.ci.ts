@@ -365,10 +365,16 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     Tagging: `version=${version}&type=${pluginMeta.type}`,
   });
 
+  // Upload logo
+  const logo = await s3.uploadLogo(report.plugin.info, {
+    local: path.resolve(ciDir, 'dist'),
+    remote: root,
+  });
+
   const latest: PluginDevInfo = {
     pluginId: pluginMeta.id,
     name: pluginMeta.name,
-    logos: pluginMeta.info.logos,
+    logo,
     build: pluginMeta.info.build!,
     version,
   };
@@ -386,12 +392,6 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     await s3.writeJSON(historyKey, history);
     console.log('wrote history');
   }
-
-  // Upload icons and screenshots
-  s3.uploadMetaFiles(report.plugin.info, {
-    local: path.resolve(ciDir, 'dist'),
-    remote: dirKey + '/dist',
-  });
 
   // Private things may want to upload
   if (upload) {

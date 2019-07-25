@@ -68,10 +68,7 @@ export interface PluginHistory {
 export interface PluginDevInfo {
   pluginId: string;
   name: string;
-  logos?: {
-    large: string;
-    small: string;
-  };
+  logo?: string; // usually logo.svg or logo.png
   build: PluginBuildInfo;
   version: string;
 }

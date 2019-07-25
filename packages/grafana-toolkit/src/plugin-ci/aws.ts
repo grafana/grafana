@@ -52,22 +52,17 @@ export class S3Client {
     }
   }
 
-  async uploadMetaFiles(meta: PluginMetaInfo, folder: UploadArgs) {
-    // Logo & Screenshots
-    const { logos, screenshots } = meta;
-    if (logos) {
+  async uploadLogo(meta: PluginMetaInfo, folder: UploadArgs): Promise<string | undefined> {
+    const { logos } = meta;
+    if (logos && logos.large) {
       const img = folder.local + '/' + logos.large;
-      await this.uploadFile(img, folder.remote + '/' + logos.large);
-      if (logos.small !== logos.large) {
-        const img = folder.local + '/' + logos.small;
-        await this.uploadFile(img, folder.remote + '/' + logos.small);
-      }
+      const idx = img.lastIndexOf('.');
+      const name = 'logo' + img.substring(idx);
+      const key = folder.remote + '/' + name;
+      await this.uploadFile(img, key);
+      return name;
     }
-    if (screenshots) {
-      for (const s of screenshots) {
-        console.log('TODO, update: ', s);
-      }
-    }
+    return undefined;
   }
 
   async uploadFile(fpath: string, path: string, md5?: string): Promise<string> {
