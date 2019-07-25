@@ -1,5 +1,6 @@
 export * from './e2e';
 
-import * as pluginCi from './plugin-ci';
+// Namespace for Plugins
+import * as plugins from './plugins';
 
-export { pluginCi };
+export { plugins };

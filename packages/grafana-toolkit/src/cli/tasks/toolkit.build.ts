@@ -62,7 +62,7 @@ const copyFiles = () => {
     'src/config/tslint.plugin.json',
 
     // plugin test file
-    'src/plugin-ci/e2e/commonPluginTests.ts',
+    'src/plugins/e2e/commonPluginTests.ts',
   ];
   // @ts-ignore
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {

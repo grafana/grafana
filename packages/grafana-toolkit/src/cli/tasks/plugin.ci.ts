@@ -1,7 +1,7 @@
 import { Task, TaskRunner } from './task';
 import { pluginBuildRunner } from './plugin.build';
 import { restoreCwd } from '../utils/cwd';
-import { S3Client } from '../../plugin-ci/aws';
+import { S3Client } from '../../plugins/aws';
 import { getPluginJson } from '../../config/utils/pluginValidation';
 import { PluginMeta } from '@grafana/ui';
 
@@ -9,7 +9,7 @@ import { PluginMeta } from '@grafana/ui';
 import execa = require('execa');
 import path = require('path');
 import fs from 'fs';
-import { getPackageDetails, findImagesInFolder, appendPluginHistory } from '../../plugin-ci/utils';
+import { getPackageDetails, findImagesInFolder, appendPluginHistory } from '../../plugins/utils';
 import {
   job,
   getJobFolder,
@@ -19,8 +19,8 @@ import {
   getBuildNumber,
   getPullRequestNumber,
   getCircleDownloadBaseURL,
-} from '../../plugin-ci/env';
-import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugin-ci/workflow';
+} from '../../plugins/env';
+import { agregateWorkflowInfo, agregateCoverageInfo, agregateTestInfo } from '../../plugins/workflow';
 import {
   PluginPackageDetails,
   PluginBuildReport,
@@ -30,9 +30,9 @@ import {
   PluginDevInfo,
   PluginDevSummary,
   DevSummary,
-} from '../../plugin-ci/types';
-import { runEndToEndTests } from '../../plugin-ci/e2e/launcher';
-import { getEndToEndSettings } from '../../plugin-ci/index';
+} from '../../plugins/types';
+import { runEndToEndTests } from '../../plugins/e2e/launcher';
+import { getEndToEndSettings } from '../../plugins/index';
 
 export interface PluginCIOptions {
   backend?: string;
@@ -279,7 +279,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
     }
 
     await execa('cp', [
-      'node_modules/@grafana/toolkit/src/plugin-ci/e2e/commonPluginTests.ts',
+      'node_modules/@grafana/toolkit/src/plugins/e2e/commonPluginTests.ts',
       path.resolve(tempDir, 'common.test.ts'),
     ]);
 
