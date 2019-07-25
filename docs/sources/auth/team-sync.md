@@ -33,7 +33,11 @@ a user as member of a team and it will not be removed when the user signs in. Th
 1. Navigate to Configuration / Teams.
 2. Select a team.
 3. Select the External group sync tab and click on the `Add group` button.
-4. Insert the slug of the group you want to sync with, for example, an LDAP distinguished name (DN) of LDAP group you want to synchronize with the team.
+4. Insert the value of the group you want to sync with. This becomes what Grafana denominates as a `GroupID`.
+
+    - Using LDAP as an example, this is the LDAP distinguished name (DN) of LDAP group you want to synchronize with the team.
+    - Using Auth Proxy as an example, this is the value we receive as part of the custom `Groups` header.
+
 5. Click on `Add group` button to save.
 
 ### Supported Providers
