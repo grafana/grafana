@@ -1,4 +1,5 @@
 import { Variable, assignModelProperties, variableTypes } from './variable';
+import { VariableSrv } from './variable_srv';
 import * as dateMath from '@grafana/data/src/utils/datemath';
 
 export class TimeExpressionVariable implements Variable {
@@ -25,7 +26,7 @@ export class TimeExpressionVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(private model: any, private variableSrv: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 2;
   }
@@ -35,7 +36,7 @@ export class TimeExpressionVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     this.variableSrv.setOptionAsCurrent(this, option);
   }
 
@@ -46,11 +47,11 @@ export class TimeExpressionVariable implements Variable {
     return Promise.resolve();
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string) {
     const time = this.getFormattedDatetime(urlValue, this.format);
     this.current = { text: urlValue, value: time };
     return this.variableSrv.setOptionFromUrl(this, urlValue);
@@ -73,5 +74,5 @@ variableTypes['timeexpression'] = {
   name: 'Time expression',
   ctor: TimeExpressionVariable,
   description: 'Enabled you to dynamically calculate a datetime according to the current time',
-  supportsMulti: false
+  supportsMulti: false,
 };
