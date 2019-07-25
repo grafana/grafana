@@ -336,6 +336,7 @@ func GetHomeDashboard(c *m.ReqContext) Response {
 
 func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 	panels := dash.Get("panels").MustArray()
+
 	newpanel := simplejson.NewFromAny(map[string]interface{}{
 		"type": "gettingstarted",
 		"id":   123123,

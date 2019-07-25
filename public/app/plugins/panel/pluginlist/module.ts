@@ -22,7 +22,6 @@ class PluginListCtrl extends PanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
 
     this.isAdmin = contextSrv.hasRole('Admin');
-    console.log('contextSrv.user.orgRole', contextSrv.user.orgRole);
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.pluginList = [];
     this.viewModel = [
