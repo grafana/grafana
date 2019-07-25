@@ -654,7 +654,7 @@ jobs:
               echo "Build URL:"
               curl -s -u "$DOCS_CIRCLE_TOKEN:" \
                 -d build_parameters[CIRCLE_JOB]=pull-submodule-changes \
-                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/staging \
+                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/master \
               | jq .build_url
             else
               echo "-- no changes to docs files --"
