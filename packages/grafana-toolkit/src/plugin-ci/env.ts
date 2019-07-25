@@ -92,8 +92,8 @@ export async function getCircleDownloadBaseURL(): Promise<string | undefined> {
   try {
     const axios = require('axios');
     const buildNumber = getBuildNumber();
-    const repo = process.env.CIRCLE_PROJECT_REPONAME; // || 'simple-react-panel';
-    const user = process.env.CIRCLE_PROJECT_USERNAME; // || 'grafana';
+    const repo = process.env.CIRCLE_PROJECT_REPONAME;
+    const user = process.env.CIRCLE_PROJECT_USERNAME;
     let url = `https://circleci.com/api/v1.1/project/github/${user}/${repo}/latest/artifacts`;
     const rsp = await axios.get(url);
     for (const s of rsp.data) {

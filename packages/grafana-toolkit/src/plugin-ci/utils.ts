@@ -1,14 +1,12 @@
 import execa from 'execa';
 import path from 'path';
 import fs from 'fs';
-import { ExtensionBytes, ZipFileInfo } from './types';
+import { PluginDevInfo, ExtensionSize, ZipFileInfo, PluginBuildReport, PluginHistory } from './types';
 
 const md5File = require('md5-file');
 
-export function getFileSizeReportInFolder(dir: string, info?: ExtensionBytes): ExtensionBytes {
-  if (!info) {
-    info = {};
-  }
+export function getFileSizeReportInFolder(dir: string, info?: ExtensionSize): ExtensionSize {
+  const acc: ExtensionSize = info ? info : {};
 
   const files = fs.readdirSync(dir);
   if (files) {
@@ -18,17 +16,22 @@ export function getFileSizeReportInFolder(dir: string, info?: ExtensionBytes): E
       if (stat.isDirectory()) {
         getFileSizeReportInFolder(newbase, info);
       } else {
-        let ext = '<other>';
+        let ext = '_none_';
         const idx = file.lastIndexOf('.');
         if (idx > 0) {
           ext = file.substring(idx + 1).toLowerCase();
         }
-        const current = info![ext] || 0;
-        info![ext] = current + stat.size;
+        const current = acc[ext];
+        if (current) {
+          current.count += 1;
+          current.bytes += stat.size;
+        } else {
+          acc[ext] = { bytes: stat.size, count: 1 };
+        }
       }
     });
   }
-  return info;
+  return acc;
 }
 
 export async function getPackageDetails(zipFile: string, zipSrc: string, writeChecksum = true): Promise<ZipFileInfo> {
@@ -73,4 +76,17 @@ export function findImagesInFolder(dir: string, prefix = '', append?: string[]):
   }
 
   return imgs;
+}
+
+export function appendPluginHistory(report: PluginBuildReport, info: PluginDevInfo, history: PluginHistory) {
+  history.last = {
+    info,
+    report,
+  };
+
+  if (!history.size) {
+    history.size = [];
+  }
+
+  console.log('TODO, append build stats to the last one');
 }

@@ -92,27 +92,19 @@ export const defaultPluginHistory: PluginHistory = {
   timing: [],
 };
 
-export interface ExtensionBytes {
-  [key: string]: number;
+export interface CountAndSize {
+  count: number;
+  bytes: number;
+}
+
+export interface ExtensionSize {
+  [key: string]: CountAndSize;
 }
 
 export interface ZipFileInfo {
   name: string;
   size: number;
-  contents: ExtensionBytes;
+  contents: ExtensionSize;
   sha1?: string;
   md5?: string;
-}
-
-export function appendPluginHistory(report: PluginBuildReport, info: PluginDevInfo, history: PluginHistory) {
-  history.last = {
-    info,
-    report,
-  };
-
-  if (!history.size) {
-    history.size = [];
-  }
-
-  console.log('TODO, append build stats to the last one');
 }

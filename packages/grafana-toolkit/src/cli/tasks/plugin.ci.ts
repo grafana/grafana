@@ -9,7 +9,7 @@ import { PluginMeta } from '@grafana/ui';
 import execa = require('execa');
 import path = require('path');
 import fs from 'fs';
-import { getPackageDetails, findImagesInFolder } from '../../plugin-ci/utils';
+import { getPackageDetails, findImagesInFolder, appendPluginHistory } from '../../plugin-ci/utils';
 import {
   job,
   getJobFolder,
@@ -26,7 +26,6 @@ import {
   PluginBuildReport,
   PluginHistory,
   defaultPluginHistory,
-  appendPluginHistory,
   TestResultsInfo,
   PluginDevInfo,
   PluginDevSummary,
@@ -280,7 +279,7 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
     }
 
     await execa('cp', [
-      'node_modules/@grafana/toolkit/src/plugin-ci/e2e/commonPluginTests.ts',
+      'node_modules/@grafana/toolkit/src/plugin-ci/e2e/commonPluginTests.txt',
       path.resolve(tempDir, 'common.test.ts'),
     ]);
 
