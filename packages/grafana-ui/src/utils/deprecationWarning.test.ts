@@ -1,8 +1,8 @@
 import { deprecationWarning } from './deprecationWarning';
 
-let dateNowValue = 10000000;
-
 test('It should not output deprecation warnings too often', () => {
+  let dateNowValue = 10000000;
+
   const spyConsoleWarn = jest.spyOn(console, 'warn').mockImplementation();
   const spyDateNow = jest.spyOn(global.Date, 'now').mockImplementation(() => dateNowValue);
   // Make sure the mock works
