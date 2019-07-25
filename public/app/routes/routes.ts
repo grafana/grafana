@@ -317,7 +317,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/plugins', {
       template: '<react-container />',
       resolve: {
-        roles: () => ['Admin'],
         component: () => PluginListPage,
       },
     })
@@ -325,7 +324,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       reloadOnSearch: false, // tabs from query parameters
       resolve: {
-        roles: () => ['Admin'],
         component: () => PluginPage,
       },
     })

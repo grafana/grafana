@@ -26,6 +26,42 @@
         "x": 0,
         "y": 0
       }
+    },
+    {
+      "folderId": 0,
+      "headings": true,
+      "id": 3,
+      "limit": 30,
+      "links": [],
+      "query": "",
+      "recent": true,
+      "search": false,
+      "starred": true,
+      "tags": [],
+      "title": "",
+      "transparent": false,
+      "type": "dashlist",
+      "gridPos": {
+        "w": 12,
+        "h": 17,
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
+      "editable": true,
+      "error": false,
+      "id": 4,
+      "links": [],
+      "title": "",
+      "transparent": false,
+      "type": "pluginlist",
+      "gridPos": {
+        "w": 12,
+        "h": 17,
+        "x": 12,
+        "y": 6
+      }
     }
   ],
   "rows": [],

@@ -58,10 +58,10 @@ func (hs *HTTPServer) registerRoutes() {
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
-	r.Get("/plugins", reqOrgAdmin, hs.Index)
-	r.Get("/plugins/:id/", reqOrgAdmin, hs.Index)
-	r.Get("/plugins/:id/edit", reqOrgAdmin, hs.Index) // deprecated
-	r.Get("/plugins/:id/page/:page", reqOrgAdmin, hs.Index)
+	r.Get("/plugins", reqSignedIn, hs.Index)
+	r.Get("/plugins/:id/", reqSignedIn, hs.Index)
+	r.Get("/plugins/:id/edit", reqSignedIn, hs.Index) // deprecated
+	r.Get("/plugins/:id/page/:page", reqSignedIn, hs.Index)
 	r.Get("/a/:id/*", reqSignedIn, hs.Index) // App Root Page
 
 	r.Get("/d/:uid/:slug", reqSignedIn, hs.Index)
@@ -252,15 +252,14 @@ func (hs *HTTPServer) registerRoutes() {
 
 		apiRoute.Get("/datasources/id/:name", Wrap(GetDataSourceIdByName), reqSignedIn)
 
+		apiRoute.Get("/plugins", Wrap(hs.GetPluginList))
+		apiRoute.Get("/plugins/:pluginId/settings", Wrap(GetPluginSettingByID))
+		apiRoute.Get("/plugins/:pluginId/markdown/:name", Wrap(GetPluginMarkdown))
+
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
-			pluginRoute.Get("/", Wrap(hs.GetPluginList))
-			pluginRoute.Get("/:pluginId/settings", Wrap(GetPluginSettingByID))
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
 			pluginRoute.Post("/:pluginId/settings", bind(models.UpdatePluginSettingCmd{}), Wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
-
-		// This is needed for panel info when choosing visualisation for panel
-		apiRoute.Get("/plugins/:pluginId/markdown/:name", Wrap(GetPluginMarkdown))
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)

@@ -328,59 +328,24 @@ func GetHomeDashboard(c *m.ReqContext) Response {
 	}
 
 	if c.HasUserRole(m.ROLE_ADMIN) && !c.HasHelpFlag(m.HelpFlagGettingStartedPanelDismissed) {
-		addPanelToDashboard(dash.Dashboard, map[string]interface{}{"x": 0, "y": 3, "w": 24, "h": 4}, gettingStartedPanel)
-	}
-
-	if c.HasUserRole(m.ROLE_ADMIN) {
-		addPanelToDashboard(dash.Dashboard, map[string]interface{}{"x": 12, "y": 6, "w": 12, "h": 17}, pluginsPanel)
-		addPanelToDashboard(dash.Dashboard, map[string]interface{}{"x": 0, "y": 6, "w": 12, "h": 17}, dashboardsPanel)
-	} else {
-		addPanelToDashboard(dash.Dashboard, map[string]interface{}{"x": 0, "y": 6, "w": 24, "h": 17}, dashboardsPanel)
+		addGettingStartedPanelToHomeDashboard(dash.Dashboard)
 	}
 
 	return JSON(200, &dash)
 }
 
-var dashboardsPanel = map[string]interface{}{
-	"folderId":    0,
-	"headings":    true,
-	"id":          3,
-	"limit":       30,
-	"links":       []interface{}{},
-	"query":       "",
-	"recent":      true,
-	"search":      false,
-	"starred":     true,
-	"tags":        []interface{}{},
-	"title":       "",
-	"transparent": false,
-	"type":        "dashlist",
-}
-
-var pluginsPanel = map[string]interface{}{
-	"editable":    true,
-	"error":       false,
-	"id":          4,
-	"links":       []interface{}{},
-	"title":       "",
-	"transparent": false,
-	"type":        "pluginlist",
-}
-
-var gettingStartedPanel = map[string]interface{}{
-	"type": "gettingstarted",
-	"id":   123123,
-}
-
-func addPanelToDashboard(dash *simplejson.Json, position map[string]interface{}, panel map[string]interface{}) {
-	panelCopy := make(map[string]interface{})
-	for k, v := range panel {
-		panelCopy[k] = v
-	}
-	panelCopy["gridPos"] = position
-
+func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 	panels := dash.Get("panels").MustArray()
-	newpanel := simplejson.NewFromAny(panelCopy)
+	newpanel := simplejson.NewFromAny(map[string]interface{}{
+		"type": "gettingstarted",
+		"id":   123123,
+		"gridPos": map[string]interface{}{
+			"x": 0,
+			"y": 3,
+			"w": 24,
+			"h": 4,
+		},
+	})
 
 	panels = append(panels, newpanel)
 	dash.Set("panels", panels)
