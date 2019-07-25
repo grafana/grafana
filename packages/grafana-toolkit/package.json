@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/toolkit",
-  "version": "6.4.0-alpha.39",
+  "version": "6.4.0-alpha.40",
   "description": "Grafana Toolkit",
   "keywords": [
     "grafana",
