@@ -385,13 +385,25 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
 
     await s3.writeJSON(historyKey, history);
     console.log('wrote history');
+  }
 
-    if (upload) {
-      s3.uploadPackages(packageInfo, {
-        local: packageDir,
-        remote: dirKey,
-      });
-    }
+  // Upload icons and screenshots
+  s3.uploadMetaFiles(report.plugin.info, {
+    local: path.resolve(ciDir, 'dist'),
+    remote: dirKey + '/dist',
+  });
+
+  // Private things may want to upload
+  if (upload) {
+    s3.uploadPackages(packageInfo, {
+      local: packageDir,
+      remote: dirKey + '/packages',
+    });
+
+    s3.uploadTestFiles(report.tests, {
+      local: ciDir,
+      remote: dirKey,
+    });
   }
 
   console.log('Update Directory Indexes');

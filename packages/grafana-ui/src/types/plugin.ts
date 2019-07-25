@@ -84,6 +84,11 @@ export interface PluginBuildInfo {
   hash?: string;
 }
 
+export interface ScreenshotInfo {
+  name: string;
+  path: string;
+}
+
 export interface PluginMetaInfo {
   author: {
     name: string;
@@ -96,7 +101,7 @@ export interface PluginMetaInfo {
     small: string;
   };
   build?: PluginBuildInfo;
-  screenshots: any[];
+  screenshots: ScreenshotInfo[];
   updated: string;
   version: string;
 }

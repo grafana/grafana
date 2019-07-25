@@ -2,9 +2,10 @@ import AWS from 'aws-sdk';
 import path from 'path';
 import fs from 'fs';
 
-import { PluginPackageDetails, ZipFileInfo } from './types';
+import { PluginPackageDetails, ZipFileInfo, TestResultsInfo } from './types';
 import defaults from 'lodash/defaults';
 import clone from 'lodash/clone';
+import { PluginMetaInfo } from '@grafana/ui';
 
 interface UploadArgs {
   local: string;
@@ -30,6 +31,11 @@ export class S3Client {
     });
   }
 
+  private async uploadPackage(file: ZipFileInfo, folder: UploadArgs): Promise<string> {
+    const fpath = path.resolve(process.cwd(), folder.local, file.name);
+    return await this.uploadFile(fpath, folder.remote + '/' + file.name, file.md5);
+  }
+
   async uploadPackages(packageInfo: PluginPackageDetails, folder: UploadArgs) {
     await this.uploadPackage(packageInfo.plugin, folder);
     if (packageInfo.docs) {
@@ -37,8 +43,34 @@ export class S3Client {
     }
   }
 
-  async uploadPackage(file: ZipFileInfo, folder: UploadArgs): Promise<string> {
-    const fpath = path.resolve(process.cwd(), folder.local, file.name);
+  async uploadTestFiles(tests: TestResultsInfo[], folder: UploadArgs) {
+    for (const test of tests) {
+      for (const s of test.screenshots) {
+        const img = path.resolve(folder.local, 'jobs', test.job, s);
+        await this.uploadFile(img, folder.remote + `/jobs/${test.job}/${s}`);
+      }
+    }
+  }
+
+  async uploadMetaFiles(meta: PluginMetaInfo, folder: UploadArgs) {
+    // Logo & Screenshots
+    const { logos, screenshots } = meta;
+    if (logos) {
+      const img = folder.local + '/' + logos.large;
+      await this.uploadFile(img, folder.remote + '/' + logos.large);
+      if (logos.small !== logos.large) {
+        const img = folder.local + '/' + logos.small;
+        await this.uploadFile(img, folder.remote + '/' + logos.small);
+      }
+    }
+    if (screenshots) {
+      for (const s of screenshots) {
+        console.log('TODO, update: ', s);
+      }
+    }
+  }
+
+  async uploadFile(fpath: string, path: string, md5?: string): Promise<string> {
     if (!fs.existsSync(fpath)) {
       return Promise.reject('File not found: ' + fpath);
     }
@@ -47,17 +79,17 @@ export class S3Client {
     return new Promise((resolve, reject) => {
       this.s3.putObject(
         {
-          Key: this.prefix + folder.remote + '/' + file.name,
+          Key: this.prefix + path,
           Bucket: this.bucket,
           Body: stream,
-          ContentType: getContentTypeForFile(file.name),
+          ContentType: getContentTypeForFile(path),
         },
         (err, data) => {
           if (err) {
             reject(err);
           } else {
-            if (file.md5 && file.md5 !== data.ETag) {
-              reject('Upload ETag does not match MD5');
+            if (md5 && md5 !== data.ETag && `"${md5}"` !== data.ETag) {
+              reject(`Upload ETag does not match MD5 (${md5} !== ${data.ETag})`);
             } else {
               resolve(data.ETag);
             }
@@ -144,6 +176,12 @@ function getContentTypeForFile(name: string): string | undefined {
     }
     if (ext === 'json') {
       return 'application/json';
+    }
+    if (ext === 'svg') {
+      return 'image/svg+xml';
+    }
+    if (ext === 'png') {
+      return 'image/png';
     }
   }
   return undefined;
