@@ -98,6 +98,34 @@ jobs:
                 path: public/e2e-test/screenShots/theOutput
                 destination: output-screenshots
 
+  end-to-end-test-release:
+      docker:
+        - image: circleci/node:10-browsers
+        - image: grafana/grafana:$CIRCLE_TAG
+      steps:
+          - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
+          - checkout
+          - restore_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+          - run:
+              name: yarn install
+              command: 'yarn install --pure-lockfile --no-progress'
+              no_output_timeout: 5m
+          - save_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+              paths:
+                - node_modules
+          - run:
+              name: run end-to-end tests
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
+              no_output_timeout: 5m
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theTruth
+                destination: expected-screenshots
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theOutput
+                destination: output-screenshots
+
   codespell:
     docker:
       - image: circleci/python
@@ -795,6 +823,10 @@ workflows:
             - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+          filters: *filter-only-release
+      - end-to-end-test-release:
+          requires:
+            - grafana-docker-release
           filters: *filter-only-release
 
   build-branches-and-prs:
