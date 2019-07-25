@@ -10,10 +10,8 @@ export interface PluginCssOptions {
 
 export const SystemJS = System;
 
-export function loadPluginCss(options: PluginCssOptions) {
-  if (config.bootData.user.lightTheme) {
-    SystemJS.import(`${options.light}!css`);
-  } else {
-    SystemJS.import(`${options.dark}!css`);
-  }
+export function loadPluginCss(options: PluginCssOptions): Promise<any> {
+  const path = config.bootData.user.lightTheme ? `${options.light}!css` : `${options.dark}!css`;
+
+  return SystemJS.import(path);
 }
