@@ -344,7 +344,12 @@ export class TableRenderer {
       const row = this.table.rows[y];
       const newRow = [];
       for (let i = 0; i < this.table.columns.length; i++) {
-        newRow.push(this.formatColumnValue(i, row[i]));
+        if (this.table.columns[i].style.type === 'number') {
+          // let numbers be formatted later
+          newRow.push(row[i]);
+        } else {
+          newRow.push(this.formatColumnValue(i, row[i]));
+        }
       }
       rows.push(newRow);
     }
