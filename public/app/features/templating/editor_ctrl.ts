@@ -33,6 +33,8 @@ export class VariableEditorCtrl {
 
     $scope.hideOptions = [{ value: 0, text: '' }, { value: 1, text: 'Label' }, { value: 2, text: 'Variable' }];
 
+    $scope.roundMethodOptions = [{ value: 0, text: 'Start of time unit' }, { value: 1, text: 'End of time unit' }];
+
     $scope.init = () => {
       $scope.mode = 'list';
 

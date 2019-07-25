@@ -236,6 +236,55 @@
       </div>
     </div>
 
+    <div ng-if="current.type === 'timeexpression'" class="gf-form-group">
+      <h5 class="section-heading">Time expression options</h5>
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <span class="gf-form-label width-8">
+            Expression
+            <info-popover mode="right-normal">
+              Syntax：now [[+-]\d[yMwdhms]] /[yMwdhms]
+            </info-popover>
+          </span>
+          <input
+            class="gf-form-input width-12"
+            rows="6"
+            ng-model="current.query"
+            ng-blur="runQuery()"
+            placeholder="时间表达式"
+          />
+        </div>
+        <div class="gf-form">
+          <span class="gf-form-label width-9">
+            Round method
+          </span>
+          <div class="gf-form-select-wrapper width-12">
+            <select
+              class="gf-form-input"
+              ng-model="current.roundMethod"
+              ng-change="runQuery()"
+              ng-options="f.value as f.text for f in roundMethodOptions"
+            ></select>
+          </div>
+        </div>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-8">
+          Format
+          <info-popover mode="right-normal">
+              See: <a href="https://momentjs.com/docs/#/displaying/format/" target="_blank">Moment.js format tokens</a>"
+            </info-popover>
+        </span>
+        <input
+          type="text"
+          class="gf-form-input width-30"
+          ng-model="current.format"
+          ng-blur="runQuery()"
+          placeholder="Default format: 'YYYY-MM-DDTHH:mm:ssZ'"
+        />
+      </div>
+    </div>
+
     <div ng-if="current.type === 'query'" class="gf-form-group">
       <h5 class="section-heading">Query Options</h5>
 
