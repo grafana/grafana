@@ -83,7 +83,7 @@ export interface PluginBuildInfo {
   branch?: string;
   hash?: string;
   number?: number;
-  pr?: string;
+  pr?: number;
 }
 
 export interface ScreenshotInfo {
