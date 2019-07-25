@@ -23,6 +23,11 @@ test('It should not output deprecation warnings too often', () => {
   deprecationWarning('file', 'oldName', 'newName');
   expect(console.warn).toHaveBeenCalledTimes(2);
 
+  deprecationWarning('file2', 'oldName', 'newName');
+  deprecationWarning('file2', 'oldName', 'newName');
+  deprecationWarning('file2', 'oldName', 'newName');
+  expect(console.warn).toHaveBeenCalledTimes(3);
+
   // or restoreMocks automatically?
   spyConsoleWarn.mockRestore();
   spyDateNow.mockRestore();
