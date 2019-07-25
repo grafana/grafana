@@ -41,6 +41,7 @@ export function reactContainer($route: any, $location: any, $injector: any, $roo
         $injector: $injector,
         $rootScope: $rootScope,
         $scope: scope,
+        $contextSrv: contextSrv,
         routeInfo: $route.current.$$route.routeInfo,
       };
 
