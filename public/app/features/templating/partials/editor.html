@@ -251,7 +251,8 @@
             rows="6"
             ng-model="current.query"
             ng-blur="runQuery()"
-            placeholder="时间表达式"
+            placeholder="time expression"
+            required
           />
         </div>
         <div class="gf-form">
@@ -280,7 +281,7 @@
           class="gf-form-input width-30"
           ng-model="current.format"
           ng-blur="runQuery()"
-          placeholder="Default format: 'YYYY-MM-DDTHH:mm:ssZ'"
+          placeholder="format as 'YYYY-MM-DDTHH:mm:ssZ' if empty"
         />
       </div>
     </div>
