@@ -9,11 +9,23 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
+	macaron "gopkg.in/macaron.v1"
 	"net/http"
 )
+
+type testLogger struct {
+	log.Logger
+	errorCalled bool
+	errMessage  string
+}
+
+func (stub *testLogger) Error(testMessage string, ctx ...interface{}) {
+	stub.errorCalled = true
+	stub.errMessage = testMessage
+}
 
 func TestTeamApiEndpoint(t *testing.T) {
 	Convey("Given two teams", t, func() {
@@ -81,7 +93,6 @@ func TestTeamApiEndpoint(t *testing.T) {
 	t.Run("When creating team with api key", func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
-		sc := setupScenarioContext("/api/teams")
 		hs := &HTTPServer{
 			Cfg: setting.NewCfg(),
 			Bus: bus.GetBus(),
@@ -89,19 +100,6 @@ func TestTeamApiEndpoint(t *testing.T) {
 		hs.Cfg.EditorsCanAdmin = true
 
 		teamName := "team foo"
-		sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
-			c.SignedInUser = &models.SignedInUser{IsAnonymous: true}
-			c.OrgRole = models.ROLE_EDITOR
-			cmd := models.CreateTeamCommand{Name: teamName}
-			return hs.CreateTeam(c, cmd)
-		})
-		sc.m.Post(sc.url, sc.defaultHandler)
-
-		keyhash := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
-		bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
-			query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
-			return nil
-		})
 
 		createTeamCalled := 0
 		bus.AddHandler("test", func(cmd *models.CreateTeamCommand) error {
@@ -116,14 +114,42 @@ func TestTeamApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		validApiKey := "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9"
-		sc.fakeReqNoAssertionsWithApiKey("POST", sc.url, validApiKey).exec()
-		assert.Equal(t, sc.resp.Code, 200)
+		req, _ := http.NewRequest("POST", "/api/teams", nil)
 
-		respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-		assert.Nil(t, err)
-		assert.Equal(t, respJSON.Get("teamId").MustInt(), 42)
-		assert.Equal(t, createTeamCalled, 1)
-		assert.Equal(t, addTeamMemberCalled, 0)
+		t.Run("with no real signed in user", func(t *testing.T) {
+			stub := &testLogger{}
+			c := &models.ReqContext{
+				Context: &macaron.Context{
+					Req: macaron.Request{Request: req},
+				},
+				SignedInUser: &models.SignedInUser{},
+				Logger:       stub,
+			}
+			c.OrgRole = models.ROLE_EDITOR
+			cmd := models.CreateTeamCommand{Name: teamName}
+			hs.CreateTeam(c, cmd)
+			assert.Equal(t, createTeamCalled, 1)
+			assert.Equal(t, addTeamMemberCalled, 0)
+			assert.True(t, stub.errorCalled)
+			assert.Equal(t, stub.errMessage, "Could not add creator to team because is not a real user.")
+		})
+
+		t.Run("with real signed in user", func(t *testing.T) {
+			stub := &testLogger{}
+			c := &models.ReqContext{
+				Context: &macaron.Context{
+					Req: macaron.Request{Request: req},
+				},
+				SignedInUser: &models.SignedInUser{UserId: 42},
+				Logger:       stub,
+			}
+			c.OrgRole = models.ROLE_EDITOR
+			cmd := models.CreateTeamCommand{Name: teamName}
+			createTeamCalled, addTeamMemberCalled = 0, 0
+			hs.CreateTeam(c, cmd)
+			assert.Equal(t, createTeamCalled, 1)
+			assert.Equal(t, addTeamMemberCalled, 1)
+			assert.False(t, stub.errorCalled)
+		})
 	})
 }

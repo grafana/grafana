@@ -113,17 +113,6 @@ func (sc *scenarioContext) fakeReqNoAssertionsWithCookie(method, url string, coo
 	return sc
 }
 
-func (sc *scenarioContext) fakeReqNoAssertionsWithApiKey(method, url string, apiKey string) *scenarioContext {
-	sc.resp = httptest.NewRecorder()
-
-	req, _ := http.NewRequest(method, url, nil)
-	req.Header.Add("Authorization", "Bearer "+apiKey)
-
-	sc.req = req
-
-	return sc
-}
-
 type scenarioContext struct {
 	m                    *macaron.Macaron
 	context              *m.ReqContext
