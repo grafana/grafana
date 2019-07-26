@@ -248,7 +248,7 @@ curl -H "X-WEBAUTH-USER: admin" http://localhost:3000/api/teams/search
       "id": 1,
       "orgId": 1,
       "name": "Core",
-      "email": "core@grana.com",
+      "email": "core@grafana.com",
       "avatarUrl": "/avatar/327a5353552d2dc3966e2e646908f540",
       "memberCount": 1,
       "permission": 0

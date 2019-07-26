@@ -31,7 +31,7 @@ Enables your Grafana Enterprise users to authenticate with SAML. [Learn More]({{
 
 ### Team Sync
 
-Team Sync allows you to setup synchronization between teams in Grafana and teams in your auth provider so that your users automatically end up in the right team.
+Team Sync allows you to setup synchronization between teams in Grafana and teams in your auth provider so that your users automatically end up in the right team. [Learn More]({{< relref "auth/team-sync.md" >}}).
 
 Supported auth providers:
 
