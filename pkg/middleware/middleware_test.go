@@ -187,8 +187,6 @@ func TestMiddlewareContext(t *testing.T) {
 
 			Convey("Should init middleware context", func() {
 				So(sc.context.IsSignedIn, ShouldEqual, true)
-				So(sc.context.SignedInUser, ShouldNotBeNil)
-				So(sc.context.SignedInUser.IsAnonymous, ShouldEqual, true)
 				So(sc.context.OrgId, ShouldEqual, 12)
 				So(sc.context.OrgRole, ShouldEqual, models.ROLE_EDITOR)
 			})
