@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.json",
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "../../public/app/types/jquery/*.ts"],
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "module": "commonjs",
@@ -9,6 +9,6 @@
     "declaration": false,
     "typeRoots": ["./node_modules/@types"],
     "esModuleInterop": true,
-    "lib": ["es2015", "es2017.string"]
+    "lib": ["es2015", "es2017.string", "dom"]
   }
 }

@@ -1,11 +1,10 @@
-import { Field, getFieldReducers } from '@grafana/data';
-import { PanelModel } from '@grafana/ui';
+import { Field, fieldReducers } from '@grafana/data';
+import { PanelModel, FieldDisplayOptions } from '@grafana/ui';
 import { GaugeOptions } from './types';
 import {
   sharedSingleStatMigrationCheck,
   migrateOldThresholds,
 } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
-import { FieldDisplayOptions } from '@grafana/ui/src/utils/fieldDisplay';
 
 export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Partial<GaugeOptions> => {
   if (!panel.options) {
@@ -33,7 +32,7 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
 
     // Make sure the stats have a valid name
     if (valueOptions.stat) {
-      fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
+      fieldOptions.calcs = [fieldReducers.get(valueOptions.stat).id];
     }
     field.min = old.minValue;
     field.max = old.maxValue;

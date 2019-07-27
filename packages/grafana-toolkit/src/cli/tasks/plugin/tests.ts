@@ -5,22 +5,38 @@ import { jestConfig } from '../../../config/jest.plugin.config';
 export interface PluginTestOptions {
   updateSnapshot: boolean;
   coverage: boolean;
+  watch: boolean;
+  testPathPattern?: string;
+  testNamePattern?: string;
 }
 
-export const testPlugin = useSpinner<PluginTestOptions>('Running tests', async ({ updateSnapshot, coverage }) => {
-  const testConfig = jestConfig();
+export const testPlugin = useSpinner<PluginTestOptions>(
+  'Running tests',
+  async ({ updateSnapshot, coverage, watch, testPathPattern, testNamePattern }) => {
+    const testConfig = jestConfig();
 
-  const cliConfig = {
-    config: JSON.stringify(testConfig),
-    updateSnapshot,
-    coverage,
-    passWithNoTests: true,
-  };
+    const cliConfig = {
+      config: JSON.stringify(testConfig),
+      updateSnapshot,
+      coverage,
+      watch,
+      testPathPattern: testPathPattern ? [testPathPattern] : [],
+      testNamePattern: testNamePattern ? [testNamePattern] : [],
+      passWithNoTests: true,
+    };
 
-  // @ts-ignore
-  const results = await jestCLI.runCLI(cliConfig, [process.cwd()]);
+    // @ts-ignore
+    const runJest = () => jestCLI.runCLI(cliConfig, [process.cwd()]);
 
-  if (results.results.numFailedTests > 0 || results.results.numFailedTestSuites > 0) {
-    throw new Error('Tests failed');
+    if (watch) {
+      runJest();
+    } else {
+      // @ts-ignore
+      const results = await runJest();
+
+      if (results.results.numFailedTests > 0 || results.results.numFailedTestSuites > 0) {
+        throw new Error('Tests failed');
+      }
+    }
   }
-});
+);

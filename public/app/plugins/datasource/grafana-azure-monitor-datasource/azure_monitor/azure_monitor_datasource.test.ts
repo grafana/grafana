@@ -92,6 +92,7 @@ describe('AzureMonitorDatasource', () => {
             resourceGroup: 'testRG',
             resourceName: 'testRN',
             metricDefinition: 'Microsoft.Compute/virtualMachines',
+            metricNamespace: 'default',
             metricName: 'Percentage CPU',
             timeGrain: 'PT1H',
             alias: '{{metric}}',
@@ -400,7 +401,7 @@ describe('AzureMonitorDatasource', () => {
           expect(options.url).toBe(
             baseUrl +
               '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
-              'metricdefinitions?api-version=2018-01-01'
+              'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
           );
           return ctx.$q.when(response);
         };
@@ -408,7 +409,7 @@ describe('AzureMonitorDatasource', () => {
 
       it('should return a list of metric names', () => {
         return ctx.ds
-          .metricFindQuery('Metricnames(nodeapp, microsoft.insights/components, rn)')
+          .metricFindQuery('Metricnames(nodeapp, microsoft.insights/components, rn, default)')
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(2);
             expect(results[0].text).toEqual('Percentage CPU');
@@ -449,7 +450,7 @@ describe('AzureMonitorDatasource', () => {
           expect(options.url).toBe(
             baseUrl +
               '/nodeapp/providers/microsoft.insights/components/rn/providers/microsoft.insights/' +
-              'metricdefinitions?api-version=2018-01-01'
+              'metricdefinitions?api-version=2018-01-01&metricnamespace=default'
           );
           return ctx.$q.when(response);
         };
@@ -458,7 +459,7 @@ describe('AzureMonitorDatasource', () => {
       it('should return a list of metric names', () => {
         return ctx.ds
           .metricFindQuery(
-            'Metricnames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components, rn)'
+            'Metricnames(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, microsoft.insights/components, rn, default)'
           )
           .then((results: Array<{ text: string; value: string }>) => {
             expect(results.length).toEqual(2);
@@ -467,6 +468,104 @@ describe('AzureMonitorDatasource', () => {
 
             expect(results[1].text).toEqual('Used capacity');
             expect(results[1].value).toEqual('UsedCapacity');
+          });
+      });
+    });
+
+    describe('with metric namespace query', () => {
+      const response = {
+        data: {
+          value: [
+            {
+              name: 'Microsoft.Compute-virtualMachines',
+              properties: {
+                metricNamespaceName: 'Microsoft.Compute/virtualMachines',
+              },
+            },
+            {
+              name: 'Telegraf-mem',
+              properties: {
+                metricNamespaceName: 'Telegraf/mem',
+              },
+            },
+          ],
+        },
+        status: 200,
+        statusText: 'OK',
+      };
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+          const baseUrl =
+            'http://azuremonitor.com/azuremonitor/subscriptions/9935389e-9122-4ef9-95f9-1513dd24753f/resourceGroups';
+          expect(options.url).toBe(
+            baseUrl +
+              '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
+          );
+          return ctx.$q.when(response);
+        };
+      });
+
+      it('should return a list of metric names', () => {
+        return ctx.ds
+          .metricFindQuery('Metricnamespace(nodeapp, Microsoft.Compute/virtualMachines, rn)')
+          .then((results: Array<{ text: string; value: string }>) => {
+            expect(results.length).toEqual(2);
+            expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
+            expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
+
+            expect(results[1].text).toEqual('Telegraf-mem');
+            expect(results[1].value).toEqual('Telegraf/mem');
+          });
+      });
+    });
+
+    describe('with metric namespace query and specifies a subscription id', () => {
+      const response = {
+        data: {
+          value: [
+            {
+              name: 'Microsoft.Compute-virtualMachines',
+              properties: {
+                metricNamespaceName: 'Microsoft.Compute/virtualMachines',
+              },
+            },
+            {
+              name: 'Telegraf-mem',
+              properties: {
+                metricNamespaceName: 'Telegraf/mem',
+              },
+            },
+          ],
+        },
+        status: 200,
+        statusText: 'OK',
+      };
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+          const baseUrl =
+            'http://azuremonitor.com/azuremonitor/subscriptions/11112222-eeee-4949-9b2d-9106972f9123/resourceGroups';
+          expect(options.url).toBe(
+            baseUrl +
+              '/nodeapp/providers/Microsoft.Compute/virtualMachines/rn/providers/microsoft.insights/metricNamespaces?api-version=2017-12-01-preview'
+          );
+          return ctx.$q.when(response);
+        };
+      });
+
+      it('should return a list of metric namespaces', () => {
+        return ctx.ds
+          .metricFindQuery(
+            'Metricnamespace(11112222-eeee-4949-9b2d-9106972f9123, nodeapp, Microsoft.Compute/virtualMachines, rn)'
+          )
+          .then((results: Array<{ text: string; value: string }>) => {
+            expect(results.length).toEqual(2);
+            expect(results[0].text).toEqual('Microsoft.Compute-virtualMachines');
+            expect(results[0].value).toEqual('Microsoft.Compute/virtualMachines');
+
+            expect(results[1].text).toEqual('Telegraf-mem');
+            expect(results[1].value).toEqual('Telegraf/mem');
           });
       });
     });
@@ -733,7 +832,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           baseUrl +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
         return ctx.$q.when(response);
       };
@@ -741,7 +840,13 @@ describe('AzureMonitorDatasource', () => {
 
     it('should return list of Metric Definitions', () => {
       return ctx.ds
-        .getMetricNames('9935389e-9122-4ef9-95f9-1513dd24753f', 'nodeapp', 'microsoft.insights/components', 'resource1')
+        .getMetricNames(
+          '9935389e-9122-4ef9-95f9-1513dd24753f',
+          'nodeapp',
+          'microsoft.insights/components',
+          'resource1',
+          'default'
+        )
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(2);
           expect(results[0].text).toEqual('Used capacity');
@@ -799,7 +904,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           baseUrl +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
         return ctx.$q.when(response);
       };
@@ -812,6 +917,7 @@ describe('AzureMonitorDatasource', () => {
           'nodeapp',
           'microsoft.insights/components',
           'resource1',
+          'default',
           'UsedCapacity'
         )
         .then((results: any) => {
@@ -872,7 +978,7 @@ describe('AzureMonitorDatasource', () => {
         const expected =
           baseUrl +
           '/providers/microsoft.insights/components/resource1' +
-          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01&metricnamespace=default';
         expect(options.url).toBe(expected);
         return ctx.$q.when(response);
       };
@@ -885,6 +991,7 @@ describe('AzureMonitorDatasource', () => {
           'nodeapp',
           'microsoft.insights/components',
           'resource1',
+          'default',
           'Transactions'
         )
         .then((results: any) => {
@@ -903,6 +1010,7 @@ describe('AzureMonitorDatasource', () => {
           'nodeapp',
           'microsoft.insights/components',
           'resource1',
+          'default',
           'FreeCapacity'
         )
         .then((results: any) => {

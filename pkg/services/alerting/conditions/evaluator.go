@@ -34,8 +34,8 @@ type thresholdEvaluator struct {
 
 func newThresholdEvaluator(typ string, model *simplejson.Json) (*thresholdEvaluator, error) {
 	params := model.Get("params").MustArray()
-	if len(params) == 0 {
-		return nil, fmt.Errorf("Evaluator missing threshold parameter")
+	if len(params) == 0 || params[0] == nil {
+		return nil, fmt.Errorf("Evaluator '%v' is missing the threshold parameter", HumanThresholdType(typ))
 	}
 
 	firstParam, ok := params[0].(json.Number)
@@ -138,4 +138,20 @@ func inSlice(a string, list []string) bool {
 		}
 	}
 	return false
+}
+
+// HumanThresholdType converts a treshold "type" string to a string that matches the UI
+// so errors are less confusing.
+func HumanThresholdType(typ string) string {
+	switch typ {
+	case "gt":
+		return "IS ABOVE"
+	case "lt":
+		return "IS BELOW"
+	case "within_range":
+		return "IS WITHIN RANGE"
+	case "outside_range":
+		return "IS OUTSIDE RANGE"
+	}
+	return ""
 }

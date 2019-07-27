@@ -155,7 +155,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
 
   onChange = () => {
     const { thresholds } = this.state;
-    this.props.onChange(threshodsWithoutKey(thresholds));
+    this.props.onChange(thresholdsWithoutKey(thresholds));
   };
 
   renderInput = (threshold: ThresholdWithKey) => {
@@ -231,7 +231,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   }
 }
 
-export function threshodsWithoutKey(thresholds: ThresholdWithKey[]): Threshold[] {
+export function thresholdsWithoutKey(thresholds: ThresholdWithKey[]): Threshold[] {
   return thresholds.map(t => {
     const { key, ...rest } = t;
     return rest; // everything except key

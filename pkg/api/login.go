@@ -44,7 +44,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData.Settings["loginHint"] = setting.LoginHint
 	viewData.Settings["passwordHint"] = setting.PasswordHint
 	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
-	viewData.Settings["samlEnabled"] = hs.Cfg.SAMLEnabled
+	viewData.Settings["samlEnabled"] = setting.IsEnterprise && hs.Cfg.SAMLEnabled
 
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
 		//this cookie is only set whenever an OAuth login fails
@@ -81,7 +81,7 @@ func tryOAuthAutoLogin(c *models.ReqContext) bool {
 	}
 	oauthInfos := setting.OAuthService.OAuthInfos
 	if len(oauthInfos) != 1 {
-		log.Warn("Skipping OAuth auto login because multiple OAuth providers are configured.")
+		log.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
 		return false
 	}
 	for key := range setting.OAuthService.OAuthInfos {
@@ -114,12 +114,16 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	}
 
 	if err := bus.Dispatch(authQuery); err != nil {
+		e401 := Error(401, "Invalid username or password", err)
 		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
-			return Error(401, "Invalid username or password", err)
+			return e401
 		}
 
+		// Do not expose disabled status,
+		// just show incorrect user credentials error (see #17947)
 		if err == login.ErrUserDisabled {
-			return Error(401, "User is disabled", err)
+			hs.log.Warn("User is disabled", "user", cmd.User)
+			return e401
 		}
 
 		return Error(500, "Error while trying to authenticate user", err)
@@ -138,7 +142,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
 	}
 
-	metrics.M_Api_Login_Post.Inc()
+	metrics.MApiLoginPost.Inc()
 	return JSON(200, result)
 }
 

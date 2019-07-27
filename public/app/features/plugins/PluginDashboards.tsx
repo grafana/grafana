@@ -60,7 +60,7 @@ export class PluginDashboards extends PureComponent<Props, State> {
   import = (dash: PluginDashboard, overwrite: boolean) => {
     const { plugin, datasource } = this.props;
 
-    const installCmd = {
+    const installCmd: any = {
       pluginId: plugin.id,
       path: dash.path,
       overwrite: overwrite,

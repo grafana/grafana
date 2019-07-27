@@ -43,6 +43,23 @@ export const savePackage = useSpinner<SavePackageOptions>(
 const preparePackage = async (pkg: any) => {
   pkg.main = 'index.js';
   pkg.types = 'index.d.ts';
+
+  const version: string = pkg.version;
+  const name: string = pkg.name;
+  const deps: any = pkg.dependencies;
+
+  // Below we are adding cross-dependencies to Grafana's packages
+  // with the version being published
+  if (name.endsWith('/ui')) {
+    deps['@grafana/data'] = version;
+  } else if (name.endsWith('/runtime')) {
+    deps['@grafana/data'] = version;
+    deps['@grafana/ui'] = version;
+  } else if (name.endsWith('/toolkit')) {
+    deps['@grafana/data'] = version;
+    deps['@grafana/ui'] = version;
+  }
+
   await savePackage({
     path: `${cwd}/dist/package.json`,
     pkg,

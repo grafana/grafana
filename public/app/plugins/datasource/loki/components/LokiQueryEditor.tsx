@@ -1,9 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-// Components
-// import { Select, SelectOptionItem } from '@grafana/ui';
-
 // Types
 import { QueryEditorProps } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';
@@ -37,7 +34,7 @@ export class LokiQueryEditor extends PureComponent<Props> {
   //   });
   // };
   //
-  // onFormatChanged = (option: SelectOptionItem) => {
+  // onFormatChanged = (option: SelectableValue) => {
   //   this.props.onChange({
   //     ...this.state.query,
   //     resultFormat: option.value,
@@ -47,7 +44,7 @@ export class LokiQueryEditor extends PureComponent<Props> {
   render() {
     // const { query } = this.state;
     // const { datasource } = this.props;
-    // const formatOptions: SelectOptionItem[] = [
+    // const formatOptions: SelectableValue[] = [
     //   { label: 'Time Series', value: 'time_series' },
     //   { label: 'Table', value: 'table' },
     // ];
