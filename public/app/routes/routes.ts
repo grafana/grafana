@@ -35,6 +35,9 @@ import { DashboardRouteInfo } from 'app/types';
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
   $locationProvider.html5Mode(true);
 
+  // Routes here are guarded both here and server side for react-container routes or just on the server for angular
+  // ones. That means angular ones could be navigated to in case there is a client side link some where.
+
   $routeProvider
     .when('/', {
       template: '<react-container />',
