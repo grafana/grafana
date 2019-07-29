@@ -4,7 +4,7 @@ import ElapsedTime from './ElapsedTime';
 import { LoadingState } from '@grafana/data';
 import { PanelData } from '@grafana/ui';
 
-function formatLatency(value) {
+function formatLatency(value: number) {
   return `${(value / 1000).toFixed(1)}s`;
 }
 

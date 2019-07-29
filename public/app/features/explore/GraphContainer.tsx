@@ -69,9 +69,10 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
   const { split } = explore;
+  // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
   const { graphResult, loadingState, showingGraph, showingTable, absoluteRange } = item;
   const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;

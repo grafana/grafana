@@ -5,8 +5,8 @@ class TablePanelCtrl {}
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
-    let model;
-    let modelJson;
+    let model: any;
+    let modelJson: any;
     let persistedOptionsMock;
     const defaultOptionsMock = {
       fieldOptions: {

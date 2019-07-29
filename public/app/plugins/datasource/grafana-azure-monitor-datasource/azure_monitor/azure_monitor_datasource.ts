@@ -332,7 +332,7 @@ export default class AzureMonitorDatasource {
       this.apiPreviewVersion
     );
 
-    return this.doRequest(url).then(result => {
+    return this.doRequest(url).then((result: any) => {
       return ResponseParser.parseResponseValues(result, 'name', 'properties.metricNamespaceName');
     });
   }

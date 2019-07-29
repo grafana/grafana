@@ -140,6 +140,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       <div className="query-row">
         <div className="query-row-field flex-shrink-1">
           {QueryField ? (
+            //@ts-ignore
             <QueryField
               datasource={datasourceInstance}
               datasourceStatus={datasourceStatus}
