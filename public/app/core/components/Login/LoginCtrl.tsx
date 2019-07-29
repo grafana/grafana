@@ -9,8 +9,6 @@ import { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import { hot } from 'react-hot-loader';
 
-let backendSrv;
-
 export interface FormModel {
   user: string;
   password: string;
@@ -45,7 +43,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
     if (config.loginError) {
       appEvents.on('alert-warning', ['Login Failed', config.loginError]);
     }
-    backendSrv = getBackendSrv();
   }
 
   signUp = (formModel: FormModel, valid: boolean) => {};
@@ -56,7 +53,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
       return;
     }
 
-    backendSrv
+    getBackendSrv()
       .put('/api/user/password', pws)
       .then(() => {
         this.toGrafana();
@@ -74,7 +71,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
       loggingIn: true,
     });
 
-    backendSrv
+    getBackendSrv()
       .post('/login', formModel)
       .then((result: any) => {
         this.result = result;

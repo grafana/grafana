@@ -27,21 +27,18 @@ export class LoginForm extends PureComponent<Props, State> {
       email: '',
       valid: false,
     };
-
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.handleChange = this.handleChange.bind(this);
   }
 
-  handleSubmit(e: SyntheticEvent) {
+  onSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
 
     const { user, password, email } = this.state;
     if (this.state.valid) {
       this.props.onSubmit({ user, password, email }, this.state.valid);
     }
-  }
+  };
 
-  handleChange(e: SyntheticEvent) {
+  onChange = (e: SyntheticEvent) => {
     // @ts-ignore
     this.setState({ [e.target.name]: e.target.value }, () => {
       this.setState({ valid: this.validate() }, () => {
@@ -50,7 +47,7 @@ export class LoginForm extends PureComponent<Props, State> {
         }
       });
     });
-  }
+  };
 
   validate() {
     if (this.state.user.length > 0 && this.state.password.length > 0) {
@@ -72,7 +69,7 @@ export class LoginForm extends PureComponent<Props, State> {
             // ng-model="formModel.user"
             placeholder={this.props.loginHint}
             aria-label="Username input field"
-            onChange={this.handleChange}
+            onChange={this.onChange}
           />
         </div>
         <div className="login-form">
@@ -85,7 +82,7 @@ export class LoginForm extends PureComponent<Props, State> {
             id="inputPassword"
             placeholder={this.props.passwordHint}
             aria-label="Password input field"
-            onChange={this.handleChange}
+            onChange={this.onChange}
           />
         </div>
         <div className="login-button-group">
@@ -94,7 +91,7 @@ export class LoginForm extends PureComponent<Props, State> {
               type="submit"
               aria-label="Login button"
               className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
-              onClick={this.handleSubmit}
+              onClick={this.onSubmit}
               disabled={!this.state.valid}
             >
               Log In

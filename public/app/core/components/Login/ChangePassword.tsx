@@ -23,7 +23,7 @@ export class ChangePassword extends PureComponent<Props, State> {
     };
   }
 
-  handleSubmit = (e: SyntheticEvent) => {
+  onSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
 
     const { newPassword, confirmNew } = this.state;
@@ -34,7 +34,7 @@ export class ChangePassword extends PureComponent<Props, State> {
     }
   };
 
-  handleChange = (e: SyntheticEvent) => {
+  onChange = (e: SyntheticEvent) => {
     // @ts-ignore
     this.setState({ [e.target.name]: e.target.value }, () => {
       this.setState({
@@ -66,7 +66,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               className="gf-form-input login-form-input"
               required
               placeholder="New password"
-              onChange={this.handleChange}
+              onChange={this.onChange}
             />
           </div>
           <div className="login-form">
@@ -77,7 +77,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               required
               ng-model="command.confirmNew"
               placeholder="Confirm new password"
-              onChange={this.handleChange}
+              onChange={this.onChange}
             />
           </div>
           <div className="login-button-group login-button-group--right text-right">
@@ -93,7 +93,7 @@ export class ChangePassword extends PureComponent<Props, State> {
             <button
               type="submit"
               className={`btn btn-large p-x-2 ${this.state.valid ? 'btn-primary' : 'btn-inverse'}`}
-              onClick={this.handleSubmit}
+              onClick={this.onSubmit}
               disabled={!this.state.valid}
             >
               Save
