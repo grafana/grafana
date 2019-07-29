@@ -61,6 +61,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
       options.jsonData.azureLogAnalyticsSameAs = true;
     }
 
+    if (!options.jsonData.hasOwnProperty('subscriptionId')) {
+      options.jsonData.subscriptionId = '';
+    }
+
     if (!options.hasOwnProperty('secureJsonData')) {
       options.secureJsonData = {};
     }
