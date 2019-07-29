@@ -92,12 +92,12 @@ export class MonitorConfig extends PureComponent<Props, State> {
     });
   };
 
-  onSubscriptionSelect = (subscriptionId: SelectableValue<string>) => {
+  onSubscriptionSelect = (subscription: SelectableValue<string>) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
       jsonData: {
         ...this.state.config.jsonData,
-        subscriptionId,
+        subscriptionId: subscription.value,
       },
     });
   };

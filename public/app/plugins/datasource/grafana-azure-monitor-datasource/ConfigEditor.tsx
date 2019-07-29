@@ -32,7 +32,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     };
 
     this.backendSrv = getBackendSrv();
-    this.tplSrv = new TemplateSrv();
+    this.templateSrv = new TemplateSrv();
 
     if (options.id) {
       this.state.config.url = '/api/datasources/proxy/' + options.id;
@@ -89,7 +89,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   backendSrv: BackendSrv = null;
-  tplSrv: TemplateSrv = null;
+  templateSrv: TemplateSrv = null;
 
   init = async () => {
     await this.getSubscriptions();
@@ -150,7 +150,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       return;
     }
 
-    const azureMonitorDatasource = new AzureMonitorDatasource(this.state.config, this.backendSrv, this.tplSrv);
+    const azureMonitorDatasource = new AzureMonitorDatasource(this.state.config, this.backendSrv, this.templateSrv);
 
     let subscriptions = (await azureMonitorDatasource.getSubscriptions()) || [];
     subscriptions = subscriptions.map(subscription => {
@@ -182,7 +182,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       return;
     }
 
-    const azureMonitorDatasource = new AzureMonitorDatasource(this.state.config, this.backendSrv, this.tplSrv);
+    const azureMonitorDatasource = new AzureMonitorDatasource(this.state.config, this.backendSrv, this.templateSrv);
 
     let logAnalyticsSubscriptions = (await azureMonitorDatasource.getSubscriptions('workspacesloganalytics')) || [];
     logAnalyticsSubscriptions = logAnalyticsSubscriptions.map(subscription => {
@@ -211,17 +211,15 @@ export class ConfigEditor extends PureComponent<Props, State> {
   };
 
   getWorkspaces = async () => {
-    const sameAs =
-      this.state.config.jsonData.azureLogAnalyticsSameAs &&
-      (this.state.subscriptions.length > 0 || this.state.config.jsonData.subscriptionId);
-    if (!sameAs && this.state.logAnalyticsSubscriptions.length === 0) {
+    const sameAs = this.state.config.jsonData.azureLogAnalyticsSameAs && this.state.config.jsonData.subscriptionId;
+    if (!sameAs && !this.state.config.jsonData.logAnalyticsSubscriptionId) {
       return;
     }
 
     const azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(
       this.state.config,
       this.backendSrv,
-      this.tplSrv
+      this.templateSrv
     );
 
     let logAnalyticsWorkspaces = await azureLogAnalyticsDatasource.getWorkspaces(

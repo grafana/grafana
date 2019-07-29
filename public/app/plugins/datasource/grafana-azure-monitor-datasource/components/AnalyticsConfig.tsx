@@ -77,12 +77,12 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
     });
   };
 
-  onLogAnalyticsSubscriptionSelect = (logAnalyticsSubscriptionId: SelectableValue<string>) => {
+  onLogAnalyticsSubscriptionSelect = (logAnalyticsSubscription: SelectableValue<string>) => {
     this.props.onDatasourceUpdate({
       ...this.state.config,
       jsonData: {
         ...this.state.config.jsonData,
-        logAnalyticsSubscriptionId,
+        logAnalyticsSubscriptionId: logAnalyticsSubscription.value,
       },
     });
   };
