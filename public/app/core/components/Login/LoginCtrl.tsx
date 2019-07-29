@@ -18,9 +18,9 @@ interface Props {
   routeParams?: any;
   updateLocation?: typeof updateLocation;
   children: (obj: {
-    loggingIn: boolean;
+    isLoggingIn: boolean;
     changePassword: (pw: { newPassword: string; confirmNew: string }, valid: boolean) => void;
-    needPassword: boolean;
+    isChangingPassword: boolean;
     toGrafana: Function;
     signUp: Function;
     login: (data: FormModel, valid: boolean) => void;
@@ -28,8 +28,8 @@ interface Props {
 }
 
 interface State {
-  loggingIn: boolean;
-  needPassword: boolean;
+  isLoggingIn: boolean;
+  isChangingPassword: boolean;
 }
 
 export class LoginCtrl extends PureComponent<Props, State> {
@@ -37,8 +37,8 @@ export class LoginCtrl extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      loggingIn: false,
-      needPassword: false,
+      isLoggingIn: false,
+      isChangingPassword: false,
     };
     if (config.loginError) {
       appEvents.on('alert-warning', ['Login Failed', config.loginError]);
@@ -68,7 +68,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
       return;
     }
     this.setState({
-      loggingIn: true,
+      isLoggingIn: true,
     });
 
     getBackendSrv()
@@ -85,7 +85,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
       })
       .catch(() => {
         this.setState({
-          loggingIn: false,
+          isLoggingIn: false,
         });
       });
   };
@@ -93,7 +93,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
   changeView = () => {
     // Implement animation
     this.setState({
-      needPassword: true,
+      isChangingPassword: true,
     });
   };
 
@@ -123,10 +123,10 @@ export class LoginCtrl extends PureComponent<Props, State> {
 
   render() {
     const { children } = this.props;
-    const { loggingIn, needPassword } = this.state;
+    const { isLoggingIn, isChangingPassword } = this.state;
     const { login, signUp, toGrafana, changePassword } = this;
 
-    return <>{children({ login, signUp, loggingIn, changePassword, toGrafana, needPassword })}</>;
+    return <>{children({ login, signUp, isLoggingIn, changePassword, toGrafana, isChangingPassword })}</>;
   }
 }
 

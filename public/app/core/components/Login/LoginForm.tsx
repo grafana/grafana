@@ -6,7 +6,7 @@ interface Props {
   displayLoginFields: boolean;
   onChange?: (valid: boolean) => void;
   onSubmit: (data: FormModel, valid: boolean) => void;
-  loggingIn: boolean;
+  isLoggingIn: boolean;
   passwordHint: string;
   loginHint: string;
 }
@@ -86,7 +86,7 @@ export class LoginForm extends PureComponent<Props, State> {
           />
         </div>
         <div className="login-button-group">
-          {!this.props.loggingIn ? (
+          {!this.props.isLoggingIn ? (
             <button
               type="submit"
               aria-label="Login button"

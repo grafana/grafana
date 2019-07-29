@@ -6,13 +6,13 @@ import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
 
-const oauthEnabled = () => Object.keys(config.oauth).length > 0;
+const isOauthEnabled = () => Object.keys(config.oauth).length > 0;
 export interface Props {
   disabledLoginForm: boolean;
   passwordHint: string;
   loginHint: string;
   disableUserSignup: boolean;
-  oauthEnabled: boolean;
+  isOauthEnabled: boolean;
   ldapEnabled: boolean;
   authProxyEnabled: boolean;
   onSubmit: Function;
@@ -48,8 +48,8 @@ export class LoginPage extends PureComponent<Props, State> {
             <div className="logo-wordmark" />
           </div>
           <LoginCtrl>
-            {({ login, loggingIn, changePassword, toGrafana, needPassword }) =>
-              needPassword ? (
+            {({ login, isLoggingIn, changePassword, toGrafana, isChangingPassword }) =>
+              isChangingPassword ? (
                 <ChangePassword onSubmit={changePassword} onSkip={toGrafana} />
               ) : (
                 <div className="login-out-box">
@@ -60,10 +60,10 @@ export class LoginPage extends PureComponent<Props, State> {
                       onSubmit={login}
                       loginHint={config.loginHint}
                       passwordHint={config.passwordHint}
-                      loggingIn={loggingIn}
+                      isLoggingIn={isLoggingIn}
                     />
 
-                    {oauthEnabled() ? (
+                    {isOauthEnabled() ? (
                       <>
                         <div className="text-center login-divider">
                           <div>
