@@ -43,6 +43,10 @@ export class ChangePassword extends PureComponent<Props, State> {
     });
   };
 
+  onSkip = (e: SyntheticEvent) => {
+    this.props.onSkip();
+  };
+
   validate() {
     return this.state.newPassword === this.state.confirmNew;
   }
@@ -85,7 +89,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               placement="bottom"
               content="If you skip you will be prompted to change password next time you login."
             >
-              <a className="btn btn-link" onClick={() => this.props.onSkip()}>
+              <a className="btn btn-link" onClick={this.onSkip}>
                 Skip
               </a>
             </Tooltip>

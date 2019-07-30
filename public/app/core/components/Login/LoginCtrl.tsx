@@ -100,7 +100,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
   toGrafana = () => {
     console.log('Trying to get to Grafana');
     const params = this.props.routeParams;
-    console.log(this.props);
+    console.log(this.result);
     if (params.redirect && params.redirect[0] === '/') {
       //   window.location.href = config.appSubUrl + params.redirect;
 
