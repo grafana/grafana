@@ -12,7 +12,7 @@ import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
 import { toUtc, dateTime, isDateTime } from '@grafana/data';
-import { getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 export class TimeSrv {
   time: any;
@@ -35,6 +35,7 @@ export class TimeSrv {
     this.time = { from: '6h', to: 'now' };
 
     $rootScope.$on('zoom-out', this.zoomOut.bind(this));
+    $rootScope.$on('shift-time', this.shiftTime.bind(this));
     $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
 
     document.addEventListener('visibilitychange', () => {
@@ -242,6 +243,16 @@ export class TimeSrv {
     const { from, to } = getZoomedTimeRange(range, factor);
 
     this.setTime({ from: toUtc(from), to: toUtc(to) });
+  }
+
+  shiftTime(e: any, direction: number) {
+    const range = this.timeRange();
+    const { from, to } = getShiftedTimeRange(direction, range);
+
+    this.setTime({
+      from: toUtc(from),
+      to: toUtc(to),
+    });
   }
 }
 
