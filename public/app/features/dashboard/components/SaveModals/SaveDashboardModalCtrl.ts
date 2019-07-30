@@ -1,4 +1,5 @@
 import coreModule from 'app/core/core_module';
+import { DashboardSrv } from '../../services/DashboardSrv';
 
 const template = `
 <div class="modal-body">
@@ -71,8 +72,8 @@ export class SaveDashboardModalCtrl {
   saveTimerange = false;
   time: any;
   originalTime: any;
-  current = [];
-  originalCurrent = [];
+  current: any[] = [];
+  originalCurrent: any[] = [];
   max: number;
   saveForm: any;
   isSaving: boolean;
@@ -81,7 +82,7 @@ export class SaveDashboardModalCtrl {
   variableValueChange = false;
 
   /** @ngInject */
-  constructor(private dashboardSrv) {
+  constructor(private dashboardSrv: DashboardSrv) {
     this.message = '';
     this.max = 64;
     this.isSaving = false;
@@ -94,7 +95,7 @@ export class SaveDashboardModalCtrl {
       return;
     }
 
-    const options = {
+    const options: any = {
       saveVariables: this.saveVariables,
       saveTimerange: this.saveTimerange,
       message: this.message,
@@ -108,7 +109,7 @@ export class SaveDashboardModalCtrl {
     return this.dashboardSrv.save(saveModel, options).then(this.postSave.bind(this, options));
   }
 
-  postSave(options) {
+  postSave(options: any) {
     if (options.saveVariables) {
       this.dashboardSrv.getCurrent().resetOriginalVariables();
     }

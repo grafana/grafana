@@ -2,8 +2,10 @@ import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import { DashboardModel } from '../../state/DashboardModel';
 import $ from 'jquery';
 import _ from 'lodash';
-import angular from 'angular';
+import angular, { ILocationService } from 'angular';
 import config from 'app/core/config';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { DashboardSrv } from '../../services/DashboardSrv';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -19,12 +21,12 @@ export class SettingsCtrl {
 
   /** @ngInject */
   constructor(
-    private $scope,
-    private $route,
-    private $location,
-    private $rootScope,
-    private backendSrv,
-    private dashboardSrv
+    private $scope: any,
+    private $route: any,
+    private $location: ILocationService,
+    private $rootScope: any,
+    private backendSrv: BackendSrv,
+    private dashboardSrv: DashboardSrv
   ) {
     // temp hack for annotations and variables editors
     // that rely on inherited scope
@@ -226,13 +228,13 @@ export class SettingsCtrl {
   }
 
   deleteDashboardConfirmed() {
-    this.backendSrv.deleteDashboard(this.dashboard.uid).then(() => {
+    this.backendSrv.deleteDashboard(this.dashboard.uid, false).then(() => {
       appEvents.emit('alert-success', ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
       this.$location.url('/');
     });
   }
 
-  onFolderChange(folder) {
+  onFolderChange(folder: { id: number; title: string }) {
     this.dashboard.meta.folderId = folder.id;
     this.dashboard.meta.folderTitle = folder.title;
     this.hasUnsavedFolderChange = true;
