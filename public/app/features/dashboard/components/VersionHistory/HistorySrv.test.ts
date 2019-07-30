@@ -7,7 +7,7 @@ describe('historySrv', () => {
   const versionsResponse = versions();
   const restoreResponse = restore;
 
-  const backendSrv = {
+  const backendSrv: any = {
     get: jest.fn(() => Promise.resolve({})),
     post: jest.fn(() => Promise.resolve({})),
   };
@@ -23,19 +23,19 @@ describe('historySrv', () => {
       backendSrv.get = jest.fn(() => Promise.resolve(versionsResponse));
       historySrv = new HistorySrv(backendSrv);
 
-      return historySrv.getHistoryList(dash, historyListOpts).then(versions => {
+      return historySrv.getHistoryList(dash, historyListOpts).then((versions: any) => {
         expect(versions).toEqual(versionsResponse);
       });
     });
 
     it('should return an empty array when not given an id', () => {
-      return historySrv.getHistoryList(emptyDash, historyListOpts).then(versions => {
+      return historySrv.getHistoryList(emptyDash, historyListOpts).then((versions: any) => {
         expect(versions).toEqual([]);
       });
     });
 
     it('should return an empty array when not given a dashboard', () => {
-      return historySrv.getHistoryList(null, historyListOpts).then(versions => {
+      return historySrv.getHistoryList(null, historyListOpts).then((versions: any) => {
         expect(versions).toEqual([]);
       });
     });
@@ -46,7 +46,7 @@ describe('historySrv', () => {
       const version = 6;
       backendSrv.post = jest.fn(() => Promise.resolve(restoreResponse(version)));
       historySrv = new HistorySrv(backendSrv);
-      return historySrv.restoreDashboard(dash, version).then(response => {
+      return historySrv.restoreDashboard(dash, version).then((response: any) => {
         expect(response).toEqual(restoreResponse(version));
       });
     });
