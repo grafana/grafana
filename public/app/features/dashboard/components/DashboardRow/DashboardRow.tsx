@@ -11,7 +11,7 @@ export interface DashboardRowProps {
 }
 
 export class DashboardRow extends React.Component<DashboardRowProps, any> {
-  constructor(props) {
+  constructor(props: DashboardRowProps) {
     super(props);
 
     this.state = {
@@ -32,7 +32,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
   onToggle = () => {
     this.props.dashboard.toggleRow(this.props.panel);
 
-    this.setState(prevState => {
+    this.setState((prevState: any) => {
       return { collapsed: !prevState.collapsed };
     });
   };
