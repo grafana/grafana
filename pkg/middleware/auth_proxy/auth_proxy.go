@@ -245,19 +245,20 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		AuthId:     auth.header,
 	}
 
-	if auth.headerType == "username" {
+	switch auth.headerType {
+	case "username":
 		extUser.Login = auth.header
 
-		// only set Email if it can be parsed as an email address
-		emailAddr, emailErr := mail.ParseAddress(auth.header)
+		emailAddr, emailErr := mail.ParseAddress(auth.header) // only set Email if it can be parsed as an email address
 		if emailErr == nil {
 			extUser.Email = emailAddr.Address
 		}
-	} else if auth.headerType == "email" {
+	case "email":
 		extUser.Email = auth.header
 		extUser.Login = auth.header
-	} else {
+	default:
 		return 0, newError("Auth proxy header property invalid", nil)
+
 	}
 
 	auth.headersIterator(func(field string, header string) {
