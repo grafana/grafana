@@ -20,6 +20,8 @@ import {
 
 import { getTimeZone } from '../profile/state/selectors';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
+import { getLocationSrv } from '@grafana/runtime';
+import kbn from '../../core/utils/kbn';
 import { ExploreTimeControls } from './ExploreTimeControls';
 
 enum IconSide {
@@ -116,21 +118,23 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     changeMode(exploreId, mode);
   };
 
-  saveQueryToPanel = async () => {
+  returnToPanel = async () => {
     const { originPanel, queries } = this.props;
 
     const dashboardSrv = getDashboardSrv();
-    const dash = dashboardSrv.getCurrent().getSaveModelClone();
-    const newPanels = dash.panels.map(panel => {
-      if (panel.id === originPanel) {
-        panel.targets = queries;
-      }
+    const dash = dashboardSrv.getCurrent();
 
-      return panel;
+    const titleSlug = kbn.slugifyForUrl(dash.title);
+    getLocationSrv().update({
+      path: `/d/${dash.uid}/:${titleSlug}`,
+      query: {
+        fullscreen: true,
+        edit: true,
+        panelId: originPanel,
+        fromExplore: true,
+        queryRows: queries.length,
+      },
     });
-
-    const newDash = { panels: newPanels, ...dash };
-    return dashboardSrv.saveDashboard(undefined, newDash);
   };
 
   render() {
@@ -240,9 +244,9 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
 
             {originDashboardIsEditable && !splitted && (
               <div className="explore-toolbar-content-item">
-                <Tooltip content={'Save query to panel'} placement="bottom">
-                  <button className="btn navbar-button" onClick={this.saveQueryToPanel}>
-                    <i className="fa fa-save" />
+                <Tooltip content={'Return to panel'} placement="bottom">
+                  <button className="btn navbar-button" onClick={this.returnToPanel}>
+                    <i className="fa fa-arrow-left" />
                   </button>
                 </Tooltip>
               </div>

@@ -29,6 +29,7 @@ import {
 } from 'app/types/explore';
 import { config } from '../config';
 import { PanelQueryState } from '../../features/dashboard/state/PanelQueryState';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -57,10 +58,10 @@ export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DAT
  */
 export async function getExploreUrl(
   panel: PanelModel,
-  panelTargets: any[],
+  panelTargets: DataQuery[],
   panelDatasource: any,
   datasourceSrv: any,
-  timeSrv: any
+  timeSrv: TimeSrv
 ) {
   let exploreDatasource = panelDatasource;
   let exploreTargets: DataQuery[] = panelTargets;
@@ -89,11 +90,10 @@ export async function getExploreUrl(
         ...state,
         datasource: exploreDatasource.name,
         queries: exploreTargets.map(t => ({ ...t, datasource: exploreDatasource.name })),
-        originPanel: panel.id,
       };
     }
 
-    const exploreState = JSON.stringify(state);
+    const exploreState = JSON.stringify({ ...state, originPanel: panel.id });
     url = renderUrl('/explore', { left: exploreState });
   }
   return url;

@@ -263,12 +263,19 @@ export class BackendSrv implements BackendService {
     return this.get(`/api/folders/${uid}`);
   }
 
-  saveDashboard(dash: DashboardModel, options: any = {}) {
+  saveDashboard(
+    dash: DashboardModel,
+    options: {
+      folderId?: number;
+      overwrite?: boolean;
+      message?: string;
+    } = { message: '' }
+  ) {
     return this.post('/api/dashboards/db/', {
       dashboard: dash,
       folderId: options.folderId,
       overwrite: options.overwrite === true,
-      message: options.message || '',
+      message: options.message,
     });
   }
 
