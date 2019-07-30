@@ -1,6 +1,6 @@
 <!--
 
-Thank you for sending a pull request!  Here are some tips:
+Thank you for sending a pull request! Here are some tips:
 
 1. If this is your first time, please read our contribution guide at https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md
 
@@ -12,7 +12,7 @@ Thank you for sending a pull request!  Here are some tips:
 
 5. If you can not merge your Pull Request due to a merge conflict, Rebase it. This gets it in sync with the master branch.
 
-6. Name your PR as "<FeatureArea>: Describe your change". If it's a fix or feature relevant for changelog describe the user impact in the title. The PR title is used to auto-generate the changelog for issues marked with the "add to changelog" label.
+6. Name your PR as "<FeatureArea>: Describe your change". If it's a fix or feature relevant for the changelog describe the user impact in the title. The PR title is used to auto-generate the changelog for issues marked with the "add to changelog" label.
 
 -->
 
