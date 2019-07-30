@@ -1,4 +1,4 @@
-<!--  Thanks for sending a pull request!  Here are some tips for you:
+<!--  Thank you for sending a pull request!  Here are some tips for you:
 
 1. If this is your first time, please read our [`CONTRIBUTING.md`](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guide.
 2. Ensure you have added or ran the appropriate tests for your PR.
