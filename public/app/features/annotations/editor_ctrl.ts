@@ -3,6 +3,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
+import DatasourceSrv from '../plugins/datasource_srv';
 
 export class AnnotationsEditorCtrl {
   mode: any;
@@ -25,7 +26,7 @@ export class AnnotationsEditorCtrl {
   showOptions: any = [{ text: 'All Panels', value: 0 }, { text: 'Specific Panels', value: 1 }];
 
   /** @ngInject */
-  constructor($scope, private datasourceSrv) {
+  constructor($scope: any, private datasourceSrv: DatasourceSrv) {
     $scope.ctrl = this;
 
     this.dashboard = $scope.dashboard;
@@ -37,13 +38,13 @@ export class AnnotationsEditorCtrl {
     this.onColorChange = this.onColorChange.bind(this);
   }
 
-  datasourceChanged() {
+  async datasourceChanged() {
     return this.datasourceSrv.get(this.currentAnnotation.datasource).then(ds => {
       this.currentDatasource = ds;
     });
   }
 
-  edit(annotation) {
+  edit(annotation: any) {
     this.currentAnnotation = annotation;
     this.currentAnnotation.showIn = this.currentAnnotation.showIn || 0;
     this.currentIsNew = false;
@@ -73,7 +74,7 @@ export class AnnotationsEditorCtrl {
     this.mode = 'list';
   }
 
-  move(index, dir) {
+  move(index: number, dir: any) {
     // @ts-ignore
     _.move(this.annotations, index, index + dir);
   }
@@ -85,13 +86,13 @@ export class AnnotationsEditorCtrl {
     this.dashboard.updateSubmenuVisibility();
   }
 
-  removeAnnotation(annotation) {
+  removeAnnotation(annotation: any) {
     const index = _.indexOf(this.annotations, annotation);
     this.annotations.splice(index, 1);
     this.dashboard.updateSubmenuVisibility();
   }
 
-  onColorChange(newColor) {
+  onColorChange(newColor: string) {
     this.currentAnnotation.iconColor = newColor;
   }
 }
