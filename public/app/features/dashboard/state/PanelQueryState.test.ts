@@ -95,7 +95,7 @@ function makeSeriesStub(refId: string) {
     fields: [{ name: 'a' }],
     rows: [],
     refId,
-  };
+  } as any;
 }
 
 describe('stream handling', () => {

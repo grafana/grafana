@@ -164,11 +164,15 @@ func scan(pluginDir string) error {
 }
 
 func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
+	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
+	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
+	// is embedded in worldping app.
+
 	if err != nil {
 		return err
 	}
 
-	if f.Name() == "node_modules" {
+	if f.Name() == "node_modules" || f.Name() == "Chromium.app" {
 		return util.ErrWalkSkipDir
 	}
 

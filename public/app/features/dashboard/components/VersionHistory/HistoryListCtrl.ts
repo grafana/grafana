@@ -1,10 +1,10 @@
 import _ from 'lodash';
-import angular from 'angular';
+import angular, { ILocationService, IQService } from 'angular';
 
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
 import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
-import { dateTime, toUtc } from '@grafana/data';
+import { dateTime, toUtc, DateTimeInput } from '@grafana/data';
 
 export class HistoryListCtrl {
   appending: boolean;
@@ -24,12 +24,12 @@ export class HistoryListCtrl {
 
   /** @ngInject */
   constructor(
-    private $route,
-    private $rootScope,
-    private $location,
-    private $q,
+    private $route: any,
+    private $rootScope: any,
+    private $location: ILocationService,
+    private $q: IQService,
     private historySrv: HistorySrv,
-    public $scope
+    public $scope: any
   ) {
     this.appending = false;
     this.diff = 'basic';
@@ -69,11 +69,11 @@ export class HistoryListCtrl {
     this.canCompare = selected === 2;
   }
 
-  formatDate(date) {
+  formatDate(date: DateTimeInput) {
     return this.dashboard.formatDate(date);
   }
 
-  formatBasicDate(date) {
+  formatBasicDate(date: DateTimeInput) {
     const now = this.dashboard.timezone === 'browser' ? dateTime() : toUtc();
     const then = this.dashboard.timezone === 'browser' ? dateTime(date) : toUtc(date);
     return then.from(now);
@@ -84,7 +84,9 @@ export class HistoryListCtrl {
     this.mode = 'compare';
 
     // have it already been fetched?
+    // @ts-ignore
     if (this.delta[this.diff]) {
+      // @ts-ignore
       return this.$q.when(this.delta[this.diff]);
     }
 
@@ -109,7 +111,8 @@ export class HistoryListCtrl {
 
     return this.historySrv
       .calculateDiff(options)
-      .then(response => {
+      .then((response: any) => {
+        // @ts-ignore
         this.delta[this.diff] = response;
       })
       .catch(() => {
@@ -130,7 +133,7 @@ export class HistoryListCtrl {
 
     return this.historySrv
       .getHistoryList(this.dashboard, options)
-      .then(revisions => {
+      .then((revisions: any) => {
         // set formatted dates & default values
         for (const rev of revisions) {
           rev.createdDateString = this.formatDate(rev.created);
@@ -140,7 +143,7 @@ export class HistoryListCtrl {
 
         this.revisions = append ? this.revisions.concat(revisions) : revisions;
       })
-      .catch(err => {
+      .catch((err: any) => {
         this.loading = false;
       })
       .finally(() => {
@@ -183,7 +186,7 @@ export class HistoryListCtrl {
     this.loading = true;
     return this.historySrv
       .restoreDashboard(this.dashboard, version)
-      .then(response => {
+      .then((response: any) => {
         this.$location.url(locationUtil.stripBaseFromUrl(response.url)).replace();
         this.$route.reload();
         this.$rootScope.appEvent('alert-success', ['Dashboard restored', 'Restored from version ' + version]);

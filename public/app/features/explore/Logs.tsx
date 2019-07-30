@@ -136,7 +136,7 @@ export default class Logs extends PureComponent<Props, State> {
   };
 
   onToggleLogLevel = (rawLevel: string, hiddenRawLevels: string[]) => {
-    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map(level => LogLevel[level]);
+    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map((level: LogLevel) => LogLevel[level]);
     this.props.onToggleLogLevel(hiddenLogLevels);
   };
 
@@ -217,12 +217,13 @@ export default class Logs extends PureComponent<Props, State> {
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
             <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
-              {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
+              {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
                 <ToggleButton
                   key={i}
                   value={dedupType}
                   onChange={this.onChangeDedup}
                   selected={dedupStrategy === dedupType}
+                  // @ts-ignore
                   tooltip={LogsDedupDescription[dedupType]}
                 >
                   {dedupType}
