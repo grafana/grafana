@@ -40,12 +40,11 @@ func (s *SocialGitlab) IsGroupMember(client *http.Client) bool {
 		return true
 	}
 
-	for groups, url := s.GetGroups(client, s.apiUrl+"/groups"); groups != nil; groups, url = s.GetGroups(client, url) {
-		for _, allowedGroup := range s.allowedGroups {
-			for _, group := range groups {
-				if group == allowedGroup {
-					return true
-				}
+	groups := s.GetGroups(client)
+	for _, allowedGroup := range s.allowedGroups {
+		for _, group := range groups {
+			if group == allowedGroup {
+				return true
 			}
 		}
 	}
@@ -53,7 +52,18 @@ func (s *SocialGitlab) IsGroupMember(client *http.Client) bool {
 	return false
 }
 
-func (s *SocialGitlab) GetGroups(client *http.Client, url string) ([]string, string) {
+func (s *SocialGitlab) GetGroups(client *http.Client) []string {
+	groups := make([]string, 0)
+
+	for groupsPage, url := s.GetGroupsPage(client, s.apiUrl+"/groups"); groupsPage != nil; groupsPage, url = s.GetGroupsPage(client, url) {
+		groups = append(groups, groupsPage...)
+	}
+
+	return groups
+}
+
+// GetGroupsPage returns groups and link to the next page if response is paginated
+func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string, string) {
 	type Group struct {
 		FullPath string `json:"full_path"`
 	}
@@ -83,6 +93,7 @@ func (s *SocialGitlab) GetGroups(client *http.Client, url string) ([]string, str
 		fullPaths[i] = group.FullPath
 	}
 
+	// GitLab uses Link header with "rel" set to prev/next/first/last page. We need "next".
 	if link, ok := response.Headers["Link"]; ok {
 		pattern := regexp.MustCompile(`<([^>]+)>; rel="next"`)
 		if matches := pattern.FindStringSubmatch(link[0]); matches != nil {
