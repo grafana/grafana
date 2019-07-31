@@ -13,7 +13,7 @@ import {
   PanelEditorProps,
   Select,
 } from '@grafana/ui';
-import { Field } from '@grafana/data';
+import { FieldSchema } from '@grafana/data';
 
 import { Threshold, ValueMapping } from '@grafana/data';
 import { BarGaugeOptions, orientationOptions, displayModes } from './types';
@@ -41,7 +41,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
       fieldOptions,
     });
 
-  onDefaultsChange = (field: Partial<Field>) => {
+  onDefaultsChange = (field: FieldSchema) => {
     this.onDisplayOptionsChanged({
       ...this.props.options.fieldOptions,
       defaults: field,

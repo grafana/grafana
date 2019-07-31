@@ -1,4 +1,5 @@
 import { readCSV, toCSV, CSVHeaderStyle } from './csv';
+import { getDataFrameRow } from './dataFrame';
 
 // Test with local CSV files
 const fs = require('fs');
@@ -11,11 +12,13 @@ describe('read csv', () => {
 
     const series = data[0];
     expect(series.fields.length).toBe(4);
-    expect(series.rows.length).toBe(3);
+
+    const width = 3;
+    expect(series.fields[0].values.length).toBe(width);
 
     // Make sure everythign it padded properly
-    for (const row of series.rows) {
-      expect(row.length).toBe(series.fields.length);
+    for (const field of series.fields) {
+      expect(field.values.length).toBe(width);
     }
 
     expect(series).toMatchSnapshot();
@@ -54,7 +57,7 @@ describe('write csv', () => {
     const data = readCSV(csv);
     const out = toCSV(data, { headerStyle: CSVHeaderStyle.full });
     expect(data.length).toBe(1);
-    expect(data[0].rows[0]).toEqual(firstRow);
+    expect(getDataFrameRow(data[0], 0)).toEqual(firstRow);
     expect(data[0].fields.length).toBe(3);
     expect(norm(out)).toBe(norm(csv));
 
@@ -65,7 +68,7 @@ describe('write csv', () => {
     const f = readCSV(shorter);
     const fields = f[0].fields;
     expect(fields.length).toBe(3);
-    expect(f[0].rows[0]).toEqual(firstRow);
+    expect(getDataFrameRow(f[0], 0)).toEqual(firstRow);
     expect(fields.map(f => f.name).join(',')).toEqual('a,b,c'); // the names
   });
 });

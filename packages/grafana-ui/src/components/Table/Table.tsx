@@ -12,7 +12,14 @@ import {
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import { stringToJsRegex, DataFrame, sortDataFrame } from '@grafana/data';
+import {
+  stringToJsRegex,
+  DataFrame,
+  sortDataFrame,
+  getDataFrameRowCount,
+  ArrayVector,
+  getDataFrameRow,
+} from '@grafana/data';
 
 import {
   TableCellBuilder,
@@ -107,7 +114,7 @@ export class Table extends Component<Props, State> {
 
     if (dataChanged || rotate !== prevProps.rotate) {
       const { width, minColumnWidth } = this.props;
-      this.rotateWidth = Math.max(width / data.rows.length, minColumnWidth);
+      this.rotateWidth = Math.max(width / getDataFrameRowCount(data), minColumnWidth);
     }
 
     // Update the data when data or sort changes
@@ -146,7 +153,7 @@ export class Table extends Component<Props, State> {
       return {
         header: title,
         width: columnWidth,
-        builder: getCellBuilder(col, style, this.props),
+        builder: getCellBuilder(col.schema, style, this.props),
       };
     });
   }
@@ -185,9 +192,9 @@ export class Table extends Component<Props, State> {
     if (row < 0) {
       this.doSort(column);
     } else {
-      const values = this.state.data.rows[row];
-      const value = values[column];
-      console.log('CLICK', value, row);
+      const field = this.state.data.fields[columnIndex];
+      const value = field.values.get(rowIndex);
+      console.log('CLICK', value, field.name);
     }
   };
 
@@ -201,6 +208,8 @@ export class Table extends Component<Props, State> {
     if (!col) {
       col = {
         name: '??' + columnIndex + '???',
+        schema: {},
+        values: new ArrayVector([]),
       };
     }
 
@@ -226,7 +235,7 @@ export class Table extends Component<Props, State> {
     const { data } = this.state;
 
     const isHeader = row < 0;
-    const rowData = isHeader ? data.fields : data.rows[row];
+    const rowData = isHeader ? data.fields : getDataFrameRow(data, row); // TODO! improve
     const value = rowData ? rowData[column] : '';
     const builder = isHeader ? this.headerBuilder : this.getTableCellBuilder(column);
 
@@ -258,7 +267,7 @@ export class Table extends Component<Props, State> {
     }
 
     let columnCount = data.fields.length;
-    let rowCount = data.rows.length + (showHeader ? 1 : 0);
+    let rowCount = getDataFrameRowCount(data) + (showHeader ? 1 : 0);
 
     let fixedColumnCount = Math.min(fixedColumns, columnCount);
     let fixedRowCount = showHeader && fixedHeader ? 1 : 0;

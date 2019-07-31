@@ -4,15 +4,15 @@ import toString from 'lodash/toString';
 import { DisplayValue, GrafanaTheme, InterpolateFunction, ScopedVars, GraphSeriesValue } from '../types/index';
 import { getDisplayProcessor } from './displayValue';
 import { getFlotPairs } from './flotPairs';
-import { ReducerID, reduceField, FieldType, NullValueMode, DataFrame, Field } from '@grafana/data';
+import { ReducerID, reduceField, FieldType, NullValueMode, DataFrame, FieldSchema } from '@grafana/data';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
   limit?: number; // if showing all values limit
   calcs: string[]; // when !values, pick one value for the whole field
 
-  defaults: Partial<Field>; // Use these values unless otherwise stated
-  override: Partial<Field>; // Set these values regardless of the source
+  defaults: FieldSchema; // Use these values unless otherwise stated
+  override: FieldSchema; // Set these values regardless of the source
 }
 
 export const VAR_SERIES_NAME = '__series_name';
@@ -31,7 +31,7 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
 
   let fieldCount = 0;
   for (const field of data[0].fields) {
-    if (field.type === FieldType.number) {
+    if (field.schema.type === FieldType.number) {
       fieldCount++;
     }
   }
@@ -50,7 +50,8 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
 }
 
 export interface FieldDisplay {
-  field: Field;
+  name: string; // NOT title!
+  field: FieldSchema;
   display: DisplayValue;
   sparkline?: GraphSeriesValue[][];
 }
@@ -91,7 +92,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       let timeColumn = -1;
       if (sparkline) {
         for (let i = 0; i < series.fields.length; i++) {
-          if (series.fields[i].type === FieldType.time) {
+          if (series.fields[i].schema.type === FieldType.time) {
             timeColumn = i;
             break;
           }
@@ -99,45 +100,50 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       }
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
-        const field = getFieldProperties(defaults, series.fields[i], override);
+        const field = series.fields[i];
+        const schema = getFieldProperties(defaults, field.schema, override);
 
         // Show all number fields
-        if (field.type !== FieldType.number) {
+        if (schema.type !== FieldType.number) {
           continue;
         }
 
-        if (!field.name) {
-          field.name = `Field[${s}]`; // it is a copy, so safe to edit
+        let name = field.name;
+        if (!name) {
+          name = `Field[${s}]`;
         }
 
-        scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: field.name };
+        scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: name };
 
         const display = getDisplayProcessor({
-          field,
+          field: schema,
           theme: options.theme,
         });
 
-        const title = field.title ? field.title : defaultTitle;
+        const title = schema.title ? schema.title : defaultTitle;
 
         // Show all number fields
         if (fieldOptions.values) {
           const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
 
-          for (const row of series.rows) {
+          for (let j = 0; j < field.values.length; j++) {
             // Add all the row variables
             if (usesCellValues) {
-              for (let j = 0; j < series.fields.length; j++) {
-                scopedVars[VAR_CELL_PREFIX + j] = {
-                  value: row[j],
-                  text: toString(row[j]),
+              for (let k = 0; k < series.fields.length; k++) {
+                const f = series.fields[k];
+                const v = f.values.get(j);
+                scopedVars[VAR_CELL_PREFIX + k] = {
+                  value: v,
+                  text: toString(v),
                 };
               }
             }
 
-            const displayValue = display(row[i]);
+            const displayValue = display(field.values.get(j));
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
-              field,
+              name,
+              field: schema,
               display: displayValue,
             });
 
@@ -148,8 +154,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           }
         } else {
           const results = reduceField({
-            series,
-            fieldIndex: i,
+            data: field.values,
             reducers: calcs, // The stats to calculate
             nullValueMode: NullValueMode.Null,
           });
@@ -170,7 +175,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             const displayValue = display(results[calc]);
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
-              field,
+              name,
+              field: schema,
               display: displayValue,
               sparkline: points,
             });
@@ -182,7 +188,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push({
-      field: { name: 'No Data' },
+      name: 'No data',
+      field: {},
       display: {
         numeric: 0,
         text: 'No data',
@@ -209,7 +216,7 @@ const numericFieldProps: any = {
  * For numeric values, only valid numbers will be applied
  * for units, 'none' will be skipped
  */
-export function applyFieldProperties(field: Field, props?: Partial<Field>): Field {
+export function applyFieldProperties(field: FieldSchema, props?: FieldSchema): FieldSchema {
   if (!props) {
     return field;
   }
@@ -237,13 +244,11 @@ export function applyFieldProperties(field: Field, props?: Partial<Field>): Fiel
       copy[key] = val;
     }
   }
-  return copy as Field;
+  return copy as FieldSchema;
 }
 
-type PartialField = Partial<Field>;
-
-export function getFieldProperties(...props: PartialField[]): Field {
-  let field = props[0] as Field;
+export function getFieldProperties(...props: FieldSchema[]): FieldSchema {
+  let field = props[0] as FieldSchema;
   for (let i = 1; i < props.length; i++) {
     field = applyFieldProperties(field, props[i]);
   }

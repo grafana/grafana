@@ -1,9 +1,13 @@
 import { getFlotPairs } from './flotPairs';
+import { createField, FieldType } from '@grafana/data';
 
 describe('getFlotPairs', () => {
   const series = {
-    fields: [],
-    rows: [[1, 100, 'a'], [2, 200, 'b'], [3, 300, 'c']],
+    fields: [
+      createField('a', FieldType.number, [1, 2, 3]),
+      createField('b', FieldType.number, [100, 200, 300]),
+      createField('c', FieldType.string, ['a', 'b', 'c']),
+    ],
   };
   it('should get X and y', () => {
     const pairs = getFlotPairs({ series, xIndex: 0, yIndex: 1 });

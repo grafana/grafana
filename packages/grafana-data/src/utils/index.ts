@@ -11,6 +11,8 @@ export * from './object';
 export * from './fieldCache';
 export * from './moment_wrapper';
 export * from './thresholds';
+export * from './dataFrame';
+export * from './vector';
 
 export { getMappedValue } from './valueMappings';
 

@@ -1,15 +1,16 @@
-import { FieldType } from '../types/index';
+import { FieldType, Field } from '../types/index';
 import { FieldCache } from './fieldCache';
+import { createField } from './dataFrame';
 
 describe('FieldCache', () => {
   it('when creating a new FieldCache from fields should be able to query cache', () => {
-    const fields = [
-      { name: 'time', type: FieldType.time },
-      { name: 'string', type: FieldType.string },
-      { name: 'number', type: FieldType.number },
-      { name: 'boolean', type: FieldType.boolean },
-      { name: 'other', type: FieldType.other },
-      { name: 'undefined' },
+    const fields: Field[] = [
+      createField('time', FieldType.time),
+      createField('string', FieldType.string),
+      createField('number', FieldType.number),
+      createField('boolean', FieldType.boolean),
+      createField('other', FieldType.other),
+      createField('undefined'),
     ];
     const fieldCache = new FieldCache(fields);
     const allFields = fieldCache.getFields();

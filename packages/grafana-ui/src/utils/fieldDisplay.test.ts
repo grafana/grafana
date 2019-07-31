@@ -1,5 +1,5 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { FieldType, ReducerID, Threshold } from '@grafana/data';
+import { FieldType, ReducerID, Threshold, createField } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
@@ -8,11 +8,11 @@ describe('FieldDisplay', () => {
     const f0 = {
       min: 0,
       max: 100,
-      dateFormat: 'YYYY',
+      dateSourceFormat: 'YYYY',
     };
     const f1 = {
       unit: 'ms',
-      dateFormat: '', // should be ignored
+      dateSourceFormat: '', // should be ignored
       max: parseFloat('NOPE'), // should be ignored
       min: null,
     };
@@ -20,7 +20,7 @@ describe('FieldDisplay', () => {
     expect(field.min).toEqual(0);
     expect(field.max).toEqual(100);
     expect(field.unit).toEqual('ms');
-    expect(field.dateFormat).toEqual('YYYY');
+    expect(field.dateSourceFormat).toEqual('YYYY');
 
     // last one overrieds
     const f2 = {
@@ -39,14 +39,9 @@ describe('FieldDisplay', () => {
       {
         name: 'Series Name',
         fields: [
-          { name: 'Field 1', type: FieldType.string },
-          { name: 'Field 2', type: FieldType.number },
-          { name: 'Field 3', type: FieldType.number },
-        ],
-        rows: [
-          ['a', 1, 2], // 0
-          ['b', 3, 4], // 1
-          ['c', 5, 6], // 2
+          createField('Field 1', FieldType.string, ['a', 'b', 'c']),
+          createField('Field 2', FieldType.number, [1, 3, 5]),
+          createField('Field 3', FieldType.number, [2, 4, 6]),
         ],
       },
     ],

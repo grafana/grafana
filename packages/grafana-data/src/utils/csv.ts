@@ -4,8 +4,9 @@ import defaults from 'lodash/defaults';
 import isNumber from 'lodash/isNumber';
 
 // Types
-import { DataFrame, Field, FieldType } from '../types';
+import { DataFrame, Field, FieldType, FieldSchema } from '../types';
 import { guessFieldTypeFromValue } from './processDataFrame';
+import { ArrayVector } from './vector';
 
 export enum CSVHeaderStyle {
   full,
@@ -51,14 +52,16 @@ enum ParseState {
 
 type FieldParser = (value: string) => any;
 
+type AnyField = Field<any, ArrayVector<any>>;
+
 export class CSVReader {
   config: CSVConfig;
   callback?: CSVParseCallbacks;
 
   field: FieldParser[];
-  series: DataFrame;
   state: ParseState;
   data: DataFrame[];
+  fields: AnyField[];
 
   constructor(options?: CSVOptions) {
     if (!options) {
@@ -69,10 +72,7 @@ export class CSVReader {
 
     this.field = [];
     this.state = ParseState.Starting;
-    this.series = {
-      fields: [],
-      rows: [],
-    };
+    this.fields = [];
     this.data = [];
   }
 
@@ -92,38 +92,46 @@ export class CSVReader {
           const idx = first.indexOf('#', 2);
           if (idx > 0) {
             const k = first.substr(1, idx - 1);
+            const isName = 'name' === k;
 
             // Simple object used to check if headers match
-            const headerKeys: Field = {
-              name: '#',
+            const headerKeys: FieldSchema = {
               type: FieldType.number,
               unit: '#',
-              dateFormat: '#',
+              dateSourceFormat: '#',
             };
 
             // Check if it is a known/supported column
-            if (headerKeys.hasOwnProperty(k)) {
+            if (isName || headerKeys.hasOwnProperty(k)) {
               // Starting a new table after reading rows
               if (this.state === ParseState.ReadingRows) {
-                this.series = {
-                  fields: [],
-                  rows: [],
-                };
-                this.data.push(this.series);
+                this.data.push({
+                  fields: this.fields,
+                });
+                this.fields = [];
               }
 
-              padColumnWidth(this.series.fields, line.length);
-              const fields: any[] = this.series.fields; // cast to any so we can lookup by key
+              // Fix any column sizing issues
+              padColumnWidth(this.fields, line.length);
+
               const v = first.substr(idx + 1);
-              fields[0][k] = v;
-              for (let j = 1; j < fields.length; j++) {
-                fields[j][k] = line[j];
+              if (isName) {
+                this.fields[0].name = v;
+                for (let j = 1; j < this.fields.length; j++) {
+                  this.fields[j].name = line[j];
+                }
+              } else {
+                for (let j = 0; j < this.fields.length; j++) {
+                  const schema = this.fields[j].schema as any; // any lets name lookup
+                  schema[k] = j === 0 ? v : line[j];
+                }
               }
+
               this.state = ParseState.InHeader;
               continue;
             }
           } else if (this.state === ParseState.Starting) {
-            this.series.fields = makeFieldsFor(line);
+            this.fields = makeFieldsFor(line);
             this.state = ParseState.InHeader;
             continue;
           }
@@ -134,67 +142,61 @@ export class CSVReader {
         if (this.state === ParseState.Starting) {
           const type = guessFieldTypeFromValue(first);
           if (type === FieldType.string) {
-            this.series.fields = makeFieldsFor(line);
+            this.fields = makeFieldsFor(line);
             this.state = ParseState.InHeader;
             continue;
           }
-          this.series.fields = makeFieldsFor(new Array(line.length));
-          this.series.fields[0].type = type;
+          this.fields = makeFieldsFor(new Array(line.length));
+          this.fields[0].schema.type = type;
           this.state = ParseState.InHeader; // fall through to read rows
         }
       }
 
       if (this.state === ParseState.InHeader) {
-        padColumnWidth(this.series.fields, line.length);
+        padColumnWidth(this.fields, line.length);
         this.state = ParseState.ReadingRows;
       }
 
       if (this.state === ParseState.ReadingRows) {
         // Make sure colum structure is valid
-        if (line.length > this.series.fields.length) {
-          padColumnWidth(this.series.fields, line.length);
+        if (line.length > this.fields.length) {
+          padColumnWidth(this.fields, line.length);
           if (this.callback) {
-            this.callback.onHeader(this.series);
-          } else {
-            // Expand all rows with nulls
-            for (let x = 0; x < this.series.rows.length; x++) {
-              const row = this.series.rows[x];
-              while (row.length < line.length) {
-                row.push(null);
-              }
-            }
+            this.callback.onHeader({ fields: this.fields });
           }
         }
 
         const row: any[] = [];
         for (let j = 0; j < line.length; j++) {
-          const v = line[j];
+          let v: any = line[j];
           if (v) {
             if (!this.field[j]) {
-              this.field[j] = makeFieldParser(v, this.series.fields[j]);
+              this.field[j] = makeFieldParser(v, this.fields[j]);
             }
-            row.push(this.field[j](v));
+            v = this.field[j](v);
           } else {
-            row.push(null);
+            v = null;
+          }
+          this.fields[j].values.buffer.push(v);
+          if (this.callback) {
+            row.push(v);
           }
         }
 
         if (this.callback) {
-          // Send the header after we guess the type
-          if (this.series.rows.length === 0) {
-            this.callback.onHeader(this.series);
-            this.series.rows.push(row); // Only add the first row
-          }
+          // // Send the header after we guess the type
+          // if (this.series.rows.length === 0) {
+          //   this.callback.onHeader(this.series);
+          //   this.series.rows.push(row); // Only add the first row
+          // }
           this.callback.onRow(row);
-        } else {
-          this.series.rows.push(row);
         }
       }
     }
   };
 
   readCSV(text: string): DataFrame[] {
-    this.data = [this.series];
+    this.data = [];
 
     const papacfg = {
       ...this.config,
@@ -210,22 +212,26 @@ export class CSVReader {
 }
 
 function makeFieldParser(value: string, field: Field): FieldParser {
-  if (!field.type) {
+  let schema = field.schema;
+  if (!schema || !schema.type) {
+    if (!schema) {
+      field.schema = schema = {};
+    }
     if (field.name === 'time' || field.name === 'Time') {
-      field.type = FieldType.time;
+      schema.type = FieldType.time;
     } else {
-      field.type = guessFieldTypeFromValue(value);
+      schema.type = guessFieldTypeFromValue(value);
     }
   }
 
-  if (field.type === FieldType.number) {
+  if (schema.type === FieldType.number) {
     return (value: string) => {
       return parseFloat(value);
     };
   }
 
   // Will convert anything that starts with "T" to true
-  if (field.type === FieldType.boolean) {
+  if (schema.type === FieldType.boolean) {
     return (value: string) => {
       return !(value[0] === 'F' || value[0] === 'f' || value[0] === '0');
     };
@@ -238,26 +244,13 @@ function makeFieldParser(value: string, field: Field): FieldParser {
 /**
  * Creates a field object for each string in the list
  */
-function makeFieldsFor(line: string[]): Field[] {
-  const fields: Field[] = [];
+function makeFieldsFor(line: string[]): AnyField[] {
+  const fields: AnyField[] = [];
   for (let i = 0; i < line.length; i++) {
     const v = line[i] ? line[i] : 'Column ' + (i + 1);
-    fields.push({ name: v });
+    fields.push({ name: v, schema: {}, values: new ArrayVector([]) });
   }
   return fields;
-}
-
-/**
- * Makes sure the colum has valid entries up the the width
- */
-function padColumnWidth(fields: Field[], width: number) {
-  if (fields.length < width) {
-    for (let i = fields.length; i < width; i++) {
-      fields.push({
-        name: 'Field ' + (i + 1),
-      });
-    }
-  }
 }
 
 type FieldWriter = (value: any) => string;
@@ -275,14 +268,15 @@ function writeValue(value: any, config: CSVConfig): string {
 }
 
 function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
-  if (field.type) {
-    if (field.type === FieldType.boolean) {
+  const { schema } = field;
+  if (schema.type) {
+    if (schema.type === FieldType.boolean) {
       return (value: any) => {
         return value ? 'true' : 'false';
       };
     }
 
-    if (field.type === FieldType.number) {
+    if (schema.type === FieldType.number) {
       return (value: any) => {
         if (isNumber(value)) {
           return value.toString();
@@ -296,15 +290,18 @@ function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
 }
 
 function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string {
+  const isName = 'name' === key;
+
   for (const f of fields) {
-    if (f.hasOwnProperty(key)) {
+    const schema = f.schema;
+    if (isName || schema.hasOwnProperty(key)) {
       let line = '#' + key + '#';
       for (let i = 0; i < fields.length; i++) {
         if (i > 0) {
           line = line + config.delimiter;
         }
 
-        const v = (fields[i] as any)[key];
+        const v = isName ? f.name : (fields[i].schema as any)[key];
         if (v) {
           line = line + writeValue(v, config);
         }
@@ -330,7 +327,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
   });
 
   for (const series of data) {
-    const { rows, fields } = series;
+    const { fields } = series;
     if (config.headerStyle === CSVHeaderStyle.full) {
       csv =
         csv +
@@ -347,23 +344,57 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
       }
       csv += config.newline;
     }
-    const writers = fields.map(field => makeFieldWriter(field, config!));
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      for (let j = 0; j < row.length; j++) {
-        if (j > 0) {
-          csv = csv + config.delimiter;
-        }
+    const length = fields[0].values.length;
+    if (length > 0) {
+      const writers = fields.map(field => makeFieldWriter(field, config!));
+      for (let i = 0; i < length; i++) {
+        for (let j = 0; j < fields.length; j++) {
+          if (j > 0) {
+            csv = csv + config.delimiter;
+          }
 
-        const v = row[j];
-        if (v !== null) {
-          csv = csv + writers[j](v);
+          const v = fields[j].values.get(i);
+          if (v !== null) {
+            csv = csv + writers[j](v);
+          }
         }
+        csv = csv + config.newline;
       }
-      csv = csv + config.newline;
     }
     csv = csv + config.newline;
   }
 
   return csv;
+}
+
+/**
+ * Make sure a field exists for the entire width and fill any extras with null
+ */
+function padColumnWidth(fields: AnyField[], width: number) {
+  if (fields.length === width) {
+    return; // no changes
+  }
+
+  // Find the maximum length of all the fields
+  const length = fields.reduce((prev, field) => {
+    return Math.max(prev, field.values.length);
+  }, 0);
+
+  // Add extra columns
+  for (let i = fields.length; i < width; i++) {
+    fields.push({
+      name: `Field ${i + 1}`,
+      schema: {},
+      values: new ArrayVector([]),
+    });
+  }
+
+  // Fill the column values
+  for (const field of fields) {
+    if (field.values.length < length) {
+      for (let i = field.values.length; i < length; i++) {
+        field.values.buffer.push(null);
+      }
+    }
+  }
 }

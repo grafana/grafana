@@ -1,4 +1,4 @@
-import { LoadingState } from '@grafana/data';
+import { LoadingState, createField } from '@grafana/data';
 import { PanelData, DataQueryRequest } from '@grafana/ui';
 import { filterPanelDataToQuery } from './QueryEditorRow';
 
@@ -10,14 +10,14 @@ function makePretendRequest(requestId: string, subRequests?: DataQueryRequest[])
 }
 
 describe('filterPanelDataToQuery', () => {
-  const data = {
+  const data: PanelData = {
     state: LoadingState.Done,
     series: [
-      { refId: 'A', fields: [{ name: 'AAA' }], rows: [], meta: {} },
-      { refId: 'B', fields: [{ name: 'B111' }], rows: [], meta: {} },
-      { refId: 'B', fields: [{ name: 'B222' }], rows: [], meta: {} },
-      { refId: 'B', fields: [{ name: 'B333' }], rows: [], meta: {} },
-      { refId: 'C', fields: [{ name: 'CCCC' }], rows: [], meta: { requestId: 'sub3' } },
+      { refId: 'A', fields: [createField('AAA')], meta: {} },
+      { refId: 'B', fields: [createField('B111')], meta: {} },
+      { refId: 'B', fields: [createField('B222')], meta: {} },
+      { refId: 'B', fields: [createField('B333')], meta: {} },
+      { refId: 'C', fields: [createField('CCCC')], meta: { requestId: 'sub3' } },
     ],
     error: {
       refId: 'B',
@@ -28,7 +28,7 @@ describe('filterPanelDataToQuery', () => {
       makePretendRequest('sub2'),
       makePretendRequest('sub3'),
     ]),
-  } as PanelData;
+  };
 
   it('should not have an error unless the refId matches', () => {
     const panelData = filterPanelDataToQuery(data, 'A');

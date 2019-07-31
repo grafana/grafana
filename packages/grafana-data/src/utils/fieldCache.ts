@@ -1,4 +1,5 @@
 import { Field, FieldType } from '../types/index';
+import { guessFieldTypeForField } from './processDataFrame';
 
 export interface IndexedField extends Field {
   index: number;
@@ -28,13 +29,17 @@ export class FieldCache {
   }
 
   addField(field: Field) {
-    this.fields.push({
-      type: FieldType.other,
-      ...field,
-    });
+    let { schema } = field;
+    if (!schema) {
+      field.schema = schema = {};
+    }
+    if (!schema.type) {
+      schema.type = guessFieldTypeForField(field);
+    }
+    this.fields.push(field);
     const index = this.fields.length - 1;
     this.fieldIndexByName[field.name] = index;
-    this.fieldIndexByType[field.type || FieldType.other].push(index);
+    this.fieldIndexByType[schema.type!].push(index);
   }
 
   hasFieldOfType(type: FieldType): boolean {
@@ -46,7 +51,7 @@ export class FieldCache {
     for (let index = 0; index < this.fields.length; index++) {
       const field = this.fields[index];
 
-      if (!type || field.type === type) {
+      if (!type || field.schema.type === type) {
         fields.push({ ...field, index });
       }
     }

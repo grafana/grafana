@@ -4,19 +4,37 @@ import isString from 'lodash/isString';
 import isBoolean from 'lodash/isBoolean';
 
 // Types
-import { DataFrame, Field, TimeSeries, FieldType, TableData, Column } from '../types/index';
+import {
+  DataFrame,
+  Field,
+  TimeSeries,
+  FieldType,
+  TableData,
+  Column,
+  FieldSchema,
+  TimeSeriesValue,
+} from '../types/index';
 import { isDateTime } from './moment_wrapper';
+import { ArrayVector } from './vector';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
+  const fields = table.columns.map(c => {
+    const { text, ...schema } = c;
+    return {
+      name: text, // rename 'text' to the 'name' field
+      schema: schema as FieldSchema,
+      values: new ArrayVector(new Array<any>()),
+    };
+  });
+  // Fill in the field values
+  for (const row of table.rows) {
+    for (let i = 0; i < fields.length; i++) {
+      fields[i].values.buffer.push(row[i]);
+    }
+  }
+
   return {
-    // rename the 'text' to 'name' field
-    fields: table.columns.map(c => {
-      const { text, ...field } = c;
-      const f = field as Field;
-      f.name = text;
-      return f;
-    }),
-    rows: table.rows,
+    fields,
     refId: table.refId,
     meta: table.meta,
     name: table.name,
@@ -24,20 +42,33 @@ function convertTableToDataFrame(table: TableData): DataFrame {
 }
 
 function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
+  const fields = [
+    {
+      name: timeSeries.target || 'Value',
+      schema: {
+        unit: timeSeries.unit,
+        type: FieldType.number,
+      },
+      values: new ArrayVector<TimeSeriesValue>([]),
+    },
+    {
+      name: 'Time',
+      schema: {
+        unit: 'dateTimeAsIso',
+        type: FieldType.time,
+      },
+      values: new ArrayVector<number>([]),
+    },
+  ];
+
+  for (const point of timeSeries.datapoints) {
+    fields[0].values.buffer.push(point[0]);
+    fields[1].values.buffer.push(point[1]);
+  }
+
   return {
     name: timeSeries.target,
-    fields: [
-      {
-        name: timeSeries.target || 'Value',
-        unit: timeSeries.unit,
-      },
-      {
-        name: 'Time',
-        type: FieldType.time,
-        unit: 'dateTimeAsIso',
-      },
-    ],
-    rows: timeSeries.datapoints,
+    fields,
     labels: timeSeries.tags,
     refId: timeSeries.refId,
     meta: timeSeries.meta,
@@ -84,20 +115,18 @@ export function guessFieldTypeFromValue(v: any): FieldType {
 /**
  * Looks at the data to guess the column type.  This ignores any existing setting
  */
-export function guessFieldTypeFromSeries(series: DataFrame, index: number): FieldType | undefined {
-  const column = series.fields[index];
-
+export function guessFieldTypeForField(field: Field): FieldType | undefined {
   // 1. Use the column name to guess
-  if (column.name) {
-    const name = column.name.toLowerCase();
+  if (field.name) {
+    const name = field.name.toLowerCase();
     if (name === 'date' || name === 'time') {
       return FieldType.time;
     }
   }
 
   // 2. Check the first non-null value
-  for (let i = 0; i < series.rows.length; i++) {
-    const v = series.rows[i][index];
+  for (let i = 0; i < field.values.length; i++) {
+    const v = field.values.get(i);
     if (v !== null) {
       return guessFieldTypeFromValue(v);
     }
@@ -113,18 +142,23 @@ export function guessFieldTypeFromSeries(series: DataFrame, index: number): Fiel
  */
 export const guessFieldTypes = (series: DataFrame): DataFrame => {
   for (let i = 0; i < series.fields.length; i++) {
-    if (!series.fields[i].type) {
+    const s = series.fields[i].schema;
+    if (!s || !s.type) {
       // Somethign is missing a type return a modified copy
       return {
         ...series,
-        fields: series.fields.map((field, index) => {
-          if (field.type) {
+        fields: series.fields.map(field => {
+          const schema = field.schema;
+          if (schema && schema.type) {
             return field;
           }
-          // Replace it with a calculated version
+          // Calculate a reasonable schema value
           return {
             ...field,
-            type: guessFieldTypeFromSeries(series, index),
+            schema: {
+              ...schema,
+              type: guessFieldTypeForField(field),
+            },
           };
         }),
       };
@@ -140,6 +174,10 @@ export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwn
 
 export const toDataFrame = (data: any): DataFrame => {
   if (data.hasOwnProperty('fields')) {
+    // @deprecated -- remove after 6.4
+    if (data.hasOwnProperty('rows')) {
+      throw new Error('Old DataFrame format.  Values should be on the fields');
+    }
     return data as DataFrame;
   }
   if (data.hasOwnProperty('datapoints')) {
@@ -153,49 +191,67 @@ export const toDataFrame = (data: any): DataFrame => {
   throw new Error('Unsupported data format');
 };
 
-export const toLegacyResponseData = (series: DataFrame): TimeSeries | TableData => {
-  const { fields, rows } = series;
+export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData => {
+  const { fields } = frame;
+
+  const length = fields[0].values.length;
+  const rows: any[][] = [];
+  for (let i = 0; i < length; i++) {
+    const row: any[] = [];
+    for (let j = 0; j < fields.length; j++) {
+      row.push(fields[j].values.get(i));
+    }
+    rows.push(row);
+  }
 
   if (fields.length === 2) {
-    const type = guessFieldTypeFromSeries(series, 1);
+    let type = fields[1].schema.type;
+    if (!type) {
+      type = guessFieldTypeForField(fields[1]);
+    }
     if (type === FieldType.time) {
       return {
-        alias: fields[0].name || series.name,
-        target: fields[0].name || series.name,
+        alias: fields[0].name || frame.name,
+        target: fields[0].name || frame.name,
         datapoints: rows,
-        unit: fields[0].unit,
-        refId: series.refId,
-        meta: series.meta,
+        unit: fields[0].schema.unit,
+        refId: frame.refId,
+        meta: frame.meta,
       } as TimeSeries;
     }
   }
 
   return {
     columns: fields.map(f => {
-      const { name, ...column } = f;
+      const { name, schema } = f;
+      const { ...column } = schema;
       (column as Column).text = name;
       return column as Column;
     }),
-    refId: series.refId,
-    meta: series.meta,
+    refId: frame.refId,
+    meta: frame.meta,
     rows,
   };
 };
 
 export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = false): DataFrame {
   if (isNumber(sortIndex)) {
+    if (true) {
+      console.log('TODO, sort by column!!!');
+    }
+
     const copy = {
       ...data,
-      rows: [...data.rows].sort((a, b) => {
-        a = a[sortIndex];
-        b = b[sortIndex];
-        // Sort null or undefined separately from comparable values
-        return +(a == null) - +(b == null) || +(a > b) || -(a < b);
-      }),
+      // rows: [...data.rows].sort((a, b) => {
+      //   a = a[sortIndex];
+      //   b = b[sortIndex];
+      //   // Sort null or undefined separately from comparable values
+      //   return +(a == null) - +(b == null) || +(a > b) || -(a < b);
+      // }),
     };
 
     if (reverse) {
-      copy.rows.reverse();
+      //copy.rows.reverse();
     }
 
     return copy;

@@ -7,12 +7,12 @@ import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
 import { DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType, DecimalCount } from '../types';
-import { DateTime, dateTime, Threshold, getMappedValue, Field } from '@grafana/data';
+import { DateTime, dateTime, Threshold, getMappedValue, FieldSchema } from '@grafana/data';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
 export interface DisplayValueOptions {
-  field?: Partial<Field>;
+  field?: FieldSchema;
 
   // Alternative to empty string
   noValue?: string;
@@ -51,10 +51,10 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
         }
       }
 
-      if (field.dateFormat) {
-        const date = toMoment(value, numeric, field.dateFormat);
+      if (field.dateSourceFormat) {
+        const date = toMoment(value, numeric, field.dateSourceFormat);
         if (date.isValid()) {
-          text = date.format(field.dateFormat);
+          text = date.format(field.dateSourceFormat); // ?? differnet format?
           shouldFormat = false;
         }
       }
