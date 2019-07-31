@@ -67,6 +67,8 @@ fi
 # Tag as 'latest' for official release; otherwise tag as grafana/grafana:master
 if echo "$_grafana_tag" | grep -q "^v"; then
 	docker_tag_all "${_docker_repo}" "latest"
+	# Create the expected tag for running the end to end tests successfully
+	docker tag "${_docker_repo}:${_grafana_version}" "grafana/grafana-dev:${_grafana_tag}"
 else
 	docker_tag_all "${_docker_repo}" "master"
 	docker tag "${_docker_repo}:${_grafana_version}" "grafana/grafana-dev:${_grafana_version}"
