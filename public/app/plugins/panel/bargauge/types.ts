@@ -20,5 +20,8 @@ export const orientationOptions: Array<SelectableValue<VizOrientation>> = [
 export const defaults: BarGaugeOptions = {
   displayMode: 'lcd',
   orientation: VizOrientation.Horizontal,
-  fieldOptions: standardGaugeFieldOptions,
+  fieldOptions: {
+    ...standardGaugeFieldOptions,
+    defaults: { ...standardGaugeFieldOptions.defaults, max: undefined },
+  },
 };
