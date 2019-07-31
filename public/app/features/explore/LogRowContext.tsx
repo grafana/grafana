@@ -1,4 +1,5 @@
 import React, { useContext, useRef, useState, useLayoutEffect } from 'react';
+import { CSSTransition } from 'react-transition-group';
 import {
   ThemeContext,
   List,
@@ -203,30 +204,30 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
     <ClickOutsideWrapper onClick={onOutsideClick}>
       <div>
         {context.after && (
-          <LogRowContextGroup
-            rows={context.after}
-            error={errors && errors.after}
-            row={row}
-            className={css`
-              top: -250px;
-            `}
-            shouldScrollToBottom
-            canLoadMoreRows={hasMoreContextRows.after}
-            onLoadMoreContext={onLoadMoreContext}
-          />
+          <CSSTransition in={true} appear={true} timeout={200} classNames="context-after">
+            <LogRowContextGroup
+              rows={context.after}
+              error={errors && errors.after}
+              row={row}
+              shouldScrollToBottom
+              canLoadMoreRows={hasMoreContextRows.after}
+              onLoadMoreContext={onLoadMoreContext}
+              className=""
+            />
+          </CSSTransition>
         )}
 
         {context.before && (
-          <LogRowContextGroup
-            onLoadMoreContext={onLoadMoreContext}
-            canLoadMoreRows={hasMoreContextRows.before}
-            row={row}
-            rows={context.before}
-            error={errors && errors.before}
-            className={css`
-              top: 100%;
-            `}
-          />
+          <CSSTransition in={true} appear={true} classNames="context-before" timeout={200}>
+            <LogRowContextGroup
+              onLoadMoreContext={onLoadMoreContext}
+              canLoadMoreRows={hasMoreContextRows.before}
+              row={row}
+              rows={context.before}
+              error={errors && errors.before}
+              className=""
+            />
+          </CSSTransition>
         )}
       </div>
     </ClickOutsideWrapper>

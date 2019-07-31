@@ -28,8 +28,45 @@
   z-index: $zindex-dropdown;
   flex-direction: column;
   max-width: 600px;
-  top: 41px;
   right: 0px;
+
+  // Triangle
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    border-style: solid;
+    left: 50%;
+    margin-top: -10px;
+    bottom: 100%;
+  }
+
+  &::before {
+    border-width: 5px;
+    margin-left: -75px;
+    border-color: transparent transparent $popover-border-color transparent;
+  }
+
+  &::after {
+    border-width: 4px;
+    margin-left: -74px;
+    border-color: transparent transparent $popover-bg transparent;
+  }
+}
+
+.time-picker-transition-appear {
+  opacity: 0;
+  top: 35px;
+}
+
+.time-picker-transition-appear-active,
+.time-picker-transition-appear-done,
+.time-picker-transition-enter,
+.time-picker-transition-enter-active,
+.time-picker-transition-enter-done {
+  top: 45px;
+  opacity: 1;
+  transition: top 0.15s ease, opacity 0.15s ease;
 }
 
 .time-picker-popover-body {

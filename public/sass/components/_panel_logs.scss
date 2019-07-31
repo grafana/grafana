@@ -62,6 +62,7 @@ $column-horizontal-spacing: 10px;
   font-size: $font-size-sm;
   display: table;
   table-layout: fixed;
+  border-spacing: 0px 4px;
   width: 100%;
 }
 
@@ -70,9 +71,6 @@ $column-horizontal-spacing: 10px;
 
   > div {
     display: table-cell;
-    padding-right: $column-horizontal-spacing;
-    border-top: 1px solid transparent;
-    border-bottom: 1px solid transparent;
     height: 100%;
   }
 
@@ -94,6 +92,7 @@ $column-horizontal-spacing: 10px;
 
 .logs-row__message {
   word-break: break-all;
+  position: relative;
 }
 
 .logs-row__match-highlight {
@@ -112,56 +111,36 @@ $column-horizontal-spacing: 10px;
 }
 
 .logs-row__level {
-  position: relative;
   width: 10px;
-
-  &::after {
-    content: '';
-    display: block;
-    position: absolute;
-    top: 1px;
-    bottom: 1px;
-    width: 3px;
-    background-color: $logs-color-unkown;
-  }
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-left-color: $logs-color-unkown;
 
   &--critical,
   &--crit {
-    &::after {
-      background-color: #705da0;
-    }
+    border-left-color: #705da0;
   }
 
   &--error,
   &--err {
-    &::after {
-      background-color: #e24d42;
-    }
+    border-left-color: #e24d42;
   }
 
   &--warning,
   &--warn {
-    &::after {
-      background-color: $yellow;
-    }
+    border-left-color: $yellow;
   }
 
   &--info {
-    &::after {
-      background-color: #7eb26d;
-    }
+    border-left-color: #7eb26d;
   }
 
   &--debug {
-    &::after {
-      background-color: #1f78c1;
-    }
+    border-left-color: #1f78c1;
   }
 
   &--trace {
-    &::after {
-      background-color: #6ed0e0;
-    }
+    border-left-color: #6ed0e0;
   }
 }
 
@@ -185,6 +164,53 @@ $column-horizontal-spacing: 10px;
 
 .logs-row__stats {
   margin: 5px 0;
+  transition: all 0.15s ease-out;
+}
+
+.logs-row__stats-transition-appear {
+  opacity: 0;
+  transform: translateY(-100%);
+  clip-path: inset(100% 100% 0% 100%);
+}
+
+.logs-row__stats-transition-appear-active,
+.logs-row__stats-transition-appear-done,
+.logs-row__stats-transition-enter,
+.logs-row__stats-transition-enter-active,
+.logs-row__stats-transition-enter-done {
+  opacity: 1;
+  transform: translateY(0%);
+  clip-path: inset(100% 100% 100% 100%);
+}
+
+.context-after-appear {
+  top: -270px;
+  opacity: 0;
+}
+
+.context-after-appear-active,
+.context-after-appear-done,
+.context-after-enter,
+.context-after-enter-active,
+.context-after-enter-done {
+  top: -250px;
+  opacity: 1;
+  transition: all 200ms ease-out;
+}
+
+.context-before-appear {
+  top: calc(100% + 20px);
+  opacity: 0;
+}
+
+.context-before-appear-active,
+.context-before-appear-done,
+.context-before-enter,
+.context-before-enter-active,
+.context-before-enter-done {
+  top: 100%;
+  opacity: 1;
+  transition: all 200ms ease-out;
 }
 
 .logs-row__field-highlight:hover {

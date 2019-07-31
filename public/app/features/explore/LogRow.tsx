@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { CSSTransition } from 'react-transition-group';
 import _ from 'lodash';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
@@ -233,7 +234,7 @@ export class LogRow extends PureComponent<Props, State> {
             ? cx(logRowStyles, getLogRowWithContextStyles(theme, this.state).row)
             : logRowStyles;
           return (
-            <div className={`logs-row ${this.props.className}`}>
+            <div className={`logs-row ${this.props.className || ''}`}>
               {showDuplicates && (
                 <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
               )}
@@ -258,48 +259,49 @@ export class LogRow extends PureComponent<Props, State> {
                 onMouseEnter={this.onMouseOverMessage}
                 onMouseLeave={this.onMouseOutMessage}
               >
-                <div
-                  className={css`
-                    position: relative;
-                  `}
-                >
-                  {showContext && context && (
-                    <LogRowContext
-                      row={row}
-                      context={context}
-                      errors={errors}
-                      hasMoreContextRows={hasMoreContextRows}
-                      onOutsideClick={this.toggleContext}
-                      onLoadMoreContext={() => {
-                        if (updateLimit) {
-                          updateLimit();
-                        }
-                      }}
+                {showContext && context && (
+                  <LogRowContext
+                    row={row}
+                    context={context}
+                    errors={errors}
+                    hasMoreContextRows={hasMoreContextRows}
+                    onOutsideClick={this.toggleContext}
+                    onLoadMoreContext={() => {
+                      if (updateLimit) {
+                        updateLimit();
+                      }
+                    }}
+                  />
+                )}
+                <div className={styles}>
+                  {parsed && (
+                    <Highlighter
+                      style={{ whiteSpace: 'pre-wrap' }}
+                      autoEscape
+                      highlightTag={FieldHighlight(this.onClickHighlight)}
+                      textToHighlight={entry}
+                      searchWords={parsedFieldHighlights}
+                      highlightClassName="logs-row__field-highlight"
                     />
                   )}
-                  <span className={styles}>
-                    {parsed && (
-                      <Highlighter
-                        style={{ whiteSpace: 'pre-wrap' }}
-                        autoEscape
-                        highlightTag={FieldHighlight(this.onClickHighlight)}
-                        textToHighlight={entry}
-                        searchWords={parsedFieldHighlights}
-                        highlightClassName="logs-row__field-highlight"
-                      />
-                    )}
-                    {!parsed && needsHighlighter && (
-                      <Highlighter
-                        style={{ whiteSpace: 'pre-wrap' }}
-                        textToHighlight={entry}
-                        searchWords={highlights}
-                        findChunks={findHighlightChunksInText}
-                        highlightClassName={highlightClassName}
-                      />
-                    )}
-                    {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
-                    {!hasAnsi && !parsed && !needsHighlighter && entry}
-                    {showFieldStats && (
+                  {!parsed && needsHighlighter && (
+                    <Highlighter
+                      style={{ whiteSpace: 'pre-wrap' }}
+                      textToHighlight={entry}
+                      searchWords={highlights}
+                      findChunks={findHighlightChunksInText}
+                      highlightClassName={highlightClassName}
+                    />
+                  )}
+                  {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
+                  {!hasAnsi && !parsed && !needsHighlighter && entry}
+                  {showFieldStats && (
+                    <CSSTransition
+                      in={showFieldStats}
+                      appear={true}
+                      classNames="logs-row__stats-transition"
+                      timeout={150}
+                    >
                       <div className="logs-row__stats">
                         <LogLabelStats
                           stats={fieldStats}
@@ -309,8 +311,8 @@ export class LogRow extends PureComponent<Props, State> {
                           rowCount={fieldCount}
                         />
                       </div>
-                    )}
-                  </span>
+                    </CSSTransition>
+                  )}
                   {row.searchWords && row.searchWords.length > 0 && (
                     <span
                       onClick={this.onContextToggle}
@@ -327,7 +329,7 @@ export class LogRow extends PureComponent<Props, State> {
                         }
                       `}
                     >
-                      {showContext ? 'Hide' : 'Show'} context
+                      {(showContext ? 'Hide' : 'Show') + ' context'}
                     </span>
                   )}
                 </div>

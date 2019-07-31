@@ -3,6 +3,7 @@
   font-family: $font-family-monospace;
   height: auto;
   word-break: break-word;
+  overflow-x: hidden;
 }
 
 .slate-query-field__wrapper {
