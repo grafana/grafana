@@ -52,11 +52,12 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     return 10;
   }
 
-  getMaxValue = (): number =>
+  getMaxValue = (): number => (
     this.getValues().reduce(
       (maxResult, d) => (d.display.numeric <= maxResult ? maxResult : Math.ceil(Number(d.display.text))),
       -Infinity
-    );
+    )
+  )
 
   render() {
     const { height, width, options, data, renderCounter } = this.props;
