@@ -108,28 +108,50 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
     });
   };
 
+  hasWorkspaceRequiredFields = () => {
+    const {
+      config: { editorJsonData, editorSecureJsonData, jsonData, secureJsonFields },
+    } = this.state;
+
+    if (jsonData.azureLogAnalyticsSameAs) {
+      return (
+        editorJsonData.tenantId &&
+        editorJsonData.clientId &&
+        editorJsonData.subscriptionId &&
+        (editorSecureJsonData.clientSecret || secureJsonFields.clientSecret)
+      );
+    }
+
+    return (
+      editorJsonData.logAnalyticsTenantId.length &&
+      editorJsonData.logAnalyticsClientId.length &&
+      editorJsonData.logAnalyticsSubscriptionId &&
+      (secureJsonFields.logAnalyticsClientSecret || editorSecureJsonData.logAnalyticsClientSecret)
+    );
+  };
+
   render() {
-    const { config, logAnalyticsSubscriptions, logAnalyticsWorkspaces } = this.state;
-    const hasRequiredFields =
-      config.editorJsonData.tenantId.length &&
-      config.editorJsonData.clientId.length &&
-      config.jsonData.azureLogAnalyticsSameAs;
+    const {
+      config: { editorJsonData, editorSecureJsonData, jsonData, secureJsonFields },
+      logAnalyticsSubscriptions,
+      logAnalyticsWorkspaces,
+    } = this.state;
     return (
       <>
         <h3 className="page-heading">Azure Log Analytics API Details</h3>
         <Switch
           label="Same details as Azure Monitor API"
-          checked={config.jsonData.azureLogAnalyticsSameAs}
-          onChange={event => this.onAzureLogAnalyticsSameAsChange(!config.jsonData.azureLogAnalyticsSameAs)}
+          checked={jsonData.azureLogAnalyticsSameAs}
+          onChange={event => this.onAzureLogAnalyticsSameAsChange(!jsonData.azureLogAnalyticsSameAs)}
         />
-        {!config.jsonData.azureLogAnalyticsSameAs && (
+        {!jsonData.azureLogAnalyticsSameAs && (
           <AzureCredentialsForm
             subscriptionOptions={logAnalyticsSubscriptions}
-            selectedSubscription={config.editorJsonData.logAnalyticsSubscriptionId}
-            tenantId={config.editorJsonData.logAnalyticsTenantId}
-            clientId={config.editorJsonData.logAnalyticsClientId}
-            clientSecret={config.editorSecureJsonData.logAnalyticsClientSecret}
-            clientSecretConfigured={config.secureJsonFields.logAnalyticsClientSecret}
+            selectedSubscription={editorJsonData.logAnalyticsSubscriptionId}
+            tenantId={editorJsonData.logAnalyticsTenantId}
+            clientId={editorJsonData.logAnalyticsClientId}
+            clientSecret={editorSecureJsonData.logAnalyticsClientSecret}
+            clientSecretConfigured={secureJsonFields.logAnalyticsClientSecret}
             onSubscriptionSelectChange={this.onLogAnalyticsSubscriptionSelect}
             onTenantIdChange={this.onLogAnalyticsTenantIdChange}
             onClientIdChange={this.onLogAnalyticsClientIdChange}
@@ -150,16 +172,16 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
               <div className="width-25">
                 <Select
                   value={logAnalyticsWorkspaces.find(
-                    workspace => workspace.value === config.editorJsonData.logAnalyticsDefaultWorkspace
+                    workspace => workspace.value === editorJsonData.logAnalyticsDefaultWorkspace
                   )}
                   options={logAnalyticsWorkspaces}
-                  defaultValue={config.editorJsonData.logAnalyticsDefaultWorkspace}
+                  defaultValue={editorJsonData.logAnalyticsDefaultWorkspace}
                   onChange={this.onWorkspaceSelectChange}
                 />
               </div>
             </div>
           </div>
-          {hasRequiredFields && (
+          {this.hasWorkspaceRequiredFields() && (
             <div className="gf-form-inline">
               <div className="gf-form">
                 <div className="max-width-30 gf-form-inline">
