@@ -39,9 +39,7 @@ export class AnnotationsEditorCtrl {
   }
 
   async datasourceChanged() {
-    return this.datasourceSrv.get(this.currentAnnotation.datasource).then(ds => {
-      this.currentDatasource = ds;
-    });
+    return (this.currentDatasource = await this.datasourceSrv.get(this.currentAnnotation.datasource));
   }
 
   edit(annotation: any) {
@@ -74,7 +72,7 @@ export class AnnotationsEditorCtrl {
     this.mode = 'list';
   }
 
-  move(index: number, dir: any) {
+  move(index: number, dir: number) {
     // @ts-ignore
     _.move(this.annotations, index, index + dir);
   }

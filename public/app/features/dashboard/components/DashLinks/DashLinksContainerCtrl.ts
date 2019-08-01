@@ -5,6 +5,8 @@ import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 
+export type DashboardLink = { tags: any; target: string; keepTime: any; includeVars: any };
+
 function dashLinksContainer() {
   return {
     scope: {
@@ -149,7 +151,7 @@ export class DashLinksContainerCtrl {
       });
     }
 
-    $scope.searchDashboards = (link: { tags: any; target: string; keepTime: any; includeVars: any }, limit: any) => {
+    $scope.searchDashboards = (link: DashboardLink, limit: any) => {
       return backendSrv.search({ tag: link.tags, limit: limit }).then(results => {
         return _.reduce(
           results,

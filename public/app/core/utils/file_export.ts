@@ -1,7 +1,7 @@
 import { isBoolean, isNumber, sortedUniq, sortedIndexOf, unescape as htmlUnescaped } from 'lodash';
 import { saveAs } from 'file-saver';
 import { isNullOrUndefined } from 'util';
-import { dateTime, TimeZone } from '@grafana/data';
+import { dateTime, TimeZone, TableData } from '@grafana/data';
 
 const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 const POINT_TIME_INDEX = 1;
@@ -177,7 +177,7 @@ export function exportSeriesListToCsvColumns(seriesList: SeriesList, options: Pa
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function convertTableDataToCsv(table: any, excel = false) {
+export function convertTableDataToCsv(table: TableData, excel = false) {
   let text = formatSpecialHeader(excel);
   // add headline
   text += formatRow(table.columns.map((val: any) => val.title || val.text));
@@ -188,7 +188,7 @@ export function convertTableDataToCsv(table: any, excel = false) {
   return text;
 }
 
-export function exportTableDataToCsv(table: any, excel = false) {
+export function exportTableDataToCsv(table: TableData, excel = false) {
   const text = convertTableDataToCsv(table, excel);
   saveSaveBlob(text, EXPORT_FILENAME);
 }

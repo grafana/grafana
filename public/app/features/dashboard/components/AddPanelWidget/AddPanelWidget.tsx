@@ -16,6 +16,8 @@ import { DashboardModel } from '../../state';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { LocationUpdate } from '@grafana/runtime';
 
+export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
+
 export interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
@@ -93,7 +95,7 @@ export class AddPanelWidget extends React.Component<Props, State> {
     reduxStore.dispatch(updateLocation(location));
   };
 
-  onPasteCopiedPanel = (panelPluginInfo: { id: any; defaults: { gridPos: { w: any; h: any }; title: any } }) => {
+  onPasteCopiedPanel = (panelPluginInfo: PanelPluginInfo) => {
     const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
 
