@@ -1,7 +1,7 @@
 import path = require('path');
 import fs = require('fs');
 
-const whitelistedJestConfigOverrides = ['snapshotSerializers'];
+const whitelistedJestConfigOverrides = ['snapshotSerializers', 'moduleNameMapper'];
 
 export const jestConfig = () => {
   const jestConfigOverrides = require(path.resolve(process.cwd(), 'package.json')).jest;
@@ -23,17 +23,21 @@ export const jestConfig = () => {
   const defaultJestConfig = {
     preset: 'ts-jest',
     verbose: false,
-    transform: {
-      '^.+\\.(ts|tsx)$': 'ts-jest',
-    },
     moduleDirectories: ['node_modules', 'src'],
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
     setupFiles,
     globals: { 'ts-jest': { isolatedModules: true } },
     coverageReporters: ['json-summary', 'text', 'lcov'],
     collectCoverageFrom: ['src/**/*.{ts,tsx}', '!**/node_modules/**', '!**/vendor/**'],
-    updateSnapshot: false,
-    passWithNoTests: true,
+
+    testMatch: [
+      '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
+      '<rootDir>/src/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
+    ],
+    transformIgnorePatterns: [
+      '[/\\\\\\\\]node_modules[/\\\\\\\\].+\\\\.(js|jsx|ts|tsx)$',
+      '^.+\\\\.module\\\\.(css|sass|scss)$',
+    ],
   };
 
   return {

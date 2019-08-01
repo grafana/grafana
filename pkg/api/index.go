@@ -308,6 +308,25 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 		}
 
 		data.NavTree = append(data.NavTree, cfgNode)
+	} else {
+		cfgNode := &dtos.NavLink{
+			Id:       "cfg",
+			Text:     "Configuration",
+			SubTitle: "Organization: " + c.OrgName,
+			Icon:     "gicon gicon-cog",
+			Url:      setting.AppSubUrl + "/plugins",
+			Children: []*dtos.NavLink{
+				{
+					Text:        "Plugins",
+					Id:          "plugins",
+					Description: "View and configure plugins",
+					Icon:        "gicon gicon-plugins",
+					Url:         setting.AppSubUrl + "/plugins",
+				},
+			},
+		}
+
+		data.NavTree = append(data.NavTree, cfgNode)
 	}
 
 	if c.IsGrafanaAdmin {

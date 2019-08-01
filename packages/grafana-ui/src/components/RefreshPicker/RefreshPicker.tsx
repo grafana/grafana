@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { SelectOptionItem } from '../Select/Select';
+import { SelectableValue } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { ButtonSelect } from '../Select/ButtonSelect';
 
@@ -23,7 +23,7 @@ export class RefreshPicker extends PureComponent<Props> {
     super(props);
   }
 
-  intervalsToOptions = (intervals: string[] | undefined): Array<SelectOptionItem<string>> => {
+  intervalsToOptions = (intervals: string[] | undefined): Array<SelectableValue<string>> => {
     const intervalsOrDefault = intervals || defaultIntervals;
     const options = intervalsOrDefault
       .filter(str => str !== '')
@@ -37,7 +37,7 @@ export class RefreshPicker extends PureComponent<Props> {
     return options;
   };
 
-  onChangeSelect = (item: SelectOptionItem<string>) => {
+  onChangeSelect = (item: SelectableValue<string>) => {
     const { onIntervalChanged } = this.props;
     if (onIntervalChanged) {
       // @ts-ignore

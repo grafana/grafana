@@ -41,7 +41,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       },
     ],
     columns: [],
-    scroll: true,
+
     fontSize: '100%',
     sort: { col: 0, desc: true },
   };
@@ -243,7 +243,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       appendTableRows(tbodyElem);
       appendPaginationControls(footerElem);
 
-      rootElem.css({ 'max-height': panel.scroll ? getTableHeight() : '' });
+      rootElem.css({ 'max-height': getTableHeight() });
     }
 
     // hook up link tooltips

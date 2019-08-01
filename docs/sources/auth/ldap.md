@@ -126,8 +126,6 @@ group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
 group_search_filter_user_attribute = "uid"
 ```
 
-Also set `member_of = "dn"` in the `[servers.attributes]` section.
-
 ### Group Mappings
 
 In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organization and role.  These will be synced every time the user logs in, with LDAP being

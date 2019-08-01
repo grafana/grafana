@@ -39,13 +39,15 @@ export class KeybindingSrv {
   }
 
   setupGlobal() {
-    this.bind(['?', 'h'], this.showHelpModal);
-    this.bind('g h', this.goToHome);
-    this.bind('g a', this.openAlerting);
-    this.bind('g p', this.goToProfile);
-    this.bind('s o', this.openSearch);
-    this.bind('f', this.openSearch);
-    this.bindGlobal('esc', this.exit);
+    if (this.contextSrv.user.isSignedIn) {
+      this.bind(['?', 'h'], this.showHelpModal);
+      this.bind('g h', this.goToHome);
+      this.bind('g a', this.openAlerting);
+      this.bind('g p', this.goToProfile);
+      this.bind('s o', this.openSearch);
+      this.bind('f', this.openSearch);
+      this.bindGlobal('esc', this.exit);
+    }
   }
 
   openSearch() {

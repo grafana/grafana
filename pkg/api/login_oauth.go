@@ -191,15 +191,18 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		return
 	}
 
+	// Do not expose disabled status,
+	// just show incorrect user credentials error (see #17947)
 	if cmd.Result.IsDisabled {
-		hs.redirectWithError(ctx, login.ErrUserDisabled)
+		oauthLogger.Warn("User is disabled", "user", cmd.Result.Login)
+		hs.redirectWithError(ctx, login.ErrInvalidCredentials)
 		return
 	}
 
 	// login
 	hs.loginUserWithUser(cmd.Result, ctx)
 
-	metrics.M_Api_Login_OAuth.Inc()
+	metrics.MApiLoginOAuth.Inc()
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		ctx.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")

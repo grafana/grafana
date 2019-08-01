@@ -146,7 +146,7 @@ describe('Explore item reducer', () => {
             queries,
             queryKeys,
           };
-          const expectedState = {
+          const expectedState: any = {
             datasourceInstance,
             StartPage,
             showingStartPage: true,
@@ -175,7 +175,7 @@ describe('Explore item reducer', () => {
           showingStartPage: true,
           range: null,
         };
-        const expectedState = {
+        const expectedState: any = {
           queryIntervals: {
             interval: '1s',
             intervalMs: 1000,

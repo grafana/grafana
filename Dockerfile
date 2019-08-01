@@ -24,7 +24,7 @@ COPY packages packages
 
 RUN yarn install --pure-lockfile --no-progress
 
-COPY Gruntfile.js tsconfig.json tslint.json ./
+COPY Gruntfile.js tsconfig.json tslint.json .browserslistrc ./
 COPY public public
 COPY scripts scripts
 COPY emails emails
@@ -33,7 +33,7 @@ ENV NODE_ENV production
 RUN ./node_modules/.bin/grunt build
 
 # Final container
-FROM ubuntu:latest
+FROM ubuntu:18.04
 
 LABEL maintainer="Grafana team <hello@grafana.com>"
 

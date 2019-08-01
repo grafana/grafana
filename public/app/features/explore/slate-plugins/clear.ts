@@ -1,7 +1,7 @@
 // Clears the rest of the line after the caret
 export default function ClearPlugin() {
   return {
-    onKeyDown(event, change) {
+    onKeyDown(event: any, change: { value?: any; deleteForward?: any }) {
       const { value } = change;
       if (!value.isCollapsed) {
         return undefined;

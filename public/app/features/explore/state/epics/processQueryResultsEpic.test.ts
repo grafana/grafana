@@ -41,9 +41,9 @@ describe('processQueryResultsEpic', () => {
         it('then resetQueryErrorAction and querySuccessAction are dispatched and eventBridge emits correct message', () => {
           const { datasourceId, exploreId, state, eventBridge } = mockExploreState();
           const { latency, series, loadingState } = testContext();
-          const graphResult = [];
+          const graphResult: any[] = [];
           const tableResult = new TableModel();
-          const logsResult = null;
+          const logsResult: any = null;
 
           epicTester(processQueryResultsEpic, state)
             .whenActionIsDispatched(
@@ -64,9 +64,9 @@ describe('processQueryResultsEpic', () => {
           it('then correct actions are dispatched', () => {
             const { datasourceId, exploreId, state } = mockExploreState({ scanning: true });
             const { latency, series, loadingState } = testContext();
-            const graphResult = [];
+            const graphResult: any[] = [];
             const tableResult = new TableModel();
-            const logsResult = null;
+            const logsResult: any = null;
 
             epicTester(processQueryResultsEpic, state)
               .whenActionIsDispatched(
@@ -84,9 +84,9 @@ describe('processQueryResultsEpic', () => {
           it('then correct actions are dispatched', () => {
             const { datasourceId, exploreId, state } = mockExploreState({ scanning: true });
             const { latency, loadingState } = testContext();
-            const graphResult = [];
+            const graphResult: any[] = [];
             const tableResult = new TableModel();
-            const logsResult = null;
+            const logsResult: any = null;
 
             epicTester(processQueryResultsEpic, state)
               .whenActionIsDispatched(

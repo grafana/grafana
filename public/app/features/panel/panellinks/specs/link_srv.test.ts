@@ -102,12 +102,12 @@ describe('linkSrv', () => {
         linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?$${DataLinkBuiltInVars.seriesName}`,
+            url: `/d/1?var-test=$${DataLinkBuiltInVars.seriesName}`,
           },
           {},
           dataPointMock
         ).href
-      ).toEqual('/d/1?series=A-series');
+      ).toEqual('/d/1?var-test=A-series');
     });
     it('should interpolate time range based on datapoint timestamp', () => {
       expect(
