@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
+import React, { PureComponent, ChangeEvent, FocusEvent, ReactText } from 'react';
 
 // Utils
 import { rangeUtil } from '@grafana/data';
@@ -46,13 +46,13 @@ interface State {
   relativeTime: string;
   timeShift: string;
   cacheTimeout: string;
-  maxDataPoints: string;
+  maxDataPoints: string | ReactText;
   interval: string;
   hideTimeOverride: boolean;
 }
 
 export class QueryOptions extends PureComponent<Props, State> {
-  allOptions = {
+  allOptions: any = {
     cacheTimeout: {
       label: 'Cache timeout',
       placeholder: '60',
@@ -91,7 +91,7 @@ export class QueryOptions extends PureComponent<Props, State> {
     },
   };
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -147,6 +147,7 @@ export class QueryOptions extends PureComponent<Props, State> {
   onDataSourceOptionBlur = (panelKey: string) => () => {
     const { panel } = this.props;
 
+    // @ts-ignore
     panel[panelKey] = this.state[panelKey];
     panel.refresh();
   };
@@ -172,6 +173,7 @@ export class QueryOptions extends PureComponent<Props, State> {
           {...options}
           onChange={this.onDataSourceOptionChange(panelKey)}
           onBlur={this.onDataSourceOptionBlur(panelKey)}
+          // @ts-ignore
           value={this.state[panelKey]}
         />
       );

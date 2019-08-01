@@ -336,7 +336,7 @@ export function toDataQueryError(err: any): DataQueryError {
 }
 
 function translateToLegacyData(data: DataQueryResponseData) {
-  return data.map(v => {
+  return data.map((v: any) => {
     if (isDataFrame(v)) {
       return toLegacyResponseData(v);
     }

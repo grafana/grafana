@@ -96,7 +96,7 @@ function makeSeriesStub(refId: string) {
   return {
     fields: [createField(undefined)],
     refId,
-  };
+  } as any;
 }
 
 describe('stream handling', () => {

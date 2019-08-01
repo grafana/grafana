@@ -90,7 +90,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     super(props);
   }
 
-  onChangeDatasource = async option => {
+  onChangeDatasource = async (option: { value: any }) => {
     this.props.changeDatasource(this.props.exploreId, option.value);
   };
 
