@@ -57,6 +57,7 @@ export const LoginPage: FC = () => {
                 <ChangePassword
                   onSubmit={changePassword}
                   onSkip={toGrafana}
+                  focus={isChangingPassword}
                   className={isChangingPassword ? '' : 'hidden'}
                 />
               </CSSTransition>

@@ -6,6 +6,7 @@ interface Props {
   onSubmit: (pw: { newPassword: string; confirmNew: string }, valid: boolean) => void;
   onSkip: Function;
   className?: string;
+  focus?: boolean;
 }
 
 interface State {
@@ -15,6 +16,7 @@ interface State {
 }
 
 export class ChangePassword extends PureComponent<Props, State> {
+  private userInput: HTMLInputElement;
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -22,6 +24,16 @@ export class ChangePassword extends PureComponent<Props, State> {
       confirmNew: '',
       valid: false,
     };
+  }
+
+  componentDidUpdate() {
+    if (this.props.focus) {
+      this.focus();
+    }
+  }
+
+  focus() {
+    this.userInput.focus();
   }
 
   onSubmit = (e: SyntheticEvent) => {
@@ -72,6 +84,9 @@ export class ChangePassword extends PureComponent<Props, State> {
               required
               placeholder="New password"
               onChange={this.onChange}
+              ref={input => {
+                this.userInput = input;
+              }}
             />
           </div>
           <div className="login-form">

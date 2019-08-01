@@ -19,6 +19,7 @@ interface State {
 }
 
 export class LoginForm extends PureComponent<Props, State> {
+  private userInput: HTMLInputElement;
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -29,6 +30,9 @@ export class LoginForm extends PureComponent<Props, State> {
     };
   }
 
+  componentDidMount() {
+    this.userInput.focus();
+  }
   onSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
 
@@ -62,6 +66,9 @@ export class LoginForm extends PureComponent<Props, State> {
       <form name="loginForm" className="login-form-group gf-form-group">
         <div className="login-form">
           <input
+            ref={input => {
+              this.userInput = input;
+            }}
             type="text"
             name="user"
             className="gf-form-input login-form-input"

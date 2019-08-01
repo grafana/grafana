@@ -91,7 +91,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
   };
 
   changeView = () => {
-    // Implement animation
     this.setState({
       isChangingPassword: true,
     });
