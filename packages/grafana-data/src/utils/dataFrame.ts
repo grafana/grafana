@@ -1,12 +1,11 @@
 import { Field, FieldType, DataFrame } from '../types/dataFrame';
-import { ArrayVector } from './vector';
 
 /**
  * This object has a 'get' property for each field name
  * and can be accessed by column index
  */
 export class RowCursor<T = any> implements IterableIterator<T> {
-  cursor = 0;
+  private cursor = 0;
 
   constructor(private fields: Field[]) {
     for (let i = 0; i < fields.length; i++) {
@@ -21,7 +20,7 @@ export class RowCursor<T = any> implements IterableIterator<T> {
   }
 
   getFieldValue(column: number): any {
-    return this.fields[column].values.get(this.cursor);
+    return this.fields[column].values[this.cursor];
   }
 
   next(): IteratorResult<T> {
@@ -39,8 +38,8 @@ export class RowCursor<T = any> implements IterableIterator<T> {
 export function createField<T>(name: string, type?: FieldType, values?: T[]) {
   return {
     name,
-    schema: { type },
-    values: new ArrayVector(values ? values : []),
+    type,
+    values: values ? values : [],
   };
 }
 
@@ -50,7 +49,7 @@ export function createField<T>(name: string, type?: FieldType, values?: T[]) {
 export function getDataFrameRow(data: DataFrame, row: number): any[] {
   const values: any[] = [];
   for (const field of data.fields) {
-    values.push(field.values.get(row));
+    values.push(field.values[row]);
   }
   return values;
 }

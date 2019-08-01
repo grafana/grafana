@@ -6,7 +6,7 @@ import { Table, Props } from './Table';
 import { ValueFormatter, getValueFormat, getColorFromHexRgbOrName } from '../../utils/index';
 import { GrafanaTheme } from '../../types/theme';
 import { InterpolateFunction } from '../../types/panel';
-import { Field, dateTime, FieldSchema } from '@grafana/data';
+import { Field, dateTime, FieldDisplayConfig } from '@grafana/data';
 
 export interface TableCellBuilderOptions {
   value: any;
@@ -73,7 +73,7 @@ export interface ColumnStyle {
 // private replaceVariables: InterpolateFunction,
 // private fmt?:ValueFormatter) {
 
-export function getCellBuilder(schema: FieldSchema, style: ColumnStyle | null, props: Props): TableCellBuilder {
+export function getCellBuilder(schema: FieldDisplayConfig, style: ColumnStyle | null, props: Props): TableCellBuilder {
   if (!style) {
     return simpleCellBuilder;
   }
@@ -153,7 +153,7 @@ class CellBuilderWithStyle {
     private mapper: ValueMapper,
     private style: ColumnStyle,
     private theme: GrafanaTheme,
-    private schema: FieldSchema,
+    private schema: FieldDisplayConfig,
     private replaceVariables: InterpolateFunction,
     private fmt?: ValueFormatter
   ) {}

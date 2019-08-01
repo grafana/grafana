@@ -4,15 +4,15 @@ import toString from 'lodash/toString';
 import { DisplayValue, GrafanaTheme, InterpolateFunction, ScopedVars, GraphSeriesValue } from '../types/index';
 import { getDisplayProcessor } from './displayValue';
 import { getFlotPairs } from './flotPairs';
-import { ReducerID, reduceField, FieldType, NullValueMode, DataFrame, FieldSchema } from '@grafana/data';
+import { ReducerID, reduceField, FieldType, NullValueMode, DataFrame, FieldDisplayConfig } from '@grafana/data';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
   limit?: number; // if showing all values limit
   calcs: string[]; // when !values, pick one value for the whole field
 
-  defaults: FieldSchema; // Use these values unless otherwise stated
-  override: FieldSchema; // Set these values regardless of the source
+  defaults: FieldDisplayConfig; // Use these values unless otherwise stated
+  override: FieldDisplayConfig; // Set these values regardless of the source
 }
 
 export const VAR_SERIES_NAME = '__series_name';
@@ -31,7 +31,7 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
 
   let fieldCount = 0;
   for (const field of data[0].fields) {
-    if (field.schema.type === FieldType.number) {
+    if (field.type === FieldType.number) {
       fieldCount++;
     }
   }
@@ -51,7 +51,7 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
 
 export interface FieldDisplay {
   name: string; // NOT title!
-  field: FieldSchema;
+  field: FieldDisplayConfig;
   display: DisplayValue;
   sparkline?: GraphSeriesValue[][];
 }
@@ -92,7 +92,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       let timeColumn = -1;
       if (sparkline) {
         for (let i = 0; i < series.fields.length; i++) {
-          if (series.fields[i].schema.type === FieldType.time) {
+          if (series.fields[i].type === FieldType.time) {
             timeColumn = i;
             break;
           }
@@ -101,12 +101,12 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
         const field = series.fields[i];
-        const schema = getFieldProperties(defaults, field.schema, override);
 
         // Show all number fields
-        if (schema.type !== FieldType.number) {
+        if (field.type !== FieldType.number) {
           continue;
         }
+        const config = getFieldProperties(defaults, field.display || {}, override);
 
         let name = field.name;
         if (!name) {
@@ -116,11 +116,11 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: name };
 
         const display = getDisplayProcessor({
-          field: schema,
+          field: config,
           theme: options.theme,
         });
 
-        const title = schema.title ? schema.title : defaultTitle;
+        const title = config.title ? config.title : defaultTitle;
 
         // Show all number fields
         if (fieldOptions.values) {
@@ -131,7 +131,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             if (usesCellValues) {
               for (let k = 0; k < series.fields.length; k++) {
                 const f = series.fields[k];
-                const v = f.values.get(j);
+                const v = f.values[j];
                 scopedVars[VAR_CELL_PREFIX + k] = {
                   value: v,
                   text: toString(v),
@@ -139,11 +139,11 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               }
             }
 
-            const displayValue = display(field.values.get(j));
+            const displayValue = display(field.values[j]);
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
               name,
-              field: schema,
+              field: config,
               display: displayValue,
             });
 
@@ -154,7 +154,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           }
         } else {
           const results = reduceField({
-            data: field.values,
+            field,
             reducers: calcs, // The stats to calculate
             nullValueMode: NullValueMode.Null,
           });
@@ -176,7 +176,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
               name,
-              field: schema,
+              field: config,
               display: displayValue,
               sparkline: points,
             });
@@ -216,7 +216,7 @@ const numericFieldProps: any = {
  * For numeric values, only valid numbers will be applied
  * for units, 'none' will be skipped
  */
-export function applyFieldProperties(field: FieldSchema, props?: FieldSchema): FieldSchema {
+export function applyFieldProperties(field: FieldDisplayConfig, props?: FieldDisplayConfig): FieldDisplayConfig {
   if (!props) {
     return field;
   }
@@ -244,11 +244,11 @@ export function applyFieldProperties(field: FieldSchema, props?: FieldSchema): F
       copy[key] = val;
     }
   }
-  return copy as FieldSchema;
+  return copy as FieldDisplayConfig;
 }
 
-export function getFieldProperties(...props: FieldSchema[]): FieldSchema {
-  let field = props[0] as FieldSchema;
+export function getFieldProperties(...props: FieldDisplayConfig[]): FieldDisplayConfig {
+  let field = props[0] as FieldDisplayConfig;
   for (let i = 1; i < props.length; i++) {
     field = applyFieldProperties(field, props[i]);
   }

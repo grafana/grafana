@@ -45,9 +45,8 @@ export const getGraphSeriesModel = (
 
       if (points.length > 0) {
         const seriesStats = reduceField({
-          series,
+          field: series.fields[field.index],
           reducers: legendOptions.stats,
-          fieldIndex: field.index,
         });
         let statsDisplayValues: DisplayValue[];
 

@@ -3,7 +3,7 @@ import omit from 'lodash/omit';
 
 import { VizOrientation, PanelModel } from '../../types/panel';
 import { FieldDisplayOptions } from '../../utils/fieldDisplay';
-import { fieldReducers, Threshold, sortThresholds, FieldSchema } from '@grafana/data';
+import { fieldReducers, Threshold, sortThresholds, FieldDisplayConfig } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
   fieldOptions: FieldDisplayOptions;
@@ -40,7 +40,7 @@ export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseO
 
     const fieldOptions = (old.fieldOptions = {} as FieldDisplayOptions);
 
-    const field = (fieldOptions.defaults = {} as FieldSchema);
+    const field = (fieldOptions.defaults = {} as FieldDisplayConfig);
     field.mappings = old.valueMappings;
     field.thresholds = migrateOldThresholds(old.thresholds);
     field.unit = valueOptions.unit;

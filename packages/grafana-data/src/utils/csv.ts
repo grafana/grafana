@@ -4,9 +4,8 @@ import defaults from 'lodash/defaults';
 import isNumber from 'lodash/isNumber';
 
 // Types
-import { DataFrame, Field, FieldType, FieldSchema } from '../types';
+import { DataFrame, Field, FieldType, FieldDisplayConfig } from '../types';
 import { guessFieldTypeFromValue } from './processDataFrame';
-import { ArrayVector } from './vector';
 
 export enum CSVHeaderStyle {
   full,
@@ -52,8 +51,6 @@ enum ParseState {
 
 type FieldParser = (value: string) => any;
 
-type AnyField = Field<any, ArrayVector<any>>;
-
 export class CSVReader {
   config: CSVConfig;
   callback?: CSVParseCallbacks;
@@ -61,7 +58,7 @@ export class CSVReader {
   field: FieldParser[];
   state: ParseState;
   data: DataFrame[];
-  fields: AnyField[];
+  fields: Field[];
 
   constructor(options?: CSVOptions) {
     if (!options) {
@@ -95,10 +92,9 @@ export class CSVReader {
             const isName = 'name' === k;
 
             // Simple object used to check if headers match
-            const headerKeys: FieldSchema = {
-              type: FieldType.number,
+            const headerKeys: FieldDisplayConfig = {
               unit: '#',
-              dateSourceFormat: '#',
+              dateFormat: '#',
             };
 
             // Check if it is a known/supported column
@@ -122,7 +118,7 @@ export class CSVReader {
                 }
               } else {
                 for (let j = 0; j < this.fields.length; j++) {
-                  const schema = this.fields[j].schema as any; // any lets name lookup
+                  const schema = this.fields[j].display as any; // any lets name lookup
                   schema[k] = j === 0 ? v : line[j];
                 }
               }
@@ -147,7 +143,7 @@ export class CSVReader {
             continue;
           }
           this.fields = makeFieldsFor(new Array(line.length));
-          this.fields[0].schema.type = type;
+          this.fields[0].type = type;
           this.state = ParseState.InHeader; // fall through to read rows
         }
       }
@@ -177,7 +173,7 @@ export class CSVReader {
           } else {
             v = null;
           }
-          this.fields[j].values.buffer.push(v);
+          this.fields[j].values.push(v);
           if (this.callback) {
             row.push(v);
           }
@@ -212,26 +208,22 @@ export class CSVReader {
 }
 
 function makeFieldParser(value: string, field: Field): FieldParser {
-  let schema = field.schema;
-  if (!schema || !schema.type) {
-    if (!schema) {
-      field.schema = schema = {};
-    }
+  if (!field.type) {
     if (field.name === 'time' || field.name === 'Time') {
-      schema.type = FieldType.time;
+      field.type = FieldType.time;
     } else {
-      schema.type = guessFieldTypeFromValue(value);
+      field.type = guessFieldTypeFromValue(value);
     }
   }
 
-  if (schema.type === FieldType.number) {
+  if (field.type === FieldType.number) {
     return (value: string) => {
       return parseFloat(value);
     };
   }
 
   // Will convert anything that starts with "T" to true
-  if (schema.type === FieldType.boolean) {
+  if (field.type === FieldType.boolean) {
     return (value: string) => {
       return !(value[0] === 'F' || value[0] === 'f' || value[0] === '0');
     };
@@ -244,11 +236,11 @@ function makeFieldParser(value: string, field: Field): FieldParser {
 /**
  * Creates a field object for each string in the list
  */
-function makeFieldsFor(line: string[]): AnyField[] {
-  const fields: AnyField[] = [];
+function makeFieldsFor(line: string[]): Field[] {
+  const fields: Field[] = [];
   for (let i = 0; i < line.length; i++) {
     const v = line[i] ? line[i] : 'Column ' + (i + 1);
-    fields.push({ name: v, schema: {}, values: new ArrayVector([]) });
+    fields.push({ name: v, values: [] });
   }
   return fields;
 }
@@ -268,15 +260,14 @@ function writeValue(value: any, config: CSVConfig): string {
 }
 
 function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
-  const { schema } = field;
-  if (schema.type) {
-    if (schema.type === FieldType.boolean) {
+  if (field.type) {
+    if (field.type === FieldType.boolean) {
       return (value: any) => {
         return value ? 'true' : 'false';
       };
     }
 
-    if (schema.type === FieldType.number) {
+    if (field.type === FieldType.number) {
       return (value: any) => {
         if (isNumber(value)) {
           return value.toString();
@@ -293,15 +284,15 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
   const isName = 'name' === key;
 
   for (const f of fields) {
-    const schema = f.schema;
-    if (isName || schema.hasOwnProperty(key)) {
+    const display = f.display;
+    if (isName || (display && display.hasOwnProperty(key))) {
       let line = '#' + key + '#';
       for (let i = 0; i < fields.length; i++) {
         if (i > 0) {
           line = line + config.delimiter;
         }
 
-        const v = isName ? f.name : (fields[i].schema as any)[key];
+        const v = isName ? f.name : (fields[i].display as any)[key];
         if (v) {
           line = line + writeValue(v, config);
         }
@@ -353,7 +344,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
             csv = csv + config.delimiter;
           }
 
-          const v = fields[j].values.get(i);
+          const v = fields[j].values[i];
           if (v !== null) {
             csv = csv + writers[j](v);
           }
@@ -370,7 +361,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
 /**
  * Make sure a field exists for the entire width and fill any extras with null
  */
-function padColumnWidth(fields: AnyField[], width: number) {
+function padColumnWidth(fields: Field[], width: number) {
   if (fields.length === width) {
     return; // no changes
   }
@@ -384,8 +375,7 @@ function padColumnWidth(fields: AnyField[], width: number) {
   for (let i = fields.length; i < width; i++) {
     fields.push({
       name: `Field ${i + 1}`,
-      schema: {},
-      values: new ArrayVector([]),
+      values: [],
     });
   }
 
@@ -393,7 +383,7 @@ function padColumnWidth(fields: AnyField[], width: number) {
   for (const field of fields) {
     if (field.values.length < length) {
       for (let i = field.values.length; i < length; i++) {
-        field.values.buffer.push(null);
+        field.values.push(null);
       }
     }
   }

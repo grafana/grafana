@@ -14,22 +14,29 @@ export interface Vector<T = any> {
   length: number;
 
   // Access the value by index (Like an array)
-  get(index: number): T;
+  // get(index: number): T;
+  [index: number]: T;
 
-  // Iterator: for(const val of v)
-  [Symbol.iterator](): IterableIterator<T>;
+  /**
+   * Appends new elements to the vector, and returns the new length of the vector.
+   * @param items New elements of the Vector.
+   *
+   * Some implementations may ignore the input or throw an error
+   */
+  push(...items: T[]): number;
 }
 
 /**
  * Every property is optional
+ *
+ * Plugins may extend this with additional properties
  */
-export interface FieldSchema {
+export interface FieldDisplayConfig {
   title?: string; // The display value for this field.  This supports template variables blank is auto
-  type?: FieldType;
   filterable?: boolean;
 
   // Date Options
-  dateSourceFormat?: string;
+  dateFormat?: string;
 
   // Numeric Options
   unit?: string;
@@ -44,11 +51,11 @@ export interface FieldSchema {
   thresholds?: Threshold[];
 }
 
-export interface Field<T = any, V extends Vector<T> = Vector<T>> {
+export interface Field<T = any> {
   name: string; // The column name
-
-  schema: FieldSchema;
-  values: V;
+  type?: FieldType;
+  display?: FieldDisplayConfig;
+  values: Vector<T>;
 }
 
 export interface DataFrame extends QueryResultBase {
@@ -56,3 +63,15 @@ export interface DataFrame extends QueryResultBase {
   fields: Field[];
   labels?: Labels;
 }
+
+// export interface Field<T = any> extends FieldBase<T>, Vector<T> {
+//   // TODO -- cache here so all components can use it
+//   stats?: {[key:string]:any};
+//   processor?: (value:any) => {};
+// }
+
+// export interface DataFrame extends DataFrameBase<Field> {
+//   toJavascript: () => DataFrameBase;
+//   getField: (name:string) => Field;
+//   getView: <T>() => Vector<T>;
+// }

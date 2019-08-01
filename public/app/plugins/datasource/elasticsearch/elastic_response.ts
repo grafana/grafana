@@ -2,7 +2,7 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
-import { DataFrame, toDataFrame, FieldType } from '@grafana/data';
+import { DataFrame, toDataFrame, FieldType, createField } from '@grafana/data';
 import { DataQueryResponse } from '@grafana/ui';
 import { ElasticsearchAggregation } from './types';
 
@@ -464,14 +464,10 @@ export class ElasticResponse {
 
       if (docs.length > 0) {
         propNames = propNames.sort();
+
+        const fieldTime = createField(this.targets[0].timeField, FieldType.time);
         const series: DataFrame = {
-          fields: [
-            {
-              name: this.targets[0].timeField,
-              type: FieldType.time,
-            },
-          ],
-          rows: [],
+          fields: [fieldTime],
         };
 
         if (logMessageField) {

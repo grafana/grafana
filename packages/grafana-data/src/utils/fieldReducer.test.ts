@@ -2,14 +2,13 @@ import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import _ from 'lodash';
 import { createField } from './dataFrame';
-import { FieldType, Vector } from '../types/index';
-import { ArrayVector } from './vector';
+import { FieldType, Field } from '../types/index';
 
 /**
  * Run a reducer and get back the value
  */
-function reduce(data: Vector, id: string): any {
-  return reduceField({ data, reducers: [id] })[id];
+function reduce(field: Field, id: string): any {
+  return reduceField({ field, reducers: [id] })[id];
 }
 
 describe('Stats Calculators', () => {
@@ -43,7 +42,7 @@ describe('Stats Calculators', () => {
 
   it('should calculate basic stats', () => {
     const stats = reduceField({
-      data: basicTable.fields[0].values,
+      field: basicTable.fields[0],
       reducers: ['first', 'last', 'mean'],
     });
 
@@ -59,7 +58,7 @@ describe('Stats Calculators', () => {
 
   it('should support a single stat also', () => {
     const stats = reduceField({
-      data: basicTable.fields[0].values,
+      field: basicTable.fields[0],
       reducers: ['first'],
     });
 
@@ -70,7 +69,7 @@ describe('Stats Calculators', () => {
 
   it('should get non standard stats', () => {
     const stats = reduceField({
-      data: basicTable.fields[0].values,
+      field: basicTable.fields[0],
       reducers: [ReducerID.distinctCount, ReducerID.changeCount],
     });
 
@@ -80,7 +79,7 @@ describe('Stats Calculators', () => {
 
   it('should calculate step', () => {
     const stats = reduceField({
-      data: new ArrayVector([100, 200, 300, 400]),
+      field: createField('x', undefined, [100, 200, 300, 400]),
       reducers: [ReducerID.step, ReducerID.delta],
     });
 
@@ -89,10 +88,10 @@ describe('Stats Calculators', () => {
   });
 
   it('consistenly check allIsNull/allIsZero', () => {
-    const empty = new ArrayVector([]);
-    const allNull = new ArrayVector([null, null, null, null]);
-    const allUndefined = new ArrayVector([undefined, undefined, undefined, undefined]);
-    const allZero = new ArrayVector([0, 0, 0, 0]);
+    const empty = createField('x', undefined, []);
+    const allNull = createField('x', undefined, [null, null, null, null]);
+    const allUndefined = createField('x', undefined, [undefined, undefined, undefined, undefined]);
+    const allZero = createField('x', undefined, [0, 0, 0, 0]);
 
     expect(reduce(empty, ReducerID.allIsNull)).toEqual(true);
     expect(reduce(allNull, ReducerID.allIsNull)).toEqual(true);
@@ -120,7 +119,7 @@ describe('Stats Calculators', () => {
     ];
 
     const stats = reduceField({
-      data: new ArrayVector(info[0].data),
+      field: createField('x', undefined, info[0].data),
       reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull], // uses standard path
     });
     expect(stats[ReducerID.first]).toEqual(null);
@@ -132,12 +131,12 @@ describe('Stats Calculators', () => {
     for (const input of info) {
       for (const reducer of reducers) {
         const v1 = reduceField({
-          data: new ArrayVector(input.data),
+          field: createField('x', undefined, input.data),
           reducers: [reducer, ReducerID.mean], // uses standard path
         })[reducer];
 
         const v2 = reduceField({
-          data: new ArrayVector(input.data),
+          field: createField('x', undefined, input.data),
           reducers: [reducer], // uses optimized path
         })[reducer];
 

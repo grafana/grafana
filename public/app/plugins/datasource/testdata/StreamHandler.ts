@@ -165,7 +165,10 @@ export class SignalWorker extends StreamWorker {
   initBuffer(refId: string): DataFrame {
     const { speed, buffer } = this.query;
     const data = {
-      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Value', type: FieldType.number }],
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [] as number[] },
+        { name: 'Value', type: FieldType.number, values: [] as number[] },
+      ],
       rows: [],
       refId,
       name: 'Signal ' + refId,
@@ -173,8 +176,8 @@ export class SignalWorker extends StreamWorker {
 
     for (let i = 0; i < this.bands; i++) {
       const suffix = this.bands > 1 ? ` ${i + 1}` : '';
-      data.fields.push({ name: 'Min' + suffix, type: FieldType.number });
-      data.fields.push({ name: 'Max' + suffix, type: FieldType.number });
+      data.fields.push({ name: 'Min' + suffix, type: FieldType.number, values: [] as number[] });
+      data.fields.push({ name: 'Max' + suffix, type: FieldType.number, values: [] as number[] });
     }
 
     console.log('START', data);
@@ -317,8 +320,10 @@ export class LogsWorker extends StreamWorker {
   initBuffer(refId: string): DataFrame {
     const { speed, buffer } = this.query;
     const data = {
-      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Line', type: FieldType.string }],
-      rows: [],
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [] as number[] },
+        { name: 'Line', type: FieldType.string, values: [] as string[] },
+      ],
       refId,
       name: 'Logs ' + refId,
     } as DataFrame;

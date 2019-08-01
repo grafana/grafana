@@ -8,11 +8,11 @@ describe('FieldDisplay', () => {
     const f0 = {
       min: 0,
       max: 100,
-      dateSourceFormat: 'YYYY',
+      dateFormat: 'YYYY',
     };
     const f1 = {
       unit: 'ms',
-      dateSourceFormat: '', // should be ignored
+      dateFormat: '', // should be ignored
       max: parseFloat('NOPE'), // should be ignored
       min: null,
     };
@@ -20,7 +20,7 @@ describe('FieldDisplay', () => {
     expect(field.min).toEqual(0);
     expect(field.max).toEqual(100);
     expect(field.unit).toEqual('ms');
-    expect(field.dateSourceFormat).toEqual('YYYY');
+    expect(field.dateFormat).toEqual('YYYY');
 
     // last one overrieds
     const f2 = {

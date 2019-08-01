@@ -29,17 +29,16 @@ export class FieldCache {
   }
 
   addField(field: Field) {
-    let { schema } = field;
-    if (!schema) {
-      field.schema = schema = {};
-    }
-    if (!schema.type) {
-      schema.type = guessFieldTypeForField(field);
+    if (!field.type) {
+      field.type = guessFieldTypeForField(field);
+      if (!field.type) {
+        field.type = FieldType.other;
+      }
     }
     this.fields.push(field);
     const index = this.fields.length - 1;
     this.fieldIndexByName[field.name] = index;
-    this.fieldIndexByType[schema.type!].push(index);
+    this.fieldIndexByType[field.type].push(index);
   }
 
   hasFieldOfType(type: FieldType): boolean {
@@ -51,7 +50,7 @@ export class FieldCache {
     for (let index = 0; index < this.fields.length; index++) {
       const field = this.fields[index];
 
-      if (!type || field.schema.type === type) {
+      if (!type || field.type === type) {
         fields.push({ ...field, index });
       }
     }

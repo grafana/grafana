@@ -1,7 +1,7 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
 
-import { NullValueMode, Vector } from '../types';
+import { NullValueMode, Field } from '../types';
 import { Registry, RegistryItem } from './registry';
 
 export enum ReducerID {
@@ -33,7 +33,7 @@ export interface FieldCalcs {
 }
 
 // Internal function
-type FieldReducer = (data: Vector, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
+type FieldReducer = (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 
 export interface FieldReducerInfo extends RegistryItem {
   // Internal details
@@ -43,7 +43,7 @@ export interface FieldReducerInfo extends RegistryItem {
 }
 
 interface ReduceFieldOptions {
-  data: Vector;
+  field: Field;
   reducers: string[]; // The stats to calculate
   nullValueMode?: NullValueMode;
 }
@@ -52,9 +52,9 @@ interface ReduceFieldOptions {
  * @returns an object with a key for each selected stat
  */
 export function reduceField(options: ReduceFieldOptions): FieldCalcs {
-  const { data, reducers, nullValueMode } = options;
+  const { field, reducers, nullValueMode } = options;
 
-  if (!data || !reducers || reducers.length < 1) {
+  if (!field || !reducers || reducers.length < 1) {
     return {};
   }
 
@@ -62,6 +62,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
 
   // Return early for empty series
   // This lets the concrete implementations assume at least one row
+  const data = field.values;
   if (data.length < 1) {
     const calcs = {} as FieldCalcs;
     for (const reducer of queue) {
@@ -75,16 +76,16 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
 
   // Avoid calculating all the standard stats if possible
   if (queue.length === 1 && queue[0].reduce) {
-    return queue[0].reduce(data, ignoreNulls, nullAsZero);
+    return queue[0].reduce(field, ignoreNulls, nullAsZero);
   }
 
   // For now everything can use the standard stats
-  let values = doStandardCalcs(data, ignoreNulls, nullAsZero);
+  let values = doStandardCalcs(field, ignoreNulls, nullAsZero);
   for (const reducer of queue) {
     if (!values.hasOwnProperty(reducer.id) && reducer.reduce) {
       values = {
         ...values,
-        ...reducer.reduce(data, ignoreNulls, nullAsZero),
+        ...reducer.reduce(field, ignoreNulls, nullAsZero),
       };
     }
   }
@@ -199,7 +200,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   },
 ]);
 
-function doStandardCalcs(data: Vector, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const calcs = {
     sum: 0,
     max: -Number.MAX_VALUE,
@@ -222,9 +223,10 @@ function doStandardCalcs(data: Vector, ignoreNulls: boolean, nullAsZero: boolean
     // Just used for calcutations -- not exposed as a stat
     previousDeltaUp: true,
   } as FieldCalcs;
+  const data = field.values;
 
   for (let i = 0; i < data.length; i++) {
-    let currentValue = data.get(i);
+    let currentValue = data[i];
     if (i === 0) {
       calcs.first = currentValue;
     }
@@ -325,13 +327,14 @@ function doStandardCalcs(data: Vector, ignoreNulls: boolean, nullAsZero: boolean
   return calcs;
 }
 
-function calculateFirst(data: Vector, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  return { first: data.get(0) };
+function calculateFirst(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  return { first: field.values[0] };
 }
 
-function calculateFirstNotNull(data: Vector, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const data = field.values;
   for (let idx = 0; idx < data.length; idx++) {
-    const v = data.get(idx);
+    const v = data[idx];
     if (v != null) {
       return { firstNotNull: v };
     }
@@ -339,14 +342,16 @@ function calculateFirstNotNull(data: Vector, ignoreNulls: boolean, nullAsZero: b
   return { firstNotNull: undefined };
 }
 
-function calculateLast(data: Vector, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  return { last: data.get(data.length - 1) };
+function calculateLast(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const data = field.values;
+  return { last: data[data.length - 1] };
 }
 
-function calculateLastNotNull(data: Vector, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const data = field.values;
   let idx = data.length - 1;
   while (idx >= 0) {
-    const v = data.get(idx--);
+    const v = data[idx--];
     if (v != null) {
       return { lastNotNull: v };
     }
@@ -354,12 +359,13 @@ function calculateLastNotNull(data: Vector, ignoreNulls: boolean, nullAsZero: bo
   return { lastNotNull: undefined };
 }
 
-function calculateChangeCount(data: Vector, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const data = field.values;
   let count = 0;
   let first = true;
   let last: any = null;
   for (let i = 0; i < data.length; i++) {
-    let currentValue = data.get(i);
+    let currentValue = data[i];
     if (currentValue === null) {
       if (ignoreNulls) {
         continue;
@@ -378,10 +384,11 @@ function calculateChangeCount(data: Vector, ignoreNulls: boolean, nullAsZero: bo
   return { changeCount: count };
 }
 
-function calculateDistinctCount(data: Vector, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const data = field.values;
   const distinct = new Set<any>();
   for (let i = 0; i < data.length; i++) {
-    let currentValue = data.get(i);
+    let currentValue = data[i];
     if (currentValue === null) {
       if (ignoreNulls) {
         continue;

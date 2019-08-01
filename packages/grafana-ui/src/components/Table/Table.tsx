@@ -12,14 +12,7 @@ import {
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import {
-  stringToJsRegex,
-  DataFrame,
-  sortDataFrame,
-  getDataFrameRowCount,
-  ArrayVector,
-  getDataFrameRow,
-} from '@grafana/data';
+import { stringToJsRegex, DataFrame, sortDataFrame, getDataFrameRowCount, getDataFrameRow } from '@grafana/data';
 
 import {
   TableCellBuilder,
@@ -153,7 +146,7 @@ export class Table extends Component<Props, State> {
       return {
         header: title,
         width: columnWidth,
-        builder: getCellBuilder(col.schema, style, this.props),
+        builder: getCellBuilder(col.display || {}, style, this.props),
       };
     });
   }
@@ -193,7 +186,7 @@ export class Table extends Component<Props, State> {
       this.doSort(column);
     } else {
       const field = this.state.data.fields[columnIndex];
-      const value = field.values.get(rowIndex);
+      const value = field.values[rowIndex];
       console.log('CLICK', value, field.name);
     }
   };
@@ -208,8 +201,8 @@ export class Table extends Component<Props, State> {
     if (!col) {
       col = {
         name: '??' + columnIndex + '???',
-        schema: {},
-        values: new ArrayVector([]),
+        display: {},
+        values: [],
       };
     }
 

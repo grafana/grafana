@@ -79,7 +79,7 @@ describe('getProcessedDataFrame', () => {
     for (const table of data) {
       for (const field of table.fields) {
         expect(field.name).toBeDefined();
-        expect(field.schema.type).toBeDefined();
+        expect(field.type).toBeDefined();
       }
     }
   });

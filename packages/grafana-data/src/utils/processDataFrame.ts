@@ -11,25 +11,24 @@ import {
   FieldType,
   TableData,
   Column,
-  FieldSchema,
+  FieldDisplayConfig,
   TimeSeriesValue,
 } from '../types/index';
 import { isDateTime } from './moment_wrapper';
-import { ArrayVector } from './vector';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
-    const { text, ...schema } = c;
+    const { text, ...disp } = c;
     return {
       name: text, // rename 'text' to the 'name' field
-      schema: schema as FieldSchema,
-      values: new ArrayVector(new Array<any>()),
+      display: disp as FieldDisplayConfig,
+      values: new Array<any>(),
     };
   });
   // Fill in the field values
   for (const row of table.rows) {
     for (let i = 0; i < fields.length; i++) {
-      fields[i].values.buffer.push(row[i]);
+      fields[i].values.push(row[i]);
     }
   }
 
@@ -49,7 +48,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
         unit: timeSeries.unit,
         type: FieldType.number,
       },
-      values: new ArrayVector<TimeSeriesValue>([]),
+      values: [] as TimeSeriesValue[],
     },
     {
       name: 'Time',
@@ -57,13 +56,13 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
         unit: 'dateTimeAsIso',
         type: FieldType.time,
       },
-      values: new ArrayVector<number>([]),
+      values: [] as number[],
     },
   ];
 
   for (const point of timeSeries.datapoints) {
-    fields[0].values.buffer.push(point[0]);
-    fields[1].values.buffer.push(point[1]);
+    fields[0].values.push(point[0]);
+    fields[1].values.push(point[1]);
   }
 
   return {
@@ -126,7 +125,7 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
 
   // 2. Check the first non-null value
   for (let i = 0; i < field.values.length; i++) {
-    const v = field.values.get(i);
+    const v = field.values[i];
     if (v !== null) {
       return guessFieldTypeFromValue(v);
     }
@@ -142,23 +141,18 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
  */
 export const guessFieldTypes = (series: DataFrame): DataFrame => {
   for (let i = 0; i < series.fields.length; i++) {
-    const s = series.fields[i].schema;
-    if (!s || !s.type) {
+    if (!series.fields[i].type) {
       // Somethign is missing a type return a modified copy
       return {
         ...series,
         fields: series.fields.map(field => {
-          const schema = field.schema;
-          if (schema && schema.type) {
+          if (field.type) {
             return field;
           }
           // Calculate a reasonable schema value
           return {
             ...field,
-            schema: {
-              ...schema,
-              type: guessFieldTypeForField(field),
-            },
+            type: guessFieldTypeForField(field),
           };
         }),
       };
@@ -199,13 +193,13 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   for (let i = 0; i < length; i++) {
     const row: any[] = [];
     for (let j = 0; j < fields.length; j++) {
-      row.push(fields[j].values.get(i));
+      row.push(fields[j].values[i]);
     }
     rows.push(row);
   }
 
   if (fields.length === 2) {
-    let type = fields[1].schema.type;
+    let type = fields[1].type;
     if (!type) {
       type = guessFieldTypeForField(fields[1]);
     }
@@ -214,7 +208,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
         alias: fields[0].name || frame.name,
         target: fields[0].name || frame.name,
         datapoints: rows,
-        unit: fields[0].schema.unit,
+        unit: fields[0].display ? fields[0].display.unit : undefined,
         refId: frame.refId,
         meta: frame.meta,
       } as TimeSeries;
@@ -223,10 +217,14 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
 
   return {
     columns: fields.map(f => {
-      const { name, schema } = f;
-      const { ...column } = schema;
-      (column as Column).text = name;
-      return column as Column;
+      const { name, display } = f;
+      if (display) {
+        // keep unit etc
+        const { ...column } = display;
+        (column as Column).text = name;
+        return column as Column;
+      }
+      return { text: name };
     }),
     refId: frame.refId,
     meta: frame.meta,
