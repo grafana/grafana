@@ -5,6 +5,7 @@ import { LoginServiceButtons } from './LoginServiceButtons';
 import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
+import { CSSTransition } from 'react-transition-group';
 
 const isOauthEnabled = () => Object.keys(config.oauth).length > 0;
 
@@ -17,11 +18,12 @@ export const LoginPage: FC = () => {
           <div className="logo-wordmark" />
         </div>
         <LoginCtrl>
-          {({ login, isLoggingIn, changePassword, toGrafana, isChangingPassword }) =>
-            isChangingPassword ? (
-              <ChangePassword onSubmit={changePassword} onSkip={toGrafana} />
-            ) : (
-              <div className="login-out-box">
+          {({ login, isLoggingIn, changePassword, toGrafana, isChangingPassword }) => (
+            <div className="login-out-box">
+              <CSSTransition in={isChangingPassword} timeout={2500} classNames="login-inner-box">
+                <ChangePassword onSubmit={changePassword} onSkip={toGrafana} />
+              </CSSTransition>
+              <CSSTransition in={!isChangingPassword} timeout={2500} classNames="login-inner-box">
                 <div className="login-inner-box" id="login-view">
                   <LoginForm
                     displayLoginFields={!config.disableLoginForm}
@@ -53,9 +55,9 @@ export const LoginPage: FC = () => {
 
                   <UserSignup />
                 </div>
-              </div>
-            )
-          }
+              </CSSTransition>
+            </div>
+          )}
         </LoginCtrl>
 
         <div className="clearfix" />
