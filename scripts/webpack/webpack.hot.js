@@ -10,6 +10,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const IgnoreNotFoundExportPlugin = require("./IgnoreNotFoundExportPlugin.js");
 
 module.exports = merge(common, {
+  mode: 'development',
   entry: {
     app: ['webpack-dev-server/client?http://localhost:3333', './public/app/dev.ts'],
   },
@@ -34,6 +35,9 @@ module.exports = merge(common, {
     proxy: {
       '!/public/build': 'http://localhost:3000',
     },
+    watchOptions: {
+      ignored: /node_modules/
+    }
   },
 
   optimization: {

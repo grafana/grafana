@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -99,6 +101,23 @@ func init() {
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			return getRandomWalk(query, context)
+		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "predictable_pulse",
+		Name: "Predictable Pulse",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			return getPredictablePulse(query, context)
+		},
+		Description: PredictablePulseDesc,
+	})
+
+	registerScenario(&Scenario{
+		Id:   "predictable_csv_wave",
+		Name: "Predictable CSV Wave",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			return getPredictableCSVWave(query, context)
 		},
 	})
 
@@ -342,6 +361,142 @@ func init() {
 	})
 }
 
+// PredictablePulseDesc is the description for the Predictable Pulse scenerio.
+const PredictablePulseDesc = `Predictable Pulse returns a pulse wave where there is a datapoint every timeStepSeconds.
+The wave cycles at timeStepSeconds*(onCount+offCount).
+The cycle of the wave is based off of absolute time (from the epoch) which makes it predictable.
+Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means times will all end in :00 seconds).`
+
+func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+	queryRes := tsdb.NewQueryResult()
+
+	// Process Input
+	var timeStep int64
+	var onCount int64
+	var offCount int64
+	var onValue null.Float
+	var offValue null.Float
+
+	options := query.Model.Get("pulseWave")
+
+	var err error
+	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
+		return queryRes
+	}
+	if onCount, err = options.Get("onCount").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse onCount value '%v' into integer: %v", options.Get("onCount"), err)
+		return queryRes
+	}
+	if offCount, err = options.Get("offCount").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse offCount value '%v' into integer: %v", options.Get("offCount"), err)
+		return queryRes
+	}
+
+	onValue, err = fromStringOrNumber(options.Get("onValue"))
+	if err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse onValue value '%v' into float: %v", options.Get("onValue"), err)
+		return queryRes
+	}
+	offValue, err = fromStringOrNumber(options.Get("offValue"))
+	if err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.Get("offValue"), err)
+		return queryRes
+	}
+
+	timeStep = timeStep * 1000                     // Seconds to Milliseconds
+	onFor := func(mod int64) (null.Float, error) { // How many items in the cycle should get the on value
+		var i int64
+		for i = 0; i < onCount; i++ {
+			if mod == i*timeStep {
+				return onValue, nil
+			}
+		}
+		return offValue, nil
+	}
+	points, err := predictableSeries(context.TimeRange, timeStep, onCount+offCount, onFor)
+	if err != nil {
+		queryRes.Error = err
+		return queryRes
+	}
+
+	series := newSeriesForQuery(query)
+	series.Points = *points
+	queryRes.Series = append(queryRes.Series, series)
+	return queryRes
+}
+
+func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+	queryRes := tsdb.NewQueryResult()
+
+	// Process Input
+	var timeStep int64
+
+	options := query.Model.Get("csvWave")
+
+	var err error
+	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
+		return queryRes
+	}
+	rawValues := options.Get("valuesCSV").MustString()
+	rawValues = strings.TrimRight(strings.TrimSpace(rawValues), ",") // Strip Trailing Comma
+	rawValesCSV := strings.Split(rawValues, ",")
+	values := make([]null.Float, len(rawValesCSV))
+	for i, rawValue := range rawValesCSV {
+		val, err := null.FloatFromString(strings.TrimSpace(rawValue), "null")
+		if err != nil {
+			queryRes.Error = fmt.Errorf("failed to parse value '%v' into nullable float: err", rawValue, err)
+			return queryRes
+		}
+		values[i] = val
+	}
+
+	timeStep = timeStep * 1000 // Seconds to Milliseconds
+	valuesLen := int64(len(values))
+	getValue := func(mod int64) (null.Float, error) {
+		var i int64
+		for i = 0; i < valuesLen; i++ {
+			if mod == i*timeStep {
+				return values[i], nil
+			}
+		}
+		return null.Float{}, fmt.Errorf("did not get value at point in waveform - should not be here")
+	}
+	points, err := predictableSeries(context.TimeRange, timeStep, valuesLen, getValue)
+	if err != nil {
+		queryRes.Error = err
+		return queryRes
+	}
+
+	series := newSeriesForQuery(query)
+	series.Points = *points
+	queryRes.Series = append(queryRes.Series, series)
+	return queryRes
+}
+
+func predictableSeries(timeRange *tsdb.TimeRange, timeStep, length int64, getValue func(mod int64) (null.Float, error)) (*tsdb.TimeSeriesPoints, error) {
+	points := make(tsdb.TimeSeriesPoints, 0)
+
+	from := timeRange.GetFromAsMsEpoch()
+	to := timeRange.GetToAsMsEpoch()
+
+	timeCursor := from - (from % timeStep) // Truncate Start
+	wavePeriod := timeStep * length
+	maxPoints := 10000 // Don't return too many points
+
+	for i := 0; i < maxPoints && timeCursor < to; i++ {
+		val, err := getValue(timeCursor % wavePeriod)
+		if err != nil {
+			return &points, err
+		}
+		point := tsdb.NewTimePoint(val, float64(timeCursor))
+		points = append(points, point)
+		timeCursor += timeStep
+	}
+	return &points, nil
+}
+
 func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
 	timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
 	to := tsdbQuery.TimeRange.GetToAsMsEpoch()
@@ -434,4 +589,19 @@ func newSeriesForQuery(query *tsdb.Query) *tsdb.TimeSeries {
 	}
 
 	return &tsdb.TimeSeries{Name: alias}
+}
+
+func fromStringOrNumber(val *simplejson.Json) (null.Float, error) {
+	switch v := val.Interface().(type) {
+	case json.Number:
+		fV, err := v.Float64()
+		if err != nil {
+			return null.Float{}, err
+		}
+		return null.FloatFrom(fV), nil
+	case string:
+		return null.FloatFromString(v, "null")
+	default:
+		return null.Float{}, fmt.Errorf("failed to extract value")
+	}
 }

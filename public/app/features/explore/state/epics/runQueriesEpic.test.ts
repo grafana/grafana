@@ -46,7 +46,7 @@ describe('runQueriesEpic', () => {
 
       describe('and we have no queries', () => {
         it('then clearQueriesAction and stateSaveAction are dispatched', () => {
-          const queries = [];
+          const queries: any[] = [];
           const { exploreId, state } = mockExploreState({ queries });
 
           epicTester(runQueriesEpic, state)

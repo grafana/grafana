@@ -4,12 +4,14 @@ import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
 import { DashboardMeta } from 'app/types';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { ILocationService } from 'angular';
 
 export class DashboardSrv {
   dashboard: DashboardModel;
 
   /** @ngInject */
-  constructor(private backendSrv, private $rootScope, private $location) {
+  constructor(private backendSrv: BackendSrv, private $rootScope: any, private $location: ILocationService) {
     appEvents.on('save-dashboard', this.saveDashboard.bind(this), $rootScope);
     appEvents.on('panel-change-view', this.onPanelChangeView);
     appEvents.on('remove-panel', this.onRemovePanel);
@@ -35,7 +37,7 @@ export class DashboardSrv {
     removePanel(dashboard, dashboard.getPanelById(panelId), true);
   };
 
-  onPanelChangeView = options => {
+  onPanelChangeView = (options: any) => {
     const urlParams = this.$location.search();
 
     // handle toggle logic
@@ -75,7 +77,11 @@ export class DashboardSrv {
     this.$location.search(urlParams);
   };
 
-  handleSaveDashboardError(clone, options, err) {
+  handleSaveDashboardError(
+    clone: any,
+    options: { overwrite?: any },
+    err: { data: { status: string; message: any }; isHandled: boolean }
+  ) {
     options = options || {};
     options.overwrite = true;
 
@@ -129,7 +135,7 @@ export class DashboardSrv {
     }
   }
 
-  postSave(clone, data) {
+  postSave(clone: DashboardModel, data: { version: number; url: string }) {
     this.dashboard.version = data.version;
 
     // important that these happens before location redirect below
@@ -146,7 +152,7 @@ export class DashboardSrv {
     return this.dashboard;
   }
 
-  save(clone, options) {
+  save(clone: any, options: { overwrite?: any; folderId?: any }) {
     options = options || {};
     options.folderId = options.folderId >= 0 ? options.folderId : this.dashboard.meta.folderId || clone.folderId;
 
@@ -156,7 +162,7 @@ export class DashboardSrv {
       .catch(this.handleSaveDashboardError.bind(this, clone, options));
   }
 
-  saveDashboard(options?, clone?) {
+  saveDashboard(options?: { overwrite?: any; folderId?: any; makeEditable?: any }, clone?: DashboardModel) {
     if (clone) {
       this.setCurrent(this.create(clone, this.dashboard.meta));
     }
@@ -204,7 +210,7 @@ export class DashboardSrv {
     });
   }
 
-  starDashboard(dashboardId, isStarred) {
+  starDashboard(dashboardId: string, isStarred: any) {
     let promise;
 
     if (isStarred) {
@@ -217,7 +223,7 @@ export class DashboardSrv {
       });
     }
 
-    return promise.then(res => {
+    return promise.then((res: boolean) => {
       if (this.dashboard && this.dashboard.id === dashboardId) {
         this.dashboard.meta.isStarred = res;
       }

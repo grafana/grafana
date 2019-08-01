@@ -6,37 +6,52 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"golang.org/x/xerrors"
 )
 
 func GetGrafanaPluginDir(currentOS string) string {
-	if isDevEnvironment() {
-		return "../data/plugins"
+	if rootPath, ok := tryGetRootForDevEnvironment(); ok {
+		return filepath.Join(rootPath, "data/plugins")
 	}
 
 	return returnOsDefault(currentOS)
 }
 
-func isDevEnvironment() bool {
-	// if ../conf/defaults.ini exists, grafana is not installed as package
-	// that its in development environment.
+// getGrafanaRoot tries to get root of directory when developing grafana ie repo root. It is not perfect it just
+// checks what is the binary path and tries to guess based on that but if it is not running in dev env you get a bogus
+// path back.
+func getGrafanaRoot() (string, error) {
 	ex, err := os.Executable()
 	if err != nil {
-		logger.Error("Could not get executable path. Assuming non dev environment.")
-		return false
+		return "", xerrors.New("Failed to get executable path")
 	}
 	exPath := filepath.Dir(ex)
 	_, last := path.Split(exPath)
 	if last == "bin" {
 		// In dev env the executable for current platform is created in 'bin/' dir
-		defaultsPath := filepath.Join(exPath, "../conf/defaults.ini")
-		_, err = os.Stat(defaultsPath)
-		return err == nil
+		return filepath.Join(exPath, ".."), nil
 	}
 
 	// But at the same time there are per platform directories that contain the binaries and can also be used.
-	defaultsPath := filepath.Join(exPath, "../../conf/defaults.ini")
+	return filepath.Join(exPath, "../.."), nil
+}
+
+// tryGetRootForDevEnvironment returns root path if we are in dev environment. It checks if conf/defaults.ini exists
+// which should only exist in dev. Second param is false if we are not in dev or if it wasn't possible to determine it.
+func tryGetRootForDevEnvironment() (string, bool) {
+	rootPath, err := getGrafanaRoot()
+	if err != nil {
+		logger.Error("Could not get executable path. Assuming non dev environment.", err)
+		return "", false
+	}
+
+	defaultsPath := filepath.Join(rootPath, "conf/defaults.ini")
+
 	_, err = os.Stat(defaultsPath)
-	return err == nil
+	if err != nil {
+		return "", false
+	}
+	return rootPath, true
 }
 
 func returnOsDefault(currentOs string) string {

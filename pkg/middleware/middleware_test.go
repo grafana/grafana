@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"encoding/base32"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,9 +10,6 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
-
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -21,7 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/macaron.v1"
 )
 
 const errorTemplate = "error-template"
@@ -377,7 +377,9 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.LDAPEnabled = true
 			setting.AuthProxyHeaderName = "X-WEBAUTH-USER"
 			setting.AuthProxyHeaderProperty = "username"
+			setting.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
 			name := "markelog"
+			group := "grafana-core-team"
 
 			middlewareScenario(t, "should not sync the user if it's in the cache", func(sc *scenarioContext) {
 				bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
@@ -385,11 +387,12 @@ func TestMiddlewareContext(t *testing.T) {
 					return nil
 				})
 
-				key := fmt.Sprintf(cachePrefix, name)
+				key := fmt.Sprintf(cachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
 				sc.remoteCacheService.Set(key, int64(33), 0)
 				sc.fakeReq("GET", "/")
 
 				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.req.Header.Add("X-WEBAUTH-GROUPS", group)
 				sc.exec()
 
 				Convey("Should init user via cache", func() {

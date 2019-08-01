@@ -42,10 +42,10 @@ export class DataSourceDashboards extends PureComponent<Props> {
 
   onImport = (dashboard: PluginDashboard, overwrite: boolean) => {
     const { dataSource, importDashboard } = this.props;
-    const data = {
+    const data: any = {
       pluginId: dashboard.pluginId,
       path: dashboard.path,
-      overwrite: overwrite,
+      overwrite,
       inputs: [],
     };
 

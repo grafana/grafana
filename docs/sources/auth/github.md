@@ -108,9 +108,9 @@ the correct teams.
 
 Your GitHub teams can be referenced in two ways:
 
-- `https://github.com/orgs/<org>/teams/<team name>`
-- `@<org>/<team name>`
+- `https://github.com/orgs/<org>/teams/<slug>`
+- `@<org>/<slug>`
 
 Example: `@grafana/developers`
 
-[Learn more about Team Sync]({{< relref "auth/enhanced_ldap.md" >}})
+[Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})
