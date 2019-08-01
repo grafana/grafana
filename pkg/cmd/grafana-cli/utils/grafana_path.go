@@ -45,12 +45,13 @@ func tryGetRootForDevEnvironment() (string, bool) {
 		return "", false
 	}
 
-	defaultsPath := filepath.Join(rootPath, "conf/defaults.ini")
+	devenvPath := filepath.Join(rootPath, "devenv")
 
-	_, err = os.Stat(defaultsPath)
+	_, err = os.Stat(devenvPath)
 	if err != nil {
 		return "", false
 	}
+
 	return rootPath, true
 }
 
