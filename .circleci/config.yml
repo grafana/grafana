@@ -101,7 +101,7 @@ jobs:
   end-to-end-test-release:
       docker:
         - image: circleci/node:10-browsers
-        - image: grafana/grafana:$CIRCLE_TAG
+        - image: grafana/grafana-dev:$CIRCLE_TAG
       steps:
           - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
           - checkout
