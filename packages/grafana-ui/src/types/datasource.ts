@@ -210,7 +210,7 @@ export abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options: any): Promise<MetricFindValue[]>;
+  getTagKeys?(options?: any): Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters

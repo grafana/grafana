@@ -4,7 +4,7 @@ import { ContextSrv } from '../services/context_srv';
 jest.mock('app/core/store');
 
 describe('backend_srv', () => {
-  const _httpBackend = options => {
+  const _httpBackend = (options: any) => {
     if (options.url === 'gateway-error') {
       return Promise.reject({ status: 502 });
     }

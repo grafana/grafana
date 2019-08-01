@@ -177,6 +177,7 @@
     "@types/enzyme-adapter-react-16": "1.0.5",
     "@types/file-saver": "2.0.1",
     "@types/marked": "0.6.5",
+    "@types/mousetrap": "1.6.3",
     "@types/prismjs": "1.16.0",
     "@types/react-redux": "7.0.8",
     "@types/react-table": "6.8.5",
