@@ -5,6 +5,7 @@ import appEvents from 'app/core/app_events';
 interface Props {
   onSubmit: (pw: { newPassword: string; confirmNew: string }, valid: boolean) => void;
   onSkip: Function;
+  className?: string;
 }
 
 interface State {
@@ -53,7 +54,7 @@ export class ChangePassword extends PureComponent<Props, State> {
 
   render() {
     return (
-      <div className="login-inner-box" id="change-password-view">
+      <div className={`login-inner-box ${this.props.className}`} id="change-password-view">
         <div className="text-left login-change-password-info">
           <h5>Change Password</h5>
           Before you can get started with awesome dashboards we need you to make your account more secure by changing

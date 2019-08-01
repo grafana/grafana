@@ -20,10 +20,7 @@ export const LoginPage: FC = () => {
         <LoginCtrl>
           {({ login, isLoggingIn, changePassword, toGrafana, isChangingPassword }) => (
             <div className="login-out-box">
-              <CSSTransition in={isChangingPassword} timeout={2500} classNames="login-inner-box">
-                <ChangePassword onSubmit={changePassword} onSkip={toGrafana} />
-              </CSSTransition>
-              <CSSTransition in={!isChangingPassword} timeout={2500} classNames="login-inner-box">
+              <CSSTransition in={!isChangingPassword} timeout={250} classNames="login-inner-box">
                 <div className="login-inner-box" id="login-view">
                   <LoginForm
                     displayLoginFields={!config.disableLoginForm}
@@ -55,6 +52,13 @@ export const LoginPage: FC = () => {
 
                   <UserSignup />
                 </div>
+              </CSSTransition>
+              <CSSTransition appear={true} in={isChangingPassword} timeout={250} classNames="login-inner-box">
+                <ChangePassword
+                  onSubmit={changePassword}
+                  onSkip={toGrafana}
+                  className={isChangingPassword ? '' : 'hidden'}
+                />
               </CSSTransition>
             </div>
           )}

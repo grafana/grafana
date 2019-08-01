@@ -162,34 +162,22 @@ select:-webkit-autofill:focus {
   transform: tranlate(0px, 0px);
   transition: 0.25s ease;
 
-  display: none;
+  &.hidden {
+    transform: translate(0px, 320px);
+    display: none;
+  }
+
   &-enter {
-    transform: translate(0px, -320px);
     display: flex;
   }
 
   &-enter-active {
-    transform: tranlate(0px, 0px);
+    transform: translate(0px, 0px);
   }
 
-  &-exit {
-    transform: translate(0px, 320px);
-  }
-  &-exit-active {
+  &-exit-active,
+  &-exit-done {
     display: none;
-  }
-  &.add {
-    transform: translate(0px, -320px);
-    &.hidden {
-      display: none;
-    }
-  }
-
-  &.remove {
-    transform: translate(0px, 320px);
-    &.hidden {
-      display: none;
-    }
   }
 }
 
