@@ -192,7 +192,7 @@ describe('runQueriesBatchEpic', () => {
             )
             .whenQueryObserverReceivesEvent({
               state: LoadingState.Done,
-              series: null,
+              data: null,
               delta,
               key: 'some key',
               request: {} as DataQueryRequest,

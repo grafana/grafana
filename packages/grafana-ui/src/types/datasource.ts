@@ -309,9 +309,9 @@ export interface DataStreamState {
   request: DataQueryRequest;
 
   /**
-   * Series data may not be known yet
+   * Data may not be known yet
    */
-  series?: DataFrame[];
+  data?: DataFrame[];
 
   /**
    * Error in stream (but may still be running)

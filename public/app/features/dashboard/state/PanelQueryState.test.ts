@@ -1,4 +1,4 @@
-import { toDataQueryError, PanelQueryState, getProcessedDataFrame } from './PanelQueryState';
+import { toDataQueryError, PanelQueryState, getProcessedDataFrames } from './PanelQueryState';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { LoadingState, createField, getDataFrameRow } from '@grafana/data';
 import { DataQueryResponse } from '@grafana/ui';
@@ -65,7 +65,7 @@ describe('getProcessedDataFrame', () => {
       target: '',
       datapoints: [[100, 1], [200, 2]],
     };
-    const data = getProcessedDataFrame([null, input1, input2, null, null]);
+    const data = getProcessedDataFrames([null, input1, input2, null, null]);
     expect(data.length).toBe(2);
     expect(data[0].fields[0].name).toBe(input1.target);
 
@@ -85,10 +85,10 @@ describe('getProcessedDataFrame', () => {
   });
 
   it('supports null values from query OK', () => {
-    expect(getProcessedDataFrame([null, null, null, null])).toEqual([]);
-    expect(getProcessedDataFrame(undefined)).toEqual([]);
-    expect(getProcessedDataFrame((null as unknown) as any[])).toEqual([]);
-    expect(getProcessedDataFrame([])).toEqual([]);
+    expect(getProcessedDataFrames([null, null, null, null])).toEqual([]);
+    expect(getProcessedDataFrames(undefined)).toEqual([]);
+    expect(getProcessedDataFrames((null as unknown) as any[])).toEqual([]);
+    expect(getProcessedDataFrames([])).toEqual([]);
   });
 });
 
@@ -130,7 +130,7 @@ describe('stream handling', () => {
       state: LoadingState.Loading,
       key: 'C',
       request: state.request, // From the same request
-      series: [makeSeriesStub('C')],
+      data: [makeSeriesStub('C')],
       unsubscribe: () => {},
     });
     expect(state.streams.length).toBe(1);
@@ -147,7 +147,7 @@ describe('stream handling', () => {
       state: LoadingState.Loading,
       key: 'D',
       request: state.request, // From the same request
-      series: [makeSeriesStub('D')],
+      data: [makeSeriesStub('D')],
       unsubscribe: () => {},
     });
     expect(state.streams.length).toBe(2);
@@ -164,7 +164,7 @@ describe('stream handling', () => {
       state: LoadingState.Loading,
       key: 'C', // The key to replace previous index 2
       request: state.request, // From the same request
-      series: [makeSeriesStub('X')],
+      data: [makeSeriesStub('X')],
       unsubscribe: () => {},
     });
     expect(state.streams.length).toBe(2);
@@ -182,7 +182,7 @@ describe('stream handling', () => {
         ...state.request,
         requestId: 'XXX', // Different request and id
       } as any,
-      series: [makeSeriesStub('C')],
+      data: [makeSeriesStub('C')],
       unsubscribe: () => {},
     });
 

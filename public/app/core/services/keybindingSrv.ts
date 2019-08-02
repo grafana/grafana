@@ -39,7 +39,7 @@ export class KeybindingSrv {
   }
 
   setupGlobal() {
-    if (this.contextSrv.user.isSignedIn) {
+    if (!(this.$location.path() === '/login')) {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
       this.bind('g a', this.openAlerting);
