@@ -165,7 +165,7 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 
 	loginQuery := models.GetUserByLoginQuery{LoginOrEmail: username}
 	if err := bus.Dispatch(&loginQuery); err != nil {
-		ctx.Logger.Error(
+		ctx.Logger.Debug(
 			"Failed to look up the username",
 			"username", username,
 		)
@@ -181,7 +181,7 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		User:     user,
 	}
 	if err := bus.Dispatch(&loginUserQuery); err != nil {
-		ctx.Logger.Error(
+		ctx.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
 		)
