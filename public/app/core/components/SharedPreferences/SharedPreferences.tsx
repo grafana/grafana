@@ -130,7 +130,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           <Select
             value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
             getOptionValue={i => i.id}
-            getOptionLabel={(dashboard: DashboardSearchHit) => this.getFullDashName(dashboard)}
+            getOptionLabel={this.getFullDashName}
             onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
             options={dashboards}
             placeholder="Choose default dashboard"
