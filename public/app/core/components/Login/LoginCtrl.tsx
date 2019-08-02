@@ -22,7 +22,6 @@ interface Props {
     changePassword: (pw: { newPassword: string; confirmNew: string; oldPassword: string }, valid: boolean) => void;
     isChangingPassword: boolean;
     toGrafana: Function;
-    signUp: Function;
     login: (data: FormModel, valid: boolean) => void;
   }) => JSX.Element;
 }
@@ -44,8 +43,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
       appEvents.on('alert-warning', ['Login Failed', config.loginError]);
     }
   }
-
-  signUp = (formModel: FormModel, valid: boolean) => {};
 
   changePassword = (pws: { newPassword: string; confirmNew: string }, valid: boolean) => {
     console.log('Changing PW');
@@ -99,33 +96,34 @@ export class LoginCtrl extends PureComponent<Props, State> {
   toGrafana = () => {
     console.log('Trying to get to Grafana');
     const params = this.props.routeParams;
-    console.log(this.result);
+    // Use window.location.href to force page reload
     if (params.redirect && params.redirect[0] === '/') {
-      //   window.location.href = config.appSubUrl + params.redirect;
+      window.location.href = config.appSubUrl + params.redirect;
 
-      console.log(`Going to ${params.redirect}`);
-      this.props.updateLocation({
-        path: config.appSubUrl + params.redirect,
-      });
+      // this.props.updateLocation({
+      //   path: config.appSubUrl + params.redirect,
+      // });
     } else if (this.result.redirectUrl) {
-      console.log('Going to redirect');
-      this.props.updateLocation({
-        path: this.result.redirectUrl,
-      });
+      window.location.href = config.appSubUrl + params.redirect;
+
+      // this.props.updateLocation({
+      //   path: this.result.redirectUrl,
+      // });
     } else {
-      console.log('Going to home');
-      this.props.updateLocation({
-        path: '/',
-      });
+      window.location.href = config.appSubUrl + '/';
+
+      // this.props.updateLocation({
+      //   path: '/',
+      // });
     }
   };
 
   render() {
     const { children } = this.props;
     const { isLoggingIn, isChangingPassword } = this.state;
-    const { login, signUp, toGrafana, changePassword } = this;
+    const { login, toGrafana, changePassword } = this;
 
-    return <>{children({ login, signUp, isLoggingIn, changePassword, toGrafana, isChangingPassword })}</>;
+    return <>{children({ login, isLoggingIn, changePassword, toGrafana, isChangingPassword })}</>;
   }
 }
 
