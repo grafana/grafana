@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
 
-const SignIn: FC<any> = ({ url }) => {
+export const SignIn: FC<any> = ({ url }) => {
   const loginUrl = `login?redirect=${encodeURIComponent(url)}`;
   return (
     <div className="sidemenu-item">
