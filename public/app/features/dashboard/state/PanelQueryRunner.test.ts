@@ -168,7 +168,7 @@ describe('PanelQueryRunner', () => {
       streamState = {
         state: LoadingState.Streaming,
         key: 'test-stream-1',
-        series: [
+        data: [
           {
             rows: [],
             fields: [],

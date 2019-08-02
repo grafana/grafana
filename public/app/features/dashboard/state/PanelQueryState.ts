@@ -41,7 +41,7 @@ export class PanelQueryState {
   // Active stream results
   streams: DataStreamState[] = [];
 
-  sendSeries = false;
+  sendFrames = false;
   sendLegacy = false;
 
   // A promise for the running query
@@ -127,15 +127,15 @@ export class PanelQueryState {
           this.executor = null;
 
           // Make sure we send something back -- called run() w/o subscribe!
-          if (!(this.sendSeries || this.sendLegacy)) {
-            this.sendSeries = true;
+          if (!(this.sendFrames || this.sendLegacy)) {
+            this.sendFrames = true;
           }
 
           // Save the result state
           this.response = {
             state: LoadingState.Done,
             request: this.request,
-            series: this.sendSeries ? getProcessedDataFrame(resp.data) : [],
+            series: this.sendFrames ? getProcessedDataFrames(resp.data) : [],
             legacy: this.sendLegacy ? translateToLegacyData(resp.data) : undefined,
           };
           resolve(this.validateStreamsAndGetPanelData());
@@ -156,7 +156,7 @@ export class PanelQueryState {
   // it will then delegate real changes to the PanelQueryRunner
   dataStreamObserver: DataStreamObserver = (stream: DataStreamState) => {
     // Streams only work with the 'series' format
-    this.sendSeries = true;
+    this.sendFrames = true;
 
     // Add the stream to our list
     let found = false;
@@ -189,8 +189,8 @@ export class PanelQueryState {
     const series: DataFrame[] = [];
 
     for (const stream of this.streams) {
-      if (stream.series) {
-        series.push.apply(series, stream.series);
+      if (stream.data) {
+        series.push.apply(series, stream.data);
       }
 
       try {
@@ -243,7 +243,7 @@ export class PanelQueryState {
       }
 
       active.push(stream);
-      series.push.apply(series, stream.series);
+      series.push.apply(series, stream.data);
 
       if (!this.isFinished(stream.state)) {
         done = false;
@@ -277,11 +277,11 @@ export class PanelQueryState {
    * Make sure all requested formats exist on the data
    */
   getDataAfterCheckingFormats(): PanelData {
-    const { response, sendLegacy, sendSeries } = this;
+    const { response, sendLegacy, sendFrames } = this;
     if (sendLegacy && (!response.legacy || !response.legacy.length)) {
       response.legacy = response.series.map(v => toLegacyResponseData(v));
     }
-    if (sendSeries && !response.series.length && response.legacy) {
+    if (sendFrames && !response.series.length && response.legacy) {
       response.series = response.legacy.map(v => toDataFrame(v));
     }
     return this.validateStreamsAndGetPanelData();
@@ -349,7 +349,7 @@ function translateToLegacyData(data: DataQueryResponseData) {
  *
  * This is also used by PanelChrome for snapshot support
  */
-export function getProcessedDataFrame(results?: any[]): DataFrame[] {
+export function getProcessedDataFrames(results?: any[]): DataFrame[] {
   if (!results) {
     return [];
   }

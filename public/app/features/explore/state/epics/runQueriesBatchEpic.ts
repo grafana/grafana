@@ -104,8 +104,8 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
         // observer subscription, handles datasourceInstance.query observer events and pushes that forward
         const streamSubscription = streamHandler.subscribe({
           next: event => {
-            const { state, error, series, delta } = event;
-            if (!series && !delta && !error) {
+            const { state, error, data, delta } = event;
+            if (!data && !delta && !error) {
               return;
             }
 
