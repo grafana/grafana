@@ -182,7 +182,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 		})
 	})
 
-	Convey("shouldAuthAdmin()", t, func() {
+	Convey("shouldAdminBind()", t, func() {
 		Convey("it should require admin userBind", func() {
 			server := &Server{
 				Config: &ServerConfig{
@@ -190,7 +190,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 				},
 			}
 
-			result := server.shouldAuthAdmin()
+			result := server.shouldAdminBind()
 			So(result, ShouldBeTrue)
 		})
 
@@ -201,8 +201,45 @@ func TestLDAPPrivateMethods(t *testing.T) {
 				},
 			}
 
-			result := server.shouldAuthAdmin()
+			result := server.shouldAdminBind()
 			So(result, ShouldBeFalse)
+		})
+	})
+
+	Convey("shouldSingleBind()", t, func() {
+		Convey("it should allow single bind", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					BindDN: "cn=%s,dc=grafana,dc=org",
+				},
+			}
+
+			result := server.shouldSingleBind()
+			So(result, ShouldBeTrue)
+		})
+
+		Convey("it should not allow single bind", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					BindDN: "cn=admin,dc=grafana,dc=org",
+				},
+			}
+
+			result := server.shouldSingleBind()
+			So(result, ShouldBeFalse)
+		})
+	})
+
+	Convey("singleBindDN()", t, func() {
+		Convey("it should allow single bind", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					BindDN: "cn=%s,dc=grafana,dc=org",
+				},
+			}
+
+			result := server.singleBindDN("test")
+			So(result, ShouldEqual, "cn=test,dc=grafana,dc=org")
 		})
 	})
 
