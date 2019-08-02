@@ -19,7 +19,7 @@ interface Props {
   updateLocation?: typeof updateLocation;
   children: (obj: {
     isLoggingIn: boolean;
-    changePassword: (pw: { newPassword: string; confirmNew: string }, valid: boolean) => void;
+    changePassword: (pw: { newPassword: string; confirmNew: string; oldPassword: string }, valid: boolean) => void;
     isChangingPassword: boolean;
     toGrafana: Function;
     signUp: Function;
