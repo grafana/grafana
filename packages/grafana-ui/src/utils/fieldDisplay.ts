@@ -189,7 +189,9 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   if (values.length === 0) {
     values.push({
       name: 'No data',
-      field: {},
+      field: {
+        ...defaults,
+      },
       display: {
         numeric: 0,
         text: 'No data',
