@@ -182,7 +182,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push({
-      field: { name: 'No Data' },
+      field: {
+        ...defaults,
+        name: 'No Data',
+      },
       display: {
         numeric: 0,
         text: 'No data',
@@ -244,6 +247,7 @@ type PartialField = Partial<Field>;
 
 export function getFieldProperties(...props: PartialField[]): Field {
   let field = props[0] as Field;
+
   for (let i = 1; i < props.length; i++) {
     field = applyFieldProperties(field, props[i]);
   }

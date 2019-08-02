@@ -11,6 +11,8 @@ weight = 7
 
 # Using PostgreSQL in Grafana
 
+> NOTE: In **9.5.18, 9.4.23, 9.6.14, 10.9, 11.4, 12-beta2** versions of PostgreSQL has a [bug](https://www.postgresql.org/message-id/flat/28827.1561082086%40sss.pgh.pa.us#df2287bd7481153984bef6bab40af0db) which prevents execution of multiple column modifications via `ALTER TABLE` statement. Because Grafana uses it during initial database set up and since PostgreSQL has [fixed](https://github.com/postgres/postgres/commit/f946a409143d01951411382fbc3c91c7eb640094) this issue, Grafana **does not support these versions**
+
 Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database.
 
 ## Adding the data source

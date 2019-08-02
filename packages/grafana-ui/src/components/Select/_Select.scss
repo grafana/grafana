@@ -180,7 +180,7 @@ $select-input-bg-disabled: $input-bg-disabled;
   flex-direction: column;
   flex-grow: 1;
   padding-right: 10px;
-  font-weight: 500;
+  font-weight: $font-weight-semi-bold;
 }
 
 .gf-form-select-box__desc-option__desc {

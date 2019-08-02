@@ -83,7 +83,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.setState({
       datasource,
       loadedDataSourceValue: this.props.dataSourceValue,
-      hasTextEditMode: false,
+      hasTextEditMode: _.has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
@@ -122,14 +122,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl" />';
     const scopeProps = { ctrl: this.getAngularQueryComponentScope() };
-
     this.angularQueryEditor = loader.load(this.element, scopeProps, template);
     this.angularScope = scopeProps.ctrl;
-
-    // give angular time to compile
-    setTimeout(() => {
-      this.setState({ hasTextEditMode: !!this.angularScope.toggleEditorMode });
-    }, 100);
   }
 
   onToggleCollapse = () => {
