@@ -145,19 +145,19 @@ func (server *Server) Close() {
 }
 
 // Login the user.
-// There is several cases -
+// There are several cases -
 // 1. "admin" user
-// Bind the "admin" user (defined in grafana config file) which has the search privileges
+// Bind the "admin" user (defined in Grafana config file) which has the search privileges
 // in LDAP server, then we search the targeted user through that bind, then the second
 // perform the bind via passed login/password.
 // 2. Single bind
-// If all the users are meant to use with grafana has ability to search in LDAP server
+// // If all the users meant to be used with Grafana have the ability to search in LDAP server
 // then we bind with LDAP server with targeted login/password
 // and then search for the said user in order to retrive all the information about them
 // 3. Unauthenticated bind
 // For some LDAP configurations it is allowed to search the
 // user without login/password binding with LDAP server, in such case
-// we will perform "unauthenticated bind" and then search for the
+// we will perform "unauthenticated bind", then search for the
 // targeted user and then perform the bind with passed login/password.
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
