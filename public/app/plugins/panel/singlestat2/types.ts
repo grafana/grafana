@@ -13,12 +13,10 @@ export interface SingleStatOptions extends SingleStatBaseOptions {
   prefixFontSize?: string;
   valueFontSize?: string;
   postfixFontSize?: string;
-
   colorBackground?: boolean;
   colorValue?: boolean;
   colorPrefix?: boolean;
   colorPostfix?: boolean;
-
   sparkline: SparklineOptions;
 }
 
@@ -32,6 +30,7 @@ export const standardFieldDisplayOptions: FieldDisplayOptions = {
       { value: -Infinity, color: 'green' },
       { value: 80, color: 'red' }, // 80%
     ],
+    mappings: [],
   },
   override: {},
 };
