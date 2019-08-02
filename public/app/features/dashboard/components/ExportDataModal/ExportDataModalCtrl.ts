@@ -4,7 +4,7 @@ import appEvents from 'app/core/app_events';
 import { DashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 export class ExportDataModalCtrl {
-  private data: any[];
+  private data: any;
   private panel: string;
   asRows = true;
   dateTimeFormat = 'YYYY-MM-DDTHH:mm:ssZ';

@@ -162,11 +162,11 @@ export class KeybindingSrv {
     });
 
     this.bind('t left', () => {
-      scope.appEvent('shift-time-backward');
+      scope.appEvent('shift-time', -1);
     });
 
     this.bind('t right', () => {
-      scope.appEvent('shift-time-forward');
+      scope.appEvent('shift-time', 1);
     });
 
     // edit panel

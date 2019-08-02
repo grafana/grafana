@@ -330,7 +330,7 @@ describe('LogsParsers', () => {
   });
 });
 
-const emptyLogsModel = {
+const emptyLogsModel: any = {
   hasUniqueLabels: false,
   rows: [],
   meta: [],
