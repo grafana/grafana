@@ -179,7 +179,7 @@
 }
 
 .explore-panel__header-label {
-  font-weight: 500;
+  font-weight: $font-weight-semi-bold;
   margin-right: $space-sm;
   font-size: $font-size-h6;
   box-shadow: $text-shadow-faint;
@@ -364,7 +364,7 @@
 .ReactTable .rt-thead.-header .rt-th {
   text-align: left;
   color: $blue;
-  font-weight: 500;
+  font-weight: $font-weight-semi-bold;
 }
 .ReactTable .rt-thead .rt-td,
 .ReactTable .rt-thead .rt-th {
