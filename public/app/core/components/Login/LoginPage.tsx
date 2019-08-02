@@ -20,39 +20,37 @@ export const LoginPage: FC = () => {
         <LoginCtrl>
           {({ login, isLoggingIn, changePassword, toGrafana, isChangingPassword }) => (
             <div className="login-out-box">
-              <CSSTransition in={!isChangingPassword} timeout={250} classNames="login-inner-box">
-                <div className="login-inner-box" id="login-view">
-                  <LoginForm
-                    displayLoginFields={!config.disableLoginForm}
-                    displayForgotPassword={!(config.ldapEnabled || config.authProxyEnabled)}
-                    onSubmit={login}
-                    loginHint={config.loginHint}
-                    passwordHint={config.passwordHint}
-                    isLoggingIn={isLoggingIn}
-                  />
+              <div className={`login-inner-box ${isChangingPassword ? 'hidden' : ''}`} id="login-view">
+                <LoginForm
+                  displayLoginFields={!config.disableLoginForm}
+                  displayForgotPassword={!(config.ldapEnabled || config.authProxyEnabled)}
+                  onSubmit={login}
+                  loginHint={config.loginHint}
+                  passwordHint={config.passwordHint}
+                  isLoggingIn={isLoggingIn}
+                />
 
-                  {isOauthEnabled() ? (
-                    <>
-                      <div className="text-center login-divider">
-                        <div>
-                          <div className="login-divider-line" />
-                        </div>
-                        <div>
-                          <span className="login-divider-text">{config.disableLoginForm ? null : <span>or</span>}</span>
-                        </div>
-                        <div>
-                          <div className="login-divider-line" />
-                        </div>
+                {isOauthEnabled() ? (
+                  <>
+                    <div className="text-center login-divider">
+                      <div>
+                        <div className="login-divider-line" />
                       </div>
-                      <div className="clearfix" />
+                      <div>
+                        <span className="login-divider-text">{config.disableLoginForm ? null : <span>or</span>}</span>
+                      </div>
+                      <div>
+                        <div className="login-divider-line" />
+                      </div>
+                    </div>
+                    <div className="clearfix" />
 
-                      <LoginServiceButtons />
-                    </>
-                  ) : null}
+                    <LoginServiceButtons />
+                  </>
+                ) : null}
 
-                  <UserSignup />
-                </div>
-              </CSSTransition>
+                <UserSignup />
+              </div>
               <CSSTransition appear={true} in={isChangingPassword} timeout={250} classNames="login-inner-box">
                 <ChangePassword
                   onSubmit={changePassword}

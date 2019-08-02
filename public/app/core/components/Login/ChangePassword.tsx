@@ -26,8 +26,8 @@ export class ChangePassword extends PureComponent<Props, State> {
     };
   }
 
-  componentDidUpdate() {
-    if (this.props.focus) {
+  componentDidUpdate(prevProps: Props) {
+    if (!prevProps.focus && this.props.focus) {
       this.focus();
     }
   }

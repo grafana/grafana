@@ -174,11 +174,6 @@ select:-webkit-autofill:focus {
   &-enter-active {
     transform: translate(0px, 0px);
   }
-
-  &-exit-active,
-  &-exit-done {
-    display: none;
-  }
 }
 
 .login-change-password-info {
