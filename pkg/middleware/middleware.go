@@ -184,7 +184,6 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		ctx.Logger.Error(
 			"Failed to authorize the user",
 			"username", username,
-			"password", password,
 		)
 
 		ctx.JsonApiErr(401, errStringInvalidUsernamePassword, err)
