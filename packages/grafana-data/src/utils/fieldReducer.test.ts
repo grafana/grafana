@@ -1,7 +1,7 @@
 import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import _ from 'lodash';
-import { createField } from './dataFrame';
+import { createField } from './dataFrameHelper';
 import { FieldType, Field } from '../types/index';
 
 /**

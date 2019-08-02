@@ -170,7 +170,6 @@ describe('PanelQueryRunner', () => {
         key: 'test-stream-1',
         series: [
           {
-            rows: [],
             fields: [],
             name: 'I am a magic stream',
           },

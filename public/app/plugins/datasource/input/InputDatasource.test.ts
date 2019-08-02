@@ -1,6 +1,6 @@
 import InputDatasource, { describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
-import { readCSV } from '@grafana/data';
+import { readCSV, DataFrame } from '@grafana/data';
 import { DataSourceInstanceSettings, PluginMeta } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
@@ -26,9 +26,9 @@ describe('InputDatasource', () => {
       return ds.query(options).then(rsp => {
         expect(rsp.data.length).toBe(1);
 
-        const series = rsp.data[0];
+        const series: DataFrame = rsp.data[0];
         expect(series.refId).toBe('Z');
-        expect(series.rows).toEqual(data[0].rows);
+        expect(series.fields[0].values).toEqual(data[0].fields[0].values);
       });
     });
   });
@@ -40,8 +40,7 @@ describe('InputDatasource', () => {
       describeDataFrame([
         {
           name: 'x',
-          fields: [{ name: 'a' }],
-          rows: [],
+          fields: [{ name: 'a', values: [] }],
         },
       ])
     ).toEqual('1 Fields, 0 Rows');

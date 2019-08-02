@@ -16,12 +16,10 @@ const testContext = () => {
   const serieA: DataFrame = {
     fields: [],
     refId: 'A',
-    rows: [],
   };
   const serieB: DataFrame = {
     fields: [],
     refId: 'B',
-    rows: [],
   };
   const series = [serieA, serieB];
   const latency = 0;

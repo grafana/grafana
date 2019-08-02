@@ -346,7 +346,6 @@ describe('dataFrameToLogsModel', () => {
     const series: DataFrame[] = [
       {
         fields: [],
-        rows: [],
       },
     ];
     expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
@@ -359,9 +358,9 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'message',
             type: FieldType.string,
+            values: [],
           },
         ],
-        rows: [],
       },
     ];
     expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
@@ -374,9 +373,9 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
+            values: [],
           },
         ],
-        rows: [],
       },
     ];
     expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
@@ -393,21 +392,16 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
+            values: [
+              't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+              't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+            ],
           },
-        ],
-        rows: [
-          [
-            '2019-04-26T09:28:11.352440161Z',
-            't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
-          ],
-          [
-            '2019-04-26T14:42:50.991981292Z',
-            't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
-          ],
         ],
         meta: {
           limit: 1000,
@@ -455,17 +449,19 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
+            values: ['WARN boooo'],
           },
           {
             name: 'level',
             type: FieldType.string,
+            values: ['dbug'],
           },
         ],
-        rows: [['1970-01-01T00:00:01Z', 'WARN boooo', 'dbug']],
       },
     ];
     const logsModel = dataFrameToLogsModel(series, 0);
@@ -492,13 +488,14 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'ts',
             type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z'],
           },
           {
             name: 'line',
             type: FieldType.string,
+            values: ['WARN boooo'],
           },
         ],
-        rows: [['1970-01-01T00:00:01Z', 'WARN boooo']],
       },
       {
         name: 'logs',
@@ -511,13 +508,14 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
+            values: ['1970-01-01T00:00:00Z', '1970-01-01T00:00:02Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
+            values: ['INFO 1', 'INFO 2'],
           },
         ],
-        rows: [['1970-01-01T00:00:00Z', 'INFO 1'], ['1970-01-01T00:00:02Z', 'INFO 2']],
       },
     ];
     const logsModel = dataFrameToLogsModel(series, 0);

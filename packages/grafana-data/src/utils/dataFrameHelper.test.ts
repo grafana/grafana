@@ -1,6 +1,39 @@
-import { FieldType, Field } from '../types/index';
-import { FieldCache } from './fieldCache';
-import { createField } from './dataFrame';
+import { FieldType, DataFrame, Field } from '../types/index';
+import { DataFrameHelper, createField } from './dataFrameHelper';
+import { DateTime } from './moment_wrapper';
+
+interface MySpecialObject {
+  time: DateTime;
+  name: string;
+  value: number;
+  more: string; // MISSING
+}
+
+describe('dataFrameHelper', () => {
+  const frame: DataFrame = {
+    fields: [
+      { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+      { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
+      { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+    ],
+  };
+  const ext = new DataFrameHelper(frame);
+
+  it('Should get a valid count for the fields', () => {
+    expect(ext.length).toEqual(3);
+  });
+
+  it('Should get a typed vector', () => {
+    const vector = ext.getValues<MySpecialObject>();
+    expect(vector.length).toEqual(3);
+
+    const first = vector[0];
+    expect(first.time).toEqual(frame.fields[0].values[0]);
+    expect(first.name).toEqual(frame.fields[1].values[0]);
+    expect(first.value).toEqual(frame.fields[2].values[0]);
+    expect(first.more).toBeUndefined();
+  });
+});
 
 describe('FieldCache', () => {
   it('when creating a new FieldCache from fields should be able to query cache', () => {
@@ -12,7 +45,7 @@ describe('FieldCache', () => {
       createField('other', FieldType.other),
       createField('undefined'),
     ];
-    const fieldCache = new FieldCache(fields);
+    const fieldCache = new DataFrameHelper({ fields });
     const allFields = fieldCache.getFields();
     expect(allFields).toHaveLength(6);
 
@@ -39,13 +72,13 @@ describe('FieldCache', () => {
     expect(fieldCache.getFields(FieldType.boolean)).toMatchObject([expectedFields[3]]);
     expect(fieldCache.getFields(FieldType.other)).toMatchObject([expectedFields[4], expectedFields[5]]);
 
-    expect(fieldCache.getFieldByIndex(0)).toMatchObject(expectedFields[0]);
-    expect(fieldCache.getFieldByIndex(1)).toMatchObject(expectedFields[1]);
-    expect(fieldCache.getFieldByIndex(2)).toMatchObject(expectedFields[2]);
-    expect(fieldCache.getFieldByIndex(3)).toMatchObject(expectedFields[3]);
-    expect(fieldCache.getFieldByIndex(4)).toMatchObject(expectedFields[4]);
-    expect(fieldCache.getFieldByIndex(5)).toMatchObject(expectedFields[5]);
-    expect(fieldCache.getFieldByIndex(6)).toBeNull();
+    expect(fieldCache.fields[0]).toMatchObject(expectedFields[0]);
+    expect(fieldCache.fields[1]).toMatchObject(expectedFields[1]);
+    expect(fieldCache.fields[2]).toMatchObject(expectedFields[2]);
+    expect(fieldCache.fields[3]).toMatchObject(expectedFields[3]);
+    expect(fieldCache.fields[4]).toMatchObject(expectedFields[4]);
+    expect(fieldCache.fields[5]).toMatchObject(expectedFields[5]);
+    expect(fieldCache.fields[6]).toBeUndefined();
 
     expect(fieldCache.getFirstFieldOfType(FieldType.time)).toMatchObject(expectedFields[0]);
     expect(fieldCache.getFirstFieldOfType(FieldType.string)).toMatchObject(expectedFields[1]);
@@ -67,6 +100,6 @@ describe('FieldCache', () => {
     expect(fieldCache.getFieldByName('boolean')).toMatchObject(expectedFields[3]);
     expect(fieldCache.getFieldByName('other')).toMatchObject(expectedFields[4]);
     expect(fieldCache.getFieldByName('undefined')).toMatchObject(expectedFields[5]);
-    expect(fieldCache.getFieldByName('null')).toBeNull();
+    expect(fieldCache.getFieldByName('null')).toBeUndefined();
   });
 });

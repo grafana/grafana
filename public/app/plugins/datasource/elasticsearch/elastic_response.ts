@@ -2,8 +2,8 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
-import { DataFrame, toDataFrame, FieldType, createField } from '@grafana/data';
-import { DataQueryResponse } from '@grafana/ui';
+import { DataFrame, toDataFrame, FieldType, DataFrameHelper } from '@grafana/data';
+import { DataQueryResponse, KeyValue } from '@grafana/ui';
 import { ElasticsearchAggregation } from './types';
 
 export class ElasticResponse {
@@ -465,27 +465,36 @@ export class ElasticResponse {
       if (docs.length > 0) {
         propNames = propNames.sort();
 
-        const fieldTime = createField(this.targets[0].timeField, FieldType.time);
-        const series: DataFrame = {
-          fields: [fieldTime],
-        };
+        const data = new DataFrameHelper({
+          fields: [
+            {
+              name: this.targets[0].timeField,
+              type: FieldType.time,
+              values: [],
+            },
+          ],
+        });
+        const fieldTime = data.fields[0];
 
         if (logMessageField) {
-          series.fields.push({
+          data.addField({
             name: logMessageField,
             type: FieldType.string,
+            values: [],
           });
         } else {
-          series.fields.push({
+          data.addField({
             name: '_source',
             type: FieldType.string,
+            values: [],
           });
         }
 
         if (logLevelField) {
-          series.fields.push({
+          data.addField({
             name: 'level',
             type: FieldType.string,
+            values: [],
           });
         }
 
@@ -494,38 +503,35 @@ export class ElasticResponse {
             continue;
           }
 
-          series.fields.push({
+          data.addField({
             name: propName,
             type: FieldType.string,
+            values: [],
           });
         }
 
         for (const doc of docs) {
-          const row: any[] = [];
-          row.push(doc[this.targets[0].timeField][0]);
+          const row: KeyValue = {};
+          row[fieldTime.name] = doc[fieldTime.name];
 
           if (logMessageField) {
-            row.push(doc[logMessageField] || '');
+            row[logMessageField] = doc[logMessageField] || '';
           } else {
-            row.push(JSON.stringify(doc._source, null, 2));
+            row[logMessageField] = JSON.stringify(doc._source, null, 2);
           }
 
           if (logLevelField) {
-            row.push(doc[logLevelField] || '');
+            row[logLevelField] = doc[logLevelField] || '';
           }
 
           for (const propName of propNames) {
-            if (doc.hasOwnProperty(propName)) {
-              row.push(doc[propName]);
-            } else {
-              row.push(null);
-            }
+            row[logLevelField] = doc.hasOwnProperty(propName) ? doc[propName] : null;
           }
 
-          series.rows.push(row);
+          data.appendObject(row);
         }
 
-        dataFrame.push(series);
+        dataFrame.push(data);
       }
 
       if (response.aggregations) {

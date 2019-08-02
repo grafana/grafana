@@ -10,11 +10,17 @@ export enum FieldType {
   other = 'other', // Object, Array, etc
 }
 
+/**
+ * Simple array style implementation.
+ *
+ * This can either be implemented by an array or something that proxies an array
+ */
 export interface Vector<T = any> {
   length: number;
 
-  // Access the value by index (Like an array)
-  // get(index: number): T;
+  /**
+   * Access the value by index (Like an array)
+   */
   [index: number]: T;
 
   /**
@@ -29,7 +35,7 @@ export interface Vector<T = any> {
 /**
  * Every property is optional
  *
- * Plugins may extend this with additional properties
+ * Plugins may extend this with additional properties.  Somethign like series overrides
  */
 export interface FieldDisplayConfig {
   title?: string; // The display value for this field.  This supports template variables blank is auto
@@ -63,15 +69,3 @@ export interface DataFrame extends QueryResultBase {
   fields: Field[];
   labels?: Labels;
 }
-
-// export interface Field<T = any> extends FieldBase<T>, Vector<T> {
-//   // TODO -- cache here so all components can use it
-//   stats?: {[key:string]:any};
-//   processor?: (value:any) => {};
-// }
-
-// export interface DataFrame extends DataFrameBase<Field> {
-//   toJavascript: () => DataFrameBase;
-//   getField: (name:string) => Field;
-//   getView: <T>() => Vector<T>;
-// }

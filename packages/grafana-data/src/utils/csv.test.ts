@@ -1,5 +1,5 @@
 import { readCSV, toCSV, CSVHeaderStyle } from './csv';
-import { getDataFrameRow } from './dataFrame';
+import { getDataFrameRow } from './dataFrameHelper';
 
 // Test with local CSV files
 const fs = require('fs');

@@ -7,7 +7,7 @@ import {
   DisplayValue,
   PanelData,
 } from '@grafana/ui';
-import { NullValueMode, reduceField, FieldCache, FieldType } from '@grafana/data';
+import { NullValueMode, reduceField, FieldType, DataFrameHelper } from '@grafana/data';
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
@@ -26,15 +26,13 @@ export const getGraphSeriesModel = (
   });
 
   for (const series of data.series) {
-    const fieldCache = new FieldCache(series.fields);
-    const timeColumn = fieldCache.getFirstFieldOfType(FieldType.time);
+    const data = new DataFrameHelper(series);
+    const timeColumn = data.getFirstFieldOfType(FieldType.time);
     if (!timeColumn) {
       continue;
     }
 
-    const numberFields = fieldCache.getFields(FieldType.number);
-    for (let i = 0; i < numberFields.length; i++) {
-      const field = numberFields[i];
+    for (const field of data.getFields(FieldType.number)) {
       // Use external calculator just to make sure it works :)
       const points = getFlotPairs({
         series,

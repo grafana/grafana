@@ -23,14 +23,17 @@ const testContext = () => {
       fields: [
         {
           name: 'Value',
+          values: [],
         },
         {
           name: 'Time',
           type: FieldType.time,
-          unit: 'dateTimeAsIso',
+          display: {
+            unit: 'dateTimeAsIso',
+          },
+          values: [],
         },
       ],
-      rows: [],
       refId: 'A',
     },
   ];

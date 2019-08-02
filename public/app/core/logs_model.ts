@@ -12,7 +12,6 @@ import {
   findUniqueLabels,
   getLogLevel,
   toLegacyResponseData,
-  FieldCache,
   FieldType,
   getLogLevelFromKey,
   LogRowModel,
@@ -22,6 +21,7 @@ import {
   LogsParser,
   LogLabelStatsModel,
   LogsDedupStrategy,
+  DataFrameHelper,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -313,14 +313,56 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
 
   for (let i = 0; i < logSeries.length; i++) {
     const series = logSeries[i];
-    const fieldCache = new FieldCache(series.fields);
+    const data = new DataFrameHelper(series);
     const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
       hasUniqueLabels = true;
     }
 
-    for (let j = 0; j < series.rows.length; j++) {
-      rows.push(processLogSeriesRow(series, fieldCache, j, uniqueLabels));
+    const timeFieldIndex = data.getFirstFieldOfType(FieldType.time);
+    const stringField = data.getFirstFieldOfType(FieldType.string);
+    const logLevelField = data.getFieldByName('level');
+
+    let seriesLogLevel: LogLevel | undefined = undefined;
+    if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
+      seriesLogLevel = getLogLevelFromKey(series.labels['level']);
+    }
+
+    for (let j = 0; j < data.length; j++) {
+      const ts = timeFieldIndex.values[j];
+      const time = dateTime(ts);
+      const timeEpochMs = time.valueOf();
+      const timeFromNow = time.fromNow();
+      const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
+      const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
+
+      const message = stringField.values[j];
+
+      let logLevel = LogLevel.unknown;
+      if (logLevelField) {
+        logLevel = getLogLevelFromKey(logLevelField.values[j]);
+      } else if (seriesLogLevel) {
+        logLevel = seriesLogLevel;
+      } else {
+        logLevel = getLogLevel(message);
+      }
+      const hasAnsi = hasAnsiCodes(message);
+      const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
+
+      rows.push({
+        logLevel,
+        timeFromNow,
+        timeEpochMs,
+        timeLocal,
+        timeUtc,
+        uniqueLabels,
+        hasAnsi,
+        searchWords,
+        entry: hasAnsi ? ansicolor.strip(message) : message,
+        raw: message,
+        labels: series.labels,
+        timestamp: ts,
+      });
     }
   }
 
@@ -348,51 +390,5 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     hasUniqueLabels,
     meta,
     rows,
-  };
-}
-
-export function processLogSeriesRow(
-  series: DataFrame,
-  fieldCache: FieldCache,
-  rowIndex: number,
-  uniqueLabels: Labels
-): LogRowModel {
-  const row = series.rows[rowIndex];
-  const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time).index;
-  const ts = row[timeFieldIndex];
-  const stringFieldIndex = fieldCache.getFirstFieldOfType(FieldType.string).index;
-  const message = row[stringFieldIndex];
-  const time = dateTime(ts);
-  const timeEpochMs = time.valueOf();
-  const timeFromNow = time.fromNow();
-  const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
-  const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
-
-  let logLevel = LogLevel.unknown;
-  const logLevelField = fieldCache.getFieldByName('level');
-
-  if (logLevelField) {
-    logLevel = getLogLevelFromKey(row[logLevelField.index]);
-  } else if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
-    logLevel = getLogLevelFromKey(series.labels['level']);
-  } else {
-    logLevel = getLogLevel(message);
-  }
-  const hasAnsi = hasAnsiCodes(message);
-  const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
-
-  return {
-    logLevel,
-    timeFromNow,
-    timeEpochMs,
-    timeLocal,
-    timeUtc,
-    uniqueLabels,
-    hasAnsi,
-    searchWords,
-    entry: hasAnsi ? ansicolor.strip(message) : message,
-    raw: message,
-    labels: series.labels,
-    timestamp: ts,
   };
 }

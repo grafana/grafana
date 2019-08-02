@@ -34,7 +34,6 @@ export class InputConfigEditor extends PureComponent<Props, State> {
       data = [
         {
           fields: [],
-          rows: [],
         },
       ];
     }
