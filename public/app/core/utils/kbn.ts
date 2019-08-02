@@ -1,18 +1,18 @@
 import { has } from 'lodash';
 import { getValueFormat, getValueFormatterIndex, getValueFormats, deprecationWarning } from '@grafana/ui';
-import { stringToJsRegex } from '@grafana/data';
+import { stringToJsRegex, TimeRange } from '@grafana/data';
 
 const kbn: any = {};
 
 kbn.valueFormats = {};
 
-kbn.regexEscape = value => {
+kbn.regexEscape = (value: string) => {
   return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
 };
 
 ///// HELPER FUNCTIONS /////
 
-kbn.round_interval = interval => {
+kbn.round_interval = (interval: number) => {
   switch (true) {
     // 0.015s
     case interval < 15:
@@ -103,7 +103,7 @@ kbn.round_interval = interval => {
   }
 };
 
-kbn.secondsToHms = seconds => {
+kbn.secondsToHms = (seconds: number) => {
   const numyears = Math.floor(seconds / 31536000);
   if (numyears) {
     return numyears + 'y';
@@ -132,7 +132,7 @@ kbn.secondsToHms = seconds => {
   return 'less than a millisecond'; //'just now' //or other string you like;
 };
 
-kbn.secondsToHhmmss = seconds => {
+kbn.secondsToHhmmss = (seconds: number) => {
   const strings: string[] = [];
   const numhours = Math.floor(seconds / 3600);
   const numminutes = Math.floor((seconds % 3600) / 60);
@@ -143,11 +143,11 @@ kbn.secondsToHhmmss = seconds => {
   return strings.join(':');
 };
 
-kbn.to_percent = (nr, outof) => {
+kbn.to_percent = (nr: number, outof: number) => {
   return Math.floor((nr / outof) * 10000) / 100 + '%';
 };
 
-kbn.addslashes = str => {
+kbn.addslashes = (str: string) => {
   str = str.replace(/\\/g, '\\\\');
   str = str.replace(/\'/g, "\\'");
   str = str.replace(/\"/g, '\\"');
@@ -169,7 +169,7 @@ kbn.intervals_in_seconds = {
   ms: 0.001,
 };
 
-kbn.calculateInterval = (range, resolution, lowLimitInterval) => {
+kbn.calculateInterval = (range: TimeRange, resolution: number, lowLimitInterval: string[]) => {
   let lowLimitMs = 1; // 1 millisecond default low limit
   let intervalMs;
 
@@ -191,7 +191,7 @@ kbn.calculateInterval = (range, resolution, lowLimitInterval) => {
   };
 };
 
-kbn.describe_interval = str => {
+kbn.describe_interval = (str: string) => {
   const matches = str.match(kbn.interval_regex);
   if (!matches || !has(kbn.intervals_in_seconds, matches[2])) {
     throw new Error('Invalid interval string, expecting a number followed by one of "Mwdhmsy"');
@@ -204,17 +204,17 @@ kbn.describe_interval = str => {
   }
 };
 
-kbn.interval_to_ms = str => {
+kbn.interval_to_ms = (str: string) => {
   const info = kbn.describe_interval(str);
   return info.sec * 1000 * info.count;
 };
 
-kbn.interval_to_seconds = str => {
+kbn.interval_to_seconds = (str: string) => {
   const info = kbn.describe_interval(str);
   return info.sec * info.count;
 };
 
-kbn.query_color_dot = (color, diameter) => {
+kbn.query_color_dot = (color: string, diameter: string) => {
   return (
     '<div class="icon-circle" style="' +
     ['display:inline-block', 'color:' + color, 'font-size:' + diameter + 'px'].join(';') +
@@ -222,7 +222,7 @@ kbn.query_color_dot = (color, diameter) => {
   );
 };
 
-kbn.slugifyForUrl = str => {
+kbn.slugifyForUrl = (str: string) => {
   return str
     .toLowerCase()
     .replace(/[^\w ]+/g, '')
@@ -230,12 +230,12 @@ kbn.slugifyForUrl = str => {
 };
 
 /** deprecated since 6.1, use grafana/data */
-kbn.stringToJsRegex = str => {
+kbn.stringToJsRegex = (str: string) => {
   deprecationWarning('kbn.ts', 'kbn.stringToJsRegex()', '@grafana/data');
   return stringToJsRegex(str);
 };
 
-kbn.toFixed = (value, decimals) => {
+kbn.toFixed = (value: number | null, decimals: number) => {
   if (value === null) {
     return '';
   }
@@ -261,7 +261,13 @@ kbn.toFixed = (value, decimals) => {
   return formatted;
 };
 
-kbn.toFixedScaled = (value, decimals, scaledDecimals, additionalDecimals, ext) => {
+kbn.toFixedScaled = (
+  value: number,
+  decimals: number,
+  scaledDecimals: number | null,
+  additionalDecimals: number,
+  ext: number
+) => {
   if (scaledDecimals === null) {
     return kbn.toFixed(value, decimals) + ext;
   } else {
@@ -269,7 +275,7 @@ kbn.toFixedScaled = (value, decimals, scaledDecimals, additionalDecimals, ext) =
   }
 };
 
-kbn.roundValue = (num, decimals) => {
+kbn.roundValue = (num: number, decimals: number) => {
   if (num === null) {
     return null;
   }

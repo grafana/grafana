@@ -58,7 +58,7 @@ export class Graph extends PureComponent<GraphProps> {
       }),
       yAxisConfig => yAxisConfig.index
     );
-    const flotOptions = {
+    const flotOptions: any = {
       legend: {
         show: false,
       },

@@ -39,7 +39,7 @@ export class KeybindingSrv {
   }
 
   setupGlobal() {
-    if (this.contextSrv.user.isSignedIn) {
+    if (!(this.$location.path() === '/login')) {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
       this.bind('g a', this.openAlerting);
@@ -162,11 +162,11 @@ export class KeybindingSrv {
     });
 
     this.bind('t left', () => {
-      scope.appEvent('shift-time-backward');
+      scope.appEvent('shift-time', -1);
     });
 
     this.bind('t right', () => {
-      scope.appEvent('shift-time-forward');
+      scope.appEvent('shift-time', 1);
     });
 
     // edit panel

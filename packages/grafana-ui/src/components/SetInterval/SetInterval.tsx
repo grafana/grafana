@@ -76,7 +76,7 @@ export class SetInterval extends PureComponent<Props> {
     this.propsSubject.unsubscribe();
   }
 
-  render() {
+  render(): null {
     return null;
   }
 }
