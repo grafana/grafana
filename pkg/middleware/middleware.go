@@ -163,11 +163,11 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		return true
 	}
 
-	AuthQuery := models.LoginUserQuery{
+	authQuery := models.LoginUserQuery{
 		Username: username,
 		Password: password,
 	}
-	if err := bus.Dispatch(&AuthQuery); err != nil {
+	if err := bus.Dispatch(&authQuery); err != nil {
 		ctx.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
@@ -177,7 +177,7 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		return true
 	}
 
-	user := AuthQuery.User
+	user := authQuery.User
 
 	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
