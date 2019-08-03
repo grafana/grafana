@@ -53,8 +53,8 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
       const data = query.data ? query.data : this.data;
       for (const series of data) {
         results.push({
-          refId: query.refId,
           ...series,
+          refId: query.refId,
         });
       }
     }

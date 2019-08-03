@@ -44,17 +44,17 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   const fields = [
     {
       name: timeSeries.target || 'Value',
-      schema: {
+      type: FieldType.number,
+      display: {
         unit: timeSeries.unit,
-        type: FieldType.number,
       },
       values: [] as TimeSeriesValue[],
     },
     {
       name: 'Time',
-      schema: {
+      type: FieldType.time,
+      display: {
         unit: 'dateTimeAsIso',
-        type: FieldType.time,
       },
       values: [] as number[],
     },

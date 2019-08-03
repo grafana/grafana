@@ -57,7 +57,6 @@ export class CSVReader {
   state: ParseState;
   data: DataFrameHelper[];
   current: DataFrameHelper;
-  names?: string[]; // The first line -- often the names
 
   constructor(options?: CSVOptions) {
     if (!options) {
@@ -73,8 +72,6 @@ export class CSVReader {
 
   // PapaParse callback on each line
   private step = (results: ParseResult, parser: Parser): void => {
-    let { fields } = this.current;
-
     for (let i = 0; i < results.data.length; i++) {
       const line: string[] = results.data[i];
       if (line.length < 1) {
@@ -101,17 +98,18 @@ export class CSVReader {
             if (isName || headerKeys.hasOwnProperty(k)) {
               // Starting a new table after reading rows
               if (this.state === ParseState.ReadingRows) {
-                this.data.push(this.current);
                 this.current = new DataFrameHelper({ fields: [] });
+                this.data.push(this.current);
               }
 
               const v = first.substr(idx + 1);
               if (isName) {
-                fields[0].name = v;
-                for (let j = 1; j < fields.length; j++) {
-                  fields[j].name = line[j];
+                this.current.addFieldFor(undefined, v);
+                for (let j = 1; j < line.length; j++) {
+                  this.current.addFieldFor(undefined, line[j]);
                 }
               } else {
+                const { fields } = this.current;
                 for (let j = 0; j < fields.length; j++) {
                   if (!fields[j].display) {
                     fields[j].display = {};
@@ -135,7 +133,9 @@ export class CSVReader {
         if (this.state === ParseState.Starting) {
           const type = guessFieldTypeFromValue(first);
           if (type === FieldType.string) {
-            this.names = line;
+            for (const s of line) {
+              this.current.addFieldFor(undefined, s);
+            }
             this.state = ParseState.InHeader;
             continue;
           }
@@ -145,22 +145,20 @@ export class CSVReader {
 
       // Add the current results to the data
       if (this.state !== ParseState.ReadingRows) {
-        this.data.push(this.current);
+        // anything???
       }
 
       this.state = ParseState.ReadingRows;
 
       // Make sure colum structure is valid
-      if (line.length > fields.length) {
-        const names = this.names || [];
+      if (line.length > this.current.fields.length) {
+        const { fields } = this.current;
         for (let f = fields.length; f < line.length; f++) {
-          this.current.addFieldFor(line[f], names[f]);
+          this.current.addFieldFor(line[f]);
         }
-        fields = this.current.fields;
         if (this.callback) {
-          this.callback.onHeader({ fields });
+          this.callback.onHeader({ fields: this.current.fields });
         }
-        this.names = undefined;
       }
 
       this.current.appendRow(line);
@@ -175,7 +173,8 @@ export class CSVReader {
   };
 
   readCSV(text: string): DataFrameHelper[] {
-    this.data = [];
+    this.current = new DataFrameHelper({ fields: [] });
+    this.data = [this.current];
 
     const papacfg = {
       ...this.config,
@@ -186,15 +185,6 @@ export class CSVReader {
     } as ParseConfig;
 
     Papa.parse(text, papacfg);
-
-    // Single line of text
-    const { names, current } = this;
-    if (names && names.length && !current.fields.length) {
-      for (const s of names) {
-        current.addFieldFor(undefined, s);
-      }
-      this.data.push(current);
-    }
 
     return this.data;
   }
@@ -237,6 +227,7 @@ function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
 
 function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string {
   const isName = 'name' === key;
+  const isType = 'type' === key;
 
   for (const f of fields) {
     const display = f.display;
@@ -247,7 +238,14 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
           line = line + config.delimiter;
         }
 
-        const v = isName ? f.name : (fields[i].display as any)[key];
+        let v: any = fields[i].name;
+        if (isType) {
+          v = fields[i].type;
+        } else if (isName) {
+          // already name
+        } else {
+          v = (fields[i].display as any)[key];
+        }
         if (v) {
           line = line + writeValue(v, config);
         }

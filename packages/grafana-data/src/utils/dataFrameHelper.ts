@@ -58,9 +58,31 @@ export class DataFrameHelper implements DataFrame {
     }
   }
 
-  public addFieldFor(value: any, name?: string): FieldWithCache {
+  /**
+   * Returns a copy that does not include functions
+   */
+  toDataFrame(): DataFrame {
+    const fields = this.fields.map(f => {
+      return {
+        name: f.name,
+        type: f.type,
+        display: f.display,
+        values: f.values,
+      };
+    });
+
+    return {
+      fields,
+      refId: this.refId,
+      meta: this.meta,
+      name: this.name,
+      labels: this.labels,
+    };
+  }
+
+  addFieldFor(value: any, name?: string): FieldWithCache {
     if (!name) {
-      name = `Column ${this.fields.length + 1}`;
+      name = `Field ${this.fields.length + 1}`;
     }
     return this.addField({
       name,
@@ -75,10 +97,34 @@ export class DataFrameHelper implements DataFrame {
   reverse() {
     for (const f of this.fields) {
       if (isArray(f.values)) {
-        const arr = f.values as Array<any>;
+        const arr = f.values as any[];
         arr.reverse();
       }
     }
+  }
+
+  /**
+   * Remove some of the rows.
+   *
+   * TODO: really just want a circular buffer
+   */
+  slice(start?: number, end?: number) {
+    let len = 0;
+    for (const f of this.fields) {
+      const vals = f.values as any[];
+      f.values = vals.slice(start, end);
+      if (f.values.length > len) {
+        len = f.values.length;
+      }
+    }
+
+    // Should not be necessary
+    for (const fx of this.fields) {
+      while (fx.values.length < len) {
+        fx.values.push(null);
+      }
+    }
+    this.longestFieldLength = len;
   }
 
   private reduce(
@@ -115,17 +161,7 @@ export class DataFrameHelper implements DataFrame {
     return field.stats!;
   }
 
-  addField(f: Field): FieldWithCache {
-    const field = {
-      index: this.fields.length,
-      ...f,
-      reduce: (
-        reducers: string[], // The stats to calculate
-        nullValueMode?: NullValueMode
-      ): FieldCalcs => {
-        return this.reduce(field, reducers, nullValueMode);
-      },
-    };
+  private updateTypeIndex(field: FieldWithCache) {
     // Make sure it has a type
     if (!field.type) {
       field.type = guessFieldTypeForField(field);
@@ -137,6 +173,20 @@ export class DataFrameHelper implements DataFrame {
       this.fieldByType[field.type!] = [];
     }
     this.fieldByType[field.type!].push(field);
+  }
+
+  addField(f: Field): FieldWithCache {
+    const field = {
+      index: this.fields.length,
+      ...f,
+      reduce: (
+        reducers: string[], // The stats to calculate
+        nullValueMode?: NullValueMode
+      ): FieldCalcs => {
+        return this.reduce(field, reducers, nullValueMode);
+      },
+    };
+    this.updateTypeIndex(field);
 
     // And a name
     if (!field.name) {
@@ -180,6 +230,19 @@ export class DataFrameHelper implements DataFrame {
     for (let i = this.fields.length; i < row.length; i++) {
       this.addFieldFor(row[i]);
     }
+
+    // The first line may change the field types
+    if (this.longestFieldLength < 1) {
+      this.fieldByType = {};
+      for (let i = 0; i < this.fields.length; i++) {
+        const f = this.fields[i];
+        if (!f.type || f.type === FieldType.other) {
+          f.type = guessFieldTypeFromValue(row[i]);
+        }
+        this.updateTypeIndex(f);
+      }
+    }
+
     for (let i = 0; i < this.fields.length; i++) {
       const f = this.fields[i];
       let v = row[i];

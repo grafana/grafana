@@ -28,7 +28,7 @@ Array [
     "label": "Value",
     "legend": true,
     "stats": Object {},
-    "unit": "watt",
+    "unit": undefined,
     "valueFormater": [Function],
   },
   TimeSeries {
@@ -226,7 +226,7 @@ Array [
     "label": "Value",
     "legend": true,
     "stats": Object {},
-    "unit": "watt",
+    "unit": undefined,
     "valueFormater": [Function],
   },
 ]

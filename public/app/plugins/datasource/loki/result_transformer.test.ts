@@ -28,7 +28,7 @@ describe('convert loki response to DataFrame', () => {
     expect(data[0].labels['foo']).toEqual('bar');
     expect(data[0].fields[0].values[0]).toEqual(streams[0].entries[0].ts);
     expect(data[0].fields[1].values[0]).toEqual(streams[0].entries[0].line);
-    expect(data[1].fields[0].values[1]).toEqual(streams[1].entries[0].ts);
-    expect(data[1].fields[1].values[1]).toEqual(streams[1].entries[0].line);
+    expect(data[1].fields[0].values[0]).toEqual(streams[1].entries[0].ts);
+    expect(data[1].fields[1].values[0]).toEqual(streams[1].entries[0].line);
   });
 });

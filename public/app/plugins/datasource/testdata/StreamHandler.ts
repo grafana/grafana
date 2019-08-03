@@ -115,18 +115,16 @@ export class StreamWorker {
     // Edit the first series
     const series = stream.data[0] as DataFrameHelper;
     for (const row of append) {
-      series.append(row);
+      series.appendRow(row);
     }
 
-    let rows = series.rows.concat(append);
-    const extra = maxRows - rows.length;
+    const extra = maxRows - series.length;
     if (extra < 0) {
-      rows = rows.slice(extra * -1);
+      series.slice(extra * -1);
     }
-    series.rows = rows;
 
-    // Tell the event about only the rows that changed (it may want to process them)
-    stream.delta = [{ ...series, rows: append }];
+    // // Tell the event about only the rows that changed (it may want to process them)
+    // stream.delta = [{ ...series }];
 
     // Broadcast the changes
     if (this.observer) {
@@ -166,22 +164,21 @@ export class SignalWorker extends StreamWorker {
     return row;
   };
 
-  initBuffer(refId: string): DataFrame {
+  initBuffer(refId: string): DataFrameHelper {
     const { speed, buffer } = this.query;
-    const data = {
+    const data = new DataFrameHelper({
       fields: [
         { name: 'Time', type: FieldType.time, values: [] as number[] },
         { name: 'Value', type: FieldType.number, values: [] as number[] },
       ],
-      rows: [],
       refId,
       name: 'Signal ' + refId,
-    } as DataFrame;
+    });
 
     for (let i = 0; i < this.bands; i++) {
       const suffix = this.bands > 1 ? ` ${i + 1}` : '';
-      data.fields.push({ name: 'Min' + suffix, type: FieldType.number, values: [] as number[] });
-      data.fields.push({ name: 'Max' + suffix, type: FieldType.number, values: [] as number[] });
+      data.addField({ name: 'Min' + suffix, type: FieldType.number, values: [] as number[] });
+      data.addField({ name: 'Max' + suffix, type: FieldType.number, values: [] as number[] });
     }
 
     console.log('START', data);
@@ -192,7 +189,7 @@ export class SignalWorker extends StreamWorker {
     const maxRows = buffer ? buffer : request.maxDataPoints;
     let time = Date.now() - maxRows * speed;
     for (let i = 0; i < maxRows; i++) {
-      data.rows.push(this.nextRow(time));
+      data.appendRow(this.nextRow(time));
       time += speed;
     }
     return data;
@@ -321,23 +318,23 @@ export class LogsWorker extends StreamWorker {
     return [time, '[' + this.getRandomLogLevel() + '] ' + this.getRandomLine()];
   };
 
-  initBuffer(refId: string): DataFrame {
+  initBuffer(refId: string): DataFrameHelper {
     const { speed, buffer } = this.query;
-    const data = {
+    const data = new DataFrameHelper({
       fields: [
         { name: 'Time', type: FieldType.time, values: [] as number[] },
         { name: 'Line', type: FieldType.string, values: [] as string[] },
       ],
       refId,
       name: 'Logs ' + refId,
-    } as DataFrame;
+    });
 
     const request = this.stream.request;
 
     const maxRows = buffer ? buffer : request.maxDataPoints;
     let time = Date.now() - maxRows * speed;
     for (let i = 0; i < maxRows; i++) {
-      data.rows.push(this.nextRow(time));
+      data.appendRow(this.nextRow(time));
       time += speed;
     }
     return data;
