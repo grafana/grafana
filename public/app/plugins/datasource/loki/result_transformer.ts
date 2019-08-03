@@ -1,7 +1,7 @@
 import { LokiLogsStream } from './types';
-import { DataFrame, parseLabels, FieldType, Labels, DataFrameHelper } from '@grafana/data';
+import { parseLabels, FieldType, Labels, DataFrameHelper } from '@grafana/data';
 
-export function logStreamToDataFrame(stream: LokiLogsStream): DataFrame {
+export function logStreamToDataFrame(stream: LokiLogsStream): DataFrameHelper {
   let labels: Labels = stream.parsedLabels;
   if (!labels && stream.labels) {
     labels = parseLabels(stream.labels);

@@ -3,9 +3,10 @@ import { Labels, QueryResultMeta, NullValueMode } from '../types/data';
 import { guessFieldTypeForField, guessFieldTypeFromValue } from './processDataFrame';
 import isNumber from 'lodash/isNumber';
 import isString from 'lodash/isString';
+import isArray from 'lodash/isArray';
 import { FieldCalcs, reduceField } from './fieldReducer';
 
-interface FieldWithCache extends Field {
+interface FieldWithCache<T = any> extends Field<T> {
   /**
    * The field index within the frame
    */
@@ -17,9 +18,14 @@ interface FieldWithCache extends Field {
   stats?: FieldCalcs;
 
   /**
+   * Convert text to the field value
+   */
+  parse?: (value: string) => T;
+
+  /**
    * TODO: based on config, save the display processor
    */
-  processor?: (value: any) => {}; // DisplayValue
+  process?: (value: T) => {}; // DisplayValue
 
   /**
    * Return a set of reductions either from the cache or calculated
@@ -52,7 +58,7 @@ export class DataFrameHelper implements DataFrame {
     }
   }
 
-  private addFieldFor(value: any, name?: string): FieldWithCache {
+  public addFieldFor(value: any, name?: string): FieldWithCache {
     if (!name) {
       name = `Column ${this.fields.length + 1}`;
     }
@@ -61,6 +67,18 @@ export class DataFrameHelper implements DataFrame {
       type: guessFieldTypeFromValue(value),
       values: [],
     });
+  }
+
+  /**
+   * Reverse the direction of all fields
+   */
+  reverse() {
+    for (const f of this.fields) {
+      if (isArray(f.values)) {
+        const arr = f.values as Array<any>;
+        arr.reverse();
+      }
+    }
   }
 
   private reduce(
@@ -159,9 +177,19 @@ export class DataFrameHelper implements DataFrame {
    * This will add each value to the corresponding column
    */
   appendRow(row: any[]) {
-    for (let i = this.fields.length; i < row.length; i++) {}
+    for (let i = this.fields.length; i < row.length; i++) {
+      this.addFieldFor(row[i]);
+    }
     for (let i = 0; i < this.fields.length; i++) {
-      this.fields[i].values.push(row[i]); // may be undefined
+      const f = this.fields[i];
+      let v = row[i];
+      if (isString(v)) {
+        if (!f.parse) {
+          f.parse = makeFieldParser(v, f);
+        }
+        v = f.parse(v);
+      }
+      f.values.push(v); // may be undefined
     }
     this.longestFieldLength++;
   }
@@ -301,4 +329,30 @@ function asNumber(prop: any): number {
     return parseInt(prop, 10);
   }
   return NaN;
+}
+
+function makeFieldParser(value: string, field: Field): (value: string) => any {
+  if (!field.type) {
+    if (field.name === 'time' || field.name === 'Time') {
+      field.type = FieldType.time;
+    } else {
+      field.type = guessFieldTypeFromValue(value);
+    }
+  }
+
+  if (field.type === FieldType.number) {
+    return (value: string) => {
+      return parseFloat(value);
+    };
+  }
+
+  // Will convert anything that starts with "T" to true
+  if (field.type === FieldType.boolean) {
+    return (value: string) => {
+      return !(value[0] === 'F' || value[0] === 'f' || value[0] === '0');
+    };
+  }
+
+  // Just pass the string back
+  return (value: string) => value;
 }

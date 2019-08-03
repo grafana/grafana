@@ -2,7 +2,7 @@ import { readCSV, toCSV, CSVHeaderStyle } from './csv';
 import { getDataFrameRow } from './dataFrameHelper';
 
 // Test with local CSV files
-const fs = require('fs');
+import fs from 'fs';
 
 describe('read csv', () => {
   it('should get X and y', () => {
@@ -13,15 +13,29 @@ describe('read csv', () => {
     const series = data[0];
     expect(series.fields.length).toBe(4);
 
-    const width = 3;
-    expect(series.fields[0].values.length).toBe(width);
+    const rows = 4;
+    expect(series.length).toBe(rows);
 
     // Make sure everythign it padded properly
     for (const field of series.fields) {
-      expect(field.values.length).toBe(width);
+      expect(field.values.length).toBe(rows);
     }
 
     expect(series).toMatchSnapshot();
+  });
+
+  it('should read single string OK', () => {
+    const text = 'a,b,c';
+    const data = readCSV(text);
+    expect(data.length).toBe(1);
+
+    const series = data[0];
+    expect(series.fields.length).toBe(2);
+    expect(series.length).toBe(0);
+
+    expect(series.fields[0].name).toEqual('a');
+    expect(series.fields[1].name).toEqual('b');
+    expect(series.fields[2].name).toEqual('c');
   });
 
   it('should read csv from local file system', () => {

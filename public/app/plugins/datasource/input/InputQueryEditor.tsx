@@ -42,7 +42,6 @@ export class InputQueryEditor extends PureComponent<Props, State> {
         data = [
           {
             fields: [],
-            rows: [],
           },
         ];
       }
@@ -59,7 +58,6 @@ export class InputQueryEditor extends PureComponent<Props, State> {
       data = [
         {
           fields: [],
-          rows: [],
         },
       ];
     }

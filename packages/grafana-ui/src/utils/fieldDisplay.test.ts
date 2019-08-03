@@ -137,7 +137,6 @@ describe('FieldDisplay', () => {
         {
           name: 'No data',
           fields: [],
-          rows: [],
         },
       ],
       replaceVariables: (value: string) => {

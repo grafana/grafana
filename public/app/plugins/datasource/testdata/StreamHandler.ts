@@ -1,7 +1,7 @@
 import defaults from 'lodash/defaults';
 import { DataQueryRequest, DataQueryResponse, DataQueryError, DataStreamObserver, DataStreamState } from '@grafana/ui';
 
-import { FieldType, DataFrame, LoadingState, LogLevel, CSVReader } from '@grafana/data';
+import { FieldType, DataFrame, LoadingState, LogLevel, CSVReader, DataFrameHelper } from '@grafana/data';
 import { TestDataQuery, StreamingQuery } from './types';
 
 export const defaultQuery: StreamingQuery = {
@@ -113,7 +113,11 @@ export class StreamWorker {
     const maxRows = query.buffer ? query.buffer : stream.request.maxDataPoints;
 
     // Edit the first series
-    const series = stream.data[0];
+    const series = stream.data[0] as DataFrameHelper;
+    for (const row of append) {
+      series.append(row);
+    }
+
     let rows = series.rows.concat(append);
     const extra = maxRows - rows.length;
     if (extra < 0) {
