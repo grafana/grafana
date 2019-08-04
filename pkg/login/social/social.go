@@ -55,7 +55,7 @@ const (
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)
-	allOauthes    = []string{"github", "gitlab", "google", "generic_oauth", "grafananet", grafanaCom}
+	allOauthes    = []string{"github", "gitlab", "google", "bitbucket", "generic_oauth", "grafananet", grafanaCom}
 )
 
 func NewOAuthService() {
@@ -153,6 +153,20 @@ func NewOAuthService() {
 				hostedDomain:   info.HostedDomain,
 				apiUrl:         info.ApiUrl,
 				allowSignup:    info.AllowSignup,
+			}
+		}
+
+		// Bitbucket.
+		if name == "bitbucket" {
+			SocialMap["bitbucket"] = &BitbucketOAuth{
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
+				},
+				allowedDomains: info.AllowedDomains,
+				apiUrl:         info.ApiUrl,
+				allowSignup:    info.AllowSignup,
+				teamIds:        util.SplitString(sec.Key("team_ids").String()),
 			}
 		}
 
