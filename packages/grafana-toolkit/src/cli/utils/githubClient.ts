@@ -36,6 +36,17 @@ class GithubClient {
   private createClient(clientConfig: AxiosRequestConfig) {
     return axios.create(clientConfig);
   }
+
+  public async getIssues(state = 'open', milestone: string, perPage = 100, ...labels: string[]) {
+    const fields = {
+      state: state,
+      per_page: perPage,
+      milestone: milestone,
+      labels: labels.join(','),
+    };
+    const res = await this.client.get('/issues', { params: fields });
+    return res.data;
+  }
 }
 
 export default GithubClient;

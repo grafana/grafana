@@ -9,23 +9,13 @@ interface ChangelogOptions {
 
 const changelogTaskRunner: TaskRunner<ChangelogOptions> = async ({ milestone }) => {
   const githubClient = new GithubClient();
-  const client = githubClient.client;
 
   if (!/^\d+$/.test(milestone)) {
     console.log('Use milestone number not title, find number in milestone url');
     return;
   }
 
-  const res = await client.get('/issues', {
-    params: {
-      state: 'closed',
-      per_page: 100,
-      labels: 'add to changelog',
-      milestone: milestone,
-    },
-  });
-
-  const issues = res.data;
+  const issues = await githubClient.getIssues('closed', milestone, 100, 'add to changelog');
 
   const bugs = _.sortBy(
     issues.filter((item: any) => {
