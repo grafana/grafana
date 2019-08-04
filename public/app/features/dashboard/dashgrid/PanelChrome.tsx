@@ -152,8 +152,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
 
-    console.log('onRefresh', panel.id);
-
     if (!isInView) {
       console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
