@@ -13,7 +13,7 @@ weight = 3
 # Generic OAuth Authentication
 
 You can configure many different oauth2 authentication services with Grafana using the generic oauth2 feature. Below you
-can find examples using Okta, BitBucket, OneLogin and Azure.
+can find examples using Okta, OneLogin and Azure.
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
 
@@ -59,23 +59,6 @@ client_secret = <okta application Client Secret>
 auth_url = https://<okta domain>/oauth2/v1/authorize
 token_url = https://<okta domain>/oauth2/v1/token
 api_url = https://<okta domain>/oauth2/v1/userinfo
-```
-
-## Set up OAuth2 with Bitbucket
-
-```bash
-[auth.generic_oauth]
-name = BitBucket
-enabled = true
-allow_sign_up = true
-client_id = <client id>
-client_secret = <client secret>
-scopes = account email
-auth_url = https://bitbucket.org/site/oauth2/authorize
-token_url = https://bitbucket.org/site/oauth2/access_token
-api_url = https://api.bitbucket.org/2.0/user
-team_ids =
-allowed_organizations =
 ```
 
 ## Set up OAuth2 with OneLogin
