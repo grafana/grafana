@@ -7,12 +7,12 @@ import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
 import { DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType, DecimalCount } from '../types';
-import { DateTime, dateTime, Threshold, getMappedValue, FieldDisplayConfig } from '@grafana/data';
+import { DateTime, dateTime, Threshold, getMappedValue, FieldConfig } from '@grafana/data';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
 export interface DisplayValueOptions {
-  field?: FieldDisplayConfig;
+  field?: FieldConfig;
 
   // Alternative to empty string
   noValue?: string;

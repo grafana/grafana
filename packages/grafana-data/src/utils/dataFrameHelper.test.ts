@@ -1,5 +1,5 @@
-import { FieldType, DataFrame, Field } from '../types/index';
-import { DataFrameHelper, createField } from './dataFrameHelper';
+import { FieldType, DataFrameJSON, FieldJSON } from '../types/index';
+import { DataFrameHelper, getDataFrameValues } from './dataFrameHelper';
 import { DateTime } from './moment_wrapper';
 
 interface MySpecialObject {
@@ -10,40 +10,40 @@ interface MySpecialObject {
 }
 
 describe('dataFrameHelper', () => {
-  const frame: DataFrame = {
+  const frame: DataFrameJSON = {
     fields: [
-      { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-      { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
-      { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+      { name: 'time', type: FieldType.time, buffer: [100, 200, 300] },
+      { name: 'name', type: FieldType.string, buffer: ['a', 'b', 'c'] },
+      { name: 'value', type: FieldType.number, buffer: [1, 2, 3] },
     ],
   };
   const ext = new DataFrameHelper(frame);
 
   it('Should get a valid count for the fields', () => {
-    expect(ext.length).toEqual(3);
+    expect(ext.getLength()).toEqual(3);
   });
 
   it('Should get a typed vector', () => {
-    const vector = ext.getValues<MySpecialObject>();
-    expect(vector.length).toEqual(3);
+    const vector = getDataFrameValues<MySpecialObject>(ext);
+    expect(vector.getLength()).toEqual(3);
 
-    const first = vector[0];
-    expect(first.time).toEqual(frame.fields[0].values[0]);
-    expect(first.name).toEqual(frame.fields[1].values[0]);
-    expect(first.value).toEqual(frame.fields[2].values[0]);
+    const first = vector.get(0);
+    expect(first.time).toEqual(frame.fields[0].buffer![0]);
+    expect(first.name).toEqual(frame.fields[1].buffer![0]);
+    expect(first.value).toEqual(frame.fields[2].buffer![0]);
     expect(first.more).toBeUndefined();
   });
 });
 
 describe('FieldCache', () => {
   it('when creating a new FieldCache from fields should be able to query cache', () => {
-    const fields: Field[] = [
-      createField('time', FieldType.time),
-      createField('string', FieldType.string),
-      createField('number', FieldType.number),
-      createField('boolean', FieldType.boolean),
-      createField('other', FieldType.other),
-      createField('undefined'),
+    const fields: FieldJSON[] = [
+      { name: 'time', type: FieldType.time },
+      { name: 'string', type: FieldType.string },
+      { name: 'number', type: FieldType.number },
+      { name: 'boolean', type: FieldType.boolean },
+      { name: 'other', type: FieldType.other },
+      { name: 'undefined' },
     ];
     const fieldCache = new DataFrameHelper({ fields });
     const allFields = fieldCache.getFields();

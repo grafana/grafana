@@ -1,4 +1,4 @@
-import { LoadingState, createField } from '@grafana/data';
+import { LoadingState, createField, toDataFrame } from '@grafana/data';
 import { PanelData, DataQueryRequest } from '@grafana/ui';
 import { filterPanelDataToQuery } from './QueryEditorRow';
 
@@ -13,11 +13,11 @@ describe('filterPanelDataToQuery', () => {
   const data: PanelData = {
     state: LoadingState.Done,
     series: [
-      { refId: 'A', fields: [createField('AAA')], meta: {} },
-      { refId: 'B', fields: [createField('B111')], meta: {} },
-      { refId: 'B', fields: [createField('B222')], meta: {} },
-      { refId: 'B', fields: [createField('B333')], meta: {} },
-      { refId: 'C', fields: [createField('CCCC')], meta: { requestId: 'sub3' } },
+      toDataFrame({ refId: 'A', fields: [createField('AAA')], meta: {} }),
+      toDataFrame({ refId: 'B', fields: [createField('B111')], meta: {} }),
+      toDataFrame({ refId: 'B', fields: [createField('B222')], meta: {} }),
+      toDataFrame({ refId: 'B', fields: [createField('B333')], meta: {} }),
+      toDataFrame({ refId: 'C', fields: [createField('CCCC')], meta: { requestId: 'sub3' } }),
     ],
     error: {
       refId: 'B',

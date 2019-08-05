@@ -7,7 +7,7 @@ import {
   DisplayValue,
   PanelData,
 } from '@grafana/ui';
-import { NullValueMode, FieldType, DataFrameHelper } from '@grafana/data';
+import { NullValueMode, FieldType, DataFrameHelper, reduceField } from '@grafana/data';
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
@@ -41,7 +41,7 @@ export const getGraphSeriesModel = (
       });
 
       if (points.length > 0) {
-        const seriesStats = field.reduce(legendOptions.stats);
+        const seriesStats = reduceField({ field, reducers: legendOptions.stats });
         let statsDisplayValues: DisplayValue[];
 
         if (legendOptions.stats) {

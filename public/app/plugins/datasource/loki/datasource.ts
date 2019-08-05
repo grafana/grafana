@@ -154,7 +154,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     if (!data.streams) {
-      return [{ ...logStreamToDataFrame(data), refId: target.refId }];
+      return [logStreamToDataFrame(data, target.refId)];
     }
 
     for (const stream of data.streams || []) {

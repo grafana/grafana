@@ -1,6 +1,6 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { DataFrame, CSVConfig, readCSV, getDataFrameRowCount } from '@grafana/data';
+import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
 
 interface Props {
   config?: CSVConfig;
@@ -74,7 +74,7 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
             {data.map((frame, index) => {
               return (
                 <span key={index}>
-                  Rows:{getDataFrameRowCount(frame)}, Columns:{frame.fields.length} &nbsp;
+                  Rows:{frame.getLength()}, Columns:{frame.fields.length} &nbsp;
                   <i className="fa fa-check-circle" />
                 </span>
               );

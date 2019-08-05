@@ -12,7 +12,7 @@ import {
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import { stringToJsRegex, DataFrame, sortDataFrame, getDataFrameRowCount, getDataFrameRow } from '@grafana/data';
+import { stringToJsRegex, DataFrame, sortDataFrame, getDataFrameRow, ArrayVector, FieldType } from '@grafana/data';
 
 import {
   TableCellBuilder,
@@ -107,7 +107,7 @@ export class Table extends Component<Props, State> {
 
     if (dataChanged || rotate !== prevProps.rotate) {
       const { width, minColumnWidth } = this.props;
-      this.rotateWidth = Math.max(width / getDataFrameRowCount(data), minColumnWidth);
+      this.rotateWidth = Math.max(width / data.getLength(), minColumnWidth);
     }
 
     // Update the data when data or sort changes
@@ -146,7 +146,7 @@ export class Table extends Component<Props, State> {
       return {
         header: title,
         width: columnWidth,
-        builder: getCellBuilder(col.display || {}, style, this.props),
+        builder: getCellBuilder(col.config || {}, style, this.props),
       };
     });
   }
@@ -186,7 +186,7 @@ export class Table extends Component<Props, State> {
       this.doSort(column);
     } else {
       const field = this.state.data.fields[columnIndex];
-      const value = field.values[rowIndex];
+      const value = field.values.get(rowIndex);
       console.log('CLICK', value, field.name);
     }
   };
@@ -201,8 +201,9 @@ export class Table extends Component<Props, State> {
     if (!col) {
       col = {
         name: '??' + columnIndex + '???',
-        display: {},
-        values: [],
+        config: {},
+        values: new ArrayVector(),
+        type: FieldType.other,
       };
     }
 
@@ -260,7 +261,7 @@ export class Table extends Component<Props, State> {
     }
 
     let columnCount = data.fields.length;
-    let rowCount = getDataFrameRowCount(data) + (showHeader ? 1 : 0);
+    let rowCount = data.getLength() + (showHeader ? 1 : 0);
 
     let fixedColumnCount = Math.min(fixedColumns, columnCount);
     let fixedRowCount = showHeader && fixedHeader ? 1 : 0;

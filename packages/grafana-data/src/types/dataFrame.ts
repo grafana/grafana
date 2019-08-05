@@ -1,6 +1,7 @@
 import { Threshold } from './threshold';
 import { ValueMapping } from './valueMapping';
-import { QueryResultBase, Labels } from './data';
+import { QueryResultBase, Labels, NullValueMode } from './data';
+import { FieldCalcs } from '../utils/index';
 
 export enum FieldType {
   time = 'time', // or date
@@ -11,33 +12,11 @@ export enum FieldType {
 }
 
 /**
- * Simple array style implementation.
- *
- * This can either be implemented by an array or something that proxies an array
- */
-export interface Vector<T = any> {
-  length: number;
-
-  /**
-   * Access the value by index (Like an array)
-   */
-  [index: number]: T;
-
-  /**
-   * Appends new elements to the vector, and returns the new length of the vector.
-   * @param items New elements of the Vector.
-   *
-   * Some implementations may ignore the input or throw an error
-   */
-  push(...items: T[]): number;
-}
-
-/**
  * Every property is optional
  *
  * Plugins may extend this with additional properties.  Somethign like series overrides
  */
-export interface FieldDisplayConfig {
+export interface FieldConfig {
   title?: string; // The display value for this field.  This supports template variables blank is auto
   filterable?: boolean;
 
@@ -55,17 +34,63 @@ export interface FieldDisplayConfig {
 
   // Must be sorted by 'value', first value is always -Infinity
   thresholds?: Threshold[];
+
+  // TODO -- remove from field reducer options
+  nullValueMode?: NullValueMode;
+
+  // TODO -- remove from displayValues options (default to 'No Data')
+  noValue?: string;
+}
+
+export interface FieldJSON<T = any> {
+  name: string; // The column name
+  type?: FieldType;
+  config?: FieldConfig;
+  buffer?: T[];
+}
+
+export interface DataFrameJSON extends QueryResultBase {
+  name?: string;
+  labels?: Labels;
+  fields: FieldJSON[];
+}
+
+export interface Vector<T = any> {
+  getLength(): number;
+
+  /**
+   * Access the value by index (Like an array)
+   */
+  get(index: number): T;
 }
 
 export interface Field<T = any> {
   name: string; // The column name
-  type?: FieldType;
-  display?: FieldDisplayConfig;
-  values: Vector<T>;
+  type: FieldType;
+  config: FieldConfig;
+  values: Vector<T>; // `buffer` when JSON
+
+  /**
+   * Cache of reduced values
+   */
+  calcs?: FieldCalcs;
+
+  /**
+   * Convert text to the field value
+   */
+  parse?: (value: any) => T;
+
+  /**
+   * TODO: attach the display processor to each field
+   */
+  display?: (value: T) => any; // DisplayValue
 }
 
 export interface DataFrame extends QueryResultBase {
   name?: string;
-  fields: Field[];
+  fields: Field[]; // All fields of equal length
   labels?: Labels;
+
+  // The number of rows
+  getLength(): number;
 }

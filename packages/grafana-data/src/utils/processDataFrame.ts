@@ -11,24 +11,35 @@ import {
   FieldType,
   TableData,
   Column,
-  FieldDisplayConfig,
+  FieldConfig,
   TimeSeriesValue,
+  DataFrameJSON,
+  FieldJSON,
 } from '../types/index';
 import { isDateTime } from './moment_wrapper';
+import { ArrayVector } from './vector';
+import { DataFrameHelper } from './dataFrameHelper';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
     const { text, ...disp } = c;
     return {
       name: text, // rename 'text' to the 'name' field
-      display: disp as FieldDisplayConfig,
-      values: new Array<any>(),
+      config: (disp || {}) as FieldConfig,
+      values: new ArrayVector(),
+      type: FieldType.other,
     };
   });
   // Fill in the field values
   for (const row of table.rows) {
     for (let i = 0; i < fields.length; i++) {
-      fields[i].values.push(row[i]);
+      fields[i].values.buffer.push(row[i]);
+    }
+  }
+  for (const f of fields) {
+    const t = guessFieldTypeForField(f);
+    if (t) {
+      f.type = t;
     }
   }
 
@@ -37,6 +48,9 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     refId: table.refId,
     meta: table.meta,
     name: table.name,
+    getLength: () => {
+      return fields[0].values.getLength();
+    },
   };
 }
 
@@ -45,32 +59,35 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     {
       name: timeSeries.target || 'Value',
       type: FieldType.number,
-      display: {
+      config: {
         unit: timeSeries.unit,
       },
-      values: [] as TimeSeriesValue[],
+      values: new ArrayVector<TimeSeriesValue>(),
     },
     {
       name: 'Time',
       type: FieldType.time,
-      display: {
+      config: {
         unit: 'dateTimeAsIso',
       },
-      values: [] as number[],
+      values: new ArrayVector<number>(),
     },
   ];
 
   for (const point of timeSeries.datapoints) {
-    fields[0].values.push(point[0]);
-    fields[1].values.push(point[1]);
+    fields[0].values.buffer.push(point[0]);
+    fields[1].values.buffer.push(point[1]);
   }
 
   return {
     name: timeSeries.target,
-    fields,
     labels: timeSeries.tags,
     refId: timeSeries.refId,
     meta: timeSeries.meta,
+    fields,
+    getLength: () => {
+      return timeSeries.datapoints.length;
+    },
   };
 }
 
@@ -124,8 +141,8 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
   }
 
   // 2. Check the first non-null value
-  for (let i = 0; i < field.values.length; i++) {
-    const v = field.values[i];
+  for (let i = 0; i < field.values.getLength(); i++) {
+    const v = field.values.get(i);
     if (v !== null) {
       return guessFieldTypeFromValue(v);
     }
@@ -146,13 +163,13 @@ export const guessFieldTypes = (series: DataFrame): DataFrame => {
       return {
         ...series,
         fields: series.fields.map(field => {
-          if (field.type) {
+          if (field.type && field.type !== FieldType.other) {
             return field;
           }
           // Calculate a reasonable schema value
           return {
             ...field,
-            type: guessFieldTypeForField(field),
+            type: guessFieldTypeForField(field) || FieldType.other,
           };
         }),
       };
@@ -172,7 +189,18 @@ export const toDataFrame = (data: any): DataFrame => {
     if (data.hasOwnProperty('rows')) {
       throw new Error('Old DataFrame format.  Values should be on the fields');
     }
-    return data as DataFrame;
+
+    // Check if each field has
+    const fields = data.fields as Array<Field | FieldJSON>;
+    if (fields.length > 0) {
+      for (const f of fields) {
+        if (f.hasOwnProperty('values')) {
+          return data as DataFrame;
+        }
+      }
+    }
+    // Converts 'buffer' to DataFrame
+    return new DataFrameHelper(data as DataFrameJSON);
   }
   if (data.hasOwnProperty('datapoints')) {
     return convertTimeSeriesToDataFrame(data);
@@ -188,12 +216,12 @@ export const toDataFrame = (data: any): DataFrame => {
 export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData => {
   const { fields } = frame;
 
-  const length = fields[0].values.length;
+  const length = fields[0].values.getLength();
   const rows: any[][] = [];
   for (let i = 0; i < length; i++) {
     const row: any[] = [];
     for (let j = 0; j < fields.length; j++) {
-      row.push(fields[j].values[i]);
+      row.push(fields[j].values.get(i));
     }
     rows.push(row);
   }
@@ -201,14 +229,14 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   if (fields.length === 2) {
     let type = fields[1].type;
     if (!type) {
-      type = guessFieldTypeForField(fields[1]);
+      type = guessFieldTypeForField(fields[1]) || FieldType.other;
     }
     if (type === FieldType.time) {
       return {
         alias: fields[0].name || frame.name,
         target: fields[0].name || frame.name,
         datapoints: rows,
-        unit: fields[0].display ? fields[0].display.unit : undefined,
+        unit: fields[0].config ? fields[0].config.unit : undefined,
         refId: frame.refId,
         meta: frame.meta,
       } as TimeSeries;
@@ -217,10 +245,10 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
 
   return {
     columns: fields.map(f => {
-      const { name, display } = f;
-      if (display) {
+      const { name, config } = f;
+      if (config) {
         // keep unit etc
-        const { ...column } = display;
+        const { ...column } = config;
         (column as Column).text = name;
         return column as Column;
       }
@@ -255,4 +283,26 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
     return copy;
   }
   return data;
+}
+
+/**
+ * Returns a copy that does not include functions
+ */
+export function dataFrameToJSON(data: DataFrame): DataFrameJSON {
+  const fields = data.fields.map(f => {
+    return {
+      name: f.name,
+      type: f.type,
+      config: f.config,
+      values: f.values,
+    };
+  });
+
+  return {
+    fields,
+    refId: data.refId,
+    meta: data.meta,
+    name: data.name,
+    labels: data.labels,
+  };
 }

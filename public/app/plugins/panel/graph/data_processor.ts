@@ -30,15 +30,15 @@ export class DataProcessor {
 
       const seriesName = series.name ? series.name : series.refId;
       for (const field of data.getFields(FieldType.number)) {
-        let name = field.display && field.display.title ? field.display.title : field.name;
+        let name = field.config && field.config.title ? field.config.title : field.name;
 
         if (seriesName && dataList.length > 0 && name !== seriesName) {
           name = seriesName + ' ' + name;
         }
 
         const datapoints = [];
-        for (let r = 0; r < data.length; r++) {
-          datapoints.push([field.values[r], time.values[r]]);
+        for (let r = 0; r < data.getLength(); r++) {
+          datapoints.push([field.values.get(r), time.values.get(r)]);
         }
 
         list.push(this.toTimeSeries(field, name, datapoints, list.length, range));
@@ -65,7 +65,7 @@ export class DataProcessor {
       datapoints: datapoints || [],
       alias: alias,
       color: getColorFromHexRgbOrName(color, config.theme.type),
-      unit: field.display ? field.display.unit : undefined,
+      unit: field.config ? field.config.unit : undefined,
     });
 
     if (datapoints && datapoints.length > 0 && range) {

@@ -1,4 +1,13 @@
-import { DataFrame, FieldType, LogsModel, LogsMetaKind, LogsDedupStrategy, LogLevel } from '@grafana/data';
+import {
+  DataFrame,
+  FieldType,
+  LogsModel,
+  LogsMetaKind,
+  LogsDedupStrategy,
+  LogLevel,
+  DataFrameHelper,
+  toDataFrame,
+} from '@grafana/data';
 import {
   dedupLogRows,
   calculateFieldStats,
@@ -344,46 +353,46 @@ describe('dataFrameToLogsModel', () => {
 
   it('given series without correct series name should return empty logs model', () => {
     const series: DataFrame[] = [
-      {
+      toDataFrame({
         fields: [],
-      },
+      }),
     ];
     expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a time field should return empty logs model', () => {
     const series: DataFrame[] = [
-      {
+      new DataFrameHelper({
         fields: [
           {
             name: 'message',
             type: FieldType.string,
-            values: [],
+            buffer: [],
           },
         ],
-      },
+      }),
     ];
     expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a string field should return empty logs model', () => {
     const series: DataFrame[] = [
-      {
+      new DataFrameHelper({
         fields: [
           {
             name: 'time',
             type: FieldType.time,
-            values: [],
+            buffer: [],
           },
         ],
-      },
+      }),
     ];
     expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given one series should return expected logs model', () => {
     const series: DataFrame[] = [
-      {
+      new DataFrameHelper({
         labels: {
           filename: '/var/log/grafana/grafana.log',
           job: 'grafana',
@@ -392,12 +401,12 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
-            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+            buffer: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
-            values: [
+            buffer: [
               't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
               't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
             ],
@@ -406,7 +415,7 @@ describe('dataFrameToLogsModel', () => {
         meta: {
           limit: 1000,
         },
-      },
+      }),
     ];
     const logsModel = dataFrameToLogsModel(series, 0);
     expect(logsModel.hasUniqueLabels).toBeFalsy();
@@ -444,25 +453,25 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series without labels should return expected logs model', () => {
     const series: DataFrame[] = [
-      {
+      new DataFrameHelper({
         fields: [
           {
             name: 'time',
             type: FieldType.time,
-            values: ['1970-01-01T00:00:01Z'],
+            buffer: ['1970-01-01T00:00:01Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
-            values: ['WARN boooo'],
+            buffer: ['WARN boooo'],
           },
           {
             name: 'level',
             type: FieldType.string,
-            values: ['dbug'],
+            buffer: ['dbug'],
           },
         ],
-      },
+      }),
     ];
     const logsModel = dataFrameToLogsModel(series, 0);
     expect(logsModel.rows).toHaveLength(1);
@@ -478,7 +487,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given multiple series should return expected logs model', () => {
     const series: DataFrame[] = [
-      {
+      toDataFrame({
         labels: {
           foo: 'bar',
           baz: '1',
@@ -488,16 +497,16 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'ts',
             type: FieldType.time,
-            values: ['1970-01-01T00:00:01Z'],
+            buffer: ['1970-01-01T00:00:01Z'],
           },
           {
             name: 'line',
             type: FieldType.string,
-            values: ['WARN boooo'],
+            buffer: ['WARN boooo'],
           },
         ],
-      },
-      {
+      }),
+      toDataFrame({
         name: 'logs',
         labels: {
           foo: 'bar',
@@ -508,15 +517,15 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
-            values: ['1970-01-01T00:00:00Z', '1970-01-01T00:00:02Z'],
+            buffer: ['1970-01-01T00:00:00Z', '1970-01-01T00:00:02Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
-            values: ['INFO 1', 'INFO 2'],
+            buffer: ['INFO 1', 'INFO 2'],
           },
         ],
-      },
+      }),
     ];
     const logsModel = dataFrameToLogsModel(series, 0);
     expect(logsModel.hasUniqueLabels).toBeTruthy();

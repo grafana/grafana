@@ -1,18 +1,25 @@
 import { LokiLogsStream } from './types';
 import { parseLabels, FieldType, Labels, DataFrameHelper } from '@grafana/data';
 
-export function logStreamToDataFrame(stream: LokiLogsStream): DataFrameHelper {
+export function logStreamToDataFrame(stream: LokiLogsStream, refId?: string): DataFrameHelper {
   let labels: Labels = stream.parsedLabels;
   if (!labels && stream.labels) {
     labels = parseLabels(stream.labels);
   }
-  const data = new DataFrameHelper({
-    labels,
-    fields: [{ name: 'ts', type: FieldType.time, values: [] }, { name: 'line', type: FieldType.string, values: [] }],
-  });
+  const time: string[] = [];
+  const lines: string[] = [];
+
   for (const entry of stream.entries) {
-    data.fields[0].values.push(entry.ts || entry.timestamp);
-    data.fields[1].values.push(entry.line);
+    time.push(entry.ts || entry.timestamp);
+    lines.push(entry.line);
   }
-  return data;
+
+  return new DataFrameHelper({
+    refId,
+    labels,
+    fields: [
+      { name: 'ts', type: FieldType.time, buffer: time }, // Time
+      { name: 'line', type: FieldType.string, buffer: lines }, // Line
+    ],
+  });
 }

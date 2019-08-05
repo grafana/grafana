@@ -4,7 +4,7 @@ import defaults from 'lodash/defaults';
 import isNumber from 'lodash/isNumber';
 
 // Types
-import { DataFrame, Field, FieldType, FieldDisplayConfig } from '../types';
+import { DataFrame, Field, FieldType, FieldConfig } from '../types';
 import { guessFieldTypeFromValue } from './processDataFrame';
 import { DataFrameHelper } from './dataFrameHelper';
 
@@ -29,7 +29,7 @@ export interface CSVParseCallbacks {
    * This can return a modified table to force any
    * Column configurations
    */
-  onHeader: (table: DataFrame) => void;
+  onHeader: (fields: Field[]) => void;
 
   // Called after each row is read
   onRow: (row: any[]) => void;
@@ -40,7 +40,7 @@ export interface CSVOptions {
   callback?: CSVParseCallbacks;
 }
 
-export function readCSV(csv: string, options?: CSVOptions): DataFrameHelper[] {
+export function readCSV(csv: string, options?: CSVOptions): DataFrame[] {
   return new CSVReader(options).readCSV(csv);
 }
 
@@ -89,7 +89,7 @@ export class CSVReader {
             const isName = 'name' === k;
 
             // Simple object used to check if headers match
-            const headerKeys: FieldDisplayConfig = {
+            const headerKeys: FieldConfig = {
               unit: '#',
               dateFormat: '#',
             };
@@ -111,10 +111,10 @@ export class CSVReader {
               } else {
                 const { fields } = this.current;
                 for (let j = 0; j < fields.length; j++) {
-                  if (!fields[j].display) {
-                    fields[j].display = {};
+                  if (!fields[j].config) {
+                    fields[j].config = {};
                   }
-                  const disp = fields[j].display as any; // any lets name lookup
+                  const disp = fields[j].config as any; // any lets name lookup
                   disp[k] = j === 0 ? v : line[j];
                 }
               }
@@ -157,7 +157,7 @@ export class CSVReader {
           this.current.addFieldFor(line[f]);
         }
         if (this.callback) {
-          this.callback.onHeader({ fields: this.current.fields });
+          this.callback.onHeader(this.current.fields);
         }
       }
 
@@ -230,7 +230,7 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
   const isType = 'type' === key;
 
   for (const f of fields) {
-    const display = f.display;
+    const display = f.config;
     if (isName || isType || (display && display.hasOwnProperty(key))) {
       let line = '#' + key + '#';
       for (let i = 0; i < fields.length; i++) {
@@ -244,7 +244,7 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
         } else if (isName) {
           // already name
         } else {
-          v = (fields[i].display as any)[key];
+          v = (fields[i].config as any)[key];
         }
         if (v) {
           line = line + writeValue(v, config);
@@ -288,7 +288,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
       }
       csv += config.newline;
     }
-    const length = fields[0].values.length;
+    const length = fields[0].values.getLength();
     if (length > 0) {
       const writers = fields.map(field => makeFieldWriter(field, config!));
       for (let i = 0; i < length; i++) {
@@ -297,7 +297,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
             csv = csv + config.delimiter;
           }
 
-          const v = fields[j].values[i];
+          const v = fields[j].values.get(i);
           if (v !== null) {
             csv = csv + writers[j](v);
           }

@@ -1,4 +1,4 @@
-import { fieldReducers, FieldDisplayConfig } from '@grafana/data';
+import { fieldReducers, FieldConfig } from '@grafana/data';
 import { PanelModel, FieldDisplayOptions } from '@grafana/ui';
 import { GaugeOptions } from './types';
 import {
@@ -24,7 +24,7 @@ export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Parti
 
     const fieldOptions = (options.fieldOptions = {} as FieldDisplayOptions);
 
-    const field = (fieldOptions.defaults = {} as FieldDisplayConfig);
+    const field = (fieldOptions.defaults = {} as FieldConfig);
     field.mappings = old.valueMappings;
     field.thresholds = migrateOldThresholds(old.thresholds);
     field.unit = valueOptions.unit;

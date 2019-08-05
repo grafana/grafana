@@ -1,8 +1,8 @@
 import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import _ from 'lodash';
+import { Field } from '../types/index';
 import { createField } from './dataFrameHelper';
-import { FieldType, Field } from '../types/index';
 
 /**
  * Run a reducer and get back the value
@@ -13,11 +13,7 @@ function reduce(field: Field, id: string): any {
 
 describe('Stats Calculators', () => {
   const basicTable = {
-    fields: [
-      createField('a', FieldType.number, [10, 20]),
-      createField('b', FieldType.number, [20, 30]),
-      createField('c', FieldType.number, [30, 40]),
-    ],
+    fields: [createField('a', [10, 20]), createField('b', [20, 30]), createField('c', [30, 40])],
   };
 
   it('should load all standard stats', () => {
@@ -57,6 +53,7 @@ describe('Stats Calculators', () => {
   });
 
   it('should support a single stat also', () => {
+    basicTable.fields[0].calcs = undefined; // clear the cache
     const stats = reduceField({
       field: basicTable.fields[0],
       reducers: ['first'],
@@ -79,7 +76,7 @@ describe('Stats Calculators', () => {
 
   it('should calculate step', () => {
     const stats = reduceField({
-      field: createField('x', undefined, [100, 200, 300, 400]),
+      field: createField('x', [100, 200, 300, 400]),
       reducers: [ReducerID.step, ReducerID.delta],
     });
 
@@ -88,10 +85,10 @@ describe('Stats Calculators', () => {
   });
 
   it('consistenly check allIsNull/allIsZero', () => {
-    const empty = createField('x', undefined, []);
-    const allNull = createField('x', undefined, [null, null, null, null]);
-    const allUndefined = createField('x', undefined, [undefined, undefined, undefined, undefined]);
-    const allZero = createField('x', undefined, [0, 0, 0, 0]);
+    const empty = createField('x');
+    const allNull = createField('x', [null, null, null, null]);
+    const allUndefined = createField('x', [undefined, undefined, undefined, undefined]);
+    const allZero = createField('x', [0, 0, 0, 0]);
 
     expect(reduce(empty, ReducerID.allIsNull)).toEqual(true);
     expect(reduce(allNull, ReducerID.allIsNull)).toEqual(true);
@@ -119,7 +116,7 @@ describe('Stats Calculators', () => {
     ];
 
     const stats = reduceField({
-      field: createField('x', undefined, info[0].data),
+      field: createField('x', info[0].data),
       reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull], // uses standard path
     });
     expect(stats[ReducerID.first]).toEqual(null);
@@ -131,12 +128,12 @@ describe('Stats Calculators', () => {
     for (const input of info) {
       for (const reducer of reducers) {
         const v1 = reduceField({
-          field: createField('x', undefined, input.data),
+          field: createField('x', input.data),
           reducers: [reducer, ReducerID.mean], // uses standard path
         })[reducer];
 
         const v2 = reduceField({
-          field: createField('x', undefined, input.data),
+          field: createField('x', input.data),
           reducers: [reducer], // uses optimized path
         })[reducer];
 

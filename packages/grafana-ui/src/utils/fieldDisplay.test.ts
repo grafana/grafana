@@ -1,5 +1,5 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { FieldType, ReducerID, Threshold, createField } from '@grafana/data';
+import { ReducerID, Threshold, createField, DataFrameHelper } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
@@ -36,14 +36,14 @@ describe('FieldDisplay', () => {
   // Simple test dataset
   const options: GetFieldDisplayValuesOptions = {
     data: [
-      {
+      new DataFrameHelper({
         name: 'Series Name',
         fields: [
-          createField('Field 1', FieldType.string, ['a', 'b', 'c']),
-          createField('Field 2', FieldType.number, [1, 3, 5]),
-          createField('Field 3', FieldType.number, [2, 4, 6]),
+          createField('Field 1', ['a', 'b', 'c']),
+          createField('Field 2', [1, 3, 5]),
+          createField('Field 3', [2, 4, 6]),
         ],
-      },
+      }),
     ],
     replaceVariables: (value: string) => {
       return value; // Return it unchanged
@@ -137,6 +137,9 @@ describe('FieldDisplay', () => {
         {
           name: 'No data',
           fields: [],
+          getLength: () => {
+            return 0;
+          },
         },
       ],
       replaceVariables: (value: string) => {

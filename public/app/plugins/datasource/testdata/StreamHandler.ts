@@ -1,7 +1,7 @@
 import defaults from 'lodash/defaults';
 import { DataQueryRequest, DataQueryResponse, DataQueryError, DataStreamObserver, DataStreamState } from '@grafana/ui';
 
-import { FieldType, DataFrame, LoadingState, LogLevel, CSVReader, DataFrameHelper } from '@grafana/data';
+import { FieldType, LoadingState, LogLevel, CSVReader, DataFrameHelper, Field } from '@grafana/data';
 import { TestDataQuery, StreamingQuery } from './types';
 
 export const defaultQuery: StreamingQuery = {
@@ -118,7 +118,7 @@ export class StreamWorker {
       series.appendRow(row);
     }
 
-    const extra = maxRows - series.length;
+    const extra = maxRows - series.getLength();
     if (extra < 0) {
       series.slice(extra * -1);
     }
@@ -167,18 +167,15 @@ export class SignalWorker extends StreamWorker {
   initBuffer(refId: string): DataFrameHelper {
     const { speed, buffer } = this.query;
     const data = new DataFrameHelper({
-      fields: [
-        { name: 'Time', type: FieldType.time, values: [] as number[] },
-        { name: 'Value', type: FieldType.number, values: [] as number[] },
-      ],
+      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Value', type: FieldType.number }],
       refId,
       name: 'Signal ' + refId,
     });
 
     for (let i = 0; i < this.bands; i++) {
       const suffix = this.bands > 1 ? ` ${i + 1}` : '';
-      data.addField({ name: 'Min' + suffix, type: FieldType.number, values: [] as number[] });
-      data.addField({ name: 'Max' + suffix, type: FieldType.number, values: [] as number[] });
+      data.addField({ name: 'Min' + suffix, type: FieldType.number });
+      data.addField({ name: 'Max' + suffix, type: FieldType.number });
     }
 
     console.log('START', data);
@@ -255,9 +252,10 @@ export class FetchWorker extends StreamWorker {
     return this.reader.read().then(this.processChunk);
   };
 
-  onHeader = (series: DataFrame) => {
-    series.refId = this.refId;
-    this.stream.data = [series];
+  onHeader = (fields: Field[]) => {
+    console.warn('TODO!!!', fields);
+    // series.refId = this.refId;
+    // this.stream.data = [series];
   };
 
   onRow = (row: any[]) => {
@@ -321,10 +319,7 @@ export class LogsWorker extends StreamWorker {
   initBuffer(refId: string): DataFrameHelper {
     const { speed, buffer } = this.query;
     const data = new DataFrameHelper({
-      fields: [
-        { name: 'Time', type: FieldType.time, values: [] as number[] },
-        { name: 'Line', type: FieldType.string, values: [] as string[] },
-      ],
+      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Line', type: FieldType.string }],
       refId,
       name: 'Logs ' + refId,
     });

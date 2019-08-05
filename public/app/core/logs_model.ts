@@ -328,19 +328,19 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       seriesLogLevel = getLogLevelFromKey(series.labels['level']);
     }
 
-    for (let j = 0; j < data.length; j++) {
-      const ts = timeFieldIndex.values[j];
+    for (let j = 0; j < data.getLength(); j++) {
+      const ts = timeFieldIndex.values.get(j);
       const time = dateTime(ts);
       const timeEpochMs = time.valueOf();
       const timeFromNow = time.fromNow();
       const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
       const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
 
-      const message = stringField.values[j];
+      const message = stringField.values.get(j);
 
       let logLevel = LogLevel.unknown;
       if (logLevelField) {
-        logLevel = getLogLevelFromKey(logLevelField.values[j]);
+        logLevel = getLogLevelFromKey(logLevelField.values.get(j));
       } else if (seriesLogLevel) {
         logLevel = seriesLogLevel;
       } else {

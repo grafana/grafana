@@ -6,7 +6,7 @@ import {
   DataSourceInstanceSettings,
   MetricFindValue,
 } from '@grafana/ui';
-import { DataFrame, getDataFrameRowCount } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 
 import { InputQuery, InputOptions } from './types';
 
@@ -66,7 +66,7 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
       let rowCount = 0;
       let info = `${this.data.length} Series:`;
       for (const series of this.data) {
-        const length = getDataFrameRowCount(series);
+        const length = series.getLength();
         info += ` [${series.fields.length} Fields, ${length} Rows]`;
         rowCount += length;
       }
@@ -91,7 +91,7 @@ export function describeDataFrame(data: DataFrame[]): string {
   }
   if (data.length > 1) {
     const count = data.reduce((acc, series) => {
-      return acc + getDataFrameRowCount(series);
+      return acc + series.getLength();
     }, 0);
     return `${data.length} Series, ${count} Rows`;
   }
@@ -99,7 +99,7 @@ export function describeDataFrame(data: DataFrame[]): string {
   if (!series.fields) {
     return 'Missing Fields';
   }
-  const length = getDataFrameRowCount(series);
+  const length = series.getLength();
   return `${series.fields.length} Fields, ${length} Rows`;
 }
 

@@ -5,7 +5,7 @@ import { getTheme } from '../../themes';
 
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
 import { ScopedVars, GrafanaThemeType } from '../../types/index';
-import { DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType, ArrayVector } from '@grafana/data';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 import { number, boolean } from '@storybook/addon-knobs';
 
@@ -34,16 +34,20 @@ export function makeDummyTable(columnCount: number, rowCount: number): DataFrame
   return {
     fields: Array.from(new Array(columnCount), (x, i) => {
       const colId = columnIndexToLeter(i);
-      const values: string[] = [];
+      const values = new ArrayVector();
       for (let i = 0; i < rowCount; i++) {
-        values.push(colId + (i + 1));
+        values.buffer.push(colId + (i + 1));
       }
       return {
         name: colId,
         type: FieldType.string,
         values,
+        config: {},
       };
     }),
+    getLength: () => {
+      return rowCount;
+    },
   };
 }
 

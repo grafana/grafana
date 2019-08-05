@@ -469,7 +469,6 @@ export class ElasticResponse {
         series.addField({
           name: this.targets[0].timeField,
           type: FieldType.time,
-          values: [],
         }).parse = (v: any) => {
           return v[0] || '';
         };
@@ -478,7 +477,6 @@ export class ElasticResponse {
           series.addField({
             name: logMessageField,
             type: FieldType.string,
-            values: [],
           }).parse = (v: any) => {
             return v || '';
           };
@@ -486,7 +484,6 @@ export class ElasticResponse {
           series.addField({
             name: '_source',
             type: FieldType.string,
-            values: [],
           }).parse = (v: any) => {
             return JSON.stringify(v, null, 2);
           };
@@ -496,7 +493,6 @@ export class ElasticResponse {
           series.addField({
             name: 'level',
             type: FieldType.string,
-            values: [],
           }).parse = (v: any) => {
             return v || '';
           };
@@ -510,7 +506,6 @@ export class ElasticResponse {
           series.addField({
             name: propName,
             type: FieldType.string,
-            values: [],
           }).parse = (v: any) => {
             return v || '';
           };

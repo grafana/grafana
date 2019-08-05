@@ -7,7 +7,7 @@ import { FormLabel } from '../FormLabel/FormLabel';
 import { UnitPicker } from '../UnitPicker/UnitPicker';
 
 // Types
-import { toIntegerOrUndefined, SelectableValue, FieldDisplayConfig } from '@grafana/data';
+import { toIntegerOrUndefined, SelectableValue, FieldConfig } from '@grafana/data';
 
 import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
 
@@ -15,8 +15,8 @@ const labelWidth = 6;
 
 export interface Props {
   showMinMax: boolean;
-  value: FieldDisplayConfig;
-  onChange: (value: FieldDisplayConfig, event?: React.SyntheticEvent<HTMLElement>) => void;
+  value: FieldConfig;
+  onChange: (value: FieldConfig, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
 export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax }) => {

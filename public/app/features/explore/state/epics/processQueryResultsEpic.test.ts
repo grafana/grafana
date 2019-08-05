@@ -8,19 +8,19 @@ import {
   updateTimeRangeAction,
   runQueriesAction,
 } from '../actionTypes';
-import { DataFrame, LoadingState } from '@grafana/data';
+import { DataFrame, LoadingState, toDataFrame } from '@grafana/data';
 import { processQueryResultsEpic } from './processQueryResultsEpic';
 import TableModel from 'app/core/table_model';
 
 const testContext = () => {
-  const serieA: DataFrame = {
+  const serieA: DataFrame = toDataFrame({
     fields: [],
     refId: 'A',
-  };
-  const serieB: DataFrame = {
+  });
+  const serieB: DataFrame = toDataFrame({
     fields: [],
     refId: 'B',
-  };
+  });
   const series = [serieA, serieB];
   const latency = 0;
   const loadingState = LoadingState.Done;

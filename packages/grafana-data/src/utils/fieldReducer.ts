@@ -58,17 +58,32 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
     return {};
   }
 
+  if (field.calcs) {
+    // Find the values we need to calculate
+    const missing: string[] = [];
+    for (const s of reducers) {
+      if (!field.calcs.hasOwnProperty(s)) {
+        missing.push(s);
+      }
+    }
+    if (missing.length < 1) {
+      return {
+        ...field.calcs,
+      };
+    }
+  }
+
   const queue = fieldReducers.list(reducers);
 
   // Return early for empty series
   // This lets the concrete implementations assume at least one row
   const data = field.values;
-  if (data.length < 1) {
-    const calcs = {} as FieldCalcs;
+  if (data.getLength() < 1) {
+    const calcs = { ...field.calcs } as FieldCalcs;
     for (const reducer of queue) {
       calcs[reducer.id] = reducer.emptyInputResult !== null ? reducer.emptyInputResult : null;
     }
-    return calcs;
+    return (field.calcs = calcs);
   }
 
   const ignoreNulls = nullValueMode === NullValueMode.Ignore;
@@ -76,7 +91,12 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
 
   // Avoid calculating all the standard stats if possible
   if (queue.length === 1 && queue[0].reduce) {
-    return queue[0].reduce(field, ignoreNulls, nullAsZero);
+    const values = queue[0].reduce(field, ignoreNulls, nullAsZero);
+    field.calcs = {
+      ...field.calcs,
+      ...values,
+    };
+    return values;
   }
 
   // For now everything can use the standard stats
@@ -89,6 +109,10 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
       };
     }
   }
+  field.calcs = {
+    ...field.calcs,
+    ...values,
+  };
   return values;
 }
 
@@ -225,8 +249,8 @@ function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean
   } as FieldCalcs;
   const data = field.values;
 
-  for (let i = 0; i < data.length; i++) {
-    let currentValue = data[i];
+  for (let i = 0; i < data.getLength(); i++) {
+    let currentValue = data.get(i);
     if (i === 0) {
       calcs.first = currentValue;
     }
@@ -261,7 +285,7 @@ function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean
           if (calcs.lastNotNull! > currentValue) {
             // counter reset
             calcs.previousDeltaUp = false;
-            if (i === data.length - 1) {
+            if (i === data.getLength() - 1) {
               // reset on last
               calcs.delta += currentValue;
             }
@@ -328,13 +352,13 @@ function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean
 }
 
 function calculateFirst(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  return { first: field.values[0] };
+  return { first: field.values.get(0) };
 }
 
 function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const data = field.values;
-  for (let idx = 0; idx < data.length; idx++) {
-    const v = data[idx];
+  for (let idx = 0; idx < data.getLength(); idx++) {
+    const v = data.get(idx);
     if (v != null) {
       return { firstNotNull: v };
     }
@@ -344,14 +368,14 @@ function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: b
 
 function calculateLast(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const data = field.values;
-  return { last: data[data.length - 1] };
+  return { last: data.get(data.getLength() - 1) };
 }
 
 function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const data = field.values;
-  let idx = data.length - 1;
+  let idx = data.getLength() - 1;
   while (idx >= 0) {
-    const v = data[idx--];
+    const v = data.get(idx--);
     if (v != null) {
       return { lastNotNull: v };
     }
@@ -364,8 +388,8 @@ function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: bo
   let count = 0;
   let first = true;
   let last: any = null;
-  for (let i = 0; i < data.length; i++) {
-    let currentValue = data[i];
+  for (let i = 0; i < data.getLength(); i++) {
+    let currentValue = data.get(i);
     if (currentValue === null) {
       if (ignoreNulls) {
         continue;
@@ -387,8 +411,8 @@ function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: bo
 function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const data = field.values;
   const distinct = new Set<any>();
-  for (let i = 0; i < data.length; i++) {
-    let currentValue = data[i];
+  for (let i = 0; i < data.getLength(); i++) {
+    let currentValue = data.get(i);
     if (currentValue === null) {
       if (ignoreNulls) {
         continue;

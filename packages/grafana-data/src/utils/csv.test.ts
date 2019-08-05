@@ -3,6 +3,7 @@ import { getDataFrameRow } from './dataFrameHelper';
 
 // Test with local CSV files
 import fs from 'fs';
+import { dataFrameToJSON } from './processDataFrame';
 
 describe('read csv', () => {
   it('should get X and y', () => {
@@ -14,14 +15,14 @@ describe('read csv', () => {
     expect(series.fields.length).toBe(4);
 
     const rows = 4;
-    expect(series.length).toBe(rows);
+    expect(series.getLength()).toBe(rows);
 
     // Make sure everythign it padded properly
     for (const field of series.fields) {
-      expect(field.values.length).toBe(rows);
+      expect(field.values.getLength()).toBe(rows);
     }
 
-    expect(series.toDataFrame()).toMatchSnapshot();
+    expect(dataFrameToJSON(series)).toMatchSnapshot();
   });
 
   it('should read single string OK', () => {
@@ -31,7 +32,7 @@ describe('read csv', () => {
 
     const series = data[0];
     expect(series.fields.length).toBe(3);
-    expect(series.length).toBe(0);
+    expect(series.getLength()).toBe(0);
 
     expect(series.fields[0].name).toEqual('a');
     expect(series.fields[1].name).toEqual('b');
@@ -45,7 +46,7 @@ describe('read csv', () => {
     const csv = fs.readFileSync(path, 'utf8');
     const data = readCSV(csv);
     expect(data.length).toBe(1);
-    expect(data[0].toDataFrame()).toMatchSnapshot();
+    expect(dataFrameToJSON(data[0])).toMatchSnapshot();
   });
 
   it('should read csv with headers', () => {
@@ -55,7 +56,7 @@ describe('read csv', () => {
     const csv = fs.readFileSync(path, 'utf8');
     const data = readCSV(csv);
     expect(data.length).toBe(1);
-    expect(data[0].toDataFrame()).toMatchSnapshot();
+    expect(dataFrameToJSON(data[0])).toMatchSnapshot();
   });
 });
 

@@ -6,8 +6,9 @@ import {
   guessFieldTypes,
   guessFieldTypeFromValue,
 } from './processDataFrame';
-import { FieldType, TimeSeries, DataFrame, TableData } from '../types/index';
+import { FieldType, TimeSeries, TableData, DataFrameJSON } from '../types/index';
 import { dateTime } from './moment_wrapper';
+import { DataFrameHelper } from './dataFrameHelper';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
@@ -20,12 +21,12 @@ describe('toDataFrame', () => {
 
     const v0 = series.fields[0].values;
     const v1 = series.fields[1].values;
-    expect(v0.length).toEqual(2);
-    expect(v1.length).toEqual(2);
-    expect(v0[0]).toEqual(100);
-    expect(v0[1]).toEqual(200);
-    expect(v1[0]).toEqual(1);
-    expect(v1[1]).toEqual(2);
+    expect(v0.getLength()).toEqual(2);
+    expect(v1.getLength()).toEqual(2);
+    expect(v0.get(0)).toEqual(100);
+    expect(v0.get(1)).toEqual(200);
+    expect(v1.get(0)).toEqual(1);
+    expect(v1.get(1)).toEqual(2);
 
     // Should fill a default name if target is empty
     const input2 = {
@@ -68,18 +69,18 @@ describe('toDataFrame', () => {
   });
 
   it('Guess Colum Types from series', () => {
-    const series: DataFrame = ({
+    const series = new DataFrameHelper({
       fields: [
-        { name: 'A (number)', values: [123, null] },
-        { name: 'B (strings)', values: [null, 'Hello'] },
-        { name: 'C (nulls)', values: [null, null] },
-        { name: 'Time', values: ['2000', 1967] },
+        { name: 'A (number)', buffer: [123, null] },
+        { name: 'B (strings)', buffer: [null, 'Hello'] },
+        { name: 'C (nulls)', buffer: [null, null] },
+        { name: 'Time', buffer: ['2000', 1967] },
       ],
-    } as unknown) as DataFrame; // missing schemas!
+    });
     const norm = guessFieldTypes(series);
     expect(norm.fields[0].type).toBe(FieldType.number);
     expect(norm.fields[1].type).toBe(FieldType.string);
-    expect(norm.fields[2].type).toBeUndefined();
+    expect(norm.fields[2].type).toBe(FieldType.other);
     expect(norm.fields[3].type).toBe(FieldType.time); // based on name
   });
 });
@@ -107,7 +108,7 @@ describe('SerisData backwards compatibility', () => {
     const series = toDataFrame(table);
     expect(isTableData(table)).toBeTruthy();
     expect(isDataFrame(series)).toBeTruthy();
-    expect(series.fields[0].display!.unit).toEqual('ms');
+    expect(series.fields[0].config.unit).toEqual('ms');
 
     const roundtrip = toLegacyResponseData(series) as TimeSeries;
     expect(isTableData(roundtrip)).toBeTruthy();
@@ -115,17 +116,18 @@ describe('SerisData backwards compatibility', () => {
   });
 
   it('converts DataFrame to TableData to series and back again', () => {
-    const series: DataFrame = {
+    const json: DataFrameJSON = {
       refId: 'Z',
       meta: {
         somethign: 8,
       },
       fields: [
-        { name: 'T', type: FieldType.time, values: [1, 2, 3] },
-        { name: 'N', type: FieldType.number, display: { filterable: true }, values: [100, 200, 300] },
-        { name: 'S', type: FieldType.string, display: { filterable: true }, values: ['1', '2', '3'] },
+        { name: 'T', type: FieldType.time, buffer: [1, 2, 3] },
+        { name: 'N', type: FieldType.number, config: { filterable: true }, buffer: [100, 200, 300] },
+        { name: 'S', type: FieldType.string, config: { filterable: true }, buffer: ['1', '2', '3'] },
       ],
     };
+    const series = toDataFrame(json);
     const table = toLegacyResponseData(series) as TableData;
     expect(table.refId).toBe(series.refId);
     expect(table.meta).toEqual(series.meta);

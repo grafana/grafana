@@ -1,54 +1,41 @@
 import { Vector } from '../types/dataFrame';
 
-interface ConstantOptions<T = any> {
-  length: number;
-  value: T;
+export class ArrayVector<T = any> implements Vector<T> {
+  buffer: T[];
+
+  constructor(buffer?: T[]) {
+    this.buffer = buffer ? buffer : [];
+  }
+
+  getLength() {
+    return this.buffer.length;
+  }
+
+  get(index: number): T {
+    return this.buffer[index];
+  }
 }
 
-const constantHandler = {
-  get: (obj: ConstantOptions, prop: any) => {
-    if ('length' === prop) {
-      return obj.length;
-    }
-    return obj.value;
-  },
-};
+export class ConstantVector<T = any> implements Vector<T> {
+  constructor(private value: T, private length: number) {}
 
-export function createConstantVector<T>(options: ConstantOptions<T>): Vector<T> {
-  const proxy = new Proxy(options, constantHandler);
-  const v = (proxy as unknown) as Vector<T>;
-  v.push = (...items: T[]) => v.length;
-  return v;
+  getLength() {
+    return this.length;
+  }
+
+  get(index: number): T {
+    return this.value;
+  }
 }
 
-interface ScaleOptions {
-  source: Vector<number>;
-  scale: number;
-}
+export class ScaledVector implements Vector<number> {
+  constructor(private source: Vector<number>, private scale: number) {}
 
-// function asNumber(prop: any): number {
-//   if (isNumber(prop)) {
-//     return prop as number;
-//   }
-//   if (isString(prop)) {
-//     return parseInt(prop, 10);
-//   }
-//   return NaN;
-// }
+  getLength(): number {
+    return this.source.getLength();
+  }
 
-const scaleHandler = {
-  get: (obj: ScaleOptions, prop: any) => {
-    if ('length' === prop) {
-      return obj.source.length;
-    }
-    const v = obj.source[prop];
-    return v * obj.scale;
-  },
-};
-
-export function createScaledVector(options: ScaleOptions): Vector<number> {
-  const proxy = new Proxy(options, scaleHandler);
-  const v = (proxy as unknown) as Vector<number>;
-  v.push = (...items: number[]) => v.length;
-  return v;
+  get(index: number): number {
+    return this.source.get(index) * this.scale;
+  }
 }
