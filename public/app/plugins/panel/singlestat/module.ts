@@ -182,7 +182,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     if (tableData.columns.length === 1) {
       this.panel.tableColumn = tableData.columns[0].text;
     } else {
-      this.panel.tableColumn = _.find(tableData.columns!, col => {
+      this.panel.tableColumn = _.find(tableData.columns, col => {
         return col.type !== 'time';
       })!.text;
     }

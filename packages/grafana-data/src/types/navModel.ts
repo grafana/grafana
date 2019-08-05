@@ -9,7 +9,7 @@ export interface NavModelItem {
   hideFromTabs?: boolean;
   hideFromMenu?: boolean;
   divider?: boolean;
-  children?: NavModelItem[] | undefined;
+  children?: NavModelItem[];
   breadcrumbs?: NavModelBreadcrumb[];
   target?: string;
   parentItem?: NavModelItem;
