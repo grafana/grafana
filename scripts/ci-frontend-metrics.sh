@@ -3,16 +3,16 @@
 echo -e "Collecting code stats (typescript errors & more)"
 
 
-ERROR_COUNT_LIMIT=0
+ERROR_COUNT_LIMIT=1566
 DIRECTIVES_LIMIT=172
 CONTROLLERS_LIMIT=139
 
-ERROR_COUNT="$(./node_modules/.bin/tsc --project tsconfig.json --noEmit --noImplicitAny true | grep -oP 'Found \K(\d+)')"
+ERROR_COUNT="$(./node_modules/.bin/tsc --project tsconfig.json --noEmit --strict true | grep -oP 'Found \K(\d+)')"
 DIRECTIVES="$(grep -r -o  directive public/app/**/*  | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/**/*  | wc -l)"
 
 if [ "$ERROR_COUNT" -gt $ERROR_COUNT_LIMIT ]; then
-  echo -e "Typescript errors $ERROR_COUNT exceeded $ERROR_COUNT_LIMIT so failing build"
+  echo -e "Typescript strict errors $ERROR_COUNT exceeded $ERROR_COUNT_LIMIT so failing build"
 	exit 1
 fi
 
@@ -32,7 +32,7 @@ echo -e "Controllers: $CONTROLLERS"
 
 if [ "${CIRCLE_BRANCH}" == "master" ]; then
   ./scripts/ci-metrics-publisher.sh \
-    grafana.ci-code.noImplicitAny="$ERROR_COUNT" \
+    grafana.ci-code.strictErrors="$ERROR_COUNT" \
     grafana.ci-code.directives="$DIRECTIVES" \
     grafana.ci-code.controllers="$CONTROLLERS"
 fi
