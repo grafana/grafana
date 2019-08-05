@@ -1,4 +1,6 @@
-const fs = require('fs');
+import fs from 'fs';
+import path from 'path';
+
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const supportedExtensions = ['css', 'scss'];
@@ -91,6 +93,7 @@ export const getStyleLoaders = () => {
     },
   ];
 
+  const styleDir = path.resolve(process.cwd(), 'src', 'styles') + path.sep;
   const rules = [
     {
       test: /(dark|light)\.css$/,
@@ -103,12 +106,12 @@ export const getStyleLoaders = () => {
     {
       test: /\.css$/,
       use: ['style-loader', ...cssLoaders, 'sass-loader'],
-      exclude: [`${process.cwd()}/src/styles/light.css`, `${process.cwd()}/src/styles/dark.css`],
+      exclude: [`${styleDir}light.css`, `${styleDir}dark.css`],
     },
     {
       test: /\.scss$/,
       use: ['style-loader', ...cssLoaders, 'sass-loader'],
-      exclude: [`${process.cwd()}/src/styles/light.scss`, `${process.cwd()}/src/styles/dark.scss`],
+      exclude: [`${styleDir}light.scss`, `${styleDir}dark.scss`],
     },
   ];
 

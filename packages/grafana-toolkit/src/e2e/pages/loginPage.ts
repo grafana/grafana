@@ -1,4 +1,4 @@
-import { TestPage } from '../pages';
+import { TestPage } from '../pageInfo';
 import {
   Selector,
   InputPageObject,

@@ -42,7 +42,7 @@ const getModuleFiles = () => {
 
 const getManualChunk = (id: string) => {
   if (id.endsWith('module.ts') || id.endsWith('module.tsx')) {
-    const idx = id.indexOf(path.sep + 'src' + path.sep);
+    const idx = id.lastIndexOf(path.sep + 'src' + path.sep);
     if (idx > 0) {
       const name = id.substring(idx + 5, id.lastIndexOf('.'));
 

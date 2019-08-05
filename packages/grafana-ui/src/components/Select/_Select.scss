@@ -20,9 +20,6 @@ $select-input-bg-disabled: $input-bg-disabled;
   border: 1px solid $input-border-color;
   color: $input-color;
   cursor: default;
-  display: table;
-  border-spacing: 0;
-  border-collapse: separate;
   height: $select-input-height;
   outline: none;
   overflow: hidden;
@@ -119,8 +116,8 @@ $select-input-bg-disabled: $input-bg-disabled;
 }
 
 .gf-form-select-box__value-container {
-  display: table-cell;
-  padding: 6px 10px;
+  display: inline-block;
+  padding: 6px 16px 6px 10px;
   vertical-align: middle;
   > div {
     display: inline-block;
@@ -129,11 +126,11 @@ $select-input-bg-disabled: $input-bg-disabled;
 }
 
 .gf-form-select-box__indicators {
-  display: table-cell;
-  vertical-align: middle;
+  position: absolute;
+  height: 100%;
+  right: 8px;
+  display: inline-block;
   text-align: right;
-  padding-right: 10px;
-  width: 20px;
 }
 
 .gf-form-select-box__select-arrow {
@@ -141,13 +138,13 @@ $select-input-bg-disabled: $input-bg-disabled;
   border-style: solid;
   border-width: 4px 4px 2.5px;
   display: inline-block;
-  height: 0;
-  width: 0;
-  position: relative;
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  margin-top: -2px;
 
   &.gf-form-select-box__select-arrow--reversed {
     border-color: transparent transparent $input-color-select-arrow;
-    top: -2px;
     border-width: 0 4px 4px;
   }
 }

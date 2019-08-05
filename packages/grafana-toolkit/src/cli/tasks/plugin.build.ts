@@ -1,8 +1,9 @@
 import { Task, TaskRunner } from './task';
+import fs from 'fs';
+
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
-import fs = require('fs');
 import glob = require('glob');
 import { Linter, Configuration, RuleFailure } from 'tslint';
 import * as prettier from 'prettier';
