@@ -35,12 +35,11 @@ func (s *SocialGitlab) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *SocialGitlab) IsGroupMember(client *http.Client) bool {
+func (s *SocialGitlab) IsGroupMember(groups []string) bool {
 	if len(s.allowedGroups) == 0 {
 		return true
 	}
 
-	groups := s.GetGroups(client)
 	for _, allowedGroup := range s.allowedGroups {
 		for _, group := range groups {
 			if group == allowedGroup {
@@ -128,14 +127,17 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("User %s is inactive", data.Username)
 	}
 
+	groups := s.GetGroups(client)
+
 	userInfo := &BasicUserInfo{
-		Id:    fmt.Sprintf("%d", data.Id),
-		Name:  data.Name,
-		Login: data.Username,
-		Email: data.Email,
+		Id:     fmt.Sprintf("%d", data.Id),
+		Name:   data.Name,
+		Login:  data.Username,
+		Email:  data.Email,
+		Groups: groups,
 	}
 
-	if !s.IsGroupMember(client) {
+	if !s.IsGroupMember(groups) {
 		return nil, ErrMissingGroupMembership
 	}
 
