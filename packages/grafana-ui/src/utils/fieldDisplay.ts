@@ -4,7 +4,7 @@ import toString from 'lodash/toString';
 import { DisplayValue, GrafanaTheme, InterpolateFunction, ScopedVars, GraphSeriesValue } from '../types/index';
 import { getDisplayProcessor } from './displayValue';
 import { getFlotPairs } from './flotPairs';
-import { ReducerID, reduceField, FieldType, NullValueMode, DataFrame, FieldConfig } from '@grafana/data';
+import { ReducerID, reduceField, FieldType, DataFrame, FieldConfig } from '@grafana/data';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
@@ -156,7 +156,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           const results = reduceField({
             field,
             reducers: calcs, // The stats to calculate
-            nullValueMode: NullValueMode.Null,
           });
 
           // Single sparkline for a field
@@ -166,7 +165,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               : getFlotPairs({
                   xField: series.fields[timeColumn],
                   yField: series.fields[i],
-                  nullValueMode: NullValueMode.Null,
                 });
 
           for (const calc of calcs) {

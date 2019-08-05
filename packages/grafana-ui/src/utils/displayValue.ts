@@ -67,10 +67,9 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
       }
 
       if (!text) {
-        if(field && field.noValue) {
+        if (field && field.noValue) {
           text = field.noValue;
-        }
-        else {
+        } else {
           text = ''; // No data?
         }
       }
