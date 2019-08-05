@@ -60,7 +60,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	if code == "" {
 		state := GenStateString()
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		hs.writeCookie(ctx.Resp, OauthStateCookieName, hashedState, 60, http.SameSiteLaxMode)
+		hs.writeCookie(ctx.Resp, OauthStateCookieName, hashedState, 60, hs.Cfg.CookieSameSite)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -73,7 +73,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	// delete cookie
 	ctx.Resp.Header().Del("Set-Cookie")
-	hs.deleteCookie(ctx.Resp, OauthStateCookieName, http.SameSiteLaxMode)
+	hs.deleteCookie(ctx.Resp, OauthStateCookieName, hs.Cfg.CookieSameSite)
 
 	if cookieState == "" {
 		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
@@ -218,15 +218,18 @@ func (hs *HTTPServer) deleteCookie(w http.ResponseWriter, name string, sameSite 
 }
 
 func (hs *HTTPServer) writeCookie(w http.ResponseWriter, name string, value string, maxAge int, sameSite http.SameSite) {
-	http.SetCookie(w, &http.Cookie{
+	cookie := http.Cookie{
 		Name:     name,
 		MaxAge:   maxAge,
 		Value:    value,
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
 		Secure:   hs.Cfg.CookieSecure,
-		SameSite: sameSite,
-	})
+	}
+	if sameSite != http.SameSiteDefaultMode {
+		cookie.SameSite = sameSite
+	}
+	http.SetCookie(w, &cookie)
 }
 
 func hashStatecode(code, seed string) string {
