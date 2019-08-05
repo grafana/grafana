@@ -24,6 +24,13 @@ describe('templateSrv', () => {
       initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
+    it('scoped vars should support objects', () => {
+      const target = _templateSrv.replace('${series.name} ${series.labels}', {
+        series: { value: { name: 'Server1', labels: 'PROD' }, text: 'asd' },
+      });
+      expect(target).toBe('Server1 PROD');
+    });
+
     it('should replace $test with scoped value', () => {
       const target = _templateSrv.replace('this.$test.filters', {
         test: { value: 'mupp', text: 'asd' },

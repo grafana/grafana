@@ -225,21 +225,35 @@ export class TemplateSrv {
     return values;
   }
 
+  getVariableValue(variableName: string, fieldName: string | undefined, scopedVars: ScopedVars) {
+    const scopedVar = scopedVars[variableName];
+    if (!scopedVar) {
+      return null;
+    }
+
+    if (fieldName) {
+      return scopedVar.value[fieldName];
+    }
+
+    return scopedVar.value;
+  }
+
   replace(target: string, scopedVars?: ScopedVars, format?: string | Function): any {
     if (!target) {
       return target;
     }
 
-    let variable, systemValue, value, fmt;
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fmt3) => {
-      variable = this.index[var1 || var2 || var3];
-      fmt = fmt2 || fmt3 || format;
+    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldName, fmt3) => {
+      const variableName = var1 || var2 || var3;
+      const variable = this.index[variableName];
+      const fmt = fmt2 || fmt3 || format;
+
       if (scopedVars) {
-        value = scopedVars[var1 || var2 || var3];
-        if (value) {
-          return this.formatValue(value.value, fmt, variable);
+        const value = this.getVariableValue(variableName, fieldName, scopedVars);
+        if (value !== null && value !== undefined) {
+          return this.formatValue(value, fmt, variable);
         }
       }
 
@@ -247,12 +261,12 @@ export class TemplateSrv {
         return match;
       }
 
-      systemValue = this.grafanaVariables[variable.current.value];
+      const systemValue = this.grafanaVariables[variable.current.value];
       if (systemValue) {
         return this.formatValue(systemValue, fmt, variable);
       }
 
-      value = variable.current.value;
+      let value = variable.current.value;
       if (this.isAllValue(value)) {
         value = this.getAllValue(variable);
         // skip formatting of custom all values
