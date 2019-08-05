@@ -164,9 +164,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             timeColumn < 0
               ? undefined
               : getFlotPairs({
-                  series,
-                  xIndex: timeColumn,
-                  yIndex: i,
+                  xField: series.fields[timeColumn],
+                  yField: series.fields[i],
                   nullValueMode: NullValueMode.Null,
                 });
 

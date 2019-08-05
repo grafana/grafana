@@ -8,11 +8,6 @@ import { FieldCalcs, reduceField } from './fieldReducer';
 
 interface FieldWithCache<T = any> extends Field<T> {
   /**
-   * The field index within the frame
-   */
-  index: number;
-
-  /**
    * Cache of reduced fields
    */
   stats?: FieldCalcs;
@@ -20,7 +15,7 @@ interface FieldWithCache<T = any> extends Field<T> {
   /**
    * Convert text to the field value
    */
-  parse?: (value: string) => T;
+  parse?: (value: any) => T;
 
   /**
    * TODO: based on config, save the display processor
@@ -177,7 +172,6 @@ export class DataFrameHelper implements DataFrame {
 
   addField(f: Field): FieldWithCache {
     const field = {
-      index: this.fields.length,
       ...f,
       reduce: (
         reducers: string[], // The stats to calculate
@@ -190,7 +184,7 @@ export class DataFrameHelper implements DataFrame {
 
     // And a name
     if (!field.name) {
-      field.name = `Column ${field.index + 1}`;
+      field.name = `Column ${this.fields.length + 1}`;
     }
     if (this.fieldByName[field.name]) {
       console.warn('Duplicate field names in DataFrame: ', field.name);
@@ -246,37 +240,27 @@ export class DataFrameHelper implements DataFrame {
     for (let i = 0; i < this.fields.length; i++) {
       const f = this.fields[i];
       let v = row[i];
-      if (isString(v)) {
-        if (!f.parse) {
-          f.parse = makeFieldParser(v, f);
-        }
-        v = f.parse(v);
+      if (!f.parse) {
+        f.parse = makeFieldParser(v, f);
       }
+      v = f.parse(v);
       f.values.push(v); // may be undefined
     }
     this.longestFieldLength++;
   }
 
   /**
-   * This will add the row
+   * Add any values that match the field names
    */
-  appendObject(row: { [key: string]: any }) {
-    for (const key of Object.keys(row)) {
-      const v = row[key];
-      let f = this.fieldByName[key];
-      if (!f) {
-        f = this.addFieldFor(v, key);
+  appendRowFrom(obj: { [key: string]: any }) {
+    for (const f of this.fields) {
+      const v = obj[f.name];
+      if (!f.parse) {
+        f.parse = makeFieldParser(v, f);
       }
-      f.values.push(v);
+      f.values.push(f.parse(v)); // may be undefined
     }
     this.longestFieldLength++;
-
-    // Make sure everything has the same length
-    for (let i = 0; i < this.fields.length; i++) {
-      if (this.fields[i].values.length !== this.longestFieldLength) {
-        this.fields[i].values.push(undefined);
-      } // may be undefined
-    }
   }
 
   getFields(type?: FieldType): FieldWithCache[] {

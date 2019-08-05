@@ -231,7 +231,7 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
 
   for (const f of fields) {
     const display = f.display;
-    if (isName || (display && display.hasOwnProperty(key))) {
+    if (isName || isType || (display && display.hasOwnProperty(key))) {
       let line = '#' + key + '#';
       for (let i = 0; i < fields.length; i++) {
         if (i > 0) {

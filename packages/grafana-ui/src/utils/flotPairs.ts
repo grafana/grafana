@@ -1,17 +1,16 @@
 // Types
 import { GraphSeriesValue } from '../types/index';
-import { NullValueMode, DataFrame } from '@grafana/data';
+import { NullValueMode, Field } from '@grafana/data';
 
 export interface FlotPairsOptions {
-  series: DataFrame;
-  xIndex: number;
-  yIndex: number;
+  xField: Field;
+  yField: Field;
   nullValueMode?: NullValueMode;
 }
 
-export function getFlotPairs({ series, xIndex, yIndex, nullValueMode }: FlotPairsOptions): GraphSeriesValue[][] {
-  const vX = series.fields[xIndex].values;
-  const vY = series.fields[yIndex].values;
+export function getFlotPairs({ xField, yField, nullValueMode }: FlotPairsOptions): GraphSeriesValue[][] {
+  const vX = xField.values;
+  const vY = yField.values;
   const length = vX.length;
   if (vY.length !== length) {
     throw new Error('Unexpected field length');

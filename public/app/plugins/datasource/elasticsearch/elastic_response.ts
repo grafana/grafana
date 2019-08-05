@@ -3,7 +3,7 @@ import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
 import { DataFrame, toDataFrame, FieldType, DataFrameHelper } from '@grafana/data';
-import { DataQueryResponse, KeyValue } from '@grafana/ui';
+import { DataQueryResponse } from '@grafana/ui';
 import { ElasticsearchAggregation } from './types';
 
 export class ElasticResponse {
@@ -464,38 +464,42 @@ export class ElasticResponse {
 
       if (docs.length > 0) {
         propNames = propNames.sort();
+        const series = new DataFrameHelper({ fields: [] });
 
-        const data = new DataFrameHelper({
-          fields: [
-            {
-              name: this.targets[0].timeField,
-              type: FieldType.time,
-              values: [],
-            },
-          ],
-        });
-        const fieldTime = data.fields[0];
+        series.addField({
+          name: this.targets[0].timeField,
+          type: FieldType.time,
+          values: [],
+        }).parse = (v: any) => {
+          return v[0] || '';
+        };
 
         if (logMessageField) {
-          data.addField({
+          series.addField({
             name: logMessageField,
             type: FieldType.string,
             values: [],
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         } else {
-          data.addField({
+          series.addField({
             name: '_source',
             type: FieldType.string,
             values: [],
-          });
+          }).parse = (v: any) => {
+            return JSON.stringify(v, null, 2);
+          };
         }
 
         if (logLevelField) {
-          data.addField({
+          series.addField({
             name: 'level',
             type: FieldType.string,
             values: [],
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         }
 
         for (const propName of propNames) {
@@ -503,35 +507,21 @@ export class ElasticResponse {
             continue;
           }
 
-          data.addField({
+          series.addField({
             name: propName,
             type: FieldType.string,
             values: [],
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         }
 
+        // Add a row for each document
         for (const doc of docs) {
-          const row: KeyValue = {};
-          row[fieldTime.name] = doc[fieldTime.name];
-
-          if (logMessageField) {
-            row[logMessageField] = doc[logMessageField] || '';
-          } else {
-            row[logMessageField] = JSON.stringify(doc._source, null, 2);
-          }
-
-          if (logLevelField) {
-            row[logLevelField] = doc[logLevelField] || '';
-          }
-
-          for (const propName of propNames) {
-            row[logLevelField] = doc.hasOwnProperty(propName) ? doc[propName] : null;
-          }
-
-          data.appendObject(row);
+          series.appendRowFrom(doc);
         }
 
-        dataFrame.push(data);
+        dataFrame.push(series);
       }
 
       if (response.aggregations) {

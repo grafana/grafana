@@ -7,7 +7,7 @@ import {
   DisplayValue,
   PanelData,
 } from '@grafana/ui';
-import { NullValueMode, reduceField, FieldType, DataFrameHelper } from '@grafana/data';
+import { NullValueMode, FieldType, DataFrameHelper } from '@grafana/data';
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
@@ -35,17 +35,13 @@ export const getGraphSeriesModel = (
     for (const field of data.getFields(FieldType.number)) {
       // Use external calculator just to make sure it works :)
       const points = getFlotPairs({
-        series,
-        xIndex: timeColumn.index,
-        yIndex: field.index,
+        xField: timeColumn,
+        yField: field,
         nullValueMode: NullValueMode.Null,
       });
 
       if (points.length > 0) {
-        const seriesStats = reduceField({
-          field: series.fields[field.index],
-          reducers: legendOptions.stats,
-        });
+        const seriesStats = field.reduce(legendOptions.stats);
         let statsDisplayValues: DisplayValue[];
 
         if (legendOptions.stats) {
