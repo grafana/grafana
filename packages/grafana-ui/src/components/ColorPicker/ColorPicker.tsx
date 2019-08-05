@@ -1,5 +1,5 @@
 import React, { Component, createRef } from 'react';
-import { omit } from 'lodash';
+import omit from 'lodash/omit';
 import { PopperController } from '../Tooltip/PopperController';
 import { Popper } from '../Tooltip/Popper';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';

@@ -163,24 +163,11 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		return true
 	}
 
-	loginQuery := models.GetUserByLoginQuery{LoginOrEmail: username}
-	if err := bus.Dispatch(&loginQuery); err != nil {
-		ctx.Logger.Debug(
-			"Failed to look up the username",
-			"username", username,
-		)
-		ctx.JsonApiErr(401, errStringInvalidUsernamePassword, err)
-
-		return true
-	}
-
-	user := loginQuery.Result
-	loginUserQuery := models.LoginUserQuery{
+	authQuery := models.LoginUserQuery{
 		Username: username,
 		Password: password,
-		User:     user,
 	}
-	if err := bus.Dispatch(&loginUserQuery); err != nil {
+	if err := bus.Dispatch(&authQuery); err != nil {
 		ctx.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
@@ -189,6 +176,8 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		ctx.JsonApiErr(401, errStringInvalidUsernamePassword, err)
 		return true
 	}
+
+	user := authQuery.User
 
 	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {

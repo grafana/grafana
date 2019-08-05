@@ -189,8 +189,11 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:ci-report')
     .description('Build a report for this whole process')
+    .option('--upload', 'upload packages also')
     .action(async cmd => {
-      await execTask(ciPluginReportTask)({});
+      await execTask(ciPluginReportTask)({
+        upload: cmd.upload,
+      });
     });
 
   program.on('command:*', () => {
