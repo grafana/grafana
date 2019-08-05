@@ -28,24 +28,45 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 	var num int
 
 	h := make(map[string][]string)
-	h["To"] = msg.To
 	h["From"] = []string{msg.From}
 	h["Subject"] = []string{msg.Subject}
 
-	m := gomail.NewMessage()
-	m.SetHeaders(h)
-	for _, file := range msg.EmbededFiles {
-		m.Embed(file)
+	if ns.Cfg.Smtp.SendSingleEmailToAllRecipients {
+		h["To"] = msg.To
+		m := gomail.NewMessage()
+		m.SetHeaders(h)
+		for _, file := range msg.EmbededFiles {
+			m.Embed(file)
+		}
+
+		m.SetBody("text/html", msg.Body)
+
+		e := dialer.DialAndSend(m)
+		if e != nil {
+			err = errutil.Wrapf(e, "Failed to send notification to email address: %s", strings.Join(msg.To, ";"))
+		}
+
+		num++
+	} else {
+		for _, address := range msg.To {
+			m := gomail.NewMessage()
+			m.SetHeader("To", address)
+			m.SetHeaders(h)
+			for _, file := range msg.EmbededFiles {
+				m.Embed(file)
+			}
+
+			m.SetBody("text/html", msg.Body)
+
+			e := dialer.DialAndSend(m)
+			if e != nil {
+				err = errutil.Wrapf(e, "Failed to send notification to email address: %s", address)
+				continue
+			}
+
+			num++
+		}
 	}
-
-	m.SetBody("text/html", msg.Body)
-
-	e := dialer.DialAndSend(m)
-	if e != nil {
-		err = errutil.Wrapf(e, "Failed to send notification to email address: %s", strings.Join(msg.To, ";"))
-	}
-
-	num++
 
 	return num, err
 }
