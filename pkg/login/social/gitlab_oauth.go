@@ -54,8 +54,8 @@ func (s *SocialGitlab) IsGroupMember(groups []string) bool {
 func (s *SocialGitlab) GetGroups(client *http.Client) []string {
 	groups := make([]string, 0)
 
-	for groupsPage, url := s.GetGroupsPage(client, s.apiUrl+"/groups"); groupsPage != nil; groupsPage, url = s.GetGroupsPage(client, url) {
-		groups = append(groups, groupsPage...)
+	for page, url := s.GetGroupsPage(client, s.apiUrl+"/groups"); page != nil; page, url = s.GetGroupsPage(client, url) {
+		groups = append(groups, page...)
 	}
 
 	return groups
