@@ -25,10 +25,17 @@ describe('templateSrv', () => {
     });
 
     it('scoped vars should support objects', () => {
-      const target = _templateSrv.replace('${series.name} ${series.labels}', {
-        series: { value: { name: 'Server1', labels: 'PROD' }, text: 'asd' },
+      const target = _templateSrv.replace('${series.name} ${series.nested.field}', {
+        series: { name: 'Server1', nested: { field: 'nested' } },
       });
-      expect(target).toBe('Server1 PROD');
+      expect(target).toBe('Server1 nested');
+    });
+
+    it('scoped vars should support arrays of objects', () => {
+      const target = _templateSrv.replace('${series.rows[0].name} ${series.rows[1].name}', {
+        series: { rows: [{ name: 'first' }, { name: 'second' }] },
+      });
+      expect(target).toBe('first second');
     });
 
     it('should replace $test with scoped value', () => {

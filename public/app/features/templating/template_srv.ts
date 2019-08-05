@@ -232,7 +232,7 @@ export class TemplateSrv {
     }
 
     if (fieldName) {
-      return scopedVar.value[fieldName];
+      return _.property(fieldName)(scopedVar);
     }
 
     return scopedVar.value;
