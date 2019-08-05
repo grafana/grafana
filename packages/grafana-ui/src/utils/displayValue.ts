@@ -14,9 +14,6 @@ export type DisplayProcessor = (value: any) => DisplayValue;
 export interface DisplayValueOptions {
   field?: FieldConfig;
 
-  // Alternative to empty string
-  noValue?: string;
-
   // Context
   isUtc?: boolean;
   theme?: GrafanaTheme; // Will pick 'dark' if not defined
@@ -70,7 +67,12 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
       }
 
       if (!text) {
-        text = options.noValue ? options.noValue : '';
+        if(field && field.noValue) {
+          text = field.noValue;
+        }
+        else {
+          text = ''; // No data?
+        }
       }
       return { text, numeric, color };
     };

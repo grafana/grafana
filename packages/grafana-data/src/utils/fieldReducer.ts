@@ -45,14 +45,13 @@ export interface FieldReducerInfo extends RegistryItem {
 interface ReduceFieldOptions {
   field: Field;
   reducers: string[]; // The stats to calculate
-  nullValueMode?: NullValueMode;
 }
 
 /**
  * @returns an object with a key for each selected stat
  */
 export function reduceField(options: ReduceFieldOptions): FieldCalcs {
-  const { field, reducers, nullValueMode } = options;
+  const { field, reducers } = options;
 
   if (!field || !reducers || reducers.length < 1) {
     return {};
@@ -86,6 +85,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
     return (field.calcs = calcs);
   }
 
+  const {nullValueMode} = field.config;
   const ignoreNulls = nullValueMode === NullValueMode.Ignore;
   const nullAsZero = nullValueMode === NullValueMode.AsZero;
 

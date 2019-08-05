@@ -35,10 +35,10 @@ export interface FieldConfig {
   // Must be sorted by 'value', first value is always -Infinity
   thresholds?: Threshold[];
 
-  // TODO -- remove from field reducer options
+  // Used when reducing field values
   nullValueMode?: NullValueMode;
 
-  // TODO -- remove from displayValues options (default to 'No Data')
+  // Alternative to empty string
   noValue?: string;
 }
 
