@@ -1,5 +1,5 @@
 import { toFixed } from './valueFormats';
-import { DecimalCount } from '../../types';
+import { DecimalCount } from '@grafana/data';
 
 export function toPercent(size: number, decimals: DecimalCount) {
   if (size === null) {

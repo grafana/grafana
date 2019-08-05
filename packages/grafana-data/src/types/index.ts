@@ -1,5 +1,6 @@
 export * from './data';
 export * from './dataLink';
+export * from './displayValue';
 export * from './logs';
 export * from './navModel';
 export * from './select';

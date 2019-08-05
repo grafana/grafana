@@ -1,5 +1,5 @@
 import { scaledUnits } from './valueFormats';
-import { DecimalCount } from '../../types';
+import { DecimalCount } from '@grafana/data';
 
 export function currency(symbol: string) {
   const units = ['', 'K', 'M', 'B', 'T'];

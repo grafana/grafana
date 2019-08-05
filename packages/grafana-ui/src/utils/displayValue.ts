@@ -6,10 +6,18 @@ import { getValueFormat } from './valueFormats/valueFormats';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import { DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType, DecimalCount } from '../types';
-import { DateTime, dateTime, Threshold, getMappedValue, Field } from '@grafana/data';
-
-export type DisplayProcessor = (value: any) => DisplayValue;
+import { GrafanaTheme, GrafanaThemeType } from '../types';
+import {
+  DecimalInfo,
+  DisplayValue,
+  DecimalCount,
+  DisplayProcessor,
+  DateTime,
+  dateTime,
+  Threshold,
+  getMappedValue,
+  Field,
+} from '@grafana/data';
 
 export interface DisplayValueOptions {
   field?: Partial<Field>;

@@ -1,4 +1,4 @@
-import { DisplayValue } from '../../types/index';
+import { DisplayValue } from '@grafana/data';
 
 import { LegendList } from './LegendList';
 import { LegendTable } from './LegendTable';

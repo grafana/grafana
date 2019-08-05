@@ -4,10 +4,9 @@ import {
   getFlotPairs,
   getColorFromHexRgbOrName,
   getDisplayProcessor,
-  DisplayValue,
   PanelData,
 } from '@grafana/ui';
-import { NullValueMode, reduceField, FieldCache, FieldType } from '@grafana/data';
+import { NullValueMode, reduceField, FieldCache, FieldType, DisplayValue } from '@grafana/data';
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 

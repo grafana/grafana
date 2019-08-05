@@ -1,10 +1,10 @@
 import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
 
-import { DisplayValue, GrafanaTheme, InterpolateFunction, ScopedVars, GraphSeriesValue } from '../types/index';
+import { GrafanaTheme, InterpolateFunction, ScopedVars, GraphSeriesValue } from '../types/index';
 import { getDisplayProcessor } from './displayValue';
 import { getFlotPairs } from './flotPairs';
-import { ReducerID, reduceField, FieldType, NullValueMode, DataFrame, Field } from '@grafana/data';
+import { DisplayValue, ReducerID, reduceField, FieldType, NullValueMode, DataFrame, Field } from '@grafana/data';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value

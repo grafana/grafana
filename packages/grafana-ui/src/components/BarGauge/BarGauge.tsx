@@ -6,8 +6,8 @@ import tinycolor from 'tinycolor2';
 import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
-import { DisplayValue, Themeable, VizOrientation } from '../../types';
-import { Threshold, TimeSeriesValue, getActiveThreshold } from '@grafana/data';
+import { Themeable, VizOrientation } from '../../types';
+import { DisplayValue, Threshold, TimeSeriesValue, getActiveThreshold } from '@grafana/data';
 
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;

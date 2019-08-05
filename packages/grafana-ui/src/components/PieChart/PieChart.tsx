@@ -2,9 +2,10 @@ import React, { PureComponent } from 'react';
 import { select, pie, arc, event } from 'd3';
 import sum from 'lodash/sum';
 
-import { GrafanaThemeType, DisplayValue } from '../../types';
+import { GrafanaThemeType } from '../../types';
 import { Themeable } from '../../index';
 import { colors as grafana_colors } from '../../utils/index';
+import { DisplayValue } from '@grafana/data';
 
 export enum PieChartType {
   PIE = 'pie',

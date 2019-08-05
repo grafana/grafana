@@ -1,6 +1,5 @@
-import { getDisplayProcessor, getColorFromThreshold, DisplayProcessor, getDecimalsForValue } from './displayValue';
-import { DisplayValue } from '../types';
-import { MappingType, ValueMapping } from '@grafana/data';
+import { getDisplayProcessor, getColorFromThreshold, getDecimalsForValue } from './displayValue';
+import { DisplayProcessor, DisplayValue, MappingType, ValueMapping } from '@grafana/data';
 
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach(processor => {

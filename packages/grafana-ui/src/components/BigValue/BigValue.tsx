@@ -7,7 +7,8 @@ import { css } from 'emotion';
 import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
-import { Themeable, DisplayValue } from '../../types';
+import { Themeable } from '../../types';
+import { DisplayValue } from '@grafana/data';
 
 export interface BigValueSparkline {
   data: any[][]; // [[number,number]]

@@ -1,5 +1,5 @@
 import { toFixed, toFixedScaled } from './valueFormats';
-import { DecimalCount } from '../../types';
+import { DecimalCount } from '@grafana/data';
 import { toUtc, toDuration as duration, dateTime } from '@grafana/data';
 
 interface IntervalsInSeconds {
