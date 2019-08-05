@@ -174,17 +174,21 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
                   </div>
                 </div>
               </div>
-              {hasRequiredFields && (
-                <div className="gf-form-inline">
-                  <div className="gf-form">
-                    <div className="max-width-30 gf-form-inline">
-                      <Button variant="secondary" size="sm" type="button" onClick={onLoadSubscriptions}>
-                        Load Subscriptions
-                      </Button>
-                    </div>
+              <div className="gf-form-inline">
+                <div className="gf-form">
+                  <div className="max-width-30 gf-form-inline">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      type="button"
+                      onClick={onLoadSubscriptions}
+                      disabled={!hasRequiredFields}
+                    >
+                      Load Subscriptions
+                    </Button>
                   </div>
                 </div>
-              )}
+              </div>
             </>
           )}
         </div>

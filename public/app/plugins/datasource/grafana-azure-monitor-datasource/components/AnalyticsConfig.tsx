@@ -136,6 +136,12 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
       logAnalyticsSubscriptions,
       logAnalyticsWorkspaces,
     } = this.state;
+
+    const addtlAttrs = {
+      ...(jsonData.azureLogAnalyticsSameAs && {
+        tooltip: 'Workspaces are pulled from default subscription selected above.',
+      }),
+    };
     return (
       <>
         <h3 className="page-heading">Azure Log Analytics API Details</h3>
@@ -143,6 +149,7 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
           label="Same details as Azure Monitor API"
           checked={jsonData.azureLogAnalyticsSameAs}
           onChange={event => this.onAzureLogAnalyticsSameAsChange(!jsonData.azureLogAnalyticsSameAs)}
+          {...addtlAttrs}
         />
         {!jsonData.azureLogAnalyticsSameAs && (
           <AzureCredentialsForm
@@ -181,17 +188,21 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
               </div>
             </div>
           </div>
-          {this.hasWorkspaceRequiredFields() && (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <div className="max-width-30 gf-form-inline">
-                  <Button variant="secondary" size="sm" type="button" onClick={() => this.props.onLoadWorkspaces()}>
-                    Load Workspaces
-                  </Button>
-                </div>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <div className="max-width-30 gf-form-inline">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  onClick={() => this.props.onLoadWorkspaces()}
+                  disabled={!this.hasWorkspaceRequiredFields()}
+                >
+                  Load Workspaces
+                </Button>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </>
     );
