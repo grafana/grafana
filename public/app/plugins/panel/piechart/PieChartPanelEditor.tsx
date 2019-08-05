@@ -54,7 +54,7 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
           <PieChartOptionsBox onOptionsChange={onOptionsChange} options={options} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings!} />
       </>
     );
   }

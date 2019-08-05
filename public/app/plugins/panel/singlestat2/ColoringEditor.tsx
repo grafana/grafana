@@ -39,27 +39,27 @@ export class ColoringEditor extends PureComponent<Props> {
         <Switch
           label="Background"
           labelClass={`width-${labelWidth}`}
-          checked={colorBackground}
+          checked={colorBackground!}
           onChange={this.onToggleColorBackground}
         />
 
         <Switch
           label="Value"
           labelClass={`width-${labelWidth}`}
-          checked={colorValue}
+          checked={colorValue!}
           onChange={this.onToggleColorValue}
         />
 
         <Switch
           label="Prefix"
           labelClass={`width-${labelWidth}`}
-          checked={colorPrefix}
+          checked={colorPrefix!}
           onChange={this.onToggleColorPrefix}
         />
         <Switch
           label="Postfix"
           labelClass={`width-${labelWidth}`}
-          checked={colorPostfix}
+          checked={colorPostfix!}
           onChange={this.onToggleColorPostfix}
         />
       </PanelOptionsGroup>

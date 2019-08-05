@@ -182,9 +182,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     if (tableData.columns.length === 1) {
       this.panel.tableColumn = tableData.columns[0].text;
     } else {
-      this.panel.tableColumn = _.find(tableData.columns, col => {
+      this.panel.tableColumn = _.find(tableData.columns!, col => {
         return col.type !== 'time';
-      }).text;
+      })!.text;
     }
   }
 
@@ -385,7 +385,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     const $sanitize = this.$sanitize;
     const panel = ctrl.panel;
     const templateSrv = this.templateSrv;
-    let data: any, linkInfo: { target: string; href: string; title: string };
+    let data: any, linkInfo: { target: string; href: string; title: string } | null;
     const $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 

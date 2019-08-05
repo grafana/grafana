@@ -60,9 +60,9 @@ const clean = (obj: any) => {
 /*  ------------------------------------------------------------------------ */
 
 class Color {
-  background: boolean;
-  name: string;
-  brightness: number;
+  background: boolean | undefined;
+  name: string | undefined;
+  brightness: number | undefined;
 
   constructor(background?: boolean, name?: string, brightness?: number) {
     this.background = background;
@@ -82,7 +82,7 @@ class Color {
     });
   }
 
-  defaultBrightness(value: number) {
+  defaultBrightness(value: number | undefined) {
     return new Color(this.background, this.name, this.brightness || value);
   }
 
@@ -351,7 +351,7 @@ export default class Colors {
 
   get parsed() {
     let styles: Set<string>;
-    let brightness: number;
+    let brightness: number | undefined;
     let color: Color;
     let bgColor: Color;
 
