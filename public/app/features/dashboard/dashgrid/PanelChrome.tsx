@@ -11,7 +11,7 @@ import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
-import { getProcessedDataFrame } from '../state/PanelQueryState';
+import { getProcessedDataFrames } from '../state/PanelQueryState';
 import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 
@@ -71,7 +71,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       this.setState({
         data: {
           state: LoadingState.Done,
-          series: getProcessedDataFrame(panel.snapshotData),
+          series: getProcessedDataFrames(panel.snapshotData),
         },
         isFirstLoad: false,
       });

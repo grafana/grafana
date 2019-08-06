@@ -1,3 +1,4 @@
+// @ts-ignore
 import Plain from 'slate-plain-serializer';
 
 import BracesPlugin from './braces';

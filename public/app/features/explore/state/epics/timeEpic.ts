@@ -37,7 +37,7 @@ export const timeEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (
         time: range.raw,
         refresh: false,
         getTimezone: () => timeZone.raw,
-        timeRangeUpdated: () => undefined,
+        timeRangeUpdated: (): any => undefined,
       });
 
       return changeRangeAction({ exploreId, range, absoluteRange });

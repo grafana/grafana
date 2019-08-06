@@ -1,7 +1,7 @@
 import { isBoolean, isNumber, sortedUniq, sortedIndexOf, unescape as htmlUnescaped } from 'lodash';
 import { saveAs } from 'file-saver';
 import { isNullOrUndefined } from 'util';
-import { dateTime, TimeZone } from '@grafana/data';
+import { dateTime, TimeZone, TableData } from '@grafana/data';
 
 const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 const POINT_TIME_INDEX = 1;
@@ -17,6 +17,11 @@ interface SeriesListToCsvColumnsOptions {
   excel: boolean;
   timezone: TimeZone;
 }
+
+type SeriesList = Array<{
+  datapoints: any;
+  alias: any;
+}>;
 
 const defaultOptions: SeriesListToCsvColumnsOptions = {
   dateTimeFormat: DEFAULT_DATETIME_FORMAT,
@@ -50,11 +55,11 @@ function htmlDecoded(text: string) {
   return text.replace(regexp, htmlDecoded).replace(regexp, htmlDecoded);
 }
 
-function formatSpecialHeader(useExcelHeader) {
+function formatSpecialHeader(useExcelHeader: boolean) {
   return useExcelHeader ? `sep=${END_COLUMN}${END_ROW}` : '';
 }
 
-function formatRow(row, addEndRowDelimiter = true) {
+function formatRow(row: any[], addEndRowDelimiter = true) {
   let text = '';
   for (let i = 0; i < row.length; i += 1) {
     if (isBoolean(row[i]) || isNumber(row[i]) || isNullOrUndefined(row[i])) {
@@ -70,7 +75,7 @@ function formatRow(row, addEndRowDelimiter = true) {
   return addEndRowDelimiter ? text + END_ROW : text;
 }
 
-export function convertSeriesListToCsv(seriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+export function convertSeriesListToCsv(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
   const { dateTimeFormat, excel, timezone } = { ...defaultOptions, ...options };
   let text = formatSpecialHeader(excel) + formatRow(['Series', 'Time', 'Value']);
   for (let seriesIndex = 0; seriesIndex < seriesList.length; seriesIndex += 1) {
@@ -92,12 +97,12 @@ export function convertSeriesListToCsv(seriesList, options: Partial<SeriesListTo
   return text;
 }
 
-export function exportSeriesListToCsv(seriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+export function exportSeriesListToCsv(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
   const text = convertSeriesListToCsv(seriesList, options);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function convertSeriesListToCsvColumns(seriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+export function convertSeriesListToCsvColumns(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
   const { dateTimeFormat, excel, timezone } = { ...defaultOptions, ...options };
   // add header
   let text =
@@ -138,7 +143,7 @@ export function convertSeriesListToCsvColumns(seriesList, options: Partial<Serie
  * Collect all unique timestamps from series list and use it to fill
  * missing points by null.
  */
-function mergeSeriesByTime(seriesList) {
+function mergeSeriesByTime(seriesList: SeriesList) {
   let timestamps = [];
   for (let i = 0; i < seriesList.length; i++) {
     const seriesPoints = seriesList[i].datapoints;
@@ -151,7 +156,7 @@ function mergeSeriesByTime(seriesList) {
   const result = [];
   for (let i = 0; i < seriesList.length; i++) {
     const seriesPoints = seriesList[i].datapoints;
-    const seriesTimestamps = seriesPoints.map(p => p[POINT_TIME_INDEX]);
+    const seriesTimestamps = seriesPoints.map((p: any) => p[POINT_TIME_INDEX]);
     const extendedDatapoints = [];
     for (let j = 0; j < timestamps.length; j++) {
       const timestamp = timestamps[j];
@@ -167,15 +172,15 @@ function mergeSeriesByTime(seriesList) {
   return result;
 }
 
-export function exportSeriesListToCsvColumns(seriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
+export function exportSeriesListToCsvColumns(seriesList: SeriesList, options: Partial<SeriesListToCsvColumnsOptions>) {
   const text = convertSeriesListToCsvColumns(seriesList, options);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function convertTableDataToCsv(table, excel = false) {
+export function convertTableDataToCsv(table: TableData, excel = false) {
   let text = formatSpecialHeader(excel);
   // add headline
-  text += formatRow(table.columns.map(val => val.title || val.text));
+  text += formatRow(table.columns.map((val: any) => val.title || val.text));
   // process data
   for (let i = 0; i < table.rows.length; i += 1) {
     text += formatRow(table.rows[i], i < table.rows.length - 1);
@@ -183,12 +188,12 @@ export function convertTableDataToCsv(table, excel = false) {
   return text;
 }
 
-export function exportTableDataToCsv(table, excel = false) {
+export function exportTableDataToCsv(table: TableData, excel = false) {
   const text = convertTableDataToCsv(table, excel);
   saveSaveBlob(text, EXPORT_FILENAME);
 }
 
-export function saveSaveBlob(payload, fname) {
+export function saveSaveBlob(payload: any, fname: string) {
   const blob = new Blob([payload], { type: 'text/csv;charset=utf-8;header=present;' });
   saveAs(blob, fname);
 }

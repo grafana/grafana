@@ -1,7 +1,9 @@
 import React, { FC } from 'react';
+import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { StoreState } from 'app/types';
 
-const SignIn: FC<any> = () => {
-  const loginUrl = `login?redirect=${encodeURIComponent(window.location.pathname)}`;
+export const SignIn: FC<any> = ({ url }) => {
+  const loginUrl = `login?redirect=${encodeURIComponent(url)}`;
   return (
     <div className="sidemenu-item">
       <a href={loginUrl} className="sidemenu-link" target="_self">
@@ -20,4 +22,8 @@ const SignIn: FC<any> = () => {
   );
 };
 
-export default SignIn;
+const mapStateToProps = (state: StoreState) => ({
+  url: state.location.url,
+});
+
+export default connectWithStore(SignIn, mapStateToProps);

@@ -135,4 +135,30 @@ describe('FieldDisplay', () => {
     expect(field.thresholds!.length).toEqual(2);
     expect(field.thresholds![0].value).toBe(-Infinity);
   });
+
+  it('Should return field thresholds when there is no data', () => {
+    const options: GetFieldDisplayValuesOptions = {
+      data: [
+        {
+          name: 'No data',
+          fields: [],
+          rows: [],
+        },
+      ],
+      replaceVariables: (value: string) => {
+        return value;
+      },
+      fieldOptions: {
+        calcs: [],
+        override: {},
+        defaults: {
+          thresholds: [{ color: '#F2495C', value: 50 }],
+        },
+      },
+      theme: getTheme(GrafanaThemeType.Dark),
+    };
+
+    const display = getFieldDisplayValues(options);
+    expect(display[0].field.thresholds!.length).toEqual(1);
+  });
 });

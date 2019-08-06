@@ -36,7 +36,7 @@ export class AdHocFilterField<
 
   componentDidUpdate(prevProps: Props) {
     if (_.isEqual(prevProps.extendedOptions, this.props.extendedOptions) === false) {
-      const pairs = [];
+      const pairs: any[] = [];
 
       this.setState({ pairs }, () => this.props.onPairsChanged(pairs));
     }

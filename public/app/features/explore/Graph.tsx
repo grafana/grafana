@@ -14,7 +14,7 @@ import TimeSeries from 'app/core/time_series2';
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
 // Copied from graph.ts
-function time_format(ticks, min, max) {
+function time_format(ticks: number, min: number, max: number) {
   if (min && max && ticks) {
     const range = max - min;
     const secPerTick = range / ticks / 1000;
@@ -39,7 +39,7 @@ function time_format(ticks, min, max) {
   return '%H:%M';
 }
 
-const FLOT_OPTIONS = {
+const FLOT_OPTIONS: any = {
   legend: {
     show: false,
   },
@@ -94,9 +94,9 @@ interface GraphState {
 
 export class Graph extends PureComponent<GraphProps, GraphState> {
   $el: any;
-  dynamicOptions = null;
+  dynamicOptions: any = null;
 
-  state = {
+  state: GraphState = {
     hiddenSeries: [],
     showAllTimeSeries: false,
   };
@@ -130,7 +130,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     this.$el.unbind('plotselected', this.onPlotSelected);
   }
 
-  onPlotSelected = (event: JQueryEventObject, ranges) => {
+  onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
     const { onChangeTime } = this.props;
     if (onChangeTime) {
       this.props.onChangeTime({

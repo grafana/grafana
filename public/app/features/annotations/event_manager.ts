@@ -28,7 +28,7 @@ export class EventManager {
     this.editorOpen = true;
   }
 
-  updateTime(range) {
+  updateTime(range: { from: any; to: any }) {
     if (!this.event) {
       this.event = {};
       this.event.dashboardId = this.panelCtrl.dashboard.id;
@@ -47,17 +47,17 @@ export class EventManager {
     this.panelCtrl.render();
   }
 
-  editEvent(event, elem?) {
+  editEvent(event: AnnotationEvent, elem?: any) {
     this.event = event;
     this.panelCtrl.render();
   }
 
-  addFlotEvents(annotations, flotOptions) {
+  addFlotEvents(annotations: any, flotOptions: any) {
     if (!this.event && annotations.length === 0) {
       return;
     }
 
-    const types = {
+    const types: any = {
       $__alerting: {
         color: ALERTING_COLOR,
         position: 'BOTTOM',
@@ -149,11 +149,11 @@ export class EventManager {
   }
 }
 
-function getRegions(events) {
+function getRegions(events: AnnotationEvent[]) {
   return _.filter(events, 'isRegion');
 }
 
-function addRegionMarking(regions, flotOptions) {
+function addRegionMarking(regions: any[], flotOptions: { grid: { markings: any } }) {
   const markings = flotOptions.grid.markings;
   const defaultColor = DEFAULT_ANNOTATION_COLOR;
   let fillColor;

@@ -55,3 +55,11 @@ export function toIntegerOrUndefined(value: string): number | undefined {
   const v = parseInt(value, 10);
   return isNaN(v) ? undefined : v;
 }
+
+export function toFloatOrUndefined(value: string): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+  const v = parseFloat(value);
+  return isNaN(v) ? undefined : v;
+}

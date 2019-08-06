@@ -1,7 +1,7 @@
 import { Page } from 'puppeteer-core';
 
 import { constants } from './constants';
-import { loginPage } from './start/loginPage';
+import { loginPage } from './pages/loginPage';
 
 export const login = async (page: Page) => {
   await loginPage.init(page);

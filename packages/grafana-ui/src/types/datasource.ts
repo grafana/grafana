@@ -210,7 +210,7 @@ export abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options: any): Promise<MetricFindValue[]>;
+  getTagKeys?(options?: any): Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters
@@ -309,9 +309,9 @@ export interface DataStreamState {
   request: DataQueryRequest;
 
   /**
-   * Series data may not be known yet
+   * Data may not be known yet
    */
-  series?: DataFrame[];
+  data?: DataFrame[];
 
   /**
    * Error in stream (but may still be running)
