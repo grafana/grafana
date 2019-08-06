@@ -91,8 +91,8 @@ export class PanelQueryRunner {
    * Subscribe one runner to another
    */
   chain(runner: PanelQueryRunner): Unsubscribable {
-    const { sendLegacy, sendSeries } = runner.state;
-    let format = sendSeries ? PanelQueryRunnerFormat.series : PanelQueryRunnerFormat.legacy;
+    const { sendLegacy, sendFrames } = runner.state;
+    let format = sendFrames ? PanelQueryRunnerFormat.frames : PanelQueryRunnerFormat.legacy;
     if (sendLegacy) {
       format = PanelQueryRunnerFormat.both;
     }

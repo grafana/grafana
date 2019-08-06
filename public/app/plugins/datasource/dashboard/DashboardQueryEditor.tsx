@@ -2,8 +2,8 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { Select, SelectOptionItem, DataQuery, DataQueryError, PanelData } from '@grafana/ui';
-import { DataFrame } from '@grafana/data';
+import { Select, DataQuery, DataQueryError, PanelData } from '@grafana/ui';
+import { DataFrame, SelectableValue } from '@grafana/data';
 import { DashboardQuery } from './types';
 import config from 'app/core/config';
 import { css } from 'emotion';
@@ -136,8 +136,8 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     const dashboard = getDashboardSrv().getCurrent();
     const query = this.getQuery();
 
-    let selected: SelectOptionItem<number>;
-    const panels: Array<SelectOptionItem<number>> = [];
+    let selected: SelectableValue<number>;
+    const panels: Array<SelectableValue<number>> = [];
     for (const panel of dashboard.panels) {
       if (panel.targets && panel.datasource !== SHARED_DASHBODARD_QUERY) {
         const plugin = config.panels[panel.type];
