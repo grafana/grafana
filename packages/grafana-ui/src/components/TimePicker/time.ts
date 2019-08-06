@@ -8,7 +8,7 @@ import {
   isDateTime,
   dateTime,
   DateTime,
-  dateTimeFromTimeZone,
+  dateTimeForTimeZone,
 } from '@grafana/data';
 
 export const rawToTimeRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeRange => {
@@ -32,7 +32,7 @@ export const stringToDateTimeType = (value: string | DateTime, roundUp?: boolean
     return parsed || dateTime();
   }
 
-  return dateTimeFromTimeZone(timeZone, value, TIME_FORMAT);
+  return dateTimeForTimeZone(timeZone, value, TIME_FORMAT);
 };
 
 export const mapTimeRangeToRangeString = (timeRange: RawTimeRange): string => {

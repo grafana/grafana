@@ -10,7 +10,7 @@ import { EpicDependencies } from 'app/store/configureStore';
 export const timeEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDependencies> = (
   action$,
   state$,
-  { getTimeSrv, getTimeRange, getTimeZone, dateTimeFromTimeZone }
+  { getTimeSrv, getTimeRange, getTimeZone, dateTimeForTimeZone }
 ) => {
   return action$.ofType(updateTimeRangeAction.type).pipe(
     map((action: ActionOf<UpdateTimeRangePayload>) => {
@@ -22,8 +22,8 @@ export const timeEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDepend
 
       if (absRange) {
         rawRange = {
-          from: dateTimeFromTimeZone(timeZone, absRange.from),
-          to: dateTimeFromTimeZone(timeZone, absRange.to),
+          from: dateTimeForTimeZone(timeZone, absRange.from),
+          to: dateTimeForTimeZone(timeZone, absRange.to),
         };
       }
 

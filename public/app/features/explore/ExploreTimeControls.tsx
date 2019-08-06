@@ -3,7 +3,7 @@ import React, { Component } from 'react';
 
 // Types
 import { ExploreId } from 'app/types';
-import { TimeRange, TimeOption, TimeZone, RawTimeRange, dateTimeFromTimeZone } from '@grafana/data';
+import { TimeRange, TimeOption, TimeZone, RawTimeRange, dateTimeForTimeZone } from '@grafana/data';
 
 // State
 
@@ -32,8 +32,8 @@ export class ExploreTimeControls extends Component<Props> {
     const { range, onChangeTime, timeZone } = this.props;
     const { from, to } = getShiftedTimeRange(direction, range);
     const nextTimeRange = {
-      from: dateTimeFromTimeZone(timeZone, from),
-      to: dateTimeFromTimeZone(timeZone, to),
+      from: dateTimeForTimeZone(timeZone, from),
+      to: dateTimeForTimeZone(timeZone, to),
     };
 
     onChangeTime(nextTimeRange);
@@ -50,8 +50,8 @@ export class ExploreTimeControls extends Component<Props> {
     const { range, onChangeTime, timeZone } = this.props;
     const { from, to } = getZoomedTimeRange(range, 2);
     const nextTimeRange = {
-      from: dateTimeFromTimeZone(timeZone, from),
-      to: dateTimeFromTimeZone(timeZone, to),
+      from: dateTimeForTimeZone(timeZone, from),
+      to: dateTimeForTimeZone(timeZone, to),
     };
 
     onChangeTime(nextTimeRange);

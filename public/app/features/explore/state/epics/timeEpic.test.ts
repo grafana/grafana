@@ -62,7 +62,7 @@ describe('timeEpic', () => {
             .thenDependencyWasCalledTimes(1, 'getTimeSrv', 'init')
             .thenDependencyWasCalledTimes(1, 'getTimeRange')
             .thenDependencyWasCalledWith([DefaultTimeZone, { from: null, to: null }], 'getTimeRange')
-            .thenDependencyWasCalledTimes(2, 'dateTimeFromTimeZone')
+            .thenDependencyWasCalledTimes(2, 'dateTimeForTimeZone')
             .thenResultingActionsEqual(
               changeRangeAction({
                 exploreId,

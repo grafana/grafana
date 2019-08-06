@@ -54,7 +54,7 @@ export const epicTester = (
 
   const getTimeZone = jest.fn().mockReturnValue(DefaultTimeZone);
 
-  const dateTimeFromTimeZone = jest.fn().mockReturnValue(null);
+  const dateTimeForTimeZone = jest.fn().mockReturnValue(null);
 
   const defaultDependencies: EpicDependencies = {
     getQueryResponse,
@@ -62,7 +62,7 @@ export const epicTester = (
     getTimeRange,
     getTimeZone,
     getShiftedTimeRange,
-    dateTimeFromTimeZone,
+    dateTimeForTimeZone,
   };
 
   const theDependencies: EpicDependencies = { ...defaultDependencies, ...dependencies };

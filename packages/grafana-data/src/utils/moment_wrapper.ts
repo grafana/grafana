@@ -98,7 +98,7 @@ export const dateTime = (input?: DateTimeInput, formatInput?: FormatInput): Date
   return moment(input as MomentInput, formatInput) as DateTime;
 };
 
-export const dateTimeFromTimeZone = (
+export const dateTimeForTimeZone = (
   timezone?: TimeZone,
   input?: DateTimeInput,
   formatInput?: FormatInput
