@@ -7,6 +7,7 @@ var ErrSmtpNotEnabled = errors.New("SMTP not configured, check your grafana.ini 
 
 type SendEmailCommand struct {
 	To           []string
+	SingleEmail  bool
 	Template     string
 	Subject      string
 	Data         map[string]interface{}

@@ -24,7 +24,17 @@ func init() {
          <textarea rows="7" class="gf-form-input width-27" required ng-model="ctrl.model.settings.addresses"></textarea>
       </div>
       <div class="gf-form">
-      <span>You can enter multiple email addresses using a ";" separator</span>
+         <span>You can enter multiple email addresses using a ";" separator</span>
+      </div>
+      <br/>
+      <div class="gf-form">
+         <gf-form-switch
+           class="gf-form"
+           label="Single email to all recipients"
+           label-class="width-15"
+           checked="ctrl.model.settings.singleEmail"
+           tooltip="Send a single email to all recipients.">
+        </gf-form-switch>
       </div>
     `,
 	})
@@ -34,14 +44,16 @@ func init() {
 // alert notifications over email.
 type EmailNotifier struct {
 	NotifierBase
-	Addresses []string
-	log       log.Logger
+	Addresses   []string
+	SingleEmail bool
+	log         log.Logger
 }
 
 // NewEmailNotifier is the constructor function
 // for the EmailNotifier.
 func NewEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	addressesString := model.Settings.Get("addresses").MustString()
+	singleEmail := model.Settings.Get("singleEmail").MustBool(false)
 
 	if addressesString == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find addresses in settings"}
@@ -59,13 +71,14 @@ func NewEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	return &EmailNotifier{
 		NotifierBase: NewNotifierBase(model),
 		Addresses:    addresses,
+		SingleEmail:  singleEmail,
 		log:          log.New("alerting.notifier.email"),
 	}, nil
 }
 
 // Notify sends the alert notification.
 func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
-	en.log.Info("Sending alert notification to", "addresses", en.Addresses)
+	en.log.Info("Sending alert notification to", "addresses", en.Addresses, "singleEmail", en.SingleEmail)
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
@@ -95,6 +108,7 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"EvalMatches":   evalContext.EvalMatches,
 			},
 			To:           en.Addresses,
+			SingleEmail:  en.SingleEmail,
 			Template:     "alert_notification.html",
 			EmbededFiles: []string{},
 		},
