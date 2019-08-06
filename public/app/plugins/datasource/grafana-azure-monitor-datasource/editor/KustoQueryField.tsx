@@ -1,12 +1,13 @@
 import _ from 'lodash';
-// @ts-ignore
 import Plain from 'slate-plain-serializer';
 
 import QueryField from './query_field';
 import debounce from 'lodash/debounce';
 import { DOMUtil } from '@grafana/ui';
+import { Editor as SlateEditor } from 'slate';
 
 import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto/kusto';
+import { CompletionItem } from 'app/types';
 // import '../sass/editor.base.scss';
 
 const TYPEAHEAD_DELAY = 100;
@@ -63,7 +64,7 @@ export default class KustoQueryField extends QueryField {
     this.fetchSchema();
   }
 
-  onTypeahead = (force?: boolean) => {
+  onTypeahead = (force = false) => {
     const selection = window.getSelection();
     if (selection.anchorNode) {
       const wrapperNode = selection.anchorNode.parentElement;
@@ -196,15 +197,15 @@ export default class KustoQueryField extends QueryField {
     }
   };
 
-  applyTypeahead(change: any, suggestion: { text: any; type: string; deleteBackwards: any }) {
+  applyTypeahead = (editor: SlateEditor, suggestion: CompletionItem): SlateEditor => {
     const { typeaheadPrefix, typeaheadContext, typeaheadText } = this.state;
-    let suggestionText = suggestion.text || suggestion;
+    let suggestionText = suggestion.label;
     const move = 0;
 
     // Modify suggestion based on context
 
     const nextChar = DOMUtil.getNextCharacter();
-    if (suggestion.type === 'function') {
+    if (suggestion.kind === 'function') {
       if (!nextChar || nextChar !== '(') {
         suggestionText += '(';
       }
@@ -228,13 +229,13 @@ export default class KustoQueryField extends QueryField {
     const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
     const forward = midWord ? suffixLength + offset : 0;
 
-    return change
+    return editor
       .deleteBackward(backward)
       .deleteForward(forward)
       .insertText(suggestionText)
-      .move(move)
+      .moveForward(move)
       .focus();
-  }
+  };
 
   // private _getFieldsSuggestions(): SuggestionGroup[] {
   //   return [
