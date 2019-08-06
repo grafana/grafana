@@ -13,7 +13,7 @@ interface MutableColumn extends Column {
 }
 
 export default class TableModel implements TableData {
-  columns: MutableColumn[];
+  columns: Array<MutableColumn | undefined>;
   rows: any[];
   type: string;
   columnMap: any;
