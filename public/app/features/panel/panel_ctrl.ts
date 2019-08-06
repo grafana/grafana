@@ -248,10 +248,10 @@ export class PanelCtrl {
   }
 
   getInfoContent(options: { mode: string }) {
-    let markdown = this.panel.description;
+    let markdown = this.panel.description || '';
 
     if (options.mode === 'tooltip') {
-      markdown = this.error || this.panel.description;
+      markdown = this.error || this.panel.description || '';
     }
 
     const linkSrv: LinkSrv = this.$injector.get('linkSrv');
