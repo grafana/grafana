@@ -40,7 +40,7 @@ export class TestRuleResult extends PureComponent<Props, State> {
     this.setState({ isLoading: false, testRuleResponse });
   }
 
-  setFormattedJson = formattedJson => {
+  setFormattedJson = (formattedJson: any) => {
     this.formattedJson = formattedJson;
   };
 

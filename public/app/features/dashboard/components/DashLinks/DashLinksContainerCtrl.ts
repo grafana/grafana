@@ -1,6 +1,11 @@
-import angular from 'angular';
+import angular, { IQService } from 'angular';
 import _ from 'lodash';
 import { iconMap } from './DashLinksEditorCtrl';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { DashboardSrv } from '../../services/DashboardSrv';
+
+export type DashboardLink = { tags: any; target: string; keepTime: any; includeVars: any };
 
 function dashLinksContainer() {
   return {
@@ -16,10 +21,10 @@ function dashLinksContainer() {
 }
 
 /** @ngInject */
-function dashLink($compile, $sanitize, linkSrv) {
+function dashLink($compile: any, $sanitize: any, linkSrv: LinkSrv) {
   return {
     restrict: 'E',
-    link: (scope, elem) => {
+    link: (scope: any, elem: JQuery) => {
       const link = scope.link;
       const dashboard = scope.dashboard;
 
@@ -86,10 +91,17 @@ function dashLink($compile, $sanitize, linkSrv) {
 
 export class DashLinksContainerCtrl {
   /** @ngInject */
-  constructor($scope, $rootScope, $q, backendSrv, dashboardSrv, linkSrv) {
+  constructor(
+    $scope: any,
+    $rootScope: any,
+    $q: IQService,
+    backendSrv: BackendSrv,
+    dashboardSrv: DashboardSrv,
+    linkSrv: LinkSrv
+  ) {
     const currentDashId = dashboardSrv.getCurrent().id;
 
-    function buildLinks(linkDef) {
+    function buildLinks(linkDef: any) {
       if (linkDef.type === 'dashboards') {
         if (!linkDef.tags) {
           console.log('Dashboard link missing tag');
@@ -118,6 +130,7 @@ export class DashLinksContainerCtrl {
           {
             url: linkDef.url,
             title: linkDef.title,
+            // @ts-ignore
             icon: iconMap[linkDef.icon],
             tooltip: linkDef.tooltip,
             target: linkDef.targetBlank ? '_blank' : '_self',
@@ -138,7 +151,7 @@ export class DashLinksContainerCtrl {
       });
     }
 
-    $scope.searchDashboards = (link, limit) => {
+    $scope.searchDashboards = (link: DashboardLink, limit: any) => {
       return backendSrv.search({ tag: link.tags, limit: limit }).then(results => {
         return _.reduce(
           results,
@@ -161,8 +174,8 @@ export class DashLinksContainerCtrl {
       });
     };
 
-    $scope.fillDropdown = link => {
-      $scope.searchDashboards(link, 100).then(results => {
+    $scope.fillDropdown = (link: { searchHits: any }) => {
+      $scope.searchDashboards(link, 100).then((results: any) => {
         _.each(results, hit => {
           hit.url = linkSrv.getLinkUrl(hit);
         });

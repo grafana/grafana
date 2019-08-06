@@ -36,7 +36,7 @@ mkdir -p /deb-repo/db   \
 gsutil -m rsync -r -d "gs://$GCP_DB_BUCKET/$RELEASE_TYPE" /deb-repo/db
 
 # Add the new release to the repo
-cp "$DIST_PATH/*.deb" /deb-repo/tmp
+cp "$DIST_PATH"/*.deb /deb-repo/tmp
 rm /deb-repo/tmp/grafana_latest*.deb || true
 aptly repo add "$REPO" /deb-repo/tmp #adds too many packages in enterprise
 

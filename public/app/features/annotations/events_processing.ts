@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-export function dedupAnnotations(annotations) {
+export function dedupAnnotations(annotations: any) {
   let dedup = [];
 
   // Split events by annotationId property existence
@@ -22,6 +22,6 @@ export function dedupAnnotations(annotations) {
   return dedup;
 }
 
-function isPanelAlert(event) {
+function isPanelAlert(event: { eventType: string }) {
   return event.eventType === 'panel-alert';
 }

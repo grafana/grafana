@@ -1,19 +1,20 @@
 import 'app/core/directives/value_select_dropdown';
 import { ValueSelectDropdownCtrl } from '../directives/value_select_dropdown';
+// @ts-ignore
 import q from 'q';
 
 describe('SelectDropdownCtrl', () => {
   const tagValuesMap: any = {};
 
   ValueSelectDropdownCtrl.prototype.onUpdated = jest.fn();
-  let ctrl;
+  let ctrl: ValueSelectDropdownCtrl;
 
   describe('Given simple variable', () => {
     beforeEach(() => {
       ctrl = new ValueSelectDropdownCtrl(q);
       ctrl.variable = {
         current: { text: 'hej', value: 'hej' },
-        getValuesForTag: key => {
+        getValuesForTag: (key: string) => {
           return Promise.resolve(tagValuesMap[key]);
         },
       };
@@ -36,7 +37,7 @@ describe('SelectDropdownCtrl', () => {
           { text: 'server-3', value: 'server-3' },
         ],
         tags: ['key1', 'key2', 'key3'],
-        getValuesForTag: key => {
+        getValuesForTag: (key: string) => {
           return Promise.resolve(tagValuesMap[key]);
         },
         multi: true,
@@ -143,7 +144,7 @@ describe('SelectDropdownCtrl', () => {
           { text: 'server-3', value: 'server-3' },
         ],
         tags: ['key1', 'key2', 'key3'],
-        getValuesForTag: key => {
+        getValuesForTag: (key: any) => {
           return Promise.resolve(tagValuesMap[key]);
         },
         multi: true,
