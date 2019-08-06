@@ -254,6 +254,10 @@ export class PanelCtrl {
       markdown = this.error || this.panel.description;
     }
 
+    if (!markdown) {
+      markdown = '';
+    }
+
     const linkSrv: LinkSrv = this.$injector.get('linkSrv');
     const templateSrv: TemplateSrv = this.$injector.get('templateSrv');
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
