@@ -14,11 +14,6 @@ export interface Props {
   onChange: (options: SingleStatOptions) => void;
 }
 
-// colorBackground?: boolean;
-// colorValue?: boolean;
-// colorPrefix?: boolean;
-// colorPostfix?: boolean;
-
 export class ColoringEditor extends PureComponent<Props> {
   onToggleColorBackground = () =>
     this.props.onChange({ ...this.props.options, colorBackground: !this.props.options.colorBackground });
