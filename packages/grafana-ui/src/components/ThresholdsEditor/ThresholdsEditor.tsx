@@ -23,11 +23,8 @@ interface ThresholdWithKey extends Threshold {
 let counter = 100;
 
 function toThresholdsWithKey(thresholds?: Threshold[]): ThresholdWithKey[] {
-  if (!thresholds) {
-    thresholds = [
-      { value: -Infinity, color: 'green' },
-      { value: 80, color: 'red' }, // 80%
-    ];
+  if (!thresholds || thresholds.length === 0) {
+    thresholds = [{ value: -Infinity, color: 'green' }];
   }
 
   return thresholds.map(t => {
