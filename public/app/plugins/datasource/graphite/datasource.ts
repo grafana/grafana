@@ -453,6 +453,16 @@ export class GraphiteDatasource {
     return this.getFuncDefs();
   }
 
+  variableFormat(formatValue: Function) {
+    return (value: any, format: any, variable: any) => {
+      if (_.isArray(value) && value.length === 1) {
+        return value.join(',');
+      }
+
+      return formatValue(value, format, variable);
+    };
+  }
+
   getFuncDefs() {
     if (this.funcDefsPromise !== null) {
       return this.funcDefsPromise;
@@ -546,7 +556,8 @@ export class GraphiteDatasource {
         target.refId = this._seriesRefLetters[i];
       }
 
-      targetValue = this.templateSrv.replace(target.target, scopedVars);
+      const formatFn = this.variableFormat(this.templateSrv.formatValue);
+      targetValue = this.templateSrv.replace(target.target, scopedVars, formatFn);
       targetValue = targetValue.replace(intervalFormatFixRegex, fixIntervalFormat);
       targets[target.refId] = targetValue;
     }
