@@ -37,7 +37,6 @@ export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
         flex-wrap: wrap;
         justify-content: space-between;
         width: 100%;
-        overflow-x: hidden;
       `,
       className
     ),

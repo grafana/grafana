@@ -44,7 +44,7 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
         }}
         className={css`
           cursor: pointer;
-          white-space: nowrap;
+          white-space: pre-wrap;
           color: ${!item.isVisible && theme.colors.linkDisabled};
         `}
       >
