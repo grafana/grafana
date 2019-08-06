@@ -139,9 +139,10 @@ github.com/klauspost/compress/gzip
 github.com/klauspost/compress/flate
 # github.com/klauspost/cpuid v1.2.0
 github.com/klauspost/cpuid
-# github.com/lib/pq v1.0.0
+# github.com/lib/pq v1.2.0
 github.com/lib/pq
 github.com/lib/pq/oid
+github.com/lib/pq/scram
 # github.com/mattn/go-colorable v0.1.1
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.7

@@ -1,6 +1,6 @@
 // Libaries
 import React, { Component } from 'react';
-import { toUtc, dateMath } from '@grafana/data';
+import { dateMath } from '@grafana/data';
 
 // Types
 import { DashboardModel } from '../../state';
@@ -16,7 +16,6 @@ import { TimePicker, RefreshPicker } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
-import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 export interface Props {
   $injector: any;
@@ -43,18 +42,12 @@ export class DashNavTimeControls extends Component<Props> {
     return Promise.resolve();
   };
 
-  onMoveTimePicker = (direction: number) => {
-    const range = this.timeSrv.timeRange();
-    const { from, to } = getShiftedTimeRange(direction, range);
-
-    this.timeSrv.setTime({
-      from: toUtc(from),
-      to: toUtc(to),
-    });
+  onMoveBack = () => {
+    this.$rootScope.appEvent('shift-time', -1);
   };
-
-  onMoveForward = () => this.onMoveTimePicker(1);
-  onMoveBack = () => this.onMoveTimePicker(-1);
+  onMoveForward = () => {
+    this.$rootScope.appEvent('shift-time', 1);
+  };
 
   onChangeTimePicker = (timeRange: TimeRange) => {
     const { dashboard } = this.props;

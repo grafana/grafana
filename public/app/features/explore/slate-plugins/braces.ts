@@ -1,4 +1,4 @@
-const BRACES = {
+const BRACES: any = {
   '[': ']',
   '{': '}',
   '(': ')',
@@ -8,7 +8,7 @@ const NON_SELECTOR_SPACE_REGEXP = / (?![^}]+})/;
 
 export default function BracesPlugin() {
   return {
-    onKeyDown(event, change) {
+    onKeyDown(event: any, change: { value?: any; insertText?: any; deleteBackward?: any }) {
       const { value } = change;
       if (!value.isCollapsed) {
         return undefined;

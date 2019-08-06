@@ -1,6 +1,7 @@
 package authproxy
 
 import (
+	"encoding/base32"
 	"fmt"
 	"net"
 	"net/mail"
@@ -31,6 +32,9 @@ var isLDAPEnabled = ldap.IsEnabled
 
 // newLDAP creates multiple LDAP instance
 var newLDAP = multildap.New
+
+// supportedHeaders states the supported headers configuration fields
+var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups"}
 
 // AuthProxy struct
 type AuthProxy struct {
@@ -142,9 +146,18 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 	return false, newError("Proxy authentication required", err)
 }
 
-// getKey forms a key for the cache
+// getKey forms a key for the cache based on the headers received as part of the authentication flow.
+// Our configuration supports multiple headers. The main header contains the email or username.
+// And the additional ones that allow us to specify extra attributes: Name, Email or Groups.
 func (auth *AuthProxy) getKey() string {
-	return fmt.Sprintf(CachePrefix, auth.header)
+	key := strings.TrimSpace(auth.header) // start the key with the main header
+
+	auth.headersIterator(func(_, header string) {
+		key = strings.Join([]string{key, header}, "-") // compose the key with any additional headers
+	})
+
+	hashedKey := base32.StdEncoding.EncodeToString([]byte(key))
+	return fmt.Sprintf(CachePrefix, hashedKey)
 }
 
 // Login logs in user id with whatever means possible
@@ -232,46 +245,57 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		AuthId:     auth.header,
 	}
 
-	if auth.headerType == "username" {
+	switch auth.headerType {
+	case "username":
 		extUser.Login = auth.header
 
-		// only set Email if it can be parsed as an email address
-		emailAddr, emailErr := mail.ParseAddress(auth.header)
+		emailAddr, emailErr := mail.ParseAddress(auth.header) // only set Email if it can be parsed as an email address
 		if emailErr == nil {
 			extUser.Email = emailAddr.Address
 		}
-	} else if auth.headerType == "email" {
+	case "email":
 		extUser.Email = auth.header
 		extUser.Login = auth.header
-	} else {
+	default:
 		return 0, newError("Auth proxy header property invalid", nil)
+
 	}
 
-	for _, field := range []string{"Name", "Email", "Login", "Groups"} {
-		if auth.headers[field] == "" {
-			continue
+	auth.headersIterator(func(field string, header string) {
+		if field == "Groups" {
+			extUser.Groups = util.SplitString(header)
+		} else {
+			reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(header)
 		}
-
-		if val := auth.ctx.Req.Header.Get(auth.headers[field]); val != "" {
-			if field == "Groups" {
-				extUser.Groups = util.SplitString(val)
-			} else {
-				reflect.ValueOf(extUser).Elem().FieldByName(field).SetString(val)
-			}
-		}
-	}
+	})
 
 	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
 		SignupAllowed: setting.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
 	}
+
 	err := bus.Dispatch(upsert)
 	if err != nil {
 		return 0, err
 	}
 
 	return upsert.Result.Id, nil
+}
+
+// headersIterator iterates over all non-empty supported additional headers
+func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
+	for _, field := range supportedHeaderFields {
+		h := auth.headers[field]
+
+		if h == "" {
+			continue
+		}
+
+		if value := auth.ctx.Req.Header.Get(h); value != "" {
+			fn(field, strings.TrimSpace(value))
+		}
+	}
 }
 
 // GetSignedUser get full signed user info

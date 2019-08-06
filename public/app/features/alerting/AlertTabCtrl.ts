@@ -167,7 +167,7 @@ export class AlertTabCtrl {
     this.newAlertRuleTag.value = '';
   }
 
-  removeAlertRuleTag(tagName) {
+  removeAlertRuleTag(tagName: string) {
     delete this.alert.alertRuleTags[tagName];
   }
 

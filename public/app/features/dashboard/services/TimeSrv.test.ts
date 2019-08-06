@@ -19,7 +19,7 @@ describe('timeSrv', () => {
     search: jest.fn(() => ({})),
   };
 
-  let timeSrv;
+  let timeSrv: TimeSrv;
 
   const _dashboard: any = {
     time: { from: 'now-6h', to: 'now' },

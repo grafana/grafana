@@ -1,5 +1,14 @@
 # 6.4.0 (unreleased)
 
+# 6.3.0-beta4 (2019-08-02)
+### Features / Enhancements
+* **Auth Proxy**: Include additional headers as part of the cache key. [#18298](https://github.com/grafana/grafana/pull/18298), [@gotjosh](https://github.com/gotjosh)
+
+# 6.3.0-beta3 (2019-08-02)
+### Bug Fixes
+* **OAuth**: Fix "missing saved state" OAuth login failure due to SameSite cookie policy. [#18332](https://github.com/grafana/grafana/pull/18332), [@papagian](https://github.com/papagian)
+* **cli**: fix for recognizing when in dev mode.. [#18334](https://github.com/grafana/grafana/pull/18334), [@xlson](https://github.com/xlson)
+
 # 6.3.0-beta2 (2019-07-26)
 ### Features / Enhancements
 * **Build grafana images consistently**. [#18224](https://github.com/grafana/grafana/pull/18224), [@hassanfarid](https://github.com/hassanfarid)

@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { HistoryListCtrl } from './HistoryListCtrl';
 import { versions, compare, restore } from './__mocks__/history';
+// @ts-ignore
 import $q from 'q';
 
 describe('HistoryListCtrl', () => {
@@ -10,9 +11,9 @@ describe('HistoryListCtrl', () => {
 
   restore(7, RESTORE_ID);
 
-  let historySrv;
-  let $rootScope;
-  let historyListCtrl;
+  let historySrv: any;
+  let $rootScope: any;
+  let historyListCtrl: any;
   beforeEach(() => {
     historySrv = {
       calculateDiff: jest.fn(),
@@ -25,13 +26,13 @@ describe('HistoryListCtrl', () => {
   });
 
   describe('when the history list component is loaded', () => {
-    let deferred;
+    let deferred: any;
 
     beforeEach(() => {
       deferred = $q.defer({});
       historySrv.getHistoryList = jest.fn(() => deferred.promise);
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {}, $q, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, $q, historySrv, {});
 
       historyListCtrl.dashboard = {
         id: 2,
@@ -89,7 +90,7 @@ describe('HistoryListCtrl', () => {
 
         historySrv.getHistoryList = jest.fn(() => deferred.promise);
 
-        historyListCtrl = new HistoryListCtrl({}, $rootScope, {}, $q, historySrv, {});
+        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, $q, historySrv, {});
 
         deferred.reject(new Error('HistoryListError'));
 
@@ -130,14 +131,14 @@ describe('HistoryListCtrl', () => {
   });
 
   describe('when the user wants to compare two revisions', () => {
-    let deferred;
+    let deferred: any;
 
     beforeEach(async () => {
       deferred = $q.defer({});
       historySrv.getHistoryList = jest.fn(() => $q.when(versionsResponse));
       historySrv.calculateDiff = jest.fn(() => deferred.promise);
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {}, $q, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, $q, historySrv, {});
 
       historyListCtrl.dashboard = {
         id: 2,
@@ -272,14 +273,14 @@ describe('HistoryListCtrl', () => {
   });
 
   describe('when the user wants to restore a revision', () => {
-    let deferred;
+    let deferred: any;
 
     beforeEach(async () => {
       deferred = $q.defer();
       historySrv.getHistoryList = jest.fn(() => $q.when(versionsResponse));
       historySrv.restoreDashboard = jest.fn(() => deferred.promise);
 
-      historyListCtrl = new HistoryListCtrl({}, $rootScope, {}, $q, historySrv, {});
+      historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, $q, historySrv, {});
 
       historyListCtrl.dashboard = {
         id: 1,
@@ -299,7 +300,7 @@ describe('HistoryListCtrl', () => {
         deferred = $q.defer();
         historySrv.getHistoryList = jest.fn(() => $q.when(versionsResponse));
         historySrv.restoreDashboard = jest.fn(() => deferred.promise);
-        historyListCtrl = new HistoryListCtrl({}, $rootScope, {}, $q, historySrv, {});
+        historyListCtrl = new HistoryListCtrl({}, $rootScope, {} as any, $q, historySrv, {});
         deferred.reject(new Error('RestoreError'));
         historyListCtrl.restoreConfirm(RESTORE_ID);
         await historyListCtrl.getLog();
