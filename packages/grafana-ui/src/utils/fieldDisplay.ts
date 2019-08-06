@@ -1,9 +1,18 @@
-import { ReducerID, reduceField, FieldType, NullValueMode, DataFrame, Field, DisplayValue } from '@grafana/data';
+import {
+  ReducerID,
+  reduceField,
+  FieldType,
+  NullValueMode,
+  DataFrame,
+  Field,
+  DisplayValue,
+  GraphSeriesValue,
+} from '@grafana/data';
 
 import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
 
-import { GrafanaTheme, InterpolateFunction, ScopedVars, GraphSeriesValue } from '../types/index';
+import { GrafanaTheme, InterpolateFunction, ScopedVars } from '../types/index';
 import { getDisplayProcessor } from './displayValue';
 import { getFlotPairs } from './flotPairs';
 

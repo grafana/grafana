@@ -1,4 +1,4 @@
-import { DisplayValue } from '@grafana/data';
+import { DisplayValue } from './displayValue';
 
 export type GraphSeriesValue = number | null;
 

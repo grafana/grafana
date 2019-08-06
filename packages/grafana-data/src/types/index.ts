@@ -8,3 +8,4 @@ export * from './threshold';
 export * from './utils';
 export * from './valueMapping';
 export * from './displayValue';
+export * from './graph';
