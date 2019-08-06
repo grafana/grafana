@@ -3,7 +3,7 @@ import omit from 'lodash/omit';
 
 import { VizOrientation, PanelModel } from '../../types/panel';
 import { FieldDisplayOptions } from '../../utils/fieldDisplay';
-import { Field, fieldReducers, Threshold, sortThresholds } from '@grafana/data';
+import { fieldReducers, Threshold, sortThresholds } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
   fieldOptions: FieldDisplayOptions;
@@ -25,54 +25,86 @@ export const sharedSingleStatOptionsCheck = (
   return options;
 };
 
-export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseOptions>) => {
+export function sharedSingleStatMigrationCheck(panel: PanelModel<SingleStatBaseOptions>) {
   if (!panel.options) {
     // This happens on the first load or when migrating from angular
     return {};
   }
 
-  // This migration aims to keep the most recent changes up-to-date
-  // Plugins should explicitly migrate for known version changes and only use this
-  // as a backup
-  const old = panel.options as any;
-  if (old.valueOptions) {
-    const { valueOptions } = old;
+  const previousVersion = parseFloat(panel.pluginVersion || '6.1');
+  let options = panel.options as any;
 
-    const fieldOptions = (old.fieldOptions = {} as FieldDisplayOptions);
+  if (previousVersion < 6.2) {
+    options = migrateFromValueOptions(options);
+  }
 
-    const field = (fieldOptions.defaults = {} as Field);
-    field.mappings = old.valueMappings;
-    field.thresholds = migrateOldThresholds(old.thresholds);
-    field.unit = valueOptions.unit;
-    field.decimals = valueOptions.decimals;
+  if (previousVersion < 6.3) {
+    options = moveThresholdsAndMappingsToField(options);
+  }
 
-    // Make sure the stats have a valid name
-    if (valueOptions.stat) {
-      const reducer = fieldReducers.get(valueOptions.stat);
-      if (reducer) {
-        fieldOptions.calcs = [reducer.id];
-      }
-    }
+  return options as SingleStatBaseOptions;
+}
 
-    field.min = old.minValue;
-    field.max = old.maxValue;
+export function moveThresholdsAndMappingsToField(old: any) {
+  const { fieldOptions } = old;
 
-    // remove old props
-    return omit(old, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
-  } else if (old.fieldOptions) {
-    // Move mappins & thresholds to field defautls (6.4+)
-    const { mappings, thresholds, ...fieldOptions } = old.fieldOptions;
-    fieldOptions.defaults = {
-      mappings,
-      thresholds: migrateOldThresholds(thresholds),
-      ...fieldOptions.defaults,
-    };
-    old.fieldOptions = fieldOptions;
+  if (!fieldOptions) {
     return old;
   }
 
-  return panel.options;
-};
+  const { mappings, thresholds, ...rest } = old.fieldOptions;
+
+  return {
+    ...old,
+    fieldOptions: {
+      ...rest,
+      defaults: {
+        ...fieldOptions.defaults,
+        mappings,
+        thresholds: migrateOldThresholds(thresholds),
+      },
+    },
+  };
+}
+
+/*
+ * Moves valueMappings and thresholds from root to new fieldOptions object
+ * Renames valueOptions to to defaults and moves it under fieldOptions
+ */
+export function migrateFromValueOptions(old: any) {
+  const { valueOptions } = old;
+  if (!valueOptions) {
+    return old;
+  }
+
+  const fieldOptions: any = {};
+  const fieldDefaults: any = {};
+
+  fieldOptions.mappings = old.valueMappings;
+  fieldOptions.thresholds = old.thresholds;
+  fieldOptions.defaults = fieldDefaults;
+
+  fieldDefaults.unit = valueOptions.unit;
+  fieldDefaults.decimals = valueOptions.decimals;
+
+  // Make sure the stats have a valid name
+  if (valueOptions.stat) {
+    const reducer = fieldReducers.get(valueOptions.stat);
+    if (reducer) {
+      fieldOptions.calcs = [reducer.id];
+    }
+  }
+
+  fieldDefaults.min = old.minValue;
+  fieldDefaults.max = old.maxValue;
+
+  const newOptions = {
+    ...old,
+    fieldOptions,
+  };
+
+  return omit(newOptions, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
+}
 
 export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefined {
   if (!thresholds || !thresholds.length) {

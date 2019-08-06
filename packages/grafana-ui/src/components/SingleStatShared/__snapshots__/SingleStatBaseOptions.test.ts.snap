@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`sharedSingleStatMigrationCheck from old valueOptions model without pluginVersion 1`] = `
+Object {
+  "fieldOptions": Object {
+    "calcs": Array [
+      "last",
+    ],
+    "defaults": Object {
+      "decimals": 5,
+      "mappings": Array [
+        Object {
+          "text": "OK",
+          "type": 1,
+          "value": "1",
+        },
+      ],
+      "max": 100,
+      "min": 10,
+      "thresholds": Array [
+        Object {
+          "color": "green",
+          "value": -Infinity,
+        },
+        Object {
+          "color": "orange",
+          "value": 40,
+        },
+        Object {
+          "color": "red",
+          "value": 80,
+        },
+      ],
+      "unit": "watt",
+    },
+  },
+}
+`;

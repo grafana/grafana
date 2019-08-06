@@ -9,5 +9,4 @@ export interface CloudWatchQuery extends DataQuery {
   statistics: string[];
   period: string;
   expression: string;
-  returnData: boolean;
 }
