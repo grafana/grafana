@@ -12,8 +12,6 @@ weight = 20
 
 This Data Source allows you to specify data source on a per query basis.
 
-See https://grafana.com/docs/guides/whats-new-in-v2-5/#mix-different-data-sources for more details.
-
 ## Usage
 
 To use the Mixed Data Source, create a new panel or edit an existing panel and navigate to the Queries tab. From the Query popup, select "-- Mixed --". Click "Add Query" and select the desired source.
