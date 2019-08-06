@@ -247,8 +247,6 @@ export class PanelModel {
   pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
 
-    this.applyPluginOptionDefaults(plugin);
-
     if (plugin.panel && plugin.onPanelMigration) {
       const version = getPluginVersion(plugin);
       if (version !== this.pluginVersion) {
@@ -256,6 +254,8 @@ export class PanelModel {
         this.pluginVersion = version;
       }
     }
+
+    this.applyPluginOptionDefaults(plugin);
   }
 
   changePlugin(newPlugin: PanelPlugin) {
