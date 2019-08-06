@@ -71,7 +71,7 @@ export class AlertTabCtrl {
     this.alertNotifications = [];
     this.alertHistory = [];
 
-    return this.backendSrv.get('/api/alert-notifications').then((res: any) => {
+    return this.backendSrv.get('/api/alert-notification-channels').then((res: any) => {
       this.notifications = res;
 
       this.initModel();

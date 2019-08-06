@@ -343,8 +343,9 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", Wrap(GetAlertStatesForDashboard))
 		})
 
-		apiRoute.Get("/alert-notifications", Wrap(GetAlertNotifications))
-		apiRoute.Get("/alert-notifiers", Wrap(GetAlertNotifiers))
+		apiRoute.Get("/alert-notification-channels", Wrap(GetAlertNotificationChannels))
+		apiRoute.Get("/alert-notifications", reqEditorRole, Wrap(GetAlertNotifications))
+		apiRoute.Get("/alert-notifiers", reqEditorRole, Wrap(GetAlertNotifiers))
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
 			alertNotifications.Post("/test", bind(dtos.NotificationTestCommand{}), Wrap(NotificationTest))

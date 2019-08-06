@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -186,20 +187,44 @@ func GetAlertNotifiers(c *m.ReqContext) Response {
 	return JSON(200, alerting.GetNotifiers())
 }
 
-func GetAlertNotifications(c *m.ReqContext) Response {
-	query := &m.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
+func GetAlertNotificationChannels(c *m.ReqContext) Response {
+	alertNotifications, err := getAlertNotificationsInternal(c)
+	if err != nil {
+		return Error(500, "Failed to get alert notifications", err)
+	}
 
-	if err := bus.Dispatch(query); err != nil {
+	result := make([]*dtos.AlertNotificationChannel, 0)
+
+	for _, notification := range alertNotifications {
+		result = append(result, dtos.NewAlertNotificationChannel(notification))
+	}
+
+	return JSON(200, result)
+}
+
+func GetAlertNotifications(c *m.ReqContext) Response {
+	alertNotifications, err := getAlertNotificationsInternal(c)
+	if err != nil {
 		return Error(500, "Failed to get alert notifications", err)
 	}
 
 	result := make([]*dtos.AlertNotification, 0)
 
-	for _, notification := range query.Result {
+	for _, notification := range alertNotifications {
 		result = append(result, dtos.NewAlertNotification(notification))
 	}
 
 	return JSON(200, result)
+}
+
+func getAlertNotificationsInternal(c *m.ReqContext) ([]*models.AlertNotification, error) {
+	query := &m.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
+
+	if err := bus.Dispatch(query); err != nil {
+		return nil, err
+	}
+
+	return query.Result, nil
 }
 
 func GetAlertNotificationByID(c *m.ReqContext) Response {

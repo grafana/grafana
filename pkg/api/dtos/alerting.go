@@ -77,6 +77,24 @@ type AlertNotification struct {
 	Settings              *simplejson.Json `json:"settings"`
 }
 
+func NewAlertNotificationChannel(notification *models.AlertNotification) *AlertNotificationChannel {
+	return &AlertNotificationChannel{
+		Id:        notification.Id,
+		Uid:       notification.Uid,
+		Name:      notification.Name,
+		Type:      notification.Type,
+		IsDefault: notification.IsDefault,
+	}
+}
+
+type AlertNotificationChannel struct {
+	Id        int64  `json:"id"`
+	Uid       string `json:"uid"`
+	Name      string `json:"name"`
+	Type      string `json:"type"`
+	IsDefault bool   `json:"isDefault"`
+}
+
 type AlertTestCommand struct {
 	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
 	PanelId   int64            `json:"panelId" binding:"Required"`
