@@ -7,14 +7,13 @@ import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 import Typeahead from './typeahead';
 import { getKeybindingSrv, KeybindingSrv } from 'app/core/services/keybindingSrv';
 
-import { Block, Document, Text, Value } from 'slate';
-// @ts-ignore
-import { Editor } from 'slate-react';
-// @ts-ignore
+import { Block, Document, Text, Value, Editor as CoreEditor } from 'slate';
+import { Editor } from '@grafana/slate-react';
 import Plain from 'slate-plain-serializer';
 import ReactDOM from 'react-dom';
 import React from 'react';
 import _ from 'lodash';
+import { CompletionItem } from 'app/types';
 
 function flattenSuggestions(s: any) {
   return s ? s.reduce((acc: any, g: any) => acc.concat(g.items), []) : [];
@@ -98,7 +97,7 @@ class QueryField extends React.Component<any, any> {
     this.updateMenu();
   }
 
-  onChange = ({ value }: any) => {
+  onChange = ({ value }: { value: Value }) => {
     const changed = value.document !== this.state.value.document;
     this.setState({ value }, () => {
       if (changed) {
@@ -124,14 +123,15 @@ class QueryField extends React.Component<any, any> {
     }
   };
 
-  onKeyDown = (event: any, change: any) => {
+  onKeyDown = (event: Event, editor: CoreEditor, next: Function) => {
     const { typeaheadIndex, suggestions } = this.state;
+    const keyboardEvent = event as KeyboardEvent;
 
-    switch (event.key) {
+    switch (keyboardEvent.key) {
       case 'Escape': {
         if (this.menuEl) {
-          event.preventDefault();
-          event.stopPropagation();
+          keyboardEvent.preventDefault();
+          keyboardEvent.stopPropagation();
           this.resetTypeahead();
           return true;
         }
@@ -139,8 +139,8 @@ class QueryField extends React.Component<any, any> {
       }
 
       case ' ': {
-        if (event.ctrlKey) {
-          event.preventDefault();
+        if (keyboardEvent.ctrlKey) {
+          keyboardEvent.preventDefault();
           this.onTypeahead(true);
           return true;
         }
@@ -151,18 +151,12 @@ class QueryField extends React.Component<any, any> {
       case 'Enter': {
         if (this.menuEl) {
           // Dont blur input
-          event.preventDefault();
+          keyboardEvent.preventDefault();
           if (!suggestions || suggestions.length === 0) {
-            return undefined;
+            return next();
           }
 
-          // Get the currently selected suggestion
-          const flattenedSuggestions = flattenSuggestions(suggestions);
-          const selected = Math.abs(typeaheadIndex);
-          const selectedIndex = selected % flattenedSuggestions.length || 0;
-          const suggestion = flattenedSuggestions[selectedIndex];
-
-          this.applyTypeahead(change, suggestion);
+          this.applyTypeahead();
           return true;
         }
         break;
@@ -171,7 +165,7 @@ class QueryField extends React.Component<any, any> {
       case 'ArrowDown': {
         if (this.menuEl) {
           // Select next suggestion
-          event.preventDefault();
+          keyboardEvent.preventDefault();
           this.setState({ typeaheadIndex: typeaheadIndex + 1 });
         }
         break;
@@ -180,7 +174,7 @@ class QueryField extends React.Component<any, any> {
       case 'ArrowUp': {
         if (this.menuEl) {
           // Select previous suggestion
-          event.preventDefault();
+          keyboardEvent.preventDefault();
           this.setState({ typeaheadIndex: Math.max(0, typeaheadIndex - 1) });
         }
         break;
@@ -191,16 +185,16 @@ class QueryField extends React.Component<any, any> {
         break;
       }
     }
-    return undefined;
+    return next();
   };
 
-  onTypeahead = (change?: boolean, item?: any) => {
-    return change || this.state.value.change();
+  onTypeahead = (change = false, item?: any): boolean | void => {
+    return change;
   };
 
-  applyTypeahead(change?: boolean, suggestion?: any): { value: object } {
-    return { value: {} };
-  }
+  applyTypeahead = (editor?: CoreEditor, suggestion?: CompletionItem): { value: Value } => {
+    return { value: new Value() };
+  };
 
   resetTypeahead = () => {
     this.setState({
@@ -245,15 +239,8 @@ class QueryField extends React.Component<any, any> {
       return;
     }
 
-    // Get the currently selected suggestion
-    const flattenedSuggestions = flattenSuggestions(suggestions);
-    const suggestion: any = _.find(
-      flattenedSuggestions,
-      suggestion => suggestion.display === item || suggestion.text === item
-    );
-
     // Manually triggering change
-    const change = this.applyTypeahead(this.state.value.change(), suggestion);
+    const change = this.applyTypeahead();
     this.onChange(change);
   };
 
