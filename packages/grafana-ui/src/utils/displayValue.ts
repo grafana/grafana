@@ -1,13 +1,22 @@
 // Libraries
 import _ from 'lodash';
+import {
+  DateTime,
+  dateTime,
+  Threshold,
+  getMappedValue,
+  Field,
+  DecimalInfo,
+  DisplayValue,
+  DecimalCount,
+} from '@grafana/data';
 
 // Utils
 import { getValueFormat } from './valueFormats/valueFormats';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import { DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType, DecimalCount } from '../types';
-import { DateTime, dateTime, Threshold, getMappedValue, Field } from '@grafana/data';
+import { GrafanaTheme, GrafanaThemeType } from '../types';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
