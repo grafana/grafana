@@ -2,12 +2,13 @@
 import React, { PureComponent, ReactNode, CSSProperties } from 'react';
 import $ from 'jquery';
 import { css } from 'emotion';
+import { DisplayValue } from '@grafana/data';
 
 // Utils
 import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
-import { Themeable, DisplayValue } from '../../types';
+import { Themeable } from '../../types';
 
 export interface BigValueSparkline {
   data: any[][]; // [[number,number]]

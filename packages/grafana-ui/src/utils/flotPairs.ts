@@ -1,6 +1,5 @@
 // Types
-import { GraphSeriesValue } from '../types/index';
-import { NullValueMode, DataFrame } from '@grafana/data';
+import { NullValueMode, DataFrame, GraphSeriesValue } from '@grafana/data';
 
 export interface FlotPairsOptions {
   series: DataFrame;

@@ -14,6 +14,7 @@ import { DashboardModel } from '../dashboard/state/DashboardModel';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { AnnotationEvent } from '@grafana/data';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -150,17 +151,17 @@ export class AnnotationsSrv {
     return this.globalAnnotationsPromise;
   }
 
-  saveAnnotationEvent(annotation: any) {
+  saveAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     return this.backendSrv.post('/api/annotations', annotation);
   }
 
-  updateAnnotationEvent(annotation: { id: any }) {
+  updateAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     return this.backendSrv.put(`/api/annotations/${annotation.id}`, annotation);
   }
 
-  deleteAnnotationEvent(annotation: { id: any; isRegion: any; regionId: any }) {
+  deleteAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     let deleteUrl = `/api/annotations/${annotation.id}`;
     if (annotation.isRegion) {

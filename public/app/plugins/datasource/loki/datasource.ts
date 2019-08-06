@@ -357,7 +357,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   testDatasource() {
-    return this._request('/api/prom/label')
+    // Consider only last 10 minutes otherwise request takes too long
+    const startMs = Date.now() - 10 * 60 * 1000;
+    const start = `${startMs}000000`; // API expects nanoseconds
+    return this._request('/api/prom/label', { start })
       .then((res: DataQueryResponse) => {
         if (res && res.data && res.data.values && res.data.values.length > 0) {
           return { status: 'success', message: 'Data source connected and labels found.' };

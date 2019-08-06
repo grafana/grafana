@@ -146,7 +146,7 @@ func TestPublicAPI(t *testing.T) {
 		})
 	})
 
-	Convey("AuthAdmin()", t, func() {
+	Convey("AdminBind()", t, func() {
 		Convey("Should use admin DN and password", func() {
 			connection := &MockConnection{}
 			var actualUsername, actualPassword string
@@ -166,7 +166,7 @@ func TestPublicAPI(t *testing.T) {
 				},
 			}
 
-			err := server.AuthAdmin()
+			err := server.AdminBind()
 
 			So(err, ShouldBeNil)
 			So(actualUsername, ShouldEqual, dn)
@@ -193,7 +193,7 @@ func TestPublicAPI(t *testing.T) {
 				log: log.New("test-logger"),
 			}
 
-			err := server.AuthAdmin()
+			err := server.AdminBind()
 			So(err, ShouldEqual, expected)
 		})
 	})

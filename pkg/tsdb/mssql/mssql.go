@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"net/url"
 	"strconv"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -21,10 +22,7 @@ func init() {
 func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mssql")
 
-	cnnstr, err := generateConnectionString(datasource)
-	if err != nil {
-		return nil, err
-	}
+	cnnstr := generateConnectionString(datasource)
 	if setting.Env == setting.DEV {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
@@ -43,21 +41,21 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
 }
 
-func generateConnectionString(datasource *models.DataSource) (string, error) {
+func generateConnectionString(datasource *models.DataSource) string {
 	server, port := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
-
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
-	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
-		server,
-		port,
-		datasource.Database,
-		datasource.User,
-		datasource.DecryptedPassword(),
-	)
-	if encrypt != "false" {
-		connStr += fmt.Sprintf("encrypt=%s;", encrypt)
+
+	query := url.Values{}
+	query.Add("database", datasource.Database)
+	query.Add("encrypt", encrypt)
+
+	u := &url.URL{
+		Scheme:   "sqlserver",
+		User:     url.UserPassword(datasource.User, datasource.DecryptedPassword()),
+		Host:     fmt.Sprintf("%s:%s", server, port),
+		RawQuery: query.Encode(),
 	}
-	return connStr, nil
+	return u.String()
 }
 
 type mssqlRowTransformer struct {

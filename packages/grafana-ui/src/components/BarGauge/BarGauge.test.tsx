@@ -1,5 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
+import { DisplayValue } from '@grafana/data';
 import {
   BarGauge,
   Props,
@@ -9,7 +10,7 @@ import {
   getTitleStyles,
   getValuePercent,
 } from './BarGauge';
-import { VizOrientation, DisplayValue } from '../../types';
+import { VizOrientation } from '../../types';
 import { getTheme } from '../../themes';
 
 // jest.mock('jquery', () => ({

@@ -40,18 +40,7 @@ describe('BarGauge Panel Migrations', () => {
         orientation: 'vertical',
       },
       pluginVersion: '6.2.0',
-      targets: [
-        {
-          refId: 'A',
-          scenarioId: 'random_walk',
-        },
-        {
-          refId: 'B',
-          scenarioId: 'random_walk',
-        },
-      ],
-      timeFrom: null,
-      timeShift: null,
+      targets: [],
       title: 'Usage',
       type: 'bargauge',
     } as PanelModel;

@@ -5,11 +5,12 @@ import { AbsoluteTimeRange, RawTimeRange } from '@grafana/data';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
 import { updateTimeRangeAction, UpdateTimeRangePayload, changeRangeAction } from '../actionTypes';
+import { EpicDependencies } from 'app/store/configureStore';
 
-export const timeEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (
+export const timeEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDependencies> = (
   action$,
   state$,
-  { getTimeSrv, getTimeRange, getTimeZone, toUtc, dateTime }
+  { getTimeSrv, getTimeRange, getTimeZone, dateTimeForTimeZone }
 ) => {
   return action$.ofType(updateTimeRangeAction.type).pipe(
     map((action: ActionOf<UpdateTimeRangePayload>) => {
@@ -21,8 +22,8 @@ export const timeEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (
 
       if (absRange) {
         rawRange = {
-          from: timeZone.isUtc ? toUtc(absRange.from) : dateTime(absRange.from),
-          to: timeZone.isUtc ? toUtc(absRange.to) : dateTime(absRange.to),
+          from: dateTimeForTimeZone(timeZone, absRange.from),
+          to: dateTimeForTimeZone(timeZone, absRange.to),
         };
       }
 
@@ -36,7 +37,7 @@ export const timeEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState> = (
       getTimeSrv().init({
         time: range.raw,
         refresh: false,
-        getTimezone: () => timeZone.raw,
+        getTimezone: () => timeZone,
         timeRangeUpdated: (): any => undefined,
       });
 
