@@ -1,6 +1,5 @@
 // Types
-import { GraphSeriesValue } from '../types/index';
-import { NullValueMode, Field } from '@grafana/data';
+import { NullValueMode, GraphSeriesValue, Field } from '@grafana/data';
 
 export interface FlotPairsOptions {
   xField: Field;

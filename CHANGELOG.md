@@ -1,5 +1,12 @@
 # 6.4.0 (unreleased)
 
+# 6.3.0 (2019-08-06)
+### Features / Enhancements
+* **OAuth**: Do not set SameSite OAuth cookie if cookie_samesite is None. [#18392](https://github.com/grafana/grafana/pull/18392), [@papagian](https://github.com/papagian)
+
+### Bug Fixes
+* **PanelLinks**: Fix render issue when there is no panel description. [#18408](https://github.com/grafana/grafana/pull/18408), [@dehrax](https://github.com/dehrax)
+
 # 6.3.0-beta4 (2019-08-02)
 ### Features / Enhancements
 * **Auth Proxy**: Include additional headers as part of the cache key. [#18298](https://github.com/grafana/grafana/pull/18298), [@gotjosh](https://github.com/gotjosh)

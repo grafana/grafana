@@ -85,7 +85,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
     return (field.calcs = calcs);
   }
 
-  const {nullValueMode} = field.config;
+  const { nullValueMode } = field.config;
   const ignoreNulls = nullValueMode === NullValueMode.Ignore;
   const nullAsZero = nullValueMode === NullValueMode.AsZero;
 
@@ -128,7 +128,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     name: 'Last (not null)',
     description: 'Last non-null value',
     standard: true,
-    alias: 'current',
+    aliasIds: ['current'],
     reduce: calculateLastNotNull,
   },
   {
@@ -148,14 +148,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
   },
   { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true },
   { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
-  { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
+  { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
   {
     id: ReducerID.sum,
     name: 'Total',
     description: 'The sum of all values',
     emptyInputResult: 0,
     standard: true,
-    alias: 'total',
+    aliasIds: ['total'],
   },
   {
     id: ReducerID.count,

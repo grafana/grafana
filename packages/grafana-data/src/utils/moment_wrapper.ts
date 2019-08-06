@@ -1,3 +1,4 @@
+import { TimeZone } from '../types/time';
 /* tslint:disable:import-blacklist ban ban-types */
 import moment, { MomentInput, DurationInputArg1 } from 'moment';
 
@@ -95,4 +96,16 @@ export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTime
 
 export const dateTime = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
   return moment(input as MomentInput, formatInput) as DateTime;
+};
+
+export const dateTimeForTimeZone = (
+  timezone?: TimeZone,
+  input?: DateTimeInput,
+  formatInput?: FormatInput
+): DateTime => {
+  if (timezone === 'utc') {
+    return toUtc(input, formatInput);
+  }
+
+  return dateTime(input, formatInput);
 };
