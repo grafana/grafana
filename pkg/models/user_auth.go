@@ -61,6 +61,11 @@ type UpdateAuthInfoCommand struct {
 	OAuthToken *oauth2.Token
 }
 
+type SyncOrgRolesCommand struct {
+	User    *User
+	ExtUser *ExternalUserInfo
+}
+
 type DeleteAuthInfoCommand struct {
 	UserAuth *UserAuth
 }

@@ -54,7 +54,7 @@ type SqlStore struct {
 	Bus          bus.Bus                  `inject:""`
 	CacheService *localcache.CacheService `inject:""`
 
-	dbCfg           DatabaseConfig
+	DBCfg           DatabaseConfig
 	engine          *xorm.Engine
 	log             log.Logger
 	Dialect         migrator.Dialect
@@ -140,12 +140,12 @@ func (ss *SqlStore) ensureAdminUser() error {
 }
 
 func (ss *SqlStore) buildExtraConnectionString(sep rune) string {
-	if ss.dbCfg.UrlQueryParams == nil {
+	if ss.DBCfg.UrlQueryParams == nil {
 		return ""
 	}
 
 	var sb strings.Builder
-	for key, values := range ss.dbCfg.UrlQueryParams {
+	for key, values := range ss.DBCfg.UrlQueryParams {
 		for _, value := range values {
 			sb.WriteRune(sep)
 			sb.WriteString(key)
@@ -156,26 +156,26 @@ func (ss *SqlStore) buildExtraConnectionString(sep rune) string {
 	return sb.String()
 }
 
-func (ss *SqlStore) buildConnectionString() (string, error) {
-	cnnstr := ss.dbCfg.ConnectionString
+func (ss *SqlStore) BuildConnectionString() (string, error) {
+	cnnstr := ss.DBCfg.ConnectionString
 
 	// special case used by integration tests
 	if cnnstr != "" {
 		return cnnstr, nil
 	}
 
-	switch ss.dbCfg.Type {
+	switch ss.DBCfg.Type {
 	case migrator.MYSQL:
 		protocol := "tcp"
-		if strings.HasPrefix(ss.dbCfg.Host, "/") {
+		if strings.HasPrefix(ss.DBCfg.Host, "/") {
 			protocol = "unix"
 		}
 
 		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
-			ss.dbCfg.User, ss.dbCfg.Pwd, protocol, ss.dbCfg.Host, ss.dbCfg.Name)
+			ss.DBCfg.User, ss.DBCfg.Pwd, protocol, ss.DBCfg.Host, ss.DBCfg.Name)
 
-		if ss.dbCfg.SslMode == "true" || ss.dbCfg.SslMode == "skip-verify" {
-			tlsCert, err := makeCert(ss.dbCfg)
+		if ss.DBCfg.SslMode == "true" || ss.DBCfg.SslMode == "skip-verify" {
+			tlsCert, err := makeCert(ss.DBCfg)
 			if err != nil {
 				return "", err
 			}
@@ -185,47 +185,47 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 
 		cnnstr += ss.buildExtraConnectionString('&')
 	case migrator.POSTGRES:
-		host, port := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
-		if ss.dbCfg.Pwd == "" {
-			ss.dbCfg.Pwd = "''"
+		host, port := util.SplitHostPortDefault(ss.DBCfg.Host, "127.0.0.1", "5432")
+		if ss.DBCfg.Pwd == "" {
+			ss.DBCfg.Pwd = "''"
 		}
-		if ss.dbCfg.User == "" {
-			ss.dbCfg.User = "''"
+		if ss.DBCfg.User == "" {
+			ss.DBCfg.User = "''"
 		}
-		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", ss.dbCfg.User, ss.dbCfg.Pwd, host, port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath, ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
+		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", ss.DBCfg.User, ss.DBCfg.Pwd, host, port, ss.DBCfg.Name, ss.DBCfg.SslMode, ss.DBCfg.ClientCertPath, ss.DBCfg.ClientKeyPath, ss.DBCfg.CaCertPath)
 
 		cnnstr += ss.buildExtraConnectionString(' ')
 	case migrator.SQLITE:
 		// special case for tests
-		if !filepath.IsAbs(ss.dbCfg.Path) {
-			ss.dbCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.dbCfg.Path)
+		if !filepath.IsAbs(ss.DBCfg.Path) {
+			ss.DBCfg.Path = filepath.Join(ss.Cfg.DataPath, ss.DBCfg.Path)
 		}
-		os.MkdirAll(path.Dir(ss.dbCfg.Path), os.ModePerm)
-		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
+		os.MkdirAll(path.Dir(ss.DBCfg.Path), os.ModePerm)
+		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.DBCfg.Path, ss.DBCfg.CacheMode)
 		cnnstr += ss.buildExtraConnectionString('&')
 	default:
-		return "", fmt.Errorf("Unknown database type: %s", ss.dbCfg.Type)
+		return "", fmt.Errorf("Unknown database type: %s", ss.DBCfg.Type)
 	}
 
 	return cnnstr, nil
 }
 
 func (ss *SqlStore) getEngine() (*xorm.Engine, error) {
-	connectionString, err := ss.buildConnectionString()
+	connectionString, err := ss.BuildConnectionString()
 
 	if err != nil {
 		return nil, err
 	}
 
-	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
-	engine, err := xorm.NewEngine(ss.dbCfg.Type, connectionString)
+	sqlog.Info("Connecting to DB", "dbtype", ss.DBCfg.Type)
+	engine, err := xorm.NewEngine(ss.DBCfg.Type, connectionString)
 	if err != nil {
 		return nil, err
 	}
 
-	engine.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
-	engine.SetMaxIdleConns(ss.dbCfg.MaxIdleConn)
-	engine.SetConnMaxLifetime(time.Second * time.Duration(ss.dbCfg.ConnMaxLifetime))
+	engine.SetMaxOpenConns(ss.DBCfg.MaxOpenConn)
+	engine.SetMaxIdleConns(ss.DBCfg.MaxIdleConn)
+	engine.SetConnMaxLifetime(time.Second * time.Duration(ss.DBCfg.ConnMaxLifetime))
 
 	// configure sql logging
 	debugSql := ss.Cfg.Raw.Section("database").Key("log_queries").MustBool(false)
@@ -246,42 +246,43 @@ func (ss *SqlStore) readConfig() {
 	cfgURL := sec.Key("url").String()
 	if len(cfgURL) != 0 {
 		dbURL, _ := url.Parse(cfgURL)
-		ss.dbCfg.Type = dbURL.Scheme
-		ss.dbCfg.Host = dbURL.Host
+		ss.DBCfg.Type = dbURL.Scheme
+		ss.DBCfg.Host = dbURL.Host
 
 		pathSplit := strings.Split(dbURL.Path, "/")
 		if len(pathSplit) > 1 {
-			ss.dbCfg.Name = pathSplit[1]
+			ss.DBCfg.Name = pathSplit[1]
 		}
 
 		userInfo := dbURL.User
 		if userInfo != nil {
-			ss.dbCfg.User = userInfo.Username()
-			ss.dbCfg.Pwd, _ = userInfo.Password()
+			ss.DBCfg.User = userInfo.Username()
+			ss.DBCfg.Pwd, _ = userInfo.Password()
 		}
 
-		ss.dbCfg.UrlQueryParams = dbURL.Query()
+		ss.DBCfg.UrlQueryParams = dbURL.Query()
 	} else {
-		ss.dbCfg.Type = sec.Key("type").String()
-		ss.dbCfg.Host = sec.Key("host").String()
-		ss.dbCfg.Name = sec.Key("name").String()
-		ss.dbCfg.User = sec.Key("user").String()
-		ss.dbCfg.ConnectionString = sec.Key("connection_string").String()
-		ss.dbCfg.Pwd = sec.Key("password").String()
+		ss.DBCfg.Type = sec.Key("type").String()
+		ss.DBCfg.Host = sec.Key("host").String()
+		ss.DBCfg.Name = sec.Key("name").String()
+		ss.DBCfg.User = sec.Key("user").String()
+		ss.DBCfg.ConnectionString = sec.Key("connection_string").String()
+		ss.DBCfg.Pwd = sec.Key("password").String()
 	}
 
-	ss.dbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
-	ss.dbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(2)
-	ss.dbCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
+	ss.DBCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
+	ss.DBCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(2)
+	ss.DBCfg.ConnMaxLifetime = sec.Key("conn_max_lifetime").MustInt(14400)
 
-	ss.dbCfg.SslMode = sec.Key("ssl_mode").String()
-	ss.dbCfg.CaCertPath = sec.Key("ca_cert_path").String()
-	ss.dbCfg.ClientKeyPath = sec.Key("client_key_path").String()
-	ss.dbCfg.ClientCertPath = sec.Key("client_cert_path").String()
-	ss.dbCfg.ServerCertName = sec.Key("server_cert_name").String()
-	ss.dbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+	ss.DBCfg.SslMode = sec.Key("ssl_mode").String()
+	ss.DBCfg.CaCertPath = sec.Key("ca_cert_path").String()
+	ss.DBCfg.ClientKeyPath = sec.Key("client_key_path").String()
+	ss.DBCfg.ClientCertPath = sec.Key("client_cert_path").String()
+	ss.DBCfg.ServerCertName = sec.Key("server_cert_name").String()
+	ss.DBCfg.Path = sec.Key("path").MustString("data/grafana.db")
+	ss.DBCfg.Logs = sec.Key("log_queries").MustBool(false)
 
-	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
+	ss.DBCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 }
 
 // Interface of arguments for testing db
@@ -378,4 +379,5 @@ type DatabaseConfig struct {
 	ConnMaxLifetime  int
 	CacheMode        string
 	UrlQueryParams   map[string][]string
+	Logs             bool
 }
