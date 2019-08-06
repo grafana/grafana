@@ -2,18 +2,23 @@
 import React from 'react';
 // @ts-ignore
 import Cascader from 'rc-cascader';
-// @ts-ignore
-import PluginPrism from 'slate-prism';
+
+import { SlatePrism } from '@grafana/ui';
+
 // Components
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 // Utils & Services
 // dom also includes Element polyfills
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
+import { Plugin, Node } from 'slate';
+
 // Types
 import { LokiQuery } from '../types';
-import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
+import { TypeaheadOutput } from 'app/types/explore';
 import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus, DOMUtil } from '@grafana/ui';
 import { AbsoluteTimeRange } from '@grafana/data';
+import { Grammar } from 'prismjs';
+import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DataSourceStatus) {
   if (datasourceStatus === DataSourceStatus.Disconnected) {
@@ -63,17 +68,17 @@ export interface CascaderOption {
 }
 
 export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<DataSourceApi<LokiQuery>, LokiQuery> {
-  history: HistoryItem[];
-  syntax: any;
+  history: LokiHistoryItem[];
+  syntax: Grammar;
   logLabelOptions: any[];
-  syntaxLoaded: any;
+  syntaxLoaded: boolean;
   absoluteRange: AbsoluteTimeRange;
   onLoadOptions: (selectedOptions: CascaderOption[]) => void;
   onLabelsRefresh?: () => void;
 }
 
 export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormProps> {
-  plugins: any[];
+  plugins: Plugin[];
   modifiedSearch: string;
   modifiedQuery: string;
 
@@ -82,9 +87,9 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
     this.plugins = [
       BracesPlugin(),
-      PluginPrism({
-        onlyIn: (node: any) => node.type === 'code_block',
-        getSyntax: (node: any) => 'promql',
+      SlatePrism({
+        onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
+        getSyntax: (node: Node) => 'promql',
       }),
     ];
   }
@@ -115,27 +120,23 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     }
   };
 
-  onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
+  onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     const { datasource } = this.props;
+
     if (!datasource.languageProvider) {
       return { suggestions: [] };
     }
 
+    const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const { history, absoluteRange } = this.props;
-    const { prefix, text, value, wrapperNode } = typeahead;
+    const { prefix, text, value, wrapperClasses, labelKey } = typeahead;
 
-    // Get DOM-dependent context
-    const wrapperClasses = Array.from(wrapperNode.classList);
-    const labelKeyNode = DOMUtil.getPreviousCousin(wrapperNode, '.attr-name');
-    const labelKey = labelKeyNode && labelKeyNode.textContent;
-    const nextChar = DOMUtil.getNextCharacter();
-
-    const result = datasource.languageProvider.provideCompletionItems(
+    const result = await lokiLanguageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey },
       { history, absoluteRange }
     );
 
-    console.log('handleTypeahead', wrapperClasses, text, prefix, nextChar, labelKey, result.context);
+    //console.log('handleTypeahead', wrapperClasses, text, prefix, nextChar, labelKey, result.context);
 
     return result;
   };
@@ -151,7 +152,8 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
       datasource,
       datasourceStatus,
     } = this.props;
-    const cleanText = datasource.languageProvider ? datasource.languageProvider.cleanText : undefined;
+    const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
+    const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
     const chooserText = getChooserText(syntaxLoaded, hasLogLabels, datasourceStatus);
     const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;

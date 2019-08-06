@@ -1,6 +1,8 @@
+import { Editor as SlateEditor } from 'slate';
+
 export default function RunnerPlugin({ handler }: any) {
   return {
-    onKeyDown(event: any) {
+    onKeyDown(event: KeyboardEvent, editor: SlateEditor, next: Function) {
       // Handle enter
       if (handler && event.key === 'Enter' && !event.shiftKey) {
         // Submit on Enter
@@ -8,7 +10,8 @@ export default function RunnerPlugin({ handler }: any) {
         handler(event);
         return true;
       }
-      return undefined;
+
+      return next();
     },
   };
 }

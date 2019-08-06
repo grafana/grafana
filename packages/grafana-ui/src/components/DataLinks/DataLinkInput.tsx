@@ -1,19 +1,16 @@
 import React, { useState, useMemo, useCallback, useContext } from 'react';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
-import { makeValue, ThemeContext, DataLinkBuiltInVars } from '../../index';
+import { makeValue, ThemeContext, DataLinkBuiltInVars, SCHEMA } from '../../index';
 import { SelectionReference } from './SelectionReference';
 import { Portal } from '../index';
-// @ts-ignore
-import { Editor } from 'slate-react';
-// @ts-ignore
-import { Value, Change, Document } from 'slate';
-// @ts-ignore
+import { Editor } from '@grafana/slate-react';
+import { Value, Editor as CoreEditor } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
 import useDebounce from 'react-use/lib/useDebounce';
 import { css, cx } from 'emotion';
-// @ts-ignore
-import PluginPrism from 'slate-prism';
+
+import { SlatePrism } from '../../slate-plugins';
 
 interface DataLinkInputProps {
   value: string;
@@ -22,7 +19,7 @@ interface DataLinkInputProps {
 }
 
 const plugins = [
-  PluginPrism({
+  SlatePrism({
     onlyIn: (node: any) => node.type === 'code_block',
     getSyntax: () => 'links',
   }),
@@ -79,27 +76,28 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
 
   useDebounce(updateUsedSuggestions, 250, [linkUrl]);
 
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Backspace' || event.key === 'Escape') {
+  const onKeyDown = (event: Event, editor: CoreEditor, next: Function) => {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key === 'Backspace') {
       setShowingSuggestions(false);
       setSuggestionsIndex(0);
     }
 
-    if (event.key === 'Enter') {
+    if (keyboardEvent.key === 'Enter') {
       if (showingSuggestions) {
         onVariableSelect(currentSuggestions[suggestionsIndex]);
       }
     }
 
     if (showingSuggestions) {
-      if (event.key === 'ArrowDown') {
-        event.preventDefault();
+      if (keyboardEvent.key === 'ArrowDown') {
+        keyboardEvent.preventDefault();
         setSuggestionsIndex(index => {
           return (index + 1) % currentSuggestions.length;
         });
       }
-      if (event.key === 'ArrowUp') {
-        event.preventDefault();
+      if (keyboardEvent.key === 'ArrowUp') {
+        keyboardEvent.preventDefault();
         setSuggestionsIndex(index => {
           const nextIndex = index - 1 < 0 ? currentSuggestions.length - 1 : (index - 1) % currentSuggestions.length;
           return nextIndex;
@@ -107,21 +105,24 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
       }
     }
 
-    if (event.key === '?' || event.key === '&' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
+    if (
+      keyboardEvent.key === '?' ||
+      keyboardEvent.key === '&' ||
+      keyboardEvent.key === '$' ||
+      (keyboardEvent.keyCode === 32 && keyboardEvent.ctrlKey)
+    ) {
       setShowingSuggestions(true);
     }
 
-    if (event.key === 'Enter' && showingSuggestions) {
-      // Preventing entering a new line
-      // As of https://github.com/ianstormtaylor/slate/issues/1345#issuecomment-340508289
-      return false;
+    if (keyboardEvent.key === 'Backspace') {
+      return next();
     } else {
       // @ts-ignore
       return;
     }
   };
 
-  const onUrlChange = ({ value }: Change) => {
+  const onUrlChange = ({ value }: { value: Value }) => {
     setLinkUrl(value);
   };
 
@@ -186,6 +187,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
           </Portal>
         )}
         <Editor
+          schema={SCHEMA}
           placeholder="http://your-grafana.com/d/000000010/annotations"
           value={linkUrl}
           onChange={onUrlChange}
