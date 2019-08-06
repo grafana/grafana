@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { select, pie, arc, event } from 'd3';
-import { sum } from 'lodash';
+import sum from 'lodash/sum';
 
 import { GrafanaThemeType, DisplayValue } from '../../types';
 import { Themeable } from '../../index';

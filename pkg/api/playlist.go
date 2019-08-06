@@ -1,8 +1,10 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/bus"
-	_ "github.com/grafana/grafana/pkg/log"
+	_ "github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -33,7 +35,7 @@ func ValidateOrgPlaylist(c *m.ReqContext) {
 		return
 	}
 
-	if len(items) == 0 && c.Context.Req.Method != "DELETE" {
+	if len(items) == 0 && c.Context.Req.Method != http.MethodDelete {
 		c.JsonApiErr(404, "Playlist is empty", itemsErr)
 		return
 	}

@@ -5,7 +5,6 @@
 .gf-table-input-csv textarea {
   height: 100%;
   width: 100%;
-  resize: none;
 }
 
 .gf-table-input-csv footer {
@@ -13,8 +12,7 @@
   bottom: 15px;
   right: 15px;
   border: 1px solid #222;
-  background: #ccc;
+  background: $online;
   padding: 1px 4px;
   font-size: 80%;
-  cursor: pointer;
 }

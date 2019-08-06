@@ -23,9 +23,6 @@ module.exports = ({config, mode}) => {
         loader: 'css-loader',
         options: {
           importLoaders: 2,
-          // url: false,
-          // sourceMap: false,
-          // minimize: false,
         },
       },
       {

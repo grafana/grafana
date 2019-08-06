@@ -42,6 +42,20 @@ func FloatFromPtr(f *float64) Float {
 	return NewFloat(*f, true)
 }
 
+// FloatFromString creates a new Float from string f.
+// If the string is equal to the value of nullString then the Float will be null.
+// An empty string f will return an error.
+func FloatFromString(f string, nullString string) (Float, error) {
+	if f == nullString {
+		return FloatFromPtr(nil), nil
+	}
+	fV, err := strconv.ParseFloat(f, 64)
+	if err != nil {
+		return Float{}, err
+	}
+	return FloatFrom(fV), nil
+}
+
 // UnmarshalJSON implements json.Unmarshaler.
 // It supports number and null input.
 // 0 will not be considered a null Float.

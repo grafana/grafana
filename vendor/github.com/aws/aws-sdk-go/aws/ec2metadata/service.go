@@ -92,6 +92,9 @@ func NewClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 		svc.Handlers.Send.SwapNamed(request.NamedHandler{
 			Name: corehandlers.SendHandler.Name,
 			Fn: func(r *request.Request) {
+				r.HTTPResponse = &http.Response{
+					Header: http.Header{},
+				}
 				r.Error = awserr.New(
 					request.CanceledErrorCode,
 					"EC2 IMDS access disabled via "+disableServiceEnvVar+" env var",

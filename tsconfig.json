@@ -22,7 +22,7 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noImplicitUseStrict": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "downlevelIteration": true,
     "noUnusedLocals": true,
     "baseUrl": "public",
@@ -32,7 +32,14 @@
       "app": ["app"],
       "sass": ["sass"]
     },
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "preserveSymlinks": true
   },
-  "include": ["public/app/**/*.ts", "public/app/**/*.tsx", "public/test/**/*.ts", "public/vendor/**/*.ts"]
+  "include": [
+    "public/app/**/*.ts",
+    "public/app/**/*.tsx",
+    "public/test/**/*.ts",
+    "public/vendor/**/*.ts",
+    "public/e2e-test/**/*.ts"
+  ]
 }

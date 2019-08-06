@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -16,7 +16,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				json := `{ }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "opsgenie_testing",
 					Type:     "opsgenie",
 					Settings: settingsJSON,
@@ -33,7 +33,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
+				model := &models.AlertNotification{
 					Name:     "opsgenie_testing",
 					Type:     "opsgenie",
 					Settings: settingsJSON,
@@ -45,7 +45,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(opsgenieNotifier.Name, ShouldEqual, "opsgenie_testing")
 				So(opsgenieNotifier.Type, ShouldEqual, "opsgenie")
-				So(opsgenieNotifier.ApiKey, ShouldEqual, "abcdefgh0123456789")
+				So(opsgenieNotifier.APIKey, ShouldEqual, "abcdefgh0123456789")
 			})
 		})
 	})

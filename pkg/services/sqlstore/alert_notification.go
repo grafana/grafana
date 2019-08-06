@@ -213,11 +213,12 @@ func getAlertNotificationWithUidInternal(query *m.GetAlertNotificationsWithUidQu
 func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if cmd.Uid == "" {
-			if uid, uidGenerationErr := generateNewAlertNotificationUid(sess, cmd.OrgId); uidGenerationErr != nil {
+			uid, uidGenerationErr := generateNewAlertNotificationUid(sess, cmd.OrgId)
+			if uidGenerationErr != nil {
 				return uidGenerationErr
-			} else {
-				cmd.Uid = uid
 			}
+
+			cmd.Uid = uid
 		}
 		existingQuery := &m.GetAlertNotificationsWithUidQuery{OrgId: cmd.OrgId, Uid: cmd.Uid}
 		err := getAlertNotificationWithUidInternal(existingQuery, sess)
@@ -381,6 +382,8 @@ func UpdateAlertNotificationWithUid(cmd *m.UpdateAlertNotificationWithUidCommand
 	if err := bus.Dispatch(updateNotification); err != nil {
 		return err
 	}
+
+	cmd.Result = updateNotification.Result
 
 	return nil
 }

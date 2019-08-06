@@ -87,7 +87,7 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 		dash.CreatedBy = userId
 		dash.Updated = time.Now()
 		dash.UpdatedBy = userId
-		metrics.M_Api_Dashboard_Insert.Inc()
+		metrics.MApiDashboardInsert.Inc()
 		affectedRows, err = sess.Insert(dash)
 	} else {
 		dash.SetVersion(dash.Version + 1)
@@ -197,12 +197,7 @@ type DashboardSearchProjection struct {
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
-	limit := query.Limit
-	if limit == 0 {
-		limit = 1000
-	}
-
-	sb := NewSearchBuilder(query.SignedInUser, limit, query.Permission).
+	sb := NewSearchBuilder(query.SignedInUser, query.Limit, query.Page, query.Permission).
 		WithTags(query.Tags).
 		WithDashboardIdsIn(query.DashboardIds)
 

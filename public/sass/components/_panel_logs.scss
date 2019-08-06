@@ -71,19 +71,14 @@ $column-horizontal-spacing: 10px;
   > div {
     display: table-cell;
     padding-right: $column-horizontal-spacing;
-    vertical-align: middle;
     border-top: 1px solid transparent;
     border-bottom: 1px solid transparent;
+    height: 100%;
   }
 
   &:hover {
     background: $page-bg;
   }
-}
-
-.logs-row__time {
-  white-space: nowrap;
-  width: 19em;
 }
 
 .logs-row__localtime {
@@ -252,7 +247,7 @@ $column-horizontal-spacing: 10px;
 }
 
 .logs-stats__header {
-  background-color: $popover-border-color;
+  background: $popover-header-bg;
   padding: 6px 10px;
   display: flex;
 }

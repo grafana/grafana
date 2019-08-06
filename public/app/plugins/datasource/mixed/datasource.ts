@@ -1,28 +1,44 @@
-import angular from 'angular';
 import _ from 'lodash';
 
-class MixedDatasource {
-  /** @ngInject */
-  constructor(private $q, private datasourceSrv) {}
+import { DataSourceApi, DataQuery, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
+import DatasourceSrv from 'app/features/plugins/datasource_srv';
 
-  query(options) {
+class MixedDatasource extends DataSourceApi<DataQuery> {
+  /** @ngInject */
+  constructor(instanceSettings: DataSourceInstanceSettings, private datasourceSrv: DatasourceSrv) {
+    super(instanceSettings);
+  }
+
+  query(options: DataQueryRequest<DataQuery>) {
     const sets = _.groupBy(options.targets, 'datasource');
-    const promises = _.map(sets, targets => {
+    const promises: any = _.map(sets, (targets: DataQuery[]) => {
       const dsName = targets[0].datasource;
       if (dsName === '-- Mixed --') {
-        return this.$q([]);
+        return Promise.resolve([]);
+      }
+
+      const filtered = _.filter(targets, (t: DataQuery) => {
+        return !t.hide;
+      });
+
+      if (filtered.length === 0) {
+        return { data: [] };
       }
 
       return this.datasourceSrv.get(dsName).then(ds => {
-        const opt = angular.copy(options);
-        opt.targets = targets;
+        const opt = _.cloneDeep(options);
+        opt.targets = filtered;
         return ds.query(opt);
       });
     });
 
-    return this.$q.all(promises).then(results => {
+    return Promise.all(promises).then(results => {
       return { data: _.flatten(_.map(results, 'data')) };
     });
+  }
+
+  testDatasource() {
+    return Promise.resolve({});
   }
 }
 

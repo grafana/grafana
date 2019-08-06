@@ -13,7 +13,7 @@
       <label class="gf-form-label width-12">Column Header</label>
       <input type="text" class="gf-form-input width-12" ng-model="style.alias" ng-change="editor.render()" ng-model-onblur placeholder="Override header label">
     </div>
-    <gf-form-switch class="gf-form" label-class="width-12" label="Render value as link" checked="style.link" change="editor.render()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label-class="width-12" label="Render value as link" checked="style.link" on-change="editor.render()"></gf-form-switch>
   </div>
 
   <div class="section gf-form-group">
@@ -34,11 +34,11 @@
 
     <div ng-if="style.type === 'string'">
       <gf-form-switch class="gf-form" label-class="width-10" ng-if="style.type === 'string'" label="Sanitize HTML" checked="style.sanitize"
-          change="editor.render()"></gf-form-switch>
+          on-change="editor.render()"></gf-form-switch>
     </div>
     <div ng-if="style.type === 'string'">
       <gf-form-switch class="gf-form" label-class="width-10" ng-if="style.type === 'string'" label="Preserve Formatting" checked="style.preserveFormat"
-          change="editor.render()"></gf-form-switch>
+          on-change="editor.render()"></gf-form-switch>
     </div>
 
     <div ng-if="style.type === 'number'">

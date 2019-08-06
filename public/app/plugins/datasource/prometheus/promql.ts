@@ -3,6 +3,7 @@
 import { CompletionItem } from 'app/types/explore';
 
 export const RATE_RANGES: CompletionItem[] = [
+  { label: '$__interval', sortText: '$__interval' },
   { label: '1m', sortText: '00:01:00' },
   { label: '5m', sortText: '00:05:00' },
   { label: '10m', sortText: '00:10:00' },

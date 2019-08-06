@@ -28,8 +28,8 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/internal/transport"
 	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/transport"
 )
 
 // dialContext connects to the address on the named network.
@@ -50,12 +50,13 @@ func toRPCErr(err error) error {
 	if err == nil || err == io.EOF {
 		return err
 	}
+	if err == io.ErrUnexpectedEOF {
+		return status.Error(codes.Internal, err.Error())
+	}
 	if _, ok := status.FromError(err); ok {
 		return err
 	}
 	switch e := err.(type) {
-	case transport.StreamError:
-		return status.Error(e.Code, e.Desc)
 	case transport.ConnectionError:
 		return status.Error(codes.Unavailable, e.Desc)
 	default:

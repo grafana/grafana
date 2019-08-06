@@ -24,7 +24,7 @@ export class QueryInspector extends PureComponent<Props, State> {
   formattedJson: any;
   clipboard: any;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = {
       allNodesExpanded: null,
@@ -39,18 +39,24 @@ export class QueryInspector extends PureComponent<Props, State> {
 
   componentDidMount() {
     const { panel } = this.props;
-    panel.events.on('refresh', this.onPanelRefresh);
+
     appEvents.on('ds-request-response', this.onDataSourceResponse);
+    appEvents.on('ds-request-error', this.onRequestError);
+
+    panel.events.on('refresh', this.onPanelRefresh);
     panel.refresh();
   }
 
   componentWillUnmount() {
     const { panel } = this.props;
+
     appEvents.off('ds-request-response', this.onDataSourceResponse);
+    appEvents.on('ds-request-error', this.onRequestError);
+
     panel.events.off('refresh', this.onPanelRefresh);
   }
 
-  handleMocking(response) {
+  handleMocking(response: any) {
     const { mockedResponse } = this.state;
     let mockedData;
     try {
@@ -71,6 +77,10 @@ export class QueryInspector extends PureComponent<Props, State> {
         response: {},
       },
     }));
+  };
+
+  onRequestError = (err: any) => {
+    this.onDataSourceResponse(err);
   };
 
   onDataSourceResponse = (response: any = {}) => {
@@ -116,7 +126,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     }));
   };
 
-  setFormattedJson = formattedJson => {
+  setFormattedJson = (formattedJson: any) => {
     this.formattedJson = formattedJson;
   };
 
@@ -151,7 +161,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     return 1;
   };
 
-  setMockedResponse = evt => {
+  setMockedResponse = (evt: any) => {
     const mockedResponse = evt.target.value;
     this.setState(prevState => ({
       ...prevState,

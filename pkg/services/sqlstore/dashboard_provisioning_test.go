@@ -65,23 +65,23 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			})
 
 			Convey("Can query for one provisioned dashboard", func() {
-				query := &models.IsDashboardProvisionedQuery{DashboardId: cmd.Result.Id}
+				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: cmd.Result.Id}
 
 				err := GetProvisionedDataByDashboardId(query)
 				So(err, ShouldBeNil)
 
-				So(query.Result, ShouldBeTrue)
+				So(query.Result, ShouldNotBeNil)
 			})
 
 			Convey("Can query for none provisioned dashboard", func() {
-				query := &models.IsDashboardProvisionedQuery{DashboardId: 3000}
+				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: 3000}
 
 				err := GetProvisionedDataByDashboardId(query)
 				So(err, ShouldBeNil)
-				So(query.Result, ShouldBeFalse)
+				So(query.Result, ShouldBeNil)
 			})
 
-			Convey("Deleteing folder should delete provision meta data", func() {
+			Convey("Deleting folder should delete provision meta data", func() {
 				deleteCmd := &models.DeleteDashboardCommand{
 					Id:    folderCmd.Result.Id,
 					OrgId: 1,
@@ -89,11 +89,25 @@ func TestDashboardProvisioningTest(t *testing.T) {
 
 				So(DeleteDashboard(deleteCmd), ShouldBeNil)
 
-				query := &models.IsDashboardProvisionedQuery{DashboardId: cmd.Result.Id}
+				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: cmd.Result.Id}
 
 				err = GetProvisionedDataByDashboardId(query)
 				So(err, ShouldBeNil)
-				So(query.Result, ShouldBeFalse)
+				So(query.Result, ShouldBeNil)
+			})
+
+			Convey("UnprovisionDashboard should delete provisioning metadata", func() {
+				unprovisionCmd := &models.UnprovisionDashboardCommand{
+					Id: dashId,
+				}
+
+				So(UnprovisionDashboard(unprovisionCmd), ShouldBeNil)
+
+				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: dashId}
+
+				err = GetProvisionedDataByDashboardId(query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldBeNil)
 			})
 		})
 	})

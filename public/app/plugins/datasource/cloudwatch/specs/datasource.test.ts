@@ -1,19 +1,20 @@
 import '../datasource';
 import CloudWatchDatasource from '../datasource';
-import * as dateMath from 'app/core/utils/datemath';
+import { dateMath } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { CustomVariable } from 'app/features/templating/all';
 import _ from 'lodash';
+import { CloudWatchQuery } from '../types';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 describe('CloudWatchDatasource', () => {
   const instanceSettings = {
-    jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
-  };
+    jsonData: { defaultRegion: 'us-east-1' },
+  } as DataSourceInstanceSettings;
 
-  const templateSrv = {
-    data: {},
-    templateSettings: { interpolate: /\[\[([\s\S]+?)\]\]/g },
-    replace: text => _.template(text, templateSrv.templateSettings)(templateSrv.data),
-    variableExists: () => false,
-  };
+  const templateSrv = new TemplateSrv();
 
   const timeSrv = {
     time: { from: 'now-1h', to: 'now' },
@@ -23,25 +24,26 @@ describe('CloudWatchDatasource', () => {
         to: dateMath.parse(timeSrv.time.to, true),
       };
     },
-  };
-  const backendSrv = {};
+  } as TimeSrv;
+  const backendSrv = {} as BackendSrv;
   const ctx = {
     backendSrv,
     templateSrv,
   } as any;
 
   beforeEach(() => {
-    ctx.ds = new CloudWatchDatasource(instanceSettings, {}, backendSrv, templateSrv, timeSrv);
+    ctx.ds = new CloudWatchDatasource(instanceSettings, {} as any, backendSrv, templateSrv, timeSrv);
   });
 
   describe('When performing CloudWatch query', () => {
-    let requestParams;
+    let requestParams: { queries: CloudWatchQuery[] };
 
     const query = {
       range: { from: 'now-1h', to: 'now' },
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          refId: 'A',
           region: 'us-east-1',
           namespace: 'AWS/EC2',
           metricName: 'CPUUtilization',
@@ -54,7 +56,7 @@ describe('CloudWatchDatasource', () => {
       ],
     };
 
-    const response = {
+    const response: any = {
       timings: [null],
       results: {
         A: {
@@ -94,15 +96,25 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should generate the correct query with interval variable', done => {
-      ctx.templateSrv.data = {
-        period: '10m',
-      };
+      templateSrv.init([
+        new CustomVariable(
+          {
+            name: 'period',
+            current: {
+              value: '10m',
+            },
+            multi: false,
+          },
+          {} as any
+        ),
+      ]);
 
       const query = {
         range: { from: 'now-1h', to: 'now' },
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            refId: 'A',
             region: 'us-east-1',
             namespace: 'AWS/EC2',
             metricName: 'CPUUtilization',
@@ -128,6 +140,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            refId: 'A',
             region: 'us-east-1',
             namespace: 'AWS/EC2',
             metricName: 'CPUUtilization',
@@ -143,7 +156,7 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should return series list', done => {
-      ctx.ds.query(query).then(result => {
+      ctx.ds.query(query).then((result: any) => {
         expect(result.data[0].target).toBe(response.results.A.series[0].name);
         expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
@@ -164,7 +177,7 @@ describe('CloudWatchDatasource', () => {
       expect(ctx.ds.getActualRegion('some-fake-region-1')).toBe('some-fake-region-1');
     });
 
-    let requestParams;
+    let requestParams: { queries: CloudWatchQuery[] };
     beforeEach(() => {
       ctx.ds.performTimeSeriesQuery = jest.fn(request => {
         requestParams = request;
@@ -178,6 +191,7 @@ describe('CloudWatchDatasource', () => {
         rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
+            refId: 'A',
             region: 'default',
             namespace: 'AWS/EC2',
             metricName: 'CPUUtilization',
@@ -190,7 +204,7 @@ describe('CloudWatchDatasource', () => {
         ],
       };
 
-      ctx.ds.query(query).then(result => {
+      ctx.ds.query(query).then((result: any) => {
         expect(requestParams.queries[0].region).toBe(instanceSettings.jsonData.defaultRegion);
         done();
       });
@@ -203,6 +217,7 @@ describe('CloudWatchDatasource', () => {
       rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
+          refId: 'A',
           region: 'us-east-1',
           namespace: 'AWS/ApplicationELB',
           metricName: 'TargetResponseTime',
@@ -216,7 +231,7 @@ describe('CloudWatchDatasource', () => {
       ],
     };
 
-    const response = {
+    const response: any = {
       timings: [null],
       results: {
         A: {
@@ -244,7 +259,7 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should return series list', done => {
-      ctx.ds.query(query).then(result => {
+      ctx.ds.query(query).then((result: any) => {
         expect(result.data[0].target).toBe(response.results.A.series[0].name);
         expect(result.data[0].datapoints[0][0]).toBe(response.results.A.series[0].points[0][0]);
         done();
@@ -252,17 +267,216 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  function describeMetricFindQuery(query, func) {
+  describe('When performing CloudWatch query with template variables', () => {
+    let requestParams: { queries: CloudWatchQuery[] };
+    beforeEach(() => {
+      templateSrv.init([
+        new CustomVariable(
+          {
+            name: 'var1',
+            current: {
+              value: 'var1-foo',
+            },
+            multi: false,
+          },
+          {} as any
+        ),
+        new CustomVariable(
+          {
+            name: 'var2',
+            current: {
+              value: 'var2-foo',
+            },
+            multi: false,
+          },
+          {} as any
+        ),
+        new CustomVariable(
+          {
+            name: 'var3',
+            options: [
+              { selected: true, value: 'var3-foo' },
+              { selected: false, value: 'var3-bar' },
+              { selected: true, value: 'var3-baz' },
+            ],
+            current: {
+              value: ['var3-foo', 'var3-baz'],
+            },
+            multi: true,
+          },
+          {} as any
+        ),
+      ]);
+
+      ctx.backendSrv.datasourceRequest = jest.fn(params => {
+        requestParams = params.data;
+        return Promise.resolve({ data: {} });
+      });
+    });
+
+    it('should generate the correct query for single template variable', done => {
+      const query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            refId: 'A',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim2: '[[var2]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+          },
+        ],
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        done();
+      });
+    });
+
+    it('should generate the correct query for multilple template variables', done => {
+      const query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            refId: 'A',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+          },
+        ],
+        scopedVars: {
+          var1: { selected: true, value: 'var1-foo' },
+          var2: { selected: true, value: 'var2-foo' },
+        },
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
+        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
+        done();
+      });
+    });
+
+    it('should generate the correct query for multilple template variables, lack scopedVars', done => {
+      const query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            refId: 'A',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+          },
+        ],
+        scopedVars: {
+          var1: { selected: true, value: 'var1-foo' },
+        },
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
+        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
+        done();
+      });
+    });
+
+    it('should generate the correct query for multilple template variables with expression', done => {
+      const query: any = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            refId: 'A',
+            id: 'id1',
+            region: 'us-east-1',
+            namespace: 'TestNamespace',
+            metricName: 'TestMetricName',
+            dimensions: {
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: ['Average'],
+            period: 300,
+            expression: '',
+          },
+          {
+            refId: 'B',
+            id: 'id2',
+            expression: 'METRICS("id1") * 2',
+            dimensions: {
+              // garbage data for fail test
+              dim1: '[[var1]]',
+              dim2: '[[var2]]',
+              dim3: '[[var3]]',
+            },
+            statistics: [], // dummy
+          },
+        ],
+        scopedVars: {
+          var1: { selected: true, value: 'var1-foo' },
+          var2: { selected: true, value: 'var2-foo' },
+        },
+      };
+
+      ctx.ds.query(query).then(() => {
+        expect(requestParams.queries.length).toBe(3);
+        expect(requestParams.queries[0].id).toMatch(/^id1.*/);
+        expect(requestParams.queries[0].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[0].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[0].dimensions['dim3']).toBe('var3-foo');
+        expect(requestParams.queries[1].id).toMatch(/^id1.*/);
+        expect(requestParams.queries[1].dimensions['dim1']).toBe('var1-foo');
+        expect(requestParams.queries[1].dimensions['dim2']).toBe('var2-foo');
+        expect(requestParams.queries[1].dimensions['dim3']).toBe('var3-baz');
+        expect(requestParams.queries[2].id).toMatch(/^id2.*/);
+        expect(requestParams.queries[2].expression).toBe('METRICS("id1") * 2');
+        done();
+      });
+    });
+  });
+
+  function describeMetricFindQuery(query: any, func: any) {
     describe('metricFindQuery ' + query, () => {
       const scenario: any = {};
-      scenario.setup = setupCallback => {
+      scenario.setup = (setupCallback: any) => {
         beforeEach(() => {
           setupCallback();
           ctx.backendSrv.datasourceRequest = jest.fn(args => {
             scenario.request = args.data;
             return Promise.resolve({ data: scenario.requestResponse });
           });
-          ctx.ds.metricFindQuery(query).then(args => {
+          ctx.ds.metricFindQuery(query).then((args: any) => {
             scenario.result = args;
           });
         });
@@ -272,7 +486,7 @@ describe('CloudWatchDatasource', () => {
     });
   }
 
-  describeMetricFindQuery('regions()', scenario => {
+  describeMetricFindQuery('regions()', (scenario: any) => {
     scenario.setup(() => {
       scenario.requestResponse = {
         results: {
@@ -290,7 +504,7 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('namespaces()', scenario => {
+  describeMetricFindQuery('namespaces()', (scenario: any) => {
     scenario.setup(() => {
       scenario.requestResponse = {
         results: {
@@ -308,7 +522,7 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('metrics(AWS/EC2)', scenario => {
+  describeMetricFindQuery('metrics(AWS/EC2)', (scenario: any) => {
     scenario.setup(() => {
       scenario.requestResponse = {
         results: {
@@ -326,7 +540,7 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('dimension_keys(AWS/EC2)', scenario => {
+  describeMetricFindQuery('dimension_keys(AWS/EC2)', (scenario: any) => {
     scenario.setup(() => {
       scenario.requestResponse = {
         results: {
@@ -344,7 +558,7 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
+  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', (scenario: any) => {
     scenario.setup(() => {
       scenario.requestResponse = {
         results: {
@@ -362,7 +576,7 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
+  describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', (scenario: any) => {
     scenario.setup(() => {
       scenario.requestResponse = {
         results: {
@@ -380,7 +594,7 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
-  describeMetricFindQuery('resource_arns(default,ec2:instance,{"environment":["production"]})', scenario => {
+  describeMetricFindQuery('resource_arns(default,ec2:instance,{"environment":["production"]})', (scenario: any) => {
     scenario.setup(() => {
       scenario.requestResponse = {
         results: {

@@ -1,13 +1,20 @@
 // Libraries
-import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
+import React, { PureComponent, ChangeEvent, FocusEvent, ReactText } from 'react';
 
 // Utils
-import { isValidTimeSpan } from 'app/core/utils/rangeutil';
+import { rangeUtil } from '@grafana/data';
 
 // Components
-import { DataSourceSelectItem, EventsWithValidation, Input, InputStatus, Switch, ValidationEvents } from '@grafana/ui';
+import {
+  DataSourceSelectItem,
+  EventsWithValidation,
+  Input,
+  InputStatus,
+  Switch,
+  ValidationEvents,
+  FormLabel,
+} from '@grafana/ui';
 import { DataSourceOption } from './DataSourceOption';
-import { FormLabel } from '@grafana/ui';
 
 // Types
 import { PanelModel } from '../state';
@@ -19,7 +26,7 @@ const timeRangeValidationEvents: ValidationEvents = {
         if (!value) {
           return true;
         }
-        return isValidTimeSpan(value);
+        return rangeUtil.isValidTimeSpan(value);
       },
       errorMessage: 'Not a valid timespan',
     },
@@ -39,13 +46,13 @@ interface State {
   relativeTime: string;
   timeShift: string;
   cacheTimeout: string;
-  maxDataPoints: string;
+  maxDataPoints: string | ReactText;
   interval: string;
   hideTimeOverride: boolean;
 }
 
 export class QueryOptions extends PureComponent<Props, State> {
-  allOptions = {
+  allOptions: any = {
     cacheTimeout: {
       label: 'Cache timeout',
       placeholder: '60',
@@ -84,7 +91,7 @@ export class QueryOptions extends PureComponent<Props, State> {
     },
   };
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -140,6 +147,7 @@ export class QueryOptions extends PureComponent<Props, State> {
   onDataSourceOptionBlur = (panelKey: string) => () => {
     const { panel } = this.props;
 
+    // @ts-ignore
     panel[panelKey] = this.state[panelKey];
     panel.refresh();
   };
@@ -165,6 +173,7 @@ export class QueryOptions extends PureComponent<Props, State> {
           {...options}
           onChange={this.onDataSourceOptionChange(panelKey)}
           onBlur={this.onDataSourceOptionBlur(panelKey)}
+          // @ts-ignore
           value={this.state[panelKey]}
         />
       );

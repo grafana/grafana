@@ -8,4 +8,10 @@ export interface GraphSeriesXY {
   color: string;
   data: GraphSeriesValue[][]; // [x,y][]
   info?: DisplayValue[]; // Legend info
+  isVisible: boolean;
+  yAxis: number;
+}
+
+export interface CreatePlotOverlay {
+  (element: JQuery, event: any, plot: { getOptions: () => { events: { manager: any } } }): any;
 }

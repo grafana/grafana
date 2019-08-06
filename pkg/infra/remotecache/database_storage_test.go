@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bmizerany/assert"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDatabaseStorageGarbageCollection(t *testing.T) {
@@ -66,7 +66,8 @@ func TestSecondSet(t *testing.T) {
 	obj := &CacheableStruct{String: "hey!"}
 
 	err = db.Set("killa-gorilla", obj, 0)
-	err = db.Set("killa-gorilla", obj, 0)
+	assert.Equal(t, err, nil)
 
+	err = db.Set("killa-gorilla", obj, 0)
 	assert.Equal(t, err, nil)
 }

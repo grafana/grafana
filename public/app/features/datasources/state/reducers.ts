@@ -1,5 +1,5 @@
-import { DataSourcesState, Plugin } from 'app/types';
-import { DataSourceSettings } from '@grafana/ui/src/types';
+import { DataSourcesState } from 'app/types';
+import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
 import {
   dataSourceLoaded,
   dataSourcesLoaded,
@@ -25,7 +25,7 @@ export const initialState: DataSourcesState = {
   dataSourceTypeSearchQuery: '',
   hasFetched: false,
   isLoadingDataSources: false,
-  dataSourceMeta: {} as Plugin,
+  dataSourceMeta: {} as DataSourcePluginMeta,
 };
 
 export const dataSourcesReducer = reducerFactory(initialState)

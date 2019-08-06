@@ -2,7 +2,17 @@ import { configure, addDecorator } from '@storybook/react';
 import { withKnobs } from '@storybook/addon-knobs';
 import { withTheme } from '../src/utils/storybook/withTheme';
 import { withPaddedStory } from '../src/utils/storybook/withPaddedStory';
-
+import 'jquery';
+import '../../../public/vendor/flot/jquery.flot.js';
+import '../../../public/vendor/flot/jquery.flot.selection';
+import '../../../public/vendor/flot/jquery.flot.time';
+import '../../../public/vendor/flot/jquery.flot.stack';
+import '../../../public/vendor/flot/jquery.flot.pie';
+import '../../../public/vendor/flot/jquery.flot.stackpercent';
+import '../../../public/vendor/flot/jquery.flot.fillbelow';
+import '../../../public/vendor/flot/jquery.flot.crosshair';
+import '../../../public/vendor/flot/jquery.flot.dashes';
+import '../../../public/vendor/flot/jquery.flot.gauge';
 // @ts-ignore
 import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore

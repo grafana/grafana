@@ -23,7 +23,7 @@ interface State {
 const headerTooltip = `Sync LDAP or OAuth groups with your Grafana teams.`;
 
 export class TeamGroupSync extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = { isAdding: false, newGroupId: '' };
   }
@@ -40,11 +40,11 @@ export class TeamGroupSync extends PureComponent<Props, State> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  onNewGroupIdChanged = event => {
+  onNewGroupIdChanged = (event: any) => {
     this.setState({ newGroupId: event.target.value });
   };
 
-  onAddGroup = event => {
+  onAddGroup = (event: any) => {
     event.preventDefault();
     this.props.addTeamGroup(this.state.newGroupId);
     this.setState({ isAdding: false, newGroupId: '' });
@@ -63,7 +63,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
       <tr key={group.groupId}>
         <td>{group.groupId}</td>
         <td style={{ width: '1%' }}>
-          <a className="btn btn-danger btn-mini" onClick={() => this.onRemoveGroup(group)}>
+          <a className="btn btn-danger btn-small" onClick={() => this.onRemoveGroup(group)}>
             <i className="fa fa-remove" />
           </a>
         </td>
@@ -121,8 +121,8 @@ export class TeamGroupSync extends PureComponent<Props, State> {
         {groups.length === 0 && !isAdding && (
           <div className="empty-list-cta">
             <div className="empty-list-cta__title">There are no external groups to sync with</div>
-            <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-xlarge btn-primary">
-              <i className="gicon gicon-add-team" />
+            <button onClick={this.onToggleAdding} className="empty-list-cta__button btn btn-large btn-primary">
+              <i className="gicon gicon-team" />
               Add Group
             </button>
             <div className="empty-list-cta__pro-tip">
@@ -156,7 +156,7 @@ export class TeamGroupSync extends PureComponent<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     groups: getTeamGroups(state.team),
   };

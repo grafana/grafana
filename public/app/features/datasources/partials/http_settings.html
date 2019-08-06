@@ -99,8 +99,14 @@
 			<input class="gf-form-input max-width-21" type="text"  ng-model='current.basicAuthUser' placeholder="user" required></input>
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-10">Password</span>
-			<input class="gf-form-input max-width-21" type="password" ng-model='current.basicAuthPassword' placeholder="password" required></input>
+      <secret-form-field
+        isConfigured="current.basicAuthPassword || current.secureJsonFields.basicAuthPassword"
+        value="current.secureJsonData.basicAuthPassword || ''"
+        on-reset="onBasicAuthPasswordReset"
+        on-change="onBasicAuthPasswordChange"
+        inputWidth="18"
+        labelWidth="10"
+      />
 		</div>
 	</div>
 

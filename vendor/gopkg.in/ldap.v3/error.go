@@ -207,7 +207,7 @@ func GetLDAPError(packet *ber.Packet) error {
 				return nil
 			}
 			return &Error{ResultCode: resultCode, MatchedDN: response.Children[1].Value.(string),
-				Err: fmt.Errorf(response.Children[2].Value.(string))}
+				Err: fmt.Errorf("%s", response.Children[2].Value.(string))}
 		}
 	}
 

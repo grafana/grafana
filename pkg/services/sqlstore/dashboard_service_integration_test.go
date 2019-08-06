@@ -27,8 +27,8 @@ func TestIntegratedDashboardService(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.IsDashboardProvisionedQuery) error {
-				cmd.Result = false
+			bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+				cmd.Result = nil
 				return nil
 			})
 

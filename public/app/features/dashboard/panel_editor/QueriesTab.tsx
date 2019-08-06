@@ -12,14 +12,17 @@ import { QueryEditorRow } from './QueryEditorRow';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { DataQuery, DataSourceSelectItem } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceSelectItem, PanelData } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
+import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
+import { Unsubscribable } from 'rxjs';
 
 interface Props {
   panel: PanelModel;
@@ -33,11 +36,13 @@ interface State {
   isPickerOpen: boolean;
   isAddingMixed: boolean;
   scrollTop: number;
+  data: PanelData;
 }
 
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
-  backendSrv: BackendSrv = getBackendSrv();
+  backendSrv = getBackendSrv();
+  querySubscription: Unsubscribable;
 
   state: State = {
     isLoadingHelp: false,
@@ -46,6 +51,37 @@ export class QueriesTab extends PureComponent<Props, State> {
     isPickerOpen: false,
     isAddingMixed: false,
     scrollTop: 0,
+    data: {
+      state: LoadingState.NotStarted,
+      series: [],
+    },
+  };
+
+  componentDidMount() {
+    const { panel } = this.props;
+    const queryRunner = panel.getQueryRunner();
+
+    this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.both);
+  }
+
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
+    }
+  }
+
+  // Updates the response with information from the stream
+  panelDataObserver = {
+    next: (data: PanelData) => {
+      const { panel } = this.props;
+      if (data.state === LoadingState.Error) {
+        panel.events.emit('data-error', data.error);
+      } else if (data.state === LoadingState.Done) {
+        panel.events.emit('data-received', data.legacy);
+      }
+      this.setState({ data });
+    },
   };
 
   findCurrentDataSource(): DataSourceSelectItem {
@@ -53,7 +89,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
   }
 
-  onChangeDataSource = datasource => {
+  onChangeDataSource = (datasource: any) => {
     const { panel } = this.props;
     const { currentDS } = this.state;
 
@@ -122,6 +158,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
 
     const index = _.indexOf(panel.targets, query);
+    // @ts-ignore
     _.move(panel.targets, index, index + direction);
 
     this.forceUpdate();
@@ -152,11 +189,12 @@ export class QueriesTab extends PureComponent<Props, State> {
         current={null}
         autoFocus={true}
         onBlur={this.onMixedPickerBlur}
+        openMenuOnFocus={true}
       />
     );
   };
 
-  onAddMixedQuery = datasource => {
+  onAddMixedQuery = (datasource: any) => {
     this.onAddQuery({ datasource: datasource.name });
     this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
   };
@@ -165,7 +203,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ isAddingMixed: false });
   };
 
-  onQueryChange = (query: DataQuery, index) => {
+  onQueryChange = (query: DataQuery, index: number) => {
     this.props.panel.changeQuery(query, index);
     this.forceUpdate();
   };
@@ -177,7 +215,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   render() {
     const { panel, dashboard } = this.props;
-    const { currentDS, scrollTop } = this.state;
+    const { currentDS, scrollTop, data } = this.state;
 
     const queryInspector: EditorToolbarView = {
       title: 'Query Inspector',
@@ -192,7 +230,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     return (
       <EditorTabBody
-        heading="Queries to"
+        heading="Query"
         renderToolbar={this.renderToolbar}
         toolbarItems={[queryInspector, dsHelp]}
         setScrollTop={this.setScrollTop}
@@ -206,6 +244,7 @@ export class QueriesTab extends PureComponent<Props, State> {
                 key={query.refId}
                 panel={panel}
                 dashboard={dashboard}
+                data={data}
                 query={query}
                 onChange={query => this.onQueryChange(query, index)}
                 onRemoveQuery={this.onRemoveQuery}

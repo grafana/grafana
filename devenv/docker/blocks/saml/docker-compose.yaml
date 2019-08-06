@@ -1,0 +1,16 @@
+  saml:
+    container_name: saml
+    image: kristophjunge/test-saml-idp
+    environment:
+      SIMPLESAMLPHP_SP_ENTITY_ID: http://grafana.com
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost/simplesaml/module.php/saml/sp/saml2-acs.php/test-sp
+      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://localhost/simplesaml/module.php/saml/sp/saml2-logout.php/test-sp
+      SIMPLESAMLPHP_ADMIN_PASSWORD: grafana
+      SIMPLESAMLPHP_SECRET_SALT: salt
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    volumes:
+      - ./docker/blocks/saml/users.php:/var/www/simplesamlphp/config/authsources.php
+
+

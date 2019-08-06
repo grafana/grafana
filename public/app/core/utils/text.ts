@@ -5,8 +5,14 @@ import xss from 'xss';
  * Adapt findMatchesInText for react-highlight-words findChunks handler.
  * See https://github.com/bvaughn/react-highlight-words#props
  */
-export function findHighlightChunksInText({ searchWords, textToHighlight }) {
-  return findMatchesInText(textToHighlight, searchWords.join(' '));
+export function findHighlightChunksInText({
+  searchWords,
+  textToHighlight,
+}: {
+  searchWords: string[];
+  textToHighlight: string;
+}) {
+  return searchWords.reduce((acc: any, term: string) => [...acc, ...findMatchesInText(textToHighlight, term)], []);
 }
 
 const cleanNeedle = (needle: string): string => {
@@ -21,7 +27,7 @@ export function findMatchesInText(haystack: string, needle: string): TextMatch[]
   if (!haystack || !needle) {
     return [];
   }
-  const matches = [];
+  const matches: TextMatch[] = [];
   const { cleaned, flags } = parseFlags(cleanNeedle(needle));
   let regexp: RegExp;
   try {
@@ -74,6 +80,7 @@ export function parseFlags(text: string): { cleaned: string; flags: string } {
 }
 
 const XSSWL = Object.keys(xss.whiteList).reduce((acc, element) => {
+  // @ts-ignore
   acc[element] = xss.whiteList[element].concat(['class', 'style']);
   return acc;
 }, {});
@@ -100,4 +107,12 @@ export function sanitize(unsanitizedString: string): string {
 
 export function hasAnsiCodes(input: string): boolean {
   return /\u001b\[\d{1,2}m/.test(input);
+}
+
+export function escapeHtml(str: string): string {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

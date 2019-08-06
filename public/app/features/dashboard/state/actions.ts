@@ -1,5 +1,5 @@
 // Services & Utils
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { actionCreatorFactory, noPayloadActionCreatorFactory } from 'app/core/redux';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 
@@ -125,7 +125,7 @@ export function addDashboardPermission(dashboardId: number, newItem: NewDashboar
   };
 }
 
-export function importDashboard(data, dashboardTitle: string): ThunkResult<void> {
+export function importDashboard(data: any, dashboardTitle: string): ThunkResult<void> {
   return async dispatch => {
     await getBackendSrv().post('/api/dashboards/import', data);
     dispatch(notifyApp(createSuccessNotification('Dashboard Imported', dashboardTitle)));

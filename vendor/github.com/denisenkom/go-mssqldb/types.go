@@ -62,6 +62,7 @@ const (
 	typeNChar      = 0xef
 	typeXml        = 0xf1
 	typeUdt        = 0xf0
+	typeTvp        = 0xf3
 
 	// long length types
 	typeText    = 0x23
@@ -69,9 +70,17 @@ const (
 	typeNText   = 0x63
 	typeVariant = 0x62
 )
-const PLP_NULL = 0xFFFFFFFFFFFFFFFF
-const UNKNOWN_PLP_LEN = 0xFFFFFFFFFFFFFFFE
-const PLP_TERMINATOR = 0x00000000
+const _PLP_NULL = 0xFFFFFFFFFFFFFFFF
+const _UNKNOWN_PLP_LEN = 0xFFFFFFFFFFFFFFFE
+const _PLP_TERMINATOR = 0x00000000
+const _TVP_NULL_TOKEN = 0xffff
+
+// TVP COLUMN FLAGS
+const _TVP_COLUMN_DEFAULT_FLAG = 0x200
+const _TVP_END_TOKEN = 0x00
+const _TVP_ROW_TOKEN = 0x01
+const _TVP_ORDER_UNIQUE_TOKEN = 0x10
+const _TVP_COLUMN_ORDERING_TOKEN = 0x11
 
 // TYPE_INFO rule
 // http://msdn.microsoft.com/en-us/library/dd358284.aspx
@@ -133,6 +142,7 @@ func readTypeInfo(r *tdsBuffer) (res typeInfo) {
 	return
 }
 
+// https://msdn.microsoft.com/en-us/library/dd358284.aspx
 func writeTypeInfo(w io.Writer, ti *typeInfo) (err error) {
 	err = binary.Write(w, binary.LittleEndian, ti.TypeId)
 	if err != nil {
@@ -142,6 +152,9 @@ func writeTypeInfo(w io.Writer, ti *typeInfo) (err error) {
 	case typeNull, typeInt1, typeBit, typeInt2, typeInt4, typeDateTim4,
 		typeFlt4, typeMoney, typeDateTime, typeFlt8, typeMoney4, typeInt8:
 		// those are fixed length
+		// https://msdn.microsoft.com/en-us/library/dd341171.aspx
+		ti.Writer = writeFixedType
+	case typeTvp:
 		ti.Writer = writeFixedType
 	default: // all others are VARLENTYPE
 		err = writeVarLen(w, ti)
@@ -157,8 +170,10 @@ func writeFixedType(w io.Writer, ti typeInfo, buf []byte) (err error) {
 	return
 }
 
+// https://msdn.microsoft.com/en-us/library/dd358341.aspx
 func writeVarLen(w io.Writer, ti *typeInfo) (err error) {
 	switch ti.TypeId {
+
 	case typeDateN:
 		ti.Writer = writeByteLenType
 	case typeTimeN, typeDateTime2N, typeDateTimeOffsetN:
@@ -200,6 +215,7 @@ func writeVarLen(w io.Writer, ti *typeInfo) (err error) {
 		ti.Writer = writeByteLenType
 	case typeBigVarBin, typeBigVarChar, typeBigBinary, typeBigChar,
 		typeNVarChar, typeNChar, typeXml, typeUdt:
+
 		// short len types
 		if ti.Size > 8000 || ti.Size == 0 {
 			if err = binary.Write(w, binary.LittleEndian, uint16(0xffff)); err != nil {
@@ -243,6 +259,48 @@ func decodeDateTim4(buf []byte) time.Time {
 	mins := binary.LittleEndian.Uint16(buf[2:])
 	return time.Date(1900, 1, 1+int(days),
 		0, int(mins), 0, 0, time.UTC)
+}
+
+func encodeDateTim4(val time.Time) (buf []byte) {
+	buf = make([]byte, 4)
+
+	ref := time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
+	dur := val.Sub(ref)
+	days := dur / (24 * time.Hour)
+	mins := val.Hour()*60 + val.Minute()
+	if days < 0 {
+		days = 0
+		mins = 0
+	}
+
+	binary.LittleEndian.PutUint16(buf[:2], uint16(days))
+	binary.LittleEndian.PutUint16(buf[2:], uint16(mins))
+	return
+}
+
+// encodes datetime value
+// type identifier is typeDateTimeN
+func encodeDateTime(t time.Time) (res []byte) {
+	// base date in days since Jan 1st 1900
+	basedays := gregorianDays(1900, 1)
+	// days since Jan 1st 1900 (same TZ as t)
+	days := gregorianDays(t.Year(), t.YearDay()) - basedays
+	tm := 300*(t.Second()+t.Minute()*60+t.Hour()*60*60) + t.Nanosecond()*300/1e9
+	// minimum and maximum possible
+	mindays := gregorianDays(1753, 1) - basedays
+	maxdays := gregorianDays(9999, 365) - basedays
+	if days < mindays {
+		days = mindays
+		tm = 0
+	}
+	if days > maxdays {
+		days = maxdays
+		tm = (23*60*60+59*60+59)*300 + 299
+	}
+	res = make([]byte, 8)
+	binary.LittleEndian.PutUint32(res[0:4], uint32(days))
+	binary.LittleEndian.PutUint32(res[4:8], uint32(tm))
+	return
 }
 
 func decodeDateTime(buf []byte) time.Time {
@@ -320,7 +378,7 @@ func readByteLenType(ti *typeInfo, r *tdsBuffer) interface{} {
 		case 8:
 			return int64(binary.LittleEndian.Uint64(buf))
 		default:
-			badStreamPanicf("Invalid size for INTNTYPE")
+			badStreamPanicf("Invalid size for INTNTYPE: %d", len(buf))
 		}
 	case typeDecimal, typeNumeric, typeDecimalN, typeNumericN:
 		return decodeDecimal(ti.Prec, ti.Scale, buf)
@@ -379,7 +437,7 @@ func writeByteLenType(w io.Writer, ti typeInfo, buf []byte) (err error) {
 	if ti.Size > 0xff {
 		panic("Invalid size for BYTELEN_TYPE")
 	}
-	err = binary.Write(w, binary.LittleEndian, uint8(ti.Size))
+	err = binary.Write(w, binary.LittleEndian, uint8(len(buf)))
 	if err != nil {
 		return
 	}
@@ -601,10 +659,10 @@ func readPLPType(ti *typeInfo, r *tdsBuffer) interface{} {
 	size := r.uint64()
 	var buf *bytes.Buffer
 	switch size {
-	case PLP_NULL:
+	case _PLP_NULL:
 		// null
 		return nil
-	case UNKNOWN_PLP_LEN:
+	case _UNKNOWN_PLP_LEN:
 		// size unknown
 		buf = bytes.NewBuffer(make([]byte, 0, 1000))
 	default:
@@ -635,13 +693,13 @@ func readPLPType(ti *typeInfo, r *tdsBuffer) interface{} {
 }
 
 func writePLPType(w io.Writer, ti typeInfo, buf []byte) (err error) {
-	if err = binary.Write(w, binary.LittleEndian, uint64(UNKNOWN_PLP_LEN)); err != nil {
+	if err = binary.Write(w, binary.LittleEndian, uint64(_UNKNOWN_PLP_LEN)); err != nil {
 		return
 	}
 	for {
 		chunksize := uint32(len(buf))
 		if chunksize == 0 {
-			err = binary.Write(w, binary.LittleEndian, uint32(PLP_TERMINATOR))
+			err = binary.Write(w, binary.LittleEndian, uint32(_PLP_TERMINATOR))
 			return
 		}
 		if err = binary.Write(w, binary.LittleEndian, chunksize); err != nil {
@@ -805,6 +863,15 @@ func decodeDate(buf []byte) time.Time {
 	return time.Date(1, 1, 1+decodeDateInt(buf), 0, 0, 0, 0, time.UTC)
 }
 
+func encodeDate(val time.Time) (buf []byte) {
+	days, _, _ := dateTime2(val)
+	buf = make([]byte, 3)
+	buf[0] = byte(days)
+	buf[1] = byte(days >> 8)
+	buf[2] = byte(days >> 16)
+	return
+}
+
 func decodeTimeInt(scale uint8, buf []byte) (sec int, ns int) {
 	var acc uint64 = 0
 	for i := len(buf) - 1; i >= 0; i-- {
@@ -820,9 +887,39 @@ func decodeTimeInt(scale uint8, buf []byte) (sec int, ns int) {
 	return
 }
 
+// calculate size of time field in bytes
+func calcTimeSize(scale int) int {
+	if scale <= 2 {
+		return 3
+	} else if scale <= 4 {
+		return 4
+	} else {
+		return 5
+	}
+}
+
+// writes time value into a field buffer
+// buffer should be at least calcTimeSize long
+func encodeTimeInt(seconds, ns, scale int, buf []byte) {
+	ns_total := int64(seconds)*1000*1000*1000 + int64(ns)
+	t := ns_total / int64(math.Pow10(int(scale)*-1)*1e9)
+	buf[0] = byte(t)
+	buf[1] = byte(t >> 8)
+	buf[2] = byte(t >> 16)
+	buf[3] = byte(t >> 24)
+	buf[4] = byte(t >> 32)
+}
+
 func decodeTime(scale uint8, buf []byte) time.Time {
 	sec, ns := decodeTimeInt(scale, buf)
 	return time.Date(1, 1, 1, 0, 0, sec, ns, time.UTC)
+}
+
+func encodeTime(hour, minute, second, ns, scale int) (buf []byte) {
+	seconds := hour*3600 + minute*60 + second
+	buf = make([]byte, calcTimeSize(scale))
+	encodeTimeInt(seconds, ns, scale, buf)
+	return
 }
 
 func decodeDateTime2(scale uint8, buf []byte) time.Time {
@@ -830,6 +927,17 @@ func decodeDateTime2(scale uint8, buf []byte) time.Time {
 	sec, ns := decodeTimeInt(scale, buf[:timesize])
 	days := decodeDateInt(buf[timesize:])
 	return time.Date(1, 1, 1+days, 0, 0, sec, ns, time.UTC)
+}
+
+func encodeDateTime2(val time.Time, scale int) (buf []byte) {
+	days, seconds, ns := dateTime2(val)
+	timesize := calcTimeSize(scale)
+	buf = make([]byte, 3+timesize)
+	encodeTimeInt(seconds, ns, scale, buf)
+	buf[timesize] = byte(days)
+	buf[timesize+1] = byte(days >> 8)
+	buf[timesize+2] = byte(days >> 16)
+	return
 }
 
 func decodeDateTimeOffset(scale uint8, buf []byte) time.Time {
@@ -843,24 +951,43 @@ func decodeDateTimeOffset(scale uint8, buf []byte) time.Time {
 		time.FixedZone("", offset*60))
 }
 
-func divFloor(x int64, y int64) int64 {
-	q := x / y
-	r := x % y
-	if r != 0 && ((r < 0) != (y < 0)) {
-		q--
-	}
-	return q
+func encodeDateTimeOffset(val time.Time, scale int) (buf []byte) {
+	timesize := calcTimeSize(scale)
+	buf = make([]byte, timesize+2+3)
+	days, seconds, ns := dateTime2(val.In(time.UTC))
+	encodeTimeInt(seconds, ns, scale, buf)
+	buf[timesize] = byte(days)
+	buf[timesize+1] = byte(days >> 8)
+	buf[timesize+2] = byte(days >> 16)
+	_, offset := val.Zone()
+	offset /= 60
+	buf[timesize+3] = byte(offset)
+	buf[timesize+4] = byte(offset >> 8)
+	return
 }
 
-func dateTime2(t time.Time) (days int32, ns int64) {
-	// number of days since Jan 1 1970 UTC
-	days64 := divFloor(t.Unix(), 24*60*60)
-	// number of days since Jan 1 1 UTC
-	days = int32(days64) + 1969*365 + 1969/4 - 1969/100 + 1969/400
-	// number of seconds within day
-	secs := t.Unix() - days64*24*60*60
-	// number of nanoseconds within day
-	ns = secs*1e9 + int64(t.Nanosecond())
+// returns days since Jan 1st 0001 in Gregorian calendar
+func gregorianDays(year, yearday int) int {
+	year0 := year - 1
+	return year0*365 + year0/4 - year0/100 + year0/400 + yearday - 1
+}
+
+func dateTime2(t time.Time) (days int, seconds int, ns int) {
+	// days since Jan 1 1 (in same TZ as t)
+	days = gregorianDays(t.Year(), t.YearDay())
+	seconds = t.Second() + t.Minute()*60 + t.Hour()*60*60
+	ns = t.Nanosecond()
+	if days < 0 {
+		days = 0
+		seconds = 0
+		ns = 0
+	}
+	max := gregorianDays(9999, 365)
+	if days > max {
+		days = max
+		seconds = 59 + 59*60 + 23*60*60
+		ns = 999999900
+	}
 	return
 }
 
@@ -989,7 +1116,7 @@ func makeGoLangScanType(ti typeInfo) reflect.Type {
 	case typeVariant:
 		return reflect.TypeOf(nil)
 	default:
-		panic(fmt.Sprintf("not implemented makeDecl for type %d", ti.TypeId))
+		panic(fmt.Sprintf("not implemented makeGoLangScanType for type %d", ti.TypeId))
 	}
 }
 
@@ -1001,6 +1128,8 @@ func makeDecl(ti typeInfo) string {
 		return "nvarchar(1)"
 	case typeInt1:
 		return "tinyint"
+	case typeBigBinary:
+		return fmt.Sprintf("binary(%d)", ti.Size)
 	case typeInt2:
 		return "smallint"
 	case typeInt4:
@@ -1089,6 +1218,8 @@ func makeDecl(ti typeInfo) string {
 		default:
 			panic("invalid size of DATETIMNTYPE")
 		}
+	case typeTimeN:
+		return "time"
 	case typeDateTime2N:
 		return fmt.Sprintf("datetime2(%d)", ti.Scale)
 	case typeDateTimeOffsetN:
@@ -1101,6 +1232,11 @@ func makeDecl(ti typeInfo) string {
 		return ti.UdtInfo.TypeName
 	case typeGuid:
 		return "uniqueidentifier"
+	case typeTvp:
+		if ti.UdtInfo.SchemaName != "" {
+			return fmt.Sprintf("%s.%s READONLY", ti.UdtInfo.SchemaName, ti.UdtInfo.TypeName)
+		}
+		return fmt.Sprintf("%s READONLY", ti.UdtInfo.TypeName)
 	default:
 		panic(fmt.Sprintf("not implemented makeDecl for type %#x", ti.TypeId))
 	}
@@ -1209,7 +1345,7 @@ func makeGoLangTypeName(ti typeInfo) string {
 	case typeBigBinary:
 		return "BINARY"
 	default:
-		panic(fmt.Sprintf("not implemented makeDecl for type %d", ti.TypeId))
+		panic(fmt.Sprintf("not implemented makeGoLangTypeName for type %d", ti.TypeId))
 	}
 }
 
@@ -1332,7 +1468,7 @@ func makeGoLangTypeLength(ti typeInfo) (int64, bool) {
 	case typeBigBinary:
 		return 0, false
 	default:
-		panic(fmt.Sprintf("not implemented makeDecl for type %d", ti.TypeId))
+		panic(fmt.Sprintf("not implemented makeGoLangTypeLength for type %d", ti.TypeId))
 	}
 }
 
@@ -1443,6 +1579,6 @@ func makeGoLangTypePrecisionScale(ti typeInfo) (int64, int64, bool) {
 	case typeBigBinary:
 		return 0, 0, false
 	default:
-		panic(fmt.Sprintf("not implemented makeDecl for type %d", ti.TypeId))
+		panic(fmt.Sprintf("not implemented makeGoLangTypePrecisionScale for type %d", ti.TypeId))
 	}
 }

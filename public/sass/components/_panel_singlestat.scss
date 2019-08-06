@@ -6,14 +6,20 @@
 }
 
 .singlestat-panel-value-container {
-  line-height: 1;
   display: table-cell;
   vertical-align: middle;
   text-align: center;
   position: relative;
   z-index: 1;
-  font-size: 3em;
   font-weight: $font-weight-semi-bold;
+  line-height: 1;
+}
+
+// Helps
+.panel-container--no-title {
+  .singlestat-panel-value-container {
+    padding-bottom: 0;
+  }
 }
 
 .singlestat-panel-prefix {
@@ -21,5 +27,5 @@
 }
 
 #flotGagueValue0 {
-  font-weight: bold; //please dont hurt me for this!
+  font-weight: $font-weight-semi-bold; //please dont hurt me for this!
 }

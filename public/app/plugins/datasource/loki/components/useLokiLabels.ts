@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { DatasourceStatus } from '@grafana/ui/src/types/plugin';
+import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
+import { AbsoluteTimeRange } from '@grafana/data';
 
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
@@ -17,8 +18,9 @@ export const useLokiLabels = (
   languageProvider: LokiLanguageProvider,
   languageProviderInitialised: boolean,
   activeOption: CascaderOption[],
-  datasourceStatus: DatasourceStatus,
-  initialDatasourceStatus?: DatasourceStatus // used for test purposes
+  absoluteRange: AbsoluteTimeRange,
+  datasourceStatus: DataSourceStatus,
+  initialDatasourceStatus?: DataSourceStatus // used for test purposes
 ) => {
   const mounted = useRefMounted();
 
@@ -26,20 +28,20 @@ export const useLokiLabels = (
   const [logLabelOptions, setLogLabelOptions] = useState([]);
   const [shouldTryRefreshLabels, setRefreshLabels] = useState(false);
   const [prevDatasourceStatus, setPrevDatasourceStatus] = useState(
-    initialDatasourceStatus || DatasourceStatus.Connected
+    initialDatasourceStatus || DataSourceStatus.Connected
   );
   const [shouldForceRefreshLabels, setForceRefreshLabels] = useState(false);
 
   // Async
   const fetchOptionValues = async (option: string) => {
-    await languageProvider.fetchLabelValues(option);
+    await languageProvider.fetchLabelValues(option, absoluteRange);
     if (mounted.current) {
       setLogLabelOptions(languageProvider.logLabelOptions);
     }
   };
 
   const tryLabelsRefresh = async () => {
-    await languageProvider.refreshLogLabels(shouldForceRefreshLabels);
+    await languageProvider.refreshLogLabels(absoluteRange, shouldForceRefreshLabels);
 
     if (mounted.current) {
       setRefreshLabels(false);
@@ -84,7 +86,7 @@ export const useLokiLabels = (
   // This effect is performed on datasourceStatus state change only.
   // We want to make sure to only force refresh AFTER a disconnected state thats why we store the previous datasourceStatus in state
   useEffect(() => {
-    if (datasourceStatus === DatasourceStatus.Connected && prevDatasourceStatus === DatasourceStatus.Disconnected) {
+    if (datasourceStatus === DataSourceStatus.Connected && prevDatasourceStatus === DataSourceStatus.Disconnected) {
       setForceRefreshLabels(true);
     }
     setPrevDatasourceStatus(datasourceStatus);

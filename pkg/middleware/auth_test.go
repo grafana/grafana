@@ -11,7 +11,7 @@ func TestMiddlewareAuth(t *testing.T) {
 	Convey("Given the grafana middleware", t, func() {
 		reqSignIn := Auth(&AuthOptions{ReqSignedIn: true})
 
-		middlewareScenario("ReqSignIn true and unauthenticated request", func(sc *scenarioContext) {
+		middlewareScenario(t, "ReqSignIn true and unauthenticated request", func(sc *scenarioContext) {
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
 			sc.fakeReq("GET", "/secure").exec()
@@ -21,7 +21,7 @@ func TestMiddlewareAuth(t *testing.T) {
 			})
 		})
 
-		middlewareScenario("ReqSignIn true and unauthenticated API request", func(sc *scenarioContext) {
+		middlewareScenario(t, "ReqSignIn true and unauthenticated API request", func(sc *scenarioContext) {
 			sc.m.Get("/api/secure", reqSignIn, sc.defaultHandler)
 
 			sc.fakeReq("GET", "/api/secure").exec()

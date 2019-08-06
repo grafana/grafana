@@ -1,3 +1,5 @@
+$mobile-menu-breakpoint: md;
+
 .sidemenu {
   position: fixed;
   display: flex;
@@ -17,7 +19,7 @@
     display: none;
   }
 
-  @include media-breakpoint-up(sm) {
+  @include media-breakpoint-up($mobile-menu-breakpoint) {
     background: $side-menu-bg;
     height: auto;
     box-shadow: $side-menu-shadow;
@@ -46,7 +48,7 @@
 .sidemenu__bottom {
   display: none;
 
-  @include media-breakpoint-up(sm) {
+  @include media-breakpoint-up($mobile-menu-breakpoint) {
     display: block;
   }
 }
@@ -55,7 +57,7 @@
   position: relative;
   @include left-brand-border();
 
-  @include media-breakpoint-up(sm) {
+  @include media-breakpoint-up($mobile-menu-breakpoint) {
     &.active,
     &:hover {
       background-color: $side-menu-item-hover-bg;
@@ -214,10 +216,10 @@ li.sidemenu-org-switcher {
   }
 }
 
-@include media-breakpoint-down(xs) {
+@include media-breakpoint-down(sm) {
   .sidemenu-open--xs {
     li {
-      font-size: $font-size-lg;
+      font-size: $font-size-md;
     }
 
     .sidemenu {
@@ -283,7 +285,6 @@ li.sidemenu-org-switcher {
       position: unset;
       width: 100%;
       float: none;
-      margin-top: $space-sm;
       margin-bottom: $space-sm;
 
       > li > a {

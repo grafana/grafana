@@ -51,6 +51,36 @@ then the Grafana proxy will transform it into "https://management.azure.com/foo/
 
 The `method` parameter is optional. It can be set to any HTTP verb to provide more fine-grained control.
 
+### Dynamic Routes
+
+When using routes, you can also reference a variable stored in JsonData or SecureJsonData which will be interpolated when connecting to the datasource.
+
+With JsonData:
+```json
+"routes": [
+  {
+      "path": "custom/api/v5/*",
+      "method": "*",
+      "url": "{{.JsonData.dynamicUrl}}",
+      ...
+  },
+]
+```
+
+With SecureJsonData:
+```json
+"routes": [{
+      "path": "custom/api/v5/*",
+      "method": "*",
+      "url": "{{.SecureJsonData.dynamicUrl}}",
+  ...
+}]
+```
+
+In the above example, the app is able to set the value for `dynamicUrl` in JsonData or SecureJsonData and it will be replaced on-demand.
+
+An app using this feature can be found [here](https://github.com/grafana/kentik-app).
+
 ## Encrypting Sensitive Data
 
 When a user saves a password or secret with your datasource plugin's Config page, then you can save data to a column in the datasource table called `secureJsonData` that is an encrypted blob. Any data saved in the blob is encrypted by Grafana and can only be decrypted by the Grafana server on the backend. This means once a password is saved, no sensitive data is sent to the browser. If the password is saved in the `jsonData` blob or the `password` field then it is unencrypted and anyone with Admin access (with the help of Chrome Developer Tools) can read it.

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -38,6 +38,10 @@ func (e *ElasticsearchExecutor) Query(ctx context.Context, dsInfo *models.DataSo
 	client, err := es.NewClient(ctx, dsInfo, tsdbQuery.TimeRange)
 	if err != nil {
 		return nil, err
+	}
+
+	if tsdbQuery.Debug {
+		client.EnableDebug()
 	}
 
 	query := newTimeSeriesQuery(client, tsdbQuery, intervalCalculator)

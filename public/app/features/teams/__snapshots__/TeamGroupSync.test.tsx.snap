@@ -81,11 +81,11 @@ exports[`Render should render component 1`] = `
       There are no external groups to sync with
     </div>
     <button
-      className="empty-list-cta__button btn btn-xlarge btn-primary"
+      className="empty-list-cta__button btn btn-large btn-primary"
       onClick={[Function]}
     >
       <i
-        className="gicon gicon-add-team"
+        className="gicon gicon-team"
       />
       Add Group
     </button>
@@ -225,7 +225,7 @@ exports[`Render should render groups table 1`] = `
             }
           >
             <a
-              className="btn btn-danger btn-mini"
+              className="btn btn-danger btn-small"
               onClick={[Function]}
             >
               <i
@@ -248,7 +248,7 @@ exports[`Render should render groups table 1`] = `
             }
           >
             <a
-              className="btn btn-danger btn-mini"
+              className="btn btn-danger btn-small"
               onClick={[Function]}
             >
               <i
@@ -271,7 +271,7 @@ exports[`Render should render groups table 1`] = `
             }
           >
             <a
-              className="btn btn-danger btn-mini"
+              className="btn btn-danger btn-small"
               onClick={[Function]}
             >
               <i

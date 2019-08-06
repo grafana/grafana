@@ -3,6 +3,7 @@ import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 
 // Pages
+import ChangePasswordPage from 'app/features/profile/ChangePasswordPage';
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import TeamPages from 'app/features/teams/TeamPages';
@@ -22,18 +23,25 @@ import DataSourceSettingsPage from '../features/datasources/settings/DataSourceS
 import OrgDetailsPage from '../features/org/OrgDetailsPage';
 import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
 import DashboardPage from '../features/dashboard/containers/DashboardPage';
+import PluginPage from '../features/plugins/PluginPage';
+import AppRootPage from 'app/features/plugins/AppRootPage';
 import config from 'app/core/config';
+import { route, ILocationProvider } from 'angular';
 
 // Types
 import { DashboardRouteInfo } from 'app/types';
 
 /** @ngInject */
-export function setupAngularRoutes($routeProvider, $locationProvider) {
+export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
   $locationProvider.html5Mode(true);
+
+  // Routes here are guarded both here and server side for react-container routes or just on the server for angular
+  // ones. That means angular ones could be navigated to in case there is a client side link some where.
 
   $routeProvider
     .when('/', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.Home,
       reloadOnSearch: false,
@@ -108,6 +116,7 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     })
     .when('/datasources/edit/:id/', {
       template: '<react-container />',
+      reloadOnSearch: false, // for tabs
       resolve: {
         component: () => DataSourceSettingsPage,
       },
@@ -164,6 +173,14 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper'),
       },
     })
+    .when('/a/:pluginId/', {
+      // Someday * and will get a ReactRouter under that path!
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () => AppRootPage,
+      },
+    })
     .when('/org', {
       template: '<react-container />',
       resolve: {
@@ -217,8 +234,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/profile/password', {
-      templateUrl: 'public/app/features/profile/partials/change_password.html',
-      controller: 'ChangePasswordCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => ChangePasswordPage,
+      },
     })
     .when('/profile/select-org', {
       templateUrl: 'public/app/features/org/partials/select_org.html',
@@ -301,10 +320,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
         component: () => PluginListPage,
       },
     })
-    .when('/plugins/:pluginId/edit', {
-      templateUrl: 'public/app/features/plugins/partials/plugin_edit.html',
-      controller: 'PluginEditCtrl',
-      controllerAs: 'ctrl',
+    .when('/plugins/:pluginId/', {
+      template: '<react-container />',
+      reloadOnSearch: false, // tabs from query parameters
+      resolve: {
+        component: () => PluginPage,
+      },
     })
     .when('/plugins/:pluginId/page/:slug', {
       templateUrl: 'public/app/features/plugins/partials/plugin_page.html',

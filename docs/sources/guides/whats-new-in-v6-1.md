@@ -26,9 +26,9 @@ Support for fetching a list of label names was released in Prometheus v2.6.0 so 
 
 ### Permissions: Editors can own dashboards, folders and teams they create
 
-When the dashboard folders feature and permissions system was released in Grafana 5.0, users with the editor role were not allowed to administrate dashboards, folders or teams. In the 6.1 release, we have added a config option so that by default editors are admins for any Dashboard, Folder or Team they create.
+When the dashboard folders feature and permissions system was released in Grafana 5.0, users with the editor role were not allowed to administrate dashboards, folders or teams. In the 6.1 release, we have added a config option that can change the default permissions so that editors are admins for any Dashboard, Folder or Team they create.
 
-This feature also adds a new Team permission that can be assigned to any user with the editor or viewer role and lets that user add other users to the Team.
+This feature also adds a new Team permission that can be assigned to any user with the editor or viewer role and enables that user to add other users to the Team.
 
 We believe that this is more in line with the Grafana philosophy, as it will allow teams to be more self-organizing. This option will be made permanent if it gets positive feedback from the community so let us know what you think in the [issue on GitHub](https://github.com/grafana/grafana/issues/15590).
 
@@ -38,6 +38,10 @@ To turn this feature on add the following [config option](/installation/configur
 [users]
 editors_can_admin = true
 ```
+
+### List and revoke of user auth tokens in the API
+
+As the first step of a feature to be able to list a user's signed in devices/sessions and to be able log out those devices from the Grafana UI, support has been added to the [API to list and revoke user authentication tokens](/http_api/admin/#auth-tokens-for-user).
 
 ### Minor Features and Fixes
 

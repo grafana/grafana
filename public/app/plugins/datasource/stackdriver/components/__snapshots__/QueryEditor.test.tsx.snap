@@ -13,41 +13,43 @@ Array [
       >
         Service
       </span>
-      <div
-        className="css-0 gf-form-input gf-form-input--form-dropdown width-15"
-        onKeyDown={[Function]}
-      >
+      <div>
         <div
-          className="css-0 gf-form-select-box__control"
-          onMouseDown={[Function]}
-          onTouchEnd={[Function]}
+          className="css-0 gf-form-input gf-form-input--form-dropdown width-15"
+          onKeyDown={[Function]}
         >
           <div
-            className="css-0 gf-form-select-box__value-container"
+            className="css-0 gf-form-select-box__control"
+            onMouseDown={[Function]}
+            onTouchEnd={[Function]}
           >
             <div
-              className="css-0 gf-form-select-box__placeholder"
+              className="css-0 gf-form-select-box__value-container"
             >
-              Select Services
+              <div
+                className="css-0 gf-form-select-box__placeholder"
+              >
+                Select Services
+              </div>
+              <input
+                className="css-14uuagi"
+                disabled={false}
+                id="react-select-2-input"
+                onBlur={[Function]}
+                onChange={[Function]}
+                onFocus={[Function]}
+                readOnly={true}
+                tabIndex="0"
+                value=""
+              />
             </div>
-            <input
-              className="css-14uuagi"
-              disabled={false}
-              id="react-select-2-input"
-              onBlur={[Function]}
-              onChange={[Function]}
-              onFocus={[Function]}
-              readOnly={true}
-              tabIndex="0"
-              value=""
-            />
-          </div>
-          <div
-            className="css-0 gf-form-select-box__indicators"
-          >
-            <span
-              className="gf-form-select-box__select-arrow "
-            />
+            <div
+              className="css-0 gf-form-select-box__indicators"
+            >
+              <span
+                className="gf-form-select-box__select-arrow "
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -71,86 +73,88 @@ Array [
       >
         Metric
       </span>
-      <div
-        className="css-0 gf-form-input gf-form-input--form-dropdown width-26"
-        onKeyDown={[Function]}
-      >
+      <div>
         <div
-          className="css-0 gf-form-select-box__control"
-          onMouseDown={[Function]}
-          onTouchEnd={[Function]}
+          className="css-0 gf-form-input gf-form-input--form-dropdown width-26"
+          onKeyDown={[Function]}
         >
           <div
-            className="css-0 gf-form-select-box__value-container"
+            className="css-0 gf-form-select-box__control"
+            onMouseDown={[Function]}
+            onTouchEnd={[Function]}
           >
             <div
-              className="css-0 gf-form-select-box__placeholder"
-            >
-              Select Metric
-            </div>
-            <div
-              className="css-0"
+              className="css-0 gf-form-select-box__value-container"
             >
               <div
-                className="gf-form-select-box__input"
-                style={
-                  Object {
-                    "display": "inline-block",
-                  }
-                }
+                className="css-0 gf-form-select-box__placeholder"
               >
-                <input
-                  aria-autocomplete="list"
-                  autoCapitalize="none"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  disabled={false}
-                  id="react-select-3-input"
-                  onBlur={[Function]}
-                  onChange={[Function]}
-                  onFocus={[Function]}
-                  spellCheck="false"
-                  style={
-                    Object {
-                      "background": 0,
-                      "border": 0,
-                      "boxSizing": "content-box",
-                      "color": "inherit",
-                      "fontSize": "inherit",
-                      "opacity": 1,
-                      "outline": 0,
-                      "padding": 0,
-                      "width": "1px",
-                    }
-                  }
-                  tabIndex="0"
-                  type="text"
-                  value=""
-                />
+                Select Metric
+              </div>
+              <div
+                className="css-0"
+              >
                 <div
+                  className="gf-form-select-box__input"
                   style={
                     Object {
-                      "height": 0,
-                      "left": 0,
-                      "overflow": "scroll",
-                      "position": "absolute",
-                      "top": 0,
-                      "visibility": "hidden",
-                      "whiteSpace": "pre",
+                      "display": "inline-block",
                     }
                   }
                 >
-                  
+                  <input
+                    aria-autocomplete="list"
+                    autoCapitalize="none"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    disabled={false}
+                    id="react-select-3-input"
+                    onBlur={[Function]}
+                    onChange={[Function]}
+                    onFocus={[Function]}
+                    spellCheck="false"
+                    style={
+                      Object {
+                        "background": 0,
+                        "border": 0,
+                        "boxSizing": "content-box",
+                        "color": "inherit",
+                        "fontSize": "inherit",
+                        "opacity": 1,
+                        "outline": 0,
+                        "padding": 0,
+                        "width": "1px",
+                      }
+                    }
+                    tabIndex="0"
+                    type="text"
+                    value=""
+                  />
+                  <div
+                    style={
+                      Object {
+                        "height": 0,
+                        "left": 0,
+                        "overflow": "scroll",
+                        "position": "absolute",
+                        "top": 0,
+                        "visibility": "hidden",
+                        "whiteSpace": "pre",
+                      }
+                    }
+                  >
+                    
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div
-            className="css-0 gf-form-select-box__indicators"
-          >
-            <span
-              className="gf-form-select-box__select-arrow "
-            />
+            <div
+              className="css-0 gf-form-select-box__indicators"
+            >
+              <span
+                className="gf-form-select-box__select-arrow "
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -181,86 +185,88 @@ Array [
       >
         Aggregation
       </label>
-      <div
-        className="css-0 gf-form-input gf-form-input--form-dropdown width-15"
-        onKeyDown={[Function]}
-      >
+      <div>
         <div
-          className="css-0 gf-form-select-box__control"
-          onMouseDown={[Function]}
-          onTouchEnd={[Function]}
+          className="css-0 gf-form-input gf-form-input--form-dropdown width-15"
+          onKeyDown={[Function]}
         >
           <div
-            className="css-0 gf-form-select-box__value-container"
+            className="css-0 gf-form-select-box__control"
+            onMouseDown={[Function]}
+            onTouchEnd={[Function]}
           >
             <div
-              className="css-0 gf-form-select-box__placeholder"
-            >
-              Select Reducer
-            </div>
-            <div
-              className="css-0"
+              className="css-0 gf-form-select-box__value-container"
             >
               <div
-                className="gf-form-select-box__input"
-                style={
-                  Object {
-                    "display": "inline-block",
-                  }
-                }
+                className="css-0 gf-form-select-box__placeholder"
               >
-                <input
-                  aria-autocomplete="list"
-                  autoCapitalize="none"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  disabled={false}
-                  id="react-select-4-input"
-                  onBlur={[Function]}
-                  onChange={[Function]}
-                  onFocus={[Function]}
-                  spellCheck="false"
-                  style={
-                    Object {
-                      "background": 0,
-                      "border": 0,
-                      "boxSizing": "content-box",
-                      "color": "inherit",
-                      "fontSize": "inherit",
-                      "opacity": 1,
-                      "outline": 0,
-                      "padding": 0,
-                      "width": "1px",
-                    }
-                  }
-                  tabIndex="0"
-                  type="text"
-                  value=""
-                />
+                Select Reducer
+              </div>
+              <div
+                className="css-0"
+              >
                 <div
+                  className="gf-form-select-box__input"
                   style={
                     Object {
-                      "height": 0,
-                      "left": 0,
-                      "overflow": "scroll",
-                      "position": "absolute",
-                      "top": 0,
-                      "visibility": "hidden",
-                      "whiteSpace": "pre",
+                      "display": "inline-block",
                     }
                   }
                 >
-                  
+                  <input
+                    aria-autocomplete="list"
+                    autoCapitalize="none"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    disabled={false}
+                    id="react-select-4-input"
+                    onBlur={[Function]}
+                    onChange={[Function]}
+                    onFocus={[Function]}
+                    spellCheck="false"
+                    style={
+                      Object {
+                        "background": 0,
+                        "border": 0,
+                        "boxSizing": "content-box",
+                        "color": "inherit",
+                        "fontSize": "inherit",
+                        "opacity": 1,
+                        "outline": 0,
+                        "padding": 0,
+                        "width": "1px",
+                      }
+                    }
+                    tabIndex="0"
+                    type="text"
+                    value=""
+                  />
+                  <div
+                    style={
+                      Object {
+                        "height": 0,
+                        "left": 0,
+                        "overflow": "scroll",
+                        "position": "absolute",
+                        "top": 0,
+                        "visibility": "hidden",
+                        "whiteSpace": "pre",
+                      }
+                    }
+                  >
+                    
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div
-            className="css-0 gf-form-select-box__indicators"
-          >
-            <span
-              className="gf-form-select-box__select-arrow "
-            />
+            <div
+              className="css-0 gf-form-select-box__indicators"
+            >
+              <span
+                className="gf-form-select-box__select-arrow "
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -293,90 +299,92 @@ Array [
       >
         Alignment Period
       </label>
-      <div
-        className="css-0 gf-form-input gf-form-input--form-dropdown width-15"
-        onKeyDown={[Function]}
-      >
+      <div>
         <div
-          className="css-0 gf-form-select-box__control"
-          onMouseDown={[Function]}
-          onTouchEnd={[Function]}
+          className="css-0 gf-form-input gf-form-input--form-dropdown width-15"
+          onKeyDown={[Function]}
         >
           <div
-            className="css-0 gf-form-select-box__value-container gf-form-select-box__value-container--has-value"
+            className="css-0 gf-form-select-box__control"
+            onMouseDown={[Function]}
+            onTouchEnd={[Function]}
           >
             <div
-              className="css-0 gf-form-select-box__single-value"
+              className="css-0 gf-form-select-box__value-container gf-form-select-box__value-container--has-value"
             >
               <div
-                className="gf-form-select-box__img-value"
+                className="css-0 gf-form-select-box__single-value"
               >
-                stackdriver auto
-              </div>
-            </div>
-            <div
-              className="css-0"
-            >
-              <div
-                className="gf-form-select-box__input"
-                style={
-                  Object {
-                    "display": "inline-block",
-                  }
-                }
-              >
-                <input
-                  aria-autocomplete="list"
-                  autoCapitalize="none"
-                  autoComplete="off"
-                  autoCorrect="off"
-                  disabled={false}
-                  id="react-select-5-input"
-                  onBlur={[Function]}
-                  onChange={[Function]}
-                  onFocus={[Function]}
-                  spellCheck="false"
-                  style={
-                    Object {
-                      "background": 0,
-                      "border": 0,
-                      "boxSizing": "content-box",
-                      "color": "inherit",
-                      "fontSize": "inherit",
-                      "opacity": 1,
-                      "outline": 0,
-                      "padding": 0,
-                      "width": "1px",
-                    }
-                  }
-                  tabIndex="0"
-                  type="text"
-                  value=""
-                />
                 <div
+                  className="gf-form-select-box__img-value"
+                >
+                  stackdriver auto
+                </div>
+              </div>
+              <div
+                className="css-0"
+              >
+                <div
+                  className="gf-form-select-box__input"
                   style={
                     Object {
-                      "height": 0,
-                      "left": 0,
-                      "overflow": "scroll",
-                      "position": "absolute",
-                      "top": 0,
-                      "visibility": "hidden",
-                      "whiteSpace": "pre",
+                      "display": "inline-block",
                     }
                   }
                 >
-                  
+                  <input
+                    aria-autocomplete="list"
+                    autoCapitalize="none"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    disabled={false}
+                    id="react-select-5-input"
+                    onBlur={[Function]}
+                    onChange={[Function]}
+                    onFocus={[Function]}
+                    spellCheck="false"
+                    style={
+                      Object {
+                        "background": 0,
+                        "border": 0,
+                        "boxSizing": "content-box",
+                        "color": "inherit",
+                        "fontSize": "inherit",
+                        "opacity": 1,
+                        "outline": 0,
+                        "padding": 0,
+                        "width": "1px",
+                      }
+                    }
+                    tabIndex="0"
+                    type="text"
+                    value=""
+                  />
+                  <div
+                    style={
+                      Object {
+                        "height": 0,
+                        "left": 0,
+                        "overflow": "scroll",
+                        "position": "absolute",
+                        "top": 0,
+                        "visibility": "hidden",
+                        "whiteSpace": "pre",
+                      }
+                    }
+                  >
+                    
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div
-            className="css-0 gf-form-select-box__indicators"
-          >
-            <span
-              className="gf-form-select-box__select-arrow "
-            />
+            <div
+              className="css-0 gf-form-select-box__indicators"
+            >
+              <span
+                className="gf-form-select-box__select-arrow "
+              />
+            </div>
           </div>
         </div>
       </div>

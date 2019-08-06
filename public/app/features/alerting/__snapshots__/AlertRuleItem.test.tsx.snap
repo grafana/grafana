@@ -77,7 +77,7 @@ exports[`Render should render component 1`] = `
       title="Edit alert rule"
     >
       <i
-        className="icon-gf icon-gf-settings"
+        className="gicon gicon-cog"
       />
     </a>
   </div>

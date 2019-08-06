@@ -1,10 +1,10 @@
-import { ReactPanelPlugin } from '@grafana/ui';
+import { PanelPlugin } from '@grafana/ui';
 
 import { TextPanelEditor } from './TextPanelEditor';
 import { TextPanel } from './TextPanel';
 import { TextOptions, defaults } from './types';
 
-export const reactPanel = new ReactPanelPlugin<TextOptions>(TextPanel)
+export const plugin = new PanelPlugin<TextOptions>(TextPanel)
   .setDefaults(defaults)
   .setEditor(TextPanelEditor)
   .setPanelChangeHandler((options: TextOptions, prevPluginId: string, prevOptions: any) => {

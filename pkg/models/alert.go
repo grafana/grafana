@@ -1,9 +1,8 @@
 package models
 
 import (
-	"time"
-
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
@@ -36,7 +35,7 @@ const (
 
 var (
 	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("Cannot change state on pause alert")
-	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state.")
+	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state")
 )
 
 func (s AlertStateType) IsValid() bool {
@@ -116,6 +115,21 @@ func (this *Alert) ContainsUpdates(other *Alert) bool {
 
 	//don't compare .State! That would be insane.
 	return result
+}
+
+func (alert *Alert) GetTagsFromSettings() []*Tag {
+	tags := []*Tag{}
+	if alert.Settings != nil {
+		if data, ok := alert.Settings.CheckGet("alertRuleTags"); ok {
+			for tagNameString, tagValue := range data.MustMap() {
+				// MustMap() already guarantees the return of a `map[string]interface{}`.
+				// Therefore we only need to verify that tagValue is a String.
+				tagValueString := simplejson.NewFromAny(tagValue).MustString()
+				tags = append(tags, &Tag{Key: tagNameString, Value: tagValueString})
+			}
+		}
+	}
+	return tags
 }
 
 type AlertingClusterInfo struct {

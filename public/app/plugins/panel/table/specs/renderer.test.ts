@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
-import { getColorDefinitionByName } from '@grafana/ui';
+import { getColorDefinitionByName, ScopedVars } from '@grafana/ui';
 
 describe('when rendering table', () => {
   const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');
@@ -166,12 +166,12 @@ describe('when rendering table', () => {
       ],
     };
 
-    const sanitize = value => {
+    const sanitize = (value: any): string => {
       return 'sanitized';
     };
 
     const templateSrv = {
-      replace: (value, scopedVars) => {
+      replace: (value: any, scopedVars: ScopedVars) => {
         if (scopedVars) {
           // For testing variables replacement in link
           _.each(scopedVars, (val, key) => {
@@ -182,6 +182,7 @@ describe('when rendering table', () => {
       },
     };
 
+    //@ts-ignore
     const renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
 
     it('time column should be formated', () => {
@@ -386,6 +387,6 @@ describe('when rendering table', () => {
   });
 });
 
-function normalize(str) {
+function normalize(str: string) {
   return str.replace(/\s+/gm, ' ').trim();
 }

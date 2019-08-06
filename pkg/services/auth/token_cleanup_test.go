@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -40,7 +41,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 				insertToken(fmt.Sprintf("newA%d", i), fmt.Sprintf("newB%d", i), from.Unix(), from.Unix())
 			}
 
-			affected, err := ctx.tokenService.deleteExpiredTokens(7*24*time.Hour, 30*24*time.Hour)
+			affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 7*24*time.Hour, 30*24*time.Hour)
 			So(err, ShouldBeNil)
 			So(affected, ShouldEqual, 3)
 		})
@@ -60,7 +61,7 @@ func TestUserAuthTokenCleanup(t *testing.T) {
 				insertToken(fmt.Sprintf("newA%d", i), fmt.Sprintf("newB%d", i), from.Unix(), fromRotate.Unix())
 			}
 
-			affected, err := ctx.tokenService.deleteExpiredTokens(7*24*time.Hour, 30*24*time.Hour)
+			affected, err := ctx.tokenService.deleteExpiredTokens(context.Background(), 7*24*time.Hour, 30*24*time.Hour)
 			So(err, ShouldBeNil)
 			So(affected, ShouldEqual, 3)
 		})

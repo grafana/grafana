@@ -359,7 +359,7 @@ func (p *TextParser) startLabelValue() stateFn {
 		}
 		return p.readingValue
 	default:
-		p.parseError(fmt.Sprintf("unexpected end of label value %q", p.currentLabelPair.Value))
+		p.parseError(fmt.Sprintf("unexpected end of label value %q", p.currentLabelPair.GetValue()))
 		return nil
 	}
 }

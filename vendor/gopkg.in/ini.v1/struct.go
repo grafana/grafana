@@ -180,7 +180,7 @@ func setWithProperType(t reflect.Type, key *Key, field reflect.Value, delim stri
 	case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		durationVal, err := key.Duration()
 		// Skip zero value
-		if err == nil && int(durationVal) > 0 {
+		if err == nil && uint64(durationVal) > 0 {
 			field.Set(reflect.ValueOf(durationVal))
 			return nil
 		}

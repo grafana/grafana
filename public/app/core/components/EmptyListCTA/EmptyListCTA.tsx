@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { CallToActionCard, ExtraLargeLinkButton, ThemeContext } from '@grafana/ui';
+import { CallToActionCard, LinkButton, ThemeContext } from '@grafana/ui';
 import { css } from 'emotion';
 export interface Props {
   model: any;
@@ -28,7 +28,9 @@ const EmptyListCTA: React.FunctionComponent<Props> = props => {
         {proTipLinkTitle}
       </a>
     </span>
-  ) : null;
+  ) : (
+    ''
+  );
 
   const ctaElementClassName = !footer
     ? css`
@@ -37,9 +39,9 @@ const EmptyListCTA: React.FunctionComponent<Props> = props => {
     : '';
 
   const ctaElement = (
-    <ExtraLargeLinkButton onClick={onClick} href={buttonLink} icon={buttonIcon} className={ctaElementClassName}>
+    <LinkButton size="lg" onClick={onClick} href={buttonLink} icon={buttonIcon} className={ctaElementClassName}>
       {buttonTitle}
-    </ExtraLargeLinkButton>
+    </LinkButton>
   );
 
   return <CallToActionCard message={title} footer={footer} callToActionElement={ctaElement} theme={theme} />;

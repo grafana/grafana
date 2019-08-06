@@ -11,7 +11,6 @@ import 'react';
 import 'react-dom';
 
 import 'vendor/bootstrap/bootstrap';
-import 'vendor/angular-ui/ui-bootstrap-tpls';
 import 'vendor/angular-other/angular-strap';
 
 import $ from 'jquery';
@@ -19,10 +18,11 @@ import angular from 'angular';
 import config from 'app/core/config';
 // @ts-ignore ignoring this for now, otherwise we would have to extend _ interface with move
 import _ from 'lodash';
-import moment from 'moment';
 import { addClassIfNoOverlayScrollbar } from 'app/core/utils/scrollbar';
+import { importPluginModule } from 'app/features/plugins/plugin_loader';
 
 // add move to lodash for backward compatabiltiy
+// @ts-ignore
 _.move = (array: [], fromIndex: number, toIndex: number) => {
   array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
   return array;
@@ -34,6 +34,8 @@ import { setupAngularRoutes } from 'app/routes/routes';
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
+import { setLocale } from '@grafana/data';
+import { setMarkdownOptions } from '@grafana/data';
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
@@ -44,7 +46,7 @@ extensionsIndex.keys().forEach((key: any) => {
 export class GrafanaApp {
   registerFunctions: any;
   ngModuleDependencies: any[];
-  preBootModules: any[];
+  preBootModules: any[] | null;
 
   constructor() {
     addClassIfNoOverlayScrollbar('no-overlay-scrollbar');
@@ -66,7 +68,9 @@ export class GrafanaApp {
   init() {
     const app = angular.module('grafana', []);
 
-    moment.locale(config.bootData.user.locale);
+    setLocale(config.bootData.user.locale);
+
+    setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 
     app.config(
       (
@@ -120,8 +124,6 @@ export class GrafanaApp {
       'ang-drag-drop',
       'grafana',
       'pasvaz.bindonce',
-      'ui.bootstrap',
-      'ui.bootstrap.tpls',
       'react',
     ];
 
@@ -145,6 +147,11 @@ export class GrafanaApp {
 
       this.preBootModules = null;
     });
+
+    // Preload selected app plugins
+    for (const modulePath of config.pluginsToPreload) {
+      importPluginModule(modulePath);
+    }
   }
 }
 

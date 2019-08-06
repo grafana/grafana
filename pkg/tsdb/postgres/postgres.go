@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/go-xorm/core"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -41,18 +41,10 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 }
 
 func generateConnectionString(datasource *models.DataSource) string {
-	password := ""
-	for key, value := range datasource.SecureJsonData.Decrypt() {
-		if key == "password" {
-			password = value
-			break
-		}
-	}
-
 	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
 	u := &url.URL{
 		Scheme: "postgres",
-		User:   url.UserPassword(datasource.User, password),
+		User:   url.UserPassword(datasource.User, datasource.DecryptedPassword()),
 		Host:   datasource.Url, Path: datasource.Database,
 		RawQuery: "sslmode=" + url.QueryEscape(sslmode),
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 func SendResetPasswordEmail(c *m.ReqContext, form dtos.SendResetPasswordEmailForm) Response {
-	if setting.LdapEnabled || setting.AuthProxyEnabled {
+	if setting.LDAPEnabled || setting.AuthProxyEnabled {
 		return Error(401, "Not allowed to reset password when LDAP or Auth Proxy is enabled", nil)
 	}
 	if setting.DisableLoginForm {

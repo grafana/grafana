@@ -4,7 +4,7 @@ import "encoding/json"
 
 type PanelPlugin struct {
 	FrontendPluginBase
-	DataFormats []string `json:"dataFormats"`
+	SkipDataQuery bool `json:"skipDataQuery"`
 }
 
 func (p *PanelPlugin) Load(decoder *json.Decoder, pluginDir string) error {
@@ -14,10 +14,6 @@ func (p *PanelPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 
 	if err := p.registerPlugin(pluginDir); err != nil {
 		return err
-	}
-
-	if p.DataFormats == nil {
-		p.DataFormats = []string{"time_series", "table"}
 	}
 
 	Panels[p.Id] = p

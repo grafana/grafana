@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -95,7 +96,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
 		}
-		interval, err := time.ParseDuration(strings.Trim(args[1], `'`))
+		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
@@ -108,9 +109,13 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 
 		if m.timescaledb {
 			return fmt.Sprintf("time_bucket('%vs',%s)", interval.Seconds(), args[0]), nil
-		} else {
-			return fmt.Sprintf("floor(extract(epoch from %s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 		}
+
+		return fmt.Sprintf(
+			"floor(extract(epoch from %s)/%v)*%v", args[0],
+			interval.Seconds(),
+			interval.Seconds(),
+		), nil
 	case "__timeGroupAlias":
 		tg, err := m.evaluateMacro("__timeGroup", args)
 		if err == nil {
@@ -135,7 +140,7 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
 		}
-		interval, err := time.ParseDuration(strings.Trim(args[1], `'`))
+		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}

@@ -3,7 +3,7 @@
   "name": "Plugin list",
   "id": "pluginlist",
 
-  "dataFormats": [],
+  "skipDataQuery": true,
 
   "info": {
     "description": "Plugin List for Grafana",

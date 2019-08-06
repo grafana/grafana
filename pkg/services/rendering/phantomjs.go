@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 )
 
@@ -42,7 +42,8 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
-		"--web-security=false",
+		"--web-security=true",
+		"--local-url-access=false",
 		phantomDebugArg,
 		scriptPath,
 		fmt.Sprintf("url=%v", url),
@@ -66,10 +67,18 @@ func (rs *RenderingService) renderViaPhantomJS(ctx context.Context, opts Opts) (
 
 	timezone := ""
 
+	cmd.Env = os.Environ()
+
 	if opts.Timezone != "" {
 		timezone = isoTimeOffsetToPosixTz(opts.Timezone)
-		baseEnviron := os.Environ()
-		cmd.Env = appendEnviron(baseEnviron, "TZ", timezone)
+		cmd.Env = appendEnviron(cmd.Env, "TZ", timezone)
+	}
+
+	// Added to disable usage of newer version of OPENSSL
+	// that seem to be incompatible with PhantomJS (used in Debian Buster)
+	if runtime.GOOS == "linux" {
+		disableNewOpenssl := "/etc/ssl"
+		cmd.Env = appendEnviron(cmd.Env, "OPENSSL_CONF", disableNewOpenssl)
 	}
 
 	rs.log.Debug("executing Phantomjs", "binPath", binPath, "cmdArgs", cmdArgs, "timezone", timezone)

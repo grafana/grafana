@@ -3,7 +3,7 @@ import $ from 'jquery';
 import coreModule from '../core_module';
 
 /** @ngInject */
-export function dropdownTypeahead($compile) {
+export function dropdownTypeahead($compile: any) {
   const inputTemplate =
     '<input type="text"' +
     ' class="gf-form-input input-medium tight-form-input"' +
@@ -20,7 +20,7 @@ export function dropdownTypeahead($compile) {
       dropdownTypeaheadOnSelect: '&dropdownTypeaheadOnSelect',
       model: '=ngModel',
     },
-    link: ($scope, elem, attrs) => {
+    link: ($scope: any, elem: any, attrs: any) => {
       const $input = $(inputTemplate);
       const $button = $(buttonTemplate);
       $input.appendTo(elem);
@@ -31,7 +31,7 @@ export function dropdownTypeahead($compile) {
       }
 
       if (attrs.ngModel) {
-        $scope.$watch('model', newValue => {
+        $scope.$watch('model', (newValue: any) => {
           _.each($scope.menuItems, item => {
             _.each(item.submenu, subItem => {
               if (subItem.value === newValue) {
@@ -59,7 +59,7 @@ export function dropdownTypeahead($compile) {
         []
       );
 
-      $scope.menuItemSelected = (index, subIndex) => {
+      $scope.menuItemSelected = (index: number, subIndex: number) => {
         const menuItem = $scope.menuItems[index];
         const payload: any = { $item: menuItem };
         if (menuItem.submenu && subIndex !== void 0) {
@@ -73,7 +73,7 @@ export function dropdownTypeahead($compile) {
         source: typeaheadValues,
         minLength: 1,
         items: 10,
-        updater: value => {
+        updater: (value: string) => {
           const result: any = {};
           _.each($scope.menuItems, menuItem => {
             _.each(menuItem.submenu, submenuItem => {
@@ -123,7 +123,7 @@ export function dropdownTypeahead($compile) {
 }
 
 /** @ngInject */
-export function dropdownTypeahead2($compile) {
+export function dropdownTypeahead2($compile: any) {
   const inputTemplate =
     '<input type="text"' + ' class="gf-form-input"' + ' spellcheck="false" style="display:none"></input>';
 
@@ -139,7 +139,7 @@ export function dropdownTypeahead2($compile) {
       model: '=ngModel',
       buttonTemplateClass: '@',
     },
-    link: ($scope, elem, attrs) => {
+    link: ($scope: any, elem: any, attrs: any) => {
       const $input = $(inputTemplate);
 
       if (!$scope.buttonTemplateClass) {
@@ -148,7 +148,7 @@ export function dropdownTypeahead2($compile) {
 
       const $button = $(buttonTemplate);
       const timeoutId = {
-        blur: null,
+        blur: null as any,
       };
       $input.appendTo(elem);
       $button.appendTo(elem);
@@ -158,7 +158,7 @@ export function dropdownTypeahead2($compile) {
       }
 
       if (attrs.ngModel) {
-        $scope.$watch('model', newValue => {
+        $scope.$watch('model', (newValue: any) => {
           _.each($scope.menuItems, item => {
             _.each(item.submenu, subItem => {
               if (subItem.value === newValue) {
@@ -194,7 +194,7 @@ export function dropdownTypeahead2($compile) {
         elem.removeClass('open');
       };
 
-      $scope.menuItemSelected = (index, subIndex) => {
+      $scope.menuItemSelected = (index: number, subIndex: number) => {
         const menuItem = $scope.menuItems[index];
         const payload: any = { $item: menuItem };
         if (menuItem.submenu && subIndex !== void 0) {
@@ -209,7 +209,7 @@ export function dropdownTypeahead2($compile) {
         source: typeaheadValues,
         minLength: 1,
         items: 10,
-        updater: value => {
+        updater: (value: string) => {
           const result: any = {};
           _.each($scope.menuItems, menuItem => {
             _.each(menuItem.submenu, submenuItem => {

@@ -213,7 +213,7 @@ type fakeFolderService struct {
 	DeletedFolderUids    []string
 }
 
-func (s *fakeFolderService) GetFolders(limit int) ([]*m.Folder, error) {
+func (s *fakeFolderService) GetFolders(limit int64) ([]*m.Folder, error) {
 	return s.GetFoldersResult, s.GetFoldersError
 }
 

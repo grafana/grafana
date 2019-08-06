@@ -39,7 +39,7 @@ Click a panel title to open the panel menu, then click share in the panel menu t
 
 ### Direct Link Rendered Image
 
-You also get a link to service side rendered PNG of the panel. Useful if you want to share an image of the panel. Please note that for OSX and Windows, you will need to ensure that a `phantomjs` binary is available under `tools/phantomjs/phantomjs`. For Linux, a `phantomjs` binary is included - however, you should ensure that any requisite libraries (e.g. libfontconfig) are available.
+You also get a link to service side rendered PNG of the panel. Useful if you want to share an image of the panel. Please note that for OSX and Windows, you will need to ensure that a `phantomjs` binary is available under `tools/phantomjs/phantomjs`. For Linux, a `phantomjs` binary is included - however, you should ensure that any requisite libraries (e.g. libfontconfig1) are available.
 
 Example of a link to a server-side rendered PNG:
 
@@ -57,6 +57,8 @@ http://play.grafana.org/render/dashboard-solo/db/grafana-play-home?orgId=1&panel
 ### Embed Panel
 
 You can embed a panel using an iframe on another web site. This tab will show you the html that you need to use.
+
+> *Notice* This sharing require either anonymous access or setting [cookie_samesite]({{< relref "installation/configuration.md#cookie-samesite" >}}) to none
 
 Example:
 

@@ -1,12 +1,13 @@
 package notifications
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" // #nosec
 	"encoding/hex"
 	"fmt"
 	"time"
 
 	"github.com/Unknwon/com"
+
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )

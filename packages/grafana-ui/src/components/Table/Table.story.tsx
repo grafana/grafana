@@ -4,7 +4,8 @@ import { Table } from './Table';
 import { getTheme } from '../../themes';
 
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
-import { ScopedVars, SeriesData, GrafanaThemeType } from '../../types/index';
+import { ScopedVars, GrafanaThemeType } from '../../types/index';
+import { DataFrame } from '@grafana/data';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 import { number, boolean } from '@storybook/addon-knobs';
 
@@ -29,7 +30,7 @@ export function columnIndexToLeter(column: number) {
   return String.fromCharCode(A + c2);
 }
 
-export function makeDummyTable(columnCount: number, rowCount: number): SeriesData {
+export function makeDummyTable(columnCount: number, rowCount: number): DataFrame {
   return {
     fields: Array.from(new Array(columnCount), (x, i) => {
       return {
@@ -43,7 +44,7 @@ export function makeDummyTable(columnCount: number, rowCount: number): SeriesDat
   };
 }
 
-storiesOf('Alpha/Table', module)
+storiesOf('UI/Table', module)
   .add('Basic Table', () => {
     // NOTE: This example does not seem to survice rotate &
     // Changing fixed headers... but the next one does?
@@ -56,7 +57,7 @@ storiesOf('Alpha/Table', module)
 
     return withFullSizeStory(Table, {
       styles: [],
-      data: simpleTable,
+      data: { ...simpleTable },
       replaceVariables,
       showHeader,
       fixedHeader,

@@ -5,10 +5,10 @@ import kbn from 'app/core/utils/kbn';
 import { appEvents } from 'app/core/core';
 
 /** @ngInject */
-function tip($compile) {
+function tip($compile: any) {
   return {
     restrict: 'E',
-    link: (scope, elem, attrs) => {
+    link: (scope: any, elem: any, attrs: any) => {
       let _t =
         '<i class="grafana-tip fa fa-' +
         (attrs.icon || 'question-circle') +
@@ -26,7 +26,7 @@ function clipboardButton() {
     scope: {
       getText: '&clipboardButton',
     },
-    link: (scope, elem) => {
+    link: (scope: any, elem: any) => {
       scope.clipboard = new Clipboard(elem[0], {
         text: () => {
           return scope.getText();
@@ -47,15 +47,15 @@ function clipboardButton() {
 }
 
 /** @ngInject */
-function compile($compile) {
+function compile($compile: any) {
   return {
     restrict: 'A',
-    link: (scope, element, attrs) => {
+    link: (scope: any, element: any, attrs: any) => {
       scope.$watch(
-        scope => {
+        (scope: any) => {
           return scope.$eval(attrs.compile);
         },
-        value => {
+        (value: any) => {
           element.html(value);
           $compile(element.contents())(scope);
         }
@@ -67,7 +67,7 @@ function compile($compile) {
 function watchChange() {
   return {
     scope: { onchange: '&watchChange' },
-    link: (scope, element) => {
+    link: (scope: any, element: any) => {
       element.on('input', () => {
         scope.$apply(() => {
           scope.onchange({ inputValue: element.val() });
@@ -78,10 +78,10 @@ function watchChange() {
 }
 
 /** @ngInject */
-function editorOptBool($compile) {
+function editorOptBool($compile: any) {
   return {
     restrict: 'E',
-    link: (scope, elem, attrs) => {
+    link: (scope: any, elem: any, attrs: any) => {
       const ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
       const tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
       const showIf = attrs.showIf ? ' ng-show="' + attrs.showIf + '" ' : '';
@@ -115,10 +115,10 @@ function editorOptBool($compile) {
 }
 
 /** @ngInject */
-function editorCheckbox($compile, $interpolate) {
+function editorCheckbox($compile: any, $interpolate: any) {
   return {
     restrict: 'E',
-    link: (scope, elem, attrs) => {
+    link: (scope: any, elem: any, attrs: any) => {
       const text = $interpolate(attrs.text)(scope);
       const model = $interpolate(attrs.model)(scope);
       const ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
@@ -150,8 +150,8 @@ function editorCheckbox($compile, $interpolate) {
 }
 
 /** @ngInject */
-function gfDropdown($parse, $compile, $timeout) {
-  function buildTemplate(items, placement?) {
+function gfDropdown($parse: any, $compile: any, $timeout: any) {
+  function buildTemplate(items: any, placement?: any) {
     const upclass = placement === 'top' ? 'dropup' : '';
     const ul = ['<ul class="dropdown-menu ' + upclass + '" role="menu" aria-labelledby="drop1">', '</ul>'];
 
@@ -191,7 +191,7 @@ function gfDropdown($parse, $compile, $timeout) {
   return {
     restrict: 'EA',
     scope: true,
-    link: function postLink(scope, iElement, iAttrs) {
+    link: function postLink(scope: any, iElement: any, iAttrs: any) {
       const getter = $parse(iAttrs.gfDropdown),
         items = getter(scope);
       $timeout(() => {

@@ -10,15 +10,24 @@ import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
-import { getColorFromHexRgbOrName } from '@grafana/ui';
+import TimeSeries from 'app/core/time_series2';
+import { DataFrame, DataLink } from '@grafana/data';
+import { getColorFromHexRgbOrName, LegacyResponseData, VariableSuggestion } from '@grafana/ui';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
+import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
+import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+
+import { auto } from 'angular';
+import { AnnotationsSrv } from 'app/features/annotations/all';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
   renderError: boolean;
   hiddenSeries: any = {};
-  seriesList: any = [];
-  dataList: any = [];
+  seriesList: TimeSeries[] = [];
+  dataList: DataFrame[] = [];
   annotations: any = [];
   alertState: any;
 
@@ -27,8 +36,10 @@ class GraphCtrl extends MetricsPanelCtrl {
   colors: any = [];
   subTabIndex: number;
   processor: DataProcessor;
+  contextMenuCtrl: GraphContextMenuCtrl;
+  linkVariableSuggestions: VariableSuggestion[] = getDataLinksVariableSuggestions();
 
-  panelDefaults = {
+  panelDefaults: any = {
     // datasource name, null = default datasource
     datasource: null,
     // sets client side (flot) or native graphite png renderer (png)
@@ -66,6 +77,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     lines: true,
     // fill factor
     fill: 1,
+    // fill factor
+    fillGradient: 0,
     // line width in pixels
     linewidth: 1,
     // show/hide dashed line
@@ -115,18 +128,24 @@ class GraphCtrl extends MetricsPanelCtrl {
     seriesOverrides: [],
     thresholds: [],
     timeRegions: [],
+    options: {
+      dataLinks: [],
+    },
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private annotationsSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService, private annotationsSrv: AnnotationsSrv) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
+    _.defaults(this.panel.options, this.panelDefaults.options);
 
+    this.dataFormat = PanelQueryRunnerFormat.frames;
     this.processor = new DataProcessor(this.panel);
+    this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
@@ -134,6 +153,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+
+    this.onDataLinksChange = this.onDataLinksChange.bind(this);
   }
 
   onInitEditMode() {
@@ -141,15 +162,16 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
+    this.addEditorTab('Data link', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
   }
 
-  onInitPanelActions(actions) {
+  onInitPanelActions(actions: any[]) {
     actions.push({ text: 'Export CSV', click: 'ctrl.exportCsv()' });
     actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
-  issueQueries(datasource) {
+  issueQueries(datasource: any) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations({
       dashboard: this.dashboard,
       panel: this.panel,
@@ -162,16 +184,16 @@ class GraphCtrl extends MetricsPanelCtrl {
      * (but not wait for completion). This resolves
      * issue 11806.
      */
-    return this.annotationsSrv.datasourcePromises.then(r => {
+    return this.annotationsSrv.datasourcePromises.then((r: any) => {
       return super.issueQueries(datasource);
     });
   }
 
-  zoomOut(evt) {
+  zoomOut(evt: any) {
     this.publishAppEvent('zoom-out', 2);
   }
 
-  onDataSnapshotLoad(snapshotData) {
+  onDataSnapshotLoad(snapshotData: any) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations({
       dashboard: this.dashboard,
       panel: this.panel,
@@ -180,16 +202,24 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.onDataReceived(snapshotData);
   }
 
-  onDataError(err) {
+  onDataError(err: any) {
     this.seriesList = [];
     this.annotations = [];
     this.render([]);
   }
 
-  onDataReceived(dataList) {
-    this.dataList = dataList;
+  // This should only be called from the snapshot callback
+  onDataReceived(dataList: LegacyResponseData[]) {
+    this.handleDataFrames(getProcessedDataFrames(dataList));
+  }
+
+  // Directly support DataFrame skipping event callbacks
+  handleDataFrames(data: DataFrame[]) {
+    super.handleDataFrames(data);
+
+    this.dataList = data;
     this.seriesList = this.processor.getSeriesList({
-      dataList: dataList,
+      dataList: this.dataList,
       range: this.range,
     });
 
@@ -216,7 +246,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
 
     this.annotationsPromise.then(
-      result => {
+      (result: { alertState: any; annotations: any }) => {
         this.loading = false;
         this.alertState = result.alertState;
         this.annotations = result.annotations;
@@ -243,25 +273,25 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
   }
 
-  onColorChange = (series, color) => {
+  onColorChange = (series: any, color: string) => {
     series.setColor(getColorFromHexRgbOrName(color, config.theme.type));
     this.panel.aliasColors[series.alias] = color;
     this.render();
   };
 
-  onToggleSeries = hiddenSeries => {
+  onToggleSeries = (hiddenSeries: any) => {
     this.hiddenSeries = hiddenSeries;
     this.render();
   };
 
-  onToggleSort = (sortBy, sortDesc) => {
+  onToggleSort = (sortBy: any, sortDesc: any) => {
     this.panel.legend.sort = sortBy;
     this.panel.legend.sortDesc = sortDesc;
     this.render();
   };
 
-  onToggleAxis = info => {
-    let override = _.find(this.panel.seriesOverrides, { alias: info.alias });
+  onToggleAxis = (info: { alias: any; yaxis: any }) => {
+    let override: any = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
@@ -270,11 +300,18 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   };
 
-  addSeriesOverride(override) {
+  onDataLinksChange(dataLinks: DataLink[]) {
+    this.panel.updateOptions({
+      ...this.panel.options,
+      dataLinks,
+    });
+  }
+
+  addSeriesOverride(override: any) {
     this.panel.seriesOverrides.push(override || {});
   }
 
-  removeSeriesOverride(override) {
+  removeSeriesOverride(override: any) {
     this.panel.seriesOverrides = _.without(this.panel.seriesOverrides, override);
     this.render();
   }
@@ -299,6 +336,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       modalClass: 'modal--narrow',
     });
   }
+
+  onContextMenuClose = () => {
+    this.contextMenuCtrl.toggleMenu();
+  };
 }
 
 export { GraphCtrl, GraphCtrl as PanelCtrl };

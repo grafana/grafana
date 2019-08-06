@@ -44,7 +44,7 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
   }
 
-  hasRole(role) {
+  hasRole(role: string) {
     return this.user.orgRole === role;
   }
 

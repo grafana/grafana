@@ -14,7 +14,7 @@ const setup = (propOverrides?: object) => {
     minValue: 0,
     showThresholdMarkers: true,
     showThresholdLabels: false,
-    thresholds: [{ index: 0, value: -Infinity, color: '#7EB26D' }],
+    thresholds: [{ value: -Infinity, color: '#7EB26D' }],
     height: 300,
     width: 300,
     value: {
@@ -48,9 +48,9 @@ describe('Get thresholds formatted', () => {
   it('should get the correct formatted values when thresholds are added', () => {
     const { instance } = setup({
       thresholds: [
-        { index: 0, value: -Infinity, color: '#7EB26D' },
-        { index: 1, value: 50, color: '#EAB839' },
-        { index: 2, value: 75, color: '#6ED0E0' },
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 50, color: '#EAB839' },
+        { value: 75, color: '#6ED0E0' },
       ],
     });
 

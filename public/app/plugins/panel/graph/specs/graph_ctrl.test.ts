@@ -1,5 +1,5 @@
-import moment from 'moment';
 import { GraphCtrl } from '../module';
+import { dateTime } from '@grafana/data';
 
 jest.mock('../graph', () => ({}));
 
@@ -33,7 +33,7 @@ describe('GraphCtrl', () => {
   const ctx = {} as any;
 
   beforeEach(() => {
-    ctx.ctrl = new GraphCtrl(scope, injector, {});
+    ctx.ctrl = new GraphCtrl(scope, injector as any, {} as any);
     ctx.ctrl.events = {
       emit: () => {},
     };
@@ -50,7 +50,7 @@ describe('GraphCtrl', () => {
         },
       ];
 
-      ctx.ctrl.range = { from: moment().valueOf(), to: moment().valueOf() };
+      ctx.ctrl.range = { from: dateTime().valueOf(), to: dateTime().valueOf() };
       ctx.ctrl.onDataReceived(data);
     });
 
@@ -62,10 +62,10 @@ describe('GraphCtrl', () => {
   describe('when time series are inside range', () => {
     beforeEach(() => {
       const range = {
-        from: moment()
+        from: dateTime()
           .subtract(1, 'days')
           .valueOf(),
-        to: moment().valueOf(),
+        to: dateTime().valueOf(),
       };
 
       const data = [
@@ -86,7 +86,7 @@ describe('GraphCtrl', () => {
 
   describe('datapointsCount given 2 series', () => {
     beforeEach(() => {
-      const data = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
+      const data: any = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
       ctx.ctrl.onDataReceived(data);
     });
 

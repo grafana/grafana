@@ -9,9 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"gopkg.in/macaron.v1"
-
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/macaron.v1"
 )
 
 func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
@@ -94,6 +93,26 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 	return sc
 }
 
+func (sc *scenarioContext) fakeReqNoAssertions(method, url string) *scenarioContext {
+	sc.resp = httptest.NewRecorder()
+	req, _ := http.NewRequest(method, url, nil)
+	sc.req = req
+
+	return sc
+}
+
+func (sc *scenarioContext) fakeReqNoAssertionsWithCookie(method, url string, cookie http.Cookie) *scenarioContext {
+	sc.resp = httptest.NewRecorder()
+	http.SetCookie(sc.resp, &cookie)
+
+	req, _ := http.NewRequest(method, url, nil)
+	req.Header = http.Header{"Cookie": sc.resp.Header()["Set-Cookie"]}
+
+	sc.req = req
+
+	return sc
+}
+
 type scenarioContext struct {
 	m                    *macaron.Macaron
 	context              *m.ReqContext
@@ -124,7 +143,7 @@ func setupScenarioContext(url string) *scenarioContext {
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	sc.m.Use(middleware.GetContextHandler(nil))
+	sc.m.Use(middleware.GetContextHandler(nil, nil))
 
 	return sc
 }

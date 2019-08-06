@@ -1,24 +1,25 @@
-import { coreModule } from 'app/core/core';
+import { coreModule, NavModelSrv } from 'app/core/core';
+import { BackendSrv } from 'app/core/services/backend_srv';
 
 export class AlertNotificationsListCtrl {
   notifications: any;
   navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv) {
+  constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
     this.loadNotifications();
     this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
   }
 
   loadNotifications() {
-    this.backendSrv.get(`/api/alert-notifications`).then(result => {
+    this.backendSrv.get(`/api/alert-notifications`).then((result: any) => {
       this.notifications = result;
     });
   }
 
-  deleteNotification(id) {
+  deleteNotification(id: number) {
     this.backendSrv.delete(`/api/alert-notifications/${id}`).then(() => {
-      this.notifications = this.notifications.filter(notification => {
+      this.notifications = this.notifications.filter((notification: any) => {
         return notification.id !== id;
       });
     });

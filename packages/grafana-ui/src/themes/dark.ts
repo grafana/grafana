@@ -1,4 +1,3 @@
-import tinycolor from 'tinycolor2';
 import defaultTheme from './default';
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
@@ -66,11 +65,11 @@ const darkTheme: GrafanaTheme = {
     textWeak: basicColors.gray2,
     textEmphasis: basicColors.gray5,
     textFaint: basicColors.dark5,
-    link: new tinycolor(basicColors.white).darken(11).toString(),
-    linkDisabled: new tinycolor(basicColors.white).darken(11).toString(),
+    link: basicColors.gray4,
+    linkDisabled: basicColors.gray2,
     linkHover: basicColors.white,
     linkExternal: basicColors.blue,
-    headingColor: new tinycolor(basicColors.white).darken(11).toString(),
+    headingColor: basicColors.gray4,
   },
   background: {
     dropdown: basicColors.dark3,

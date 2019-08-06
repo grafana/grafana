@@ -8,6 +8,8 @@ import (
 	"net/rpc"
 
 	"github.com/mitchellh/go-testing-interface"
+	hclog "github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-plugin/internal/plugin"
 	"google.golang.org/grpc"
 )
 
@@ -140,9 +142,11 @@ func TestPluginGRPCConn(t testing.T, ps map[string]Plugin) (*GRPCClient, *GRPCSe
 	// Start up the server
 	server := &GRPCServer{
 		Plugins: ps,
+		DoneCh:  make(chan struct{}),
 		Server:  DefaultGRPCServer,
 		Stdout:  new(bytes.Buffer),
 		Stderr:  new(bytes.Buffer),
+		logger:  hclog.Default(),
 	}
 	if err := server.Init(); err != nil {
 		t.Fatalf("err: %s", err)
@@ -165,10 +169,11 @@ func TestPluginGRPCConn(t testing.T, ps map[string]Plugin) (*GRPCClient, *GRPCSe
 
 	// Create the client
 	client := &GRPCClient{
-		Conn:    conn,
-		Plugins: ps,
-		broker:  broker,
-		doneCtx: context.Background(),
+		Conn:       conn,
+		Plugins:    ps,
+		broker:     broker,
+		doneCtx:    context.Background(),
+		controller: plugin.NewGRPCControllerClient(conn),
 	}
 
 	return client, server

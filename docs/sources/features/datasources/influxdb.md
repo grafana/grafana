@@ -32,6 +32,7 @@ Name | Description
 *Database* | Name of your influxdb database
 *User* | Name of your database user
 *Password* | Database user's password
+*HTTP mode* | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
@@ -116,6 +117,26 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
 change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
 
+## Querying Logs (BETA)
+
+> Only available in Grafana v6.3+.
+
+Querying and displaying log data from InfluxDB is available via [Explore](/features/explore).
+
+![](/img/docs/v63/influxdb_explore_logs.png)
+
+Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher,
+and then use the `Measurements/Fields` button to display your logs.
+
+### Log Queries
+
+The Logs Explorer (the `Measurements/Fields` button) next to the query field shows a list of measurements and fields. Choose the desired measurement that contains your log data and then choose which field Explore should use to display the log message.
+
+Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
+
+### Filter search
+
+To add a filter click the plus icon to the right of the `Measurements/Fields` button or a condition. You can remove tag filters by clicking on the first select and choosing `--remove filter--`.
 
 ## Templating
 
@@ -123,7 +144,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -212,4 +233,6 @@ datasources:
     user: grafana
     password: grafana
     url: http://localhost:8086
+    jsonData:
+      httpMode: GET
 ```

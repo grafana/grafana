@@ -1,11 +1,10 @@
 import React, { PureComponent } from 'react';
 
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-
-import { PanelPlugin } from 'app/types';
+import { PanelPluginMeta } from '@grafana/ui';
 
 interface Props {
-  plugin: PanelPlugin;
+  plugin: PanelPluginMeta;
   searchQuery: string;
   onChange: (query: string) => void;
   onClose: () => void;

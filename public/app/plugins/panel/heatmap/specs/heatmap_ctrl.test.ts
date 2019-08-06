@@ -1,5 +1,6 @@
-import moment from 'moment';
 import { HeatmapCtrl } from '../heatmap_ctrl';
+import { dateTime } from '@grafana/data';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 describe('HeatmapCtrl', () => {
   const ctx = {} as any;
@@ -20,19 +21,20 @@ describe('HeatmapCtrl', () => {
   };
 
   beforeEach(() => {
-    ctx.ctrl = new HeatmapCtrl($scope, $injector, {});
+    //@ts-ignore
+    ctx.ctrl = new HeatmapCtrl($scope, $injector, {} as TimeSrv);
   });
 
   describe('when time series are outside range', () => {
     beforeEach(() => {
-      const data = [
+      const data: any = [
         {
           target: 'test.cpu1',
           datapoints: [[45, 1234567890], [60, 1234567899]],
         },
       ];
 
-      ctx.ctrl.range = { from: moment().valueOf(), to: moment().valueOf() };
+      ctx.ctrl.range = { from: dateTime().valueOf(), to: dateTime().valueOf() };
       ctx.ctrl.onDataReceived(data);
     });
 
@@ -44,13 +46,13 @@ describe('HeatmapCtrl', () => {
   describe('when time series are inside range', () => {
     beforeEach(() => {
       const range = {
-        from: moment()
+        from: dateTime()
           .subtract(1, 'days')
           .valueOf(),
-        to: moment().valueOf(),
+        to: dateTime().valueOf(),
       };
 
-      const data = [
+      const data: any = [
         {
           target: 'test.cpu1',
           datapoints: [[45, range.from + 1000], [60, range.from + 10000]],
@@ -68,7 +70,7 @@ describe('HeatmapCtrl', () => {
 
   describe('datapointsCount given 2 series', () => {
     beforeEach(() => {
-      const data = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
+      const data: any = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
       ctx.ctrl.onDataReceived(data);
     });
 

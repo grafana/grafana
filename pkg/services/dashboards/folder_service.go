@@ -9,7 +9,7 @@ import (
 
 // FolderService service for operating on folders
 type FolderService interface {
-	GetFolders(limit int) ([]*models.Folder, error)
+	GetFolders(limit int64) ([]*models.Folder, error)
 	GetFolderByID(id int64) (*models.Folder, error)
 	GetFolderByUID(uid string) (*models.Folder, error)
 	CreateFolder(cmd *models.CreateFolderCommand) error
@@ -25,11 +25,7 @@ var NewFolderService = func(orgId int64, user *models.SignedInUser) FolderServic
 	}
 }
 
-func (dr *dashboardServiceImpl) GetFolders(limit int) ([]*models.Folder, error) {
-	if limit == 0 {
-		limit = 1000
-	}
-
+func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error) {
 	searchQuery := search.Query{
 		SignedInUser: dr.user,
 		DashboardIds: make([]int64, 0),

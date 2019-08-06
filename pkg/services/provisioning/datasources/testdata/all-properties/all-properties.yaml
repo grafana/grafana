@@ -1,7 +1,7 @@
 apiVersion: 1
 
 datasources:
-  - name: name
+  - name: $TEST_VAR
     type: type
     access: proxy
     orgId: 2

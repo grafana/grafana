@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -60,10 +60,10 @@ func TestAlertRuleModel(t *testing.T) {
 		})
 
 		Convey("can construct alert rule model", func() {
-			firstNotification := m.CreateAlertNotificationCommand{OrgId: 1, Name: "1"}
+			firstNotification := models.CreateAlertNotificationCommand{OrgId: 1, Name: "1"}
 			err := sqlstore.CreateAlertNotificationCommand(&firstNotification)
 			So(err, ShouldBeNil)
-			secondNotification := m.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
+			secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
 			err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
 			So(err, ShouldBeNil)
 
@@ -92,7 +92,7 @@ func TestAlertRuleModel(t *testing.T) {
 				alertJSON, jsonErr := simplejson.NewJson([]byte(json))
 				So(jsonErr, ShouldBeNil)
 
-				alert := &m.Alert{
+				alert := &models.Alert{
 					Id:          1,
 					OrgId:       1,
 					DashboardId: 1,
@@ -129,7 +129,7 @@ func TestAlertRuleModel(t *testing.T) {
 			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
 			So(jsonErr, ShouldBeNil)
 
-			alert := &m.Alert{
+			alert := &models.Alert{
 				Id:          1,
 				OrgId:       1,
 				DashboardId: 1,
@@ -167,7 +167,7 @@ func TestAlertRuleModel(t *testing.T) {
 			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
 			So(jsonErr, ShouldBeNil)
 
-			alert := &m.Alert{
+			alert := &models.Alert{
 				Id:          1,
 				OrgId:       1,
 				DashboardId: 1,

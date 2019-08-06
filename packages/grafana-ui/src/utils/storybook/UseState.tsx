@@ -28,7 +28,6 @@ export class UseState<T> extends React.Component<StateHolderProps<T>, { value: T
   }
 
   handleStateUpdate = (nextState: T) => {
-    console.log(nextState);
     this.setState({ value: nextState });
   };
 

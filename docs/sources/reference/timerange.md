@@ -53,7 +53,7 @@ From Dashboard settings, click the Timepicker tab. From here you can specify the
 
 ### Defining Now
 
-Users often ask, [when will then be now](https://www.youtube.com/watch?v=VeZ9HhHU86o)? Grafana offers the ability to override the `now` value on a per dashboard basis. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
+Grafana offers the ability to override the `now` value on a per dashboard basis. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
 
 ## Panel time overrides & timeshift
 

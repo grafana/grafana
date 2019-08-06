@@ -4,7 +4,7 @@ import config from 'app/core/config';
 
 export class Analytics {
   /** @ngInject */
-  constructor(private $rootScope, private $location) {}
+  constructor(private $rootScope: any, private $location: any) {}
 
   gaInit() {
     $.ajax({
@@ -35,7 +35,7 @@ export class Analytics {
 }
 
 /** @ngInject */
-function startAnalytics(googleAnalyticsSrv) {
+function startAnalytics(googleAnalyticsSrv: Analytics) {
   if ((config as any).googleAnalyticsId) {
     googleAnalyticsSrv.init();
   }

@@ -3,8 +3,6 @@
   "name": "Singlestat",
   "id": "singlestat",
 
-  "dataFormats": ["time_series", "table"],
-
   "info": {
     "description": "Singlestat Panel for Grafana",
     "author": {
