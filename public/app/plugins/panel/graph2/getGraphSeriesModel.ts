@@ -30,7 +30,7 @@ export const getGraphSeriesModel = (
       const field = numberFields[i];
       // Use external calculator just to make sure it works :)
       const points = getFlotPairs({
-        series,
+        rows: series.rows,
         xIndex: timeColumn.index,
         yIndex: field.index,
         nullValueMode: NullValueMode.Null,

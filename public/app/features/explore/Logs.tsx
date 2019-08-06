@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { rangeUtil } from '@grafana/data';
-import { Switch } from '@grafana/ui';
+import { rangeUtil, dateTimeForTimeZone } from '@grafana/data';
+import { Switch, GraphWithLegend, LegendDisplayMode } from '@grafana/ui';
 import {
   RawTimeRange,
   LogLevel,
@@ -13,31 +13,31 @@ import {
   LogsDedupStrategy,
   LogRowModel,
 } from '@grafana/data';
-import TimeSeries from 'app/core/time_series2';
+// import TimeSeries from 'app/core/time_series2';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
-import Graph from './Graph';
+// import Graph from './Graph';
 import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
 import { LogsDedupDescription } from 'app/core/logs_model';
 
 const PREVIEW_LIMIT = 100;
 
-const graphOptions = {
-  series: {
-    stack: true,
-    bars: {
-      show: true,
-      lineWidth: 5,
-      // barWidth: 10,
-    },
-    // stack: true,
-  },
-  yaxis: {
-    tickDecimals: 0,
-  },
-};
+// const graphOptions = {
+//   series: {
+//     stack: true,
+//     bars: {
+//       show: true,
+//       lineWidth: 5,
+//       // barWidth: 10,
+//     },
+//     // stack: true,
+//   },
+//   yaxis: {
+//     tickDecimals: 0,
+//   },
+// };
 
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
@@ -153,7 +153,7 @@ export default class Logs extends PureComponent<Props, State> {
   render() {
     const {
       data,
-      exploreId,
+      // exploreId,
       highlighterExpressions,
       loading = false,
       onClickLabel,
@@ -193,14 +193,36 @@ export default class Logs extends PureComponent<Props, State> {
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
-    const timeSeries = data.series
-      ? data.series.map(series => new TimeSeries(series))
-      : [new TimeSeries({ datapoints: [] })];
+    const timeRange = {
+      from: dateTimeForTimeZone(timeZone, absoluteRange.from),
+      to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+      raw: {
+        from: dateTimeForTimeZone(timeZone, absoluteRange.from),
+        to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+      },
+    };
+    const height = 100;
 
     return (
       <div className="logs-panel">
         <div className="logs-panel-graph">
-          <Graph
+          <GraphWithLegend
+            displayMode={LegendDisplayMode.List}
+            height={height}
+            isLegendVisible={true}
+            placement={'under'}
+            width={width}
+            timeRange={timeRange}
+            showBars={true}
+            showLines={false}
+            showPoints={false}
+            onSeriesColorChange={() => {}}
+            onToggleSort={() => {}}
+            series={data.series}
+            isStacked={true}
+            lineWidth={5}
+          />
+          {/* <Graph
             data={timeSeries}
             height={100}
             width={width}
@@ -210,7 +232,7 @@ export default class Logs extends PureComponent<Props, State> {
             onChangeTime={this.props.onChangeTime}
             onToggleSeries={this.onToggleLogLevel}
             userOptions={graphOptions}
-          />
+          /> */}
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">

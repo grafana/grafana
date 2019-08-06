@@ -67,6 +67,8 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     onToggleSort,
     hideEmpty,
     hideZero,
+    isStacked,
+    lineWidth,
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
@@ -96,6 +98,8 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
           width={width}
           height={height}
           key={isLegendVisible ? 'legend-visible' : 'legend-invisible'}
+          isStacked={isStacked}
+          lineWidth={lineWidth}
         />
       </div>
 

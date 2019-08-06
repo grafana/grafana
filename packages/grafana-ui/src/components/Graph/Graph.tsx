@@ -14,6 +14,8 @@ export interface GraphProps {
   showBars?: boolean;
   width: number;
   height: number;
+  isStacked?: boolean;
+  lineWidth?: number;
 }
 
 export class Graph extends PureComponent<GraphProps> {
@@ -21,6 +23,8 @@ export class Graph extends PureComponent<GraphProps> {
     showLines: true,
     showPoints: false,
     showBars: false,
+    isStacked: false,
+    lineWidth: 1,
   };
 
   element: HTMLElement | null = null;
@@ -38,7 +42,7 @@ export class Graph extends PureComponent<GraphProps> {
       return;
     }
 
-    const { width, series, timeRange, showLines, showBars, showPoints } = this.props;
+    const { width, series, timeRange, showLines, showBars, showPoints, isStacked, lineWidth } = this.props;
 
     if (!width) {
       return;
@@ -62,9 +66,10 @@ export class Graph extends PureComponent<GraphProps> {
         show: false,
       },
       series: {
+        stack: isStacked,
         lines: {
           show: showLines,
-          linewidth: 1,
+          linewidth: lineWidth,
           zero: false,
         },
         points: {
@@ -78,7 +83,7 @@ export class Graph extends PureComponent<GraphProps> {
           fill: 1,
           barWidth: 1,
           zero: false,
-          lineWidth: 0,
+          lineWidth: lineWidth,
         },
         shadowSize: 0,
       },
@@ -113,9 +118,10 @@ export class Graph extends PureComponent<GraphProps> {
   }
 
   render() {
+    const { height } = this.props;
     return (
       <div className="graph-panel">
-        <div className="graph-panel__chart" ref={e => (this.element = e)} />
+        <div className="graph-panel__chart" ref={e => (this.element = e)} style={{ height }} />
       </div>
     );
   }

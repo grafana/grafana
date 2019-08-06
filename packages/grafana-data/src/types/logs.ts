@@ -1,4 +1,5 @@
-import { Labels, TimeSeries } from './data';
+import { Labels } from './data';
+import { GraphSeriesXY } from './graph';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -54,7 +55,7 @@ export interface LogsModel {
   hasUniqueLabels: boolean;
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
-  series?: TimeSeries[];
+  series?: GraphSeriesXY[];
 }
 
 export interface LogSearchMatch {

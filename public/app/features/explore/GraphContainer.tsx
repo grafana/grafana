@@ -10,6 +10,7 @@ import { toggleGraph, updateTimeRange } from './state/actions';
 import Graph from './Graph';
 import Panel from './Panel';
 import { getTimeZone } from '../profile/state/selectors';
+import TimeSeries from 'app/core/time_series2';
 
 interface GraphContainerProps {
   exploreId: ExploreId;
@@ -49,12 +50,23 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
       timeZone,
     } = this.props;
     const graphHeight = showingGraph && showingTable ? 200 : 400;
+    const series = graphResult
+      ? graphResult.map(serie => {
+          return {
+            datapoints: serie.data,
+            alias: serie.label,
+            target: serie.label,
+            color: serie.color,
+          };
+        })
+      : null;
+    const timeSeries = series ? series.map(series => new TimeSeries(series)) : [new TimeSeries({ datapoints: [] })];
 
     return (
       <Panel label="Graph" collapsible isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
         {graphResult && (
           <Graph
-            data={graphResult}
+            data={timeSeries}
             height={graphHeight}
             id={`explore-graph-${exploreId}`}
             onChangeTime={this.onChangeTime}
