@@ -12,9 +12,8 @@ type SmtpSettings struct {
 	EhloIdentity string
 	SkipVerify   bool
 
-	SendWelcomeEmailOnSignUp       bool
-	TemplatesPattern               string
-	SendSingleEmailToAllRecipients bool
+	SendWelcomeEmailOnSignUp bool
+	TemplatesPattern         string
 }
 
 func (cfg *Cfg) readSmtpSettings() {
@@ -33,5 +32,4 @@ func (cfg *Cfg) readSmtpSettings() {
 	emails := cfg.Raw.Section("emails")
 	cfg.Smtp.SendWelcomeEmailOnSignUp = emails.Key("welcome_email_on_sign_up").MustBool(false)
 	cfg.Smtp.TemplatesPattern = emails.Key("templates_pattern").MustString("emails/*.html")
-	cfg.Smtp.SendSingleEmailToAllRecipients = emails.Key("single_email_to_all_recipients").MustBool(false)
 }
