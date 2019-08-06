@@ -46,8 +46,8 @@ class GraphElement {
   data: any[];
   panelWidth: number;
   eventManager: EventManager;
-  thresholdManager: ThresholdManager;
-  timeRegionManager: TimeRegionManager;
+  thresholdManager: ThresholdManager | null;
+  timeRegionManager: TimeRegionManager | null;
   legendElem: HTMLElement;
 
   constructor(private scope: any, private elem: JQuery, private timeSrv: TimeSrv, private linkSrv: LinkService) {
@@ -555,8 +555,8 @@ class GraphElement {
 
   addTimeAxis(options: any) {
     const ticks = this.panelWidth / 100;
-    const min = _.isUndefined(this.ctrl.range.from) ? null : this.ctrl.range.from.valueOf();
-    const max = _.isUndefined(this.ctrl.range.to) ? null : this.ctrl.range.to.valueOf();
+    const min = _.isUndefined(this.ctrl.range.from) ? 0 : this.ctrl.range.from.valueOf();
+    const max = _.isUndefined(this.ctrl.range.to) ? 0 : this.ctrl.range.to.valueOf();
 
     options.xaxis = {
       timezone: this.dashboard.getTimezone(),
@@ -587,7 +587,7 @@ class GraphElement {
   }
 
   addXHistogramAxis(options: any, bucketSize: number) {
-    let ticks, min, max;
+    let ticks, min: number, max: number;
     const defaultTicks = this.panelWidth / 50;
 
     if (this.data.length && bucketSize) {
@@ -598,8 +598,8 @@ class GraphElement {
         }
       }
       ticks = Object.keys(tickValues).map(v => Number(v));
-      min = _.min(ticks);
-      max = _.max(ticks);
+      min = _.min(ticks)!;
+      max = _.max(ticks)!;
 
       // Adjust tick step
       let tickStep = bucketSize;
