@@ -119,20 +119,20 @@ export class DataFrameHelper implements DataFrame {
     this.fieldByName[field.name] = field;
 
     // Make sure the lengths all match
-    if (field.values.getLength() !== this.getLength()) {
-      if (field.values.getLength() > this.getLength()) {
+    if (field.values.length !== this.length) {
+      if (field.values.length > this.length) {
         // Add `null` to all other values
-        const newlen = field.values.getLength();
+        const newlen = field.values.length;
         for (const fx of this.fields) {
           const arr = fx.values as ArrayVector;
-          while (fx.values.getLength() !== newlen) {
+          while (fx.values.length !== newlen) {
             arr.buffer.push(null);
           }
         }
-        this.longestFieldLength = field.values.getLength();
+        this.longestFieldLength = field.values.length;
       } else {
         const arr = field.values as ArrayVector;
-        while (field.values.getLength() !== this.longestFieldLength) {
+        while (field.values.length !== this.longestFieldLength) {
           arr.buffer.push(null);
         }
       }
@@ -142,7 +142,7 @@ export class DataFrameHelper implements DataFrame {
     return field;
   }
 
-  getLength() {
+  get length() {
     return this.longestFieldLength;
   }
 
@@ -238,30 +238,40 @@ export function createField<T>(name: string, values?: T[], type?: FieldType): Fi
   };
 }
 
-export function getDataFrameValues<T>(data: DataFrame): Vector<T> {
-  let index = 0;
-  const obj = {} as T;
-  const getFieldValue = (column: number) => {
-    return data.fields[column].values.get(index);
-  };
-  for (let i = 0; i < data.fields.length; i++) {
-    const getter = {
-      get: () => {
-        return getFieldValue(i);
-      },
-    };
-    Object.defineProperty(obj, data.fields[i].name, getter);
-    Object.defineProperty(obj, i, getter);
+export class DataFrameView<T = any> implements Vector<T> {
+  private index = 0;
+  private obj: T;
+
+  constructor(private data: DataFrame) {
+    const obj = ({} as unknown) as T;
+    for (let i = 0; i < data.fields.length; i++) {
+      const getter = {
+        get: () => {
+          return this.getFieldValue(i);
+        },
+      };
+      Object.defineProperty(obj, data.fields[i].name, getter);
+      Object.defineProperty(obj, i, getter);
+    }
+    this.obj = obj;
   }
-  return {
-    getLength: () => {
-      return data.getLength();
-    },
-    get: (idx: number) => {
-      index = idx;
-      return obj;
-    },
-  };
+
+  getFieldValue(column: number) {
+    return this.data.fields[column].values.get(this.index);
+  }
+
+  get length() {
+    return this.data.length;
+  }
+
+  get(idx: number) {
+    this.index = idx;
+    return this.obj;
+  }
+
+  toArray(): T[] {
+    throw new Error('Method not implemented.');
+  }
 }
 
 /**

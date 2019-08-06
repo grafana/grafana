@@ -66,7 +66,7 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
       let rowCount = 0;
       let info = `${this.data.length} Series:`;
       for (const series of this.data) {
-        const length = series.getLength();
+        const length = series.length;
         info += ` [${series.fields.length} Fields, ${length} Rows]`;
         rowCount += length;
       }
@@ -91,7 +91,7 @@ export function describeDataFrame(data: DataFrame[]): string {
   }
   if (data.length > 1) {
     const count = data.reduce((acc, series) => {
-      return acc + series.getLength();
+      return acc + series.length;
     }, 0);
     return `${data.length} Series, ${count} Rows`;
   }
@@ -99,7 +99,7 @@ export function describeDataFrame(data: DataFrame[]): string {
   if (!series.fields) {
     return 'Missing Fields';
   }
-  const length = series.getLength();
+  const length = series.length;
   return `${series.fields.length} Fields, ${length} Rows`;
 }
 

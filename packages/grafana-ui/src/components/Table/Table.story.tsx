@@ -34,20 +34,18 @@ export function makeDummyTable(columnCount: number, rowCount: number): DataFrame
   return {
     fields: Array.from(new Array(columnCount), (x, i) => {
       const colId = columnIndexToLeter(i);
-      const values = new ArrayVector();
+      const values = new ArrayVector<string>();
       for (let i = 0; i < rowCount; i++) {
         values.buffer.push(colId + (i + 1));
       }
       return {
         name: colId,
         type: FieldType.string,
-        values,
         config: {},
+        values,
       };
     }),
-    getLength: () => {
-      return rowCount;
-    },
+    length: rowCount,
   };
 }
 

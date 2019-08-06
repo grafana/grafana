@@ -328,7 +328,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       seriesLogLevel = getLogLevelFromKey(series.labels['level']);
     }
 
-    for (let j = 0; j < data.getLength(); j++) {
+    for (let j = 0; j < data.length; j++) {
       const ts = timeFieldIndex.values.get(j);
       const time = dateTime(ts);
       const timeEpochMs = time.valueOf();

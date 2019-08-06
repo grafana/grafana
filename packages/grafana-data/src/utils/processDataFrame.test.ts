@@ -21,8 +21,8 @@ describe('toDataFrame', () => {
 
     const v0 = series.fields[0].values;
     const v1 = series.fields[1].values;
-    expect(v0.getLength()).toEqual(2);
-    expect(v1.getLength()).toEqual(2);
+    expect(v0.length).toEqual(2);
+    expect(v1.length).toEqual(2);
     expect(v0.get(0)).toEqual(100);
     expect(v0.get(1)).toEqual(200);
     expect(v1.get(0)).toEqual(1);

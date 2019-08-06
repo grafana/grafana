@@ -48,9 +48,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     refId: table.refId,
     meta: table.meta,
     name: table.name,
-    getLength: () => {
-      return fields[0].values.getLength();
-    },
+    length: fields[0].values.length,
   };
 }
 
@@ -85,9 +83,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     refId: timeSeries.refId,
     meta: timeSeries.meta,
     fields,
-    getLength: () => {
-      return timeSeries.datapoints.length;
-    },
+    length: timeSeries.datapoints.length,
   };
 }
 
@@ -141,7 +137,7 @@ export function guessFieldTypeForField(field: Field): FieldType | undefined {
   }
 
   // 2. Check the first non-null value
-  for (let i = 0; i < field.values.getLength(); i++) {
+  for (let i = 0; i < field.values.length; i++) {
     const v = field.values.get(i);
     if (v !== null) {
       return guessFieldTypeFromValue(v);
@@ -216,7 +212,7 @@ export const toDataFrame = (data: any): DataFrame => {
 export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData => {
   const { fields } = frame;
 
-  const length = fields[0].values.getLength();
+  const length = fields[0].values.length;
   const rows: any[][] = [];
   for (let i = 0; i < length; i++) {
     const row: any[] = [];
@@ -289,12 +285,12 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
  * Returns a copy that does not include functions
  */
 export function dataFrameToJSON(data: DataFrame): DataFrameJSON {
-  const fields = data.fields.map(f => {
+  const fields: FieldJSON[] = data.fields.map(f => {
     return {
       name: f.name,
       type: f.type,
       config: f.config,
-      values: f.values,
+      buffer: f.values.toArray(),
     };
   });
 

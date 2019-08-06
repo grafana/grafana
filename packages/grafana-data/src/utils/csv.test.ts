@@ -15,11 +15,11 @@ describe('read csv', () => {
     expect(series.fields.length).toBe(4);
 
     const rows = 4;
-    expect(series.getLength()).toBe(rows);
+    expect(series.length).toBe(rows);
 
     // Make sure everythign it padded properly
     for (const field of series.fields) {
-      expect(field.values.getLength()).toBe(rows);
+      expect(field.values.length).toBe(rows);
     }
 
     expect(dataFrameToJSON(series)).toMatchSnapshot();
@@ -32,7 +32,7 @@ describe('read csv', () => {
 
     const series = data[0];
     expect(series.fields.length).toBe(3);
-    expect(series.getLength()).toBe(0);
+    expect(series.length).toBe(0);
 
     expect(series.fields[0].name).toEqual('a');
     expect(series.fields[1].name).toEqual('b');

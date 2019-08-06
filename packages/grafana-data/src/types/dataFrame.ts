@@ -2,6 +2,7 @@ import { Threshold } from './threshold';
 import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { FieldCalcs } from '../utils/index';
+import { DisplayProcessor } from './displayValue';
 
 export enum FieldType {
   time = 'time', // or date
@@ -56,12 +57,17 @@ export interface DataFrameJSON extends QueryResultBase {
 }
 
 export interface Vector<T = any> {
-  getLength(): number;
+  length: number;
 
   /**
    * Access the value by index (Like an array)
    */
   get(index: number): T;
+
+  /**
+   * Convert the body to a simple array
+   */
+  toArray(): T[];
 }
 
 export interface Field<T = any> {
@@ -81,9 +87,9 @@ export interface Field<T = any> {
   parse?: (value: any) => T;
 
   /**
-   * TODO: attach the display processor to each field
+   * Convert a value for display
    */
-  display?: (value: T) => any; // DisplayValue
+  display?: DisplayProcessor;
 }
 
 export interface DataFrame extends QueryResultBase {
@@ -92,5 +98,5 @@ export interface DataFrame extends QueryResultBase {
   labels?: Labels;
 
   // The number of rows
-  getLength(): number;
+  length: number;
 }

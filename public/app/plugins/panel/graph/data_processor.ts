@@ -37,7 +37,7 @@ export class DataProcessor {
         }
 
         const datapoints = [];
-        for (let r = 0; r < data.getLength(); r++) {
+        for (let r = 0; r < data.length; r++) {
           datapoints.push([field.values.get(r), time.values.get(r)]);
         }
 

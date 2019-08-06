@@ -1,5 +1,5 @@
 import { ElasticResponse } from '../elastic_response';
-import { DataFrameHelper, getDataFrameValues } from '@grafana/data';
+import { DataFrameHelper, DataFrameView } from '@grafana/data';
 import { KeyValue } from '@grafana/ui';
 
 describe('ElasticResponse', () => {
@@ -872,8 +872,8 @@ describe('ElasticResponse', () => {
       expect(fields).toContainEqual({ name: 'host', type: 'string' });
       expect(fields).toContainEqual({ name: 'message', type: 'string' });
 
-      let rows = getDataFrameValues<any>(logResults);
-      for (let i = 0; i < rows.getLength(); i++) {
+      let rows = new DataFrameView(logResults);
+      for (let i = 0; i < rows.length; i++) {
         const r = rows.get(i);
         const row = [r._id, r._type, r._index, r._source];
         expect(row).toContain(response.responses[0].hits.hits[i]._id);
@@ -885,8 +885,8 @@ describe('ElasticResponse', () => {
       // Make a map from the histogram results
       const hist: KeyValue<number> = {};
       const histogramResults = new DataFrameHelper(result.data[1]);
-      rows = getDataFrameValues<any>(histogramResults);
-      for (let i = 0; i < rows.getLength(); i++) {
+      rows = new DataFrameView(histogramResults);
+      for (let i = 0; i < rows.length; i++) {
         const row = rows.get(i);
         hist[row.Time] = row.Count;
       }

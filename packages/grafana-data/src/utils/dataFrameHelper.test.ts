@@ -1,5 +1,5 @@
 import { FieldType, DataFrameJSON, FieldJSON } from '../types/index';
-import { DataFrameHelper, getDataFrameValues } from './dataFrameHelper';
+import { DataFrameHelper, DataFrameView } from './dataFrameHelper';
 import { DateTime } from './moment_wrapper';
 
 interface MySpecialObject {
@@ -20,12 +20,12 @@ describe('dataFrameHelper', () => {
   const ext = new DataFrameHelper(frame);
 
   it('Should get a valid count for the fields', () => {
-    expect(ext.getLength()).toEqual(3);
+    expect(ext.length).toEqual(3);
   });
 
   it('Should get a typed vector', () => {
-    const vector = getDataFrameValues<MySpecialObject>(ext);
-    expect(vector.getLength()).toEqual(3);
+    const vector = new DataFrameView<MySpecialObject>(ext);
+    expect(vector.length).toEqual(3);
 
     const first = vector.get(0);
     expect(first.time).toEqual(frame.fields[0].buffer![0]);

@@ -10,8 +10,8 @@ export interface FlotPairsOptions {
 export function getFlotPairs({ xField, yField, nullValueMode }: FlotPairsOptions): GraphSeriesValue[][] {
   const vX = xField.values;
   const vY = yField.values;
-  const length = vX.getLength();
-  if (vY.getLength() !== length) {
+  const length = vX.length;
+  if (vY.length !== length) {
     throw new Error('Unexpected field length');
   }
 

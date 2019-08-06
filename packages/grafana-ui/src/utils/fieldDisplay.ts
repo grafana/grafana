@@ -135,7 +135,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         if (fieldOptions.values) {
           const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
 
-          for (let j = 0; j < field.values.getLength(); j++) {
+          for (let j = 0; j < field.values.length; j++) {
             // Add all the row variables
             if (usesCellValues) {
               for (let k = 0; k < series.fields.length; k++) {

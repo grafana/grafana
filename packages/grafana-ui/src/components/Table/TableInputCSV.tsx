@@ -74,7 +74,7 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
             {data.map((frame, index) => {
               return (
                 <span key={index}>
-                  Rows:{frame.getLength()}, Columns:{frame.fields.length} &nbsp;
+                  Rows:{frame.length}, Columns:{frame.fields.length} &nbsp;
                   <i className="fa fa-check-circle" />
                 </span>
               );

@@ -107,7 +107,7 @@ export class Table extends Component<Props, State> {
 
     if (dataChanged || rotate !== prevProps.rotate) {
       const { width, minColumnWidth } = this.props;
-      this.rotateWidth = Math.max(width / data.getLength(), minColumnWidth);
+      this.rotateWidth = Math.max(width / data.length, minColumnWidth);
     }
 
     // Update the data when data or sort changes
@@ -261,7 +261,7 @@ export class Table extends Component<Props, State> {
     }
 
     let columnCount = data.fields.length;
-    let rowCount = data.getLength() + (showHeader ? 1 : 0);
+    let rowCount = data.length + (showHeader ? 1 : 0);
 
     let fixedColumnCount = Math.min(fixedColumns, columnCount);
     let fixedRowCount = showHeader && fixedHeader ? 1 : 0;

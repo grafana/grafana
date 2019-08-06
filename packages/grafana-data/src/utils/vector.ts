@@ -7,35 +7,55 @@ export class ArrayVector<T = any> implements Vector<T> {
     this.buffer = buffer ? buffer : [];
   }
 
-  getLength() {
+  get length() {
     return this.buffer.length;
   }
 
   get(index: number): T {
     return this.buffer[index];
   }
+
+  toArray(): T[] {
+    return this.buffer;
+  }
 }
 
 export class ConstantVector<T = any> implements Vector<T> {
-  constructor(private value: T, private length: number) {}
+  constructor(private value: T, private len: number) {}
 
-  getLength() {
-    return this.length;
+  get length() {
+    return this.len;
   }
 
   get(index: number): T {
     return this.value;
+  }
+
+  toArray(): T[] {
+    const arr: T[] = [];
+    for (let i = 0; i < this.length; i++) {
+      arr[i] = this.value;
+    }
+    return arr;
   }
 }
 
 export class ScaledVector implements Vector<number> {
   constructor(private source: Vector<number>, private scale: number) {}
 
-  getLength(): number {
-    return this.source.getLength();
+  get length(): number {
+    return this.source.length;
   }
 
   get(index: number): number {
     return this.source.get(index) * this.scale;
+  }
+
+  toArray(): number[] {
+    const arr: number[] = [];
+    for (let i = 0; i < this.length; i++) {
+      arr[i] = this.get(i);
+    }
+    return arr;
   }
 }

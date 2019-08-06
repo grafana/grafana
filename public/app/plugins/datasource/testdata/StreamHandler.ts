@@ -118,7 +118,7 @@ export class StreamWorker {
       series.appendRow(row);
     }
 
-    const extra = maxRows - series.getLength();
+    const extra = maxRows - series.length;
     if (extra < 0) {
       series.slice(extra * -1);
     }

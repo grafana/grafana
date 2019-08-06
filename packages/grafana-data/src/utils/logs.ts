@@ -36,7 +36,7 @@ export function getLogLevelFromKey(key: string): LogLevel {
 export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataFrame {
   const levels = new ArrayVector<LogLevel>();
   const lines = series.fields[lineIndex];
-  for (let i = 0; i < lines.values.getLength(); i++) {
+  for (let i = 0; i < lines.values.length; i++) {
     const line = lines.values.get(lineIndex);
     levels.buffer.push(getLogLevel(line));
   }

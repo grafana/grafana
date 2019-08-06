@@ -8,6 +8,7 @@ import {
   FieldConfig,
   DecimalInfo,
   DisplayValue,
+  DisplayProcessor,
   DecimalCount,
 } from '@grafana/data';
 
@@ -17,8 +18,6 @@ import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
 import { GrafanaTheme, GrafanaThemeType } from '../types';
-
-export type DisplayProcessor = (value: any) => DisplayValue;
 
 export interface DisplayValueOptions {
   field?: FieldConfig;
