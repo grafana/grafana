@@ -8,7 +8,7 @@
 # 6.3.1 (2019-08-07)
 
 ### Bug Fixes
-* **PanelLinks**: Fix crash issue Gauge & Bar Gauge for panels with panel links (drill down links). [#18430](https://github.com/grafana/grafana/pull/18430)
+* **PanelLinks**: Fixes crash issue with Gauge & Bar Gauge panels with panel links (drill down links). [#18430](https://github.com/grafana/grafana/pull/18430)
 
 # 6.3.0 (2019-08-06)
 ### Features / Enhancements
