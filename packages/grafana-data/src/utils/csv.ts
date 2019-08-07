@@ -98,7 +98,6 @@ export class CSVReader {
               name: '#',
               type: FieldType.number,
               unit: '#',
-              dateFormat: '#',
             };
 
             // Check if it is a known/supported column
