@@ -60,8 +60,6 @@ const clean = (obj: any) => {
 /*  ------------------------------------------------------------------------ */
 
 class Color {
-  background: boolean | undefined;
-  name: string | undefined;
   background?: boolean;
   name?: string;
   brightness?: number;
@@ -353,7 +351,7 @@ export default class Colors {
 
   get parsed() {
     let styles: Set<string>;
-    let brightness?: number;
+    let brightness: number | undefined;
     let color: Color;
     let bgColor: Color;
 
