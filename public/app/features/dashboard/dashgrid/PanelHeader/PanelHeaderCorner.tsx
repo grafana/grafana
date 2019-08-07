@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 import { renderMarkdown } from '@grafana/data';
-import { Tooltip, ScopedVars } from '@grafana/ui';
+import { Tooltip, ScopedVars, PopperContent } from '@grafana/ui';
 import { DataLink } from '@grafana/data';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -44,7 +44,7 @@ export class PanelHeaderCorner extends Component<Props> {
 
   getInfoContent = (): JSX.Element => {
     const { panel } = this.props;
-    const markdown = panel.description;
+    const markdown = panel.description || '';
     const linkSrv = new LinkSrv(templateSrv, this.timeSrv);
     const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
     const markedInterpolatedMarkdown = renderMarkdown(interpolatedMarkdown);
@@ -71,7 +71,7 @@ export class PanelHeaderCorner extends Component<Props> {
     );
   };
 
-  renderCornerType(infoMode: InfoMode, content: string | JSX.Element) {
+  renderCornerType(infoMode: InfoMode, content: PopperContent<any>) {
     const theme = infoMode === InfoMode.Error ? 'error' : 'info';
     return (
       <Tooltip content={content} placement="top-start" theme={theme}>
@@ -95,7 +95,7 @@ export class PanelHeaderCorner extends Component<Props> {
     }
 
     if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {
-      return this.renderCornerType(infoMode, this.getInfoContent());
+      return this.renderCornerType(infoMode, this.getInfoContent);
     }
 
     return null;
