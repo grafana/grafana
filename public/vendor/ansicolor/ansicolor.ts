@@ -353,7 +353,7 @@ export default class Colors {
 
   get parsed() {
     let styles: Set<string>;
-    let brightness: number | undefined;
+    let brightness?: number;
     let color: Color;
     let bgColor: Color;
 
