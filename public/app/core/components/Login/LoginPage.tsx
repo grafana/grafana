@@ -18,17 +18,19 @@ export const LoginPage: FC = () => {
           <div className="logo-wordmark" />
         </div>
         <LoginCtrl>
-          {({ login, isLoggingIn, changePassword, toGrafana, isChangingPassword }) => (
+          {({ login, isLoggingIn, changePassword, skipPasswordChange, isChangingPassword }) => (
             <div className="login-out-box">
               <div className={`login-inner-box ${isChangingPassword ? 'hidden' : ''}`} id="login-view">
-                <LoginForm
-                  displayLoginFields={!config.disableLoginForm}
-                  displayForgotPassword={!(config.ldapEnabled || config.authProxyEnabled)}
-                  onSubmit={login}
-                  loginHint={config.loginHint}
-                  passwordHint={config.passwordHint}
-                  isLoggingIn={isLoggingIn}
-                />
+                {!config.disableLoginForm ? (
+                  <LoginForm
+                    displayLoginFields={!config.disableLoginForm}
+                    displayForgotPassword={!(config.ldapEnabled || config.authProxyEnabled)}
+                    onSubmit={login}
+                    loginHint={config.loginHint}
+                    passwordHint={config.passwordHint}
+                    isLoggingIn={isLoggingIn}
+                  />
+                ) : null}
 
                 {isOauthEnabled() ? (
                   <>
@@ -48,13 +50,12 @@ export const LoginPage: FC = () => {
                     <LoginServiceButtons />
                   </>
                 ) : null}
-
-                <UserSignup />
+                {!config.disableUserSignUp ? <UserSignup /> : null}
               </div>
               <CSSTransition appear={true} in={isChangingPassword} timeout={250} classNames="login-inner-box">
                 <ChangePassword
                   onSubmit={changePassword}
-                  onSkip={toGrafana}
+                  onSkip={skipPasswordChange}
                   focus={isChangingPassword}
                   className={isChangingPassword ? '' : 'hidden'}
                 />

@@ -43,7 +43,7 @@ export class ChangePassword extends PureComponent<Props, State> {
     if (this.state.valid) {
       this.props.onSubmit({ newPassword, confirmNew, oldPassword: 'admin' }, true);
     } else {
-      appEvents.on('alert-warning', ['New passwords do not match', '']);
+      appEvents.emit('alert-warning', ['New passwords do not match', '']);
     }
   };
 

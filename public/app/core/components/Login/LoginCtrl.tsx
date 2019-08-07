@@ -21,8 +21,8 @@ interface Props {
     isLoggingIn: boolean;
     changePassword: (pw: { newPassword: string; confirmNew: string; oldPassword: string }, valid: boolean) => void;
     isChangingPassword: boolean;
-    toGrafana: Function;
-    login: (data: FormModel, valid: boolean) => void;
+    skipPasswordChange: Function;
+    login: (data: FormModel) => void;
   }) => JSX.Element;
 }
 
@@ -58,12 +58,9 @@ export class LoginCtrl extends PureComponent<Props, State> {
       .catch((err: any) => console.log(err));
   };
 
-  login = (formModel: FormModel, valid: boolean) => {
+  login = (formModel: FormModel) => {
     console.log(formModel);
-    console.log(this);
-    if (!valid) {
-      return;
-    }
+
     this.setState({
       isLoggingIn: true,
     });
@@ -123,7 +120,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     const { isLoggingIn, isChangingPassword } = this.state;
     const { login, toGrafana, changePassword } = this;
 
-    return <>{children({ login, isLoggingIn, changePassword, toGrafana, isChangingPassword })}</>;
+    return <>{children({ login, isLoggingIn, changePassword, skipPasswordChange: toGrafana, isChangingPassword })}</>;
   }
 }
 
