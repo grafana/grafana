@@ -254,6 +254,24 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 				So(len(permQuery.Result), ShouldEqual, 0)
 			})
+
+			Convey("Should be able to return if user is admin of teams or not", func() {
+				groupId := group2.Result.Id
+				err := AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[0]})
+				So(err, ShouldBeNil)
+				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[1], Permission: m.PERMISSION_ADMIN})
+				So(err, ShouldBeNil)
+
+				query := &m.IsAdminOfTeamsQuery{SignedInUser: &m.SignedInUser{OrgId: testOrgId, UserId: userIds[0]}}
+				err = IsAdminOfTeams(query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldBeFalse)
+
+				query = &m.IsAdminOfTeamsQuery{SignedInUser: &m.SignedInUser{OrgId: testOrgId, UserId: userIds[1]}}
+				err = IsAdminOfTeams(query)
+				So(err, ShouldBeNil)
+				So(query.Result, ShouldBeTrue)
+			})
 		})
 	})
 }

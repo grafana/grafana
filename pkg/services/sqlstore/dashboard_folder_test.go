@@ -272,6 +272,15 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldBeTrue)
 				})
+
+				Convey("should have admin permission in folders", func() {
+					query := &m.HasAdminPermissionInFoldersQuery{
+						SignedInUser: &m.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: m.ROLE_ADMIN},
+					}
+					err := HasAdminPermissionInFolders(query)
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeTrue)
+				})
 			})
 
 			Convey("Editor users", func() {
@@ -326,6 +335,15 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldBeTrue)
 				})
+
+				Convey("should not have admin permission in folders", func() {
+					query := &m.HasAdminPermissionInFoldersQuery{
+						SignedInUser: &m.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: m.ROLE_EDITOR},
+					}
+					err := HasAdminPermissionInFolders(query)
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeFalse)
+				})
 			})
 
 			Convey("Viewer users", func() {
@@ -375,6 +393,15 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &m.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: m.ROLE_VIEWER},
 					}
 					err := HasEditPermissionInFolders(query)
+					So(err, ShouldBeNil)
+					So(query.Result, ShouldBeFalse)
+				})
+
+				Convey("should not have admin permission in folders", func() {
+					query := &m.HasAdminPermissionInFoldersQuery{
+						SignedInUser: &m.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: m.ROLE_VIEWER},
+					}
+					err := HasAdminPermissionInFolders(query)
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldBeFalse)
 				})

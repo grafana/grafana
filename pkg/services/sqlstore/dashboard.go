@@ -25,6 +25,7 @@ func init() {
 	bus.AddHandler("sql", GetDashboardsBySlug)
 	bus.AddHandler("sql", ValidateDashboardBeforeSave)
 	bus.AddHandler("sql", HasEditPermissionInFolders)
+	bus.AddHandler("sql", HasAdminPermissionInFolders)
 }
 
 var generateNewUid func() string = util.GenerateShortUID
@@ -640,6 +641,30 @@ func HasEditPermissionInFolders(query *m.HasEditPermissionInFoldersQuery) error 
 	builder := &SqlBuilder{}
 	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
 	builder.writeDashboardPermissionFilter(query.SignedInUser, m.PERMISSION_EDIT)
+
+	type folderCount struct {
+		Count int64
+	}
+
+	resp := make([]*folderCount, 0)
+	if err := x.SQL(builder.GetSqlString(), builder.params...).Find(&resp); err != nil {
+		return err
+	}
+
+	query.Result = len(resp) > 0 && resp[0].Count > 0
+
+	return nil
+}
+
+func HasAdminPermissionInFolders(query *m.HasAdminPermissionInFoldersQuery) error {
+	if query.SignedInUser.HasRole(m.ROLE_ADMIN) {
+		query.Result = true
+		return nil
+	}
+
+	builder := &SqlBuilder{}
+	builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?", query.SignedInUser.OrgId, dialect.BooleanStr(true))
+	builder.writeDashboardPermissionFilter(query.SignedInUser, m.PERMISSION_ADMIN)
 
 	type folderCount struct {
 		Count int64

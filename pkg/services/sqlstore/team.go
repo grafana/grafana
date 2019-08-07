@@ -21,6 +21,7 @@ func init() {
 	bus.AddHandler("sql", UpdateTeamMember)
 	bus.AddHandler("sql", RemoveTeamMember)
 	bus.AddHandler("sql", GetTeamMembers)
+	bus.AddHandler("sql", IsAdminOfTeams)
 }
 
 func getTeamSearchSqlBase() string {
@@ -391,4 +392,22 @@ func GetTeamMembers(query *m.GetTeamMembersQuery) error {
 
 	err := sess.Find(&query.Result)
 	return err
+}
+
+func IsAdminOfTeams(query *m.IsAdminOfTeamsQuery) error {
+	builder := &SqlBuilder{}
+	builder.Write("SELECT COUNT(team.id) AS count FROM team INNER JOIN team_member ON team_member.team_id = team.id WHERE team.org_id = ? AND team_member.user_id = ? AND team_member.permission = ?", query.SignedInUser.OrgId, query.SignedInUser.UserId, m.PERMISSION_ADMIN)
+
+	type teamCount struct {
+		Count int64
+	}
+
+	resp := make([]*teamCount, 0)
+	if err := x.SQL(builder.GetSqlString(), builder.params...).Find(&resp); err != nil {
+		return err
+	}
+
+	query.Result = len(resp) > 0 && resp[0].Count > 0
+
+	return nil
 }
