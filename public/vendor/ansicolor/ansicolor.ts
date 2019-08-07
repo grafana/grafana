@@ -62,7 +62,9 @@ const clean = (obj: any) => {
 class Color {
   background: boolean | undefined;
   name: string | undefined;
-  brightness: number | undefined;
+  background?: boolean;
+  name?: string;
+  brightness?: number;
 
   constructor(background?: boolean, name?: string, brightness?: number) {
     this.background = background;
