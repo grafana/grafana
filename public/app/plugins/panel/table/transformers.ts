@@ -228,7 +228,7 @@ transformers['json'] = {
         const values = [];
 
         if (_.isObject(dp) && panel.columns.length > 0) {
-          const flattened = flatten(dp, {});
+          const flattened = flatten(dp);
           for (z = 0; z < panel.columns.length; z++) {
             values.push(flattened[panel.columns[z].value]);
           }
