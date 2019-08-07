@@ -33,7 +33,6 @@ export class ColoringEditor extends PureComponent<Props> {
 
   render() {
     const { colorBackground, colorValue, colorPrefix, colorPostfix } = this.props.options;
-    console.log(colorValue);
 
     return (
       <PanelOptionsGroup title="Coloring">
