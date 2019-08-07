@@ -1,15 +1,6 @@
 // Libraries
 import _ from 'lodash';
-import {
-  DateTime,
-  dateTime,
-  Threshold,
-  getMappedValue,
-  Field,
-  DecimalInfo,
-  DisplayValue,
-  DecimalCount,
-} from '@grafana/data';
+import { Threshold, getMappedValue, Field, DecimalInfo, DisplayValue, DecimalCount } from '@grafana/data';
 
 // Utils
 import { getValueFormat } from './valueFormats/valueFormats';
@@ -60,14 +51,6 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
         }
       }
 
-      if (field.dateFormat) {
-        const date = toMoment(value, numeric, field.dateFormat);
-        if (date.isValid()) {
-          text = date.format(field.dateFormat);
-          shouldFormat = false;
-        }
-      }
-
       if (!isNaN(numeric)) {
         if (shouldFormat && !_.isBoolean(value)) {
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
@@ -86,20 +69,6 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
   }
 
   return toStringProcessor;
-}
-
-function toMoment(value: any, numeric: number, format: string): DateTime {
-  if (!isNaN(numeric)) {
-    const v = dateTime(numeric);
-    if (v.isValid()) {
-      return v;
-    }
-  }
-  const v = dateTime(value, format);
-  if (v.isValid) {
-    return v;
-  }
-  return dateTime(value); // moment will try to parse the format
 }
 
 /** Will return any value as a number or NaN */
