@@ -187,16 +187,16 @@ func GetAlertNotifiers(c *m.ReqContext) Response {
 	return JSON(200, alerting.GetNotifiers())
 }
 
-func GetAlertNotificationChannels(c *m.ReqContext) Response {
+func GetAlertNotificationLookup(c *m.ReqContext) Response {
 	alertNotifications, err := getAlertNotificationsInternal(c)
 	if err != nil {
 		return Error(500, "Failed to get alert notifications", err)
 	}
 
-	result := make([]*dtos.AlertNotificationChannel, 0)
+	result := make([]*dtos.AlertNotificationLookup, 0)
 
 	for _, notification := range alertNotifications {
-		result = append(result, dtos.NewAlertNotificationChannel(notification))
+		result = append(result, dtos.NewAlertNotificationLookup(notification))
 	}
 
 	return JSON(200, result)

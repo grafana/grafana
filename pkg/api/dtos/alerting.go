@@ -77,8 +77,8 @@ type AlertNotification struct {
 	Settings              *simplejson.Json `json:"settings"`
 }
 
-func NewAlertNotificationChannel(notification *models.AlertNotification) *AlertNotificationChannel {
-	return &AlertNotificationChannel{
+func NewAlertNotificationLookup(notification *models.AlertNotification) *AlertNotificationLookup {
+	return &AlertNotificationLookup{
 		Id:        notification.Id,
 		Uid:       notification.Uid,
 		Name:      notification.Name,
@@ -87,7 +87,7 @@ func NewAlertNotificationChannel(notification *models.AlertNotification) *AlertN
 	}
 }
 
-type AlertNotificationChannel struct {
+type AlertNotificationLookup struct {
 	Id        int64  `json:"id"`
 	Uid       string `json:"uid"`
 	Name      string `json:"name"`

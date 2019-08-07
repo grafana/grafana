@@ -344,11 +344,10 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", Wrap(GetAlertStatesForDashboard))
 		})
 
-		apiRoute.Get("/alert-notification-channels", Wrap(GetAlertNotificationChannels))
-		apiRoute.Get("/alert-notifications", reqEditorRole, Wrap(GetAlertNotifications))
 		apiRoute.Get("/alert-notifiers", reqEditorRole, Wrap(GetAlertNotifiers))
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
+			apiRoute.Get("/", Wrap(GetAlertNotifications))
 			alertNotifications.Post("/test", bind(dtos.NotificationTestCommand{}), Wrap(NotificationTest))
 			alertNotifications.Post("/", bind(models.CreateAlertNotificationCommand{}), Wrap(CreateAlertNotification))
 			alertNotifications.Put("/:notificationId", bind(models.UpdateAlertNotificationCommand{}), Wrap(UpdateAlertNotification))
@@ -358,6 +357,11 @@ func (hs *HTTPServer) registerRoutes() {
 			alertNotifications.Put("/uid/:uid", bind(models.UpdateAlertNotificationWithUidCommand{}), Wrap(UpdateAlertNotificationByUID))
 			alertNotifications.Delete("/uid/:uid", Wrap(DeleteAlertNotificationByUID))
 		}, reqEditorRole)
+
+		// alert notifications without requirement of user to be org editor
+		apiRoute.Group("/alert-notifications", func(orgRoute routing.RouteRegister) {
+			orgRoute.Get("/lookup", Wrap(GetAlertNotificationLookup))
+		})
 
 		apiRoute.Get("/annotations", Wrap(GetAnnotations))
 		apiRoute.Post("/annotations/mass-delete", reqOrgAdmin, bind(dtos.DeleteAnnotationsCmd{}), Wrap(DeleteAnnotations))
