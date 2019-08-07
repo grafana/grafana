@@ -84,7 +84,7 @@ class Color {
     });
   }
 
-  defaultBrightness(value: number | undefined) {
+  defaultBrightness(value?: number) {
     return new Color(this.background, this.name, this.brightness || value);
   }
 
