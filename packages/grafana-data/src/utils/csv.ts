@@ -91,7 +91,6 @@ export class CSVReader {
             // Simple object used to check if headers match
             const headerKeys: FieldConfig = {
               unit: '#',
-              dateFormat: '#',
             };
 
             // Check if it is a known/supported column

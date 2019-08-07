@@ -21,9 +21,6 @@ export interface FieldConfig {
   title?: string; // The display value for this field.  This supports template variables blank is auto
   filterable?: boolean;
 
-  // Date Options
-  dateFormat?: string;
-
   // Numeric Options
   unit?: string;
   decimals?: number | null; // Significant digits (for display)
