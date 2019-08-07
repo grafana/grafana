@@ -67,8 +67,12 @@ export class UserProvider extends PureComponent<Props, State> {
 
   updateUserProfile = async (payload: ProfileUpdateFields) => {
     this.setState({ loadingStates: { ...this.state.loadingStates, updateUserProfile: true } });
-    await getBackendSrv().put('/api/user', payload);
-    await this.loadUser();
+    await getBackendSrv()
+      .put('/api/user', payload)
+      .then(() => {
+        this.loadUser();
+      })
+      .catch(e => console.log(e));
     this.setState({ loadingStates: { ...this.state.loadingStates, updateUserProfile: false } });
   };
 
