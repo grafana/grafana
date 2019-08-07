@@ -257,16 +257,13 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
       label: series.alias,
       data: points,
       isVisible: true,
-      yAxis: 1,
+      yAxis: {
+        index: 1,
+        min: 0,
+      },
     };
 
     return graphSeries;
-    // return {
-    //   datapoints: series.datapoints,
-    //   target: series.alias,
-    //   alias: series.alias,
-    //   color: series.color,
-    // };
   });
 }
 

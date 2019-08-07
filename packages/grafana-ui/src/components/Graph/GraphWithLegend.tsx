@@ -80,7 +80,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
             label: s.label,
             color: s.color,
             isVisible: s.isVisible,
-            yAxis: s.yAxis,
+            yAxis: s.yAxis.index,
             displayValues: s.info || [],
           },
         ]);

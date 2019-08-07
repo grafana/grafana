@@ -76,10 +76,15 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     const seriesOptionsUpdate: SeriesOptions = series[label]
       ? {
           ...series[label],
-          yAxis,
+          yAxis: {
+            ...series[label].yAxis,
+            index: yAxis,
+          },
         }
       : {
-          yAxis,
+          yAxis: {
+            index: yAxis,
+          },
         };
     this.onSeriesOptionsUpdate(label, seriesOptionsUpdate);
   }

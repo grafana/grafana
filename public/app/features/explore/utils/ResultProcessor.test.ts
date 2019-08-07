@@ -133,7 +133,9 @@ describe('ResultProcessor', () => {
             data: [[1559038518831, 39.91264531864214], [1559038519831, 40.35179822906545]],
             info: undefined,
             isVisible: true,
-            yAxis: 1,
+            yAxis: {
+              index: 1,
+            },
           },
         ]);
       });
@@ -201,7 +203,9 @@ describe('ResultProcessor', () => {
               data: [[1559038518831, 39.91264531864214], [1559038519831, 40.35179822906545]],
               info: undefined,
               isVisible: true,
-              yAxis: 1,
+              yAxis: {
+                index: 1,
+              },
             },
           ],
         });
@@ -230,7 +234,9 @@ describe('ResultProcessor', () => {
               data: [[1558038518831, 19.91264531864214], [1558038518831, 20.35179822906545]],
               info: undefined,
               isVisible: true,
-              yAxis: 1,
+              yAxis: {
+                index: 1,
+              },
             },
           ],
         });
@@ -248,7 +254,9 @@ describe('ResultProcessor', () => {
             ],
             info: undefined,
             isVisible: true,
-            yAxis: 1,
+            yAxis: {
+              index: 1,
+            },
           },
         ]);
       });
@@ -331,7 +339,9 @@ describe('ResultProcessor', () => {
                 data: [[1558038518831, 37.91264531864214], [1558038519831, 38.35179822906545]],
                 info: undefined,
                 isVisible: true,
-                yAxis: 1,
+                yAxis: {
+                  index: 1,
+                },
               },
             ],
           },
@@ -414,7 +424,9 @@ describe('ResultProcessor', () => {
               ],
               info: undefined,
               isVisible: true,
-              yAxis: 1,
+              yAxis: {
+                index: 1,
+              },
             } as GraphSeriesXY,
           ],
         };

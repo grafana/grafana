@@ -53,10 +53,14 @@ export class Graph extends PureComponent<GraphProps> {
     const max = timeRange.to.valueOf();
     const yaxes = uniqBy(
       series.map(s => {
+        const index = s.yAxis ? s.yAxis.index : 1;
+        const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : undefined;
+
         return {
           show: true,
-          index: s.yAxis,
-          position: s.yAxis === 1 ? 'left' : 'right',
+          index,
+          position: index === 1 ? 'left' : 'right',
+          min,
         };
       }),
       yAxisConfig => yAxisConfig.index
