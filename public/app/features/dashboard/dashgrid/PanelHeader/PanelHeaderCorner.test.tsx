@@ -16,6 +16,6 @@ describe('Render', () => {
     const wrapper = shallow(<PanelHeaderCorner panel={panel} links={links} />);
     const instance = wrapper.instance() as PanelHeaderCorner;
 
-    expect(instance.getInfoContent()).not.toBeNull();
+    expect(instance.getInfoContent()).toBeDefined();
   });
 });
