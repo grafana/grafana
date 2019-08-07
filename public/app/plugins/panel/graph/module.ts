@@ -162,7 +162,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
-    this.addEditorTab('Data link', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
+    this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
   }
 
