@@ -39,7 +39,7 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 				c.Logger.Error("Could not add creator to team.", "error", err)
 			}
 		} else {
-			c.Logger.Error("Could not add creator to team because is not a real user.")
+			c.Logger.Warn("Could not add creator to team because is not a real user.")
 		}
 	}
 

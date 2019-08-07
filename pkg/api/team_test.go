@@ -18,13 +18,13 @@ import (
 
 type testLogger struct {
 	log.Logger
-	errorCalled bool
-	errMessage  string
+	warnCalled  bool
+	warnMessage string
 }
 
-func (stub *testLogger) Error(testMessage string, ctx ...interface{}) {
-	stub.errorCalled = true
-	stub.errMessage = testMessage
+func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
+	stub.warnCalled = true
+	stub.warnMessage = testMessage
 }
 
 func TestTeamApiEndpoint(t *testing.T) {
@@ -130,8 +130,8 @@ func TestTeamApiEndpoint(t *testing.T) {
 			hs.CreateTeam(c, cmd)
 			assert.Equal(t, createTeamCalled, 1)
 			assert.Equal(t, addTeamMemberCalled, 0)
-			assert.True(t, stub.errorCalled)
-			assert.Equal(t, stub.errMessage, "Could not add creator to team because is not a real user.")
+			assert.True(t, stub.warnCalled)
+			assert.Equal(t, stub.warnMessage, "Could not add creator to team because is not a real user.")
 		})
 
 		t.Run("with real signed in user", func(t *testing.T) {
@@ -149,7 +149,7 @@ func TestTeamApiEndpoint(t *testing.T) {
 			hs.CreateTeam(c, cmd)
 			assert.Equal(t, createTeamCalled, 1)
 			assert.Equal(t, addTeamMemberCalled, 1)
-			assert.False(t, stub.errorCalled)
+			assert.False(t, stub.warnCalled)
 		})
 	})
 }
