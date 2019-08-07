@@ -172,7 +172,7 @@ export class TemplateSrv {
         return this.encodeURIComponentStrict(value);
       }
       default: {
-        if (_.isArray(value)) {
+        if (_.isArray(value) && value.length > 1) {
           return '{' + value.join(',') + '}';
         }
         return value;
