@@ -72,8 +72,10 @@ export class UserProvider extends PureComponent<Props, State> {
       .then(() => {
         this.loadUser();
       })
-      .catch(e => console.log(e));
-    this.setState({ loadingStates: { ...this.state.loadingStates, updateUserProfile: false } });
+      .catch(e => console.log(e))
+      .finally(() => {
+        this.setState({ loadingStates: { ...this.state.loadingStates, updateUserProfile: false } });
+      });
   };
 
   render() {
