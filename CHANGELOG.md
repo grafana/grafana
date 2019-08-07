@@ -3,7 +3,7 @@
 # 6.3.2 (2019-08-07)
 
 ### Bug Fixes
-* **Gauge/BarGauge**: Fixes issue with losts thresholds and issue loading Gauge with avg stat. [#18375](https://github.com/grafana/grafana/pull/18375)
+* **Gauge/BarGauge**: Fixes issue with lost thresholds and an issue loading Gauge with avg stat. [#18375](https://github.com/grafana/grafana/pull/18375)
 
 # 6.3.1 (2019-08-07)
 
