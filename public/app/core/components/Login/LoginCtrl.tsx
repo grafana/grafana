@@ -9,6 +9,8 @@ import { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import { hot } from 'react-hot-loader';
 
+const isOauthEnabled = () => Object.keys(config.oauth).length > 0;
+
 export interface FormModel {
   user: string;
   password: string;
@@ -23,6 +25,13 @@ interface Props {
     isChangingPassword: boolean;
     skipPasswordChange: Function;
     login: (data: FormModel) => void;
+    disableLoginForm: boolean;
+    ldapEnabled: boolean;
+    authProxyEnabled: boolean;
+    disableUserSignUp: boolean;
+    isOauthEnabled: boolean;
+    loginHint: string;
+    passwordHint: string;
   }) => JSX.Element;
 }
 
@@ -119,8 +128,26 @@ export class LoginCtrl extends PureComponent<Props, State> {
     const { children } = this.props;
     const { isLoggingIn, isChangingPassword } = this.state;
     const { login, toGrafana, changePassword } = this;
+    const { loginHint, passwordHint, disableLoginForm, ldapEnabled, authProxyEnabled, disableUserSignUp } = config;
 
-    return <>{children({ login, isLoggingIn, changePassword, skipPasswordChange: toGrafana, isChangingPassword })}</>;
+    return (
+      <>
+        {children({
+          isOauthEnabled: isOauthEnabled(),
+          loginHint,
+          passwordHint,
+          disableLoginForm,
+          ldapEnabled,
+          authProxyEnabled,
+          disableUserSignUp,
+          login,
+          isLoggingIn,
+          changePassword,
+          skipPasswordChange: toGrafana,
+          isChangingPassword,
+        })}
+      </>
+    );
   }
 }
 

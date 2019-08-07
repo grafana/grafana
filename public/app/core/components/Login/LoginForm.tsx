@@ -3,7 +3,6 @@ import { FormModel } from './LoginCtrl';
 
 interface Props {
   displayForgotPassword: boolean;
-  displayLoginFields: boolean;
   onChange?: (valid: boolean) => void;
   onSubmit: (data: FormModel) => void;
   isLoggingIn: boolean;

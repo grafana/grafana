@@ -1,13 +1,10 @@
 import React, { FC } from 'react';
-import config from 'app/core/config';
 import { UserSignup } from './UserSignup';
 import { LoginServiceButtons } from './LoginServiceButtons';
 import LoginCtrl from './LoginCtrl';
 import { LoginForm } from './LoginForm';
 import { ChangePassword } from './ChangePassword';
 import { CSSTransition } from 'react-transition-group';
-
-const isOauthEnabled = () => Object.keys(config.oauth).length > 0;
 
 export const LoginPage: FC = () => {
   return (
@@ -18,28 +15,40 @@ export const LoginPage: FC = () => {
           <div className="logo-wordmark" />
         </div>
         <LoginCtrl>
-          {({ login, isLoggingIn, changePassword, skipPasswordChange, isChangingPassword }) => (
+          {({
+            loginHint,
+            passwordHint,
+            isOauthEnabled,
+            ldapEnabled,
+            authProxyEnabled,
+            disableLoginForm,
+            disableUserSignUp,
+            login,
+            isLoggingIn,
+            changePassword,
+            skipPasswordChange,
+            isChangingPassword,
+          }) => (
             <div className="login-out-box">
               <div className={`login-inner-box ${isChangingPassword ? 'hidden' : ''}`} id="login-view">
-                {!config.disableLoginForm ? (
+                {!disableLoginForm ? (
                   <LoginForm
-                    displayLoginFields={!config.disableLoginForm}
-                    displayForgotPassword={!(config.ldapEnabled || config.authProxyEnabled)}
+                    displayForgotPassword={!(ldapEnabled || authProxyEnabled)}
                     onSubmit={login}
-                    loginHint={config.loginHint}
-                    passwordHint={config.passwordHint}
+                    loginHint={loginHint}
+                    passwordHint={passwordHint}
                     isLoggingIn={isLoggingIn}
                   />
                 ) : null}
 
-                {isOauthEnabled() ? (
+                {isOauthEnabled ? (
                   <>
                     <div className="text-center login-divider">
                       <div>
                         <div className="login-divider-line" />
                       </div>
                       <div>
-                        <span className="login-divider-text">{config.disableLoginForm ? null : <span>or</span>}</span>
+                        <span className="login-divider-text">{disableLoginForm ? null : <span>or</span>}</span>
                       </div>
                       <div>
                         <div className="login-divider-line" />
@@ -50,7 +59,7 @@ export const LoginPage: FC = () => {
                     <LoginServiceButtons />
                   </>
                 ) : null}
-                {!config.disableUserSignUp ? <UserSignup /> : null}
+                {!disableUserSignUp ? <UserSignup /> : null}
               </div>
               <CSSTransition appear={true} in={isChangingPassword} timeout={250} classNames="login-inner-box">
                 <ChangePassword
