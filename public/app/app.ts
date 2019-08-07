@@ -46,7 +46,7 @@ extensionsIndex.keys().forEach((key: any) => {
 export class GrafanaApp {
   registerFunctions: any;
   ngModuleDependencies: any[];
-  preBootModules: any[];
+  preBootModules: any[] | null;
 
   constructor() {
     addClassIfNoOverlayScrollbar('no-overlay-scrollbar');

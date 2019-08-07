@@ -73,10 +73,10 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
           <ColoringEditor options={options} onChange={this.props.onOptionsChange} />
           <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds!} />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings!} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
       </>
     );
   }

@@ -2,26 +2,7 @@
 
 exports[`Render should render with base threshold 1`] = `
 <ThresholdsEditor
-  onChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Array [
-            Object {
-              "color": "#7EB26D",
-              "value": -Infinity,
-            },
-          ],
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": undefined,
-        },
-      ],
-    }
-  }
+  onChange={[MockFunction]}
   thresholds={Array []}
 >
   <Component
@@ -61,7 +42,7 @@ exports[`Render should render with base threshold 1`] = `
               className="thresholds-row-color-indicator"
               style={
                 Object {
-                  "backgroundColor": "#7EB26D",
+                  "backgroundColor": "#73BF69",
                 }
               }
             />
@@ -81,12 +62,12 @@ exports[`Render should render with base threshold 1`] = `
                     className="thresholds-row-input-inner-color-colorpicker"
                   >
                     <WithTheme(ColorPicker)
-                      color="#7EB26D"
+                      color="green"
                       enableNamedColors={true}
                       onChange={[Function]}
                     >
                       <ColorPicker
-                        color="#7EB26D"
+                        color="green"
                         enableNamedColors={true}
                         onChange={[Function]}
                         theme={
@@ -247,7 +228,7 @@ exports[`Render should render with base threshold 1`] = `
                         <PopperController
                           content={
                             <ColorPickerPopover
-                              color="#7EB26D"
+                              color="green"
                               enableNamedColors={true}
                               onChange={[Function]}
                               theme={
@@ -409,7 +390,7 @@ exports[`Render should render with base threshold 1`] = `
                           hideAfter={300}
                         >
                           <ForwardRef(ColorPickerTrigger)
-                            color="#7EB26D"
+                            color="#73BF69"
                             onClick={[Function]}
                             onMouseLeave={[Function]}
                           >
@@ -445,7 +426,7 @@ exports[`Render should render with base threshold 1`] = `
                                 <div
                                   style={
                                     Object {
-                                      "backgroundColor": "#7EB26D",
+                                      "backgroundColor": "#73BF69",
                                       "bottom": 0,
                                       "display": "block",
                                       "left": 0,

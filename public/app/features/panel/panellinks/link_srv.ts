@@ -46,7 +46,7 @@ export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
 
 type LinkTarget = '_blank' | '_self';
 
-interface LinkModel {
+export interface LinkModel {
   href: string;
   title: string;
   target: LinkTarget;
