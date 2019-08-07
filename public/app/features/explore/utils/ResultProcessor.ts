@@ -3,7 +3,7 @@ import { DataQueryResponse, DataQueryResponseData } from '@grafana/ui';
 import { TableData, isTableData, LogsModel, toDataFrame, guessFieldTypes, TimeSeries } from '@grafana/data';
 
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
-import { getProcessedDataFrame } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
@@ -101,7 +101,7 @@ export class ResultProcessor {
   };
 
   private makeTimeSeriesList = (rawData: any[]) => {
-    const dataList = getProcessedDataFrame(rawData);
+    const dataList = getProcessedDataFrames(rawData);
     const dataProcessor = new DataProcessor({ xaxis: {}, aliasColors: [] }); // Hack before we use GraphSeriesXY instead
     const timeSeries = dataProcessor.getSeriesList({ dataList });
 

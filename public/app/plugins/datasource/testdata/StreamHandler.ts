@@ -113,7 +113,7 @@ export class StreamWorker {
     const maxRows = query.buffer ? query.buffer : stream.request.maxDataPoints;
 
     // Edit the first series
-    const series = stream.series[0];
+    const series = stream.data[0];
     let rows = series.rows.concat(append);
     const extra = maxRows - rows.length;
     if (extra < 0) {
@@ -143,7 +143,7 @@ export class SignalWorker extends StreamWorker {
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
     setTimeout(() => {
-      this.stream.series = [this.initBuffer(query.refId)];
+      this.stream.data = [this.initBuffer(query.refId)];
       this.looper();
     }, 10);
 
@@ -253,7 +253,7 @@ export class FetchWorker extends StreamWorker {
 
   onHeader = (series: DataFrame) => {
     series.refId = this.refId;
-    this.stream.series = [series];
+    this.stream.data = [series];
   };
 
   onRow = (row: any[]) => {
@@ -269,7 +269,7 @@ export class LogsWorker extends StreamWorker {
     super(key, query, request, observer);
 
     window.setTimeout(() => {
-      this.stream.series = [this.initBuffer(query.refId)];
+      this.stream.data = [this.initBuffer(query.refId)];
       this.looper();
     }, 10);
   }

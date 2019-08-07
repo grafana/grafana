@@ -97,6 +97,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ homeDashboardId: dashboardId });
   };
 
+  getFullDashName = (dashboard: DashboardSearchHit) => {
+    if (typeof dashboard.folderTitle === 'undefined' || dashboard.folderTitle === '') {
+      return dashboard.title;
+    }
+    return dashboard.folderTitle + ' / ' + dashboard.title;
+  };
+
   render() {
     const { theme, timezone, homeDashboardId, dashboards } = this.state;
 
@@ -123,7 +130,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           <Select
             value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
             getOptionValue={i => i.id}
-            getOptionLabel={i => i.title}
+            getOptionLabel={this.getFullDashName}
             onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
             options={dashboards}
             placeholder="Choose default dashboard"

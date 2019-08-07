@@ -6,14 +6,14 @@ import _ from 'lodash';
  * @param annotations
  * @param options
  */
-export function makeRegions(annotations, options) {
+export function makeRegions(annotations: any[], options: { range: any }) {
   const [regionEvents, singleEvents] = _.partition(annotations, 'regionId');
   const regions = getRegions(regionEvents, options.range);
   annotations = _.concat(regions, singleEvents);
   return annotations;
 }
 
-function getRegions(events, range) {
+function getRegions(events: string | any[], range: { to: { valueOf: () => number }; from: { valueOf: () => number } }) {
   const regionEvents = _.filter(events, event => {
     return event.regionId;
   });
@@ -49,11 +49,11 @@ function getRegions(events, range) {
   return regions;
 }
 
-function isStartOfRegion(event): boolean {
+function isStartOfRegion(event: { id: any; regionId: any }): boolean {
   return event.id && event.id === event.regionId;
 }
 
-export function dedupAnnotations(annotations) {
+export function dedupAnnotations(annotations: any) {
   let dedup = [];
 
   // Split events by annotationId property existence
@@ -75,6 +75,6 @@ export function dedupAnnotations(annotations) {
   return dedup;
 }
 
-function isPanelAlert(event) {
+function isPanelAlert(event: { eventType: string }) {
   return event.eventType === 'panel-alert';
 }

@@ -3,9 +3,9 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { PluginConfigPageProps, DataSourcePlugin } from '@grafana/ui';
-import { TestDataDatasource } from './datasource';
+import { TestDataDataSource } from './datasource';
 
-interface Props extends PluginConfigPageProps<DataSourcePlugin<TestDataDatasource>> {}
+interface Props extends PluginConfigPageProps<DataSourcePlugin<TestDataDataSource>> {}
 
 export class TestInfoTab extends PureComponent<Props> {
   constructor(props: Props) {

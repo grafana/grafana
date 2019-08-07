@@ -33,7 +33,7 @@ mkdir -p /rpm-repo
 gsutil -m rsync -r "$BUCKET" /rpm-repo
 
 # Add the new release to the repo
-cp "$DIST_PATH/*.rpm" /rpm-repo # adds to many files for enterprise
+cp "$DIST_PATH"/*.rpm /rpm-repo # adds to many files for enterprise
 rm /rpm-repo/grafana-latest-1*.rpm || true
 createrepo /rpm-repo
 

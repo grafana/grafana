@@ -25,11 +25,11 @@ type PageObjects<T> = { [P in keyof T]: T[P] };
 
 export interface TestPageConfig<T> {
   url?: string;
-  pageObjects?: PageObjects<T>;
+  pageObjects: PageObjects<T>;
 }
 
 export class TestPage<T> implements TestPageType<T> {
-  pageObjects?: PageObjects<T>;
+  pageObjects: PageObjects<T>;
   private page?: Page;
   private pageUrl?: string;
 
