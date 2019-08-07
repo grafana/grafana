@@ -28,7 +28,7 @@ export class VariableSrv {
     private $injector: auto.IInjectorService,
     private templateSrv: TemplateSrv,
     private timeSrv: TimeSrv
-  ) { }
+  ) {}
 
   init(dashboard: DashboardModel) {
     this.dashboard = dashboard;
@@ -320,13 +320,13 @@ export class VariableSrv {
     }
     if (state.location.path === path) {
       if (state.location.url === this.originalUrl) {
-        return;
+        return this.$q.when({});
       }
 
       this.originalUrl = this.$location.url();
       const queryParams = this.$location.search();
       if (!Object.keys(queryParams).some(k => k.indexOf('var-') === 0)) {
-        return;
+        return this.$q.when({});
       }
       return this.$q
         .all(
@@ -343,6 +343,7 @@ export class VariableSrv {
       if (this.storeUnsub) {
         this.storeUnsub();
       }
+      return this.$q.when({});
     }
   }
 
