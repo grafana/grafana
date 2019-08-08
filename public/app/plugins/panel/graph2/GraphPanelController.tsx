@@ -1,6 +1,8 @@
 import React from 'react';
-import { GraphSeriesXY, PanelData } from '@grafana/ui';
+import { PanelData } from '@grafana/ui';
+import { GraphSeriesXY } from '@grafana/data';
 import difference from 'lodash/difference';
+
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 import { Options, SeriesOptions } from './types';
 import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from '@grafana/ui/src/components/Graph/GraphWithLegend';

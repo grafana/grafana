@@ -34,7 +34,7 @@ export interface State {
 
 export class DashboardPanel extends PureComponent<Props, State> {
   element: HTMLElement;
-  specialPanels = {};
+  specialPanels: { [key: string]: Function } = {};
 
   constructor(props: Props) {
     super(props);

@@ -74,7 +74,7 @@ const tooltipText =
   'The api key life duration. For example 1d if your key is going to last for one day. All the supported units are: s,m,h,d,w,M,y';
 
 export class ApiKeysPage extends PureComponent<Props, any> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     this.state = { isAdding: false, newApiKey: initialApiKeyState };
   }
@@ -99,7 +99,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     this.setState({ isAdding: !this.state.isAdding });
   };
 
-  onAddApiKey = async evt => {
+  onAddApiKey = async (evt: any) => {
     evt.preventDefault();
 
     const openModal = (apiKey: string) => {
@@ -124,10 +124,10 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     });
   };
 
-  onApiKeyStateUpdate = (evt, prop: string) => {
+  onApiKeyStateUpdate = (evt: any, prop: string) => {
     const value = evt.currentTarget.value;
     this.setState((prevState: State) => {
-      const newApiKey = {
+      const newApiKey: any = {
         ...prevState.newApiKey,
       };
       newApiKey[prop] = value;
@@ -163,7 +163,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
     );
   }
 
-  formatDate(date, format?) {
+  formatDate(date: any, format?: string) {
     if (!date) {
       return 'No expiration date';
     }
@@ -304,7 +304,7 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   return {
     navModel: getNavModel(state.navIndex, 'apikeys'),
     apiKeys: getApiKeys(state.apiKeys),

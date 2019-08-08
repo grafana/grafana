@@ -37,9 +37,8 @@ import {
   DateTimeInput,
   FormatInput,
   DateTime,
-  toUtc,
-  dateTime,
   AbsoluteTimeRange,
+  dateTimeForTimeZone,
 } from '@grafana/data';
 import { Observable } from 'rxjs';
 import { getQueryResponse } from 'app/core/utils/explore';
@@ -90,9 +89,8 @@ export interface EpicDependencies {
   getTimeSrv: () => TimeSrv;
   getTimeRange: (timeZone: TimeZone, rawRange: RawTimeRange) => TimeRange;
   getTimeZone: (state: UserState) => TimeZone;
-  toUtc: (input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
-  dateTime: (input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
   getShiftedTimeRange: (direction: number, origRange: TimeRange, timeZone: TimeZone) => AbsoluteTimeRange;
+  dateTimeForTimeZone: (timezone?: TimeZone, input?: DateTimeInput, formatInput?: FormatInput) => DateTime;
 }
 
 const dependencies: EpicDependencies = {
@@ -100,9 +98,8 @@ const dependencies: EpicDependencies = {
   getTimeSrv,
   getTimeRange,
   getTimeZone,
-  toUtc,
-  dateTime,
   getShiftedTimeRange,
+  dateTimeForTimeZone,
 };
 
 const epicMiddleware = createEpicMiddleware({ dependencies });

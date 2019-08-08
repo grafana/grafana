@@ -298,7 +298,10 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 			alert.ExecutionError = cmd.Error
 		}
 
-		sess.ID(alert.Id).Update(&alert)
+		_, err := sess.ID(alert.Id).Update(&alert)
+		if err != nil {
+			return err
+		}
 
 		cmd.Result = alert
 		return nil

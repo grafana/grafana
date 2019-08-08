@@ -106,12 +106,12 @@ describe('runQueriesBatchEpic', () => {
         it('then correct actions are dispatched', () => {
           const { exploreId, state, datasourceId } = mockExploreState();
           const unsubscribe = jest.fn();
-          const serieA = {
+          const serieA: any = {
             fields: [],
             rows: [],
             refId: 'A',
           };
-          const serieB = {
+          const serieB: any = {
             fields: [],
             rows: [],
             refId: 'B',
@@ -171,12 +171,12 @@ describe('runQueriesBatchEpic', () => {
         it('then correct actions are dispatched', () => {
           const { exploreId, state, datasourceId, history } = mockExploreState();
           const unsubscribe = jest.fn();
-          const serieA = {
+          const serieA: any = {
             fields: [],
             rows: [],
             refId: 'A',
           };
-          const serieB = {
+          const serieB: any = {
             fields: [],
             rows: [],
             refId: 'B',
@@ -189,7 +189,7 @@ describe('runQueriesBatchEpic', () => {
             )
             .whenQueryObserverReceivesEvent({
               state: LoadingState.Done,
-              series: null,
+              data: null,
               delta,
               key: 'some key',
               request: {} as DataQueryRequest,

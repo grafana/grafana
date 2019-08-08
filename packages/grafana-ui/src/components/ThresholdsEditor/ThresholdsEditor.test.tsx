@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from 'react';
 import { mount } from 'enzyme';
-import { ThresholdsEditor, Props, threshodsWithoutKey } from './ThresholdsEditor';
+import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
 import { colors } from '../../utils';
 
 const setup = (propOverrides?: Partial<Props>) => {
@@ -21,7 +21,7 @@ const setup = (propOverrides?: Partial<Props>) => {
 };
 
 function getCurrentThresholds(editor: ThresholdsEditor) {
-  return threshodsWithoutKey(editor.state.thresholds);
+  return thresholdsWithoutKey(editor.state.thresholds);
 }
 
 describe('Render', () => {

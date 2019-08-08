@@ -49,7 +49,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
       isChangingPassword: false,
     };
     if (config.loginError) {
-      appEvents.on('alert-warning', ['Login Failed', config.loginError]);
+      appEvents.emit('alert-warning', ['Login Failed', config.loginError]);
     }
   }
 

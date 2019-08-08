@@ -18,7 +18,7 @@ interface State {
 }
 
 export class LogLabel extends PureComponent<Props, State> {
-  state = {
+  state: State = {
     stats: null,
     showStats: false,
   };

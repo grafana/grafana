@@ -2,8 +2,9 @@
 
 .PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run clean devenv devenv-down revive-alerting
 
-GO := GO111MODULE=on go
-GO_FILES := ./pkg/...
+GO = GO111MODULE=on go
+GO_FILES ?= ./pkg/...
+SH_FILES ?= $(shell find ./scripts -name *.sh)
 
 all: deps build
 
@@ -110,6 +111,11 @@ go-vet:
 	@$(GO) vet $(GO_FILES)
 
 lint-go: go-vet golangci-lint revive revive-alerting gosec
+
+# with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
+shellcheck: $(SH_FILES)
+	@docker run --rm -v "$$PWD:/mnt" koalaman/shellcheck:stable \
+	$(SH_FILES) -e SC1071
 
 run: scripts/go/bin/bra
 	@scripts/go/bin/bra run

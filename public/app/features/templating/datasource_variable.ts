@@ -109,7 +109,7 @@ export class DatasourceVariable implements Variable {
     return this.current.value;
   }
 }
-// @ts-ignore
+
 variableTypes['datasource'] = {
   name: 'Datasource',
   ctor: DatasourceVariable,

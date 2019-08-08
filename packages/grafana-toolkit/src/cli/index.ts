@@ -16,10 +16,9 @@ import { pluginDevTask } from './tasks/plugin.dev';
 import {
   ciBuildPluginTask,
   ciBuildPluginDocsTask,
-  ciBundlePluginTask,
+  ciPackagePluginTask,
   ciTestPluginTask,
   ciPluginReportTask,
-  ciDeployPluginTask,
 } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 
@@ -171,10 +170,10 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
-    .command('plugin:ci-bundle')
-    .description('Create a zip artifact for the plugin')
+    .command('plugin:ci-package')
+    .description('Create a zip packages for the plugin')
     .action(async cmd => {
-      await execTask(ciBundlePluginTask)({});
+      await execTask(ciPackagePluginTask)({});
     });
 
   program
@@ -190,15 +189,11 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:ci-report')
     .description('Build a report for this whole process')
+    .option('--upload', 'upload packages also')
     .action(async cmd => {
-      await execTask(ciPluginReportTask)({});
-    });
-
-  program
-    .command('plugin:ci-deploy')
-    .description('Publish plugin CI results')
-    .action(async cmd => {
-      await execTask(ciDeployPluginTask)({});
+      await execTask(ciPluginReportTask)({
+        upload: cmd.upload,
+      });
     });
 
   program.on('command:*', () => {

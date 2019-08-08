@@ -89,7 +89,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
   }
 
-  onChangeDataSource = datasource => {
+  onChangeDataSource = (datasource: any) => {
     const { panel } = this.props;
     const { currentDS } = this.state;
 
@@ -194,7 +194,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     );
   };
 
-  onAddMixedQuery = datasource => {
+  onAddMixedQuery = (datasource: any) => {
     this.onAddQuery({ datasource: datasource.name });
     this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
   };
@@ -203,7 +203,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ isAddingMixed: false });
   };
 
-  onQueryChange = (query: DataQuery, index) => {
+  onQueryChange = (query: DataQuery, index: number) => {
     this.props.panel.changeQuery(query, index);
     this.forceUpdate();
   };

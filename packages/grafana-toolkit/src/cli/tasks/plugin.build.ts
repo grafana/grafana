@@ -1,8 +1,9 @@
 import { Task, TaskRunner } from './task';
+import fs from 'fs';
+
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
-import fs = require('fs');
 import glob = require('glob');
 import { Linter, Configuration, RuleFailure } from 'tslint';
 import * as prettier from 'prettier';
@@ -82,12 +83,19 @@ export const prettierCheckPlugin = useSpinner<Fixable>('Prettier check', async (
         if (!prettier.check(data.toString(), opts)) {
           if (fix) {
             const fixed = prettier.format(data.toString(), opts);
-            fs.writeFile(s, fixed, err => {
-              if (err) {
-                console.log('Error fixing ' + s, err);
-                failed = true;
-              }
-            });
+            if (fixed && fixed.length > 10) {
+              fs.writeFile(s, fixed, err => {
+                if (err) {
+                  console.log('Error fixing ' + s, err);
+                  failed = true;
+                } else {
+                  console.log('Fixed: ' + s);
+                }
+              });
+            } else {
+              console.log('No automatic fix for: ' + s);
+              failed = true;
+            }
           } else {
             failed = true;
           }

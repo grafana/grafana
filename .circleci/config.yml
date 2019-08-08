@@ -98,6 +98,34 @@ jobs:
                 path: public/e2e-test/screenShots/theOutput
                 destination: output-screenshots
 
+  end-to-end-test-release:
+      docker:
+        - image: circleci/node:10-browsers
+        - image: grafana/grafana-dev:$CIRCLE_TAG
+      steps:
+          - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
+          - checkout
+          - restore_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+          - run:
+              name: yarn install
+              command: 'yarn install --pure-lockfile --no-progress'
+              no_output_timeout: 5m
+          - save_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+              paths:
+                - node_modules
+          - run:
+              name: run end-to-end tests
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
+              no_output_timeout: 5m
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theTruth
+                destination: expected-screenshots
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theOutput
+                destination: output-screenshots
+
   codespell:
     docker:
       - image: circleci/python
@@ -126,6 +154,15 @@ jobs:
       - run:
           name: Lint Go
           command: 'make lint-go'
+
+  shellcheck:
+    machine: true
+    working_directory: ~/go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: ShellCheck
+          command: 'make shellcheck'
 
   test-frontend:
     docker:
@@ -617,7 +654,7 @@ jobs:
               echo "Build URL:"
               curl -s -u "$DOCS_CIRCLE_TOKEN:" \
                 -d build_parameters[CIRCLE_JOB]=pull-submodule-changes \
-                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/staging \
+                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/master \
               | jq .build_url
             else
               echo "-- no changes to docs files --"
@@ -650,6 +687,8 @@ workflows:
           filters: *filter-only-master
       - lint-go:
           filters: *filter-only-master
+      - shellcheck:
+          filters: *filter-only-master
       - test-frontend:
           filters: *filter-only-master
       - test-backend:
@@ -665,6 +704,7 @@ workflows:
             - test-frontend
             - codespell
             - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
@@ -677,6 +717,7 @@ workflows:
             - test-frontend
             - codespell
             - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -687,6 +728,7 @@ workflows:
             - test-frontend
             - codespell
             - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
@@ -698,6 +740,7 @@ workflows:
             - test-frontend
             - codespell
             - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -724,6 +767,8 @@ workflows:
           filters: *filter-only-release
       - lint-go:
           filters: *filter-only-release
+      - shellcheck:
+          filters: *filter-only-release
       - test-frontend:
           filters: *filter-only-release
       - test-backend:
@@ -739,6 +784,7 @@ workflows:
             - test-frontend
             - codespell
             - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
@@ -751,6 +797,7 @@ workflows:
             - test-frontend
             - codespell
             - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -762,6 +809,7 @@ workflows:
             - test-frontend
             - codespell
             - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -772,8 +820,13 @@ workflows:
             - test-frontend
             - codespell
             - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+          filters: *filter-only-release
+      - end-to-end-test-release:
+          requires:
+            - grafana-docker-release
           filters: *filter-only-release
 
   build-branches-and-prs:
@@ -790,6 +843,10 @@ workflows:
         - codespell:
             filters: *filter-not-release-or-master
         - lint-go:
+            filters: *filter-not-release-or-master
+        - lint-go:
+            filters: *filter-not-release-or-master
+        - shellcheck:
             filters: *filter-not-release-or-master
         - test-frontend:
             filters: *filter-not-release-or-master
@@ -808,6 +865,7 @@ workflows:
               - test-frontend
               - codespell
               - lint-go
+              - shellcheck
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
@@ -819,6 +877,7 @@ workflows:
               - test-frontend
               - codespell
               - lint-go
+              - shellcheck
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test

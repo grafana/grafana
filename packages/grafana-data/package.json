@@ -1,10 +1,16 @@
 {
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "6.4.0-alpha.12",
+  "version": "6.4.0-alpha.44",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
   ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git"
+  },
   "main": "src/index.ts",
   "scripts": {
     "tslint": "tslint -c tslint.json --project tsconfig.json",
@@ -13,8 +19,6 @@
     "bundle": "rollup -c rollup.config.ts",
     "build": "grafana-toolkit package:build --scope=data"
   },
-  "author": "Grafana Labs",
-  "license": "Apache-2.0",
   "devDependencies": {
     "@types/jest": "23.3.14",
     "@types/jquery": "1.10.35",
@@ -35,6 +39,6 @@
     "rollup-plugin-typescript2": "0.19.3",
     "rollup-plugin-visualizer": "0.9.2",
     "sinon": "1.17.6",
-    "typescript": "3.4.1"
+    "typescript": "3.5.3"
   }
 }
