@@ -12,7 +12,6 @@ import store from 'app/core/store';
 // Components
 import { Alert } from './Error';
 import ErrorBoundary from './ErrorBoundary';
-import GraphContainer from './GraphContainer';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -30,7 +29,7 @@ import {
 } from './state/actions';
 
 // Types
-import { RawTimeRange } from '@grafana/data';
+import { RawTimeRange, GraphSeriesXY } from '@grafana/data';
 
 import { DataQuery, ExploreStartPageProps, DataSourceApi, DataQueryError } from '@grafana/ui';
 import {
@@ -56,6 +55,7 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
+import ExploreGraphPanel from './ExploreGraphPanel';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -87,6 +87,7 @@ interface ExploreProps {
   queryErrors: DataQueryError[];
   isLive: boolean;
   updateTimeRange: typeof updateTimeRange;
+  graphResult?: GraphSeriesXY[];
 }
 
 /**
@@ -225,6 +226,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       queryKeys,
       queryErrors,
       mode,
+      graphResult,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
 
@@ -259,7 +261,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
                       {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
                       {!showingStartPage && (
                         <>
-                          {mode === ExploreMode.Metrics && <GraphContainer width={width} exploreId={exploreId} />}
+                          {mode === ExploreMode.Metrics && (
+                            <ExploreGraphPanel exploreId={exploreId} series={graphResult} width={width} />
+                          )}
                           {mode === ExploreMode.Metrics && (
                             <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />
                           )}
@@ -306,6 +310,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     isLive,
     supportedModes,
     mode,
+    graphResult,
   } = item;
 
   const { datasource, queries, range: urlRange, mode: urlMode, ui } = (urlState || {}) as ExploreUrlState;
@@ -349,6 +354,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialUI,
     queryErrors,
     isLive,
+    graphResult,
   };
 }
 

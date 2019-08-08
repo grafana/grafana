@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { rangeUtil, dateTimeForTimeZone } from '@grafana/data';
-import { Switch, GraphWithLegend, LegendDisplayMode } from '@grafana/ui';
+import { rangeUtil } from '@grafana/data';
+import { Switch } from '@grafana/ui';
 import {
   RawTimeRange,
   LogLevel,
@@ -13,7 +13,6 @@ import {
   LogsDedupStrategy,
   LogRowModel,
 } from '@grafana/data';
-// import TimeSeries from 'app/core/time_series2';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
@@ -21,24 +20,10 @@ import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButto
 import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
 import { LogsDedupDescription } from 'app/core/logs_model';
-import { GraphSeriesToggler } from 'app/plugins/panel/graph2/GraphSeriesToggler';
+import ExploreGraphPanel from './ExploreGraphPanel';
+import { ExploreId } from 'app/types';
 
 const PREVIEW_LIMIT = 100;
-
-// const graphOptions = {
-//   series: {
-//     stack: true,
-//     bars: {
-//       show: true,
-//       lineWidth: 5,
-//       // barWidth: 10,
-//     },
-//     // stack: true,
-//   },
-//   yaxis: {
-//     tickDecimals: 0,
-//   },
-// };
 
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
@@ -55,7 +40,7 @@ interface Props {
   data?: LogsModel;
   dedupedData?: LogsModel;
   width: number;
-  exploreId: string;
+  exploreId: ExploreId;
   highlighterExpressions: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
@@ -154,17 +139,15 @@ export default class Logs extends PureComponent<Props, State> {
   render() {
     const {
       data,
-      // exploreId,
+      exploreId,
       highlighterExpressions,
       loading = false,
       onClickLabel,
-      absoluteRange,
       timeZone,
       scanning,
       scanRange,
       width,
       dedupedData,
-      onChangeTime,
     } = this.props;
 
     if (!data) {
@@ -195,44 +178,16 @@ export default class Logs extends PureComponent<Props, State> {
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
-    const timeRange = {
-      from: dateTimeForTimeZone(timeZone, absoluteRange.from),
-      to: dateTimeForTimeZone(timeZone, absoluteRange.to),
-      raw: {
-        from: dateTimeForTimeZone(timeZone, absoluteRange.from),
-        to: dateTimeForTimeZone(timeZone, absoluteRange.to),
-      },
-    };
-    const height = 100;
 
     return (
       <div className="logs-panel">
         <div className="logs-panel-graph">
-          <GraphSeriesToggler series={data.series} onHiddenSeriesChanged={this.onToggleLogLevel}>
-            {({ onSeriesToggle, toggledSeries }) => {
-              return (
-                <GraphWithLegend
-                  displayMode={LegendDisplayMode.List}
-                  height={height}
-                  isLegendVisible={true}
-                  placement={'under'}
-                  width={width}
-                  timeRange={timeRange}
-                  timeZone={timeZone}
-                  showBars={true}
-                  showLines={false}
-                  showPoints={false}
-                  onSeriesColorChange={() => {}}
-                  onToggleSort={() => {}}
-                  series={toggledSeries}
-                  isStacked={true}
-                  lineWidth={5}
-                  onSeriesToggle={onSeriesToggle}
-                  onSelectionChanged={onChangeTime}
-                />
-              );
-            }}
-          </GraphSeriesToggler>
+          <ExploreGraphPanel
+            exploreId={exploreId}
+            series={data.series}
+            width={width}
+            onHiddenSeriesChanged={this.onToggleLogLevel}
+          />
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
