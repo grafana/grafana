@@ -1068,6 +1068,7 @@
     this.highlighter = this.options.highlighter || this.highlighter
     this.updater = this.options.updater || this.updater
     this.source = this.options.source
+    this.doNested = this.options.doNested || this.doNested
     this.$menu = $(this.options.menu)
     this.shown = false
     this.listen()
@@ -1175,15 +1176,24 @@
   , render: function (items) {
       var that = this
 
-      items = $(items).map(function (i, item) {
-        i = $(that.options.item).attr('data-value', item)
-        i.find('a').html(that.highlighter(item))
-        return i[0]
-      })
+      if ($.isFunction(this.doNested) && !this.query) {
+        items = this.doNested(items)
+      } else {
+        items = $(items).map(function (i, item) {
+          i = $(that.options.item).attr('data-value', item)
+          i.find('a').html(that.highlighter(item))
+          return i[0]
+        })
+      }
 
       // CHANGE (rashidpc) Do not select first element by default
       // items.first().addClass('active')
       this.$menu.html(items)
+      if (this.$menu.has('.dropdown-submenu').length) {
+         this.$menu.css("overflow-y", "unset")
+      } else {
+        this.$menu.css("overflow-y", "auto")
+      }
       return this
     }
 
@@ -1360,6 +1370,7 @@
 
   $.fn.typeahead.defaults = {
     source: []
+  , doNested: []
   , items: 8
   , menu: '<ul class="typeahead dropdown-menu"></ul>'
   , item: '<li><a href="#"></a></li>'
