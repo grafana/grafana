@@ -77,6 +77,7 @@ export function registerAngularDirectives() {
     'items',
     ['onClose', { watchDepth: 'reference', wrapApply: true }],
     ['getContextMenuSource', { watchDepth: 'reference', wrapApply: true }],
+    ['formatSourceDate', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
   // We keep the drilldown terminology here because of as using data-* directive

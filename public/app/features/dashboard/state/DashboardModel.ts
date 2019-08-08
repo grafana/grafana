@@ -699,13 +699,13 @@ export class DashboardModel {
     return newPanel;
   }
 
-  formatDate(date: DateTimeInput, format?: string) {
+  formatDate = (date: DateTimeInput, format?: string) => {
     date = isDateTime(date) ? date : dateTime(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
     const timezone = this.getTimezone();
 
     return timezone === 'browser' ? dateTime(date).format(format) : toUtc(date).format(format);
-  }
+  };
 
   destroy() {
     this.events.removeAllListeners();
