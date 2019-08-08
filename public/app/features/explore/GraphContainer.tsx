@@ -1,16 +1,16 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { TimeZone, AbsoluteTimeRange, LoadingState } from '@grafana/data';
+import { TimeZone, AbsoluteTimeRange, LoadingState, dateTimeForTimeZone } from '@grafana/data';
+import { GraphWithLegend, LegendDisplayMode } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
 import { toggleGraph, updateTimeRange } from './state/actions';
-import Graph from './Graph';
 import Panel from './Panel';
 import { getTimeZone } from '../profile/state/selectors';
-import TimeSeries from 'app/core/time_series2';
+import { GraphSeriesToggler } from 'app/plugins/panel/graph2/GraphSeriesToggler';
 
 interface GraphContainerProps {
   exploreId: ExploreId;
@@ -38,44 +38,47 @@ export class GraphContainer extends PureComponent<GraphContainerProps> {
   };
 
   render() {
-    const {
-      exploreId,
-      graphResult,
-      loading,
-      showingGraph,
-      showingTable,
-      absoluteRange,
-      split,
-      width,
-      timeZone,
-    } = this.props;
+    const { graphResult, loading, showingGraph, showingTable, absoluteRange, width, timeZone } = this.props;
+
+    if (!graphResult) {
+      return null;
+    }
+
     const graphHeight = showingGraph && showingTable ? 200 : 400;
-    const series = graphResult
-      ? graphResult.map(serie => {
-          return {
-            datapoints: serie.data,
-            alias: serie.label,
-            target: serie.label,
-            color: serie.color,
-          };
-        })
-      : null;
-    const timeSeries = series ? series.map(series => new TimeSeries(series)) : [new TimeSeries({ datapoints: [] })];
+    const timeRange = {
+      from: dateTimeForTimeZone(timeZone, absoluteRange.from),
+      to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+      raw: {
+        from: dateTimeForTimeZone(timeZone, absoluteRange.from),
+        to: dateTimeForTimeZone(timeZone, absoluteRange.to),
+      },
+    };
 
     return (
       <Panel label="Graph" collapsible isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
-        {graphResult && (
-          <Graph
-            data={timeSeries}
-            height={graphHeight}
-            id={`explore-graph-${exploreId}`}
-            onChangeTime={this.onChangeTime}
-            range={absoluteRange}
-            timeZone={timeZone}
-            split={split}
-            width={width}
-          />
-        )}
+        <GraphSeriesToggler series={graphResult}>
+          {({ onSeriesToggle, toggledSeries }) => {
+            return (
+              <GraphWithLegend
+                displayMode={LegendDisplayMode.List}
+                height={graphHeight}
+                isLegendVisible={true}
+                placement={'under'}
+                width={width}
+                timeRange={timeRange}
+                timeZone={timeZone}
+                showBars={false}
+                showLines={true}
+                showPoints={false}
+                onSeriesColorChange={() => {}}
+                onToggleSort={() => {}}
+                series={toggledSeries}
+                onSeriesToggle={onSeriesToggle}
+                onSelectionChanged={this.onChangeTime}
+              />
+            );
+          }}
+        </GraphSeriesToggler>
       </Panel>
     );
   }

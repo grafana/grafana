@@ -1,6 +1,7 @@
 import React from 'react';
 import { GraphSeriesXY } from '@grafana/data';
 import difference from 'lodash/difference';
+import isEqual from 'lodash/isEqual';
 
 interface GraphSeriesTogglerAPI {
   onSeriesToggle: (label: string, event: React.MouseEvent<HTMLElement>) => void;
@@ -28,6 +29,13 @@ export class GraphSeriesToggler extends React.Component<GraphSeriesTogglerProps,
       hiddenSeries: [],
       toggledSeries: props.series,
     };
+  }
+
+  componentDidUpdate(prevProps: Readonly<GraphSeriesTogglerProps>) {
+    const { series } = this.props;
+    if (!isEqual(prevProps.series, series)) {
+      this.setState({ hiddenSeries: [], toggledSeries: series });
+    }
   }
 
   onSeriesToggle(label: string, event: React.MouseEvent<HTMLElement>) {

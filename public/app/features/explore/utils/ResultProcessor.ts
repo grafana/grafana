@@ -16,8 +16,6 @@ import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryS
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
-// import { default as TimeSeries2 } from 'app/core/time_series2';
-// import { DataProcessor } from 'app/plugins/panel/graph/data_processor';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export class ResultProcessor {
@@ -124,10 +122,6 @@ export class ResultProcessor {
     );
 
     return graphSeries;
-    // const dataProcessor = new DataProcessor({ xaxis: {}, aliasColors: [] }); // Hack before we use GraphSeriesXY instead
-    // const timeSeries = dataProcessor.getSeriesList({ dataList });
-
-    // return (timeSeries as any) as TimeSeries[]; // Hack before we use GraphSeriesXY instead
   };
 
   private isSameGraphSeries = (a: GraphSeriesXY, b: GraphSeriesXY) => {
@@ -174,9 +168,6 @@ export class ResultProcessor {
       }
 
       if (isNew) {
-        // const timeSeries2Result = new TimeSeries2({ ...newResult });
-
-        // const result = (timeSeries2Result as any) as TimeSeries; // Hack before we use GraphSeriesXY instead
         results.push(newResult);
       }
     }
