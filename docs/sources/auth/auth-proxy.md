@@ -292,6 +292,4 @@ curl -H "X-WEBAUTH-USER: leonard" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem
 
 With this, the user `leonard` will be automatically placed into the Loki team as part of Grafana authentication.
 
-Please note that by default server-side session caching is enabled. If a user has previously authenticated via Auth Proxy, team synchronization only happens once the sessions expire.
-
 [Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})
