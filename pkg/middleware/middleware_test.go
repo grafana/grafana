@@ -252,28 +252,38 @@ func TestMiddlewareContext(t *testing.T) {
 			maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour)
 			maxAge := (maxAgeHours + time.Hour).Seconds()
 
-			expectedCookie := &http.Cookie{
-				Name:     setting.LoginCookieName,
-				Value:    "rotated",
-				Path:     setting.AppSubUrl + "/",
-				HttpOnly: true,
-				MaxAge:   int(maxAge),
-				Secure:   setting.CookieSecure,
-				SameSite: setting.CookieSameSite,
+			sameSitePolicies := []http.SameSite{
+				http.SameSiteDefaultMode,
+				http.SameSiteLaxMode,
+				http.SameSiteStrictMode,
 			}
+			for _, sameSitePolicy := range sameSitePolicies {
+				setting.CookieSameSite = sameSitePolicy
+				expectedCookie := &http.Cookie{
+					Name:     setting.LoginCookieName,
+					Value:    "rotated",
+					Path:     setting.AppSubUrl + "/",
+					HttpOnly: true,
+					MaxAge:   int(maxAge),
+					Secure:   setting.CookieSecure,
+				}
+				if sameSitePolicy != http.SameSiteDefaultMode {
+					expectedCookie.SameSite = sameSitePolicy
+				}
 
-			sc.fakeReq("GET", "/").exec()
+				sc.fakeReq("GET", "/").exec()
 
-			Convey("Should init context with user info", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 12)
-				So(sc.context.UserToken.UserId, ShouldEqual, 12)
-				So(sc.context.UserToken.UnhashedToken, ShouldEqual, "rotated")
-			})
+				Convey(fmt.Sprintf("Should init context with user info and setting.SameSite=%v", sameSitePolicy), func() {
+					So(sc.context.IsSignedIn, ShouldBeTrue)
+					So(sc.context.UserId, ShouldEqual, 12)
+					So(sc.context.UserToken.UserId, ShouldEqual, 12)
+					So(sc.context.UserToken.UnhashedToken, ShouldEqual, "rotated")
+				})
 
-			Convey("Should set cookie", func() {
-				So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
-			})
+				Convey(fmt.Sprintf("Should set cookie with setting.SameSite=%v", sameSitePolicy), func() {
+					So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
+				})
+			}
 		})
 
 		middlewareScenario(t, "Invalid/expired auth token in cookie", func(sc *scenarioContext) {
