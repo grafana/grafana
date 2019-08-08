@@ -21,6 +21,7 @@ import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButto
 import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
 import { LogsDedupDescription } from 'app/core/logs_model';
+import { GraphSeriesToggler } from 'app/plugins/panel/graph2/GraphSeriesToggler';
 
 const PREVIEW_LIMIT = 100;
 
@@ -135,7 +136,7 @@ export default class Logs extends PureComponent<Props, State> {
     });
   };
 
-  onToggleLogLevel = (rawLevel: string, hiddenRawLevels: string[]) => {
+  onToggleLogLevel = (hiddenRawLevels: string[]) => {
     const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map((level: LogLevel) => LogLevel[level]);
     this.props.onToggleLogLevel(hiddenLogLevels);
   };
@@ -206,33 +207,29 @@ export default class Logs extends PureComponent<Props, State> {
     return (
       <div className="logs-panel">
         <div className="logs-panel-graph">
-          <GraphWithLegend
-            displayMode={LegendDisplayMode.List}
-            height={height}
-            isLegendVisible={true}
-            placement={'under'}
-            width={width}
-            timeRange={timeRange}
-            showBars={true}
-            showLines={false}
-            showPoints={false}
-            onSeriesColorChange={() => {}}
-            onToggleSort={() => {}}
-            series={data.series}
-            isStacked={true}
-            lineWidth={5}
-          />
-          {/* <Graph
-            data={timeSeries}
-            height={100}
-            width={width}
-            range={absoluteRange}
-            timeZone={timeZone}
-            id={`explore-logs-graph-${exploreId}`}
-            onChangeTime={this.props.onChangeTime}
-            onToggleSeries={this.onToggleLogLevel}
-            userOptions={graphOptions}
-          /> */}
+          <GraphSeriesToggler series={data.series} onHiddenSeriesChanged={this.onToggleLogLevel}>
+            {({ onSeriesToggle, toggledSeries }) => {
+              return (
+                <GraphWithLegend
+                  displayMode={LegendDisplayMode.List}
+                  height={height}
+                  isLegendVisible={true}
+                  placement={'under'}
+                  width={width}
+                  timeRange={timeRange}
+                  showBars={true}
+                  showLines={false}
+                  showPoints={false}
+                  onSeriesColorChange={() => {}}
+                  onToggleSort={() => {}}
+                  series={toggledSeries}
+                  isStacked={true}
+                  lineWidth={5}
+                  onSeriesToggle={onSeriesToggle}
+                />
+              );
+            }}
+          </GraphSeriesToggler>
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
