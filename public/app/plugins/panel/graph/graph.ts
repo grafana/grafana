@@ -199,7 +199,7 @@ class GraphElement {
           {
             items: [
               ...dataLinks.map<ContextMenuItem>(link => {
-                const linkUiModel = this.linkSrv.getDataLinkUIModel(link, this.panel.scopedVariables, {
+                const linkUiModel = this.linkSrv.getDataLinkUIModel(link, this.panel.scopedVars, {
                   seriesName: item.series.alias,
                   datapoint: item.datapoint,
                 });
