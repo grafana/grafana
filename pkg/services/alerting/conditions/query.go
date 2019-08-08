@@ -234,7 +234,7 @@ func newQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	evaluatorJSON := model.Get("evaluator")
 	evaluator, err := NewAlertEvaluator(evaluatorJSON)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error in condition %v: %v", index, err)
 	}
 	condition.Evaluator = evaluator
 

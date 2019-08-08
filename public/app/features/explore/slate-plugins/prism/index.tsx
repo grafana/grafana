@@ -3,7 +3,7 @@ import Prism from 'prismjs';
 
 const TOKEN_MARK = 'prism-token';
 
-export function setPrismTokens(language, field, values, alias = 'variable') {
+export function setPrismTokens(language: string, field: string | number, values: any, alias = 'variable') {
   Prism.languages[language][field] = {
     alias,
     pattern: new RegExp(`(?:^|\\s)(${values.join('|')})(?:$|\\s)`),
@@ -17,7 +17,7 @@ export function setPrismTokens(language, field, values, alias = 'variable') {
  * (Adapted to handle nested grammar definitions.)
  */
 
-export default function PrismPlugin({ definition, language }) {
+export default function PrismPlugin({ definition, language }: { definition: any; language: string }) {
   if (definition) {
     // Don't override exising modified definitions
     Prism.languages[language] = Prism.languages[language] || definition;
@@ -31,7 +31,7 @@ export default function PrismPlugin({ definition, language }) {
      * @return {Element}
      */
 
-    renderMark(props) {
+    renderMark(props: any): JSX.Element {
       const { children, mark } = props;
       // Only apply spans to marks identified by this plugin
       if (mark.type !== TOKEN_MARK) {
@@ -48,13 +48,13 @@ export default function PrismPlugin({ definition, language }) {
      * @return {Array}
      */
 
-    decorateNode(node) {
+    decorateNode(node: any): any[] {
       if (node.type !== 'paragraph') {
         return [];
       }
 
       const texts = node.getTexts().toArray();
-      const tstring = texts.map(t => t.text).join('\n');
+      const tstring = texts.map((t: { text: any }) => t.text).join('\n');
       const grammar = Prism.languages[language];
       const tokens = Prism.tokenize(tstring, grammar);
       const decorations: any[] = [];
@@ -64,7 +64,7 @@ export default function PrismPlugin({ definition, language }) {
       let endOffset = 0;
       let start = 0;
 
-      function processToken(token, acc?) {
+      function processToken(token: any, acc?: string) {
         // Accumulate token types down the tree
         const types = `${acc || ''} ${token.type || ''} ${token.alias || ''}`;
 

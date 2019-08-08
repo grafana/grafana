@@ -1,10 +1,20 @@
+import {
+  ReducerID,
+  reduceField,
+  FieldType,
+  NullValueMode,
+  DataFrame,
+  Field,
+  DisplayValue,
+  GraphSeriesValue,
+} from '@grafana/data';
+
 import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
 
-import { DisplayValue, GrafanaTheme, InterpolateFunction, ScopedVars, GraphSeriesValue } from '../types/index';
+import { GrafanaTheme, InterpolateFunction, ScopedVars } from '../types/index';
 import { getDisplayProcessor } from './displayValue';
 import { getFlotPairs } from './flotPairs';
-import { ReducerID, reduceField, FieldType, NullValueMode, DataFrame, Field } from '@grafana/data';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
@@ -182,7 +192,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push({
-      field: { name: 'No Data' },
+      field: {
+        ...defaults,
+        name: 'No Data',
+      },
       display: {
         numeric: 0,
         text: 'No data',
@@ -244,6 +257,7 @@ type PartialField = Partial<Field>;
 
 export function getFieldProperties(...props: PartialField[]): Field {
   let field = props[0] as Field;
+
   for (let i = 1; i < props.length; i++) {
     field = applyFieldProperties(field, props[i]);
   }

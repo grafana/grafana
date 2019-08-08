@@ -2,6 +2,7 @@ package commandstest
 
 import (
 	"github.com/codegangsta/cli"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
 type FakeFlagger struct {
@@ -12,6 +13,7 @@ type FakeCommandLine struct {
 	LocalFlags, GlobalFlags *FakeFlagger
 	HelpShown, VersionShown bool
 	CliArgs                 []string
+	Client                  utils.ApiClient
 }
 
 func (ff FakeFlagger) String(key string) string {
@@ -104,4 +106,8 @@ func (fcli *FakeCommandLine) PluginDirectory() string {
 
 func (fcli *FakeCommandLine) PluginURL() string {
 	return fcli.GlobalString("pluginUrl")
+}
+
+func (fcli *FakeCommandLine) ApiClient() utils.ApiClient {
+	return fcli.Client
 }

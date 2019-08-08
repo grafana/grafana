@@ -1,13 +1,13 @@
 // Libraries
 import _ from 'lodash';
 import React from 'react';
-
 import { css } from 'emotion';
+import { GraphSeriesValue } from '@grafana/data';
+
 import { Graph, GraphProps } from './Graph';
 import { LegendRenderOptions, LegendItem, LegendDisplayMode } from '../Legend/Legend';
 import { GraphLegend } from './GraphLegend';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { GraphSeriesValue } from '../../types/graph';
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
 export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;

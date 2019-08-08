@@ -60,6 +60,7 @@ Here is a minimal policy example:
             "Sid": "AllowReadingMetricsFromCloudWatch",
             "Effect": "Allow",
             "Action": [
+                "cloudwatch:DescribeAlarmsForMetric",
                 "cloudwatch:ListMetrics",
                 "cloudwatch:GetMetricStatistics",
                 "cloudwatch:GetMetricData"

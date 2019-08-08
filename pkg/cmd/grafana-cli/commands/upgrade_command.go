@@ -17,13 +17,13 @@ func upgradeCommand(c utils.CommandLine) error {
 		return err
 	}
 
-	v, err2 := s.GetPlugin(pluginName, c.RepoDirectory())
+	plugin, err2 := c.ApiClient().GetPlugin(pluginName, c.RepoDirectory())
 
 	if err2 != nil {
 		return err2
 	}
 
-	if ShouldUpgrade(localPlugin.Info.Version, v) {
+	if shouldUpgrade(localPlugin.Info.Version, &plugin) {
 		s.RemoveInstalledPlugin(pluginsDir, pluginName)
 		return InstallPlugin(pluginName, "", c)
 	}

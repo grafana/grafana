@@ -1715,6 +1715,23 @@ Licensed under the MIT license.
             axis.max = max;
         }
 
+        // grafana change
+        function getSignificantDigitCount(n) {
+          //remove decimal and make positive
+          n = Math.abs(String(n).replace(".", ""));
+          if (n == 0) {
+            return 0;
+          }
+
+          // kill the 0s at the end of n
+          while (n != 0 && n % 10 == 0) {
+            n /= 10;
+          }
+
+          // get number of digits
+          return Math.floor(Math.log(n) / Math.LN10) + 1;
+        }
+
         function setupTickGeneration(axis) {
             var opts = axis.options;
 
@@ -1763,9 +1780,10 @@ Licensed under the MIT license.
             axis.delta = delta;
             axis.tickDecimals = Math.max(0, maxDec != null ? maxDec : dec);
             axis.tickSize = opts.tickSize || size;
+
             // grafana addition
             if (opts.tickDecimals === null || opts.tickDecimals === undefined) {
-              axis.scaledDecimals = axis.tickDecimals - Math.floor(Math.log(axis.tickSize) / Math.LN10);
+              axis.scaledDecimals = axis.tickDecimals - Math.ceil((1 / getSignificantDigitCount(axis.tickSize)) * 3);
             }
 
             // Time mode was moved to a plug-in in 0.8, and since so many people use it

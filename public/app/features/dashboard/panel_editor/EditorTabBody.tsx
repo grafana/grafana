@@ -32,11 +32,11 @@ interface State {
 }
 
 export class EditorTabBody extends PureComponent<Props, State> {
-  static defaultProps = {
+  static defaultProps: Partial<Props> = {
     toolbarItems: [],
   };
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -61,10 +61,10 @@ export class EditorTabBody extends PureComponent<Props, State> {
     this.setState({ isOpen: false });
   };
 
-  static getDerivedStateFromProps(props, state) {
+  static getDerivedStateFromProps(props: Props, state: State) {
     if (state.openView) {
       const activeToolbarItem = props.toolbarItems.find(
-        item => item.title === state.openView.title && item.icon === state.openView.icon
+        (item: any) => item.title === state.openView.title && item.icon === state.openView.icon
       );
       if (activeToolbarItem) {
         return {

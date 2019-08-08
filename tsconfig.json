@@ -22,7 +22,7 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noImplicitUseStrict": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "downlevelIteration": true,
     "noUnusedLocals": true,
     "baseUrl": "public",

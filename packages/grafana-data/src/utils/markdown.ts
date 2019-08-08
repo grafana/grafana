@@ -15,6 +15,6 @@ export function setMarkdownOptions(optionsOverride?: MarkedOptions) {
   marked.setOptions({ ...defaultMarkedOptions, ...optionsOverride });
 }
 
-export function renderMarkdown(str: string): string {
-  return marked(str);
+export function renderMarkdown(str?: string): string {
+  return marked(str || '');
 }

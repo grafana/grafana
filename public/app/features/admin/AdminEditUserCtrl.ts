@@ -175,7 +175,7 @@ export default class AdminEditUserCtrl {
       });
     };
 
-    $scope.disableUser = event => {
+    $scope.disableUser = (event: any) => {
       const user = $scope.user;
 
       // External user can not be disabled

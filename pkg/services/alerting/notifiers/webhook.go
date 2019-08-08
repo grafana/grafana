@@ -81,6 +81,14 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("state", evalContext.Rule.State)
 	bodyJSON.Set("evalMatches", evalContext.EvalMatches)
 
+	tags := make(map[string]string)
+
+	for _, tag := range evalContext.Rule.AlertRuleTags {
+		tags[tag.Key] = tag.Value
+	}
+
+	bodyJSON.Set("tags", tags)
+
 	ruleURL, err := evalContext.GetRuleURL()
 	if err == nil {
 		bodyJSON.Set("ruleUrl", ruleURL)
