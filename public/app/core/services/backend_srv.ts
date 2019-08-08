@@ -265,17 +265,13 @@ export class BackendSrv implements BackendService {
 
   saveDashboard(
     dash: DashboardModel,
-    options: {
-      folderId?: number;
-      overwrite?: boolean;
-      message?: string;
-    } = { message: '' }
+    { message = '', folderId, overwrite }: { message?: string; folderId?: number; overwrite?: boolean } = {}
   ) {
     return this.post('/api/dashboards/db/', {
       dashboard: dash,
-      folderId: options.folderId,
-      overwrite: options.overwrite === true,
-      message: options.message,
+      folderId,
+      overwrite,
+      message,
     });
   }
 

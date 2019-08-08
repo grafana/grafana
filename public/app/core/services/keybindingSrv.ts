@@ -186,7 +186,6 @@ export class KeybindingSrv {
       if (dashboard.meta.focusPanelId) {
         appEvents.emit('panel-change-view', {
           fullscreen: true,
-          edit: null,
           panelId: dashboard.meta.focusPanelId,
           toggle: true,
         });

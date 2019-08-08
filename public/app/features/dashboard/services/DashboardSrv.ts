@@ -7,11 +7,11 @@ import { DashboardMeta } from 'app/types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { ILocationService } from 'angular';
 
-interface DashboardSrvOptions {
-  folderId?: number;
-  makeEditable?: boolean;
+interface DashboardSaveOptions {
   redirect?: boolean;
+  folderId?: number;
   overwrite?: boolean;
+  message?: string;
 }
 
 export class DashboardSrv {
@@ -44,49 +44,49 @@ export class DashboardSrv {
     removePanel(dashboard, dashboard.getPanelById(panelId), true);
   };
 
-  onPanelChangeView = (options?: { fullscreen?: boolean; edit?: boolean; panelId?: number }) => {
+  onPanelChangeView = ({
+    fullscreen = false,
+    edit = false,
+    panelId,
+  }: {
+    fullscreen?: boolean;
+    edit?: boolean;
+    panelId?: number;
+  }) => {
     const urlParams = this.$location.search();
 
     // handle toggle logic
-    if (options.fullscreen === urlParams.fullscreen) {
-      // I hate using these truthy converters (!!) but in this case
-      // I think it's appropriate. edit can be null/false/undefined and
-      // here i want all of those to compare the same
-      if (!!options.edit === !!urlParams.edit) {
-        delete urlParams.fullscreen;
-        delete urlParams.edit;
-        delete urlParams.panelId;
-        delete urlParams.tab;
-        this.$location.search(urlParams);
-        return;
+    // I hate using these truthy converters (!!) but in this case
+    // I think it's appropriate. edit can be null/false/undefined and
+    // here i want all of those to compare the same
+    if (fullscreen === urlParams.fullscreen && edit === !!urlParams.edit) {
+      ['fullscreen', 'edit', 'panelId', 'tab'].forEach(key => {
+        delete urlParams[key];
+      });
+      this.$location.search(urlParams);
+      return;
+    }
+
+    const newUrlParams = {
+      ...urlParams,
+      fullscreen: fullscreen || undefined,
+      edit: edit || undefined,
+      tab: edit ? urlParams.tab : undefined,
+      panelId,
+    };
+
+    Object.keys(newUrlParams).forEach(key => {
+      if (newUrlParams[key] === undefined) {
+        delete newUrlParams[key];
       }
-    }
+    });
 
-    if (options.fullscreen) {
-      urlParams.fullscreen = true;
-    } else {
-      delete urlParams.fullscreen;
-    }
-
-    if (options.edit) {
-      urlParams.edit = true;
-    } else {
-      delete urlParams.edit;
-      delete urlParams.tab;
-    }
-
-    if (options.panelId || options.panelId === 0) {
-      urlParams.panelId = options.panelId;
-    } else {
-      delete urlParams.panelId;
-    }
-
-    this.$location.search(urlParams);
+    this.$location.search(newUrlParams);
   };
 
   handleSaveDashboardError(
     clone: any,
-    options: DashboardSrvOptions = { overwrite: true },
+    options: DashboardSaveOptions,
     err: { data: { status: string; message: any }; isHandled: boolean }
   ) {
     if (err.data && err.data.status === 'version-mismatch') {
@@ -139,7 +139,7 @@ export class DashboardSrv {
     }
   }
 
-  postSave(clone: DashboardModel, data: { version: number; url: string }, redirect = true) {
+  postSave(data: { version: number; url: string }, redirect = true) {
     this.dashboard.version = data.version;
 
     // important that these happens before location redirect below
@@ -158,16 +158,25 @@ export class DashboardSrv {
     return this.dashboard;
   }
 
-  save(clone: any, options: DashboardSrvOptions = { redirect: true }) {
-    options.folderId = options.folderId >= 0 ? options.folderId : this.dashboard.meta.folderId || clone.folderId;
+  save(clone: any, { redirect = true, folderId, overwrite, message }: DashboardSaveOptions = {}) {
+    folderId = folderId >= 0 ? folderId : this.dashboard.meta.folderId || clone.folderId;
 
     return this.backendSrv
-      .saveDashboard(clone, options)
-      .then((data: any) => this.postSave(clone, data, options.redirect))
-      .catch(this.handleSaveDashboardError.bind(this, clone, options));
+      .saveDashboard(clone, { folderId, overwrite, message })
+      .then((data: any) => this.postSave(data, redirect))
+      .catch(this.handleSaveDashboardError.bind(this, clone, { redirect, folderId }));
   }
 
-  saveDashboard(clone?: DashboardModel, options: DashboardSrvOptions = { redirect: true }) {
+  saveDashboard(
+    clone?: DashboardModel,
+    {
+      makeEditable = false,
+      redirect = true,
+      folderId,
+      overwrite,
+      message,
+    }: DashboardSaveOptions & { makeEditable?: boolean } = {}
+  ) {
     if (clone) {
       this.setCurrent(this.create(clone, this.dashboard.meta));
     }
@@ -176,7 +185,7 @@ export class DashboardSrv {
       return this.showDashboardProvisionedModal();
     }
 
-    if (!this.dashboard.meta.canSave && options.makeEditable !== true) {
+    if (!(this.dashboard.meta.canSave || makeEditable)) {
       return Promise.resolve();
     }
 
@@ -185,10 +194,10 @@ export class DashboardSrv {
     }
 
     if (this.dashboard.version > 0) {
-      return this.showSaveModal(options.redirect);
+      return this.showSaveModal(redirect);
     }
 
-    return this.save(this.dashboard.getSaveModelClone(), options);
+    return this.save(this.dashboard.getSaveModelClone(), { redirect, folderId, overwrite, message });
   }
 
   saveJSONDashboard(json: string) {

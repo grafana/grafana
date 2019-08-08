@@ -74,7 +74,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       const datasourceType = this.datasources.filter(datasource => datasource.value === panel.datasource)[0].meta.id;
       const exploreQueries: ReadonlyArray<DataQuery> = store
         .getObject(`grafana.explore.history.${datasourceType}`)
-        .map(({ query }) => query);
+        .map(({ query }: any) => query);
 
       if (!exploreQueries) {
         return;
