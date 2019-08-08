@@ -1,4 +1,4 @@
-import React, { PureComponent, SyntheticEvent } from 'react';
+import React, { PureComponent, SyntheticEvent, ChangeEvent } from 'react';
 import { Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 
@@ -47,12 +47,13 @@ export class ChangePassword extends PureComponent<Props, State> {
     }
   };
 
-  onChange = (e: SyntheticEvent) => {
+  onChange = (e: ChangeEvent<HTMLInputElement>) => {
     // @ts-ignore
-    this.setState({ [e.target.name]: e.target.value }, () => {
-      this.setState({
-        valid: this.validate(),
-      });
+    const { value } = this.state;
+    // @ts-ignore
+    this.setState({
+      [e.target.name]: e.target.value,
+      valid: this.validate(e.target.name, e.target.value),
     });
   };
 
@@ -60,8 +61,13 @@ export class ChangePassword extends PureComponent<Props, State> {
     this.props.onSkip();
   };
 
-  validate() {
-    return this.state.newPassword === this.state.confirmNew;
+  validate(changed: string, pw: string) {
+    if (changed === 'newPassword') {
+      return this.state.confirmNew === pw;
+    } else if (changed === 'confirmNew') {
+      return this.state.newPassword === pw;
+    }
+    return false;
   }
 
   render() {
