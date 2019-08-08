@@ -1,6 +1,6 @@
 import { GraphWithLegendProps } from './GraphWithLegend';
 import { LegendDisplayMode } from '../Legend/Legend';
-import { dateTime } from '@grafana/data';
+import { dateTime, DefaultTimeZone } from '@grafana/data';
 
 export const mockGraphWithLegendData = ({
   displayMode,
@@ -3318,4 +3318,5 @@ export const mockGraphWithLegendData = ({
   },
   onToggleSort: () => {},
   displayMode: displayMode || LegendDisplayMode.List,
+  timeZone: DefaultTimeZone,
 });

@@ -4,11 +4,12 @@ import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
 
 // Types
-import { TimeRange, GraphSeriesXY } from '@grafana/data';
+import { TimeRange, GraphSeriesXY, AbsoluteTimeRange, TimeZone, DefaultTimeZone } from '@grafana/data';
 
 export interface GraphProps {
   series: GraphSeriesXY[];
   timeRange: TimeRange; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
+  timeZone: TimeZone; // NOTE: we should aim to make `time` a property of the axis, not force it for all graphs
   showLines?: boolean;
   showPoints?: boolean;
   showBars?: boolean;
@@ -16,6 +17,7 @@ export interface GraphProps {
   height: number;
   isStacked?: boolean;
   lineWidth?: number;
+  onSelectionChanged?: (range: AbsoluteTimeRange) => void;
 }
 
 export class Graph extends PureComponent<GraphProps> {
@@ -28,6 +30,7 @@ export class Graph extends PureComponent<GraphProps> {
   };
 
   element: HTMLElement | null = null;
+  $element: any;
 
   componentDidUpdate() {
     this.draw();
@@ -35,14 +38,32 @@ export class Graph extends PureComponent<GraphProps> {
 
   componentDidMount() {
     this.draw();
+    if (this.element) {
+      this.$element = $(this.element);
+      this.$element.bind('plotselected', this.onPlotSelected);
+    }
   }
+
+  componentWillUnmount() {
+    this.$element.unbind('plotselected', this.onPlotSelected);
+  }
+
+  onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
+    const { onSelectionChanged } = this.props;
+    if (onSelectionChanged) {
+      onSelectionChanged({
+        from: ranges.xaxis.from,
+        to: ranges.xaxis.to,
+      });
+    }
+  };
 
   draw() {
     if (this.element === null) {
       return;
     }
 
-    const { width, series, timeRange, showLines, showBars, showPoints, isStacked, lineWidth } = this.props;
+    const { width, series, timeRange, showLines, showBars, showPoints, isStacked, lineWidth, timeZone } = this.props;
 
     if (!width) {
       return;
@@ -100,6 +121,7 @@ export class Graph extends PureComponent<GraphProps> {
         label: 'Datetime',
         ticks: ticks,
         timeformat: timeFormat(ticks, min, max),
+        timezone: timeZone ? timeZone : DefaultTimeZone,
       },
       yaxes,
       grid: {
@@ -112,6 +134,10 @@ export class Graph extends PureComponent<GraphProps> {
         color: '#a1a1a1',
         margin: { left: 0, right: 0 },
         labelMarginX: 0,
+      },
+      selection: {
+        mode: 'x',
+        color: '#666',
       },
     };
 

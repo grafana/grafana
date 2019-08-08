@@ -164,6 +164,7 @@ export default class Logs extends PureComponent<Props, State> {
       scanRange,
       width,
       dedupedData,
+      onChangeTime,
     } = this.props;
 
     if (!data) {
@@ -217,6 +218,7 @@ export default class Logs extends PureComponent<Props, State> {
                   placement={'under'}
                   width={width}
                   timeRange={timeRange}
+                  timeZone={timeZone}
                   showBars={true}
                   showLines={false}
                   showPoints={false}
@@ -226,6 +228,7 @@ export default class Logs extends PureComponent<Props, State> {
                   isStacked={true}
                   lineWidth={5}
                   onSeriesToggle={onSeriesToggle}
+                  onSelectionChanged={onChangeTime}
                 />
               );
             }}

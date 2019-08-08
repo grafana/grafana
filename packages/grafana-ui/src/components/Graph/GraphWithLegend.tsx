@@ -69,6 +69,8 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     hideZero,
     isStacked,
     lineWidth,
+    onSelectionChanged,
+    timeZone,
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
@@ -92,6 +94,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
         <Graph
           series={series.filter(s => !!s.isVisible)}
           timeRange={timeRange}
+          timeZone={timeZone}
           showLines={showLines}
           showPoints={showPoints}
           showBars={showBars}
@@ -100,6 +103,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
           key={isLegendVisible ? 'legend-visible' : 'legend-invisible'}
           isStacked={isStacked}
           lineWidth={lineWidth}
+          onSelectionChanged={onSelectionChanged}
         />
       </div>
 
