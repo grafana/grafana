@@ -21,7 +21,7 @@ interface Props {
   updateLocation?: typeof updateLocation;
   children: (obj: {
     isLoggingIn: boolean;
-    changePassword: (pw: { newPassword: string; confirmNew: string; oldPassword: string }, valid: boolean) => void;
+    changePassword: (pw: string) => void;
     isChangingPassword: boolean;
     skipPasswordChange: Function;
     login: (data: FormModel) => void;
@@ -53,14 +53,15 @@ export class LoginCtrl extends PureComponent<Props, State> {
     }
   }
 
-  changePassword = (pws: { newPassword: string; confirmNew: string }, valid: boolean) => {
+  changePassword = (pws: string) => {
     console.log('Changing PW');
-    if (!valid) {
-      return;
-    }
-
+    const pw = {
+      newPassword: pws,
+      confirmNew: pws,
+      oldPassword: 'admin',
+    };
     getBackendSrv()
-      .put('/api/user/password', pws)
+      .put('/api/user/password', pw)
       .then(() => {
         this.toGrafana();
       })
