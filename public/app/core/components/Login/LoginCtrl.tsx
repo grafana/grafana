@@ -54,7 +54,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
   }
 
   changePassword = (pws: string) => {
-    console.log('Changing PW');
     const pw = {
       newPassword: pws,
       confirmNew: pws,
@@ -69,8 +68,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
   };
 
   login = (formModel: FormModel) => {
-    console.log(formModel);
-
     this.setState({
       isLoggingIn: true,
     });
@@ -79,7 +76,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
       .post('/login', formModel)
       .then((result: any) => {
         this.result = result;
-        console.log(result);
         if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
           this.toGrafana();
           return;
@@ -101,7 +97,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
   };
 
   toGrafana = () => {
-    console.log('Trying to get to Grafana');
     const params = this.props.routeParams;
     // Use window.location.href to force page reload
     if (params.redirect && params.redirect[0] === '/') {
