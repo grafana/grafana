@@ -3,6 +3,7 @@ import { DisplayValue } from './displayValue';
 export interface YAxis {
   index: number;
   min?: number;
+  tickDecimals?: number;
 }
 
 export type GraphSeriesValue = number | null;

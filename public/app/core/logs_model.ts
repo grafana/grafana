@@ -260,6 +260,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
       yAxis: {
         index: 1,
         min: 0,
+        tickDecimals: 0,
       },
     };
 

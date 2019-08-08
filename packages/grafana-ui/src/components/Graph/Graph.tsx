@@ -54,13 +54,15 @@ export class Graph extends PureComponent<GraphProps> {
     const yaxes = uniqBy(
       series.map(s => {
         const index = s.yAxis ? s.yAxis.index : 1;
-        const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : undefined;
+        const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : null;
+        const tickDecimals = s.yAxis && !isNaN(s.yAxis.tickDecimals as number) ? s.yAxis.tickDecimals : null;
 
         return {
           show: true,
           index,
           position: index === 1 ? 'left' : 'right',
           min,
+          tickDecimals,
         };
       }),
       yAxisConfig => yAxisConfig.index
