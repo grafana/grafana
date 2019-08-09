@@ -61,7 +61,13 @@ export const LoginPage: FC = () => {
                 ) : null}
                 {!disableUserSignUp ? <UserSignup /> : null}
               </div>
-              <CSSTransition in={isChangingPassword} timeout={250} classNames="login-inner-box">
+              <CSSTransition
+                appear={true}
+                mountOnEnter={true}
+                in={isChangingPassword}
+                timeout={250}
+                classNames="login-inner-box"
+              >
                 <ChangePassword onSubmit={changePassword} onSkip={skipPasswordChange} focus={isChangingPassword} />
               </CSSTransition>
             </div>

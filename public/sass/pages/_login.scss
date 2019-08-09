@@ -162,11 +162,11 @@ select:-webkit-autofill:focus {
   transition: 0.25s ease;
 
   &.hidden {
-    transform: translate(0px, 320px);
     display: none;
   }
 
   &-enter {
+    transform: translate(0px, 320px);
     display: flex;
   }
 

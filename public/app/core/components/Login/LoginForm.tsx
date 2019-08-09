@@ -1,4 +1,4 @@
-import React, { PureComponent, SyntheticEvent } from 'react';
+import React, { PureComponent, SyntheticEvent, ChangeEvent } from 'react';
 import { FormModel } from './LoginCtrl';
 
 interface Props {
@@ -41,23 +41,22 @@ export class LoginForm extends PureComponent<Props, State> {
     }
   };
 
-  onChange = (e: SyntheticEvent) => {
-    // @ts-ignore
-    this.setState({ [e.target.name]: e.target.value }, () => {
-      this.setState({ valid: this.validate() }, () => {
-        if (this.props.onChange) {
-          this.props.onChange(this.state.valid);
-        }
-      });
+  onChangePassword = (e: ChangeEvent<HTMLInputElement>) => {
+    this.setState({
+      password: e.target.value,
+      valid: this.validate(this.state.user, e.target.value),
     });
   };
 
-  validate() {
-    if (this.state.user.length > 0 && this.state.password.length > 0) {
-      return true;
-    } else {
-      return false;
-    }
+  onChangeUsername = (e: ChangeEvent<HTMLInputElement>) => {
+    this.setState({
+      user: e.target.value,
+      valid: this.validate(e.target.value, this.state.password),
+    });
+  };
+
+  validate(user: string, password: string) {
+    return user.length > 0 && password.length > 0;
   }
 
   render() {
@@ -72,10 +71,9 @@ export class LoginForm extends PureComponent<Props, State> {
             name="user"
             className="gf-form-input login-form-input"
             required
-            // ng-model="formModel.user"
             placeholder={this.props.loginHint}
             aria-label="Username input field"
-            onChange={this.onChange}
+            onChange={this.onChangeUsername}
           />
         </div>
         <div className="login-form">
@@ -88,7 +86,7 @@ export class LoginForm extends PureComponent<Props, State> {
             id="inputPassword"
             placeholder={this.props.passwordHint}
             aria-label="Password input field"
-            onChange={this.onChange}
+            onChange={this.onChangePassword}
           />
         </div>
         <div className="login-button-group">

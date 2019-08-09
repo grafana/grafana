@@ -1,5 +1,4 @@
 import React from 'react';
-import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 
 import { updateLocation } from 'app/core/actions';
@@ -19,7 +18,7 @@ export interface FormModel {
 interface Props {
   routeParams?: any;
   updateLocation?: typeof updateLocation;
-  children: (obj: {
+  children: (props: {
     isLoggingIn: boolean;
     changePassword: (pw: string) => void;
     isChangingPassword: boolean;
@@ -48,15 +47,12 @@ export class LoginCtrl extends PureComponent<Props, State> {
       isLoggingIn: false,
       isChangingPassword: false,
     };
-    if (config.loginError) {
-      appEvents.emit('alert-warning', ['Login Failed', config.loginError]);
-    }
   }
 
-  changePassword = (pws: string) => {
+  changePassword = (password: string) => {
     const pw = {
-      newPassword: pws,
-      confirmNew: pws,
+      newPassword: password,
+      confirmNew: password,
       oldPassword: 'admin',
     };
     getBackendSrv()
