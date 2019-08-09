@@ -193,7 +193,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   refreshExplore = () => {
     const { exploreId, update } = this.props;
 
-    if (update.queries || update.ui || update.range || update.datasource) {
+    if (update.queries || update.ui || update.range || update.datasource || update.mode) {
       this.props.refreshExplore(exploreId);
     }
   };
@@ -323,15 +323,15 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     const urlModeIsValid = supportedModes.includes(urlMode);
     const modeStateIsValid = supportedModes.includes(mode);
 
-    if (urlModeIsValid) {
-      newMode = urlMode;
-    } else if (modeStateIsValid) {
+    if (modeStateIsValid) {
       newMode = mode;
+    } else if (urlModeIsValid) {
+      newMode = urlMode;
     } else {
       newMode = supportedModes[0];
     }
   } else {
-    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(urlMode) ? urlMode : ExploreMode.Metrics;
+    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(mode) ? mode : ExploreMode.Metrics;
   }
 
   const initialUI = ui || DEFAULT_UI_STATE;
