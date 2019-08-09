@@ -92,7 +92,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       typeaheadIndex: 0,
       typeaheadPrefix: '',
       typeaheadText: '',
-      value: makeValue(props.initialQuery, props.syntax),
+      value: makeValue(props.initialQuery || '', props.syntax),
       lastExecutedValue: null,
     };
   }
@@ -420,6 +420,10 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   updateMenu = () => {
     const { suggestions } = this.state;
     const menu = this.menuEl;
+    // Exit for unit tests
+    if (!window.getSelection) {
+      return;
+    }
     const selection = window.getSelection();
     const node = selection.anchorNode;
 
