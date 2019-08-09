@@ -420,6 +420,10 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   updateMenu = () => {
     const { suggestions } = this.state;
     const menu = this.menuEl;
+    // Exit for unit tests
+    if (!window.getSelection) {
+      return;
+    }
     const selection = window.getSelection();
     const node = selection.anchorNode;
 
