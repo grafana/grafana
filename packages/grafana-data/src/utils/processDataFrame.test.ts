@@ -5,6 +5,7 @@ import {
   toDataFrame,
   guessFieldTypes,
   guessFieldTypeFromValue,
+  sortDataFrame,
 } from './processDataFrame';
 import { FieldType, TimeSeries, TableData, DataFrameJSON } from '../types/index';
 import { dateTime } from './moment_wrapper';
@@ -134,5 +135,28 @@ describe('SerisData backwards compatibility', () => {
 
     const names = table.columns.map(c => c.text);
     expect(names).toEqual(['T', 'N', 'S']);
+  });
+});
+
+describe('sorted DataFrame', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'fist', type: FieldType.time, buffer: [1, 2, 3] },
+      { name: 'second', type: FieldType.string, buffer: ['a', 'b', 'c'] },
+      { name: 'third', type: FieldType.number, buffer: [2000, 3000, 1000] },
+    ],
+  });
+  it('Should sort numbers', () => {
+    const sorted = sortDataFrame(frame, 0, true);
+    expect(sorted.length).toEqual(3);
+    expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
+    expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
+  });
+
+  it('Should sort strings', () => {
+    const sorted = sortDataFrame(frame, 1, true);
+    expect(sorted.length).toEqual(3);
+    expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
+    expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
   });
 });

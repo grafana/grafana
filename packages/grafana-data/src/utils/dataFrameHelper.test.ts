@@ -1,6 +1,7 @@
 import { FieldType, DataFrameJSON, FieldJSON } from '../types/index';
 import { DataFrameHelper, DataFrameView } from './dataFrameHelper';
 import { DateTime } from './moment_wrapper';
+import { toDataFrame } from './processDataFrame';
 
 interface MySpecialObject {
   time: DateTime;

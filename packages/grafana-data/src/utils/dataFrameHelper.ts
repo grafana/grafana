@@ -10,8 +10,8 @@ export class DataFrameHelper implements DataFrame {
   name?: string;
   fields: Field[];
   labels?: Labels;
+  length = 0; // updated so it is the length of all fields
 
-  private longestFieldLength = 0;
   private fieldByName: { [key: string]: Field } = {};
   private fieldByType: { [key: string]: Field[] } = {};
 
@@ -73,7 +73,7 @@ export class DataFrameHelper implements DataFrame {
         arr.buffer.push(null);
       }
     }
-    this.longestFieldLength = len;
+    this.length = len;
   }
 
   private updateTypeIndex(field: Field) {
@@ -129,10 +129,10 @@ export class DataFrameHelper implements DataFrame {
             arr.buffer.push(null);
           }
         }
-        this.longestFieldLength = field.values.length;
+        this.length = field.values.length;
       } else {
         const arr = field.values as ArrayVector;
-        while (field.values.length !== this.longestFieldLength) {
+        while (field.values.length !== this.length) {
           arr.buffer.push(null);
         }
       }
@@ -140,10 +140,6 @@ export class DataFrameHelper implements DataFrame {
 
     this.fields.push(field);
     return field;
-  }
-
-  get length() {
-    return this.longestFieldLength;
   }
 
   /**
@@ -155,7 +151,7 @@ export class DataFrameHelper implements DataFrame {
     }
 
     // The first line may change the field types
-    if (this.longestFieldLength < 1) {
+    if (this.length < 1) {
       this.fieldByType = {};
       for (let i = 0; i < this.fields.length; i++) {
         const f = this.fields[i];
@@ -177,7 +173,7 @@ export class DataFrameHelper implements DataFrame {
       const arr = f.values as ArrayVector;
       arr.buffer.push(v); // may be undefined
     }
-    this.longestFieldLength++;
+    this.length++;
   }
 
   /**
@@ -193,7 +189,7 @@ export class DataFrameHelper implements DataFrame {
       const arr = f.values as ArrayVector;
       arr.buffer.push(f.parse(v)); // may be undefined
     }
-    this.longestFieldLength++;
+    this.length++;
   }
 
   getFields(type?: FieldType): Field[] {

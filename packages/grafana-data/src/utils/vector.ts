@@ -59,3 +59,26 @@ export class ScaledVector implements Vector<number> {
     return arr;
   }
 }
+
+/**
+ * Values are returned in the order defined by the input parameter
+ */
+export class SortedVector implements Vector<number> {
+  constructor(private source: Vector<number>, private order: number[]) {}
+
+  get length(): number {
+    return this.source.length;
+  }
+
+  get(index: number): number {
+    return this.source.get(this.order[index]);
+  }
+
+  toArray(): number[] {
+    const arr: number[] = [];
+    for (let i = 0; i < this.length; i++) {
+      arr[i] = this.get(i);
+    }
+    return arr;
+  }
+}

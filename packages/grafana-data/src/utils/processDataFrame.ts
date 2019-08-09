@@ -17,7 +17,7 @@ import {
   FieldJSON,
 } from '../types/index';
 import { isDateTime } from './moment_wrapper';
-import { ArrayVector } from './vector';
+import { ArrayVector, SortedVector } from './vector';
 import { DataFrameHelper } from './dataFrameHelper';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
@@ -257,28 +257,50 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
 };
 
 export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = false): DataFrame {
-  if (isNumber(sortIndex)) {
-    if (true) {
-      console.log('TODO, sort by column!!!');
-    }
-
-    const copy = {
-      ...data,
-      // rows: [...data.rows].sort((a, b) => {
-      //   a = a[sortIndex];
-      //   b = b[sortIndex];
-      //   // Sort null or undefined separately from comparable values
-      //   return +(a == null) - +(b == null) || +(a > b) || -(a < b);
-      // }),
-    };
-
-    if (reverse) {
-      //copy.rows.reverse();
-    }
-
-    return copy;
+  const field = data.fields[sortIndex!];
+  if (!field) {
+    return data;
   }
-  return data;
+
+  // Natural order
+  const index: number[] = [];
+  for (let i = 0; i < data.length; i++) {
+    index.push(i);
+  }
+  const values = field.values;
+
+  // Numeric Comparison
+  let compare = (a: number, b: number) => {
+    const vA = values.get(a);
+    const vB = values.get(b);
+    return vA - vB; // works for numbers!
+  };
+
+  // String Comparison
+  if (field.type === FieldType.string) {
+    compare = (a: number, b: number) => {
+      const vA: string = values.get(a);
+      const vB: string = values.get(b);
+      return vA.localeCompare(vB);
+    };
+  }
+
+  // Run the sort function
+  index.sort(compare);
+  if (reverse) {
+    index.reverse();
+  }
+
+  // Return a copy that maps sorted values
+  return {
+    ...data,
+    fields: data.fields.map(f => {
+      return {
+        ...f,
+        values: new SortedVector(f.values, index),
+      };
+    }),
+  };
 }
 
 /**
