@@ -60,6 +60,39 @@ export class ScaledVector implements Vector<number> {
   }
 }
 
+export class CircularVector<T> implements Vector<T> {
+  buffer: T[];
+  index: number;
+  length: number;
+
+  constructor(buffer: T[]) {
+    this.length = buffer.length;
+    this.buffer = buffer;
+    this.index = 0;
+  }
+
+  append(value: T) {
+    let idx = this.index - 1;
+    if (idx < 0) {
+      idx = this.length - 1;
+    }
+    this.buffer[idx] = value;
+    this.index = idx;
+  }
+
+  get(index: number): T {
+    return this.buffer[(index + this.index) % this.length];
+  }
+
+  toArray(): T[] {
+    const arr: T[] = [];
+    for (let i = 0; i < this.length; i++) {
+      arr[i] = this.get(i);
+    }
+    return arr;
+  }
+}
+
 /**
  * Values are returned in the order defined by the input parameter
  */

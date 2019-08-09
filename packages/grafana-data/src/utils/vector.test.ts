@@ -1,4 +1,4 @@
-import { ConstantVector, ScaledVector, ArrayVector } from './vector';
+import { ConstantVector, ScaledVector, ArrayVector, CircularVector } from './vector';
 
 describe('Check Proxy Vector', () => {
   it('should support constant values', () => {
@@ -24,5 +24,20 @@ describe('Check Proxy Vector', () => {
     for (let i = 0; i < 10; i++) {
       expect(v.get(i)).toEqual(source.get(i) * scale);
     }
+  });
+});
+
+describe('Check Circular Vector', () => {
+  it('should support constant values', () => {
+    const buffer = [3, 2, 1, 0];
+    const v = new CircularVector(buffer);
+    expect(v.length).toEqual(4);
+    expect(v.toArray()).toEqual([3, 2, 1, 0]);
+
+    v.append(4);
+    expect(v.toArray()).toEqual([4, 3, 2, 1]);
+
+    v.append(5);
+    expect(v.toArray()).toEqual([5, 4, 3, 2]);
   });
 });
