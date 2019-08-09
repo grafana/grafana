@@ -11,6 +11,7 @@ const template = `
       items="ctrl.contextMenuCtrl.menuItems"
       onClose="ctrl.onContextMenuClose"
       getContextMenuSource="ctrl.contextMenuCtrl.getSource"
+      formatSourceDate="ctrl.formatDate"
       x="ctrl.contextMenuCtrl.position.x"
       y="ctrl.contextMenuCtrl.position.y"
     ></graph-context-menu>

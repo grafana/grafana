@@ -256,7 +256,9 @@ func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays in
 		Path:     setting.AppSubUrl + "/",
 		Secure:   setting.CookieSecure,
 		MaxAge:   maxAge,
-		SameSite: setting.CookieSameSite,
+	}
+	if setting.CookieSameSite != http.SameSiteDefaultMode {
+		cookie.SameSite = setting.CookieSameSite
 	}
 
 	http.SetCookie(ctx.Resp, &cookie)
