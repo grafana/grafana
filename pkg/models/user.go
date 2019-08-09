@@ -210,6 +210,10 @@ func (user *SignedInUser) HasRole(role RoleType) bool {
 	return user.OrgRole.Includes(role)
 }
 
+func (user *SignedInUser) IsRealUser() bool {
+	return user.UserId != 0
+}
+
 type UserProfileDTO struct {
 	Id             int64    `json:"id"`
 	Email          string   `json:"email"`
