@@ -52,7 +52,7 @@ To setup a local development environment we recommend reading [Building Grafana 
 ### Frontend specific checks
 
 - [ ] The pull request does not increase the Angular code base.
-  > We are in the process of migrating to React so any increment of Angular code is generally discouraged from. (there are a few exceptions)
+  > We are in the process of migrating to React so any increment of Angular code is generally discouraged.
 - [ ] The pull request does not contain uses of `any` or `{}` without comments describing why.
 - [ ] The pull request does not contain large React component that could easily be split into several smaller components.
 - [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.(there can be exceptions)
