@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import React from 'react';
 import { css } from 'emotion';
-import { GraphSeriesValue } from '@grafana/data';
+import { GraphSeriesValue, AbsoluteTimeRange } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';
 import { LegendRenderOptions, LegendItem, LegendDisplayMode } from '../Legend/Legend';
@@ -22,6 +22,7 @@ export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
   onSeriesAxisToggle?: SeriesAxisToggleHandler;
   onSeriesToggle?: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
+  onSelectionChanged?: (range: AbsoluteTimeRange) => void;
 }
 
 const getGraphWithLegendStyles = ({ placement }: GraphWithLegendProps) => ({
