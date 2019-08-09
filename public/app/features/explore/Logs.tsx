@@ -16,7 +16,6 @@ import {
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
-// import Graph from './Graph';
 import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
 import { LogsDedupDescription } from 'app/core/logs_model';

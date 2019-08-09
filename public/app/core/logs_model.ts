@@ -293,18 +293,13 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
       logsModel.series = getGraphSeriesModel(
         { series: metricSeries, state: LoadingState.Done },
         {},
-        { showBars: false, showLines: true, showPoints: false },
+        { showBars: true, showLines: false, showPoints: false },
         {
           asTable: false,
           isVisible: true,
           placement: 'under',
         }
       );
-      // for (const series of metricSeries) {
-      //   const legacySeries = toLegacyResponseData(series);
-      //   const graphSeries: GraphSeriesXY = {};
-      //   logsModel.series.push(graphSeries);
-      // }
     }
 
     return logsModel;
