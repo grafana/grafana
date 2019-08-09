@@ -40,7 +40,7 @@ To setup a local development environment we recommend reading [Building Grafana 
 
 ### Low level checks
 
-- [ ] The pull request contains a title that explains the PR. Follow [PR and commit messages guidelines](#Pull-Requests-titles-and-message)
+- [ ] The pull request contains a title that explains it. It follows [PR and commit messages guidelines](#Pull-Requests-titles-and-message)
 - [ ] The pull request contains necessary link(s) to issue(s). 
 - [ ] The pull request contains commits with commit messages that are small and understandable. Follow [PR and commit messages guidelines](#Pull-Requests-titles-and-message)
 - [ ] The pull request does not contain magic strings or numbers that could be replaced with an `Enum` or `const` instead.
