@@ -67,7 +67,7 @@ Content-Type: application/json
 
 Returns all notification channels, but with less detailed information.
 Accessible by any authenticated user and is mainly used by providing
-alert notifcation channels in Grafana UI when configuring alert rule.
+alert notification channels in Grafana UI when configuring alert rule.
 
 `GET /api/alert-notifications/lookup`
 
