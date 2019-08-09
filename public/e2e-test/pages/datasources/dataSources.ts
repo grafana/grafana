@@ -4,4 +4,5 @@ export interface DataSourcesPage {}
 
 export const dataSourcesPage = new TestPage<DataSourcesPage>({
   url: '/datasources',
+  pageObjects: {},
 });
