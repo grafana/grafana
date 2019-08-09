@@ -355,10 +355,10 @@ Even if you don't have the time or knowledge to investigate an issue we highly r
 
 ## External PRs
 
-Part of issue triage should also be triaging of external PRs. Main goal should to make sure PRs from external contributors have an owner/reviewer and are not forgotten.
+Part of issue triage should also be triaging of external PRs. Main goal should be to make sure PRs from external contributors have an owner/reviewer and are not forgotten.
 
 1. Check new external PRs which do not have a reviewer.
-1. Check if there is a link to existing issue.
+1. Check if there is a link to an existing issue.
 1. If not and you know which issue it is solving add the link yourself, otherwise ask the author to link the issue or create one.
 1. Assign a reviewer based on who was handling the linked issue or what code or feature does the PR touches (look at who was the last to make changes there if all else fails).
 
