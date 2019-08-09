@@ -47,7 +47,7 @@ Content-Type: application/json
 
 `GET /api/org/users`
 
-Retuens all org users within the current organization.
+Returns all org users within the current organization.
 Accessible to users with org admin role.
 
 **Example Request**:
@@ -83,7 +83,7 @@ Content-Type: application/json
 
 `GET /api/org/users/lookup`
 
-Retuens all org users within the current organization, but with less detailed information.
+Returns all org users within the current organization, but with less detailed information.
 Accessible to users with org admin role, admin in any folder or admin of any team.
 Mainly used by Grafana UI for providing list of users when adding team members and
 when editing folder/dashboard permissions.
