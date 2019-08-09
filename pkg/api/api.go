@@ -347,7 +347,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/alert-notifiers", reqEditorRole, Wrap(GetAlertNotifiers))
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
-			apiRoute.Get("/", Wrap(GetAlertNotifications))
+			alertNotifications.Get("/", Wrap(GetAlertNotifications))
 			alertNotifications.Post("/test", bind(dtos.NotificationTestCommand{}), Wrap(NotificationTest))
 			alertNotifications.Post("/", bind(models.CreateAlertNotificationCommand{}), Wrap(CreateAlertNotification))
 			alertNotifications.Put("/:notificationId", bind(models.UpdateAlertNotificationCommand{}), Wrap(UpdateAlertNotification))
