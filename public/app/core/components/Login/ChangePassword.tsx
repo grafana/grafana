@@ -47,13 +47,17 @@ export class ChangePassword extends PureComponent<Props, State> {
     }
   };
 
-  onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    // @ts-ignore
-    const { value } = this.state;
-    // @ts-ignore
+  onNewPasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({
-      [e.target.name]: e.target.value,
-      valid: this.validate(e.target.name, e.target.value),
+      newPassword: e.target.value,
+      valid: this.validate('newPassword', e.target.value),
+    });
+  };
+
+  onConfirmPasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
+    this.setState({
+      confirmNew: e.target.value,
+      valid: this.validate('confirmNew', e.target.value),
     });
   };
 
@@ -89,7 +93,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               className="gf-form-input login-form-input"
               required
               placeholder="New password"
-              onChange={this.onChange}
+              onChange={this.onNewPasswordChange}
               ref={input => {
                 this.userInput = input;
               }}
@@ -103,7 +107,7 @@ export class ChangePassword extends PureComponent<Props, State> {
               required
               ng-model="command.confirmNew"
               placeholder="Confirm new password"
-              onChange={this.onChange}
+              onChange={this.onConfirmPasswordChange}
             />
           </div>
           <div className="login-button-group login-button-group--right text-right">
