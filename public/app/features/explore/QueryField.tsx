@@ -16,7 +16,6 @@ import NewlinePlugin from './slate-plugins/newline';
 
 import { TypeaheadWithTheme } from './Typeahead';
 import { makeFragment, makeValue } from '@grafana/ui';
-import PlaceholdersBuffer from './PlaceholdersBuffer';
 
 export const TYPEAHEAD_DEBOUNCE = 100;
 export const HIGHLIGHT_WAIT = 500;
@@ -74,7 +73,6 @@ export interface TypeaheadInput {
  */
 export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
   menuEl: HTMLElement | null;
-  placeholdersBuffer: PlaceholdersBuffer;
   plugins: any[];
   resetTimer: any;
   mounted: boolean;
@@ -83,7 +81,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   constructor(props: QueryFieldProps, context: Context<any>) {
     super(props, context);
 
-    this.placeholdersBuffer = new PlaceholdersBuffer(props.initialQuery || '');
     this.updateHighlightsTimer = _.debounce(this.updateLogsHighlights, HIGHLIGHT_WAIT);
 
     // Base plugins
@@ -95,7 +92,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       typeaheadIndex: 0,
       typeaheadPrefix: '',
       typeaheadText: '',
-      value: makeValue(this.placeholdersBuffer.toString(), props.syntax),
+      value: makeValue(props.initialQuery, props.syntax),
       lastExecutedValue: null,
     };
   }
@@ -118,8 +115,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     if (initialQuery !== prevProps.initialQuery) {
       // and we have a version that differs
       if (initialQuery !== Plain.serialize(value)) {
-        this.placeholdersBuffer = new PlaceholdersBuffer(initialQuery || '');
-        this.setState({ value: makeValue(this.placeholdersBuffer.toString(), syntax) });
+        this.setState({ value: makeValue(initialQuery, syntax) });
       }
     }
 
@@ -136,9 +132,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
         .change()
         .insertText(' ')
         .deleteBackward();
-      if (this.placeholdersBuffer.hasPlaceholders()) {
-        change.move(this.placeholdersBuffer.getNextMoveOffset()).focus();
-      }
+
       this.onChange(change, true);
     }
   }
@@ -325,11 +319,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
       const insertTextOperation = nextChange.operations.find((operation: any) => operation.type === 'insert_text');
       if (insertTextOperation) {
-        const suggestionText = insertTextOperation.text;
-        this.placeholdersBuffer.setNextPlaceholderValue(suggestionText);
-        if (this.placeholdersBuffer.hasPlaceholders()) {
-          nextChange.move(this.placeholdersBuffer.getNextMoveOffset()).focus();
-        }
+        return undefined;
       }
 
       return true;
@@ -415,8 +405,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     // If we dont wait here, menu clicks wont work because the menu
     // will be gone.
     this.resetTimer = setTimeout(this.resetTypeahead, 100);
-    // Disrupting placeholder entry wipes all remaining placeholders needing input
-    this.placeholdersBuffer.clearPlaceholders();
 
     if (previousValue !== currentValue) {
       this.executeOnChangeAndRunQueries();
