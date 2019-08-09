@@ -35,8 +35,6 @@ To setup a local development environment we recommend reading [Building Grafana 
 
 - [ ] The pull request adds value and the impact of the change is in line with [Backend](https://github.com/grafana/grafana/tree/master/pkg) or [Frontend](https://github.com/grafana/grafana/tree/master/style_guides).
 - [ ] The pull request works the way it says it should do.
-- [ ] The pull request does not increase the Angular code base.
-  > We are in the process of migrating to React so any increment of Angular code is generally discouraged from. (there are a few exceptions)
 - [ ] The pull request closes one issue if possible and does not fix unrelated issues within the same pull request.
 - [ ] The pull request contains necessary tests.
 
@@ -53,6 +51,8 @@ To setup a local development environment we recommend reading [Building Grafana 
 
 ### Frontend specific checks
 
+- [ ] The pull request does not increase the Angular code base.
+  > We are in the process of migrating to React so any increment of Angular code is generally discouraged from. (there are a few exceptions)
 - [ ] The pull request does not contain uses of `any` or `{}` without comments describing why.
 - [ ] The pull request does not contain large React component that could easily be split into several smaller components.
 - [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.(there can be exceptions)
