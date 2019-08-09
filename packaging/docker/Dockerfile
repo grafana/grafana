@@ -1,21 +1,16 @@
 ARG BASE_IMAGE=alpine:3.10
-FROM ubuntu:18.04
+FROM alpine:3.10
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
-
-RUN apt-get update && apt-get install -qq -y tar && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
 
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # Change to tar xfzv to make tar print every file it extracts
 RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
-# Node build container
-FROM node:10.14.2-alpine
-
 # PhantomJS
+FROM alpine:3.10
+
 RUN apk add --no-cache curl &&\
     cd /tmp && curl -Ls https://github.com/dustinblackman/phantomized/releases/download/2.1.1/dockerized-phantomjs.tar.gz | tar xz &&\
     cp -R lib lib64 / &&\
