@@ -62,7 +62,7 @@ To setup a local development environment we recommend reading [Building Grafana 
 - [ ] The pull request does not contain code that mutates state in reducers or thunks.
 - [ ] The pull request uses helpers `actionCreatorFactory` and `reducerFactory` instead of traditional `switch statement` reducers in Redux. See [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
 - [ ] The pull request uses `reducerTester` to test reducers. See [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
-- [ ] The pull request does not contain code that access reducers state slice directly, instead the code uses state selectors to access state.
+- [ ] The pull request does not contain code that accesses the reducers state slice directly, instead, the code uses state selectors to access state.
 
 ### Pull Requests titles and message
 
