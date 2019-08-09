@@ -13,10 +13,10 @@ export interface SingleStatOptions extends SingleStatBaseOptions {
   prefixFontSize?: string;
   valueFontSize?: string;
   postfixFontSize?: string;
-  colorBackground?: boolean;
-  colorValue?: boolean;
-  colorPrefix?: boolean;
-  colorPostfix?: boolean;
+  colorBackground: boolean;
+  colorValue: boolean;
+  colorPrefix: boolean;
+  colorPostfix: boolean;
   sparkline: SparklineOptions;
 }
 
@@ -44,4 +44,8 @@ export const defaults: SingleStatOptions = {
   },
   fieldOptions: standardFieldDisplayOptions,
   orientation: VizOrientation.Auto,
+  colorBackground: false,
+  colorValue: false,
+  colorPrefix: false,
+  colorPostfix: false,
 };

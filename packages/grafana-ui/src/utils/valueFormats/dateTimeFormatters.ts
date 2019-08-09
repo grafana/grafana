@@ -295,7 +295,7 @@ export function toDurationInHoursMinutesSeconds(size: number) {
 }
 
 export function toTimeTicks(size: number, decimals: DecimalCount, scaledDecimals: DecimalCount) {
-  return toSeconds(size, decimals, scaledDecimals);
+  return toSeconds(size / 100, decimals, scaledDecimals);
 }
 
 export function toClockMilliseconds(size: number, decimals: DecimalCount) {
