@@ -92,7 +92,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       typeaheadIndex: 0,
       typeaheadPrefix: '',
       typeaheadText: '',
-      value: makeValue(props.initialQuery, props.syntax),
+      value: makeValue(props.initialQuery || '', props.syntax),
       lastExecutedValue: null,
     };
   }
