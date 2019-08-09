@@ -55,7 +55,7 @@ To setup a local development environment we recommend reading [Building Grafana 
   > We are in the process of migrating to React so any increment of Angular code is generally discouraged.
 - [ ] The pull request does not contain uses of `any` or `{}` without comments describing why.
 - [ ] The pull request does not contain large React components that could easily be split into several smaller components.
-- [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.(there can be exceptions)
+- [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.
 
 #### Redux specific checks (skip if pull request does not contain Redux changes)
 
