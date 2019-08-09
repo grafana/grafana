@@ -49,14 +49,13 @@ To setup a local development environment we recommend reading [Building Grafana 
 
 #### Bug specific checks
 
-- [ ] The pull request contains only one commit if possible.
 - [ ] The pull request contains `Closes: #Issue` or `Fixes: #Issue` in pull request description.
 
 ### Frontend specific checks
 
 - [ ] The pull request does not contain uses of `any` or `{}` without comments describing why.
 - [ ] The pull request does not contain large React component that could easily be split into several smaller components.
-- [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.
+- [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.(there can be exceptions)
 
 #### Redux specific checks (skip if pull request does not contain Redux changes)
 
