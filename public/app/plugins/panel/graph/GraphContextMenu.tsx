@@ -1,14 +1,20 @@
 import React, { useContext } from 'react';
 import { FlotDataPoint } from './GraphContextMenuCtrl';
 import { ContextMenu, ContextMenuProps, SeriesIcon, ThemeContext } from '@grafana/ui';
-import { dateTime } from '@grafana/data';
+import { DateTimeInput } from '@grafana/data';
 import { css } from 'emotion';
 
 type GraphContextMenuProps = ContextMenuProps & {
   getContextMenuSource: () => FlotDataPoint | null;
+  formatSourceDate: (date: DateTimeInput, format?: string) => string;
 };
 
-export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({ getContextMenuSource, items, ...otherProps }) => {
+export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
+  getContextMenuSource,
+  formatSourceDate,
+  items,
+  ...otherProps
+}) => {
   const theme = useContext(ThemeContext);
   const source = getContextMenuSource();
 
@@ -35,7 +41,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({ getContextMe
               font-size: ${theme.typography.size.sm};
             `}
           >
-            <strong>{dateTime(source.datapoint[0]).format(timeFormat)}</strong>
+            <strong>{formatSourceDate(source.datapoint[0], timeFormat)}</strong>
             <div>
               <SeriesIcon color={source.series.color} />
               <span
