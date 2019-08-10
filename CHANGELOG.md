@@ -1,5 +1,22 @@
 # 6.4.0 (unreleased)
 
+# 6.3.2 (2019-08-07)
+
+### Bug Fixes
+* **Gauge/BarGauge**: Fixes issue with lost thresholds and an issue loading Gauge with avg stat. [#18375](https://github.com/grafana/grafana/pull/18375)
+
+# 6.3.1 (2019-08-07)
+
+### Bug Fixes
+* **PanelLinks**: Fixes crash issue with Gauge & Bar Gauge panels with panel links (drill down links). [#18430](https://github.com/grafana/grafana/pull/18430)
+
+# 6.3.0 (2019-08-06)
+### Features / Enhancements
+* **OAuth**: Do not set SameSite OAuth cookie if cookie_samesite is None. [#18392](https://github.com/grafana/grafana/pull/18392), [@papagian](https://github.com/papagian)
+
+### Bug Fixes
+* **PanelLinks**: Fix render issue when there is no panel description. [#18408](https://github.com/grafana/grafana/pull/18408), [@dehrax](https://github.com/dehrax)
+
 # 6.3.0-beta4 (2019-08-02)
 ### Features / Enhancements
 * **Auth Proxy**: Include additional headers as part of the cache key. [#18298](https://github.com/grafana/grafana/pull/18298), [@gotjosh](https://github.com/gotjosh)

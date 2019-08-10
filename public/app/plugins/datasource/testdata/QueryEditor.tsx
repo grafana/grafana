@@ -11,7 +11,7 @@ import { SelectableValue } from '@grafana/data';
 
 // Types
 import { QueryEditorProps } from '@grafana/ui';
-import { TestDataDatasource } from './datasource';
+import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
 
 interface State {
@@ -19,7 +19,7 @@ interface State {
   current: Scenario | null;
 }
 
-type Props = QueryEditorProps<TestDataDatasource, TestDataQuery>;
+type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
 export class QueryEditor extends PureComponent<Props> {
   backendSrv = getBackendSrv();

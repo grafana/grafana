@@ -132,7 +132,7 @@ export class LinkSrv implements LinkService {
     if (dataPoint) {
       info.href = this.templateSrv.replace(
         info.href,
-        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint[0]))
+        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint.datapoint[0]))
       );
     }
 

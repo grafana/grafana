@@ -48,7 +48,6 @@ export interface Field {
   type?: FieldType;
   filterable?: boolean;
   unit?: string;
-  dateFormat?: string; // Source data format
   decimals?: number | null; // Significant digits (for display)
   min?: number | null;
   max?: number | null;
