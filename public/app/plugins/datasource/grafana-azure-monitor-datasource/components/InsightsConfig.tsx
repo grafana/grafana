@@ -111,3 +111,5 @@ export class InsightsConfig extends PureComponent<Props, State> {
     );
   }
 }
+
+export default InsightsConfig;

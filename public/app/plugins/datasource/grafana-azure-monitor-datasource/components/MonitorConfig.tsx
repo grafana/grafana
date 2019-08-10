@@ -128,3 +128,5 @@ export class MonitorConfig extends PureComponent<Props, State> {
     );
   }
 }
+
+export default MonitorConfig;

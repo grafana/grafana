@@ -52,7 +52,7 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
     };
   }
 
-  static getDerivedStateFromProps(nextProps, prevState) {
+  static getDerivedStateFromProps(nextProps: Props, prevState: Props) {
     const { selectedAzureCloud, tenantId, clientId, clientSecret, clientSecretConfigured } = nextProps;
     return {
       selectedAzureCloud,
@@ -196,3 +196,5 @@ export class AzureCredentialsForm extends PureComponent<Props, State> {
     );
   }
 }
+
+export default AzureCredentialsForm;

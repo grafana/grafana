@@ -208,3 +208,5 @@ export class AnalyticsConfig extends PureComponent<Props, State> {
     );
   }
 }
+
+export default AnalyticsConfig;

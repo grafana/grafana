@@ -9,7 +9,7 @@ import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import { InsightsConfig } from './components/InsightsConfig';
 
-type Props = DataSourcePluginOptionsEditorProps<any>;
+export type Props = DataSourcePluginOptionsEditorProps<any>;
 
 export interface State {
   config: any;
@@ -49,7 +49,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     };
   }
 
-  static keyFill = options => {
+  static keyFill = (options: any) => {
     options.jsonData.cloudName = options.jsonData.cloudName || 'azuremonitor';
 
     if (!options.jsonData.hasOwnProperty('azureLogAnalyticsSameAs')) {
@@ -99,7 +99,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     }
   };
 
-  updateDatasource = async config => {
+  updateDatasource = async (config: any) => {
     for (const j in config.jsonData) {
       if (config.jsonData[j].length === 0) {
         delete config.jsonData[j];
@@ -170,7 +170,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return true;
   };
 
-  onConfigUpdate = config => {
+  onConfigUpdate = (config: any) => {
     this.updateDatasource(config);
   };
 
@@ -197,7 +197,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const azureMonitorDatasource = new AzureMonitorDatasource(this.state.config, this.backendSrv, this.templateSrv);
 
     let subscriptions = (await azureMonitorDatasource.getSubscriptions()) || [];
-    subscriptions = subscriptions.map(subscription => {
+    subscriptions = subscriptions.map((subscription: any) => {
       return {
         value: subscription.value,
         label: subscription.text,
@@ -224,7 +224,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const azureMonitorDatasource = new AzureMonitorDatasource(this.state.config, this.backendSrv, this.templateSrv);
 
     let logAnalyticsSubscriptions = (await azureMonitorDatasource.getSubscriptions('workspacesloganalytics')) || [];
-    logAnalyticsSubscriptions = logAnalyticsSubscriptions.map(subscription => {
+    logAnalyticsSubscriptions = logAnalyticsSubscriptions.map((subscription: any) => {
       return {
         value: subscription.value,
         label: subscription.text,
@@ -261,7 +261,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
         ? this.state.config.editorJsonData.subscriptionId
         : this.state.config.editorJsonData.logAnalyticsSubscriptionId
     );
-    logAnalyticsWorkspaces = logAnalyticsWorkspaces.map(workspace => {
+    logAnalyticsWorkspaces = logAnalyticsWorkspaces.map((workspace: any) => {
       return {
         value: workspace.value,
         label: workspace.text,
@@ -302,3 +302,5 @@ export class ConfigEditor extends PureComponent<Props, State> {
     );
   }
 }
+
+export default ConfigEditor;
