@@ -65,6 +65,7 @@ export class GraphContextMenuCtrl {
   setSource = (source: FlotDataPoint | null) => {
     this.source = source;
   };
+
   getSource = () => {
     return this.source;
   };
