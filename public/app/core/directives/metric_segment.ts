@@ -136,26 +136,29 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
       };
 
       $scope.doNested = function(items) {
-        // Making array to an object and set the end to the full path. It also cancells duplications!
-        // i.e ['system.cpu'] becomes { system: { cpu: 'system.cpu' } }
-        let tmpObject = items.reduce(function(o, property) { return _.setWith(o, property, property, Object); }, {});
+      // Making array to an object and set the end to the full path. It also cancells duplications!
+      // i.e ['system.cpu'] becomes { system: { cpu: 'system.cpu' } }
+      const tmpObject = items.reduce(function(o, property) {
+        return _.setWith(o, property, property, Object);
+      }, {});
 
-        // Recursive function to build the nested ul from the object
-        let toHtml = function(object) {
-          return _.map(object, function(i, item) {
-            if (typeof (i) === "string") {
-              return '<li data-value="' + i + '"> <a href="#">' + item + ' </a> </li>';
-            }
+      // Recursive function to build the nested ul from the object
+      const toHtml = function(object) {
+        return _.map(object, function(i, item) {
+          if (typeof i === 'string') {
+            return `<li data-value="${i}"> <a href="#">${item} </a> </li>`;
+          }
 
-            let li = '<li class="dropdown-submenu"> <a href="#">' + item +
-              '</a> <ul class="dropdown-menu"> ' + toHtml(i).join(' ') + ' </ul> </li>';
+          const li = `<li class="dropdown-submenu"> <a href="#">${item}</a> <ul class="dropdown-menu"> ${toHtml(i).join(
+            ' ',
+          )} </ul> </li>`;
 
-            return li;
-          });
-        };
-
-        return toHtml(tmpObject).join(' ');
+          return li;
+        });
       };
+
+      return toHtml(tmpObject).join(' ');
+    };
 
       $input.attr('data-provide', 'typeahead');
       $input.typeahead({
