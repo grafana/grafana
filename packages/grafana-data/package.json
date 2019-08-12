@@ -26,7 +26,7 @@
     "@types/node": "10.14.1",
     "@types/papaparse": "4.5.9",
     "@types/pretty-format": "20.0.1",
-    "@types/react": "16.9.0",
+    "@types/react": "16.9.1",
     "@types/sinon": "^7.0.11",
     "awesome-typescript-loader": "^5.2.1",
     "lodash": "^4.17.10",
