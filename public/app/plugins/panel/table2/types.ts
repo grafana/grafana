@@ -27,7 +27,6 @@ export const defaults: Options = {
       alias: '',
       decimals: 2,
       colors: ['rgba(245, 54, 54, 0.9)', 'rgba(237, 129, 40, 0.89)', 'rgba(50, 172, 45, 0.97)'],
-      colorMode: null,
       pattern: '/.*/',
       thresholds: [],
     },

@@ -5,7 +5,7 @@ import { MappingType, ValueMapping } from '@grafana/data';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {
-  valueMappings: ValueMapping[];
+  valueMappings?: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
 }
 

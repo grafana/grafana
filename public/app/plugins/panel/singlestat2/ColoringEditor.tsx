@@ -14,11 +14,6 @@ export interface Props {
   onChange: (options: SingleStatOptions) => void;
 }
 
-// colorBackground?: boolean;
-// colorValue?: boolean;
-// colorPrefix?: boolean;
-// colorPostfix?: boolean;
-
 export class ColoringEditor extends PureComponent<Props> {
   onToggleColorBackground = () =>
     this.props.onChange({ ...this.props.options, colorBackground: !this.props.options.colorBackground });
@@ -39,27 +34,27 @@ export class ColoringEditor extends PureComponent<Props> {
         <Switch
           label="Background"
           labelClass={`width-${labelWidth}`}
-          checked={colorBackground}
+          checked={colorBackground!}
           onChange={this.onToggleColorBackground}
         />
 
         <Switch
           label="Value"
           labelClass={`width-${labelWidth}`}
-          checked={colorValue}
+          checked={colorValue!}
           onChange={this.onToggleColorValue}
         />
 
         <Switch
           label="Prefix"
           labelClass={`width-${labelWidth}`}
-          checked={colorPrefix}
+          checked={colorPrefix!}
           onChange={this.onToggleColorPrefix}
         />
         <Switch
           label="Postfix"
           labelClass={`width-${labelWidth}`}
-          checked={colorPostfix}
+          checked={colorPostfix!}
           onChange={this.onToggleColorPostfix}
         />
       </PanelOptionsGroup>
