@@ -148,7 +148,7 @@ export const toDataFrame = (data: any): DataFrame => {
   if (data.hasOwnProperty('columns')) {
     return convertTableToDataFrame(data);
   }
-  // TODO, try to convert JSON/Array to seriesta?
+  // TODO, try to convert JSON/Array to table?
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
 };
