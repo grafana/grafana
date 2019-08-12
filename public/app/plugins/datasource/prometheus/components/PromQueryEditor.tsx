@@ -72,7 +72,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   onIntervalChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
     const interval = e.currentTarget.value;
     this.query.interval = interval;
-    this.setState({ interval }, this.onRunQuery);
+    this.setState({ interval });
   };
 
   onIntervalFactorChange = (option: SelectOptionItem<number>) => {
@@ -83,7 +83,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   onLegendChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
     const legendFormat = e.currentTarget.value;
     this.query.legendFormat = legendFormat;
-    this.setState({ legendFormat }, this.onRunQuery);
+    this.setState({ legendFormat });
   };
 
   onRunQuery = () => {
@@ -124,6 +124,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               placeholder="legend format"
               value={legendFormat}
               onChange={this.onLegendChange}
+              onBlur={this.onRunQuery}
             />
           </div>
 
@@ -141,6 +142,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               className="gf-form-input width-8"
               placeholder={interval}
               onChange={this.onIntervalChange}
+              onBlur={this.onRunQuery}
               value={interval}
             />
           </div>
