@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	redis "gopkg.in/redis.v2"
+	redis "gopkg.in/redis.v5"
 )
 
 const redisCacheType = "redis"
@@ -38,7 +38,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 		case "password":
 			options.Password = connVal
 		case "db":
-			i, err := strconv.ParseInt(connVal, 10, 64)
+			i, err := strconv.Atoi(connVal)
 			if err != nil {
 				return nil, errutil.Wrap("value for db in redis connection string must be a number", err)
 			}
@@ -50,7 +50,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 			}
 			options.PoolSize = i
 		default:
-			return nil, fmt.Errorf("unrecorgnized option '%v' in redis connection string", connVal)
+			return nil, fmt.Errorf("unrecognized option '%v' in redis connection string", connVal)
 		}
 	}
 	return options, nil
@@ -71,7 +71,7 @@ func (s *redisStorage) Set(key string, val interface{}, expires time.Duration) e
 	if err != nil {
 		return err
 	}
-	status := s.c.SetEx(key, expires, string(value))
+	status := s.c.Set(key, string(value), expires)
 	return status.Err()
 }
 

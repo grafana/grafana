@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	redis "gopkg.in/redis.v2"
+	redis "gopkg.in/redis.v5"
 )
 
 func Test_parseRedisConnStr(t *testing.T) {
