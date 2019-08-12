@@ -37,6 +37,6 @@ else
   prapare_version_commit
 
   echo $'\nPublishing packages'
-  yarn packages:publishNext
+  yarn packages:publishCanary
 fi
 
