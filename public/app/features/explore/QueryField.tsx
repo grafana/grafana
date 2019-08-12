@@ -309,12 +309,14 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     const { typeaheadIndex, suggestions } = this.state;
     event.preventDefault();
 
-    if (event.shiftKey || !suggestions || suggestions.length === 0) {
+    if (event.shiftKey) {
       // pass through if shift is pressed
       return undefined;
     } else if (!this.menuEl) {
       this.executeOnChangeAndRunQueries();
       return true;
+    } else if (!suggestions || suggestions.length === 0) {
+      return undefined;
     }
 
     const suggestion = getSuggestionByIndex(suggestions, typeaheadIndex);
