@@ -102,7 +102,6 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
               showBars={showBars}
               showLines={showLines}
               showPoints={false}
-              onSeriesColorChange={() => {}}
               onToggleSort={() => {}}
               series={toggledSeries}
               isStacked={isStacked}

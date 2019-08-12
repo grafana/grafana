@@ -18,7 +18,7 @@ export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
   displayMode: LegendDisplayMode;
   sortLegendBy?: string;
   sortLegendDesc?: boolean;
-  onSeriesColorChange: SeriesColorChangeHandler;
+  onSeriesColorChange?: SeriesColorChangeHandler;
   onSeriesAxisToggle?: SeriesAxisToggleHandler;
   onSeriesToggle?: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
