@@ -44,12 +44,12 @@ export class UserPicker extends Component<Props, State> {
     }
 
     return backendSrv
-      .get(`/api/org/users?query=${query}&limit=10`)
+      .get(`/api/org/users/lookup?query=${query}&limit=10`)
       .then((result: any) => {
         return result.map((user: any) => ({
           id: user.userId,
           value: user.userId,
-          label: user.login === user.email ? user.login : `${user.login} - ${user.email}`,
+          label: user.login,
           imgUrl: user.avatarUrl,
           login: user.login,
         }));
