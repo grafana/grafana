@@ -520,7 +520,7 @@ export class HeatmapRenderer {
       const logBase = this.panel.yAxis.logBase;
       const domain = this.yScale.domain();
       const tickValues = this.logScaleTickValues(domain, logBase);
-      this.data.buckets = mergeZeroBuckets(this.data.buckets, _.min(tickValues));
+      this.data.buckets = mergeZeroBuckets(this.data.buckets, _.min(tickValues)!);
     }
 
     const cardsData = this.data.cards;
