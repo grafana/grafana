@@ -7,6 +7,7 @@ import { StoreState } from 'app/types';
 import { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import { hot } from 'react-hot-loader';
+import appEvents from 'app/core/app_events';
 
 const isOauthEnabled = () => Object.keys(config.oauth).length > 0;
 
@@ -47,6 +48,10 @@ export class LoginCtrl extends PureComponent<Props, State> {
       isLoggingIn: false,
       isChangingPassword: false,
     };
+
+    if (config.loginError) {
+      appEvents.emit('alert-warning', ['Login Failed', config.loginError]);
+    }
   }
 
   changePassword = (password: string) => {
