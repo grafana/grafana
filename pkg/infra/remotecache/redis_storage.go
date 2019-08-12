@@ -1,6 +1,7 @@
 package remotecache
 
 import (
+	"crypto/tls"
 	"fmt"
 	"strconv"
 	"strings"
@@ -49,8 +50,18 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 				return nil, errutil.Wrap("value for pool_size in redis connection string must be a number", err)
 			}
 			options.PoolSize = i
+		case "ssl":
+			if connVal != "true" && connVal != "false" && connVal != "insecure" {
+				return nil, fmt.Errorf("ssl must be set to 'true' or 'false' when present")
+			}
+			if connVal == "true" {
+				options.TLSConfig = &tls.Config{}
+			}
+			if connVal == "insecure" {
+				options.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+			}
 		default:
-			return nil, fmt.Errorf("unrecognized option '%v' in redis connection string", connVal)
+			return nil, fmt.Errorf("unrecognized option '%v' in redis connection string", connKey)
 		}
 	}
 	return options, nil
