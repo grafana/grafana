@@ -12,7 +12,7 @@ weight = 2
 
 # Security
 
-## Data source proxy and insecure internal web services
+## Data source proxy and protecting internal services
 
 If you have non-Grafana web services running on your Grafana server or within its local network, these may be vulnerable to exploitation via the Grafana data source proxy.
 
