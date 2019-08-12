@@ -22,6 +22,7 @@ type redisStorage struct {
 func parseRedisConnStr(connStr string) (*redis.Options, error) {
 	keyValueCSV := strings.Split(connStr, ",")
 	options := &redis.Options{Network: "tcp"}
+	setTLSIsTrue := false
 	for _, rawKeyValue := range keyValueCSV {
 		keyValueTuple := strings.SplitN(rawKeyValue, "=", 2)
 		if len(keyValueTuple) != 2 {
@@ -55,7 +56,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 				return nil, fmt.Errorf("ssl must be set to 'true', 'false', or 'insecure' when present")
 			}
 			if connVal == "true" {
-				options.TLSConfig = &tls.Config{}
+				setTLSIsTrue = true // Needs addr already parsed, so set later
 			}
 			if connVal == "insecure" {
 				options.TLSConfig = &tls.Config{InsecureSkipVerify: true}
@@ -63,6 +64,14 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 		default:
 			return nil, fmt.Errorf("unrecognized option '%v' in redis connection string", connKey)
 		}
+	}
+	if setTLSIsTrue {
+		// Get hostname from the Addr property and set it on the configuration for TLS
+		sp := strings.Split(options.Addr, ":")
+		if len(sp) < 1 {
+			return nil, fmt.Errorf("unable able to get hostname from the addr field, expected host:port, got '%v'", options.Addr)
+		}
+		options.TLSConfig = &tls.Config{ServerName: sp[0]}
 	}
 	return options, nil
 }

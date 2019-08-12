@@ -36,12 +36,12 @@ func Test_parseRedisConnStr(t *testing.T) {
 			},
 			false,
 		},
-		"ssl set to true should result in default TLS configuration": {
-			"addr=127.0.0.1:6379,ssl=true",
+		"ssl set to true should result in default TLS configuration with tls set to addr's host": {
+			"addr=grafana.com:6379,ssl=true",
 			&redis.Options{
-				Addr:      "127.0.0.1:6379",
+				Addr:      "grafana.com:6379",
 				Network:   "tcp",
-				TLSConfig: &tls.Config{},
+				TLSConfig: &tls.Config{ServerName: "grafana.com"},
 			},
 			false,
 		},
