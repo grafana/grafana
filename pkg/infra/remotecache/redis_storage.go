@@ -52,7 +52,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 			options.PoolSize = i
 		case "ssl":
 			if connVal != "true" && connVal != "false" && connVal != "insecure" {
-				return nil, fmt.Errorf("ssl must be set to 'true' or 'false' when present")
+				return nil, fmt.Errorf("ssl must be set to 'true', 'false', or 'insecure' when present")
 			}
 			if connVal == "true" {
 				options.TLSConfig = &tls.Config{}
