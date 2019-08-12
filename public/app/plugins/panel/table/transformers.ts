@@ -191,7 +191,7 @@ transformers['json'] = {
       const maxDocs = Math.min(series.datapoints.length, 100);
       for (let y = 0; y < maxDocs; y++) {
         const doc = series.datapoints[y];
-        const flattened = flatten(doc, null);
+        const flattened = flatten(doc, {});
         for (const propName in flattened) {
           names[propName] = true;
         }
@@ -228,7 +228,7 @@ transformers['json'] = {
         const values = [];
 
         if (_.isObject(dp) && panel.columns.length > 0) {
-          const flattened = flatten(dp, null);
+          const flattened = flatten(dp);
           for (z = 0; z < panel.columns.length; z++) {
             values.push(flattened[panel.columns[z].value]);
           }

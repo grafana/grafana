@@ -135,9 +135,6 @@ class GraphElement {
   }
 
   onPanelTeardown() {
-    this.thresholdManager = null;
-    this.timeRegionManager = null;
-
     if (this.plot) {
       this.plot.destroy();
       this.plot = null;
@@ -587,19 +584,24 @@ class GraphElement {
   }
 
   addXHistogramAxis(options: any, bucketSize: number) {
-    let ticks, min, max;
+    let ticks: number | number[];
+    let min: number | undefined;
+    let max: number | undefined;
+
     const defaultTicks = this.panelWidth / 50;
 
     if (this.data.length && bucketSize) {
       const tickValues = [];
+
       for (const d of this.data) {
         for (const point of d.data) {
           tickValues[point[0]] = true;
         }
       }
+
       ticks = Object.keys(tickValues).map(v => Number(v));
-      min = _.min(ticks);
-      max = _.max(ticks);
+      min = _.min(ticks)!;
+      max = _.max(ticks)!;
 
       // Adjust tick step
       let tickStep = bucketSize;
@@ -819,7 +821,7 @@ class GraphElement {
     };
   }
 
-  time_format(ticks: number, min: number, max: number) {
+  time_format(ticks: number, min: number | null, max: number | null) {
     if (min && max && ticks) {
       const range = max - min;
       const secPerTick = range / ticks / 1000;

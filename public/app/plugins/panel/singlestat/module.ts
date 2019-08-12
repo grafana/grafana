@@ -12,7 +12,7 @@ import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { isTableData } from '@grafana/data';
 import { GrafanaThemeType, getValueFormat, getColorFromHexRgbOrName } from '@grafana/ui';
 import { auto } from 'angular';
-import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { LinkSrv, LinkModel } from 'app/features/panel/panellinks/link_srv';
 import TableModel from 'app/core/table_model';
 
 const BASE_FONT_SIZE = 38;
@@ -385,7 +385,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     const $sanitize = this.$sanitize;
     const panel = ctrl.panel;
     const templateSrv = this.templateSrv;
-    let data: any, linkInfo: { target: string; href: string; title: string };
+    let data: any;
+    let linkInfo: LinkModel | null = null;
     const $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 
