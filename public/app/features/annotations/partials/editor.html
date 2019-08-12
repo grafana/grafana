@@ -13,10 +13,10 @@
       class="btn btn-primary"
       ng-click="ctrl.setupNew();"
       ng-if="ctrl.annotations.length > 1"
-      ng-hide="ctrl.mode === 'edit' || ctrl.mode === 'new'">
-      New
-    </a
+      ng-hide="ctrl.mode === 'edit' || ctrl.mode === 'new'"
     >
+      New
+    </a>
   </div>
 
   <div ng-if="ctrl.mode === 'list'">
@@ -62,6 +62,15 @@
 
     <!-- empty list cta, there is always one built in query -->
     <div ng-if="ctrl.annotations.length === 1" class="p-t-2">
+      <empty-list-cta
+      title="There are no custom annotation queries added yet"
+      buttonIcon="gicon gicon-annotation"
+      buttonTitle="Add Annotation Query"
+      onClick="ctrl.setupNew"
+      infoBox="true"
+      infoBoxTitle="What are Annotations?"
+      infoBoxContent="This is some content"
+      />
       <div class="empty-list-cta">
         <div class="empty-list-cta__title">There are no custom annotation queries added yet</div>
         <a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-large btn-primary">

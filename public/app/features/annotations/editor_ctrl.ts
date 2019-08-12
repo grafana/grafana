@@ -63,10 +63,10 @@ export class AnnotationsEditorCtrl {
     this.mode = 'list';
   }
 
-  setupNew() {
+  setupNew = () => {
     this.mode = 'new';
     this.reset();
-  }
+  };
 
   backToList() {
     this.mode = 'list';
