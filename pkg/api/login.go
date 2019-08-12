@@ -199,15 +199,18 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return err
 	}
 
-	http.SetCookie(ctx.Resp, &http.Cookie{
+	cookie := http.Cookie{
 		Name:     cookieName,
 		MaxAge:   60,
 		Value:    hex.EncodeToString(encryptedError),
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
 		Secure:   hs.Cfg.CookieSecure,
-		SameSite: hs.Cfg.CookieSameSite,
-	})
+	}
+	if hs.Cfg.CookieSameSite != http.SameSiteDefaultMode {
+		cookie.SameSite = hs.Cfg.CookieSameSite
+	}
+	http.SetCookie(ctx.Resp, &cookie)
 
 	return nil
 }

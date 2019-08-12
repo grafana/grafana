@@ -31,7 +31,38 @@ To setup a local development environment we recommend reading [Building Grafana 
 
 - Add tests relevant to the fixed bug or new feature.
 
-- Follow [PR and commit messages guidelines](#PR-and-commit-messages-guidelines)
+### High level checks
+
+- [ ] The pull request adds value and the impact of the change is in line with [Backend](https://github.com/grafana/grafana/tree/master/pkg) or [Frontend](https://github.com/grafana/grafana/tree/master/style_guides).
+- [ ] The pull request works the way it says it should do.
+- [ ] The pull request closes one issue if possible and does not fix unrelated issues within the same pull request.
+- [ ] The pull request contains necessary tests.
+
+### Low level checks
+
+- [ ] The pull request contains a title that explains it. It follows [PR and commit messages guidelines](#Pull-Requests-titles-and-message)
+- [ ] The pull request contains necessary link(s) to issue(s). 
+- [ ] The pull request contains commits with messages that are small and understandable. It follows [PR and commit messages guidelines](#Pull-Requests-titles-and-message)
+- [ ] The pull request does not contain magic strings or numbers that could be replaced with an `Enum` or `const` instead.
+
+#### Bug specific checks
+
+- [ ] The pull request contains `Closes: #Issue` or `Fixes: #Issue` in pull request description.
+
+### Frontend specific checks
+
+- [ ] The pull request does not increase the Angular code base.
+  > We are in the process of migrating to React so any increment of Angular code is generally discouraged.
+- [ ] The pull request does not contain uses of `any` or `{}` without comments describing why.
+- [ ] The pull request does not contain large React components that could easily be split into several smaller components.
+- [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.
+
+#### Redux specific checks (skip if pull request does not contain Redux changes)
+
+- [ ] The pull request does not contain code that mutates state in reducers or thunks.
+- [ ] The pull request uses helpers `actionCreatorFactory` and `reducerFactory` instead of traditional `switch statement` reducers in Redux. See [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
+- [ ] The pull request uses `reducerTester` to test reducers. See [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
+- [ ] The pull request does not contain code that accesses the reducers state slice directly, instead, the code uses state selectors to access state.
 
 ### Pull Requests titles and message
 

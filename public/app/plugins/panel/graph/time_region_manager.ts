@@ -4,8 +4,8 @@ import { GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
 import { dateTime, DateTime, AbsoluteTimeRange } from '@grafana/data';
 
 type TimeRegionColorDefinition = {
-  fill: string;
-  line: string;
+  fill: string | null;
+  line: string | null;
 };
 
 export const colorModes: any = {

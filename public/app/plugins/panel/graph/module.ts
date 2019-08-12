@@ -11,7 +11,7 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { DataFrame, DataLink } from '@grafana/data';
+import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
 import { getColorFromHexRgbOrName, LegacyResponseData, VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
@@ -339,6 +339,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onContextMenuClose = () => {
     this.contextMenuCtrl.toggleMenu();
+  };
+
+  formatDate = (date: DateTimeInput, format?: string) => {
+    return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
   };
 }
 

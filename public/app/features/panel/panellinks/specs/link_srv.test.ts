@@ -11,7 +11,7 @@ jest.mock('angular', () => {
 
 const dataPointMock = {
   seriesName: 'A-series',
-  datapoint: [1000000000, 1],
+  datapoint: [1000000001, 1],
 };
 
 describe('linkSrv', () => {
@@ -119,7 +119,7 @@ describe('linkSrv', () => {
           {},
           dataPointMock
         ).href
-      ).toEqual('/d/1?time=1000000000');
+      ).toEqual('/d/1?time=1000000001');
     });
   });
 });
