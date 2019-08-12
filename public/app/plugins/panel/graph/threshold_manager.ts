@@ -35,7 +35,7 @@ export class ThresholdManager {
     const handleElem = $(evt.currentTarget).parents('.alert-handle-wrapper');
     const handleIndex = $(evt.currentTarget).data('handleIndex');
 
-    let lastY: number = null;
+    let lastY: number | null = null;
     let posTop: number;
     const plot = this.plot;
     const panelCtrl = this.panelCtrl;

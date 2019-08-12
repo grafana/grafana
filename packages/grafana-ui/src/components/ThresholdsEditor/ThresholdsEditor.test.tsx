@@ -27,7 +27,6 @@ function getCurrentThresholds(editor: ThresholdsEditor) {
 describe('Render', () => {
   it('should render with base threshold', () => {
     const { wrapper } = setup();
-
     expect(wrapper).toMatchSnapshot();
   });
 });
@@ -35,8 +34,7 @@ describe('Render', () => {
 describe('Initialization', () => {
   it('should add a base threshold if missing', () => {
     const { instance } = setup();
-
-    expect(getCurrentThresholds(instance)).toEqual([{ value: -Infinity, color: colors[0] }]);
+    expect(getCurrentThresholds(instance)).toEqual([{ value: -Infinity, color: 'green' }]);
   });
 });
 
@@ -47,8 +45,8 @@ describe('Add threshold', () => {
     instance.onAddThresholdAfter(instance.state.thresholds[0]);
 
     expect(getCurrentThresholds(instance)).toEqual([
-      { value: -Infinity, color: colors[0] }, // 0
-      { value: 50, color: colors[2] }, // 1
+      { value: -Infinity, color: 'green' }, // 0
+      { value: 50, color: colors[1] }, // 1
     ]);
   });
 

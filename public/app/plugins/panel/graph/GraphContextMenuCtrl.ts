@@ -13,7 +13,7 @@ export class GraphContextMenuCtrl {
   private source?: FlotDataPoint | null;
   private scope?: any;
   menuItems: ContextMenuItem[];
-  scrollContextElement: HTMLElement;
+  scrollContextElement: HTMLElement | null;
   position: {
     x: number;
     y: number;
@@ -58,7 +58,7 @@ export class GraphContextMenuCtrl {
 
   // Sets element which is considered as a scroll context of given context menu.
   // Having access to this element allows scroll event attachement for menu to be closed when user scrolls
-  setScrollContextElement = (el: HTMLElement) => {
+  setScrollContextElement = (el: HTMLElement | null) => {
     this.scrollContextElement = el;
   };
 
