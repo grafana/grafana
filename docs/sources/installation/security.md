@@ -36,5 +36,5 @@ Important to understand that users with Viewer role can still issue any possible
 
 There are a couple of ways you can restrict data source query access:
 
-- Create multiple data sources with some restrictions added in data source config that restrict access (like database name or credentials). Then use the [Data Source Permissions]({{< relref "permissions/datasource_permissions.md" >}}) feature to restrict user access to the data source in Grafana.
+- Create multiple data sources with some restrictions added in data source config that restrict access (like database name or credentials). Then use the [Data Source Permissions]({{< relref "permissions/datasource_permissions.md" >}}) Enterprise feature to restrict user access to the data source in Grafana.
 - Create a separate Grafana organization and in that organization create a separate data source. Make sure the data source has some option/user/credentials setting that limits access to a subset of the data. Not all data sources have an option to limit access.
