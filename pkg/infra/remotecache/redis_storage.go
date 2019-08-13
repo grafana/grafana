@@ -69,7 +69,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 		// Get hostname from the Addr property and set it on the configuration for TLS
 		sp := strings.Split(options.Addr, ":")
 		if len(sp) < 1 {
-			return nil, fmt.Errorf("unable able to get hostname from the addr field, expected host:port, got '%v'", options.Addr)
+			return nil, fmt.Errorf("unable to get hostname from the addr field, expected host:port, got '%v'", options.Addr)
 		}
 		options.TLSConfig = &tls.Config{ServerName: sp[0]}
 	}
