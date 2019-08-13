@@ -1,14 +1,22 @@
 import { DataQueryResponse, DataQueryResponseData } from '@grafana/ui';
 
-import { TableData, isTableData, LogsModel, toDataFrame, guessFieldTypes, TimeSeries } from '@grafana/data';
+import {
+  TableData,
+  isTableData,
+  LogsModel,
+  toDataFrame,
+  guessFieldTypes,
+  TimeSeries,
+  GraphSeriesXY,
+  LoadingState,
+} from '@grafana/data';
 
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { sortLogsResult } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
-import { default as TimeSeries2 } from 'app/core/time_series2';
-import { DataProcessor } from 'app/plugins/panel/graph/data_processor';
+import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export class ResultProcessor {
   private rawData: DataQueryResponseData[] = [];
@@ -45,12 +53,12 @@ export class ResultProcessor {
     return this.rawData;
   };
 
-  getGraphResult = (): TimeSeries[] => {
+  getGraphResult = (): GraphSeriesXY[] => {
     if (this.state.mode !== ExploreMode.Metrics) {
       return [];
     }
 
-    const newResults = this.makeTimeSeriesList(this.metrics);
+    const newResults = this.createGraphSeries(this.metrics);
     return this.mergeGraphResults(newResults, this.state.graphResult);
   };
 
@@ -100,26 +108,26 @@ export class ResultProcessor {
     return { ...sortedNewResults, rows, series };
   };
 
-  private makeTimeSeriesList = (rawData: any[]) => {
-    const dataList = getProcessedDataFrames(rawData);
-    const dataProcessor = new DataProcessor({ xaxis: {}, aliasColors: [] }); // Hack before we use GraphSeriesXY instead
-    const timeSeries = dataProcessor.getSeriesList({ dataList });
+  private createGraphSeries = (rawData: any[]) => {
+    const dataFrames = getProcessedDataFrames(rawData);
+    const graphSeries = getGraphSeriesModel(
+      { series: dataFrames, state: LoadingState.Done },
+      {},
+      { showBars: false, showLines: true, showPoints: false },
+      {
+        asTable: false,
+        isVisible: true,
+        placement: 'under',
+      }
+    );
 
-    return (timeSeries as any) as TimeSeries[]; // Hack before we use GraphSeriesXY instead
+    return graphSeries;
   };
 
-  private isSameTimeSeries = (a: TimeSeries | TimeSeries2, b: TimeSeries | TimeSeries2) => {
-    if (a.hasOwnProperty('id') && b.hasOwnProperty('id')) {
-      const aValue = (a as TimeSeries2).id;
-      const bValue = (b as TimeSeries2).id;
-      if (aValue !== undefined && bValue !== undefined && aValue === bValue) {
-        return true;
-      }
-    }
-
-    if (a.hasOwnProperty('alias') && b.hasOwnProperty('alias')) {
-      const aValue = (a as TimeSeries2).alias;
-      const bValue = (b as TimeSeries2).alias;
+  private isSameGraphSeries = (a: GraphSeriesXY, b: GraphSeriesXY) => {
+    if (a.hasOwnProperty('label') && b.hasOwnProperty('label')) {
+      const aValue = a.label;
+      const bValue = b.label;
       if (aValue !== undefined && bValue !== undefined && aValue === bValue) {
         return true;
       }
@@ -128,24 +136,21 @@ export class ResultProcessor {
     return false;
   };
 
-  private mergeGraphResults = (
-    newResults: TimeSeries[] | TimeSeries2[],
-    prevResults: TimeSeries[] | TimeSeries2[]
-  ): TimeSeries[] => {
+  private mergeGraphResults = (newResults: GraphSeriesXY[], prevResults: GraphSeriesXY[]): GraphSeriesXY[] => {
     if (!prevResults || prevResults.length === 0 || this.replacePreviousResults) {
-      return (newResults as any) as TimeSeries[]; // Hack before we use GraphSeriesXY instead
+      return newResults; // Hack before we use GraphSeriesXY instead
     }
 
-    const results: TimeSeries[] = prevResults.slice() as TimeSeries[];
+    const results: GraphSeriesXY[] = prevResults.slice() as GraphSeriesXY[];
 
     // update existing results
     for (let index = 0; index < results.length; index++) {
       const prevResult = results[index];
       for (const newResult of newResults) {
-        const isSame = this.isSameTimeSeries(prevResult, newResult);
+        const isSame = this.isSameGraphSeries(prevResult, newResult);
 
         if (isSame) {
-          prevResult.datapoints = prevResult.datapoints.concat(newResult.datapoints);
+          prevResult.data = prevResult.data.concat(newResult.data);
           break;
         }
       }
@@ -155,7 +160,7 @@ export class ResultProcessor {
     for (const newResult of newResults) {
       let isNew = true;
       for (const prevResult of results) {
-        const isSame = this.isSameTimeSeries(prevResult, newResult);
+        const isSame = this.isSameGraphSeries(prevResult, newResult);
         if (isSame) {
           isNew = false;
           break;
@@ -163,10 +168,7 @@ export class ResultProcessor {
       }
 
       if (isNew) {
-        const timeSeries2Result = new TimeSeries2({ ...newResult });
-
-        const result = (timeSeries2Result as any) as TimeSeries; // Hack before we use GraphSeriesXY instead
-        results.push(result);
+        results.push(newResult);
       }
     }
     return results;

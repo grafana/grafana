@@ -16,6 +16,7 @@ import {
   LogsDedupStrategy,
   LoadingState,
   AbsoluteTimeRange,
+  GraphSeriesXY,
 } from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
@@ -159,7 +160,7 @@ export interface ExploreItemState {
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
-  graphResult?: any[];
+  graphResult?: GraphSeriesXY[];
   /**
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */

@@ -33,7 +33,7 @@ export default class ElapsedTime extends PureComponent<Props, State> {
     this.setState({ elapsed });
   };
 
-  componentWillReceiveProps(nextProps: Props) {
+  UNSAFE_componentWillReceiveProps(nextProps: Props) {
     if (nextProps.time) {
       clearInterval(this.timer);
     } else if (this.props.time) {

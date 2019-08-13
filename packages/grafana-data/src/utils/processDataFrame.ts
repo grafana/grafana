@@ -7,14 +7,15 @@ import isBoolean from 'lodash/isBoolean';
 import {
   DataFrame,
   Field,
+  FieldConfig,
   TimeSeries,
   FieldType,
   TableData,
   Column,
-  FieldConfig,
+  GraphSeriesXY,
   TimeSeriesValue,
-  DataFrameJSON,
   FieldJSON,
+  DataFrameJSON,
 } from '../types/index';
 import { isDateTime } from './moment_wrapper';
 import { ArrayVector, SortedVector } from './vector';
@@ -84,6 +85,37 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     meta: timeSeries.meta,
     fields,
     length: timeSeries.datapoints.length,
+  };
+}
+
+function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
+  const x = new ArrayVector();
+  const y = new ArrayVector();
+  for (let i = 0; i < graphSeries.data.length; i++) {
+    const row = graphSeries.data[i];
+    x.buffer.push(row[0]);
+    y.buffer.push(row[1]);
+  }
+
+  return {
+    name: graphSeries.label,
+    fields: [
+      {
+        name: graphSeries.label || 'Value',
+        type: FieldType.number,
+        config: {},
+        values: x,
+      },
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {
+          unit: 'dateTimeAsIso',
+        },
+        values: y,
+      },
+    ],
+    length: x.buffer.length,
   };
 }
 
@@ -200,6 +232,9 @@ export const toDataFrame = (data: any): DataFrame => {
   }
   if (data.hasOwnProperty('datapoints')) {
     return convertTimeSeriesToDataFrame(data);
+  }
+  if (data.hasOwnProperty('data')) {
+    return convertGraphSeriesToDataFrame(data);
   }
   if (data.hasOwnProperty('columns')) {
     return convertTableToDataFrame(data);

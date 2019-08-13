@@ -13,31 +13,16 @@ import {
   LogsDedupStrategy,
   LogRowModel,
 } from '@grafana/data';
-import TimeSeries from 'app/core/time_series2';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
-import Graph from './Graph';
 import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
 import { LogsDedupDescription } from 'app/core/logs_model';
+import ExploreGraphPanel from './ExploreGraphPanel';
+import { ExploreId } from 'app/types';
 
 const PREVIEW_LIMIT = 100;
-
-const graphOptions = {
-  series: {
-    stack: true,
-    bars: {
-      show: true,
-      lineWidth: 5,
-      // barWidth: 10,
-    },
-    // stack: true,
-  },
-  yaxis: {
-    tickDecimals: 0,
-  },
-};
 
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
@@ -54,7 +39,7 @@ interface Props {
   data?: LogsModel;
   dedupedData?: LogsModel;
   width: number;
-  exploreId: string;
+  exploreId: ExploreId;
   highlighterExpressions: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;
@@ -135,7 +120,7 @@ export default class Logs extends PureComponent<Props, State> {
     });
   };
 
-  onToggleLogLevel = (rawLevel: string, hiddenRawLevels: string[]) => {
+  onToggleLogLevel = (hiddenRawLevels: string[]) => {
     const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map((level: LogLevel) => LogLevel[level]);
     this.props.onToggleLogLevel(hiddenLogLevels);
   };
@@ -157,7 +142,6 @@ export default class Logs extends PureComponent<Props, State> {
       highlighterExpressions,
       loading = false,
       onClickLabel,
-      absoluteRange,
       timeZone,
       scanning,
       scanRange,
@@ -193,23 +177,15 @@ export default class Logs extends PureComponent<Props, State> {
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
-    const timeSeries = data.series
-      ? data.series.map(series => new TimeSeries(series))
-      : [new TimeSeries({ datapoints: [] })];
 
     return (
       <div className="logs-panel">
         <div className="logs-panel-graph">
-          <Graph
-            data={timeSeries}
-            height={100}
+          <ExploreGraphPanel
+            exploreId={exploreId}
+            series={data.series}
             width={width}
-            range={absoluteRange}
-            timeZone={timeZone}
-            id={`explore-logs-graph-${exploreId}`}
-            onChangeTime={this.props.onChangeTime}
-            onToggleSeries={this.onToggleLogLevel}
-            userOptions={graphOptions}
+            onHiddenSeriesChanged={this.onToggleLogLevel}
           />
         </div>
         <div className="logs-panel-options">
