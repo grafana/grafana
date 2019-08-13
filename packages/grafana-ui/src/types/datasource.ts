@@ -1,5 +1,14 @@
 import { ComponentType, ComponentClass } from 'react';
-import { TimeRange, RawTimeRange, TableData, TimeSeries, DataFrame, LogRowModel, LoadingState } from '@grafana/data';
+import {
+  TimeRange,
+  RawTimeRange,
+  TableData,
+  TimeSeries,
+  DataFrame,
+  LogRowModel,
+  LoadingState,
+  DataFrameDTO,
+} from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
 
@@ -286,7 +295,7 @@ export interface ExploreStartPageProps {
  */
 export type LegacyResponseData = TimeSeries | TableData | any;
 
-export type DataQueryResponseData = DataFrame | LegacyResponseData;
+export type DataQueryResponseData = DataFrameDTO | LegacyResponseData;
 
 export type DataStreamObserver = (event: DataStreamState) => void;
 

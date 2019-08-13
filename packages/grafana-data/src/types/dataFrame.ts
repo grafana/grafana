@@ -40,19 +40,6 @@ export interface FieldConfig {
   noValue?: string;
 }
 
-export interface FieldJSON<T = any> {
-  name: string; // The column name
-  type?: FieldType;
-  config?: FieldConfig;
-  buffer?: T[];
-}
-
-export interface DataFrameJSON extends QueryResultBase {
-  name?: string;
-  labels?: Labels;
-  fields: FieldJSON[];
-}
-
 export interface Vector<T = any> {
   length: number;
 
@@ -62,9 +49,9 @@ export interface Vector<T = any> {
   get(index: number): T;
 
   /**
-   * Convert the body to a simple array
+   * Return the values as a simple array for json serialization
    */
-  toArray(): T[];
+  toJSON(): any; // typically T[]
 }
 
 export interface Field<T = any> {
@@ -96,4 +83,23 @@ export interface DataFrame extends QueryResultBase {
 
   // The number of rows
   length: number;
+}
+
+/**
+ * Like a field, but properties are optional and values may be a simple array
+ */
+export interface FieldDTO<T = any> {
+  name: string; // The column name
+  type?: FieldType;
+  config?: FieldConfig;
+  values?: Vector<T> | T[]; // toJSON will always be T[], input could be either
+}
+
+/**
+ * Like a DataFrame, but fields may be a FieldDTO
+ */
+export interface DataFrameDTO extends QueryResultBase {
+  name?: string;
+  labels?: Labels;
+  fields: Array<FieldDTO | Field>;
 }

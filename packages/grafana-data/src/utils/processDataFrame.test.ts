@@ -7,7 +7,7 @@ import {
   guessFieldTypeFromValue,
   sortDataFrame,
 } from './processDataFrame';
-import { FieldType, TimeSeries, TableData, DataFrameJSON } from '../types/index';
+import { FieldType, TimeSeries, TableData, DataFrameDTO } from '../types/index';
 import { dateTime } from './moment_wrapper';
 import { DataFrameHelper } from './dataFrameHelper';
 
@@ -72,10 +72,10 @@ describe('toDataFrame', () => {
   it('Guess Colum Types from series', () => {
     const series = new DataFrameHelper({
       fields: [
-        { name: 'A (number)', buffer: [123, null] },
-        { name: 'B (strings)', buffer: [null, 'Hello'] },
-        { name: 'C (nulls)', buffer: [null, null] },
-        { name: 'Time', buffer: ['2000', 1967] },
+        { name: 'A (number)', values: [123, null] },
+        { name: 'B (strings)', values: [null, 'Hello'] },
+        { name: 'C (nulls)', values: [null, null] },
+        { name: 'Time', values: ['2000', 1967] },
       ],
     });
     const norm = guessFieldTypes(series);
@@ -117,15 +117,15 @@ describe('SerisData backwards compatibility', () => {
   });
 
   it('converts DataFrame to TableData to series and back again', () => {
-    const json: DataFrameJSON = {
+    const json: DataFrameDTO = {
       refId: 'Z',
       meta: {
         somethign: 8,
       },
       fields: [
-        { name: 'T', type: FieldType.time, buffer: [1, 2, 3] },
-        { name: 'N', type: FieldType.number, config: { filterable: true }, buffer: [100, 200, 300] },
-        { name: 'S', type: FieldType.string, config: { filterable: true }, buffer: ['1', '2', '3'] },
+        { name: 'T', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'N', type: FieldType.number, config: { filterable: true }, values: [100, 200, 300] },
+        { name: 'S', type: FieldType.string, config: { filterable: true }, values: ['1', '2', '3'] },
       ],
     };
     const series = toDataFrame(json);
@@ -141,22 +141,22 @@ describe('SerisData backwards compatibility', () => {
 describe('sorted DataFrame', () => {
   const frame = toDataFrame({
     fields: [
-      { name: 'fist', type: FieldType.time, buffer: [1, 2, 3] },
-      { name: 'second', type: FieldType.string, buffer: ['a', 'b', 'c'] },
-      { name: 'third', type: FieldType.number, buffer: [2000, 3000, 1000] },
+      { name: 'fist', type: FieldType.time, values: [1, 2, 3] },
+      { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
+      { name: 'third', type: FieldType.number, values: [2000, 3000, 1000] },
     ],
   });
   it('Should sort numbers', () => {
     const sorted = sortDataFrame(frame, 0, true);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
-    expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[0].values.toJSON()).toEqual([3, 2, 1]);
+    expect(sorted.fields[1].values.toJSON()).toEqual(['c', 'b', 'a']);
   });
 
   it('Should sort strings', () => {
     const sorted = sortDataFrame(frame, 1, true);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
-    expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[0].values.toJSON()).toEqual([3, 2, 1]);
+    expect(sorted.fields[1].values.toJSON()).toEqual(['c', 'b', 'a']);
   });
 });

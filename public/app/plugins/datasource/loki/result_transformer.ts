@@ -18,8 +18,8 @@ export function logStreamToDataFrame(stream: LokiLogsStream, refId?: string): Da
     refId,
     labels,
     fields: [
-      { name: 'ts', type: FieldType.time, buffer: time }, // Time
-      { name: 'line', type: FieldType.string, buffer: lines }, // Line
+      { name: 'ts', type: FieldType.time, values: time }, // Time
+      { name: 'line', type: FieldType.string, values: lines }, // Line
     ],
   });
 }

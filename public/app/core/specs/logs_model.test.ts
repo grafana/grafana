@@ -367,7 +367,7 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'message',
             type: FieldType.string,
-            buffer: [],
+            values: [],
           },
         ],
       }),
@@ -382,7 +382,7 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
-            buffer: [],
+            values: [],
           },
         ],
       }),
@@ -401,12 +401,12 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
-            buffer: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
-            buffer: [
+            values: [
               't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
               't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
             ],
@@ -458,17 +458,17 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
-            buffer: ['1970-01-01T00:00:01Z'],
+            values: ['1970-01-01T00:00:01Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
-            buffer: ['WARN boooo'],
+            values: ['WARN boooo'],
           },
           {
             name: 'level',
             type: FieldType.string,
-            buffer: ['dbug'],
+            values: ['dbug'],
           },
         ],
       }),
@@ -497,12 +497,12 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'ts',
             type: FieldType.time,
-            buffer: ['1970-01-01T00:00:01Z'],
+            values: ['1970-01-01T00:00:01Z'],
           },
           {
             name: 'line',
             type: FieldType.string,
-            buffer: ['WARN boooo'],
+            values: ['WARN boooo'],
           },
         ],
       }),
@@ -517,12 +517,12 @@ describe('dataFrameToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
-            buffer: ['1970-01-01T00:00:00Z', '1970-01-01T00:00:02Z'],
+            values: ['1970-01-01T00:00:00Z', '1970-01-01T00:00:02Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
-            buffer: ['INFO 1', 'INFO 2'],
+            values: ['INFO 1', 'INFO 2'],
           },
         ],
       }),

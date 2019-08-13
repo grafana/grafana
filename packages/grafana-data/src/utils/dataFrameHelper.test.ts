@@ -1,4 +1,4 @@
-import { FieldType, DataFrameJSON, FieldJSON } from '../types/index';
+import { FieldType, DataFrameDTO, FieldDTO } from '../types/index';
 import { DataFrameHelper, DataFrameView } from './dataFrameHelper';
 import { DateTime } from './moment_wrapper';
 
@@ -10,11 +10,11 @@ interface MySpecialObject {
 }
 
 describe('dataFrameHelper', () => {
-  const frame: DataFrameJSON = {
+  const frame: DataFrameDTO = {
     fields: [
-      { name: 'time', type: FieldType.time, buffer: [100, 200, 300] },
-      { name: 'name', type: FieldType.string, buffer: ['a', 'b', 'c'] },
-      { name: 'value', type: FieldType.number, buffer: [1, 2, 3] },
+      { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+      { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
+      { name: 'value', type: FieldType.number, values: [1, 2, 3] },
     ],
   };
   const ext = new DataFrameHelper(frame);
@@ -28,16 +28,16 @@ describe('dataFrameHelper', () => {
     expect(vector.length).toEqual(3);
 
     const first = vector.get(0);
-    expect(first.time).toEqual(frame.fields[0].buffer![0]);
-    expect(first.name).toEqual(frame.fields[1].buffer![0]);
-    expect(first.value).toEqual(frame.fields[2].buffer![0]);
+    expect(first.time).toEqual((frame.fields[0].values as any[])[0]);
+    expect(first.name).toEqual((frame.fields[1].values as any[])[0]);
+    expect(first.value).toEqual((frame.fields[2].values as any[])[0]);
     expect(first.more).toBeUndefined();
   });
 });
 
 describe('FieldCache', () => {
   it('when creating a new FieldCache from fields should be able to query cache', () => {
-    const fields: FieldJSON[] = [
+    const fields: FieldDTO[] = [
       { name: 'time', type: FieldType.time },
       { name: 'string', type: FieldType.string },
       { name: 'number', type: FieldType.number },

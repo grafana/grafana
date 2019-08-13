@@ -32,12 +32,12 @@ describe('Check Circular Vector', () => {
     const buffer = [3, 2, 1, 0];
     const v = new CircularVector(buffer);
     expect(v.length).toEqual(4);
-    expect(v.toArray()).toEqual([3, 2, 1, 0]);
+    expect(v.toJSON()).toEqual([3, 2, 1, 0]);
 
     v.append(4);
-    expect(v.toArray()).toEqual([4, 3, 2, 1]);
+    expect(v.toJSON()).toEqual([4, 3, 2, 1]);
 
     v.append(5);
-    expect(v.toArray()).toEqual([5, 4, 3, 2]);
+    expect(v.toJSON()).toEqual([5, 4, 3, 2]);
   });
 });

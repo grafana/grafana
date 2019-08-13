@@ -14,8 +14,8 @@ import {
   Column,
   GraphSeriesXY,
   TimeSeriesValue,
-  FieldJSON,
-  DataFrameJSON,
+  FieldDTO,
+  DataFrameDTO,
 } from '../types/index';
 import { isDateTime } from './moment_wrapper';
 import { ArrayVector, SortedVector } from './vector';
@@ -218,17 +218,11 @@ export const toDataFrame = (data: any): DataFrame => {
       throw new Error('Old DataFrame format.  Values should be on the fields');
     }
 
-    // Check if each field has
-    const fields = data.fields as Array<Field | FieldJSON>;
-    if (fields.length > 0) {
-      for (const f of fields) {
-        if (f.hasOwnProperty('values')) {
-          return data as DataFrame;
-        }
-      }
+    // DataFrameDTO does not have length
+    if (data.hasOwnProperty('length')) {
+      return data as DataFrame;
     }
-    // Converts 'buffer' to DataFrame
-    return new DataFrameHelper(data as DataFrameJSON);
+    return new DataFrameHelper(data as DataFrameDTO);
   }
   if (data.hasOwnProperty('datapoints')) {
     return convertTimeSeriesToDataFrame(data);
@@ -341,13 +335,13 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
 /**
  * Returns a copy that does not include functions
  */
-export function dataFrameToJSON(data: DataFrame): DataFrameJSON {
-  const fields: FieldJSON[] = data.fields.map(f => {
+export function dataFrameToJSON(data: DataFrame): DataFrameDTO {
+  const fields: FieldDTO[] = data.fields.map(f => {
     return {
       name: f.name,
       type: f.type,
       config: f.config,
-      buffer: f.values.toArray(),
+      buffer: f.values.toJSON(),
     };
   });
 

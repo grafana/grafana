@@ -23,7 +23,7 @@ const testContext = () => {
       fields: [
         {
           name: 'Value',
-          buffer: [],
+          values: [],
         },
         {
           name: 'Time',
@@ -31,7 +31,7 @@ const testContext = () => {
           config: {
             unit: 'dateTimeAsIso',
           },
-          buffer: [],
+          values: [],
         },
       ],
       refId: 'A',

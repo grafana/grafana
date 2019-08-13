@@ -1,4 +1,4 @@
-import { Field, FieldType, DataFrame, Vector, FieldJSON, DataFrameJSON } from '../types/dataFrame';
+import { Field, FieldType, DataFrame, Vector, FieldDTO, DataFrameDTO } from '../types/dataFrame';
 import { Labels, QueryResultMeta } from '../types/data';
 import { guessFieldTypeForField, guessFieldTypeFromValue } from './processDataFrame';
 import { ArrayVector } from './vector';
@@ -15,7 +15,7 @@ export class DataFrameHelper implements DataFrame {
   private fieldByName: { [key: string]: Field } = {};
   private fieldByType: { [key: string]: Field[] } = {};
 
-  constructor(data?: DataFrame | DataFrameJSON) {
+  constructor(data?: DataFrame | DataFrameDTO) {
     if (!data) {
       data = { fields: [] }; //
     }
@@ -90,12 +90,13 @@ export class DataFrameHelper implements DataFrame {
     this.fieldByType[field.type].push(field);
   }
 
-  addField(f: Field | FieldJSON): Field {
+  addField(f: Field | FieldDTO): Field {
     const type = f.type || FieldType.other;
-    let values: Vector = (f as any).values;
-    if (!values) {
-      values = new ArrayVector((f as any).buffer);
-    }
+    const values =
+      !f.values || isArray(f.values)
+        ? new ArrayVector(f.values as any[] | undefined) // array or empty
+        : (f.values as Vector);
+
     // And a name
     let name = f.name;
     if (!name) {
@@ -265,8 +266,9 @@ export class DataFrameView<T = any> implements Vector<T> {
     return this.obj;
   }
 
-  toArray(): T[] {
-    throw new Error('Method not implemented.');
+  toJSON(): T[] {
+    console.warn('not really implemented');
+    return [];
   }
 }
 

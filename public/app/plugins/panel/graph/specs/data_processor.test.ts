@@ -34,10 +34,10 @@ describe('Graph DataProcessor', () => {
       {
         name: 'series',
         fields: [
-          { name: 'v1', buffer: [0.1, 0.2, 0.3] }, // first
-          { name: 'v2', buffer: [1.1, 2.2, 3.3] }, // second
-          { name: 'string', buffer: ['a', 'b', 'c'] }, // skip
-          { name: 'time', buffer: [1001, 1002, 1003] }, // Time is last column
+          { name: 'v1', values: [0.1, 0.2, 0.3] }, // first
+          { name: 'v2', values: [1.1, 2.2, 3.3] }, // second
+          { name: 'string', values: ['a', 'b', 'c'] }, // skip
+          { name: 'time', values: [1001, 1002, 1003] }, // Time is last column
         ],
       },
     ]);
