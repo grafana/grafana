@@ -22,7 +22,7 @@ export function registerAngularDirectives() {
     'buttonIcon',
     'buttonLink',
     'buttonTitle',
-    'onClick',
+    ['onClick', { watchDepth: 'reference', wrapApply: true }],
     'proTip',
     'proTipLink',
     'proTipLinkTitle',
