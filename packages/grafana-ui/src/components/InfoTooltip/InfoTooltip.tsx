@@ -1,9 +1,9 @@
 import React from 'react';
 import { Tooltip, TooltipProps } from '../Tooltip/Tooltip';
-import { PopperContent } from '../Tooltip/PopperController';
+import { TooltipContent } from '../Tooltip/PopperController';
 
 interface InfoTooltipProps extends Omit<TooltipProps, 'children' | 'content'> {
-  children: PopperContent<any>;
+  children: TooltipContent<any>;
 }
 
 export const InfoTooltip = ({ children, ...restProps }: InfoTooltipProps) => {

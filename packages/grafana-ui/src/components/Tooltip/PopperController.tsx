@@ -3,16 +3,19 @@ import * as PopperJS from 'popper.js';
 
 // This API allows popovers to update Popper's position when e.g. popover content changes
 // updatePopperPosition is delivered to content by react-popper
-export interface PopperContentProps {
+export interface TooltipContentProps {
   updatePopperPosition?: () => void;
 }
 
-export type PopperContent<T extends PopperContentProps> = string | React.ReactElement<T> | ((props: T) => JSX.Element);
+export type TooltipContent<T extends TooltipContentProps> =
+  | string
+  | React.ReactElement<T>
+  | ((props: T) => JSX.Element);
 
 export interface UsingPopperProps {
   show?: boolean;
   placement?: PopperJS.Placement;
-  content: PopperContent<any>;
+  content: TooltipContent<any>;
   children: JSX.Element;
 }
 
@@ -22,13 +25,13 @@ type PopperControllerRenderProp = (
   popperProps: {
     show: boolean;
     placement: PopperJS.Placement;
-    content: PopperContent<any>;
+    content: TooltipContent<any>;
   }
 ) => JSX.Element;
 
 interface Props {
   placement?: PopperJS.Placement;
-  content: PopperContent<any>;
+  content: TooltipContent<any>;
   className?: string;
   children: PopperControllerRenderProp;
   hideAfter?: number;
