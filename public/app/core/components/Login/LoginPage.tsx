@@ -29,7 +29,7 @@ export const LoginPage: FC = () => {
             skipPasswordChange,
             isChangingPassword,
           }) => (
-            <div className="login-out-box">
+            <div className="login-outer-box">
               <div className={`login-inner-box ${isChangingPassword ? 'hidden' : ''}`} id="login-view">
                 {!disableLoginForm ? (
                   <LoginForm

@@ -321,6 +321,11 @@ select:-webkit-autofill:focus {
     flex-direction: row;
   }
 
+  .login-inner-box {
+    width: 55%;
+    padding: $space-md 56px;
+  }
+
   .login-button-forgot-password {
     padding-top: 0;
     padding-left: 10px;
