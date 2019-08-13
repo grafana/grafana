@@ -125,7 +125,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   }
 
-  componentWillReceiveProps(nextProps: QueryFieldProps) {
+  UNSAFE_componentWillReceiveProps(nextProps: QueryFieldProps) {
     if (nextProps.syntaxLoaded && !this.props.syntaxLoaded) {
       // Need a bogus edit to re-render the editor after syntax has fully loaded
       const change = this.state.value
