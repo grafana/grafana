@@ -121,6 +121,7 @@ var (
 	LoginHint               string
 	PasswordHint            string
 	DefaultTheme            string
+	DefaultTimezone         string
 	DisableLoginForm        bool
 	DisableSignoutMenu      bool
 	SignoutRedirectUrl      string
@@ -770,6 +771,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 	DefaultTheme, err = valueAsString(users, "default_theme", "")
+	if err != nil {
+		return err
+	}
+	DefaultTimezone, err = valueAsString(users, "default_timezone", "")
 	if err != nil {
 		return err
 	}

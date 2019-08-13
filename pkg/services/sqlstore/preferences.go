@@ -41,7 +41,7 @@ func GetPreferencesWithDefaults(query *m.GetPreferencesWithDefaultsQuery) error 
 
 	res := &m.Preferences{
 		Theme:           setting.DefaultTheme,
-		Timezone:        "browser",
+		Timezone:        setting.DefaultTimezone,
 		HomeDashboardId: 0,
 	}
 
