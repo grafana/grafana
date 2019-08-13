@@ -6,17 +6,19 @@ import {
   DataSourceInstanceSettings,
   MetricFindValue,
 } from '@grafana/ui';
-import { DataFrame } from '@grafana/data';
+import { DataFrame, DataFrameDTO, toDataFrame } from '@grafana/data';
 
 import { InputQuery, InputOptions } from './types';
 
 export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
-  data: DataFrame[];
+  data: DataFrame[] = [];
 
   constructor(instanceSettings: DataSourceInstanceSettings<InputOptions>) {
     super(instanceSettings);
 
-    this.data = instanceSettings.jsonData.data ? instanceSettings.jsonData.data : [];
+    if (instanceSettings.jsonData.data) {
+      this.data = instanceSettings.jsonData.data.map(v => toDataFrame(v));
+    }
   }
 
   /**
@@ -47,13 +49,13 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
   query(options: DataQueryRequest<InputQuery>): Promise<DataQueryResponse> {
     const results: DataFrame[] = [];
     for (const query of options.targets) {
-      if (query.hide) {
-        continue;
+      let data = this.data;
+      if (query.data) {
+        data = query.data.map(v => toDataFrame(v));
       }
-      const data = query.data ? query.data : this.data;
-      for (const series of data) {
+      for (let i = 0; i < data.length; i++) {
         results.push({
-          ...series,
+          ...data[i],
           refId: query.refId,
         });
       }
@@ -85,13 +87,23 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
   }
 }
 
-export function describeDataFrame(data: DataFrame[]): string {
+function getLength(data?: DataFrameDTO | DataFrame) {
+  if (!data || !data.fields || !data.fields.length) {
+    return 0;
+  }
+  if (data.hasOwnProperty('length')) {
+    return (data as DataFrame).length;
+  }
+  return data.fields[0].values.length;
+}
+
+export function describeDataFrame(data: Array<DataFrameDTO | DataFrame>): string {
   if (!data || !data.length) {
     return '';
   }
   if (data.length > 1) {
     const count = data.reduce((acc, series) => {
-      return acc + series.length;
+      return acc + getLength(series);
     }, 0);
     return `${data.length} Series, ${count} Rows`;
   }
@@ -99,7 +111,7 @@ export function describeDataFrame(data: DataFrame[]): string {
   if (!series.fields) {
     return 'Missing Fields';
   }
-  const length = series.length;
+  const length = getLength(series);
   return `${series.fields.length} Fields, ${length} Rows`;
 }
 

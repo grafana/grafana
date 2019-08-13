@@ -88,6 +88,10 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   };
 }
 
+/**
+ * This is added temporarily while we convert the LogsModel
+ * to DataFrame.  See: https://github.com/grafana/grafana/issues/18528
+ */
 function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
   const x = new ArrayVector();
   const y = new ArrayVector();
@@ -335,13 +339,13 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
 /**
  * Returns a copy that does not include functions
  */
-export function dataFrameToJSON(data: DataFrame): DataFrameDTO {
+export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
   const fields: FieldDTO[] = data.fields.map(f => {
     return {
       name: f.name,
       type: f.type,
       config: f.config,
-      buffer: f.values.toJSON(),
+      values: f.values.toJSON(),
     };
   });
 

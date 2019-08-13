@@ -5,7 +5,8 @@ import React, { PureComponent } from 'react';
 import { InputOptions } from './types';
 
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings, TableInputCSV } from '@grafana/ui';
-import { DataFrame, toCSV, DataFrameHelper } from '@grafana/data';
+import { DataFrame, DataFrameHelper } from '@grafana/data';
+import { dataFrameToCSV } from './utils';
 
 type InputSettings = DataSourceSettings<InputOptions>;
 
@@ -23,7 +24,7 @@ export class InputConfigEditor extends PureComponent<Props, State> {
   componentDidMount() {
     const { options } = this.props;
     if (options.jsonData.data) {
-      const text = toCSV(options.jsonData.data);
+      const text = dataFrameToCSV(options.jsonData.data);
       this.setState({ text });
     }
   }

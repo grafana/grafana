@@ -3,7 +3,7 @@ import { getDataFrameRow } from './dataFrameHelper';
 
 // Test with local CSV files
 import fs from 'fs';
-import { dataFrameToJSON } from './processDataFrame';
+import { toDataFrameDTO } from './processDataFrame';
 
 describe('read csv', () => {
   it('should get X and y', () => {
@@ -22,7 +22,7 @@ describe('read csv', () => {
       expect(field.values.length).toBe(rows);
     }
 
-    expect(dataFrameToJSON(series)).toMatchSnapshot();
+    expect(toDataFrameDTO(series)).toMatchSnapshot();
   });
 
   it('should read single string OK', () => {
@@ -46,7 +46,7 @@ describe('read csv', () => {
     const csv = fs.readFileSync(path, 'utf8');
     const data = readCSV(csv);
     expect(data.length).toBe(1);
-    expect(dataFrameToJSON(data[0])).toMatchSnapshot();
+    expect(toDataFrameDTO(data[0])).toMatchSnapshot();
   });
 
   it('should read csv with headers', () => {
@@ -56,7 +56,7 @@ describe('read csv', () => {
     const csv = fs.readFileSync(path, 'utf8');
     const data = readCSV(csv);
     expect(data.length).toBe(1);
-    expect(dataFrameToJSON(data[0])).toMatchSnapshot();
+    expect(toDataFrameDTO(data[0])).toMatchSnapshot();
   });
 });
 

@@ -8,6 +8,8 @@ import { InputQuery, InputOptions } from './types';
 import { FormLabel, Select, QueryEditorProps, TableInputCSV } from '@grafana/ui';
 import { DataFrame, toCSV, SelectableValue, DataFrameHelper } from '@grafana/data';
 
+import { dataFrameToCSV } from './utils';
+
 type Props = QueryEditorProps<InputDatasource, InputQuery, InputOptions>;
 
 const options = [
@@ -26,7 +28,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
 
   onComponentDidMount() {
     const { query } = this.props;
-    const text = query.data ? toCSV(query.data) : '';
+    const text = dataFrameToCSV(query.data);
     this.setState({ text });
   }
 
