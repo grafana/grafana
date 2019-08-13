@@ -41,6 +41,7 @@ export interface PromDataQueryResponse {
       result?: DataQueryResponseData[];
     };
   };
+  cancelled?: boolean;
 }
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
@@ -528,6 +529,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const eventList: AnnotationEvent[] = [];
       tagKeys = tagKeys.split(',');
 
+      if (results.cancelled) {
+        return [];
+      }
       _.each(results.data.data.result, series => {
         const tags = _.chain(series.metric)
           .filter((v, k) => {
