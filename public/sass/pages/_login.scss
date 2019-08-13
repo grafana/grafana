@@ -20,7 +20,6 @@ $login-border: #8daac5;
 
   & .btn-primary {
     @include buttonBackground(#ff6600, #bc3e06);
-    height: 40px;
   }
 }
 
@@ -162,18 +161,17 @@ select:-webkit-autofill:focus {
   transform: tranlate(0px, 0px);
   transition: 0.25s ease;
 
-  &.add {
-    transform: translate(0px, -320px);
-    &.hidden {
-      display: none;
-    }
+  &.hidden {
+    display: none;
   }
 
-  &.remove {
+  &-enter {
     transform: translate(0px, 320px);
-    &.hidden {
-      display: none;
-    }
+    display: flex;
+  }
+
+  &-enter-active {
+    transform: translate(0px, 0px);
   }
 }
 
@@ -319,13 +317,13 @@ select:-webkit-autofill:focus {
     }
   }
 
+  .login-button-group {
+    flex-direction: row;
+  }
+
   .login-inner-box {
     width: 55%;
     padding: $space-md 56px;
-  }
-
-  .login-button-group {
-    flex-direction: row;
   }
 
   .login-button-forgot-password {
