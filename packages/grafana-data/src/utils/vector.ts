@@ -64,7 +64,7 @@ export class ScaledVector implements Vector<number> {
   }
 }
 
-export class CircularVector<T> implements Vector<T> {
+export class CircularVector<T = any> implements Vector<T> {
   buffer: T[];
   index: number;
   length: number;

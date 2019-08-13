@@ -51,31 +51,6 @@ export class DataFrameHelper implements DataFrame {
     }
   }
 
-  /**
-   * Remove some of the rows.
-   *
-   * TODO: really just want a circular buffer
-   */
-  slice(start?: number, end?: number) {
-    let len = 0;
-    for (const f of this.fields) {
-      const arr = f.values as ArrayVector;
-      arr.buffer = arr.buffer.slice(start, end);
-      if (arr.buffer.length > len) {
-        len = arr.buffer.length;
-      }
-    }
-
-    // Should not be necessary
-    for (const fx of this.fields) {
-      const arr = fx.values as ArrayVector;
-      while (arr.buffer.length < len) {
-        arr.buffer.push(null);
-      }
-    }
-    this.length = len;
-  }
-
   private updateTypeIndex(field: Field) {
     // Make sure it has a type
     if (field.type === FieldType.other) {
