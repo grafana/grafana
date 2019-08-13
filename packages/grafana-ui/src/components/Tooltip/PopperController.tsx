@@ -1,16 +1,9 @@
 import React from 'react';
 import * as PopperJS from 'popper.js';
+import { TooltipContent } from './Tooltip';
 
 // This API allows popovers to update Popper's position when e.g. popover content changes
 // updatePopperPosition is delivered to content by react-popper
-export interface TooltipContentProps {
-  updatePopperPosition?: () => void;
-}
-
-export type TooltipContent<T extends TooltipContentProps> =
-  | string
-  | React.ReactElement<T>
-  | ((props: T) => JSX.Element);
 
 export interface UsingPopperProps {
   show?: boolean;

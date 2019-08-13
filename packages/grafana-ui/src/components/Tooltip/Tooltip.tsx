@@ -6,6 +6,16 @@ import { PopperController, UsingPopperProps } from './PopperController';
 export interface TooltipProps extends UsingPopperProps {
   theme?: 'info' | 'error';
 }
+
+export interface TooltipContentProps {
+  updatePopperPosition?: () => void;
+}
+
+export type TooltipContent<T extends TooltipContentProps> =
+  | string
+  | React.ReactElement<T>
+  | ((props: T) => JSX.Element);
+
 export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) => {
   const tooltipTriggerRef = createRef<PopperJS.ReferenceObject>();
   const popperBackgroundClassName = 'popper__background' + (theme ? ' popper__background--' + theme : '');

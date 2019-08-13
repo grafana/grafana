@@ -1,7 +1,7 @@
 import React from 'react';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import { getColorName, getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
-import { TooltipContentProps } from '../Tooltip/PopperController';
+import { TooltipContentProps } from '../Tooltip/Tooltip';
 import SpectrumPalette from './SpectrumPalette';
 import { GrafanaThemeType, Themeable } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';

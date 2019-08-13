@@ -1,6 +1,6 @@
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { FormLabel } from '../FormLabel/FormLabel';
-import { TooltipContent } from '../Tooltip/PopperController';
+import { TooltipContent } from '../Tooltip/Tooltip';
 import { cx } from 'emotion';
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
