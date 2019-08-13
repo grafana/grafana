@@ -51,7 +51,7 @@ class PopperController extends React.Component<Props, State> {
     };
   }
 
-  componentWillReceiveProps(nextProps: Props) {
+  UNSAFE_componentWillReceiveProps(nextProps: Props) {
     if (nextProps.placement && nextProps.placement !== this.state.placement) {
       this.setState((prevState: State) => {
         return {
