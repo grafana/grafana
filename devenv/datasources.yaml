@@ -126,7 +126,7 @@ datasources:
   - name: gdev-elasticsearch-v7-metrics
     type: elasticsearch
     access: proxy
-    database: "[metrics-]YYYY.MM.DD"
+    database: "[metricbeat-]YYYY.MM.DD"
     url: http://localhost:12200
     jsonData:
       timeInterval: 10s
