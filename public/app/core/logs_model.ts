@@ -1,17 +1,15 @@
 import _ from 'lodash';
 import ansicolor from 'vendor/ansicolor/ansicolor';
 
-import { colors } from '@grafana/ui';
+import { colors, getFlotPairs } from '@grafana/ui';
 
 import {
-  TimeSeries,
   Labels,
   LogLevel,
   DataFrame,
   findCommonLabels,
   findUniqueLabels,
   getLogLevel,
-  toLegacyResponseData,
   FieldCache,
   FieldType,
   getLogLevelFromKey,
@@ -22,10 +20,15 @@ import {
   LogsParser,
   LogLabelStatsModel,
   LogsDedupStrategy,
+  GraphSeriesXY,
+  LoadingState,
+  dateTime,
+  toUtc,
+  NullValueMode,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
-import { dateTime, toUtc } from '@grafana/data';
+import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -192,7 +195,7 @@ export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>)
   };
 }
 
-export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): TimeSeries[] {
+export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): GraphSeriesXY[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
   // when executing queries & interval calculated and not here but this is a temporary fix.
@@ -242,12 +245,26 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
       return a[1] - b[1];
     });
 
-    return {
-      datapoints: series.datapoints,
-      target: series.alias,
-      alias: series.alias,
+    const points = getFlotPairs({
+      rows: series.datapoints,
+      xIndex: 1,
+      yIndex: 0,
+      nullValueMode: NullValueMode.Null,
+    });
+
+    const graphSeries: GraphSeriesXY = {
       color: series.color,
+      label: series.alias,
+      data: points,
+      isVisible: true,
+      yAxis: {
+        index: 1,
+        min: 0,
+        tickDecimals: 0,
+      },
     };
+
+    return graphSeries;
   });
 }
 
@@ -273,10 +290,16 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
     if (metricSeries.length === 0) {
       logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
     } else {
-      logsModel.series = [];
-      for (const series of metricSeries) {
-        logsModel.series.push(toLegacyResponseData(series) as TimeSeries);
-      }
+      logsModel.series = getGraphSeriesModel(
+        { series: metricSeries, state: LoadingState.Done },
+        {},
+        { showBars: true, showLines: false, showPoints: false },
+        {
+          asTable: false,
+          isVisible: true,
+          placement: 'under',
+        }
+      );
     }
 
     return logsModel;
