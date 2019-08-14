@@ -24,7 +24,7 @@ function unpublish_previous_canary () {
 
 # Get current version from lerna.json
 PACKAGE_VERSION=$(grep '"version"' lerna.json | cut -d '"' -f 4)
-# Get short current commit's has
+# Get  current commit's short hash
 GIT_SHA=$(parse_git_hash)
 
 echo "Commit: ${GIT_SHA}"
