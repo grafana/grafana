@@ -1,9 +1,13 @@
 import { getFlotPairs } from './flotPairs';
-import { createField, DataFrameHelper } from '@grafana/data';
+import { DataFrameHelper } from '@grafana/data';
 
 describe('getFlotPairs', () => {
   const series = new DataFrameHelper({
-    fields: [createField('a', [1, 2, 3]), createField('b', [100, 200, 300]), createField('c', ['a', 'b', 'c'])],
+    fields: [
+      { name: 'a', values: [1, 2, 3] },
+      { name: 'b', values: [100, 200, 300] },
+      { name: 'c', values: ['a', 'b', 'c'] },
+    ],
   });
   it('should get X and y', () => {
     const pairs = getFlotPairs({

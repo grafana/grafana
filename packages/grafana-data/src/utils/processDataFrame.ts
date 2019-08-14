@@ -337,6 +337,17 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
 }
 
 /**
+ * Wrapper to get an array from each field value
+ */
+export function getDataFrameRow(data: DataFrame, row: number): any[] {
+  const values: any[] = [];
+  for (const field of data.fields) {
+    values.push(field.values.get(row));
+  }
+  return values;
+}
+
+/**
  * Returns a copy that does not include functions
  */
 export function toDataFrameDTO(data: DataFrame): DataFrameDTO {

@@ -1,5 +1,5 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { ReducerID, Threshold, createField, DataFrameHelper } from '@grafana/data';
+import { ReducerID, Threshold, DataFrameHelper } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
@@ -37,9 +37,9 @@ describe('FieldDisplay', () => {
       new DataFrameHelper({
         name: 'Series Name',
         fields: [
-          createField('Field 1', ['a', 'b', 'c']),
-          createField('Field 2', [1, 3, 5]),
-          createField('Field 3', [2, 4, 6]),
+          { name: 'Field 1', values: ['a', 'b', 'c'] },
+          { name: 'Field 2', values: [1, 3, 5] },
+          { name: 'Field 3', values: [2, 4, 6] },
         ],
       }),
     ],

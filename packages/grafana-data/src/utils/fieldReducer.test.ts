@@ -1,8 +1,10 @@
 import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import _ from 'lodash';
-import { Field } from '../types/index';
-import { createField } from './dataFrameHelper';
+import { Field, FieldType } from '../types/index';
+import { DataFrameHelper } from './dataFrameHelper';
+import { ArrayVector } from './vector';
+import { guessFieldTypeFromValue } from './processDataFrame';
 
 /**
  * Run a reducer and get back the value
@@ -11,10 +13,20 @@ function reduce(field: Field, id: string): any {
   return reduceField({ field, reducers: [id] })[id];
 }
 
-describe('Stats Calculators', () => {
-  const basicTable = {
-    fields: [createField('a', [10, 20]), createField('b', [20, 30]), createField('c', [30, 40])],
+function createField<T>(name: string, values?: T[], type?: FieldType): Field<T> {
+  const arr = new ArrayVector(values);
+  return {
+    name,
+    config: {},
+    type: type ? type : guessFieldTypeFromValue(arr.get(0)),
+    values: arr,
   };
+}
+
+describe('Stats Calculators', () => {
+  const basicTable = new DataFrameHelper({
+    fields: [{ name: 'a', values: [10, 20] }, { name: 'b', values: [20, 30] }, { name: 'c', values: [30, 40] }],
+  });
 
   it('should load all standard stats', () => {
     for (const id of Object.keys(ReducerID)) {

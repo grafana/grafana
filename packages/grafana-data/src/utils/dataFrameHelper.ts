@@ -200,16 +200,6 @@ export class DataFrameHelper implements DataFrame {
   }
 }
 
-export function createField<T>(name: string, values?: T[], type?: FieldType): Field<T> {
-  const arr = new ArrayVector(values);
-  return {
-    name,
-    config: {},
-    type: type ? type : guessFieldTypeFromValue(arr.get(0)),
-    values: arr,
-  };
-}
-
 export class DataFrameView<T = any> implements Vector<T> {
   private index = 0;
   private obj: T;
@@ -245,17 +235,6 @@ export class DataFrameView<T = any> implements Vector<T> {
     console.warn('not really implemented');
     return [];
   }
-}
-
-/**
- * Wrapper to get an array from each field value
- */
-export function getDataFrameRow(data: DataFrame, row: number): any[] {
-  const values: any[] = [];
-  for (const field of data.fields) {
-    values.push(field.values.get(row));
-  }
-  return values;
 }
 
 function makeFieldParser(value: string, field: Field): (value: string) => any {

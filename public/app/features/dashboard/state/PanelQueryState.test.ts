@@ -1,6 +1,6 @@
 import { toDataQueryError, PanelQueryState, getProcessedDataFrames } from './PanelQueryState';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { LoadingState, createField, getDataFrameRow } from '@grafana/data';
+import { LoadingState, getDataFrameRow } from '@grafana/data';
 import { DataQueryResponse } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
@@ -94,7 +94,7 @@ describe('getProcessedDataFrame', () => {
 
 function makeSeriesStub(refId: string) {
   return {
-    fields: [createField(undefined)],
+    fields: [{ name: undefined }],
     refId,
   } as any;
 }

@@ -1,5 +1,5 @@
 import { readCSV, toCSV, CSVHeaderStyle } from './csv';
-import { getDataFrameRow } from './dataFrameHelper';
+import { getDataFrameRow } from './processDataFrame';
 
 // Test with local CSV files
 import fs from 'fs';
