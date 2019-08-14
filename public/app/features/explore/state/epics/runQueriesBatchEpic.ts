@@ -104,8 +104,8 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
         // observer subscription, handles datasourceInstance.query observer events and pushes that forward
         const streamSubscription = streamHandler.subscribe({
           next: event => {
-            const { state, error, data } = event;
-            if (!data && !error) {
+            const { state, error, data, delta } = event;
+            if (!data && !delta && !error) {
               return;
             }
 
@@ -138,7 +138,7 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
               outerObservable.next(
                 limitMessageRatePayloadAction({
                   exploreId,
-                  series: data,
+                  series: delta,
                   datasourceId,
                 })
               );
@@ -152,7 +152,7 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
                 now,
                 loadingState: state,
                 series: null,
-                delta: data,
+                delta,
               });
               publishActions(outerObservable, actions);
             }
