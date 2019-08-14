@@ -48,15 +48,25 @@ describe('toDataFrame', () => {
     expect(data.fields[0].type).toBe(FieldType.number);
   });
 
-  // TODO TODO
-  // it('keeps dataFrame unchanged', () => {
-  //   const input = {
-  //     fields: [{ text: 'A' }, { text: 'B' }, { text: 'C' }],
-  //     rows: [[100, 'A', 1], [200, 'B', 2], [300, 'C', 3]],
-  //   };
-  //   const series = toDataFrame(input);
-  //   expect(series).toBe(input);
-  // });
+  it('keeps dataFrame unchanged', () => {
+    const input = toDataFrame({
+      datapoints: [[100, 1], [200, 2]],
+    });
+    expect(input.length).toEqual(2);
+
+    // If the object is alreay a DataFrame, it should not change
+    const again = toDataFrame(input);
+    expect(again).toBe(input);
+  });
+
+  it('migrate from 6.3 style rows', () => {
+    const oldDataFrame = {
+      fields: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
+      rows: [[100, 'A', 1], [200, 'B', 2], [300, 'C', 3]],
+    };
+    const data = toDataFrame(oldDataFrame);
+    expect(data.length).toBe(oldDataFrame.rows.length);
+  });
 
   it('Guess Colum Types from value', () => {
     expect(guessFieldTypeFromValue(1)).toBe(FieldType.number);

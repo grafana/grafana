@@ -217,9 +217,15 @@ export const isDataFrame = (data: any): data is DataFrame => data && data.hasOwn
 
 export const toDataFrame = (data: any): DataFrame => {
   if (data.hasOwnProperty('fields')) {
-    // @deprecated -- remove after 6.4
+    // @deprecated -- remove in 6.5
     if (data.hasOwnProperty('rows')) {
-      throw new Error('Old DataFrame format.  Values should be on the fields');
+      const v = new DataFrameHelper(data as DataFrameDTO);
+      const rows = data.rows as any[][];
+      for (let i = 0; i < rows.length; i++) {
+        v.appendRow(rows[i]);
+      }
+      // TODO: deprection warning
+      return v;
     }
 
     // DataFrameDTO does not have length
