@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 GRAFANA_TAG=${1:-}
 RELEASE_CHANNEL="latest"
