@@ -29,6 +29,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     fields: [
       {
         name: timeSeries.target || 'Value',
+        type: FieldType.number,
         unit: timeSeries.unit,
       },
       {
