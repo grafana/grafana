@@ -1,10 +1,14 @@
 {
+  "plugins": ["lodash"],
   "presets": [
     [
       "@babel/preset-env",
       {
-		  "targets": { "browsers": "last 3 versions" },
-		  "useBuiltIns": "entry"
+        "targets": {
+          "browsers": "last 3 versions"
+        },
+        "useBuiltIns": "entry",
+        "modules": "false",
       }
     ]
   ]

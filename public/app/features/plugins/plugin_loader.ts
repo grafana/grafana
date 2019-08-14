@@ -162,10 +162,10 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export function importPluginModule(path: string): Promise<any> {
+export async function importPluginModule(path: string): Promise<any> {
   const builtIn = builtInPlugins[path];
   if (builtIn) {
-    return Promise.resolve(builtIn);
+    return await builtIn();
   }
   return grafanaRuntime.SystemJS.import(path);
 }
