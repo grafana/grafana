@@ -69,6 +69,8 @@ export {
 } from './Logs/LogRowContextProvider';
 export { LogRowContext } from './Logs/LogRowContext';
 export { LogLabelStats } from './Logs/LogLabelStats';
+export { LogLabel } from './Logs/LogLabel';
+export { LogLabels } from './Logs/LogLabels';
 export { Alert } from './Alert/Alert';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';

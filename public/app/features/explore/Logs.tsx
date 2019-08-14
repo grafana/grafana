@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 import { rangeUtil } from '@grafana/data';
-import { Switch } from '@grafana/ui';
+import { Switch, LogLabels } from '@grafana/ui';
 import {
   RawTimeRange,
   LogLevel,
@@ -16,7 +16,6 @@ import {
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
-import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
 import { LogsDedupDescription } from 'app/core/logs_model';
 import ExploreGraphPanel from './ExploreGraphPanel';
@@ -28,7 +27,7 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
     return (
       <span className="logs-meta-item__labels">
-        <LogLabels labels={value} plain />
+        <LogLabels labels={value} plain getRows={undefined} />
       </span>
     );
   }

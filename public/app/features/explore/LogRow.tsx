@@ -14,12 +14,12 @@ import {
   LogRowContextQueryErrors,
   LogRowContext,
   LogLabelStats,
+  LogLabels,
 } from '@grafana/ui';
 import { LogRowModel, LogLabelStatsModel, LogsParser, TimeZone } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 
 import { calculateFieldStats, getParser } from 'app/core/logs_model';
-import { LogLabels } from './LogLabels';
 import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { css, cx } from 'emotion';

@@ -1,4 +1,6 @@
-import { LogLevel } from '../types/logs';
+import { countBy, chain } from 'lodash';
+
+import { LogLevel, LogRowModel, LogLabelStatsModel } from '../types/logs';
 import { DataFrame, FieldType } from '../types/data';
 
 /**
@@ -41,4 +43,20 @@ export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataF
       return [...row, getLogLevel(line)];
     }),
   };
+}
+
+export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
+  // Consider only rows that have the given label
+  const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
+  const rowCount = rowsWithLabel.length;
+
+  // Get label value counts for eligible rows
+  const countsByValue = countBy(rowsWithLabel, row => (row as LogRowModel).labels[label]);
+  const sortedCounts = chain(countsByValue)
+    .map((count, value) => ({ count, value, proportion: count / rowCount }))
+    .sortBy('count')
+    .reverse()
+    .value();
+
+  return sortedCounts;
 }

@@ -1,14 +1,13 @@
 import React, { PureComponent } from 'react';
+import { LogRowModel, LogLabelStatsModel, calculateLogsLabelStats } from '@grafana/data';
 
-import { LogLabelStats } from '@grafana/ui';
-import { LogRowModel, LogLabelStatsModel } from '@grafana/data';
-import { calculateLogsLabelStats } from 'app/core/logs_model';
+import { LogLabelStats } from './LogLabelStats';
 
 interface Props {
-  getRows?: () => LogRowModel[];
-  label: string;
-  plain?: boolean;
   value: string;
+  label: string;
+  getRows: () => LogRowModel[];
+  plain?: boolean;
   onClickLabel?: (label: string, value: string) => void;
 }
 
@@ -19,7 +18,7 @@ interface State {
 
 export class LogLabel extends PureComponent<Props, State> {
   state: State = {
-    stats: null,
+    stats: [],
     showStats: false,
   };
 
@@ -37,7 +36,7 @@ export class LogLabel extends PureComponent<Props, State> {
   onClickStats = () => {
     this.setState(state => {
       if (state.showStats) {
-        return { showStats: false, stats: null };
+        return { showStats: false, stats: [] };
       }
       const allRows = this.props.getRows();
       const stats = calculateLogsLabelStats(allRows, this.props.label);

@@ -1,11 +1,10 @@
 import React, { PureComponent } from 'react';
-
 import { LogLabel } from './LogLabel';
 import { Labels, LogRowModel } from '@grafana/data';
 
 interface Props {
-  getRows?: () => LogRowModel[];
   labels: Labels;
+  getRows: () => LogRowModel[];
   plain?: boolean;
   onClickLabel?: (label: string, value: string) => void;
 }

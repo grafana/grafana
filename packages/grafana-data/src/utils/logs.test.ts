@@ -1,5 +1,5 @@
 import { LogLevel } from '../types/logs';
-import { getLogLevel } from './logs';
+import { getLogLevel, calculateLogsLabelStats } from './logs';
 
 describe('getLoglevel()', () => {
   it('returns no log level on empty line', () => {
@@ -23,5 +23,58 @@ describe('getLoglevel()', () => {
 
   it('returns first log level found', () => {
     expect(getLogLevel('WARN this could be a debug message')).toBe(LogLevel.warn);
+  });
+});
+
+describe('calculateLogsLabelStats()', () => {
+  test('should return no stats for empty rows', () => {
+    expect(calculateLogsLabelStats([], '')).toEqual([]);
+  });
+
+  test('should return no stats of label is not found', () => {
+    const rows = [
+      {
+        entry: 'foo 1',
+        labels: {
+          foo: 'bar',
+        },
+      },
+    ];
+
+    expect(calculateLogsLabelStats(rows as any, 'baz')).toEqual([]);
+  });
+
+  test('should return stats for found labels', () => {
+    const rows = [
+      {
+        entry: 'foo 1',
+        labels: {
+          foo: 'bar',
+        },
+      },
+      {
+        entry: 'foo 0',
+        labels: {
+          foo: 'xxx',
+        },
+      },
+      {
+        entry: 'foo 2',
+        labels: {
+          foo: 'bar',
+        },
+      },
+    ];
+
+    expect(calculateLogsLabelStats(rows as any, 'foo')).toMatchObject([
+      {
+        value: 'bar',
+        count: 2,
+      },
+      {
+        value: 'xxx',
+        count: 1,
+      },
+    ]);
   });
 });

@@ -107,22 +107,6 @@ export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): Log
   return sortedCounts;
 }
 
-export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
-  // Consider only rows that have the given label
-  const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
-  const rowCount = rowsWithLabel.length;
-
-  // Get label value counts for eligible rows
-  const countsByValue = _.countBy(rowsWithLabel, row => (row as LogRowModel).labels[label]);
-  const sortedCounts = _.chain(countsByValue)
-    .map((count, value) => ({ count, value, proportion: count / rowCount }))
-    .sortBy('count')
-    .reverse()
-    .value();
-
-  return sortedCounts;
-}
-
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
 function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedupStrategy): boolean {
   switch (strategy) {

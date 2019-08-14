@@ -1,12 +1,5 @@
 import { DataFrame, FieldType, LogsModel, LogsMetaKind, LogsDedupStrategy, LogLevel } from '@grafana/data';
-import {
-  dedupLogRows,
-  calculateFieldStats,
-  calculateLogsLabelStats,
-  getParser,
-  LogsParsers,
-  dataFrameToLogsModel,
-} from '../logs_model';
+import { dedupLogRows, calculateFieldStats, getParser, LogsParsers, dataFrameToLogsModel } from '../logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -182,59 +175,6 @@ describe('calculateFieldStats()', () => {
       {
         value: '503',
         count: 2,
-      },
-    ]);
-  });
-});
-
-describe('calculateLogsLabelStats()', () => {
-  test('should return no stats for empty rows', () => {
-    expect(calculateLogsLabelStats([], '')).toEqual([]);
-  });
-
-  test('should return no stats of label is not found', () => {
-    const rows = [
-      {
-        entry: 'foo 1',
-        labels: {
-          foo: 'bar',
-        },
-      },
-    ];
-
-    expect(calculateLogsLabelStats(rows as any, 'baz')).toEqual([]);
-  });
-
-  test('should return stats for found labels', () => {
-    const rows = [
-      {
-        entry: 'foo 1',
-        labels: {
-          foo: 'bar',
-        },
-      },
-      {
-        entry: 'foo 0',
-        labels: {
-          foo: 'xxx',
-        },
-      },
-      {
-        entry: 'foo 2',
-        labels: {
-          foo: 'bar',
-        },
-      },
-    ];
-
-    expect(calculateLogsLabelStats(rows as any, 'foo')).toMatchObject([
-      {
-        value: 'bar',
-        count: 2,
-      },
-      {
-        value: 'xxx',
-        count: 1,
       },
     ]);
   });
