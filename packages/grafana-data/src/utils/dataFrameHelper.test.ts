@@ -15,6 +15,7 @@ describe('dataFrameHelper', () => {
       { name: 'time', type: FieldType.time, values: [100, 200, 300] },
       { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
       { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+      { name: 'value', type: FieldType.number, values: [4, 5, 6] },
     ],
   };
   const ext = new DataFrameHelper(frame);
@@ -32,6 +33,12 @@ describe('dataFrameHelper', () => {
     expect(first.name).toEqual((frame.fields[1].values as any[])[0]);
     expect(first.value).toEqual((frame.fields[2].values as any[])[0]);
     expect(first.more).toBeUndefined();
+  });
+
+  it('Should get the first field with a duplicate name', () => {
+    const field = ext.getFieldByName('value');
+    expect(field!.name).toEqual('value');
+    expect(field!.values.toJSON()).toEqual([1, 2, 3]);
   });
 });
 

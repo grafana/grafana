@@ -91,8 +91,9 @@ export class DataFrameHelper implements DataFrame {
 
     if (this.fieldByName[field.name]) {
       console.warn('Duplicate field names in DataFrame: ', field.name);
+    } else {
+      this.fieldByName[field.name] = field;
     }
-    this.fieldByName[field.name] = field;
 
     // Make sure the lengths all match
     if (field.values.length !== this.length) {
@@ -180,22 +181,26 @@ export class DataFrameHelper implements DataFrame {
   }
 
   hasFieldOfType(type: FieldType): boolean {
-    return this.fieldByType[type] && this.fieldByType[type].length > 0;
+    const types = this.fieldByType[type];
+    return types && types.length > 0;
   }
 
-  getFirstFieldOfType(type: FieldType): Field | null {
+  getFirstFieldOfType(type: FieldType): Field | undefined {
     const arr = this.fieldByType[type];
     if (arr && arr.length > 0) {
       return arr[0];
     }
-    return null;
+    return undefined;
   }
 
   hasFieldNamed(name: string): boolean {
-    return this.fieldByName[name] !== undefined;
+    return !!this.fieldByName[name];
   }
 
-  getFieldByName(name: string): Field | null {
+  /**
+   * Returns the first field with the given name.
+   */
+  getFieldByName(name: string): Field | undefined {
     return this.fieldByName[name];
   }
 }
@@ -212,7 +217,10 @@ export class DataFrameView<T = any> implements Vector<T> {
           return this.getFieldValue(i);
         },
       };
-      Object.defineProperty(obj, data.fields[i].name, getter);
+      const name = data.fields[i].name;
+      if (!(obj as any).hasOwnProperty(name)) {
+        Object.defineProperty(obj, name, getter);
+      }
       Object.defineProperty(obj, i, getter);
     }
     this.obj = obj;
