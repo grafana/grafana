@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
 import { renderMarkdown } from '@grafana/data';
-import { Tooltip, ScopedVars, TooltipContent } from '@grafana/ui';
+import { Tooltip, ScopedVars, PopoverContent } from '@grafana/ui';
 import { DataLink } from '@grafana/data';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -71,7 +71,7 @@ export class PanelHeaderCorner extends Component<Props> {
     );
   };
 
-  renderCornerType(infoMode: InfoMode, content: TooltipContent<any>) {
+  renderCornerType(infoMode: InfoMode, content: PopoverContent<any>) {
     const theme = infoMode === InfoMode.Error ? 'error' : 'info';
     return (
       <Tooltip content={content} placement="top-start" theme={theme}>

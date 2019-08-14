@@ -17,7 +17,7 @@ import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
 import resetSelectStyles from './resetSelectStyles';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { TooltipContent } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../Tooltip/Tooltip';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { SelectableValue } from '@grafana/data';
 
@@ -43,7 +43,7 @@ export interface CommonProps<T> {
   backspaceRemovesValue?: boolean;
   isOpen?: boolean;
   components?: any;
-  tooltipContent?: TooltipContent<any>;
+  tooltipContent?: PopoverContent<any>;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   tabSelectsValue?: boolean;
@@ -269,7 +269,7 @@ export interface TooltipWrapperProps {
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   isOpen?: boolean;
-  tooltipContent?: TooltipContent<any>;
+  tooltipContent?: PopoverContent<any>;
 }
 
 export interface TooltipWrapperState {

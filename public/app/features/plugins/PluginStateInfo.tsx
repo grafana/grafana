@@ -1,13 +1,13 @@
 import React, { FC, useContext } from 'react';
 import { css } from 'emotion';
 import { PluginState, Tooltip, ThemeContext } from '@grafana/ui';
-import { TooltipContent } from '@grafana/ui/src/components/Tooltip/Tooltip';
+import { PopoverContent } from '@grafana/ui/src/components/Tooltip/Tooltip';
 
 interface Props {
   state?: PluginState;
 }
 
-function getPluginStateInfoText(state?: PluginState): TooltipContent<any> | null {
+function getPluginStateInfoText(state?: PluginState): PopoverContent<any> | null {
   switch (state) {
     case PluginState.alpha:
       return (

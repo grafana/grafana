@@ -1,10 +1,10 @@
 import React, { InputHTMLAttributes, FunctionComponent } from 'react';
 import { FormLabel } from '../FormLabel/FormLabel';
-import { TooltipContent } from '../Tooltip/Tooltip';
+import { PopoverContent } from '../Tooltip/Tooltip';
 import { cx } from 'emotion';
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  tooltip?: TooltipContent<any>;
+  tooltip?: PopoverContent<any>;
   labelWidth?: number;
   inputWidth?: number;
   inputEl?: React.ReactNode;

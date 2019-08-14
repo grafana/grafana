@@ -1,7 +1,7 @@
 import React from 'react';
 import { NamedColorsPalette } from './NamedColorsPalette';
 import { getColorName, getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
-import { TooltipContentProps } from '../Tooltip/Tooltip';
+import { PopoverContentProps } from '../Tooltip/Tooltip';
 import SpectrumPalette from './SpectrumPalette';
 import { GrafanaThemeType, Themeable } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
@@ -19,7 +19,7 @@ export interface ColorPickerProps extends Themeable {
   enableNamedColors?: boolean;
 }
 
-export interface Props<T> extends ColorPickerProps, TooltipContentProps {
+export interface Props<T> extends ColorPickerProps, PopoverContentProps {
   customPickers?: T;
 }
 

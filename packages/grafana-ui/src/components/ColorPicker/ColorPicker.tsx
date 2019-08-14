@@ -1,6 +1,6 @@
 import React, { Component, createRef } from 'react';
 import omit from 'lodash/omit';
-import { PopperController } from '../Tooltip/PopperController';
+import { PopoverController } from '../Tooltip/PopoverController';
 import { Popper } from '../Tooltip/Popper';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
@@ -46,7 +46,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
       });
 
       return (
-        <PopperController content={popoverElement} hideAfter={300}>
+        <PopoverController content={popoverElement} hideAfter={300}>
           {(showPopper, hidePopper, popperProps) => {
             return (
               <>
@@ -80,7 +80,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
               </>
             );
           }}
-        </PopperController>
+        </PopoverController>
       );
     }
   };
