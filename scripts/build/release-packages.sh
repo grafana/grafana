@@ -14,7 +14,7 @@ if grep -q "beta" <<< "$GRAFANA_TAG"; then
   RELEASE_CHANNEL="next"
 fi
 
-echo $_grafana_version
+echo "$_grafana_version"
 
 # Get current version from lerna.json
 # Since this happens on tagged branch, the lerna.json version and package.json file SHOULD be updated already
