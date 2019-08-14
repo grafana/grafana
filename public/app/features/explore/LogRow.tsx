@@ -12,6 +12,7 @@ import {
   LogRowContextRows,
   HasMoreContextRows,
   LogRowContextQueryErrors,
+  LogRowContext,
 } from '@grafana/ui';
 import { LogRowModel, LogLabelStatsModel, LogsParser, TimeZone } from '@grafana/data';
 import tinycolor from 'tinycolor2';
@@ -22,7 +23,6 @@ import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { css, cx } from 'emotion';
-import { LogRowContext } from './LogRowContext';
 
 interface Props {
   highlighterExpressions?: string[];

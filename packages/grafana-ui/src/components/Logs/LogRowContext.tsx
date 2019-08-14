@@ -1,20 +1,16 @@
 import React, { useContext, useRef, useState, useLayoutEffect } from 'react';
-import {
-  ThemeContext,
-  List,
-  GrafanaTheme,
-  selectThemeVariant,
-  ClickOutsideWrapper,
-  CustomScrollbar,
-  DataQueryError,
-  LogRowContextRows,
-  HasMoreContextRows,
-  LogRowContextQueryErrors,
-} from '@grafana/ui';
-
 import { LogRowModel } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { Alert } from './Error';
+
+import { Alert } from '../Alert/Alert';
+import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
+import { GrafanaTheme } from '../../types/theme';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import { DataQueryError } from '../../types/datasource';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { List } from '../List/List';
+import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 interface LogRowContextProps {
   row: LogRowModel;
@@ -145,7 +141,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   const theme = useContext(ThemeContext);
   const { commonStyles, logs } = getLogRowContextStyles(theme);
   const [scrollTop, setScrollTop] = useState(0);
-  const listContainerRef = useRef<HTMLDivElement>();
+  const listContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
 
   useLayoutEffect(() => {
     if (shouldScrollToBottom && listContainerRef.current) {

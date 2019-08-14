@@ -67,6 +67,8 @@ export {
   HasMoreContextRows,
   LogRowContextQueryErrors,
 } from './Logs/LogRowContextProvider';
+export { LogRowContext } from './Logs/LogRowContext';
+export { Alert } from './Alert/Alert';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';

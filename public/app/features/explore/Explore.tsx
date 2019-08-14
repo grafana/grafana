@@ -10,7 +10,7 @@ import { AutoSizer } from 'react-virtualized';
 import store from 'app/core/store';
 
 // Components
-import { Alert } from './Error';
+import { Alert } from '@grafana/ui';
 import ErrorBoundary from './ErrorBoundary';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
