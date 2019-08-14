@@ -1,4 +1,4 @@
-  #!/bin/bash
+#!/usr/bin/env bash
 
 function parse_git_hash() {
   git rev-parse --short HEAD 2> /dev/null | sed "s/\(.*\)/\1/"
@@ -18,7 +18,7 @@ function unpublish_previous_canary () {
     # dist-tag next to be changed to canary when https://github.com/grafana/grafana/pull/18195 is merged
     CURRENT_CANARY=$(npm view @grafana/${PACKAGE} dist-tags.next)
     echo "Unpublish @grafana/${PACKAGE}@${CURRENT_CANARY}"
-    npm unpublish @grafana/${PACKAGE}@${CURRENT_CANARY}
+    npm unpublish "@grafana/${PACKAGE}@${CURRENT_CANARY}"
   done
 }
 
