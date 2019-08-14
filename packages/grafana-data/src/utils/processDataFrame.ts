@@ -4,7 +4,7 @@ import isString from 'lodash/isString';
 import isBoolean from 'lodash/isBoolean';
 
 // Types
-import { DataFrame, Field, TimeSeries, FieldType, TableData, Column } from '../types/index';
+import { DataFrame, Field, TimeSeries, FieldType, TableData, Column, GraphSeriesXY } from '../types/index';
 import { isDateTime } from './moment_wrapper';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
@@ -29,6 +29,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     fields: [
       {
         name: timeSeries.target || 'Value',
+        type: FieldType.number,
         unit: timeSeries.unit,
       },
       {
@@ -41,6 +42,23 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     labels: timeSeries.tags,
     refId: timeSeries.refId,
     meta: timeSeries.meta,
+  };
+}
+
+function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
+  return {
+    name: graphSeries.label,
+    fields: [
+      {
+        name: graphSeries.label || 'Value',
+      },
+      {
+        name: 'Time',
+        type: FieldType.time,
+        unit: 'dateTimeAsIso',
+      },
+    ],
+    rows: graphSeries.data,
   };
 }
 
@@ -144,6 +162,9 @@ export const toDataFrame = (data: any): DataFrame => {
   }
   if (data.hasOwnProperty('datapoints')) {
     return convertTimeSeriesToDataFrame(data);
+  }
+  if (data.hasOwnProperty('data')) {
+    return convertGraphSeriesToDataFrame(data);
   }
   if (data.hasOwnProperty('columns')) {
     return convertTableToDataFrame(data);

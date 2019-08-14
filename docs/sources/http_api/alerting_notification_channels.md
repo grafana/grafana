@@ -63,6 +63,48 @@ Content-Type: application/json
 
 ```
 
+## Get all notification channels (lookup)
+
+Returns all notification channels, but with less detailed information.
+Accessible by any authenticated user and is mainly used by providing
+alert notification channels in Grafana UI when configuring alert rule.
+
+`GET /api/alert-notifications/lookup`
+
+**Example Request**:
+
+```http
+GET /api/alert-notifications/lookup HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "id": 1,
+    "uid": "000000001",
+    "name": "Test",
+    "type": "email",
+    "isDefault": false
+  },
+  {
+    "id": 2,
+    "uid": "000000002",
+    "name": "Slack",
+    "type": "slack",
+    "isDefault": false
+  }
+]
+
+```
+
 ## Get notification channel by uid
 
 `GET /api/alert-notifications/uid/:uid`

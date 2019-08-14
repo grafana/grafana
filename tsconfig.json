@@ -19,6 +19,7 @@
     "noEmitOnError": false,
     "emitDecoratorMetadata": false,
     "experimentalDecorators": true,
+    "strictNullChecks": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noImplicitUseStrict": false,

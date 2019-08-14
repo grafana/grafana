@@ -3,7 +3,7 @@ import * as PopperJS from 'popper.js';
 import { Popper } from './Popper';
 import { PopperController, UsingPopperProps } from './PopperController';
 
-interface TooltipProps extends UsingPopperProps {
+export interface TooltipProps extends UsingPopperProps {
   theme?: 'info' | 'error';
 }
 export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) => {

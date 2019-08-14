@@ -16,10 +16,10 @@ export class TextPanelEditor extends PureComponent<PanelEditorProps<TextOptions>
   ];
 
   onModeChange = (item: SelectableValue<TextMode>) =>
-    this.props.onOptionsChange({ ...this.props.options, mode: item.value });
+    this.props.onOptionsChange({ ...this.props.options, mode: item.value! });
 
   onContentChange = (evt: ChangeEvent<HTMLTextAreaElement>) => {
-    this.props.onOptionsChange({ ...this.props.options, content: (event.target as any).value });
+    this.props.onOptionsChange({ ...this.props.options, content: (evt.target as any).value });
   };
 
   render() {
