@@ -319,11 +319,6 @@ export interface DataStreamState {
   error?: DataQueryError;
 
   /**
-   * Optionally return only the rows that changed in this event
-   */
-  delta?: DataFrame[];
-
-  /**
    * Stop listening to this stream
    */
   unsubscribe: () => void;

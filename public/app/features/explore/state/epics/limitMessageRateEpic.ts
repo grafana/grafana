@@ -17,8 +17,7 @@ export const limitMessageRateEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState
         latency: 0,
         datasourceId,
         loadingState: LoadingState.Streaming,
-        series: null,
-        delta: series,
+        series,
       });
     })
   );

@@ -70,7 +70,6 @@ describe('runQueriesBatchEpic', () => {
               historyUpdatedAction({ exploreId, history }),
               processQueryResultsAction({
                 exploreId,
-                delta: null,
                 series,
                 latency: 0,
                 datasourceId,
@@ -123,14 +122,14 @@ describe('runQueriesBatchEpic', () => {
             )
             .whenQueryObserverReceivesEvent({
               state: LoadingState.Streaming,
-              delta: [serieA],
+              data: [serieA],
               key: 'some key',
               request: {} as DataQueryRequest,
               unsubscribe,
             })
             .whenQueryObserverReceivesEvent({
               state: LoadingState.Streaming,
-              delta: [serieB],
+              data: [serieB],
               key: 'some key',
               request: {} as DataQueryRequest,
               unsubscribe,
@@ -181,7 +180,7 @@ describe('runQueriesBatchEpic', () => {
             rows: [],
             refId: 'B',
           };
-          const delta = [serieA, serieB];
+          const data = [serieA, serieB];
 
           epicTester(runQueriesBatchEpic, state)
             .whenActionIsDispatched(
@@ -189,8 +188,7 @@ describe('runQueriesBatchEpic', () => {
             )
             .whenQueryObserverReceivesEvent({
               state: LoadingState.Done,
-              data: null,
-              delta,
+              data,
               key: 'some key',
               request: {} as DataQueryRequest,
               unsubscribe,
@@ -200,8 +198,7 @@ describe('runQueriesBatchEpic', () => {
               historyUpdatedAction({ exploreId, history }),
               processQueryResultsAction({
                 exploreId,
-                delta,
-                series: null,
+                series: data,
                 latency: 0,
                 datasourceId,
                 loadingState: LoadingState.Done,
@@ -245,7 +242,6 @@ describe('runQueriesBatchEpic', () => {
             historyUpdatedAction({ exploreId, history }), // output from first observable
             processQueryResultsAction({
               exploreId,
-              delta: null,
               series,
               latency: 0,
               datasourceId,
@@ -257,7 +253,6 @@ describe('runQueriesBatchEpic', () => {
             historyUpdatedAction({ exploreId, history }), // output from second observable
             processQueryResultsAction({
               exploreId,
-              delta: null,
               series,
               latency: 0,
               datasourceId,
@@ -295,7 +290,6 @@ describe('runQueriesBatchEpic', () => {
             historyUpdatedAction({ exploreId, history }),
             processQueryResultsAction({
               exploreId,
-              delta: null,
               series,
               latency: 0,
               datasourceId,
@@ -332,7 +326,6 @@ describe('runQueriesBatchEpic', () => {
             historyUpdatedAction({ exploreId, history }),
             processQueryResultsAction({
               exploreId,
-              delta: null,
               series,
               latency: 0,
               datasourceId,
@@ -369,7 +362,6 @@ describe('runQueriesBatchEpic', () => {
             historyUpdatedAction({ exploreId, history }),
             processQueryResultsAction({
               exploreId,
-              delta: null,
               series,
               latency: 0,
               datasourceId,
@@ -406,7 +398,6 @@ describe('runQueriesBatchEpic', () => {
             historyUpdatedAction({ exploreId, history }),
             processQueryResultsAction({
               exploreId,
-              delta: null,
               series,
               latency: 0,
               datasourceId,

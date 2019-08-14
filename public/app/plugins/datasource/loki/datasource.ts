@@ -179,12 +179,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const subscription = webSocket(liveTarget.url)
         .pipe(
           map((results: any[]) => {
-            const delta = this.processResult(results, liveTarget);
+            const data = this.processResult(results, liveTarget);
             const state: DataStreamState = {
               key: `loki-${liveTarget.refId}`,
               request: options,
               state: LoadingState.Streaming,
-              delta,
+              data,
               unsubscribe: () => this.unsubscribe(liveTarget.refId),
             };
 

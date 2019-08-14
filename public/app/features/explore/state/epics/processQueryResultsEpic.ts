@@ -2,7 +2,6 @@ import _ from 'lodash';
 import { Epic } from 'redux-observable';
 import { mergeMap } from 'rxjs/operators';
 import { NEVER } from 'rxjs';
-import { LoadingState } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
@@ -25,7 +24,7 @@ export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSt
 ) => {
   return action$.ofType(processQueryResultsAction.type).pipe(
     mergeMap((action: ActionOf<ProcessQueryResultsPayload>) => {
-      const { exploreId, datasourceId, latency, loadingState, series, delta } = action.payload;
+      const { exploreId, datasourceId, latency, loadingState, series } = action.payload;
       const { datasourceInstance, scanning, eventBridge } = state$.value.explore[exploreId];
 
       // If datasource already changed, results do not matter
@@ -33,8 +32,8 @@ export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSt
         return NEVER;
       }
 
-      const result = series || delta || [];
-      const replacePreviousResults = loadingState === LoadingState.Done && series && !delta ? true : false;
+      const result = series || [];
+      const replacePreviousResults = true; // ??? loadingState === LoadingState.Done && series && !delta ? true : false;
       const resultProcessor = new ResultProcessor(state$.value.explore[exploreId], replacePreviousResults, result);
       const graphResult = resultProcessor.getGraphResult();
       const tableResult = resultProcessor.getTableResult();

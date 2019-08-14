@@ -199,12 +199,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           single(), // unsubscribes automatically after first result
           filter((response: any) => (response.cancelled ? false : true)),
           map((response: any) => {
-            const delta = this.processResult(response, query, target, queries.length);
+            const data = this.processResult(response, query, target, queries.length);
             const state: DataStreamState = {
               key: `prometheus-${target.refId}`,
               state: query.instant ? LoadingState.Loading : LoadingState.Done,
               request: options,
-              delta,
+              data,
               unsubscribe: () => undefined,
             };
 

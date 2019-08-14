@@ -242,7 +242,6 @@ export interface ProcessQueryResultsPayload {
   datasourceId: string;
   loadingState: LoadingState;
   series?: DataQueryResponseData[];
-  delta?: DataFrame[];
 }
 
 export interface RunQueriesBatchPayload {

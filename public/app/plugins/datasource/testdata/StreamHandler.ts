@@ -121,9 +121,6 @@ export class StreamWorker {
     }
     series.rows = rows;
 
-    // Tell the event about only the rows that changed (it may want to process them)
-    stream.delta = [{ ...series, rows: append }];
-
     // Broadcast the changes
     if (this.observer) {
       this.observer(stream);

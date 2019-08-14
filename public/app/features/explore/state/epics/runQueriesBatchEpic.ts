@@ -5,7 +5,7 @@ import _, { isString } from 'lodash';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { DataStreamState, DataQueryResponse, DataQueryResponseData } from '@grafana/ui';
 
-import { LoadingState, DataFrame, AbsoluteTimeRange } from '@grafana/data';
+import { LoadingState, AbsoluteTimeRange } from '@grafana/data';
 import { dateMath } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -41,11 +41,10 @@ interface ProcessResponseConfig {
   now: number;
   loadingState: LoadingState;
   series?: DataQueryResponseData[];
-  delta?: DataFrame[];
 }
 
 const processResponse = (config: ProcessResponseConfig) => {
-  const { exploreId, exploreItemState, datasourceId, now, loadingState, series, delta } = config;
+  const { exploreId, exploreItemState, datasourceId, now, loadingState, series } = config;
   const { queries, history } = exploreItemState;
   const latency = Date.now() - now;
 
@@ -53,7 +52,7 @@ const processResponse = (config: ProcessResponseConfig) => {
   const nextHistory = updateHistory(history, datasourceId, queries);
   return [
     historyUpdatedAction({ exploreId, history: nextHistory }),
-    processQueryResultsAction({ exploreId, latency, datasourceId, loadingState, series, delta }),
+    processQueryResultsAction({ exploreId, latency, datasourceId, loadingState, series }),
     stateSaveAction(),
   ];
 };
@@ -104,8 +103,8 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
         // observer subscription, handles datasourceInstance.query observer events and pushes that forward
         const streamSubscription = streamHandler.subscribe({
           next: event => {
-            const { state, error, data, delta } = event;
-            if (!data && !delta && !error) {
+            const { state, error, data } = event;
+            if (!data && !error) {
               return;
             }
 
@@ -138,7 +137,7 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
               outerObservable.next(
                 limitMessageRatePayloadAction({
                   exploreId,
-                  series: delta,
+                  series: data,
                   datasourceId,
                 })
               );
@@ -151,8 +150,7 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
                 datasourceId,
                 now,
                 loadingState: state,
-                series: null,
-                delta,
+                series: data,
               });
               publishActions(outerObservable, actions);
             }
@@ -170,7 +168,6 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
                 now,
                 loadingState: LoadingState.Done,
                 series: response && response.data ? response.data : [],
-                delta: null,
               });
             }),
             catchError(error => {
