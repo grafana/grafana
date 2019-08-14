@@ -30,6 +30,7 @@ import { route, ILocationProvider } from 'angular';
 
 // Types
 import { DashboardRouteInfo } from 'app/types';
+import { LoginPage } from 'app/core/components/Login/LoginPage';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
@@ -285,8 +286,10 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     })
     // LOGIN / SIGNUP
     .when('/login', {
-      templateUrl: 'public/app/partials/login.html',
-      controller: 'LoginCtrl',
+      template: '<react-container/>',
+      resolve: {
+        component: () => LoginPage,
+      },
       pageClass: 'login-page sidemenu-hidden',
     })
     .when('/invite/:code', {

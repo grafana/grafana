@@ -15,9 +15,9 @@ import {
   TimeRange,
   DataFrame,
   LogsModel,
-  TimeSeries,
   LoadingState,
   AbsoluteTimeRange,
+  GraphSeriesXY,
 } from '@grafana/data';
 import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode, QueryOptions } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -149,7 +149,7 @@ export interface QuerySuccessPayload {
   exploreId: ExploreId;
   latency: number;
   loadingState: LoadingState;
-  graphResult: TimeSeries[];
+  graphResult: GraphSeriesXY[];
   tableResult: TableModel;
   logsResult: LogsModel;
 }

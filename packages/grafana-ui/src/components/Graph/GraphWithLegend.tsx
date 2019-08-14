@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import React from 'react';
 import { css } from 'emotion';
-import { GraphSeriesValue } from '@grafana/data';
+import { GraphSeriesValue, AbsoluteTimeRange } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';
 import { LegendRenderOptions, LegendItem, LegendDisplayMode } from '../Legend/Legend';
@@ -18,10 +18,11 @@ export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
   displayMode: LegendDisplayMode;
   sortLegendBy?: string;
   sortLegendDesc?: boolean;
-  onSeriesColorChange: SeriesColorChangeHandler;
+  onSeriesColorChange?: SeriesColorChangeHandler;
   onSeriesAxisToggle?: SeriesAxisToggleHandler;
   onSeriesToggle?: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
+  onSelectionChanged?: (range: AbsoluteTimeRange) => void;
 }
 
 const getGraphWithLegendStyles = ({ placement }: GraphWithLegendProps) => ({
@@ -67,6 +68,10 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     onToggleSort,
     hideEmpty,
     hideZero,
+    isStacked,
+    lineWidth,
+    onSelectionChanged,
+    timeZone,
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
@@ -78,7 +83,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
             label: s.label,
             color: s.color,
             isVisible: s.isVisible,
-            yAxis: s.yAxis,
+            yAxis: s.yAxis.index,
             displayValues: s.info || [],
           },
         ]);
@@ -90,12 +95,16 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
         <Graph
           series={series.filter(s => !!s.isVisible)}
           timeRange={timeRange}
+          timeZone={timeZone}
           showLines={showLines}
           showPoints={showPoints}
           showBars={showBars}
           width={width}
           height={height}
           key={isLegendVisible ? 'legend-visible' : 'legend-invisible'}
+          isStacked={isStacked}
+          lineWidth={lineWidth}
+          onSelectionChanged={onSelectionChanged}
         />
       </div>
 
