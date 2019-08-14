@@ -34,8 +34,8 @@ describe('toDataFrame', () => {
       target: 'time',
       datapoints: [[100, 1], [200, 2]],
     };
-    let series = toDataFrame(input1);
-    expect(series.fields[0].type).toBe(FieldType.number);
+    const data = toDataFrame(input1);
+    expect(data.fields[0].type).toBe(FieldType.number);
   });
 
   it('keeps dataFrame unchanged', () => {
