@@ -68,6 +68,7 @@ export {
   LogRowContextQueryErrors,
 } from './Logs/LogRowContextProvider';
 export { LogRowContext } from './Logs/LogRowContext';
+export { LogLabelStats } from './Logs/LogLabelStats';
 export { Alert } from './Alert/Alert';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { LogLabelStats } from './LogLabelStats';
+import { LogLabelStats } from '@grafana/ui';
 import { LogRowModel, LogLabelStatsModel } from '@grafana/data';
 import { calculateLogsLabelStats } from 'app/core/logs_model';
 
