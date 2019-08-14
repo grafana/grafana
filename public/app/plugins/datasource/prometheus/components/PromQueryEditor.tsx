@@ -39,7 +39,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
     super(props);
     const { query } = props;
     this.query = query;
-    // Query target properties that are fullu controlled inputs
+    // Query target properties that are fully controlled inputs
     this.state = {
       // Fully controlled text inputs
       interval: query.interval,
@@ -123,6 +123,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               placeholder="legend format"
               value={legendFormat}
               onChange={this.onLegendChange}
+              onBlur={this.onRunQuery}
             />
           </div>
 
@@ -140,6 +141,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               className="gf-form-input width-8"
               placeholder={interval}
               onChange={this.onIntervalChange}
+              onBlur={this.onRunQuery}
               value={interval}
             />
           </div>
