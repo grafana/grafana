@@ -1,8 +1,9 @@
-import { DataQueryResponse, DataQueryError } from '@grafana/ui';
-import { LogRowModel } from '@grafana/data';
 import { useState, useEffect } from 'react';
+import { LogRowModel } from '@grafana/data';
 import flatten from 'lodash/flatten';
 import useAsync from 'react-use/lib/useAsync';
+
+import { DataQueryResponse, DataQueryError } from '../../types/datasource';
 
 export interface LogRowContextRows {
   before?: string[];
@@ -16,6 +17,11 @@ export interface LogRowContextQueryErrors {
 export interface HasMoreContextRows {
   before: boolean;
   after: boolean;
+}
+
+interface ResultType {
+  data: string[][];
+  errors: string[];
 }
 
 interface LogRowContextProviderProps {
@@ -64,7 +70,7 @@ export const getRowContexts = async (
     errors: results.map(result => {
       const errorResult: DataQueryError = result as DataQueryError;
       if (!errorResult.message) {
-        return null;
+        return '';
       }
 
       return errorResult.message;
@@ -85,10 +91,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // React Hook that creates an object state value called result to component state and a setter function called setResult
   // The intial value for result is null
   // Used for sorting the response from backend
-  const [result, setResult] = useState<{
-    data: string[][];
-    errors: string[];
-  }>(null);
+  const [result, setResult] = useState<ResultType>((null as any) as ResultType);
 
   // React Hook that creates an object state value called hasMoreContextRows to component state and a setter function called setHasMoreContextRows
   // The intial value for hasMoreContextRows is {before: true, after: true}
@@ -110,7 +113,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // The side effect changes the hasMoreContextRows state if there are more context rows before or after the current result
   useEffect(() => {
     if (value) {
-      setResult(currentResult => {
+      setResult((currentResult: any) => {
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
 
@@ -138,8 +141,8 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
       after: result ? flatten(result.data[1]) : [],
     },
     errors: {
-      before: result ? result.errors[0] : null,
-      after: result ? result.errors[1] : null,
+      before: result ? result.errors[0] : undefined,
+      after: result ? result.errors[1] : undefined,
     },
     hasMoreContextRows,
     updateLimit: () => setLimit(limit + 10),

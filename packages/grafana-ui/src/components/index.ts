@@ -61,6 +61,12 @@ export {
   LegendPlacement,
   LegendDisplayMode,
 } from './Legend/Legend';
+export {
+  LogRowContextProvider,
+  LogRowContextRows,
+  HasMoreContextRows,
+  LogRowContextQueryErrors,
+} from './Logs/LogRowContextProvider';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';

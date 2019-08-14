@@ -3,6 +3,18 @@ import _ from 'lodash';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
+import {
+  ThemeContext,
+  selectThemeVariant,
+  GrafanaTheme,
+  DataQueryResponse,
+  LogRowContextProvider,
+  LogRowContextRows,
+  HasMoreContextRows,
+  LogRowContextQueryErrors,
+} from '@grafana/ui';
+import { LogRowModel, LogLabelStatsModel, LogsParser, TimeZone } from '@grafana/data';
+import tinycolor from 'tinycolor2';
 
 import { calculateFieldStats, getParser } from 'app/core/logs_model';
 import { LogLabels } from './LogLabels';
@@ -10,17 +22,7 @@ import { findHighlightChunksInText } from 'app/core/utils/text';
 import { LogLabelStats } from './LogLabelStats';
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { css, cx } from 'emotion';
-import {
-  LogRowContextProvider,
-  LogRowContextRows,
-  HasMoreContextRows,
-  LogRowContextQueryErrors,
-} from './LogRowContextProvider';
-import { ThemeContext, selectThemeVariant, GrafanaTheme, DataQueryResponse } from '@grafana/ui';
-
-import { LogRowModel, LogLabelStatsModel, LogsParser, TimeZone } from '@grafana/data';
 import { LogRowContext } from './LogRowContext';
-import tinycolor from 'tinycolor2';
 
 interface Props {
   highlighterExpressions?: string[];
