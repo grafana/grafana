@@ -1,5 +1,5 @@
 import React from 'react';
-import { PopoverController, Popper } from '@grafana/ui';
+import { PopoverController, Popover } from '@grafana/ui';
 // @ts-ignore
 import rst2html from 'rst2html';
 import { FunctionDescriptor, FunctionEditorControlsProps, FunctionEditorControls } from './FunctionEditorControls';
@@ -73,7 +73,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
           return (
             <>
               {this.triggerRef && (
-                <Popper
+                <Popover
                   {...popperProps}
                   referenceElement={this.triggerRef.current}
                   wrapperClassName="popper"

@@ -1,7 +1,7 @@
 import React, { Component, createRef } from 'react';
 import omit from 'lodash/omit';
 import { PopoverController } from '../Tooltip/PopoverController';
-import { Popper } from '../Tooltip/Popper';
+import { Popover } from '../Tooltip/Popover';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
 import { getColorFromHexRgbOrName } from '../../utils/namedColorsPalette';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
@@ -51,7 +51,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
             return (
               <>
                 {this.pickerTriggerRef.current && (
-                  <Popper
+                  <Popover
                     {...popperProps}
                     referenceElement={this.pickerTriggerRef.current}
                     wrapperClassName="ColorPicker"

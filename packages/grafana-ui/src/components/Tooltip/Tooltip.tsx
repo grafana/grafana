@@ -1,6 +1,6 @@
 import React, { createRef } from 'react';
 import * as PopperJS from 'popper.js';
-import { Popper } from './Popper';
+import { Popover } from './Popover';
 import { PopoverController, UsingPopperProps } from './PopoverController';
 
 export interface TooltipProps extends UsingPopperProps {
@@ -33,7 +33,7 @@ export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) =
         return (
           <>
             {tooltipTriggerRef.current && (
-              <Popper
+              <Popover
                 {...payloadProps}
                 onMouseEnter={showPopper}
                 onMouseLeave={hidePopper}
