@@ -40,7 +40,7 @@ Automatic prereleases are published under `canary` dist tag.
 3. Run `yarn packages:build` script that will prepare distribution packages in `packages/grafana-*/dist`. These directories are going to be published to npm
 4. Depending whether  or not it's a prerelease:
   - When releasing a prelease run `packages:publishNext` to publish new versions.
-  - When releasing a stable version run `packages:publish` to publish new versions.
+  - When releasing a stable version run `packages:publishLatest` to publish new versions.
 
 5. Push version commit to the release branch
 
