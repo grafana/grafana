@@ -22,7 +22,8 @@ describe('read csv', () => {
       expect(field.values.length).toBe(rows);
     }
 
-    expect(toDataFrameDTO(series)).toMatchSnapshot();
+    const dto = toDataFrameDTO(series);
+    expect(dto).toMatchSnapshot();
   });
 
   it('should read single string OK', () => {
