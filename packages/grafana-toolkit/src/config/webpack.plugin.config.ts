@@ -151,6 +151,8 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       'slate-react',
       'react',
       'react-dom',
+      'react-redux',
+      'redux',
       'rxjs',
       'd3',
       'angular',

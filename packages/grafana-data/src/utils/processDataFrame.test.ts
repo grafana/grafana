@@ -39,6 +39,15 @@ describe('toDataFrame', () => {
     expect(series.fields[0].name).toEqual('Value');
   });
 
+  it('assumes TimeSeries values are numbers', () => {
+    const input1 = {
+      target: 'time',
+      datapoints: [[100, 1], [200, 2]],
+    };
+    const data = toDataFrame(input1);
+    expect(data.fields[0].type).toBe(FieldType.number);
+  });
+
   // TODO TODO
   // it('keeps dataFrame unchanged', () => {
   //   const input = {
