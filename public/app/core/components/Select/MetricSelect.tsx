@@ -35,7 +35,7 @@ export class MetricSelect extends React.Component<Props, State> {
     this.setState({ options: this.buildOptions(this.props) });
   }
 
-  componentWillReceiveProps(nextProps: Props) {
+  UNSAFE_componentWillReceiveProps(nextProps: Props) {
     if (nextProps.options.length > 0 || nextProps.variables.length) {
       this.setState({ options: this.buildOptions(nextProps) });
     }

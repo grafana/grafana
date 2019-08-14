@@ -74,7 +74,7 @@ GraphWithLegendStories.add('default', () => {
         .map(s => s.trim())
         .indexOf(s.label.split('-')[0]) > -1
     ) {
-      s.yAxis = 2;
+      s.yAxis = { index: 2 };
     }
 
     return s;
