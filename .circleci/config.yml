@@ -688,7 +688,7 @@ jobs:
           command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
       - run:
           name: Release packages
-          command: cd scripts/build && ./release-packages.sh "${CIRCLE_TAG}"
+          command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
 
 workflows:
   version: 2
