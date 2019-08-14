@@ -121,7 +121,7 @@ export class StreamWorker {
 
   appendRows(append: any[][]) {
     // Trim the maximum row count
-    const { stream, values } = this;
+    const { stream, values, data } = this;
 
     // Append all rows
     for (let i = 0; i < append.length; i++) {
@@ -130,7 +130,11 @@ export class StreamWorker {
         values[j].append(row[j]); // Circular buffer will kick out old entries
       }
     }
-    stream.data = [this.data];
+    // Clear any cached values
+    for (let j = 0; j < data.fields.length; j++) {
+      data.fields[j].calcs = undefined;
+    }
+    stream.data = [data];
 
     // Broadcast the changes
     if (this.observer) {
