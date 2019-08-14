@@ -1,13 +1,5 @@
 import { FieldType, DataFrameDTO, FieldDTO } from '../types/index';
-import { DataFrameHelper, DataFrameView } from './dataFrameHelper';
-import { DateTime } from './moment_wrapper';
-
-interface MySpecialObject {
-  time: DateTime;
-  name: string;
-  value: number;
-  more: string; // MISSING
-}
+import { DataFrameHelper } from './dataFrameHelper';
 
 describe('dataFrameHelper', () => {
   const frame: DataFrameDTO = {
@@ -22,17 +14,6 @@ describe('dataFrameHelper', () => {
 
   it('Should get a valid count for the fields', () => {
     expect(ext.length).toEqual(3);
-  });
-
-  it('Should get a typed vector', () => {
-    const vector = new DataFrameView<MySpecialObject>(ext);
-    expect(vector.length).toEqual(3);
-
-    const first = vector.get(0);
-    expect(first.time).toEqual((frame.fields[0].values as any[])[0]);
-    expect(first.name).toEqual((frame.fields[1].values as any[])[0]);
-    expect(first.value).toEqual((frame.fields[2].values as any[])[0]);
-    expect(first.more).toBeUndefined();
   });
 
   it('Should get the first field with a duplicate name', () => {

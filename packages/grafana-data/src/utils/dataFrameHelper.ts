@@ -212,16 +212,20 @@ export class DataFrameView<T = any> implements Vector<T> {
   constructor(private data: DataFrame) {
     const obj = ({} as unknown) as T;
     for (let i = 0; i < data.fields.length; i++) {
-      const getter = {
-        get: () => {
-          return this.getFieldValue(i);
-        },
+      const getter = () => {
+        return this.getFieldValue(i);
       };
       const name = data.fields[i].name;
       if (!(obj as any).hasOwnProperty(name)) {
-        Object.defineProperty(obj, name, getter);
+        Object.defineProperty(obj, name, {
+          enumerable: true, // Shows up as enumerable property
+          get: getter,
+        });
       }
-      Object.defineProperty(obj, i, getter);
+      Object.defineProperty(obj, i, {
+        enumerable: false, // Don't enumerate array index
+        get: getter,
+      });
     }
     this.obj = obj;
   }
