@@ -10,7 +10,7 @@ export class AxesEditorCtrl {
   xNameSegment: any;
 
   /** @ngInject */
-  constructor(private $scope) {
+  constructor(private $scope: any) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
@@ -48,7 +48,7 @@ export class AxesEditorCtrl {
     }
   }
 
-  setUnitFormat(axis, subItem) {
+  setUnitFormat(axis: { format: any }, subItem: { value: any }) {
     axis.format = subItem.value;
     this.panelCtrl.render();
   }

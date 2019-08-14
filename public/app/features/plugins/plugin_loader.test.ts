@@ -13,9 +13,7 @@ jest.mock('app/core/core', () => {
   };
 });
 
-/* tslint:disable:import-blacklist */
-import System from 'systemjs/dist/system.js';
-
+import { SystemJS } from '@grafana/runtime';
 import { AppPluginMeta, PluginMetaInfo, PluginType, PluginIncludeType, AppPlugin } from '@grafana/ui';
 import { importAppPlugin } from './plugin_loader';
 
@@ -34,11 +32,11 @@ describe('Load App', () => {
   const modulePath = 'my/custom/plugin/module';
 
   beforeAll(() => {
-    System.set(modulePath, System.newModule({ plugin: app }));
+    SystemJS.set(modulePath, SystemJS.newModule({ plugin: app }));
   });
 
   afterAll(() => {
-    System.delete(modulePath);
+    SystemJS.delete(modulePath);
   });
 
   it('should call init and set meta', async () => {
@@ -52,7 +50,7 @@ describe('Load App', () => {
     };
 
     // Check that we mocked the import OK
-    const m = await System.import(modulePath);
+    const m = await SystemJS.import(modulePath);
     expect(m.plugin).toBe(app);
 
     const loaded = await importAppPlugin(meta);
@@ -79,11 +77,11 @@ describe('Load Legacy App', () => {
   const modulePath = 'my/custom/legacy/plugin/module';
 
   beforeAll(() => {
-    System.set(modulePath, System.newModule(app));
+    SystemJS.set(modulePath, SystemJS.newModule(app));
   });
 
   afterAll(() => {
-    System.delete(modulePath);
+    SystemJS.delete(modulePath);
   });
 
   it('should call init and set meta for legacy app', async () => {

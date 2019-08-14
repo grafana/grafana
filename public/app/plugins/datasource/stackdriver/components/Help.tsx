@@ -1,11 +1,13 @@
 import React from 'react';
 import { Project } from './Project';
 import StackdriverDatasource from '../datasource';
+import { MetricDescriptor } from '../types';
 
 export interface Props {
   datasource: StackdriverDatasource;
   rawQuery: string;
   lastQueryError: string;
+  metricDescriptor?: MetricDescriptor;
 }
 
 interface State {
@@ -27,7 +29,7 @@ export class Help extends React.Component<Props, State> {
     this.setState({ displaRawQuery: !this.state.displaRawQuery });
   };
 
-  shouldComponentUpdate(nextProps) {
+  shouldComponentUpdate(nextProps: Props) {
     return nextProps.metricDescriptor !== null;
   }
 

@@ -2,8 +2,8 @@ import { ElasticResponse } from '../elastic_response';
 
 describe('ElasticResponse', () => {
   let targets;
-  let response;
-  let result;
+  let response: any;
+  let result: any;
 
   describe('simple query and count', () => {
     beforeEach(() => {
@@ -48,7 +48,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('simple query count & avg aggregation', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -97,7 +97,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by query one metric', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -149,7 +149,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by query two metrics', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -209,7 +209,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with percentiles ', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -257,7 +257,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with extended_stats', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -333,7 +333,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by with alias pattern', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -394,7 +394,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('histogram response', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -426,7 +426,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with two filters agg', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -583,7 +583,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('No group by time with percentiles ', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -720,7 +720,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with bucket_script ', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -782,6 +782,96 @@ describe('ElasticResponse', () => {
       expect(result.data[0].datapoints[1][0]).toBe(3);
       expect(result.data[1].datapoints[1][0]).toBe(4);
       expect(result.data[2].datapoints[1][0]).toBe(12);
+    });
+  });
+
+  describe('simple logs query and count', () => {
+    beforeEach(() => {
+      targets = [
+        {
+          refId: 'A',
+          metrics: [{ type: 'count', id: '1' }],
+          bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
+          context: 'explore',
+          interval: '10s',
+          isLogsQuery: true,
+          key: 'Q-1561369883389-0.7611823271062786-0',
+          live: false,
+          maxDataPoints: 1620,
+          query: '',
+          timeField: '@timestamp',
+        },
+      ];
+      response = {
+        responses: [
+          {
+            aggregations: {
+              '2': {
+                buckets: [
+                  {
+                    doc_count: 10,
+                    key: 1000,
+                  },
+                  {
+                    doc_count: 15,
+                    key: 2000,
+                  },
+                ],
+              },
+            },
+            hits: {
+              hits: [
+                {
+                  _id: 'fdsfs',
+                  _type: '_doc',
+                  _index: 'mock-index',
+                  _source: {
+                    '@timestamp': '2019-06-24T09:51:19.765Z',
+                    host: 'djisaodjsoad',
+                    message: 'hello, i am a message',
+                  },
+                  fields: {
+                    '@timestamp': ['2019-06-24T09:51:19.765Z'],
+                  },
+                },
+                {
+                  _id: 'kdospaidopa',
+                  _type: '_doc',
+                  _index: 'mock-index',
+                  _source: {
+                    '@timestamp': '2019-06-24T09:52:19.765Z',
+                    host: 'dsalkdakdop',
+                    message: 'hello, i am also message',
+                  },
+                  fields: {
+                    '@timestamp': ['2019-06-24T09:52:19.765Z'],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      result = new ElasticResponse(targets, response).getLogs();
+    });
+
+    it('should return histogram aggregation and documents', () => {
+      expect(result.data.length).toBe(2);
+      expect(result.data[0].fields).toContainEqual({ name: '@timestamp', type: 'time' });
+      expect(result.data[0].fields).toContainEqual({ name: 'host', type: 'string' });
+      expect(result.data[0].fields).toContainEqual({ name: 'message', type: 'string' });
+      result.data[0].rows.forEach((row: any, i: number) => {
+        expect(row).toContain(response.responses[0].hits.hits[i]._id);
+        expect(row).toContain(response.responses[0].hits.hits[i]._type);
+        expect(row).toContain(response.responses[0].hits.hits[i]._index);
+        expect(row).toContain(JSON.stringify(response.responses[0].hits.hits[i]._source, undefined, 2));
+      });
+
+      expect(result.data[1]).toHaveProperty('name', 'Count');
+      response.responses[0].aggregations['2'].buckets.forEach((bucket: any) => {
+        expect(result.data[1].rows).toContainEqual([bucket.doc_count, bucket.key]);
+      });
     });
   });
 });

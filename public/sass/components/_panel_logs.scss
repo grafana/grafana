@@ -81,11 +81,6 @@ $column-horizontal-spacing: 10px;
   }
 }
 
-.logs-row__time {
-  white-space: nowrap;
-  width: 19em;
-}
-
 .logs-row__localtime {
   white-space: nowrap;
   width: 12.5em;
@@ -252,7 +247,7 @@ $column-horizontal-spacing: 10px;
 }
 
 .logs-stats__header {
-  background-color: $popover-border-color;
+  background: $popover-header-bg;
   padding: 6px 10px;
   display: flex;
 }

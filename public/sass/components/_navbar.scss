@@ -35,7 +35,7 @@
   .navbar-button--settings,
   .navbar-page-btn .fa-caret-down,
   .refresh-picker,
-  .gf-timepicker-nav {
+  .time-picker {
     display: none;
   }
 
@@ -134,7 +134,7 @@ i.navbar-page-btn__search {
   align-items: center;
   font-weight: $btn-font-weight;
   padding: 6px $space-sm;
-  line-height: 16px;
+  line-height: 18px;
   color: $text-muted;
   border: 1px solid $navbar-button-border;
   margin-left: $space-xs;

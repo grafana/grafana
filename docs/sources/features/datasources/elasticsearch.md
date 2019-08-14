@@ -79,6 +79,18 @@ Identifier | Description
 `s`   | second
 `ms`  | millisecond
 
+### Logs (BETA)
+
+> Only available in Grafana v6.3+.
+
+There are two parameters, `Message field name` and `Level field name`, that can optionally be configured from the data source settings page that determine
+which fields will be used for log messages and log levels when visualizing logs in [Explore](/features/explore).
+
+For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch the following configuration should work:
+
+- **Message field name:**  message
+- **Level field name:** fields.level
+
 ## Metric Query editor
 
 ![Elasticsearch Query Editor](/img/docs/elasticsearch/query_editor.png)
@@ -162,6 +174,28 @@ Time | The name of the time field, needs to be date field.
 Text | Event description field.
 Tags | Optional field name to use for event tags (can be an array or a CSV string).
 
+## Querying Logs (BETA)
+
+> Only available in Grafana v6.3+.
+
+Querying and displaying log data from Elasticsearch is available via [Explore](/features/explore).
+
+![](/img/docs/v63/elasticsearch_explore_logs.png)
+
+Select the Elasticsearch data source, change to Logs using the Metrics/Logs switcher, and then optionally enter a lucene query into the query field to filter the log messages.
+
+Finally, press the `Enter` key or the `Run Query` button to display your logs.
+
+### Log Queries
+
+Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
+
+Note that the fields used for log message and level is based on an [optional datasource configuration](#logs-beta).
+
+### Filter Log Messages
+
+Optionally enter a lucene query into the query field to filter the log messages. For example, using a default Filebeat setup you should be able to use `fields.level:error` to only show error log messages.
+
 ## Configure the Datasource with Provisioning
 
 It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
@@ -180,4 +214,23 @@ datasources:
     jsonData:
       interval: Daily
       timeField: "@timestamp"
+```
+
+or, for logs:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: elasticsearch-v7-filebeat
+    type: elasticsearch
+    access: proxy
+    database: "[filebeat-]YYYY.MM.DD"
+    url: http://localhost:9200
+    jsonData:
+      interval: Daily
+      timeField: "@timestamp"
+      esVersion: 70
+      logMessageField: message
+      logLevelField: fields.level
 ```

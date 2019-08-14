@@ -155,6 +155,7 @@ callback URL to be correct).
 > case add the subpath to the end of this URL setting.
 
 ### serve_from_sub_path
+> Available in 6.3 and above
 
 Serve Grafana from subpath specified in `root_url` setting. By
 default it is set to `false` for compatibility reasons.
@@ -280,9 +281,24 @@ Either `redis`, `memcached` or `database` default is `database`
 
 ### connstr
 
-The remote cache connection string. Leave empty when using `database` since it will use the primary database.
-Redis example config: `addr=127.0.0.1:6379,pool_size=100,db=grafana`
-Memcache example: `127.0.0.1:11211`
+The remote cache connection string. The format depends on the `type` of the remote cache.
+
+#### Database
+
+Leave empty when using `database` since it will use the primary database.
+
+#### Redis
+
+Example connstr: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
+
+- `addr` is the host `:` port of the redis server.
+- `pool_size` (optional) is the number of underlying connections that can be made to redis.
+- `db` (optional) is the number indentifer of the redis database you want to use.
+- `ssl` (optional) is if SSL should be used to connect to redis server. The value may be `true`, `false`, or `insecure`. Setting the value to `insecure` skips verification of the certificate chain and hostname when making the connection.
+
+#### Memcache
+
+Example connstr: `127.0.0.1:11211`
 
 <hr />
 
@@ -303,7 +319,7 @@ The number of days the keep me logged in / remember me cookie lasts.
 
 ### secret_key
 
-Used for signing some datasource settings like secrets and passwords. Cannot be changed without requiring an update
+Used for signing some datasource settings like secrets and passwords, the encryption format used is AES-256 in CFB mode. Cannot be changed without requiring an update
 to datasource settings to re-encode them.
 
 ### disable_gravatar

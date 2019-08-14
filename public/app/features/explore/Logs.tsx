@@ -1,44 +1,28 @@
 import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
-import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
+import { rangeUtil } from '@grafana/data';
+import { Switch } from '@grafana/ui';
 import {
   RawTimeRange,
-  Switch,
   LogLevel,
   TimeZone,
-  TimeRange,
   AbsoluteTimeRange,
   LogsMetaKind,
   LogsModel,
   LogsDedupStrategy,
   LogRowModel,
-} from '@grafana/ui';
-import TimeSeries from 'app/core/time_series2';
+} from '@grafana/data';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
-import Graph from './Graph';
 import { LogLabels } from './LogLabels';
 import { LogRow } from './LogRow';
 import { LogsDedupDescription } from 'app/core/logs_model';
+import ExploreGraphPanel from './ExploreGraphPanel';
+import { ExploreId } from 'app/types';
 
 const PREVIEW_LIMIT = 100;
-
-const graphOptions = {
-  series: {
-    stack: true,
-    bars: {
-      show: true,
-      lineWidth: 5,
-      // barWidth: 10,
-    },
-    // stack: true,
-  },
-  yaxis: {
-    tickDecimals: 0,
-  },
-};
 
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
@@ -55,10 +39,10 @@ interface Props {
   data?: LogsModel;
   dedupedData?: LogsModel;
   width: number;
-  exploreId: string;
+  exploreId: ExploreId;
   highlighterExpressions: string[];
   loading: boolean;
-  range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -69,7 +53,7 @@ interface Props {
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   onDedupStrategyChange: (dedupStrategy: LogsDedupStrategy) => void;
-  onToggleLogLevel: (hiddenLogLevels: Set<LogLevel>) => void;
+  onToggleLogLevel: (hiddenLogLevels: LogLevel[]) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
 }
 
@@ -77,8 +61,7 @@ interface State {
   deferLogs: boolean;
   renderAll: boolean;
   showLabels: boolean;
-  showLocalTime: boolean;
-  showUtc: boolean;
+  showTime: boolean;
 }
 
 export default class Logs extends PureComponent<Props, State> {
@@ -89,8 +72,7 @@ export default class Logs extends PureComponent<Props, State> {
     deferLogs: true,
     renderAll: false,
     showLabels: false,
-    showLocalTime: true,
-    showUtc: false,
+    showTime: true,
   };
 
   componentDidMount() {
@@ -104,7 +86,7 @@ export default class Logs extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: Props, prevState: State) {
     // Staged rendering
     if (prevState.deferLogs && !this.state.deferLogs && !this.state.renderAll) {
       this.renderAllTimer = setTimeout(() => this.setState({ renderAll: true }), 2000);
@@ -131,22 +113,15 @@ export default class Logs extends PureComponent<Props, State> {
     });
   };
 
-  onChangeLocalTime = (event: React.SyntheticEvent) => {
+  onChangeTime = (event: React.SyntheticEvent) => {
     const target = event.target as HTMLInputElement;
     this.setState({
-      showLocalTime: target.checked,
+      showTime: target.checked,
     });
   };
 
-  onChangeUtc = (event: React.SyntheticEvent) => {
-    const target = event.target as HTMLInputElement;
-    this.setState({
-      showUtc: target.checked,
-    });
-  };
-
-  onToggleLogLevel = (rawLevel: string, hiddenRawLevels: Set<string>) => {
-    const hiddenLogLevels: Set<LogLevel> = new Set(Array.from(hiddenRawLevels).map(level => LogLevel[level]));
+  onToggleLogLevel = (hiddenRawLevels: string[]) => {
+    const hiddenLogLevels: LogLevel[] = hiddenRawLevels.map((level: LogLevel) => LogLevel[level]);
     this.props.onToggleLogLevel(hiddenLogLevels);
   };
 
@@ -167,7 +142,6 @@ export default class Logs extends PureComponent<Props, State> {
       highlighterExpressions,
       loading = false,
       onClickLabel,
-      range,
       timeZone,
       scanning,
       scanRange,
@@ -179,7 +153,7 @@ export default class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { deferLogs, renderAll, showLabels, showLocalTime, showUtc } = this.state;
+    const { deferLogs, renderAll, showLabels, showTime } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
     const hasLabel = hasData && dedupedData.hasUniqueLabels;
@@ -203,41 +177,29 @@ export default class Logs extends PureComponent<Props, State> {
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
-    const timeSeries = data.series
-      ? data.series.map(series => new TimeSeries(series))
-      : [new TimeSeries({ datapoints: [] })];
-    const absRange = {
-      from: range.from.valueOf(),
-      to: range.to.valueOf(),
-    };
 
     return (
       <div className="logs-panel">
         <div className="logs-panel-graph">
-          <Graph
-            data={timeSeries}
-            height={100}
+          <ExploreGraphPanel
+            exploreId={exploreId}
+            series={data.series}
             width={width}
-            range={absRange}
-            timeZone={timeZone}
-            id={`explore-logs-graph-${exploreId}`}
-            onChangeTime={this.props.onChangeTime}
-            onToggleSeries={this.onToggleLogLevel}
-            userOptions={graphOptions}
+            onHiddenSeriesChanged={this.onToggleLogLevel}
           />
         </div>
         <div className="logs-panel-options">
           <div className="logs-panel-controls">
-            <Switch label="Timestamp" checked={showUtc} onChange={this.onChangeUtc} transparent />
-            <Switch label="Local time" checked={showLocalTime} onChange={this.onChangeLocalTime} transparent />
+            <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
             <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
             <ToggleButtonGroup label="Dedup" transparent={true}>
-              {Object.keys(LogsDedupStrategy).map((dedupType, i) => (
+              {Object.keys(LogsDedupStrategy).map((dedupType: string, i) => (
                 <ToggleButton
                   key={i}
                   value={dedupType}
                   onChange={this.onChangeDedup}
                   selected={dedupStrategy === dedupType}
+                  // @ts-ignore
                   tooltip={LogsDedupDescription[dedupType]}
                 >
                   {dedupType}
@@ -270,8 +232,8 @@ export default class Logs extends PureComponent<Props, State> {
                 row={row}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
-                showLocalTime={showLocalTime}
-                showUtc={showUtc}
+                showTime={showTime}
+                timeZone={timeZone}
                 onClickLabel={onClickLabel}
               />
             ))}
@@ -286,8 +248,8 @@ export default class Logs extends PureComponent<Props, State> {
                 row={row}
                 showDuplicates={showDuplicates}
                 showLabels={showLabels && hasLabel}
-                showLocalTime={showLocalTime}
-                showUtc={showUtc}
+                showTime={showTime}
+                timeZone={timeZone}
                 onClickLabel={onClickLabel}
               />
             ))}

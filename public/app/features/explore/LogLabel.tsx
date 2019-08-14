@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { LogLabelStats } from './LogLabelStats';
-import { LogRowModel, LogLabelStatsModel } from '@grafana/ui';
+import { LogRowModel, LogLabelStatsModel } from '@grafana/data';
 import { calculateLogsLabelStats } from 'app/core/logs_model';
 
 interface Props {
@@ -18,7 +18,7 @@ interface State {
 }
 
 export class LogLabel extends PureComponent<Props, State> {
-  state = {
+  state: State = {
     stats: null,
     showStats: false,
   };

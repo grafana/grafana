@@ -19,7 +19,7 @@ export class DashLinksEditorCtrl {
   link: any;
 
   /** @ngInject */
-  constructor($scope, $rootScope) {
+  constructor($scope: any, $rootScope: any) {
     this.iconMap = iconMap;
     this.dashboard.links = this.dashboard.links || [];
     this.mode = 'list';
@@ -44,7 +44,7 @@ export class DashLinksEditorCtrl {
     this.dashboard.updateSubmenuVisibility();
   }
 
-  editLink(link) {
+  editLink(link: any) {
     this.link = link;
     this.mode = 'edit';
     console.log(this.link);
@@ -54,12 +54,12 @@ export class DashLinksEditorCtrl {
     this.backToList();
   }
 
-  moveLink(index, dir) {
+  moveLink(index: string | number, dir: string | number) {
     // @ts-ignore
     _.move(this.dashboard.links, index, index + dir);
   }
 
-  deleteLink(index) {
+  deleteLink(index: number) {
     this.dashboard.links.splice(index, 1);
     this.dashboard.updateSubmenuVisibility();
   }

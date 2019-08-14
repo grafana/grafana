@@ -31,6 +31,10 @@ We value clean & readable code that is loosely coupled and covered by unit tests
 The majority of our tests uses go convey but thats something we want to avoid going forward.
 For new tests we want to use standard library and `testify/assert`.
 
+## Import aliases
+Currently there are import aliases for `/pkg/models` package but thats something we want to avoid going forward.
+Newly introduced code should refer explicitly to the `models` instead of using the alias `m`. Whenever changing existing code it's desired to remove the import aliases as well.
+
 ## The Bus
 The bus is our way to introduce indirection between the HTTP handlers and sqlstore (responsible for fetching data from the database). Http handlers and sqlstore don't depend on each other. They only depend on the bus and the domain model(pkg/models). This makes it easier to test the code and avoids coupling. More about this under `current rewrite/refactorings`
 

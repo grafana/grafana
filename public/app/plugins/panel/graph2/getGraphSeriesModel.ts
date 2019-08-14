@@ -1,16 +1,6 @@
-import {
-  GraphSeriesXY,
-  NullValueMode,
-  reduceField,
-  colors,
-  getFlotPairs,
-  getColorFromHexRgbOrName,
-  getDisplayProcessor,
-  DisplayValue,
-  PanelData,
-  FieldCache,
-  FieldType,
-} from '@grafana/ui';
+import { colors, getFlotPairs, getColorFromHexRgbOrName, getDisplayProcessor, PanelData } from '@grafana/ui';
+import { NullValueMode, reduceField, FieldCache, FieldType, DisplayValue, GraphSeriesXY } from '@grafana/data';
+
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
@@ -40,7 +30,7 @@ export const getGraphSeriesModel = (
       const field = numberFields[i];
       // Use external calculator just to make sure it works :)
       const points = getFlotPairs({
-        series,
+        rows: series.rows,
         xIndex: timeColumn.index,
         yIndex: field.index,
         nullValueMode: NullValueMode.Null,
@@ -77,7 +67,9 @@ export const getGraphSeriesModel = (
           color: seriesColor,
           info: statsDisplayValues,
           isVisible: true,
-          yAxis: (seriesOptions[field.name] && seriesOptions[field.name].yAxis) || 1,
+          yAxis: {
+            index: (seriesOptions[field.name] && seriesOptions[field.name].yAxis) || 1,
+          },
         });
       }
     }

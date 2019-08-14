@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { toDuration } from '@grafana/ui/src/utils/moment_wrapper';
+import { toDuration } from '@grafana/data';
 
 const INTERVAL = 150;
 
@@ -33,7 +33,7 @@ export default class ElapsedTime extends PureComponent<Props, State> {
     this.setState({ elapsed });
   };
 
-  componentWillReceiveProps(nextProps: Props) {
+  UNSAFE_componentWillReceiveProps(nextProps: Props) {
     if (nextProps.time) {
       clearInterval(this.timer);
     } else if (this.props.time) {

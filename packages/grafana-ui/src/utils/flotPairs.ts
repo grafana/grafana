@@ -1,16 +1,14 @@
 // Types
-import { NullValueMode, GraphSeriesValue, SeriesData } from '../types/index';
+import { NullValueMode, GraphSeriesValue } from '@grafana/data';
 
 export interface FlotPairsOptions {
-  series: SeriesData;
+  rows: any[][];
   xIndex: number;
   yIndex: number;
   nullValueMode?: NullValueMode;
 }
 
-export function getFlotPairs({ series, xIndex, yIndex, nullValueMode }: FlotPairsOptions): GraphSeriesValue[][] {
-  const rows = series.rows;
-
+export function getFlotPairs({ rows, xIndex, yIndex, nullValueMode }: FlotPairsOptions): GraphSeriesValue[][] {
   const ignoreNulls = nullValueMode === NullValueMode.Ignore;
   const nullAsZero = nullValueMode === NullValueMode.AsZero;
 

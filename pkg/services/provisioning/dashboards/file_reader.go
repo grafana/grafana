@@ -53,7 +53,9 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 
 // pollChanges periodically runs startWalkingDisk based on interval specified in the config.
 func (fr *fileReader) pollChanges(ctx context.Context) {
-	ticker := time.Tick(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds))
+
+	// TODO: Fix the staticcheck error
+	ticker := time.Tick(time.Duration(int64(time.Second) * fr.Cfg.UpdateIntervalSeconds)) //nolint:staticcheck
 	for {
 		select {
 		case <-ticker:

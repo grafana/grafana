@@ -33,7 +33,7 @@ export class UnsavedChangesModalCtrl {
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(private unsavedChangesSrv) {}
+  constructor(private unsavedChangesSrv: any) {}
 
   discard() {
     this.dismiss();

@@ -3,15 +3,16 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
+import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
 describe('DashboardModel', () => {
   describe('when creating dashboard with old schema', () => {
-    let model;
-    let graph;
-    let singlestat;
-    let table;
+    let model: any;
+    let graph: any;
+    let singlestat: any;
+    let table: any;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -127,7 +128,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(18);
+      expect(model.schemaVersion).toBe(19);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -141,7 +142,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when migrating to the grid layout', () => {
-    let model;
+    let model: any;
 
     beforeEach(() => {
       model = {
@@ -382,17 +383,72 @@ describe('DashboardModel', () => {
       expect(dashboard.panels[0].maxPerRow).toBe(3);
     });
   });
+
+  describe('when migrating panel links', () => {
+    let model: any;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            links: [
+              {
+                url: 'http://mylink.com',
+                keepTime: true,
+                title: 'test',
+              },
+              {
+                url: 'http://mylink.com?existingParam',
+                params: 'customParam',
+                title: 'test',
+              },
+              {
+                url: 'http://mylink.com?existingParam',
+                includeVars: true,
+                title: 'test',
+              },
+              {
+                dashboard: 'my other dashboard',
+                title: 'test',
+              },
+              {
+                dashUri: '',
+                title: 'test',
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('should add keepTime as variable', () => {
+      expect(model.panels[0].links[0].url).toBe(`http://mylink.com?$${DataLinkBuiltInVars.keepTime}`);
+    });
+
+    it('should add params to url', () => {
+      expect(model.panels[0].links[1].url).toBe('http://mylink.com?existingParam&customParam');
+    });
+
+    it('should add includeVars to url', () => {
+      expect(model.panels[0].links[2].url).toBe(`http://mylink.com?existingParam&$${DataLinkBuiltInVars.includeVars}`);
+    });
+
+    it('should slugify dashboard name', () => {
+      expect(model.panels[0].links[3].url).toBe(`/dashboard/db/my-other-dashboard`);
+    });
+  });
 });
 
-function createRow(options, panelDescriptions: any[]) {
+function createRow(options: any, panelDescriptions: any[]) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
   const { collapse, showTitle, title, repeat, repeatIteration } = options;
   let { height } = options;
   height = height * PANEL_HEIGHT_STEP;
-  const panels = [];
+  const panels: any[] = [];
   _.each(panelDescriptions, panelDesc => {
     const panel = { span: panelDesc[0] };
     if (panelDesc.length > 1) {
+      //@ts-ignore
       panel['height'] = panelDesc[1] * PANEL_HEIGHT_STEP;
     }
     panels.push(panel);

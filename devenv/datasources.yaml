@@ -153,6 +153,9 @@ datasources:
       interval: Daily
       timeField: "@timestamp"
       esVersion: 70
+      timeInterval: "10s"
+      logMessageField: message
+      logLevelField: fields.level
 
   - name: gdev-elasticsearch-v7-metricbeat
     type: elasticsearch

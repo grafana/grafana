@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"gopkg.in/ldap.v3"
 
-	"github.com/davecgh/go-spew/spew"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -31,7 +31,8 @@ type IConnection interface {
 type IServer interface {
 	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
 	Users([]string) ([]*models.ExternalUserInfo, error)
-	Auth(string, string) error
+	Bind() error
+	UserBind(string, string) error
 	Dial() error
 	Close()
 }
@@ -43,13 +44,38 @@ type Server struct {
 	log        log.Logger
 }
 
+// Bind authenticates the connection with the LDAP server
+// - with the username and password setup in the config
+// - or, anonymously
+func (server *Server) Bind() error {
+	if server.shouldAdminBind() {
+		if err := server.AdminBind(); err != nil {
+			return err
+		}
+	} else {
+		err := server.Connection.UnauthenticatedBind(server.Config.BindDN)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// UsersMaxRequest is a max amount of users we can request via Users().
+// Since many LDAP servers has limitations
+// on how much items can we return in one request
+const UsersMaxRequest = 500
+
 var (
 
 	// ErrInvalidCredentials is returned if username and password do not match
 	ErrInvalidCredentials = errors.New("Invalid Username or Password")
+
+	// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
+	ErrCouldNotFindUser = errors.New("Can't find user in LDAP")
 )
 
-// New creates the new LDAP auth
+// New creates the new LDAP connection
 func New(config *ServerConfig) IServer {
 	return &Server{
 		Config: config,
@@ -58,6 +84,7 @@ func New(config *ServerConfig) IServer {
 }
 
 // Dial dials in the LDAP
+// TODO: decrease cyclomatic complexity
 func (server *Server) Dial() error {
 	var err error
 	var certPool *x509.CertPool
@@ -117,14 +144,46 @@ func (server *Server) Close() {
 	server.Connection.Close()
 }
 
-// Login user by searching and serializing it
+// Login the user.
+// There are several cases -
+// 1. "admin" user
+// Bind the "admin" user (defined in Grafana config file) which has the search privileges
+// in LDAP server, then we search the targeted user through that bind, then the second
+// perform the bind via passed login/password.
+// 2. Single bind
+// // If all the users meant to be used with Grafana have the ability to search in LDAP server
+// then we bind with LDAP server with targeted login/password
+// and then search for the said user in order to retrive all the information about them
+// 3. Unauthenticated bind
+// For some LDAP configurations it is allowed to search the
+// user without login/password binding with LDAP server, in such case
+// we will perform "unauthenticated bind", then search for the
+// targeted user and then perform the bind with passed login/password.
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
-	// Authentication
-	err := server.Auth(query.Username, query.Password)
-	if err != nil {
-		return nil, err
+	var err error
+	var authAndBind bool
+
+	// Check if we can use a search user
+	if server.shouldAdminBind() {
+		if err := server.AdminBind(); err != nil {
+			return nil, err
+		}
+	} else if server.shouldSingleBind() {
+		authAndBind = true
+		err = server.UserBind(
+			server.singleBindDN(query.Username),
+			query.Password,
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := server.Connection.UnauthenticatedBind(server.Config.BindDN)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Find user entry & attributes
@@ -136,8 +195,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	// If we couldn't find the user -
 	// we should show incorrect credentials err
 	if len(users) == 0 {
-		server.disableExternalUser(query.Username)
-		return nil, ErrInvalidCredentials
+		return nil, ErrCouldNotFindUser
 	}
 
 	user := users[0]
@@ -145,12 +203,96 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		return nil, err
 	}
 
+	if !authAndBind {
+		// Authenticate user
+		err = server.UserBind(user.AuthId, query.Password)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return user, nil
 }
 
-// Users gets LDAP users
+// shouldAdminBind checks if we should use
+// admin username & password for LDAP bind
+func (server *Server) shouldAdminBind() bool {
+	return server.Config.BindPassword != ""
+}
+
+// singleBindDN combines the bind with the username
+// in order to get the proper path
+func (server *Server) singleBindDN(username string) string {
+	return fmt.Sprintf(server.Config.BindDN, username)
+}
+
+// shouldSingleBind checks if we can use "single bind" approach
+func (server *Server) shouldSingleBind() bool {
+	return strings.Contains(server.Config.BindDN, "%s")
+}
+
+// Users gets LDAP users by logins
 func (server *Server) Users(logins []string) (
 	[]*models.ExternalUserInfo,
+	error,
+) {
+	var users []*ldap.Entry
+	err := getUsersIteration(logins, func(previous, current int) error {
+		entries, err := server.users(logins[previous:current])
+		if err != nil {
+			return err
+		}
+
+		users = append(users, entries...)
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(users) == 0 {
+		return []*models.ExternalUserInfo{}, nil
+	}
+
+	serializedUsers, err := server.serializeUsers(users)
+	if err != nil {
+		return nil, err
+	}
+
+	server.log.Debug(
+		"LDAP users found", "users", spew.Sdump(serializedUsers),
+	)
+
+	return serializedUsers, nil
+}
+
+// getUsersIteration is a helper function for Users() method.
+// It divides the users by equal parts for the anticipated requests
+func getUsersIteration(logins []string, fn func(int, int) error) error {
+	lenLogins := len(logins)
+	iterations := int(
+		math.Ceil(
+			float64(lenLogins) / float64(UsersMaxRequest),
+		),
+	)
+
+	for i := 1; i < iterations+1; i++ {
+		previous := float64(UsersMaxRequest * (i - 1))
+		current := math.Min(float64(i*UsersMaxRequest), float64(lenLogins))
+
+		err := fn(int(previous), int(current))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// users is helper method for the Users()
+func (server *Server) users(logins []string) (
+	[]*ldap.Entry,
 	error,
 ) {
 	var result *ldap.SearchResult
@@ -170,18 +312,7 @@ func (server *Server) Users(logins []string) (
 		}
 	}
 
-	if len(result.Entries) == 0 {
-		return []*models.ExternalUserInfo{}, nil
-	}
-
-	serializedUsers, err := server.serializeUsers(result)
-	if err != nil {
-		return nil, err
-	}
-
-	server.log.Debug("LDAP users found", "users", spew.Sdump(serializedUsers))
-
-	return serializedUsers, nil
+	return result.Entries, nil
 }
 
 // validateGrafanaUser validates user access.
@@ -190,41 +321,13 @@ func (server *Server) Users(logins []string) (
 func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
 	if len(server.Config.Groups) > 0 && len(user.OrgRoles) < 1 {
 		server.log.Error(
-			"user does not belong in any of the specified LDAP groups",
+			"User does not belong in any of the specified LDAP groups",
 			"username", user.Login,
 			"groups", user.Groups,
 		)
 		return ErrInvalidCredentials
 	}
 
-	return nil
-}
-
-// disableExternalUser marks external user as disabled in Grafana db
-func (server *Server) disableExternalUser(username string) error {
-	// Check if external user exist in Grafana
-	userQuery := &models.GetExternalUserInfoByLoginQuery{
-		LoginOrEmail: username,
-	}
-
-	if err := bus.Dispatch(userQuery); err != nil {
-		return err
-	}
-
-	userInfo := userQuery.Result
-	if !userInfo.IsDisabled {
-		server.log.Debug("Disabling external user", "user", userQuery.Result.Login)
-		// Mark user as disabled in grafana db
-		disableUserCmd := &models.DisableUserCommand{
-			UserId:     userQuery.Result.UserId,
-			IsDisabled: true,
-		}
-
-		if err := bus.Dispatch(disableUserCmd); err != nil {
-			server.log.Debug("Error disabling external user", "user", userQuery.Result.Login, "message", err.Error())
-			return err
-		}
-	}
 	return nil
 }
 
@@ -243,6 +346,9 @@ func (server *Server) getSearchRequest(
 		inputs.Email,
 		inputs.Name,
 		inputs.MemberOf,
+
+		// In case for the POSIX LDAP schema server
+		server.Config.GroupSearchFilterUserAttribute,
 	)
 
 	search := ""
@@ -308,32 +414,40 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 	return extUser, nil
 }
 
-// shouldBindAdmin checks if we should use
-// admin username & password for LDAP bind
-func (server *Server) shouldBindAdmin() bool {
-	return server.Config.BindPassword != ""
+// UserBind binds the user with the LDAP server
+func (server *Server) UserBind(username, password string) error {
+	err := server.userBind(username, password)
+	if err != nil {
+		server.log.Error(
+			fmt.Sprintf("Cannot bind user %s with LDAP", username),
+			"error",
+			err,
+		)
+		return err
+	}
+
+	return nil
 }
 
-// Auth authentificates user in LDAP.
-// It might not use passed password and username,
-// since they can be overwritten with admin config values -
-// see "bind_dn" and "bind_password" options in LDAP config
-func (server *Server) Auth(username, password string) error {
-	path := server.Config.BindDN
-
-	if server.shouldBindAdmin() {
-		password = server.Config.BindPassword
-	} else {
-		path = fmt.Sprintf(path, username)
+// AdminBind binds "admin" user with LDAP
+func (server *Server) AdminBind() error {
+	err := server.userBind(server.Config.BindDN, server.Config.BindPassword)
+	if err != nil {
+		server.log.Error(
+			"Cannot authentificate admin user in LDAP",
+			"error",
+			err,
+		)
+		return err
 	}
 
-	bindFn := func() error {
-		return server.Connection.Bind(path, password)
-	}
+	return nil
+}
 
-	if err := bindFn(); err != nil {
-		server.log.Error("Cannot authentificate in LDAP", "err", err)
-
+// userBind binds the user with the LDAP server
+func (server *Server) userBind(path, password string) error {
+	err := server.Connection.Bind(path, password)
+	if err != nil {
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
 				return ErrInvalidCredentials
@@ -345,7 +459,8 @@ func (server *Server) Auth(username, password string) error {
 	return nil
 }
 
-// requestMemberOf use this function when POSIX LDAP schema does not support memberOf, so it manually search the groups
+// requestMemberOf use this function when POSIX LDAP
+// schema does not support memberOf, so it manually search the groups
 func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 	var memberOf []string
 	var config = server.Config
@@ -391,6 +506,7 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 
 		if len(groupSearchResult.Entries) > 0 {
 			for _, group := range groupSearchResult.Entries {
+
 				memberOf = append(
 					memberOf,
 					getAttribute(groupIDAttribute, group),
@@ -406,11 +522,11 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 // serializeUsers serializes the users
 // from LDAP result to ExternalInfo struct
 func (server *Server) serializeUsers(
-	users *ldap.SearchResult,
+	entries []*ldap.Entry,
 ) ([]*models.ExternalUserInfo, error) {
 	var serialized []*models.ExternalUserInfo
 
-	for _, user := range users.Entries {
+	for _, user := range entries {
 		extUser, err := server.buildGrafanaUser(user)
 		if err != nil {
 			return nil, err

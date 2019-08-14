@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { readCSV } from '../../utils/csv';
+import { readCSV } from '@grafana/data';
 import { Table, Props } from './Table';
 import { getTheme } from '../../themes/index';
 import { GrafanaThemeType } from '../../types/theme';

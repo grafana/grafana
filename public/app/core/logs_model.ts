@@ -1,16 +1,15 @@
 import _ from 'lodash';
 import ansicolor from 'vendor/ansicolor/ansicolor';
 
+import { colors, getFlotPairs } from '@grafana/ui';
+
 import {
-  colors,
-  TimeSeries,
   Labels,
   LogLevel,
-  SeriesData,
+  DataFrame,
   findCommonLabels,
   findUniqueLabels,
   getLogLevel,
-  toLegacyResponseData,
   FieldCache,
   FieldType,
   getLogLevelFromKey,
@@ -21,10 +20,15 @@ import {
   LogsParser,
   LogLabelStatsModel,
   LogsDedupStrategy,
-} from '@grafana/ui';
+  GraphSeriesXY,
+  LoadingState,
+  dateTime,
+  toUtc,
+  NullValueMode,
+} from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -191,7 +195,7 @@ export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>)
   };
 }
 
-export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): TimeSeries[] {
+export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): GraphSeriesXY[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
   // when executing queries & interval calculated and not here but this is a temporary fix.
@@ -241,24 +245,38 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
       return a[1] - b[1];
     });
 
-    return {
-      datapoints: series.datapoints,
-      target: series.alias,
-      alias: series.alias,
+    const points = getFlotPairs({
+      rows: series.datapoints,
+      xIndex: 1,
+      yIndex: 0,
+      nullValueMode: NullValueMode.Null,
+    });
+
+    const graphSeries: GraphSeriesXY = {
       color: series.color,
+      label: series.alias,
+      data: points,
+      isVisible: true,
+      yAxis: {
+        index: 1,
+        min: 0,
+        tickDecimals: 0,
+      },
     };
+
+    return graphSeries;
   });
 }
 
-function isLogsData(series: SeriesData) {
+function isLogsData(series: DataFrame) {
   return series.fields.some(f => f.type === FieldType.time) && series.fields.some(f => f.type === FieldType.string);
 }
 
-export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: number): LogsModel {
-  const metricSeries: SeriesData[] = [];
-  const logSeries: SeriesData[] = [];
+export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number): LogsModel {
+  const metricSeries: DataFrame[] = [];
+  const logSeries: DataFrame[] = [];
 
-  for (const series of seriesData) {
+  for (const series of dataFrame) {
     if (isLogsData(series)) {
       logSeries.push(series);
       continue;
@@ -272,10 +290,16 @@ export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: numb
     if (metricSeries.length === 0) {
       logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
     } else {
-      logsModel.series = [];
-      for (const series of metricSeries) {
-        logsModel.series.push(toLegacyResponseData(series) as TimeSeries);
-      }
+      logsModel.series = getGraphSeriesModel(
+        { series: metricSeries, state: LoadingState.Done },
+        {},
+        { showBars: true, showLines: false, showPoints: false },
+        {
+          asTable: false,
+          isVisible: true,
+          placement: 'under',
+        }
+      );
     }
 
     return logsModel;
@@ -289,7 +313,7 @@ export function seriesDataToLogsModel(seriesData: SeriesData[], intervalMs: numb
   };
 }
 
-export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
+export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
   if (logSeries.length === 0) {
     return undefined;
   }
@@ -323,10 +347,6 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
     }
   }
 
-  const sortedRows = rows.sort((a, b) => {
-    return a.timestamp > b.timestamp ? -1 : 1;
-  });
-
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
   if (_.size(commonLabels) > 0) {
@@ -342,7 +362,7 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limits[0].meta.limit} (${sortedRows.length} returned)`,
+      value: `${limits[0].meta.limit} (${rows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }
@@ -350,12 +370,12 @@ export function logSeriesToLogsModel(logSeries: SeriesData[]): LogsModel {
   return {
     hasUniqueLabels,
     meta,
-    rows: sortedRows,
+    rows,
   };
 }
 
 export function processLogSeriesRow(
-  series: SeriesData,
+  series: DataFrame,
   fieldCache: FieldCache,
   rowIndex: number,
   uniqueLabels: Labels
@@ -369,6 +389,7 @@ export function processLogSeriesRow(
   const timeEpochMs = time.valueOf();
   const timeFromNow = time.fromNow();
   const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
+  const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
 
   let logLevel = LogLevel.unknown;
   const logLevelField = fieldCache.getFieldByName('level');
@@ -388,6 +409,7 @@ export function processLogSeriesRow(
     timeFromNow,
     timeEpochMs,
     timeLocal,
+    timeUtc,
     uniqueLabels,
     hasAnsi,
     searchWords,

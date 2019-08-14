@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -15,7 +16,7 @@ func TestUserDataAccess(t *testing.T) {
 	Convey("Testing DB", t, func() {
 		ss := InitTestDB(t)
 
-		Convey("Creating a user", func() {
+		Convey("Creates a user", func() {
 			cmd := &models.CreateUserCommand{
 				Email: "usertest@test.com",
 				Name:  "user name",
@@ -34,27 +35,47 @@ func TestUserDataAccess(t *testing.T) {
 				So(query.Result.Password, ShouldEqual, "")
 				So(query.Result.Rands, ShouldHaveLength, 10)
 				So(query.Result.Salt, ShouldHaveLength, 10)
+				So(query.Result.IsDisabled, ShouldBeFalse)
+			})
+		})
+
+		Convey("Creates disabled user", func() {
+			cmd := &models.CreateUserCommand{
+				Email:      "usertest@test.com",
+				Name:       "user name",
+				Login:      "user_test_login",
+				IsDisabled: true,
+			}
+
+			err := CreateUser(context.Background(), cmd)
+			So(err, ShouldBeNil)
+
+			Convey("Loading a user", func() {
+				query := models.GetUserByIdQuery{Id: cmd.Result.Id}
+				err := GetUserById(&query)
+				So(err, ShouldBeNil)
+
+				So(query.Result.Email, ShouldEqual, "usertest@test.com")
+				So(query.Result.Password, ShouldEqual, "")
+				So(query.Result.Rands, ShouldHaveLength, 10)
+				So(query.Result.Salt, ShouldHaveLength, 10)
+				So(query.Result.IsDisabled, ShouldBeTrue)
 			})
 		})
 
 		Convey("Given 5 users", func() {
-			var err error
-			var cmd *models.CreateUserCommand
-			users := []models.User{}
-			for i := 0; i < 5; i++ {
-				cmd = &models.CreateUserCommand{
-					Email: fmt.Sprint("user", i, "@test.com"),
-					Name:  fmt.Sprint("user", i),
-					Login: fmt.Sprint("loginuser", i),
+			users := createFiveTestUsers(func(i int) *models.CreateUserCommand {
+				return &models.CreateUserCommand{
+					Email:      fmt.Sprint("user", i, "@test.com"),
+					Name:       fmt.Sprint("user", i),
+					Login:      fmt.Sprint("loginuser", i),
+					IsDisabled: false,
 				}
-				err = CreateUser(context.Background(), cmd)
-				So(err, ShouldBeNil)
-				users = append(users, cmd.Result)
-			}
+			})
 
 			Convey("Can return the first page of users and a total count", func() {
 				query := models.SearchUsersQuery{Query: "", Page: 1, Limit: 3}
-				err = SearchUsers(&query)
+				err := SearchUsers(&query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 3)
@@ -63,7 +84,7 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Can return the second page of users and a total count", func() {
 				query := models.SearchUsersQuery{Query: "", Page: 2, Limit: 3}
-				err = SearchUsers(&query)
+				err := SearchUsers(&query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 2)
@@ -72,7 +93,7 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Can return list of users matching query on user name", func() {
 				query := models.SearchUsersQuery{Query: "use", Page: 1, Limit: 3}
-				err = SearchUsers(&query)
+				err := SearchUsers(&query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 3)
@@ -102,7 +123,7 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Can return list of users matching query on email", func() {
 				query := models.SearchUsersQuery{Query: "ser1@test.com", Page: 1, Limit: 3}
-				err = SearchUsers(&query)
+				err := SearchUsers(&query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 1)
@@ -111,14 +132,14 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Can return list of users matching query on login name", func() {
 				query := models.SearchUsersQuery{Query: "loginuser1", Page: 1, Limit: 3}
-				err = SearchUsers(&query)
+				err := SearchUsers(&query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 1)
 				So(query.Result.TotalCount, ShouldEqual, 1)
 			})
 
-			Convey("can return list users based on their auth type", func() {
+			Convey("Can return list users based on their auth type", func() {
 				// add users to auth table
 				for index, user := range users {
 					authModule := "killa"
@@ -133,11 +154,11 @@ func TestUserDataAccess(t *testing.T) {
 						AuthModule: authModule,
 						AuthId:     "gorilla",
 					}
-					err = SetAuthInfo(cmd2)
+					err := SetAuthInfo(cmd2)
 					So(err, ShouldBeNil)
 				}
 				query := models.SearchUsersQuery{AuthModule: "ldap"}
-				err = SearchUsers(&query)
+				err := SearchUsers(&query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Users, ShouldHaveLength, 3)
@@ -162,8 +183,51 @@ func TestUserDataAccess(t *testing.T) {
 				So(fourth, ShouldBeTrue)
 			})
 
+			Convey("Can return list users based on their is_disabled flag", func() {
+				ss = InitTestDB(t)
+				createFiveTestUsers(func(i int) *models.CreateUserCommand {
+					return &models.CreateUserCommand{
+						Email:      fmt.Sprint("user", i, "@test.com"),
+						Name:       fmt.Sprint("user", i),
+						Login:      fmt.Sprint("loginuser", i),
+						IsDisabled: i%2 == 0,
+					}
+				})
+
+				isDisabled := false
+				query := models.SearchUsersQuery{IsDisabled: &isDisabled}
+				err := SearchUsers(&query)
+				So(err, ShouldBeNil)
+
+				So(query.Result.Users, ShouldHaveLength, 2)
+
+				first, third := false, false
+				for _, user := range query.Result.Users {
+					if user.Name == "user1" {
+						first = true
+					}
+
+					if user.Name == "user3" {
+						third = true
+					}
+				}
+
+				So(first, ShouldBeTrue)
+				So(third, ShouldBeTrue)
+
+				ss = InitTestDB(t)
+				users = createFiveTestUsers(func(i int) *models.CreateUserCommand {
+					return &models.CreateUserCommand{
+						Email:      fmt.Sprint("user", i, "@test.com"),
+						Name:       fmt.Sprint("user", i),
+						Login:      fmt.Sprint("loginuser", i),
+						IsDisabled: false,
+					}
+				})
+			})
+
 			Convey("when a user is an org member and has been assigned permissions", func() {
-				err = AddOrgUser(&models.AddOrgUserCommand{LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER, OrgId: users[0].OrgId, UserId: users[1].Id})
+				err := AddOrgUser(&models.AddOrgUserCommand{LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER, OrgId: users[0].OrgId, UserId: users[1].Id})
 				So(err, ShouldBeNil)
 
 				testHelperUpdateDashboardAcl(1, models.DashboardAcl{DashboardId: 1, OrgId: users[0].OrgId, UserId: users[1].Id, Permission: models.PERMISSION_EDIT})
@@ -221,19 +285,77 @@ func TestUserDataAccess(t *testing.T) {
 			})
 
 			Convey("When batch disabling users", func() {
-				userIdsToDisable := []int64{}
-				for i := 0; i < 3; i++ {
-					userIdsToDisable = append(userIdsToDisable, users[i].Id)
-				}
-				disableCmd := models.BatchDisableUsersCommand{UserIds: userIdsToDisable, IsDisabled: true}
+				Convey("Should disable all users", func() {
+					disableCmd := models.BatchDisableUsersCommand{
+						UserIds:    []int64{1, 2, 3, 4, 5},
+						IsDisabled: true,
+					}
 
-				err = BatchDisableUsers(&disableCmd)
-				So(err, ShouldBeNil)
+					err := BatchDisableUsers(&disableCmd)
+					So(err, ShouldBeNil)
 
-				Convey("Should disable all provided users", func() {
+					isDisabled := true
+					query := &models.SearchUsersQuery{IsDisabled: &isDisabled}
+					err = SearchUsers(query)
+
+					So(err, ShouldBeNil)
+					So(query.Result.TotalCount, ShouldEqual, 5)
+				})
+
+				Convey("Should enable all users", func() {
+					ss = InitTestDB(t)
+					createFiveTestUsers(func(i int) *models.CreateUserCommand {
+						return &models.CreateUserCommand{
+							Email:      fmt.Sprint("user", i, "@test.com"),
+							Name:       fmt.Sprint("user", i),
+							Login:      fmt.Sprint("loginuser", i),
+							IsDisabled: true,
+						}
+					})
+
+					disableCmd := models.BatchDisableUsersCommand{
+						UserIds:    []int64{1, 2, 3, 4, 5},
+						IsDisabled: false,
+					}
+
+					err := BatchDisableUsers(&disableCmd)
+					So(err, ShouldBeNil)
+
+					isDisabled := false
+					query := &models.SearchUsersQuery{IsDisabled: &isDisabled}
+					err = SearchUsers(query)
+
+					So(err, ShouldBeNil)
+					So(query.Result.TotalCount, ShouldEqual, 5)
+				})
+
+				Convey("Should disable only specific users", func() {
+					ss = InitTestDB(t)
+					users = createFiveTestUsers(func(i int) *models.CreateUserCommand {
+						return &models.CreateUserCommand{
+							Email:      fmt.Sprint("user", i, "@test.com"),
+							Name:       fmt.Sprint("user", i),
+							Login:      fmt.Sprint("loginuser", i),
+							IsDisabled: false,
+						}
+					})
+
+					userIdsToDisable := []int64{}
+					for i := 0; i < 3; i++ {
+						userIdsToDisable = append(userIdsToDisable, users[i].Id)
+					}
+					disableCmd := models.BatchDisableUsersCommand{
+						UserIds:    userIdsToDisable,
+						IsDisabled: true,
+					}
+
+					err := BatchDisableUsers(&disableCmd)
+					So(err, ShouldBeNil)
+
 					query := models.SearchUsersQuery{}
 					err = SearchUsers(&query)
 
+					So(err, ShouldBeNil)
 					So(query.Result.TotalCount, ShouldEqual, 5)
 					for _, user := range query.Result.Users {
 						shouldBeDisabled := false
@@ -249,6 +371,72 @@ func TestUserDataAccess(t *testing.T) {
 						// Otherwise user shouldn't be disabled
 						if !shouldBeDisabled {
 							So(user.IsDisabled, ShouldBeFalse)
+						}
+					}
+				})
+
+				// Since previous tests were destructive
+				ss = InitTestDB(t)
+				users = createFiveTestUsers(func(i int) *models.CreateUserCommand {
+					return &models.CreateUserCommand{
+						Email:      fmt.Sprint("user", i, "@test.com"),
+						Name:       fmt.Sprint("user", i),
+						Login:      fmt.Sprint("loginuser", i),
+						IsDisabled: false,
+					}
+				})
+			})
+
+			Convey("When searching users", func() {
+				// Find a user to set tokens on
+				login := "loginuser0"
+
+				// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
+				// Make the first log-in during the past
+				getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
+				query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
+				err := GetUserByAuthInfo(query)
+				getTime = time.Now
+
+				So(err, ShouldBeNil)
+				So(query.Result.Login, ShouldEqual, login)
+
+				// Add a second auth module for this user
+				// Have this module's last log-in be more recent
+				getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
+				query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
+				err = GetUserByAuthInfo(query)
+				getTime = time.Now
+
+				So(err, ShouldBeNil)
+				So(query.Result.Login, ShouldEqual, login)
+
+				Convey("Should return the only most recently used auth_module", func() {
+					searchUserQuery := &models.SearchUsersQuery{}
+					err = SearchUsers(searchUserQuery)
+
+					So(err, ShouldBeNil)
+					So(searchUserQuery.Result.Users, ShouldHaveLength, 5)
+					for _, user := range searchUserQuery.Result.Users {
+						if user.Login == login {
+							So(user.AuthModule, ShouldHaveLength, 1)
+							So(user.AuthModule[0], ShouldEqual, "test2")
+						}
+					}
+
+					// "log in" again with the first auth module
+					updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: query.Result.Id, AuthModule: "test1", AuthId: "test1"}
+					err = UpdateAuthInfo(updateAuthCmd)
+					So(err, ShouldBeNil)
+
+					searchUserQuery = &models.SearchUsersQuery{}
+					err = SearchUsers(searchUserQuery)
+
+					So(err, ShouldBeNil)
+					for _, user := range searchUserQuery.Result.Users {
+						if user.Login == login {
+							So(user.AuthModule, ShouldHaveLength, 1)
+							So(user.AuthModule[0], ShouldEqual, "test1")
 						}
 					}
 				})
@@ -292,4 +480,20 @@ func GetOrgUsersForTest(query *models.GetOrgUsersQuery) error {
 
 	err := sess.Find(&query.Result)
 	return err
+}
+
+func createFiveTestUsers(fn func(i int) *models.CreateUserCommand) []models.User {
+	var err error
+	var cmd *models.CreateUserCommand
+	users := []models.User{}
+	for i := 0; i < 5; i++ {
+		cmd = fn(i)
+
+		err = CreateUser(context.Background(), cmd)
+		users = append(users, cmd.Result)
+
+		So(err, ShouldBeNil)
+	}
+
+	return users
 }

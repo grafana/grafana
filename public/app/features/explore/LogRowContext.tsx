@@ -7,8 +7,9 @@ import {
   ClickOutsideWrapper,
   CustomScrollbar,
   DataQueryError,
-  LogRowModel,
 } from '@grafana/ui';
+
+import { LogRowModel } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { LogRowContextRows, HasMoreContextRows, LogRowContextQueryErrors } from './LogRowContextProvider';
 import { Alert } from './Error';
@@ -103,12 +104,6 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   const theme = useContext(ThemeContext);
   const { header } = getLogRowContextStyles(theme);
 
-  // Filtering out the original row from the context.
-  // Loki requires a rowTimestamp+1ns for the following logs to be queried.
-  // We don't to ns-precision calculations in Loki log row context retrieval, hence the filtering here
-  // Also see: https://github.com/grafana/loki/issues/597
-  const logRowsToRender = rows.filter(contextRow => contextRow !== row.raw);
-
   return (
     <div className={header}>
       <span
@@ -116,7 +111,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
           opacity: 0.6;
         `}
       >
-        Found {logRowsToRender.length} rows.
+        Found {rows.length} rows.
       </span>
       {(rows.length >= 10 || (rows.length > 10 && rows.length % 10 !== 0)) && canLoadMoreRows && (
         <span

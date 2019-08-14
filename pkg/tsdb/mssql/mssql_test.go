@@ -27,6 +27,33 @@ import (
 // If needed, change the variable below to the IP address of the database.
 var serverIP = "localhost"
 
+func TestGenerateConnectionString(t *testing.T) {
+	encrypted, _ := simplejson.NewJson([]byte(`{"encrypt":"false"}`))
+	testSet := []struct {
+		ds       *models.DataSource
+		expected string
+	}{
+		{
+			&models.DataSource{
+				User:     "user",
+				Database: "db",
+				Url:      "localhost:1433",
+				SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
+					"password": "pass;word",
+				}),
+				JsonData: encrypted,
+			},
+			"sqlserver://user:pass;word@localhost:1433?database=db&encrypt=false",
+		},
+	}
+	for i := range testSet {
+		got := generateConnectionString(testSet[i].ds)
+		if got != testSet[i].expected {
+			t.Errorf("mssql connString error for testCase %d got: %s expected: %s", i, got, testSet[i].expected)
+		}
+	}
+}
+
 func TestMSSQL(t *testing.T) {
 	SkipConvey("MSSQL", t, func() {
 		x := InitMSSQLTestDB(t)

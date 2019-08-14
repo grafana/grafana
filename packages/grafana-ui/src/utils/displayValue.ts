@@ -1,31 +1,18 @@
 // Libraries
 import _ from 'lodash';
+import { Threshold, getMappedValue, Field, DecimalInfo, DisplayValue, DecimalCount } from '@grafana/data';
 
 // Utils
 import { getValueFormat } from './valueFormats/valueFormats';
-import { getMappedValue } from './valueMappings';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import {
-  Threshold,
-  ValueMapping,
-  DecimalInfo,
-  DisplayValue,
-  GrafanaTheme,
-  GrafanaThemeType,
-  DecimalCount,
-  Field,
-} from '../types';
-import { DateTime, dateTime } from './moment_wrapper';
+import { GrafanaTheme, GrafanaThemeType } from '../types';
 
 export type DisplayProcessor = (value: any) => DisplayValue;
 
 export interface DisplayValueOptions {
   field?: Partial<Field>;
-
-  mappings?: ValueMapping[];
-  thresholds?: Threshold[];
 
   // Alternative to empty string
   noValue?: string;
@@ -41,7 +28,8 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
     const formatFunc = getValueFormat(field.unit || 'none');
 
     return (value: any) => {
-      const { mappings, thresholds, theme } = options;
+      const { theme } = options;
+      const { mappings, thresholds } = field;
       let color;
 
       let text = _.toString(value);
@@ -59,14 +47,6 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
             numeric = v;
           }
 
-          shouldFormat = false;
-        }
-      }
-
-      if (field.dateFormat) {
-        const date = toMoment(value, numeric, field.dateFormat);
-        if (date.isValid()) {
-          text = date.format(field.dateFormat);
           shouldFormat = false;
         }
       }
@@ -89,20 +69,6 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
   }
 
   return toStringProcessor;
-}
-
-function toMoment(value: any, numeric: number, format: string): DateTime {
-  if (!isNaN(numeric)) {
-    const v = dateTime(numeric);
-    if (v.isValid()) {
-      return v;
-    }
-  }
-  const v = dateTime(value, format);
-  if (v.isValid) {
-    return v;
-  }
-  return dateTime(value); // moment will try to parse the format
 }
 
 /** Will return any value as a number or NaN */

@@ -13,6 +13,9 @@ var GetConfig = ldap.GetConfig
 // IsEnabled checks if LDAP is enabled
 var IsEnabled = ldap.IsEnabled
 
+// newLDAP return instance of the single LDAP server
+var newLDAP = ldap.New
+
 // ErrInvalidCredentials is returned if username and password do not match
 var ErrInvalidCredentials = ldap.ErrInvalidCredentials
 
@@ -21,9 +24,6 @@ var ErrNoLDAPServers = errors.New("No LDAP servers are configured")
 
 // ErrDidNotFindUser if request for user is unsuccessful
 var ErrDidNotFindUser = errors.New("Did not find a user")
-
-// newLDAP return instance of the single LDAP server
-var newLDAP = ldap.New
 
 // IMultiLDAP is interface for MultiLDAP
 type IMultiLDAP interface {
@@ -109,6 +109,10 @@ func (multiples *MultiLDAP) User(login string) (
 
 		defer server.Close()
 
+		if err := server.Bind(); err != nil {
+			return nil, err
+		}
+
 		users, err := server.Users(search)
 		if err != nil {
 			return nil, err
@@ -141,6 +145,10 @@ func (multiples *MultiLDAP) Users(logins []string) (
 		}
 
 		defer server.Close()
+
+		if err := server.Bind(); err != nil {
+			return nil, err
+		}
 
 		users, err := server.Users(logins)
 		if err != nil {

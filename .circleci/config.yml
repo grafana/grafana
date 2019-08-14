@@ -96,7 +96,35 @@ jobs:
                 destination: expected-screenshots
           - store_artifacts:
                 path: public/e2e-test/screenShots/theOutput
-                destination: output-screenshots               
+                destination: output-screenshots
+
+  end-to-end-test-release:
+      docker:
+        - image: circleci/node:10-browsers
+        - image: grafana/grafana-dev:$CIRCLE_TAG
+      steps:
+          - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
+          - checkout
+          - restore_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+          - run:
+              name: yarn install
+              command: 'yarn install --pure-lockfile --no-progress'
+              no_output_timeout: 5m
+          - save_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+              paths:
+                - node_modules
+          - run:
+              name: run end-to-end tests
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
+              no_output_timeout: 5m
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theTruth
+                destination: expected-screenshots
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theOutput
+                destination: output-screenshots
 
   codespell:
     docker:
@@ -114,7 +142,7 @@ jobs:
           name: check documentation spelling errors
           command: 'codespell -I ./words_to_ignore.txt docs/'
 
-  backend-lint:
+  lint-go:
     docker:
       - image: circleci/golang:1.12.6
         environment:
@@ -124,8 +152,17 @@ jobs:
     steps:
       - checkout
       - run:
-          name: backend lint
-          command: './scripts/backend-lint.sh'
+          name: Lint Go
+          command: 'make lint-go'
+
+  shellcheck:
+    machine: true
+    working_directory: ~/go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: ShellCheck
+          command: 'make shellcheck'
 
   test-frontend:
     docker:
@@ -598,7 +635,7 @@ jobs:
 
   store-build-artifacts:
     docker:
-      - image: circleci/node:8
+      - image: circleci/node:10
     steps:
       - attach_workspace:
           at: .
@@ -617,11 +654,26 @@ jobs:
               echo "Build URL:"
               curl -s -u "$DOCS_CIRCLE_TOKEN:" \
                 -d build_parameters[CIRCLE_JOB]=pull-submodule-changes \
-                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/staging \
+                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/master \
               | jq .build_url
             else
               echo "-- no changes to docs files --"
             fi
+
+  release-next-packages:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run:
+          name: Boostrap lerna
+          command: 'npx lerna bootstrap'
+      - run:
+          name: npm - Prepare auth token
+          command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
+      - run:
+          name: Release next packages
+          command: './scripts/circle-release-next-packages.sh'
 
 workflows:
   version: 2
@@ -633,7 +685,9 @@ workflows:
           filters: *filter-only-master
       - codespell:
           filters: *filter-only-master
-      - backend-lint:
+      - lint-go:
+          filters: *filter-only-master
+      - shellcheck:
           filters: *filter-only-master
       - test-frontend:
           filters: *filter-only-master
@@ -649,11 +703,12 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
-          filters: *filter-only-master 
+          filters: *filter-only-master
       - grafana-docker-master:
           requires:
             - build-all
@@ -661,7 +716,8 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -671,7 +727,8 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
@@ -682,7 +739,8 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -694,6 +752,11 @@ workflows:
           requires:
             - end-to-end-test
           filters: *filter-only-master
+      - release-next-packages:
+          requires:
+            - build-all
+            - test-frontend
+          filters: *filter-only-master
   release:
     jobs:
       - build-all:
@@ -702,7 +765,9 @@ workflows:
           filters: *filter-only-release
       - codespell:
           filters: *filter-only-release
-      - backend-lint:
+      - lint-go:
+          filters: *filter-only-release
+      - shellcheck:
           filters: *filter-only-release
       - test-frontend:
           filters: *filter-only-release
@@ -718,7 +783,8 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
             - build-oss-msi
@@ -730,7 +796,8 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -741,7 +808,8 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -751,9 +819,14 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+          filters: *filter-only-release
+      - end-to-end-test-release:
+          requires:
+            - grafana-docker-release
           filters: *filter-only-release
 
   build-branches-and-prs:
@@ -769,7 +842,11 @@ workflows:
               - build-fast-frontend
         - codespell:
             filters: *filter-not-release-or-master
-        - backend-lint:
+        - lint-go:
+            filters: *filter-not-release-or-master
+        - lint-go:
+            filters: *filter-not-release-or-master
+        - shellcheck:
             filters: *filter-not-release-or-master
         - test-frontend:
             filters: *filter-not-release-or-master
@@ -787,7 +864,8 @@ workflows:
               - test-backend
               - test-frontend
               - codespell
-              - backend-lint
+              - lint-go
+              - shellcheck
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
@@ -798,8 +876,10 @@ workflows:
               - test-backend
               - test-frontend
               - codespell
-              - backend-lint
+              - lint-go
+              - shellcheck
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
+

@@ -120,7 +120,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
   return {
     button: css`
       label: button;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       font-weight: ${fontWeight};
       font-size: ${fontSize};
