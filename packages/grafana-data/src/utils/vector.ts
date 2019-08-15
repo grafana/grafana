@@ -23,6 +23,10 @@ export class ArrayVector<T = any> implements Vector<T> {
     return this.buffer[index];
   }
 
+  toArray(): T[] {
+    return this.buffer;
+  }
+
   toJSON(): T[] {
     return this.buffer;
   }
@@ -39,12 +43,16 @@ export class ConstantVector<T = any> implements Vector<T> {
     return this.value;
   }
 
-  toJSON(): T[] {
+  toArray(): T[] {
     const arr: T[] = [];
     for (let i = 0; i < this.length; i++) {
       arr[i] = this.value;
     }
     return arr;
+  }
+
+  toJSON(): T[] {
+    return this.toArray();
   }
 }
 
@@ -57,6 +65,10 @@ export class ScaledVector implements Vector<number> {
 
   get(index: number): number {
     return this.source.get(index) * this.scale;
+  }
+
+  toArray(): number[] {
+    return vectorToArray(this);
   }
 
   toJSON(): number[] {
@@ -88,6 +100,10 @@ export class CircularVector<T = any> implements Vector<T> {
     return this.buffer[(index + this.index) % this.length];
   }
 
+  toArray(): T[] {
+    return vectorToArray(this);
+  }
+
   toJSON(): T[] {
     return vectorToArray(this);
   }
@@ -96,18 +112,22 @@ export class CircularVector<T = any> implements Vector<T> {
 /**
  * Values are returned in the order defined by the input parameter
  */
-export class SortedVector implements Vector<number> {
-  constructor(private source: Vector<number>, private order: number[]) {}
+export class SortedVector<T = any> implements Vector<T> {
+  constructor(private source: Vector<T>, private order: number[]) {}
 
   get length(): number {
     return this.source.length;
   }
 
-  get(index: number): number {
+  get(index: number): T {
     return this.source.get(this.order[index]);
   }
 
-  toJSON(): number[] {
+  toArray(): T[] {
+    return vectorToArray(this);
+  }
+
+  toJSON(): T[] {
     return vectorToArray(this);
   }
 }

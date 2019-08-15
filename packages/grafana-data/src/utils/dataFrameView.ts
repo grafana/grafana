@@ -53,8 +53,15 @@ export class DataFrameView<T = any> implements Vector<T> {
     return this.obj;
   }
 
+  toArray(): T[] {
+    const arr: T[] = [];
+    for (let i = 0; i < this.data.length; i++) {
+      arr.push({ ...this.get(i) });
+    }
+    return arr;
+  }
+
   toJSON(): T[] {
-    console.warn('not really implemented');
-    return [];
+    return this.toArray();
   }
 }

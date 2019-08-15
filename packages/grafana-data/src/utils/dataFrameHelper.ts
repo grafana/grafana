@@ -205,50 +205,6 @@ export class DataFrameHelper implements DataFrame {
   }
 }
 
-export class DataFrameView<T = any> implements Vector<T> {
-  private index = 0;
-  private obj: T;
-
-  constructor(private data: DataFrame) {
-    const obj = ({} as unknown) as T;
-    for (let i = 0; i < data.fields.length; i++) {
-      const getter = () => {
-        return this.getFieldValue(i);
-      };
-      const name = data.fields[i].name;
-      if (!(obj as any).hasOwnProperty(name)) {
-        Object.defineProperty(obj, name, {
-          enumerable: true, // Shows up as enumerable property
-          get: getter,
-        });
-      }
-      Object.defineProperty(obj, i, {
-        enumerable: false, // Don't enumerate array index
-        get: getter,
-      });
-    }
-    this.obj = obj;
-  }
-
-  getFieldValue(column: number) {
-    return this.data.fields[column].values.get(this.index);
-  }
-
-  get length() {
-    return this.data.length;
-  }
-
-  get(idx: number) {
-    this.index = idx;
-    return this.obj;
-  }
-
-  toJSON(): T[] {
-    console.warn('not really implemented');
-    return [];
-  }
-}
-
 function makeFieldParser(value: string, field: Field): (value: string) => any {
   if (!field.type) {
     if (field.name === 'time' || field.name === 'Time') {

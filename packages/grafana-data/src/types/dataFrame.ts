@@ -49,9 +49,14 @@ export interface Vector<T = any> {
   get(index: number): T;
 
   /**
+   * Get the resutls as an array.
+   */
+  toArray(): T[];
+
+  /**
    * Return the values as a simple array for json serialization
    */
-  toJSON(): any; // typically T[]
+  toJSON(): any; // same results as toArray()
 }
 
 export interface Field<T = any> {
