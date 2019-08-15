@@ -831,6 +831,56 @@ workflows:
 
   build-branches-and-prs:
       jobs:
+        - build-fast-backend:
+            filters: *filter-not-release-or-master
+        - build-fast-frontend:
+            filters: *filter-not-release-or-master
+        - build-fast-package:
+            filters: *filter-not-release-or-master
+            requires:
+              - build-fast-backend
+              - build-fast-frontend
+        - codespell:
+            filters: *filter-not-release-or-master
+        - lint-go:
+            filters: *filter-not-release-or-master
+        - lint-go:
+            filters: *filter-not-release-or-master
+        - shellcheck:
+            filters: *filter-not-release-or-master
+        - test-frontend:
+            filters: *filter-not-release-or-master
+        - test-backend:
+            filters: *filter-not-release-or-master
+        - mysql-integration-test:
+            filters: *filter-not-release-or-master
+        - postgres-integration-test:
+            filters: *filter-not-release-or-master
+        - cache-server-test:
+            filters: *filter-not-release-or-master
+        - grafana-docker-pr:
+            requires:
+              - build-fast-package
+              - test-backend
+              - test-frontend
+              - codespell
+              - lint-go
+              - shellcheck
+              - mysql-integration-test
+              - postgres-integration-test
+              - cache-server-test
+            filters: *filter-not-release-or-master
+        - store-build-artifacts:
+            requires:
+              - build-fast-package
+              - test-backend
+              - test-frontend
+              - codespell
+              - lint-go
+              - shellcheck
+              - mysql-integration-test
+              - postgres-integration-test
+              - cache-server-test
+            filters: *filter-not-release-or-master
         - release-next-packages:
           filters: *filter-not-release-or-master
-
