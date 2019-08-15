@@ -17,11 +17,17 @@ import {
   LogLabels,
   LogMessageAnsi,
 } from '@grafana/ui';
-import { LogRowModel, LogLabelStatsModel, LogsParser, TimeZone, calculateFieldStats, getParser } from '@grafana/data';
+import {
+  LogRowModel,
+  LogLabelStatsModel,
+  LogsParser,
+  TimeZone,
+  calculateFieldStats,
+  getParser,
+  findHighlightChunksInText,
+} from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
-
-import { findHighlightChunksInText } from 'app/core/utils/text';
 
 interface Props {
   highlighterExpressions?: string[];

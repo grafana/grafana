@@ -11,6 +11,7 @@ export * from './object';
 export * from './fieldCache';
 export * from './moment_wrapper';
 export * from './thresholds';
+export * from './text';
 
 export { getMappedValue } from './valueMappings';
 

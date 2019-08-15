@@ -333,10 +333,3 @@ export interface QueryTransaction {
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
-
-export interface TextMatch {
-  text: string;
-  start: number;
-  length: number;
-  end: number;
-}
