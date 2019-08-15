@@ -39,14 +39,14 @@ export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
   },
   {
     value: `${DataLinkBuiltInVars.valueTime}`,
-    documentation: "Adds narrowed down time range relative to data point's timestamp",
+    documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.BuiltIn,
   },
 ];
 
 type LinkTarget = '_blank' | '_self';
 
-interface LinkModel {
+export interface LinkModel {
   href: string;
   title: string;
   target: LinkTarget;
@@ -91,22 +91,14 @@ export class LinkSrv implements LinkService {
   }
 
   getDataPointVars = (seriesName: string, valueTime: DateTime) => {
-    // const valueTimeQuery = toUrlParams({
-    //   time: dateTime(valueTime).valueOf(),
-    // });
-
-    const seriesQuery = toUrlParams({
-      series: seriesName,
-    });
-
     return {
       [DataLinkBuiltInVars.valueTime]: {
         text: valueTime.valueOf(),
         value: valueTime.valueOf(),
       },
       [DataLinkBuiltInVars.seriesName]: {
-        text: seriesQuery,
-        value: seriesQuery,
+        text: seriesName,
+        value: seriesName,
       },
     };
   };
@@ -140,7 +132,7 @@ export class LinkSrv implements LinkService {
     if (dataPoint) {
       info.href = this.templateSrv.replace(
         info.href,
-        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint[0]))
+        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint.datapoint[0]))
       );
     }
 

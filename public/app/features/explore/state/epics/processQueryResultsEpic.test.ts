@@ -8,21 +8,19 @@ import {
   updateTimeRangeAction,
   runQueriesAction,
 } from '../actionTypes';
-import { DataFrame, LoadingState } from '@grafana/data';
+import { DataFrame, LoadingState, toDataFrame } from '@grafana/data';
 import { processQueryResultsEpic } from './processQueryResultsEpic';
 import TableModel from 'app/core/table_model';
 
 const testContext = () => {
-  const serieA: DataFrame = {
+  const serieA: DataFrame = toDataFrame({
     fields: [],
     refId: 'A',
-    rows: [],
-  };
-  const serieB: DataFrame = {
+  });
+  const serieB: DataFrame = toDataFrame({
     fields: [],
     refId: 'B',
-    rows: [],
-  };
+  });
   const series = [serieA, serieB];
   const latency = 0;
   const loadingState = LoadingState.Done;
@@ -41,9 +39,9 @@ describe('processQueryResultsEpic', () => {
         it('then resetQueryErrorAction and querySuccessAction are dispatched and eventBridge emits correct message', () => {
           const { datasourceId, exploreId, state, eventBridge } = mockExploreState();
           const { latency, series, loadingState } = testContext();
-          const graphResult = [];
+          const graphResult: any[] = [];
           const tableResult = new TableModel();
-          const logsResult = null;
+          const logsResult: any = null;
 
           epicTester(processQueryResultsEpic, state)
             .whenActionIsDispatched(
@@ -64,9 +62,9 @@ describe('processQueryResultsEpic', () => {
           it('then correct actions are dispatched', () => {
             const { datasourceId, exploreId, state } = mockExploreState({ scanning: true });
             const { latency, series, loadingState } = testContext();
-            const graphResult = [];
+            const graphResult: any[] = [];
             const tableResult = new TableModel();
-            const logsResult = null;
+            const logsResult: any = null;
 
             epicTester(processQueryResultsEpic, state)
               .whenActionIsDispatched(
@@ -84,9 +82,9 @@ describe('processQueryResultsEpic', () => {
           it('then correct actions are dispatched', () => {
             const { datasourceId, exploreId, state } = mockExploreState({ scanning: true });
             const { latency, loadingState } = testContext();
-            const graphResult = [];
+            const graphResult: any[] = [];
             const tableResult = new TableModel();
-            const logsResult = null;
+            const logsResult: any = null;
 
             epicTester(processQueryResultsEpic, state)
               .whenActionIsDispatched(

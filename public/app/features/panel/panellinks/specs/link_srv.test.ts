@@ -11,7 +11,7 @@ jest.mock('angular', () => {
 
 const dataPointMock = {
   seriesName: 'A-series',
-  datapoint: [1000000000, 1],
+  datapoint: [1000000001, 1],
 };
 
 describe('linkSrv', () => {
@@ -102,12 +102,12 @@ describe('linkSrv', () => {
         linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?$${DataLinkBuiltInVars.seriesName}`,
+            url: `/d/1?var-test=$${DataLinkBuiltInVars.seriesName}`,
           },
           {},
           dataPointMock
         ).href
-      ).toEqual('/d/1?series=A-series');
+      ).toEqual('/d/1?var-test=A-series');
     });
     it('should interpolate time range based on datapoint timestamp', () => {
       expect(
@@ -119,7 +119,7 @@ describe('linkSrv', () => {
           {},
           dataPointMock
         ).href
-      ).toEqual('/d/1?time=1000000000');
+      ).toEqual('/d/1?time=1000000001');
     });
   });
 });

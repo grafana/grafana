@@ -1,11 +1,14 @@
 #!/bin/bash
 
+# shellcheck disable=SC2086
+
 #
 #   This script is executed from within the container.
 #
 
 set -e
 
+# shellcheck disable=SC2124
 EXTRA_OPTS="$@"
 
 CCARMV6=/opt/rpi-tools/arm-bcm2708/arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc
@@ -14,9 +17,6 @@ CCARM64=aarch64-linux-gnu-gcc
 CCOSX64=/tmp/osxcross/target/bin/o64-clang
 CCWIN64=x86_64-w64-mingw32-gcc
 CCX64=/tmp/x86_64-centos6-linux-gnu/bin/x86_64-centos6-linux-gnu-gcc
-
-GOPATH=/go
-REPO_PATH=$GOPATH/src/github.com/grafana/grafana
 
 cd /go/src/github.com/grafana/grafana
 echo "current dir: $(pwd)"
@@ -63,6 +63,7 @@ mkdir dist
 go run build.go -gen-version ${OPT} > dist/grafana.version
 
 # Load ruby, needed for packing with fpm
+# shellcheck disable=SC1091
 source /etc/profile.d/rvm.sh
 
 echo "Packaging"

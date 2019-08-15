@@ -1,6 +1,6 @@
+import { toUtc, toDuration as duration, dateTime, DecimalCount } from '@grafana/data';
+
 import { toFixed, toFixedScaled } from './valueFormats';
-import { DecimalCount } from '../../types';
-import { toUtc, toDuration as duration, dateTime } from '@grafana/data';
 
 interface IntervalsInSeconds {
   [interval: string]: number;
@@ -295,7 +295,7 @@ export function toDurationInHoursMinutesSeconds(size: number) {
 }
 
 export function toTimeTicks(size: number, decimals: DecimalCount, scaledDecimals: DecimalCount) {
-  return toSeconds(size, decimals, scaledDecimals);
+  return toSeconds(size / 100, decimals, scaledDecimals);
 }
 
 export function toClockMilliseconds(size: number, decimals: DecimalCount) {

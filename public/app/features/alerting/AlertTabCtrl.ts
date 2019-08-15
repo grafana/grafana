@@ -71,7 +71,7 @@ export class AlertTabCtrl {
     this.alertNotifications = [];
     this.alertHistory = [];
 
-    return this.backendSrv.get('/api/alert-notifications').then((res: any) => {
+    return this.backendSrv.get('/api/alert-notifications/lookup').then((res: any) => {
       this.notifications = res;
 
       this.initModel();
@@ -167,7 +167,7 @@ export class AlertTabCtrl {
     this.newAlertRuleTag.value = '';
   }
 
-  removeAlertRuleTag(tagName) {
+  removeAlertRuleTag(tagName: string) {
     delete this.alert.alertRuleTags[tagName];
   }
 

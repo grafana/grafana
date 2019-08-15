@@ -1,21 +1,24 @@
 // Libraries
 import _ from 'lodash';
+import {
+  Threshold,
+  getMappedValue,
+  FieldConfig,
+  DisplayProcessor,
+  DecimalInfo,
+  DisplayValue,
+  DecimalCount,
+} from '@grafana/data';
 
 // Utils
 import { getValueFormat } from './valueFormats/valueFormats';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import { DecimalInfo, DisplayValue, GrafanaTheme, GrafanaThemeType, DecimalCount } from '../types';
-import { DateTime, dateTime, Threshold, getMappedValue, Field } from '@grafana/data';
-
-export type DisplayProcessor = (value: any) => DisplayValue;
+import { GrafanaTheme, GrafanaThemeType } from '../types';
 
 export interface DisplayValueOptions {
-  field?: Partial<Field>;
-
-  // Alternative to empty string
-  noValue?: string;
+  field?: FieldConfig;
 
   // Context
   isUtc?: boolean;
@@ -51,14 +54,6 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
         }
       }
 
-      if (field.dateFormat) {
-        const date = toMoment(value, numeric, field.dateFormat);
-        if (date.isValid()) {
-          text = date.format(field.dateFormat);
-          shouldFormat = false;
-        }
-      }
-
       if (!isNaN(numeric)) {
         if (shouldFormat && !_.isBoolean(value)) {
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
@@ -70,27 +65,17 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
       }
 
       if (!text) {
-        text = options.noValue ? options.noValue : '';
+        if (field && field.noValue) {
+          text = field.noValue;
+        } else {
+          text = ''; // No data?
+        }
       }
       return { text, numeric, color };
     };
   }
 
   return toStringProcessor;
-}
-
-function toMoment(value: any, numeric: number, format: string): DateTime {
-  if (!isNaN(numeric)) {
-    const v = dateTime(numeric);
-    if (v.isValid()) {
-      return v;
-    }
-  }
-  const v = dateTime(value, format);
-  if (v.isValid) {
-    return v;
-  }
-  return dateTime(value); // moment will try to parse the format
 }
 
 /** Will return any value as a number or NaN */

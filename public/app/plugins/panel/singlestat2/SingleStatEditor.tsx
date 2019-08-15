@@ -10,7 +10,7 @@ import {
   FieldPropertiesEditor,
   PanelOptionsGroup,
 } from '@grafana/ui';
-import { Threshold, ValueMapping, Field } from '@grafana/data';
+import { Threshold, ValueMapping, FieldConfig } from '@grafana/data';
 
 import { SingleStatOptions, SparklineOptions } from './types';
 import { ColoringEditor } from './ColoringEditor';
@@ -46,7 +46,7 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
       sparkline,
     });
 
-  onDefaultsChange = (field: Partial<Field>) => {
+  onDefaultsChange = (field: FieldConfig) => {
     this.onDisplayOptionsChanged({
       ...this.props.options.fieldOptions,
       override: field,

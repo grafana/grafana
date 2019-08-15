@@ -1,13 +1,11 @@
 package authproxy
 
 import (
+	"encoding/base32"
 	"errors"
 	"fmt"
 	"net/http"
 	"testing"
-
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -15,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/macaron.v1"
 )
 
 type TestMultiLDAP struct {
@@ -45,37 +45,70 @@ func (stub *TestMultiLDAP) User(login string) (
 	return result, nil
 }
 
+func prepareMiddleware(t *testing.T, req *http.Request, store *remotecache.RemoteCache) *AuthProxy {
+	t.Helper()
+
+	ctx := &models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{
+				Request: req,
+			},
+		},
+	}
+
+	auth := New(&Options{
+		Store: store,
+		Ctx:   ctx,
+		OrgID: 4,
+	})
+
+	return auth
+}
+
 func TestMiddlewareContext(t *testing.T) {
 	Convey("auth_proxy helper", t, func() {
 		req, _ := http.NewRequest("POST", "http://example.com", nil)
 		setting.AuthProxyHeaderName = "X-Killa"
-		name := "markelog"
+		store := remotecache.NewFakeStore(t)
 
+		name := "markelog"
 		req.Header.Add(setting.AuthProxyHeaderName, name)
 
-		ctx := &models.ReqContext{
-			Context: &macaron.Context{
-				Req: macaron.Request{
-					Request: req,
-				},
-			},
-		}
+		Convey("when the cache only contains the main header", func() {
 
-		Convey("logs in user from the cache", func() {
-			store := remotecache.NewFakeStore(t)
-			key := fmt.Sprintf(CachePrefix, name)
-			store.Set(key, int64(33), 0)
+			Convey("with a simple cache key", func() {
+				// Set cache key
+				key := fmt.Sprintf(CachePrefix, base32.StdEncoding.EncodeToString([]byte(name)))
+				store.Set(key, int64(33), 0)
 
-			auth := New(&Options{
-				Store: store,
-				Ctx:   ctx,
-				OrgID: 4,
+				// Set up the middleware
+				auth := prepareMiddleware(t, req, store)
+				id, err := auth.Login()
+
+				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:NVQXE23FNRXWO===")
+				So(err, ShouldBeNil)
+				So(id, ShouldEqual, 33)
 			})
 
-			id, err := auth.Login()
+			Convey("when the cache key contains additional headers", func() {
+				setting.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
+				group := "grafana-core-team"
+				req.Header.Add("X-WEBAUTH-GROUPS", group)
 
-			So(err, ShouldBeNil)
-			So(id, ShouldEqual, 33)
+				key := fmt.Sprintf(CachePrefix, base32.StdEncoding.EncodeToString([]byte(name+"-"+group)))
+				store.Set(key, int64(33), 0)
+
+				auth := prepareMiddleware(t, req, store)
+
+				id, err := auth.Login()
+
+				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:NVQXE23FNRXWOLLHOJQWMYLOMEWWG33SMUWXIZLBNU======")
+				So(err, ShouldBeNil)
+				So(id, ShouldEqual, 33)
+			})
+
+			Convey("when the does not exist", func() {
+			})
 		})
 
 		Convey("LDAP", func() {
@@ -119,13 +152,9 @@ func TestMiddlewareContext(t *testing.T) {
 
 				store := remotecache.NewFakeStore(t)
 
-				server := New(&Options{
-					Store: store,
-					Ctx:   ctx,
-					OrgID: 4,
-				})
+				auth := prepareMiddleware(t, req, store)
 
-				id, err := server.Login()
+				id, err := auth.Login()
 
 				So(err, ShouldBeNil)
 				So(id, ShouldEqual, 42)
@@ -149,11 +178,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 				store := remotecache.NewFakeStore(t)
 
-				auth := New(&Options{
-					Store: store,
-					Ctx:   ctx,
-					OrgID: 4,
-				})
+				auth := prepareMiddleware(t, req, store)
 
 				stub := &TestMultiLDAP{
 					ID: 42,
@@ -170,7 +195,6 @@ func TestMiddlewareContext(t *testing.T) {
 				So(id, ShouldNotEqual, 42)
 				So(stub.loginCalled, ShouldEqual, false)
 			})
-
 		})
 	})
 }

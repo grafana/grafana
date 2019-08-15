@@ -154,7 +154,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     if (!data.streams) {
-      return [{ ...logStreamToDataFrame(data), refId: target.refId }];
+      return [logStreamToDataFrame(data, target.refId)];
     }
 
     for (const stream of data.streams || []) {
@@ -330,16 +330,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const series: DataFrame[] = [];
 
     try {
+      const reverse = options && options.direction === 'FORWARD';
       const result = await this._request('/api/prom/query', target);
       if (result.data) {
         for (const stream of result.data.streams || []) {
           const dataFrame = logStreamToDataFrame(stream);
+          if (reverse) {
+            dataFrame.reverse();
+          }
           series.push(dataFrame);
-        }
-      }
-      if (options && options.direction === 'FORWARD') {
-        if (series[0] && series[0].rows) {
-          series[0].rows.reverse();
         }
       }
 
@@ -357,7 +356,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   testDatasource() {
-    return this._request('/api/prom/label')
+    // Consider only last 10 minutes otherwise request takes too long
+    const startMs = Date.now() - 10 * 60 * 1000;
+    const start = `${startMs}000000`; // API expects nanoseconds
+    return this._request('/api/prom/label', { start })
       .then((res: DataQueryResponse) => {
         if (res && res.data && res.data.values && res.data.values.length > 0) {
           return { status: 'success', message: 'Data source connected and labels found.' };

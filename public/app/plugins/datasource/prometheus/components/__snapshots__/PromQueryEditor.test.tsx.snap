@@ -35,6 +35,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
       </Component>
       <input
         className="gf-form-input"
+        onBlur={[Function]}
         onChange={[Function]}
         placeholder="legend format"
         type="text"
@@ -53,6 +54,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
       </Component>
       <input
         className="gf-form-input width-8"
+        onBlur={[Function]}
         onChange={[Function]}
         type="text"
       />

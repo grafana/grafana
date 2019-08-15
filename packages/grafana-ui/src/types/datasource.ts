@@ -1,5 +1,14 @@
 import { ComponentType, ComponentClass } from 'react';
-import { TimeRange, RawTimeRange, TableData, TimeSeries, DataFrame, LogRowModel, LoadingState } from '@grafana/data';
+import {
+  TimeRange,
+  RawTimeRange,
+  TableData,
+  TimeSeries,
+  DataFrame,
+  LogRowModel,
+  LoadingState,
+  DataFrameDTO,
+} from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
 
@@ -210,7 +219,7 @@ export abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options: any): Promise<MetricFindValue[]>;
+  getTagKeys?(options?: any): Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters
@@ -286,7 +295,7 @@ export interface ExploreStartPageProps {
  */
 export type LegacyResponseData = TimeSeries | TableData | any;
 
-export type DataQueryResponseData = DataFrame | LegacyResponseData;
+export type DataQueryResponseData = DataFrameDTO | LegacyResponseData;
 
 export type DataStreamObserver = (event: DataStreamState) => void;
 
@@ -309,9 +318,9 @@ export interface DataStreamState {
   request: DataQueryRequest;
 
   /**
-   * Series data may not be known yet
+   * Data may not be known yet
    */
-  series?: DataFrame[];
+  data?: DataFrame[];
 
   /**
    * Error in stream (but may still be running)

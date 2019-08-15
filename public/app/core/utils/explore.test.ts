@@ -223,7 +223,7 @@ describe('instanceOfDataQueryError', () => {
 describe('hasRefId', () => {
   describe('when called with a null value', () => {
     it('then it should return null', () => {
-      const input = null;
+      const input: any = null;
       const result = getValueWithRefId(input);
 
       expect(result).toBeNull();
@@ -304,7 +304,7 @@ describe('getFirstQueryErrorWithoutRefId', () => {
 describe('getRefIds', () => {
   describe('when called with a null value', () => {
     it('then it should return empty array', () => {
-      const input = null;
+      const input: any = null;
       const result = getRefIds(input);
 
       expect(result).toEqual([]);

@@ -13,6 +13,11 @@ export const defaultPulse: any = {
   offValue: 1,
 };
 
+export const defaultCSVWave: any = {
+  timeStep: 60,
+  valuesCSV: '0,0,2,2,1,1',
+};
+
 export class TestDataQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
@@ -87,6 +92,12 @@ export class TestDataQueryCtrl extends QueryCtrl {
       this.target.pulseWave = _.defaults(this.target.pulseWave || {}, defaultPulse);
     } else {
       delete this.target.pulseWave;
+    }
+
+    if (this.target.scenarioId === 'predictable_csv_wave') {
+      this.target.csvWave = _.defaults(this.target.csvWave || {}, defaultCSVWave);
+    } else {
+      delete this.target.csvWave;
     }
 
     this.refresh();

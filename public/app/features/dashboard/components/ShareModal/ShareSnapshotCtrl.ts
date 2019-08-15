@@ -1,9 +1,20 @@
-import angular from 'angular';
+import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TimeSrv } from '../../services/TimeSrv';
+import { DashboardModel } from '../../state/DashboardModel';
+import { PanelModel } from '../../state/PanelModel';
 
 export class ShareSnapshotCtrl {
   /** @ngInject */
-  constructor($scope, $rootScope, $location, backendSrv, $timeout, timeSrv) {
+  constructor(
+    $scope: any,
+    $rootScope: any,
+    $location: ILocationService,
+    backendSrv: BackendSrv,
+    $timeout: any,
+    timeSrv: TimeSrv
+  ) {
     $scope.snapshot = {
       name: $scope.dashboard.title,
       expires: 0,
@@ -26,7 +37,7 @@ export class ShareSnapshotCtrl {
     ];
 
     $scope.init = () => {
-      backendSrv.get('/api/snapshot/shared-options').then(options => {
+      backendSrv.get('/api/snapshot/shared-options').then((options: { [x: string]: any }) => {
         $scope.sharingButtonText = options['externalSnapshotName'];
         $scope.externalEnabled = options['externalEnabled'];
       });
@@ -34,7 +45,7 @@ export class ShareSnapshotCtrl {
 
     $scope.apiUrl = '/api/snapshots';
 
-    $scope.createSnapshot = external => {
+    $scope.createSnapshot = (external: any) => {
       $scope.dashboard.snapshot = {
         timestamp: new Date(),
       };
@@ -52,7 +63,7 @@ export class ShareSnapshotCtrl {
       }, $scope.snapshot.timeoutSeconds * 1000);
     };
 
-    $scope.saveSnapshot = external => {
+    $scope.saveSnapshot = (external: any) => {
       const dash = $scope.dashboard.getSaveModelClone();
       $scope.scrubDashboard(dash);
 
@@ -64,7 +75,7 @@ export class ShareSnapshotCtrl {
       };
 
       backendSrv.post($scope.apiUrl, cmdData).then(
-        results => {
+        (results: { deleteUrl: any; url: any }) => {
           $scope.loading = false;
           $scope.deleteUrl = results.deleteUrl;
           $scope.snapshotUrl = results.url;
@@ -80,7 +91,7 @@ export class ShareSnapshotCtrl {
       return $scope.snapshotUrl;
     };
 
-    $scope.scrubDashboard = dash => {
+    $scope.scrubDashboard = (dash: DashboardModel) => {
       // change title
       dash.title = $scope.snapshot.name;
 
@@ -131,7 +142,7 @@ export class ShareSnapshotCtrl {
 
       // cleanup snapshotData
       delete $scope.dashboard.snapshot;
-      $scope.dashboard.forEachPanel(panel => {
+      $scope.dashboard.forEachPanel((panel: PanelModel) => {
         delete panel.snapshotData;
       });
       _.each($scope.dashboard.annotations.list, annotation => {

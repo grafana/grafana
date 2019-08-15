@@ -29,6 +29,10 @@ func appendIfNotEmpty(slice []string, values ...string) []string {
 }
 
 func getAttribute(name string, entry *ldap.Entry) string {
+	if strings.ToLower(name) == "dn" {
+		return entry.DN
+	}
+
 	for _, attr := range entry.Attributes {
 		if attr.Name == name {
 			if len(attr.Values) > 0 {
@@ -40,6 +44,10 @@ func getAttribute(name string, entry *ldap.Entry) string {
 }
 
 func getArrayAttribute(name string, entry *ldap.Entry) []string {
+	if strings.ToLower(name) == "dn" {
+		return []string{entry.DN}
+	}
+
 	for _, attr := range entry.Attributes {
 		if attr.Name == name && len(attr.Values) > 0 {
 			return attr.Values
