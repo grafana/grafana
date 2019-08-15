@@ -33,24 +33,24 @@ echo "Current lerna.json version: ${PACKAGE_VERSION}"
 # check if there were any changes to packages between current and previous commit
 count=$(git diff HEAD~1..HEAD --name-only -- packages | awk '{c++} END {print c}')
 
-if [ -z "$count" ]; then
-  echo "No changes in packages, skipping packages publishing"
-else
-  echo "Changes detected in ${count} packages"
-  echo "Releasing packages under ${PACKAGE_VERSION}-${GIT_SHA}"
-  npx lerna version "${PACKAGE_VERSION}-${GIT_SHA}" --no-git-tag-version --no-push --force-publish -y
-  echo $'\nGit status:'
-  git status -s
+# if [ -z "$count" ]; then
+  # echo "No changes in packages, skipping packages publishing"
+# else
+  # echo "Changes detected in ${count} packages"
+echo "Releasing packages under ${PACKAGE_VERSION}-${GIT_SHA}"
+npx lerna version "${PACKAGE_VERSION}-${GIT_SHA}" --no-git-tag-version --no-push --force-publish -y
+echo $'\nGit status:'
+git status -s
 
 
-  echo $'\nBuilding packages'
-  yarn packages:build
+echo $'\nBuilding packages'
+yarn packages:build
 
-  prapare_version_commit
+#   prapare_version_commit
 
-  unpublish_previous_canary
+#   unpublish_previous_canary
 
-  echo $'\nPublishing packages'
-  yarn packages:publishNext
-fi
+#   echo $'\nPublishing packages'
+#   yarn packages:publishNext
+# fi
 
