@@ -34,8 +34,6 @@ RUN if [ `arch` = "x86_64" ]; then \
       cp -R usr/lib/x86_64-linux-gnu /usr/lib && \
       cp -R usr/share/fonts /usr/share && \
       cp -R etc/fonts /etc && \
-      curl -k -Ls https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2 | tar -jxf - && \
-      cp phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/phantomjs && \
       rm -rf /tmp/* && \
       apk del --no-cache phantomjs-utils; \
     fi
