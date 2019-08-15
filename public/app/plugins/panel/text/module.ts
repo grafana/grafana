@@ -1,8 +1,11 @@
 import _ from 'lodash';
 import { PanelCtrl } from 'app/plugins/sdk';
-import Remarkable from 'remarkable';
-import { sanitize } from 'app/core/utils/text';
+
+import { sanitize, escapeHtml } from 'app/core/utils/text';
 import config from 'app/core/config';
+import { auto, ISCEService } from 'angular';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { renderMarkdown } from '@grafana/data';
 
 const defaultContent = `
 # Title
@@ -17,7 +20,6 @@ export class TextPanelCtrl extends PanelCtrl {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
   static scrollable = true;
 
-  remarkable: any;
   content: string;
   // Set and populate defaults
   panelDefaults = {
@@ -26,7 +28,12 @@ export class TextPanelCtrl extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private templateSrv, private $sce) {
+  constructor(
+    $scope: any,
+    $injector: auto.IInjectorService,
+    private templateSrv: TemplateSrv,
+    private $sce: ISCEService
+  ) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
@@ -70,21 +77,13 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 
   renderText(content: string) {
-    content = content
-      .replace(/&/g, '&amp;')
-      .replace(/>/g, '&gt;')
-      .replace(/</g, '&lt;')
-      .replace(/\n/g, '<br/>');
-    this.updateContent(content);
+    const safeContent = escapeHtml(content).replace(/\n/g, '<br/>');
+    this.updateContent(safeContent);
   }
 
   renderMarkdown(content: string) {
-    if (!this.remarkable) {
-      this.remarkable = new Remarkable();
-    }
-
     this.$scope.$applyAsync(() => {
-      this.updateContent(this.remarkable.render(content));
+      this.updateContent(renderMarkdown(content));
     });
   }
 

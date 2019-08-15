@@ -1,15 +1,21 @@
 import {
+  DataFrame,
+  FieldType,
+  LogsModel,
+  LogsMetaKind,
+  LogsDedupStrategy,
+  LogLevel,
+  DataFrameHelper,
+  toDataFrame,
+} from '@grafana/data';
+import {
+  dedupLogRows,
   calculateFieldStats,
   calculateLogsLabelStats,
-  dedupLogRows,
   getParser,
-  LogsDedupStrategy,
-  LogsModel,
   LogsParsers,
-  seriesDataToLogsModel,
-  LogsMetaKind,
+  dataFrameToLogsModel,
 } from '../logs_model';
-import { SeriesData, FieldType } from '@grafana/ui';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -333,61 +339,60 @@ describe('LogsParsers', () => {
   });
 });
 
-const emptyLogsModel = {
+const emptyLogsModel: any = {
   hasUniqueLabels: false,
   rows: [],
   meta: [],
   series: [],
 };
 
-describe('seriesDataToLogsModel', () => {
+describe('dataFrameToLogsModel', () => {
   it('given empty series should return empty logs model', () => {
-    expect(seriesDataToLogsModel([] as SeriesData[], 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel([] as DataFrame[], 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without correct series name should return empty logs model', () => {
-    const series: SeriesData[] = [
-      {
+    const series: DataFrame[] = [
+      toDataFrame({
         fields: [],
-        rows: [],
-      },
+      }),
     ];
-    expect(seriesDataToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a time field should return empty logs model', () => {
-    const series: SeriesData[] = [
-      {
+    const series: DataFrame[] = [
+      new DataFrameHelper({
         fields: [
           {
             name: 'message',
             type: FieldType.string,
+            values: [],
           },
         ],
-        rows: [],
-      },
+      }),
     ];
-    expect(seriesDataToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given series without a string field should return empty logs model', () => {
-    const series: SeriesData[] = [
-      {
+    const series: DataFrame[] = [
+      new DataFrameHelper({
         fields: [
           {
             name: 'time',
             type: FieldType.time,
+            values: [],
           },
         ],
-        rows: [],
-      },
+      }),
     ];
-    expect(seriesDataToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
+    expect(dataFrameToLogsModel(series, 0)).toMatchObject(emptyLogsModel);
   });
 
   it('given one series should return expected logs model', () => {
-    const series: SeriesData[] = [
-      {
+    const series: DataFrame[] = [
+      new DataFrameHelper({
         labels: {
           filename: '/var/log/grafana/grafana.log',
           job: 'grafana',
@@ -396,43 +401,38 @@ describe('seriesDataToLogsModel', () => {
           {
             name: 'time',
             type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
+            values: [
+              't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+              't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+            ],
           },
-        ],
-        rows: [
-          [
-            '2019-04-26T09:28:11.352440161Z',
-            't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
-          ],
-          [
-            '2019-04-26T14:42:50.991981292Z',
-            't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
-          ],
         ],
         meta: {
           limit: 1000,
         },
-      },
+      }),
     ];
-    const logsModel = seriesDataToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0);
     expect(logsModel.hasUniqueLabels).toBeFalsy();
     expect(logsModel.rows).toHaveLength(2);
     expect(logsModel.rows).toMatchObject([
-      {
-        timestamp: '2019-04-26T14:42:50.991981292Z',
-        entry: 't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
-        labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
-        logLevel: 'error',
-        uniqueLabels: {},
-      },
       {
         timestamp: '2019-04-26T09:28:11.352440161Z',
         entry: 't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
         labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
         logLevel: 'info',
+        uniqueLabels: {},
+      },
+      {
+        timestamp: '2019-04-26T14:42:50.991981292Z',
+        entry: 't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+        labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana' },
+        logLevel: 'error',
         uniqueLabels: {},
       },
     ]);
@@ -452,91 +452,101 @@ describe('seriesDataToLogsModel', () => {
   });
 
   it('given one series without labels should return expected logs model', () => {
-    const series: SeriesData[] = [
-      {
+    const series: DataFrame[] = [
+      new DataFrameHelper({
         fields: [
           {
             name: 'time',
             type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
+            values: ['WARN boooo'],
+          },
+          {
+            name: 'level',
+            type: FieldType.string,
+            values: ['dbug'],
           },
         ],
-        rows: [['1970-01-01T00:00:01Z', 'WARN boooo']],
-      },
+      }),
     ];
-    const logsModel = seriesDataToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0);
     expect(logsModel.rows).toHaveLength(1);
     expect(logsModel.rows).toMatchObject([
       {
         entry: 'WARN boooo',
         labels: undefined,
-        logLevel: 'warning',
+        logLevel: LogLevel.debug,
         uniqueLabels: {},
       },
     ]);
   });
 
   it('given multiple series should return expected logs model', () => {
-    const series: SeriesData[] = [
-      {
+    const series: DataFrame[] = [
+      toDataFrame({
         labels: {
           foo: 'bar',
           baz: '1',
+          level: 'dbug',
         },
         fields: [
           {
             name: 'ts',
             type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z'],
           },
           {
             name: 'line',
             type: FieldType.string,
+            values: ['WARN boooo'],
           },
         ],
-        rows: [['1970-01-01T00:00:01Z', 'WARN boooo']],
-      },
-      {
+      }),
+      toDataFrame({
         name: 'logs',
         labels: {
           foo: 'bar',
           baz: '2',
+          level: 'err',
         },
         fields: [
           {
             name: 'time',
             type: FieldType.time,
+            values: ['1970-01-01T00:00:00Z', '1970-01-01T00:00:02Z'],
           },
           {
             name: 'message',
             type: FieldType.string,
+            values: ['INFO 1', 'INFO 2'],
           },
         ],
-        rows: [['1970-01-01T00:00:00Z', 'INFO 1'], ['1970-01-01T00:00:02Z', 'INFO 2']],
-      },
+      }),
     ];
-    const logsModel = seriesDataToLogsModel(series, 0);
+    const logsModel = dataFrameToLogsModel(series, 0);
     expect(logsModel.hasUniqueLabels).toBeTruthy();
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
       {
-        entry: 'INFO 2',
-        labels: { foo: 'bar', baz: '2' },
-        logLevel: 'info',
-        uniqueLabels: { baz: '2' },
-      },
-      {
         entry: 'WARN boooo',
         labels: { foo: 'bar', baz: '1' },
-        logLevel: 'warning',
+        logLevel: LogLevel.debug,
         uniqueLabels: { baz: '1' },
       },
       {
         entry: 'INFO 1',
         labels: { foo: 'bar', baz: '2' },
-        logLevel: 'info',
+        logLevel: LogLevel.error,
+        uniqueLabels: { baz: '2' },
+      },
+      {
+        entry: 'INFO 2',
+        labels: { foo: 'bar', baz: '2' },
+        logLevel: LogLevel.error,
         uniqueLabels: { baz: '2' },
       },
     ]);

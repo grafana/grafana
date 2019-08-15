@@ -3,8 +3,9 @@ notifiers:
     type: slack
     uid: notifier1
     org_id: 2
-    uid: "notifier1"
     is_default: true
+    send_reminder: true
+    frequency: 1h
     settings:
       recipient: "XXX"
       token: "xoxb"

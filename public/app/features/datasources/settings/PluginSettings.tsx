@@ -8,7 +8,7 @@ import {
   DataQuery,
   DataSourceJsonData,
 } from '@grafana/ui';
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 
 export type GenericDataSourcePlugin = DataSourcePlugin<DataSourceApi<DataQuery, DataSourceJsonData>>;
 
@@ -54,7 +54,7 @@ export class PluginSettings extends PureComponent<Props> {
     }
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps: Props) {
     const { plugin } = this.props;
     if (!plugin.components.ConfigEditor && this.props.dataSource !== prevProps.dataSource) {
       this.scopeProps.ctrl.current = _.cloneDeep(this.props.dataSource);

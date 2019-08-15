@@ -7,7 +7,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -91,7 +91,7 @@ func (ds *RemoteCache) Run(ctx context.Context) error {
 
 func createClient(opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SqlStore) (CacheStorage, error) {
 	if opts.Name == redisCacheType {
-		return newRedisStorage(opts), nil
+		return newRedisStorage(opts)
 	}
 
 	if opts.Name == memcachedCacheType {

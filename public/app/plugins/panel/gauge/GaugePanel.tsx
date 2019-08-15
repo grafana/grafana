@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { Gauge, FieldDisplay, getFieldDisplayValues } from '@grafana/ui';
+import { Gauge, FieldDisplay, getFieldDisplayValues, VizOrientation } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
@@ -14,7 +14,6 @@ import { PanelProps, VizRepeater } from '@grafana/ui';
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
-    const { fieldOptions } = options;
     const { field, display } = value;
 
     return (
@@ -22,7 +21,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
         value={display}
         width={width}
         height={height}
-        thresholds={fieldOptions.thresholds}
+        thresholds={field.thresholds}
         showThresholdLabels={options.showThresholdLabels}
         showThresholdMarkers={options.showThresholdMarkers}
         minValue={field.min}
@@ -43,7 +42,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   };
 
   render() {
-    const { height, width, options, data, renderCounter } = this.props;
+    const { height, width, data, renderCounter } = this.props;
     return (
       <VizRepeater
         getValues={this.getValues}
@@ -52,7 +51,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
         height={height}
         source={data}
         renderCounter={renderCounter}
-        orientation={options.orientation}
+        orientation={VizOrientation.Auto}
       />
     );
   }

@@ -1,43 +1,47 @@
 // Libraries
 import _ from 'lodash';
+import { from } from 'rxjs';
+import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 // Services & Utils
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
-import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
 import { getNextRefIdChar } from './query';
 
 // Types
 import {
-  colors,
+  DataQuery,
+  DataSourceApi,
+  DataQueryError,
+  DataSourceJsonData,
+  DataQueryRequest,
+  DataStreamObserver,
+} from '@grafana/ui';
+import {
+  toUtc,
   TimeRange,
   RawTimeRange,
   TimeZone,
   IntervalValues,
-  DataQuery,
-  DataSourceApi,
-  toSeriesData,
-  guessFieldTypes,
   TimeFragment,
-  DataQueryError,
-} from '@grafana/ui';
-import TimeSeries from 'app/core/time_series2';
+  LogRowModel,
+  LogsModel,
+  LogsDedupStrategy,
+} from '@grafana/data';
 import {
   ExploreUrlState,
   HistoryItem,
   QueryTransaction,
-  ResultType,
   QueryIntervals,
   QueryOptions,
-  ResultGetter,
+  ExploreMode,
 } from 'app/types/explore';
-import { LogsDedupStrategy, seriesDataToLogsModel } from 'app/core/logs_model';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { config } from '../config';
 
 export const DEFAULT_RANGE = {
-  from: 'now-6h',
+  from: 'now-1h',
   to: 'now',
 };
 
@@ -51,6 +55,7 @@ export const DEFAULT_UI_STATE = {
 const MAX_HISTORY_ITEMS = 100;
 
 export const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
+export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
 
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
@@ -75,7 +80,7 @@ export async function getExploreUrl(
   // Mixed datasources need to choose only one datasource
   if (panelDatasource.meta.id === 'mixed' && panelTargets) {
     // Find first explore datasource among targets
-    let mixedExploreDatasource;
+    let mixedExploreDatasource: any;
     for (const t of panel.targets) {
       const datasource = await datasourceSrv.get(t.datasource);
       if (datasource && datasource.meta.explore) {
@@ -112,7 +117,6 @@ export async function getExploreUrl(
 
 export function buildQueryTransaction(
   queries: DataQuery[],
-  resultType: ResultType,
   queryOptions: QueryOptions,
   range: TimeRange,
   queryIntervals: QueryIntervals,
@@ -133,7 +137,7 @@ export function buildQueryTransaction(
   // Using `format` here because it relates to the view panel that the request is for.
   // However, some datasources don't use `panelId + query.refId`, but only `panelId`.
   // Therefore panel id has to be unique.
-  const panelId = `${queryOptions.format}-${key}`;
+  const panelId = `${key}`;
 
   const options = {
     interval,
@@ -152,7 +156,6 @@ export function buildQueryTransaction(
   return {
     queries,
     options,
-    resultType,
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
@@ -162,10 +165,8 @@ export function buildQueryTransaction(
 
 export const clearQueryKeys: (query: DataQuery) => object = ({ key, refId, ...rest }) => rest;
 
-const metricProperties = ['expr', 'target', 'datasource'];
-const isMetricSegment = (segment: { [key: string]: string }) =>
-  metricProperties.some(prop => segment.hasOwnProperty(prop));
-const isUISegment = (segment: { [key: string]: string }) => segment.hasOwnProperty('ui');
+const isSegment = (segment: { [key: string]: string }, ...props: string[]) =>
+  props.some(prop => segment.hasOwnProperty(prop));
 
 enum ParseUrlStateIndex {
   RangeFrom = 0,
@@ -209,11 +210,12 @@ export const safeStringifyValue = (value: any, space?: number) => {
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsed = safeParseJson(initial);
-  const errorResult = {
+  const errorResult: any = {
     datasource: null,
     queries: [],
     range: DEFAULT_RANGE,
     ui: DEFAULT_UI_STATE,
+    mode: null,
   };
 
   if (!parsed) {
@@ -235,8 +237,12 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter(segment => isMetricSegment(segment));
-  const uiState = parsedSegments.filter(segment => isUISegment(segment))[0];
+  const metricProperties = ['expr', 'target', 'datasource', 'query'];
+  const queries = parsedSegments.filter(segment => isSegment(segment, ...metricProperties));
+  const modeObj = parsedSegments.filter(segment => isSegment(segment, 'mode'))[0];
+  const mode = modeObj ? modeObj.mode : ExploreMode.Metrics;
+
+  const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
   const ui = uiState
     ? {
         showingGraph: uiState.ui[ParseUiStateIndex.Graph],
@@ -246,7 +252,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
       }
     : DEFAULT_UI_STATE;
 
-  return { datasource, queries, range, ui };
+  return { datasource, queries, range, ui, mode };
 }
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
@@ -256,6 +262,7 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
       urlState.range.to,
       urlState.datasource,
       ...urlState.queries,
+      { mode: urlState.mode },
       {
         ui: [
           !!urlState.ui.showingGraph,
@@ -310,40 +317,20 @@ export function ensureQueries(queries?: DataQuery[]): DataQuery[] {
 }
 
 /**
- * A target is non-empty when it has keys (with non-empty values) other than refId and key.
+ * A target is non-empty when it has keys (with non-empty values) other than refId, key and context.
  */
+const validKeys = ['refId', 'key', 'context'];
 export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery[]): boolean {
   return (
     queries &&
-    queries.some(
-      query =>
-        Object.keys(query)
-          .map(k => query[k])
-          .filter(v => v).length > 2
-    )
+    queries.some((query: any) => {
+      const keys = Object.keys(query)
+        .filter(key => validKeys.indexOf(key) === -1)
+        .map(k => query[k])
+        .filter(v => v);
+      return keys.length > 0;
+    })
   );
-}
-
-export function calculateResultsFromQueryTransactions(result: any, resultType: ResultType, graphInterval: number) {
-  const flattenedResult: any[] = _.flatten(result);
-  const graphResult = resultType === 'Graph' && result ? result : null;
-  const tableResult =
-    resultType === 'Table' && result
-      ? mergeTablesIntoModel(
-          new TableModel(),
-          ...flattenedResult.filter((r: any) => r.columns && r.rows).map((r: any) => r as TableModel)
-        )
-      : mergeTablesIntoModel(new TableModel());
-  const logsResult =
-    resultType === 'Logs' && result
-      ? seriesDataToLogsModel(flattenedResult.map(r => guessFieldTypes(toSeriesData(r))), graphInterval)
-      : null;
-
-  return {
-    graphResult,
-    tableResult,
-    logsResult,
-  };
 }
 
 export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
@@ -353,37 +340,6 @@ export function getIntervals(range: TimeRange, lowLimit: string, resolution: num
 
   return kbn.calculateInterval(range, resolution, lowLimit);
 }
-
-export const makeTimeSeriesList: ResultGetter = (dataList, transaction, allTransactions) => {
-  // Prevent multiple Graph transactions to have the same colors
-  let colorIndexOffset = 0;
-  for (const other of allTransactions) {
-    // Only need to consider transactions that came before the current one
-    if (other === transaction) {
-      break;
-    }
-    // Count timeseries of previous query results
-    if (other.resultType === 'Graph' && other.done) {
-      colorIndexOffset += other.result.length;
-    }
-  }
-
-  return dataList.map((seriesData, index: number) => {
-    const datapoints = seriesData.datapoints || [];
-    const alias = seriesData.target;
-    const colorIndex = (colorIndexOffset + index) % colors.length;
-    const color = colors[colorIndex];
-
-    const series = new TimeSeries({
-      datapoints,
-      alias,
-      color,
-      unit: seriesData.unit,
-    });
-
-    return series;
-  });
-};
 
 /**
  * Update the query history. Side-effect: store history in local storage
@@ -424,13 +380,13 @@ export const getQueryKeys = (queries: DataQuery[], datasourceInstance: DataSourc
 
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRange => {
   return {
-    from: dateMath.parse(rawRange.from, false, timeZone.raw as any),
-    to: dateMath.parse(rawRange.to, true, timeZone.raw as any),
+    from: dateMath.parse(rawRange.from, false, timeZone as any),
+    to: dateMath.parse(rawRange.to, true, timeZone as any),
     raw: rawRange,
   };
 };
 
-const parseRawTime = (value): TimeFragment => {
+const parseRawTime = (value: any): TimeFragment => {
   if (value === null) {
     return null;
   }
@@ -464,8 +420,8 @@ export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): Ti
   };
 
   return {
-    from: dateMath.parse(raw.from, false, timeZone.raw as any),
-    to: dateMath.parse(raw.to, true, timeZone.raw as any),
+    from: dateMath.parse(raw.from, false, timeZone as any),
+    to: dateMath.parse(raw.to, true, timeZone as any),
     raw,
   };
 };
@@ -528,4 +484,54 @@ export const getRefIds = (value: any): string[] => {
   }
 
   return _.uniq(_.flatten(refIds));
+};
+
+const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  if (a.timestamp < b.timestamp) {
+    return -1;
+  }
+
+  if (a.timestamp > b.timestamp) {
+    return 1;
+  }
+
+  return 0;
+};
+
+const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
+  if (a.timestamp > b.timestamp) {
+    return -1;
+  }
+
+  if (a.timestamp < b.timestamp) {
+    return 1;
+  }
+
+  return 0;
+};
+
+export const sortLogsResult = (logsResult: LogsModel, refreshInterval: string) => {
+  const rows = logsResult ? logsResult.rows : [];
+  const live = isLive(refreshInterval);
+  live ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
+  const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
+
+  return result;
+};
+
+export const convertToWebSocketUrl = (url: string) => {
+  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
+  if (backend.endsWith('/')) {
+    backend = backend.slice(0, backend.length - 1);
+  }
+  return `${backend}${url}`;
+};
+
+export const getQueryResponse = (
+  datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData>,
+  options: DataQueryRequest<DataQuery>,
+  observer?: DataStreamObserver
+) => {
+  return from(datasourceInstance.query(options, observer));
 };

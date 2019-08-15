@@ -35,6 +35,8 @@ RUN apt-get update   && \
         curl            \
         git             \
         make            \
+        cmake           \
+        libssl-dev      \
         xz-utils     && \
     git clone https://github.com/tpoechtrager/osxcross.git  /tmp/osxcross  && \
     curl -L ${OSX_SDK_URL}/${OSX_SDK}.tar.xz -o /tmp/osxcross/tarballs/${OSX_SDK}.tar.xz && \
@@ -69,7 +71,7 @@ RUN apt-get update   && \
 # base image to crossbuild grafana
 FROM ubuntu:14.04
 
-ENV GOVERSION=1.12.4 \
+ENV GOVERSION=1.12.6 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
     NODEVERSION=10.14.2

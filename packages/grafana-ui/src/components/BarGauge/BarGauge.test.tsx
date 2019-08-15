@@ -1,7 +1,16 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import { BarGauge, Props, getValueColor, getBasicAndGradientStyles, getBarGradient, getTitleStyles } from './BarGauge';
-import { VizOrientation, DisplayValue } from '../../types';
+import { DisplayValue } from '@grafana/data';
+import {
+  BarGauge,
+  Props,
+  getValueColor,
+  getBasicAndGradientStyles,
+  getBarGradient,
+  getTitleStyles,
+  getValuePercent,
+} from './BarGauge';
+import { VizOrientation } from '../../types';
 import { getTheme } from '../../themes';
 
 // jest.mock('jquery', () => ({
@@ -17,11 +26,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
     maxValue: 100,
     minValue: 0,
     displayMode: 'basic',
-    thresholds: [
-      { index: 0, value: -Infinity, color: 'green' },
-      { index: 1, value: 70, color: 'orange' },
-      { index: 2, value: 90, color: 'red' },
-    ],
+    thresholds: [{ value: -Infinity, color: 'green' }, { value: 70, color: 'orange' }, { value: 90, color: 'red' }],
     height: 300,
     width: 300,
     value: {
@@ -60,6 +65,24 @@ describe('BarGauge', () => {
     it('should get the base threshold', () => {
       const props = getProps({ value: getValue(-10) });
       expect(getValueColor(props)).toEqual(green);
+    });
+  });
+
+  describe('Get value percent', () => {
+    it('0 to 100 and value 40', () => {
+      expect(getValuePercent(40, 0, 100)).toEqual(0.4);
+    });
+
+    it('50 to 100 and value 75', () => {
+      expect(getValuePercent(75, 50, 100)).toEqual(0.5);
+    });
+
+    it('-30 to 30 and value 0', () => {
+      expect(getValuePercent(0, -30, 30)).toEqual(0.5);
+    });
+
+    it('-30 to 30 and value 30', () => {
+      expect(getValuePercent(30, -30, 30)).toEqual(1);
     });
   });
 

@@ -8,17 +8,17 @@ export default class AppInsightsQuerystringBuilder {
   timeGrainUnit = '';
   filter = '';
 
-  constructor(private from, private to, public grafanaInterval) {}
+  constructor(private from: any, private to: any, public grafanaInterval: any) {}
 
-  setAggregation(aggregation) {
+  setAggregation(aggregation: string) {
     this.aggregation = aggregation;
   }
 
-  setGroupBy(groupBy) {
+  setGroupBy(groupBy: string) {
     this.groupBy = groupBy;
   }
 
-  setInterval(timeGrainType, timeGrain, timeGrainUnit) {
+  setInterval(timeGrainType: string, timeGrain: any, timeGrainUnit: string) {
     this.timeGrainType = timeGrainType;
     this.timeGrain = timeGrain;
     this.timeGrainUnit = timeGrainUnit;

@@ -1,6 +1,7 @@
 import coreModule from 'app/core/core_module';
 import { contextSrv } from 'app/core/services/context_srv';
 import config from 'app/core/config';
+import { BackendSrv } from '../services/backend_srv';
 
 const template = `
 <div class="modal-body">
@@ -47,18 +48,18 @@ export class OrgSwitchCtrl {
   currentOrgId: any;
 
   /** @ngInject */
-  constructor(private backendSrv) {
+  constructor(private backendSrv: BackendSrv) {
     this.currentOrgId = contextSrv.user.orgId;
     this.getUserOrgs();
   }
 
   getUserOrgs() {
-    this.backendSrv.get('/api/user/orgs').then(orgs => {
+    this.backendSrv.get('/api/user/orgs').then((orgs: any) => {
       this.orgs = orgs;
     });
   }
 
-  setUsingOrg(org) {
+  setUsingOrg(org: any) {
     return this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
       this.setWindowLocation(config.appSubUrl + (config.appSubUrl.endsWith('/') ? '' : '/') + '?orgId=' + org.orgId);
     });

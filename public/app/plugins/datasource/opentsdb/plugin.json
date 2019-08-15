@@ -8,7 +8,6 @@
   "defaultMatchFormat": "pipe",
   "annotations": true,
   "alerting": true,
-  "tables": false,
 
   "info": {
     "description": "Open source time series database",

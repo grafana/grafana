@@ -2,10 +2,13 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { InputDatasource } from './InputDatasource';
+import { InputDatasource, describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
 
-import { FormLabel, Select, QueryEditorProps, SelectOptionItem, SeriesData, TableInputCSV, toCSV } from '@grafana/ui';
+import { FormLabel, Select, QueryEditorProps, TableInputCSV } from '@grafana/ui';
+import { DataFrame, toCSV, SelectableValue, DataFrameHelper } from '@grafana/data';
+
+import { dataFrameToCSV } from './utils';
 
 type Props = QueryEditorProps<InputDatasource, InputQuery, InputOptions>;
 
@@ -25,25 +28,20 @@ export class InputQueryEditor extends PureComponent<Props, State> {
 
   onComponentDidMount() {
     const { query } = this.props;
-    const text = query.data ? toCSV(query.data) : '';
+    const text = dataFrameToCSV(query.data);
     this.setState({ text });
   }
 
-  onSourceChange = (item: SelectOptionItem<string>) => {
+  onSourceChange = (item: SelectableValue<string>) => {
     const { datasource, query, onChange, onRunQuery } = this.props;
-    let data: SeriesData[] | undefined = undefined;
+    let data: DataFrame[] | undefined = undefined;
     if (item.value === 'panel') {
       if (query.data) {
         return;
       }
       data = [...datasource.data];
       if (!data) {
-        data = [
-          {
-            fields: [],
-            rows: [],
-          },
-        ];
+        data = [new DataFrameHelper()];
       }
       this.setState({ text: toCSV(data) });
     }
@@ -51,16 +49,11 @@ export class InputQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
-  onSeriesParsed = (data: SeriesData[], text: string) => {
+  onSeriesParsed = (data: DataFrame[], text: string) => {
     const { query, onChange, onRunQuery } = this.props;
     this.setState({ text });
     if (!data) {
-      data = [
-        {
-          fields: [],
-          rows: [],
-        },
-      ];
+      data = [new DataFrameHelper()];
     }
     onChange({ ...query, data });
     onRunQuery();
@@ -80,10 +73,10 @@ export class InputQueryEditor extends PureComponent<Props, State> {
 
           <div className="btn btn-link">
             {query.data ? (
-              datasource.getDescription(query.data)
+              describeDataFrame(query.data)
             ) : (
               <a href={`datasources/edit/${id}/`}>
-                {name}: {datasource.getDescription(datasource.data)} &nbsp;&nbsp;
+                {name}: {describeDataFrame(datasource.data)} &nbsp;&nbsp;
                 <i className="fa fa-pencil-square-o" />
               </a>
             )}

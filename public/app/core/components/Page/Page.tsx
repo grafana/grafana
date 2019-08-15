@@ -7,7 +7,8 @@ import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 import PageHeader from '../PageHeader/PageHeader';
 import Footer from '../Footer/Footer';
 import PageContents from './PageContents';
-import { CustomScrollbar, NavModel } from '@grafana/ui';
+import { CustomScrollbar } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import { isEqual } from 'lodash';
 
 interface Props {

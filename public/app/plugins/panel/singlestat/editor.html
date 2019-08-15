@@ -89,6 +89,14 @@
     <div ng-if="ctrl.panel.sparkline.show">
       <gf-form-switch class="gf-form" label-class="width-9" label="Full height" checked="ctrl.panel.sparkline.full" on-change="ctrl.render()"></gf-form-switch>
       <div class="gf-form">
+        <label class="gf-form-label width-9">Y-Min</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right" ng-model="ctrl.panel.sparkline.ymin" ng-change="ctrl.render()" ng-model-onblur empty-to-null>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Y-Max</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right" ng-model="ctrl.panel.sparkline.ymax" ng-change="ctrl.render()" ng-model-onblur empty-to-null>
+      </div>
+      <div class="gf-form">
         <label class="gf-form-label width-9">Line Color</label>
         <span class="gf-form-label">
           <color-picker color="ctrl.panel.sparkline.lineColor" onChange="ctrl.onSparklineColorChange"></color-picker>

@@ -87,7 +87,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
       setupFn();
 
       const store = mockStore(ctx.storeState);
-
+      // @ts-ignore
       await store.dispatch(initDashboard(ctx.args));
 
       ctx.actions = store.getActions();

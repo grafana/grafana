@@ -20,12 +20,12 @@ export class AppNotificationList extends PureComponent<Props> {
   componentDidMount() {
     const { notifyApp } = this.props;
 
-    appEvents.on('alert-warning', options => notifyApp(createWarningNotification(options[0], options[1])));
-    appEvents.on('alert-success', options => notifyApp(createSuccessNotification(options[0], options[1])));
-    appEvents.on('alert-error', options => notifyApp(createErrorNotification(options[0], options[1])));
+    appEvents.on('alert-warning', (options: string[]) => notifyApp(createWarningNotification(options[0], options[1])));
+    appEvents.on('alert-success', (options: string[]) => notifyApp(createSuccessNotification(options[0], options[1])));
+    appEvents.on('alert-error', (options: string[]) => notifyApp(createErrorNotification(options[0], options[1])));
   }
 
-  onClearAppNotification = id => {
+  onClearAppNotification = (id: number) => {
     this.props.clearAppNotification(id);
   };
 

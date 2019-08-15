@@ -14,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -133,7 +133,7 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 		Meta:      meta,
 	}
 
-	c.TimeRequest(metrics.M_Api_Dashboard_Get)
+	c.TimeRequest(metrics.MApiDashboardGet)
 	return JSON(200, dto)
 }
 
@@ -278,12 +278,11 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		inFolder := cmd.FolderId > 0
 		err := dashboards.MakeUserAdmin(hs.Bus, cmd.OrgId, cmd.UserId, dashboard.Id, !inFolder)
 		if err != nil {
-			hs.log.Error("Could not make user admin", "dashboard", cmd.Result.Title, "user", c.SignedInUser.UserId, "error", err)
-			return Error(500, "Failed to make user admin of dashboard", err)
+			hs.log.Error("Could not make user admin", "dashboard", dashboard.Title, "user", c.SignedInUser.UserId, "error", err)
 		}
 	}
 
-	c.TimeRequest(metrics.M_Api_Dashboard_Save)
+	c.TimeRequest(metrics.MApiDashboardSave)
 	return JSON(200, util.DynMap{
 		"status":  "success",
 		"slug":    dashboard.Slug,
@@ -316,6 +315,7 @@ func GetHomeDashboard(c *m.ReqContext) Response {
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)
 	}
+	defer file.Close()
 
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true

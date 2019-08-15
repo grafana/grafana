@@ -1,3 +1,3 @@
 #!/bin/bash
-cd /oss
+cd /oss || exit 1
 make

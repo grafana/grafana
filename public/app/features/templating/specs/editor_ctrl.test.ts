@@ -1,6 +1,7 @@
 import { VariableEditorCtrl } from '../editor_ctrl';
+import { TemplateSrv } from '../template_srv';
 
-let mockEmit;
+let mockEmit: any;
 jest.mock('app/core/app_events', () => {
   mockEmit = jest.fn();
   return {
@@ -17,7 +18,7 @@ describe('VariableEditorCtrl', () => {
 
   describe('When running a variable query and the data source returns an error', () => {
     beforeEach(() => {
-      const variableSrv = {
+      const variableSrv: any = {
         updateOptions: () => {
           return Promise.reject({
             data: { message: 'error' },
@@ -25,7 +26,7 @@ describe('VariableEditorCtrl', () => {
         },
       };
 
-      return new VariableEditorCtrl(scope, {}, variableSrv, {});
+      return new VariableEditorCtrl(scope, {} as any, variableSrv, {} as TemplateSrv);
     });
 
     it('should emit an error', () => {

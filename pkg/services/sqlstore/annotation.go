@@ -29,7 +29,7 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 		}
 
 		if item.Tags != nil {
-			tags, err := r.ensureTagsExist(sess, tags)
+			tags, err := EnsureTagsExist(sess, tags)
 			if err != nil {
 				return err
 			}
@@ -42,26 +42,6 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 
 		return nil
 	})
-}
-
-// Will insert if needed any new key/value pars and return ids
-func (r *SqlAnnotationRepo) ensureTagsExist(sess *DBSession, tags []*models.Tag) ([]*models.Tag, error) {
-	for _, tag := range tags {
-		var existingTag models.Tag
-
-		// check if it exists
-		if exists, err := sess.Table("tag").Where(dialect.Quote("key")+"=? AND "+dialect.Quote("value")+"=?", tag.Key, tag.Value).Get(&existingTag); err != nil {
-			return nil, err
-		} else if exists {
-			tag.Id = existingTag.Id
-		} else {
-			if _, err := sess.Table("tag").Insert(tag); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	return tags, nil
 }
 
 func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
@@ -94,7 +74,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		}
 
 		if item.Tags != nil {
-			tags, err := r.ensureTagsExist(sess, models.ParseTagPairs(item.Tags))
+			tags, err := EnsureTagsExist(sess, models.ParseTagPairs(item.Tags))
 			if err != nil {
 				return err
 			}

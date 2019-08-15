@@ -10,15 +10,9 @@ import templateSrv from 'app/features/templating/template_srv';
 import { PanelQueryState } from './PanelQueryState';
 
 // Types
-import {
-  PanelData,
-  DataQuery,
-  TimeRange,
-  ScopedVars,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceJsonData,
-} from '@grafana/ui';
+import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
+
+import { TimeRange } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -40,7 +34,7 @@ export interface QueryRunnerOptions<
 }
 
 export enum PanelQueryRunnerFormat {
-  series = 'series',
+  frames = 'frames',
   legacy = 'legacy',
   both = 'both',
 }
@@ -63,7 +57,7 @@ export class PanelQueryRunner {
    * Listen for updates to the PanelData.  If a query has already run for this panel,
    * the results will be immediatly passed to the observer
    */
-  subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.series): Unsubscribable {
+  subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.frames): Unsubscribable {
     if (!this.subject) {
       this.subject = new Subject(); // Delay creating a subject until someone is listening
     }
@@ -71,10 +65,10 @@ export class PanelQueryRunner {
     if (format === PanelQueryRunnerFormat.legacy) {
       this.state.sendLegacy = true;
     } else if (format === PanelQueryRunnerFormat.both) {
-      this.state.sendSeries = true;
+      this.state.sendFrames = true;
       this.state.sendLegacy = true;
     } else {
-      this.state.sendSeries = true;
+      this.state.sendFrames = true;
     }
 
     // Send the last result
@@ -108,9 +102,6 @@ export class PanelQueryRunner {
       delayStateNotification,
     } = options;
 
-    // filter out hidden queries & deep clone them
-    const clonedAndFilteredQueries = cloneDeep(queries.filter(q => !q.hide));
-
     const request: DataQueryRequest = {
       requestId: getNextRequestId(),
       timezone,
@@ -120,7 +111,7 @@ export class PanelQueryRunner {
       timeInfo,
       interval: '',
       intervalMs: 0,
-      targets: clonedAndFilteredQueries,
+      targets: cloneDeep(queries),
       maxDataPoints: maxDataPoints || widthPixels,
       scopedVars: scopedVars || {},
       cacheTimeout,
@@ -134,6 +125,10 @@ export class PanelQueryRunner {
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
+
+      if (ds.meta && !ds.meta.hiddenQueries) {
+        request.targets = request.targets.filter(q => !q.hide);
+      }
 
       // Attach the datasource name to each query
       request.targets = request.targets.map(query => {

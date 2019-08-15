@@ -1,4 +1,5 @@
 import { Variable, assignModelProperties, variableTypes } from './variable';
+import { VariableSrv } from './all';
 
 export class ConstantVariable implements Variable {
   query: string;
@@ -6,7 +7,7 @@ export class ConstantVariable implements Variable {
   current: any;
   skipUrlSync: boolean;
 
-  defaults = {
+  defaults: any = {
     type: 'constant',
     name: '',
     hide: 2,
@@ -18,7 +19,7 @@ export class ConstantVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(private model: any, private variableSrv: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
@@ -27,7 +28,7 @@ export class ConstantVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     this.variableSrv.setOptionAsCurrent(this, option);
   }
 
@@ -37,11 +38,11 @@ export class ConstantVariable implements Variable {
     return Promise.resolve();
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 

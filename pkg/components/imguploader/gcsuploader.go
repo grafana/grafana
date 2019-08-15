@@ -8,7 +8,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2/google"
 )
@@ -67,6 +67,7 @@ func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string)
 	if err != nil {
 		return err
 	}
+	defer fileReader.Close()
 
 	reqUrl := fmt.Sprintf(uploadUrl, u.bucket, key)
 	u.log.Debug("Request URL: ", reqUrl)

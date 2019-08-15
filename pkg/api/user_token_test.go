@@ -124,7 +124,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 					ClientIp:  "127.0.0.2",
 					UserAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1",
 					CreatedAt: time.Now().Unix(),
-					SeenAt:    time.Now().Unix(),
+					SeenAt:    0,
 				},
 			}
 			sc.userAuthTokenService.GetUserTokensProvider = func(ctx context.Context, userId int64) ([]*m.UserToken, error) {
@@ -140,17 +140,27 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 			So(resultOne.Get("id").MustInt64(), ShouldEqual, tokens[0].Id)
 			So(resultOne.Get("isActive").MustBool(), ShouldBeTrue)
 			So(resultOne.Get("clientIp").MustString(), ShouldEqual, "127.0.0.1")
-			So(resultOne.Get("userAgent").MustString(), ShouldEqual, "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.119 Safari/537.36")
 			So(resultOne.Get("createdAt").MustString(), ShouldEqual, time.Unix(tokens[0].CreatedAt, 0).Format(time.RFC3339))
 			So(resultOne.Get("seenAt").MustString(), ShouldEqual, time.Unix(tokens[0].SeenAt, 0).Format(time.RFC3339))
+
+			So(resultOne.Get("device").MustString(), ShouldEqual, "Other")
+			So(resultOne.Get("browser").MustString(), ShouldEqual, "Chrome")
+			So(resultOne.Get("browserVersion").MustString(), ShouldEqual, "72.0")
+			So(resultOne.Get("os").MustString(), ShouldEqual, "Linux")
+			So(resultOne.Get("osVersion").MustString(), ShouldEqual, "")
 
 			resultTwo := result.GetIndex(1)
 			So(resultTwo.Get("id").MustInt64(), ShouldEqual, tokens[1].Id)
 			So(resultTwo.Get("isActive").MustBool(), ShouldBeFalse)
 			So(resultTwo.Get("clientIp").MustString(), ShouldEqual, "127.0.0.2")
-			So(resultTwo.Get("userAgent").MustString(), ShouldEqual, "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1")
 			So(resultTwo.Get("createdAt").MustString(), ShouldEqual, time.Unix(tokens[1].CreatedAt, 0).Format(time.RFC3339))
-			So(resultTwo.Get("seenAt").MustString(), ShouldEqual, time.Unix(tokens[1].SeenAt, 0).Format(time.RFC3339))
+			So(resultTwo.Get("seenAt").MustString(), ShouldEqual, time.Unix(tokens[1].CreatedAt, 0).Format(time.RFC3339))
+
+			So(resultTwo.Get("device").MustString(), ShouldEqual, "iPhone")
+			So(resultTwo.Get("browser").MustString(), ShouldEqual, "Mobile Safari")
+			So(resultTwo.Get("browserVersion").MustString(), ShouldEqual, "11.0")
+			So(resultTwo.Get("os").MustString(), ShouldEqual, "iOS")
+			So(resultTwo.Get("osVersion").MustString(), ShouldEqual, "11.0")
 		})
 	})
 }

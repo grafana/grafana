@@ -1,4 +1,4 @@
-import { NavModel, NavModelItem } from '@grafana/ui';
+import { NavModel, NavModelItem } from '@grafana/data';
 
 export const backendSrv = {
   get: jest.fn(),
@@ -8,11 +8,11 @@ export const backendSrv = {
   post: jest.fn(),
 };
 
-export function createNavTree(...args) {
-  const root = [];
+export function createNavTree(...args: any[]) {
+  const root: any[] = [];
   let node = root;
   for (const arg of args) {
-    const child = { id: arg, url: `/url/${arg}`, text: `${arg}-Text`, children: [] };
+    const child: any = { id: arg, url: `/url/${arg}`, text: `${arg}-Text`, children: [] };
     node.push(child);
     node = child.children;
   }
@@ -31,8 +31,10 @@ export function createNavModel(title: string, ...tabs: string[]): NavModel {
     breadcrumbs: [],
   };
 
+  const children = [];
+
   for (const tab of tabs) {
-    node.children.push({
+    children.push({
       id: tab,
       icon: 'icon',
       subTitle: 'subTitle',
@@ -42,7 +44,9 @@ export function createNavModel(title: string, ...tabs: string[]): NavModel {
     });
   }
 
-  node.children[0].active = true;
+  children[0].active = true;
+
+  node.children = children;
 
   return {
     node: node,

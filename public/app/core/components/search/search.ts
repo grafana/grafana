@@ -6,6 +6,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import appEvents from 'app/core/app_events';
 import { parse, SearchParserOptions, SearchParserResult } from 'search-query-parser';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
 export interface SearchQuery {
   query: string;
   parsedQuery: SearchParserResult;
@@ -32,6 +33,15 @@ class SearchQueryParser {
   }
 }
 
+interface SelectedIndicies {
+  dashboardIndex?: number;
+  folderIndex?: number;
+}
+
+interface OpenSearchParams {
+  query?: string;
+}
+
 export class SearchCtrl {
   isOpen: boolean;
   query: SearchQuery;
@@ -49,7 +59,7 @@ export class SearchCtrl {
   queryParser: SearchQueryParser;
 
   /** @ngInject */
-  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
+  constructor($scope: any, private $location: any, private $timeout: any, private searchSrv: SearchSrv) {
     appEvents.on('show-dash-search', this.openSearch.bind(this), $scope);
     appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
     appEvents.on('search-query', debounce(this.search.bind(this), 500), $scope);
@@ -88,7 +98,7 @@ export class SearchCtrl {
     appEvents.emit('search-query');
   }
 
-  openSearch(evt, payload) {
+  openSearch(payload: OpenSearchParams = {}) {
     if (this.isOpen) {
       this.closeSearch();
       return;
@@ -99,18 +109,15 @@ export class SearchCtrl {
     this.selectedIndex = -1;
     this.results = [];
     this.query = {
-      query: evt ? `${evt.query} ` : '',
-      parsedQuery: this.queryParser.parse(evt && evt.query),
+      query: payload.query ? `${payload.query} ` : '',
+      parsedQuery: this.queryParser.parse(payload.query),
       tags: [],
       starred: false,
     };
+
     this.currentSearchId = 0;
     this.ignoreClose = true;
     this.isLoading = true;
-
-    if (payload && payload.starred) {
-      this.query.starred = true;
-    }
 
     this.$timeout(() => {
       this.ignoreClose = false;
@@ -166,7 +173,7 @@ export class SearchCtrl {
     }, 100);
   }
 
-  moveSelection(direction) {
+  moveSelection(direction: number) {
     if (this.results.length === 0) {
       return;
     }
@@ -252,14 +259,14 @@ export class SearchCtrl {
     return query.query === '' && query.starred === false && query.tags.length === 0;
   }
 
-  filterByTag(tag) {
+  filterByTag(tag: string) {
     if (_.indexOf(this.query.tags, tag) === -1) {
       this.query.tags.push(tag);
       this.search();
     }
   }
 
-  removeTag(tag, evt) {
+  removeTag(tag: string, evt: any) {
     this.query.tags = _.without(this.query.tags, tag);
     this.search();
     this.giveSearchFocus = true;
@@ -298,14 +305,11 @@ export class SearchCtrl {
     this.moveSelection(0);
   }
 
-  private getFlattenedResultForNavigation(): Array<{
-    folderIndex: number;
-    dashboardIndex: number;
-  }> {
+  private getFlattenedResultForNavigation(): SelectedIndicies[] {
     let folderIndex = 0;
 
-    return _.flatMap(this.results, s => {
-      let result = [];
+    return _.flatMap(this.results, (s: any) => {
+      let result: SelectedIndicies[] = [];
 
       result.push({
         folderIndex: folderIndex,

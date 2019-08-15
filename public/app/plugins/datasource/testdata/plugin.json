@@ -4,6 +4,7 @@
   "id": "testdata",
 
   "metrics": true,
+  "logs": true,
   "alerting": true,
   "annotations": true,
 

@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/extensions"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/log"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"

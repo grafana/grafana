@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
+import { Threshold, DisplayValue } from '@grafana/data';
+
 import { getColorFromHexRgbOrName } from '../../utils';
-import { DisplayValue, Threshold, Themeable } from '../../types';
+import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
 
 export interface Props extends Themeable {
@@ -42,12 +44,12 @@ export class Gauge extends PureComponent<Props> {
     const lastThreshold = thresholds[thresholds.length - 1];
 
     return [
-      ...thresholds.map(threshold => {
-        if (threshold.index === 0) {
+      ...thresholds.map((threshold, index) => {
+        if (index === 0) {
           return { value: minValue, color: getColorFromHexRgbOrName(threshold.color, theme.type) };
         }
 
-        const previousThreshold = thresholds[threshold.index - 1];
+        const previousThreshold = thresholds[index - 1];
         return { value: threshold.value, color: getColorFromHexRgbOrName(previousThreshold.color, theme.type) };
       }),
       { value: maxValue, color: getColorFromHexRgbOrName(lastThreshold.color, theme.type) },
@@ -58,7 +60,7 @@ export class Gauge extends PureComponent<Props> {
     if (length > 12) {
       return FONT_SCALE - (length * 5) / 110;
     }
-    return FONT_SCALE - (length * 5) / 100;
+    return FONT_SCALE - (length * 5) / 101;
   }
 
   draw() {
@@ -69,16 +71,17 @@ export class Gauge extends PureComponent<Props> {
 
     const backgroundColor = selectThemeVariant(
       {
-        dark: theme.colors.dark3,
-        light: '#e6e6e6',
+        dark: theme.colors.dark8,
+        light: theme.colors.gray6,
       },
       theme.type
     );
 
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
-    const gaugeWidth = Math.min(dimension / 6, 40) / gaugeWidthReduceRatio;
+    const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
-    const fontSize = Math.min(dimension / 5.5, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
+    const fontSize = Math.min(dimension / 4, 100) * (value.text !== null ? this.getFontScale(value.text.length) : 1);
+
     const thresholdLabelFontSize = fontSize / 2.5;
 
     const options: any = {
@@ -181,7 +184,7 @@ function calculateGaugeAutoProps(width: number, height: number, title: string | 
   const titleFontSize = Math.min((width * 0.15) / 1.5, 20); // 20% of height * line-height, max 40px
   const titleHeight = titleFontSize * 1.5;
   const availableHeight = showLabel ? height - titleHeight : height;
-  const gaugeHeight = Math.min(availableHeight * 0.7, width);
+  const gaugeHeight = Math.min(availableHeight, width);
 
   return {
     showLabel,

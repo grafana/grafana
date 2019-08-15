@@ -68,6 +68,7 @@ type TeamMemberDTO struct {
 	TeamId     int64          `json:"teamId"`
 	UserId     int64          `json:"userId"`
 	External   bool           `json:"-"`
+	AuthModule string         `json:"auth_module"`
 	Email      string         `json:"email"`
 	Login      string         `json:"login"`
 	AvatarUrl  string         `json:"avatarUrl"`

@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Utils & Services
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
@@ -53,8 +53,8 @@ export class VisualizationTab extends PureComponent<Props, State> {
   }
 
   getReactPanelOptions = () => {
-    const { panel, plugin } = this.props;
-    return panel.getOptions(plugin.defaults);
+    const { panel } = this.props;
+    return panel.getOptions();
   };
 
   renderPanelOptions() {

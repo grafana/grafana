@@ -49,9 +49,9 @@ const deepFreeze = <T>(obj: T): T => {
 interface ReducerTester<State> extends Given<State>, When<State>, Then<State> {}
 
 export const reducerTester = <State>(): Given<State> => {
-  let reducerUnderTest: Reducer<State, ActionOf<any>> = null;
-  let resultingState: State = null;
-  let initialState: State = null;
+  let reducerUnderTest: Reducer<State, ActionOf<any>>;
+  let resultingState: State;
+  let initialState: State;
 
   const givenReducer = (reducer: Reducer<State, ActionOf<any>>, state: State): When<State> => {
     reducerUnderTest = reducer;

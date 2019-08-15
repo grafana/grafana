@@ -2,14 +2,16 @@ import _ from 'lodash';
 import {
   DataSourceApi,
   DataQueryRequest,
-  TableData,
-  TimeSeries,
   DataSourceInstanceSettings,
   DataStreamObserver,
+  MetricFindValue,
 } from '@grafana/ui';
+import { TableData, TimeSeries } from '@grafana/data';
 import { TestDataQuery, Scenario } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { StreamHandler } from './StreamHandler';
+import { queryMetricTree } from './metricTree';
+import templateSrv from 'app/features/templating/template_srv';
 
 type TestData = TimeSeries | TableData;
 
@@ -17,7 +19,7 @@ export interface TestDataRegistry {
   [key: string]: TestData[];
 }
 
-export class TestDataDatasource extends DataSourceApi<TestDataQuery> {
+export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   streams = new StreamHandler();
 
   /** @ngInject */
@@ -28,14 +30,11 @@ export class TestDataDatasource extends DataSourceApi<TestDataQuery> {
   query(options: DataQueryRequest<TestDataQuery>, observer: DataStreamObserver) {
     const queries = options.targets.map(item => {
       return {
-        refId: item.refId,
-        scenarioId: item.scenarioId,
+        ...item,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
-        stringInput: item.stringInput,
-        points: item.points,
-        alias: item.alias,
         datasourceId: this.id,
+        alias: templateSrv.replace(item.alias || ''),
       };
     });
 
@@ -125,5 +124,15 @@ export class TestDataDatasource extends DataSourceApi<TestDataQuery> {
 
   getScenarios(): Promise<Scenario[]> {
     return getBackendSrv().get('/api/tsdb/testdata/scenarios');
+  }
+
+  metricFindQuery(query: string) {
+    return new Promise<MetricFindValue[]>((resolve, reject) => {
+      setTimeout(() => {
+        const children = queryMetricTree(templateSrv.replace(query));
+        const items = children.map(item => ({ value: item.name, text: item.name }));
+        resolve(items);
+      }, 100);
+    });
   }
 }

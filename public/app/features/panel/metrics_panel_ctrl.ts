@@ -6,16 +6,9 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import {
-  toLegacyResponseData,
-  isSeriesData,
-  LegacyResponseData,
-  TimeRange,
-  DataSourceApi,
-  PanelData,
-  LoadingState,
-  DataQueryResponse,
-} from '@grafana/ui';
+import { toLegacyResponseData, isDataFrame, TimeRange, LoadingState, DataFrame } from '@grafana/data';
+
+import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
 import { PanelQueryRunnerFormat } from '../dashboard/state/PanelQueryRunner';
@@ -37,6 +30,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   skipDataOnInit: boolean;
   dataList: LegacyResponseData[];
   querySubscription?: Unsubscribable;
+  dataFormat = PanelQueryRunnerFormat.legacy;
 
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -87,16 +81,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = true;
 
     // load datasource service
-    return (
-      this.datasourceSrv
-        .get(this.panel.datasource, this.panel.scopedVars)
-        .then(this.updateTimeRange.bind(this))
-        .then(this.issueQueries.bind(this))
-        // NOTE handleQueryResult is called by panelDataObserver
-        .catch((err: any) => {
-          this.processDataError(err);
-        })
-    );
+    return this.datasourceSrv
+      .get(this.panel.datasource, this.panel.scopedVars)
+      .then(this.updateTimeRange.bind(this))
+      .then(this.issueQueries.bind(this))
+      .catch((err: any) => {
+        this.processDataError(err);
+      });
   }
 
   processDataError(err: any) {
@@ -119,8 +110,10 @@ class MetricsPanelCtrl extends PanelCtrl {
       }
     }
 
-    this.events.emit('data-error', err);
     console.log('Panel data error:', err);
+    return this.$timeout(() => {
+      this.events.emit('data-error', err);
+    });
   }
 
   // Updates the response with information from the stream
@@ -129,13 +122,30 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (data.state === LoadingState.Error) {
         this.loading = false;
         this.processDataError(data.error);
-      } else if (data.state === LoadingState.Done) {
-        this.loading = false;
+        return;
+      }
 
+      // Ignore data in loading state
+      if (data.state === LoadingState.Loading) {
+        this.loading = true;
+        return;
+      }
+
+      if (data.request) {
+        const { range, timeInfo } = data.request;
+        if (range) {
+          this.range = range;
+        }
+        if (timeInfo) {
+          this.timeInfo = timeInfo;
+        }
+      }
+
+      if (this.dataFormat === PanelQueryRunnerFormat.legacy) {
         // The result should already be processed, but just in case
         if (!data.legacy) {
           data.legacy = data.series.map(v => {
-            if (isSeriesData(v)) {
+            if (isDataFrame(v)) {
               return toLegacyResponseData(v);
             }
             return v;
@@ -147,6 +157,8 @@ class MetricsPanelCtrl extends PanelCtrl {
         this.handleQueryResult({
           data: data.legacy,
         });
+      } else {
+        this.handleDataFrames(data.series);
       }
     },
   };
@@ -187,7 +199,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     const queryRunner = panel.getQueryRunner();
 
     if (!this.querySubscription) {
-      this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.legacy);
+      this.querySubscription = queryRunner.subscribe(this.panelDataObserver, this.dataFormat);
     }
 
     return queryRunner.run({
@@ -203,6 +215,13 @@ class MetricsPanelCtrl extends PanelCtrl {
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
     });
+  }
+
+  handleDataFrames(data: DataFrame[]) {
+    if (this.dashboard && this.dashboard.snapshot) {
+      this.panel.snapshotData = data;
+    }
+    // Subclasses that asked for DataFrame will override
   }
 
   handleQueryResult(result: DataQueryResponse) {

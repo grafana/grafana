@@ -1,34 +1,24 @@
 // Types
 import {
   DataQueryRequest,
-  SeriesData,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
-} from '@grafana/ui/src/types';
+  MetricFindValue,
+} from '@grafana/ui';
+import { DataFrame, DataFrameDTO, toDataFrame } from '@grafana/data';
+
 import { InputQuery, InputOptions } from './types';
 
 export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
-  data: SeriesData[];
+  data: DataFrame[] = [];
 
   constructor(instanceSettings: DataSourceInstanceSettings<InputOptions>) {
     super(instanceSettings);
 
-    this.data = instanceSettings.jsonData.data ? instanceSettings.jsonData.data : [];
-  }
-
-  getDescription(data: SeriesData[]): string {
-    if (!data) {
-      return '';
+    if (instanceSettings.jsonData.data) {
+      this.data = instanceSettings.jsonData.data.map(v => toDataFrame(v));
     }
-    if (data.length > 1) {
-      const count = data.reduce((acc, series) => {
-        return acc + series.rows.length;
-      }, 0);
-      return `${data.length} Series, ${count} Rows`;
-    }
-    const series = data[0];
-    return `${series.fields.length} Fields, ${series.rows.length} Rows`;
   }
 
   /**
@@ -36,12 +26,12 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
    */
   getQueryDisplayText(query: InputQuery): string {
     if (query.data) {
-      return 'Panel Data: ' + this.getDescription(query.data);
+      return 'Panel Data: ' + describeDataFrame(query.data);
     }
-    return `Shared Data From: ${this.name} (${this.getDescription(this.data)})`;
+    return `Shared Data From: ${this.name} (${describeDataFrame(this.data)})`;
   }
 
-  metricFindQuery(query: string, options?: any) {
+  metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
     return new Promise((resolve, reject) => {
       const names = [];
       for (const series of this.data) {
@@ -57,16 +47,16 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
   }
 
   query(options: DataQueryRequest<InputQuery>): Promise<DataQueryResponse> {
-    const results: SeriesData[] = [];
+    const results: DataFrame[] = [];
     for (const query of options.targets) {
-      if (query.hide) {
-        continue;
+      let data = this.data;
+      if (query.data) {
+        data = query.data.map(v => toDataFrame(v));
       }
-      const data = query.data ? query.data : this.data;
-      for (const series of data) {
+      for (let i = 0; i < data.length; i++) {
         results.push({
+          ...data[i],
           refId: query.refId,
-          ...series,
         });
       }
     }
@@ -78,8 +68,9 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
       let rowCount = 0;
       let info = `${this.data.length} Series:`;
       for (const series of this.data) {
-        info += ` [${series.fields.length} Fields, ${series.rows.length} Rows]`;
-        rowCount += series.rows.length;
+        const length = series.length;
+        info += ` [${series.fields.length} Fields, ${length} Rows]`;
+        rowCount += length;
       }
 
       if (rowCount > 0) {
@@ -94,6 +85,34 @@ export class InputDatasource extends DataSourceApi<InputQuery, InputOptions> {
       });
     });
   }
+}
+
+function getLength(data?: DataFrameDTO | DataFrame) {
+  if (!data || !data.fields || !data.fields.length) {
+    return 0;
+  }
+  if (data.hasOwnProperty('length')) {
+    return (data as DataFrame).length;
+  }
+  return data.fields[0].values.length;
+}
+
+export function describeDataFrame(data: Array<DataFrameDTO | DataFrame>): string {
+  if (!data || !data.length) {
+    return '';
+  }
+  if (data.length > 1) {
+    const count = data.reduce((acc, series) => {
+      return acc + getLength(series);
+    }, 0);
+    return `${data.length} Series, ${count} Rows`;
+  }
+  const series = data[0];
+  if (!series.fields) {
+    return 'Missing Fields';
+  }
+  const length = getLength(series);
+  return `${series.fields.length} Fields, ${length} Rows`;
 }
 
 export default InputDatasource;

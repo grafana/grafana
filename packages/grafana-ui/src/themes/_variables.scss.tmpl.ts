@@ -171,7 +171,6 @@ $zindex-tooltip: ${theme.zIndex.tooltip};
 $zindex-modal-backdrop: ${theme.zIndex.modalBackdrop};
 $zindex-modal: ${theme.zIndex.modal};
 $zindex-typeahead: ${theme.zIndex.typeahead};
-$zindex-timepicker-popover: 1070;
 
 // Buttons
 //

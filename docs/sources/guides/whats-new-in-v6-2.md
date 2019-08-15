@@ -12,19 +12,21 @@ weight = -13
 
 # What's New in Grafana v6.2
 
-> More content will be added to this guide before the stable release.
-
-Grafana v6.2 Beta is now [available for download](https://grafana.com/grafana/download/beta).
-
 For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
 If you use a password for your datasources please read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2).
 
+Checkout the [demo dashboard](https://play.grafana.org/d/ZvPm55mWk/new-features-in-v6-2?orgId=1) of some the new features in v6.2.
+
 ## Improved security
 
-- Ensure encryption of datasource secrets
-- Embedding Grafana not allowed per default
-- Disable browser caching for full page requests
+Datasources now store passwords and basic auth passwords in `secureJsonData` encrypted by default. Existing datasource with unencrypted passwords will keep working.
+Read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2) on how to migrate existing datasources to use encrypted storage.
+
+To mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking), embedding Grafana is no longer allowed per default.
+Read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2) for further details of how this may affect you.
+
+To mitigate the risk of sensitive information being cached in browser after a user has logged out, browser caching is now disabled for full page requests.
 
 ## Provisioning
 
@@ -79,10 +81,11 @@ This release contains a lot of small features and fixes:
 
 - Explore - Adds user time zone support, reconnect for failing datasources and a fix that prevents killing Prometheus instances when Histogram metrics are loaded.
 - Alerting - Adds support for configuring timeout durations and retries, see [configuration](/installation/configuration/#evaluation-timeout-seconds) for more information.
+- Azure Monitor - Adds support for multiple subscriptions per datasource.
 - Elasticsearch - A small bug fix to properly display percentiles metrics in table panel.
 - InfluxDB - Support for POST HTTP verb.
 - CloudWatch - Important fix for default alias disappearing in v6.1.
-- Search - Works in a scope of dashboard's folder by default when viewing dashboard
+- Search - Works in a scope of dashboard's folder by default when viewing dashboard.
 
 Checkout the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file for a complete list of new features, changes, and bug fixes.
 

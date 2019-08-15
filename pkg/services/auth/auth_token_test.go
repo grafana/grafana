@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
@@ -115,6 +115,26 @@ func TestUserAuthToken(t *testing.T) {
 					model2, err := ctx.getAuthTokenByID(userToken2.Id)
 					So(err, ShouldBeNil)
 					So(model2, ShouldBeNil)
+				})
+			})
+
+			Convey("When revoking users tokens in a batch", func() {
+				Convey("Can revoke all users tokens", func() {
+					userIds := []int64{}
+					for i := 0; i < 3; i++ {
+						userId := userID + int64(i+1)
+						userIds = append(userIds, userId)
+						userAuthTokenService.CreateToken(context.Background(), userId, "192.168.10.11:1234", "some user agent")
+					}
+
+					err := userAuthTokenService.BatchRevokeAllUserTokens(context.Background(), userIds)
+					So(err, ShouldBeNil)
+
+					for _, v := range userIds {
+						tokens, err := userAuthTokenService.GetUserTokens(context.Background(), v)
+						So(err, ShouldBeNil)
+						So(len(tokens), ShouldEqual, 0)
+					}
 				})
 			})
 		})

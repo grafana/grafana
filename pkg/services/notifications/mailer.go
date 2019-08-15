@@ -12,9 +12,9 @@ import (
 	"net"
 	"strconv"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/pkg/errors"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	gomail "gopkg.in/mail.v2"
 )
 
@@ -38,11 +38,11 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 
 		e := dialer.DialAndSend(m)
 		if e != nil {
-			err = errors.Wrapf(e, "Failed to send notification to email address: %s", address)
+			err = errutil.Wrapf(e, "Failed to send notification to email address: %s", address)
 			continue
 		}
 
-		num += 1
+		num++
 	}
 
 	return num, err
@@ -83,9 +83,9 @@ func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
 	return d, nil
 }
 
-func (ns *NotificationService) buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
+func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (*Message, error) {
 	if !ns.Cfg.Smtp.Enabled {
-		return nil, m.ErrSmtpNotEnabled
+		return nil, models.ErrSmtpNotEnabled
 	}
 
 	var buffer bytes.Buffer

@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { css } from 'emotion';
-import { ThemeContext, LargeLinkButton, CallToActionCard } from '@grafana/ui';
+import { ThemeContext, LinkButton, CallToActionCard } from '@grafana/ui';
 
 export const NoDataSourceCallToAction = () => {
   const theme = useContext(ThemeContext);
@@ -22,9 +22,9 @@ export const NoDataSourceCallToAction = () => {
   );
 
   const ctaElement = (
-    <LargeLinkButton href="/datasources/new" icon="gicon gicon-datasources">
+    <LinkButton size="lg" href="/datasources/new" icon="gicon gicon-datasources">
       Add data source
-    </LargeLinkButton>
+    </LinkButton>
   );
 
   const cardClassName = css`

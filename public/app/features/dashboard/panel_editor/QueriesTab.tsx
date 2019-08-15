@@ -18,7 +18,8 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { DataQuery, DataSourceSelectItem, PanelData, LoadingState } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceSelectItem, PanelData } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
@@ -88,7 +89,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
   }
 
-  onChangeDataSource = datasource => {
+  onChangeDataSource = (datasource: any) => {
     const { panel } = this.props;
     const { currentDS } = this.state;
 
@@ -193,7 +194,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     );
   };
 
-  onAddMixedQuery = datasource => {
+  onAddMixedQuery = (datasource: any) => {
     this.onAddQuery({ datasource: datasource.name });
     this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
   };
@@ -202,7 +203,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ isAddingMixed: false });
   };
 
-  onQueryChange = (query: DataQuery, index) => {
+  onQueryChange = (query: DataQuery, index: number) => {
     this.props.panel.changeQuery(query, index);
     this.forceUpdate();
   };

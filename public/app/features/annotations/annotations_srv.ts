@@ -1,5 +1,5 @@
 // Libaries
-import angular from 'angular';
+import angular, { IQService } from 'angular';
 import _ from 'lodash';
 
 // Components
@@ -11,6 +11,10 @@ import { makeRegions, dedupAnnotations } from './events_processing';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
+import DatasourceSrv from '../plugins/datasource_srv';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { AnnotationEvent } from '@grafana/data';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -18,7 +22,13 @@ export class AnnotationsSrv {
   datasourcePromises: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {}
+  constructor(
+    private $rootScope: any,
+    private $q: IQService,
+    private datasourceSrv: DatasourceSrv,
+    private backendSrv: BackendSrv,
+    private timeSrv: TimeSrv
+  ) {}
 
   init(dashboard: DashboardModel) {
     // always clearPromiseCaches when loading new dashboard
@@ -33,7 +43,7 @@ export class AnnotationsSrv {
     this.datasourcePromises = null;
   }
 
-  getAnnotations(options) {
+  getAnnotations(options: any) {
     return this.$q
       .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
@@ -70,7 +80,7 @@ export class AnnotationsSrv {
       });
   }
 
-  getAlertStates(options) {
+  getAlertStates(options: any) {
     if (!options.dashboard.id) {
       return this.$q.when([]);
     }
@@ -94,7 +104,7 @@ export class AnnotationsSrv {
     return this.alertStatesPromise;
   }
 
-  getGlobalAnnotations(options) {
+  getGlobalAnnotations(options: any) {
     const dashboard = options.dashboard;
 
     if (this.globalAnnotationsPromise) {
@@ -117,7 +127,7 @@ export class AnnotationsSrv {
       dsPromises.push(datasourcePromise);
       promises.push(
         datasourcePromise
-          .then(datasource => {
+          .then((datasource: any) => {
             // issue query against data source
             return datasource.annotationQuery({
               range: range,
@@ -141,17 +151,17 @@ export class AnnotationsSrv {
     return this.globalAnnotationsPromise;
   }
 
-  saveAnnotationEvent(annotation) {
+  saveAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     return this.backendSrv.post('/api/annotations', annotation);
   }
 
-  updateAnnotationEvent(annotation) {
+  updateAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     return this.backendSrv.put(`/api/annotations/${annotation.id}`, annotation);
   }
 
-  deleteAnnotationEvent(annotation) {
+  deleteAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
     let deleteUrl = `/api/annotations/${annotation.id}`;
     if (annotation.isRegion) {
@@ -161,7 +171,7 @@ export class AnnotationsSrv {
     return this.backendSrv.delete(deleteUrl);
   }
 
-  translateQueryResult(annotation, results) {
+  translateQueryResult(annotation: any, results: any) {
     // if annotation has snapshotData
     // make clone and remove it
     if (annotation.snapshotData) {

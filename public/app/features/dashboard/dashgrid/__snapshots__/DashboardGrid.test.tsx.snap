@@ -1,0 +1,996 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
+<SizeMe(GridWrapper)
+  className="layout"
+  isDraggable={true}
+  isFullscreen={false}
+  isResizable={true}
+  layout={
+    Array [
+      Object {
+        "h": 10,
+        "i": "1",
+        "w": 24,
+        "x": 0,
+        "y": 0,
+      },
+      Object {
+        "h": 10,
+        "i": "2",
+        "w": 25,
+        "x": 0,
+        "y": 10,
+      },
+      Object {
+        "h": 100,
+        "i": "3",
+        "w": 25,
+        "x": 0,
+        "y": 20,
+      },
+      Object {
+        "h": 10,
+        "i": "4",
+        "w": 25,
+        "x": 0,
+        "y": 120,
+      },
+    ]
+  }
+  onDragStop={[Function]}
+  onLayoutChange={[Function]}
+  onResize={[Function]}
+  onResizeStop={[Function]}
+  onWidthChange={[Function]}
+>
+  <div
+    className=""
+    id="panel-1"
+    key="1"
+  >
+    <DashboardPanel
+      dashboard={
+        DashboardModel {
+          "annotations": Object {
+            "list": Array [
+              Object {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard",
+              },
+            ],
+          },
+          "autoUpdate": undefined,
+          "description": undefined,
+          "editable": true,
+          "events": Emitter {
+            "emitter": EventEmitter {
+              "_events": Object {
+                "panel-added": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "panel-removed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "repeats-processed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "row-collapsed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "row-expanded": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "view-mode-changed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+              },
+              "_eventsCount": 6,
+            },
+          },
+          "gnetId": null,
+          "graphTooltip": 0,
+          "id": null,
+          "links": Array [],
+          "meta": Object {
+            "canEdit": true,
+            "canMakeEditable": false,
+            "canSave": true,
+            "canShare": true,
+            "canStar": true,
+            "fullscreen": false,
+            "isEditing": false,
+            "showSettings": true,
+          },
+          "originalTemplating": Array [],
+          "originalTime": Object {
+            "from": "now-6h",
+            "to": "now",
+          },
+          "panels": Array [
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 0,
+              },
+              "id": 1,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph",
+              "transparent": false,
+              "type": "graph",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 25,
+                "x": 0,
+                "y": 10,
+              },
+              "id": 2,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph2",
+              "transparent": false,
+              "type": "graph2",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 100,
+                "w": 25,
+                "x": 0,
+                "y": 20,
+              },
+              "id": 3,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph3",
+              "transparent": false,
+              "type": "graph3",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 25,
+                "x": 0,
+                "y": 120,
+              },
+              "id": 4,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph4",
+              "transparent": false,
+              "type": "graph4",
+            },
+          ],
+          "refresh": undefined,
+          "revision": undefined,
+          "schemaVersion": 19,
+          "snapshot": undefined,
+          "style": "dark",
+          "tags": Array [],
+          "templating": Object {
+            "list": Array [],
+          },
+          "time": Object {
+            "from": "now-6h",
+            "to": "now",
+          },
+          "timepicker": Object {},
+          "timezone": "",
+          "title": "My dashboard",
+          "uid": null,
+          "version": 0,
+        }
+      }
+      isInView={false}
+      panel={
+        PanelModel {
+          "cachedPluginOptions": Object {},
+          "datasource": null,
+          "events": Emitter {
+            "emitter": EventEmitter {
+              "_events": Object {},
+              "_eventsCount": 0,
+            },
+          },
+          "gridPos": Object {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 0,
+          },
+          "id": 1,
+          "isInView": false,
+          "targets": Array [
+            Object {
+              "refId": "A",
+            },
+          ],
+          "title": "My graph",
+          "transparent": false,
+          "type": "graph",
+        }
+      }
+    />
+  </div>
+  <div
+    className=""
+    id="panel-2"
+    key="2"
+  >
+    <DashboardPanel
+      dashboard={
+        DashboardModel {
+          "annotations": Object {
+            "list": Array [
+              Object {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard",
+              },
+            ],
+          },
+          "autoUpdate": undefined,
+          "description": undefined,
+          "editable": true,
+          "events": Emitter {
+            "emitter": EventEmitter {
+              "_events": Object {
+                "panel-added": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "panel-removed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "repeats-processed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "row-collapsed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "row-expanded": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "view-mode-changed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+              },
+              "_eventsCount": 6,
+            },
+          },
+          "gnetId": null,
+          "graphTooltip": 0,
+          "id": null,
+          "links": Array [],
+          "meta": Object {
+            "canEdit": true,
+            "canMakeEditable": false,
+            "canSave": true,
+            "canShare": true,
+            "canStar": true,
+            "fullscreen": false,
+            "isEditing": false,
+            "showSettings": true,
+          },
+          "originalTemplating": Array [],
+          "originalTime": Object {
+            "from": "now-6h",
+            "to": "now",
+          },
+          "panels": Array [
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 0,
+              },
+              "id": 1,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph",
+              "transparent": false,
+              "type": "graph",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 25,
+                "x": 0,
+                "y": 10,
+              },
+              "id": 2,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph2",
+              "transparent": false,
+              "type": "graph2",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 100,
+                "w": 25,
+                "x": 0,
+                "y": 20,
+              },
+              "id": 3,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph3",
+              "transparent": false,
+              "type": "graph3",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 25,
+                "x": 0,
+                "y": 120,
+              },
+              "id": 4,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph4",
+              "transparent": false,
+              "type": "graph4",
+            },
+          ],
+          "refresh": undefined,
+          "revision": undefined,
+          "schemaVersion": 19,
+          "snapshot": undefined,
+          "style": "dark",
+          "tags": Array [],
+          "templating": Object {
+            "list": Array [],
+          },
+          "time": Object {
+            "from": "now-6h",
+            "to": "now",
+          },
+          "timepicker": Object {},
+          "timezone": "",
+          "title": "My dashboard",
+          "uid": null,
+          "version": 0,
+        }
+      }
+      isInView={false}
+      panel={
+        PanelModel {
+          "cachedPluginOptions": Object {},
+          "datasource": null,
+          "events": Emitter {
+            "emitter": EventEmitter {
+              "_events": Object {},
+              "_eventsCount": 0,
+            },
+          },
+          "gridPos": Object {
+            "h": 10,
+            "w": 25,
+            "x": 0,
+            "y": 10,
+          },
+          "id": 2,
+          "isInView": false,
+          "targets": Array [
+            Object {
+              "refId": "A",
+            },
+          ],
+          "title": "My graph2",
+          "transparent": false,
+          "type": "graph2",
+        }
+      }
+    />
+  </div>
+  <div
+    className=""
+    id="panel-3"
+    key="3"
+  >
+    <DashboardPanel
+      dashboard={
+        DashboardModel {
+          "annotations": Object {
+            "list": Array [
+              Object {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard",
+              },
+            ],
+          },
+          "autoUpdate": undefined,
+          "description": undefined,
+          "editable": true,
+          "events": Emitter {
+            "emitter": EventEmitter {
+              "_events": Object {
+                "panel-added": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "panel-removed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "repeats-processed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "row-collapsed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "row-expanded": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "view-mode-changed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+              },
+              "_eventsCount": 6,
+            },
+          },
+          "gnetId": null,
+          "graphTooltip": 0,
+          "id": null,
+          "links": Array [],
+          "meta": Object {
+            "canEdit": true,
+            "canMakeEditable": false,
+            "canSave": true,
+            "canShare": true,
+            "canStar": true,
+            "fullscreen": false,
+            "isEditing": false,
+            "showSettings": true,
+          },
+          "originalTemplating": Array [],
+          "originalTime": Object {
+            "from": "now-6h",
+            "to": "now",
+          },
+          "panels": Array [
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 0,
+              },
+              "id": 1,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph",
+              "transparent": false,
+              "type": "graph",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 25,
+                "x": 0,
+                "y": 10,
+              },
+              "id": 2,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph2",
+              "transparent": false,
+              "type": "graph2",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 100,
+                "w": 25,
+                "x": 0,
+                "y": 20,
+              },
+              "id": 3,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph3",
+              "transparent": false,
+              "type": "graph3",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 25,
+                "x": 0,
+                "y": 120,
+              },
+              "id": 4,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph4",
+              "transparent": false,
+              "type": "graph4",
+            },
+          ],
+          "refresh": undefined,
+          "revision": undefined,
+          "schemaVersion": 19,
+          "snapshot": undefined,
+          "style": "dark",
+          "tags": Array [],
+          "templating": Object {
+            "list": Array [],
+          },
+          "time": Object {
+            "from": "now-6h",
+            "to": "now",
+          },
+          "timepicker": Object {},
+          "timezone": "",
+          "title": "My dashboard",
+          "uid": null,
+          "version": 0,
+        }
+      }
+      isInView={false}
+      panel={
+        PanelModel {
+          "cachedPluginOptions": Object {},
+          "datasource": null,
+          "events": Emitter {
+            "emitter": EventEmitter {
+              "_events": Object {},
+              "_eventsCount": 0,
+            },
+          },
+          "gridPos": Object {
+            "h": 100,
+            "w": 25,
+            "x": 0,
+            "y": 20,
+          },
+          "id": 3,
+          "isInView": false,
+          "targets": Array [
+            Object {
+              "refId": "A",
+            },
+          ],
+          "title": "My graph3",
+          "transparent": false,
+          "type": "graph3",
+        }
+      }
+    />
+  </div>
+  <div
+    className=""
+    id="panel-4"
+    key="4"
+  >
+    <DashboardPanel
+      dashboard={
+        DashboardModel {
+          "annotations": Object {
+            "list": Array [
+              Object {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard",
+              },
+            ],
+          },
+          "autoUpdate": undefined,
+          "description": undefined,
+          "editable": true,
+          "events": Emitter {
+            "emitter": EventEmitter {
+              "_events": Object {
+                "panel-added": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "panel-removed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "repeats-processed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "row-collapsed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "row-expanded": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+                "view-mode-changed": EE {
+                  "context": [Circular],
+                  "fn": [Function],
+                  "once": false,
+                },
+              },
+              "_eventsCount": 6,
+            },
+          },
+          "gnetId": null,
+          "graphTooltip": 0,
+          "id": null,
+          "links": Array [],
+          "meta": Object {
+            "canEdit": true,
+            "canMakeEditable": false,
+            "canSave": true,
+            "canShare": true,
+            "canStar": true,
+            "fullscreen": false,
+            "isEditing": false,
+            "showSettings": true,
+          },
+          "originalTemplating": Array [],
+          "originalTime": Object {
+            "from": "now-6h",
+            "to": "now",
+          },
+          "panels": Array [
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 24,
+                "x": 0,
+                "y": 0,
+              },
+              "id": 1,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph",
+              "transparent": false,
+              "type": "graph",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 25,
+                "x": 0,
+                "y": 10,
+              },
+              "id": 2,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph2",
+              "transparent": false,
+              "type": "graph2",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 100,
+                "w": 25,
+                "x": 0,
+                "y": 20,
+              },
+              "id": 3,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph3",
+              "transparent": false,
+              "type": "graph3",
+            },
+            PanelModel {
+              "cachedPluginOptions": Object {},
+              "datasource": null,
+              "events": Emitter {
+                "emitter": EventEmitter {
+                  "_events": Object {},
+                  "_eventsCount": 0,
+                },
+              },
+              "gridPos": Object {
+                "h": 10,
+                "w": 25,
+                "x": 0,
+                "y": 120,
+              },
+              "id": 4,
+              "isInView": false,
+              "targets": Array [
+                Object {
+                  "refId": "A",
+                },
+              ],
+              "title": "My graph4",
+              "transparent": false,
+              "type": "graph4",
+            },
+          ],
+          "refresh": undefined,
+          "revision": undefined,
+          "schemaVersion": 19,
+          "snapshot": undefined,
+          "style": "dark",
+          "tags": Array [],
+          "templating": Object {
+            "list": Array [],
+          },
+          "time": Object {
+            "from": "now-6h",
+            "to": "now",
+          },
+          "timepicker": Object {},
+          "timezone": "",
+          "title": "My dashboard",
+          "uid": null,
+          "version": 0,
+        }
+      }
+      isInView={false}
+      panel={
+        PanelModel {
+          "cachedPluginOptions": Object {},
+          "datasource": null,
+          "events": Emitter {
+            "emitter": EventEmitter {
+              "_events": Object {},
+              "_eventsCount": 0,
+            },
+          },
+          "gridPos": Object {
+            "h": 10,
+            "w": 25,
+            "x": 0,
+            "y": 120,
+          },
+          "id": 4,
+          "isInView": false,
+          "targets": Array [
+            Object {
+              "refId": "A",
+            },
+          ],
+          "title": "My graph4",
+          "transparent": false,
+          "type": "graph4",
+        }
+      }
+    />
+  </div>
+</SizeMe(GridWrapper)>
+`;

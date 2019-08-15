@@ -1,34 +1,24 @@
 // Libraries
 import _ from 'lodash';
+import {
+  Threshold,
+  getMappedValue,
+  FieldConfig,
+  DisplayProcessor,
+  DecimalInfo,
+  DisplayValue,
+  DecimalCount,
+} from '@grafana/data';
 
 // Utils
 import { getValueFormat } from './valueFormats/valueFormats';
-import { getMappedValue } from './valueMappings';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import {
-  Threshold,
-  ValueMapping,
-  DecimalInfo,
-  DisplayValue,
-  GrafanaTheme,
-  GrafanaThemeType,
-  DecimalCount,
-  Field,
-} from '../types';
-import { DateTime, dateTime } from './moment_wrapper';
-
-export type DisplayProcessor = (value: any) => DisplayValue;
+import { GrafanaTheme, GrafanaThemeType } from '../types';
 
 export interface DisplayValueOptions {
-  field?: Partial<Field>;
-
-  mappings?: ValueMapping[];
-  thresholds?: Threshold[];
-
-  // Alternative to empty string
-  noValue?: string;
+  field?: FieldConfig;
 
   // Context
   isUtc?: boolean;
@@ -41,8 +31,9 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
     const formatFunc = getValueFormat(field.unit || 'none');
 
     return (value: any) => {
-      const { mappings, thresholds, theme } = options;
-      let color = field.color;
+      const { theme } = options;
+      const { mappings, thresholds } = field;
+      let color;
 
       let text = _.toString(value);
       let numeric = toNumber(value);
@@ -63,46 +54,28 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
         }
       }
 
-      if (field.dateFormat) {
-        const date = toMoment(value, numeric, field.dateFormat);
-        if (date.isValid()) {
-          text = date.format(field.dateFormat);
-          shouldFormat = false;
-        }
-      }
-
       if (!isNaN(numeric)) {
         if (shouldFormat && !_.isBoolean(value)) {
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
           text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
         }
-        if (thresholds && thresholds.length > 0) {
+        if (thresholds && thresholds.length) {
           color = getColorFromThreshold(numeric, thresholds, theme);
         }
       }
 
       if (!text) {
-        text = options.noValue ? options.noValue : '';
+        if (field && field.noValue) {
+          text = field.noValue;
+        } else {
+          text = ''; // No data?
+        }
       }
       return { text, numeric, color };
     };
   }
 
   return toStringProcessor;
-}
-
-function toMoment(value: any, numeric: number, format: string): DateTime {
-  if (!isNaN(numeric)) {
-    const v = dateTime(numeric);
-    if (v.isValid()) {
-      return v;
-    }
-  }
-  const v = dateTime(value, format);
-  if (v.isValid) {
-    return v;
-  }
-  return dateTime(value); // moment will try to parse the format
 }
 
 /** Will return any value as a number or NaN */

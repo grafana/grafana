@@ -9,7 +9,7 @@ export interface Props {
 }
 
 export class TagBadge extends React.Component<Props, any> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
   }
 

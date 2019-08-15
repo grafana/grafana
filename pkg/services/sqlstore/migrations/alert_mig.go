@@ -45,6 +45,20 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("add index alert state", NewAddIndexMigration(alertV1, alertV1.Indices[1]))
 	mg.AddMigration("add index alert dashboard_id", NewAddIndexMigration(alertV1, alertV1.Indices[2]))
 
+	alertRuleTagTable := Table{
+		Name: "alert_rule_tag",
+		Columns: []*Column{
+			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
+			{Name: "tag_id", Type: DB_BigInt, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"alert_id", "tag_id"}, Type: UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("Create alert_rule_tag table v1", NewAddTableMigration(alertRuleTagTable))
+	mg.AddMigration("Add unique index alert_rule_tag.alert_id_tag_id", NewAddIndexMigration(alertRuleTagTable, alertRuleTagTable.Indices[0]))
+
 	alert_notification := Table{
 		Name: "alert_notification",
 		Columns: []*Column{

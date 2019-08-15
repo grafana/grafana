@@ -1,6 +1,8 @@
-export const getSearchQuery = state => state.searchQuery;
+import { AlertRulesState } from 'app/types';
 
-export const getAlertRuleItems = state => {
+export const getSearchQuery = (state: AlertRulesState) => state.searchQuery;
+
+export const getAlertRuleItems = (state: AlertRulesState) => {
   const regex = new RegExp(state.searchQuery, 'i');
 
   return state.items.filter(item => {

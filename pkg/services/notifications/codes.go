@@ -1,7 +1,7 @@
 package notifications
 
 import (
-	"crypto/sha1"
+	"crypto/sha1" // #nosec
 	"encoding/hex"
 	"fmt"
 	"time"

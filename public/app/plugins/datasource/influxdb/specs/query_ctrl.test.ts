@@ -19,10 +19,11 @@ describe('InfluxDBQueryCtrl', () => {
 
     ctx.ctrl = new InfluxQueryCtrl(
       {},
-      {},
-      {},
-      {},
-      new uiSegmentSrv({ trustAsHtml: html => html }, { highlightVariablesAsHtml: () => {} })
+      {} as any,
+      {} as any,
+      {} as any,
+      //@ts-ignore
+      new uiSegmentSrv({ trustAsHtml: (html: any) => html }, { highlightVariablesAsHtml: () => {} })
     );
   });
 

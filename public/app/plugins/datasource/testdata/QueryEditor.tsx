@@ -3,14 +3,15 @@ import React, { PureComponent } from 'react';
 import _ from 'lodash';
 
 // Services & Utils
-import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 
 // Components
-import { FormLabel, Select, SelectOptionItem } from '@grafana/ui';
+import { FormLabel, Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 // Types
-import { QueryEditorProps } from '@grafana/ui/src/types';
-import { TestDataDatasource } from './datasource';
+import { QueryEditorProps } from '@grafana/ui';
+import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
 
 interface State {
@@ -18,10 +19,10 @@ interface State {
   current: Scenario | null;
 }
 
-type Props = QueryEditorProps<TestDataDatasource, TestDataQuery>;
+type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
 export class QueryEditor extends PureComponent<Props> {
-  backendSrv: BackendSrv = getBackendSrv();
+  backendSrv = getBackendSrv();
 
   state: State = {
     scenarioList: [],
@@ -40,7 +41,7 @@ export class QueryEditor extends PureComponent<Props> {
     this.setState({ scenarioList: scenarioList, current: current });
   }
 
-  onScenarioChange = (item: SelectOptionItem<string>) => {
+  onScenarioChange = (item: SelectableValue<string>) => {
     this.props.onChange({
       ...this.props.query,
       scenarioId: item.value,
