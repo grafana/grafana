@@ -17,6 +17,8 @@ import {
   GraphSeriesValue,
   DisplayValue,
   fieldReducers,
+  ValueMapping,
+  MappingType,
 } from '@grafana/data';
 import { GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
 import { auto } from 'angular';
@@ -247,55 +249,43 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  // XXXXXXXXXXXXXXXX
-  // NOT USED, keeping to make sure same logic/format
-  // XXXXXXXXXXXXXXXX
-  setValueMapping(data: any) {
+  /**
+   * Convert the existing format to new format
+   */
+  convertValueMappingConfig(): ValueMapping[] {
+    const { panel } = this;
+    const mappings: ValueMapping[] = [];
+
+    // Guess the right type based on options
+    let mappingType = panel.mappingType;
+    if (!panel.mappingType) {
+      if (panel.valueMaps && panel.valueMaps.length) {
+        mappingType = 1;
+      } else if (panel.rangeMaps && panel.rangeMaps.length) {
+        mappingType = 2;
+      }
+    }
+
     // check value to text mappings if its enabled
-    if (this.panel.mappingType === 1) {
-      for (let i = 0; i < this.panel.valueMaps.length; i++) {
-        const map = this.panel.valueMaps[i];
-        // special null case
-        if (map.value === 'null') {
-          if (data.value === null || data.value === void 0) {
-            data.valueFormatted = map.text;
-            return;
-          }
-          continue;
-        }
-
-        // value/number to text mapping
-        const value = parseFloat(map.value);
-        if (value === data.valueRounded) {
-          data.valueFormatted = map.text;
-          return;
-        }
+    if (mappingType === 1) {
+      for (let i = 0; i < panel.valueMaps.length; i++) {
+        const map = panel.valueMaps[i];
+        mappings.push({
+          ...map,
+          type: MappingType.ValueToText,
+        });
       }
-    } else if (this.panel.mappingType === 2) {
-      for (let i = 0; i < this.panel.rangeMaps.length; i++) {
-        const map = this.panel.rangeMaps[i];
-        // special null case
-        if (map.from === 'null' && map.to === 'null') {
-          if (data.value === null || data.value === void 0) {
-            data.valueFormatted = map.text;
-            return;
-          }
-          continue;
-        }
-
-        // value/number to range mapping
-        const from = parseFloat(map.from);
-        const to = parseFloat(map.to);
-        if (to >= data.valueRounded && from <= data.valueRounded) {
-          data.valueFormatted = map.text;
-          return;
-        }
+    } else if (mappingType === 2) {
+      for (let i = 0; i < panel.rangeMaps.length; i++) {
+        const map = panel.rangeMaps[i];
+        mappings.push({
+          ...map,
+          type: MappingType.RangeToText,
+        });
       }
     }
 
-    if (data.value === null || data.value === void 0) {
-      data.valueFormatted = 'no value';
-    }
+    return mappings;
   }
 
   removeValueMap(map: any) {
@@ -328,12 +318,12 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       const processor = getDisplayProcessor({
         field: {
           ...data.field.config,
-          // TODO, mapping stuff
           unit: panel.format,
           decimals: panel.decimals,
+          mappings: this.convertValueMappingConfig(),
         },
         theme: config.theme,
-        isUtc: dashboard.isTimezoneUtc,
+        isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
       });
       data.display = processor(data.value);
     } else {
@@ -344,14 +334,21 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     // get thresholds
-    data.thresholds = panel.thresholds.split(',').map((strVale: string) => {
-      return Number(strVale.trim());
-    });
+    data.thresholds = panel.thresholds
+      ? panel.thresholds.split(',').map((strVale: string) => {
+          return Number(strVale.trim());
+        })
+      : [];
 
     // Map panel colors to hex or rgb/a values
-    data.colorMap = panel.colors.map((color: string) =>
-      getColorFromHexRgbOrName(color, config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark)
-    );
+    if (panel.colors) {
+      data.colorMap = panel.colors.map((color: string) =>
+        getColorFromHexRgbOrName(
+          color,
+          config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
+        )
+      );
+    }
   };
 
   link(scope: any, elem: JQuery, attrs: any, ctrl: any) {
