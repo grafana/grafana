@@ -177,7 +177,7 @@ exports[`Render should render team members 1`] = `
         </tr>
       </thead>
       <tbody>
-        <Component
+        <Connect(TeamMemberRow)
           editorsCanAdmin={false}
           key="1"
           member={
@@ -197,7 +197,7 @@ exports[`Render should render team members 1`] = `
           signedInUserIsTeamAdmin={true}
           syncEnabled={false}
         />
-        <Component
+        <Connect(TeamMemberRow)
           editorsCanAdmin={false}
           key="2"
           member={
@@ -217,7 +217,7 @@ exports[`Render should render team members 1`] = `
           signedInUserIsTeamAdmin={true}
           syncEnabled={false}
         />
-        <Component
+        <Connect(TeamMemberRow)
           editorsCanAdmin={false}
           key="3"
           member={
@@ -237,7 +237,7 @@ exports[`Render should render team members 1`] = `
           signedInUserIsTeamAdmin={true}
           syncEnabled={false}
         />
-        <Component
+        <Connect(TeamMemberRow)
           editorsCanAdmin={false}
           key="4"
           member={
@@ -257,7 +257,7 @@ exports[`Render should render team members 1`] = `
           signedInUserIsTeamAdmin={true}
           syncEnabled={false}
         />
-        <Component
+        <Connect(TeamMemberRow)
           editorsCanAdmin={false}
           key="5"
           member={
