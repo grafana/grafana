@@ -58,4 +58,19 @@ describe('dataFrameView', () => {
     const keys = Object.keys(first);
     expect(keys).toEqual(['time', 'name', 'value']);
   });
+
+  it('has a weird side effect that the object values change after interation', () => {
+    expect(vector.length).toEqual(3);
+
+    // Get the first value
+    const first = vector.get(0);
+    expect(first.name).toEqual('a');
+
+    // Then get the second one
+    const second = vector.get(1);
+
+    // the values for 'first' have changed
+    expect(first.name).toEqual('b');
+    expect(first.name).toEqual(second.name);
+  });
 });
