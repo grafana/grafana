@@ -76,7 +76,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('Should use series avg as default main value', () => {
-      expect(ctx.data.value).toBe(0);
+      expect(ctx.data.value).toBe('test.cpu1');
     });
 
     it('should set formatted value', () => {

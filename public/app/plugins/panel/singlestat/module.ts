@@ -162,34 +162,40 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         value: 'No Data',
       };
     } else {
+      const name = f.field.config.title || f.field.name;
       let calc = panel.valueName;
       let calcField = f.field;
-      if ('last_time' === calc) {
-        if (f.frame.firstTimeField) {
-          calcField = f.frame.firstTimeField;
-          calc = ReducerID.last;
+      let val: any = undefined;
+      if ('name' === calc) {
+        val = name;
+      } else {
+        if ('last_time' === calc) {
+          if (f.frame.firstTimeField) {
+            calcField = f.frame.firstTimeField;
+            calc = ReducerID.last;
+          }
         }
+
+        // Normalize functions (avg -> mean, etc)
+        const r = fieldReducers.getIfExists(calc);
+        calc = r ? r.id : ReducerID.lastNotNull;
+
+        // Calculate the value
+        val = reduceField({
+          field: calcField,
+          reducers: [calc],
+        })[calc];
       }
-
-      // Normalize functions (avg -> mean, etc)
-      const r = fieldReducers.getIfExists(calc);
-      calc = r ? r.id : ReducerID.lastNotNull;
-
-      // Calculate the value
-      const val = reduceField({
-        field: calcField,
-        reducers: [calc],
-      })[calc];
 
       this.data = {
         field: f.field,
         value: val,
         scopedVars: _.extend({}, panel.scopedVars),
       };
-      const name = f.field.config.title || f.field.name;
       this.data.scopedVars['__name'] = name;
       panel.tableColumn = this.fieldNames.length > 1 ? name : '';
 
+      // Get the fields for a sparkline
       if (panel.sparkline && panel.sparkline.show && f.frame.firstTimeField) {
         this.data.sparkline = getFlotPairs({
           xField: f.frame.firstTimeField,
@@ -317,7 +323,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
    * This function is here so we can test it
    */
   updateDataForRender = () => {
-    const { data, panel } = this;
+    const { data, panel, dashboard } = this;
     if (data.field) {
       const processor = getDisplayProcessor({
         field: {
@@ -327,6 +333,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           decimals: panel.decimals,
         },
         theme: config.theme,
+        isUtc: dashboard.isTimezoneUtc,
       });
       data.display = processor(data.value);
     } else {
