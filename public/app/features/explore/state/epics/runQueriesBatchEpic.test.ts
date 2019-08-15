@@ -14,25 +14,28 @@ import {
   clearQueriesAction,
   stateSaveAction,
 } from '../actionTypes';
-import { LoadingState, DataFrame, FieldType } from '@grafana/data';
+import { LoadingState, DataFrame, FieldType, DataFrameHelper } from '@grafana/data';
 import { DataQueryRequest } from '@grafana/ui';
 
 const testContext = () => {
   const series: DataFrame[] = [
-    {
+    new DataFrameHelper({
       fields: [
         {
           name: 'Value',
+          values: [],
         },
         {
           name: 'Time',
           type: FieldType.time,
-          unit: 'dateTimeAsIso',
+          config: {
+            unit: 'dateTimeAsIso',
+          },
+          values: [],
         },
       ],
-      rows: [],
       refId: 'A',
-    },
+    }),
   ];
   const response = { data: series };
 

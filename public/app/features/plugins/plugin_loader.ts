@@ -15,6 +15,8 @@ import slateReact from 'slate-react';
 import slatePlain from 'slate-plain-serializer';
 import react from 'react';
 import reactDom from 'react-dom';
+import reactRedux from 'react-redux';
+import redux from 'redux';
 
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
@@ -93,6 +95,8 @@ exposeToPlugin('slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
+exposeToPlugin('react-redux', reactRedux);
+exposeToPlugin('redux', redux);
 exposeToPlugin('emotion', emotion);
 
 exposeToPlugin('app/features/dashboard/impression_store', {

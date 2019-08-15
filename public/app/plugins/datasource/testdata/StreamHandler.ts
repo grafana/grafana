@@ -1,7 +1,16 @@
 import defaults from 'lodash/defaults';
 import { DataQueryRequest, DataQueryResponse, DataQueryError, DataStreamObserver, DataStreamState } from '@grafana/ui';
 
-import { FieldType, DataFrame, LoadingState, LogLevel, CSVReader } from '@grafana/data';
+import {
+  FieldType,
+  Field,
+  LoadingState,
+  LogLevel,
+  CSVReader,
+  DataFrameHelper,
+  CircularVector,
+  DataFrame,
+} from '@grafana/data';
 import { TestDataQuery, StreamingQuery } from './types';
 
 export const defaultQuery: StreamingQuery = {
@@ -74,6 +83,10 @@ export class StreamWorker {
   last = -1;
   timeoutId = 0;
 
+  // The values within
+  values: CircularVector[] = [];
+  data: DataFrame = { fields: [], length: 0 };
+
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     this.stream = {
       key,
@@ -103,26 +116,25 @@ export class StreamWorker {
     }
     this.query = query.stream;
     this.stream.request = request; // OK?
-    console.log('Reuse Test Stream: ', this);
     return true;
   }
 
   appendRows(append: any[][]) {
     // Trim the maximum row count
-    const { query, stream } = this;
-    const maxRows = query.buffer ? query.buffer : stream.request.maxDataPoints;
+    const { stream, values, data } = this;
 
-    // Edit the first series
-    const series = stream.data[0];
-    let rows = series.rows.concat(append);
-    const extra = maxRows - rows.length;
-    if (extra < 0) {
-      rows = rows.slice(extra * -1);
+    // Append all rows
+    for (let i = 0; i < append.length; i++) {
+      const row = append[i];
+      for (let j = 0; j < values.length; j++) {
+        values[j].append(row[j]); // Circular buffer will kick out old entries
+      }
     }
-    series.rows = rows;
-
-    // Tell the event about only the rows that changed (it may want to process them)
-    stream.delta = [{ ...series, rows: append }];
+    // Clear any cached values
+    for (let j = 0; j < data.fields.length; j++) {
+      data.fields[j].calcs = undefined;
+    }
+    stream.data = [data];
 
     // Broadcast the changes
     if (this.observer) {
@@ -143,7 +155,7 @@ export class SignalWorker extends StreamWorker {
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
     setTimeout(() => {
-      this.stream.data = [this.initBuffer(query.refId)];
+      this.initBuffer(query.refId);
       this.looper();
     }, 10);
 
@@ -162,33 +174,46 @@ export class SignalWorker extends StreamWorker {
     return row;
   };
 
-  initBuffer(refId: string): DataFrame {
+  initBuffer(refId: string) {
     const { speed, buffer } = this.query;
-    const data = {
-      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Value', type: FieldType.number }],
-      rows: [],
+    const request = this.stream.request;
+    const maxRows = buffer ? buffer : request.maxDataPoints;
+    const times = new CircularVector(new Array<number>(maxRows));
+    const vals = new CircularVector(new Array<number>(maxRows));
+    this.values = [times, vals];
+
+    const data = new DataFrameHelper({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: times }, // The time field
+        { name: 'Value', type: FieldType.number, values: vals },
+      ],
       refId,
       name: 'Signal ' + refId,
-    } as DataFrame;
+    });
 
     for (let i = 0; i < this.bands; i++) {
       const suffix = this.bands > 1 ? ` ${i + 1}` : '';
-      data.fields.push({ name: 'Min' + suffix, type: FieldType.number });
-      data.fields.push({ name: 'Max' + suffix, type: FieldType.number });
+      const min = new CircularVector(new Array<number>(maxRows));
+      const max = new CircularVector(new Array<number>(maxRows));
+      this.values.push(min);
+      this.values.push(max);
+
+      data.addField({ name: 'Min' + suffix, type: FieldType.number, values: min });
+      data.addField({ name: 'Max' + suffix, type: FieldType.number, values: max });
     }
 
     console.log('START', data);
 
-    const request = this.stream.request;
-
     this.value = Math.random() * 100;
-    const maxRows = buffer ? buffer : request.maxDataPoints;
     let time = Date.now() - maxRows * speed;
     for (let i = 0; i < maxRows; i++) {
-      data.rows.push(this.nextRow(time));
+      const row = this.nextRow(time);
+      for (let j = 0; j < this.values.length; j++) {
+        this.values[j].append(row[j]);
+      }
       time += speed;
     }
-    return data;
+    this.data = data;
   }
 
   looper = () => {
@@ -251,9 +276,10 @@ export class FetchWorker extends StreamWorker {
     return this.reader.read().then(this.processChunk);
   };
 
-  onHeader = (series: DataFrame) => {
-    series.refId = this.refId;
-    this.stream.data = [series];
+  onHeader = (fields: Field[]) => {
+    console.warn('TODO!!!', fields);
+    // series.refId = this.refId;
+    // this.stream.data = [series];
   };
 
   onRow = (row: any[]) => {
@@ -269,7 +295,7 @@ export class LogsWorker extends StreamWorker {
     super(key, query, request, observer);
 
     window.setTimeout(() => {
-      this.stream.data = [this.initBuffer(query.refId)];
+      this.initBuffer(query.refId);
       this.looper();
     }, 10);
   }
@@ -314,24 +340,34 @@ export class LogsWorker extends StreamWorker {
     return [time, '[' + this.getRandomLogLevel() + '] ' + this.getRandomLine()];
   };
 
-  initBuffer(refId: string): DataFrame {
+  initBuffer(refId: string) {
     const { speed, buffer } = this.query;
-    const data = {
-      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Line', type: FieldType.string }],
-      rows: [],
-      refId,
-      name: 'Logs ' + refId,
-    } as DataFrame;
 
     const request = this.stream.request;
 
     const maxRows = buffer ? buffer : request.maxDataPoints;
+
+    const times = new CircularVector(new Array(maxRows));
+    const lines = new CircularVector(new Array(maxRows));
+
+    this.values = [times, lines];
+    this.data = new DataFrameHelper({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: times },
+        { name: 'Line', type: FieldType.string, values: lines },
+      ],
+      refId,
+      name: 'Logs ' + refId,
+    });
+
+    // Fill up the buffer
     let time = Date.now() - maxRows * speed;
     for (let i = 0; i < maxRows; i++) {
-      data.rows.push(this.nextRow(time));
+      const row = this.nextRow(time);
+      times.append(row[0]);
+      lines.append(row[1]);
       time += speed;
     }
-    return data;
   }
 
   looper = () => {
