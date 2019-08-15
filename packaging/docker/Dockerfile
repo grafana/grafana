@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=alpine:3.10
-FROM alpine:3.10
+FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
 
@@ -7,18 +7,6 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # Change to tar xfzv to make tar print every file it extracts
 RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
-
-# PhantomJS
-FROM alpine:3.10
-
-RUN apk add --no-cache curl &&\
-    cd /tmp && curl -Ls https://github.com/dustinblackman/phantomized/releases/download/2.1.1/dockerized-phantomjs.tar.gz | tar xz &&\
-    cp -R lib lib64 / &&\
-    cp -R usr/lib/x86_64-linux-gnu /usr/lib &&\
-    cp -R usr/share /usr/share &&\
-    cp -R etc/fonts /etc &&\
-    curl -k -Ls https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2 | tar -jxf - &&\
-    cp phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/phantomjs
 
 FROM ${BASE_IMAGE}
 
@@ -38,12 +26,19 @@ WORKDIR $GF_PATHS_HOME
 RUN apk add --no-cache ca-certificates bash
 
 # PhantomJS
-COPY --from=1 /tmp/lib /lib
-COPY --from=1 /tmp/lib64 /lib64
-COPY --from=1 /tmp/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
-COPY --from=1 /tmp/usr/share /usr/share
-COPY --from=1 /tmp/etc/fonts /etc/fonts
-COPY --from=1 /usr/local/bin/phantomjs /usr/local/bin
+RUN if [ `arch` = "x86_64" ]; then \
+      apk add --no-cache --virtual phantomjs-utils curl && \
+      cd /tmp && \
+      curl -Ls https://github.com/dustinblackman/phantomized/releases/download/2.1.1/dockerized-phantomjs.tar.gz | tar xz && \
+      cp -R lib lib64 / && \
+      cp -R usr/lib/x86_64-linux-gnu /usr/lib && \
+      cp -R usr/share/fonts /usr/share && \
+      cp -R etc/fonts /etc && \
+      curl -k -Ls https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2 | tar -jxf - && \
+      cp phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin/phantomjs && \
+      rm -rf /tmp/* && \
+      apk del --no-cache phantomjs-utils; \
+    fi
 
 COPY --from=0 /tmp/grafana "$GF_PATHS_HOME"
 
