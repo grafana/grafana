@@ -1,5 +1,5 @@
 import { SingleStatCtrl, ShowData } from '../module';
-import { dateTime } from '@grafana/data';
+import { dateTime, ReducerID } from '@grafana/data';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { LegacyResponseData } from '@grafana/ui';
 
@@ -348,6 +348,7 @@ describe('SingleStatCtrl', () => {
         ctx.input = tableData;
         ctx.input[0].rows[0] = [1492759673649, 'ignore1', 65, 'ignore2'];
         ctx.ctrl.panel.tableColumn = 'test1';
+        ctx.ctrl.panel.valueName = ReducerID.first;
       });
 
       it('Should replace value with text NOT OK', () => {

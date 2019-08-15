@@ -272,6 +272,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         const map = panel.valueMaps[i];
         mappings.push({
           ...map,
+          id: i, // used for order
           type: MappingType.ValueToText,
         });
       }
@@ -280,6 +281,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         const map = panel.rangeMaps[i];
         mappings.push({
           ...map,
+          id: i, // used for order
           type: MappingType.RangeToText,
         });
       }
