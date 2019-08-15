@@ -180,7 +180,18 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
         // Normalize functions (avg -> mean, etc)
         const r = fieldReducers.getIfExists(calc);
-        calc = r ? r.id : ReducerID.lastNotNull;
+        if (r) {
+          calc = r.id;
+          // With strings, don't accidentally use a math function
+          if (calcField.type === FieldType.string) {
+            const avoid = [ReducerID.mean, ReducerID.sum];
+            if (avoid.includes(calc)) {
+              calc = panel.valueName = ReducerID.last;
+            }
+          }
+        } else {
+          calc = ReducerID.lastNotNull;
+        }
 
         // Calculate the value
         val = reduceField({

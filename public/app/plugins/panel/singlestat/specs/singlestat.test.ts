@@ -201,10 +201,6 @@ describe('SingleStatCtrl', () => {
       expect(ctx.data.value).toBe(9.9);
     });
 
-    // it('round should be rounded up', () => {
-    //   expect(ctx.data.valueRounded).toBe(10);
-    // });
-
     it('Should replace value with text', () => {
       expect(ctx.data.display.text).toBe('OK');
     });
