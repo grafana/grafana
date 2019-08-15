@@ -846,8 +846,6 @@ workflows:
             filters: *filter-not-release-or-master
         - lint-go:
             filters: *filter-not-release-or-master
-        - shellcheck:
-            filters: *filter-not-release-or-master
         - test-frontend:
             filters: *filter-not-release-or-master
         - test-backend:
@@ -865,7 +863,6 @@ workflows:
               - test-frontend
               - codespell
               - lint-go
-              - shellcheck
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
@@ -877,7 +874,6 @@ workflows:
               - test-frontend
               - codespell
               - lint-go
-              - shellcheck
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
