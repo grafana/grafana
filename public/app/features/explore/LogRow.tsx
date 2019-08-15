@@ -15,14 +15,14 @@ import {
   LogRowContext,
   LogLabelStats,
   LogLabels,
+  LogMessageAnsi,
 } from '@grafana/ui';
 import { LogRowModel, LogLabelStatsModel, LogsParser, TimeZone } from '@grafana/data';
 import tinycolor from 'tinycolor2';
+import { css, cx } from 'emotion';
 
 import { calculateFieldStats, getParser } from 'app/core/logs_model';
 import { findHighlightChunksInText } from 'app/core/utils/text';
-import { LogMessageAnsi } from './LogMessageAnsi';
-import { css, cx } from 'emotion';
 
 interface Props {
   highlighterExpressions?: string[];

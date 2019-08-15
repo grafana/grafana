@@ -1,7 +1,5 @@
 import _ from 'lodash';
-import ansicolor from 'vendor/ansicolor/ansicolor';
-
-import { colors, getFlotPairs } from '@grafana/ui';
+import { colors, getFlotPairs, ansicolor } from '@grafana/ui';
 
 import {
   Labels,

@@ -7,6 +7,7 @@ export * from './deprecationWarning';
 export * from './validate';
 export { getFlotPairs } from './flotPairs';
 export * from './slate';
+export { default as ansicolor } from './ansicolor';
 
 // Export with a namespace
 import * as DOMUtil from './dom'; // includes Element.closest polyfil

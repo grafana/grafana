@@ -72,6 +72,7 @@ export { LogLabelStats } from './Logs/LogLabelStats';
 export { LogLabel } from './Logs/LogLabel';
 export { LogLabels } from './Logs/LogLabels';
 export { Alert } from './Alert/Alert';
+export { LogMessageAnsi } from './Logs/LogMessageAnsi';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
