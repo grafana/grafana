@@ -1,3 +1,5 @@
+export type KeyValue<T = any> = { [s: string]: T };
+
 export enum LoadingState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
