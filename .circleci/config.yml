@@ -879,6 +879,4 @@ workflows:
               - cache-server-test
             filters: *filter-not-release-or-master
         - release-next-packages:
-            requires:
-              - build-fast-package
             filters: *filter-not-release-or-master
