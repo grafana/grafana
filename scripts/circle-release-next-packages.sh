@@ -46,6 +46,12 @@ else
   echo $'\nBuilding packages'
   yarn packages:build
 
+  exit_status=$?
+  if [ $exit_status -eq 1 ]; then
+    echo "Packages build failed, skipping canary release"
+    # TODO: notify on slack/email?
+    exit
+  fi
   prapare_version_commit
 
   unpublish_previous_canary
