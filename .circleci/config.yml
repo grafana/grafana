@@ -667,7 +667,7 @@ jobs:
       - checkout
       - run:
           name: Boostrap lerna
-          command: 'npx lerna bootstrap'
+          command: 'yarn install --frozen-lockfile'
       - run:
           name: npm - Prepare auth token
           command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
