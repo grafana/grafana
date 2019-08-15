@@ -1,3 +1,5 @@
+export type DisplayProcessor = (value: any) => DisplayValue;
+
 export interface DisplayValue {
   text: string; // Show in the UI
   numeric: number; // Use isNaN to check if it is a real number

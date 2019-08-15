@@ -68,7 +68,7 @@ describe('LokiDatasource', () => {
       const res = await ds.query(options);
 
       const dataFrame = res.data[0] as DataFrame;
-      expect(dataFrame.rows[0][1]).toBe('hello');
+      expect(dataFrame.fields[1].values.get(0)).toBe('hello');
       expect(dataFrame.meta.limit).toBe(20);
       expect(dataFrame.meta.searchWords).toEqual(['(?i)foo']);
       done();

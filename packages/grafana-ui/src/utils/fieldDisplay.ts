@@ -2,9 +2,8 @@ import {
   ReducerID,
   reduceField,
   FieldType,
-  NullValueMode,
   DataFrame,
-  Field,
+  FieldConfig,
   DisplayValue,
   GraphSeriesValue,
 } from '@grafana/data';
@@ -21,8 +20,8 @@ export interface FieldDisplayOptions {
   limit?: number; // if showing all values limit
   calcs: string[]; // when !values, pick one value for the whole field
 
-  defaults: Partial<Field>; // Use these values unless otherwise stated
-  override: Partial<Field>; // Set these values regardless of the source
+  defaults: FieldConfig; // Use these values unless otherwise stated
+  override: FieldConfig; // Set these values regardless of the source
 }
 
 export const VAR_SERIES_NAME = '__series_name';
@@ -60,7 +59,8 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
 }
 
 export interface FieldDisplay {
-  field: Field;
+  name: string; // NOT title!
+  field: FieldConfig;
   display: DisplayValue;
   sparkline?: GraphSeriesValue[][];
 }
@@ -109,45 +109,50 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       }
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
-        const field = getFieldProperties(defaults, series.fields[i], override);
+        const field = series.fields[i];
 
         // Show all number fields
         if (field.type !== FieldType.number) {
           continue;
         }
+        const config = getFieldProperties(defaults, field.config || {}, override);
 
-        if (!field.name) {
-          field.name = `Field[${s}]`; // it is a copy, so safe to edit
+        let name = field.name;
+        if (!name) {
+          name = `Field[${s}]`;
         }
 
-        scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: field.name };
+        scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: name };
 
         const display = getDisplayProcessor({
-          field,
+          field: config,
           theme: options.theme,
         });
 
-        const title = field.title ? field.title : defaultTitle;
+        const title = config.title ? config.title : defaultTitle;
 
         // Show all number fields
         if (fieldOptions.values) {
           const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
 
-          for (const row of series.rows) {
+          for (let j = 0; j < field.values.length; j++) {
             // Add all the row variables
             if (usesCellValues) {
-              for (let j = 0; j < series.fields.length; j++) {
-                scopedVars[VAR_CELL_PREFIX + j] = {
-                  value: row[j],
-                  text: toString(row[j]),
+              for (let k = 0; k < series.fields.length; k++) {
+                const f = series.fields[k];
+                const v = f.values.get(j);
+                scopedVars[VAR_CELL_PREFIX + k] = {
+                  value: v,
+                  text: toString(v),
                 };
               }
             }
 
-            const displayValue = display(row[i]);
+            const displayValue = display(field.values.get(j));
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
-              field,
+              name,
+              field: config,
               display: displayValue,
             });
 
@@ -158,10 +163,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           }
         } else {
           const results = reduceField({
-            series,
-            fieldIndex: i,
+            field,
             reducers: calcs, // The stats to calculate
-            nullValueMode: NullValueMode.Null,
           });
 
           // Single sparkline for a field
@@ -169,10 +172,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             timeColumn < 0
               ? undefined
               : getFlotPairs({
-                  rows: series.rows,
-                  xIndex: timeColumn,
-                  yIndex: i,
-                  nullValueMode: NullValueMode.Null,
+                  xField: series.fields[timeColumn],
+                  yField: series.fields[i],
                 });
 
           for (const calc of calcs) {
@@ -180,7 +181,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             const displayValue = display(results[calc]);
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
-              field,
+              name,
+              field: config,
               display: displayValue,
               sparkline: points,
             });
@@ -192,9 +194,9 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push({
+      name: 'No data',
       field: {
         ...defaults,
-        name: 'No Data',
       },
       display: {
         numeric: 0,
@@ -222,7 +224,7 @@ const numericFieldProps: any = {
  * For numeric values, only valid numbers will be applied
  * for units, 'none' will be skipped
  */
-export function applyFieldProperties(field: Field, props?: Partial<Field>): Field {
+export function applyFieldProperties(field: FieldConfig, props?: FieldConfig): FieldConfig {
   if (!props) {
     return field;
   }
@@ -250,14 +252,11 @@ export function applyFieldProperties(field: Field, props?: Partial<Field>): Fiel
       copy[key] = val;
     }
   }
-  return copy as Field;
+  return copy as FieldConfig;
 }
 
-type PartialField = Partial<Field>;
-
-export function getFieldProperties(...props: PartialField[]): Field {
-  let field = props[0] as Field;
-
+export function getFieldProperties(...props: FieldConfig[]): FieldConfig {
+  let field = props[0] as FieldConfig;
   for (let i = 1; i < props.length; i++) {
     field = applyFieldProperties(field, props[i]);
   }

@@ -4,8 +4,9 @@ import defaults from 'lodash/defaults';
 import isNumber from 'lodash/isNumber';
 
 // Types
-import { DataFrame, Field, FieldType } from '../types';
+import { DataFrame, Field, FieldType, FieldConfig } from '../types';
 import { guessFieldTypeFromValue } from './processDataFrame';
+import { DataFrameHelper } from './dataFrameHelper';
 
 export enum CSVHeaderStyle {
   full,
@@ -28,9 +29,9 @@ export interface CSVParseCallbacks {
    * This can return a modified table to force any
    * Column configurations
    */
-  onHeader: (table: DataFrame) => void;
+  onHeader: (fields: Field[]) => void;
 
-  // Called after each row is read and
+  // Called after each row is read
   onRow: (row: any[]) => void;
 }
 
@@ -49,16 +50,13 @@ enum ParseState {
   ReadingRows,
 }
 
-type FieldParser = (value: string) => any;
-
 export class CSVReader {
   config: CSVConfig;
   callback?: CSVParseCallbacks;
 
-  field: FieldParser[];
-  series: DataFrame;
   state: ParseState;
-  data: DataFrame[];
+  data: DataFrameHelper[];
+  current: DataFrameHelper;
 
   constructor(options?: CSVOptions) {
     if (!options) {
@@ -67,12 +65,8 @@ export class CSVReader {
     this.config = options.config || {};
     this.callback = options.callback;
 
-    this.field = [];
+    this.current = new DataFrameHelper({ fields: [] });
     this.state = ParseState.Starting;
-    this.series = {
-      fields: [],
-      rows: [],
-    };
     this.data = [];
   }
 
@@ -92,37 +86,42 @@ export class CSVReader {
           const idx = first.indexOf('#', 2);
           if (idx > 0) {
             const k = first.substr(1, idx - 1);
+            const isName = 'name' === k;
 
             // Simple object used to check if headers match
-            const headerKeys: Field = {
-              name: '#',
-              type: FieldType.number,
+            const headerKeys: FieldConfig = {
               unit: '#',
             };
 
             // Check if it is a known/supported column
-            if (headerKeys.hasOwnProperty(k)) {
+            if (isName || headerKeys.hasOwnProperty(k)) {
               // Starting a new table after reading rows
               if (this.state === ParseState.ReadingRows) {
-                this.series = {
-                  fields: [],
-                  rows: [],
-                };
-                this.data.push(this.series);
+                this.current = new DataFrameHelper({ fields: [] });
+                this.data.push(this.current);
               }
 
-              padColumnWidth(this.series.fields, line.length);
-              const fields: any[] = this.series.fields; // cast to any so we can lookup by key
               const v = first.substr(idx + 1);
-              fields[0][k] = v;
-              for (let j = 1; j < fields.length; j++) {
-                fields[j][k] = line[j];
+              if (isName) {
+                this.current.addFieldFor(undefined, v);
+                for (let j = 1; j < line.length; j++) {
+                  this.current.addFieldFor(undefined, line[j]);
+                }
+              } else {
+                const { fields } = this.current;
+                for (let j = 0; j < fields.length; j++) {
+                  if (!fields[j].config) {
+                    fields[j].config = {};
+                  }
+                  const disp = fields[j].config as any; // any lets name lookup
+                  disp[k] = j === 0 ? v : line[j];
+                }
               }
+
               this.state = ParseState.InHeader;
               continue;
             }
           } else if (this.state === ParseState.Starting) {
-            this.series.fields = makeFieldsFor(line);
             this.state = ParseState.InHeader;
             continue;
           }
@@ -133,67 +132,48 @@ export class CSVReader {
         if (this.state === ParseState.Starting) {
           const type = guessFieldTypeFromValue(first);
           if (type === FieldType.string) {
-            this.series.fields = makeFieldsFor(line);
+            for (const s of line) {
+              this.current.addFieldFor(undefined, s);
+            }
             this.state = ParseState.InHeader;
             continue;
           }
-          this.series.fields = makeFieldsFor(new Array(line.length));
-          this.series.fields[0].type = type;
           this.state = ParseState.InHeader; // fall through to read rows
         }
       }
 
-      if (this.state === ParseState.InHeader) {
-        padColumnWidth(this.series.fields, line.length);
-        this.state = ParseState.ReadingRows;
+      // Add the current results to the data
+      if (this.state !== ParseState.ReadingRows) {
+        // anything???
       }
 
-      if (this.state === ParseState.ReadingRows) {
-        // Make sure colum structure is valid
-        if (line.length > this.series.fields.length) {
-          padColumnWidth(this.series.fields, line.length);
-          if (this.callback) {
-            this.callback.onHeader(this.series);
-          } else {
-            // Expand all rows with nulls
-            for (let x = 0; x < this.series.rows.length; x++) {
-              const row = this.series.rows[x];
-              while (row.length < line.length) {
-                row.push(null);
-              }
-            }
-          }
-        }
+      this.state = ParseState.ReadingRows;
 
-        const row: any[] = [];
-        for (let j = 0; j < line.length; j++) {
-          const v = line[j];
-          if (v) {
-            if (!this.field[j]) {
-              this.field[j] = makeFieldParser(v, this.series.fields[j]);
-            }
-            row.push(this.field[j](v));
-          } else {
-            row.push(null);
-          }
+      // Make sure colum structure is valid
+      if (line.length > this.current.fields.length) {
+        const { fields } = this.current;
+        for (let f = fields.length; f < line.length; f++) {
+          this.current.addFieldFor(line[f]);
         }
-
         if (this.callback) {
-          // Send the header after we guess the type
-          if (this.series.rows.length === 0) {
-            this.callback.onHeader(this.series);
-            this.series.rows.push(row); // Only add the first row
-          }
-          this.callback.onRow(row);
-        } else {
-          this.series.rows.push(row);
+          this.callback.onHeader(this.current.fields);
         }
+      }
+
+      this.current.appendRow(line);
+      if (this.callback) {
+        // // Send the header after we guess the type
+        // if (this.series.rows.length === 0) {
+        //   this.callback.onHeader(this.series);
+        // }
+        this.callback.onRow(line);
       }
     }
   };
 
-  readCSV(text: string): DataFrame[] {
-    this.data = [this.series];
+  readCSV(text: string): DataFrameHelper[] {
+    this.current = new DataFrameHelper({ fields: [] });
+    this.data = [this.current];
 
     const papacfg = {
       ...this.config,
@@ -204,58 +184,8 @@ export class CSVReader {
     } as ParseConfig;
 
     Papa.parse(text, papacfg);
+
     return this.data;
-  }
-}
-
-function makeFieldParser(value: string, field: Field): FieldParser {
-  if (!field.type) {
-    if (field.name === 'time' || field.name === 'Time') {
-      field.type = FieldType.time;
-    } else {
-      field.type = guessFieldTypeFromValue(value);
-    }
-  }
-
-  if (field.type === FieldType.number) {
-    return (value: string) => {
-      return parseFloat(value);
-    };
-  }
-
-  // Will convert anything that starts with "T" to true
-  if (field.type === FieldType.boolean) {
-    return (value: string) => {
-      return !(value[0] === 'F' || value[0] === 'f' || value[0] === '0');
-    };
-  }
-
-  // Just pass the string back
-  return (value: string) => value;
-}
-
-/**
- * Creates a field object for each string in the list
- */
-function makeFieldsFor(line: string[]): Field[] {
-  const fields: Field[] = [];
-  for (let i = 0; i < line.length; i++) {
-    const v = line[i] ? line[i] : 'Column ' + (i + 1);
-    fields.push({ name: v });
-  }
-  return fields;
-}
-
-/**
- * Makes sure the colum has valid entries up the the width
- */
-function padColumnWidth(fields: Field[], width: number) {
-  if (fields.length < width) {
-    for (let i = fields.length; i < width; i++) {
-      fields.push({
-        name: 'Field ' + (i + 1),
-      });
-    }
   }
 }
 
@@ -295,15 +225,26 @@ function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
 }
 
 function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string {
+  const isName = 'name' === key;
+  const isType = 'type' === key;
+
   for (const f of fields) {
-    if (f.hasOwnProperty(key)) {
+    const display = f.config;
+    if (isName || isType || (display && display.hasOwnProperty(key))) {
       let line = '#' + key + '#';
       for (let i = 0; i < fields.length; i++) {
         if (i > 0) {
           line = line + config.delimiter;
         }
 
-        const v = (fields[i] as any)[key];
+        let v: any = fields[i].name;
+        if (isType) {
+          v = fields[i].type;
+        } else if (isName) {
+          // already name
+        } else {
+          v = (fields[i].config as any)[key];
+        }
         if (v) {
           line = line + writeValue(v, config);
         }
@@ -329,7 +270,7 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
   });
 
   for (const series of data) {
-    const { rows, fields } = series;
+    const { fields } = series;
     if (config.headerStyle === CSVHeaderStyle.full) {
       csv =
         csv +
@@ -346,20 +287,22 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
       }
       csv += config.newline;
     }
-    const writers = fields.map(field => makeFieldWriter(field, config!));
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      for (let j = 0; j < row.length; j++) {
-        if (j > 0) {
-          csv = csv + config.delimiter;
-        }
+    const length = fields[0].values.length;
+    if (length > 0) {
+      const writers = fields.map(field => makeFieldWriter(field, config!));
+      for (let i = 0; i < length; i++) {
+        for (let j = 0; j < fields.length; j++) {
+          if (j > 0) {
+            csv = csv + config.delimiter;
+          }
 
-        const v = row[j];
-        if (v !== null) {
-          csv = csv + writers[j](v);
+          const v = fields[j].values.get(i);
+          if (v !== null) {
+            csv = csv + writers[j](v);
+          }
         }
+        csv = csv + config.newline;
       }
-      csv = csv + config.newline;
     }
     csv = csv + config.newline;
   }

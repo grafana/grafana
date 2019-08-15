@@ -1,5 +1,6 @@
 import { LogLevel } from '../types/logs';
-import { DataFrame, FieldType } from '../types/data';
+import { DataFrame, FieldType } from '../types/index';
+import { ArrayVector } from './vector';
 
 /**
  * Returns the log level of a log line.
@@ -33,12 +34,23 @@ export function getLogLevelFromKey(key: string): LogLevel {
 }
 
 export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataFrame {
+  const levels = new ArrayVector<LogLevel>();
+  const lines = series.fields[lineIndex];
+  for (let i = 0; i < lines.values.length; i++) {
+    const line = lines.values.get(lineIndex);
+    levels.buffer.push(getLogLevel(line));
+  }
+
   return {
     ...series, // Keeps Tags, RefID etc
-    fields: [...series.fields, { name: 'LogLevel', type: FieldType.string }],
-    rows: series.rows.map(row => {
-      const line = row[lineIndex];
-      return [...row, getLogLevel(line)];
-    }),
+    fields: [
+      ...series.fields,
+      {
+        name: 'LogLevel',
+        type: FieldType.string,
+        values: levels,
+        config: {},
+      },
+    ],
   };
 }

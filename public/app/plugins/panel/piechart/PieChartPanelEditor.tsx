@@ -8,7 +8,7 @@ import {
   FieldPropertiesEditor,
   PanelOptionsGroup,
 } from '@grafana/ui';
-import { ValueMapping, Field } from '@grafana/data';
+import { ValueMapping, FieldConfig } from '@grafana/data';
 
 import { PieChartOptionsBox } from './PieChartOptionsBox';
 import { PieChartOptions } from './types';
@@ -28,7 +28,7 @@ export class PieChartPanelEditor extends PureComponent<PanelEditorProps<PieChart
       fieldOptions,
     });
 
-  onDefaultsChange = (field: Partial<Field>) => {
+  onDefaultsChange = (field: FieldConfig) => {
     this.onDisplayOptionsChanged({
       ...this.props.options.fieldOptions,
       defaults: field,

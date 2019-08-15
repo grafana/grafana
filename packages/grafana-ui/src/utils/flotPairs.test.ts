@@ -1,10 +1,19 @@
 import { getFlotPairs } from './flotPairs';
+import { DataFrameHelper } from '@grafana/data';
 
 describe('getFlotPairs', () => {
-  const rows = [[1, 100, 'a'], [2, 200, 'b'], [3, 300, 'c']];
-
+  const series = new DataFrameHelper({
+    fields: [
+      { name: 'a', values: [1, 2, 3] },
+      { name: 'b', values: [100, 200, 300] },
+      { name: 'c', values: ['a', 'b', 'c'] },
+    ],
+  });
   it('should get X and y', () => {
-    const pairs = getFlotPairs({ rows, xIndex: 0, yIndex: 1 });
+    const pairs = getFlotPairs({
+      xField: series.fields[0],
+      yField: series.fields[1],
+    });
 
     expect(pairs.length).toEqual(3);
     expect(pairs[0].length).toEqual(2);
@@ -13,7 +22,10 @@ describe('getFlotPairs', () => {
   });
 
   it('should work with strings', () => {
-    const pairs = getFlotPairs({ rows, xIndex: 0, yIndex: 2 });
+    const pairs = getFlotPairs({
+      xField: series.fields[0],
+      yField: series.fields[2],
+    });
 
     expect(pairs.length).toEqual(3);
     expect(pairs[0].length).toEqual(2);

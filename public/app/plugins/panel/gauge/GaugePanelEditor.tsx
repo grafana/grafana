@@ -11,7 +11,7 @@ import {
   Switch,
   PanelOptionsGroup,
 } from '@grafana/ui';
-import { Field, Threshold, ValueMapping } from '@grafana/data';
+import { Threshold, ValueMapping, FieldConfig } from '@grafana/data';
 
 import { GaugeOptions } from './types';
 
@@ -49,7 +49,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       fieldOptions,
     });
 
-  onDefaultsChange = (field: Partial<Field>) => {
+  onDefaultsChange = (field: FieldConfig) => {
     this.onDisplayOptionsChanged({
       ...this.props.options.fieldOptions,
       defaults: field,
