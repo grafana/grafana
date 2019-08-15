@@ -274,53 +274,90 @@ describe('AzureLogAnalyticsDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    const tableResponseWithOneColumn = {
-      tables: [
-        {
-          name: 'PrimaryResult',
-          columns: [
+    describe('with a workspaces query that specifies a subscription id', () => {
+      const response = {
+        data: {
+          value: [
             {
-              name: 'Category',
-              type: 'string',
+              name: 'aworkspace',
+              properties: {
+                source: 'Azure',
+                customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
+              },
             },
           ],
-          rows: [['Administrative'], ['Policy']],
         },
-      ],
-    };
-
-    const workspaceResponse = {
-      value: [
-        {
-          name: 'aworkspace',
-          properties: {
-            source: 'Azure',
-            customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
-          },
-        },
-      ],
-    };
-
-    let queryResults: any[];
-
-    beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
-        if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
-          return ctx.$q.when({ data: workspaceResponse, status: 200 });
-        } else {
-          return ctx.$q.when({ data: tableResponseWithOneColumn, status: 200 });
-        }
+        status: 200,
+        statusText: 'OK',
       };
 
-      queryResults = await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+          expect(options.url).toContain('11112222-eeee-4949-9b2d-9106972f9123');
+          return ctx.$q.when(response);
+        };
+      });
+
+      it('should return a list of workspaces', () => {
+        return ctx.ds
+          .metricFindQuery('Workspaces(11112222-eeee-4949-9b2d-9106972f9123)')
+          .then((results: Array<{ text: string; value: string }>) => {
+            expect(results.length).toEqual(1);
+            expect(results[0].text).toEqual('aworkspace');
+            expect(results[0].value).toEqual('abc1b44e-3e57-4410-b027-6cc0ae6dee67');
+          });
+      });
     });
 
-    it('should return a list of categories in the correct format', () => {
-      expect(queryResults.length).toBe(2);
-      expect(queryResults[0].text).toBe('Administrative');
-      expect(queryResults[0].value).toBe('Administrative');
-      expect(queryResults[1].text).toBe('Policy');
-      expect(queryResults[1].value).toBe('Policy');
+    describe('with a categories query', () => {
+      const tableResponseWithOneColumn = {
+        tables: [
+          {
+            name: 'PrimaryResult',
+            columns: [
+              {
+                name: 'Category',
+                type: 'string',
+              },
+            ],
+            rows: [['Administrative'], ['Policy']],
+          },
+        ],
+      };
+
+      const workspaceResponse = {
+        value: [
+          {
+            name: 'aworkspace',
+            properties: {
+              source: 'Azure',
+              customerId: 'abc1b44e-3e57-4410-b027-6cc0ae6dee67',
+            },
+          },
+        ],
+      };
+
+      let queryResults: any[];
+
+      beforeEach(async () => {
+        ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
+          if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
+            return ctx.$q.when({ data: workspaceResponse, status: 200 });
+          } else {
+            return ctx.$q.when({ data: tableResponseWithOneColumn, status: 200 });
+          }
+        };
+
+        queryResults = await ctx.ds.metricFindQuery('workspace("aworkspace").AzureActivity  | distinct Category');
+      });
+
+      it('should return a list of categories in the correct format', () => {
+        expect(queryResults.length).toBe(2);
+        expect(queryResults[0].text).toBe('Administrative');
+        expect(queryResults[0].value).toBe('Administrative');
+        expect(queryResults[1].text).toBe('Policy');
+        expect(queryResults[1].value).toBe('Policy');
+      });
     });
   });
 

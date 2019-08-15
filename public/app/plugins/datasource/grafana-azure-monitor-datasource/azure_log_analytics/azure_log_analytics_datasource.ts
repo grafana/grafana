@@ -119,6 +119,10 @@ export default class AzureLogAnalyticsDatasource {
   }
 
   metricFindQuery(query: string) {
+    const workspacesQueryWithSub = query.match(/^Workspaces\(([^\)]+?)(,\s?([^,]+?))?\)/i);
+    if (workspacesQueryWithSub) {
+      return this.getWorkspaces(this.toVariable(workspacesQueryWithSub[1]));
+    }
     return this.getDefaultOrFirstWorkspace().then((workspace: any) => {
       const queries: any[] = this.buildQuery(query, null, workspace);
 
@@ -143,6 +147,10 @@ export default class AzureLogAnalyticsDatasource {
           }
         });
     });
+  }
+
+  toVariable(metric: string) {
+    return this.templateSrv.replace((metric || '').trim());
   }
 
   private buildQuery(query: string, options: any, workspace: any) {
