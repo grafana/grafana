@@ -8,9 +8,11 @@ export * from './logs';
 export * from './labels';
 export * from './labels';
 export * from './object';
-export * from './fieldCache';
 export * from './moment_wrapper';
 export * from './thresholds';
+export * from './dataFrameHelper';
+export * from './dataFrameView';
+export * from './vector';
 
 export { getMappedValue } from './valueMappings';
 

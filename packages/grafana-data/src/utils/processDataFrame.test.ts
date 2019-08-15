@@ -5,9 +5,11 @@ import {
   toDataFrame,
   guessFieldTypes,
   guessFieldTypeFromValue,
+  sortDataFrame,
 } from './processDataFrame';
-import { FieldType, TimeSeries, DataFrame, TableData } from '../types/data';
+import { FieldType, TimeSeries, TableData, DataFrameDTO } from '../types/index';
 import { dateTime } from './moment_wrapper';
+import { DataFrameHelper } from './dataFrameHelper';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
@@ -17,7 +19,15 @@ describe('toDataFrame', () => {
     };
     let series = toDataFrame(input1);
     expect(series.fields[0].name).toBe(input1.target);
-    expect(series.rows).toBe(input1.datapoints);
+
+    const v0 = series.fields[0].values;
+    const v1 = series.fields[1].values;
+    expect(v0.length).toEqual(2);
+    expect(v1.length).toEqual(2);
+    expect(v0.get(0)).toEqual(100);
+    expect(v0.get(1)).toEqual(200);
+    expect(v1.get(0)).toEqual(1);
+    expect(v1.get(1)).toEqual(2);
 
     // Should fill a default name if target is empty
     const input2 = {
@@ -39,12 +49,23 @@ describe('toDataFrame', () => {
   });
 
   it('keeps dataFrame unchanged', () => {
-    const input = {
-      fields: [{ text: 'A' }, { text: 'B' }, { text: 'C' }],
+    const input = toDataFrame({
+      datapoints: [[100, 1], [200, 2]],
+    });
+    expect(input.length).toEqual(2);
+
+    // If the object is alreay a DataFrame, it should not change
+    const again = toDataFrame(input);
+    expect(again).toBe(input);
+  });
+
+  it('migrate from 6.3 style rows', () => {
+    const oldDataFrame = {
+      fields: [{ name: 'A' }, { name: 'B' }, { name: 'C' }],
       rows: [[100, 'A', 1], [200, 'B', 2], [300, 'C', 3]],
     };
-    const series = toDataFrame(input);
-    expect(series).toBe(input);
+    const data = toDataFrame(oldDataFrame);
+    expect(data.length).toBe(oldDataFrame.rows.length);
   });
 
   it('Guess Colum Types from value', () => {
@@ -68,14 +89,18 @@ describe('toDataFrame', () => {
   });
 
   it('Guess Colum Types from series', () => {
-    const series = {
-      fields: [{ name: 'A (number)' }, { name: 'B (strings)' }, { name: 'C (nulls)' }, { name: 'Time' }],
-      rows: [[123, null, null, '2000'], [null, 'Hello', null, 'XXX']],
-    };
+    const series = new DataFrameHelper({
+      fields: [
+        { name: 'A (number)', values: [123, null] },
+        { name: 'B (strings)', values: [null, 'Hello'] },
+        { name: 'C (nulls)', values: [null, null] },
+        { name: 'Time', values: ['2000', 1967] },
+      ],
+    });
     const norm = guessFieldTypes(series);
     expect(norm.fields[0].type).toBe(FieldType.number);
     expect(norm.fields[1].type).toBe(FieldType.string);
-    expect(norm.fields[2].type).toBeUndefined();
+    expect(norm.fields[2].type).toBe(FieldType.other);
     expect(norm.fields[3].type).toBe(FieldType.time); // based on name
   });
 });
@@ -103,6 +128,7 @@ describe('SerisData backwards compatibility', () => {
     const series = toDataFrame(table);
     expect(isTableData(table)).toBeTruthy();
     expect(isDataFrame(series)).toBeTruthy();
+    expect(series.fields[0].config.unit).toEqual('ms');
 
     const roundtrip = toLegacyResponseData(series) as TimeSeries;
     expect(isTableData(roundtrip)).toBeTruthy();
@@ -110,23 +136,46 @@ describe('SerisData backwards compatibility', () => {
   });
 
   it('converts DataFrame to TableData to series and back again', () => {
-    const series: DataFrame = {
+    const json: DataFrameDTO = {
       refId: 'Z',
       meta: {
         somethign: 8,
       },
       fields: [
-        { name: 'T', type: FieldType.time }, // first
-        { name: 'N', type: FieldType.number, filterable: true },
-        { name: 'S', type: FieldType.string, filterable: true },
+        { name: 'T', type: FieldType.time, values: [1, 2, 3] },
+        { name: 'N', type: FieldType.number, config: { filterable: true }, values: [100, 200, 300] },
+        { name: 'S', type: FieldType.string, config: { filterable: true }, values: ['1', '2', '3'] },
       ],
-      rows: [[1, 100, '1'], [2, 200, '2'], [3, 300, '3']],
     };
+    const series = toDataFrame(json);
     const table = toLegacyResponseData(series) as TableData;
-    expect(table.meta).toBe(series.meta);
     expect(table.refId).toBe(series.refId);
+    expect(table.meta).toEqual(series.meta);
 
     const names = table.columns.map(c => c.text);
     expect(names).toEqual(['T', 'N', 'S']);
+  });
+});
+
+describe('sorted DataFrame', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'fist', type: FieldType.time, values: [1, 2, 3] },
+      { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
+      { name: 'third', type: FieldType.number, values: [2000, 3000, 1000] },
+    ],
+  });
+  it('Should sort numbers', () => {
+    const sorted = sortDataFrame(frame, 0, true);
+    expect(sorted.length).toEqual(3);
+    expect(sorted.fields[0].values.toJSON()).toEqual([3, 2, 1]);
+    expect(sorted.fields[1].values.toJSON()).toEqual(['c', 'b', 'a']);
+  });
+
+  it('Should sort strings', () => {
+    const sorted = sortDataFrame(frame, 1, true);
+    expect(sorted.length).toEqual(3);
+    expect(sorted.fields[0].values.toJSON()).toEqual([3, 2, 1]);
+    expect(sorted.fields[1].values.toJSON()).toEqual(['c', 'b', 'a']);
   });
 });

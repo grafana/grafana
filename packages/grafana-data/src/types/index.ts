@@ -1,4 +1,5 @@
 export * from './data';
+export * from './dataFrame';
 export * from './dataLink';
 export * from './logs';
 export * from './navModel';
