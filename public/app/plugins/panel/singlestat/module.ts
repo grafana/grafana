@@ -26,7 +26,7 @@ import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryS
 
 const BASE_FONT_SIZE = 38;
 
-interface ShowData {
+export interface ShowData {
   field: Field;
   value: any;
   sparkline: GraphSeriesValue[][];
@@ -312,6 +312,41 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.panel.rangeMaps.push({ from: '', to: '', text: '' });
   }
 
+  /**
+   * This processes our display values for each render
+   * This function is here so we can test it
+   */
+  updateDataForRender = () => {
+    const { data, panel } = this;
+    if (data.field) {
+      const processor = getDisplayProcessor({
+        field: {
+          ...data.field.config,
+          // TODO, mapping stuff
+          unit: panel.format,
+          decimals: panel.decimals,
+        },
+        theme: config.theme,
+      });
+      data.display = processor(data.value);
+    } else {
+      data.display = {
+        numeric: NaN,
+        text: _.toString(data.value),
+      };
+    }
+
+    // get thresholds
+    data.thresholds = panel.thresholds.split(',').map((strVale: string) => {
+      return Number(strVale.trim());
+    });
+
+    // Map panel colors to hex or rgb/a values
+    data.colorMap = panel.colors.map((color: string) =>
+      getColorFromHexRgbOrName(color, config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark)
+    );
+  };
+
   link(scope: any, elem: JQuery, attrs: any, ctrl: any) {
     const $location = this.$location;
     const linkSrv = this.linkSrv;
@@ -536,38 +571,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       if (!ctrl.data) {
         return;
       }
+      ctrl.updateDataForRender();
       const { data, panel } = ctrl;
-
-      if (data.field) {
-        const processor = getDisplayProcessor({
-          field: {
-            ...data.field.config,
-            // TODO, mapping stuff
-            unit: panel.format,
-            decimals: panel.decimals,
-          },
-          theme: config.theme,
-        });
-        data.display = processor(data.value);
-      } else {
-        data.display = {
-          numeric: NaN,
-          text: _.toString(data.value),
-        };
-      }
-
-      // get thresholds
-      data.thresholds = panel.thresholds.split(',').map((strVale: string) => {
-        return Number(strVale.trim());
-      });
-
-      // Map panel colors to hex or rgb/a values
-      data.colorMap = panel.colors.map((color: string) =>
-        getColorFromHexRgbOrName(
-          color,
-          config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
-        )
-      );
 
       const body = panel.gauge.show ? '' : getBigValueHtml();
 
@@ -679,6 +684,12 @@ function getColorForValue(data: any, value: number) {
 
   return _.first(data.colorMap);
 }
+
+//------------------------------------------------
+// Private utility functions
+// Somethign like this should be avaliable in a
+//  DataFrame[] abstraction helper
+//------------------------------------------------
 
 interface FrameInfo {
   firstTimeField?: Field;
