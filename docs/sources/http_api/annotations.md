@@ -27,7 +27,6 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-
 Query Parameters:
 
 - `from`: epoch datetime in milliseconds. Optional.
@@ -88,9 +87,13 @@ Content-Type: application/json
 ]
 ```
 
+> Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.
+
 ## Create Annotation
 
-Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional. If they are not specified then a global annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation the response will include both `id` and `endId`, if not only `id`.
+Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional.
+If they are not specified then a global annotation is created and can be queried in any dashboard that adds
+the Grafana annotations data source. When creating a region annotation include the timeEnd property.
 
 `POST /api/annotations`
 
@@ -120,9 +123,12 @@ Content-Type: application/json
 {
     "message":"Annotation added",
     "id": 1,
-    "endId": 2
 }
 ```
+
+> The response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would
+also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time &
+timeEnd properties.
 
 ## Create Annotation in Graphite format
 
@@ -198,7 +204,7 @@ Content-Type: application/json
 
 Updates one or more properties of an annotation that matches the specified id.
 
-This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties. 
+This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties.
 
 **Example Request**:
 
