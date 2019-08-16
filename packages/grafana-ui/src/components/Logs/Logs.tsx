@@ -11,10 +11,13 @@ import {
   LogsModel,
   LogsDedupStrategy,
   LogRowModel,
+  LogsDedupDescription,
 } from '@grafana/data';
 import { LogLabels } from './LogLabels';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
-import { LogRow } from './LogRow';
+import { Switch } from '../Switch/Switch';
+import { ToggleButtonGroup, ToggleButton } from '../ToggleButtonGroup/ToggleButtonGroup';
+import { LogRows } from './LogRows';
 
 const PREVIEW_LIMIT = 100;
 
@@ -104,18 +107,22 @@ export class Logs extends PureComponent<Props, State> {
     return onDedupStrategyChange(dedup);
   };
 
-  onChangeLabels = (event: React.SyntheticEvent) => {
-    const target = event.target as HTMLInputElement;
-    this.setState({
-      showLabels: target.checked,
-    });
+  onChangeLabels = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      this.setState({
+        showLabels: target.checked,
+      });
+    }
   };
 
-  onChangeTime = (event: React.SyntheticEvent) => {
-    const target = event.target as HTMLInputElement;
-    this.setState({
-      showTime: target.checked,
-    });
+  onChangeTime = (event?: React.SyntheticEvent) => {
+    const target = event && (event.target as HTMLInputElement);
+    if (target) {
+      this.setState({
+        showTime: target.checked,
+      });
+    }
   };
 
   onToggleLogLevel = (hiddenRawLevels: string[]) => {
@@ -156,14 +163,12 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { deferLogs, renderAll, showLabels, showTime } = this.state;
+    const { showLabels, showTime } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = data && data.rows && data.rows.length > 0;
-    const hasLabel = hasData && dedupedData && dedupedData.hasUniqueLabels ? true : false;
     const dedupCount = dedupedData
       ? dedupedData.rows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
-    const showDuplicates = dedupStrategy !== LogsDedupStrategy.none && dedupCount > 0;
     const meta = data.meta ? [...data.meta] : [];
 
     if (dedupStrategy !== LogsDedupStrategy.none) {
@@ -174,16 +179,8 @@ export class Logs extends PureComponent<Props, State> {
       });
     }
 
-    // Staged rendering
-    const processedRows = dedupedData ? dedupedData.rows : [];
-    const firstRows = processedRows.slice(0, PREVIEW_LIMIT);
-    const lastRows = processedRows.slice(PREVIEW_LIMIT);
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
     const series = data && data.series ? data.series : [];
-
-    // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
-    const getRows = () => processedRows;
-    const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
       <div className="logs-panel">
@@ -204,7 +201,7 @@ export class Logs extends PureComponent<Props, State> {
             onUpdateTimeRange={onChangeTime}
           />
         </div>
-        {/* <div className="logs-panel-options">
+        <div className="logs-panel-options">
           <div className="logs-panel-controls">
             <Switch label="Time" checked={showTime} onChange={this.onChangeTime} transparent />
             <Switch label="Labels" checked={showLabels} onChange={this.onChangeLabels} transparent />
@@ -223,7 +220,7 @@ export class Logs extends PureComponent<Props, State> {
               ))}
             </ToggleButtonGroup>
           </div>
-        </div> */}
+        </div>
 
         {hasData && meta && (
           <div className="logs-panel-meta">
@@ -236,41 +233,18 @@ export class Logs extends PureComponent<Props, State> {
           </div>
         )}
 
-        <div className="logs-rows">
-          {hasData &&
-          !deferLogs && // Only inject highlighterExpression in the first set for performance reasons
-            firstRows.map((row, index) => (
-              <LogRow
-                key={index}
-                getRows={getRows}
-                getRowContext={getRowContext}
-                highlighterExpressions={highlighterExpressions}
-                row={row}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels && hasLabel}
-                showTime={showTime}
-                timeZone={timeZone}
-                onClickLabel={onClickLabel}
-              />
-            ))}
-          {hasData &&
-            !deferLogs &&
-            renderAll &&
-            lastRows.map((row, index) => (
-              <LogRow
-                key={PREVIEW_LIMIT + index}
-                getRows={getRows}
-                getRowContext={getRowContext}
-                row={row}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels && hasLabel}
-                showTime={showTime}
-                timeZone={timeZone}
-                onClickLabel={onClickLabel}
-              />
-            ))}
-          {hasData && deferLogs && <span>Rendering {processedRows.length} rows...</span>}
-        </div>
+        <LogRows
+          data={data}
+          deduplicatedData={dedupedData}
+          dedupStrategy={dedupStrategy}
+          getRowContext={this.props.getRowContext}
+          highlighterExpressions={highlighterExpressions}
+          onClickLabel={onClickLabel}
+          showLabels={showLabels}
+          showTime={showTime}
+          timeZone={timeZone}
+        />
+
         {!loading && !hasData && !scanning && (
           <div className="logs-panel-nodata">
             No logs found.
