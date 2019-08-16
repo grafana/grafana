@@ -33,7 +33,6 @@ interface Props {
   data?: LogsModel;
   dedupedData?: LogsModel;
   width: number;
-  exploreId: string;
   highlighterExpressions: string[];
   loading: boolean;
   absoluteRange: AbsoluteTimeRange;

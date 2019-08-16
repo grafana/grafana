@@ -87,7 +87,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
   render() {
     const {
-      exploreId,
       loading,
       logsHighlighterExpressions,
       logsResult,
@@ -118,7 +117,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
           data={logsResult}
           dedupedData={dedupedResult}
-          exploreId={exploreId}
           highlighterExpressions={logsHighlighterExpressions}
           loading={loading}
           onChangeTime={this.onChangeTime}
