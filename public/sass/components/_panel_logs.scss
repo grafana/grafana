@@ -196,45 +196,6 @@ $column-horizontal-spacing: 10px;
   }
 }
 
-.logs-labels {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.logs-label {
-  display: flex;
-  padding: 0 2px;
-  background-color: $btn-inverse-bg;
-  border-radius: $border-radius;
-  margin: 0 4px 2px 0;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.logs-label__icon {
-  border-left: $panel-border;
-  padding: 0 2px;
-  cursor: pointer;
-  margin-left: 2px;
-}
-
-.logs-label__value {
-  display: inline-block;
-  max-width: 20em;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.logs-label__stats {
-  position: absolute;
-  top: 1.25em;
-  left: -10px;
-  z-index: 100;
-  justify-content: space-between;
-  box-shadow: $popover-shadow;
-}
-
 /*
 * Stats popover & message stats box
 */
