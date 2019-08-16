@@ -134,6 +134,12 @@ If you're using systemd and have a large amount of annotations consider temporar
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
 Read more [here](/installation/configuration/#disable-sanitize-html) about this new setting.
 
+
+## Upgrading to v6.4
+
+One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row.  If you have a large number of region annotations the database migration may take a long time to complete.  See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.
+
+
 ### Authentication and security
 
 If your using Grafana's builtin, LDAP (without Auth Proxy) or OAuth authentication all users will be required to login upon the next visit after the upgrade.

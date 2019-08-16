@@ -56,9 +56,9 @@ Content-Type: application/json
         "newState": "",
         "prevState": "",
         "time": 1507266395000,
+        "timeEnd": 1507266395000,
         "text": "test",
         "metric": "",
-        "regionId": 1123,
         "type": "event",
         "tags": [
             "tag1",
@@ -78,7 +78,6 @@ Content-Type: application/json
         "time": 1507265111000,
         "text": "test",
         "metric": "",
-        "regionId": 1123,
         "type": "event",
         "tags": [
             "tag1",
@@ -106,7 +105,6 @@ Content-Type: application/json
   "dashboardId":468,
   "panelId":1,
   "time":1507037197339,
-  "isRegion":true,
   "timeEnd":1507180805056,
   "tags":["tag1","tag2"],
   "text":"Annotation Description"
@@ -176,7 +174,6 @@ Content-Type: application/json
 
 {
   "time":1507037197339,
-  "isRegion":true,
   "timeEnd":1507180805056,
   "text":"Annotation Description",
   "tags":["tag3","tag4","tag5"]
@@ -201,7 +198,7 @@ Content-Type: application/json
 
 Updates one or more properties of an annotation that matches the specified id.
 
-This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties. It does not handle updating of the `isRegion` and `regionId` properties. To make an annotation regional or vice versa, consider using the [Update Annotation](#update-annotation) operation.
+This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties. 
 
 **Example Request**:
 
@@ -251,31 +248,5 @@ Content-Type: application/json
 
 {
     "message":"Annotation deleted"
-}
-```
-
-## Delete Annotation By RegionId
-
-`DELETE /api/annotations/region/:id`
-
-Deletes the annotation that matches the specified region id. A region is an annotation that covers a timerange and has a start and end time. In the Grafana database, this is a stored as two annotations connected by a region id.
-
-**Example Request**:
-
-```http
-DELETE /api/annotations/region/1 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-    "message":"Annotation region deleted"
 }
 ```

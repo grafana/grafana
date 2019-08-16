@@ -70,7 +70,6 @@ export interface AnnotationEvent {
   dashboardId?: number;
   panelId?: number;
   userId?: number;
-  regionId?: number;
   login?: string;
   email?: string;
   avatarUrl?: string;
@@ -81,4 +80,7 @@ export interface AnnotationEvent {
   text?: string;
   type?: string;
   tags?: string[];
+
+  // Currently used to merge annotations from alerts and dashboard
+  source?: any; // source.type === 'dashboard'
 }
