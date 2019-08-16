@@ -4,20 +4,6 @@ import _ from 'lodash';
 import Highlighter from 'react-highlight-words';
 import classnames from 'classnames';
 import {
-  ThemeContext,
-  selectThemeVariant,
-  GrafanaTheme,
-  DataQueryResponse,
-  LogRowContextProvider,
-  LogRowContextRows,
-  HasMoreContextRows,
-  LogRowContextQueryErrors,
-  LogRowContext,
-  LogLabelStats,
-  LogLabels,
-  LogMessageAnsi,
-} from '@grafana/ui';
-import {
   LogRowModel,
   LogLabelStatsModel,
   LogsParser,
@@ -28,6 +14,17 @@ import {
 } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
+import { DataQueryResponse, GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
+import {
+  LogRowContextRows,
+  LogRowContextQueryErrors,
+  HasMoreContextRows,
+  LogRowContextProvider,
+} from './LogRowContextProvider';
+import { LogRowContext } from './LogRowContext';
+import { LogLabels } from './LogLabels';
+import { LogMessageAnsi } from './LogMessageAnsi';
+import { LogLabelStats } from './LogLabelStats';
 
 interface Props {
   highlighterExpressions?: string[];
@@ -39,7 +36,7 @@ interface Props {
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
-  getRowContext?: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
+  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
   className?: string;
 }
 
@@ -102,7 +99,7 @@ const getLogRowWithContextStyles = (theme: GrafanaTheme, state: State) => {
  * When the user requests stats for a field, they will be calculated and rendered below the row.
  */
 export class LogRow extends PureComponent<Props, State> {
-  mouseMessageTimer: NodeJS.Timer;
+  mouseMessageTimer: NodeJS.Timer | null = null;
 
   state: any = {
     fieldCount: 0,
@@ -117,7 +114,7 @@ export class LogRow extends PureComponent<Props, State> {
   };
 
   componentWillUnmount() {
-    clearTimeout(this.mouseMessageTimer);
+    this.clearMouseMessageTimer();
   }
 
   onClickClose = () => {
@@ -155,8 +152,14 @@ export class LogRow extends PureComponent<Props, State> {
       // See comment in onMouseOverMessage method
       return;
     }
-    clearTimeout(this.mouseMessageTimer);
+    this.clearMouseMessageTimer();
     this.setState({ parsed: false });
+  };
+
+  clearMouseMessageTimer = () => {
+    if (this.mouseMessageTimer) {
+      clearTimeout(this.mouseMessageTimer);
+    }
   };
 
   parseMessage = () => {
@@ -242,7 +245,9 @@ export class LogRow extends PureComponent<Props, State> {
           return (
             <div className={`logs-row ${this.props.className}`}>
               {showDuplicates && (
-                <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
+                <div className="logs-row__duplicates">
+                  {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
+                </div>
               )}
               <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
               {showTime && showUtc && (
@@ -257,7 +262,11 @@ export class LogRow extends PureComponent<Props, State> {
               )}
               {showLabels && (
                 <div className="logs-row__labels">
-                  <LogLabels getRows={getRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
+                  <LogLabels
+                    getRows={getRows}
+                    labels={row.uniqueLabels ? row.uniqueLabels : {}}
+                    onClickLabel={onClickLabel}
+                  />
                 </div>
               )}
               <div

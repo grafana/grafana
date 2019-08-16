@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 import { rangeUtil } from '@grafana/data';
-import { Switch, LogLabels } from '@grafana/ui';
+import { Switch, LogLabels, LogRow } from '@grafana/ui';
 import {
   RawTimeRange,
   LogLevel,
@@ -16,7 +16,6 @@ import {
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
-import { LogRow } from './LogRow';
 import { LogsDedupDescription } from 'app/core/logs_model';
 import ExploreGraphPanel from './ExploreGraphPanel';
 import { ExploreId } from 'app/types';

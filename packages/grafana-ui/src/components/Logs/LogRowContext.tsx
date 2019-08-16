@@ -16,7 +16,7 @@ interface LogRowContextProps {
   row: LogRowModel;
   context: LogRowContextRows;
   errors?: LogRowContextQueryErrors;
-  hasMoreContextRows: HasMoreContextRows;
+  hasMoreContextRows?: HasMoreContextRows;
   onOutsideClick: () => void;
   onLoadMoreContext: () => void;
 }
@@ -209,7 +209,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
               top: -250px;
             `}
             shouldScrollToBottom
-            canLoadMoreRows={hasMoreContextRows.after}
+            canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.after : false}
             onLoadMoreContext={onLoadMoreContext}
           />
         )}
@@ -217,7 +217,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
         {context.before && (
           <LogRowContextGroup
             onLoadMoreContext={onLoadMoreContext}
-            canLoadMoreRows={hasMoreContextRows.before}
+            canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.before : false}
             row={row}
             rows={context.before}
             error={errors && errors.before}
