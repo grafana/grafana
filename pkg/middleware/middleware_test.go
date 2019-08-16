@@ -3,12 +3,12 @@ package middleware
 import (
 	"context"
 	"encoding/base32"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
 	"testing"
 	"time"
-	"errors"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
