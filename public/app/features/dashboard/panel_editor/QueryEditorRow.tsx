@@ -215,7 +215,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
     if (series && series.length) {
       const rows = series.reduce((count, series) => {
-        return count + series.rows.length;
+        return count + series.length;
       }, 0);
       things.push(
         <span key="seriesInfo">

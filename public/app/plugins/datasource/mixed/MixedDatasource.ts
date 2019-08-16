@@ -8,13 +8,14 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  LoadingState,
   DataStreamState,
   DataStreamObserver,
   DataSourceInstanceSettings,
 } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
+
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { getProcessedSeriesData } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
@@ -98,7 +99,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
           .then(res => {
             request.endTime = Date.now();
             event.state = LoadingState.Done;
-            event.series = getProcessedSeriesData(res.data).map(series => {
+            event.data = getProcessedDataFrames(res.data).map(series => {
               if (!series.meta) {
                 series.meta = {};
               }

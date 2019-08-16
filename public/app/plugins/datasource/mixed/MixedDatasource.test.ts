@@ -3,6 +3,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { DataStreamState, DataStreamObserver, DataSourceInstanceSettings } from '@grafana/ui';
 import { MixedDatasource } from './MixedDatasource';
+import { isQueryFinished } from 'app/features/dashboard/state/PanelQueryState';
 
 const defaultDS = new MockDataSourceApi('DefaultDS', { data: ['A', 'B'] });
 const datasourceSrv = new DatasourceSrvMock(defaultDS, {
@@ -55,9 +56,12 @@ describe('MixedDatasource', () => {
       resolver = resolve;
     });
     let counter = 0;
+    // Expect two events for each request.  Starting and error/done
     const dummyStream: DataStreamObserver = (event: DataStreamState) => {
-      if (++counter === request.targets.length) {
-        resolver(event);
+      if (isQueryFinished(event.state)) {
+        if (++counter >= request.targets.length) {
+          resolver(event);
+        }
       }
     };
 

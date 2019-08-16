@@ -24,6 +24,10 @@ import {
   DataQueryResponseData,
 } from '@grafana/ui';
 
+export function isQueryFinished(state: LoadingState) {
+  return state === LoadingState.Done || state === LoadingState.Error;
+}
+
 export class PanelQueryState {
   // The current/last running request
   request = {
@@ -47,10 +51,6 @@ export class PanelQueryState {
   private executor?: Promise<PanelData> = null;
   private rejector = (reason?: any) => {};
   private datasource: DataSourceApi = {} as any;
-
-  isFinished(state: LoadingState) {
-    return state === LoadingState.Done || state === LoadingState.Error;
-  }
 
   isStarted() {
     return this.response.state !== LoadingState.NotStarted;
@@ -167,7 +167,7 @@ export class PanelQueryState {
       if (s.key === stream.key) {
         found = true;
         // Keep any existing series
-        if (!stream.series) {
+        if (!stream.data) {
           return {
             ...s,
             ...stream,
@@ -242,7 +242,7 @@ export class PanelQueryState {
     }
 
     let loading = true;
-    let done = this.isFinished(response.state);
+    let done = isQueryFinished(response.state);
     const series = [...response.series];
     const active: DataStreamState[] = [];
 
@@ -256,12 +256,17 @@ export class PanelQueryState {
       active.push(stream);
       series.push.apply(series, stream.data);
 
-      if (!this.isFinished(stream.state)) {
+      if (!isQueryFinished(stream.state)) {
         done = false;
         if (stream.state !== LoadingState.Loading) {
           loading = false;
         }
       }
+    }
+
+    // Change state to streaming if we already have somethign
+    if (loading && series.length > 0) {
+      loading = false;
     }
 
     this.streams = active;
@@ -323,9 +328,11 @@ export function shouldDisconnect(source: DataQueryRequest, state: DataStreamStat
 
   // Check if the refID exists within our current query
   // This may be too generous!
-  for (const query of source.targets) {
-    if (query.refId === state.key) {
-      return false;
+  if (source.targets) {
+    for (const query of source.targets) {
+      if (query.refId === state.key) {
+        return false;
+      }
     }
   }
 
