@@ -1,19 +1,23 @@
 import { ComponentClass } from 'react';
 import {
-  RawTimeRange,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
+  DataQueryError,
+} from '@grafana/ui';
+
+import {
+  RawTimeRange,
   LogLevel,
   TimeRange,
-  DataQueryError,
   LogsModel,
   LogsDedupStrategy,
   LoadingState,
   AbsoluteTimeRange,
-} from '@grafana/ui';
+  GraphSeriesXY,
+} from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
@@ -156,7 +160,7 @@ export interface ExploreItemState {
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
-  graphResult?: any[];
+  graphResult?: GraphSeriesXY[];
   /**
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
@@ -283,7 +287,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
 
 export abstract class LanguageProvider {
   datasource: any;
-  request: (url: any) => Promise<any>;
+  request: (url: string, params?: any) => Promise<any>;
   /**
    * Returns startTask that resolves with a task list when main syntax is loaded.
    * Task list consists of secondary promises that load more detailed language features.

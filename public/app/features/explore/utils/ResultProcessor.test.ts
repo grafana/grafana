@@ -1,4 +1,4 @@
-jest.mock('@grafana/ui/src/utils/moment_wrapper', () => ({
+jest.mock('@grafana/data/src/utils/moment_wrapper', () => ({
   dateTime: (ts: any) => {
     return {
       valueOf: () => ts,
@@ -16,7 +16,7 @@ jest.mock('@grafana/ui/src/utils/moment_wrapper', () => ({
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import { toFixed, TimeSeries, LogRowModel, LogsMetaItem } from '@grafana/ui';
+import { TimeSeries, LogRowModel, LogsMetaItem, GraphSeriesXY } from '@grafana/data';
 
 const testContext = (options: any = {}) => {
   const response = [
@@ -128,20 +128,14 @@ describe('ResultProcessor', () => {
 
         expect(theResult).toEqual([
           {
-            alias: 'A-series',
-            aliasEscaped: 'A-series',
-            bars: {
-              fillColor: '#7EB26D',
-            },
-            hasMsResolution: true,
-            id: 'A-series',
             label: 'A-series',
-            legend: true,
-            stats: {},
             color: '#7EB26D',
-            datapoints: [[39.91264531864214, 1559038518831], [40.35179822906545, 1559038519831]],
-            unit: undefined,
-            valueFormater: toFixed,
+            data: [[1559038518831, 39.91264531864214], [1559038519831, 40.35179822906545]],
+            info: undefined,
+            isVisible: true,
+            yAxis: {
+              index: 1,
+            },
           },
         ]);
       });
@@ -204,12 +198,14 @@ describe('ResultProcessor', () => {
           ],
           series: [
             {
-              alias: 'A-series',
-              datapoints: [[39.91264531864214, 1559038518831], [40.35179822906545, 1559038519831]],
-              meta: undefined,
-              refId: 'A',
-              target: 'A-series',
-              unit: undefined,
+              label: 'A-series',
+              color: '#7EB26D',
+              data: [[1559038518831, 39.91264531864214], [1559038519831, 40.35179822906545]],
+              info: undefined,
+              isVisible: true,
+              yAxis: {
+                index: 1,
+              },
             },
           ],
         });
@@ -233,20 +229,14 @@ describe('ResultProcessor', () => {
           replacePreviousResults: false,
           graphResult: [
             {
-              alias: 'A-series',
-              aliasEscaped: 'A-series',
-              bars: {
-                fillColor: '#7EB26D',
-              },
-              hasMsResolution: true,
-              id: 'A-series',
               label: 'A-series',
-              legend: true,
-              stats: {},
               color: '#7EB26D',
-              datapoints: [[19.91264531864214, 1558038518831], [20.35179822906545, 1558038519831]],
-              unit: undefined,
-              valueFormater: toFixed,
+              data: [[1558038518831, 19.91264531864214], [1558038518831, 20.35179822906545]],
+              info: undefined,
+              isVisible: true,
+              yAxis: {
+                index: 1,
+              },
             },
           ],
         });
@@ -254,25 +244,19 @@ describe('ResultProcessor', () => {
 
         expect(theResult).toEqual([
           {
-            alias: 'A-series',
-            aliasEscaped: 'A-series',
-            bars: {
-              fillColor: '#7EB26D',
-            },
-            hasMsResolution: true,
-            id: 'A-series',
             label: 'A-series',
-            legend: true,
-            stats: {},
             color: '#7EB26D',
-            datapoints: [
-              [19.91264531864214, 1558038518831],
-              [20.35179822906545, 1558038519831],
-              [39.91264531864214, 1559038518831],
-              [40.35179822906545, 1559038519831],
+            data: [
+              [1558038518831, 19.91264531864214],
+              [1558038518831, 20.35179822906545],
+              [1559038518831, 39.91264531864214],
+              [1559038519831, 40.35179822906545],
             ],
-            unit: undefined,
-            valueFormater: toFixed,
+            info: undefined,
+            isVisible: true,
+            yAxis: {
+              index: 1,
+            },
           },
         ]);
       });
@@ -350,20 +334,14 @@ describe('ResultProcessor', () => {
             ],
             series: [
               {
-                alias: 'A-series',
-                aliasEscaped: 'A-series',
-                bars: {
-                  fillColor: '#7EB26D',
-                },
-                hasMsResolution: true,
-                id: 'A-series',
                 label: 'A-series',
-                legend: true,
-                stats: {},
                 color: '#7EB26D',
-                datapoints: [[37.91264531864214, 1558038518831], [38.35179822906545, 1558038519831]],
-                unit: undefined,
-                valueFormater: toFixed,
+                data: [[1558038518831, 37.91264531864214], [1558038519831, 38.35179822906545]],
+                info: undefined,
+                isVisible: true,
+                yAxis: {
+                  index: 1,
+                },
               },
             ],
           },
@@ -436,26 +414,20 @@ describe('ResultProcessor', () => {
           ],
           series: [
             {
-              alias: 'A-series',
-              aliasEscaped: 'A-series',
-              bars: {
-                fillColor: '#7EB26D',
-              },
-              hasMsResolution: true,
-              id: 'A-series',
               label: 'A-series',
-              legend: true,
-              stats: {},
               color: '#7EB26D',
-              datapoints: [
-                [37.91264531864214, 1558038518831],
-                [38.35179822906545, 1558038519831],
-                [39.91264531864214, 1559038518831],
-                [40.35179822906545, 1559038519831],
+              data: [
+                [1558038518831, 37.91264531864214],
+                [1558038519831, 38.35179822906545],
+                [1559038518831, 39.91264531864214],
+                [1559038519831, 40.35179822906545],
               ],
-              unit: undefined as string,
-              valueFormater: toFixed,
-            },
+              info: undefined,
+              isVisible: true,
+              yAxis: {
+                index: 1,
+              },
+            } as GraphSeriesXY,
           ],
         };
 

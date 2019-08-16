@@ -6,7 +6,7 @@ import { single, map, filter, catchError } from 'rxjs/operators';
 
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
@@ -20,19 +20,17 @@ import { PromQuery, PromOptions, PromQueryRequest, PromContext } from './types';
 import {
   DataQueryRequest,
   DataSourceApi,
-  AnnotationEvent,
   DataSourceInstanceSettings,
   DataQueryError,
   DataStreamObserver,
-  LoadingState,
   DataStreamState,
   DataQueryResponseData,
-} from '@grafana/ui/src/types';
+} from '@grafana/ui';
 import { ExploreUrlState } from 'app/types/explore';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TimeRange, DateTime } from '@grafana/ui/src';
+import { TimeRange, DateTime, LoadingState, AnnotationEvent } from '@grafana/data';
 
 export interface PromDataQueryResponse {
   data: {
@@ -43,6 +41,7 @@ export interface PromDataQueryResponse {
       result?: DataQueryResponseData[];
     };
   };
+  cancelled?: boolean;
 }
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
@@ -351,7 +350,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     // Apply adhoc filters
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    expr = adhocFilters.reduce((acc, filter) => {
+    expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -530,6 +529,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const eventList: AnnotationEvent[] = [];
       tagKeys = tagKeys.split(',');
 
+      if (results.cancelled) {
+        return [];
+      }
       _.each(results.data.data.result, series => {
         const tags = _.chain(series.metric)
           .filter((v, k) => {

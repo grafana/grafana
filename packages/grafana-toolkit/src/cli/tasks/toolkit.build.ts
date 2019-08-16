@@ -1,9 +1,9 @@
 import execa = require('execa');
 import * as fs from 'fs';
-import { changeCwdToGrafanaUi, restoreCwd, changeCwdToGrafanaToolkit } from '../utils/cwd';
 import chalk from 'chalk';
 import { useSpinner } from '../utils/useSpinner';
 import { Task, TaskRunner } from './task';
+import escapeRegExp from 'lodash/escapeRegExp';
 
 const path = require('path');
 
@@ -50,7 +50,7 @@ const preparePackage = async (pkg: any) => {
   });
 };
 
-const moveFiles = () => {
+const copyFiles = () => {
   const files = [
     'README.md',
     'CHANGELOG.md',
@@ -60,6 +60,9 @@ const moveFiles = () => {
     'src/config/tsconfig.plugin.json',
     'src/config/tsconfig.plugin.local.json',
     'src/config/tslint.plugin.json',
+
+    // plugin test file
+    'src/plugins/e2e/commonPluginTests.ts',
   ];
   // @ts-ignore
   return useSpinner<void>(`Moving ${files.join(', ')} files`, async () => {
@@ -102,7 +105,7 @@ const copySassFiles = () => {
 };
 
 const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
-  cwd = changeCwdToGrafanaToolkit();
+  cwd = path.resolve(__dirname, '../../../');
   distDir = `${cwd}/dist`;
   const pkg = require(`${cwd}/package.json`);
   console.log(chalk.yellow(`Building ${pkg.name} (package.json version: ${pkg.version})`));
@@ -112,9 +115,23 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   await preparePackage(pkg);
   fs.mkdirSync('./dist/bin');
   fs.mkdirSync('./dist/sass');
-  await moveFiles();
+  await copyFiles();
   await copySassFiles();
-  restoreCwd();
+
+  // RYAN HACK HACK HACK
+  // when Dominik is back from vacation, we can find a better way
+  // This moves the index to the root so plugin e2e tests can import them
+  console.warn('hacking an index.js file for toolkit.  Help!');
+  const index = `${distDir}/src/index.js`;
+  fs.readFile(index, 'utf8', (err, data) => {
+    const pattern = 'require("./';
+    const js = data.replace(new RegExp(escapeRegExp(pattern), 'g'), 'require("./src/');
+    fs.writeFile(`${distDir}/index.js`, js, err => {
+      if (err) {
+        throw new Error('Error writing index: ' + err);
+      }
+    });
+  });
 };
 
 export const toolkitBuildTask = new Task<void>('@grafana/toolkit build', toolkitBuildTaskRunner);

@@ -12,7 +12,8 @@ import {
 } from './explore';
 import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { DataQueryError, LogsDedupStrategy } from '@grafana/ui';
+import { LogsDedupStrategy } from '@grafana/data';
+import { DataQueryError } from '@grafana/ui';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
@@ -222,7 +223,7 @@ describe('instanceOfDataQueryError', () => {
 describe('hasRefId', () => {
   describe('when called with a null value', () => {
     it('then it should return null', () => {
-      const input = null;
+      const input: any = null;
       const result = getValueWithRefId(input);
 
       expect(result).toBeNull();
@@ -303,7 +304,7 @@ describe('getFirstQueryErrorWithoutRefId', () => {
 describe('getRefIds', () => {
   describe('when called with a null value', () => {
     it('then it should return empty array', () => {
-      const input = null;
+      const input: any = null;
       const result = getRefIds(input);
 
       expect(result).toEqual([]);

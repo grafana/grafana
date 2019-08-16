@@ -37,6 +37,12 @@ func DeleteApiKeyCtx(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
 
 func AddApiKey(cmd *models.AddApiKeyCommand) error {
 	return inTransaction(func(sess *DBSession) error {
+		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
+		exists, _ := sess.Get(&key)
+		if exists {
+			return models.ErrDuplicateApiKey
+		}
+
 		updated := timeNow()
 		var expires *int64 = nil
 		if cmd.SecondsToLive > 0 {

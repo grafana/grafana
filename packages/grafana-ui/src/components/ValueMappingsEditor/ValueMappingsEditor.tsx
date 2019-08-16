@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 
 import MappingRow from './MappingRow';
-import { MappingType, ValueMapping } from '../../types';
+import { MappingType, ValueMapping } from '@grafana/data';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {
-  valueMappings: ValueMapping[];
+  valueMappings?: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
 }
 
@@ -18,7 +18,7 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const mappings = props.valueMappings;
+    const mappings = props.valueMappings || [];
 
     this.state = {
       valueMappings: mappings,

@@ -34,7 +34,7 @@ import { setupAngularRoutes } from 'app/routes/routes';
 
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { setLocale } from '@grafana/ui/src/utils/moment_wrapper';
+import { setLocale } from '@grafana/data';
 import { setMarkdownOptions } from '@grafana/data';
 
 // import symlinked extensions
@@ -46,7 +46,7 @@ extensionsIndex.keys().forEach((key: any) => {
 export class GrafanaApp {
   registerFunctions: any;
   ngModuleDependencies: any[];
-  preBootModules: any[];
+  preBootModules: any[] | null;
 
   constructor() {
     addClassIfNoOverlayScrollbar('no-overlay-scrollbar');

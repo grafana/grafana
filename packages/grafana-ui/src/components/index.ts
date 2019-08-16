@@ -1,6 +1,6 @@
 export { DeleteButton } from './DeleteButton/DeleteButton';
 export { Tooltip } from './Tooltip/Tooltip';
-export { PopperController } from './Tooltip/PopperController';
+export { PopperController, PopperContent } from './Tooltip/PopperController';
 export { Popper } from './Tooltip/Popper';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
@@ -9,7 +9,7 @@ export * from './Button/Button';
 export { ButtonVariant } from './Button/AbstractButton';
 
 // Select
-export { Select, AsyncSelect, SelectOptionItem } from './Select/Select';
+export { Select, AsyncSelect } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Select/resetSelectStyles';

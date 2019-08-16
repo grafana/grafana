@@ -1,9 +1,9 @@
 import { TemplateSrv } from '../template_srv';
 
 describe('templateSrv', () => {
-  let _templateSrv;
+  let _templateSrv: any;
 
-  function initTemplateSrv(variables) {
+  function initTemplateSrv(variables: any) {
     _templateSrv = new TemplateSrv();
     _templateSrv.init(variables);
   }
@@ -110,6 +110,23 @@ describe('templateSrv', () => {
     it('should replace $test with globbed value', () => {
       const target = _templateSrv.replace('this.$test.filters', {}, 'glob');
       expect(target).toBe('this.{value1,value2}.filters');
+    });
+
+    describe('when the globbed variable only has one value', () => {
+      beforeEach(() => {
+        initTemplateSrv([
+          {
+            type: 'query',
+            name: 'test',
+            current: { value: ['value1'] },
+          },
+        ]);
+      });
+
+      it('should not glob the value', () => {
+        const target = _templateSrv.replace('this.$test.filters', {}, 'glob');
+        expect(target).toBe('this.value1.filters');
+      });
     });
 
     it('should replace ${test} with globbed value', () => {
@@ -374,7 +391,7 @@ describe('templateSrv', () => {
     });
 
     it('should set multiple url params', () => {
-      const params = {};
+      const params: any = {};
       _templateSrv.fillVariableValuesForUrl(params);
       expect(params['var-test']).toMatchObject(['val1', 'val2']);
     });
@@ -395,7 +412,7 @@ describe('templateSrv', () => {
     });
 
     it('should not include template variable value in url', () => {
-      const params = {};
+      const params: any = {};
       _templateSrv.fillVariableValuesForUrl(params);
       expect(params['var-test']).toBe(undefined);
     });
@@ -417,7 +434,7 @@ describe('templateSrv', () => {
     });
 
     it('should not include template variable value in url', () => {
-      const params = {};
+      const params: any = {};
       _templateSrv.fillVariableValuesForUrl(params);
       expect(params['var-test']).toBe(undefined);
     });
@@ -429,7 +446,7 @@ describe('templateSrv', () => {
     });
 
     it('should set scoped value as url params', () => {
-      const params = {};
+      const params: any = {};
       _templateSrv.fillVariableValuesForUrl(params, {
         test: { value: 'val1' },
       });
@@ -443,7 +460,7 @@ describe('templateSrv', () => {
     });
 
     it('should not set scoped value as url params', () => {
-      const params = {};
+      const params: any = {};
       _templateSrv.fillVariableValuesForUrl(params, {
         test: { name: 'test', value: 'val1', skipUrlSync: true },
       });

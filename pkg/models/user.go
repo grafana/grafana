@@ -62,6 +62,7 @@ type CreateUserCommand struct {
 	Password       string
 	EmailVerified  bool
 	IsAdmin        bool
+	IsDisabled     bool
 	SkipOrgSetup   bool
 	DefaultOrgRole string
 
@@ -146,6 +147,8 @@ type SearchUsersQuery struct {
 	Limit      int
 	AuthModule string
 
+	IsDisabled *bool
+
 	Result SearchUserQueryResult
 }
 
@@ -207,6 +210,10 @@ func (user *SignedInUser) HasRole(role RoleType) bool {
 	return user.OrgRole.Includes(role)
 }
 
+func (user *SignedInUser) IsRealUser() bool {
+	return user.UserId != 0
+}
+
 type UserProfileDTO struct {
 	Id             int64    `json:"id"`
 	Email          string   `json:"email"`
@@ -216,7 +223,8 @@ type UserProfileDTO struct {
 	OrgId          int64    `json:"orgId"`
 	IsGrafanaAdmin bool     `json:"isGrafanaAdmin"`
 	IsDisabled     bool     `json:"isDisabled"`
-	AuthModule     []string `json:"authModule"`
+	IsExternal     bool     `json:"isExternal"`
+	AuthLabels     []string `json:"authLabels"`
 }
 
 type UserSearchHitDTO struct {
@@ -229,7 +237,8 @@ type UserSearchHitDTO struct {
 	IsDisabled    bool                 `json:"isDisabled"`
 	LastSeenAt    time.Time            `json:"lastSeenAt"`
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
-	AuthModule    AuthModuleConversion `json:"authModule"`
+	AuthLabels    []string             `json:"authLabels"`
+	AuthModule    AuthModuleConversion `json:"-"`
 }
 
 type UserIdDTO struct {

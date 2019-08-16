@@ -11,11 +11,14 @@ type MockLDAP struct {
 	loginCalledTimes int
 	closeCalledTimes int
 	usersCalledTimes int
+	bindCalledTimes  int
 
 	dialErrReturn error
 
 	loginErrReturn error
 	loginReturn    *models.ExternalUserInfo
+
+	bindErrReturn error
 
 	usersErrReturn   error
 	usersFirstReturn []*models.ExternalUserInfo
@@ -40,8 +43,8 @@ func (mock *MockLDAP) Users([]string) ([]*models.ExternalUserInfo, error) {
 	return mock.usersRestReturn, mock.usersErrReturn
 }
 
-// Auth test fn
-func (mock *MockLDAP) Auth(string, string) error {
+// UserBind test fn
+func (mock *MockLDAP) UserBind(string, string) error {
 	return nil
 }
 
@@ -54,6 +57,11 @@ func (mock *MockLDAP) Dial() error {
 // Close test fn
 func (mock *MockLDAP) Close() {
 	mock.closeCalledTimes = mock.closeCalledTimes + 1
+}
+
+func (mock *MockLDAP) Bind() error {
+	mock.bindCalledTimes++
+	return mock.bindErrReturn
 }
 
 // MockMultiLDAP represents testing struct for multildap testing

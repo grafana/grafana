@@ -186,7 +186,7 @@ Slack | `slack` | yes | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
-Webhook | `webhook` | yes, external only | no
+Webhook | `webhook` | yes, external only | yes
 
 # Enable images in notifications {#external-image-store}
 

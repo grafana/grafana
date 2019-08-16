@@ -28,7 +28,7 @@ $popper-margin-from-ref: 5px;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   padding: 6px 10px;
   color: $tooltipColor;
-  font-weight: 500;
+  font-weight: $font-weight-semi-bold;
 
   .popper__arrow {
     border-color: $tooltipBackground;

@@ -1,9 +1,11 @@
 import { ElasticResponse } from '../elastic_response';
+import { DataFrameHelper, DataFrameView } from '@grafana/data';
+import { KeyValue } from '@grafana/ui';
 
 describe('ElasticResponse', () => {
   let targets;
-  let response;
-  let result;
+  let response: any;
+  let result: any;
 
   describe('simple query and count', () => {
     beforeEach(() => {
@@ -48,7 +50,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('simple query count & avg aggregation', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -97,7 +99,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by query one metric', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -149,7 +151,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by query two metrics', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -209,7 +211,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with percentiles ', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -257,7 +259,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with extended_stats', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -333,7 +335,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('single group by with alias pattern', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -394,7 +396,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('histogram response', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -426,7 +428,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with two filters agg', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -583,7 +585,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('No group by time with percentiles ', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -720,7 +722,7 @@ describe('ElasticResponse', () => {
   });
 
   describe('with bucket_script ', () => {
-    let result;
+    let result: any;
 
     beforeEach(() => {
       targets = [
@@ -858,19 +860,39 @@ describe('ElasticResponse', () => {
 
     it('should return histogram aggregation and documents', () => {
       expect(result.data.length).toBe(2);
-      expect(result.data[0].fields).toContainEqual({ name: '@timestamp', type: 'time' });
-      expect(result.data[0].fields).toContainEqual({ name: 'host', type: 'string' });
-      expect(result.data[0].fields).toContainEqual({ name: 'message', type: 'string' });
-      result.data[0].rows.forEach((row, i) => {
+      const logResults = result.data[0] as DataFrameHelper;
+      const fields = logResults.fields.map(f => {
+        return {
+          name: f.name,
+          type: f.type,
+        };
+      });
+
+      expect(fields).toContainEqual({ name: '@timestamp', type: 'time' });
+      expect(fields).toContainEqual({ name: 'host', type: 'string' });
+      expect(fields).toContainEqual({ name: 'message', type: 'string' });
+
+      let rows = new DataFrameView(logResults);
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows.get(i);
+        const row = [r._id, r._type, r._index, r._source];
         expect(row).toContain(response.responses[0].hits.hits[i]._id);
         expect(row).toContain(response.responses[0].hits.hits[i]._type);
         expect(row).toContain(response.responses[0].hits.hits[i]._index);
         expect(row).toContain(JSON.stringify(response.responses[0].hits.hits[i]._source, undefined, 2));
-      });
+      }
 
-      expect(result.data[1]).toHaveProperty('name', 'Count');
-      response.responses[0].aggregations['2'].buckets.forEach(bucket => {
-        expect(result.data[1].rows).toContainEqual([bucket.doc_count, bucket.key]);
+      // Make a map from the histogram results
+      const hist: KeyValue<number> = {};
+      const histogramResults = new DataFrameHelper(result.data[1]);
+      rows = new DataFrameView(histogramResults);
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows.get(i);
+        hist[row.Time] = row.Count;
+      }
+
+      response.responses[0].aggregations['2'].buckets.forEach((bucket: any) => {
+        expect(hist[bucket.key]).toEqual(bucket.doc_count);
       });
     });
   });

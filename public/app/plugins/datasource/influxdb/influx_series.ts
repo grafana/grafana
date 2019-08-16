@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import { FieldType } from '@grafana/ui';
+import { FieldType } from '@grafana/data';
 
 export default class InfluxSeries {
   series: any;

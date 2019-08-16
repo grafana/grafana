@@ -1,7 +1,6 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { DataFrame } from '../../types/data';
-import { CSVConfig, readCSV } from '../../utils/csv';
+import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
 
 interface Props {
   config?: CSVConfig;
@@ -30,7 +29,7 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
     };
   }
 
-  readCSV = debounce(() => {
+  readCSV: any = debounce(() => {
     const { config } = this.props;
     const { text } = this.state;
 
@@ -72,10 +71,10 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
         />
         {data && (
           <footer>
-            {data.map((series, index) => {
+            {data.map((frame, index) => {
               return (
                 <span key={index}>
-                  Rows:{series.rows.length}, Columns:{series.fields.length} &nbsp;
+                  Rows:{frame.length}, Columns:{frame.fields.length} &nbsp;
                   <i className="fa fa-check-circle" />
                 </span>
               );

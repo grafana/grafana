@@ -1,4 +1,7 @@
 import coreModule from 'app/core/core_module';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { NavModelSrv } from 'app/core/core';
+import { ILocationService } from 'angular';
 
 export class UserInviteCtrl {
   navModel: any;
@@ -6,7 +9,7 @@ export class UserInviteCtrl {
   inviteForm: any;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private $location) {
+  constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv, private $location: ILocationService) {
     this.navModel = navModelSrv.getNav('cfg', 'users', 0);
 
     this.invite = {

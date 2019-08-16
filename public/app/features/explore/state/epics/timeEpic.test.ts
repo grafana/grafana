@@ -1,4 +1,4 @@
-import { dateTime, DefaultTimeZone } from '@grafana/ui';
+import { dateTime, DefaultTimeZone } from '@grafana/data';
 
 import { epicTester } from 'test/core/redux/epicTester';
 import { mockExploreState } from 'test/mocks/mockExploreState';
@@ -62,7 +62,7 @@ describe('timeEpic', () => {
             .thenDependencyWasCalledTimes(1, 'getTimeSrv', 'init')
             .thenDependencyWasCalledTimes(1, 'getTimeRange')
             .thenDependencyWasCalledWith([DefaultTimeZone, { from: null, to: null }], 'getTimeRange')
-            .thenDependencyWasCalledTimes(2, 'dateTime')
+            .thenDependencyWasCalledTimes(2, 'dateTimeForTimeZone')
             .thenResultingActionsEqual(
               changeRangeAction({
                 exploreId,

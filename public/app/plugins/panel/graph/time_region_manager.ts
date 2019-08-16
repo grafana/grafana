@@ -1,11 +1,11 @@
 import 'vendor/flot/jquery.flot';
 import _ from 'lodash';
-import { GrafanaThemeType, getColorFromHexRgbOrName, AbsoluteTimeRange } from '@grafana/ui';
-import { dateTime, DateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
+import { dateTime, DateTime, AbsoluteTimeRange } from '@grafana/data';
 
 type TimeRegionColorDefinition = {
-  fill: string;
-  line: string;
+  fill: string | null;
+  line: string | null;
 };
 
 export const colorModes: any = {

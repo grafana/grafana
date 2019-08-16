@@ -3,15 +3,10 @@ import { Observable, Subject } from 'rxjs';
 import { mergeMap, catchError, takeUntil, filter } from 'rxjs/operators';
 import _, { isString } from 'lodash';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import {
-  DataStreamState,
-  LoadingState,
-  DataQueryResponse,
-  DataFrame,
-  DataQueryResponseData,
-  AbsoluteTimeRange,
-} from '@grafana/ui';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { DataStreamState, DataQueryResponse, DataQueryResponseData } from '@grafana/ui';
+
+import { LoadingState, DataFrame, AbsoluteTimeRange } from '@grafana/data';
+import { dateMath } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
@@ -109,8 +104,8 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
         // observer subscription, handles datasourceInstance.query observer events and pushes that forward
         const streamSubscription = streamHandler.subscribe({
           next: event => {
-            const { state, error, series, delta } = event;
-            if (!series && !delta && !error) {
+            const { state, error, data, delta } = event;
+            if (!data && !delta && !error) {
               return;
             }
 

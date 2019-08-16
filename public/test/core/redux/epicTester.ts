@@ -8,8 +8,8 @@ import {
   DataStreamObserver,
   DataQueryResponse,
   DataStreamState,
-  DefaultTimeZone,
 } from '@grafana/ui';
+import { DefaultTimeZone } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
@@ -54,18 +54,15 @@ export const epicTester = (
 
   const getTimeZone = jest.fn().mockReturnValue(DefaultTimeZone);
 
-  const toUtc = jest.fn().mockReturnValue(null);
-
-  const dateTime = jest.fn().mockReturnValue(null);
+  const dateTimeForTimeZone = jest.fn().mockReturnValue(null);
 
   const defaultDependencies: EpicDependencies = {
     getQueryResponse,
     getTimeSrv,
     getTimeRange,
     getTimeZone,
-    toUtc,
-    dateTime,
     getShiftedTimeRange,
+    dateTimeForTimeZone,
   };
 
   const theDependencies: EpicDependencies = { ...defaultDependencies, ...dependencies };

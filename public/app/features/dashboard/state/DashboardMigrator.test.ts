@@ -9,10 +9,10 @@ jest.mock('app/core/services/context_srv', () => ({}));
 
 describe('DashboardModel', () => {
   describe('when creating dashboard with old schema', () => {
-    let model;
-    let graph;
-    let singlestat;
-    let table;
+    let model: any;
+    let graph: any;
+    let singlestat: any;
+    let table: any;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -142,7 +142,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when migrating to the grid layout', () => {
-    let model;
+    let model: any;
 
     beforeEach(() => {
       model = {
@@ -385,7 +385,7 @@ describe('DashboardModel', () => {
   });
 
   describe('when migrating panel links', () => {
-    let model;
+    let model: any;
 
     beforeEach(() => {
       model = new DashboardModel({
@@ -439,15 +439,16 @@ describe('DashboardModel', () => {
   });
 });
 
-function createRow(options, panelDescriptions: any[]) {
+function createRow(options: any, panelDescriptions: any[]) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
   const { collapse, showTitle, title, repeat, repeatIteration } = options;
   let { height } = options;
   height = height * PANEL_HEIGHT_STEP;
-  const panels = [];
+  const panels: any[] = [];
   _.each(panelDescriptions, panelDesc => {
     const panel = { span: panelDesc[0] };
     if (panelDesc.length > 1) {
+      //@ts-ignore
       panel['height'] = panelDesc[1] * PANEL_HEIGHT_STEP;
     }
     panels.push(panel);

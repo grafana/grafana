@@ -1,7 +1,7 @@
 ///<amd-dependency path="test/specs/helpers" name="helpers" />
 
 import { IndexPattern } from '../index_pattern';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc } from '@grafana/data';
 
 describe('IndexPattern', () => {
   describe('when getting index for today', () => {

@@ -24,7 +24,8 @@ import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
-import { DataSourceApi, DataQuery, LogsModel, LogsDedupStrategy, LoadingState } from '@grafana/ui';
+import { DataSourceApi, DataQuery } from '@grafana/ui';
+import { LogsModel, LogsDedupStrategy, LoadingState } from '@grafana/data';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
@@ -145,7 +146,7 @@ describe('Explore item reducer', () => {
             queries,
             queryKeys,
           };
-          const expectedState = {
+          const expectedState: any = {
             datasourceInstance,
             StartPage,
             showingStartPage: true,
@@ -174,7 +175,7 @@ describe('Explore item reducer', () => {
           showingStartPage: true,
           range: null,
         };
-        const expectedState = {
+        const expectedState: any = {
           queryIntervals: {
             interval: '1s',
             intervalMs: 1000,

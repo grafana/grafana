@@ -14,24 +14,28 @@ import {
   clearQueriesAction,
   stateSaveAction,
 } from '../actionTypes';
-import { LoadingState, DataQueryRequest, DataFrame, FieldType } from '@grafana/ui';
+import { LoadingState, DataFrame, FieldType, DataFrameHelper } from '@grafana/data';
+import { DataQueryRequest } from '@grafana/ui';
 
 const testContext = () => {
   const series: DataFrame[] = [
-    {
+    new DataFrameHelper({
       fields: [
         {
           name: 'Value',
+          values: [],
         },
         {
           name: 'Time',
           type: FieldType.time,
-          unit: 'dateTimeAsIso',
+          config: {
+            unit: 'dateTimeAsIso',
+          },
+          values: [],
         },
       ],
-      rows: [],
       refId: 'A',
-    },
+    }),
   ];
   const response = { data: series };
 
@@ -105,12 +109,12 @@ describe('runQueriesBatchEpic', () => {
         it('then correct actions are dispatched', () => {
           const { exploreId, state, datasourceId } = mockExploreState();
           const unsubscribe = jest.fn();
-          const serieA = {
+          const serieA: any = {
             fields: [],
             rows: [],
             refId: 'A',
           };
-          const serieB = {
+          const serieB: any = {
             fields: [],
             rows: [],
             refId: 'B',
@@ -170,12 +174,12 @@ describe('runQueriesBatchEpic', () => {
         it('then correct actions are dispatched', () => {
           const { exploreId, state, datasourceId, history } = mockExploreState();
           const unsubscribe = jest.fn();
-          const serieA = {
+          const serieA: any = {
             fields: [],
             rows: [],
             refId: 'A',
           };
-          const serieB = {
+          const serieB: any = {
             fields: [],
             rows: [],
             refId: 'B',
@@ -188,7 +192,7 @@ describe('runQueriesBatchEpic', () => {
             )
             .whenQueryObserverReceivesEvent({
               state: LoadingState.Done,
-              series: null,
+              data: null,
               delta,
               key: 'some key',
               request: {} as DataQueryRequest,

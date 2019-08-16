@@ -10,7 +10,7 @@
 ## Docs
 
 For detailed documentation and basic usage examples, please see the package
-documentation at <http://godoc.org/github.com/lib/pq>.
+documentation at <https://godoc.org/github.com/lib/pq>.
 
 ## Tests
 

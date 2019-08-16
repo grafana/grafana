@@ -99,7 +99,7 @@ See [investigation of issues](#investigation-of-issues).
 
 Helping the Grafana project to know which issues are most important by users and the community is crucial for the success of the project. Read more about [prioritizing issues](#4-prioritization-of-issues) for details about how issues are being prioritized. The Grafana project use GitGub issues and reactions for collecting votes on enhancement and bugs.
 
-**Please don't add `+1` issue comments or similar since that will notify everyone that have subscribed to an issue and it doesn't add any useful update, rather it creates a bad .**
+**Please don't add `+1` issue comments or similar since that will notify everyone that have subscribed to an issue and it doesn't add any useful update, rather it creates a bad habit.**
 
 If you want to show your interest or importance of an issue, please use [GitHub's reactions](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments).
 
@@ -119,7 +119,7 @@ To get started with issue triage and finding issues that haven't been triaged yo
 
 ### Browse unlabeled issues
 
-The easiest and straigt forward way of getting started and finding issues that haven't been triaged is to browse [unlabeled issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+no%3Alabel) and starting from the bottom and working yourself to the top.
+The easiest and straight forward way of getting started and finding issues that haven't been triaged is to browse [unlabeled issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+no%3Alabel) and starting from the bottom and working yourself to the top.
 
 ### Subscribe to all notifications
 
@@ -179,7 +179,7 @@ Depending on the issue, you might not feel all this information is needed. Use y
 
 If the author provides the standard information but you are still unable to triage the issue, request additional information. Do this kindly and politely because you are asking for more of the author's time.
 
-If the author does not respond requested information within the timespan of a week, close the issue with a kind note stating that the author can request for the issue to be reopened when the necessary information is provided.
+If the author does not respond to the requested information within the timespan of a week, close the issue with a kind note stating that the author can request for the issue to be reopened when the necessary information is provided.
 
 When you feel you have all the information needed you're ready to [categorizing the issue](#3-categorizing-an-issue).
 
@@ -352,6 +352,15 @@ Investigating issues can be a very time consuming task, especially for the maint
 For some other combinations there may not be possible at all for a maintainer to setup a proper test environment for being able to investigate. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
 
 Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
+
+## External PRs
+
+Part of issue triage should also be triaging of external PRs. Main goal should be to make sure PRs from external contributors have an owner/reviewer and are not forgotten.
+
+1. Check new external PRs which do not have a reviewer.
+1. Check if there is a link to an existing issue.
+1. If not and you know which issue it is solving add the link yourself, otherwise ask the author to link the issue or create one.
+1. Assign a reviewer based on who was handling the linked issue or what code or feature does the PR touches (look at who was the last to make changes there if all else fails).
 
 ## Appendix
 

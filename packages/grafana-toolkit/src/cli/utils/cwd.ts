@@ -17,3 +17,15 @@ export const changeCwdToGrafanaUiDist = () => {
 export const restoreCwd = () => {
   process.chdir(cwd);
 };
+
+type PackageId = 'ui' | 'data' | 'runtime' | 'toolkit';
+
+export const changeCwdToPackage = (scope: PackageId) => {
+  try {
+    process.chdir(`${cwd}/packages/grafana-${scope}`);
+  } catch (e) {
+    throw e;
+  }
+
+  return process.cwd();
+};

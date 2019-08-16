@@ -9,17 +9,21 @@ import jquery from 'jquery';
 // Experimental module exports
 import prismjs from 'prismjs';
 import slate from 'slate';
+// @ts-ignore
 import slateReact from 'slate-react';
+// @ts-ignore
 import slatePlain from 'slate-plain-serializer';
 import react from 'react';
 import reactDom from 'react-dom';
+import reactRedux from 'react-redux';
+import redux from 'redux';
 
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import { coreModule, appEvents, contextSrv } from 'app/core/core';
-import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta } from '@grafana/ui/src/types';
-import * as datemath from '@grafana/ui/src/utils/datemath';
+import { DataSourcePlugin, AppPlugin, PanelPlugin, PluginMeta, DataSourcePluginMeta } from '@grafana/ui';
+import { dateMath } from '@grafana/data';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
@@ -37,7 +41,7 @@ import { Observable, Subject } from 'rxjs';
 
 // add cache busting
 const bust = `?_cache=${Date.now()}`;
-function locate(load) {
+function locate(load: { address: string }) {
   return load.address + bust;
 }
 grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locate }));
@@ -64,7 +68,7 @@ grafanaRuntime.SystemJS.config({
 });
 
 function exposeToPlugin(name: string, component: any) {
-  grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require, exports, module) => {
+  grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
     module.exports = component;
   });
 }
@@ -91,6 +95,8 @@ exposeToPlugin('slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
+exposeToPlugin('react-redux', reactRedux);
+exposeToPlugin('redux', redux);
 exposeToPlugin('emotion', emotion);
 
 exposeToPlugin('app/features/dashboard/impression_store', {
@@ -109,7 +115,7 @@ exposeToPlugin('app/core/services/backend_srv', {
 });
 
 exposeToPlugin('app/plugins/sdk', sdk);
-exposeToPlugin('app/core/utils/datemath', datemath);
+exposeToPlugin('app/core/utils/datemath', dateMath);
 exposeToPlugin('app/core/utils/file_export', fileExport);
 exposeToPlugin('app/core/utils/flatten', flatten);
 exposeToPlugin('app/core/utils/kbn', kbn);

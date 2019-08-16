@@ -3,8 +3,7 @@ import omit from 'lodash/omit';
 
 import { VizOrientation, PanelModel } from '../../types/panel';
 import { FieldDisplayOptions } from '../../utils/fieldDisplay';
-import { Field } from '../../types';
-import { getFieldReducers } from '../../utils/index';
+import { fieldReducers, Threshold, sortThresholds } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
   fieldOptions: FieldDisplayOptions;
@@ -26,40 +25,99 @@ export const sharedSingleStatOptionsCheck = (
   return options;
 };
 
-export const sharedSingleStatMigrationCheck = (panel: PanelModel<SingleStatBaseOptions>) => {
+export function sharedSingleStatMigrationCheck(panel: PanelModel<SingleStatBaseOptions>) {
   if (!panel.options) {
     // This happens on the first load or when migrating from angular
     return {};
   }
 
-  // This migration aims to keep the most recent changes up-to-date
-  // Plugins should explicitly migrate for known version changes and only use this
-  // as a backup
-  const old = panel.options as any;
-  if (old.valueOptions) {
-    const { valueOptions } = old;
+  const previousVersion = parseFloat(panel.pluginVersion || '6.1');
+  let options = panel.options as any;
 
-    const fieldOptions = (old.fieldOptions = {} as FieldDisplayOptions);
-    fieldOptions.mappings = old.valueMappings;
-    fieldOptions.thresholds = old.thresholds;
-
-    const field = (fieldOptions.defaults = {} as Field);
-    if (valueOptions) {
-      field.unit = valueOptions.unit;
-      field.decimals = valueOptions.decimals;
-
-      // Make sure the stats have a valid name
-      if (valueOptions.stat) {
-        fieldOptions.calcs = getFieldReducers([valueOptions.stat]).map(s => s.id);
-      }
-    }
-
-    field.min = old.minValue;
-    field.max = old.maxValue;
-
-    // remove old props
-    return omit(old, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
+  if (previousVersion < 6.2) {
+    options = migrateFromValueOptions(options);
   }
 
-  return panel.options;
-};
+  if (previousVersion < 6.3) {
+    options = moveThresholdsAndMappingsToField(options);
+  }
+
+  return options as SingleStatBaseOptions;
+}
+
+export function moveThresholdsAndMappingsToField(old: any) {
+  const { fieldOptions } = old;
+
+  if (!fieldOptions) {
+    return old;
+  }
+
+  const { mappings, thresholds, ...rest } = old.fieldOptions;
+
+  return {
+    ...old,
+    fieldOptions: {
+      ...rest,
+      defaults: {
+        ...fieldOptions.defaults,
+        mappings,
+        thresholds: migrateOldThresholds(thresholds),
+      },
+    },
+  };
+}
+
+/*
+ * Moves valueMappings and thresholds from root to new fieldOptions object
+ * Renames valueOptions to to defaults and moves it under fieldOptions
+ */
+export function migrateFromValueOptions(old: any) {
+  const { valueOptions } = old;
+  if (!valueOptions) {
+    return old;
+  }
+
+  const fieldOptions: any = {};
+  const fieldDefaults: any = {};
+
+  fieldOptions.mappings = old.valueMappings;
+  fieldOptions.thresholds = old.thresholds;
+  fieldOptions.defaults = fieldDefaults;
+
+  fieldDefaults.unit = valueOptions.unit;
+  fieldDefaults.decimals = valueOptions.decimals;
+
+  // Make sure the stats have a valid name
+  if (valueOptions.stat) {
+    const reducer = fieldReducers.get(valueOptions.stat);
+    if (reducer) {
+      fieldOptions.calcs = [reducer.id];
+    }
+  }
+
+  fieldDefaults.min = old.minValue;
+  fieldDefaults.max = old.maxValue;
+
+  const newOptions = {
+    ...old,
+    fieldOptions,
+  };
+
+  return omit(newOptions, 'valueMappings', 'thresholds', 'valueOptions', 'minValue', 'maxValue');
+}
+
+export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefined {
+  if (!thresholds || !thresholds.length) {
+    return undefined;
+  }
+  const copy = thresholds.map(t => {
+    return {
+      // Drops 'index'
+      value: t.value === null ? -Infinity : t.value,
+      color: t.color,
+    };
+  });
+  sortThresholds(copy);
+  copy[0].value = -Infinity;
+  return copy;
+}

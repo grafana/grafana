@@ -46,7 +46,7 @@ func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
 		Code:  cmd.Code,
 	})
 
-	metrics.M_Api_User_SignUpStarted.Inc()
+	metrics.MApiUserSignUpStarted.Inc()
 
 	return JSON(200, util.DynMap{"status": "SignUpCreated"})
 }
@@ -110,7 +110,7 @@ func (hs *HTTPServer) SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Re
 	}
 
 	hs.loginUserWithUser(user, c)
-	metrics.M_Api_User_SignUpCompleted.Inc()
+	metrics.MApiUserSignUpCompleted.Inc()
 
 	return JSON(200, apiResponse)
 }

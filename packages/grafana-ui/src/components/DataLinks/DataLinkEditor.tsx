@@ -1,5 +1,5 @@
 import React, { useState, ChangeEvent, useContext } from 'react';
-import { DataLink } from '../../index';
+import { DataLink } from '@grafana/data';
 import { FormField, Switch } from '../index';
 import { VariableSuggestion } from './DataLinkSuggestions';
 import { css, cx } from 'emotion';

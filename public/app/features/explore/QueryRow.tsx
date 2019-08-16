@@ -13,15 +13,8 @@ import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/act
 
 // Types
 import { StoreState } from 'app/types';
-import {
-  TimeRange,
-  DataQuery,
-  DataSourceApi,
-  QueryFixAction,
-  DataSourceStatus,
-  PanelData,
-  DataQueryError,
-} from '@grafana/ui';
+import { TimeRange, AbsoluteTimeRange, toDataFrame, guessFieldTypes } from '@grafana/data';
+import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData, DataQueryError } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
@@ -45,6 +38,7 @@ interface QueryRowProps extends PropsFromParent {
   query: DataQuery;
   modifyQueries: typeof modifyQueries;
   range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
@@ -123,6 +117,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       query,
       exploreEvents,
       range,
+      absoluteRange,
       datasourceStatus,
       queryResponse,
       latency,
@@ -145,6 +140,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       <div className="query-row">
         <div className="query-row-field flex-shrink-1">
           {QueryField ? (
+            //@ts-ignore
             <QueryField
               datasource={datasourceInstance}
               datasourceStatus={datasourceStatus}
@@ -155,6 +151,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
               onChange={this.onChange}
               panelData={null}
               queryResponse={queryResponse}
+              absoluteRange={absoluteRange}
             />
           ) : (
             <QueryEditor
@@ -209,6 +206,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     history,
     queries,
     range,
+    absoluteRange,
     datasourceError,
     graphResult,
     loadingState,
@@ -219,7 +217,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
   const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
-  const series = graphResult ? graphResult : []; // TODO: use DataFrame
+  const series = graphResult ? graphResult.map(serie => guessFieldTypes(toDataFrame(serie))) : []; // TODO: use DataFrame
   const queryResponse: PanelData = {
     series,
     state: loadingState,
@@ -231,6 +229,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     history,
     query,
     range,
+    absoluteRange,
     datasourceStatus,
     queryResponse,
     latency,

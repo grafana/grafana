@@ -3,7 +3,7 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import TableInputCSV from './TableInputCSV';
 import { action } from '@storybook/addon-actions';
-import { DataFrame } from '../../types/data';
+import { DataFrame } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 const TableInputStories = storiesOf('UI/Table/Input', module);

@@ -2,10 +2,17 @@ import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import alertDef from '../alerting/state/alertDef';
+import { DashboardSrv } from '../dashboard/services/DashboardSrv';
+import { ContextSrv } from 'app/core/services/context_srv';
 
 /** @ngInject */
-export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, $compile) {
-  function sanitizeString(str) {
+export function annotationTooltipDirective(
+  $sanitize: any,
+  dashboardSrv: DashboardSrv,
+  contextSrv: ContextSrv,
+  $compile: any
+) {
+  function sanitizeString(str: string) {
     try {
       return $sanitize(str);
     } catch (err) {
@@ -20,7 +27,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       event: '=',
       onEdit: '&',
     },
-    link: (scope, element) => {
+    link: (scope: any, element: JQuery) => {
       const event = scope.event;
       let title = event.title;
       let text = event.text;

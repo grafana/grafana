@@ -77,6 +77,20 @@ interface PluginMetaInfoLink {
   url: string;
 }
 
+export interface PluginBuildInfo {
+  time?: number;
+  repo?: string;
+  branch?: string;
+  hash?: string;
+  number?: number;
+  pr?: number;
+}
+
+export interface ScreenshotInfo {
+  name: string;
+  path: string;
+}
+
 export interface PluginMetaInfo {
   author: {
     name: string;
@@ -88,7 +102,8 @@ export interface PluginMetaInfo {
     large: string;
     small: string;
   };
-  screenshots: any[];
+  build?: PluginBuildInfo;
+  screenshots: ScreenshotInfo[];
   updated: string;
   version: string;
 }

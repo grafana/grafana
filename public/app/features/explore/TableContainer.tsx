@@ -9,7 +9,7 @@ import { toggleTable } from './state/actions';
 import Table from './Table';
 import Panel from './Panel';
 import TableModel from 'app/core/table_model';
-import { LoadingState } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
 
 interface TableContainerProps {
   exploreId: ExploreId;
@@ -36,8 +36,9 @@ export class TableContainer extends PureComponent<TableContainerProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
+  // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
   const { loadingState, showingTable, tableResult } = item;
   const loading =

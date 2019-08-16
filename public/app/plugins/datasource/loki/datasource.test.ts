@@ -1,7 +1,8 @@
 import LokiDatasource from './datasource';
 import { LokiQuery } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { DataFrame, DataSourceApi } from '@grafana/ui';
+import { DataSourceApi } from '@grafana/ui';
+import { DataFrame } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -67,7 +68,7 @@ describe('LokiDatasource', () => {
       const res = await ds.query(options);
 
       const dataFrame = res.data[0] as DataFrame;
-      expect(dataFrame.rows[0][1]).toBe('hello');
+      expect(dataFrame.fields[1].values.get(0)).toBe('hello');
       expect(dataFrame.meta.limit).toBe(20);
       expect(dataFrame.meta.searchWords).toEqual(['(?i)foo']);
       done();

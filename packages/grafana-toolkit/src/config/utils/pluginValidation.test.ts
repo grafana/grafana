@@ -3,7 +3,7 @@ import { getPluginJson, validatePluginJson } from './pluginValidation';
 describe('pluginValdation', () => {
   describe('plugin.json', () => {
     test('missing plugin.json file', () => {
-      expect(() => getPluginJson(`${__dirname}/mocks/missing-plugin-json`)).toThrow('plugin.json file is missing!');
+      expect(() => getPluginJson(`${__dirname}/mocks/missing-plugin.json`)).toThrowError();
     });
   });
 

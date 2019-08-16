@@ -1,6 +1,6 @@
 import { Epic } from 'redux-observable';
 import { map, throttleTime } from 'rxjs/operators';
-import { LoadingState } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
 
 import { StoreState } from 'app/types';
 import { ActionOf } from '../../../../core/redux/actionCreatorFactory';

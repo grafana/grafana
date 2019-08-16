@@ -33,7 +33,7 @@ export class Aggregations extends React.Component<Props, State> {
     this.setAggOptions(this.props);
   }
 
-  componentWillReceiveProps(nextProps: Props) {
+  UNSAFE_componentWillReceiveProps(nextProps: Props) {
     this.setAggOptions(nextProps);
   }
 

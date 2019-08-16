@@ -1,11 +1,10 @@
 // Libraries
 import _ from 'lodash';
 import { from } from 'rxjs';
-import { toUtc } from '@grafana/ui/src/utils/moment_wrapper';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 // Services & Utils
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
@@ -13,21 +12,24 @@ import { getNextRefIdChar } from './query';
 
 // Types
 import {
-  TimeRange,
-  RawTimeRange,
-  TimeZone,
-  IntervalValues,
   DataQuery,
   DataSourceApi,
-  TimeFragment,
   DataQueryError,
-  LogRowModel,
-  LogsModel,
-  LogsDedupStrategy,
   DataSourceJsonData,
   DataQueryRequest,
   DataStreamObserver,
 } from '@grafana/ui';
+import {
+  toUtc,
+  TimeRange,
+  RawTimeRange,
+  TimeZone,
+  IntervalValues,
+  TimeFragment,
+  LogRowModel,
+  LogsModel,
+  LogsDedupStrategy,
+} from '@grafana/data';
 import {
   ExploreUrlState,
   HistoryItem,
@@ -39,7 +41,7 @@ import {
 import { config } from '../config';
 
 export const DEFAULT_RANGE = {
-  from: 'now-6h',
+  from: 'now-1h',
   to: 'now',
 };
 
@@ -78,7 +80,7 @@ export async function getExploreUrl(
   // Mixed datasources need to choose only one datasource
   if (panelDatasource.meta.id === 'mixed' && panelTargets) {
     // Find first explore datasource among targets
-    let mixedExploreDatasource;
+    let mixedExploreDatasource: any;
     for (const t of panel.targets) {
       const datasource = await datasourceSrv.get(t.datasource);
       if (datasource && datasource.meta.explore) {
@@ -208,7 +210,7 @@ export const safeStringifyValue = (value: any, space?: number) => {
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsed = safeParseJson(initial);
-  const errorResult = {
+  const errorResult: any = {
     datasource: null,
     queries: [],
     range: DEFAULT_RANGE,
@@ -321,7 +323,7 @@ const validKeys = ['refId', 'key', 'context'];
 export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery[]): boolean {
   return (
     queries &&
-    queries.some(query => {
+    queries.some((query: any) => {
       const keys = Object.keys(query)
         .filter(key => validKeys.indexOf(key) === -1)
         .map(k => query[k])
@@ -384,7 +386,7 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRa
   };
 };
 
-const parseRawTime = (value): TimeFragment => {
+const parseRawTime = (value: any): TimeFragment => {
   if (value === null) {
     return null;
   }
@@ -485,11 +487,11 @@ export const getRefIds = (value: any): string[] => {
 };
 
 const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timeEpochMs < b.timeEpochMs) {
+  if (a.timestamp < b.timestamp) {
     return -1;
   }
 
-  if (a.timeEpochMs > b.timeEpochMs) {
+  if (a.timestamp > b.timestamp) {
     return 1;
   }
 
@@ -497,11 +499,11 @@ const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
 };
 
 const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  if (a.timeEpochMs > b.timeEpochMs) {
+  if (a.timestamp > b.timestamp) {
     return -1;
   }
 
-  if (a.timeEpochMs < b.timeEpochMs) {
+  if (a.timestamp < b.timestamp) {
     return 1;
   }
 

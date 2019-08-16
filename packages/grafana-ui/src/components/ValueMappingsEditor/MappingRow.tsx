@@ -2,7 +2,7 @@ import React, { ChangeEvent, PureComponent } from 'react';
 
 import { FormField, FormLabel, Input, Select } from '..';
 
-import { MappingType, ValueMapping } from '../../types';
+import { MappingType, ValueMapping } from '@grafana/data';
 
 export interface Props {
   valueMapping: ValueMapping;

@@ -16,16 +16,9 @@ import {
   HasMoreContextRows,
   LogRowContextQueryErrors,
 } from './LogRowContextProvider';
-import {
-  ThemeContext,
-  selectThemeVariant,
-  GrafanaTheme,
-  DataQueryResponse,
-  LogRowModel,
-  LogLabelStatsModel,
-  LogsParser,
-  TimeZone,
-} from '@grafana/ui';
+import { ThemeContext, selectThemeVariant, GrafanaTheme, DataQueryResponse } from '@grafana/ui';
+
+import { LogRowModel, LogLabelStatsModel, LogsParser, TimeZone } from '@grafana/data';
 import { LogRowContext } from './LogRowContext';
 import tinycolor from 'tinycolor2';
 

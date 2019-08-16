@@ -1,18 +1,19 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { DataSourceApi } from '@grafana/ui';
+
 import {
   RawTimeRange,
   LogLevel,
   TimeZone,
   AbsoluteTimeRange,
-  DataSourceApi,
   LogsModel,
   LogRowModel,
   LogsDedupStrategy,
   LoadingState,
   TimeRange,
-} from '@grafana/ui';
+} from '@grafana/data';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -76,7 +77,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     });
   };
 
-  getLogRowContext = async (row: LogRowModel, options?: any) => {
+  getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
     const { datasourceInstance } = this.props;
 
     if (datasourceInstance) {
@@ -141,8 +142,9 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
+  // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
   const {
     logsHighlighterExpressions,

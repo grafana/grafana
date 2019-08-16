@@ -5,7 +5,7 @@ import { webSocket } from 'rxjs/webSocket';
 import { catchError, map } from 'rxjs/operators';
 
 // Services & Utils
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -14,18 +14,16 @@ import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './q
 // Types
 import {
   PluginMeta,
-  DataQueryRequest,
-  DataFrame,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataQueryError,
-  LogRowModel,
+  DataQueryRequest,
   DataStreamObserver,
-  LoadingState,
   DataStreamState,
   DataQueryResponse,
-  DateTime,
 } from '@grafana/ui';
+
+import { DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -80,6 +78,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       ...options,
       url,
     };
+
     return this.backendSrv.datasourceRequest(req);
   }
 
@@ -155,7 +154,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
 
     if (!data.streams) {
-      return [{ ...logStreamToDataFrame(data), refId: target.refId }];
+      return [logStreamToDataFrame(data, target.refId)];
     }
 
     for (const stream of data.streams || []) {
@@ -256,10 +255,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return this.languageProvider.importQueries(queries, originMeta.id);
   }
 
-  metadataRequest(url: string) {
+  metadataRequest(url: string, params?: any) {
     // HACK to get label values for {job=|}, will be replaced when implementing LokiQueryField
     const apiUrl = url.replace('v1', 'prom');
-    return this._request(apiUrl, { silent: true }).then((res: DataQueryResponse) => {
+    return this._request(apiUrl, params, { silent: true }).then((res: DataQueryResponse) => {
       const data: any = { data: { data: res.data.values || [] } };
       return data;
     });
@@ -331,16 +330,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const series: DataFrame[] = [];
 
     try {
+      const reverse = options && options.direction === 'FORWARD';
       const result = await this._request('/api/prom/query', target);
       if (result.data) {
         for (const stream of result.data.streams || []) {
           const dataFrame = logStreamToDataFrame(stream);
+          if (reverse) {
+            dataFrame.reverse();
+          }
           series.push(dataFrame);
-        }
-      }
-      if (options && options.direction === 'FORWARD') {
-        if (series[0] && series[0].rows) {
-          series[0].rows.reverse();
         }
       }
 
@@ -358,7 +356,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   testDatasource() {
-    return this._request('/api/prom/label')
+    // Consider only last 10 minutes otherwise request takes too long
+    const startMs = Date.now() - 10 * 60 * 1000;
+    const start = `${startMs}000000`; // API expects nanoseconds
+    return this._request('/api/prom/label', { start })
       .then((res: DataQueryResponse) => {
         if (res && res.data && res.data.values && res.data.values.length > 0) {
           return { status: 'success', message: 'Data source connected and labels found.' };

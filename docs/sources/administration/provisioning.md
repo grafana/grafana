@@ -45,6 +45,8 @@ datasources:
     password: $PASSWORD
 ```
 
+If you have a literal `$` in your value and want to avoid interpolation, `$$` can be used.
+
 <hr />
 
 ## Configuration Management Tools

@@ -4,7 +4,8 @@ import React, { FC, useContext } from 'react';
 import Prism from 'prismjs';
 // Components
 import { css } from 'emotion';
-import { DataLink, ThemeContext } from '../../index';
+import { DataLink } from '@grafana/data';
+import { ThemeContext } from '../../index';
 import { Button } from '../index';
 import { DataLinkEditor } from './DataLinkEditor';
 import { VariableSuggestion } from './DataLinkSuggestions';
@@ -65,7 +66,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
         </div>
       )}
 
-      {(!value || (value && value.length < (maxLinks || 1))) && (
+      {(!value || (value && value.length < (maxLinks || Infinity))) && (
         <Button variant="inverse" icon="fa fa-plus" onClick={() => onAdd()}>
           Create link
         </Button>

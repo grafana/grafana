@@ -1,5 +1,5 @@
 import TableModel from 'app/core/table_model';
-import { Column } from '@grafana/ui';
+import { Column } from '@grafana/data';
 import { ColumnStyle } from '@grafana/ui/src/components/Table/TableCellBuilder';
 
 export interface TableTransform {
