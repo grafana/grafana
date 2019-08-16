@@ -64,6 +64,9 @@ export {
 export { LogLabels } from './Logs/LogLabels';
 export { Alert } from './Alert/Alert';
 export { LogRow } from './Logs/LogRow';
+export { GraphSeriesToggler } from './Graph/GraphSeriesToggler';
+export { ExploreGraphPanel } from './Logs/ExploreGraphPanel';
+export { Panel } from './Panel/Panel';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';

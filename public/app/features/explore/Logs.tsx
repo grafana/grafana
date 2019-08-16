@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React, { PureComponent } from 'react';
 
 import { rangeUtil } from '@grafana/data';
-import { Switch, LogLabels, LogRow } from '@grafana/ui';
+import { Switch, LogLabels, LogRow, ExploreGraphPanel } from '@grafana/ui';
 import {
   RawTimeRange,
   LogLevel,
@@ -12,12 +12,11 @@ import {
   LogsModel,
   LogsDedupStrategy,
   LogRowModel,
+  LogsDedupDescription,
 } from '@grafana/data';
 
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
-import { LogsDedupDescription } from 'app/core/logs_model';
-import ExploreGraphPanel from './ExploreGraphPanel';
 import { ExploreId } from 'app/types';
 
 const PREVIEW_LIMIT = 100;
@@ -136,7 +135,6 @@ export default class Logs extends PureComponent<Props, State> {
   render() {
     const {
       data,
-      exploreId,
       highlighterExpressions,
       loading = false,
       onClickLabel,
@@ -145,6 +143,8 @@ export default class Logs extends PureComponent<Props, State> {
       scanRange,
       width,
       dedupedData,
+      absoluteRange,
+      onChangeTime,
     } = this.props;
 
     if (!data) {
@@ -180,10 +180,19 @@ export default class Logs extends PureComponent<Props, State> {
       <div className="logs-panel">
         <div className="logs-panel-graph">
           <ExploreGraphPanel
-            exploreId={exploreId}
             series={data.series}
             width={width}
             onHiddenSeriesChanged={this.onToggleLogLevel}
+            loading={loading}
+            absoluteRange={absoluteRange}
+            isStacked={true}
+            showPanel={false}
+            showingGraph={true}
+            showingTable={true}
+            timeZone={timeZone}
+            showBars={true}
+            showLines={false}
+            onUpdateTimeRange={onChangeTime}
           />
         </div>
         <div className="logs-panel-options">

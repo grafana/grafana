@@ -8,7 +8,7 @@ interface Props {
   onToggle?: (isOpen: boolean) => void;
 }
 
-export default class Panel extends PureComponent<Props> {
+export class Panel extends PureComponent<Props> {
   onClickToggle = () => {
     const { onToggle, isOpen } = this.props;
     if (onToggle) {

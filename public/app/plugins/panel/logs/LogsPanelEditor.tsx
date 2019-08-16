@@ -2,11 +2,10 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
 import { PanelEditorProps, Switch, PanelOptionsGrid, PanelOptionsGroup } from '@grafana/ui';
-import { LogsDedupStrategy } from '@grafana/data';
+import { LogsDedupStrategy, LogsDedupDescription } from '@grafana/data';
 
 // Types
 import { Options } from './types';
-import { LogsDedupDescription } from 'app/core/logs_model';
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
 export class LogsPanelEditor extends PureComponent<PanelEditorProps<Options>> {

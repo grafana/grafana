@@ -36,13 +36,6 @@ export const LogLevelColor = {
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
 
-export enum LogsDedupDescription {
-  none = 'No de-duplication',
-  exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
-  numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
-  signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
-}
-
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
 function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedupStrategy): boolean {
   switch (strategy) {

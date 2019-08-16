@@ -1,30 +1,28 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
-import { LegendDisplayMode, GraphWithLegend } from '@grafana/ui';
-import { TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone, LoadingState } from '@grafana/data';
 
-import { GraphSeriesToggler } from 'app/plugins/panel/graph2/GraphSeriesToggler';
-import Panel from './Panel';
-import { StoreState, ExploreId, ExploreMode } from 'app/types';
-import { getTimeZone } from '../profile/state/selectors';
-import { toggleGraph, updateTimeRange } from './state/actions';
+import { TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
+import { GraphSeriesToggler, GraphSeriesTogglerAPI } from '../Graph/GraphSeriesToggler';
+import { GraphWithLegend } from '../Graph/GraphWithLegend';
+import { LegendDisplayMode } from '../Legend/Legend';
+import { Panel } from '../Panel/Panel';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
 interface Props {
-  exploreId: ExploreId;
   series: GraphSeriesXY[];
   width: number;
-  absoluteRange?: AbsoluteTimeRange;
-  loading?: boolean;
-  mode?: ExploreMode;
-  showingGraph?: boolean;
-  showingTable?: boolean;
-  timeZone?: TimeZone;
+  absoluteRange: AbsoluteTimeRange;
+  loading: boolean;
+  showPanel: boolean;
+  showBars: boolean;
+  showLines: boolean;
+  isStacked: boolean;
+  showingGraph: boolean;
+  showingTable: boolean;
+  timeZone: TimeZone;
+  onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
+  onToggleGraph?: (showingGraph: boolean) => void;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  toggleGraph: typeof toggleGraph;
-  updateTimeRange: typeof updateTimeRange;
 }
 
 interface State {
@@ -45,14 +43,15 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
   };
 
   onClickGraphButton = () => {
-    const { toggleGraph, exploreId, showingGraph } = this.props;
-    toggleGraph(exploreId, showingGraph);
+    const { onToggleGraph, showingGraph } = this.props;
+    if (onToggleGraph) {
+      onToggleGraph(showingGraph);
+    }
   };
 
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
-    const { exploreId, updateTimeRange } = this.props;
-
-    updateTimeRange({ exploreId, absoluteRange });
+    const { onUpdateTimeRange } = this.props;
+    onUpdateTimeRange(absoluteRange);
   };
 
   renderGraph = () => {
@@ -62,9 +61,12 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
       onHiddenSeriesChanged,
       timeZone,
       absoluteRange,
-      mode,
+      showPanel,
       showingGraph,
       showingTable,
+      showBars,
+      showLines,
+      isStacked,
     } = this.props;
     const { showAllTimeSeries } = this.state;
 
@@ -80,16 +82,13 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
         to: dateTimeForTimeZone(timeZone, absoluteRange.to),
       },
     };
-    const height = mode === ExploreMode.Logs ? 100 : showingGraph && showingTable ? 200 : 400;
-    const showBars = mode === ExploreMode.Logs ? true : false;
-    const showLines = mode === ExploreMode.Metrics ? true : false;
-    const isStacked = mode === ExploreMode.Logs ? true : false;
-    const lineWidth = mode === ExploreMode.Metrics ? 1 : 5;
+    const height = showPanel === false ? 100 : showingGraph && showingTable ? 200 : 400;
+    const lineWidth = showLines ? 1 : 5;
     const seriesToShow = showAllTimeSeries ? series : series.slice(0, MAX_NUMBER_OF_TIME_SERIES);
 
     return (
       <GraphSeriesToggler series={seriesToShow} onHiddenSeriesChanged={onHiddenSeriesChanged}>
-        {({ onSeriesToggle, toggledSeries }) => {
+        {({ onSeriesToggle, toggledSeries }: GraphSeriesTogglerAPI) => {
           return (
             <GraphWithLegend
               displayMode={LegendDisplayMode.List}
@@ -116,7 +115,7 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
   };
 
   render() {
-    const { series, mode, showingGraph, loading } = this.props;
+    const { series, showPanel, showingGraph, loading } = this.props;
     const { showAllTimeSeries } = this.state;
 
     return (
@@ -131,43 +130,14 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
           </div>
         )}
 
-        {mode === ExploreMode.Metrics && (
+        {showPanel && (
           <Panel label="Graph" collapsible isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
             {this.renderGraph()}
           </Panel>
         )}
 
-        {mode === ExploreMode.Logs && this.renderGraph()}
+        {!showPanel && this.renderGraph()}
       </>
     );
   }
 }
-
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
-  const explore = state.explore;
-  // @ts-ignore
-  const item: ExploreItemState = explore[exploreId];
-  const { loadingState, showingGraph, showingTable, absoluteRange, mode } = item;
-  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
-
-  return {
-    loading,
-    showingGraph,
-    showingTable,
-    timeZone: getTimeZone(state.user),
-    absoluteRange,
-    mode,
-  };
-}
-
-const mapDispatchToProps = {
-  toggleGraph,
-  updateTimeRange,
-};
-
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(ExploreGraphPanel)
-);
