@@ -12,7 +12,7 @@ import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
 
 import { GrafanaTheme, InterpolateFunction, ScopedVars } from '../types/index';
-import { getDisplayProcessor } from './displayValue';
+import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from './flotPairs';
 
 export interface FieldDisplayOptions {

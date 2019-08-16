@@ -1,58 +1,5 @@
 import _ from 'lodash';
 
-/**
- * This function converts annotation events into set
- * of single events and regions (event consist of two)
- * @param annotations
- * @param options
- */
-export function makeRegions(annotations: any[], options: { range: any }) {
-  const [regionEvents, singleEvents] = _.partition(annotations, 'regionId');
-  const regions = getRegions(regionEvents, options.range);
-  annotations = _.concat(regions, singleEvents);
-  return annotations;
-}
-
-function getRegions(events: string | any[], range: { to: { valueOf: () => number }; from: { valueOf: () => number } }) {
-  const regionEvents = _.filter(events, event => {
-    return event.regionId;
-  });
-  let regions: any = _.groupBy(regionEvents, 'regionId');
-  regions = _.compact(
-    _.map(regions, regionEvents => {
-      const regionObj: any = _.head(regionEvents);
-      if (regionEvents && regionEvents.length > 1) {
-        regionObj.timeEnd = regionEvents[1].time;
-        regionObj.isRegion = true;
-        return regionObj;
-      } else {
-        if (regionEvents && regionEvents.length) {
-          // Don't change proper region object
-          if (!regionObj.time || !regionObj.timeEnd) {
-            // This is cut region
-            if (isStartOfRegion(regionObj)) {
-              regionObj.timeEnd = range.to.valueOf() - 1;
-            } else {
-              // Start time = null
-              regionObj.timeEnd = regionObj.time;
-              regionObj.time = range.from.valueOf() + 1;
-            }
-            regionObj.isRegion = true;
-          }
-
-          return regionObj;
-        }
-      }
-    })
-  );
-
-  return regions;
-}
-
-function isStartOfRegion(event: { id: any; regionId: any }): boolean {
-  return event.id && event.id === event.regionId;
-}
-
 export function dedupAnnotations(annotations: any) {
   let dedup = [];
 

@@ -1,4 +1,4 @@
-import { KeyValue } from '../types/index';
+import { KeyValue } from '../types';
 
 // Avoid writing the warning message more than once every 10s
 const history: KeyValue<number> = {};
