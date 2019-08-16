@@ -46,7 +46,6 @@ describe('SingleStatCtrl', () => {
           ctx.ctrl = new SingleStatCtrl($scope, $injector, {} as LinkSrv, $sanitize);
           setupFunc();
           ctx.ctrl.onDataReceived(ctx.input);
-          ctx.ctrl.updateDataForRender(); // would be called by angular
           ctx.data = ctx.ctrl.data;
         });
       };

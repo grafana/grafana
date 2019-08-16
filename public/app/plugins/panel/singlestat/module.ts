@@ -148,7 +148,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   // Directly support DataFrame skipping event callbacks
   handleDataFrames(frames: DataFrame[]) {
-    const { panel } = this;
+    const { panel, dashboard } = this;
     super.handleDataFrames(frames);
     this.loading = false;
 
@@ -159,9 +159,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       f = distinct.first;
     }
     if (!f) {
-      //
+      // When we don't have any field
       this.data = {
         value: 'No Data',
+        display: {
+          text: 'No Data',
+          numeric: NaN,
+        },
       };
     } else {
       const name = f.field.config.title || f.field.name;
@@ -200,9 +204,21 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         })[calc];
       }
 
+      const processor = getDisplayProcessor({
+        field: {
+          ...f.field.config,
+          unit: panel.format,
+          decimals: panel.decimals,
+          mappings: this.convertValueMappingConfig(),
+        },
+        theme: config.theme,
+        isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
+      });
+
       this.data = {
         field: f.field,
         value: val,
+        display: processor(val),
         scopedVars: _.extend({}, panel.scopedVars),
       };
       this.data.scopedVars['__name'] = name;
@@ -320,49 +336,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   addRangeMap() {
     this.panel.rangeMaps.push({ from: '', to: '', text: '' });
   }
-
-  /**
-   * This processes our display values for each render
-   * This function is here so we can test it
-   */
-  updateDataForRender = () => {
-    const { data, panel, dashboard } = this;
-    if (data.field) {
-      const processor = getDisplayProcessor({
-        field: {
-          ...data.field.config,
-          unit: panel.format,
-          decimals: panel.decimals,
-          mappings: this.convertValueMappingConfig(),
-        },
-        theme: config.theme,
-        isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
-      });
-      data.display = processor(data.value);
-    } else {
-      data.display = {
-        numeric: NaN,
-        text: _.toString(data.value),
-      };
-    }
-
-    // get thresholds
-    data.thresholds = panel.thresholds
-      ? panel.thresholds.split(',').map((strVale: string) => {
-          return Number(strVale.trim());
-        })
-      : [];
-
-    // Map panel colors to hex or rgb/a values
-    if (panel.colors) {
-      data.colorMap = panel.colors.map((color: string) =>
-        getColorFromHexRgbOrName(
-          color,
-          config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
-        )
-      );
-    }
-  };
 
   link(scope: any, elem: JQuery, attrs: any, ctrl: any) {
     const $location = this.$location;
@@ -588,8 +561,24 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       if (!ctrl.data) {
         return;
       }
-      ctrl.updateDataForRender();
       const { data, panel } = ctrl;
+
+      // get thresholds
+      data.thresholds = panel.thresholds
+        ? panel.thresholds.split(',').map((strVale: string) => {
+            return Number(strVale.trim());
+          })
+        : [];
+
+      // Map panel colors to hex or rgb/a values
+      if (panel.colors) {
+        data.colorMap = panel.colors.map((color: string) =>
+          getColorFromHexRgbOrName(
+            color,
+            config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
+          )
+        );
+      }
 
       const body = panel.gauge.show ? '' : getBigValueHtml();
 
