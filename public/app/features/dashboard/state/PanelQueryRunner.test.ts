@@ -1,4 +1,4 @@
-import { PanelQueryRunner } from './PanelQueryRunner';
+import { PanelQueryRunner, QueryRunnerOptions } from './PanelQueryRunner';
 import { PanelData, DataQueryRequest, DataStreamObserver, DataStreamState, ScopedVars } from '@grafana/ui';
 
 import { LoadingState, DataFrameHelper } from '@grafana/data';
@@ -6,6 +6,7 @@ import { dateTime } from '@grafana/data';
 import { SHARED_DASHBODARD_QUERY } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 import { PanelModel } from './PanelModel';
+import { Subject } from 'rxjs';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -232,10 +233,10 @@ describe('PanelQueryRunner', () => {
     });
   });
 
-  describeQueryRunnerScenario('Chained query runners', ctx => {
+  describeQueryRunnerScenario('Shared query request', ctx => {
     ctx.setup(() => {});
 
-    it('should get the same results as the target', async () => {
+    it('should get the same results as the original', async () => {
       // Get the results from
       const q: DashboardQuery = { refId: 'Z', panelId: 1 };
       const myPanelId = 7;
@@ -270,6 +271,21 @@ describe('PanelQueryRunner', () => {
       expect(req.targets[0].datasource).toBe('TestDB');
       expect(res.series.length).toBe(1);
       expect(res.series[0].length).toBe(2);
+
+      // Get the private subject and check that someone is listening
+      const subject = (ctx.runner as any).subject as Subject<PanelData>;
+      expect(subject.observers.length).toBe(2);
+
+      // Now change the query and we should stop listening
+      try {
+        runnerWantingSharedResults.run({
+          datasource: 'unknown-datasource',
+          panelId: myPanelId, // Not 1
+        } as QueryRunnerOptions);
+      } catch {}
+      // runnerWantingSharedResults subject is now unsubscribed
+      // the test listener is still subscribed
+      expect(subject.observers.length).toBe(1);
     });
   });
 });
