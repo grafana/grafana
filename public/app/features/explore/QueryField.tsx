@@ -115,7 +115,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     if (initialQuery !== prevProps.initialQuery) {
       // and we have a version that differs
       if (initialQuery !== Plain.serialize(value)) {
-        this.setState({ value: makeValue(initialQuery, syntax) });
+        this.setState({ value: makeValue(initialQuery || '', syntax) });
       }
     }
 

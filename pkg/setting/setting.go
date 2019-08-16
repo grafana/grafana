@@ -29,6 +29,7 @@ type Scheme string
 const (
 	HTTP              Scheme = "http"
 	HTTPS             Scheme = "https"
+	HTTP2             Scheme = "h2"
 	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
 )
@@ -636,6 +637,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	if protocolStr == "https" {
 		Protocol = HTTPS
+		CertFile = server.Key("cert_file").String()
+		KeyFile = server.Key("cert_key").String()
+	}
+	if protocolStr == "h2" {
+		Protocol = HTTP2
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}

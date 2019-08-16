@@ -1,6 +1,5 @@
 import { ElasticResponse } from '../elastic_response';
-import { DataFrameHelper, DataFrameView } from '@grafana/data';
-import { KeyValue } from '@grafana/ui';
+import { DataFrameHelper, DataFrameView, KeyValue } from '@grafana/data';
 
 describe('ElasticResponse', () => {
   let targets;
