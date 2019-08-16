@@ -14,6 +14,7 @@ import { GrafanaThemeType, getValueFormat, getColorFromHexRgbOrName } from '@gra
 import { auto } from 'angular';
 import { LinkSrv, LinkModel } from 'app/features/panel/panellinks/link_srv';
 import TableModel from 'app/core/table_model';
+import { getLocationSrv } from '@grafana/runtime';
 
 const BASE_FONT_SIZE = 38;
 
@@ -111,6 +112,32 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
     this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
     this.unitFormats = kbn.getUnitFormats();
+  }
+
+  migrateToGaugePanel(migrate: boolean) {
+    if (migrate) {
+      console.log('Change the panel type... the wrapper should pick this up after render');
+      this.panel.type = 'gauge';
+
+      // maybe change some parameter?
+      getLocationSrv().update({ query: { chage: 'xxxxx' }, partial: true });
+
+      // or refresh?
+      this.refresh();
+
+      // debugger;
+      // const panel = this.panel as PanelModel;
+      // importPanelPlugin('gauge').then( gauge => {
+      //   console.warn('MIGRATE', panel, 'to', gauge );
+      //   panel.type = gauge.id;
+      //   panel.changePlugin(gauge);
+      // }).catch( err => {
+      //   console.warn('error loading gauge', err);
+      // });
+    } else {
+      this.panel.gauge.show = false;
+      this.render();
+    }
   }
 
   setUnitFormat(subItem: { value: any }) {

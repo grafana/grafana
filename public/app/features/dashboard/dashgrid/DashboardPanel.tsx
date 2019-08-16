@@ -98,6 +98,8 @@ export class DashboardPanel extends PureComponent<Props, State> {
       this.setState({ isLazy: false });
     }
 
+    console.log('XXXX', this.props);
+
     if (!this.element || this.state.angularPanel) {
       return;
     }

@@ -59,6 +59,10 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     super(props);
   }
 
+  componentDidUpdate(prevProps: PanelEditorProps) {
+    console.log('CHECK Panel Update', this.props);
+  }
+
   onChangeTab = (tab: PanelEditorTab) => {
     store.dispatch(
       updateLocation({

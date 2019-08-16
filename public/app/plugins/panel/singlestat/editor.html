@@ -1,4 +1,27 @@
 <div class="editor-row">
+
+  <div class="grafana-info-box" ng-if="ctrl.panel.gauge.show">
+    <h5>Gauge Migration</h5>
+    <p>
+      Gauge visualizations within the Singlestat panel are now deprecated.  Please
+      migrate this panel to use the Gauge panel
+    
+      <div class="gf-form-button-row">
+        <button class="btn btn-primary" ng-click="ctrl.migrateToGaugePanel(true)">
+          Migrate to Gauge Panel
+        </button>
+        <button class="btn btn-inverse" ng-click="ctrl.migrateToGaugePanel(false)">
+          Show as single stat
+        </button>
+      </div>
+    
+      <div ng-if="ctrl.panel.sparkline.show">
+        TODO... note about sparkline... and possible soltuion with shared querys?
+      </div>
+    </p>
+  </div>
+    
+
   <div class="section gf-form-group">
     <h5 class="section-heading">Value</h5>
 
