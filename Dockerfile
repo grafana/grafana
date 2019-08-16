@@ -12,6 +12,10 @@ COPY pkg pkg
 COPY build.go build.go
 COPY package.json package.json
 
+RUN go get github.com/crewjam/saml
+
+RUN go get github.com/stretchr/testify/require
+
 RUN go run build.go build
 
 # Node build container
