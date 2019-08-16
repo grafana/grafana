@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+	"errors"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
@@ -374,7 +375,7 @@ func TestMiddlewareContext(t *testing.T) {
 				sc.exec()
 
 				assert.False(t, *actualAuthProxyAutoSignUp)
-				assert.Equal(t, sc.resp.Code, 500)
+				assert.Equal(t, sc.resp.Code, 407)
 				assert.Nil(t, sc.context)
 			})
 
@@ -473,6 +474,36 @@ func TestMiddlewareContext(t *testing.T) {
 				sc.fakeReq("GET", "/")
 				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
 				sc.req.RemoteAddr = "[2001::23]:12345"
+				sc.exec()
+
+				Convey("Should return 407 status code", func() {
+					So(sc.resp.Code, ShouldEqual, 407)
+					So(sc.context, ShouldBeNil)
+				})
+			})
+
+			middlewareScenario(t, "Should return 407 status code if LDAP says no", func(sc *scenarioContext) {
+				bus.AddHandler("LDAP", func(cmd *models.UpsertUserCommand) error {
+					return errors.New("Do not add user")
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.exec()
+
+				Convey("Should return 407 status code", func() {
+					So(sc.resp.Code, ShouldEqual, 407)
+					So(sc.context, ShouldBeNil)
+				})
+			})
+
+			middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(sc *scenarioContext) {
+				bus.AddHandler("Do not have the user", func(query *models.GetSignedInUserQuery) error {
+					return errors.New("Do not add user")
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
 				sc.exec()
 
 				Convey("Should return 407 status code", func() {
