@@ -96,6 +96,9 @@ export class PanelQueryRunner {
     if (sendLegacy) {
       format = PanelQueryRunnerFormat.both;
     }
+    if (!runner.subject) {
+      runner.subject = new Subject();
+    }
     return this.subscribe(runner.subject, format);
   }
 
