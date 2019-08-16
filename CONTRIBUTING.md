@@ -48,7 +48,7 @@ To setup a local development environment we recommend reading [Building Grafana 
 #### Bug specific checks
 
 - [ ] The pull request contains `Closes: #Issue` or `Fixes: #Issue` in pull request description.
-- [ ] If possible the pull request adds tests that proofs that the bug is fixed. 
+- [ ] The Pull Request adds tests that replicate the fixed bug and helps avoid regressions.
 
 ### Frontend specific checks
 
