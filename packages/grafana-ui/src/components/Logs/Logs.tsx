@@ -58,7 +58,7 @@ interface State {
   showTime: boolean;
 }
 
-export default class Logs extends PureComponent<Props, State> {
+export class Logs extends PureComponent<Props, State> {
   deferLogsTimer: NodeJS.Timer | null = null;
   renderAllTimer: NodeJS.Timer | null = null;
 

@@ -1,12 +1,18 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
-import { PanelEditorProps, Switch, PanelOptionsGrid, PanelOptionsGroup } from '@grafana/ui';
+import {
+  PanelEditorProps,
+  Switch,
+  PanelOptionsGrid,
+  PanelOptionsGroup,
+  ToggleButtonGroup,
+  ToggleButton,
+} from '@grafana/ui';
 import { LogsDedupStrategy, LogsDedupDescription } from '@grafana/data';
 
 // Types
 import { Options } from './types';
-import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 
 export class LogsPanelEditor extends PureComponent<PanelEditorProps<Options>> {
   onToggleTime = () => {

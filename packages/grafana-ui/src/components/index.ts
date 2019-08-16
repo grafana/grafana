@@ -61,12 +61,12 @@ export {
   LegendPlacement,
   LegendDisplayMode,
 } from './Legend/Legend';
-export { LogLabels } from './Logs/LogLabels';
 export { Alert } from './Alert/Alert';
-export { LogRow } from './Logs/LogRow';
 export { GraphSeriesToggler } from './Graph/GraphSeriesToggler';
 export { ExploreGraphPanel } from './Logs/ExploreGraphPanel';
 export { Panel } from './Panel/Panel';
+export { Logs } from './Logs/Logs';
+export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
