@@ -110,6 +110,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 			hs.log.Debug("server was shutdown gracefully")
 			return nil
 		}
+	case setting.HTTP2:
+		err = hs.listenAndServeH2TLS(setting.CertFile, setting.KeyFile)
+		if err == http.ErrServerClosed {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
 	case setting.HTTPS:
 		err = hs.listenAndServeTLS(setting.CertFile, setting.KeyFile)
 		if err == http.ErrServerClosed {
@@ -177,6 +183,45 @@ func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
 
 	hs.httpSrv.TLSConfig = tlsCfg
 	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
+
+	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+}
+
+func (hs *HTTPServer) listenAndServeH2TLS(certfile, keyfile string) error {
+	if certfile == "" {
+		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
+	}
+
+	if keyfile == "" {
+		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
+	}
+
+	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
+		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+	}
+
+	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
+		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
+	}
+
+	tlsCfg := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		PreferServerCipherSuites: false,
+		CipherSuites: []uint16{
+			tls.TLS_CHACHA20_POLY1305_SHA256,
+			tls.TLS_AES_128_GCM_SHA256,
+			tls.TLS_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+		NextProtos: []string{"h2", "http/1.1"},
+	}
+
+	hs.httpSrv.TLSConfig = tlsCfg
 
 	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
 }

@@ -16,6 +16,10 @@ Further documentation can be found at http://docs.grafana.org/installation/docke
 
 ## Changelog
 
+### v6.4.0-pre1
+
+* Switch base image from ubuntu:18.04 to alpine:3.10
+
 ### v6.3.0-beta2
 * Switch base image from ubuntu:latest to ubuntu:18.04
 
