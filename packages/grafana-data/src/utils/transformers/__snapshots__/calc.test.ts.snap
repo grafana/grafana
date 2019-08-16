@@ -4,42 +4,66 @@ exports[`Calc Transformer filters by include 1`] = `
 Object {
   "fields": Array [
     Object {
+      "config": Object {},
       "name": "Field",
       "type": "string",
+      "values": Array [
+        "A",
+        "B",
+      ],
     },
     Object {
-      "name": "Min",
+      "config": Object {
+        "title": "First",
+      },
+      "name": "first",
+      "type": "string",
+      "values": Array [
+        "A",
+        "B",
+      ],
     },
     Object {
-      "name": "Max",
+      "config": Object {
+        "title": "Min",
+      },
+      "name": "min",
+      "type": "string",
+      "values": Array [
+        "A",
+        "B",
+      ],
     },
     Object {
-      "name": "Mean",
+      "config": Object {
+        "title": "Max",
+      },
+      "name": "max",
+      "type": "string",
+      "values": Array [
+        "A",
+        "B",
+      ],
     },
     Object {
-      "name": "Delta",
+      "config": Object {
+        "title": "Delta",
+      },
+      "name": "delta",
+      "type": "string",
+      "values": Array [
+        "A",
+        "B",
+      ],
     },
   ],
+  "labels": undefined,
   "meta": Object {
     "transformations": Array [
       "calc",
     ],
   },
-  "rows": Array [
-    Array [
-      "A",
-      1,
-      7,
-      4,
-      6,
-    ],
-    Array [
-      "B",
-      2,
-      8,
-      5,
-      6,
-    ],
-  ],
+  "name": undefined,
+  "refId": undefined,
 }
 `;

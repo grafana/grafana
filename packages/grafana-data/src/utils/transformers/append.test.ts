@@ -1,21 +1,22 @@
 import { transformDataFrame, dataTransformers } from './transformers';
 import { DataTransformerID } from './ids';
+import { toDataFrame } from '../processDataFrame';
 
-const seriesAB = {
-  fields: [{ name: 'A' }, { name: 'B' }],
+const seriesAB = toDataFrame({
+  columns: [{ text: 'A' }, { text: 'B' }],
   rows: [
-    [1, 2], // A,B
-    [1, 2], // A,B
+    [1, 100], // A,B
+    [2, 200], // A,B
   ],
-};
+});
 
-const seriesBC = {
-  fields: [{ name: 'B' }, { name: 'C' }],
+const seriesBC = toDataFrame({
+  columns: [{ text: 'A' }, { text: 'C' }],
   rows: [
-    [2, 3], // A,B
-    [2, 3], // A,B
+    [3, 3000], // A,C
+    [4, 4000], // A,C
   ],
-};
+});
 
 describe('Append Transformer', () => {
   it('filters by include', () => {
@@ -26,8 +27,15 @@ describe('Append Transformer', () => {
     const x = dataTransformers.get(DataTransformerID.append);
     expect(x.id).toBe(cfg.id);
 
-    const filtered = transformDataFrame([cfg], [seriesAB, seriesBC])[0];
-    expect(filtered.fields.length).toBe(3);
-    expect(filtered).toMatchSnapshot();
+    const processed = transformDataFrame([cfg], [seriesAB, seriesBC])[0];
+    expect(processed.fields.length).toBe(3);
+
+    const fieldA = processed.fields[0];
+    const fieldB = processed.fields[1];
+    const fieldC = processed.fields[2];
+
+    expect(fieldA.values.toArray()).toEqual([1, 2, 3, 4]);
+    expect(fieldB.values.toArray()).toEqual([100, 200, undefined, undefined]);
+    expect(fieldC.values.toArray()).toEqual([undefined, undefined, 3000, 4000]);
   });
 });

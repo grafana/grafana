@@ -1,17 +1,16 @@
 import { DataTransformerInfo } from './transformers';
-import { DataFrame } from '../../types/data';
+import { DataFrame } from '../../types/dataFrame';
 import { DataTransformerID } from './ids';
+import { DataFrameHelper } from '../dataFrameHelper';
+import { KeyValue } from '../../types/data';
+import { AppendedVectors } from '../vector';
 
 interface AppendOptions {}
-
-interface FieldIndex {
-  [field: string]: number;
-}
 
 export const appendTransformer: DataTransformerInfo<AppendOptions> = {
   id: DataTransformerID.append,
   name: 'Append',
-  description: 'Append all series',
+  description: 'Append values into a single DataFrame.  This uses the name as the key',
   defaultOptions: {},
 
   /**
@@ -24,37 +23,35 @@ export const appendTransformer: DataTransformerInfo<AppendOptions> = {
         return data;
       }
 
-      const processed: DataFrame = {
-        fields: [],
-        rows: [],
-      };
-      const index: FieldIndex = {};
-      let width = data[0].fields.length;
-      for (let i = 0; i < width; i++) {
-        const f = data[0].fields[i];
-        processed.fields.push(f);
-        index[f.name] = i;
-      }
-
-      for (const series of data) {
-        const arr: number[] = [];
-        for (let i = 0; i < series.fields.length; i++) {
-          const f = series.fields[i];
-          if (!index.hasOwnProperty(f.name)) {
-            index[f.name] = width++;
-            processed.fields.push(f);
+      let length = 0;
+      const processed = new DataFrameHelper();
+      for (let i = 0; i < data.length; i++) {
+        const frame = data[i];
+        const used: KeyValue<boolean> = {};
+        for (let j = 0; j < frame.fields.length; j++) {
+          const src = frame.fields[j];
+          if (used[src.name]) {
+            continue;
           }
-          arr[i] = index[f.name];
-        }
-        for (const row of series.rows) {
-          const norm: any[] = [];
-          for (let i = 0; i < row.length; i++) {
-            norm[arr[i]] = row[i];
+          used[src.name] = true;
+
+          let f = processed.getFieldByName(src.name);
+          if (!f) {
+            f = processed.addField({
+              ...src,
+              values: new AppendedVectors(length),
+            });
           }
-          processed.rows.push(norm);
+          (f.values as AppendedVectors).append(src.values);
+        }
+
+        // Make sure all fields have their length updated
+        length += frame.length;
+        processed.length = length;
+        for (const f of processed.fields) {
+          (f.values as AppendedVectors).setLength(processed.length);
         }
       }
-
       return [processed];
     };
   },

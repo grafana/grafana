@@ -1,5 +1,4 @@
-import { Field, DataFrame } from '../../types/data';
-import { FieldType } from '../../types/data';
+import { Field, DataFrame, FieldType } from '../../types/dataFrame';
 import { DataMatcherInfo } from './matchers';
 import { DataMatcherID } from './ids';
 

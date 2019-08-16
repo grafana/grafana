@@ -1,4 +1,4 @@
-import { DataFrame } from '../../types/data';
+import { DataFrame } from '../../types/dataFrame';
 import { Registry, RegistryItemWithOptions } from '../registry';
 
 export type DataTransformer = (data: DataFrame[]) => DataFrame[];

@@ -1,4 +1,4 @@
-import { Field, DataFrame } from '../../types/data';
+import { Field, DataFrame } from '../../types/dataFrame';
 import { Registry, RegistryItemWithOptions } from '../registry';
 
 export type DataMatcher = (series: DataFrame, field?: Field) => boolean;

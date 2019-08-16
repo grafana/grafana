@@ -1,17 +1,17 @@
-import { FieldType } from '../../types/data';
+import { FieldType } from '../../types/dataFrame';
 import { DataMatcherID } from '../matchers/ids';
 import { transformDataFrame } from './transformers';
 import { DataTransformerID } from './ids';
+import { toDataFrame } from '../processDataFrame';
 
-export const simpleSeriesWithTypes = {
+export const simpleSeriesWithTypes = toDataFrame({
   fields: [
-    { name: 'A', type: FieldType.time },
-    { name: 'B', type: FieldType.boolean },
-    { name: 'C', type: FieldType.string },
-    { name: 'D', type: FieldType.number },
+    { name: 'A', type: FieldType.time, values: [1000, 2000] },
+    { name: 'B', type: FieldType.boolean, values: [true, false] },
+    { name: 'C', type: FieldType.string, values: ['a', 'b'] },
+    { name: 'D', type: FieldType.number, values: [1, 2] },
   ],
-  rows: [[1, 2, 3, 4], [4, 5, 6, 7]],
-};
+});
 
 describe('Filter Transformer', () => {
   it('filters by include', () => {

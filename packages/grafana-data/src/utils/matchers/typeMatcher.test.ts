@@ -1,15 +1,15 @@
-import { FieldType } from '../../types/data';
+import { FieldType } from '../../types/dataFrame';
 import { dataMatchers } from './matchers';
 import { DataMatcherID } from './ids';
+import { toDataFrame } from '../processDataFrame';
 
-export const simpleSeriesWithTypes = {
+export const simpleSeriesWithTypes = toDataFrame({
   fields: [
     { name: 'A', type: FieldType.time },
     { name: 'B', type: FieldType.boolean },
     { name: 'C', type: FieldType.string },
   ],
-  rows: [],
-};
+});
 
 describe('Field Type Matcher', () => {
   const matcher = dataMatchers.get(DataMatcherID.fieldType);

@@ -1,30 +1,25 @@
 import { transformDataFrame } from './transformers';
 import { ReducerID } from '../fieldReducer';
 import { DataTransformerID } from './ids';
+import { toDataFrame, toDataFrameDTO } from '../processDataFrame';
 
-const seriesWithValues = {
-  fields: [{ name: 'A' }, { name: 'B' }],
-  rows: [
-    [1, 2], // 1
-    [2, 3], //
-    [3, 4], //
-    [4, 5], //
-    [5, 6], //
-    [6, 7], //
-    [7, 8], //
+const seriesWithValues = toDataFrame({
+  fields: [
+    { name: 'A', values: [1, 2, 3, 4] }, // Numbers
+    { name: 'B', values: ['a', 'b', 'c', 'd'] }, // Strings
   ],
-};
+});
 
 describe('Calc Transformer', () => {
   it('filters by include', () => {
     const cfg = {
       id: DataTransformerID.calc,
       options: {
-        calcs: [ReducerID.min, ReducerID.max, ReducerID.mean, ReducerID.delta],
+        calcs: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.delta],
       },
     };
-    const filtered = transformDataFrame([cfg], [seriesWithValues])[0];
-    expect(filtered.fields.length).toBe(5);
-    expect(filtered).toMatchSnapshot();
+    const processed = transformDataFrame([cfg], [seriesWithValues])[0];
+    expect(processed.fields.length).toBe(5);
+    expect(toDataFrameDTO(processed)).toMatchSnapshot();
   });
 });

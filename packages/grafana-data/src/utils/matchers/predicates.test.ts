@@ -1,4 +1,4 @@
-import { FieldType } from '../../types/data';
+import { FieldType } from '../../types/dataFrame';
 import { dataMatchers, DataMatcherConfig } from './matchers';
 import { simpleSeriesWithTypes } from './typeMatcher.test';
 import { DataMatcherID } from './ids';

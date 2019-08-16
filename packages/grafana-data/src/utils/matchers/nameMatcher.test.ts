@@ -1,10 +1,10 @@
 import { getDataMatcher } from './matchers';
 import { DataMatcherID } from './ids';
+import { toDataFrame } from '../processDataFrame';
 
-const seriesWithNames = {
+const seriesWithNames = toDataFrame({
   fields: [{ name: 'A hello world' }, { name: 'AAA' }, { name: 'C' }],
-  rows: [],
-};
+});
 
 describe('Field Type Matcher', () => {
   it('Match all with wildcard regex', () => {

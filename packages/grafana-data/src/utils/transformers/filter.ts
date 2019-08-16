@@ -1,5 +1,5 @@
 import { DataTransformerInfo, NoopDataTransformer } from './transformers';
-import { DataFrame } from '../../types/data';
+import { DataFrame, Field } from '../../types/dataFrame';
 import { DataMatcherConfig, getDataMatcher } from '../matchers/matchers';
 import { DataMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
@@ -34,7 +34,7 @@ export const filterTransformer: DataTransformerInfo<FilterOptions> = {
       const processed: DataFrame[] = [];
       for (const series of data) {
         // Find the matching field indexes
-        const mask: number[] = [];
+        const fields: Field[] = [];
         for (let i = 0; i < series.fields.length; i++) {
           const field = series.fields[i];
           if (exclude) {
@@ -42,25 +42,21 @@ export const filterTransformer: DataTransformerInfo<FilterOptions> = {
               continue;
             }
             if (!include) {
-              mask.push(i);
+              fields.push(field);
             }
           }
           if (include && include(series, field)) {
-            mask.push(i);
+            fields.push(field);
           }
         }
 
-        if (!mask.length) {
+        if (!fields.length) {
           continue;
         }
         const copy = {
-          ...series,
-          fields: mask.map(i => series.fields[i]),
-          rows: new Array(series.rows.length),
+          ...series, // all the other properties
+          fields, // but a different set of fields
         };
-        for (const row of series.rows) {
-          copy.rows.push(mask.map(i => row[i]));
-        }
         processed.push(copy);
       }
       return processed;

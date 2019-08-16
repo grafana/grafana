@@ -1,9 +1,12 @@
 import { DataTransformerInfo } from './transformers';
-import { DataFrame, FieldType } from '../../types/data';
+import { DataFrame, FieldType, Field } from '../../types/dataFrame';
 import { DataMatcherConfig, getDataMatcher } from '../matchers/matchers';
 import { alwaysDataMatcher } from '../matchers/predicates';
 import { DataTransformerID } from './ids';
 import { ReducerID, fieldReducers, reduceField } from '../fieldReducer';
+import { KeyValue } from '../../types/data';
+import { ArrayVector } from '../vector';
+import { guessFieldTypeForField } from '../processDataFrame';
 
 interface CalcOptions {
   calcs: string[];
@@ -26,44 +29,60 @@ export const calcTransformer: DataTransformerInfo<CalcOptions> = {
     const matcher = options.matcher ? getDataMatcher(options.matcher) : alwaysDataMatcher;
     const calculators = fieldReducers.list(options.calcs);
     const reducers = calculators.map(c => c.id);
-    const fields = [
-      {
-        name: 'Field',
-        type: FieldType.string,
-      },
-      ...calculators.map(info => {
-        return {
-          name: info.name,
-        };
-      }),
-    ];
 
     return (data: DataFrame[]) => {
       const processed: DataFrame[] = [];
       for (const series of data) {
         if (matcher(series)) {
-          const sub = {
-            ...series,
-            fields,
-            rows: [] as any[], // empty rows
-          };
+          const values: ArrayVector[] = [];
+          const fields: Field[] = [];
+          const byId: KeyValue<ArrayVector> = {};
+          values.push(new ArrayVector()); // The name
+          fields.push({
+            name: 'Field',
+            type: FieldType.string,
+            values: values[0],
+            config: {},
+          });
+          for (const info of calculators) {
+            const vals = new ArrayVector();
+            byId[info.id] = vals;
+            values.push(vals);
+            fields.push({
+              name: info.id,
+              type: FieldType.other, // UNKNOWN until after we call the functions
+              values: values[0],
+              config: {
+                title: info.name,
+              },
+            });
+          }
           for (let i = 0; i < series.fields.length; i++) {
             const field = series.fields[i];
             if (matcher(series, field)) {
               const results = reduceField({
-                series,
-                fieldIndex: i,
+                field,
                 reducers,
               });
-              const row: any[] = [];
-              row.push(field.name);
-              for (const s of reducers) {
-                row.push(results[s]);
+              // Update the name list
+              values[0].buffer.push(field.name);
+              for (const info of calculators) {
+                const v = results[info.id];
+                byId[info.id].buffer.push(v);
               }
-              sub.rows.push(row);
             }
           }
-          processed.push(sub);
+          for (const f of fields) {
+            const t = guessFieldTypeForField(f);
+            if (t) {
+              f.type = t;
+            }
+          }
+          processed.push({
+            ...series, // Same properties, different fields
+            fields,
+            length: values[0].length,
+          });
         }
       }
       return processed;
