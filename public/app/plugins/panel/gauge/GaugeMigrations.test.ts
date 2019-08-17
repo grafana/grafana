@@ -79,4 +79,23 @@ describe('Gauge Panel Migrations', () => {
 
     expect(gaugePanelMigrationCheck(panel)).toMatchSnapshot();
   });
+
+  it('from old gauge', () => {
+    const panel = {
+      format: 'ms',
+      gauge: {
+        maxValue: 150,
+        minValue: -10,
+        show: true,
+        thresholdLabels: false,
+        thresholdMarkers: true,
+      },
+    };
+
+    const newOptions = gaugePanelMigrationCheck(panel as any);
+    expect(newOptions.fieldOptions.defaults.min).toBe(-10);
+    expect(newOptions.fieldOptions.defaults.max).toBe(150);
+    expect(newOptions.showThresholdMarkers).toBe(true);
+    expect(newOptions.showThresholdLabels).toBe(true);
+  });
 });

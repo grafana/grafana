@@ -25,10 +25,10 @@ export const sharedSingleStatOptionsCheck = (
   return options;
 };
 
-export function sharedSingleStatMigrationCheck(panel: PanelModel<SingleStatBaseOptions>) {
+export function sharedSingleStatMigrationCheck(panel: PanelModel<SingleStatBaseOptions>): SingleStatBaseOptions {
   if (!panel.options) {
     // This happens on the first load or when migrating from angular
-    return {};
+    return {} as any;
   }
 
   const previousVersion = parseFloat(panel.pluginVersion || '6.1');
