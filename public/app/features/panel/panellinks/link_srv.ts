@@ -3,7 +3,13 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { VariableSuggestion, ScopedVars, VariableOrigin } from '@grafana/ui';
+import {
+  VariableSuggestion,
+  ScopedVars,
+  VariableOrigin,
+  FieldDisplayLinkFunction,
+  FieldDisplayLinkOptions,
+} from '@grafana/ui';
 import { TimeSeriesValue, DateTime, dateTime, DataLink, KeyValue, deprecationWarning } from '@grafana/data';
 
 export const DataLinkBuiltInVars = {
@@ -60,6 +66,8 @@ interface LinkDataPoint {
 export interface LinkService {
   getDataLinkUIModel: (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
   getDataPointVars: (seriesName: string, dataPointTs: DateTime) => ScopedVars;
+
+  fieldDisplayLinker: FieldDisplayLinkFunction;
 }
 
 export class LinkSrv implements LinkService {
@@ -148,6 +156,16 @@ export class LinkSrv implements LinkService {
     deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDataLinkUIModel');
     return this.getDataLinkUIModel(link, scopedVars);
   }
+
+  fieldDisplayLinker = (options: FieldDisplayLinkOptions): LinkModel[] | undefined => {
+    if (!options.links || !options.links.length) {
+      return undefined;
+    }
+    return options.links.map(link => {
+      // TODO -- pass in the point info
+      return this.getDataLinkUIModel(link, options.scopedVars);
+    });
+  };
 }
 
 let singleton: LinkService;

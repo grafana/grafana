@@ -10,10 +10,12 @@ import {
   FieldPropertiesEditor,
   Switch,
   PanelOptionsGroup,
+  DataLinksEditor,
 } from '@grafana/ui';
-import { Threshold, ValueMapping, FieldConfig } from '@grafana/data';
+import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { GaugeOptions } from './types';
+import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;
@@ -56,10 +58,18 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     });
   };
 
+  onDataLinksChanged = (links: DataLink[]) => {
+    this.onDefaultsChange({
+      ...this.props.options.fieldOptions.defaults,
+      links,
+    });
+  };
+
   render() {
     const { options } = this.props;
     const { fieldOptions, showThresholdLabels, showThresholdMarkers } = options;
     const { defaults } = fieldOptions;
+    const suggestions = getPanelLinksVariableSuggestions();
 
     return (
       <>
@@ -92,6 +102,15 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+
+        <PanelOptionsGroup title="Data links">
+          <DataLinksEditor
+            value={defaults.links}
+            onChange={this.onDataLinksChanged}
+            suggestions={suggestions}
+            maxLinks={10}
+          />
+        </PanelOptionsGroup>
       </>
     );
   }

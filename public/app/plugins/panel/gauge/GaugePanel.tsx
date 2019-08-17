@@ -10,6 +10,7 @@ import { Gauge, FieldDisplay, getFieldDisplayValues, VizOrientation } from '@gra
 // Types
 import { GaugeOptions } from './types';
 import { PanelProps, VizRepeater } from '@grafana/ui';
+import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
@@ -38,6 +39,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
+      linker: getLinkSrv().fieldDisplayLinker,
     });
   };
 

@@ -1,7 +1,26 @@
-import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
+import {
+  getFieldProperties,
+  getFieldDisplayValues,
+  GetFieldDisplayValuesOptions,
+  FieldDisplayLinkOptions,
+  FieldDisplayLinkFunction,
+} from './fieldDisplay';
 import { ReducerID, Threshold, DataFrameHelper } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
+
+const simpleLinker: FieldDisplayLinkFunction = (options: FieldDisplayLinkOptions) => {
+  if (!options.links || !options.links.length) {
+    return undefined;
+  }
+  return options.links.map(link => {
+    return {
+      href: link.url,
+      title: link.title,
+      target: link.targetBlank ? '_blank' : '_self',
+    };
+  });
+};
 
 describe('FieldDisplay', () => {
   it('Construct simple field properties', () => {
@@ -46,6 +65,7 @@ describe('FieldDisplay', () => {
     replaceVariables: (value: string) => {
       return value; // Return it unchanged
     },
+    linker: simpleLinker,
     fieldOptions: {
       calcs: [],
       override: {},
@@ -138,6 +158,7 @@ describe('FieldDisplay', () => {
           length: 0,
         },
       ],
+      linker: simpleLinker,
       replaceVariables: (value: string) => {
         return value;
       },

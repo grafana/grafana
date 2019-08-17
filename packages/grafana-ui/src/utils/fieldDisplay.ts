@@ -1,11 +1,14 @@
 import {
   ReducerID,
   reduceField,
+  Field,
   FieldType,
   DataFrame,
   FieldConfig,
   DisplayValue,
   GraphSeriesValue,
+  DataLink,
+  LinkModel,
 } from '@grafana/data';
 
 import toNumber from 'lodash/toNumber';
@@ -63,12 +66,23 @@ export interface FieldDisplay {
   field: FieldConfig;
   display: DisplayValue;
   sparkline?: GraphSeriesValue[][];
+  links?: LinkModel[]; // Links with the values escaped
 }
+
+export interface FieldDisplayLinkOptions {
+  links: DataLink[];
+  field: Field; // Includes config.links
+  value: DisplayValue; // Formatted display value
+  scopedVars: ScopedVars;
+}
+
+export type FieldDisplayLinkFunction = (options: FieldDisplayLinkOptions) => LinkModel[] | undefined;
 
 export interface GetFieldDisplayValuesOptions {
   data?: DataFrame[];
   fieldOptions: FieldDisplayOptions;
   replaceVariables: InterpolateFunction;
+  linker: FieldDisplayLinkFunction;
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
 }
@@ -76,7 +90,7 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { data, replaceVariables, fieldOptions, sparkline } = options;
+  const { data, replaceVariables, fieldOptions, sparkline, linker } = options;
   const { defaults, override } = fieldOptions;
   const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
 
@@ -154,6 +168,14 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               name,
               field: config,
               display: displayValue,
+              links: config.links
+                ? linker({
+                    links: config.links,
+                    field,
+                    value: displayValue,
+                    scopedVars,
+                  })
+                : undefined,
             });
 
             if (values.length >= limit) {
@@ -185,6 +207,14 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               field: config,
               display: displayValue,
               sparkline: points,
+              links: config.links
+                ? linker({
+                    links: config.links,
+                    field,
+                    value: displayValue,
+                    scopedVars,
+                  })
+                : undefined,
             });
           }
         }

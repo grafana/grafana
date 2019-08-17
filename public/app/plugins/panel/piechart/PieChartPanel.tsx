@@ -10,6 +10,7 @@ import { PieChart, getFieldDisplayValues } from '@grafana/ui';
 // Types
 import { PieChartOptions } from './types';
 import { PanelProps } from '@grafana/ui';
+import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
 interface Props extends PanelProps<PieChartOptions> {}
 
@@ -22,6 +23,7 @@ export class PieChartPanel extends PureComponent<Props> {
       data: data.series,
       theme: config.theme,
       replaceVariables: replaceVariables,
+      linker: getLinkSrv().fieldDisplayLinker,
     }).map(v => v.display);
 
     return (
