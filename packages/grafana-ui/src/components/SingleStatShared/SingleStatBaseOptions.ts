@@ -190,7 +190,7 @@ export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefine
 }
 
 /**
- * Convert the existing format to new format
+ * Convert the angular single stat mapping to new react style
  */
 function convertOldAngulrValueMapping(panel: any): ValueMapping[] {
   const mappings: ValueMapping[] = [];
