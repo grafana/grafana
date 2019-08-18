@@ -1,6 +1,6 @@
-import { sharedSingleStatMigrationCheck } from './SingleStatBaseOptions';
+import { sharedSingleStatMigrationHandler } from './SingleStatBaseOptions';
 
-describe('sharedSingleStatMigrationCheck', () => {
+describe('sharedSingleStatMigrationHandler', () => {
   it('from old valueOptions model without pluginVersion', () => {
     const panel = {
       options: {
@@ -34,6 +34,6 @@ describe('sharedSingleStatMigrationCheck', () => {
       type: 'bargauge',
     };
 
-    expect(sharedSingleStatMigrationCheck(panel as any)).toMatchSnapshot();
+    expect(sharedSingleStatMigrationHandler(panel as any)).toMatchSnapshot();
   });
 });

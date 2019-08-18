@@ -20,6 +20,7 @@ import {
 import { isDateTime } from './moment_wrapper';
 import { ArrayVector, SortedVector } from './vector';
 import { DataFrameHelper } from './dataFrameHelper';
+import { deprecationWarning } from './deprecationWarning';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -224,7 +225,7 @@ export const toDataFrame = (data: any): DataFrame => {
       for (let i = 0; i < rows.length; i++) {
         v.appendRow(rows[i]);
       }
-      // TODO: deprection warning
+      deprecationWarning('DataFrame', '.rows', 'columnar format');
       return v;
     }
 

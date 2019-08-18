@@ -127,7 +127,7 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 ### protocol
 
-`http`,`https` or `socket`
+`http`,`https`,`h2` or `socket`
 
 > **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
 
@@ -179,11 +179,11 @@ reasons.
 
 ### cert_file
 
-Path to the certificate file (if `protocol` is set to `https`).
+Path to the certificate file (if `protocol` is set to `https` or `h2`).
 
 ### cert_key
 
-Path to the certificate key file (if `protocol` is set to `https`).
+Path to the certificate key file (if `protocol` is set to `https` or `h2`).
 
 ### router_logging
 

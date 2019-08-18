@@ -371,7 +371,6 @@ func (hs *HTTPServer) registerRoutes() {
 			annotationsRoute.Delete("/:annotationId", Wrap(DeleteAnnotationByID))
 			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), Wrap(UpdateAnnotation))
 			annotationsRoute.Patch("/:annotationId", bind(dtos.PatchAnnotationsCmd{}), Wrap(PatchAnnotation))
-			annotationsRoute.Delete("/region/:regionId", Wrap(DeleteAnnotationRegion))
 			annotationsRoute.Post("/graphite", reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), Wrap(PostGraphiteAnnotation))
 		})
 

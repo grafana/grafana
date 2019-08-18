@@ -262,9 +262,10 @@ export class PanelModel {
     const pluginId = newPlugin.meta.id;
     const oldOptions: any = this.getOptionsToRemember();
     const oldPluginId = this.type;
+    const wasAngular = !!this.plugin.angularPanelCtrl;
 
     // for angular panels we must remove all events and let angular panels do some cleanup
-    if (this.plugin.angularPanelCtrl) {
+    if (wasAngular) {
       this.destroy();
     }
 
@@ -280,16 +281,24 @@ export class PanelModel {
     this.cachedPluginOptions[oldPluginId] = oldOptions;
     this.restorePanelOptions(pluginId);
 
+    // Let panel plugins inspect options from previous panel and keep any that it can use
+    if (newPlugin.onPanelTypeChanged) {
+      let old: any = {};
+
+      if (wasAngular) {
+        old = { angular: oldOptions };
+      } else if (oldOptions && oldOptions.options) {
+        old = oldOptions.options;
+      }
+
+      this.options = this.options || {};
+      Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
+    }
+
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
     this.applyPluginOptionDefaults(newPlugin);
-    // Let panel plugins inspect options from previous panel and keep any that it can use
-    if (newPlugin.onPanelTypeChanged) {
-      this.options = this.options || {};
-      const old = oldOptions && oldOptions.options ? oldOptions.options : {};
-      Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
-    }
 
     if (newPlugin.onPanelMigration) {
       this.pluginVersion = getPluginVersion(newPlugin);

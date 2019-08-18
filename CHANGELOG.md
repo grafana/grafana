@@ -1,5 +1,10 @@
 # 6.4.0 (unreleased)
 
+### Breaking changes
+
+* **Annotations**: There are some breaking changes in the annotations HTTP API for region annotations. Region
+    annotations are now represented using a single event instead of two seperate events. Check HTTP docs for more details.
+
 # 6.3.3 (2019-08-15)
 
 ### Bug Fixes

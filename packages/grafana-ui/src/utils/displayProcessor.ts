@@ -15,9 +15,9 @@ import { getValueFormat } from './valueFormats/valueFormats';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import { GrafanaTheme, GrafanaThemeType } from '../types';
+import { GrafanaTheme, GrafanaThemeType } from '../types/index';
 
-export interface DisplayValueOptions {
+interface DisplayProcessorOptions {
   field?: FieldConfig;
 
   // Context
@@ -25,7 +25,7 @@ export interface DisplayValueOptions {
   theme?: GrafanaTheme; // Will pick 'dark' if not defined
 }
 
-export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProcessor {
+export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayProcessor {
   if (options && !_.isEmpty(options)) {
     const field = options.field ? options.field : {};
     const formatFunc = getValueFormat(field.unit || 'none');

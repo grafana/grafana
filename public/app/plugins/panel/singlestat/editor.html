@@ -1,4 +1,41 @@
 <div class="editor-row">
+
+  <div class="grafana-info-box" ng-if="ctrl.panel.gauge.show">
+    <h5>Gauge Migration</h5>
+    <p>
+      Gauge visualizations within the Singlestat panel are deprecated.  Please
+      migrate this panel to use the Gauge panel
+    
+      <div class="gf-form-button-row">
+        <button class="btn btn-primary" ng-click="ctrl.migrateToGaugePanel(true)">
+          Migrate to Gauge Panel
+        </button>
+        <button class="btn btn-inverse" ng-click="ctrl.migrateToGaugePanel(false)">
+          Show as single stat
+        </button>
+      </div>
+    
+      <br/>
+      
+      <div ng-if="ctrl.panel.sparkline.show">
+        <b>NOTE:</b> Sparklines are not supported in the gauge panel
+      </div>
+
+      <div ng-if="ctrl.panel.prefix">
+        <b>NOTE:</b> Prefix will not be show in the gauge panel
+      </div>
+
+      <div ng-if="ctrl.panel.postfix">
+        <b>NOTE:</b> Postfix will not be show in the gauge panel
+      </div>
+
+      <div ng-if="ctrl.panel.links && ctrl.panel.links.length">
+        <b>NOTE:</b> Links will be in the upper left corner, rather than anywhere on the gauge
+      </div>
+    </p>
+  </div>
+    
+
   <div class="section gf-form-group">
     <h5 class="section-heading">Value</h5>
 
