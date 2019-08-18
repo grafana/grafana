@@ -20,11 +20,11 @@ export interface SingleStatBaseOptions {
 
 const optionsToKeep = ['fieldOptions', 'orientation'];
 
-export const sharedSingleStatOptionsCheck = (
+export function sharedSingleStatPanelChangedHandler(
   options: Partial<SingleStatBaseOptions> | any,
   prevPluginId: string,
   prevOptions: any
-) => {
+) {
   // Migrating from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {
     const panel = prevOptions.angular;
@@ -90,9 +90,9 @@ export const sharedSingleStatOptionsCheck = (
     }
   }
   return options;
-};
+}
 
-export function sharedSingleStatMigrationCheck(panel: PanelModel<SingleStatBaseOptions>): SingleStatBaseOptions {
+export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBaseOptions>): SingleStatBaseOptions {
   if (!panel.options) {
     // This happens on the first load or when migrating from angular
     return {} as any;

@@ -2,10 +2,10 @@ import { PanelPlugin } from '@grafana/ui';
 import { GaugePanelEditor } from './GaugePanelEditor';
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions, defaults } from './types';
-import { gaugePanelMigrationCheck, gaugePanelChangedCheck } from './GaugeMigrations';
+import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 
 export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   .setDefaults(defaults)
   .setEditor(GaugePanelEditor)
-  .setPanelChangeHandler(gaugePanelChangedCheck)
-  .setMigrationHandler(gaugePanelMigrationCheck);
+  .setPanelChangeHandler(gaugePanelChangedHandler)
+  .setMigrationHandler(gaugePanelMigrationHandler);
