@@ -89,7 +89,7 @@ describe('Gauge Panel Migrations', () => {
           maxValue: 150,
           minValue: -10,
           show: true,
-          thresholdLabels: false,
+          thresholdLabels: true,
           thresholdMarkers: true,
         },
       },
