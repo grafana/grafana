@@ -113,6 +113,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.unitFormats = kbn.getUnitFormats();
   }
 
+  migrateToGaugePanel(migrate: boolean) {
+    if (migrate) {
+      this.onPluginTypeChange(config.panels['gauge']);
+    } else {
+      this.panel.gauge.show = false;
+      this.render();
+    }
+  }
+
   setUnitFormat(subItem: { value: any }) {
     this.panel.format = subItem.value;
     this.refresh();
