@@ -1,6 +1,6 @@
 -include local/Makefile
 
-.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run clean devenv devenv-down revive-alerting
+.PHONY: all deps-go deps-js deps build-go build-server build-cli build-js build build-docker-dev build-docker-full lint-go gosec revive golangci-lint go-vet test-go test-js test run clean devenv devenv-down revive-alerting test test-mysql test-psql test-integration
 
 GO = GO111MODULE=on go
 GO_FILES ?= ./pkg/...
@@ -142,3 +142,15 @@ devenv-down:
 	@cd devenv; \
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;
+
+test:
+	@$(GO) test $(GO_FILES) -cover
+
+test-mysql:
+	@GRAFANA_TEST_DB=mysql $(GO) test $(GO_FILES) -cover -tags=integration
+
+test-psql:
+	@GRAFANA_TEST_DB=postgres $(GO) test $(GO_FILES) -cover -tags=integration
+
+test-integration:
+	@$(GO) test $(GO_FILES) -cover -tags=integration
