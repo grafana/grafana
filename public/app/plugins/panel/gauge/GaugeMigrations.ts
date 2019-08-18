@@ -1,30 +1,27 @@
-import { PanelModel, VizOrientation } from '@grafana/ui';
-import { FieldConfig } from '@grafana/data';
+import { PanelModel, sharedSingleStatOptionsCheck, sharedSingleStatMigrationCheck } from '@grafana/ui';
 import { GaugeOptions } from './types';
-import { sharedSingleStatMigrationCheck } from '@grafana/ui/src/components/SingleStatShared/SingleStatBaseOptions';
 
+// This is called when the panel first loads
 export const gaugePanelMigrationCheck = (panel: PanelModel<GaugeOptions>): Partial<GaugeOptions> => {
-  if (!panel.options && (panel as any).format) {
-    return migrateFromAngularSingleStat(panel);
-  }
-
   return sharedSingleStatMigrationCheck(panel);
 };
 
-function migrateFromAngularSingleStat(panel: any): Partial<GaugeOptions> {
-  const options = {
-    fieldOptions: {
-      defaults: {} as FieldConfig,
-      override: {} as FieldConfig,
-      calcs: [panel.format],
-    },
-    orientation: VizOrientation.Horizontal,
-  };
+// This is called when the panel changes from another panel
+export const gaugePanelChangedCheck = (
+  options: Partial<GaugeOptions> | any,
+  prevPluginId: string,
+  prevOptions: any
+) => {
+  // This handles most config changes
+  const opts = sharedSingleStatOptionsCheck(options, prevPluginId, prevOptions) as GaugeOptions;
 
-  if (panel.gauge) {
-    options.fieldOptions.defaults.min = panel.gauge.minValue;
-    options.fieldOptions.defaults.max = panel.gauge.maxValue;
+  // Changing from angular singlestat
+  if (prevPluginId === 'singlestat' && prevOptions.angular) {
+    const gauge = prevOptions.angular.gauge;
+    if (gauge) {
+      opts.showThresholdMarkers = gauge.thresholdMarkers;
+      opts.showThresholdLabels = gauge.thresholdLabels;
+    }
   }
-
-  return options;
-}
+  return opts;
+};
