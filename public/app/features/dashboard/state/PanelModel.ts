@@ -284,14 +284,17 @@ export class PanelModel {
     // Let panel plugins inspect options from previous panel and keep any that it can use
     if (newPlugin.onPanelTypeChanged) {
       let old: any = {};
+
       if (wasAngular) {
         old = { angular: oldOptions };
       } else if (oldOptions && oldOptions.options) {
         old = oldOptions.options;
       }
+
       this.options = this.options || {};
       Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
     }
+
     // switch
     this.type = pluginId;
     this.plugin = newPlugin;
