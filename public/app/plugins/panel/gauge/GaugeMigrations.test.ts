@@ -1,5 +1,5 @@
 import { PanelModel } from '@grafana/ui';
-import { gaugePanelMigrationCheck } from './GaugeMigrations';
+import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 
 describe('Gauge Panel Migrations', () => {
   it('from 6.1.1', () => {
@@ -77,6 +77,30 @@ describe('Gauge Panel Migrations', () => {
       type: 'gauge',
     } as PanelModel;
 
-    expect(gaugePanelMigrationCheck(panel)).toMatchSnapshot();
+    expect(gaugePanelMigrationHandler(panel)).toMatchSnapshot();
+  });
+
+  it('change from angular singlestat to gauge', () => {
+    const old: any = {
+      angular: {
+        format: 'ms',
+        decimals: 7,
+        gauge: {
+          maxValue: 150,
+          minValue: -10,
+          show: true,
+          thresholdLabels: true,
+          thresholdMarkers: true,
+        },
+      },
+    };
+
+    const newOptions = gaugePanelChangedHandler({} as any, 'singlestat', old);
+    expect(newOptions.fieldOptions.defaults.unit).toBe('ms');
+    expect(newOptions.fieldOptions.defaults.min).toBe(-10);
+    expect(newOptions.fieldOptions.defaults.max).toBe(150);
+    expect(newOptions.fieldOptions.defaults.decimals).toBe(7);
+    expect(newOptions.showThresholdMarkers).toBe(true);
+    expect(newOptions.showThresholdLabels).toBe(true);
   });
 });
