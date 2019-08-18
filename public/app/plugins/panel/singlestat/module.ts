@@ -3,7 +3,13 @@ import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
-import { LegacyResponseData, getFlotPairs, getDisplayProcessor, KeyValue } from '@grafana/ui';
+import {
+  LegacyResponseData,
+  getFlotPairs,
+  getDisplayProcessor,
+  convertOldAngulrValueMapping,
+  getColorFromHexRgbOrName,
+} from '@grafana/ui';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -17,10 +23,8 @@ import {
   GraphSeriesValue,
   DisplayValue,
   fieldReducers,
-  ValueMapping,
-  MappingType,
+  KeyValue,
 } from '@grafana/data';
-import { GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
 import { auto } from 'angular';
 import { LinkSrv, LinkModel } from 'app/features/panel/panellinks/link_srv';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
@@ -218,7 +222,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           ...f.field.config,
           unit: panel.format,
           decimals: panel.decimals,
-          mappings: this.convertValueMappingConfig(),
+          mappings: convertOldAngulrValueMapping(panel),
         },
         theme: config.theme,
         isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
@@ -283,47 +287,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   onSparklineFillChange(newColor: string) {
     this.panel.sparkline.fillColor = newColor;
     this.render();
-  }
-
-  /**
-   * Convert the existing format to new format
-   */
-  convertValueMappingConfig(): ValueMapping[] {
-    const { panel } = this;
-    const mappings: ValueMapping[] = [];
-
-    // Guess the right type based on options
-    let mappingType = panel.mappingType;
-    if (!panel.mappingType) {
-      if (panel.valueMaps && panel.valueMaps.length) {
-        mappingType = 1;
-      } else if (panel.rangeMaps && panel.rangeMaps.length) {
-        mappingType = 2;
-      }
-    }
-
-    // check value to text mappings if its enabled
-    if (mappingType === 1) {
-      for (let i = 0; i < panel.valueMaps.length; i++) {
-        const map = panel.valueMaps[i];
-        mappings.push({
-          ...map,
-          id: i, // used for order
-          type: MappingType.ValueToText,
-        });
-      }
-    } else if (mappingType === 2) {
-      for (let i = 0; i < panel.rangeMaps.length; i++) {
-        const map = panel.rangeMaps[i];
-        mappings.push({
-          ...map,
-          id: i, // used for order
-          type: MappingType.RangeToText,
-        });
-      }
-    }
-
-    return mappings;
   }
 
   removeValueMap(map: any) {
@@ -581,19 +544,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       // Map panel colors to hex or rgb/a values
       if (panel.colors) {
-        data.colorMap = panel.colors.map((color: string) =>
-          getColorFromHexRgbOrName(
-            color,
-            config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
-          )
-        );
+        data.colorMap = panel.colors.map((color: string) => getColorFromHexRgbOrName(color, config.theme.type));
       }
 
       const body = panel.gauge.show ? '' : getBigValueHtml();
 
       if (panel.colorBackground) {
         const color = getColorForValue(data, data.display.numeric);
-        console.log(color);
         if (color) {
           $panelContainer.css('background-color', color);
           if (scope.fullscreen) {
