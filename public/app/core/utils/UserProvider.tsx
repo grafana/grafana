@@ -28,7 +28,7 @@ export interface ProfileUpdateFields {
 
 export interface Props {
   userId?: number; // passed, will load user on mount
-  children: (api: UserAPI, states: LoadingStates, user: User) => JSX.Element;
+  children: (api: UserAPI, states: LoadingStates, user?: User) => JSX.Element;
 }
 
 export interface State {
