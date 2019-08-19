@@ -3,6 +3,7 @@ import { LogsModel, TimeZone, LogsDedupStrategy, LogRowModel } from '@grafana/da
 import { LogRow } from './LogRow';
 
 const PREVIEW_LIMIT = 100;
+const RENDER_LIMIT = 500;
 
 export interface Props {
   data: LogsModel;
@@ -12,6 +13,7 @@ export interface Props {
   showLabels: boolean;
   timeZone: TimeZone;
   deduplicatedData?: LogsModel;
+  rowLimit?: number;
   onClickLabel?: (label: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: any) => Promise<any>;
 }
@@ -68,6 +70,7 @@ export class LogRows extends PureComponent<Props, State> {
       showLabels,
       timeZone,
       onClickLabel,
+      rowLimit,
     } = this.props;
     const { deferLogs, renderAll } = this.state;
     const dedupedData = deduplicatedData ? deduplicatedData : data;
@@ -81,7 +84,9 @@ export class LogRows extends PureComponent<Props, State> {
     // Staged rendering
     const processedRows = dedupedData ? dedupedData.rows : [];
     const firstRows = processedRows.slice(0, PREVIEW_LIMIT);
-    const lastRows = processedRows.slice(PREVIEW_LIMIT);
+    const renderLimit = rowLimit || RENDER_LIMIT;
+    const rowCount = Math.min(processedRows.length, renderLimit);
+    const lastRows = processedRows.slice(PREVIEW_LIMIT, rowCount);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
@@ -121,7 +126,7 @@ export class LogRows extends PureComponent<Props, State> {
               onClickLabel={onClickLabel}
             />
           ))}
-        {hasData && deferLogs && <span>Rendering {processedRows.length} rows...</span>}
+        {hasData && deferLogs && <span>Rendering {rowCount} rows...</span>}
       </div>
     );
   }

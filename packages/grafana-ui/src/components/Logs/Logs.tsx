@@ -19,8 +19,6 @@ import { Switch } from '../Switch/Switch';
 import { ToggleButtonGroup, ToggleButton } from '../ToggleButtonGroup/ToggleButtonGroup';
 import { LogRows } from './LogRows';
 
-const PREVIEW_LIMIT = 100;
-
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {
     return (
@@ -54,50 +52,15 @@ interface Props {
 }
 
 interface State {
-  deferLogs: boolean;
-  renderAll: boolean;
   showLabels: boolean;
   showTime: boolean;
 }
 
 export class Logs extends PureComponent<Props, State> {
-  deferLogsTimer: NodeJS.Timer | null = null;
-  renderAllTimer: NodeJS.Timer | null = null;
-
   state = {
-    deferLogs: true,
-    renderAll: false,
     showLabels: false,
     showTime: true,
   };
-
-  componentDidMount() {
-    // Staged rendering
-    if (this.state.deferLogs) {
-      const { data } = this.props;
-      const rowCount = data && data.rows ? data.rows.length : 0;
-      // Render all right away if not too far over the limit
-      const renderAll = rowCount <= PREVIEW_LIMIT * 2;
-      this.deferLogsTimer = setTimeout(() => this.setState({ deferLogs: false, renderAll }), rowCount);
-    }
-  }
-
-  componentDidUpdate(prevProps: Props, prevState: State) {
-    // Staged rendering
-    if (prevState.deferLogs && !this.state.deferLogs && !this.state.renderAll) {
-      this.renderAllTimer = setTimeout(() => this.setState({ renderAll: true }), 2000);
-    }
-  }
-
-  componentWillUnmount() {
-    if (this.deferLogsTimer) {
-      clearTimeout(this.deferLogsTimer);
-    }
-
-    if (this.renderAllTimer) {
-      clearTimeout(this.renderAllTimer);
-    }
-  }
 
   onChangeDedup = (dedup: LogsDedupStrategy) => {
     const { onDedupStrategyChange } = this.props;
@@ -169,7 +132,7 @@ export class Logs extends PureComponent<Props, State> {
     const dedupCount = dedupedData
       ? dedupedData.rows.reduce((sum, row) => (row.duplicates ? sum + row.duplicates : sum), 0)
       : 0;
-    const meta = data.meta ? [...data.meta] : [];
+    const meta = data && data.meta ? [...data.meta] : [];
 
     if (dedupStrategy !== LogsDedupStrategy.none) {
       meta.push({
@@ -240,6 +203,7 @@ export class Logs extends PureComponent<Props, State> {
           getRowContext={this.props.getRowContext}
           highlighterExpressions={highlighterExpressions}
           onClickLabel={onClickLabel}
+          rowLimit={data ? data.rows.length : undefined}
           showLabels={showLabels}
           showTime={showTime}
           timeZone={timeZone}

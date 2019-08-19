@@ -83,7 +83,11 @@ export class ResultProcessor {
     const sortedNewResults = sortLogsResult(newResults, this.state.refreshInterval);
 
     if (this.replacePreviousResults) {
-      return sortedNewResults;
+      const slice = 1000;
+      const rows = sortedNewResults.rows.slice(0, slice);
+      const series = sortedNewResults.series;
+
+      return { ...sortedNewResults, rows, series };
     }
 
     const prevLogsResult: LogsModel = this.state.logsResult || { hasUniqueLabels: false, rows: [] };
