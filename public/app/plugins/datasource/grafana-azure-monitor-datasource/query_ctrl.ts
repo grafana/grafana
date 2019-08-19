@@ -70,6 +70,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       valueColumn: string;
       segmentColumn: string;
     };
+    azureResourceGraph: {
+      query: string;
+    };
   };
 
   defaults = {
@@ -112,6 +115,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       timeGrain: 'auto',
       timeColumn: 'timestamp',
       valueColumn: '',
+    },
+    azureResourceGraph: {
+      query: 'count',
     },
   };
 
