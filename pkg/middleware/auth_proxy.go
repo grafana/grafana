@@ -24,7 +24,7 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *m.ReqContext,
 		OrgID: orgID,
 	})
 
-	logger := log.New("auth proxy")
+	logger := log.New("auth.proxy")
 
 	// Bail if auth proxy is not enabled
 	if !auth.IsEnabled() {
