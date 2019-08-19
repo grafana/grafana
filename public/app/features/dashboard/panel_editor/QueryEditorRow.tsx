@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
 import classNames from 'classnames';
 import _ from 'lodash';
 
@@ -198,8 +198,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     return null;
   }
 
-  renderQueryResponseInfo(response: PanelData) {
-    const things = [];
+  renderQueryResponseInfo(response: PanelData): ReactNode[] {
+    const things: ReactNode[] = [];
 
     const { request, state, series, error } = response;
 
@@ -213,21 +213,29 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       );
     }
 
+    let seriesInfo = 'No Data';
     if (series && series.length) {
-      const rows = series.reduce((count, series) => {
-        return count + series.length;
-      }, 0);
-      things.push(
-        <span key="seriesInfo">
-          {response.series.length} Series, {rows} Rows
-        </span>
-      );
+      if (series.length > 1) {
+        let fieldCount = 0;
+        let rowCount = 0;
+        for (let i = 0; i < series.length; i++) {
+          const frame = series[i];
+          fieldCount += frame.fields.length;
+          rowCount += frame.length;
+        }
+        // TODO: need a better description of multi-frame results
+        seriesInfo = `${series.length} Frames, with ${fieldCount} Fields and ${rowCount} Rows`;
+      } else {
+        const frame = series[0];
+        seriesInfo = `${frame.fields.length} Fields, ${frame.length} Rows`;
+      }
     }
+    things.push(<span key="seriesInfo">{seriesInfo}</span>);
 
     if (request) {
       if (request.endTime) {
         const elapsed = (request.endTime - request.startTime) / 1000;
-        things.push(<span key="time">&nbsp;&nbsp; {elapsed} seconds</span>);
+        things.push(<span key="time">&nbsp;in{elapsed} seconds</span>);
       } else {
         // running time?
       }
@@ -318,15 +326,6 @@ export interface AngularQueryComponentScope {
   range: TimeRange;
 }
 
-function hasQueryForTarget(req: DataQueryRequest, refId: string) {
-  for (const t of req.targets) {
-    if (t.refId === refId) {
-      return true;
-    }
-  }
-  return false;
-}
-
 /**
  * Get a version of the PanelData limited to the query we are looking at
  */
@@ -337,12 +336,15 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     // Check if a sub request is still loading
     if (data.request && data.request.subRequests) {
       for (const sub of data.request.subRequests) {
-        if (hasQueryForTarget(sub, refId)) {
-          return {
-            state: LoadingState.Loading,
-            request: sub,
-            series: [],
-          };
+        for (let i = 0; i < sub.targets.length; i++) {
+          const t = sub.targets[i];
+          if (t.refId === refId) {
+            return {
+              state: LoadingState.Loading,
+              request: sub,
+              series: [],
+            };
+          }
         }
       }
     }

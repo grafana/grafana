@@ -26,7 +26,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     super(instanceSettings);
   }
 
-  query(request: DataQueryRequest<DataQuery>, observer: DataStreamObserver): Promise<DataQueryResponse> {
+  async query(request: DataQueryRequest<DataQuery>, observer: DataStreamObserver): Promise<DataQueryResponse> {
     // Remove any hidden or invalid queries
     const queries = request.targets.filter(t => {
       return !t.hide || t.datasource === MIXED_DATASOURCE_NAME;
@@ -36,7 +36,8 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       return Promise.resolve({ data: [] }); // nothing
     }
 
-    // When more than one source, query them all together
+    // When multiple datasources are used, merge their results
+    // after all queries have finished.  (<=6.3 behavior)
     const sets = groupBy(queries, 'datasource');
     const names = Object.keys(sets);
     if (names.length > 1) {
@@ -56,7 +57,9 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       });
     }
 
-    // Otherwise stream results as we get them
+    // If there is only one datasource used, make multiple requests
+    // and stream the results.  (new in 6.4)
+    const ds = await getDatasourceSrv().get(queries[0].datasource);
     request.subRequests = [];
     for (const query of queries) {
       const sub = cloneDeep(request);
@@ -65,17 +68,17 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       sub.startTime = Date.now();
       request.subRequests.push(sub);
       this.startStreamingQuery(
-        query.datasource,
+        ds,
         query.refId, // Replace existing data by refId
-        sub, // the request
+        sub, // the modified sub-request
         observer
       );
     }
-    return Promise.resolve({ data: [] }); // maybe wait for first result?
+    return { data: [] }; // maybe wait for first result?
   }
 
   startStreamingQuery(
-    datasource: string,
+    datasource: DataSourceApi,
     key: string,
     request: DataQueryRequest<DataQuery>,
     observer: DataStreamObserver
@@ -89,31 +92,29 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
         getBackendSrv().resolveCancelerIfExists(request.requestId);
       },
     };
-    observer(event); // Is this necessary?
+    // Send an initial 'loading' state -- necessary?
+    observer(event);
 
     // Starts background process
-    getDatasourceSrv()
-      .get(datasource)
-      .then(ds => {
-        ds.query(request, observer)
-          .then(res => {
-            request.endTime = Date.now();
-            event.state = LoadingState.Done;
-            event.data = getProcessedDataFrames(res.data).map(series => {
-              if (!series.meta) {
-                series.meta = {};
-              }
-              series.meta.requestId = request.requestId;
-              return series;
-            });
-            observer(event);
-          })
-          .catch(err => {
-            request.endTime = Date.now();
-            event.state = LoadingState.Error;
-            event.error = toDataQueryError(err);
-            observer(event);
-          });
+    datasource
+      .query(request, observer)
+      .then(res => {
+        request.endTime = Date.now();
+        event.state = LoadingState.Done;
+        event.data = getProcessedDataFrames(res.data).map(series => {
+          if (!series.meta) {
+            series.meta = {};
+          }
+          series.meta.requestId = request.requestId;
+          return series;
+        });
+        observer(event);
+      })
+      .catch(err => {
+        request.endTime = Date.now();
+        event.state = LoadingState.Error;
+        event.error = toDataQueryError(err);
+        observer(event);
       });
   }
 
