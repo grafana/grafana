@@ -46,10 +46,10 @@ export class DashLinksEditorCtrl {
     this.mode = 'list';
   }
 
-  setupNew() {
+  setupNew = () => {
     this.mode = 'new';
     this.link = { type: 'dashboards', icon: 'external link' };
-  }
+  };
 
   addLink() {
     this.dashboard.links.push(this.link);
