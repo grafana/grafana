@@ -11,10 +11,7 @@ export interface PopoverContentProps {
   updatePopperPosition?: () => void;
 }
 
-export type PopoverContent<T extends PopoverContentProps> =
-  | string
-  | React.ReactElement<T>
-  | ((props: T) => JSX.Element);
+export type PopoverContent = string | React.ReactElement<any> | ((props: PopoverContentProps) => JSX.Element);
 
 export const Tooltip = ({ children, theme, ...controllerProps }: TooltipProps) => {
   const tooltipTriggerRef = createRef<PopperJS.ReferenceObject>();

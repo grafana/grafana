@@ -4,7 +4,7 @@ import { PopoverContent } from '../Tooltip/Tooltip';
 import { cx } from 'emotion';
 export interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  tooltip?: PopoverContent<any>;
+  tooltip?: PopoverContent;
   labelWidth?: number;
   inputWidth?: number;
   inputEl?: React.ReactNode;

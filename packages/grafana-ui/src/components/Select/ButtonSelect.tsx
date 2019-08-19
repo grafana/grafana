@@ -38,7 +38,7 @@ export interface Props<T> {
   components?: any;
   maxMenuHeight?: number;
   onChange: (item: SelectableValue<T>) => void;
-  tooltipContent?: PopoverContent<any>;
+  tooltipContent?: PopoverContent;
   isMenuOpen?: boolean;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;

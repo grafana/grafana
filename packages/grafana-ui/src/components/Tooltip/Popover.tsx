@@ -22,7 +22,7 @@ export type RenderPopperArrowFn = (props: { arrowProps: PopperArrowProps; placem
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   show: boolean;
   placement?: PopperJS.Placement;
-  content: PopoverContent<any>;
+  content: PopoverContent;
   referenceElement: PopperJS.ReferenceObject;
   wrapperClassName?: string;
   renderArrow?: RenderPopperArrowFn;

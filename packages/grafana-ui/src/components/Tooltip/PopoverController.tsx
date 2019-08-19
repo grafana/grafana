@@ -8,7 +8,7 @@ import { PopoverContent } from './Tooltip';
 export interface UsingPopperProps {
   show?: boolean;
   placement?: PopperJS.Placement;
-  content: PopoverContent<any>;
+  content: PopoverContent;
   children: JSX.Element;
 }
 
@@ -18,13 +18,13 @@ type PopperControllerRenderProp = (
   popperProps: {
     show: boolean;
     placement: PopperJS.Placement;
-    content: PopoverContent<any>;
+    content: PopoverContent;
   }
 ) => JSX.Element;
 
 interface Props {
   placement?: PopperJS.Placement;
-  content: PopoverContent<any>;
+  content: PopoverContent;
   className?: string;
   children: PopperControllerRenderProp;
   hideAfter?: number;

@@ -43,7 +43,7 @@ export interface CommonProps<T> {
   backspaceRemovesValue?: boolean;
   isOpen?: boolean;
   components?: any;
-  tooltipContent?: PopoverContent<any>;
+  tooltipContent?: PopoverContent;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   tabSelectsValue?: boolean;
@@ -269,7 +269,7 @@ export interface TooltipWrapperProps {
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   isOpen?: boolean;
-  tooltipContent?: PopoverContent<any>;
+  tooltipContent?: PopoverContent;
 }
 
 export interface TooltipWrapperState {

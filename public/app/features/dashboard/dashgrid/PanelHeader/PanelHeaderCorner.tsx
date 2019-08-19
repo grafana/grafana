@@ -71,7 +71,7 @@ export class PanelHeaderCorner extends Component<Props> {
     );
   };
 
-  renderCornerType(infoMode: InfoMode, content: PopoverContent<any>) {
+  renderCornerType(infoMode: InfoMode, content: PopoverContent) {
     const theme = infoMode === InfoMode.Error ? 'error' : 'info';
     return (
       <Tooltip content={content} placement="top-start" theme={theme}>

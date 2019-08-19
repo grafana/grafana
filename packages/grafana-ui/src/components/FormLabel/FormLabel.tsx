@@ -8,7 +8,7 @@ interface Props {
   htmlFor?: string;
   isFocused?: boolean;
   isInvalid?: boolean;
-  tooltip?: PopoverContent<any>;
+  tooltip?: PopoverContent;
   width?: number;
 }
 

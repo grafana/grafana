@@ -7,7 +7,7 @@ interface Props {
   state?: PluginState;
 }
 
-function getPluginStateInfoText(state?: PluginState): PopoverContent<any> | null {
+function getPluginStateInfoText(state?: PluginState): PopoverContent | null {
   switch (state) {
     case PluginState.alpha:
       return (
