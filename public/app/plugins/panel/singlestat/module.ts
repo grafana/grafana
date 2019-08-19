@@ -203,7 +203,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           if (calcField.type === FieldType.string) {
             const avoid = [ReducerID.mean, ReducerID.sum];
             if (avoid.includes(calc)) {
-              calc = panel.valueName = ReducerID.last;
+              calc = panel.valueName = ReducerID.first;
             }
           }
         } else {
