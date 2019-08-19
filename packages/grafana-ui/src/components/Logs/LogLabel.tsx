@@ -123,5 +123,4 @@ class UnThemedLogLabel extends PureComponent<Props, State> {
 }
 
 export const LogLabel = withTheme(UnThemedLogLabel);
-
 LogLabel.displayName = 'LogLabel';

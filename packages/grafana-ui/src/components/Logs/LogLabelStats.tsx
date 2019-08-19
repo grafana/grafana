@@ -1,32 +1,50 @@
 import React, { PureComponent } from 'react';
-import classnames from 'classnames';
+import { css, cx } from 'emotion';
 import { LogLabelStatsModel } from '@grafana/data';
 
-function LogLabelStatsRow(logLabelStatsModel: LogLabelStatsModel) {
-  const { active, count, proportion, value } = logLabelStatsModel;
-  const percent = `${Math.round(proportion * 100)}%`;
-  const barStyle = { width: percent };
-  const className = classnames('logs-stats-row', { 'logs-stats-row--active': active });
-
-  return (
-    <div className={className}>
-      <div className="logs-stats-row__label">
-        <div className="logs-stats-row__value" title={value}>
-          {value}
-        </div>
-        <div className="logs-stats-row__count">{count}</div>
-        <div className="logs-stats-row__percent">{percent}</div>
-      </div>
-      <div className="logs-stats-row__bar">
-        <div className="logs-stats-row__innerbar" style={barStyle} />
-      </div>
-    </div>
-  );
-}
+import { LogLabelStatsRow } from './LogLabelStatsRow';
+import { Themeable, GrafanaTheme } from '../../types/theme';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import { withTheme } from '../../themes/index';
 
 const STATS_ROW_LIMIT = 5;
 
-interface Props {
+const getStyles = (theme: GrafanaTheme) => ({
+  logsStats: css`
+    label: logs-stats;
+    background-color: ${selectThemeVariant({ light: theme.colors.pageBg, dark: theme.colors.dark2 }, theme.type)};
+    color: ${theme.colors.text};
+    border: 1px solid ${selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark9 }, theme.type)};
+    border-radius: ${theme.border.radius.md};
+    max-width: 500px;
+  `,
+  logsStatsHeader: css`
+    label: logs-stats__header;
+    background: ${selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.dark9 }, theme.type)};
+    padding: 6px 10px;
+    display: flex;
+  `,
+  logsStatsTitle: css`
+    label: logs-stats__title;
+    font-weight: ${theme.typography.weight.semibold};
+    padding-right: ${theme.spacing.d};
+    overflow: hidden;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+  `,
+  logsStatsClose: css`
+    label: logs-stats__close;
+    cursor: pointer;
+  `,
+  logsStatsBody: css`
+    label: logs-stats__body;
+    padding: 20px 10px 10px 10px;
+  `,
+});
+
+interface Props extends Themeable {
   stats: LogLabelStatsModel[];
   label: string;
   value: string;
@@ -34,9 +52,10 @@ interface Props {
   onClickClose: () => void;
 }
 
-export class LogLabelStats extends PureComponent<Props> {
+class UnThemedLogLabelStats extends PureComponent<Props> {
   render() {
-    const { label, rowCount, stats, value, onClickClose } = this.props;
+    const { label, rowCount, stats, value, onClickClose, theme } = this.props;
+    const style = getStyles(theme);
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
     let activeRow = topRows.find(row => row.value === value);
     let otherRows = stats.slice(STATS_ROW_LIMIT);
@@ -54,14 +73,14 @@ export class LogLabelStats extends PureComponent<Props> {
     const otherProportion = otherCount / total;
 
     return (
-      <div className="logs-stats">
-        <div className="logs-stats__header">
-          <span className="logs-stats__title">
+      <div className={cx([style.logsStats])}>
+        <div className={cx([style.logsStatsHeader])}>
+          <span className={cx([style.logsStatsTitle])}>
             {label}: {total} of {rowCount} rows have that label
           </span>
-          <span className="logs-stats__close fa fa-remove" onClick={onClickClose} />
+          <span className={cx([style.logsStatsClose, 'fa fa-remove'])} onClick={onClickClose} />
         </div>
-        <div className="logs-stats__body">
+        <div className={cx([style.logsStatsBody])}>
           {topRows.map(stat => (
             <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
           ))}
@@ -74,3 +93,6 @@ export class LogLabelStats extends PureComponent<Props> {
     );
   }
 }
+
+export const LogLabelStats = withTheme(UnThemedLogLabelStats);
+LogLabelStats.displayName = 'LogLabelStats';
