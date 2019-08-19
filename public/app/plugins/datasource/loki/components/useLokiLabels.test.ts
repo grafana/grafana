@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook, act } from 'react-hooks-testing-library';
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from './useLokiLabels';
 import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
