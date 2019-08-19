@@ -15,6 +15,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
+	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn()
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	quota := middleware.Quota(hs.QuotaService)
@@ -103,13 +104,6 @@ func (hs *HTTPServer) registerRoutes() {
 	// dashboard snapshots
 	r.Get("/dashboard/snapshot/*", hs.Index)
 	r.Get("/dashboard/snapshots/", reqSignedIn, hs.Index)
-
-	// api for dashboard snapshots
-	r.Post("/api/snapshots/", bind(models.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
-	r.Get("/api/snapshot/shared-options/", GetSharingOptions)
-	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
-	r.Get("/api/snapshots-delete/:deleteKey", Wrap(DeleteDashboardSnapshotByDeleteKey))
-	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
 
 	// api renew session based on cookie
 	r.Get("/api/login/ping", quota("session"), Wrap(hs.LoginAPIPing))
@@ -418,4 +412,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// streams
 	//r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
+
+	// Snapshots
+	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, bind(models.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
+	r.Get("/api/snapshot/shared-options/", reqSignedIn, GetSharingOptions)
+	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
+	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
+	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
 }
