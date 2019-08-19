@@ -666,8 +666,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Boostrap lerna
-          command: 'npx lerna bootstrap'
+          name: Bootstrap lerna
+          command: 'npx lerna bootstrap --hoist'
       - run:
           name: Build packages
           command: yarn packages:build
@@ -679,8 +679,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Boostrap lerna
-          command: 'npx lerna bootstrap'
+          name: Bootstrap lerna
+          command: 'npx lerna bootstrap --hoist'
       - run:
           name: npm - Prepare auth token
           command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
