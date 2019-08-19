@@ -22,6 +22,7 @@ The Azure Monitor Datasource supports multiple services in the Azure cloud:
 - **[Application Insights]({{< relref "#querying-the-application-insights-service" >}})** is an extensible Application Performance Management (APM) service for web developers on multiple platforms and can be used to monitor your live web application - it will automatically detect performance anomalies.
 - **[Azure Log Analytics]({{< relref "#querying-the-azure-log-analytics-service" >}})** (or Azure Logs) gives you access to log data collected by Azure Monitor.
 - **[Application Insights Analytics]({{< relref "#writing-analytics-queries-for-the-application-insights-service" >}})** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics.
+- **[Azure Resource Graph]({{< relref "#querying-resource-graph" >}})** allows you to query [Azure Resource Graph](https://azure.microsoft.com/en-gb/features/resource-graph/)
 
 ## Adding the data source to Grafana
 
@@ -76,6 +77,7 @@ In the query editor for a panel, after choosing your Azure Monitor datasource, t
 - `Azure Monitor`
 - `Application Insights`
 - `Azure Log Analytics`
+- `Azure Resource Graph`
 
 The query editor will change depending on which one you pick. Azure Monitor is the default.
 
@@ -291,3 +293,9 @@ There are some important caveats to remember:
 - Currently, four default dashboard variables are supported: `$__timeFilter()`, `$__from`, `$__to`, and `$__interval`. If you're searching in timestamped data, replace the beginning of your where clause to `where $__timeFilter()`. Dashboard changes by time region are handled as you'd expect, as long as you leave the name of the `timestamp` column alone. Likewise, `$__interval` will automatically change based on the dashboard's time region _and_ the width of the chart being displayed. Use it in bins, so `bin(timestamp,$__interval)` changes into something like `bin(timestamp,1s)`. Use `$__from` and `$__to` if you just want the formatted dates to be inserted.
 
 - Templated dashboard variables are not yet supported! They will come in a future version.
+
+### Querying Resource Graph
+
+Query Azure resources using Azure Resource Graph API. 
+
+**Note:** Results are only in `table` format. So trend graphs will not work.
