@@ -19,6 +19,7 @@
 
 <div ng-if="ctrl.mode == 'list'">
   <div ng-if="ctrl.dashboard.links.length === 0">
+    <empty-list-cta onClick="ctrl.setupNew" title="ctrl.emptyListCta.title" buttonIcon="ctrl.emptyListCta.buttonIcon" buttonTitle="cltr.emptyListCta.buttonTitle" infoBox="ctrl.emptyListCta.infoBox" infoBoxTitle="ctrl.emptyListCta.infoBoxTitle"/>
     <div class="empty-list-cta">
       <div class="empty-list-cta__title">
         There are no dashboard links added yet
