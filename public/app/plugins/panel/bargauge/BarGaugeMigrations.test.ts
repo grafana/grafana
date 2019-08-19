@@ -1,5 +1,5 @@
 import { PanelModel } from '@grafana/ui';
-import { barGaugePanelMigrationCheck } from './BarGaugeMigrations';
+import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 
 describe('BarGauge Panel Migrations', () => {
   it('from 6.2', () => {
@@ -45,6 +45,6 @@ describe('BarGauge Panel Migrations', () => {
       type: 'bargauge',
     } as PanelModel;
 
-    expect(barGaugePanelMigrationCheck(panel)).toMatchSnapshot();
+    expect(barGaugePanelMigrationHandler(panel)).toMatchSnapshot();
   });
 });

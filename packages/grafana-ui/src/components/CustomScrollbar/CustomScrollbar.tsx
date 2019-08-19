@@ -77,7 +77,7 @@ export class CustomScrollbar extends Component<Props> {
         {...passedProps}
         className={cx(
           css`
-            visibility: ${hideTrack ? 'none' : 'visible'};
+            visibility: ${hideTrack ? 'hidden' : 'visible'};
           `,
           track
         )}

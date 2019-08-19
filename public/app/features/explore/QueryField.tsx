@@ -115,7 +115,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     if (initialQuery !== prevProps.initialQuery) {
       // and we have a version that differs
       if (initialQuery !== Plain.serialize(value)) {
-        this.setState({ value: makeValue(initialQuery, syntax) });
+        this.setState({ value: makeValue(initialQuery || '', syntax) });
       }
     }
 
@@ -125,7 +125,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   }
 
-  componentWillReceiveProps(nextProps: QueryFieldProps) {
+  UNSAFE_componentWillReceiveProps(nextProps: QueryFieldProps) {
     if (nextProps.syntaxLoaded && !this.props.syntaxLoaded) {
       // Need a bogus edit to re-render the editor after syntax has fully loaded
       const change = this.state.value
@@ -307,29 +307,23 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
   handleEnterAndTabKey = (event: KeyboardEvent, change: Change) => {
     const { typeaheadIndex, suggestions } = this.state;
-    if (this.menuEl) {
-      // Dont blur input
-      event.preventDefault();
-      if (!suggestions || suggestions.length === 0) {
-        return undefined;
-      }
+    event.preventDefault();
 
-      const suggestion = getSuggestionByIndex(suggestions, typeaheadIndex);
-      const nextChange = this.applyTypeahead(change, suggestion);
-
-      const insertTextOperation = nextChange.operations.find((operation: any) => operation.type === 'insert_text');
-      if (insertTextOperation) {
-        return undefined;
-      }
-
-      return true;
-    } else if (!event.shiftKey) {
-      // Run queries if Shift is not pressed, otherwise pass through
+    if (event.shiftKey) {
+      // pass through if shift is pressed
+      return undefined;
+    } else if (!this.menuEl) {
       this.executeOnChangeAndRunQueries();
-
       return true;
+    } else if (!suggestions || suggestions.length === 0) {
+      return undefined;
     }
-    return undefined;
+
+    const suggestion = getSuggestionByIndex(suggestions, typeaheadIndex);
+    const nextChange = this.applyTypeahead(change, suggestion);
+
+    const insertTextOperation = nextChange.operations.find((operation: any) => operation.type === 'insert_text');
+    return insertTextOperation ? true : undefined;
   };
 
   onKeyDown = (event: KeyboardEvent, change: Change) => {

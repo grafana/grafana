@@ -13,7 +13,7 @@ import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/act
 
 // Types
 import { StoreState } from 'app/types';
-import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
+import { TimeRange, AbsoluteTimeRange, toDataFrame, guessFieldTypes } from '@grafana/data';
 import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData, DataQueryError } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -217,7 +217,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
   const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
-  const series = graphResult ? graphResult : []; // TODO: use DataFrame
+  const series = graphResult ? graphResult.map(serie => guessFieldTypes(toDataFrame(serie))) : []; // TODO: use DataFrame
   const queryResponse: PanelData = {
     series,
     state: loadingState,

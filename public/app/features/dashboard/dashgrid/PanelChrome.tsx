@@ -178,7 +178,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         queries: panel.targets,
         panelId: panel.id,
         dashboardId: this.props.dashboard.id,
-        timezone: this.props.dashboard.timezone,
+        timezone: this.props.dashboard.getTimezone(),
         timeRange: timeData.timeRange,
         timeInfo: timeData.timeInfo,
         widthPixels: width,
@@ -251,6 +251,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             id={panel.id}
             data={data}
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
+            timeZone={this.props.dashboard.getTimezone()}
             options={panel.getOptions()}
             transparent={panel.transparent}
             width={width - theme.panelPadding * 2}

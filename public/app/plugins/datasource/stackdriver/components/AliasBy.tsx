@@ -24,7 +24,7 @@ export class AliasBy extends Component<Props, State> {
     this.setState({ value: this.props.value });
   }
 
-  componentWillReceiveProps(nextProps: Props) {
+  UNSAFE_componentWillReceiveProps(nextProps: Props) {
     if (nextProps.value !== this.props.value) {
       this.setState({ value: nextProps.value });
     }

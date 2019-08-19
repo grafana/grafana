@@ -1,6 +1,5 @@
 // Libraries
-import isString from 'lodash/isString';
-import isEqual from 'lodash/isEqual';
+import { isArray, isEqual, isString } from 'lodash';
 
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -123,6 +122,10 @@ export class PanelQueryState {
       return ds
         .query(this.request, this.dataStreamObserver)
         .then(resp => {
+          if (!isArray(resp.data)) {
+            throw new Error(`Expected response data to be array, got ${typeof resp.data}.`);
+          }
+
           this.request.endTime = Date.now();
           this.executor = null;
 
@@ -349,8 +352,8 @@ function translateToLegacyData(data: DataQueryResponseData) {
  *
  * This is also used by PanelChrome for snapshot support
  */
-export function getProcessedDataFrames(results?: any[]): DataFrame[] {
-  if (!results) {
+export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
+  if (!isArray(results)) {
     return [];
   }
 
