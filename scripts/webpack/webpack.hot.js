@@ -63,7 +63,6 @@ module.exports = merge(common, {
               'angularjs-annotate',
               '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
               'react-hot-loader/babel',
-              'lodash'
             ],
             presets: [
               [

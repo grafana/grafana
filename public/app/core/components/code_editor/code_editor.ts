@@ -53,30 +53,19 @@ async function link(scope: any, elem: any, attrs: any) {
   // Initialize editor
   const aceElem = elem.get(0);
   const { default: ace } = await import(/* webpackChunkName: "brace" */ 'brace');
-  // @ts-ignore
   await import('brace/ext/language_tools');
-  // @ts-ignore
   await import('brace/theme/textmate');
-  // @ts-ignore
   await import('brace/mode/text');
-  // @ts-ignore
   await import('brace/snippets/text');
-  // @ts-ignore
   await import('brace/mode/sql');
-  // @ts-ignore
   await import('brace/snippets/sql');
-  // @ts-ignore
   await import('brace/mode/sqlserver');
-  // @ts-ignore
   await import('brace/snippets/sqlserver');
-  // @ts-ignore
   await import('brace/mode/markdown');
-  // @ts-ignore
   await import('brace/snippets/markdown');
-  // @ts-ignore
   await import('brace/mode/json');
-  // @ts-ignore
   await import('brace/snippets/json');
+
   // @ts-ignore
   await import('./theme-grafana-dark');
 

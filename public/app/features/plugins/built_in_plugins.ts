@@ -32,33 +32,23 @@ const stackdriverPlugin = async () =>
 const azureMonitorPlugin = async () =>
   await import(/* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module');
 
-const textPanel = async () => await import(/* webpackChunkName: "textPanel" */ 'app/plugins/panel/text/module');
-const text2Panel = async () => await import(/* webpackChunkName: "text2Panel" */ 'app/plugins/panel/text2/module');
-const graph2Panel = async () => await import(/* webpackChunkName: "graph2Panel" */ 'app/plugins/panel/graph2/module');
-const graphPanel = async () => await import(/* webpackChunkName: "graphPanel" */ 'app/plugins/panel/graph/module');
-const dashListPanel = async () =>
-  await import(/* webpackChunkName: "dashListPanel" */ 'app/plugins/panel/dashlist/module');
-const pluginsListPanel = async () =>
-  await import(/* webpackChunkName: "pluginsListPanel" */ 'app/plugins/panel/pluginlist/module');
-const alertListPanel = async () =>
-  await import(/* webpackChunkName: "alertListPanel" */ 'app/plugins/panel/alertlist/module');
-const annoListPanel = async () =>
-  await import(/* webpackChunkName: "annoListPanel" */ 'app/plugins/panel/annolist/module');
-const heatmapPanel = async () =>
-  await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
-const tablePanel = async () => await import(/* webpackChunkName: "tablePanel" */ 'app/plugins/panel/table/module');
-const table2Panel = async () => await import(/* webpackChunkName: "table2Panel" */ 'app/plugins/panel/table2/module');
-const singlestatPanel = async () =>
-  await import(/* webpackChunkName: "singlestatPanel" */ 'app/plugins/panel/singlestat/module');
-const singlestatPanel2 = async () =>
-  await import(/* webpackChunkName: "singlestatPanel2" */ 'app/plugins/panel/singlestat2/module');
-const gettingStartedPanel = async () =>
-  await import(/* webpackChunkName: "gettingStartedPanel" */ 'app/plugins/panel/gettingstarted/module');
-const gaugePanel = async () => await import(/* webpackChunkName: "gaugePanel" */ 'app/plugins/panel/gauge/module');
-const pieChartPanel = async () =>
-  await import(/* webpackChunkName: "pieChartPanel" */ 'app/plugins/panel/piechart/module');
-const barGaugePanel = async () =>
-  await import(/* webpackChunkName: "barGaugePanel" */ 'app/plugins/panel/bargauge/module');
+import * as textPanel from 'app/plugins/panel/text/module';
+import * as text2Panel from 'app/plugins/panel/text2/module';
+import * as graph2Panel from 'app/plugins/panel/graph2/module';
+import * as graphPanel from 'app/plugins/panel/graph/module';
+import * as dashListPanel from 'app/plugins/panel/dashlist/module';
+import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
+import * as alertListPanel from 'app/plugins/panel/alertlist/module';
+import * as annoListPanel from 'app/plugins/panel/annolist/module';
+import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
+import * as tablePanel from 'app/plugins/panel/table/module';
+import * as table2Panel from 'app/plugins/panel/table2/module';
+import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
+import * as singlestatPanel2 from 'app/plugins/panel/singlestat2/module';
+import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
+import * as gaugePanel from 'app/plugins/panel/gauge/module';
+import * as pieChartPanel from 'app/plugins/panel/piechart/module';
+import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 
 const exampleApp = async () => await import(/* webpackChunkName: "exampleApp" */ 'app/plugins/app/example-app/module');
 

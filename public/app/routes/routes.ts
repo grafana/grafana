@@ -20,6 +20,9 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
   // Routes here are guarded both here and server side for react-container routes or just on the server for angular
   // ones. That means angular ones could be navigated to in case there is a client side link some where.
 
+  const importDashboardPage = () =>
+    import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage');
+
   $routeProvider
     .when('/', {
       template: '<react-container />',
@@ -28,8 +31,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.Home,
       reloadOnSearch: false,
       resolve: {
-        component: () =>
-          import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'),
+        component: importDashboardPage,
       },
     })
     .when('/d/:uid/:slug', {
@@ -38,8 +40,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
       resolve: {
-        component: () =>
-          import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'),
+        component: importDashboardPage,
       },
     })
     .when('/d/:uid', {
@@ -48,8 +49,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       reloadOnSearch: false,
       routeInfo: DashboardRouteInfo.Normal,
       resolve: {
-        component: () =>
-          import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'),
+        component: importDashboardPage,
       },
     })
     .when('/dashboard/:type/:slug', {
@@ -58,8 +58,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
       resolve: {
-        component: () =>
-          import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'),
+        component: importDashboardPage,
       },
     })
     .when('/dashboard/new', {
@@ -68,8 +67,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.New,
       reloadOnSearch: false,
       resolve: {
-        component: () =>
-          import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'),
+        component: importDashboardPage,
       },
     })
     .when('/d-solo/:uid/:slug', {

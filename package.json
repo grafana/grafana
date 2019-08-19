@@ -60,7 +60,6 @@
     "babel-jest": "24.8.0",
     "babel-loader": "8.0.5",
     "babel-plugin-angularjs-annotate": "0.10.0",
-    "babel-plugin-lodash": "^3.3.4",
     "clean-webpack-plugin": "2.0.0",
     "css-loader": "2.1.1",
     "enzyme": "3.9.0",

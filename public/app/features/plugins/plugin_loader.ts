@@ -165,7 +165,12 @@ for (const flotDep of flotDeps) {
 export async function importPluginModule(path: string): Promise<any> {
   const builtIn = builtInPlugins[path];
   if (builtIn) {
-    return await builtIn();
+    // for handling dynamic imports
+    if (typeof builtIn === 'function') {
+      return await builtIn();
+    } else {
+      return Promise.resolve(builtIn);
+    }
   }
   return grafanaRuntime.SystemJS.import(path);
 }

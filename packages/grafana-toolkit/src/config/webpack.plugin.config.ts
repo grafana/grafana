@@ -184,7 +184,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
               loader: 'babel-loader',
               options: {
                 presets: ['@babel/preset-env', { modules: false }],
-                plugins: ['angularjs-annotate', 'lodash'],
+                plugins: ['angularjs-annotate'],
               },
             },
             {
