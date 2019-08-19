@@ -667,7 +667,7 @@ jobs:
       - checkout
       - run:
           name: Bootstrap lerna
-          command: 'npx lerna bootstrap --hoist'
+          command: 'npx lerna bootstrap'
       - run:
           name: Build packages
           command: yarn packages:build
