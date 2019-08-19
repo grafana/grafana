@@ -15,6 +15,10 @@ export interface Props {
   infoBoxTitle?: string;
 }
 
+const ctaStyle = css`
+  text-align: center;
+`;
+
 const infoBoxStyles = css`
   max-width: 700px;
   margin: 0 auto;
@@ -75,7 +79,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
 
   return (
     <CallToActionCard
-      className="empty-list-cta"
+      className={ctaStyle}
       message={title}
       footer={footer()}
       callToActionElement={ctaElement}
