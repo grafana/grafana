@@ -11,7 +11,7 @@ export interface Props {
   proTipLink?: string;
   proTipLinkTitle?: string;
   proTipTarget?: string;
-  infoBox?: JSX.Element | string;
+  infoBox?: { __html: string };
   infoBoxTitle?: string;
 }
 
@@ -52,7 +52,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
         {infoBox ? (
           <div key="infoBoxHtml" className={`grafana-info-box ${infoBoxStyles}`}>
             {infoBoxTitle && <h5>{infoBoxTitle}</h5>}
-            {infoBox}
+            <div dangerouslySetInnerHTML={infoBox} />
           </div>
         ) : (
           ''
@@ -73,7 +73,15 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
     </LinkButton>
   );
 
-  return <CallToActionCard message={title} footer={footer()} callToActionElement={ctaElement} theme={theme} />;
+  return (
+    <CallToActionCard
+      className="empty-list-cta"
+      message={title}
+      footer={footer()}
+      callToActionElement={ctaElement}
+      theme={theme}
+    />
+  );
 };
 
 export default EmptyListCTA;
