@@ -1,9 +1,9 @@
 import React, { PureComponent } from 'react';
 
 import { FormLabel, Select } from '@grafana/ui';
-import { getBackendSrv, BackendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchHit, DashboardSearchHitType } from 'app/types';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 export interface Props {
   resourceUri: string;
@@ -25,7 +25,7 @@ const timezones = [
 ];
 
 export class SharedPreferences extends PureComponent<Props, State> {
-  backendSrv: BackendSrv = getBackendSrv();
+  backendSrv = getBackendSrv();
 
   constructor(props: Props) {
     super(props);
@@ -97,6 +97,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ homeDashboardId: dashboardId });
   };
 
+  getFullDashName = (dashboard: DashboardSearchHit) => {
+    if (typeof dashboard.folderTitle === 'undefined' || dashboard.folderTitle === '') {
+      return dashboard.title;
+    }
+    return dashboard.folderTitle + ' / ' + dashboard.title;
+  };
+
   render() {
     const { theme, timezone, homeDashboardId, dashboards } = this.state;
 
@@ -123,10 +130,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
           <Select
             value={dashboards.find(dashboard => dashboard.id === homeDashboardId)}
             getOptionValue={i => i.id}
-            getOptionLabel={i => i.title}
+            getOptionLabel={this.getFullDashName}
             onChange={(dashboard: DashboardSearchHit) => this.onHomeDashboardChanged(dashboard.id)}
             options={dashboards}
-            placeholder="Chose default dashboard"
+            placeholder="Choose default dashboard"
             width={20}
           />
         </div>

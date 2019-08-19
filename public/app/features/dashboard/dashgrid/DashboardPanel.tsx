@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 
 // Utils & Services
-import { getAngularLoader, AngularComponent } from 'app/core/services/AngularLoader';
+import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
 
 // Components
@@ -34,7 +34,7 @@ export interface State {
 
 export class DashboardPanel extends PureComponent<Props, State> {
   element: HTMLElement;
-  specialPanels = {};
+  specialPanels: { [key: string]: Function } = {};
 
   constructor(props: Props) {
     super(props);
@@ -61,7 +61,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return <AddPanelWidget panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
-  onPluginTypeChanged = (plugin: PanelPluginMeta) => {
+  onPluginTypeChange = (plugin: PanelPluginMeta) => {
     this.loadPlugin(plugin.id);
   };
 
@@ -211,7 +211,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
             plugin={plugin}
             dashboard={dashboard}
             angularPanel={angularPanel}
-            onTypeChanged={this.onPluginTypeChanged}
+            onPluginTypeChange={this.onPluginTypeChange}
           />
         )}
       </div>

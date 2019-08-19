@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["src/**/*.ts", "src/**/*.tsx", "../../public/app/types/jquery/*.ts"],
+  "exclude": ["dist", "node_modules"],
+  "compilerOptions": {
+    "rootDirs": ["."],
+    "typeRoots": ["./node_modules/@types", "types"],
+    "declarationDir": "dist",
+    "outDir": "compiled"
+  }
+}

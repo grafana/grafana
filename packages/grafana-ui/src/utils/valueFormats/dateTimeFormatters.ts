@@ -1,6 +1,6 @@
+import { toUtc, toDuration as duration, dateTime, DecimalCount } from '@grafana/data';
+
 import { toFixed, toFixedScaled, ValueFormatter } from './valueFormats';
-import { DecimalCount } from '../../types';
-import { toUtc, toDuration as duration, dateTime } from '../moment_wrapper';
 
 interface IntervalsInSeconds {
   [interval: string]: number;
@@ -295,7 +295,7 @@ export function toDurationInHoursMinutesSeconds(size: number) {
 }
 
 export function toTimeTicks(size: number, decimals: DecimalCount, scaledDecimals: DecimalCount) {
-  return toSeconds(size, decimals, scaledDecimals);
+  return toSeconds(size / 100, decimals, scaledDecimals);
 }
 
 export function toClockMilliseconds(size: number, decimals: DecimalCount) {
@@ -329,9 +329,9 @@ export function dateTimeFromNow(value: number, decimals: DecimalCount, scaledDec
   return time.fromNow();
 }
 
-export function toMomentFormatter(fmt: string): ValueFormatter {
+export function toTimeFormatter(fmt: string): ValueFormatter {
   return (value: number, decimals: DecimalCount, scaledDecimals: DecimalCount, isUtc?: boolean) => {
-    const time = isUtc ? moment.utc(value) : moment(value);
+    const time = isUtc ? toUtc(value) : dateTime(value);
     return time.format(fmt);
   };
 }

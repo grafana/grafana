@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 
 // Components

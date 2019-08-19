@@ -22,7 +22,7 @@ func TestGoogleChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewGoogleChatNotifier(model)
+				_, err := newGoogleChatNotifier(model)
 				So(err, ShouldNotBeNil)
 			})
 
@@ -39,15 +39,14 @@ func TestGoogleChatNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewGoogleChatNotifier(model)
+				not, err := newGoogleChatNotifier(model)
 				webhookNotifier := not.(*GoogleChatNotifier)
 
 				So(err, ShouldBeNil)
 				So(webhookNotifier.Name, ShouldEqual, "ops")
 				So(webhookNotifier.Type, ShouldEqual, "googlechat")
-				So(webhookNotifier.Url, ShouldEqual, "http://google.com")
+				So(webhookNotifier.URL, ShouldEqual, "http://google.com")
 			})
-
 		})
 	})
 }

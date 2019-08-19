@@ -47,7 +47,7 @@ func TestSensuNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(sensuNotifier.Name, ShouldEqual, "sensu")
 				So(sensuNotifier.Type, ShouldEqual, "sensu")
-				So(sensuNotifier.Url, ShouldEqual, "http://sensu-api.example.com:4567/results")
+				So(sensuNotifier.URL, ShouldEqual, "http://sensu-api.example.com:4567/results")
 				So(sensuNotifier.Source, ShouldEqual, "grafana_instance_01")
 				So(sensuNotifier.Handler, ShouldEqual, "myhandler")
 			})

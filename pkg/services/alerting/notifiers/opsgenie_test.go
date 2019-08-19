@@ -45,7 +45,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(opsgenieNotifier.Name, ShouldEqual, "opsgenie_testing")
 				So(opsgenieNotifier.Type, ShouldEqual, "opsgenie")
-				So(opsgenieNotifier.ApiKey, ShouldEqual, "abcdefgh0123456789")
+				So(opsgenieNotifier.APIKey, ShouldEqual, "abcdefgh0123456789")
 			})
 		})
 	})

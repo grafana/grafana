@@ -16,21 +16,22 @@ import (
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/cache"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"gopkg.in/macaron.v1"
+	macaron "gopkg.in/macaron.v1"
 )
 
 func init() {
@@ -60,12 +61,13 @@ type HTTPServer struct {
 	RenderService       rendering.Service        `inject:""`
 	Cfg                 *setting.Cfg             `inject:""`
 	HooksService        *hooks.HooksService      `inject:""`
-	CacheService        *cache.CacheService      `inject:""`
+	CacheService        *localcache.CacheService `inject:""`
 	DatasourceCache     datasources.CacheService `inject:""`
 	AuthTokenService    models.UserTokenService  `inject:""`
 	QuotaService        *quota.QuotaService      `inject:""`
 	RemoteCacheService  *remotecache.RemoteCache `inject:""`
 	ProvisioningService ProvisioningService      `inject:""`
+	Login               *login.LoginService      `inject:""`
 }
 
 func (hs *HTTPServer) Init() error {
@@ -104,6 +106,12 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	switch setting.Protocol {
 	case setting.HTTP:
 		err = hs.httpSrv.ListenAndServe()
+		if err == http.ErrServerClosed {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
+	case setting.HTTP2:
+		err = hs.listenAndServeH2TLS(setting.CertFile, setting.KeyFile)
 		if err == http.ErrServerClosed {
 			hs.log.Debug("server was shutdown gracefully")
 			return nil
@@ -179,6 +187,45 @@ func (hs *HTTPServer) listenAndServeTLS(certfile, keyfile string) error {
 	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
 }
 
+func (hs *HTTPServer) listenAndServeH2TLS(certfile, keyfile string) error {
+	if certfile == "" {
+		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
+	}
+
+	if keyfile == "" {
+		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
+	}
+
+	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
+		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+	}
+
+	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
+		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
+	}
+
+	tlsCfg := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		PreferServerCipherSuites: false,
+		CipherSuites: []uint16{
+			tls.TLS_CHACHA20_POLY1305_SHA256,
+			tls.TLS_AES_128_GCM_SHA256,
+			tls.TLS_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+		NextProtos: []string{"h2", "http/1.1"},
+	}
+
+	hs.httpSrv.TLSConfig = tlsCfg
+
+	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+}
+
 func (hs *HTTPServer) newMacaron() *macaron.Macaron {
 	macaron.Env = setting.Env
 	m := macaron.New()
@@ -227,6 +274,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(middleware.AddDefaultResponseHeaders())
 
+	if setting.ServeFromSubPath && setting.AppSubUrl != "" {
+		m.SetURLPrefix(setting.AppSubUrl)
+	}
+
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  path.Join(setting.StaticRootPath, "views"),
 		IndentJSON: macaron.Env != macaron.PROD,
@@ -254,7 +305,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 		return
 	}
 
-	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/metrics" {
+	if ctx.Req.Method != http.MethodGet || ctx.Req.URL.Path != "/metrics" {
 		return
 	}
 
@@ -263,7 +314,8 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 		return
 	}
 
-	promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}).
+	promhttp.
+		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}).
 		ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 

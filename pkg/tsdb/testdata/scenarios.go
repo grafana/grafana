@@ -2,11 +2,14 @@ package testdata
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -98,6 +101,23 @@ func init() {
 
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			return getRandomWalk(query, context)
+		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "predictable_pulse",
+		Name: "Predictable Pulse",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			return getPredictablePulse(query, context)
+		},
+		Description: PredictablePulseDesc,
+	})
+
+	registerScenario(&Scenario{
+		Id:   "predictable_csv_wave",
+		Name: "Predictable CSV Wave",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			return getPredictableCSVWave(query, context)
 		},
 	})
 
@@ -261,6 +281,220 @@ func init() {
 			return queryRes
 		},
 	})
+
+	registerScenario(&Scenario{
+		Id:   "logs",
+		Name: "Logs",
+
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			from := context.TimeRange.GetFromAsMsEpoch()
+			to := context.TimeRange.GetToAsMsEpoch()
+			lines := query.Model.Get("lines").MustInt64(10)
+			includeLevelColumn := query.Model.Get("levelColumn").MustBool(false)
+
+			logLevelGenerator := newRandomStringProvider([]string{
+				"emerg",
+				"alert",
+				"crit",
+				"critical",
+				"warn",
+				"warning",
+				"err",
+				"eror",
+				"error",
+				"info",
+				"notice",
+				"dbug",
+				"debug",
+				"trace",
+				"",
+			})
+			containerIDGenerator := newRandomStringProvider([]string{
+				"f36a9eaa6d34310686f2b851655212023a216de955cbcc764210cefa71179b1a",
+				"5a354a630364f3742c602f315132e16def594fe68b1e4a195b2fce628e24c97a",
+			})
+			hostnameGenerator := newRandomStringProvider([]string{
+				"srv-001",
+				"srv-002",
+			})
+
+			table := tsdb.Table{
+				Columns: []tsdb.TableColumn{
+					{Text: "time"},
+					{Text: "message"},
+					{Text: "container_id"},
+					{Text: "hostname"},
+				},
+				Rows: []tsdb.RowValues{},
+			}
+
+			if includeLevelColumn {
+				table.Columns = append(table.Columns, tsdb.TableColumn{Text: "level"})
+			}
+
+			for i := int64(0); i < lines && to > from; i++ {
+				row := tsdb.RowValues{float64(to)}
+
+				logLevel := logLevelGenerator.Next()
+				timeFormatted := time.Unix(to/1000, 0).Format(time.RFC3339)
+				lvlString := ""
+				if !includeLevelColumn {
+					lvlString = fmt.Sprintf("lvl=%s ", logLevel)
+				}
+
+				row = append(row, fmt.Sprintf("t=%s %smsg=\"Request Completed\" logger=context userId=1 orgId=1 uname=admin method=GET path=/api/datasources/proxy/152/api/prom/label status=502 remote_addr=[::1] time_ms=1 size=0 referer=\"http://localhost:3000/explore?left=%%5B%%22now-6h%%22,%%22now%%22,%%22Prometheus%%202.x%%22,%%7B%%7D,%%7B%%22ui%%22:%%5Btrue,true,true,%%22none%%22%%5D%%7D%%5D\"", timeFormatted, lvlString))
+				row = append(row, containerIDGenerator.Next())
+				row = append(row, hostnameGenerator.Next())
+
+				if includeLevelColumn {
+					row = append(row, logLevel)
+				}
+
+				table.Rows = append(table.Rows, row)
+				to -= query.IntervalMs
+			}
+
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Tables = append(queryRes.Tables, &table)
+			return queryRes
+		},
+	})
+}
+
+// PredictablePulseDesc is the description for the Predictable Pulse scenerio.
+const PredictablePulseDesc = `Predictable Pulse returns a pulse wave where there is a datapoint every timeStepSeconds.
+The wave cycles at timeStepSeconds*(onCount+offCount).
+The cycle of the wave is based off of absolute time (from the epoch) which makes it predictable.
+Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means times will all end in :00 seconds).`
+
+func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+	queryRes := tsdb.NewQueryResult()
+
+	// Process Input
+	var timeStep int64
+	var onCount int64
+	var offCount int64
+	var onValue null.Float
+	var offValue null.Float
+
+	options := query.Model.Get("pulseWave")
+
+	var err error
+	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
+		return queryRes
+	}
+	if onCount, err = options.Get("onCount").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse onCount value '%v' into integer: %v", options.Get("onCount"), err)
+		return queryRes
+	}
+	if offCount, err = options.Get("offCount").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse offCount value '%v' into integer: %v", options.Get("offCount"), err)
+		return queryRes
+	}
+
+	onValue, err = fromStringOrNumber(options.Get("onValue"))
+	if err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse onValue value '%v' into float: %v", options.Get("onValue"), err)
+		return queryRes
+	}
+	offValue, err = fromStringOrNumber(options.Get("offValue"))
+	if err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.Get("offValue"), err)
+		return queryRes
+	}
+
+	timeStep = timeStep * 1000                     // Seconds to Milliseconds
+	onFor := func(mod int64) (null.Float, error) { // How many items in the cycle should get the on value
+		var i int64
+		for i = 0; i < onCount; i++ {
+			if mod == i*timeStep {
+				return onValue, nil
+			}
+		}
+		return offValue, nil
+	}
+	points, err := predictableSeries(context.TimeRange, timeStep, onCount+offCount, onFor)
+	if err != nil {
+		queryRes.Error = err
+		return queryRes
+	}
+
+	series := newSeriesForQuery(query)
+	series.Points = *points
+	queryRes.Series = append(queryRes.Series, series)
+	return queryRes
+}
+
+func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+	queryRes := tsdb.NewQueryResult()
+
+	// Process Input
+	var timeStep int64
+
+	options := query.Model.Get("csvWave")
+
+	var err error
+	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
+		queryRes.Error = fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
+		return queryRes
+	}
+	rawValues := options.Get("valuesCSV").MustString()
+	rawValues = strings.TrimRight(strings.TrimSpace(rawValues), ",") // Strip Trailing Comma
+	rawValesCSV := strings.Split(rawValues, ",")
+	values := make([]null.Float, len(rawValesCSV))
+	for i, rawValue := range rawValesCSV {
+		val, err := null.FloatFromString(strings.TrimSpace(rawValue), "null")
+		if err != nil {
+			queryRes.Error = fmt.Errorf("failed to parse value '%v' into nullable float: err", rawValue, err)
+			return queryRes
+		}
+		values[i] = val
+	}
+
+	timeStep = timeStep * 1000 // Seconds to Milliseconds
+	valuesLen := int64(len(values))
+	getValue := func(mod int64) (null.Float, error) {
+		var i int64
+		for i = 0; i < valuesLen; i++ {
+			if mod == i*timeStep {
+				return values[i], nil
+			}
+		}
+		return null.Float{}, fmt.Errorf("did not get value at point in waveform - should not be here")
+	}
+	points, err := predictableSeries(context.TimeRange, timeStep, valuesLen, getValue)
+	if err != nil {
+		queryRes.Error = err
+		return queryRes
+	}
+
+	series := newSeriesForQuery(query)
+	series.Points = *points
+	queryRes.Series = append(queryRes.Series, series)
+	return queryRes
+}
+
+func predictableSeries(timeRange *tsdb.TimeRange, timeStep, length int64, getValue func(mod int64) (null.Float, error)) (*tsdb.TimeSeriesPoints, error) {
+	points := make(tsdb.TimeSeriesPoints, 0)
+
+	from := timeRange.GetFromAsMsEpoch()
+	to := timeRange.GetToAsMsEpoch()
+
+	timeCursor := from - (from % timeStep) // Truncate Start
+	wavePeriod := timeStep * length
+	maxPoints := 10000 // Don't return too many points
+
+	for i := 0; i < maxPoints && timeCursor < to; i++ {
+		val, err := getValue(timeCursor % wavePeriod)
+		if err != nil {
+			return &points, err
+		}
+		point := tsdb.NewTimePoint(val, float64(timeCursor))
+		points = append(points, point)
+		timeCursor += timeStep
+	}
+	return &points, nil
 }
 
 func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
@@ -355,4 +589,19 @@ func newSeriesForQuery(query *tsdb.Query) *tsdb.TimeSeries {
 	}
 
 	return &tsdb.TimeSeries{Name: alias}
+}
+
+func fromStringOrNumber(val *simplejson.Json) (null.Float, error) {
+	switch v := val.Interface().(type) {
+	case json.Number:
+		fV, err := v.Float64()
+		if err != nil {
+			return null.Float{}, err
+		}
+		return null.FloatFrom(fV), nil
+	case string:
+		return null.FloatFromString(v, "null")
+	default:
+		return null.Float{}, fmt.Errorf("failed to extract value")
+	}
 }

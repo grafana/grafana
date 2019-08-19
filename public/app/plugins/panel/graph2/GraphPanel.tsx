@@ -9,6 +9,7 @@ interface GraphPanelProps extends PanelProps<Options> {}
 export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   data,
   timeRange,
+  timeZone,
   width,
   height,
   options,
@@ -39,6 +40,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
         return (
           <GraphWithLegend
             timeRange={timeRange}
+            timeZone={timeZone}
             width={width}
             height={height}
             displayMode={asTable ? LegendDisplayMode.Table : LegendDisplayMode.List}

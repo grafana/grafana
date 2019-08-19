@@ -59,12 +59,19 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
     if (filterEnd === -1) {
       filterTerm = expression.trim();
     } else {
-      filterTerm = expression.substr(0, filterEnd);
+      filterTerm = expression.substr(0, filterEnd).trim();
       expression = expression.substr(filterEnd);
     }
 
     // Unwrap the filter term by removing quotes
-    results.push(filterTerm.replace(/^\s*"/g, '').replace(/"\s*$/g, ''));
+    const quotedTerm = filterTerm.match(/^"((?:[^\\"]|\\")*)"$/);
+
+    if (quotedTerm) {
+      const unwrappedFilterTerm = quotedTerm[1];
+      results.push(unwrappedFilterTerm);
+    } else {
+      return null;
+    }
   }
   return results;
 }

@@ -27,7 +27,6 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-
 Query Parameters:
 
 - `from`: epoch datetime in milliseconds. Optional.
@@ -56,9 +55,9 @@ Content-Type: application/json
         "newState": "",
         "prevState": "",
         "time": 1507266395000,
+        "timeEnd": 1507266395000,
         "text": "test",
         "metric": "",
-        "regionId": 1123,
         "type": "event",
         "tags": [
             "tag1",
@@ -78,7 +77,6 @@ Content-Type: application/json
         "time": 1507265111000,
         "text": "test",
         "metric": "",
-        "regionId": 1123,
         "type": "event",
         "tags": [
             "tag1",
@@ -89,9 +87,13 @@ Content-Type: application/json
 ]
 ```
 
+> Starting in Grafana v6.4 regions annotations are now returned in one entity that now includes the timeEnd property.
+
 ## Create Annotation
 
-Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional. If they are not specified then a global annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation the response will include both `id` and `endId`, if not only `id`.
+Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional.
+If they are not specified then a global annotation is created and can be queried in any dashboard that adds
+the Grafana annotations data source. When creating a region annotation include the timeEnd property.
 
 `POST /api/annotations`
 
@@ -106,7 +108,6 @@ Content-Type: application/json
   "dashboardId":468,
   "panelId":1,
   "time":1507037197339,
-  "isRegion":true,
   "timeEnd":1507180805056,
   "tags":["tag1","tag2"],
   "text":"Annotation Description"
@@ -122,9 +123,12 @@ Content-Type: application/json
 {
     "message":"Annotation added",
     "id": 1,
-    "endId": 2
 }
 ```
+
+> The response for this HTTP request is slightly different in versions prior to v6.4. In prior versions you would
+also get an endId if you where creating a region. But in 6.4 regions are represented using a single event with time &
+timeEnd properties.
 
 ## Create Annotation in Graphite format
 
@@ -176,7 +180,6 @@ Content-Type: application/json
 
 {
   "time":1507037197339,
-  "isRegion":true,
   "timeEnd":1507180805056,
   "text":"Annotation Description",
   "tags":["tag3","tag4","tag5"]
@@ -195,12 +198,13 @@ Content-Type: application/json
 ```
 
 ## Patch Annotation
+> This is available in Grafana 6.0.0-beta2 and above.
 
 `PATCH /api/annotations/:id`
 
 Updates one or more properties of an annotation that matches the specified id.
 
-This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties. It does not handle updating of the `isRegion` and `regionId` properties. To make an annotation regional or vice versa, consider using the [Update Annotation](#update-annotation) operation.
+This operation currently supports updating of the `text`, `tags`, `time` and `timeEnd` properties.
 
 **Example Request**:
 
@@ -250,31 +254,5 @@ Content-Type: application/json
 
 {
     "message":"Annotation deleted"
-}
-```
-
-## Delete Annotation By RegionId
-
-`DELETE /api/annotations/region/:id`
-
-Deletes the annotation that matches the specified region id. A region is an annotation that covers a timerange and has a start and end time. In the Grafana database, this is a stored as two annotations connected by a region id.
-
-**Example Request**:
-
-```http
-DELETE /api/annotations/region/1 HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-    "message":"Annotation region deleted"
 }
 ```

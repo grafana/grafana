@@ -1,6 +1,7 @@
+import { DecimalCount } from '@grafana/data';
+
 import { getCategories } from './categories';
-import { DecimalCount } from '../../types';
-import { toMomentFormatter } from './dateTimeFormatters';
+import { toTimeFormatter } from './dateTimeFormatters';
 
 export type ValueFormatter = (
   value: number,
@@ -150,8 +151,8 @@ function createValueFormat(id: string): ValueFormatter | null {
   if (creator === 'fixed') {
     return toFixedUnit(args);
   }
-  if (creator === 'moment') {
-    return toMomentFormatter(args);
+  if (creator === 'time') {
+    return toTimeFormatter(args);
   }
 
   console.warn('Unknown Format Creator:', id);

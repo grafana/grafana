@@ -1,3 +1,5 @@
+import { Segment } from './types';
+
 export const DefaultRemoveFilterValue = '-- remove filter --';
 export const DefaultFilterValue = 'select value';
 
@@ -5,7 +7,12 @@ export class FilterSegments {
   filterSegments: any[];
   removeSegment: any;
 
-  constructor(private uiSegmentSrv, private filters, private getFilterKeysFunc, private getFilterValuesFunc) {}
+  constructor(
+    private uiSegmentSrv: any,
+    private filters: string[],
+    private getFilterKeysFunc: (arg0: any, arg1: string) => any,
+    private getFilterValuesFunc: (arg0: any) => any
+  ) {}
 
   buildSegmentModel() {
     this.removeSegment = this.uiSegmentSrv.newSegment({ fake: true, value: DefaultRemoveFilterValue });
@@ -30,7 +37,7 @@ export class FilterSegments {
     this.ensurePlusButton(this.filterSegments);
   }
 
-  async getFilters(segment, index, hasNoFilterKeys) {
+  async getFilters(segment: { type: any; value?: any }, index: number, hasNoFilterKeys: boolean) {
     if (segment.type === 'condition') {
       return [this.uiSegmentSrv.newSegment('AND')];
     }
@@ -70,7 +77,7 @@ export class FilterSegments {
     return filterValues;
   }
 
-  addNewFilterSegments(segment, index) {
+  addNewFilterSegments(segment: Segment, index: number) {
     if (index > 2) {
       this.filterSegments.splice(index, 0, this.uiSegmentSrv.newCondition('AND'));
     }
@@ -79,7 +86,7 @@ export class FilterSegments {
     this.filterSegments.push(this.uiSegmentSrv.newFake(DefaultFilterValue, 'value', 'query-segment-value'));
   }
 
-  removeFilterSegment(index) {
+  removeFilterSegment(index: number) {
     this.filterSegments.splice(index, 3);
     // remove trailing condition
     if (index > 2 && this.filterSegments[index - 1].type === 'condition') {
@@ -92,7 +99,7 @@ export class FilterSegments {
     }
   }
 
-  ensurePlusButton(segments) {
+  ensurePlusButton(segments: Segment[]) {
     const count = segments.length;
     const lastSegment = segments[Math.max(count - 1, 0)];
 
@@ -101,7 +108,7 @@ export class FilterSegments {
     }
   }
 
-  filterSegmentUpdated(segment, index) {
+  filterSegmentUpdated(segment: Segment, index: number) {
     if (segment.type === 'plus-button') {
       this.addNewFilterSegments(segment, index);
     } else if (segment.type === 'key' && segment.value === DefaultRemoveFilterValue) {

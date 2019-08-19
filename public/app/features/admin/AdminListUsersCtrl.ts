@@ -1,5 +1,6 @@
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
+import tags from 'app/core/utils/tags';
 
 export default class AdminListUsersCtrl {
   users: any;
@@ -12,8 +13,8 @@ export default class AdminListUsersCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private $scope: any, private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
-    this.navModel = navModelSrv.getNav('admin', 'global-users');
+  constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
+    this.navModel = navModelSrv.getNav('admin', 'global-users', 0);
     this.query = '';
     this.getUsers();
   }
@@ -32,6 +33,8 @@ export default class AdminListUsersCtrl {
         for (let i = 1; i < this.totalPages + 1; i++) {
           this.pages.push({ page: i, current: i === this.page });
         }
+
+        this.addUsersAuthLabels();
       });
   }
 
@@ -40,17 +43,29 @@ export default class AdminListUsersCtrl {
     this.getUsers();
   }
 
-  deleteUser(user: any) {
-    this.$scope.appEvent('confirm-modal', {
-      title: 'Delete',
-      text: 'Do you want to delete ' + user.login + '?',
-      icon: 'fa-trash',
-      yesText: 'Delete',
-      onConfirm: () => {
-        this.backendSrv.delete('/api/admin/users/' + user.id).then(() => {
-          this.getUsers();
-        });
-      },
-    });
+  addUsersAuthLabels() {
+    for (const user of this.users) {
+      user.authLabel = getAuthLabel(user);
+      user.authLabelStyle = getAuthLabelStyle(user.authLabel);
+    }
   }
+}
+
+function getAuthLabel(user: any) {
+  if (user.authLabels && user.authLabels.length) {
+    return user.authLabels[0];
+  }
+  return '';
+}
+
+function getAuthLabelStyle(label: string) {
+  if (label === 'LDAP' || !label) {
+    return {};
+  }
+
+  const { color, borderColor } = tags.getTagColorsFromName(label);
+  return {
+    'background-color': color,
+    'border-color': borderColor,
+  };
 }

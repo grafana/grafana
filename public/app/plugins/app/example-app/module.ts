@@ -5,6 +5,7 @@ import { AppPlugin } from '@grafana/ui';
 import { ExamplePage1 } from './config/ExamplePage1';
 import { ExamplePage2 } from './config/ExamplePage2';
 import { ExampleRootPage } from './ExampleRootPage';
+import { ExampleAppSettings } from './types';
 
 // Legacy exports just for testing
 export {
@@ -12,7 +13,7 @@ export {
   AngularExamplePageCtrl, // Must match `pages.component` in plugin.json
 };
 
-export const plugin = new AppPlugin()
+export const plugin = new AppPlugin<ExampleAppSettings>()
   .setRootPage(ExampleRootPage)
   .addConfigPage({
     title: 'Page 1',

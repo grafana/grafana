@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	_ "github.com/grafana/grafana/pkg/extensions"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	_ "github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
@@ -31,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/cache"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
@@ -88,7 +88,7 @@ func (g *GrafanaServerImpl) Run() error {
 	if err != nil {
 		return fmt.Errorf("Failed to provide object to the graph: %v", err)
 	}
-	err = serviceGraph.Provide(&inject.Object{Value: cache.New(5*time.Minute, 10*time.Minute)})
+	err = serviceGraph.Provide(&inject.Object{Value: localcache.New(5*time.Minute, 10*time.Minute)})
 	if err != nil {
 		return fmt.Errorf("Failed to provide object to the graph: %v", err)
 	}

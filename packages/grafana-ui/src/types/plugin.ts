@@ -1,4 +1,5 @@
 import { ComponentClass } from 'react';
+import { KeyValue } from '@grafana/data';
 
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
@@ -11,7 +12,7 @@ export enum PluginType {
   app = 'app',
 }
 
-export interface PluginMeta {
+export interface PluginMeta<T extends {} = KeyValue> {
   id: string;
   name: string;
   type: PluginType;
@@ -27,8 +28,8 @@ export interface PluginMeta {
   dependencies?: PluginDependencies;
 
   // Filled in by the backend
-  jsonData?: { [str: string]: any };
-  secureJsonData?: { [str: string]: any };
+  jsonData?: T;
+  secureJsonData?: KeyValue;
   enabled?: boolean;
   defaultNavUrl?: string;
   hasUpdate?: boolean;
@@ -75,6 +76,20 @@ interface PluginMetaInfoLink {
   url: string;
 }
 
+export interface PluginBuildInfo {
+  time?: number;
+  repo?: string;
+  branch?: string;
+  hash?: string;
+  number?: number;
+  pr?: number;
+}
+
+export interface ScreenshotInfo {
+  name: string;
+  path: string;
+}
+
 export interface PluginMetaInfo {
   author: {
     name: string;
@@ -86,14 +101,15 @@ export interface PluginMetaInfo {
     large: string;
     small: string;
   };
-  screenshots: any[];
+  build?: PluginBuildInfo;
+  screenshots: ScreenshotInfo[];
   updated: string;
   version: string;
 }
 
 export interface PluginConfigPageProps<T extends GrafanaPlugin> {
   plugin: T;
-  query: { [s: string]: any }; // The URL query parameters
+  query: KeyValue; // The URL query parameters
 }
 
 export interface PluginConfigPage<T extends GrafanaPlugin> {

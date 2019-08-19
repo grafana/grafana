@@ -45,6 +45,8 @@ datasources:
     password: $PASSWORD
 ```
 
+If you have a literal `$` in your value and want to avoid interpolation, `$$` can be used.
+
 <hr />
 
 ## Configuration Management Tools
@@ -149,6 +151,8 @@ Since not all datasources have the same configuration settings we only have the 
 | esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56/60/70) |
 | timeField | string | Elasticsearch | Which field that should be used as timestamp |
 | interval | string | Elasticsearch | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
+| logMessageField | string | Elasticsearch | Which field should be used as the log message |
+| logLevelField | string | Elasticsearch | Which field should be used to indicate the priority of the log message |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
 | assumeRoleArn | string | Cloudwatch | ARN of Assume Role |
 | defaultRegion | string | Cloudwatch | AWS region |
@@ -179,6 +183,24 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
 
+#### Custom HTTP headers for datasources
+Datasources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
+going to that datasource. The header name is configured in the `jsonData` field and the header value should be
+configured in `secureJsonData`.
+
+```yaml
+apiVersion: 1
+
+datasources:
+- name: Graphite
+  jsonData:
+    httpHeaderName1: "HeaderName"
+    httpHeaderName2: "Authorization"
+  secureJsonData:
+    httpHeaderValue1: "HeaderValue"
+    httpHeaderValue2: "Bearer XXXXXXXXX"
+```
+
 ### Dashboards
 
 It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into Grafana from the local filesystem.
@@ -189,8 +211,8 @@ The dashboard provider config file looks somewhat like this:
 apiVersion: 1
 
 providers:
-  # <string> provider name
-- name: 'default'
+  # <string> an unique provider name
+- name: 'a unique provider name'
   # <int> org id. will default to orgId 1 if not specified
   orgId: 1
   # <string, required> name of the dashboard folder. Required
@@ -204,7 +226,7 @@ providers:
   # <bool> enable dashboard editing
   editable: true
   # <int> how often Grafana will scan for changed dashboards
-  updateIntervalSeconds: 10  
+  updateIntervalSeconds: 10
   options:
     # <string, required> path to dashboard files on disk. Required
     path: /var/lib/grafana/dashboards
@@ -274,7 +296,7 @@ notifiers:
     # or
     org_name: Main Org.
     is_default: true
-    send_reminders: true
+    send_reminder: true
     frequency: 1h
     disable_resolve_message: false
     # See `Supported Settings` section for settings supporter for each

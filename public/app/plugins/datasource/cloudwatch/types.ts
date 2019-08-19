@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/ui/src/types';
+import { DataQuery } from '@grafana/ui';
 
 export interface CloudWatchQuery extends DataQuery {
   id: string;
@@ -9,5 +9,4 @@ export interface CloudWatchQuery extends DataQuery {
   statistics: string[];
   period: string;
   expression: string;
-  returnData: boolean;
 }

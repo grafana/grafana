@@ -7,7 +7,7 @@ describe('dynamic formats', () => {
   });
 
   it('should support fixed', () => {
-    const fmt = getValueFormat('moment:dddd');
+    const fmt = getValueFormat('time:dddd');
     expect(fmt(1505634997920)).toBe('Sunday');
   });
 });

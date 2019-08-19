@@ -1,4 +1,5 @@
 import { Variable, assignModelProperties, variableTypes } from './variable';
+import { VariableSrv } from './variable_srv';
 
 export class TextBoxVariable implements Variable {
   query: string;
@@ -6,7 +7,7 @@ export class TextBoxVariable implements Variable {
   options: any[];
   skipUrlSync: boolean;
 
-  defaults = {
+  defaults: any = {
     type: 'textbox',
     name: '',
     hide: 0,
@@ -18,7 +19,7 @@ export class TextBoxVariable implements Variable {
   };
 
   /** @ngInject */
-  constructor(private model, private variableSrv) {
+  constructor(private model: any, private variableSrv: VariableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
@@ -27,7 +28,7 @@ export class TextBoxVariable implements Variable {
     return this.model;
   }
 
-  setValue(option) {
+  setValue(option: any) {
     this.variableSrv.setOptionAsCurrent(this, option);
   }
 
@@ -37,11 +38,11 @@ export class TextBoxVariable implements Variable {
     return Promise.resolve();
   }
 
-  dependsOn(variable) {
+  dependsOn(variable: any) {
     return false;
   }
 
-  setValueFromUrl(urlValue) {
+  setValueFromUrl(urlValue: string) {
     this.query = urlValue;
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
@@ -50,7 +51,7 @@ export class TextBoxVariable implements Variable {
     return this.current.value;
   }
 }
-
+// @ts-ignore
 variableTypes['textbox'] = {
   name: 'Text box',
   ctor: TextBoxVariable,

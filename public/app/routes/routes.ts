@@ -3,6 +3,7 @@ import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 
 // Pages
+import ChangePasswordPage from 'app/features/profile/ChangePasswordPage';
 import ServerStats from 'app/features/admin/ServerStats';
 import AlertRuleList from 'app/features/alerting/AlertRuleList';
 import TeamPages from 'app/features/teams/TeamPages';
@@ -25,17 +26,23 @@ import DashboardPage from '../features/dashboard/containers/DashboardPage';
 import PluginPage from '../features/plugins/PluginPage';
 import AppRootPage from 'app/features/plugins/AppRootPage';
 import config from 'app/core/config';
+import { route, ILocationProvider } from 'angular';
 
 // Types
 import { DashboardRouteInfo } from 'app/types';
+import { LoginPage } from 'app/core/components/Login/LoginPage';
 
 /** @ngInject */
-export function setupAngularRoutes($routeProvider, $locationProvider) {
+export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
   $locationProvider.html5Mode(true);
+
+  // Routes here are guarded both here and server side for react-container routes or just on the server for angular
+  // ones. That means angular ones could be navigated to in case there is a client side link some where.
 
   $routeProvider
     .when('/', {
       template: '<react-container />',
+      //@ts-ignore
       pageClass: 'page-dashboard',
       routeInfo: DashboardRouteInfo.Home,
       reloadOnSearch: false,
@@ -228,8 +235,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/profile/password', {
-      templateUrl: 'public/app/features/profile/partials/change_password.html',
-      controller: 'ChangePasswordCtrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => ChangePasswordPage,
+      },
     })
     .when('/profile/select-org', {
       templateUrl: 'public/app/features/org/partials/select_org.html',
@@ -277,8 +286,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
     })
     // LOGIN / SIGNUP
     .when('/login', {
-      templateUrl: 'public/app/partials/login.html',
-      controller: 'LoginCtrl',
+      template: '<react-container/>',
+      resolve: {
+        component: () => LoginPage,
+      },
       pageClass: 'login-page sidemenu-hidden',
     })
     .when('/invite/:code', {

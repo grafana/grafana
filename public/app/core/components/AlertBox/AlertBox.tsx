@@ -18,7 +18,7 @@ function getIconFromSeverity(severity: AppNotificationSeverity): string {
       return 'fa fa-check';
     }
     default:
-      return null;
+      return '';
   }
 }
 

@@ -30,7 +30,7 @@ $path-position: $marker-size-half - ($path-height / 2);
   border: none;
 
   &:hover {
-    color: $white;
+    color: $link-hover-color;
   }
 }
 

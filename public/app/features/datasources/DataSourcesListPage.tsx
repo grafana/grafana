@@ -10,7 +10,8 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
 
 // Types
-import { NavModel, DataSourceSettings } from '@grafana/ui';
+import { DataSourceSettings } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import { StoreState } from 'app/types';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 

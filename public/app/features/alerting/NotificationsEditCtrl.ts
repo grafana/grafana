@@ -32,7 +32,7 @@ export class AlertNotificationEditCtrl {
     private $templateCache: any,
     navModelSrv: NavModelSrv
   ) {
-    this.navModel = navModelSrv.getNav('alerting', 'channels');
+    this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
     this.isNew = !this.$routeParams.id;
 
     this.getFrequencySuggestion = () => {

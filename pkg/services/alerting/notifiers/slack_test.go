@@ -26,6 +26,7 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
+			//nolint:goconst
 			Convey("from settings", func() {
 				json := `
 				{
@@ -45,11 +46,11 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(slackNotifier.Name, ShouldEqual, "ops")
 				So(slackNotifier.Type, ShouldEqual, "slack")
-				So(slackNotifier.Url, ShouldEqual, "http://google.com")
+				So(slackNotifier.URL, ShouldEqual, "http://google.com")
 				So(slackNotifier.Recipient, ShouldEqual, "")
 				So(slackNotifier.Username, ShouldEqual, "")
 				So(slackNotifier.IconEmoji, ShouldEqual, "")
-				So(slackNotifier.IconUrl, ShouldEqual, "")
+				So(slackNotifier.IconURL, ShouldEqual, "")
 				So(slackNotifier.Mention, ShouldEqual, "")
 				So(slackNotifier.Token, ShouldEqual, "")
 			})
@@ -79,11 +80,11 @@ func TestSlackNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(slackNotifier.Name, ShouldEqual, "ops")
 				So(slackNotifier.Type, ShouldEqual, "slack")
-				So(slackNotifier.Url, ShouldEqual, "http://google.com")
+				So(slackNotifier.URL, ShouldEqual, "http://google.com")
 				So(slackNotifier.Recipient, ShouldEqual, "#ds-opentsdb")
 				So(slackNotifier.Username, ShouldEqual, "Grafana Alerts")
 				So(slackNotifier.IconEmoji, ShouldEqual, ":smile:")
-				So(slackNotifier.IconUrl, ShouldEqual, "https://grafana.com/img/fav32.png")
+				So(slackNotifier.IconURL, ShouldEqual, "https://grafana.com/img/fav32.png")
 				So(slackNotifier.Mention, ShouldEqual, "@carl")
 				So(slackNotifier.Token, ShouldEqual, "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX")
 			})

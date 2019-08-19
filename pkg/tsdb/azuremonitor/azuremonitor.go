@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -11,7 +12,8 @@ import (
 )
 
 var (
-	azlog log.Logger
+	azlog           log.Logger
+	legendKeyFormat *regexp.Regexp
 )
 
 // AzureMonitorExecutor executes queries for the Azure Monitor datasource - all four services
@@ -36,6 +38,7 @@ func NewAzureMonitorExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint,
 func init() {
 	azlog = log.New("tsdb.azuremonitor")
 	tsdb.RegisterTsdbQueryEndpoint("grafana-azure-monitor-datasource", NewAzureMonitorExecutor)
+	legendKeyFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
 // Query takes in the frontend queries, parses them into the query format

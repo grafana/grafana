@@ -5,7 +5,7 @@ export default class AdminEditOrgCtrl {
   /** @ngInject */
   constructor($scope: any, $routeParams: any, backendSrv: BackendSrv, $location: any, navModelSrv: NavModelSrv) {
     $scope.init = () => {
-      $scope.navModel = navModelSrv.getNav('admin', 'global-orgs');
+      $scope.navModel = navModelSrv.getNav('admin', 'global-orgs', 0);
 
       if ($routeParams.id) {
         $scope.getOrg($routeParams.id);

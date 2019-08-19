@@ -5,45 +5,70 @@ class TablePanelCtrl {}
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
-    let model;
-    let modelJson;
+    let model: any;
+    let modelJson: any;
+    let persistedOptionsMock;
+    const defaultOptionsMock = {
+      fieldOptions: {
+        thresholds: [
+          {
+            color: '#F2495C',
+            index: 1,
+            value: 50,
+          },
+          {
+            color: '#73BF69',
+            index: 0,
+            value: null,
+          },
+        ],
+      },
+      showThresholds: true,
+    };
 
     beforeEach(() => {
+      persistedOptionsMock = {
+        fieldOptions: {
+          thresholds: [
+            {
+              color: '#F2495C',
+              index: 1,
+              value: 50,
+            },
+            {
+              color: '#73BF69',
+              index: 0,
+              value: null,
+            },
+          ],
+        },
+      };
+
       modelJson = {
         type: 'table',
         showColumns: true,
         targets: [{ refId: 'A' }, { noRefId: true }],
-        options: {
-          fieldOptions: {
-            thresholds: [
-              {
-                color: '#F2495C',
-                index: 1,
-                value: 50,
-              },
-              {
-                color: '#73BF69',
-                index: 0,
-                value: null,
-              },
-            ],
-          },
-        },
+        options: persistedOptionsMock,
       };
+
       model = new PanelModel(modelJson);
-      model.pluginLoaded(
-        getPanelPlugin(
-          {
-            id: 'table',
-          },
-          null, // react
-          TablePanelCtrl // angular
-        )
+      const panelPlugin = getPanelPlugin(
+        {
+          id: 'table',
+        },
+        null, // react
+        TablePanelCtrl // angular
       );
+      panelPlugin.setDefaults(defaultOptionsMock);
+      model.pluginLoaded(panelPlugin);
     });
 
     it('should apply defaults', () => {
       expect(model.gridPos.h).toBe(3);
+    });
+
+    it('should apply option defaults', () => {
+      expect(model.getOptions().showThresholds).toBeTruthy();
     });
 
     it('should set model props on instance', () => {
@@ -73,25 +98,21 @@ describe('PanelModel', () => {
       expect(saveModel.events).toBe(undefined);
     });
 
-    it('should restore -Infinity value for base threshold', () => {
-      expect(model.options.fieldOptions.thresholds).toEqual([
-        {
-          color: '#F2495C',
-          index: 1,
-          value: 50,
-        },
-        {
-          color: '#73BF69',
-          index: 0,
-          value: -Infinity,
-        },
-      ]);
-    });
-
     describe('when changing panel type', () => {
+      const newPanelPluginDefaults = {
+        showThresholdLabels: false,
+      };
+
       beforeEach(() => {
-        model.changePlugin(getPanelPlugin({ id: 'graph' }));
+        const newPlugin = getPanelPlugin({ id: 'graph' });
+        newPlugin.setDefaults(newPanelPluginDefaults);
+        model.changePlugin(newPlugin);
         model.alert = { id: 2 };
+      });
+
+      it('should apply next panel option defaults', () => {
+        expect(model.getOptions().showThresholdLabels).toBeFalsy();
+        expect(model.getOptions().showThresholds).toBeUndefined();
       });
 
       it('should remove table properties but keep core props', () => {
@@ -144,27 +165,13 @@ describe('PanelModel', () => {
       it('should call react onPanelTypeChanged', () => {
         expect(onPanelTypeChanged.mock.calls.length).toBe(1);
         expect(onPanelTypeChanged.mock.calls[0][1]).toBe('table');
-        expect(onPanelTypeChanged.mock.calls[0][2].fieldOptions.thresholds).toBeDefined();
+        expect(onPanelTypeChanged.mock.calls[0][2].angular).toBeDefined();
       });
 
       it('getQueryRunner() should return same instance after changing to another react panel', () => {
         model.changePlugin(getPanelPlugin({ id: 'react2' }));
         const sameQueryRunner = model.getQueryRunner();
         expect(panelQueryRunner).toBe(sameQueryRunner);
-      });
-    });
-
-    describe('get panel options', () => {
-      it('should apply defaults', () => {
-        model.options = { existingProp: 10 };
-        const options = model.getOptions({
-          defaultProp: true,
-          existingProp: 0,
-        });
-
-        expect(options.defaultProp).toBe(true);
-        expect(options.existingProp).toBe(10);
-        expect(model.options).toBe(options);
       });
     });
   });

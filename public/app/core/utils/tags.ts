@@ -73,7 +73,7 @@ export function getTagColorsFromName(name: string): { color: string; borderColor
   return { color, borderColor };
 }
 
-function djb2(str) {
+function djb2(str: string) {
   let hash = 5381;
   for (let i = 0; i < str.length; i++) {
     hash = (hash << 5) + hash + str.charCodeAt(i); /* hash * 33 + c */
