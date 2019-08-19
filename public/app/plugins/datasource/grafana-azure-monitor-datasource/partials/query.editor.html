@@ -348,6 +348,16 @@
           </div>
       </div>
     </div>
+    <div class="gf-form-inline">      
+        <div class="gf-form">        
+            <div class="gf-form gf-form--grow">
+                <label class="gf-form-label query-keyword width-9">Top</label>
+                <input type="text" class="gf-form-input width-9" ng-model="ctrl.target.azureResourceGraph.top" spellcheck="false" placeholder="Top N results" ng-blur="ctrl.refresh()">
+                <label class="gf-form-label query-keyword width-9">Skip</label>
+                <input type="text" class="gf-form-input width-9" ng-model="ctrl.target.azureResourceGraph.skip" spellcheck="false" placeholder="Skip N results" ng-blur="ctrl.refresh()">
+            </div>
+        </div>
+    </div>
   </div>
   <div class="gf-form" ng-show="ctrl.lastQueryError">
     <pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
