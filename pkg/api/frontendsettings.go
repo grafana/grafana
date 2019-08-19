@@ -115,11 +115,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			}
 		}
 
-		if ds.Type == m.DS_ES {
-			dsMap["index"] = ds.Database
-		}
-
-		if ds.Type == m.DS_INFLUXDB {
+		if (ds.Type == m.DS_INFLUXDB) || (ds.Type == m.DS_ES) {
 			dsMap["database"] = ds.Database
 		}
 
@@ -176,7 +172,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"appSubUrl":                  setting.AppSubUrl,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":           setting.AuthProxyEnabled,
-		"ldapEnabled":                setting.LdapEnabled,
+		"ldapEnabled":                setting.LDAPEnabled,
 		"alertingEnabled":            setting.AlertingEnabled,
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,

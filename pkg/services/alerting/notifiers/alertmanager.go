@@ -51,7 +51,7 @@ type AlertmanagerNotifier struct {
 
 // ShouldNotify returns true if the notifiers should be used depending on state
 func (am *AlertmanagerNotifier) ShouldNotify(ctx context.Context, evalContext *alerting.EvalContext, notificationState *models.AlertNotificationState) bool {
-	am.log.Debug("Should notify", "ruleId", evalContext.Rule.Id, "state", evalContext.Rule.State, "previousState", evalContext.PrevAlertState)
+	am.log.Debug("Should notify", "ruleId", evalContext.Rule.ID, "state", evalContext.Rule.State, "previousState", evalContext.PrevAlertState)
 
 	// Do not notify when we become OK for the first time.
 	if (evalContext.PrevAlertState == models.AlertStatePending) && (evalContext.Rule.State == models.AlertStateOK) {
@@ -89,11 +89,11 @@ func (am *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, m
 	if description != "" {
 		alertJSON.SetPath([]string{"annotations", "description"}, description)
 	}
-	if evalContext.ImagePublicUrl != "" {
-		alertJSON.SetPath([]string{"annotations", "image"}, evalContext.ImagePublicUrl)
+	if evalContext.ImagePublicURL != "" {
+		alertJSON.SetPath([]string{"annotations", "image"}, evalContext.ImagePublicURL)
 	}
 
-	// Labels (from metrics tags + mandatory alertname).
+	// Labels (from metrics tags + AlertRuleTags + mandatory alertname).
 	tags := make(map[string]string)
 	if match != nil {
 		if len(match.Tags) == 0 {
@@ -104,6 +104,9 @@ func (am *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, m
 			}
 		}
 	}
+	for _, tag := range evalContext.Rule.AlertRuleTags {
+		tags[tag.Key] = tag.Value
+	}
 	tags["alertname"] = evalContext.Rule.Name
 	alertJSON.Set("labels", tags)
 	return alertJSON
@@ -111,9 +114,9 @@ func (am *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, m
 
 // Notify sends alert notifications to the alert manager
 func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error {
-	am.log.Info("Sending Alertmanager alert", "ruleId", evalContext.Rule.Id, "notification", am.Name)
+	am.log.Info("Sending Alertmanager alert", "ruleId", evalContext.Rule.ID, "notification", am.Name)
 
-	ruleURL, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		am.log.Error("Failed get rule link", "error", err)
 		return err

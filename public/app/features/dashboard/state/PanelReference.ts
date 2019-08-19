@@ -30,7 +30,7 @@ export function copyReference(panel: PanelModel, ref: PanelModel) {
   // Remove fields that are not in the panel
   for (const key of _.keys(panel)) {
     if (!ref.hasOwnProperty(key) && !ignoreForReference[key]) {
-      delete panel[key];
+      delete (panel as any)[key];
     }
   }
 
@@ -39,7 +39,7 @@ export function copyReference(panel: PanelModel, ref: PanelModel) {
     if (ignoreForReference[key]) {
       continue;
     }
-    panel[key] = ref[key];
+    (panel as any)[key] = (ref as any)[key];
   }
 }
 
@@ -95,7 +95,7 @@ export function loadPanelRef(ref: PanelRef): Promise<PanelReferenceInfo> {
 
   return getBackendSrv()
     .getDashboardByUid(ref.dashboard)
-    .then(result => {
+    .then((result: any) => {
       info.dashboard = result.dashboard;
       if (ref.panelId > 0) {
         info.panel = _.find(result.dashboard.panels, { id: ref.panelId }) as PanelModel;
@@ -105,7 +105,7 @@ export function loadPanelRef(ref: PanelRef): Promise<PanelReferenceInfo> {
       }
       return info;
     })
-    .catch(err => {
+    .catch((err: any) => {
       err.isHandled = true;
       info.error = 'Can not find referenced dashboard: ' + err;
       return info;

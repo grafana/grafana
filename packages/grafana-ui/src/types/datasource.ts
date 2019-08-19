@@ -1,7 +1,15 @@
 import { ComponentType, ComponentClass } from 'react';
-import { TimeRange } from './time';
+import {
+  TimeRange,
+  RawTimeRange,
+  TableData,
+  TimeSeries,
+  DataFrame,
+  LogRowModel,
+  LoadingState,
+  DataFrameDTO,
+} from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
-import { TableData, TimeSeries, SeriesData, LoadingState } from './data';
 import { PanelData } from './panel';
 
 // NOTE: this seems more general than just DataSource
@@ -29,6 +37,11 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setConfigCtrl(ConfigCtrl: any) {
+    this.angularConfigCtrl = ConfigCtrl;
+    return this;
+  }
+
   setQueryCtrl(QueryCtrl: any) {
     this.components.QueryCtrl = QueryCtrl;
     return this;
@@ -46,6 +59,16 @@ export class DataSourcePlugin<
 
   setExploreQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
     this.components.ExploreQueryField = ExploreQueryField;
+    return this;
+  }
+
+  setExploreMetricsQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+    this.components.ExploreMetricsQueryField = ExploreQueryField;
+    return this;
+  }
+
+  setExploreLogsQueryField(ExploreQueryField: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>) {
+    this.components.ExploreLogsQueryField = ExploreQueryField;
     return this;
   }
 
@@ -74,9 +97,7 @@ export class DataSourcePlugin<
 export interface DataSourcePluginMeta extends PluginMeta {
   builtIn?: boolean; // Is this for all
   metrics?: boolean;
-  tables?: boolean;
   logs?: boolean;
-  explore?: boolean;
   annotations?: boolean;
   alerting?: boolean;
   mixed?: boolean;
@@ -84,6 +105,14 @@ export interface DataSourcePluginMeta extends PluginMeta {
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
+  streaming?: boolean;
+
+  /**
+   * By default, hidden queries are not passed to the datasource
+   * Set this to true in plugin.json to have hidden queries passed to the
+   * DataSource query method
+   */
+  hiddenQueries?: boolean;
 }
 
 interface PluginMetaQueryOptions {
@@ -102,6 +131,8 @@ export interface DataSourcePluginComponents<
   VariableQueryEditor?: any;
   QueryEditor?: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>;
   ExploreQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreMetricsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
+  ExploreLogsQueryField?: ComponentClass<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreStartPage?: ComponentClass<ExploreStartPageProps>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<DataSourceSettings<TOptions>>>;
 }
@@ -173,6 +204,29 @@ export abstract class DataSourceApi<
   getQueryDisplayText?(query: TQuery): string;
 
   /**
+   * Retrieve context for a given log row
+   */
+  getLogRowContext?: <TContextQueryOptions extends {}>(
+    row: LogRowModel,
+    options?: TContextQueryOptions
+  ) => Promise<DataQueryResponse>;
+
+  /**
+   * Variable query action.
+   */
+  metricFindQuery?(query: any, options?: any): Promise<MetricFindValue[]>;
+
+  /**
+   * Get tag keys for adhoc filters
+   */
+  getTagKeys?(options?: any): Promise<MetricFindValue[]>;
+
+  /**
+   * Get tag values for adhoc filters
+   */
+  getTagValues?(options: any): Promise<MetricFindValue[]>;
+
+  /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
    * we attach the components to this instance for easy access
    */
@@ -187,14 +241,20 @@ export abstract class DataSourceApi<
    * Used by alerting to check if query contains template variables
    */
   targetContainsTemplate?(query: TQuery): boolean;
-}
 
-export abstract class ExploreDataSourceApi<
-  TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
-> extends DataSourceApi<TQuery, TOptions> {
+  /**
+   * Used in explore
+   */
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
+
+  /**
+   * Used in explore
+   */
   getHighlighterExpression?(query: TQuery): string[];
+
+  /**
+   * Used in explore
+   */
   languageProvider?: any;
 }
 
@@ -231,11 +291,11 @@ export interface ExploreStartPageProps {
 }
 
 /**
- * Starting in v6.2 SeriesData can represent both TimeSeries and TableData
+ * Starting in v6.2 DataFrame can represent both TimeSeries and TableData
  */
 export type LegacyResponseData = TimeSeries | TableData | any;
 
-export type DataQueryResponseData = SeriesData | LegacyResponseData;
+export type DataQueryResponseData = DataFrameDTO | LegacyResponseData;
 
 export type DataStreamObserver = (event: DataStreamState) => void;
 
@@ -258,9 +318,9 @@ export interface DataStreamState {
   request: DataQueryRequest;
 
   /**
-   * Series data may not be known yet
+   * Data may not be known yet
    */
-  series?: SeriesData[];
+  data?: DataFrame[];
 
   /**
    * Error in stream (but may still be running)
@@ -270,7 +330,7 @@ export interface DataStreamState {
   /**
    * Optionally return only the rows that changed in this event
    */
-  delta?: SeriesData[];
+  delta?: DataFrame[];
 
   /**
    * Stop listening to this stream
@@ -303,6 +363,8 @@ export interface DataQuery {
    * For non mixed scenarios this is undefined.
    */
   datasource?: string | null;
+
+  metric?: any;
 }
 
 export interface DataQueryError {
@@ -330,6 +392,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
   timezone: string;
   range: TimeRange;
+  rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   targets: TQuery[];
   panelId: number;
@@ -361,6 +424,10 @@ export interface QueryHint {
   type: string;
   label: string;
   fix?: QueryFix;
+}
+
+export interface MetricFindValue {
+  text: string;
 }
 
 export interface DataSourceJsonData {
@@ -407,6 +474,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
+  database?: string;
 
   /**
    * This is the full Authorization header if basic auth is ennabled.

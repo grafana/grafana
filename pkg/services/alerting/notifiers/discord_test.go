@@ -22,14 +22,15 @@ func TestDiscordNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				_, err := NewDiscordNotifier(model)
+				_, err := newDiscordNotifier(model)
 				So(err, ShouldNotBeNil)
 			})
 
 			Convey("settings should trigger incident", func() {
 				json := `
 				{
-          "url": "https://web.hook/"
+					"content": "@everyone Please check this notification",
+					"url": "https://web.hook/"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -39,12 +40,13 @@ func TestDiscordNotifier(t *testing.T) {
 					Settings: settingsJSON,
 				}
 
-				not, err := NewDiscordNotifier(model)
+				not, err := newDiscordNotifier(model)
 				discordNotifier := not.(*DiscordNotifier)
 
 				So(err, ShouldBeNil)
 				So(discordNotifier.Name, ShouldEqual, "discord_testing")
 				So(discordNotifier.Type, ShouldEqual, "discord")
+				So(discordNotifier.Content, ShouldEqual, "@everyone Please check this notification")
 				So(discordNotifier.WebhookURL, ShouldEqual, "https://web.hook/")
 			})
 		})

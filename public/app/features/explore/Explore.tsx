@@ -12,30 +12,29 @@ import store from 'app/core/store';
 // Components
 import { Alert } from './Error';
 import ErrorBoundary from './ErrorBoundary';
-import GraphContainer from './GraphContainer';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
-import TimePicker from './TimePicker';
 
 // Actions
 import {
   changeSize,
-  changeTime,
   initializeExplore,
   modifyQueries,
   scanStart,
   setQueries,
   refreshExplore,
   reconnectDatasource,
+  updateTimeRange,
 } from './state/actions';
 
 // Types
-import { RawTimeRange, DataQuery, ExploreStartPageProps, ExploreDataSourceApi, DataQueryError } from '@grafana/ui';
+import { RawTimeRange, GraphSeriesXY } from '@grafana/data';
+
+import { DataQuery, ExploreStartPageProps, DataSourceApi, DataQueryError } from '@grafana/ui';
 import {
   ExploreItemState,
   ExploreUrlState,
-  RangeScanner,
   ExploreId,
   ExploreUpdateState,
   ExploreUIState,
@@ -43,26 +42,26 @@ import {
 } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
-  LAST_USED_DATASOURCE_KEY,
   ensureQueries,
   DEFAULT_RANGE,
   DEFAULT_UI_STATE,
   getTimeRangeFromUrl,
+  lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
-import { scanStopAction } from './state/actionTypes';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
+import { scanStopAction } from './state/actionTypes';
+import ExploreGraphPanel from './ExploreGraphPanel';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
   changeSize: typeof changeSize;
-  changeTime: typeof changeTime;
   datasourceError: string;
-  datasourceInstance: ExploreDataSourceApi;
+  datasourceInstance: DataSourceApi;
   datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
@@ -72,7 +71,6 @@ interface ExploreProps {
   update: ExploreUpdateState;
   reconnectDatasource: typeof reconnectDatasource;
   refreshExplore: typeof refreshExplore;
-  scanner?: RangeScanner;
   scanning?: boolean;
   scanRange?: RawTimeRange;
   scanStart: typeof scanStart;
@@ -84,9 +82,12 @@ interface ExploreProps {
   initialDatasource: string;
   initialQueries: DataQuery[];
   initialRange: RawTimeRange;
+  mode: ExploreMode;
   initialUI: ExploreUIState;
   queryErrors: DataQueryError[];
-  mode: ExploreMode;
+  isLive: boolean;
+  updateTimeRange: typeof updateTimeRange;
+  graphResult?: GraphSeriesXY[];
 }
 
 /**
@@ -116,19 +117,14 @@ interface ExploreProps {
 export class Explore extends React.PureComponent<ExploreProps> {
   el: any;
   exploreEvents: Emitter;
-  /**
-   * Timepicker to control scanning
-   */
-  timepickerRef: React.RefObject<TimePicker>;
 
   constructor(props: ExploreProps) {
     super(props);
     this.exploreEvents = new Emitter();
-    this.timepickerRef = React.createRef();
   }
 
   componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, initialUI } = this.props;
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, mode, initialUI } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
@@ -138,6 +134,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         initialDatasource,
         initialQueries,
         initialRange,
+        mode,
         width,
         this.exploreEvents,
         initialUI
@@ -157,11 +154,10 @@ export class Explore extends React.PureComponent<ExploreProps> {
     this.el = el;
   };
 
-  onChangeTime = (range: RawTimeRange, changedByScanner?: boolean) => {
-    if (this.props.scanning && !changedByScanner) {
-      this.onStopScanning();
-    }
-    this.props.changeTime(this.props.exploreId, range);
+  onChangeTime = (rawRange: RawTimeRange) => {
+    const { updateTimeRange, exploreId } = this.props;
+
+    updateTimeRange({ exploreId, rawRange });
   };
 
   // Use this in help pages to set page to a single query
@@ -187,13 +183,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
   onStartScanning = () => {
     // Scanner will trigger a query
-    const scanner = this.scanPreviousRange;
-    this.props.scanStart(this.props.exploreId, scanner);
-  };
-
-  scanPreviousRange = (): RawTimeRange => {
-    // Calling move() on the timepicker will trigger this.onChangeTime()
-    return this.timepickerRef.current.move(-1, true);
+    this.props.scanStart(this.props.exploreId);
   };
 
   onStopScanning = () => {
@@ -203,7 +193,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
   refreshExplore = () => {
     const { exploreId, update } = this.props;
 
-    if (update.queries || update.ui || update.range || update.datasource) {
+    if (update.queries || update.ui || update.range || update.datasource || update.mode) {
       this.props.refreshExplore(exploreId);
     }
   };
@@ -236,12 +226,13 @@ export class Explore extends React.PureComponent<ExploreProps> {
       queryKeys,
       queryErrors,
       mode,
+      graphResult,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
 
     return (
       <div className={exploreClass} ref={this.getRef}>
-        <ExploreToolbar exploreId={exploreId} timepickerRef={this.timepickerRef} onChangeTime={this.onChangeTime} />
+        <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
         {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
         {datasourceMissing ? this.renderEmptyState() : null}
 
@@ -270,7 +261,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
                       {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
                       {!showingStartPage && (
                         <>
-                          {mode === ExploreMode.Metrics && <GraphContainer width={width} exploreId={exploreId} />}
+                          {mode === ExploreMode.Metrics && (
+                            <ExploreGraphPanel exploreId={exploreId} series={graphResult} width={width} />
+                          )}
                           {mode === ExploreMode.Metrics && (
                             <TableContainer exploreId={exploreId} onClickCell={this.onClickLabel} />
                           )}
@@ -314,13 +307,33 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     urlState,
     update,
     queryErrors,
+    isLive,
+    supportedModes,
     mode,
+    graphResult,
   } = item;
 
-  const { datasource, queries, range: urlRange, ui } = (urlState || {}) as ExploreUrlState;
-  const initialDatasource = datasource || store.get(LAST_USED_DATASOURCE_KEY);
+  const { datasource, queries, range: urlRange, mode: urlMode, ui } = (urlState || {}) as ExploreUrlState;
+  const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
   const initialQueries: DataQuery[] = ensureQueries(queries);
   const initialRange = urlRange ? getTimeRangeFromUrl(urlRange, timeZone).raw : DEFAULT_RANGE;
+
+  let newMode: ExploreMode;
+  if (supportedModes.length) {
+    const urlModeIsValid = supportedModes.includes(urlMode);
+    const modeStateIsValid = supportedModes.includes(mode);
+
+    if (modeStateIsValid) {
+      newMode = mode;
+    } else if (urlModeIsValid) {
+      newMode = urlMode;
+    } else {
+      newMode = supportedModes[0];
+    }
+  } else {
+    newMode = [ExploreMode.Metrics, ExploreMode.Logs].includes(mode) ? mode : ExploreMode.Metrics;
+  }
+
   const initialUI = ui || DEFAULT_UI_STATE;
 
   return {
@@ -337,15 +350,16 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialDatasource,
     initialQueries,
     initialRange,
+    mode: newMode,
     initialUI,
     queryErrors,
-    mode,
+    isLive,
+    graphResult,
   };
 }
 
 const mapDispatchToProps = {
   changeSize,
-  changeTime,
   initializeExplore,
   modifyQueries,
   reconnectDatasource,
@@ -353,6 +367,7 @@ const mapDispatchToProps = {
   scanStart,
   scanStopAction,
   setQueries,
+  updateTimeRange,
 };
 
 export default hot(module)(

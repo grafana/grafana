@@ -1,10 +1,11 @@
-import { PanelPlugin, sharedSingleStatMigrationCheck, sharedSingleStatOptionsCheck } from '@grafana/ui';
+import { PanelPlugin } from '@grafana/ui';
 import { GaugePanelEditor } from './GaugePanelEditor';
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions, defaults } from './types';
+import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 
 export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
   .setDefaults(defaults)
   .setEditor(GaugePanelEditor)
-  .setPanelChangeHandler(sharedSingleStatOptionsCheck)
-  .setMigrationHandler(sharedSingleStatMigrationCheck);
+  .setPanelChangeHandler(gaugePanelChangedHandler)
+  .setMigrationHandler(gaugePanelMigrationHandler);

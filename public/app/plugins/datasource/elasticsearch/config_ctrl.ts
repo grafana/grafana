@@ -1,19 +1,24 @@
 import _ from 'lodash';
+import { ElasticsearchOptions } from './types';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { getMaxConcurrenShardRequestOrDefault } from './datasource';
 
 export class ElasticConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/elasticsearch/partials/config.html';
-  current: any;
+  current: DataSourceInstanceSettings<ElasticsearchOptions>;
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope: any) {
     this.current.jsonData.timeField = this.current.jsonData.timeField || '@timestamp';
     this.current.jsonData.esVersion = this.current.jsonData.esVersion || 5;
     const defaultMaxConcurrentShardRequests = this.current.jsonData.esVersion >= 70 ? 5 : 256;
     this.current.jsonData.maxConcurrentShardRequests =
       this.current.jsonData.maxConcurrentShardRequests || defaultMaxConcurrentShardRequests;
+    this.current.jsonData.logMessageField = this.current.jsonData.logMessageField || '';
+    this.current.jsonData.logLevelField = this.current.jsonData.logLevelField || '';
   }
 
-  indexPatternTypes = [
+  indexPatternTypes: any = [
     { name: 'No pattern', value: undefined },
     { name: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
     { name: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
@@ -41,5 +46,9 @@ export class ElasticConfigCtrl {
       });
       this.current.database = def.example || 'es-index-name';
     }
+  }
+
+  versionChanged() {
+    this.current.jsonData.maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(this.current.jsonData);
   }
 }

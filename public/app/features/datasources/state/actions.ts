@@ -1,12 +1,13 @@
 import { ThunkAction } from 'redux-thunk';
 import config from '../../../core/config';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 import { updateLocation, updateNavIndex, UpdateNavIndexAction } from 'app/core/actions';
 import { buildNavModel } from './navModel';
 import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
-import { StoreState, LocationUpdate } from 'app/types';
+import { StoreState } from 'app/types';
+import { LocationUpdate } from '@grafana/runtime';
 import { actionCreatorFactory } from 'app/core/redux';
 import { ActionOf, noPayloadActionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';

@@ -1,7 +1,7 @@
 ignoreGeneratedHeader = false
 severity = "error"
 confidence = 0.8
-errorCode = 0
+errorCode = 1
 
 [rule.context-as-argument]
 [rule.error-return]

@@ -1,0 +1,6 @@
+{
+  "extends": "../../tslint.json",
+  "rules": {
+    "import-blacklist": [true, ["^@grafana/data.*"], ["^@grafana/ui.*"], ["^@grafana/runtime.*"]]
+  }
+}

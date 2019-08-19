@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 )
@@ -40,6 +41,20 @@ func FloatFromPtr(f *float64) Float {
 		return NewFloat(0, false)
 	}
 	return NewFloat(*f, true)
+}
+
+// FloatFromString creates a new Float from string f.
+// If the string is equal to the value of nullString then the Float will be null.
+// An empty string f will return an error.
+func FloatFromString(f string, nullString string) (Float, error) {
+	if f == nullString {
+		return FloatFromPtr(nil), nil
+	}
+	fV, err := strconv.ParseFloat(f, 64)
+	if err != nil {
+		return Float{}, err
+	}
+	return FloatFrom(fV), nil
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -85,7 +100,7 @@ func (f *Float) UnmarshalText(text []byte) error {
 // MarshalJSON implements json.Marshaler.
 // It will encode null if this Float is null.
 func (f Float) MarshalJSON() ([]byte, error) {
-	if !f.Valid {
+	if !f.Valid || math.IsNaN(f.Float64) {
 		return []byte(nullString), nil
 	}
 	return []byte(strconv.FormatFloat(f.Float64, 'f', -1, 64)), nil

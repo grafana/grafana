@@ -14,6 +14,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -185,8 +186,14 @@ func transformMap(i map[interface{}]interface{}) interface{} {
 
 // interpolateValue returns final value after interpolation. At the moment only env var interpolation is done
 // here but in the future something like interpolation from file could be also done here.
+// For a literal '$', '$$' can be used to avoid interpolation.
 func interpolateValue(val string) string {
-	return os.ExpandEnv(val)
+	parts := strings.Split(val, "$$")
+	interpolated := make([]string, len(parts))
+	for i, v := range parts {
+		interpolated[i] = os.ExpandEnv(v)
+	}
+	return strings.Join(interpolated, "$")
 }
 
 type interpolated struct {

@@ -1,7 +1,7 @@
 import { AppNotification, AppNotificationSeverity, AppNotificationTimeout } from 'app/types';
 import { getMessageFromError } from 'app/core/utils/errors';
 
-const defaultSuccessNotification: AppNotification = {
+const defaultSuccessNotification = {
   title: '',
   text: '',
   severity: AppNotificationSeverity.Success,
@@ -9,7 +9,7 @@ const defaultSuccessNotification: AppNotification = {
   timeout: AppNotificationTimeout.Success,
 };
 
-const defaultWarningNotification: AppNotification = {
+const defaultWarningNotification = {
   title: '',
   text: '',
   severity: AppNotificationSeverity.Warning,
@@ -17,7 +17,7 @@ const defaultWarningNotification: AppNotification = {
   timeout: AppNotificationTimeout.Warning,
 };
 
-const defaultErrorNotification: AppNotification = {
+const defaultErrorNotification = {
   title: '',
   text: '',
   severity: AppNotificationSeverity.Error,

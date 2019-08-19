@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"github.com/go-xorm/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -109,4 +110,51 @@ func addAnnotationMig(mg *Migrator) {
 	//
 	updateEpochSql := "UPDATE annotation SET epoch = (epoch*1000) where epoch < 9999999999"
 	mg.AddMigration("Convert existing annotations from seconds to milliseconds", NewRawSqlMigration(updateEpochSql))
+
+	//
+	// 6.4: Make Regions a single annotation row
+	//
+	mg.AddMigration("Add epoch_end column", NewAddColumnMigration(table, &Column{
+		Name: "epoch_end", Type: DB_BigInt, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("Add index for epoch_end", NewAddIndexMigration(table, &Index{
+		Cols: []string{"org_id", "epoch", "epoch_end"}, Type: IndexType,
+	}))
+	mg.AddMigration("Make epoch_end the same as epoch", NewRawSqlMigration("UPDATE annotation SET epoch_end = epoch"))
+	mg.AddMigration("Move region to single row", &AddMakeRegionSingleRowMigration{})
+
+	// TODO! drop region_id column?
+}
+
+type AddMakeRegionSingleRowMigration struct {
+	MigrationBase
+}
+
+func (m *AddMakeRegionSingleRowMigration) Sql(dialect Dialect) string {
+	return "code migration"
+}
+
+type TempRegionInfoDTO struct {
+	RegionId int64
+	Epoch    int64
+}
+
+func (m *AddMakeRegionSingleRowMigration) Exec(sess *xorm.Session, mg *Migrator) error {
+	regions := make([]*TempRegionInfoDTO, 0)
+
+	err := sess.SQL("SELECT region_id, epoch FROM annotation WHERE region_id>0 AND region_id <> id").Find(&regions)
+
+	if err != nil {
+		return err
+	}
+
+	for _, region := range regions {
+		_, err := sess.Exec("UPDATE annotation SET epoch_end = ? WHERE id = ?", region.Epoch, region.RegionId)
+		if err != nil {
+			return err
+		}
+	}
+
+	sess.Exec("DELETE FROM annotation WHERE region_id > 0 AND id <> region_id")
+	return nil
 }

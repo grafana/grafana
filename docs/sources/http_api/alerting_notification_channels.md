@@ -54,10 +54,52 @@ Content-Type: application/json
     "sendReminder": false,
     "disableResolveMessage": false,
     "settings": {
-      "addresses": "carl@grafana.com;dev@grafana.com"
+      "addresses": "dev@grafana.com"
     },
     "created": "2018-04-23T14:44:09+02:00",
     "updated": "2018-08-20T15:47:49+02:00"
+  }
+]
+
+```
+
+## Get all notification channels (lookup)
+
+Returns all notification channels, but with less detailed information.
+Accessible by any authenticated user and is mainly used by providing
+alert notification channels in Grafana UI when configuring alert rule.
+
+`GET /api/alert-notifications/lookup`
+
+**Example Request**:
+
+```http
+GET /api/alert-notifications/lookup HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "id": 1,
+    "uid": "000000001",
+    "name": "Test",
+    "type": "email",
+    "isDefault": false
+  },
+  {
+    "id": 2,
+    "uid": "000000002",
+    "name": "Slack",
+    "type": "slack",
+    "isDefault": false
   }
 ]
 
@@ -93,7 +135,7 @@ Content-Type: application/json
   "sendReminder": false,
   "disableResolveMessage": false,
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   },
   "created": "2018-04-23T14:44:09+02:00",
   "updated": "2018-08-20T15:47:49+02:00"
@@ -130,7 +172,7 @@ Content-Type: application/json
   "sendReminder": false,
   "disableResolveMessage": false,
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   },
   "created": "2018-04-23T14:44:09+02:00",
   "updated": "2018-08-20T15:47:49+02:00"
@@ -158,7 +200,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "isDefault": false,
   "sendReminder": false,
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   }
 }
 ```
@@ -177,7 +219,7 @@ Content-Type: application/json
   "isDefault": false,
   "sendReminder": false,
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   },
   "created": "2018-04-23T14:44:09+02:00",
   "updated": "2018-08-20T15:47:49+02:00"
@@ -206,7 +248,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "sendReminder": true,
   "frequency": "15m",
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   }
 }
 ```
@@ -226,7 +268,7 @@ Content-Type: application/json
   "sendReminder": true,
   "frequency": "15m",
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   },
   "created": "2017-01-01 12:34",
   "updated": "2017-01-01 12:34"
@@ -256,7 +298,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "sendReminder": true,
   "frequency": "15m",
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   }
 }
 ```
@@ -276,7 +318,7 @@ Content-Type: application/json
   "sendReminder": true,
   "frequency": "15m",
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   },
   "created": "2017-01-01 12:34",
   "updated": "2017-01-01 12:34"
@@ -353,7 +395,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {
   "type":  "email",
   "settings": {
-    "addresses": "carl@grafana.com;dev@grafana.com"
+    "addresses": "dev@grafana.com"
   }
 }
 ```

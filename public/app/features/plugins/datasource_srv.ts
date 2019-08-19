@@ -5,15 +5,23 @@ import coreModule from 'app/core/core_module';
 // Services & Utils
 import config from 'app/core/config';
 import { importDataSourcePlugin } from './plugin_loader';
+import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
 
 // Types
-import { DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/ui/src/types';
+import { DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/ui';
+import { auto } from 'angular';
+import { TemplateSrv } from '../templating/template_srv';
 
-export class DatasourceSrv {
+export class DatasourceSrv implements DataSourceService {
   datasources: { [name: string]: DataSourceApi };
 
   /** @ngInject */
-  constructor(private $q, private $injector, private $rootScope, private templateSrv) {
+  constructor(
+    private $q: any,
+    private $injector: auto.IInjectorService,
+    private $rootScope: any,
+    private templateSrv: TemplateSrv
+  ) {
     this.init();
   }
 
@@ -27,7 +35,7 @@ export class DatasourceSrv {
     }
 
     // Interpolation here is to support template variable in data source selection
-    name = this.templateSrv.replace(name, scopedVars, (value, variable) => {
+    name = this.templateSrv.replace(name, scopedVars, (value: any[], variable: any) => {
       if (Array.isArray(value)) {
         return value[0];
       }
@@ -61,9 +69,13 @@ export class DatasourceSrv {
           return;
         }
 
-        const instance: DataSourceApi = this.$injector.instantiate(dsPlugin.DataSourceClass, {
-          instanceSettings: dsConfig,
-        });
+        // If there is only one constructor argument it is instanceSettings
+        const useAngular = dsPlugin.DataSourceClass.length !== 1;
+        const instance: DataSourceApi = useAngular
+          ? this.$injector.instantiate(dsPlugin.DataSourceClass, {
+              instanceSettings: dsConfig,
+            })
+          : new dsPlugin.DataSourceClass(dsConfig);
 
         instance.components = dsPlugin.components;
         instance.meta = dsConfig.meta;
@@ -90,7 +102,7 @@ export class DatasourceSrv {
   }
 
   getAnnotationSources() {
-    const sources = [];
+    const sources: any[] = [];
 
     this.addDataSourceVariables(sources);
 
@@ -103,7 +115,7 @@ export class DatasourceSrv {
     return sources;
   }
 
-  getMetricSources(options?) {
+  getMetricSources(options?: { skipVariables?: boolean }) {
     const metricSources: DataSourceSelectItem[] = [];
 
     _.each(config.datasources, (value, key) => {
@@ -143,7 +155,7 @@ export class DatasourceSrv {
     return metricSources;
   }
 
-  addDataSourceVariables(list) {
+  addDataSourceVariables(list: any[]) {
     // look for data source variables
     for (let i = 0; i < this.templateSrv.variables.length; i++) {
       const variable = this.templateSrv.variables[i];
@@ -171,14 +183,8 @@ export class DatasourceSrv {
   }
 }
 
-let singleton: DatasourceSrv;
-
-export function setDatasourceSrv(srv: DatasourceSrv) {
-  singleton = srv;
-}
-
 export function getDatasourceSrv(): DatasourceSrv {
-  return singleton;
+  return getDataSourceService() as DatasourceSrv;
 }
 
 coreModule.service('datasourceSrv', DatasourceSrv);

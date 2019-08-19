@@ -45,7 +45,7 @@ func TestWebhookNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(webhookNotifier.Name, ShouldEqual, "ops")
 				So(webhookNotifier.Type, ShouldEqual, "webhook")
-				So(webhookNotifier.Url, ShouldEqual, "http://google.com")
+				So(webhookNotifier.URL, ShouldEqual, "http://google.com")
 			})
 		})
 	})

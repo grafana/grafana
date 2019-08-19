@@ -77,6 +77,7 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 	}
 }
 
+//nolint:goconst
 func TestAlertmanagerNotifier(t *testing.T) {
 	Convey("Alertmanager notifier tests", t, func() {
 

@@ -16,6 +16,7 @@ function convertCSSToStyle(css: string): Style {
 
     if (match && match[1] && match[2]) {
       const key = match[1].replace(/-(a-z)/g, (_, character) => character.toUpperCase());
+      // @ts-ignore
       accumulated[key] = match[2];
     }
 
@@ -33,7 +34,7 @@ interface State {
 }
 
 export class LogMessageAnsi extends PureComponent<Props, State> {
-  state = {
+  state: State = {
     chunks: [],
     prevValue: '',
   };

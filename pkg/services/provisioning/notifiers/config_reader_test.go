@@ -66,6 +66,8 @@ func TestNotificationAsConfig(t *testing.T) {
 			So(nt.Settings, ShouldResemble, map[string]interface{}{
 				"recipient": "XXX", "token": "xoxb", "uploadImage": true, "url": "https://slack.com",
 			})
+			So(nt.SendReminder, ShouldBeTrue)
+			So(nt.Frequency, ShouldEqual, "1h")
 
 			nt = nts[1]
 			So(nt.Name, ShouldEqual, "another-not-default-notification")

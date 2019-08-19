@@ -13,7 +13,7 @@ class AdminSettingsCtrl {
 
   /** @ngInject */
   constructor($scope: any, backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
-    this.navModel = navModelSrv.getNav('admin', 'server-settings');
+    this.navModel = navModelSrv.getNav('admin', 'server-settings', 0);
 
     backendSrv.get('/api/admin/settings').then((settings: any) => {
       $scope.settings = settings;

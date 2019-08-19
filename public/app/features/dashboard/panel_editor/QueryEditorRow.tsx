@@ -5,13 +5,14 @@ import _ from 'lodash';
 
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Emitter } from 'app/core/utils/emitter';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, TimeRange, PanelData, LoadingState, DataQueryRequest } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
+import { TimeRange, LoadingState } from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
@@ -82,7 +83,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.setState({
       datasource,
       loadedDataSourceValue: this.props.dataSourceValue,
-      hasTextEditMode: false,
+      hasTextEditMode: _.has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
@@ -121,14 +122,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl" />';
     const scopeProps = { ctrl: this.getAngularQueryComponentScope() };
-
     this.angularQueryEditor = loader.load(this.element, scopeProps, template);
     this.angularScope = scopeProps.ctrl;
-
-    // give angular time to compile
-    setTimeout(() => {
-      this.setState({ hasTextEditMode: !!this.angularScope.toggleEditorMode });
-    }, 100);
   }
 
   onToggleCollapse = () => {

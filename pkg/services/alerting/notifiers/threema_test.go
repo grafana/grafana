@@ -113,7 +113,6 @@ func TestThreemaNotifier(t *testing.T) {
 				So(not, ShouldBeNil)
 				So(err.(alerting.ValidationError).Reason, ShouldEqual, "Invalid Threema Recipient ID: Must be 8 characters long")
 			})
-
 		})
 	})
 }

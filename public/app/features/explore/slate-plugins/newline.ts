@@ -1,4 +1,4 @@
-function getIndent(text) {
+function getIndent(text: any) {
   let offset = text.length - text.trimLeft().length;
   if (offset) {
     let indent = text[0];
@@ -12,7 +12,7 @@ function getIndent(text) {
 
 export default function NewlinePlugin() {
   return {
-    onKeyDown(event, change) {
+    onKeyDown(event: any, change: { value?: any; splitBlock?: any }) {
       const { value } = change;
       if (!value.isCollapsed) {
         return undefined;

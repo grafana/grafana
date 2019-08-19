@@ -19,6 +19,11 @@ module.exports = merge(common, {
     light: './public/sass/grafana.light.scss',
   },
 
+  // If we enabled watch option via CLI
+  watchOptions: {
+    ignored: /node_modules/
+  },
+
   module: {
     rules: [
       {
