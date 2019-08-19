@@ -530,4 +530,89 @@ describe('templateSrv', () => {
       expect(target).toBe('10 * 100');
     });
   });
+
+  describe('expressions evaluation', () => {
+    beforeEach(() => {
+      initTemplateSrv([]);
+    });
+
+    describe('built-in string expressions ', () => {
+      test('replace', () => {
+        const expr = '${replace($instancePath, region, $region)}';
+        const result = _templateSrv.evaluateExpressionVariable(expr, {
+          instancePath: {
+            text: 'grafana.region.instance',
+            value: 'grafana.region.instance',
+          },
+          region: {
+            text: 'eu-west-1',
+            value: 'eu-west-1',
+          },
+        });
+        expect(result).toBe('grafana.eu-west-1.instance');
+      });
+    });
+
+    describe('built-in math expressions ', () => {
+      describe('integer arguments', () => {
+        test('add', () => {
+          const expr = '${add(10, 10)}';
+          const result = _templateSrv.evaluateExpressionVariable(expr);
+          expect(result).toBe(20);
+        });
+
+        test('subtract', () => {
+          const expr = '${subtract(20, 10)}';
+          const result = _templateSrv.evaluateExpressionVariable(expr);
+          expect(result).toBe(10);
+        });
+
+        test('multiply', () => {
+          const expr = '${multiply(5, 6)}';
+          const result = _templateSrv.evaluateExpressionVariable(expr);
+          expect(result).toBe(30);
+        });
+      });
+
+      describe('float argument', () => {
+        test('add', () => {
+          const expr = '${add(1.5, 0.5)}';
+          const result = _templateSrv.evaluateExpressionVariable(expr);
+          expect(result).toBe(2);
+        });
+
+        test('subtract', () => {
+          const expr = '${subtract(2.5, 1.3)}';
+          const result = _templateSrv.evaluateExpressionVariable(expr);
+          expect(result).toBe(1.2);
+        });
+
+        test('multiply', () => {
+          const expr = '${multiply(1.5, 1.5)}';
+          const result = _templateSrv.evaluateExpressionVariable(expr);
+          expect(result).toBe(2.25);
+        });
+      });
+
+      describe('mixed arguments', () => {
+        test('add', () => {
+          const expr = '${add(1, 0.5)}';
+          const result = _templateSrv.evaluateExpressionVariable(expr);
+          expect(result).toBe(1.5);
+        });
+
+        test('subtract', () => {
+          const expr = '${subtract(2, 1.3)}';
+          const result = _templateSrv.evaluateExpressionVariable(expr);
+          expect(result).toBe(0.7);
+        });
+
+        test('multiply', () => {
+          const expr = '${multiply(2, 1.5)}';
+          const result = _templateSrv.evaluateExpressionVariable(expr);
+          expect(result).toBe(3);
+        });
+      });
+    });
+  });
 });

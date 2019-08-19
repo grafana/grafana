@@ -117,7 +117,7 @@ export class LinkSrv implements LinkService {
 
     const variablesQuery = toUrlParams(params);
 
-    info.href = this.templateSrv.replace(link.url, {
+    let varsToApply = {
       ...scopedVars,
       [DataLinkBuiltInVars.keepTime]: {
         text: timeRangeUrl,
@@ -127,15 +127,16 @@ export class LinkSrv implements LinkService {
         text: variablesQuery,
         value: variablesQuery,
       },
-    });
+    };
 
     if (dataPoint) {
-      info.href = this.templateSrv.replace(
-        info.href,
-        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint.datapoint[0]))
-      );
+      varsToApply = {
+        ...varsToApply,
+        ...this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint.datapoint[0])),
+      };
     }
 
+    info.href = this.templateSrv.replace(link.url, varsToApply);
     return info;
   };
 

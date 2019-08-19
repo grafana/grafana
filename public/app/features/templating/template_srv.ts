@@ -1,12 +1,78 @@
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import { variableRegex } from 'app/features/templating/variable';
+import { variableRegex, expressionVariableRegex } from 'app/features/templating/variable';
 import { ScopedVars } from '@grafana/ui';
 import { TimeRange } from '@grafana/data';
 
 function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
+
+const isFloat = (val: string) => {
+  const floatRegex = /^-?\d+(?:[.,]\d*?)?$/;
+  if (!floatRegex.test(val)) {
+    return false;
+  }
+
+  const parsed = parseFloat(val);
+  if (isNaN(parsed)) {
+    return false;
+  }
+  return true;
+};
+
+const isInt = (val: string) => {
+  const intRegex = /^-?\d+$/;
+  if (!intRegex.test(val)) {
+    return false;
+  }
+  const intVal = parseInt(val, 10);
+  return parseFloat(val) === intVal && !isNaN(intVal);
+};
+
+const builtInFunctions: { [key: string]: any } = {
+  add: (values: any[]) => {
+    return values.reduce((acc, current) => {
+      if (isInt(current)) {
+        return acc + parseInt(current, 10);
+      }
+      if (isFloat(current)) {
+        return acc + parseFloat(current);
+      }
+      throw new Error('Value is not a number');
+    }, 0);
+  },
+  subtract: (values: any[]) => {
+    const subject = values[0];
+    return values.slice(1).reduce((acc, current) => {
+      if (isInt(current)) {
+        return acc - parseInt(current, 10);
+      }
+      if (isFloat(current)) {
+        return acc - parseFloat(current);
+      }
+      throw new Error('Value is not a number');
+    }, subject);
+  },
+  multiply: (values: any[]) => {
+    return values.reduce((acc, current) => {
+      if (isInt(current)) {
+        return acc * parseInt(current, 10);
+      }
+      if (isFloat(current)) {
+        return acc * parseFloat(current);
+      }
+      throw new Error('Value is not a number');
+    }, 1);
+  },
+  replace: (args: string[]) => {
+    // text: text on which replace will be performed
+    // pattern: RegExp's pattern, will be used as global match
+    // value: value to replace matching pattern
+    const [text, pattern, value] = args;
+    return text.replace(new RegExp(pattern, 'g'), value);
+  },
+};
 
 export class TemplateSrv {
   variables: any[];
@@ -225,6 +291,45 @@ export class TemplateSrv {
     return values;
   }
 
+  isExpressionMatch = (match: string) => {
+    return expressionVariableRegex.test(match);
+  };
+
+  evaluateExpressionVariable = (target: string, scopedVars?: ScopedVars, format?: string | Function) => {
+    let result;
+    // get expression arguments
+    // ie. for expression ${add($__value_time, 10)} will result in ($__value_time, 10)
+    let args = target.match(/\(([^()]+)\)/g);
+
+    if (!args) {
+      return;
+    }
+
+    // interpolate function arguments
+    args = this.replace(args[0], scopedVars, format)
+      .slice(1)
+      .slice(0, -1)
+      .split(',');
+
+    // retrieve expression's function name
+    // i.e. for expression ${add($__value_time, 10)}  will result in add
+    const fn = target
+      .slice(2)
+      .slice(0, -1)
+      .split('(')[0];
+
+    // evaluate expresssion
+    // all variables used in expression should already be interpolated by now
+    // ts-ignore
+    try {
+      result = builtInFunctions[fn](args.map(arg => arg.trim()));
+    } catch (e) {
+      console.log(e);
+    }
+
+    return result;
+  };
+
   replace(target: string, scopedVars?: ScopedVars, format?: string | Function): any {
     if (!target) {
       return target;
@@ -234,6 +339,9 @@ export class TemplateSrv {
     this.regex.lastIndex = 0;
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fmt3) => {
+      if (this.isExpressionMatch(match)) {
+        this.evaluateExpressionVariable(match, scopedVars, format);
+      }
       variable = this.index[var1 || var2 || var3];
       fmt = fmt2 || fmt3 || format;
       if (scopedVars) {
