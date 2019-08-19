@@ -59,8 +59,8 @@ export default class AzureResourceGraphDatasource {
           query: query.query,
           subscriptions,
           options: {
-            $top: 1000,
-            $skip: 0,
+            $top: query.top,
+            $skip: query.skip,
             resultFormat: 'table',
           },
         },
@@ -104,6 +104,8 @@ export default class AzureResourceGraphDatasource {
         queryType: 'Azure Resource Graph',
         resultFormat: 'table',
         query: this.templateSrv.replace(item.query, options.scopedVars),
+        top: item.top,
+        skip: item.skip,
       };
     });
     if (!queries || queries.length === 0) {

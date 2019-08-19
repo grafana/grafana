@@ -118,6 +118,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     },
     azureResourceGraph: {
       query: 'count',
+      top: 100,
+      skip: 0,
     },
   };
 
