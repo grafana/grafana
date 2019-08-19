@@ -74,7 +74,6 @@ export class GeneralTab extends PureComponent<Props> {
             />
           </PanelOptionsGroup>
 
-
           <GeneralTabReference panel={panel} onReferenceChanged={onReferenceChanged} />
         </>
       </EditorTabBody>
