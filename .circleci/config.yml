@@ -1,15 +1,14 @@
 version: 2
 
-update-go-to-1-12: &update-go-to-1-12
-  - run:
-      name: Update Go to 1.12
-      working_directory: /tmp
-      command: |
-        wget https://dl.google.com/go/go1.12.linux-amd64.tar.gz
-        sudo rm -rf /usr/local/go
-        sudo tar -C /usr/local -xzf go1.12.linux-amd64.tar.gz
-
 aliases:
+  - &update-go-to-1-12
+    name: Update Go to 1.12
+    working_directory: /tmp
+    command: |
+      wget https://dl.google.com/go/go1.12.linux-amd64.tar.gz
+      sudo rm -rf /usr/local/go
+      sudo tar -C /usr/local -xzf go1.12.linux-amd64.tar.gz
+
   # Workflow filters
   - &filter-only-release
     branches:
@@ -31,7 +30,7 @@ jobs:
     working_directory: ~/go/src/github.com/grafana/grafana
     steps:
       - checkout
-      - *update-go-to-1-12
+      - run: *update-go-to-1-12
       - run: make devenv sources=mysql_tests
       - run:
           name: mysql integration tests
@@ -42,7 +41,7 @@ jobs:
     working_directory: ~/go/src/github.com/grafana/grafana
     steps:
       - checkout
-      - *update-go-to-1-12
+      - run: *update-go-to-1-12
       - run: make devenv sources=postgres_tests
       - run:
           name: psql integration tests
@@ -53,7 +52,7 @@ jobs:
     working_directory: ~/go/src/github.com/grafana/grafana
     steps:
       - checkout
-      - *update-go-to-1-12
+      - run: *update-go-to-1-12
       - run:
           name: run go tests
           command: make test-integration
@@ -149,7 +148,7 @@ jobs:
     working_directory: ~/go/src/github.com/grafana/grafana
     steps:
       - checkout
-      - *update-go-to-1-12
+      - run: *update-go-to-1-12
       - run:
           name: Lint Go
           command: 'make lint-go -j 2'
