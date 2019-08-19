@@ -99,6 +99,20 @@
       ]
     },
     {
+      "path": "resourcegraph",
+      "method": "POST",
+      "url": "https://management.azure.com/providers/Microsoft.ResourceGraph/resources",
+      "tokenAuth": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
+        "params": {
+          "grant_type": "client_credentials",
+          "client_id": "{{.JsonData.clientId}}",
+          "client_secret": "{{.SecureJsonData.clientSecret}}",
+          "resource": "https://management.azure.com/"
+        }
+      }
+    },
+    {
       "path": "workspacesloganalytics",
       "method": "GET",
       "url": "https://management.azure.com",

@@ -59,6 +59,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       timeGrainUnit: string;
       timeGrain: string;
     };
+    azureResourceGraph: {
+      query: string;
+    };
   };
 
   defaults = {
@@ -99,6 +102,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       xaxis: 'timestamp',
       yaxis: '',
       spliton: '',
+    },
+    azureResourceGraph: {
+      query: 'count',
     },
   };
 

@@ -2,6 +2,7 @@ import _ from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
+import AzureResourceGraphDatasource from './azure_resource_graph/azure_resource_graph_datasource';
 import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
 import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
 import { BackendSrv } from 'app/core/services/backend_srv';
@@ -12,6 +13,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   azureMonitorDatasource: AzureMonitorDatasource;
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
+  azureResourceGraphDatasource: AzureResourceGraphDatasource;
 
   /** @ngInject */
   constructor(
@@ -35,6 +37,12 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       this.templateSrv,
       this.$q
     );
+    this.azureResourceGraphDatasource = new AzureResourceGraphDatasource(
+      instanceSettings,
+      this.backendSrv,
+      this.templateSrv,
+      this.$q
+    );
   }
 
   async query(options: DataQueryRequest<AzureMonitorQuery>) {
@@ -42,10 +50,15 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     const azureMonitorOptions = _.cloneDeep(options);
     const appInsightsOptions = _.cloneDeep(options);
     const azureLogAnalyticsOptions = _.cloneDeep(options);
+    const azureResourceGraphOptions = _.cloneDeep(options);
 
     azureMonitorOptions.targets = _.filter(azureMonitorOptions.targets, ['queryType', 'Azure Monitor']);
     appInsightsOptions.targets = _.filter(appInsightsOptions.targets, ['queryType', 'Application Insights']);
     azureLogAnalyticsOptions.targets = _.filter(azureLogAnalyticsOptions.targets, ['queryType', 'Azure Log Analytics']);
+    azureResourceGraphOptions.targets = _.filter(azureResourceGraphOptions.targets, [
+      'queryType',
+      'Azure Resource Graph',
+    ]);
 
     if (azureMonitorOptions.targets.length > 0) {
       const amPromise = this.azureMonitorDatasource.query(azureMonitorOptions);
@@ -65,6 +78,13 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       const alaPromise = this.azureLogAnalyticsDatasource.query(azureLogAnalyticsOptions);
       if (alaPromise) {
         promises.push(alaPromise);
+      }
+    }
+
+    if (azureResourceGraphOptions.targets.length > 0) {
+      const argPromise = this.azureResourceGraphDatasource.query(azureResourceGraphOptions);
+      if (argPromise) {
+        promises.push(argPromise);
       }
     }
 
