@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 
 export const ReactProfileWrapper = () => (
   <UserProvider userId={config.bootData.user.id}>
-    {(user, api, states) => {
+    {(api, states, user) => {
       return (
         <>
           {!states.loadUser && (

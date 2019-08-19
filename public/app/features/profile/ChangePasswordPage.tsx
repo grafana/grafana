@@ -18,7 +18,7 @@ export class ChangePasswordPage extends PureComponent<Props> {
     return (
       <Page navModel={navModel}>
         <UserProvider>
-          {(user, { changePassword }, states) => (
+          {({ changePassword }, states) => (
             <Page.Contents>
               <h3 className="page-sub-heading">Change Your Password</h3>
               <ChangePasswordForm onChangePassword={changePassword} isSaving={states.changePassword} />

@@ -28,7 +28,7 @@ export interface ProfileUpdateFields {
 
 export interface Props {
   userId?: number; // passed, will load user on mount
-  children: (user: User, api: UserAPI, states: LoadingStates) => JSX.Element;
+  children: (api: UserAPI, states: LoadingStates, user: User) => JSX.Element;
 }
 
 export interface State {
@@ -88,7 +88,7 @@ export class UserProvider extends PureComponent<Props, State> {
       updateUserProfile: this.updateUserProfile,
     };
 
-    return <>{children(user, api, loadingStates)}</>;
+    return <>{children(api, loadingStates, user)}</>;
   }
 }
 
