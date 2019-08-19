@@ -1,5 +1,5 @@
 import { ComponentClass, ComponentType } from 'react';
-import { LoadingState, DataFrame, TimeRange } from '@grafana/data';
+import { LoadingState, DataFrame, TimeRange, TimeZone } from '@grafana/data';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 
@@ -27,6 +27,7 @@ export interface PanelProps<T = any> {
   // TODO: annotation?: PanelData;
 
   timeRange: TimeRange;
+  timeZone: TimeZone;
   options: T;
   onOptionsChange: (options: T) => void;
   renderCounter: number;
@@ -121,6 +122,16 @@ export interface PanelMenuItem {
   onClick?: () => void;
   shortcut?: string;
   subMenu?: PanelMenuItem[];
+}
+
+export interface AngularPanelMenuItem {
+  click: Function;
+  icon: string;
+  href: string;
+  divider: boolean;
+  text: string;
+  shortcut: string;
+  submenu: any[];
 }
 
 export enum VizOrientation {

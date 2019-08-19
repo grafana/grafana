@@ -798,11 +798,11 @@ export class DashboardModel {
     return rowPanels;
   }
 
-  on(eventName: string, callback: Function) {
+  on(eventName: string, callback: (payload?: any) => void) {
     this.events.on(eventName, callback);
   }
 
-  off(eventName: string, callback?: Function) {
+  off(eventName: string, callback?: (payload?: any) => void) {
     this.events.off(eventName, callback);
   }
 

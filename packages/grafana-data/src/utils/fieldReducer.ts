@@ -1,7 +1,8 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
 
-import { DataFrame, NullValueMode } from '../types/index';
+import { NullValueMode, Field } from '../types';
+import { Registry, RegistryItem } from './registry';
 
 export enum ReducerID {
   sum = 'sum',
@@ -32,87 +33,86 @@ export interface FieldCalcs {
 }
 
 // Internal function
-type FieldReducer = (data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
+type FieldReducer = (field: Field, ignoreNulls: boolean, nullAsZero: boolean) => FieldCalcs;
 
-export interface FieldReducerInfo {
-  id: string;
-  name: string;
-  description: string;
-  alias?: string; // optional secondary key.  'avg' vs 'mean', 'total' vs 'sum'
-
+export interface FieldReducerInfo extends RegistryItem {
   // Internal details
   emptyInputResult?: any; // typically null, but some things like 'count' & 'sum' should be zero
   standard: boolean; // The most common stats can all be calculated in a single pass
   reduce?: FieldReducer;
 }
 
-/**
- * @param ids list of stat names or null to get all of them
- */
-export function getFieldReducers(ids?: string[]): FieldReducerInfo[] {
-  if (ids === null || ids === undefined) {
-    if (!hasBuiltIndex) {
-      getById(ReducerID.mean);
-    }
-    return listOfStats;
-  }
-
-  return ids.reduce((list, id) => {
-    const stat = getById(id);
-    if (stat) {
-      list.push(stat);
-    }
-    return list;
-  }, new Array<FieldReducerInfo>());
-}
-
 interface ReduceFieldOptions {
-  series: DataFrame;
-  fieldIndex: number;
+  field: Field;
   reducers: string[]; // The stats to calculate
-  nullValueMode?: NullValueMode;
 }
 
 /**
  * @returns an object with a key for each selected stat
  */
 export function reduceField(options: ReduceFieldOptions): FieldCalcs {
-  const { series, fieldIndex, reducers, nullValueMode } = options;
+  const { field, reducers } = options;
 
-  if (!reducers || reducers.length < 1) {
+  if (!field || !reducers || reducers.length < 1) {
     return {};
   }
 
-  const queue = getFieldReducers(reducers);
+  if (field.calcs) {
+    // Find the values we need to calculate
+    const missing: string[] = [];
+    for (const s of reducers) {
+      if (!field.calcs.hasOwnProperty(s)) {
+        missing.push(s);
+      }
+    }
+    if (missing.length < 1) {
+      return {
+        ...field.calcs,
+      };
+    }
+  }
+
+  const queue = fieldReducers.list(reducers);
 
   // Return early for empty series
   // This lets the concrete implementations assume at least one row
-  if (!series.rows || series.rows.length < 1) {
-    const calcs = {} as FieldCalcs;
+  const data = field.values;
+  if (data.length < 1) {
+    const calcs = { ...field.calcs } as FieldCalcs;
     for (const reducer of queue) {
       calcs[reducer.id] = reducer.emptyInputResult !== null ? reducer.emptyInputResult : null;
     }
-    return calcs;
+    return (field.calcs = calcs);
   }
 
+  const { nullValueMode } = field.config;
   const ignoreNulls = nullValueMode === NullValueMode.Ignore;
   const nullAsZero = nullValueMode === NullValueMode.AsZero;
 
   // Avoid calculating all the standard stats if possible
   if (queue.length === 1 && queue[0].reduce) {
-    return queue[0].reduce(series, fieldIndex, ignoreNulls, nullAsZero);
+    const values = queue[0].reduce(field, ignoreNulls, nullAsZero);
+    field.calcs = {
+      ...field.calcs,
+      ...values,
+    };
+    return values;
   }
 
   // For now everything can use the standard stats
-  let values = doStandardCalcs(series, fieldIndex, ignoreNulls, nullAsZero);
+  let values = doStandardCalcs(field, ignoreNulls, nullAsZero);
   for (const reducer of queue) {
     if (!values.hasOwnProperty(reducer.id) && reducer.reduce) {
       values = {
         ...values,
-        ...reducer.reduce(series, fieldIndex, ignoreNulls, nullAsZero),
+        ...reducer.reduce(field, ignoreNulls, nullAsZero),
       };
     }
   }
+  field.calcs = {
+    ...field.calcs,
+    ...values,
+  };
   return values;
 }
 
@@ -122,124 +122,109 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
 //
 // ------------------------------------------------------------------------------
 
-// private registry of all stats
-interface TableStatIndex {
-  [id: string]: FieldReducerInfo;
-}
+export const fieldReducers = new Registry<FieldReducerInfo>(() => [
+  {
+    id: ReducerID.lastNotNull,
+    name: 'Last (not null)',
+    description: 'Last non-null value',
+    standard: true,
+    aliasIds: ['current'],
+    reduce: calculateLastNotNull,
+  },
+  {
+    id: ReducerID.last,
+    name: 'Last',
+    description: 'Last Value',
+    standard: true,
+    reduce: calculateLast,
+  },
+  { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
+  {
+    id: ReducerID.firstNotNull,
+    name: 'First (not null)',
+    description: 'First non-null value',
+    standard: true,
+    reduce: calculateFirstNotNull,
+  },
+  { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true },
+  { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
+  { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, aliasIds: ['avg'] },
+  {
+    id: ReducerID.sum,
+    name: 'Total',
+    description: 'The sum of all values',
+    emptyInputResult: 0,
+    standard: true,
+    aliasIds: ['total'],
+  },
+  {
+    id: ReducerID.count,
+    name: 'Count',
+    description: 'Number of values in response',
+    emptyInputResult: 0,
+    standard: true,
+  },
+  {
+    id: ReducerID.range,
+    name: 'Range',
+    description: 'Difference between minimum and maximum values',
+    standard: true,
+  },
+  {
+    id: ReducerID.delta,
+    name: 'Delta',
+    description: 'Cumulative change in value',
+    standard: true,
+  },
+  {
+    id: ReducerID.step,
+    name: 'Step',
+    description: 'Minimum interval between values',
+    standard: true,
+  },
+  {
+    id: ReducerID.diff,
+    name: 'Difference',
+    description: 'Difference between first and last values',
+    standard: true,
+  },
+  {
+    id: ReducerID.logmin,
+    name: 'Min (above zero)',
+    description: 'Used for log min scale',
+    standard: true,
+  },
+  {
+    id: ReducerID.allIsZero,
+    name: 'All Zeros',
+    description: 'All values are zero',
+    emptyInputResult: false,
+    standard: true,
+  },
+  {
+    id: ReducerID.allIsNull,
+    name: 'All Nulls',
+    description: 'All values are null',
+    emptyInputResult: true,
+    standard: true,
+  },
+  {
+    id: ReducerID.changeCount,
+    name: 'Change Count',
+    description: 'Number of times the value changes',
+    standard: false,
+    reduce: calculateChangeCount,
+  },
+  {
+    id: ReducerID.distinctCount,
+    name: 'Distinct Count',
+    description: 'Number of distinct values',
+    standard: false,
+    reduce: calculateDistinctCount,
+  },
+]);
 
-const listOfStats: FieldReducerInfo[] = [];
-const index: TableStatIndex = {};
-let hasBuiltIndex = false;
-
-function getById(id: string): FieldReducerInfo | undefined {
-  if (!hasBuiltIndex) {
-    [
-      {
-        id: ReducerID.lastNotNull,
-        name: 'Last (not null)',
-        description: 'Last non-null value',
-        standard: true,
-        alias: 'current',
-        reduce: calculateLastNotNull,
-      },
-      {
-        id: ReducerID.last,
-        name: 'Last',
-        description: 'Last Value',
-        standard: true,
-        reduce: calculateLast,
-      },
-      { id: ReducerID.first, name: 'First', description: 'First Value', standard: true, reduce: calculateFirst },
-      {
-        id: ReducerID.firstNotNull,
-        name: 'First (not null)',
-        description: 'First non-null value',
-        standard: true,
-        reduce: calculateFirstNotNull,
-      },
-      { id: ReducerID.min, name: 'Min', description: 'Minimum Value', standard: true },
-      { id: ReducerID.max, name: 'Max', description: 'Maximum Value', standard: true },
-      { id: ReducerID.mean, name: 'Mean', description: 'Average Value', standard: true, alias: 'avg' },
-      {
-        id: ReducerID.sum,
-        name: 'Total',
-        description: 'The sum of all values',
-        emptyInputResult: 0,
-        standard: true,
-        alias: 'total',
-      },
-      {
-        id: ReducerID.count,
-        name: 'Count',
-        description: 'Number of values in response',
-        emptyInputResult: 0,
-        standard: true,
-      },
-      {
-        id: ReducerID.range,
-        name: 'Range',
-        description: 'Difference between minimum and maximum values',
-        standard: true,
-      },
-      {
-        id: ReducerID.delta,
-        name: 'Delta',
-        description: 'Cumulative change in value',
-        standard: true,
-      },
-      {
-        id: ReducerID.step,
-        name: 'Step',
-        description: 'Minimum interval between values',
-        standard: true,
-      },
-      {
-        id: ReducerID.diff,
-        name: 'Difference',
-        description: 'Difference between first and last values',
-        standard: true,
-      },
-      {
-        id: ReducerID.logmin,
-        name: 'Min (above zero)',
-        description: 'Used for log min scale',
-        standard: true,
-      },
-      {
-        id: ReducerID.changeCount,
-        name: 'Change Count',
-        description: 'Number of times the value changes',
-        standard: false,
-        reduce: calculateChangeCount,
-      },
-      {
-        id: ReducerID.distinctCount,
-        name: 'Distinct Count',
-        description: 'Number of distinct values',
-        standard: false,
-        reduce: calculateDistinctCount,
-      },
-    ].forEach(info => {
-      const { id, alias } = info;
-      if (index.hasOwnProperty(id)) {
-        console.warn('Duplicate Stat', id, info, index);
-      }
-      index[id] = info;
-      if (alias) {
-        if (index.hasOwnProperty(alias)) {
-          console.warn('Duplicate Stat (alias)', alias, info, index);
-        }
-        index[alias] = info;
-      }
-      listOfStats.push(info);
-    });
-    hasBuiltIndex = true;
-  }
-
-  return index[id];
-}
-
-function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const calcs = {
     sum: 0,
     max: -Number.MAX_VALUE,
@@ -253,7 +238,7 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
     count: 0,
     nonNullCount: 0,
     allIsNull: true,
-    allIsZero: false,
+    allIsZero: true,
     range: null,
     diff: null,
     delta: 0,
@@ -262,9 +247,10 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
     // Just used for calcutations -- not exposed as a stat
     previousDeltaUp: true,
   } as FieldCalcs;
+  const data = field.values;
 
-  for (let i = 0; i < data.rows.length; i++) {
-    let currentValue = data.rows[i][fieldIndex];
+  for (let i = 0; i < data.length; i++) {
+    let currentValue = data.get(i);
     if (i === 0) {
       calcs.first = currentValue;
     }
@@ -299,7 +285,7 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
           if (calcs.lastNotNull! > currentValue) {
             // counter reset
             calcs.previousDeltaUp = false;
-            if (i === data.rows.length - 1) {
+            if (i === data.length - 1) {
               // reset on last
               calcs.delta += currentValue;
             }
@@ -350,6 +336,10 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
     calcs.mean = calcs.sum! / calcs.nonNullCount;
   }
 
+  if (calcs.allIsNull) {
+    calcs.allIsZero = false;
+  }
+
   if (calcs.max !== null && calcs.min !== null) {
     calcs.range = calcs.max - calcs.min;
   }
@@ -361,18 +351,14 @@ function doStandardCalcs(data: DataFrame, fieldIndex: number, ignoreNulls: boole
   return calcs;
 }
 
-function calculateFirst(data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  return { first: data.rows[0][fieldIndex] };
+function calculateFirst(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  return { first: field.values.get(0) };
 }
 
-function calculateFirstNotNull(
-  data: DataFrame,
-  fieldIndex: number,
-  ignoreNulls: boolean,
-  nullAsZero: boolean
-): FieldCalcs {
-  for (let idx = 0; idx < data.rows.length; idx++) {
-    const v = data.rows[idx][fieldIndex];
+function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const data = field.values;
+  for (let idx = 0; idx < data.length; idx++) {
+    const v = data.get(idx);
     if (v != null) {
       return { firstNotNull: v };
     }
@@ -380,19 +366,16 @@ function calculateFirstNotNull(
   return { firstNotNull: undefined };
 }
 
-function calculateLast(data: DataFrame, fieldIndex: number, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  return { last: data.rows[data.rows.length - 1][fieldIndex] };
+function calculateLast(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const data = field.values;
+  return { last: data.get(data.length - 1) };
 }
 
-function calculateLastNotNull(
-  data: DataFrame,
-  fieldIndex: number,
-  ignoreNulls: boolean,
-  nullAsZero: boolean
-): FieldCalcs {
-  let idx = data.rows.length - 1;
+function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const data = field.values;
+  let idx = data.length - 1;
   while (idx >= 0) {
-    const v = data.rows[idx--][fieldIndex];
+    const v = data.get(idx--);
     if (v != null) {
       return { lastNotNull: v };
     }
@@ -400,17 +383,13 @@ function calculateLastNotNull(
   return { lastNotNull: undefined };
 }
 
-function calculateChangeCount(
-  data: DataFrame,
-  fieldIndex: number,
-  ignoreNulls: boolean,
-  nullAsZero: boolean
-): FieldCalcs {
+function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const data = field.values;
   let count = 0;
   let first = true;
   let last: any = null;
-  for (let i = 0; i < data.rows.length; i++) {
-    let currentValue = data.rows[i][fieldIndex];
+  for (let i = 0; i < data.length; i++) {
+    let currentValue = data.get(i);
     if (currentValue === null) {
       if (ignoreNulls) {
         continue;
@@ -429,15 +408,11 @@ function calculateChangeCount(
   return { changeCount: count };
 }
 
-function calculateDistinctCount(
-  data: DataFrame,
-  fieldIndex: number,
-  ignoreNulls: boolean,
-  nullAsZero: boolean
-): FieldCalcs {
+function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  const data = field.values;
   const distinct = new Set<any>();
-  for (let i = 0; i < data.rows.length; i++) {
-    let currentValue = data.rows[i][fieldIndex];
+  for (let i = 0; i < data.length; i++) {
+    let currentValue = data.get(i);
     if (currentValue === null) {
       if (ignoreNulls) {
         continue;

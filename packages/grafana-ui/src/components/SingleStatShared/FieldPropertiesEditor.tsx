@@ -7,8 +7,7 @@ import { FormLabel } from '../FormLabel/FormLabel';
 import { UnitPicker } from '../UnitPicker/UnitPicker';
 
 // Types
-import { toIntegerOrUndefined, Field } from '@grafana/data';
-import { SelectOptionItem } from '../Select/Select';
+import { toIntegerOrUndefined, SelectableValue, FieldConfig, toFloatOrUndefined, toNumberString } from '@grafana/data';
 
 import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
 
@@ -16,8 +15,8 @@ const labelWidth = 6;
 
 export interface Props {
   showMinMax: boolean;
-  value: Partial<Field>;
-  onChange: (value: Partial<Field>, event?: React.SyntheticEvent<HTMLElement>) => void;
+  value: FieldConfig;
+  onChange: (value: FieldConfig, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
 export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax }) => {
@@ -26,8 +25,8 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
   const [decimals, setDecimals] = useState(
     value.decimals !== undefined && value.decimals !== null ? value.decimals.toString() : ''
   );
-  const [min, setMin] = useState(value.min !== undefined && value.min !== null ? value.min.toString() : '');
-  const [max, setMax] = useState(value.max !== undefined && value.max !== null ? value.max.toString() : '');
+  const [min, setMin] = useState(toNumberString(value.min));
+  const [max, setMax] = useState(toNumberString(value.max));
 
   const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange({ ...value, title: event.target.value });
@@ -54,7 +53,7 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     [value.max, onChange]
   );
 
-  const onUnitChange = (unit: SelectOptionItem<string>) => {
+  const onUnitChange = (unit: SelectableValue<string>) => {
     onChange({ ...value, unit: unit.value });
   };
 
@@ -62,8 +61,8 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     onChange({
       ...value,
       decimals: toIntegerOrUndefined(decimals),
-      min: toIntegerOrUndefined(min),
-      max: toIntegerOrUndefined(max),
+      min: toFloatOrUndefined(min),
+      max: toFloatOrUndefined(max),
     });
   }, [min, max, decimals]);
 

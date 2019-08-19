@@ -28,7 +28,9 @@ const EmptyListCTA: React.FunctionComponent<Props> = props => {
         {proTipLinkTitle}
       </a>
     </span>
-  ) : null;
+  ) : (
+    ''
+  );
 
   const ctaElementClassName = !footer
     ? css`

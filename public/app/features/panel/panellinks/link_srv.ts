@@ -3,8 +3,8 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { VariableSuggestion, KeyValue, ScopedVars, deprecationWarning, VariableOrigin } from '@grafana/ui';
-import { TimeSeriesValue, DateTime, dateTime, DataLink } from '@grafana/data';
+import { VariableSuggestion, ScopedVars, VariableOrigin } from '@grafana/ui';
+import { TimeSeriesValue, DateTime, dateTime, DataLink, KeyValue, deprecationWarning } from '@grafana/data';
 
 export const DataLinkBuiltInVars = {
   keepTime: '__url_time_range',
@@ -39,14 +39,14 @@ export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
   },
   {
     value: `${DataLinkBuiltInVars.valueTime}`,
-    documentation: "Adds narrowed down time range relative to data point's timestamp",
+    documentation: 'Time value of the clicked datapoint (in ms epoch)',
     origin: VariableOrigin.BuiltIn,
   },
 ];
 
 type LinkTarget = '_blank' | '_self';
 
-interface LinkModel {
+export interface LinkModel {
   href: string;
   title: string;
   target: LinkTarget;
@@ -55,6 +55,7 @@ interface LinkModel {
 interface LinkDataPoint {
   datapoint: TimeSeriesValue[];
   seriesName: string;
+  [key: number]: any;
 }
 export interface LinkService {
   getDataLinkUIModel: (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
@@ -90,22 +91,14 @@ export class LinkSrv implements LinkService {
   }
 
   getDataPointVars = (seriesName: string, valueTime: DateTime) => {
-    // const valueTimeQuery = toUrlParams({
-    //   time: dateTime(valueTime).valueOf(),
-    // });
-
-    const seriesQuery = toUrlParams({
-      series: seriesName,
-    });
-
     return {
       [DataLinkBuiltInVars.valueTime]: {
         text: valueTime.valueOf(),
         value: valueTime.valueOf(),
       },
       [DataLinkBuiltInVars.seriesName]: {
-        text: seriesQuery,
-        value: seriesQuery,
+        text: seriesName,
+        value: seriesName,
       },
     };
   };
@@ -139,7 +132,7 @@ export class LinkSrv implements LinkService {
     if (dataPoint) {
       info.href = this.templateSrv.replace(
         info.href,
-        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint[0]))
+        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint.datapoint[0]))
       );
     }
 

@@ -1,4 +1,5 @@
 import { ComponentClass } from 'react';
+import { KeyValue } from '@grafana/data';
 
 export enum PluginState {
   alpha = 'alpha', // Only included it `enable_alpha` is true
@@ -10,8 +11,6 @@ export enum PluginType {
   datasource = 'datasource',
   app = 'app',
 }
-
-export type KeyValue<T = any> = { [s: string]: T };
 
 export interface PluginMeta<T extends {} = KeyValue> {
   id: string;
@@ -77,6 +76,20 @@ interface PluginMetaInfoLink {
   url: string;
 }
 
+export interface PluginBuildInfo {
+  time?: number;
+  repo?: string;
+  branch?: string;
+  hash?: string;
+  number?: number;
+  pr?: number;
+}
+
+export interface ScreenshotInfo {
+  name: string;
+  path: string;
+}
+
 export interface PluginMetaInfo {
   author: {
     name: string;
@@ -88,7 +101,8 @@ export interface PluginMetaInfo {
     large: string;
     small: string;
   };
-  screenshots: any[];
+  build?: PluginBuildInfo;
+  screenshots: ScreenshotInfo[];
   updated: string;
   version: string;
 }

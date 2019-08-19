@@ -1,6 +1,6 @@
-import { toDataQueryError, PanelQueryState, getProcessedDataFrame } from './PanelQueryState';
+import { toDataQueryError, PanelQueryState, getProcessedDataFrames } from './PanelQueryState';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { LoadingState } from '@grafana/data';
+import { LoadingState, getDataFrameRow } from '@grafana/data';
 import { DataQueryResponse } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
@@ -65,37 +65,38 @@ describe('getProcessedDataFrame', () => {
       target: '',
       datapoints: [[100, 1], [200, 2]],
     };
-    const data = getProcessedDataFrame([null, input1, input2, null, null]);
+    const data = getProcessedDataFrames([null, input1, input2, null, null]);
     expect(data.length).toBe(2);
     expect(data[0].fields[0].name).toBe(input1.target);
-    expect(data[0].rows).toBe(input1.datapoints);
+
+    const cmp = [getDataFrameRow(data[0], 0), getDataFrameRow(data[0], 1)];
+    expect(cmp).toEqual(input1.datapoints);
 
     // Default name
     expect(data[1].fields[0].name).toEqual('Value');
 
     // Every colun should have a name and a type
     for (const table of data) {
-      for (const column of table.fields) {
-        expect(column.name).toBeDefined();
-        expect(column.type).toBeDefined();
+      for (const field of table.fields) {
+        expect(field.name).toBeDefined();
+        expect(field.type).toBeDefined();
       }
     }
   });
 
   it('supports null values from query OK', () => {
-    expect(getProcessedDataFrame([null, null, null, null])).toEqual([]);
-    expect(getProcessedDataFrame(undefined)).toEqual([]);
-    expect(getProcessedDataFrame((null as unknown) as any[])).toEqual([]);
-    expect(getProcessedDataFrame([])).toEqual([]);
+    expect(getProcessedDataFrames([null, null, null, null])).toEqual([]);
+    expect(getProcessedDataFrames(undefined)).toEqual([]);
+    expect(getProcessedDataFrames((null as unknown) as any[])).toEqual([]);
+    expect(getProcessedDataFrames([])).toEqual([]);
   });
 });
 
 function makeSeriesStub(refId: string) {
   return {
-    fields: [{ name: 'a' }],
-    rows: [],
+    fields: [{ name: undefined }],
     refId,
-  };
+  } as any;
 }
 
 describe('stream handling', () => {
@@ -129,7 +130,7 @@ describe('stream handling', () => {
       state: LoadingState.Loading,
       key: 'C',
       request: state.request, // From the same request
-      series: [makeSeriesStub('C')],
+      data: [makeSeriesStub('C')],
       unsubscribe: () => {},
     });
     expect(state.streams.length).toBe(1);
@@ -146,7 +147,7 @@ describe('stream handling', () => {
       state: LoadingState.Loading,
       key: 'D',
       request: state.request, // From the same request
-      series: [makeSeriesStub('D')],
+      data: [makeSeriesStub('D')],
       unsubscribe: () => {},
     });
     expect(state.streams.length).toBe(2);
@@ -163,7 +164,7 @@ describe('stream handling', () => {
       state: LoadingState.Loading,
       key: 'C', // The key to replace previous index 2
       request: state.request, // From the same request
-      series: [makeSeriesStub('X')],
+      data: [makeSeriesStub('X')],
       unsubscribe: () => {},
     });
     expect(state.streams.length).toBe(2);
@@ -181,7 +182,7 @@ describe('stream handling', () => {
         ...state.request,
         requestId: 'XXX', // Different request and id
       } as any,
-      series: [makeSeriesStub('C')],
+      data: [makeSeriesStub('C')],
       unsubscribe: () => {},
     });
 

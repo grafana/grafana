@@ -62,6 +62,7 @@ type CreateUserCommand struct {
 	Password       string
 	EmailVerified  bool
 	IsAdmin        bool
+	IsDisabled     bool
 	SkipOrgSetup   bool
 	DefaultOrgRole string
 
@@ -146,6 +147,8 @@ type SearchUsersQuery struct {
 	Limit      int
 	AuthModule string
 
+	IsDisabled *bool
+
 	Result SearchUserQueryResult
 }
 
@@ -205,6 +208,10 @@ func (user *SignedInUser) HasRole(role RoleType) bool {
 	}
 
 	return user.OrgRole.Includes(role)
+}
+
+func (user *SignedInUser) IsRealUser() bool {
+	return user.UserId != 0
 }
 
 type UserProfileDTO struct {

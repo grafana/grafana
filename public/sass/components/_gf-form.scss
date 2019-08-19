@@ -388,8 +388,8 @@ $input-border: 1px solid $input-border-color;
     margin-bottom: $space-xxs;
   }
 
-  &--no-padding {
-    padding-left: 0;
+  &--small-padding {
+    padding-left: 4px;
   }
 
   &:hover {

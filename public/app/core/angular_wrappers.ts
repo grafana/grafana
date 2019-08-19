@@ -11,6 +11,7 @@ import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField, DataLi
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
 import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
+import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
 
 export function registerAngularDirectives() {
   react2AngularDirective('sidemenu', SideMenu, []);
@@ -77,6 +78,7 @@ export function registerAngularDirectives() {
     'items',
     ['onClose', { watchDepth: 'reference', wrapApply: true }],
     ['getContextMenuSource', { watchDepth: 'reference', wrapApply: true }],
+    ['formatSourceDate', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
   // We keep the drilldown terminology here because of as using data-* directive
@@ -86,4 +88,6 @@ export function registerAngularDirectives() {
     'suggestions',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
+
+  react2AngularDirective('reactProfileWrapper', ReactProfileWrapper, []);
 }

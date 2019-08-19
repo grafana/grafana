@@ -326,7 +326,7 @@ describe('PrometheusDatasource', () => {
   describe('When interpolating variables', () => {
     beforeEach(() => {
       ctx.ds = new PrometheusDatasource(instanceSettings, q, ctx.backendSrvMock, ctx.templateSrvMock, ctx.timeSrvMock);
-      ctx.variable = new CustomVariable({}, {});
+      ctx.variable = new CustomVariable({}, {} as any);
     });
 
     describe('and value is a string', () => {
@@ -666,6 +666,19 @@ describe('PrometheusDatasource', () => {
         },
       },
     };
+
+    describe('when time series query is cancelled', () => {
+      it('should return empty results', async () => {
+        backendSrv.datasourceRequest = jest.fn(() => Promise.resolve({ cancelled: true }));
+        ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
+
+        await ctx.ds.annotationQuery(options).then((data: any) => {
+          results = data;
+        });
+
+        expect(results).toEqual([]);
+      });
+    });
 
     describe('not use useValueForTime', () => {
       beforeEach(async () => {

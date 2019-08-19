@@ -51,7 +51,7 @@ sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 Use the above line even if you are on Ubuntu or another Debian version. Then add our gpg key. This allows you to install signed packages.
 
 ```bash
-sudo wget -q -O - https://packages.grafana.com/gpg.key | apt-key add -
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
 Update your Apt repositories and install Grafana

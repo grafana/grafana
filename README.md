@@ -1,4 +1,4 @@
-# [Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana) [![codecov](https://codecov.io/gh/grafana/grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/grafana/grafana)
+# [Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana) 
 
 [Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
@@ -50,6 +50,11 @@ make run
 ```
 
 #### Frontend
+Install front-end dependencies first:
+
+```bash
+yarn install --pure-lockfile
+```
 
 Rebuild on file change, and serve them by Grafana's webserver (http://localhost:3000):
 
@@ -165,7 +170,7 @@ Follow the instructions in `./devenv` to spin up test containers running the app
 GRAFANA_TEST_DB=mysql go test ./pkg/services/sqlstore/...
 
 # Or run all the packages using the circle CI scripts. This method will be slower as the scripts will run all the tests, including the integration tests.
-./scripts/circle-test-mysql.sh 
+./scripts/circle-test-mysql.sh
 ```
 
 ```bash

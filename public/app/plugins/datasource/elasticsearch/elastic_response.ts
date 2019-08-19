@@ -2,7 +2,7 @@ import _ from 'lodash';
 import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
-import { DataFrame, toDataFrame, FieldType } from '@grafana/data';
+import { DataFrame, toDataFrame, FieldType, DataFrameHelper } from '@grafana/data';
 import { DataQueryResponse } from '@grafana/ui';
 import { ElasticsearchAggregation } from './types';
 
@@ -464,33 +464,38 @@ export class ElasticResponse {
 
       if (docs.length > 0) {
         propNames = propNames.sort();
-        const series: DataFrame = {
-          fields: [
-            {
-              name: this.targets[0].timeField,
-              type: FieldType.time,
-            },
-          ],
-          rows: [],
+        const series = new DataFrameHelper({ fields: [] });
+
+        series.addField({
+          name: this.targets[0].timeField,
+          type: FieldType.time,
+        }).parse = (v: any) => {
+          return v[0] || '';
         };
 
         if (logMessageField) {
-          series.fields.push({
+          series.addField({
             name: logMessageField,
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         } else {
-          series.fields.push({
+          series.addField({
             name: '_source',
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return JSON.stringify(v, null, 2);
+          };
         }
 
         if (logLevelField) {
-          series.fields.push({
+          series.addField({
             name: 'level',
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         }
 
         for (const propName of propNames) {
@@ -498,35 +503,17 @@ export class ElasticResponse {
             continue;
           }
 
-          series.fields.push({
+          series.addField({
             name: propName,
             type: FieldType.string,
-          });
+          }).parse = (v: any) => {
+            return v || '';
+          };
         }
 
+        // Add a row for each document
         for (const doc of docs) {
-          const row: any[] = [];
-          row.push(doc[this.targets[0].timeField][0]);
-
-          if (logMessageField) {
-            row.push(doc[logMessageField] || '');
-          } else {
-            row.push(JSON.stringify(doc._source, null, 2));
-          }
-
-          if (logLevelField) {
-            row.push(doc[logLevelField] || '');
-          }
-
-          for (const propName of propNames) {
-            if (doc.hasOwnProperty(propName)) {
-              row.push(doc[propName]);
-            } else {
-              row.push(null);
-            }
-          }
-
-          series.rows.push(row);
+          series.appendRowFrom(doc);
         }
 
         dataFrame.push(series);

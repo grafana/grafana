@@ -41,6 +41,7 @@ export interface PromDataQueryResponse {
       result?: DataQueryResponseData[];
     };
   };
+  cancelled?: boolean;
 }
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
@@ -349,7 +350,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     // Apply adhoc filters
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    expr = adhocFilters.reduce((acc, filter) => {
+    expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -528,6 +529,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       const eventList: AnnotationEvent[] = [];
       tagKeys = tagKeys.split(',');
 
+      if (results.cancelled) {
+        return [];
+      }
       _.each(results.data.data.result, series => {
         const tags = _.chain(series.metric)
           .filter((v, k) => {

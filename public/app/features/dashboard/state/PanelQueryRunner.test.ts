@@ -1,7 +1,7 @@
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { PanelData, DataQueryRequest, DataStreamObserver, DataStreamState, ScopedVars } from '@grafana/ui';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState, DataFrameHelper } from '@grafana/data';
 import { dateTime } from '@grafana/data';
 
 jest.mock('app/core/services/backend_srv');
@@ -168,12 +168,11 @@ describe('PanelQueryRunner', () => {
       streamState = {
         state: LoadingState.Streaming,
         key: 'test-stream-1',
-        series: [
-          {
-            rows: [],
+        data: [
+          new DataFrameHelper({
             fields: [],
             name: 'I am a magic stream',
-          },
+          }),
         ],
         request: {
           requestId: ctx.queryCalledWith.requestId,

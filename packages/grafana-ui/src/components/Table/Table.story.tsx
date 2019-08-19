@@ -5,7 +5,7 @@ import { getTheme } from '../../themes';
 
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
 import { ScopedVars, GrafanaThemeType } from '../../types/index';
-import { DataFrame } from '@grafana/data';
+import { DataFrame, FieldType, ArrayVector } from '@grafana/data';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 import { number, boolean } from '@storybook/addon-knobs';
 
@@ -33,14 +33,19 @@ export function columnIndexToLeter(column: number) {
 export function makeDummyTable(columnCount: number, rowCount: number): DataFrame {
   return {
     fields: Array.from(new Array(columnCount), (x, i) => {
+      const colId = columnIndexToLeter(i);
+      const values = new ArrayVector<string>();
+      for (let i = 0; i < rowCount; i++) {
+        values.buffer.push(colId + (i + 1));
+      }
       return {
-        name: columnIndexToLeter(i),
+        name: colId,
+        type: FieldType.string,
+        config: {},
+        values,
       };
     }),
-    rows: Array.from(new Array(rowCount), (x, rowId) => {
-      const suffix = (rowId + 1).toString();
-      return Array.from(new Array(columnCount), (x, colId) => columnIndexToLeter(colId) + suffix);
-    }),
+    length: rowCount,
   };
 }
 

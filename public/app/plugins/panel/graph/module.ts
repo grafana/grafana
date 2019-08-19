@@ -11,9 +11,9 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { DataFrame, DataLink } from '@grafana/data';
+import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
 import { getColorFromHexRgbOrName, LegacyResponseData, VariableSuggestion } from '@grafana/ui';
-import { getProcessedDataFrame } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -143,7 +143,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
     _.defaults(this.panel.options, this.panelDefaults.options);
 
-    this.dataFormat = PanelQueryRunnerFormat.series;
+    this.dataFormat = PanelQueryRunnerFormat.frames;
     this.processor = new DataProcessor(this.panel);
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
@@ -162,7 +162,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
-    this.addEditorTab('Data link', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
+    this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
   }
 
@@ -210,12 +210,12 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   // This should only be called from the snapshot callback
   onDataReceived(dataList: LegacyResponseData[]) {
-    this.handleDataFrame(getProcessedDataFrame(dataList));
+    this.handleDataFrames(getProcessedDataFrames(dataList));
   }
 
   // Directly support DataFrame skipping event callbacks
-  handleDataFrame(data: DataFrame[]) {
-    super.handleDataFrame(data);
+  handleDataFrames(data: DataFrame[]) {
+    super.handleDataFrames(data);
 
     this.dataList = data;
     this.seriesList = this.processor.getSeriesList({
@@ -339,6 +339,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onContextMenuClose = () => {
     this.contextMenuCtrl.toggleMenu();
+  };
+
+  formatDate = (date: DateTimeInput, format?: string) => {
+    return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
   };
 }
 

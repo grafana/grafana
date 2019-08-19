@@ -1,18 +1,15 @@
 import _ from 'lodash';
 import ansicolor from 'vendor/ansicolor/ansicolor';
 
-import { colors } from '@grafana/ui';
+import { colors, getFlotPairs } from '@grafana/ui';
 
 import {
-  TimeSeries,
   Labels,
   LogLevel,
   DataFrame,
   findCommonLabels,
   findUniqueLabels,
   getLogLevel,
-  toLegacyResponseData,
-  FieldCache,
   FieldType,
   getLogLevelFromKey,
   LogRowModel,
@@ -22,10 +19,17 @@ import {
   LogsParser,
   LogLabelStatsModel,
   LogsDedupStrategy,
+  DataFrameHelper,
+  GraphSeriesXY,
+  LoadingState,
+  dateTime,
+  toUtc,
+  NullValueMode,
+  toDataFrame,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
-import { dateTime, toUtc } from '@grafana/data';
+import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -192,7 +196,7 @@ export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>)
   };
 }
 
-export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): TimeSeries[] {
+export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): GraphSeriesXY[] {
   // currently interval is rangeMs / resolution, which is too low for showing series as bars.
   // need at least 10px per bucket, so we multiply interval by 10. Should be solved higher up the chain
   // when executing queries & interval calculated and not here but this is a temporary fix.
@@ -242,12 +246,27 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Time
       return a[1] - b[1];
     });
 
-    return {
-      datapoints: series.datapoints,
-      target: series.alias,
-      alias: series.alias,
+    // EEEP: converts GraphSeriesXY to DataFrame and back again!
+    const data = toDataFrame(series);
+    const points = getFlotPairs({
+      xField: data.fields[1],
+      yField: data.fields[0],
+      nullValueMode: NullValueMode.Null,
+    });
+
+    const graphSeries: GraphSeriesXY = {
       color: series.color,
+      label: series.alias,
+      data: points,
+      isVisible: true,
+      yAxis: {
+        index: 1,
+        min: 0,
+        tickDecimals: 0,
+      },
     };
+
+    return graphSeries;
   });
 }
 
@@ -273,10 +292,16 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
     if (metricSeries.length === 0) {
       logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
     } else {
-      logsModel.series = [];
-      for (const series of metricSeries) {
-        logsModel.series.push(toLegacyResponseData(series) as TimeSeries);
-      }
+      logsModel.series = getGraphSeriesModel(
+        { series: metricSeries, state: LoadingState.Done },
+        {},
+        { showBars: true, showLines: false, showPoints: false },
+        {
+          asTable: false,
+          isVisible: true,
+          placement: 'under',
+        }
+      );
     }
 
     return logsModel;
@@ -313,14 +338,56 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
 
   for (let i = 0; i < logSeries.length; i++) {
     const series = logSeries[i];
-    const fieldCache = new FieldCache(series.fields);
+    const data = new DataFrameHelper(series);
     const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
       hasUniqueLabels = true;
     }
 
-    for (let j = 0; j < series.rows.length; j++) {
-      rows.push(processLogSeriesRow(series, fieldCache, j, uniqueLabels));
+    const timeFieldIndex = data.getFirstFieldOfType(FieldType.time);
+    const stringField = data.getFirstFieldOfType(FieldType.string);
+    const logLevelField = data.getFieldByName('level');
+
+    let seriesLogLevel: LogLevel | undefined = undefined;
+    if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
+      seriesLogLevel = getLogLevelFromKey(series.labels['level']);
+    }
+
+    for (let j = 0; j < data.length; j++) {
+      const ts = timeFieldIndex.values.get(j);
+      const time = dateTime(ts);
+      const timeEpochMs = time.valueOf();
+      const timeFromNow = time.fromNow();
+      const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
+      const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
+
+      const message = stringField.values.get(j);
+
+      let logLevel = LogLevel.unknown;
+      if (logLevelField) {
+        logLevel = getLogLevelFromKey(logLevelField.values.get(j));
+      } else if (seriesLogLevel) {
+        logLevel = seriesLogLevel;
+      } else {
+        logLevel = getLogLevel(message);
+      }
+      const hasAnsi = hasAnsiCodes(message);
+      const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
+
+      rows.push({
+        logLevel,
+        timeFromNow,
+        timeEpochMs,
+        timeLocal,
+        timeUtc,
+        uniqueLabels,
+        hasAnsi,
+        searchWords,
+        entry: hasAnsi ? ansicolor.strip(message) : message,
+        raw: message,
+        labels: series.labels,
+        timestamp: ts,
+      });
     }
   }
 
@@ -348,51 +415,5 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     hasUniqueLabels,
     meta,
     rows,
-  };
-}
-
-export function processLogSeriesRow(
-  series: DataFrame,
-  fieldCache: FieldCache,
-  rowIndex: number,
-  uniqueLabels: Labels
-): LogRowModel {
-  const row = series.rows[rowIndex];
-  const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time).index;
-  const ts = row[timeFieldIndex];
-  const stringFieldIndex = fieldCache.getFirstFieldOfType(FieldType.string).index;
-  const message = row[stringFieldIndex];
-  const time = dateTime(ts);
-  const timeEpochMs = time.valueOf();
-  const timeFromNow = time.fromNow();
-  const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
-  const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
-
-  let logLevel = LogLevel.unknown;
-  const logLevelField = fieldCache.getFieldByName('level');
-
-  if (logLevelField) {
-    logLevel = getLogLevelFromKey(row[logLevelField.index]);
-  } else if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
-    logLevel = getLogLevelFromKey(series.labels['level']);
-  } else {
-    logLevel = getLogLevel(message);
-  }
-  const hasAnsi = hasAnsiCodes(message);
-  const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
-
-  return {
-    logLevel,
-    timeFromNow,
-    timeEpochMs,
-    timeLocal,
-    timeUtc,
-    uniqueLabels,
-    hasAnsi,
-    searchWords,
-    entry: hasAnsi ? ansicolor.strip(message) : message,
-    raw: message,
-    labels: series.labels,
-    timestamp: ts,
   };
 }

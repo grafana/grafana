@@ -11,7 +11,7 @@ import ErrorBoundary from 'app/core/components/ErrorBoundary/ErrorBoundary';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
-import { getProcessedDataFrame } from '../state/PanelQueryState';
+import { getProcessedDataFrames } from '../state/PanelQueryState';
 import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 
@@ -71,7 +71,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       this.setState({
         data: {
           state: LoadingState.Done,
-          series: getProcessedDataFrame(panel.snapshotData),
+          series: getProcessedDataFrames(panel.snapshotData),
         },
         isFirstLoad: false,
       });
@@ -152,8 +152,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
 
-    console.log('onRefresh', panel.id);
-
     if (!isInView) {
       console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
@@ -180,7 +178,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         queries: panel.targets,
         panelId: panel.id,
         dashboardId: this.props.dashboard.id,
-        timezone: this.props.dashboard.timezone,
+        timezone: this.props.dashboard.getTimezone(),
         timeRange: timeData.timeRange,
         timeInfo: timeData.timeInfo,
         widthPixels: width,
@@ -253,6 +251,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             id={panel.id}
             data={data}
             timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
+            timeZone={this.props.dashboard.getTimezone()}
             options={panel.getOptions()}
             transparent={panel.transparent}
             width={width - theme.panelPadding * 2}

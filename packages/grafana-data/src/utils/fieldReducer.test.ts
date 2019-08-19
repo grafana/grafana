@@ -1,37 +1,44 @@
-import { getFieldReducers, ReducerID, reduceField } from './index';
+import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import _ from 'lodash';
+import { Field, FieldType } from '../types/index';
+import { DataFrameHelper } from './dataFrameHelper';
+import { ArrayVector } from './vector';
+import { guessFieldTypeFromValue } from './processDataFrame';
+
+/**
+ * Run a reducer and get back the value
+ */
+function reduce(field: Field, id: string): any {
+  return reduceField({ field, reducers: [id] })[id];
+}
+
+function createField<T>(name: string, values?: T[], type?: FieldType): Field<T> {
+  const arr = new ArrayVector(values);
+  return {
+    name,
+    config: {},
+    type: type ? type : guessFieldTypeFromValue(arr.get(0)),
+    values: arr,
+  };
+}
 
 describe('Stats Calculators', () => {
-  const basicTable = {
-    fields: [{ name: 'a' }, { name: 'b' }, { name: 'c' }],
-    rows: [[10, 20, 30], [20, 30, 40]],
-  };
+  const basicTable = new DataFrameHelper({
+    fields: [{ name: 'a', values: [10, 20] }, { name: 'b', values: [20, 30] }, { name: 'c', values: [30, 40] }],
+  });
 
   it('should load all standard stats', () => {
-    const names = [
-      ReducerID.sum,
-      ReducerID.max,
-      ReducerID.min,
-      ReducerID.logmin,
-      ReducerID.mean,
-      ReducerID.last,
-      ReducerID.first,
-      ReducerID.count,
-      ReducerID.range,
-      ReducerID.diff,
-      ReducerID.step,
-      ReducerID.delta,
-      // ReducerID.allIsZero,
-      // ReducerID.allIsNull,
-    ];
-    const stats = getFieldReducers(names);
-    expect(stats.length).toBe(names.length);
+    for (const id of Object.keys(ReducerID)) {
+      const reducer = fieldReducers.getIfExists(id);
+      const found = reducer ? reducer.id : '<NOT FOUND>';
+      expect(found).toEqual(id);
+    }
   });
 
   it('should fail to load unknown stats', () => {
     const names = ['not a stat', ReducerID.max, ReducerID.min, 'also not a stat'];
-    const stats = getFieldReducers(names);
+    const stats = fieldReducers.list(names);
     expect(stats.length).toBe(2);
 
     const found = stats.map(v => v.id);
@@ -43,8 +50,7 @@ describe('Stats Calculators', () => {
 
   it('should calculate basic stats', () => {
     const stats = reduceField({
-      series: basicTable,
-      fieldIndex: 0,
+      field: basicTable.fields[0],
       reducers: ['first', 'last', 'mean'],
     });
 
@@ -59,9 +65,9 @@ describe('Stats Calculators', () => {
   });
 
   it('should support a single stat also', () => {
+    basicTable.fields[0].calcs = undefined; // clear the cache
     const stats = reduceField({
-      series: basicTable,
-      fieldIndex: 0,
+      field: basicTable.fields[0],
       reducers: ['first'],
     });
 
@@ -72,8 +78,7 @@ describe('Stats Calculators', () => {
 
   it('should get non standard stats', () => {
     const stats = reduceField({
-      series: basicTable,
-      fieldIndex: 0,
+      field: basicTable.fields[0],
       reducers: [ReducerID.distinctCount, ReducerID.changeCount],
     });
 
@@ -83,8 +88,7 @@ describe('Stats Calculators', () => {
 
   it('should calculate step', () => {
     const stats = reduceField({
-      series: { fields: [{ name: 'A' }], rows: [[100], [200], [300], [400]] },
-      fieldIndex: 0,
+      field: createField('x', [100, 200, 300, 400]),
       reducers: [ReducerID.step, ReducerID.delta],
     });
 
@@ -92,26 +96,39 @@ describe('Stats Calculators', () => {
     expect(stats.delta).toEqual(300);
   });
 
+  it('consistenly check allIsNull/allIsZero', () => {
+    const empty = createField('x');
+    const allNull = createField('x', [null, null, null, null]);
+    const allUndefined = createField('x', [undefined, undefined, undefined, undefined]);
+    const allZero = createField('x', [0, 0, 0, 0]);
+
+    expect(reduce(empty, ReducerID.allIsNull)).toEqual(true);
+    expect(reduce(allNull, ReducerID.allIsNull)).toEqual(true);
+    expect(reduce(allUndefined, ReducerID.allIsNull)).toEqual(true);
+
+    expect(reduce(empty, ReducerID.allIsZero)).toEqual(false);
+    expect(reduce(allNull, ReducerID.allIsZero)).toEqual(false);
+    expect(reduce(allZero, ReducerID.allIsZero)).toEqual(true);
+  });
+
   it('consistent results for first/last value with null', () => {
     const info = [
       {
-        rows: [[null], [200], [null]], // first/last value is null
+        data: [null, 200, null], // first/last value is null
         result: 200,
       },
       {
-        rows: [[null], [null], [null]], // All null
+        data: [null, null, null], // All null
         result: undefined,
       },
       {
-        rows: [], // Empty row
+        data: [undefined, undefined, undefined], // Empty row
         result: undefined,
       },
     ];
-    const fields = [{ name: 'A' }];
 
     const stats = reduceField({
-      series: { rows: info[0].rows, fields },
-      fieldIndex: 0,
+      field: createField('x', info[0].data),
       reducers: [ReducerID.first, ReducerID.last, ReducerID.firstNotNull, ReducerID.lastNotNull], // uses standard path
     });
     expect(stats[ReducerID.first]).toEqual(null);
@@ -123,21 +140,19 @@ describe('Stats Calculators', () => {
     for (const input of info) {
       for (const reducer of reducers) {
         const v1 = reduceField({
-          series: { rows: input.rows, fields },
-          fieldIndex: 0,
+          field: createField('x', input.data),
           reducers: [reducer, ReducerID.mean], // uses standard path
         })[reducer];
 
         const v2 = reduceField({
-          series: { rows: input.rows, fields },
-          fieldIndex: 0,
+          field: createField('x', input.data),
           reducers: [reducer], // uses optimized path
         })[reducer];
 
         if (v1 !== v2 || v1 !== input.result) {
           const msg =
             `Invalid ${reducer} result for: ` +
-            input.rows.join(', ') +
+            input.data.join(', ') +
             ` Expected: ${input.result}` + // configured
             ` Recieved: Multiple: ${v1}, Single: ${v2}`;
           expect(msg).toEqual(null);

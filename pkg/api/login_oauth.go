@@ -60,7 +60,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	if code == "" {
 		state := GenStateString()
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		hs.writeCookie(ctx.Resp, OauthStateCookieName, hashedState, 60)
+		hs.writeCookie(ctx.Resp, OauthStateCookieName, hashedState, 60, hs.Cfg.CookieSameSite)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -73,7 +73,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 
 	// delete cookie
 	ctx.Resp.Header().Del("Set-Cookie")
-	hs.deleteCookie(ctx.Resp, OauthStateCookieName)
+	hs.deleteCookie(ctx.Resp, OauthStateCookieName, hs.Cfg.CookieSameSite)
 
 	if cookieState == "" {
 		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
@@ -191,15 +191,18 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		return
 	}
 
+	// Do not expose disabled status,
+	// just show incorrect user credentials error (see #17947)
 	if cmd.Result.IsDisabled {
-		hs.redirectWithError(ctx, login.ErrUserDisabled)
+		oauthLogger.Warn("User is disabled", "user", cmd.Result.Login)
+		hs.redirectWithError(ctx, login.ErrInvalidCredentials)
 		return
 	}
 
 	// login
 	hs.loginUserWithUser(cmd.Result, ctx)
 
-	metrics.M_Api_Login_OAuth.Inc()
+	metrics.MApiLoginOAuth.Inc()
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		ctx.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
@@ -210,20 +213,23 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 	ctx.Redirect(setting.AppSubUrl + "/")
 }
 
-func (hs *HTTPServer) deleteCookie(w http.ResponseWriter, name string) {
-	hs.writeCookie(w, name, "", -1)
+func (hs *HTTPServer) deleteCookie(w http.ResponseWriter, name string, sameSite http.SameSite) {
+	hs.writeCookie(w, name, "", -1, sameSite)
 }
 
-func (hs *HTTPServer) writeCookie(w http.ResponseWriter, name string, value string, maxAge int) {
-	http.SetCookie(w, &http.Cookie{
+func (hs *HTTPServer) writeCookie(w http.ResponseWriter, name string, value string, maxAge int, sameSite http.SameSite) {
+	cookie := http.Cookie{
 		Name:     name,
 		MaxAge:   maxAge,
 		Value:    value,
 		HttpOnly: true,
 		Path:     setting.AppSubUrl + "/",
 		Secure:   hs.Cfg.CookieSecure,
-		SameSite: hs.Cfg.CookieSameSite,
-	})
+	}
+	if sameSite != http.SameSiteDefaultMode {
+		cookie.SameSite = sameSite
+	}
+	http.SetCookie(w, &cookie)
 }
 
 func hashStatecode(code, seed string) string {

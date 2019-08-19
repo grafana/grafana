@@ -11,6 +11,44 @@ import (
 )
 
 func TestLDAPPrivateMethods(t *testing.T) {
+	Convey("getSearchRequest()", t, func() {
+		Convey("with enabled GroupSearchFilterUserAttribute setting", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					Attr: AttributeMap{
+						Username: "username",
+						Name:     "name",
+						MemberOf: "memberof",
+						Email:    "email",
+					},
+					GroupSearchFilterUserAttribute: "gansta",
+					SearchBaseDNs:                  []string{"BaseDNHere"},
+				},
+				log: log.New("test-logger"),
+			}
+
+			result := server.getSearchRequest("killa", []string{"gorilla"})
+
+			So(result, ShouldResemble, &ldap.SearchRequest{
+				BaseDN:       "killa",
+				Scope:        2,
+				DerefAliases: 0,
+				SizeLimit:    0,
+				TimeLimit:    0,
+				TypesOnly:    false,
+				Filter:       "(|)",
+				Attributes: []string{
+					"username",
+					"email",
+					"name",
+					"memberof",
+					"gansta",
+				},
+				Controls: nil,
+			})
+		})
+	})
+
 	Convey("serializeUsers()", t, func() {
 		Convey("simple case", func() {
 			server := &Server{
@@ -144,7 +182,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 		})
 	})
 
-	Convey("shouldAuthAdmin()", t, func() {
+	Convey("shouldAdminBind()", t, func() {
 		Convey("it should require admin userBind", func() {
 			server := &Server{
 				Config: &ServerConfig{
@@ -152,7 +190,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 				},
 			}
 
-			result := server.shouldAuthAdmin()
+			result := server.shouldAdminBind()
 			So(result, ShouldBeTrue)
 		})
 
@@ -163,8 +201,45 @@ func TestLDAPPrivateMethods(t *testing.T) {
 				},
 			}
 
-			result := server.shouldAuthAdmin()
+			result := server.shouldAdminBind()
 			So(result, ShouldBeFalse)
+		})
+	})
+
+	Convey("shouldSingleBind()", t, func() {
+		Convey("it should allow single bind", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					BindDN: "cn=%s,dc=grafana,dc=org",
+				},
+			}
+
+			result := server.shouldSingleBind()
+			So(result, ShouldBeTrue)
+		})
+
+		Convey("it should not allow single bind", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					BindDN: "cn=admin,dc=grafana,dc=org",
+				},
+			}
+
+			result := server.shouldSingleBind()
+			So(result, ShouldBeFalse)
+		})
+	})
+
+	Convey("singleBindDN()", t, func() {
+		Convey("it should allow single bind", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					BindDN: "cn=%s,dc=grafana,dc=org",
+				},
+			}
+
+			result := server.singleBindDN("test")
+			So(result, ShouldEqual, "cn=test,dc=grafana,dc=org")
 		})
 	})
 

@@ -87,7 +87,7 @@ export class DashNav extends PureComponent<Props> {
     const { dashboard, $injector } = this.props;
     const dashboardSrv = $injector.get('dashboardSrv');
 
-    dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then(newState => {
+    dashboardSrv.starDashboard(dashboard.id, dashboard.meta.isStarred).then((newState: any) => {
       dashboard.meta.isStarred = newState;
       this.forceUpdate();
     });

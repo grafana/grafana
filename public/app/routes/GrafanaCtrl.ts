@@ -206,7 +206,7 @@ export function grafanaAppDirective(
         }
 
         $timeout(() => $location.search(search));
-        setViewModeBodyClass(body, search.kiosk);
+        setViewModeBodyClass(body, search.kiosk!);
       });
 
       // handle in active view state class

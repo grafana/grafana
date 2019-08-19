@@ -19,6 +19,7 @@ import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { LinkSrv } from './panellinks/link_srv';
+import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
 
 export class PanelCtrl {
   panel: any;
@@ -248,10 +249,10 @@ export class PanelCtrl {
   }
 
   getInfoContent(options: { mode: string }) {
-    let markdown = this.panel.description;
+    let markdown = this.panel.description || '';
 
     if (options.mode === 'tooltip') {
-      markdown = this.error || this.panel.description;
+      markdown = this.error || this.panel.description || '';
     }
 
     const linkSrv: LinkSrv = this.$injector.get('linkSrv');
@@ -281,4 +282,7 @@ export class PanelCtrl {
     html += '</div>';
     return html;
   }
+
+  // overriden from react
+  onPluginTypeChange = (plugin: PanelPluginMeta) => {};
 }

@@ -82,10 +82,10 @@ func TestMultiLDAP(t *testing.T) {
 				teardown()
 			})
 
-			Convey("Should still call a second error for invalid cred error", func() {
+			Convey("Should still call a second error for invalid not found error", func() {
 				mock := setup()
 
-				mock.loginErrReturn = ErrInvalidCredentials
+				mock.loginErrReturn = ErrCouldNotFindUser
 
 				multi := New([]*ldap.ServerConfig{
 					{}, {},

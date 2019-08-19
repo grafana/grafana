@@ -55,7 +55,7 @@ export class TableRenderer {
   }
 
   getColorForValue(value: number, style: ColumnStyle) {
-    if (!style.thresholds) {
+    if (!style.thresholds || !style.colors) {
       return null;
     }
     for (let i = style.thresholds.length; i > 0; i--) {

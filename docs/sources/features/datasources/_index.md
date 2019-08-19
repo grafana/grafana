@@ -34,6 +34,7 @@ The following datasources are officially supported:
 * [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
 * [OpenTSDB]({{< relref "opentsdb.md" >}})
 * [Testdata]({{< relref "testdata.md" >}})
+* [Mixed]({{< relref "mixed.md" >}})
 
 ## Data source plugins
 
