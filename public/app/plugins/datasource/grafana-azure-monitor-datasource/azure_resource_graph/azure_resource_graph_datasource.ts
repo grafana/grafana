@@ -5,58 +5,49 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { IQService } from 'angular';
 
-class AzureResourceGraphResponseParser {
-  static parseResponseValues(results: any[]) {
+export class AzureResourceGraphResponseParser {
+  output: any = {};
+
+  constructor(results: any[]) {
+    this.output = {
+      type: 'table',
+      columns: [],
+      rows: [],
+    };
     if (results && results[0] && results[0].result && results[0].result.data && results[0].result.data.data) {
-      const output = results[0].result.data.data;
-      output.type = 'table';
-      output.columns = output.columns.map((c: any, index: number) => {
-        c.text = c.name || index;
-        c.type = c.type || 'string';
-        return c;
+      const output = results[0].result.data.data || {};
+      this.output.columns = (output.columns || []).map((column: any, index: number) => {
+        column.text = column.name || index;
+        column.type = column.type || 'string';
+        return column;
       });
-      output.rows = output.rows.map((r: any) => {
-        return r.map((ri: any) => {
-          if (typeof ri === 'string') {
-            return ri;
+      this.output.rows = (output.rows || []).map((row: any) => {
+        return row.map((rowItem: any) => {
+          if (typeof rowItem === 'string') {
+            return rowItem;
           } else {
-            return JSON.stringify(ri);
+            return JSON.stringify(rowItem);
           }
         });
       });
-      return output;
-    } else {
-      return [];
     }
   }
 
-  static parseResponseValuesToVariables(results: any[]) {
+  getResultsAsVariablesList() {
     const returnvalues: any[] = [];
-    if (results && results[0] && results[0].result && results[0].result.data && results[0].result.data.data) {
-      const output = results[0].result.data.data;
-      output.rows = output.rows.map((r: any) => {
-        return r.map((ri: any) => {
-          if (typeof ri === 'string') {
-            return ri;
-          } else {
-            return JSON.stringify(ri);
-          }
+    _.each(this.output.rows, row => {
+      _.each(row, col => {
+        returnvalues.push({
+          value: col,
+          text: col,
         });
       });
-      _.each(output.rows, row => {
-        _.each(row, col => {
-          returnvalues.push({
-            value: col,
-            text: col,
-          });
-        });
-      });
-    }
+    });
     return returnvalues;
   }
 }
 
-class AzureResourceGraphQueryOption implements AzureResourceGraphQueryOptions {
+export class AzureResourceGraphQueryOption implements AzureResourceGraphQueryOptions {
   url: string;
   query: string;
   top: number;
@@ -169,11 +160,12 @@ export default class AzureResourceGraphDatasource {
     }
     const promises = this.doQueries(queries);
     return this.$q.all(promises).then(results => {
-      return AzureResourceGraphResponseParser.parseResponseValues(results);
+      const responseParser = new AzureResourceGraphResponseParser(results);
+      return responseParser.output;
     });
   }
 
-  async metricFindQuery(query: string) {
+  metricFindQuery(query: string) {
     if (query.startsWith(`ResourceGraph(`) && query.endsWith(`)`)) {
       const resourceGraphQuery = query.replace(`ResourceGraph(`, ``).slice(0, -1);
       const queryOption = new AzureResourceGraphQueryOption(
@@ -184,7 +176,8 @@ export default class AzureResourceGraphDatasource {
       );
       const promises = this.doQueries([queryOption]);
       return this.$q.all(promises).then(results => {
-        return AzureResourceGraphResponseParser.parseResponseValuesToVariables(results);
+        const responseParser = new AzureResourceGraphResponseParser(results);
+        return responseParser.getResultsAsVariablesList();
       });
     }
     return undefined;
