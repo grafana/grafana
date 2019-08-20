@@ -9,6 +9,8 @@ export interface AzureMonitorQuery extends DataQuery {
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
   appInsights: ApplicationInsightsQuery;
+  azureResourceGraph: AzureResourceGraphQuery;
+  //   appInsights: any;
 }
 
 export interface AzureDataSourceJsonData extends DataSourceJsonData {
@@ -69,6 +71,19 @@ export interface ApplicationInsightsQuery {
   dimension: string;
   dimensionFilter: string;
   alias: string;
+}
+
+export interface AzureResourceGraphQuery {
+  query: string;
+  top: number;
+  skip: number;
+}
+
+export interface AzureResourceGraphQueryOptions {
+  url: string;
+  query: string;
+  top: number;
+  skip: number;
 }
 
 // Azure Monitor API Types
