@@ -525,6 +525,11 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResu
 	return queryRes
 }
 
+/**
+ * Looks for a labels request and adds them as tags
+ *
+ * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
+ */
 func attachLabels(query *tsdb.Query, queryRes *tsdb.QueryResult) {
 	labelText := query.Model.Get("labels").MustString("")
 	if labelText == "" {
