@@ -67,6 +67,7 @@ export { ExploreGraphPanel } from './Logs/ExploreGraphPanel';
 export { Panel } from './Panel/Panel';
 export { Logs } from './Logs/Logs';
 export { LogRows } from './Logs/LogRows';
+export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
