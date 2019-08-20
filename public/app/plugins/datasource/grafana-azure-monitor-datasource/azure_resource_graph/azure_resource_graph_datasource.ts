@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { AzureDataSourceJsonData, AzureResourceGraphQuery, AzureResourceGraphQueryOptions } from '../types';
+import { AzureDataSourceJsonData, AzureResourceGraphQuery } from '../types';
 import { DataSourceInstanceSettings } from '@grafana/ui';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -47,14 +47,12 @@ export class AzureResourceGraphResponseParser {
   }
 }
 
-export class AzureResourceGraphQueryOption implements AzureResourceGraphQueryOptions {
-  url: string;
+export class AzureResourceGraphQueryOption implements AzureResourceGraphQuery {
   query: string;
   top: number;
   skip: number;
 
-  constructor(url: string, query: string, top: number, skip: number) {
-    this.url = url;
+  constructor(query: string, top: number, skip: number) {
     this.query = query;
     this.top = top;
     this.skip = skip;
@@ -66,6 +64,7 @@ export default class AzureResourceGraphDatasource {
   url: string;
   cloudName: string;
   baseUrl: string;
+  allSubscriptions: any[];
 
   /** @ngInject */
   constructor(
@@ -78,17 +77,29 @@ export default class AzureResourceGraphDatasource {
     this.url = instanceSettings.url;
     this.cloudName = instanceSettings.jsonData.cloudName || 'azuremonitor';
     this.baseUrl = `/resourcegraph`;
+    this.allSubscriptions = [];
+    this.getupSubscriptionIds();
+  }
+
+  isConfigured(): boolean {
+    return this.allSubscriptions.length > 0;
   }
 
   getupSubscriptionIds() {
-    const url = `/${this.cloudName}/subscriptions?api-version=2019-03-01`;
-    return this.doSubscriptionsRequest(url).then((result: any) => {
-      if (result && result.data && result.data.value) {
-        return result.data.value.map((sub: any) => sub.subscriptionId);
-      } else {
-        return [];
-      }
-    });
+    if (this.isConfigured()) {
+      return this.allSubscriptions.map((sub: any) => sub.subscriptionId);
+    } else {
+      const url = `/${this.cloudName}/subscriptions?api-version=2019-03-01`;
+      return this.doSubscriptionsRequest(url).then((result: any) => {
+        if (result && result.data && result.data.value) {
+          this.allSubscriptions = result.data.value;
+          return result.data.value.map((sub: any) => sub.subscriptionId);
+        } else {
+          this.allSubscriptions = [];
+          return [];
+        }
+      });
+    }
   }
 
   doSubscriptionsRequest(url: string, maxRetries = 1) {
@@ -109,7 +120,7 @@ export default class AzureResourceGraphDatasource {
     const subscriptions = await this.getupSubscriptionIds();
     return this.backendSrv
       .datasourceRequest({
-        url: query.url + '?api-version=2019-04-01',
+        url: this.url + this.baseUrl + '?api-version=2019-04-01',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         data: {
@@ -148,7 +159,6 @@ export default class AzureResourceGraphDatasource {
     }).map(target => {
       const item: AzureResourceGraphQuery = target.azureResourceGraph;
       const queryOption = new AzureResourceGraphQueryOption(
-        this.url + this.baseUrl,
         this.templateSrv.replace(item.query, options.scopedVars),
         item.top,
         item.skip
@@ -168,12 +178,7 @@ export default class AzureResourceGraphDatasource {
   metricFindQuery(query: string) {
     if (query.startsWith(`ResourceGraph(`) && query.endsWith(`)`)) {
       const resourceGraphQuery = query.replace(`ResourceGraph(`, ``).slice(0, -1);
-      const queryOption = new AzureResourceGraphQueryOption(
-        this.url + this.baseUrl,
-        this.templateSrv.replace(resourceGraphQuery),
-        1000,
-        0
-      );
+      const queryOption = new AzureResourceGraphQueryOption(this.templateSrv.replace(resourceGraphQuery), 1000, 0);
       const promises = this.doQueries([queryOption]);
       return this.$q.all(promises).then(results => {
         const responseParser = new AzureResourceGraphResponseParser(results);
