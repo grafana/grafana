@@ -21,7 +21,7 @@ interface Props {
 export const RadioButtonGroup = ({ children, name }: Props) => {
   let renderedChildren;
   if (name) {
-    renderedChildren = children.map(child => React.cloneElement(child, { name }));
+    renderedChildren = children.map(child => React.cloneElement(child, { name, key: child.props.id }));
   } else {
     renderedChildren = children;
   }
