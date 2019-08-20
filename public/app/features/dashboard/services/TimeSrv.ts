@@ -95,6 +95,14 @@ export class TimeSrv {
 
   private initTimeFromUrl() {
     const params = this.$location.search();
+
+    if (params.valueTime && params.valueTimeWindow) {
+      const valueTime = parseInt(params.valueTime, 10);
+      const valueTimeWindow = parseInt(params.valueTimeWindow, 10);
+      this.time.from = toUtc(valueTime - valueTimeWindow / 2);
+      this.time.to = toUtc(valueTime + valueTimeWindow / 2);
+    }
+
     if (params.from) {
       this.time.from = this.parseUrlParam(params.from) || this.time.from;
     }
