@@ -145,20 +145,54 @@ describe('timeSrv', () => {
       expect(timeSrv.time.to).toEqual('now');
     });
 
-    it('should handle data point windowing', () => {
-      location = {
-        search: jest.fn(() => ({
-          valueTime: '1410337645000',
-          valueTimeWindow: '10000',
-        })),
-      };
+    describe('data point windowing', () => {
+      it('should handle windowing around data point', () => {
+        location = {
+          search: jest.fn(() => ({
+            valueTime: '1410337645000',
+            valueTimeWindow: '10000',
+          })),
+        };
 
-      timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+        timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
 
-      timeSrv.init(_dashboard);
-      const time = timeSrv.timeRange();
-      expect(time.from.valueOf()).toEqual(1410337640000);
-      expect(time.to.valueOf()).toEqual(1410337650000);
+        timeSrv.init(_dashboard);
+        const time = timeSrv.timeRange();
+        expect(time.from.valueOf()).toEqual(1410337640000);
+        expect(time.to.valueOf()).toEqual(1410337650000);
+      });
+
+      it('should handle windowing after data point', () => {
+        location = {
+          search: jest.fn(() => ({
+            valueTime: '1410337645000',
+            valueTimeWindow: '+5000',
+          })),
+        };
+
+        timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+
+        timeSrv.init(_dashboard);
+        const time = timeSrv.timeRange();
+        expect(time.from.valueOf()).toEqual(1410337645000);
+        expect(time.to.valueOf()).toEqual(1410337650000);
+      });
+
+      it('should handle windowing before data point', () => {
+        location = {
+          search: jest.fn(() => ({
+            valueTime: '1410337645000',
+            valueTimeWindow: '-5000',
+          })),
+        };
+
+        timeSrv = new TimeSrv(rootScope as any, jest.fn() as any, location as any, timer, new ContextSrvStub() as any);
+
+        timeSrv.init(_dashboard);
+        const time = timeSrv.timeRange();
+        expect(time.from.valueOf()).toEqual(1410337640000);
+        expect(time.to.valueOf()).toEqual(1410337645000);
+      });
     });
   });
 
