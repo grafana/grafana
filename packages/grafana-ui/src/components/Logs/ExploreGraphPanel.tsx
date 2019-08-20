@@ -1,14 +1,40 @@
 import React, { PureComponent } from 'react';
-
+import { css, cx } from 'emotion';
 import { TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
+
 import { GraphSeriesToggler, GraphSeriesTogglerAPI } from '../Graph/GraphSeriesToggler';
 import { GraphWithLegend } from '../Graph/GraphWithLegend';
 import { LegendDisplayMode } from '../Legend/Legend';
 import { Panel } from '../Panel/Panel';
+import { Themeable, GrafanaTheme } from '../../types/theme';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import { withTheme } from '../../themes/ThemeContext';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
-interface Props {
+const getStyles = (theme: GrafanaTheme) => ({
+  timeSeriesDisclaimer: css`
+    label: time-series-disclaimer;
+    width: 300px;
+    margin: ${theme.spacing.sm} auto;
+    padding: 10px 0;
+    border-radius: ${theme.border.radius.md};
+    text-align: center;
+    background-color: ${selectThemeVariant({ light: theme.colors.white, dark: theme.colors.dark4 }, theme.type)};
+  `,
+  disclaimerIcon: css`
+    label: disclaimer-icon;
+    color: ${theme.colors.yellow};
+    margin-right: ${theme.spacing.xs};
+  `,
+  showAllTimeSeries: css`
+    label: show-all-time-series;
+    cursor: pointer;
+    color: ${theme.colors.linkExternal};
+  `,
+});
+
+interface Props extends Themeable {
   series: GraphSeriesXY[];
   width: number;
   absoluteRange: AbsoluteTimeRange;
@@ -30,7 +56,7 @@ interface State {
   showAllTimeSeries: boolean;
 }
 
-export class ExploreGraphPanel extends PureComponent<Props, State> {
+class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
   state: State = {
     hiddenSeries: [],
     showAllTimeSeries: false,
@@ -115,16 +141,17 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
   };
 
   render() {
-    const { series, showPanel, showingGraph, loading } = this.props;
+    const { series, showPanel, showingGraph, loading, theme } = this.props;
     const { showAllTimeSeries } = this.state;
+    const style = getStyles(theme);
 
     return (
       <>
         {series && series.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
-          <div className="time-series-disclaimer">
-            <i className="fa fa-fw fa-warning disclaimer-icon" />
+          <div className={cx([style.timeSeriesDisclaimer])}>
+            <i className={cx(['fa fa-fw fa-warning', style.disclaimerIcon])} />
             {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
-            <span className="show-all-time-series" onClick={this.onShowAllTimeSeries}>{`Show all ${
+            <span className={cx([style.showAllTimeSeries])} onClick={this.onShowAllTimeSeries}>{`Show all ${
               series.length
             }`}</span>
           </div>
@@ -141,3 +168,6 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
     );
   }
 }
+
+export const ExploreGraphPanel = withTheme(UnThemedExploreGraphPanel);
+ExploreGraphPanel.displayName = 'ExploreGraphPanel';

@@ -202,25 +202,6 @@
   }
 }
 
-.time-series-disclaimer {
-  width: 300px;
-  margin: $space-sm auto;
-  padding: 10px 0;
-  border-radius: $border-radius;
-  text-align: center;
-  background-color: $panel-bg;
-
-  .disclaimer-icon {
-    color: $yellow;
-    margin-right: $space-xs;
-  }
-
-  .show-all-time-series {
-    cursor: pointer;
-    color: $external-link-color;
-  }
-}
-
 .navbar .elapsed-time {
   position: absolute;
   left: 0;
