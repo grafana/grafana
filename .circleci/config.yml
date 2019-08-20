@@ -897,4 +897,7 @@ workflows:
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
+      - deploy-release:
+          requires:
+            - build-oss-msi
 
