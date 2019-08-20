@@ -38,6 +38,12 @@ const toggle = css`
     color: #5794f2;
     z-index: 2;
   }
+
+  &:focus + .${toggleLabel} {
+    outline-offset: 2px;
+    outline: solid 2px blue;
+    z-index: 2;
+  }
 `;
 
 interface Props {
@@ -59,8 +65,8 @@ export const RadioButton: FC<Props> = ({ name, id, children, onChange }) => {
   };
   return (
     <>
-      <input type="radio" name={name} id={id} className={toggle} />
-      <label onClick={handleClick} className={toggleLabel} htmlFor={id}>
+      <input tabIndex={0} type="radio" name={name} id={id} className={toggle} />
+      <label tabIndex={-1} onClick={handleClick} className={toggleLabel} htmlFor={id}>
         {children}
       </label>
     </>
