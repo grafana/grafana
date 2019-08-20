@@ -17,6 +17,7 @@ import toString from 'lodash/toString';
 import { GrafanaTheme, InterpolateFunction, ScopedVars } from '../types/index';
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from './flotPairs';
+import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
@@ -26,7 +27,7 @@ export interface FieldDisplayOptions {
   defaults: FieldConfig; // Use these values unless otherwise stated
   override: FieldConfig; // Set these values regardless of the source
 }
-
+// TODO: use built in variables, same as for data links?
 export const VAR_SERIES_NAME = '__series_name';
 export const VAR_FIELD_NAME = '__field_name';
 export const VAR_CALC = '__calc';
@@ -89,8 +90,19 @@ export interface GetFieldDisplayValuesOptions {
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
+const getTimeColumnIdx = (series: DataFrame) => {
+  let timeColumn = -1;
+  for (let i = 0; i < series.fields.length; i++) {
+    if (series.fields[i].type === FieldType.time) {
+      timeColumn = i;
+      break;
+    }
+  }
+  return timeColumn;
+};
+
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { data, replaceVariables, fieldOptions, sparkline, linker } = options;
+  const { data, replaceVariables, fieldOptions, linker } = options;
   const { defaults, override } = fieldOptions;
   const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
 
@@ -110,17 +122,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           name: series.refId ? series.refId : `Series[${s}]`,
         };
       }
-      scopedVars[VAR_SERIES_NAME] = { text: 'Series', value: series.name };
 
-      let timeColumn = -1;
-      if (sparkline) {
-        for (let i = 0; i < series.fields.length; i++) {
-          if (series.fields[i].type === FieldType.time) {
-            timeColumn = i;
-            break;
-          }
-        }
-      }
+      scopedVars[DataLinkBuiltInVars.seriesName] = { text: 'Series', value: series.name };
+
+      const timeColumn = getTimeColumnIdx(series);
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
         const field = series.fields[i];
@@ -168,12 +173,19 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               name,
               field: config,
               display: displayValue,
+
               links: config.links
                 ? linker({
                     links: config.links,
                     field,
                     value: displayValue,
-                    scopedVars,
+                    scopedVars: {
+                      ...scopedVars,
+                      [DataLinkBuiltInVars.valueTime]: {
+                        value: timeColumn < 0 ? undefined : series.fields[timeColumn].values.get(j),
+                        text: 'Value time',
+                      },
+                    },
                   })
                 : undefined,
             });
@@ -237,7 +249,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     // Don't show title for single item
     values[0].display.title = undefined;
   }
-
   return values;
 };
 

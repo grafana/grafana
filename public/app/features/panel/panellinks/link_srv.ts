@@ -134,7 +134,6 @@ export class LinkSrv implements LinkService {
       return undefined;
     }
     return options.links.map(link => {
-      // TODO -- pass in the point info
       return this.getDataLinkUIModel(link, options.scopedVars);
     });
   };
