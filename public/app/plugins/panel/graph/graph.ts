@@ -16,7 +16,7 @@ import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
-import { LinkService, LinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { LinkService, LinkSrv, DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
@@ -196,9 +196,10 @@ class GraphElement {
           {
             items: [
               ...dataLinks.map<ContextMenuItem>(link => {
-                const linkUiModel = this.linkSrv.getDataLinkUIModel(link, this.panel.scopedVars, {
-                  seriesName: item.series.alias,
-                  datapoint: item.datapoint,
+                const linkUiModel = this.linkSrv.getDataLinkUIModel(link, {
+                  ...this.panel.scopedVars,
+                  [DataLinkBuiltInVars.seriesName]: { value: item.series.alias, text: item.series.alias },
+                  [DataLinkBuiltInVars.valueTime]: { value: item.datapoint[0], text: item.datapoint[0] },
                 });
                 return {
                   label: linkUiModel.title,

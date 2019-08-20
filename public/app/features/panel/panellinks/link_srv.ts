@@ -10,7 +10,7 @@ import {
   FieldDisplayLinkFunction,
   FieldDisplayLinkOptions,
 } from '@grafana/ui';
-import { TimeSeriesValue, DateTime, dateTime, DataLink, KeyValue, deprecationWarning } from '@grafana/data';
+import { DataLink, KeyValue, deprecationWarning } from '@grafana/data';
 
 export const DataLinkBuiltInVars = {
   keepTime: '__url_time_range',
@@ -58,15 +58,8 @@ export interface LinkModel {
   target: LinkTarget;
 }
 
-interface LinkDataPoint {
-  datapoint: TimeSeriesValue[];
-  seriesName: string;
-  [key: number]: any;
-}
 export interface LinkService {
-  getDataLinkUIModel: (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
-  getDataPointVars: (seriesName: string, dataPointTs: DateTime) => ScopedVars;
-
+  getDataLinkUIModel: (link: DataLink, scopedVars: ScopedVars) => LinkModel;
   fieldDisplayLinker: FieldDisplayLinkFunction;
 }
 
@@ -98,20 +91,7 @@ export class LinkSrv implements LinkService {
     return info;
   }
 
-  getDataPointVars = (seriesName: string, valueTime: DateTime) => {
-    return {
-      [DataLinkBuiltInVars.valueTime]: {
-        text: valueTime.valueOf(),
-        value: valueTime.valueOf(),
-      },
-      [DataLinkBuiltInVars.seriesName]: {
-        text: seriesName,
-        value: seriesName,
-      },
-    };
-  };
-
-  getDataLinkUIModel = (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => {
+  getDataLinkUIModel = (link: DataLink, scopedVars: ScopedVars) => {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
@@ -124,7 +104,6 @@ export class LinkSrv implements LinkService {
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
     const variablesQuery = toUrlParams(params);
-
     info.href = this.templateSrv.replace(link.url, {
       ...scopedVars,
       [DataLinkBuiltInVars.keepTime]: {
@@ -136,13 +115,6 @@ export class LinkSrv implements LinkService {
         value: variablesQuery,
       },
     });
-
-    if (dataPoint) {
-      info.href = this.templateSrv.replace(
-        info.href,
-        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint.datapoint[0]))
-      );
-    }
 
     return info;
   };
