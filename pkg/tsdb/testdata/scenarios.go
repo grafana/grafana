@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -423,6 +425,7 @@ func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Query
 	series := newSeriesForQuery(query)
 	series.Points = *points
 	queryRes.Series = append(queryRes.Series, series)
+	attachLabels(query, queryRes)
 	return queryRes
 }
 
@@ -472,6 +475,7 @@ func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Que
 	series := newSeriesForQuery(query)
 	series.Points = *points
 	queryRes.Series = append(queryRes.Series, series)
+	attachLabels(query, queryRes)
 	return queryRes
 }
 
@@ -517,7 +521,31 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResu
 
 	queryRes := tsdb.NewQueryResult()
 	queryRes.Series = append(queryRes.Series, series)
+	attachLabels(query, queryRes)
 	return queryRes
+}
+
+func attachLabels(query *tsdb.Query, queryRes *tsdb.QueryResult) {
+	labelText := query.Model.Get("labels").MustString("")
+	if labelText == "" {
+		return
+	}
+
+	re := regexp.MustCompile(`\b(\w+)(!?=~?)"([^"\n]*?)"`)
+	tags := make(map[string]string)
+
+	byt := []byte(labelText)
+	re.ReplaceAllFunc(byt, func(s []byte) []byte {
+		exp := string(s)
+		idx := strings.Index(exp, "=")
+		key := exp[:idx]
+		val := util.TrimQuotes(exp[idx+1:])
+		tags[key] = val
+		return s
+	})
+	for _, series := range queryRes.Series {
+		series.Tags = tags
+	}
 }
 
 func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {

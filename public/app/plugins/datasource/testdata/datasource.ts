@@ -81,7 +81,11 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           }
 
           for (const series of results.series || []) {
-            data.push({ target: series.name, datapoints: series.points, refId: query.refId });
+            data.push({
+              refId: query.refId,
+              target: series.name,
+              datapoints: series.points,
+            });
           }
         }
 
