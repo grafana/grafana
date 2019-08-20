@@ -15,7 +15,7 @@ import {
 import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { GaugeOptions } from './types';
-import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import { getPanelLinksVariableSuggestions, getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;
@@ -69,7 +69,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     const { options } = this.props;
     const { fieldOptions, showThresholdLabels, showThresholdMarkers } = options;
     const { defaults } = fieldOptions;
-    const suggestions = getPanelLinksVariableSuggestions();
+    const suggestions = fieldOptions.values ? getDataLinksVariableSuggestions() : getPanelLinksVariableSuggestions();
 
     return (
       <>
