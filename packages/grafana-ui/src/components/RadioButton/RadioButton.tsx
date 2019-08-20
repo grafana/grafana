@@ -65,7 +65,7 @@ export const RadioButton: FC<Props> = ({ name, id, children, onChange }) => {
   };
   return (
     <>
-      <input tabIndex={0} type="radio" name={name} id={id} className={toggle} />
+      <input tabIndex={0} onChange={handleClick} type="radio" name={name} id={id} className={toggle} />
       <label tabIndex={-1} onClick={handleClick} className={toggleLabel} htmlFor={id}>
         {children}
       </label>
