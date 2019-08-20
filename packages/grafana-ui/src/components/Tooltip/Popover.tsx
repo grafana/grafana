@@ -3,7 +3,7 @@ import * as PopperJS from 'popper.js';
 import { Manager, Popper as ReactPopper, PopperArrowProps } from 'react-popper';
 import { Portal } from '../Portal/Portal';
 import Transition from 'react-transition-group/Transition';
-import { PopperContent } from './PopperController';
+import { PopoverContent } from './Tooltip';
 
 const defaultTransitionStyles = {
   transition: 'opacity 200ms linear',
@@ -22,14 +22,14 @@ export type RenderPopperArrowFn = (props: { arrowProps: PopperArrowProps; placem
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   show: boolean;
   placement?: PopperJS.Placement;
-  content: PopperContent<any>;
+  content: PopoverContent;
   referenceElement: PopperJS.ReferenceObject;
   wrapperClassName?: string;
   renderArrow?: RenderPopperArrowFn;
   eventsEnabled?: boolean;
 }
 
-class Popper extends PureComponent<Props> {
+class Popover extends PureComponent<Props> {
   static defaultProps: Partial<Props> = {
     eventsEnabled: true,
   };
@@ -101,4 +101,4 @@ class Popper extends PureComponent<Props> {
   }
 }
 
-export { Popper };
+export { Popover };

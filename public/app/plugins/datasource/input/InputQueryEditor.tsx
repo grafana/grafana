@@ -6,7 +6,9 @@ import { InputDatasource, describeDataFrame } from './InputDatasource';
 import { InputQuery, InputOptions } from './types';
 
 import { FormLabel, Select, QueryEditorProps, TableInputCSV } from '@grafana/ui';
-import { DataFrame, toCSV, SelectableValue } from '@grafana/data';
+import { DataFrame, toCSV, SelectableValue, DataFrameHelper } from '@grafana/data';
+
+import { dataFrameToCSV } from './utils';
 
 type Props = QueryEditorProps<InputDatasource, InputQuery, InputOptions>;
 
@@ -26,7 +28,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
 
   onComponentDidMount() {
     const { query } = this.props;
-    const text = query.data ? toCSV(query.data) : '';
+    const text = dataFrameToCSV(query.data);
     this.setState({ text });
   }
 
@@ -39,12 +41,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
       }
       data = [...datasource.data];
       if (!data) {
-        data = [
-          {
-            fields: [],
-            rows: [],
-          },
-        ];
+        data = [new DataFrameHelper()];
       }
       this.setState({ text: toCSV(data) });
     }
@@ -56,12 +53,7 @@ export class InputQueryEditor extends PureComponent<Props, State> {
     const { query, onChange, onRunQuery } = this.props;
     this.setState({ text });
     if (!data) {
-      data = [
-        {
-          fields: [],
-          rows: [],
-        },
-      ];
+      data = [new DataFrameHelper()];
     }
     onChange({ ...query, data });
     onRunQuery();

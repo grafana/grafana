@@ -1,23 +1,17 @@
-ARG BASE_IMAGE=ubuntu:18.04
+ARG BASE_IMAGE=alpine:3.10
 FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64.tar.gz"
-
-RUN apt-get update && apt-get install -qq -y tar && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
 
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # Change to tar xfzv to make tar print every file it extracts
 RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
-ARG BASE_IMAGE=ubuntu:18.04
 FROM ${BASE_IMAGE}
 
 ARG GF_UID="472"
 ARG GF_GID="472"
-ARG DEBIAN_FRONTEND=noninteractive
 
 ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \
@@ -29,16 +23,26 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apt-get update && apt-get -y upgrade && \
-    apt-get install -qq -y libfontconfig1 ca-certificates curl && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache ca-certificates bash
+
+# PhantomJS
+RUN if [ `arch` = "x86_64" ]; then \
+      apk add --no-cache --virtual phantomjs-utils curl && \
+      cd /tmp && \
+      curl -Ls https://github.com/dustinblackman/phantomized/releases/download/2.1.1/dockerized-phantomjs.tar.gz | tar xz && \
+      cp -R lib lib64 / && \
+      cp -R usr/lib/x86_64-linux-gnu /usr/lib && \
+      cp -R usr/share/fonts /usr/share && \
+      cp -R etc/fonts /etc && \
+      rm -rf /tmp/* && \
+      apk del --no-cache phantomjs-utils; \
+    fi
 
 COPY --from=0 /tmp/grafana "$GF_PATHS_HOME"
 
 RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
-    groupadd -r -g $GF_GID grafana && \
-    useradd -r -u $GF_UID -g grafana grafana && \
+    addgroup -S -g $GF_GID grafana && \
+    adduser -S -u $GF_UID -G grafana grafana && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \

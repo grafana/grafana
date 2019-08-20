@@ -16,6 +16,8 @@ export interface User {
   label: string;
   avatarUrl: string;
   login: string;
+  email: string;
+  name: string;
 }
 
 export interface Invitee {

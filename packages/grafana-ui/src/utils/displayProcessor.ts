@@ -1,28 +1,31 @@
 // Libraries
 import _ from 'lodash';
-import { Threshold, getMappedValue, Field, DecimalInfo, DisplayValue, DecimalCount } from '@grafana/data';
+import {
+  Threshold,
+  getMappedValue,
+  FieldConfig,
+  DisplayProcessor,
+  DecimalInfo,
+  DisplayValue,
+  DecimalCount,
+} from '@grafana/data';
 
 // Utils
 import { getValueFormat } from './valueFormats/valueFormats';
 import { getColorFromHexRgbOrName } from './namedColorsPalette';
 
 // Types
-import { GrafanaTheme, GrafanaThemeType } from '../types';
+import { GrafanaTheme, GrafanaThemeType } from '../types/index';
 
-export type DisplayProcessor = (value: any) => DisplayValue;
-
-export interface DisplayValueOptions {
-  field?: Partial<Field>;
-
-  // Alternative to empty string
-  noValue?: string;
+interface DisplayProcessorOptions {
+  field?: FieldConfig;
 
   // Context
   isUtc?: boolean;
   theme?: GrafanaTheme; // Will pick 'dark' if not defined
 }
 
-export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProcessor {
+export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayProcessor {
   if (options && !_.isEmpty(options)) {
     const field = options.field ? options.field : {};
     const formatFunc = getValueFormat(field.unit || 'none');
@@ -62,7 +65,11 @@ export function getDisplayProcessor(options?: DisplayValueOptions): DisplayProce
       }
 
       if (!text) {
-        text = options.noValue ? options.noValue : '';
+        if (field && field.noValue) {
+          text = field.noValue;
+        } else {
+          text = ''; // No data?
+        }
       }
       return { text, numeric, color };
     };

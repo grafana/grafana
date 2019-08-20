@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import uniqueId from 'lodash/uniqueId';
 import { Tooltip } from '../Tooltip/Tooltip';
+import * as PopperJS from 'popper.js';
 
 export interface Props {
   label: string;
@@ -8,8 +9,9 @@ export interface Props {
   className?: string;
   labelClass?: string;
   switchClass?: string;
-  transparent?: boolean;
   tooltip?: string;
+  tooltipPlacement?: PopperJS.Placement;
+  transparent?: boolean;
   onChange: (event?: React.SyntheticEvent<HTMLInputElement>) => void;
 }
 
@@ -28,7 +30,16 @@ export class Switch extends PureComponent<Props, State> {
   };
 
   render() {
-    const { labelClass = '', switchClass = '', label, checked, transparent, className, tooltip } = this.props;
+    const {
+      labelClass = '',
+      switchClass = '',
+      label,
+      checked,
+      transparent,
+      className,
+      tooltip,
+      tooltipPlacement,
+    } = this.props;
 
     const labelId = this.state.id;
     const labelClassName = `gf-form-label ${labelClass} ${transparent ? 'gf-form-label--transparent' : ''} pointer`;
@@ -41,7 +52,7 @@ export class Switch extends PureComponent<Props, State> {
             <div className={labelClassName}>
               {label}
               {tooltip && (
-                <Tooltip placement="top" content={tooltip} theme={'info'}>
+                <Tooltip placement={tooltipPlacement ? tooltipPlacement : 'auto'} content={tooltip} theme={'info'}>
                   <div className="gf-form-help-icon gf-form-help-icon--right-normal">
                     <i className="fa fa-info-circle" />
                   </div>
