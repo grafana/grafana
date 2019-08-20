@@ -660,6 +660,19 @@ jobs:
               echo "-- no changes to docs files --"
             fi
 
+  build-grafana-packages:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run:
+          name: Boostrap lerna
+          command: 'npx lerna bootstrap'
+      - run:
+          name: Build packages
+          command: yarn packages:build
+
+
   release-next-packages:
     docker:
       - image: circleci/node:10
@@ -834,6 +847,8 @@ workflows:
         - build-fast-backend:
             filters: *filter-not-release-or-master
         - build-fast-frontend:
+            filters: *filter-not-release-or-master
+        - build-grafana-packages:
             filters: *filter-not-release-or-master
         - build-fast-package:
             filters: *filter-not-release-or-master
