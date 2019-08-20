@@ -19,7 +19,7 @@ version: 2
 jobs:
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.12.6
+      - image: circleci/golang:1.12.9
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
@@ -30,7 +30,7 @@ jobs:
     steps:
         - checkout
         - run: sudo apt update
-        - run: sudo apt install -y mysql-client
+        - run: sudo apt install -y default-mysql-client
         - run: dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
         - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
         - run:
@@ -39,7 +39,7 @@ jobs:
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.12.6
+      - image: circleci/golang:1.12.9
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
@@ -58,7 +58,7 @@ jobs:
 
   cache-server-test:
     docker:
-      - image: circleci/golang:1.12.6
+      - image: circleci/golang:1.12.9
       - image: circleci/redis:4-alpine
       - image: memcached
     working_directory: /go/src/github.com/grafana/grafana
@@ -144,7 +144,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: circleci/golang:1.12.6
+      - image: circleci/golang:1.12.9
         environment:
           # we need CGO because of go-sqlite3
           CGO_ENABLED: 1
@@ -185,7 +185,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/golang:1.12.6
+      - image: circleci/golang:1.12.9
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
