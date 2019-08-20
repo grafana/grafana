@@ -4,14 +4,13 @@ import { Options } from './types';
 import { LogsDedupStrategy } from '@grafana/data';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { sortLogsResult } from 'app/core/utils/explore';
-import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
 export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   data,
   timeZone,
-  options: { showTime },
+  options: { showTime, sortOrder },
   width,
 }) => {
   if (!data) {
@@ -23,7 +22,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   }
 
   const newResults = data ? dataFrameToLogsModel(data.series, data.request.intervalMs) : null;
-  const sortedNewResults = sortLogsResult(newResults, offOption.value);
+  const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
   return (
     <CustomScrollbar autoHide>
