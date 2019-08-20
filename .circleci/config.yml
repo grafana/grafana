@@ -30,7 +30,7 @@ jobs:
     steps:
         - checkout
         - run: sudo apt update
-        - run: sudo apt install -y mysql-client
+        - run: sudo apt install -y default-mysql-client
         - run: dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
         - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
         - run:
