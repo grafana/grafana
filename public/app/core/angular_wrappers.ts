@@ -18,7 +18,19 @@ export function registerAngularDirectives() {
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
   react2AngularDirective('appNotificationsList', AppNotificationList, []);
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
-  react2AngularDirective('emptyListCta', EmptyListCTA, ['model']);
+  react2AngularDirective('emptyListCta', EmptyListCTA, [
+    'title',
+    'buttonIcon',
+    'buttonLink',
+    'buttonTitle',
+    ['onClick', { watchDepth: 'reference', wrapApply: true }],
+    'proTip',
+    'proTipLink',
+    'proTipLinkTitle',
+    'proTipTarget',
+    'infoBox',
+    'infoBoxTitle',
+  ]);
   react2AngularDirective('searchField', SearchField, [
     'query',
     'autoFocus',
