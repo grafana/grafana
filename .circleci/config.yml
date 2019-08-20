@@ -895,7 +895,17 @@ workflows:
               - shellcheck
               - mysql-integration-test
               - postgres-integration-test
-              - build-oss-msi
               - cache-server-test
             filters: *filter-not-release-or-master
+        - deploy-release:
+            requires:
+              - build-all
+              - test-backend
+              - test-frontend
+              - codespell
+              - lint-go
+              - shellcheck
+              - mysql-integration-test
+              - postgres-integration-test
+              - build-oss-msi
 
