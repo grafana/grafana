@@ -41,9 +41,6 @@ exports[`Render should render CTA if there are no API keys 1`] = `
       buttonTitle=" New API Key"
       onClick={[Function]}
       proTip="Remember you can provide view-only API access to other applications."
-      proTipLink=""
-      proTipLinkTitle=""
-      proTipTarget="_blank"
       title="You haven't added any API Keys yet."
     />
     <Component
