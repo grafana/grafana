@@ -895,9 +895,7 @@ workflows:
               - shellcheck
               - mysql-integration-test
               - postgres-integration-test
+              - build-oss-msi
               - cache-server-test
             filters: *filter-not-release-or-master
-      - deploy-release:
-          requires:
-            - build-oss-msi
 
