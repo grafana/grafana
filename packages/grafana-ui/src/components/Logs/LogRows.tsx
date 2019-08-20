@@ -1,11 +1,16 @@
 import React, { PureComponent } from 'react';
+import { cx } from 'emotion';
 import { LogsModel, TimeZone, LogsDedupStrategy, LogRowModel } from '@grafana/data';
+
 import { LogRow } from './LogRow';
+import { Themeable } from '../../types/theme';
+import { withTheme } from '../../themes/index';
+import { getLogRowStyles } from './getLogRowStyles';
 
 const PREVIEW_LIMIT = 100;
 const RENDER_LIMIT = 500;
 
-export interface Props {
+export interface Props extends Themeable {
   data: LogsModel;
   dedupStrategy: LogsDedupStrategy;
   highlighterExpressions: string[];
@@ -23,7 +28,7 @@ interface State {
   renderAll: boolean;
 }
 
-export class LogRows extends PureComponent<Props, State> {
+class UnThemedLogRows extends PureComponent<Props, State> {
   deferLogsTimer: NodeJS.Timer | null = null;
   renderAllTimer: NodeJS.Timer | null = null;
 
@@ -71,6 +76,7 @@ export class LogRows extends PureComponent<Props, State> {
       timeZone,
       onClickLabel,
       rowLimit,
+      theme,
     } = this.props;
     const { deferLogs, renderAll } = this.state;
     const dedupedData = deduplicatedData ? deduplicatedData : data;
@@ -91,9 +97,10 @@ export class LogRows extends PureComponent<Props, State> {
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = () => processedRows;
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
+    const { logsRows } = getLogRowStyles(theme);
 
     return (
-      <div className="logs-rows">
+      <div className={cx([logsRows])}>
         {hasData &&
         !deferLogs && // Only inject highlighterExpression in the first set for performance reasons
           firstRows.map((row, index) => (
@@ -131,3 +138,6 @@ export class LogRows extends PureComponent<Props, State> {
     );
   }
 }
+
+export const LogRows = withTheme(UnThemedLogRows);
+LogRows.displayName = 'LogsRows';

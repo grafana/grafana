@@ -66,6 +66,14 @@ export const getLogRowStyles = (theme: GrafanaTheme, logLevel?: LogLevel) => {
       background-color: rgba(${theme.colors.yellow}, 0.2);
       border-bottom-style: dotted;
     `,
+    logsRows: css`
+      label: logs-rows;
+      font-family: ${theme.typography.fontFamily.monospace};
+      font-size: ${theme.typography.size.sm};
+      display: table;
+      table-layout: fixed;
+      width: 100%;
+    `,
     logsRow: css`
       label: logs-row;
       display: table-row;
