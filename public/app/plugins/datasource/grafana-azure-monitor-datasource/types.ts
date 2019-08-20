@@ -56,6 +56,13 @@ export interface AzureResourceGraphQuery {
   skip: number;
 }
 
+export interface AzureResourceGraphQueryOptions {
+  url: string;
+  query: string;
+  top: number;
+  skip: number;
+}
+
 // Azure Monitor API Types
 
 export interface AzureMonitorMetricDefinitionsResponse {
