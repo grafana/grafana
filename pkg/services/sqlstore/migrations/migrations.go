@@ -34,7 +34,7 @@ func AddMigrations(mg *Migrator) {
 	addServerlockMigrations(mg)
 	addUserAuthTokenMigrations(mg)
 	addCacheMigration(mg)
-	addReportsMigrations(mg)
+	addReportMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

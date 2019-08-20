@@ -4,10 +4,10 @@ import (
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-func addReportsMigrations(mg *Migrator) {
+func addReportMigrations(mg *Migrator) {
 
-	reportsV1 := Table{
-		Name: "reports",
+	reportV1 := Table{
+		Name: "report",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
@@ -27,8 +27,8 @@ func addReportsMigrations(mg *Migrator) {
 	}
 
 	// create table
-	mg.AddMigration("create reports table v1", NewAddTableMigration(reportsV1))
+	mg.AddMigration("create report table v1", NewAddTableMigration(reportV1))
 
 	// create indices
-	mg.AddMigration("add index reports dashboard_id", NewAddIndexMigration(reportsV1, reportsV1.Indices[0]))
+	mg.AddMigration("add index report dashboard_id", NewAddIndexMigration(reportV1, reportV1.Indices[0]))
 }
