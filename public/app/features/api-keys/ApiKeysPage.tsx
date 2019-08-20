@@ -151,9 +151,6 @@ export class ApiKeysPage extends PureComponent<Props, any> {
             onClick={this.onToggleAdding}
             buttonTitle=" New API Key"
             proTip="Remember you can provide view-only API access to other applications."
-            proTipLink=""
-            proTipLinkTitle=""
-            proTipTarget="_blank"
           />
         )}
         {this.renderAddApiKeyForm()}
