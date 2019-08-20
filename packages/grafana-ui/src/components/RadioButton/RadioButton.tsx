@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { css } from 'emotion';
 
 export const toggleLabel = css`
@@ -45,13 +45,24 @@ interface Props {
   name?: string;
   id: string;
   children: string;
+  onChange?: (newName: string) => void;
 }
 
-export const RadioButton = ({ name, id, children }: Props) => (
-  <>
-    <input type="radio" name={name} id={id} className={toggle} />
-    <label className={toggleLabel} htmlFor={id}>
-      {children}
-    </label>
-  </>
-);
+export const RadioButton: FC<Props> = ({ name, id, children, onChange }) => {
+  if (!name) {
+    throw new Error("RadioButton needs 'name' property to be set.");
+  }
+  const handleClick = () => {
+    if (onChange) {
+      onChange(id);
+    }
+  };
+  return (
+    <>
+      <input type="radio" name={name} id={id} className={toggle} />
+      <label onClick={handleClick} className={toggleLabel} htmlFor={id}>
+        {children}
+      </label>
+    </>
+  );
+};

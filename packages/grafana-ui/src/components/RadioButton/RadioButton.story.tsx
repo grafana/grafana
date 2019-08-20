@@ -10,7 +10,7 @@ RadioButtonStories.addDecorator(withCenteredStory);
 
 RadioButtonStories.add('RadioButtonGroup', () => {
   return (
-    <RadioButtonGroup name="options">
+    <RadioButtonGroup name="options" onChange={id => console.log('New value is: ' + id)}>
       <RadioButton id="label1">Label 1</RadioButton>
       <RadioButton id="label2">Label 2</RadioButton>
       <RadioButton id="label3">Label 3</RadioButton>
