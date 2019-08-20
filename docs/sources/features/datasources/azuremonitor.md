@@ -296,6 +296,19 @@ There are some important caveats to remember:
 
 ### Querying Resource Graph
 
-Query Azure resources using Azure Resource Graph API. 
+Explore all of your azure resources and manage azure resources inventory. Get instant access to resource information across all your environments. This API used to query across all subscriptions.
 
 **Note:** Results are only in `table` format. So trend graphs will not work.
+
+### Templating with Variables for Azure resource Graph
+
+Use the one of the following queries in the `Query` field in the Variable edit view.
+
+| Name                               | Description                                                |
+| ---------------------------------- | ---------------------------------------------------------- |
+| _ResourceGraph(query)_             | Returns results for the query .                            |
+
+Examples:
+
+- Gets distinct list of resources locations: `ResourceGraph(distinct location)`
+- Gets all the resource group names in north europe: `ResourceGraph(where location == "northeurope" | distinct resourceGroup)`

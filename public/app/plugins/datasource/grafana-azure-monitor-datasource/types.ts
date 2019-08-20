@@ -5,6 +5,7 @@ export interface AzureMonitorQuery extends DataQuery {
   subscription: string;
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
+  azureResourceGraph: AzureResourceGraphQuery;
   //   appInsights: any;
 }
 
@@ -47,6 +48,19 @@ export interface AzureLogsQuery {
   query: string;
   resultFormat: string;
   workspace: string;
+}
+
+export interface AzureResourceGraphQuery {
+  query: string;
+  top: number;
+  skip: number;
+}
+
+export interface AzureResourceGraphQueryOptions {
+  url: string;
+  query: string;
+  top: number;
+  skip: number;
 }
 
 // Azure Monitor API Types
