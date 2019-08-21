@@ -61,7 +61,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     return <AddPanelWidget panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
-  onPluginTypeChanged = (plugin: PanelPluginMeta) => {
+  onPluginTypeChange = (plugin: PanelPluginMeta) => {
     this.loadPlugin(plugin.id);
   };
 
@@ -211,7 +211,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
             plugin={plugin}
             dashboard={dashboard}
             angularPanel={angularPanel}
-            onTypeChanged={this.onPluginTypeChanged}
+            onPluginTypeChange={this.onPluginTypeChange}
           />
         )}
       </div>
