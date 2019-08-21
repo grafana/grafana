@@ -10,7 +10,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf // indirect
 	github.com/golangci/golangci-lint v1.17.1 // indirect
 	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf // indirect
-	github.com/mgechev/revive v0.0.0-20190505013521-22b849f28677
+	github.com/mgechev/revive v0.0.0-20190815002930-e120712eba7c
 	github.com/securego/gosec v0.0.0-20190510081509-ee80733faf72
 	github.com/urfave/cli v1.20.0 // indirect
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20180810215634-df19058c872c // indirect

@@ -3,6 +3,7 @@ export { FieldPropertiesEditor } from './FieldPropertiesEditor';
 
 export {
   SingleStatBaseOptions,
-  sharedSingleStatOptionsCheck,
-  sharedSingleStatMigrationCheck,
+  sharedSingleStatPanelChangedHandler,
+  sharedSingleStatMigrationHandler,
+  convertOldAngulrValueMapping,
 } from './SingleStatBaseOptions';

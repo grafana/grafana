@@ -3,7 +3,8 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import classNames from 'classnames';
-import { withSize } from 'react-sizeme';
+// @ts-ignore
+import sizeMe from 'react-sizeme';
 
 // Types
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
@@ -77,7 +78,7 @@ function GridWrapper({
   );
 }
 
-const SizedReactLayoutGrid = withSize({ monitorWidth: true })(GridWrapper);
+const SizedReactLayoutGrid = sizeMe({ monitorWidth: true })(GridWrapper);
 
 export interface Props {
   dashboard: DashboardModel;

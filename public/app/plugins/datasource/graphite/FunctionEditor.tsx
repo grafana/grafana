@@ -1,5 +1,5 @@
 import React from 'react';
-import { PopperController, Popper } from '@grafana/ui';
+import { PopoverController, Popover } from '@grafana/ui';
 // @ts-ignore
 import rst2html from 'rst2html';
 import { FunctionDescriptor, FunctionEditorControlsProps, FunctionEditorControls } from './FunctionEditorControls';
@@ -68,12 +68,12 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
 
   render() {
     return (
-      <PopperController content={this.renderContent} placement="top" hideAfter={300}>
+      <PopoverController content={this.renderContent} placement="top" hideAfter={300}>
         {(showPopper, hidePopper, popperProps) => {
           return (
             <>
               {this.triggerRef && (
-                <Popper
+                <Popover
                   {...popperProps}
                   referenceElement={this.triggerRef.current}
                   wrapperClassName="popper"
@@ -103,7 +103,7 @@ class FunctionEditor extends React.PureComponent<FunctionEditorProps, FunctionEd
             </>
           );
         }}
-      </PopperController>
+      </PopoverController>
     );
   }
 }

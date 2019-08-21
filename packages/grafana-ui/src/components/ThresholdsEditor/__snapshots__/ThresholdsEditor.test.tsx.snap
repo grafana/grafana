@@ -225,7 +225,7 @@ exports[`Render should render with base threshold 1`] = `
                           }
                         }
                       >
-                        <PopperController
+                        <PopoverController
                           content={
                             <ColorPickerPopover
                               color="green"
@@ -439,7 +439,7 @@ exports[`Render should render with base threshold 1`] = `
                               </div>
                             </div>
                           </ForwardRef(ColorPickerTrigger)>
-                        </PopperController>
+                        </PopoverController>
                       </ColorPicker>
                     </WithTheme(ColorPicker)>
                   </div>

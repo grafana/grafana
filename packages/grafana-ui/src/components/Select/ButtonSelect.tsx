@@ -1,6 +1,6 @@
 import React, { PureComponent, ReactElement } from 'react';
 import Select from './Select';
-import { PopperContent } from '../Tooltip/PopperController';
+import { PopoverContent } from '../Tooltip/Tooltip';
 import { SelectableValue } from '@grafana/data';
 
 interface ButtonComponentProps {
@@ -38,7 +38,7 @@ export interface Props<T> {
   components?: any;
   maxMenuHeight?: number;
   onChange: (item: SelectableValue<T>) => void;
-  tooltipContent?: PopperContent<any>;
+  tooltipContent?: PopoverContent;
   isMenuOpen?: boolean;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
