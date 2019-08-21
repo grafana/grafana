@@ -14,7 +14,7 @@ import { rawToTimeRange } from './time';
 
 // Types
 import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue } from '@grafana/data';
-import { isMathString } from '@grafana/data/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 
 export interface Props {
   value: TimeRange;
@@ -129,8 +129,8 @@ export class TimePicker extends PureComponent<Props, State> {
 
     const adjustedTime = (time: DateTime) => (isUTC ? time.utc() : time.local()) || null;
     const adjustedTimeRange = {
-      to: isMathString(value.raw.to) ? value.raw.to : adjustedTime(value.to),
-      from: isMathString(value.raw.from) ? value.raw.from : adjustedTime(value.from),
+      to: dateMath.isMathString(value.raw.to) ? value.raw.to : adjustedTime(value.to),
+      from: dateMath.isMathString(value.raw.from) ? value.raw.from : adjustedTime(value.from),
     };
     const rangeString = rangeUtil.describeTimeRange(adjustedTimeRange);
 
