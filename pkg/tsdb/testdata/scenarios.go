@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -523,9 +522,6 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResu
 	attachLabels(query, queryRes)
 	return queryRes
 }
-
-// Compiled once.
-var labelRegex = regexp.MustCompile(`\b(\w+)(!?=~?)"([^"\n]*?)"`)
 
 /**
  * Looks for a labels request and adds them as tags
