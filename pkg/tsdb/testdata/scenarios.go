@@ -423,6 +423,7 @@ func getPredictablePulse(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Query
 	series := newSeriesForQuery(query)
 	series.Points = *points
 	queryRes.Series = append(queryRes.Series, series)
+	attachLabels(query, queryRes)
 	return queryRes
 }
 
@@ -472,6 +473,7 @@ func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Que
 	series := newSeriesForQuery(query)
 	series.Points = *points
 	queryRes.Series = append(queryRes.Series, series)
+	attachLabels(query, queryRes)
 	return queryRes
 }
 
@@ -517,7 +519,49 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResu
 
 	queryRes := tsdb.NewQueryResult()
 	queryRes.Series = append(queryRes.Series, series)
+	attachLabels(query, queryRes)
 	return queryRes
+}
+
+/**
+ * Looks for a labels request and adds them as tags
+ *
+ * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
+ */
+func attachLabels(query *tsdb.Query, queryRes *tsdb.QueryResult) {
+	labelText := query.Model.Get("labels").MustString("")
+	if labelText == "" {
+		return
+	}
+
+	tags := parseLabels(labelText)
+	for _, series := range queryRes.Series {
+		series.Tags = tags
+	}
+}
+
+// generous parser:
+// {job="foo", instance="bar"}
+// job="foo", instance="bar"
+// job=foo, instance=bar
+// should all equal {job=foo, instance=bar}
+
+func parseLabels(text string) map[string]string {
+	var tags map[string]string
+	text = strings.Trim(text, `{}`)
+	if len(text) < 2 {
+		return tags
+	}
+	tags = make(map[string]string)
+
+	for _, keyval := range strings.Split(text, ",") {
+		idx := strings.Index(keyval, "=")
+		key := strings.TrimSpace(keyval[:idx])
+		val := strings.TrimSpace(keyval[idx+1:])
+		tags[key] = val
+	}
+
+	return tags
 }
 
 func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
