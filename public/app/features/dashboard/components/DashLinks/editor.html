@@ -19,22 +19,7 @@
 
 <div ng-if="ctrl.mode == 'list'">
   <div ng-if="ctrl.dashboard.links.length === 0">
-    <div class="empty-list-cta">
-      <div class="empty-list-cta__title">
-        There are no dashboard links added yet
-      </div>
-      <a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-large btn-primary">
-        <i class="gicon gicon-link"></i>
-        Add Dashboard Link
-      </a>
-      <div class="grafana-info-box">
-        <h5>What are Dashboard Links?</h5>
-        <p>
-          Dashboard Links allow you to place links to other dashboards and web sites directly in below the dashboard
-          header.
-        </p>
-      </div>
-    </div>
+    <empty-list-cta on-click="ctrl.setupNew" title="ctrl.emptyListCta.title" buttonIcon="ctrl.emptyListCta.buttonIcon" buttonTitle="ctrl.emptyListCta.buttonTitle" infoBox="ctrl.emptyListCta.infoBox" infoBoxTitle="ctrl.emptyListCta.infoBoxTitle"/>
   </div>
 
   <div ng-if="ctrl.dashboard.links.length > 0">
