@@ -1,13 +1,43 @@
 import _ from 'lodash';
-import { AzureDataSourceJsonData, AzureResourceGraphQuery as IAzureResourceGraphQuery } from '../types';
+import {
+  AzureDataSourceJsonData,
+  AzureSubscription as IAzureSubscription,
+  AzureResourceGraphQuery as IAzureResourceGraphQuery,
+} from '../types';
 import { DataSourceInstanceSettings } from '@grafana/ui';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { IQService } from 'angular';
 
+export class AzureSubscription {
+  id: string;
+  subscriptionId: string;
+  tenantId: string;
+  displayName: string;
+  name: string;
+  constructor(result: IAzureSubscription) {
+    this.id = result.id || result.subscriptionId;
+    this.subscriptionId = result.subscriptionId || result.id;
+    this.tenantId = result.tenantId;
+    this.displayName = result.displayName;
+    this.name = result.name || result.displayName || '';
+  }
+}
+
+export class AzureSubscriptionsResponseParser {
+  subscriptions: IAzureSubscription[] = [];
+  constructor(results: any) {
+    if (results && results.data && results.data.value && results.data.value.length > 0) {
+      this.subscriptions = results.data.value.map((sub: IAzureSubscription) => new AzureSubscription(sub));
+    }
+  }
+  getSubscriptionIds(): string[] {
+    return this.subscriptions.map((sub: IAzureSubscription) => sub.subscriptionId.toString());
+  }
+}
+
 export class AzureResourceGraphResponseParser {
   output: any = {};
-
   constructor(results: any[]) {
     this.output = {
       type: 'table',
@@ -32,7 +62,6 @@ export class AzureResourceGraphResponseParser {
       });
     }
   }
-
   getResultsAsVariablesList() {
     const returnvalues: any[] = [];
     _.each(this.output.rows, row => {
@@ -51,7 +80,6 @@ export class AzureResourceGraphQuery implements IAzureResourceGraphQuery {
   query: string;
   top: number;
   skip: number;
-
   constructor(query: string, top: number, skip: number) {
     this.query = query;
     this.top = top;
@@ -64,7 +92,7 @@ export default class AzureResourceGraphDatasource {
   url: string;
   cloudName: string;
   baseUrl: string;
-  allSubscriptions: any[];
+  allSubscriptions: IAzureSubscription[];
 
   /** @ngInject */
   constructor(
@@ -83,12 +111,9 @@ export default class AzureResourceGraphDatasource {
   getSubscriptionIds() {
     const url = `/${this.cloudName}/subscriptions?api-version=2019-03-01`;
     return this.doSubscriptionsRequest(url).then((result: any) => {
-      if (result && result.data && result.data.value) {
-        this.allSubscriptions = result.data.value;
-        return result.data.value.map((sub: any) => sub.subscriptionId);
-      } else {
-        return [];
-      }
+      const subscriptionsResponse = new AzureSubscriptionsResponseParser(result);
+      this.allSubscriptions = subscriptionsResponse.subscriptions;
+      return subscriptionsResponse.getSubscriptionIds();
     });
   }
 
@@ -111,7 +136,7 @@ export default class AzureResourceGraphDatasource {
     if (this.allSubscriptions.length === 0) {
       subscriptions = await this.getSubscriptionIds();
     } else {
-      subscriptions = this.allSubscriptions.map((sub: any) => sub.subscriptionId);
+      subscriptions = this.allSubscriptions.map((sub: any) => sub.subscriptionId.toString());
     }
     return this.backendSrv
       .datasourceRequest({
