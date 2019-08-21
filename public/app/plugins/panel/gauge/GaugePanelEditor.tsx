@@ -15,7 +15,10 @@ import {
 import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { GaugeOptions } from './types';
-import { getPanelLinksVariableSuggestions, getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import {
+  getPanelLinksVariableSuggestions,
+  getDataLinksVariableSuggestions,
+} from 'app/features/panel/panellinks/link_srv';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
   labelWidth = 6;
