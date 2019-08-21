@@ -49,7 +49,7 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
   onDefaultsChange = (field: FieldConfig) => {
     this.onDisplayOptionsChanged({
       ...this.props.options.fieldOptions,
-      override: field,
+      defaults: field,
     });
   };
 
