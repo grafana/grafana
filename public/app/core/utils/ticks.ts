@@ -245,6 +245,6 @@ function getMonthDayFormat() {
   const language = navigator.languages ? navigator.languages[0] : navigator.language || 'en-US';
   return new Date(Date.UTC(1977, 11, 20, 0, 0, 0))
     .toLocaleDateString(language, { month: 'numeric', day: 'numeric' })
-	    .replace('12', '%m')
+    .replace('12', '%m')
     .replace('20', '%d');
 }

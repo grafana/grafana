@@ -11,6 +11,7 @@ export class User {
   orgName: string;
   orgCount: number;
   timezone: string;
+  monthDayFormat: string;
   helpFlags1: number;
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;

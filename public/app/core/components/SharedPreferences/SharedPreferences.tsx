@@ -13,10 +13,26 @@ export interface State {
   homeDashboardId: number;
   theme: string;
   timezone: string;
+  monthDayFormat: string;
   dashboards: DashboardSearchHit[];
 }
 
 const themes = [{ value: '', label: 'Default' }, { value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light' }];
+
+const monthDayFormats = [
+  { value: '', text: 'Default' },
+  { value: 'browser', text: 'Local browser formatting' },
+  // US
+  { value: '%m/%d', text: 'mm/dd' },
+  // UK
+  { value: '%d/%m', text: 'dd/mm' },
+  // Europe
+  { value: '%m-%d', text: 'mm-dd' },
+  // Asia
+  { value: '%d-%m', text: 'dd-mm' },
+  // DE
+  { value: '%d.%m.', text: 'dd.mm.' },
+];
 
 const timezones = [
   { value: '', label: 'Default' },
@@ -34,6 +50,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       homeDashboardId: 0,
       theme: '',
       timezone: '',
+      monthDayFormat: '',
       dashboards: [],
     };
   }
@@ -68,6 +85,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       homeDashboardId: prefs.homeDashboardId,
       theme: prefs.theme,
       timezone: prefs.timezone,
+      monthDayFormat: prefs.monthDayFormat,
       dashboards: [defaultDashboardHit, ...dashboards],
     });
   }
@@ -93,6 +111,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
     this.setState({ timezone });
   };
 
+  onMonthDayFormatChanged = (monthDayFormat: string) => {
+    this.setState({ monthDayFormat });
+  };
+
   onHomeDashboardChanged = (dashboardId: number) => {
     this.setState({ homeDashboardId: dashboardId });
   };
@@ -105,7 +127,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
   };
 
   render() {
-    const { theme, timezone, homeDashboardId, dashboards } = this.state;
+    const { theme, timezone, monthDayFormat, homeDashboardId, dashboards } = this.state;
 
     return (
       <form className="section gf-form-group" onSubmit={this.onSubmitForm}>
@@ -144,6 +166,16 @@ export class SharedPreferences extends PureComponent<Props, State> {
             value={timezones.find(item => item.value === timezone)}
             onChange={timezone => this.onTimeZoneChanged(timezone.value)}
             options={timezones}
+            width={20}
+          />
+        </div>
+        <div className="gf-form">
+          <label className="gf-form-label width-11">Graph Date Format</label>
+          <Select
+            isSearchable={false}
+            value={monthDayFormats.find(item => item.value === monthDayFormat)}
+            onChange={monthDayFormat => this.onMonthDayFormatChanged(monthDayFormat.value)}
+            options={monthDayFormats}
             width={20}
           />
         </div>
