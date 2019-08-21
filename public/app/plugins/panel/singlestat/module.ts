@@ -161,17 +161,19 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   // Directly support DataFrame skipping event callbacks
   handleDataFrames(frames: DataFrame[]) {
-    const { panel, dashboard } = this;
+    const { panel } = this;
     super.handleDataFrames(frames);
     this.loading = false;
 
     const distinct = getDistinctNames(frames);
-    let f = distinct.byName[panel.tableColumn]; //
+    let fieldInfo = distinct.byName[panel.tableColumn]; //
     this.fieldNames = distinct.names;
-    if (!f) {
-      f = distinct.first;
+
+    if (!fieldInfo) {
+      fieldInfo = distinct.first;
     }
-    if (!f) {
+
+    if (!fieldInfo) {
       // When we don't have any field
       this.data = {
         value: 'No Data',
@@ -181,73 +183,83 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         },
       };
     } else {
-      const name = f.field.config.title || f.field.name;
-      let calc = panel.valueName;
-      let calcField = f.field;
-      let val: any = undefined;
-      if ('name' === calc) {
-        val = name;
-      } else {
-        if ('last_time' === calc) {
-          if (f.frame.firstTimeField) {
-            calcField = f.frame.firstTimeField;
-            calc = ReducerID.last;
-          }
-        }
-
-        // Normalize functions (avg -> mean, etc)
-        const r = fieldReducers.getIfExists(calc);
-        if (r) {
-          calc = r.id;
-          // With strings, don't accidentally use a math function
-          if (calcField.type === FieldType.string) {
-            const avoid = [ReducerID.mean, ReducerID.sum];
-            if (avoid.includes(calc)) {
-              calc = panel.valueName = ReducerID.first;
-            }
-          }
-        } else {
-          calc = ReducerID.lastNotNull;
-        }
-
-        // Calculate the value
-        val = reduceField({
-          field: calcField,
-          reducers: [calc],
-        })[calc];
-      }
-
-      const processor = getDisplayProcessor({
-        field: {
-          ...f.field.config,
-          unit: panel.format,
-          decimals: panel.decimals,
-          mappings: convertOldAngulrValueMapping(panel),
-        },
-        theme: config.theme,
-        isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
-      });
-
-      this.data = {
-        field: f.field,
-        value: val,
-        display: processor(val),
-        scopedVars: _.extend({}, panel.scopedVars),
-      };
-      this.data.scopedVars['__name'] = name;
-      panel.tableColumn = this.fieldNames.length > 1 ? name : '';
-
-      // Get the fields for a sparkline
-      if (panel.sparkline && panel.sparkline.show && f.frame.firstTimeField) {
-        this.data.sparkline = getFlotPairs({
-          xField: f.frame.firstTimeField,
-          yField: f.field,
-          nullValueMode: panel.nullPointMode,
-        });
-      }
+      this.data = this.processField(fieldInfo);
     }
 
     this.render();
+  }
+
+  processField(fieldInfo: FieldInfo) {
+    const { panel, dashboard } = this;
+
+    const name = fieldInfo.field.config.title || fieldInfo.field.name;
+    let calc = panel.valueName;
+    let calcField = fieldInfo.field;
+    let val: any = undefined;
+
+    if ('name' === calc) {
+      val = name;
+    } else {
+      if ('last_time' === calc) {
+        if (fieldInfo.frame.firstTimeField) {
+          calcField = fieldInfo.frame.firstTimeField;
+          calc = ReducerID.last;
+        }
+      }
+
+      // Normalize functions (avg -> mean, etc)
+      const r = fieldReducers.getIfExists(calc);
+      if (r) {
+        calc = r.id;
+        // With strings, don't accidentally use a math function
+        if (calcField.type === FieldType.string) {
+          const avoid = [ReducerID.mean, ReducerID.sum];
+          if (avoid.includes(calc)) {
+            calc = panel.valueName = ReducerID.first;
+          }
+        }
+      } else {
+        calc = ReducerID.lastNotNull;
+      }
+
+      // Calculate the value
+      val = reduceField({
+        field: calcField,
+        reducers: [calc],
+      })[calc];
+    }
+
+    const processor = getDisplayProcessor({
+      field: {
+        ...fieldInfo.field.config,
+        unit: panel.format,
+        decimals: panel.decimals,
+        mappings: convertOldAngulrValueMapping(panel),
+      },
+      theme: config.theme,
+      isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
+    });
+
+    const data = {
+      field: fieldInfo.field,
+      value: val,
+      display: processor(val),
+      scopedVars: _.extend({}, panel.scopedVars),
+    };
+
+    data.scopedVars['__name'] = name;
+    panel.tableColumn = this.fieldNames.length > 1 ? name : '';
+
+    // Get the fields for a sparkline
+    if (panel.sparkline && panel.sparkline.show && fieldInfo.frame.firstTimeField) {
+      this.data.sparkline = getFlotPairs({
+        xField: fieldInfo.frame.firstTimeField,
+        yField: fieldInfo.field,
+        nullValueMode: panel.nullPointMode,
+      });
+    }
+
+    return data;
   }
 
   canModifyText() {
