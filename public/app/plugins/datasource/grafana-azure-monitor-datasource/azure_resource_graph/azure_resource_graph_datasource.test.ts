@@ -169,6 +169,76 @@ describe('AzureResourceGraphDatasource', () => {
           });
         });
       });
+      describe('Multi fields query with multiple targets', () => {
+        const options = {
+          targets: [
+            {
+              queryType: 'Azure Resource Graph',
+              hide: false,
+              azureResourceGraph: {
+                query: 'where location == "northeurope" | summarize count=count() by location',
+                top: 100,
+                skip: 0,
+              },
+            },
+            {
+              queryType: 'Azure Resource Graph',
+              hide: false,
+              azureResourceGraph: {
+                query: 'where location == "westeurope" | summarize count=count() by location',
+                top: 100,
+                skip: 0,
+              },
+            },
+          ],
+        };
+        const response: any = {
+          totalRecords: 1,
+          count: 1,
+          data: {
+            columns: [{ name: 'type', type: 'string' }, { name: 'count', type: 'integer' }],
+            rows: [['northeurope', 1155]],
+          },
+          facets: [],
+          resultTruncated: 'true',
+        };
+        beforeEach(() => {
+          ctx.backendSrv.datasourceRequest = () => {
+            return ctx.$q.when({ data: response, status: 200 });
+          };
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+        });
+        it('Output should be table format', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].type).toBe('table');
+          });
+        });
+        it('Output should valid number of columns results', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].columns.length).toBe(2);
+          });
+        });
+        it('Output should valid column results', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].columns[0].text).toBe('type');
+          });
+        });
+        it('Output should valid number of results', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].rows.length).toBe(2);
+          });
+        });
+        it('Output row should have valid length', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].rows[0].length).toBe(2);
+          });
+        });
+        it('Output should contain result', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].rows[1][1]).toBe(1155);
+          });
+        });
+      });
       describe('Disabled query', () => {
         const options = {
           targets: [
