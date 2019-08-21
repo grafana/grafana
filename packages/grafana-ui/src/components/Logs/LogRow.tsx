@@ -104,7 +104,7 @@ const getLogRowWithContextStyles = (theme: GrafanaTheme, state: State) => {
  * Once a parser is found, it will determine fields, that will be highlighted.
  * When the user requests stats for a field, they will be calculated and rendered below the row.
  */
-class UnThemeedLogRow extends PureComponent<Props, State> {
+class UnThemedLogRow extends PureComponent<Props, State> {
   mouseMessageTimer: NodeJS.Timer | null = null;
 
   state: any = {
@@ -383,5 +383,5 @@ class UnThemeedLogRow extends PureComponent<Props, State> {
   }
 }
 
-export const LogRow = withTheme(UnThemeedLogRow);
+export const LogRow = withTheme(UnThemedLogRow);
 LogRow.displayName = 'LogRow';

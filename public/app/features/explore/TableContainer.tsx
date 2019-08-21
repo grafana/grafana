@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { LoadingState } from '@grafana/data';
-import { Panel } from '@grafana/ui';
+import { Collapse } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -29,9 +29,9 @@ export class TableContainer extends PureComponent<TableContainerProps> {
     const { loading, onClickCell, showingTable, tableResult } = this.props;
 
     return (
-      <Panel label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
+      <Collapse label="Table" loading={loading} collapsible isOpen={showingTable} onToggle={this.onClickTableButton}>
         {tableResult && <Table data={tableResult} loading={loading} onClickCell={onClickCell} />}
-      </Panel>
+      </Collapse>
     );
   }
 }

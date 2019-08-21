@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSourceApi, Panel, Logs } from '@grafana/ui';
+import { DataSourceApi, Collapse, Logs } from '@grafana/ui';
 
 import {
   RawTimeRange,
@@ -105,14 +105,14 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
     if (isLive) {
       return (
-        <Panel label="Logs" loading={false} isOpen>
+        <Collapse label="Logs" loading={false} isOpen>
           <LiveLogsWithTheme logsResult={logsResult} timeZone={timeZone} stopLive={this.onStopLive} />
-        </Panel>
+        </Collapse>
       );
     }
 
     return (
-      <Panel label="Logs" loading={loading} isOpen>
+      <Collapse label="Logs" loading={loading} isOpen>
         <Logs
           dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
           data={logsResult}
@@ -133,7 +133,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           hiddenLogLevels={hiddenLogLevels}
           getRowContext={this.getLogRowContext}
         />
-      </Panel>
+      </Collapse>
     );
   }
 }

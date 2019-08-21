@@ -5,7 +5,7 @@ import { TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from 
 import { GraphSeriesToggler, GraphSeriesTogglerAPI } from '../Graph/GraphSeriesToggler';
 import { GraphWithLegend } from '../Graph/GraphWithLegend';
 import { LegendDisplayMode } from '../Legend/Legend';
-import { Panel } from '../Panel/Panel';
+import { Collapse } from '../Collapse/Collapse';
 import { Themeable, GrafanaTheme } from '../../types/theme';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/ThemeContext';
@@ -158,9 +158,15 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
         )}
 
         {showPanel && (
-          <Panel label="Graph" collapsible isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
+          <Collapse
+            label="Graph"
+            collapsible
+            isOpen={showingGraph}
+            loading={loading}
+            onToggle={this.onClickGraphButton}
+          >
             {this.renderGraph()}
-          </Panel>
+          </Collapse>
         )}
 
         {!showPanel && this.renderGraph()}
