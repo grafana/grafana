@@ -2,6 +2,7 @@
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
+import { grafanaTimeFormat } from 'app/core/utils/ticks';
 
 // Types
 import { TimeRange, GraphSeriesXY, AbsoluteTimeRange, TimeZone, DefaultTimeZone } from '@grafana/data';
@@ -120,7 +121,7 @@ export class Graph extends PureComponent<GraphProps> {
         max: max,
         label: 'Datetime',
         ticks: ticks,
-        timeformat: timeFormat(ticks, min, max),
+        timeformat: grafanaTimeFormat(ticks, min, max),
         timezone: timeZone ? timeZone : DefaultTimeZone,
       },
       yaxes,
@@ -157,32 +158,6 @@ export class Graph extends PureComponent<GraphProps> {
       </div>
     );
   }
-}
-
-// Copied from graph.ts
-function timeFormat(ticks: number, min: number, max: number): string {
-  if (min && max && ticks) {
-    const range = max - min;
-    const secPerTick = range / ticks / 1000;
-    const oneDay = 86400000;
-    const oneYear = 31536000000;
-
-    if (secPerTick <= 45) {
-      return '%H:%M:%S';
-    }
-    if (secPerTick <= 7200 || range <= oneDay) {
-      return '%H:%M';
-    }
-    if (secPerTick <= 80000) {
-      return '%m/%d %H:%M';
-    }
-    if (secPerTick <= 2419200 || range <= oneYear) {
-      return '%m/%d';
-    }
-    return '%Y-%m';
-  }
-
-  return '%H:%M';
 }
 
 export default Graph;

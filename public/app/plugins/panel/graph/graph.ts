@@ -20,6 +20,7 @@ import { LinkService, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
+import { grafanaTimeFormat } from 'app/core/utils/ticks';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
@@ -563,7 +564,7 @@ class GraphElement {
       max: max,
       label: 'Datetime',
       ticks: ticks,
-      timeformat: this.time_format(ticks, min, max),
+      timeformat: grafanaTimeFormat(ticks, min, max),
     };
   }
 
@@ -819,33 +820,6 @@ class GraphElement {
       }
       return formatter(val, axis.tickDecimals, axis.scaledDecimals);
     };
-  }
-
-  time_format(ticks: number, min: number | null, max: number | null) {
-    if (min && max && ticks) {
-      const range = max - min;
-      const secPerTick = range / ticks / 1000;
-      // Need have 10 millisecond margin on the day range
-      // As sometimes last 24 hour dashboard evaluates to more than 86400000
-      const oneDay = 86400010;
-      const oneYear = 31536000000;
-
-      if (secPerTick <= 45) {
-        return '%H:%M:%S';
-      }
-      if (secPerTick <= 7200 || range <= oneDay) {
-        return '%H:%M';
-      }
-      if (secPerTick <= 80000) {
-        return '%m/%d %H:%M';
-      }
-      if (secPerTick <= 2419200 || range <= oneYear) {
-        return '%m/%d';
-      }
-      return '%Y-%m';
-    }
-
-    return '%H:%M';
   }
 }
 
