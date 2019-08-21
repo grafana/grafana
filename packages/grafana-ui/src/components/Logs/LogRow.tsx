@@ -345,7 +345,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
                         position: relative;
                         z-index: ${showContext ? 1 : 0};
                         cursor: pointer;
-                        .logs-row:hover & {
+                        .${style.logsRow}:hover & {
                           visibility: visible;
                           margin-left: 10px;
                           text-decoration: underline;
