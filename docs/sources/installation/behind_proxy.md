@@ -89,7 +89,7 @@ backend grafana_backend
 
 ### IIS URL Rewrite Rule (Windows) with Subpath
 
-IIS requires that the URL Rewrite module is installed.
+IIS requires that the URL Rewrite module is installed. In order to use Reverse-proxy in IIS you may need to enable ARR - [learn more](https://blogs.msdn.microsoft.com/friis/2016/08/25/setup-iis-with-url-rewrite-as-a-reverse-proxy-for-real-world-apps/)
 
 Given:
 
