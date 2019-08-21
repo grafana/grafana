@@ -1,4 +1,9 @@
-import { TextMatch } from '../types/text';
+export interface TextMatch {
+  text: string;
+  start: number;
+  length: number;
+  end: number;
+}
 
 /**
  * Adapt findMatchesInText for react-highlight-words findChunks handler.
