@@ -1,5 +1,5 @@
 # Golang build container
-FROM golang:1.12.4
+FROM golang:1.12.9
 
 WORKDIR $GOPATH/src/github.com/grafana/grafana
 

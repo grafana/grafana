@@ -14,7 +14,19 @@
 			<label class="gf-form-label query-keyword">Alias</label>
 			<input type="text" class="gf-form-input max-width-7" placeholder="optional" ng-model="ctrl.target.alias" ng-change="ctrl.refresh()" ng-model-onblur>
 		</div>
-		<div class="gf-form gf-form--grow">
+		<div ng-if="ctrl.showLabels" class="gf-form gf-form--grow">
+			<label class="gf-form-label query-keyword">
+				Labels
+				<info-popover mode="right-normal">
+					Set labels using a key=value syntax:<br/>
+					{key="value", key2="value"}<br/>
+					key="value", key2="value"<br/>
+					key=value, key2=value<br/>
+				</info-popover>
+			</label>
+			<input type="text" class="gf-form-input gf-form--grow" placeholder='key=value, key2=value2' ng-model="ctrl.target.labels" ng-change="ctrl.refresh()" ng-model-onblur>
+		</div>
+		<div ng-if="!ctrl.showLabels" class="gf-form gf-form--grow">
 			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>
 	</div>
