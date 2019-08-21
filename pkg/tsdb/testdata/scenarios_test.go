@@ -102,5 +102,6 @@ func TestToLabels(t *testing.T) {
 		So(parseLabels(`{job="foo", instance="bar"}`), ShouldEqual, tags)
 		So(parseLabels(`job="foo", instance="bar"`), ShouldEqual, tags)
 		So(parseLabels(`job=foo, instance=bar`), ShouldEqual, tags)
+		So(parseLabels(`job = foo,instance = bar`), ShouldEqual, tags)
 	})
 }
