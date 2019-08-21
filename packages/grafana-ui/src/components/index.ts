@@ -62,10 +62,9 @@ export {
   LegendDisplayMode,
 } from './Legend/Legend';
 export { Alert } from './Alert/Alert';
-export { GraphSeriesToggler } from './Graph/GraphSeriesToggler';
-export { ExploreGraphPanel } from './Logs/ExploreGraphPanel';
+export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
 export { Collapse } from './Collapse/Collapse';
-export { Logs } from './Logs/Logs';
+export { LogLabels } from './Logs/LogLabels';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';

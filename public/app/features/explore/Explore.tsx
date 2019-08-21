@@ -32,7 +32,7 @@ import {
 // Types
 import { RawTimeRange, GraphSeriesXY, LoadingState, TimeZone, AbsoluteTimeRange } from '@grafana/data';
 
-import { DataQuery, ExploreStartPageProps, DataSourceApi, DataQueryError, ExploreGraphPanel } from '@grafana/ui';
+import { DataQuery, ExploreStartPageProps, DataSourceApi, DataQueryError } from '@grafana/ui';
 import {
   ExploreItemState,
   ExploreUrlState,
@@ -56,6 +56,7 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
+import { ExploreGraphPanel } from './ExploreGraphPanel';
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;

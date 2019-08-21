@@ -13,11 +13,9 @@ import {
   LogRowModel,
   LogsDedupDescription,
 } from '@grafana/data';
-import { LogLabels } from './LogLabels';
+import { Switch, LogLabels, ToggleButtonGroup, ToggleButton, LogRows } from '@grafana/ui';
+
 import { ExploreGraphPanel } from './ExploreGraphPanel';
-import { Switch } from '../Switch/Switch';
-import { ToggleButtonGroup, ToggleButton } from '../ToggleButtonGroup/ToggleButtonGroup';
-import { LogRows } from './LogRows';
 
 function renderMetaItem(value: any, kind: LogsMetaKind) {
   if (kind === LogsMetaKind.LabelsMap) {

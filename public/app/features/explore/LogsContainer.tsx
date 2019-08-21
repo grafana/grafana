@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSourceApi, Collapse, Logs } from '@grafana/ui';
+import { DataSourceApi, Collapse } from '@grafana/ui';
 
 import {
   RawTimeRange,
@@ -24,6 +24,7 @@ import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/featur
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { Logs } from './Logs';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;

@@ -2,13 +2,17 @@ import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import { TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
 
-import { GraphSeriesToggler, GraphSeriesTogglerAPI } from '../Graph/GraphSeriesToggler';
-import { GraphWithLegend } from '../Graph/GraphWithLegend';
-import { LegendDisplayMode } from '../Legend/Legend';
-import { Collapse } from '../Collapse/Collapse';
-import { Themeable, GrafanaTheme } from '../../types/theme';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { withTheme } from '../../themes/ThemeContext';
+import {
+  GrafanaTheme,
+  selectThemeVariant,
+  Themeable,
+  GraphWithLegend,
+  LegendDisplayMode,
+  withTheme,
+  Collapse,
+  GraphSeriesToggler,
+  GraphSeriesTogglerAPI,
+} from '@grafana/ui';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
