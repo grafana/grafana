@@ -18,11 +18,13 @@
 			<label class="gf-form-label query-keyword">
 				Labels
 				<info-popover mode="right-normal">
-					Enter labels using prometheus syntax<br/>
-					{key="value", key="value"}
+					Set labels using a key=value syntax:<br/>
+					{key="value", key2="value"}<br/>
+					key="value", key2="value"<br/>
+					key=value, key2=value<br/>
 				</info-popover>
 			</label>
-			<input type="text" class="gf-form-input gf-form--grow" placeholder='{key="value", key="value"}' ng-model="ctrl.target.labels" ng-change="ctrl.refresh()" ng-model-onblur>
+			<input type="text" class="gf-form-input gf-form--grow" placeholder='key=value, key2=value2' ng-model="ctrl.target.labels" ng-change="ctrl.refresh()" ng-model-onblur>
 		</div>
 		<div ng-if="!ctrl.showLabels" class="gf-form gf-form--grow">
 			<div class="gf-form-label gf-form-label--grow"></div>
