@@ -1,9 +1,49 @@
 import AzureResourceGraphDatasource from '../datasource';
+import { AzureSubscription, AzureSubscriptionsResponseParser } from './azure_resource_graph_datasource';
 // @ts-ignore
 import Q from 'q';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('AzureResourceGraphDatasource', () => {
+  describe('Azure Subscription', () => {
+    const queryResponse = {
+      data: {
+        value: [
+          {
+            id: '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572',
+            subscriptionId: '99999999-cccc-bbbb-aaaa-9106972f9572',
+            tenantId: '99999999-aaaa-bbbb-cccc-51c4f982ec48',
+            displayName: 'Primary Subscription',
+            state: 'Enabled',
+            subscriptionPolicies: {
+              locationPlacementId: 'Public_2014-09-01',
+              quotaId: 'PayAsYouGo_2014-09-01',
+              spendingLimit: 'Off',
+            },
+            authorizationSource: 'RoleBased',
+          },
+        ],
+        count: {
+          type: 'Total',
+          value: 1,
+        },
+      },
+      status: 200,
+      statusText: 'OK',
+    };
+    const subscriptionsResponse = new AzureSubscriptionsResponseParser(queryResponse);
+    it('Subcription', () => {
+      expect(new AzureSubscription(queryResponse.data.value[0]).subscriptionId).toBe(
+        '99999999-cccc-bbbb-aaaa-9106972f9572'
+      );
+    });
+    it('Subscriptions count', () => {
+      expect(subscriptionsResponse.subscriptions.length).toBe(1);
+      expect(subscriptionsResponse.subscriptions[0].subscriptionId).toBe('99999999-cccc-bbbb-aaaa-9106972f9572');
+      expect(subscriptionsResponse.getSubscriptionIds().length).toBe(1);
+      expect(subscriptionsResponse.getSubscriptionIds()[0]).toBe('99999999-cccc-bbbb-aaaa-9106972f9572');
+    });
+  });
   describe('Resource Graph', () => {
     const ctx: any = {
       backendSrv: {},
@@ -61,11 +101,10 @@ describe('AzureResourceGraphDatasource', () => {
 
         it('Output should contain result', () => {
           return ctx.ds.query(options).then((results: any) => {
-            expect(results.data[0].rows[0][0]).toBe('55542');
+            expect(results.data[0].rows[0][0]).toBe(55542);
           });
         });
       });
-
       describe('Multi fields query', () => {
         const options = {
           targets: [
@@ -134,7 +173,78 @@ describe('AzureResourceGraphDatasource', () => {
 
         it('Output should contain result', () => {
           return ctx.ds.query(options).then((results: any) => {
-            expect(results.data[0].rows[1][1]).toBe('2200');
+            expect(results.data[0].rows[1][1]).toBe(2200);
+          });
+        });
+      });
+      describe('Disabled query', () => {
+        const options = {
+          targets: [
+            {
+              queryType: 'Azure Resource Graph',
+              hide: true,
+              azureResourceGraph: {
+                query: 'count',
+                top: 100,
+                skip: 0,
+              },
+            },
+          ],
+        };
+
+        const response: any = {
+          totalRecords: 1,
+          count: 1,
+          data: {
+            columns: [{ name: 'Count', type: 'integer' }],
+            rows: [[55542]],
+          },
+          facets: [],
+          resultTruncated: 'false',
+        };
+
+        beforeEach(() => {
+          ctx.backendSrv.datasourceRequest = () => {
+            return ctx.$q.when({ data: response, status: 200 });
+          };
+        });
+
+        it('No results returned', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0]).toBe(undefined);
+          });
+        });
+      });
+      describe('Missing query', () => {
+        const options = {
+          targets: [
+            {
+              queryType: 'Azure Resource Graph',
+              hide: false,
+            },
+          ],
+        };
+
+        const response: any = {
+          totalRecords: 1,
+          count: 1,
+          data: {
+            columns: [{ name: 'Count', type: 'integer' }],
+            rows: [[55542]],
+          },
+          facets: [],
+          resultTruncated: 'false',
+        };
+
+        beforeEach(() => {
+          ctx.backendSrv.datasourceRequest = () => {
+            return ctx.$q.when({ data: response, status: 200 });
+          };
+        });
+
+        it('No results returned', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0]).toBe(undefined);
           });
         });
       });
@@ -212,6 +322,45 @@ describe('AzureResourceGraphDatasource', () => {
           return ctx.ds.metricFindQuery('ResourceGroups()').then((results: any) => {
             expect(results).not.toBe(undefined);
           });
+        });
+      });
+    });
+
+    describe('When performing subscriptions query', () => {
+      const response = {
+        data: {
+          value: [
+            {
+              id: '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572',
+              subscriptionId: '99999999-cccc-bbbb-aaaa-9106972f9572',
+              tenantId: '99999999-aaaa-bbbb-cccc-51c4f982ec48',
+              displayName: 'Primary Subscription',
+              state: 'Enabled',
+              subscriptionPolicies: {
+                locationPlacementId: 'Public_2014-09-01',
+                quotaId: 'PayAsYouGo_2014-09-01',
+                spendingLimit: 'Off',
+              },
+              authorizationSource: 'RoleBased',
+            },
+          ],
+          count: {
+            type: 'Total',
+            value: 1,
+          },
+        },
+        status: 200,
+        statusText: 'OK',
+      };
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = () => {
+          return ctx.$q.when(response);
+        };
+      });
+      it('Subscriptions', () => {
+        return ctx.ds.getSubscriptionIds().then((r: any) => {
+          expect(r.length).toBe(1);
+          expect(r[0]).toBe('99999999-cccc-bbbb-aaaa-9106972f9572');
         });
       });
     });
