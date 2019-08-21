@@ -142,7 +142,7 @@ export class AlertTab extends PureComponent<Props> {
       <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
         <>
           <div ref={element => (this.element = element)} />
-          {!alert && <EmptyListCTA model={model} />}
+          {!alert && <EmptyListCTA {...model} />}
         </>
       </EditorTabBody>
     );
