@@ -1,65 +1,67 @@
 import AzureResourceGraphDatasource from '../datasource';
-import { AzureSubscription, AzureSubscriptionsResponseParser } from './azure_resource_graph_datasource';
+import { AzureSubscription, AzureSubscriptions } from './azure_resource_graph_datasource';
 // @ts-ignore
 import Q from 'q';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-describe('AzureResourceGraphDatasource', () => {
-  describe('Azure Subscription', () => {
-    const queryResponse = {
-      data: {
-        value: [
-          {
-            id: '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572',
-            subscriptionId: '99999999-cccc-bbbb-aaaa-9106972f9572',
-            tenantId: '99999999-aaaa-bbbb-cccc-51c4f982ec48',
-            displayName: 'Primary Subscription',
-            state: 'Enabled',
-            subscriptionPolicies: {
-              locationPlacementId: 'Public_2014-09-01',
-              quotaId: 'PayAsYouGo_2014-09-01',
-              spendingLimit: 'Off',
-            },
-            authorizationSource: 'RoleBased',
-          },
-        ],
-        count: {
-          type: 'Total',
-          value: 1,
+const SUBSCRIPTION_ID_DUMMY_01 = `99999999-cccc-bbbb-aaaa-9106972f9572`;
+const TENANT_ID_DUMMY_01 = `99999999-aaaa-bbbb-cccc-51c4f982ec48`;
+const RESPONSE_SUBSCRIPTIONS_01 = {
+  data: {
+    value: [
+      {
+        id: `/subscriptions/${SUBSCRIPTION_ID_DUMMY_01}`,
+        subscriptionId: `${SUBSCRIPTION_ID_DUMMY_01}`,
+        tenantId: `${TENANT_ID_DUMMY_01}`,
+        displayName: 'Primary Subscription',
+        state: 'Enabled',
+        subscriptionPolicies: {
+          locationPlacementId: 'Public_2014-09-01',
+          quotaId: 'PayAsYouGo_2014-09-01',
+          spendingLimit: 'Off',
         },
+        authorizationSource: 'RoleBased',
       },
-      status: 200,
-      statusText: 'OK',
-    };
-    const subscriptionsResponse = new AzureSubscriptionsResponseParser(queryResponse);
+    ],
+    count: {
+      type: 'Total',
+      value: 1,
+    },
+  },
+  status: 200,
+  statusText: 'OK',
+};
+const ctx: any = {
+  backendSrv: {},
+  templateSrv: new TemplateSrv(),
+  $q: Q,
+  instanceSettings: {
+    url: 'http://azuremonitor.com',
+    jsonData: { subscriptionId: `${SUBSCRIPTION_ID_DUMMY_01}` },
+    cloudName: 'azuremonitor',
+  },
+};
+
+describe('AzureSubscription', () => {
+  describe('Subscription class', () => {
     it('Subcription', () => {
-      expect(new AzureSubscription(queryResponse.data.value[0]).subscriptionId).toBe(
-        '99999999-cccc-bbbb-aaaa-9106972f9572'
-      );
-    });
-    it('Subscriptions count', () => {
-      expect(subscriptionsResponse.subscriptions.length).toBe(1);
-      expect(subscriptionsResponse.subscriptions[0].subscriptionId).toBe('99999999-cccc-bbbb-aaaa-9106972f9572');
-      expect(subscriptionsResponse.getSubscriptionIds().length).toBe(1);
-      expect(subscriptionsResponse.getSubscriptionIds()[0]).toBe('99999999-cccc-bbbb-aaaa-9106972f9572');
+      const subscription = new AzureSubscription(RESPONSE_SUBSCRIPTIONS_01.data.value[0]);
+      expect(subscription.subscriptionId).toBe(`${SUBSCRIPTION_ID_DUMMY_01}`);
     });
   });
-  describe('Resource Graph', () => {
-    const ctx: any = {
-      backendSrv: {},
-      templateSrv: new TemplateSrv(),
-    };
-
-    beforeEach(() => {
-      ctx.$q = Q;
-      ctx.instanceSettings = {
-        url: 'http://azuremonitor.com',
-        jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f' },
-        cloudName: 'azuremonitor',
-      };
-      ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+  describe('Subscription response parser', () => {
+    it('Subscriptions count', () => {
+      const subscriptionsResponse = new AzureSubscriptions(RESPONSE_SUBSCRIPTIONS_01);
+      expect(subscriptionsResponse.subscriptions.length).toBe(RESPONSE_SUBSCRIPTIONS_01.data.value.length);
+      expect(subscriptionsResponse.subscriptions[0].subscriptionId).toBe(`${SUBSCRIPTION_ID_DUMMY_01}`);
+      expect(subscriptionsResponse.getSubscriptionIds().length).toBe(RESPONSE_SUBSCRIPTIONS_01.data.value.length);
+      expect(subscriptionsResponse.getSubscriptionIds()[0]).toBe(`${SUBSCRIPTION_ID_DUMMY_01}`);
     });
+  });
+});
 
+describe('AzureResourceGraphDatasource', () => {
+  describe('Resource Graph', () => {
     describe('When performing a query', () => {
       describe('Single field query', () => {
         const options = {
@@ -75,7 +77,6 @@ describe('AzureResourceGraphDatasource', () => {
             },
           ],
         };
-
         const response: any = {
           totalRecords: 1,
           count: 1,
@@ -86,19 +87,17 @@ describe('AzureResourceGraphDatasource', () => {
           facets: [],
           resultTruncated: 'false',
         };
-
         beforeEach(() => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
         });
-
         it('Output should be table format', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0].type).toBe('table');
           });
         });
-
         it('Output should contain result', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0].rows[0][0]).toBe(55542);
@@ -119,7 +118,6 @@ describe('AzureResourceGraphDatasource', () => {
             },
           ],
         };
-
         const response: any = {
           totalRecords: 3,
           count: 3,
@@ -134,43 +132,37 @@ describe('AzureResourceGraphDatasource', () => {
           facets: [],
           resultTruncated: 'true',
         };
-
         beforeEach(() => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
         });
-
         it('Output should be table format', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0].type).toBe('table');
           });
         });
-
         it('Output should valid number of columns results', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0].columns.length).toBe(2);
           });
         });
-
         it('Output should valid column results', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0].columns[0].text).toBe('type');
           });
         });
-
         it('Output should valid number of results', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0].rows.length).toBe(3);
           });
         });
-
         it('Output row should have valid length', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0].rows[0].length).toBe(2);
           });
         });
-
         it('Output should contain result', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0].rows[1][1]).toBe(2200);
@@ -191,7 +183,6 @@ describe('AzureResourceGraphDatasource', () => {
             },
           ],
         };
-
         const response: any = {
           totalRecords: 1,
           count: 1,
@@ -202,13 +193,12 @@ describe('AzureResourceGraphDatasource', () => {
           facets: [],
           resultTruncated: 'false',
         };
-
         beforeEach(() => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
         });
-
         it('No results returned', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0]).toBe(undefined);
@@ -224,7 +214,6 @@ describe('AzureResourceGraphDatasource', () => {
             },
           ],
         };
-
         const response: any = {
           totalRecords: 1,
           count: 1,
@@ -235,13 +224,12 @@ describe('AzureResourceGraphDatasource', () => {
           facets: [],
           resultTruncated: 'false',
         };
-
         beforeEach(() => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
         });
-
         it('No results returned', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0]).toBe(undefined);
@@ -249,11 +237,9 @@ describe('AzureResourceGraphDatasource', () => {
         });
       });
     });
-
     describe('When performing a metricFindQuery', () => {
       describe('ResourceGraph', () => {
         const query = 'ResourceGraph(distinct type)';
-
         const response = {
           totalRecords: 2,
           count: 2,
@@ -263,13 +249,12 @@ describe('AzureResourceGraphDatasource', () => {
           },
           resultTruncated: 'false',
         };
-
         beforeEach(() => {
           ctx.backendSrv.datasourceRequest = () => {
             return ctx.$q.when({ data: response, status: 200 });
           };
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
         });
-
         it('Expect valid result', () => {
           return ctx.ds.metricFindQuery(query).then((results: any) => {
             expect(results.length).toBe(2);
@@ -278,7 +263,6 @@ describe('AzureResourceGraphDatasource', () => {
           });
         });
       });
-
       describe('Invalid Queries', () => {
         const workspaceResponse = {
           value: [
@@ -291,7 +275,6 @@ describe('AzureResourceGraphDatasource', () => {
             },
           ],
         };
-
         const resourceGroupResponse = {
           data: {
             value: [{ name: 'grp1' }, { name: 'grp2' }],
@@ -299,7 +282,6 @@ describe('AzureResourceGraphDatasource', () => {
           status: 200,
           statusText: 'OK',
         };
-
         beforeEach(async () => {
           ctx.backendSrv.datasourceRequest = (options: { url: string }) => {
             if (options.url.indexOf('Microsoft.OperationalInsights/workspaces') > -1) {
@@ -310,14 +292,13 @@ describe('AzureResourceGraphDatasource', () => {
               return ctx.$q.when({ data: undefined, status: 200 });
             }
           };
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
         });
-
         it('Should return undefined', () => {
           return ctx.ds.metricFindQuery('ResourceGraphs(distinct type)').then((results: any) => {
             expect(results).toBe(undefined);
           });
         });
-
         it('Should not clash with other find query', () => {
           return ctx.ds.metricFindQuery('ResourceGroups()').then((results: any) => {
             expect(results).not.toBe(undefined);
@@ -325,43 +306,18 @@ describe('AzureResourceGraphDatasource', () => {
         });
       });
     });
-
-    describe('When performing subscriptions query', () => {
-      const response = {
-        data: {
-          value: [
-            {
-              id: '/subscriptions/99999999-cccc-bbbb-aaaa-9106972f9572',
-              subscriptionId: '99999999-cccc-bbbb-aaaa-9106972f9572',
-              tenantId: '99999999-aaaa-bbbb-cccc-51c4f982ec48',
-              displayName: 'Primary Subscription',
-              state: 'Enabled',
-              subscriptionPolicies: {
-                locationPlacementId: 'Public_2014-09-01',
-                quotaId: 'PayAsYouGo_2014-09-01',
-                spendingLimit: 'Off',
-              },
-              authorizationSource: 'RoleBased',
-            },
-          ],
-          count: {
-            type: 'Total',
-            value: 1,
-          },
-        },
-        status: 200,
-        statusText: 'OK',
+  });
+  describe('When performing subscriptions query', () => {
+    beforeEach(() => {
+      ctx.backendSrv.datasourceRequest = () => {
+        return ctx.$q.when(RESPONSE_SUBSCRIPTIONS_01);
       };
-      beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = () => {
-          return ctx.$q.when(response);
-        };
-      });
-      it('Subscriptions', () => {
-        return ctx.ds.getSubscriptionIds().then((r: any) => {
-          expect(r.length).toBe(1);
-          expect(r[0]).toBe('99999999-cccc-bbbb-aaaa-9106972f9572');
-        });
+      ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+    });
+    it('getSubscriptionIds', () => {
+      return ctx.ds.getSubscriptionIds().then((r: any) => {
+        expect(r.length).toBe(RESPONSE_SUBSCRIPTIONS_01.data.value.length);
+        expect(r[0]).toBe(`${SUBSCRIPTION_ID_DUMMY_01}`);
       });
     });
   });
