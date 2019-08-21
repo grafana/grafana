@@ -13,10 +13,10 @@
       class="btn btn-primary"
       ng-click="ctrl.setupNew();"
       ng-if="ctrl.annotations.length > 1"
-      ng-hide="ctrl.mode === 'edit' || ctrl.mode === 'new'">
-      New
-    </a
+      ng-hide="ctrl.mode === 'edit' || ctrl.mode === 'new'"
     >
+      New
+    </a>
   </div>
 
   <div ng-if="ctrl.mode === 'list'">
@@ -62,27 +62,7 @@
 
     <!-- empty list cta, there is always one built in query -->
     <div ng-if="ctrl.annotations.length === 1" class="p-t-2">
-      <div class="empty-list-cta">
-        <div class="empty-list-cta__title">There are no custom annotation queries added yet</div>
-        <a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-large btn-primary">
-          <i class="gicon gicon-annotation"></i>
-          Add Annotation Query
-        </a>
-        <div class="grafana-info-box">
-          <h5>What are Annotations?</h5>
-          <p>
-            Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines
-            and icons on all graph panels. When you hover over an annotation icon you can get event text &amp; tags for
-            the event. You can add annotation events directly from grafana by holding CTRL or CMD + click on graph (or
-            drag region). These will be stored in Grafana's annotation database.
-          </p>
-          Checkout the
-          <a class="external-link" target="_blank" href="http://docs.grafana.org/reference/annotations/"
-            >Annotations documentation</a
-          >
-          for more information.
-        </div>
-      </div>
+      <empty-list-cta title="ctrl.emptyListCta.title" buttonIcon="ctrl.emptyListCta.buttonIcon" buttonTitle="ctrl.emptyListCta.buttonTitle" infoBox="ctrl.emptyListCta.infoBox" infoBoxTitle="ctrl.emptyListCta.infoBoxTitle" on-click="ctrl.setupNew"/>
     </div>
   </div>
 

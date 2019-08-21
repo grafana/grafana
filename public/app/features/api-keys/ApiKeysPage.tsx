@@ -145,17 +145,12 @@ export class ApiKeysPage extends PureComponent<Props, any> {
       <>
         {!isAdding && (
           <EmptyListCTA
-            model={{
-              title: "You haven't added any API Keys yet.",
-              buttonIcon: 'gicon gicon-apikeys',
-              buttonLink: '#',
-              onClick: this.onToggleAdding,
-              buttonTitle: ' New API Key',
-              proTip: 'Remember you can provide view-only API access to other applications.',
-              proTipLink: '',
-              proTipLinkTitle: '',
-              proTipTarget: '_blank',
-            }}
+            title="You haven't added any API Keys yet."
+            buttonIcon="gicon gicon-apikeys"
+            buttonLink="#"
+            onClick={this.onToggleAdding}
+            buttonTitle=" New API Key"
+            proTip="Remember you can provide view-only API access to other applications."
           />
         )}
         {this.renderAddApiKeyForm()}

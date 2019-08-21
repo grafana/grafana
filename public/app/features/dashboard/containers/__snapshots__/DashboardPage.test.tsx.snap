@@ -4,7 +4,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
 <div
   className=""
 >
-  <Component
+  <Connect(DashNav)
     $injector={Object {}}
     dashboard={
       DashboardModel {
@@ -241,7 +241,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
 <div
   className="dashboard-page--settings-opening"
 >
-  <Component
+  <Connect(DashNav)
     $injector={Object {}}
     dashboard={
       DashboardModel {
