@@ -3,6 +3,7 @@ import { Team } from 'app/types';
 
 export interface Props {
   teams: Team[];
+  isLoading: boolean;
   loadTeams: () => void;
 }
 
@@ -12,11 +13,12 @@ export class UserTeams extends PureComponent<Props> {
   }
 
   render() {
-    const { teams } = this.props;
+    const { isLoading, teams } = this.props;
+    const showTeams = !isLoading && teams.length > 0;
 
     return (
       <>
-        {teams.length > 0 && (
+        {showTeams && (
           <>
             <h3 className="page-sub-heading">Teams</h3>
             <div className="gf-form-group">

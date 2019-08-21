@@ -18,7 +18,7 @@ export const ReactProfileWrapper = () => (
             />
           )}
           <SharedPreferences resourceUri="user" />
-          {!states.loadTeams && <UserTeams loadTeams={api.loadTeams} teams={teams} />}
+          <UserTeams isLoading={states.loadTeams} loadTeams={api.loadTeams} teams={teams} />
         </>
       );
     }}
