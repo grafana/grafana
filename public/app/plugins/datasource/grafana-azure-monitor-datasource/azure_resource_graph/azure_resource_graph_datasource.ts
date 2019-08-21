@@ -42,26 +42,39 @@ export class AzureResourceGraphResponseParser {
     columns: [],
     rows: [],
   };
-  constructor(results: any[]) {
-    if (results && results[0] && results[0].result && results[0].result.data && results[0].result.data.data) {
-      const output = results[0].result.data.data || {};
-      this.output.columns = (output.columns || []).map((column: any, index: number) => {
-        column.text = column.name || index;
-        column.type = column.type === 'integer' ? 'number' : column.type || 'string';
-        return column;
+  constructor(response: any[]) {
+    _.each(response, res => {
+      if (res.result && res.result.data && res.result.data.data) {
+        const tmpOutput = res.result.data.data || {};
+        const output = this.parseTableResult(tmpOutput.columns, tmpOutput.rows);
+        this.output.columns = output.columns;
+        this.output.rows = _.concat(this.output.rows, output.rows);
+      }
+    });
+  }
+  parseTableResult(columns: any[], rows: any[]): any {
+    columns = (columns || []).map((column: any, index: number) => {
+      column.text = column.name || index;
+      column.type = column.type === 'integer' ? 'number' : column.type || 'string';
+      return column;
+    });
+    rows = (rows || []).map((row: any) => {
+      return row.map((rowItem: any, index: number) => {
+        if (columns[index] && columns[index].type === 'number') {
+          return +rowItem;
+        } else if (typeof rowItem === 'string') {
+          return rowItem;
+        } else {
+          return JSON.stringify(rowItem);
+        }
       });
-      this.output.rows = (output.rows || []).map((row: any) => {
-        return row.map((rowItem: any, index: number) => {
-          if (this.output.columns[index] && this.output.columns[index].type === 'number') {
-            return +rowItem;
-          } else if (typeof rowItem === 'string') {
-            return rowItem;
-          } else {
-            return JSON.stringify(rowItem);
-          }
-        });
-      });
-    }
+    });
+    const output: any = {
+      type: 'table',
+      columns,
+      rows,
+    };
+    return output;
   }
   getResultsAsVariablesList() {
     const returnvalues: any[] = [];
