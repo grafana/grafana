@@ -4,13 +4,16 @@ import { UserProfileEditForm } from './UserProfileEditForm';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { UserTeams } from './UserTeams';
 import { config } from '@grafana/runtime';
+import { LoadingPlaceholder } from '@grafana/ui';
 
 export const ReactProfileWrapper = () => (
   <UserProvider userId={config.bootData.user.id}>
     {(api, states, teams, user) => {
       return (
         <>
-          {!states.loadUser && (
+          {states.loadUser ? (
+            <LoadingPlaceholder text="Loading user profile..." />
+          ) : (
             <UserProfileEditForm
               updateProfile={api.updateUserProfile}
               isSavingUser={states.updateUserProfile}

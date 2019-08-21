@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { Team } from 'app/types';
+import { LoadingPlaceholder } from '@grafana/ui';
 
 export interface Props {
   teams: Team[];
@@ -14,11 +15,14 @@ export class UserTeams extends PureComponent<Props> {
 
   render() {
     const { isLoading, teams } = this.props;
-    const showTeams = !isLoading && teams.length > 0;
+
+    if (isLoading) {
+      return <LoadingPlaceholder text="Loading teams..." />;
+    }
 
     return (
       <>
-        {showTeams && (
+        {teams.length > 0 && (
           <>
             <h3 className="page-sub-heading">Teams</h3>
             <div className="gf-form-group">

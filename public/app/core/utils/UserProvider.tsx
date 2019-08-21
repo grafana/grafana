@@ -50,7 +50,7 @@ export class UserProvider extends PureComponent<Props, State> {
     },
   };
 
-  componentDidMount() {
+  componentWillMount() {
     if (this.props.userId) {
       this.loadUser();
     }
