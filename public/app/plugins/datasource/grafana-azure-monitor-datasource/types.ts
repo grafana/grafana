@@ -1,5 +1,13 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/ui';
 
+export interface AzureSubscription {
+  id: string;
+  subscriptionId?: string;
+  tenantId?: string;
+  displayName?: string;
+  name?: string;
+}
+
 export interface AzureMonitorQuery extends DataQuery {
   format: string;
   subscription: string;

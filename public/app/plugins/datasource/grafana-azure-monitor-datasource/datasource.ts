@@ -248,4 +248,9 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
   getSubscriptions() {
     return this.azureMonitorDatasource.getSubscriptions();
   }
+
+  /*Azure Resource Graph */
+  getSubscriptionIds() {
+    return this.azureResourceGraphDatasource.getSubscriptionIds();
+  }
 }
