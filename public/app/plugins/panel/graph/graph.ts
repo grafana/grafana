@@ -16,7 +16,7 @@ import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
-import { LinkService, LinkSrv, DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
+import { LinkService, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
@@ -25,7 +25,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat, ContextMenuItem, ContextMenuGroup } from '@grafana/ui';
+import { getValueFormat, ContextMenuItem, ContextMenuGroup, DataLinkBuiltInVars } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { DataLink, toUtc } from '@grafana/data';
 import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';

@@ -17,7 +17,7 @@ import toString from 'lodash/toString';
 import { GrafanaTheme, InterpolateFunction, ScopedVars } from '../types/index';
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from './flotPairs';
-import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
+import { DataLinkBuiltInVars } from '../utils/dataLinks';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value

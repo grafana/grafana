@@ -1,4 +1,5 @@
-import { LinkSrv, DataLinkBuiltInVars } from '../link_srv';
+import { LinkSrv } from '../link_srv';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';

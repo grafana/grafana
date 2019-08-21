@@ -6,9 +6,9 @@ import {
   FieldDisplayLinkFunction,
 } from './fieldDisplay';
 import { ReducerID, Threshold, DataFrameHelper, FieldType } from '@grafana/data';
+import { DataLinkBuiltInVars } from '../utils/dataLinks';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
-import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
 
 const simpleLinker: FieldDisplayLinkFunction = (options: FieldDisplayLinkOptions) => {
   if (!options.links || !options.links.length) {

@@ -9,15 +9,9 @@ import {
   VariableOrigin,
   FieldDisplayLinkFunction,
   FieldDisplayLinkOptions,
+  DataLinkBuiltInVars,
 } from '@grafana/ui';
 import { DataLink, KeyValue, deprecationWarning } from '@grafana/data';
-
-export const DataLinkBuiltInVars = {
-  keepTime: '__url_time_range',
-  includeVars: '__all_variables',
-  seriesName: '__series_name',
-  valueTime: '__value_time',
-};
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...templateSrv.variables.map(variable => ({
