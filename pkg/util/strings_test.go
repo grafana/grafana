@@ -26,15 +26,6 @@ func TestSplitString(t *testing.T) {
 	})
 }
 
-func TestTrimQuotes(t *testing.T) {
-	Convey("trims quotes strings correctly", t, func() {
-		So(TrimQuotes(``), ShouldResemble, []string{})
-		So(TrimQuotes(`"aaa"`), ShouldResemble, []string{`aaa`})
-		So(TrimQuotes(`'aaa'`), ShouldResemble, []string{`aaa`})
-		So(TrimQuotes(`aaa`), ShouldResemble, []string{`aaa`})
-	})
-}
-
 func TestDateAge(t *testing.T) {
 	Convey("GetAgeString", t, func() {
 		So(GetAgeString(time.Time{}), ShouldEqual, "?")

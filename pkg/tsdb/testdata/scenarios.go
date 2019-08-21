@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -525,6 +524,9 @@ func getRandomWalk(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResu
 	return queryRes
 }
 
+// Compiled once.
+var labelRegex = regexp.MustCompile(`\b(\w+)(!?=~?)"([^"\n]*?)"`)
+
 /**
  * Looks for a labels request and adds them as tags
  *
@@ -536,21 +538,34 @@ func attachLabels(query *tsdb.Query, queryRes *tsdb.QueryResult) {
 		return
 	}
 
-	re := regexp.MustCompile(`\b(\w+)(!?=~?)"([^"\n]*?)"`)
-	tags := make(map[string]string)
-
-	byt := []byte(labelText)
-	re.ReplaceAllFunc(byt, func(s []byte) []byte {
-		exp := string(s)
-		idx := strings.Index(exp, "=")
-		key := exp[:idx]
-		val := util.TrimQuotes(exp[idx+1:])
-		tags[key] = val
-		return s
-	})
+	tags := parseLabels(labelText)
 	for _, series := range queryRes.Series {
 		series.Tags = tags
 	}
+}
+
+// generous parser:
+// {job="foo", instance="bar"}
+// job="foo", instance="bar"
+// job=foo, instance=bar
+// should all equal {job=foo, instance=bar}
+
+func parseLabels(text string) map[string]string {
+	var tags map[string]string
+	text = strings.Trim(text, `{}`)
+	if len(text) < 2 {
+		return tags
+	}
+	tags = make(map[string]string)
+
+	for _, keyval := range strings.Split(text, ",") {
+		idx := strings.Index(keyval, "=")
+		key := strings.TrimSpace(keyval[:idx])
+		val := strings.TrimSpace(keyval[idx+1:])
+		tags[key] = val
+	}
+
+	return tags
 }
 
 func getRandomWalkTable(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {

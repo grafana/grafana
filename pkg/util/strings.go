@@ -36,16 +36,6 @@ func SplitString(str string) []string {
 	return regexp.MustCompile("[, ]+").Split(str, -1)
 }
 
-// TrimQuotes returns a copy without the surrounding quote marks
-func TrimQuotes(s string) string {
-	if len(s) >= 2 {
-		if s[0] == '"' && s[len(s)-1] == '"' {
-			return s[1 : len(s)-1]
-		}
-	}
-	return s
-}
-
 // GetAgeString returns a string representing certain time from years to minutes.
 func GetAgeString(t time.Time) string {
 	if t.IsZero() {
