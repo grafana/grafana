@@ -23,6 +23,11 @@ export const HIGHLIGHT_WAIT = 500;
 const SLATE_TAB = '  ';
 const isIndentLeftHotkey = isKeyHotkey('mod+[');
 const isIndentRightHotkey = isKeyHotkey('mod+]');
+const isSelectLeftHotkey = isKeyHotkey('shift+left');
+const isSelectRightHotkey = isKeyHotkey('shift+right');
+const isSelectUpHotkey = isKeyHotkey('shift+up');
+const isSelectDownHotkey = isKeyHotkey('shift+down');
+const isSelectLineHotkey = isKeyHotkey('mod+l');
 
 function getSuggestionByIndex(suggestions: CompletionItemGroup[], index: number): CompletionItem {
   // Flatten suggestion groups
@@ -384,6 +389,25 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   };
 
+  handleSelectVertical = (change: Change, direction: 'up' | 'down') => {
+    const { focusBlock } = change.value;
+    const adjacentBlock =
+      direction === 'up'
+        ? change.value.document.getPreviousBlock(focusBlock.key)
+        : change.value.document.getNextBlock(focusBlock.key);
+
+    if (!adjacentBlock) {
+      return true;
+    }
+    const adjacentText = adjacentBlock.getFirstText();
+    change.moveFocusTo(adjacentText.key, Math.min(change.value.anchorOffset, adjacentText.text.length)).focus();
+    return true;
+  };
+
+  handleSelectUp = (change: Change) => this.handleSelectVertical(change, 'up');
+
+  handleSelectDown = (change: Change) => this.handleSelectVertical(change, 'down');
+
   onKeyDown = (event: KeyboardEvent, change: Change) => {
     const { typeaheadIndex } = this.state;
 
@@ -395,6 +419,40 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     } else if (isIndentRightHotkey(event)) {
       event.preventDefault();
       this.handleIndent(change, 'right');
+      return true;
+    } else if (isSelectLeftHotkey(event)) {
+      event.preventDefault();
+      if (change.value.focusOffset > 0) {
+        change.moveFocus(-1);
+      }
+      return true;
+    } else if (isSelectRightHotkey(event)) {
+      event.preventDefault();
+      if (change.value.focusOffset < change.value.startText.text.length) {
+        change.moveFocus(1);
+      }
+      return true;
+    } else if (isSelectUpHotkey(event)) {
+      event.preventDefault();
+      this.handleSelectUp(change);
+      return true;
+    } else if (isSelectDownHotkey(event)) {
+      event.preventDefault();
+      this.handleSelectDown(change);
+      return true;
+    } else if (isSelectLineHotkey(event)) {
+      event.preventDefault();
+      const { focusBlock, document } = change.value;
+
+      change.moveAnchorToStartOfBlock(focusBlock.key);
+
+      const nextBlock = document.getNextBlock(focusBlock.key);
+      if (nextBlock) {
+        change.moveFocusToStartOfNextBlock();
+      } else {
+        change.moveFocusToEndOfText();
+      }
+
       return true;
     }
 
