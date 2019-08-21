@@ -3,7 +3,6 @@ import { coreModule, NavModelSrv } from 'app/core/core';
 import { dateTime } from '@grafana/data';
 import { UserSession } from 'app/types';
 import { BackendSrv } from 'app/core/services/backend_srv';
-import { ILocationService } from 'angular';
 
 export class ProfileCtrl {
   user: any;
@@ -18,24 +17,11 @@ export class ProfileCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(
-    private backendSrv: BackendSrv,
-    private contextSrv: any,
-    private $location: ILocationService,
-    navModelSrv: NavModelSrv
-  ) {
-    this.getUser();
+  constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
     this.getUserSessions();
     this.getUserTeams();
     this.getUserOrgs();
     this.navModel = navModelSrv.getNav('profile', 'profile-settings', 0);
-  }
-
-  getUser() {
-    this.backendSrv.get('/api/user').then((user: any) => {
-      this.user = user;
-      this.user.theme = user.theme || 'dark';
-    });
   }
 
   getUserSessions() {
@@ -101,19 +87,6 @@ export class ProfileCtrl {
   setUsingOrg(org: any) {
     this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
       window.location.href = config.appSubUrl + '/profile';
-    });
-  }
-
-  update() {
-    if (!this.userForm.$valid) {
-      return;
-    }
-
-    this.backendSrv.put('/api/user/', this.user).then(() => {
-      this.contextSrv.user.name = this.user.name || this.user.login;
-      if (this.oldTheme !== this.user.theme) {
-        window.location.href = config.appSubUrl + this.$location.path();
-      }
     });
   }
 }

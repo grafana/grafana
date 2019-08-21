@@ -1,18 +1,14 @@
 import React from 'react';
 import * as PopperJS from 'popper.js';
+import { PopoverContent } from './Tooltip';
 
 // This API allows popovers to update Popper's position when e.g. popover content changes
 // updatePopperPosition is delivered to content by react-popper
-export interface PopperContentProps {
-  updatePopperPosition?: () => void;
-}
-
-export type PopperContent<T extends PopperContentProps> = string | React.ReactElement<T> | ((props: T) => JSX.Element);
 
 export interface UsingPopperProps {
   show?: boolean;
   placement?: PopperJS.Placement;
-  content: PopperContent<any>;
+  content: PopoverContent;
   children: JSX.Element;
 }
 
@@ -22,13 +18,13 @@ type PopperControllerRenderProp = (
   popperProps: {
     show: boolean;
     placement: PopperJS.Placement;
-    content: PopperContent<any>;
+    content: PopoverContent;
   }
 ) => JSX.Element;
 
 interface Props {
   placement?: PopperJS.Placement;
-  content: PopperContent<any>;
+  content: PopoverContent;
   className?: string;
   children: PopperControllerRenderProp;
   hideAfter?: number;
@@ -39,7 +35,7 @@ interface State {
   show: boolean;
 }
 
-class PopperController extends React.Component<Props, State> {
+class PopoverController extends React.Component<Props, State> {
   private hideTimeout: any;
 
   constructor(props: Props) {
@@ -101,4 +97,4 @@ class PopperController extends React.Component<Props, State> {
   }
 }
 
-export { PopperController };
+export { PopoverController };

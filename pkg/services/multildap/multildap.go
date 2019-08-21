@@ -19,6 +19,9 @@ var newLDAP = ldap.New
 // ErrInvalidCredentials is returned if username and password do not match
 var ErrInvalidCredentials = ldap.ErrInvalidCredentials
 
+// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
+var ErrCouldNotFindUser = ldap.ErrCouldNotFindUser
+
 // ErrNoLDAPServers is returned when there is no LDAP servers specified
 var ErrNoLDAPServers = errors.New("No LDAP servers are configured")
 
@@ -76,7 +79,7 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		}
 
 		// Continue if we couldn't find the user
-		if err == ErrInvalidCredentials {
+		if err == ErrCouldNotFindUser {
 			continue
 		}
 

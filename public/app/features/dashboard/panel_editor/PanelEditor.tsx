@@ -20,7 +20,7 @@ interface PanelEditorProps {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   angularPanel?: AngularComponent;
-  onTypeChanged: (newType: PanelPluginMeta) => void;
+  onPluginTypeChange: (newType: PanelPluginMeta) => void;
 }
 
 interface PanelEditorTab {
@@ -70,7 +70,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
   };
 
   renderCurrentTab(activeTab: string) {
-    const { panel, dashboard, onTypeChanged, plugin, angularPanel } = this.props;
+    const { panel, dashboard, onPluginTypeChange, plugin, angularPanel } = this.props;
 
     switch (activeTab) {
       case 'advanced':
@@ -85,7 +85,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
             panel={panel}
             dashboard={dashboard}
             plugin={plugin}
-            onTypeChanged={onTypeChanged}
+            onPluginTypeChange={onPluginTypeChange}
             angularPanel={angularPanel}
           />
         );

@@ -92,3 +92,16 @@ func TestTestdataScenarios(t *testing.T) {
 		})
 	})
 }
+
+func TestToLabels(t *testing.T) {
+	Convey("read labels", t, func() {
+		tags := make(map[string]string)
+		tags["job"] = "foo"
+		tags["instance"] = "bar"
+
+		So(parseLabels(`{job="foo", instance="bar"}`), ShouldEqual, tags)
+		So(parseLabels(`job="foo", instance="bar"`), ShouldEqual, tags)
+		So(parseLabels(`job=foo, instance=bar`), ShouldEqual, tags)
+		So(parseLabels(`job = foo,instance = bar`), ShouldEqual, tags)
+	})
+}
