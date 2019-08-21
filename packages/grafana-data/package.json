@@ -41,5 +41,5 @@
     "sinon": "1.17.6",
     "typescript": "3.5.3"
   },
-  "typings": "src/index.ts"
+  "types": "src/index.ts"
 }

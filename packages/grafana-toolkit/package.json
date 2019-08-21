@@ -99,5 +99,5 @@
   "_moduleAliases": {
     "puppeteer": "node_modules/puppeteer-core"
   },
-  "typings": "src/index.ts"
+  "types": "src/index.ts"
 }
