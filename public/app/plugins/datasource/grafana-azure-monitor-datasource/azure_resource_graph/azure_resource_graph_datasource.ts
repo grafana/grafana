@@ -48,12 +48,14 @@ export class AzureResourceGraphResponseParser {
       const output = results[0].result.data.data || {};
       this.output.columns = (output.columns || []).map((column: any, index: number) => {
         column.text = column.name || index;
-        column.type = column.type || 'string';
+        column.type = column.type === 'integer' ? 'number' : column.type || 'string';
         return column;
       });
       this.output.rows = (output.rows || []).map((row: any) => {
-        return row.map((rowItem: any) => {
-          if (typeof rowItem === 'string') {
+        return row.map((rowItem: any, index: number) => {
+          if (this.output.columns[index] && this.output.columns[index].type === 'number') {
+            return +rowItem;
+          } else if (typeof rowItem === 'string') {
             return rowItem;
           } else {
             return JSON.stringify(rowItem);
@@ -175,8 +177,8 @@ export default class AzureResourceGraphDatasource {
 
   async query(options: any) {
     const queries: AzureResourceGraphQuery[] = _.filter(options.targets, item => {
-      return item.hide !== true;
-    }).map(target => {
+      return item.hide !== true && item.azureResourceGraph && item.azureResourceGraph.query;
+    }).map((target: any) => {
       const item: AzureResourceGraphQuery = target.azureResourceGraph;
       const queryOption = new AzureResourceGraphQuery(
         this.templateSrv.replace(item.query, options.scopedVars),
