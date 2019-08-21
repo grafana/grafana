@@ -8,7 +8,7 @@ export interface DataLink {
   targetBlank?: boolean;
 }
 
-type LinkTarget = '_blank' | '_self';
+export type LinkTarget = '_blank' | '_self';
 
 /**
  * Processed Link Model.  The values are ready to use

@@ -1,10 +1,12 @@
 import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { Threshold, DisplayValue } from '@grafana/data';
+import { Threshold, DisplayValue, LinkModel } from '@grafana/data';
 
 import { getColorFromHexRgbOrName } from '../../utils';
 import { Themeable } from '../../types';
 import { selectThemeVariant } from '../../themes';
+import { WithContextMenu } from '../ContextMenu/WithContextMenu';
+import { linkModelToContextMenuItems } from '../../utils/dataLinks';
 
 export interface Props extends Themeable {
   height: number;
@@ -15,6 +17,7 @@ export interface Props extends Themeable {
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
+  links?: LinkModel[];
 }
 
 const FONT_SCALE = 1;
@@ -133,8 +136,32 @@ export class Gauge extends PureComponent<Props> {
     }
   }
 
-  render() {
+  getDataLinksContextMenuItems = () => {
+    const { links } = this.props;
+    return links
+      ? [
+          {
+            items: linkModelToContextMenuItems(links),
+            label: 'Data links',
+          },
+        ]
+      : [];
+  };
+
+  renderVisualization = (onClick?: React.MouseEventHandler<HTMLElement>) => {
     const { width, value, height } = this.props;
+    const autoProps = calculateGaugeAutoProps(width, height, value.title);
+
+    return (
+      <div
+        style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
+        ref={element => (this.canvasElement = element)}
+        onClick={onClick}
+      />
+    );
+  };
+  render() {
+    const { width, value, height, links } = this.props;
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
 
     return (
@@ -148,10 +175,14 @@ export class Gauge extends PureComponent<Props> {
           overflow: 'hidden',
         }}
       >
-        <div
-          style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
-          ref={element => (this.canvasElement = element)}
-        />
+        {links && links.length ? (
+          <WithContextMenu getContextMenuItems={this.getDataLinksContextMenuItems}>
+            {({ openMenu }) => this.renderVisualization(openMenu)}
+          </WithContextMenu>
+        ) : (
+          this.renderVisualization()
+        )}
+
         {autoProps.showLabel && (
           <div
             style={{
