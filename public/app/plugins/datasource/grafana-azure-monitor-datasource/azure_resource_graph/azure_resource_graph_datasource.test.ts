@@ -193,11 +193,11 @@ describe('AzureResourceGraphDatasource', () => {
           ],
         };
         const response: any = {
-          totalRecords: 1,
-          count: 1,
+          totalRecords: 2,
+          count: 2,
           data: {
             columns: [{ name: 'type', type: 'string' }, { name: 'count', type: 'integer' }],
-            rows: [['northeurope', 1155]],
+            rows: [['northeurope', 1155], ['northeurope', 5511]],
           },
           facets: [],
           resultTruncated: 'true',
@@ -225,7 +225,7 @@ describe('AzureResourceGraphDatasource', () => {
         });
         it('Output should valid number of results', () => {
           return ctx.ds.query(options).then((results: any) => {
-            expect(results.data[0].rows.length).toBe(2);
+            expect(results.data[0].rows.length).toBe(4);
           });
         });
         it('Output row should have valid length', () => {
@@ -235,7 +235,7 @@ describe('AzureResourceGraphDatasource', () => {
         });
         it('Output should contain result', () => {
           return ctx.ds.query(options).then((results: any) => {
-            expect(results.data[0].rows[1][1]).toBe(1155);
+            expect(results.data[0].rows[1][1]).toBe(5511);
           });
         });
       });
