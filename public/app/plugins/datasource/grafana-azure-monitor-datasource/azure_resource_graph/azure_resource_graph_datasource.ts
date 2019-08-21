@@ -24,7 +24,7 @@ export class AzureSubscription {
   }
 }
 
-export class AzureSubscriptionsResponseParser {
+export class AzureSubscriptions {
   subscriptions: IAzureSubscription[] = [];
   constructor(results: any) {
     if (results && results.data && results.data.value && results.data.value.length > 0) {
@@ -37,13 +37,12 @@ export class AzureSubscriptionsResponseParser {
 }
 
 export class AzureResourceGraphResponseParser {
-  output: any = {};
+  output: any = {
+    type: 'table',
+    columns: [],
+    rows: [],
+  };
   constructor(results: any[]) {
-    this.output = {
-      type: 'table',
-      columns: [],
-      rows: [],
-    };
     if (results && results[0] && results[0].result && results[0].result.data && results[0].result.data.data) {
       const output = results[0].result.data.data || {};
       this.output.columns = (output.columns || []).map((column: any, index: number) => {
@@ -113,9 +112,9 @@ export default class AzureResourceGraphDatasource {
   getSubscriptionIds() {
     const url = `/${this.cloudName}/subscriptions?api-version=2019-03-01`;
     return this.doSubscriptionsRequest(url).then((result: any) => {
-      const subscriptionsResponse = new AzureSubscriptionsResponseParser(result);
-      this.allSubscriptions = subscriptionsResponse.subscriptions;
-      return subscriptionsResponse.getSubscriptionIds();
+      const subscriptions = new AzureSubscriptions(result);
+      this.allSubscriptions = subscriptions.subscriptions;
+      return subscriptions.getSubscriptionIds();
     });
   }
 
