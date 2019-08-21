@@ -5,7 +5,8 @@ import {
   FieldDisplayLinkOptions,
   FieldDisplayLinkFunction,
 } from './fieldDisplay';
-import { ReducerID, Threshold, DataFrameHelper } from '@grafana/data';
+import { ReducerID, Threshold, DataFrameHelper, FieldType } from '@grafana/data';
+import { DataLinkBuiltInVars } from '../utils/dataLinks';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
@@ -174,5 +175,63 @@ describe('FieldDisplay', () => {
 
     const display = getFieldDisplayValues(options);
     expect(display[0].field.thresholds!.length).toEqual(1);
+  });
+
+  it('Should pass value time to linker function via scoped vars', () => {
+    const linkerSpy = jest.fn();
+    const linkerMock: FieldDisplayLinkFunction = (options: FieldDisplayLinkOptions) => {
+      linkerSpy(options.scopedVars);
+      // console.log(options.scopedVars)
+      return options.links.map(link => {
+        return {
+          href: link.url,
+          title: link.title,
+          target: link.targetBlank ? '_blank' : '_self',
+        };
+      });
+    };
+
+    const options: GetFieldDisplayValuesOptions = {
+      data: [
+        new DataFrameHelper({
+          name: 'Series Name',
+          fields: [
+            { name: 'Time field', values: ['1', '2'], type: FieldType.time },
+            {
+              name: 'Field 1',
+              values: ['0.5', '1.0'],
+              type: FieldType.number,
+              config: {
+                links: [
+                  {
+                    title: 'Link 1',
+                    url: 'http://grafana.com?vt=${__value_time}&sn=${__series_name}',
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+      ],
+      linker: linkerMock,
+      replaceVariables: (value: string) => {
+        return value;
+      },
+      fieldOptions: {
+        values: true,
+        calcs: [],
+        override: {},
+        defaults: {
+          thresholds: [{ color: '#F2495C', value: 50 }],
+        },
+      },
+      theme: getTheme(GrafanaThemeType.Dark),
+    };
+
+    getFieldDisplayValues(options);
+
+    expect(linkerSpy).toBeCalledTimes(2);
+    expect(linkerSpy.mock.calls[0][0][DataLinkBuiltInVars.valueTime].value).toBe('1');
+    expect(linkerSpy.mock.calls[1][0][DataLinkBuiltInVars.valueTime].value).toBe('2');
   });
 });

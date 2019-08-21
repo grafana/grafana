@@ -20,7 +20,7 @@ import {
   MIN_PANEL_HEIGHT,
   DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
-import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;

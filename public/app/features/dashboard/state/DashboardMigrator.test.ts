@@ -3,7 +3,7 @@ import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
-import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 

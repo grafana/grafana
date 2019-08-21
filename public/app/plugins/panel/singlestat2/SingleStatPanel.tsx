@@ -24,7 +24,16 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
       };
     }
 
-    return <BigValue value={value.display} sparkline={sparkline} width={width} height={height} theme={config.theme} />;
+    return (
+      <BigValue
+        value={value.display}
+        sparkline={sparkline}
+        width={width}
+        height={height}
+        theme={config.theme}
+        links={value.links}
+      />
+    );
   };
 
   getValues = (): FieldDisplay[] => {
