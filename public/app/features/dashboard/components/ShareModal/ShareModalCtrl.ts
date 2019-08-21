@@ -5,6 +5,8 @@ import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { TimeSrv } from '../../services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+// Context provides access to user preferences for data formatting
+import { contextSrv } from 'app/core/services/context_srv';
 
 /** @ngInject */
 export function ShareModalCtrl(
@@ -62,6 +64,12 @@ export function ShareModalCtrl(
     params.from = range.from.valueOf();
     params.to = range.to.valueOf();
     params.orgId = config.bootData.user.orgId;
+
+    // Graph date formatting
+    const { monthDayFormat } = contextSrv.user;
+    if (monthDayFormat && monthDayFormat !== 'browser') {
+      params.monthDayFormat = monthDayFormat;
+    }
 
     if ($scope.options.includeTemplateVars) {
       templateSrv.fillVariableValuesForUrl(params);

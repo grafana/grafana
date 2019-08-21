@@ -22,6 +22,7 @@ const setup = (propOverrides?: object) => {
         orgId: 1,
         orgName: 'Grafana',
         timezone: 'UTC',
+        monthDayFormat: '',
         helpFlags1: 1,
         lightTheme: false,
         hasEditPermissionInFolders: false,

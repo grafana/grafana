@@ -43,4 +43,8 @@ func addPreferencesMigrations(mg *Migrator) {
 		Sqlite("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;").
 		Postgres("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;").
 		Mysql("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;"))
+
+	mg.AddMigration("Update preferences table add column", NewAddColumnMigration(preferencesV2, &Column{
+		Name: "month_day_format", Type: DB_NVarchar, Length: 50, Nullable: true,
+	}))
 }
