@@ -148,7 +148,7 @@
     </div>
   </div>
 
-  <div class="section gf-form-group">
+  <div class="section gf-form-group" ng-if="ctrl.panel.gauge.show">
     <h5 class="section-heading">Gauge</h5>
     <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Show" checked="ctrl.panel.gauge.show" on-change="ctrl.render()"></gf-form-switch>
     <div ng-if="ctrl.panel.gauge.show">
