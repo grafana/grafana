@@ -25,6 +25,7 @@ import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
 import DashboardPage from '../features/dashboard/containers/DashboardPage';
 import PluginPage from '../features/plugins/PluginPage';
 import AppRootPage from 'app/features/plugins/AppRootPage';
+import LdapPage from 'app/features/admin/LdapPage';
 import config from 'app/core/config';
 import { route, ILocationProvider } from 'angular';
 
@@ -282,6 +283,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       resolve: {
         component: () => ServerStats,
+      },
+    })
+    .when('/admin/ldap', {
+      template: '<react-container />',
+      resolve: {
+        component: () => LdapPage,
       },
     })
     // LOGIN / SIGNUP
