@@ -10,6 +10,10 @@ awsconfig
 /public/views/index.html
 /public/views/error.html
 /emails/dist
+
+# Enterprise emails
+/emails/templates/for-enterprise-*
+
 /public_gen
 /public/vendor/npm
 /tmp
