@@ -157,7 +157,7 @@ export class PanelQueryState {
 
           // Save the result state
           this.response = {
-            state: resp.state ? resp.state : LoadingState.Done,
+            state: LoadingState.Done,
             request: this.request,
             series: this.sendFrames ? getProcessedDataFrames(resp.data) : [],
             legacy: this.sendLegacy ? translateToLegacyData(resp.data) : undefined,

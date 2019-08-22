@@ -385,12 +385,6 @@ export interface DataStreamState {
 
 export interface DataQueryResponse {
   /**
-   * Return `LoadingState.Streaming` when starting a streaming result
-   */
-
-  state?: LoadingState;
-
-  /**
    * The response data.  When streaming, this may be empty
    * or a partial result set
    */
