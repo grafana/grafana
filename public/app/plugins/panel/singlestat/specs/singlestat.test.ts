@@ -193,7 +193,7 @@ describe('SingleStatCtrl', () => {
   singleStatScenario('When value to text mapping is specified', (ctx: TestContext) => {
     ctx.setup(() => {
       ctx.input = [{ target: 'test.cpu1', datapoints: [[9.9, 1]] }];
-      ctx.ctrl.panel.valueMaps = [{ value: '10', text: 'OK' }];
+      ctx.ctrl.panel.valueMaps = [{ value: '9.9', text: 'OK' }];
     });
 
     it('value should remain', () => {
@@ -291,19 +291,15 @@ describe('SingleStatCtrl', () => {
     singleStatScenario('When value to text mapping is specified', (ctx: TestContext) => {
       ctx.setup(() => {
         ctx.input = tableData;
-        ctx.input[0].rows[0] = [1492759673649, 'ignore1', 9.9, 'ignore2'];
+        ctx.input[0].rows[0] = [1492759673649, 'ignore1', 10, 'ignore2'];
         ctx.ctrl.panel.mappingType = 2;
         ctx.ctrl.panel.tableColumn = 'mean';
         ctx.ctrl.panel.valueMaps = [{ value: '10', text: 'OK' }];
       });
 
       it('value should remain', () => {
-        expect(ctx.data.value).toBe(9.9);
+        expect(ctx.data.value).toBe(10);
       });
-
-      // it('round should be rounded up', () => {
-      //   expect(ctx.data.valueRounded).toBe(10);
-      // });
 
       it('Should replace value with text', () => {
         expect(ctx.data.display.text).toBe('OK');
