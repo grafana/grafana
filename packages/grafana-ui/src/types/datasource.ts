@@ -189,22 +189,22 @@ export abstract class DataSourceApi<
   /**
    * Query for data, and optionally stream results to an observer.
    *
-   * The observer may or may not be called depending if the query
-   * and DataSource implementation thinks streaming is necessary.
-   *
-   * When streaming behavior is required, the Promise should return
-   * with empty or partial data and a `Streaming` state in the response.
-   * The results in this initial response will not be replaced with any
-   * data from subsequent events.
-   *
-   * The request object will be passed in each observer callback
-   * so it could assert that the correct events are streaming and
-   * unsubscribe if unexpected results are returned.
-   *
-   * To see the full pipeline, check:
+   * Are you reading these docs aiming to execute a query?
+   * +-> If Yes, then consider using panelQueryRunner/State instead.  see:
    *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryRunner.ts PanelQueryRunner.ts}
    *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryState.ts PanelQueryState.ts}
    *
+   * If you are implementing a simple request-response query,
+   * then you can ignore the `observer` entirely.
+   *
+   * When streaming behavior is required, the Promise should return
+   * with empty or partial data and a `Streaming` state in the response.
+   * NOTE: The data in this initial response will not be replaced with any
+   * data from subsequent events. {@see DataStreamState}
+   *
+   * The request object will be passed in each observer callback
+   * so the callback could assert that the correct events are streaming and
+   * unsubscribe if unexpected results are returned.
    */
   abstract query(request: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
