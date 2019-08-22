@@ -148,6 +148,9 @@ export interface DataSourceConstructor<
 
 /**
  * The main data source abstraction interface, represents an instance of a data source
+ *
+ * Although this is a class, datasource implementations do not *yet* need to extend it.
+ * As such, we can not yet add functions with default implementations.
  */
 export abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
@@ -184,9 +187,24 @@ export abstract class DataSourceApi<
   init?: () => void;
 
   /**
-   * Main metrics / data query action
+   * Query for data, and optionally stream results to an observer.
+   *
+   * The observer may or may not be called depending on if the query
+   * and DataSource implementation thinks streaming is necessary.
+   *
+   * When streaming behavior is required, the Promise should return
+   * with empty or partial data and a `Streaming` state in the response.
+   *
+   * NOTE the request information will be passed in each observer callback
+   * so it could assert that the correct events are streaming and
+   * unsubscribe if unexpected results are returned.
+   *
+   * For an See:
+   *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryRunner.ts PanelQueryRunner.ts}
+   *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryState.ts PanelQueryState.ts}
+   *
    */
-  abstract query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
+  abstract query(request: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -295,7 +313,7 @@ export interface ExploreStartPageProps {
  */
 export type LegacyResponseData = TimeSeries | TableData | any;
 
-export type DataQueryResponseData = DataFrameDTO | LegacyResponseData;
+export type DataQueryResponseData = DataFrame | DataFrameDTO | LegacyResponseData;
 
 export type DataStreamObserver = (event: DataStreamState) => void;
 
@@ -306,7 +324,18 @@ export interface DataStreamState {
   state: LoadingState;
 
   /**
-   * Consistent key across events.
+   * The key is used to identify unique sets of data within
+   * a response, and join or replace them before sending them to the panel.
+   *
+   * For example consider a query that streams four DataFrames (A,B,C,D)
+   * and multiple events with keys AB, and CD
+   *
+   * Events:
+   * 1. {key:AB, data:[A1,B1]} >> PanelData: [A1,B1]
+   * 2. {key:CD, data:[C2,D2]} >> PanelData: [A1,B1,C2,D2]
+   * 3. {key:AB, data:[A3,B3]} >> PanelData: [A3,B3,C2,D2]
+   * 4. {key:AB, data:[A4]}    >> PanelData: [A4,C2,D2]
+   * 5. {key:CD, data:[C5]}    >> PanelData: [A4,C5]
    */
   key: string;
 
@@ -318,7 +347,9 @@ export interface DataStreamState {
   request: DataQueryRequest;
 
   /**
-   * Data may not be known yet
+   * The streaming events return entire DataFrames.  The DataSource
+   * sending the events is responcible for truncating any growing lists
+   * most likely to the requested `maxDataPoints`
    */
   data?: DataFrame[];
 
@@ -328,7 +359,12 @@ export interface DataStreamState {
   error?: DataQueryError;
 
   /**
-   * Optionally return only the rows that changed in this event
+   * @deprecated: DO NOT USE IN ANYTHING NEW!!!!
+   *
+   * merging streaming rows should be handled in the DataSource
+   * and/or we should add metadata to this state event that
+   * indicates that the PanelQueryRunner should manage the row
+   * additions.
    */
   delta?: DataFrame[];
 
@@ -339,6 +375,16 @@ export interface DataStreamState {
 }
 
 export interface DataQueryResponse {
+  /**
+   * Return `LoadingState.Streaming` when starting a streaming result
+   */
+
+  state?: LoadingState;
+
+  /**
+   * The response data.  When streaming, this may be empty
+   * or a partial result set
+   */
   data: DataQueryResponseData[];
 }
 
