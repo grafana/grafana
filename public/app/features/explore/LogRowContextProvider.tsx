@@ -1,5 +1,5 @@
 import { DataQueryResponse, DataQueryError } from '@grafana/ui';
-import { LogRowModel } from '@grafana/data';
+import { LogRowModel, toDataFrame, Field } from '@grafana/data';
 import { useState, useEffect } from 'react';
 import flatten from 'lodash/flatten';
 import useAsync from 'react-use/lib/useAsync';
@@ -47,19 +47,39 @@ export const getRowContexts = async (
   const results: Array<DataQueryResponse | DataQueryError> = await Promise.all(promises.map(p => p.catch(e => e)));
 
   return {
-    data: results.map((result, index) => {
+    data: results.map(result => {
       const dataResult: DataQueryResponse = result as DataQueryResponse;
       if (!dataResult.data) {
         return [];
       }
 
-      // We need to filter out the row we're basing our search from because of how start/end params work in Loki API
-      // see https://github.com/grafana/loki/issues/597#issuecomment-506408980
-      // the alternative to create our own add 1 nanosecond method to the a timestamp string would be quite complex
-      return dataResult.data.map(series => {
-        const filteredRows = series.rows.filter((r: any) => r[0] !== row.timestamp);
-        return filteredRows.map((row: any) => row[1]);
-      });
+      const data: any[] = [];
+      for (let index = 0; index < dataResult.data.length; index++) {
+        const dataFrame = toDataFrame(dataResult.data[index]);
+        const timestampField: Field<string> = dataFrame.fields.filter(field => field.name === 'ts')[0];
+
+        for (let fieldIndex = 0; fieldIndex < timestampField.values.length; fieldIndex++) {
+          const timestamp = timestampField.values.get(fieldIndex);
+
+          // We need to filter out the row we're basing our search from because of how start/end params work in Loki API
+          // see https://github.com/grafana/loki/issues/597#issuecomment-506408980
+          // the alternative to create our own add 1 nanosecond method to the a timestamp string would be quite complex
+          if (timestamp === row.timestamp) {
+            continue;
+          }
+
+          const lineField: Field<string> = dataFrame.fields.filter(field => field.name === 'line')[0];
+          const line = lineField.values.get(fieldIndex); // assuming that both fields have same length
+
+          if (data.length === 0) {
+            data[0] = [line];
+          } else {
+            data[0].push(line);
+          }
+        }
+      }
+
+      return data;
     }),
     errors: results.map(result => {
       const errorResult: DataQueryError = result as DataQueryError;

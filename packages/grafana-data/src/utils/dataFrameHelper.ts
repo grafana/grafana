@@ -44,10 +44,7 @@ export class DataFrameHelper implements DataFrame {
    */
   reverse() {
     for (const f of this.fields) {
-      if (isArray(f.values)) {
-        const arr = f.values as any[];
-        arr.reverse();
-      }
+      f.values.toArray().reverse();
     }
   }
 
