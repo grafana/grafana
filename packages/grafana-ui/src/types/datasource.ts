@@ -148,6 +148,9 @@ export interface DataSourceConstructor<
 
 /**
  * The main data source abstraction interface, represents an instance of a data source
+ *
+ * Although this is a class, datasource implementations do not *yet* need to extend it.
+ * As such, we can not yet add functions with default implementations.
  */
 export abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
@@ -184,9 +187,26 @@ export abstract class DataSourceApi<
   init?: () => void;
 
   /**
-   * Main metrics / data query action
+   * Query for data, and optionally stream results to an observer.
+   *
+   * Are you reading these docs aiming to execute a query?
+   * +-> If Yes, then consider using panelQueryRunner/State instead.  see:
+   *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryRunner.ts PanelQueryRunner.ts}
+   *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryState.ts PanelQueryState.ts}
+   *
+   * If you are implementing a simple request-response query,
+   * then you can ignore the `observer` entirely.
+   *
+   * When streaming behavior is required, the Promise can return at any time
+   * with empty or partial data in the response and optionally a state.
+   * NOTE: The data in this initial response will not be replaced with any
+   * data from subsequent events. {@see DataStreamState}
+   *
+   * The request object will be passed in each observer callback
+   * so the callback could assert that the correct events are streaming and
+   * unsubscribe if unexpected results are returned.
    */
-  abstract query(options: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
+  abstract query(request: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -295,7 +315,7 @@ export interface ExploreStartPageProps {
  */
 export type LegacyResponseData = TimeSeries | TableData | any;
 
-export type DataQueryResponseData = DataFrameDTO | LegacyResponseData;
+export type DataQueryResponseData = DataFrame | DataFrameDTO | LegacyResponseData;
 
 export type DataStreamObserver = (event: DataStreamState) => void;
 
@@ -306,7 +326,25 @@ export interface DataStreamState {
   state: LoadingState;
 
   /**
-   * Consistent key across events.
+   * The key is used to identify unique sets of data within
+   * a response, and join or replace them before sending them to the panel.
+   *
+   * For example consider a query that streams four DataFrames (A,B,C,D)
+   * and multiple events with keys K1, and K2
+   *
+   * query(...) returns: {
+   *   state:Streaming
+   *   data:[A]
+   * }
+   *
+   * Events:
+   * 1. {key:K1, data:[B1]}    >> PanelData: [A,B1]
+   * 2. {key:K2, data:[C2,D2]} >> PanelData: [A,B1,C2,D2]
+   * 3. {key:K1, data:[B3]}    >> PanelData: [A,B3,C2,D2]
+   * 4. {key:K2, data:[C4]}    >> PanelData: [A,B3,C4]
+   *
+   * NOTE: that PanelData will not report a `Done` state until all
+   * unique keys have returned with either `Error` or `Done` state.
    */
   key: string;
 
@@ -318,7 +356,9 @@ export interface DataStreamState {
   request: DataQueryRequest;
 
   /**
-   * Data may not be known yet
+   * The streaming events return entire DataFrames.  The DataSource
+   * sending the events is responsible for truncating any growing lists
+   * most likely to the requested `maxDataPoints`
    */
   data?: DataFrame[];
 
@@ -328,7 +368,12 @@ export interface DataStreamState {
   error?: DataQueryError;
 
   /**
-   * Optionally return only the rows that changed in this event
+   * @deprecated: DO NOT USE IN ANYTHING NEW!!!!
+   *
+   * merging streaming rows should be handled in the DataSource
+   * and/or we should add metadata to this state event that
+   * indicates that the PanelQueryRunner should manage the row
+   * additions.
    */
   delta?: DataFrame[];
 
@@ -339,6 +384,10 @@ export interface DataStreamState {
 }
 
 export interface DataQueryResponse {
+  /**
+   * The response data.  When streaming, this may be empty
+   * or a partial result set
+   */
   data: DataQueryResponseData[];
 }
 
