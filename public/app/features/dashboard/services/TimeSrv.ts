@@ -95,7 +95,15 @@ export class TimeSrv {
 
   private getTimeWindow(time: string, timeWindow: string) {
     const valueTime = parseInt(time, 10);
-    const timeWindowMs = kbn.interval_to_ms(timeWindow);
+    let timeWindowMs;
+
+    if (timeWindow.match(/^\d+$/) && parseInt(timeWindow, 10)) {
+      // when time window specified in ms
+      timeWindowMs = parseInt(timeWindow, 10);
+    } else {
+      timeWindowMs = kbn.interval_to_ms(timeWindow);
+    }
+
     return {
       from: toUtc(valueTime - timeWindowMs / 2),
       to: toUtc(valueTime + timeWindowMs / 2),
@@ -111,7 +119,6 @@ export class TimeSrv {
 
     if (params.from) {
       this.time.from = this.parseUrlParam(params.from) || this.time.from;
-      console.log('FROM:', params.from, this.time.from);
     }
     if (params.to) {
       this.time.to = this.parseUrlParam(params.to) || this.time.to;
