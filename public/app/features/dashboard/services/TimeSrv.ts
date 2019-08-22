@@ -93,43 +93,25 @@ export class TimeSrv {
     return null;
   }
 
-  private getValueTimeWindow(_valueTime: string, _valueTimeWindow: string) {
-    const negativeWindowRegex = /^\-\d*$/;
-    const positiveWindowRegex = /^\+\d*$/;
-
-    const valueTime = parseInt(_valueTime, 10);
-    const valueTimeWindow = parseInt(_valueTimeWindow, 10);
-
-    if (_valueTimeWindow.match(negativeWindowRegex)) {
-      return {
-        from: toUtc(valueTime + valueTimeWindow),
-        to: toUtc(valueTime),
-      };
-    }
-
-    if (_valueTimeWindow.match(positiveWindowRegex)) {
-      return {
-        from: toUtc(valueTime),
-        to: toUtc(valueTime + valueTimeWindow),
-      };
-    }
-
+  private getTimeWindow(time: string, timeWindow: string) {
+    const valueTime = parseInt(time, 10);
+    const timeWindowMs = kbn.interval_to_ms(timeWindow);
     return {
-      from: toUtc(valueTime - valueTimeWindow / 2),
-      to: toUtc(valueTime + valueTimeWindow / 2),
+      from: toUtc(valueTime - timeWindowMs / 2),
+      to: toUtc(valueTime + timeWindowMs / 2),
     };
   }
+
   private initTimeFromUrl() {
     const params = this.$location.search();
 
-    if (params.valueTime && params.valueTimeWindow) {
-      this.time = this.getValueTimeWindow(params.valueTime, params.valueTimeWindow);
-      // const valueTime = parseInt(params.valueTime, 10);
-      // const valueTimeWindow = parseInt(params.valueTimeWindow, 10);
+    if (params.time && params['time.window']) {
+      this.time = this.getTimeWindow(params.time, params['time.window']);
     }
 
     if (params.from) {
       this.time.from = this.parseUrlParam(params.from) || this.time.from;
+      console.log('FROM:', params.from, this.time.from);
     }
     if (params.to) {
       this.time.to = this.parseUrlParam(params.to) || this.time.to;
