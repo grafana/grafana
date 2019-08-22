@@ -189,17 +189,19 @@ export abstract class DataSourceApi<
   /**
    * Query for data, and optionally stream results to an observer.
    *
-   * The observer may or may not be called depending on if the query
+   * The observer may or may not be called depending if the query
    * and DataSource implementation thinks streaming is necessary.
    *
    * When streaming behavior is required, the Promise should return
    * with empty or partial data and a `Streaming` state in the response.
+   * The results in this initial response will not be replaced with any
+   * data from subsequent events.
    *
-   * NOTE the request information will be passed in each observer callback
+   * The request object will be passed in each observer callback
    * so it could assert that the correct events are streaming and
    * unsubscribe if unexpected results are returned.
    *
-   * For an See:
+   * To see the full pipeline, check:
    *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryRunner.ts PanelQueryRunner.ts}
    *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryState.ts PanelQueryState.ts}
    *
@@ -328,14 +330,18 @@ export interface DataStreamState {
    * a response, and join or replace them before sending them to the panel.
    *
    * For example consider a query that streams four DataFrames (A,B,C,D)
-   * and multiple events with keys AB, and CD
+   * and multiple events with keys K1, and K2
+   *
+   * query(...) returns: {
+   *   state:Streaming
+   *   data:[A]
+   * }
    *
    * Events:
-   * 1. {key:AB, data:[A1,B1]} >> PanelData: [A1,B1]
-   * 2. {key:CD, data:[C2,D2]} >> PanelData: [A1,B1,C2,D2]
-   * 3. {key:AB, data:[A3,B3]} >> PanelData: [A3,B3,C2,D2]
-   * 4. {key:AB, data:[A4]}    >> PanelData: [A4,C2,D2]
-   * 5. {key:CD, data:[C5]}    >> PanelData: [A4,C5]
+   * 1. {key:K1, data:[B1]}    >> PanelData: [A,B1]
+   * 2. {key:K2, data:[C2,D2]} >> PanelData: [A,B1,C2,D2]
+   * 3. {key:K1, data:[B3]}    >> PanelData: [A,B3,C2,D2]
+   * 4. {key:K2, data:[C4]}    >> PanelData: [A,B3,C4]
    */
   key: string;
 
