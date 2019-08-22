@@ -357,7 +357,7 @@ export interface DataStreamState {
 
   /**
    * The streaming events return entire DataFrames.  The DataSource
-   * sending the events is responcible for truncating any growing lists
+   * sending the events is responsible for truncating any growing lists
    * most likely to the requested `maxDataPoints`
    */
   data?: DataFrame[];
