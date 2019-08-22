@@ -1,4 +1,4 @@
-import { FieldType, DataFrameDTO, FieldDTO, Field } from '../types/index';
+import { DataFrameDTO, FieldDTO, FieldType } from '../types';
 import { DataFrameHelper } from './dataFrameHelper';
 
 describe('dataFrameHelper', () => {
