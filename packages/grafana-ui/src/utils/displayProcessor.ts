@@ -58,6 +58,14 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         if (shouldFormat && !_.isBoolean(value)) {
           const { decimals, scaledDecimals } = getDecimalsForValue(value, field.decimals);
           text = formatFunc(numeric, decimals, scaledDecimals, options.isUtc);
+
+          // Check if the formatted text mapped to a different value
+          if (mappings && mappings.length > 0) {
+            const mappedValue = getMappedValue(mappings, text);
+            if (mappedValue) {
+              text = mappedValue.text;
+            }
+          }
         }
         if (thresholds && thresholds.length) {
           color = getColorFromThreshold(numeric, thresholds, theme);

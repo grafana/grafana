@@ -40,16 +40,18 @@
     <h5 class="section-heading">Value</h5>
 
     <div class="gf-form-inline">
-      <div class="gf-form" ng-show="ctrl.dataType === 'timeseries'">
-        <label class="gf-form-label width-6">Stat</label>
+      <div class="gf-form" ng-if="ctrl.fieldNames.length > 1">
+        <label class="gf-form-label width-6">Field</label>
         <div class="gf-form-select-wrapper width-12">
-          <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f.value as f.text for f in ctrl.valueNameOptions" ng-change="ctrl.refresh()"></select>
+          <select class="gf-form-input" ng-model="ctrl.panel.tableColumn" ng-options="f for f in ctrl.fieldNames" ng-change="ctrl.refresh()"></select>
         </div>
       </div>
-      <div class="gf-form" ng-show="ctrl.dataType === 'table'">
-        <label class="gf-form-label width-6">Column</label>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-6">Show</label>
         <div class="gf-form-select-wrapper width-12">
-          <select class="gf-form-input" ng-model="ctrl.panel.tableColumn" ng-options="f for f in ctrl.tableColumnOptions" ng-change="ctrl.refresh()"></select>
+          <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f.value as f.text for f in ctrl.valueNameOptions" ng-change="ctrl.refresh()"></select>
         </div>
       </div>
       <div class="gf-form">
@@ -64,19 +66,24 @@
       <div class="gf-form">
         <label class="gf-form-label width-6">Prefix</label>
         <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.prefix" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+      <div class="gf-form">
         <label class="gf-form-label width-6">Font size</label>
         <div class="gf-form-select-wrapper">
           <select class="gf-form-input" ng-model="ctrl.panel.prefixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()" ng-disabled="!ctrl.canModifyText()"></select>
         </div>
       </div>
     </div>
-
-    <div class="gf-form">
-      <label class="gf-form-label width-6">Postfix</label>
-      <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
-      <label class="gf-form-label width-6">Font size</label>
-      <div class="gf-form-select-wrapper">
-        <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()" ng-disabled="!ctrl.canModifyText()"></select>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-6">Postfix</label>
+        <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-6">Font size</label>
+        <div class="gf-form-select-wrapper">
+          <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()" ng-disabled="!ctrl.canModifyText()"></select>
+        </div>
       </div>
     </div>
     <div class="gf-form">
@@ -122,7 +129,7 @@
 
   <div class="section gf-form-group">
     <h5 class="section-heading">Spark lines</h5>
-    <gf-form-switch class="gf-form" label-class="width-9" label="Show" checked="ctrl.panel.sparkline.show" on-change="ctrl.render()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label-class="width-9" label="Show" checked="ctrl.panel.sparkline.show" on-change="ctrl.refresh()"></gf-form-switch>
     <div ng-if="ctrl.panel.sparkline.show">
       <gf-form-switch class="gf-form" label-class="width-9" label="Full height" checked="ctrl.panel.sparkline.full" on-change="ctrl.render()"></gf-form-switch>
       <div class="gf-form">
