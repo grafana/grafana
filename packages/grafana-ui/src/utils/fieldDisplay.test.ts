@@ -225,7 +225,13 @@ describe('FieldDisplay', () => {
       theme: getTheme(GrafanaThemeType.Dark),
     };
 
-    getFieldDisplayValues(options);
+    const fieldDisplayValues = getFieldDisplayValues(options);
+
+    fieldDisplayValues.map(v => {
+      if (v.getLinks) {
+        v.getLinks();
+      }
+    });
 
     expect(linkerSpy).toBeCalledTimes(2);
     expect(linkerSpy.mock.calls[0][0][DataLinkBuiltInVars.valueTime].value).toBe('1');
