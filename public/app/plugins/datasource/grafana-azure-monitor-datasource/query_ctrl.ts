@@ -72,6 +72,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     };
     azureResourceGraph: {
       query: string;
+      top: number;
+      skip: number;
+      subscriptions: string[];
     };
   };
 
@@ -120,6 +123,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       query: 'count',
       top: 100,
       skip: 0,
+      subscriptions: ['all'],
     },
   };
 
@@ -129,7 +133,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   showLastQuery: boolean;
   lastQuery: string;
   lastQueryError?: string;
+  showSubscriptionsDropdown: boolean;
   subscriptions: Array<{ text: string; value: string }>;
+  bodyEl: any;
 
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService, private templateSrv: TemplateSrv) {
@@ -672,5 +678,27 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       );
     }
     this.refresh();
+  }
+
+  updateResourceGraphSubscriptions(subscription: any, event: any, selectAll: boolean) {
+    if (selectAll === true) {
+      this.target.azureResourceGraph.subscriptions = ['all'];
+      this.showSubscriptionsDropdown = false;
+    }
+    if (subscription && subscription.value) {
+      if (this.target.azureResourceGraph.subscriptions.indexOf(subscription.value) > -1) {
+        const uniqueSubscriptionIds = _.uniq(this.target.azureResourceGraph.subscriptions);
+        this.target.azureResourceGraph.subscriptions = uniqueSubscriptionIds.filter(
+          (s: string) => s !== subscription.value
+        );
+      } else {
+        this.target.azureResourceGraph.subscriptions.push(subscription.value);
+      }
+      const uniqueSubscriptionIds = _.uniq(this.target.azureResourceGraph.subscriptions);
+      this.target.azureResourceGraph.subscriptions = uniqueSubscriptionIds.filter((s: string) => s !== 'all');
+    }
+    if (this.target.azureResourceGraph.subscriptions.length === 0) {
+      this.target.azureResourceGraph.subscriptions.push('all');
+    }
   }
 }

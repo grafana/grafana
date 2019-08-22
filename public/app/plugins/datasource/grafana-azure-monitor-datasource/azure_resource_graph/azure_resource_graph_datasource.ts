@@ -94,10 +94,12 @@ export class AzureResourceGraphQuery implements IAzureResourceGraphQuery {
   query: string;
   top: number;
   skip: number;
-  constructor(query: string, top: number, skip: number) {
+  subscriptions: string[];
+  constructor(query: string, top: number, skip: number, subscriptions: string[]) {
     this.query = query;
     this.top = top;
     this.skip = skip;
+    this.subscriptions = subscriptions;
   }
 }
 
@@ -152,6 +154,12 @@ export default class AzureResourceGraphDatasource {
     } else {
       subscriptions = this.allSubscriptions.map((sub: any) => sub.subscriptionId.toString());
     }
+    if (query.subscriptions.indexOf('all') < 0) {
+      const filteredSubscriptions = query.subscriptions.filter(s => s !== 'all');
+      if (filteredSubscriptions.length > 0) {
+        subscriptions = filteredSubscriptions;
+      }
+    }
     return this.backendSrv
       .datasourceRequest({
         url: this.url + this.baseUrl + '?api-version=2019-04-01',
@@ -194,8 +202,9 @@ export default class AzureResourceGraphDatasource {
       const item: AzureResourceGraphQuery = target.azureResourceGraph;
       const queryOption = new AzureResourceGraphQuery(
         this.templateSrv.replace(item.query, options.scopedVars),
-        item.top,
-        item.skip
+        item.top || 1000,
+        item.skip || 0,
+        item.subscriptions || ['all']
       );
       return queryOption;
     });
@@ -212,7 +221,7 @@ export default class AzureResourceGraphDatasource {
   metricFindQuery(query: string) {
     if (query.startsWith(`ResourceGraph(`) && query.endsWith(`)`)) {
       const resourceGraphQuery = query.replace(`ResourceGraph(`, ``).slice(0, -1);
-      const queryOption = new AzureResourceGraphQuery(this.templateSrv.replace(resourceGraphQuery), 1000, 0);
+      const queryOption = new AzureResourceGraphQuery(this.templateSrv.replace(resourceGraphQuery), 1000, 0, ['all']);
       const promises = this.doQueries([queryOption]);
       return this.$q.all(promises).then(results => {
         const responseParser = new AzureResourceGraphResponseParser(results);
