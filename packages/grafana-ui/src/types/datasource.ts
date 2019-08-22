@@ -343,7 +343,7 @@ export interface DataStreamState {
    * 3. {key:K1, data:[B3]}    >> PanelData: [A,B3,C2,D2]
    * 4. {key:K2, data:[C4]}    >> PanelData: [A,B3,C4]
    *
-   * NOTE: that PanelData will report a `Done` state until all
+   * NOTE: that PanelData will not report a `Done` state until all
    * unique keys have returned with either `Error` or `Done` state.
    */
   key: string;
