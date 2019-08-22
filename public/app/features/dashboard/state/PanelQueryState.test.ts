@@ -1,7 +1,7 @@
 import { toDataQueryError, PanelQueryState, getProcessedDataFrames } from './PanelQueryState';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { LoadingState, getDataFrameRow, DataFrame, dateTime } from '@grafana/data';
-import { DataQueryResponse, DataQueryRequest, DataStreamObserver, DataQuery, DataSourceApi } from '@grafana/ui';
+import { LoadingState, getDataFrameRow } from '@grafana/data';
+import { DataQueryResponse } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('PanelQueryState', () => {
@@ -54,109 +54,6 @@ describe('PanelQueryState', () => {
   });
 });
 
-interface TestInputEvent {
-  info?: string;
-  key: string;
-  data: DataFrame[];
-  panel: string[];
-  state: LoadingState;
-}
-
-interface TestStreamingQuery extends DataQuery {
-  events: TestInputEvent[];
-  finalState: LoadingState;
-}
-
-describe('Call PanelQuryState directly', () => {
-  // A pretend DataSource that streams back our test events
-  const ds = {
-    query(request: DataQueryRequest<TestStreamingQuery>, observer: DataStreamObserver): Promise<DataQueryResponse> {
-      // Execute async code
-      const query = request.targets[0];
-      for (const event of query.events) {
-        observer({
-          state: event.state,
-          request,
-          key: event.key,
-          data: event.data,
-          unsubscribe: () => {}, // ignore
-        });
-      }
-      return Promise.resolve({
-        state: LoadingState.Done,
-        data: [],
-      });
-    },
-  } as DataSourceApi;
-
-  it('process list of events', async () => {
-    const query: TestStreamingQuery = {
-      refId: 'X',
-      events: [
-        {
-          info: 'Event 1',
-          key: 'K1',
-          data: [makeSeriesStub('A')],
-          panel: ['A'],
-          state: LoadingState.Streaming,
-        },
-        {
-          info: 'Event 2',
-          key: 'K2',
-          data: [makeSeriesStub('X')],
-          panel: ['A', 'X'],
-          state: LoadingState.Done,
-        },
-        {
-          info: 'Event 3',
-          key: 'K1',
-          data: [makeSeriesStub('A'), makeSeriesStub('B')],
-          panel: ['A', 'B', 'X'],
-          state: LoadingState.Done,
-        },
-      ],
-      finalState: LoadingState.Done,
-    };
-
-    const req = {
-      requestId: 'HELLO',
-      targets: [query],
-      timezone: '',
-      range: {
-        from: dateTime().subtract(1, 'hour'),
-        to: dateTime(),
-        raw: { from: '1h', to: 'now' },
-      },
-      panelId: 1,
-      dashboardId: 1,
-      interval: '10ms',
-      intervalMs: 10,
-      maxDataPoints: 1000,
-      scopedVars: {},
-      startTime: 0,
-    };
-
-    return new Promise(resolve => {
-      const state = new PanelQueryState();
-      let count = 0;
-      state.onStreamingDataUpdated = () => {
-        const data = state.validateStreamsAndGetPanelData();
-        const event = query.events[count++];
-        if (event) {
-          const ids = data.series.map(frame => frame.refId);
-          expect(ids).toEqual(event.panel);
-        } else {
-          expect(data.state).toBe(query.finalState);
-          resolve(); // Done;
-        }
-      };
-
-      // Execute the query
-      state.execute(ds, req, true);
-    });
-  });
-});
-
 describe('getProcessedDataFrame', () => {
   it('converts timeseries to table skipping nulls', () => {
     const input1 = {
@@ -195,12 +92,11 @@ describe('getProcessedDataFrame', () => {
   });
 });
 
-function makeSeriesStub(refId: string): DataFrame {
+function makeSeriesStub(refId: string) {
   return {
+    fields: [{ name: undefined }],
     refId,
-    fields: [],
-    length: 0,
-  };
+  } as any;
 }
 
 describe('stream handling', () => {
