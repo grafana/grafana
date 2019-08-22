@@ -1,4 +1,4 @@
-import { FieldType, DataFrameDTO, FieldDTO } from '../types/index';
+import { DataFrameDTO, FieldDTO, FieldType } from '../types';
 import { DataFrameHelper } from './dataFrameHelper';
 
 describe('dataFrameHelper', () => {
@@ -85,5 +85,31 @@ describe('FieldCache', () => {
     expect(fieldCache.getFieldByName('other')!.name).toEqual(expectedFieldNames[4]);
     expect(fieldCache.getFieldByName('undefined')!.name).toEqual(expectedFieldNames[5]);
     expect(fieldCache.getFieldByName('null')).toBeUndefined();
+  });
+});
+
+describe('reverse', () => {
+  describe('when called with a DataFrame', () => {
+    it('then it should reverse the order of values in all fields', () => {
+      const frame: DataFrameDTO = {
+        fields: [
+          { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+          { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
+          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+        ],
+      };
+
+      const helper = new DataFrameHelper(frame);
+
+      expect(helper.getFieldByName('time')!.values.toArray()).toEqual([100, 200, 300]);
+      expect(helper.getFieldByName('name')!.values.toArray()).toEqual(['a', 'b', 'c']);
+      expect(helper.getFieldByName('value')!.values.toArray()).toEqual([1, 2, 3]);
+
+      helper.reverse();
+
+      expect(helper.getFieldByName('time')!.values.toArray()).toEqual([300, 200, 100]);
+      expect(helper.getFieldByName('name')!.values.toArray()).toEqual(['c', 'b', 'a']);
+      expect(helper.getFieldByName('value')!.values.toArray()).toEqual([3, 2, 1]);
+    });
   });
 });
