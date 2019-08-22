@@ -315,7 +315,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   handleEnterKey = (event: KeyboardEvent, change: Change) => {
-    const { typeaheadIndex, suggestions } = this.state;
     event.preventDefault();
 
     if (event.shiftKey) {
@@ -324,7 +323,16 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     } else if (!this.menuEl) {
       this.executeOnChangeAndRunQueries();
       return true;
-    } else if (!suggestions || suggestions.length === 0) {
+    } else {
+      return this.selectSuggestion(change);
+    }
+  };
+
+  selectSuggestion = (change: Change) => {
+    const { typeaheadIndex, suggestions } = this.state;
+    event.preventDefault();
+
+    if (!suggestions || suggestions.length === 0) {
       return undefined;
     }
 
@@ -335,12 +343,17 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     return insertTextOperation ? true : undefined;
   };
 
-  handleTabKey = (change: Change) => {
+  handleTabKey = (change: Change): void => {
     const {
       startBlock,
       endBlock,
       selection: { startOffset, startKey, endOffset, endKey },
     } = change.value;
+
+    if (this.menuEl) {
+      this.selectSuggestion(change);
+      return;
+    }
 
     const first = startBlock.getFirstText();
 
