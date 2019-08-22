@@ -24,6 +24,23 @@ import {
   DataQueryResponseData,
 } from '@grafana/ui';
 
+/**
+ * This class is usually called from PanelQueryRunner, however to use it directly
+ *
+ * One time setup:
+ * ```
+ *    const queryState = new PanelQueryState();
+ *    queryState.onStreamingDataUpdated = () => { // maybe throttle
+ *      const data = queryState.validateStreamsAndGetPanelData();
+ *      console.log( 'Updates when ever the query results change', data );
+ *    }
+ * ```
+ *
+ * When the query request changes:
+ * ```
+ *    queryState.execute(ds, req, true);
+ * ```
+ */
 export class PanelQueryState {
   // The current/last running request
   request = {
@@ -96,7 +113,11 @@ export class PanelQueryState {
     this.closeStreams(true);
   }
 
-  execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
+  /**
+   * @param streamPromiseResult This will post a callback rather than returning
+   * real data from the DataSource Promise
+   */
+  execute(ds: DataSourceApi, req: DataQueryRequest, streamPromiseResult?: boolean): Promise<PanelData> {
     this.request = req;
     this.datasource = ds;
 
@@ -141,6 +162,16 @@ export class PanelQueryState {
             series: this.sendFrames ? getProcessedDataFrames(resp.data) : [],
             legacy: this.sendLegacy ? translateToLegacyData(resp.data) : undefined,
           };
+
+          if (streamPromiseResult) {
+            this.onStreamingDataUpdated();
+            resolve({
+              state: this.response.state,
+              series: [], // Empty since it will be calculated in the callback
+            });
+            return;
+          }
+
           resolve(this.validateStreamsAndGetPanelData());
         })
         .catch(err => {
@@ -234,10 +265,9 @@ export class PanelQueryState {
       };
     }
 
-    let done = this.isFinished(response.state);
     const series = [...response.series];
     const active: DataStreamState[] = [];
-
+    let done = true;
     for (const stream of this.streams) {
       if (shouldDisconnect(request, stream)) {
         console.log('getPanelData() - shouldDisconnect true, unsubscribing to steam');
@@ -251,6 +281,11 @@ export class PanelQueryState {
       if (!this.isFinished(stream.state)) {
         done = false;
       }
+    }
+
+    // If the executor is still running it is not really done
+    if (done && this.executor) {
+      done = false;
     }
 
     this.streams = active;

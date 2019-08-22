@@ -197,8 +197,8 @@ export abstract class DataSourceApi<
    * If you are implementing a simple request-response query,
    * then you can ignore the `observer` entirely.
    *
-   * When streaming behavior is required, the Promise should return
-   * with empty or partial data and a `Streaming` state in the response.
+   * When streaming behavior is required, the Promise can return at any time
+   * with empty or partial data in the response and optionally a state.
    * NOTE: The data in this initial response will not be replaced with any
    * data from subsequent events. {@see DataStreamState}
    *
@@ -342,6 +342,9 @@ export interface DataStreamState {
    * 2. {key:K2, data:[C2,D2]} >> PanelData: [A,B1,C2,D2]
    * 3. {key:K1, data:[B3]}    >> PanelData: [A,B3,C2,D2]
    * 4. {key:K2, data:[C4]}    >> PanelData: [A,B3,C4]
+   *
+   * NOTE: that PanelData will report a `Done` state until all
+   * unique keys have returned with either `Error` or `Done` state.
    */
   key: string;
 
