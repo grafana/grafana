@@ -16,9 +16,9 @@ export const simpleSeriesWithTypes = toDataFrame({
 describe('Filter Transformer', () => {
   it('filters by include', () => {
     const cfg = {
-      id: DataTransformerID.filter,
+      id: DataTransformerID.filterFields,
       options: {
-        include: { id: FieldMatcherID.numericFields },
+        include: { id: FieldMatcherID.numeric },
       },
     };
 

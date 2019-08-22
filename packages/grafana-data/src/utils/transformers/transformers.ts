@@ -1,6 +1,9 @@
 import { DataFrame } from '../../types/dataFrame';
 import { Registry, RegistryItemWithOptions } from '../registry';
 
+/**
+ * Immutable data transformation
+ */
 export type DataTransformer = (data: DataFrame[]) => DataFrame[];
 
 export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOptions {
@@ -45,21 +48,25 @@ export function transformDataFrame(options: DataTransformerConfig[], data: DataF
 
 // Initalize the Registry
 
-import { filterTransformer, FilterOptions } from './filter';
 import { appendTransformer, AppendOptions } from './append';
 import { reduceTransformer, ReduceOptions } from './reduce';
+import { filterFieldsTransformer, filterFramesTransformer } from './filter';
 
+/**
+ * Registry of transformation options that can be driven by
+ * stored configuration files.
+ */
 class TransformerRegisry extends Registry<DataTransformerInfo> {
   // ------------------------------------------------------------
-  // Helper functions for calling directly from javascript code
+  // Nacent options for more functional programming
+  // The API to these functions should change to match the actual
+  // needs of people trying to use it.
+  //  filterFields|Frames is left off since it is likely easier to
+  //  support with `frames.filter( f => {...} )`
   // ------------------------------------------------------------
 
   append(data: DataFrame[], options?: AppendOptions): DataFrame | undefined {
     return appendTransformer.transformer(options || appendTransformer.defaultOptions)(data)[0];
-  }
-
-  filter(data: DataFrame[], options: FilterOptions): DataFrame[] {
-    return filterTransformer.transformer(options)(data);
   }
 
   reduce(data: DataFrame[], options: ReduceOptions): DataFrame[] {
@@ -67,4 +74,9 @@ class TransformerRegisry extends Registry<DataTransformerInfo> {
   }
 }
 
-export const dataTransformers = new TransformerRegisry(() => [filterTransformer, appendTransformer, reduceTransformer]);
+export const dataTransformers = new TransformerRegisry(() => [
+  filterFieldsTransformer,
+  filterFramesTransformer,
+  appendTransformer,
+  reduceTransformer,
+]);

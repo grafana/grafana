@@ -1,20 +1,20 @@
 import { DataTransformerInfo, NoopDataTransformer } from './transformers';
 import { DataFrame, Field } from '../../types/dataFrame';
-import { DataMatcherConfig, getDataMatcher } from '../matchers/matchers';
 import { FieldMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
+import { MatcherConfig, getFieldMatcher, getFrameMatchers } from '../matchers/matchers';
 
 export interface FilterOptions {
-  include?: DataMatcherConfig;
-  exclude?: DataMatcherConfig;
+  include?: MatcherConfig;
+  exclude?: MatcherConfig;
 }
 
-export const filterTransformer: DataTransformerInfo<FilterOptions> = {
-  id: DataTransformerID.filter,
-  name: 'Filter',
+export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
+  id: DataTransformerID.filterFields,
+  name: 'Filter Fields',
   description: 'select a subset of fields',
   defaultOptions: {
-    include: { id: FieldMatcherID.numericFields },
+    include: { id: FieldMatcherID.numeric },
   },
 
   /**
@@ -26,9 +26,8 @@ export const filterTransformer: DataTransformerInfo<FilterOptions> = {
       return NoopDataTransformer;
     }
 
-    const include = options.include ? getDataMatcher(options.include) : null;
-
-    const exclude = options.exclude ? getDataMatcher(options.exclude) : null;
+    const include = options.include ? getFieldMatcher(options.include) : null;
+    const exclude = options.exclude ? getFieldMatcher(options.exclude) : null;
 
     return (data: DataFrame[]) => {
       const processed: DataFrame[] = [];
@@ -38,14 +37,14 @@ export const filterTransformer: DataTransformerInfo<FilterOptions> = {
         for (let i = 0; i < series.fields.length; i++) {
           const field = series.fields[i];
           if (exclude) {
-            if (exclude(series, field)) {
+            if (exclude(field)) {
               continue;
             }
             if (!include) {
               fields.push(field);
             }
           }
-          if (include && include(series, field)) {
+          if (include && include(field)) {
             fields.push(field);
           }
         }
@@ -58,6 +57,44 @@ export const filterTransformer: DataTransformerInfo<FilterOptions> = {
           fields, // but a different set of fields
         };
         processed.push(copy);
+      }
+      return processed;
+    };
+  },
+};
+
+export const filterFramesTransformer: DataTransformerInfo<FilterOptions> = {
+  id: DataTransformerID.filterFrames,
+  name: 'Filter Frames',
+  description: 'select a subset of frames',
+  defaultOptions: {},
+
+  /**
+   * Return a modified copy of the series.  If the transform is not or should not
+   * be applied, just return the input series
+   */
+  transformer: (options: FilterOptions) => {
+    if (!options.include && !options.exclude) {
+      return NoopDataTransformer;
+    }
+
+    const include = options.include ? getFrameMatchers(options.include) : null;
+    const exclude = options.exclude ? getFrameMatchers(options.exclude) : null;
+
+    return (data: DataFrame[]) => {
+      const processed: DataFrame[] = [];
+      for (const series of data) {
+        if (exclude) {
+          if (exclude(series)) {
+            continue;
+          }
+          if (!include) {
+            processed.push(series);
+          }
+        }
+        if (include && include(series)) {
+          processed.push(series);
+        }
       }
       return processed;
     };

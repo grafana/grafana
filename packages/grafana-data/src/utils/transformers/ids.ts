@@ -3,5 +3,7 @@ export enum DataTransformerID {
   append = 'append', // Merge all series together
   //  rotate = 'rotate', // Columns to rows
   reduce = 'reduce', // Run calculations on fields
-  filter = 'filter', // Pick some fields
+
+  filterFields = 'filterFields', // Pick some fields (keep all frames)
+  filterFrames = 'filterFrames', // Pick some frames (keep all fields)
 }
