@@ -16,10 +16,8 @@ export class User {
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;
 
-  constructor() {
-    if (config.bootData.user) {
-      _.extend(this, config.bootData.user);
-    }
+  constructor(user?: any, overrides?: any) {
+    _.extend(this, user, overrides);
   }
 }
 
@@ -38,7 +36,17 @@ export class ContextSrv {
       config.bootData = { user: {}, settings: {} };
     }
 
-    this.user = new User();
+    // User overrides from URL params
+    const userUrlParams: string[] = ['monthDayFormat'];
+    const userOverrides = userUrlParams.reduce((acc: any, param) => {
+      const match = new RegExp(`${param}=([^&]*)`).exec(location.search);
+      if (match) {
+        acc[param] = decodeURIComponent(match[1]);
+      }
+      return acc;
+    }, {});
+
+    this.user = new User(config.bootData.user, userOverrides);
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
