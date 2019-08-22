@@ -5,7 +5,7 @@ import { DataFrameHelper } from '../dataFrameHelper';
 import { KeyValue } from '../../types/data';
 import { AppendedVectors } from '../vector';
 
-interface AppendOptions {}
+export interface AppendOptions {}
 
 export const appendTransformer: DataTransformerInfo<AppendOptions> = {
   id: DataTransformerID.append,

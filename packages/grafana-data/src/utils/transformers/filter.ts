@@ -4,7 +4,7 @@ import { DataMatcherConfig, getDataMatcher } from '../matchers/matchers';
 import { DataMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
 
-interface FilterOptions {
+export interface FilterOptions {
   include?: DataMatcherConfig;
   exclude?: DataMatcherConfig;
 }

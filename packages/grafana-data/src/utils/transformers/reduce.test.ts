@@ -10,12 +10,12 @@ const seriesWithValues = toDataFrame({
   ],
 });
 
-describe('Calc Transformer', () => {
+describe('Reducer Transformer', () => {
   it('filters by include', () => {
     const cfg = {
-      id: DataTransformerID.calc,
+      id: DataTransformerID.reduce,
       options: {
-        calcs: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.delta],
+        reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.delta],
       },
     };
     const processed = transformDataFrame([cfg], [seriesWithValues])[0];

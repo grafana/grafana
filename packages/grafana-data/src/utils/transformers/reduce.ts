@@ -8,15 +8,15 @@ import { KeyValue } from '../../types/data';
 import { ArrayVector } from '../vector';
 import { guessFieldTypeForField } from '../processDataFrame';
 
-interface CalcOptions {
-  calcs: string[];
+export interface ReduceOptions {
+  reducers: string[];
   matcher?: DataMatcherConfig; // Assume all fields
 }
 
-export const calcTransformer: DataTransformerInfo<CalcOptions> = {
-  id: DataTransformerID.calc,
-  name: 'Calculate',
-  description: 'calculate...',
+export const reduceTransformer: DataTransformerInfo<ReduceOptions> = {
+  id: DataTransformerID.reduce,
+  name: 'Reducer',
+  description: 'Return a DataFrame with the reduction results',
   defaultOptions: {
     calcs: [ReducerID.min, ReducerID.max, ReducerID.mean, ReducerID.last],
   },
@@ -25,9 +25,9 @@ export const calcTransformer: DataTransformerInfo<CalcOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: CalcOptions) => {
+  transformer: (options: ReduceOptions) => {
     const matcher = options.matcher ? getDataMatcher(options.matcher) : alwaysDataMatcher;
-    const calculators = fieldReducers.list(options.calcs);
+    const calculators = fieldReducers.list(options.reducers);
     const reducers = calculators.map(c => c.id);
 
     return (data: DataFrame[]) => {
@@ -51,7 +51,7 @@ export const calcTransformer: DataTransformerInfo<CalcOptions> = {
             fields.push({
               name: info.id,
               type: FieldType.other, // UNKNOWN until after we call the functions
-              values: values[0],
+              values: values[values.length - 1],
               config: {
                 title: info.name,
               },

@@ -45,12 +45,26 @@ export function transformDataFrame(options: DataTransformerConfig[], data: DataF
 
 // Initalize the Registry
 
-import { filterTransformer } from './filter';
-import { appendTransformer } from './append';
-import { calcTransformer } from './calc';
+import { filterTransformer, FilterOptions } from './filter';
+import { appendTransformer, AppendOptions } from './append';
+import { reduceTransformer, ReduceOptions } from './reduce';
 
-export const dataTransformers = new Registry<DataTransformerInfo>(() => [
-  filterTransformer,
-  appendTransformer,
-  calcTransformer,
-]);
+class TransformerRegisry extends Registry<DataTransformerInfo> {
+  // ------------------------------------------------------------
+  // Helper functions for calling directly from javascript code
+  // ------------------------------------------------------------
+
+  append(data: DataFrame[], options?: AppendOptions): DataFrame | undefined {
+    return appendTransformer.transformer(options || appendTransformer.defaultOptions)(data)[0];
+  }
+
+  filter(data: DataFrame[], options: FilterOptions): DataFrame[] {
+    return filterTransformer.transformer(options)(data);
+  }
+
+  reduce(data: DataFrame[], options: ReduceOptions): DataFrame[] {
+    return reduceTransformer.transformer(options)(data);
+  }
+}
+
+export const dataTransformers = new TransformerRegisry(() => [filterTransformer, appendTransformer, reduceTransformer]);
