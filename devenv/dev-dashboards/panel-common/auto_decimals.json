@@ -18,6 +18,7 @@
   "links": [],
   "panels": [
     {
+      "cacheTimeout": null,
       "gridPos": {
         "h": 5,
         "w": 4,
@@ -25,13 +26,23 @@
         "y": 0
       },
       "id": 2,
+      "links": [],
       "options": {
         "fieldOptions": {
           "calcs": ["lastNotNull"],
           "defaults": {
-            "mappings": [],
+            "mappings": [
+              {
+                "id": 0,
+                "op": "=",
+                "text": "N/A",
+                "type": 1,
+                "value": "null"
+              }
+            ],
             "max": 100,
             "min": 0,
+            "nullValueMode": "connected",
             "thresholds": [
               {
                 "color": "green",
@@ -42,12 +53,12 @@
                 "value": 80
               }
             ],
-            "unit": "short"
+            "unit": "none"
           },
           "override": {},
           "values": false
         },
-        "orientation": "auto",
+        "orientation": "horizontal",
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
@@ -70,54 +81,6 @@
         "h": 5,
         "w": 4,
         "x": 4,
-        "y": 0
-      },
-      "id": 3,
-      "options": {
-        "fieldOptions": {
-          "calcs": ["lastNotNull"],
-          "defaults": {
-            "mappings": [],
-            "max": 100,
-            "min": 0,
-            "thresholds": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ],
-            "unit": "short"
-          },
-          "override": {},
-          "values": false
-        },
-        "orientation": "auto",
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "pluginVersion": "6.4.0-pre",
-      "targets": [
-        {
-          "alias": "",
-          "refId": "A",
-          "scenarioId": "csv_metric_values",
-          "stringInput": "0,1.125"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "1.125 = 1.12",
-      "type": "gauge"
-    },
-    {
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 8,
         "y": 0
       },
       "id": 4,
@@ -165,10 +128,10 @@
       "gridPos": {
         "h": 5,
         "w": 4,
-        "x": 12,
+        "x": 8,
         "y": 0
       },
-      "id": 5,
+      "id": 3,
       "options": {
         "fieldOptions": {
           "calcs": ["lastNotNull"],
@@ -201,12 +164,60 @@
           "alias": "",
           "refId": "A",
           "scenarioId": "csv_metric_values",
-          "stringInput": "0,100.50"
+          "stringInput": "0,1.125"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "100.50 = 101",
+      "title": "1.125 = 1.12",
+      "type": "gauge"
+    },
+    {
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "id": 19,
+      "options": {
+        "fieldOptions": {
+          "calcs": ["lastNotNull"],
+          "defaults": {
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "unit": "short"
+          },
+          "override": {},
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "6.4.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0,2.235"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "2.235 = 2.2",
       "type": "gauge"
     },
     {
@@ -456,7 +467,7 @@
         "x": 12,
         "y": 5
       },
-      "id": 12,
+      "id": 5,
       "options": {
         "fieldOptions": {
           "calcs": ["lastNotNull"],
@@ -489,12 +500,12 @@
           "alias": "",
           "refId": "A",
           "scenarioId": "csv_metric_values",
-          "stringInput": "0,1000000"
+          "stringInput": "0,100.50"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "1000000 = 1 Mil",
+      "title": "100.50 = 101",
       "type": "gauge"
     },
     {
@@ -744,7 +755,7 @@
         "x": 12,
         "y": 10
       },
-      "id": 17,
+      "id": 12,
       "options": {
         "fieldOptions": {
           "calcs": ["lastNotNull"],
@@ -762,7 +773,7 @@
                 "value": 80
               }
             ],
-            "unit": "ms"
+            "unit": "short"
           },
           "override": {},
           "values": false
@@ -777,12 +788,12 @@
           "alias": "",
           "refId": "A",
           "scenarioId": "csv_metric_values",
-          "stringInput": "0,1200"
+          "stringInput": "0,1000000"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "1860 (ms) = 1.86s",
+      "title": "1000000 = 1 Mil",
       "type": "gauge"
     },
     {
@@ -832,6 +843,54 @@
       "timeShift": null,
       "title": "90000 (ms) = 1.5 min",
       "type": "gauge"
+    },
+    {
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 15
+      },
+      "id": 17,
+      "options": {
+        "fieldOptions": {
+          "calcs": ["lastNotNull"],
+          "defaults": {
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "thresholds": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "unit": "ms"
+          },
+          "override": {},
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "6.4.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "0,1200"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "1860 (ms) = 1.86s",
+      "type": "gauge"
     }
   ],
   "schemaVersion": 19,
@@ -850,5 +909,5 @@
   "timezone": "",
   "title": "Panel Tests - Auto Decimals",
   "uid": "5mqG8qdZz",
-  "version": 7
+  "version": 1
 }
