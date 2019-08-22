@@ -79,7 +79,7 @@ const notMatcher: DataMatcherInfo<DataMatcherConfig> = {
   matcher: (option: DataMatcherConfig) => {
     const check = getDataMatcher(option);
     return (series: DataFrame, field?: Field) => {
-      return !check;
+      return !check(series, field);
     };
   },
 

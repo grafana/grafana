@@ -29,4 +29,11 @@ describe('Check Predicates', () => {
       );
     }
   });
+
+  it('match not time', () => {
+    const matcher = dataMatchers.get(DataMatcherID.invertMatch);
+    for (const field of simpleSeriesWithTypes.fields) {
+      expect(matcher.matcher(matchesTimeConfig)(simpleSeriesWithTypes, field)).toBe(field.type !== FieldType.time);
+    }
+  });
 });
