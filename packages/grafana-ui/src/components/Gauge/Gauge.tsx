@@ -1,12 +1,12 @@
 import React, { PureComponent, useRef, useContext } from 'react';
 import $ from 'jquery';
-import { Threshold, DisplayValue, LinkModel } from '@grafana/data';
+import { Threshold, DisplayValue } from '@grafana/data';
 
 import { getColorFromHexRgbOrName } from '../../utils';
 import { Themeable } from '../../types';
 import { selectThemeVariant, ThemeContext } from '../../themes';
 import { WithContextMenu } from '../ContextMenu/WithContextMenu';
-import { linkModelToContextMenuItems } from '../../utils/dataLinks';
+import { linkModelToContextMenuItems, WithLinksProps } from '../../utils/dataLinks';
 import useMouseHovered from 'react-use/lib/useMouseHovered';
 import useHoverDirty from 'react-use/lib/useHoverDirty';
 import { Portal } from '../Portal/Portal';
@@ -77,7 +77,8 @@ const MouseCursorAddon = ({ children, cursor }: MouseCursorRenderedProps) => {
     </>
   );
 };
-export interface Props extends Themeable {
+
+export interface Props extends Themeable, WithLinksProps {
   height: number;
   maxValue: number;
   minValue: number;
@@ -86,7 +87,6 @@ export interface Props extends Themeable {
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
-  links?: LinkModel[];
 }
 
 const FONT_SCALE = 1;
@@ -206,15 +206,11 @@ export class Gauge extends PureComponent<Props> {
   }
 
   getDataLinksContextMenuItems = () => {
-    const { links } = this.props;
-    return links
-      ? [
-          {
-            items: linkModelToContextMenuItems(links),
-            label: 'Data links',
-          },
-        ]
-      : [];
+    const { getLinks } = this.props;
+    if (!getLinks) {
+      return [];
+    }
+    return [{ items: linkModelToContextMenuItems(getLinks()), label: 'Data links' }];
   };
 
   renderVisualization = (onClick?: React.MouseEventHandler<HTMLElement>, hasLinks?: boolean) => {
@@ -263,7 +259,8 @@ export class Gauge extends PureComponent<Props> {
   };
 
   render() {
-    const { links } = this.props;
+    const { getLinks } = this.props;
+
     return (
       <div
         style={{
@@ -275,7 +272,7 @@ export class Gauge extends PureComponent<Props> {
           overflow: 'hidden',
         }}
       >
-        {links && links.length ? (
+        {getLinks ? (
           <WithContextMenu getContextMenuItems={this.getDataLinksContextMenuItems}>
             {({ openMenu }) => this.renderVisualization(openMenu, true)}
           </WithContextMenu>

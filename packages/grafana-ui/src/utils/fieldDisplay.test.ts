@@ -11,9 +11,6 @@ import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
 const simpleLinker: FieldDisplayLinkFunction = (options: FieldDisplayLinkOptions) => {
-  if (!options.links || !options.links.length) {
-    return undefined;
-  }
   return options.links.map(link => {
     return {
       href: link.url,

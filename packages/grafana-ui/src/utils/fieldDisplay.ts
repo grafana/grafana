@@ -67,7 +67,8 @@ export interface FieldDisplay {
   field: FieldConfig;
   display: DisplayValue;
   sparkline?: GraphSeriesValue[][];
-  links?: LinkModel[]; // Links with the values escaped
+  // returns links (based on FieldConfig.links) with variables interpolated
+  getLinks?: () => LinkModel[];
 }
 
 export interface FieldDisplayLinkOptions {
@@ -77,7 +78,7 @@ export interface FieldDisplayLinkOptions {
   scopedVars: ScopedVars;
 }
 
-export type FieldDisplayLinkFunction = (options: FieldDisplayLinkOptions) => LinkModel[] | undefined;
+export type FieldDisplayLinkFunction = (options: FieldDisplayLinkOptions) => LinkModel[];
 
 export interface GetFieldDisplayValuesOptions {
   data?: DataFrame[];
@@ -173,21 +174,22 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               name,
               field: config,
               display: displayValue,
-
-              links: config.links
-                ? linker({
-                    links: config.links,
-                    field,
-                    value: displayValue,
-                    scopedVars: {
-                      ...scopedVars,
-                      [DataLinkBuiltInVars.valueTime]: {
-                        value: timeColumn < 0 ? undefined : series.fields[timeColumn].values.get(j),
-                        text: 'Value time',
-                      },
-                    },
-                  })
-                : undefined,
+              getLinks:
+                config.links && config.links.length > 0
+                  ? () =>
+                      linker({
+                        links: config.links || [],
+                        field,
+                        value: displayValue,
+                        scopedVars: {
+                          ...scopedVars,
+                          [DataLinkBuiltInVars.valueTime]: {
+                            value: timeColumn < 0 ? undefined : series.fields[timeColumn].values.get(j),
+                            text: 'Value time',
+                          },
+                        },
+                      })
+                  : undefined,
             });
 
             if (values.length >= limit) {
@@ -219,14 +221,16 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               field: config,
               display: displayValue,
               sparkline: points,
-              links: config.links
-                ? linker({
-                    links: config.links,
-                    field,
-                    value: displayValue,
-                    scopedVars,
-                  })
-                : undefined,
+              getLinks:
+                config.links && config.links.length > 0
+                  ? () =>
+                      linker({
+                        links: config.links || [],
+                        field,
+                        value: displayValue,
+                        scopedVars,
+                      })
+                  : undefined,
             });
           }
         }

@@ -18,3 +18,7 @@ export const linkModelToContextMenuItems: (links: LinkModel[]) => ContextMenuIte
     };
   });
 };
+
+export interface WithLinksProps {
+  getLinks?: () => LinkModel[];
+}

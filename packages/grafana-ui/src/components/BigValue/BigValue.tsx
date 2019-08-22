@@ -2,14 +2,14 @@
 import React, { PureComponent, ReactNode, CSSProperties } from 'react';
 import $ from 'jquery';
 import { css } from 'emotion';
-import { DisplayValue, LinkModel } from '@grafana/data';
+import { DisplayValue } from '@grafana/data';
 
 // Utils
 import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
 import { Themeable } from '../../types';
-import { linkModelToContextMenuItems } from '../../utils/dataLinks';
+import { linkModelToContextMenuItems, WithLinksProps } from '../../utils/dataLinks';
 
 import { WithContextMenu } from '../ContextMenu/WithContextMenu';
 
@@ -22,7 +22,7 @@ export interface BigValueSparkline {
   lineColor: string;
 }
 
-export interface Props extends Themeable {
+export interface Props extends Themeable, WithLinksProps {
   height: number;
   width: number;
   value: DisplayValue;
@@ -30,7 +30,6 @@ export interface Props extends Themeable {
   suffix?: DisplayValue;
   sparkline?: BigValueSparkline;
   backgroundColor?: string;
-  links?: LinkModel[];
 }
 
 /*
@@ -48,12 +47,12 @@ export class BigValue extends PureComponent<Props> {
   }
 
   getDataLinksContextMenuItems = () => {
-    const { links } = this.props;
-    if (!links) {
+    const { getLinks } = this.props;
+    if (!getLinks) {
       return [];
     }
 
-    return [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
+    return [{ items: linkModelToContextMenuItems(getLinks()), label: 'Data links' }];
   };
 
   draw() {

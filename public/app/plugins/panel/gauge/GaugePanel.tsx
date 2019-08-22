@@ -15,7 +15,7 @@ import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
-    const { field, display, links } = value;
+    const { field, display, getLinks } = value;
 
     return (
       <Gauge
@@ -28,7 +28,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
         minValue={field.min}
         maxValue={field.max}
         theme={config.theme}
-        links={links}
+        getLinks={getLinks}
       />
     );
   };

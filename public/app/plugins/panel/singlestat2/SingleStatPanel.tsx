@@ -31,7 +31,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
         width={width}
         height={height}
         theme={config.theme}
-        links={value.links}
+        getLinks={value.getLinks}
       />
     );
   };
