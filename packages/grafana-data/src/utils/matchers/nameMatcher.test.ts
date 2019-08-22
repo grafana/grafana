@@ -1,5 +1,5 @@
-import { getDataMatcher } from './matchers';
-import { DataMatcherID } from './ids';
+import { getFieldMatcher } from './matchers';
+import { FieldMatcherID } from './ids';
 import { toDataFrame } from '../processDataFrame';
 
 describe('Field Name Matcher', () => {
@@ -8,14 +8,14 @@ describe('Field Name Matcher', () => {
       fields: [{ name: 'A hello world' }, { name: 'AAA' }, { name: 'C' }],
     });
     const config = {
-      id: DataMatcherID.fieldName,
+      id: FieldMatcherID.byName,
       options: '/.*/',
     };
 
-    const matcher = getDataMatcher(config);
+    const matcher = getFieldMatcher(config);
 
     for (const field of seriesWithNames.fields) {
-      expect(matcher(seriesWithNames, field)).toBe(true);
+      expect(matcher(field)).toBe(true);
     }
   });
 
@@ -24,14 +24,14 @@ describe('Field Name Matcher', () => {
       fields: [{ name: '12' }, { name: '112' }, { name: '13' }],
     });
     const config = {
-      id: DataMatcherID.fieldName,
+      id: FieldMatcherID.byName,
       options: '/^\\d+$/',
     };
 
-    const matcher = getDataMatcher(config);
+    const matcher = getFieldMatcher(config);
 
     for (const field of seriesWithNames.fields) {
-      expect(matcher(seriesWithNames, field)).toBe(true);
+      expect(matcher(field)).toBe(true);
     }
   });
 
@@ -40,14 +40,14 @@ describe('Field Name Matcher', () => {
       fields: [{ name: 'some.instance.path' }, { name: '112' }, { name: '13' }],
     });
     const config = {
-      id: DataMatcherID.fieldName,
+      id: FieldMatcherID.byName,
       options: '/\\b(?:\\S+?\\.)+\\S+\\b$/',
     };
 
-    const matcher = getDataMatcher(config);
+    const matcher = getFieldMatcher(config);
     let resultCount = 0;
     for (const field of seriesWithNames.fields) {
-      if (matcher(seriesWithNames, field)) {
+      if (matcher(field)) {
         resultCount++;
       }
       expect(resultCount).toBe(1);

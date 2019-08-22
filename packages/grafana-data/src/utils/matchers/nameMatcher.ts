@@ -1,21 +1,18 @@
 import { Field, DataFrame } from '../../types/dataFrame';
-import { DataMatcherInfo } from './matchers';
-import { DataMatcherID } from './ids';
+import { FieldMatcherInfo, FrameMatcherInfo } from './matchers';
+import { FieldMatcherID, FrameMatcherID } from './ids';
 import { stringToJsRegex } from '../string';
 
 // General Field matcher
-const fieldNameMacher: DataMatcherInfo<string> = {
-  id: DataMatcherID.fieldName,
+const fieldNameMacher: FieldMatcherInfo<string> = {
+  id: FieldMatcherID.byName,
   name: 'Field Name',
   description: 'match the field name',
   defaultOptions: '/.*/',
 
-  matcher: (pattern: string) => {
+  get: (pattern: string) => {
     const regex = stringToJsRegex(pattern);
-    return (data: DataFrame, field?: Field) => {
-      if (!field) {
-        return true;
-      }
+    return (field: Field) => {
       return regex.test(field.name);
     };
   },
@@ -25,9 +22,32 @@ const fieldNameMacher: DataMatcherInfo<string> = {
   },
 };
 
+// General Field matcher
+const frameNameMacher: FrameMatcherInfo<string> = {
+  id: FrameMatcherID.byName,
+  name: 'Frame Name',
+  description: 'match the frame name',
+  defaultOptions: '/.*/',
+
+  get: (pattern: string) => {
+    const regex = stringToJsRegex(pattern);
+    return (frame: DataFrame) => {
+      return regex.test(frame.name || '');
+    };
+  },
+
+  getOptionsDisplayText: (pattern: string) => {
+    return `Frame name: ${pattern}`;
+  },
+};
+
 /**
  * Registry Initalization
  */
-export function getNameMatchers(): DataMatcherInfo[] {
+export function getFieldNameMatchers(): FieldMatcherInfo[] {
   return [fieldNameMacher];
+}
+
+export function getFrameNameMatchers(): FrameMatcherInfo[] {
+  return [frameNameMacher];
 }

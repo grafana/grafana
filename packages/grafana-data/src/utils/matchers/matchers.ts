@@ -1,40 +1,56 @@
 import { Field, DataFrame } from '../../types/dataFrame';
 import { Registry, RegistryItemWithOptions } from '../registry';
 
-export type DataMatcher = (series: DataFrame, field?: Field) => boolean;
+export type FieldMatcher = (field: Field) => boolean;
+export type FrameMatcher = (frame: DataFrame) => boolean;
 
-/**
- * A configurable way to say if somthing should apply to a field or series
- */
-export interface DataMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
-  /**
-   * When field is undefined, we are asking if the series matches
-   */
-  matcher: (options: TOptions) => DataMatcher;
+export interface FieldMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
+  get: (options: TOptions) => FieldMatcher;
 }
 
-export interface DataMatcherConfig<TOptions = any> {
+export interface FrameMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
+  get: (options: TOptions) => FrameMatcher;
+}
+
+export interface MatcherConfig<TOptions = any> {
   id: string;
   options?: TOptions;
 }
 
-export function getDataMatcher(config: DataMatcherConfig): DataMatcher {
-  const info = dataMatchers.get(config.id);
+// Load the Buildtin matchers
+import { getFieldPredicateMatchers, getFramePredicateMatchers } from './predicates';
+import { getFieldNameMatchers, getFrameNameMatchers } from './nameMatcher';
+import { getFieldTypeMatchers } from './fieldTypeMatcher';
+import { getRefIdMatchers } from './refIdMatcher';
+
+export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
+  return [
+    ...getFieldPredicateMatchers(), // Predicates
+    ...getFieldTypeMatchers(), // by type
+    ...getFieldNameMatchers(), // by name
+  ];
+});
+
+export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
+  return [
+    ...getFramePredicateMatchers(), // Predicates
+    ...getFrameNameMatchers(), // by name
+    ...getRefIdMatchers(), // by query refId
+  ];
+});
+
+export function getFieldMatcher(config: MatcherConfig): FieldMatcher {
+  const info = fieldMatchers.get(config.id);
   if (!info) {
     throw new Error('Unknown Matcher: ' + config.id);
   }
-  return info.matcher(config.options);
+  return info.get(config.options);
 }
 
-// Load the Buildtin matchers
-import { getPredicateMatchers } from './predicates';
-import { getFieldTypeMatchers } from './typeMatcher';
-import { getNameMatchers } from './nameMatcher';
-
-export const dataMatchers = new Registry<DataMatcherInfo>(() => {
-  return [
-    ...getPredicateMatchers(), // Predicates
-    ...getFieldTypeMatchers(), // field types
-    ...getNameMatchers(), // By Name
-  ];
-});
+export function getFrameMatchers(config: MatcherConfig): FrameMatcher {
+  const info = frameMatchers.get(config.id);
+  if (!info) {
+    throw new Error('Unknown Matcher: ' + config.id);
+  }
+  return info.get(config.options);
+}

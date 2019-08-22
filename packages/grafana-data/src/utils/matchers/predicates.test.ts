@@ -1,39 +1,37 @@
 import { FieldType } from '../../types/dataFrame';
-import { dataMatchers, DataMatcherConfig } from './matchers';
-import { simpleSeriesWithTypes } from './typeMatcher.test';
-import { DataMatcherID } from './ids';
+import { MatcherConfig, fieldMatchers } from './matchers';
+import { simpleSeriesWithTypes } from './fieldTypeMatcher.test';
+import { FieldMatcherID, MatcherID } from './ids';
 
-const matchesNumberConfig: DataMatcherConfig = {
-  id: DataMatcherID.fieldType,
+const matchesNumberConfig: MatcherConfig = {
+  id: FieldMatcherID.byType,
   options: FieldType.number,
 };
-const matchesTimeConfig: DataMatcherConfig = {
-  id: DataMatcherID.fieldType,
+const matchesTimeConfig: MatcherConfig = {
+  id: FieldMatcherID.byType,
   options: FieldType.time,
 };
 const both = [matchesNumberConfig, matchesTimeConfig];
 
 describe('Check Predicates', () => {
   it('can not match both', () => {
-    const matcher = dataMatchers.get(DataMatcherID.allMatch);
+    const matches = fieldMatchers.get(MatcherID.allMatch).get(both);
     for (const field of simpleSeriesWithTypes.fields) {
-      expect(matcher.matcher(both)(simpleSeriesWithTypes, field)).toBe(false);
+      expect(matches(field)).toBe(false);
     }
   });
 
   it('match either time or number', () => {
-    const matcher = dataMatchers.get(DataMatcherID.anyMatch);
+    const matches = fieldMatchers.get(MatcherID.anyMatch).get(both);
     for (const field of simpleSeriesWithTypes.fields) {
-      expect(matcher.matcher(both)(simpleSeriesWithTypes, field)).toBe(
-        field.type === FieldType.number || field.type === FieldType.time
-      );
+      expect(matches(field)).toBe(field.type === FieldType.number || field.type === FieldType.time);
     }
   });
 
   it('match not time', () => {
-    const matcher = dataMatchers.get(DataMatcherID.invertMatch);
+    const matches = fieldMatchers.get(MatcherID.invertMatch).get(matchesTimeConfig);
     for (const field of simpleSeriesWithTypes.fields) {
-      expect(matcher.matcher(matchesTimeConfig)(simpleSeriesWithTypes, field)).toBe(field.type !== FieldType.time);
+      expect(matches(field)).toBe(field.type !== FieldType.time);
     }
   });
 });

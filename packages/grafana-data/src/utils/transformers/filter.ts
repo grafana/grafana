@@ -1,7 +1,7 @@
 import { DataTransformerInfo, NoopDataTransformer } from './transformers';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataMatcherConfig, getDataMatcher } from '../matchers/matchers';
-import { DataMatcherID } from '../matchers/ids';
+import { FieldMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
 
 export interface FilterOptions {
@@ -14,7 +14,7 @@ export const filterTransformer: DataTransformerInfo<FilterOptions> = {
   name: 'Filter',
   description: 'select a subset of fields',
   defaultOptions: {
-    include: { id: DataMatcherID.numericFields },
+    include: { id: FieldMatcherID.numericFields },
   },
 
   /**

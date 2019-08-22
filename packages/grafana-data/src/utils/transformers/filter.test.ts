@@ -1,5 +1,5 @@
 import { FieldType } from '../../types/dataFrame';
-import { DataMatcherID } from '../matchers/ids';
+import { FieldMatcherID } from '../matchers/ids';
 import { transformDataFrame } from './transformers';
 import { DataTransformerID } from './ids';
 import { toDataFrame } from '../processDataFrame';
@@ -18,7 +18,7 @@ describe('Filter Transformer', () => {
     const cfg = {
       id: DataTransformerID.filter,
       options: {
-        include: { id: DataMatcherID.numericFields },
+        include: { id: FieldMatcherID.numericFields },
       },
     };
 
