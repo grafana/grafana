@@ -6,6 +6,10 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 const SUBSCRIPTION_ID_DUMMY_01 = `99999999-cccc-bbbb-aaaa-9106972f9572`;
 const TENANT_ID_DUMMY_01 = `99999999-aaaa-bbbb-cccc-51c4f982ec48`;
+const SUBSCRIPTION_ID_DUMMY_02 = `88888888-cccc-bbbb-aaaa-9106972f9572`;
+const TENANT_ID_DUMMY_02 = `88888888-aaaa-bbbb-cccc-51c4f982ec48`;
+const SUBSCRIPTION_ID_DUMMY_03 = `77777777-cccc-bbbb-aaaa-9106972f9572`;
+const TENANT_ID_DUMMY_03 = `77777777-aaaa-bbbb-cccc-51c4f982ec48`;
 const RESPONSE_SUBSCRIPTIONS_01 = {
   data: {
     value: [
@@ -22,10 +26,36 @@ const RESPONSE_SUBSCRIPTIONS_01 = {
         },
         authorizationSource: 'RoleBased',
       },
+      {
+        id: `/subscriptions/${SUBSCRIPTION_ID_DUMMY_02}`,
+        subscriptionId: `${SUBSCRIPTION_ID_DUMMY_02}`,
+        tenantId: `${TENANT_ID_DUMMY_02}`,
+        displayName: 'Secondary Subscription',
+        state: 'Enabled',
+        subscriptionPolicies: {
+          locationPlacementId: 'Public_2014-09-01',
+          quotaId: 'PayAsYouGo_2014-09-01',
+          spendingLimit: 'Off',
+        },
+        authorizationSource: 'RoleBased',
+      },
+      {
+        id: `/subscriptions/${SUBSCRIPTION_ID_DUMMY_03}`,
+        subscriptionId: `${SUBSCRIPTION_ID_DUMMY_03}`,
+        tenantId: `${TENANT_ID_DUMMY_03}`,
+        displayName: 'Third Subscription',
+        state: 'Enabled',
+        subscriptionPolicies: {
+          locationPlacementId: 'Public_2014-09-01',
+          quotaId: 'PayAsYouGo_2014-09-01',
+          spendingLimit: 'Off',
+        },
+        authorizationSource: 'RoleBased',
+      },
     ],
     count: {
       type: 'Total',
-      value: 1,
+      value: 3,
     },
   },
   status: 200,
@@ -236,6 +266,68 @@ describe('AzureResourceGraphDatasource', () => {
         it('Output should contain result', () => {
           return ctx.ds.query(options).then((results: any) => {
             expect(results.data[0].rows[1][1]).toBe(5511);
+          });
+        });
+      });
+      describe('Multi fields query with selected subscriptions', () => {
+        const options = {
+          targets: [
+            {
+              queryType: 'Azure Resource Graph',
+              hide: false,
+              azureResourceGraph: {
+                query: `summarize  resources_count=count() by subscriptionId`,
+                top: 100,
+                skip: 0,
+                subscriptions: [SUBSCRIPTION_ID_DUMMY_01, SUBSCRIPTION_ID_DUMMY_03],
+              },
+            },
+          ],
+        };
+        const response: any = {
+          totalRecords: 2,
+          count: 2,
+          data: {
+            columns: [{ name: 'subscriptionId', type: 'string' }, { name: 'resources_count', type: 'integer' }],
+            rows: [[SUBSCRIPTION_ID_DUMMY_01, 300], [SUBSCRIPTION_ID_DUMMY_03, 200]],
+          },
+          facets: [],
+          resultTruncated: 'true',
+        };
+        beforeEach(() => {
+          ctx.backendSrv.datasourceRequest = () => {
+            return ctx.$q.when({ data: response, status: 200 });
+          };
+          ctx.ds = new AzureResourceGraphDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.templateSrv, ctx.$q);
+        });
+        it('Output should be table format', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].type).toBe('table');
+          });
+        });
+        it('Output should valid number of columns results', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].columns.length).toBe(2);
+          });
+        });
+        it('Output should valid column results', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].columns[0].text).toBe('subscriptionId');
+          });
+        });
+        it('Output should valid number of results', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].rows.length).toBe(2);
+          });
+        });
+        it('Output row should have valid length', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].rows[0].length).toBe(2);
+          });
+        });
+        it('Output should contain result', () => {
+          return ctx.ds.query(options).then((results: any) => {
+            expect(results.data[0].rows[1][1]).toBe(200);
           });
         });
       });

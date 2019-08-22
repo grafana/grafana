@@ -13,6 +13,34 @@
         get-options="ctrl.getSubscriptions()" on-change="ctrl.onSubscriptionChange()" css-class="min-width-12">
       </gf-form-dropdown>
     </div>
+    <div class="gf-form" ng-if="ctrl.target.queryType === 'Azure Resource Graph'">
+        <label class="gf-form-label query-keyword width-9">Subscriptions</label>
+        <div class="variable-link-wrapper" ng-init="ctrl.showSubscriptionsDropdown = false">
+          <a class="variable-value-link"  ng-click="ctrl.showSubscriptionsDropdown = ! ctrl.showSubscriptionsDropdown">
+            <span ng-if="ctrl.target.azureResourceGraph.subscriptions.indexOf('all') > -1">All Subscriptions</span>
+            <span ng-if="ctrl.target.azureResourceGraph.subscriptions.indexOf('all') === -1 && ctrl.target.azureResourceGraph.subscriptions.length > 1">Multiple Subscriptions</span>
+            <span ng-if="ctrl.target.azureResourceGraph.subscriptions.indexOf('all') === -1 && ctrl.target.azureResourceGraph.subscriptions.length === 1">
+              <span ng-repeat="subscription in ctrl.subscriptions" ng-if="ctrl.target.azureResourceGraph.subscriptions.indexOf(subscription.value) > -1 ">{{subscription.text}}</span>
+            </span>
+            <i class="fa fa-caret-down" style="font-size:12px"></i>
+          </a>
+          <div class="variable-value-dropdown" ng-if="ctrl.showSubscriptionsDropdown === true" ng-class="{'multi': true }"  style="max-height: 50px; overflow-y:auto;">
+            <div class="variable-options-wrapper">
+              <div class="variable-options-column">
+                <a class="variable-options-column-header" ng-class="{'many-selected': true }" bs-tooltip="'Click to select all'" data-placement="top"  ng-click="ctrl.updateResourceGraphSubscriptions(null, $event, true)">
+                  <span class="variable-option-icon"></span>
+                  <span ng-if="ctrl.target.azureResourceGraph.subscriptions.indexOf('all') > -1">All Subscriptions selected</span>
+                  <span ng-if="ctrl.target.azureResourceGraph.subscriptions.indexOf('all') === -1 && ctrl.target.azureResourceGraph.subscriptions.length > 0">{{ctrl.target.azureResourceGraph.subscriptions.length}} selected</span>
+                </a>
+                <a class="variable-option pointer" ng-repeat="subscription in ctrl.subscriptions" ng-class="{'selected': (ctrl.target.azureResourceGraph.subscriptions.indexOf('all') > -1) || (ctrl.target.azureResourceGraph.subscriptions.indexOf(subscription.value) > -1)  }" ng-click="ctrl.updateResourceGraphSubscriptions(subscription, $event, false)">
+                    <span class="variable-option-icon"></span>
+                    <span>{{subscription.text}}</span>
+                  </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     <div class="gf-form gf-form--grow">
       <div class="gf-form-label gf-form-label--grow"></div>
     </div>
@@ -339,7 +367,7 @@
     </div>
   </div>
 
-  <div ng-if="ctrl.target.queryType === 'Azure Resource Graph'">
+  <div ng-if="ctrl.target.queryType === 'Azure Resource Graph'" ng-click="ctrl.showSubscriptionsDropdown = false">
     <div class="gf-form-inline">
       <div class="gf-form">
           <div class="gf-form gf-form--grow">

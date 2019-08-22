@@ -62,6 +62,7 @@ export interface AzureResourceGraphQuery {
   query: string;
   top: number;
   skip: number;
+  subscriptions: string[];
 }
 
 // Azure Monitor API Types
