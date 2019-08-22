@@ -49,14 +49,11 @@ export class BigValue extends PureComponent<Props> {
 
   getDataLinksContextMenuItems = () => {
     const { links } = this.props;
-    return links
-      ? [
-          {
-            items: linkModelToContextMenuItems(links),
-            label: 'Data links',
-          },
-        ]
-      : [];
+    if (!links) {
+      return [];
+    }
+
+    return [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
   };
 
   draw() {
