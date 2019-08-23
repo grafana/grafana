@@ -254,6 +254,7 @@ export interface ExploreItemState {
   mode: ExploreMode;
 
   isLive: boolean;
+  isLivePaused: boolean;
   urlReplaced: boolean;
 }
 

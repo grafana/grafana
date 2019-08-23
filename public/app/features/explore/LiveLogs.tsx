@@ -38,6 +38,9 @@ export interface Props extends Themeable {
   logsResult?: LogsModel;
   timeZone: TimeZone;
   stopLive: () => void;
+  onPause: () => void;
+  onResume: () => void;
+  isPaused: boolean;
 }
 
 export interface State {
@@ -47,36 +50,38 @@ export interface State {
 class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement = null;
 
-  constructor(props: Props) {
-    super(props);
-    this.state = { renderCount: 0 };
-  }
-
   componentDidUpdate(prevProps: Props) {
-    const prevRows: LogRowModel[] = prevProps.logsResult ? prevProps.logsResult.rows : [];
-    const rows: LogRowModel[] = this.props.logsResult ? this.props.logsResult.rows : [];
-
-    if (prevRows !== rows) {
-      this.setState({
-        renderCount: this.state.renderCount + 1,
-      });
-    }
-
     if (this.liveEndDiv) {
+      // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
+      // default.
       this.liveEndDiv.scrollIntoView(false);
     }
   }
 
+  /**
+   * Handle pausing when user scrolls up so that we stop resetting his position to the bottom when new row arrives.
+   * We do not need to throttle it here much, adding new rows should be throttled/buffered itself in the query epics
+   * and after you pause we remove the handler and add it after you manually resume, so this should not be fired often.
+   * @param event
+   */
+  onScroll = (event: React.SyntheticEvent) => {
+    const { isPaused, onPause } = this.props;
+    const { scrollTop, clientHeight, scrollHeight } = event.currentTarget;
+    const scrolledAtTheBottom = scrollTop + clientHeight === scrollHeight;
+    if (!scrolledAtTheBottom && !isPaused) {
+      onPause();
+    }
+  };
+
   render() {
-    const { theme, timeZone } = this.props;
-    const { renderCount } = this.state;
+    const { theme, timeZone, isPaused, onPause, onResume } = this.props;
     const styles = getStyles(theme);
     const rowsToRender: LogRowModel[] = this.props.logsResult ? this.props.logsResult.rows : [];
     const showUtc = timeZone === 'utc';
 
     return (
       <>
-        <div className={cx(['logs-rows', styles.logsRowsLive])}>
+        <div onScroll={isPaused ? undefined : this.onScroll} className={cx(['logs-rows', styles.logsRowsLive])}>
           {rowsToRender.map((row: any, index) => {
             return (
               <div
@@ -108,8 +113,16 @@ class LiveLogs extends PureComponent<Props, State> {
         </div>
         <div className={cx([styles.logsRowsIndicator])}>
           <span>
-            Last line received: <ElapsedTime renderCount={renderCount} humanize={true} /> ago
+            Last line received: <ElapsedTime resetKey={this.props.logsResult} humanize={true} /> ago
           </span>
+          <LinkButton
+            onClick={isPaused ? onResume : onPause}
+            size="md"
+            variant="transparent"
+            style={{ color: theme.colors.orange }}
+          >
+            {isPaused ? 'Resume' : 'Pause'}
+          </LinkButton>
           <LinkButton
             onClick={this.props.stopLive}
             size="md"

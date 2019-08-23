@@ -30,6 +30,8 @@ import {
   queryStartAction,
   runQueriesAction,
   changeRangeAction,
+  setPausedStateAction,
+  updateTimeRangeAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import {
@@ -112,6 +114,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   supportedModes: [],
   mode: null,
   isLive: false,
+  isLivePaused: false,
   urlReplaced: false,
 });
 
@@ -190,6 +193,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         refreshInterval,
         loadingState: live ? LoadingState.Streaming : LoadingState.NotStarted,
         isLive: live,
+        // Make sure we do not start live tailing paused if we left it paused last time.
+        isLivePaused: false,
         logsResult,
       };
     },
@@ -573,6 +578,22 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         range,
         absoluteRange,
       };
+    },
+  })
+  .addMapper({
+    filter: setPausedStateAction,
+    mapper: (state, action): ExploreItemState => {
+      const { isPaused } = action.payload;
+      return {
+        ...state,
+        isLivePaused: isPaused,
+      };
+    },
+  })
+  .addMapper({
+    filter: updateTimeRangeAction,
+    mapper: (state, action): ExploreItemState => {
+      return state;
     },
   })
   .create();

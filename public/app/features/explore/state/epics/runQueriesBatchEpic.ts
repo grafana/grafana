@@ -3,7 +3,7 @@ import { Observable, Subject } from 'rxjs';
 import { mergeMap, catchError, takeUntil, filter } from 'rxjs/operators';
 import _, { isString } from 'lodash';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { DataStreamState, DataQueryResponse, DataQueryResponseData } from '@grafana/ui';
+import { DataStreamState, DataQueryResponse, DataQueryResponseData } from '@grafana/ui/src';
 
 import { LoadingState, DataFrame, AbsoluteTimeRange } from '@grafana/data';
 import { dateMath } from '@grafana/data';
@@ -25,6 +25,8 @@ import {
   limitMessageRatePayloadAction,
   stateSaveAction,
   changeRangeAction,
+  setPausedStateAction,
+  SetPausedStatePayload,
 } from '../actionTypes';
 import { ExploreId, ExploreItemState } from 'app/types';
 
@@ -83,7 +85,7 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
 
       // Create an observable per run queries action
       // Within the observable create two subscriptions
-      // First subscription: 'querySubscription' subscribes to the call to query method on datasourceinstance
+      // First subscription: 'querySubscription' subscribes to the call to query method on datasource instance
       // Second subscription: 'streamSubscription' subscribes to events from the query methods observer callback
       const observable: Observable<ActionOf<any>> = Observable.create((outerObservable: Subject<any>) => {
         const datasourceId = datasourceInstance.meta.id;
@@ -199,9 +201,13 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
             .ofType(
               runQueriesBatchAction.type,
               resetExploreAction.type,
+              // stops subscriptions if user changes data source
               updateDatasourceInstanceAction.type,
               changeRefreshIntervalAction.type,
-              clearQueriesAction.type
+              // stops subscriptions if user clears all queries
+              clearQueriesAction.type,
+              // Stops subscription if user pauses live streaming
+              setPausedStateAction.type
             )
             .pipe(
               filter(action => {
@@ -209,19 +215,20 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
                   return true; // stops all subscriptions if user navigates away
                 }
 
-                if (action.type === updateDatasourceInstanceAction.type && action.payload.exploreId === exploreId) {
-                  return true; // stops subscriptions if user changes data source
+                if (action.payload.exploreId !== exploreId) {
+                  // Filter out actions which are not for current exploreId.
+                  return false;
                 }
 
-                if (action.type === changeRefreshIntervalAction.type && action.payload.exploreId === exploreId) {
+                if (action.type === changeRefreshIntervalAction.type) {
                   return !isLive(action.payload.refreshInterval); // stops subscriptions if user changes refresh interval away from 'Live'
                 }
 
-                if (action.type === clearQueriesAction.type && action.payload.exploreId === exploreId) {
-                  return true; // stops subscriptions if user clears all queries
+                if (action.type === setPausedStateAction.type) {
+                  return (action as ActionOf<SetPausedStatePayload>).payload.isPaused;
                 }
 
-                return action.payload.exploreId === exploreId;
+                return true;
               })
             )
         )

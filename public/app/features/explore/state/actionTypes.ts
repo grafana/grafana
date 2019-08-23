@@ -268,6 +268,11 @@ export interface UpdateTimeRangePayload {
   absoluteRange?: AbsoluteTimeRange;
 }
 
+export interface SetPausedStatePayload {
+  exploreId: ExploreId;
+  isPaused: boolean;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -296,7 +301,8 @@ export const changeQueryAction = actionCreatorFactory<ChangeQueryPayload>('explo
 export const changeSizeAction = actionCreatorFactory<ChangeSizePayload>('explore/CHANGE_SIZE').create();
 
 /**
- * Change the time range of Explore. Usually called from the Timepicker or a graph interaction.
+ * Change the time range of Explore. Usually called from the Timepicker or a graph interaction. Also contains live
+ * option and so controls switch to live tailing mode.
  */
 export const changeRefreshIntervalAction = actionCreatorFactory<ChangeRefreshIntervalPayload>(
   'explore/CHANGE_REFRESH_INTERVAL'
@@ -477,6 +483,8 @@ export const limitMessageRatePayloadAction = actionCreatorFactory<LimitMessageRa
 export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explore/CHANGE_RANGE').create();
 
 export const updateTimeRangeAction = actionCreatorFactory<UpdateTimeRangePayload>('explore/UPDATE_TIMERANGE').create();
+
+export const setPausedStateAction = actionCreatorFactory<SetPausedStatePayload>('explore/SET_PAUSED_STATE').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>

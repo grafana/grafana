@@ -21,7 +21,11 @@ import { StoreState } from 'app/types';
 import { changeDedupStrategy, updateTimeRange } from './state/actions';
 import Logs from './Logs';
 import Panel from './Panel';
-import { toggleLogLevelAction, changeRefreshIntervalAction } from 'app/features/explore/state/actionTypes';
+import {
+  toggleLogLevelAction,
+  changeRefreshIntervalAction,
+  setPausedStateAction,
+} from 'app/features/explore/state/actionTypes';
 import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
@@ -51,6 +55,8 @@ interface LogsContainerProps {
   updateTimeRange: typeof updateTimeRange;
   range: TimeRange;
   absoluteRange: AbsoluteTimeRange;
+  setPausedStateAction: typeof setPausedStateAction;
+  isPaused: boolean;
 }
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -63,6 +69,16 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   onStopLive = () => {
     const { exploreId } = this.props;
     this.props.stopLive({ exploreId, refreshInterval: offOption.value });
+  };
+
+  onPause = () => {
+    const { exploreId } = this.props;
+    this.props.setPausedStateAction({ exploreId, isPaused: true });
+  };
+
+  onResume = () => {
+    const { exploreId } = this.props;
+    this.props.setPausedStateAction({ exploreId, isPaused: false });
   };
 
   handleDedupStrategyChange = (dedupStrategy: LogsDedupStrategy) => {
@@ -109,7 +125,14 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     if (isLive) {
       return (
         <Panel label="Logs" loading={false} isOpen>
-          <LiveLogsWithTheme logsResult={logsResult} timeZone={timeZone} stopLive={this.onStopLive} />
+          <LiveLogsWithTheme
+            logsResult={logsResult}
+            timeZone={timeZone}
+            stopLive={this.onStopLive}
+            isPaused={this.props.isPaused}
+            onPause={this.onPause}
+            onResume={this.onResume}
+          />
         </Panel>
       );
     }
@@ -153,6 +176,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     scanning,
     datasourceInstance,
     isLive,
+    isLivePaused,
     range,
     absoluteRange,
   } = item;
@@ -173,6 +197,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     dedupedResult,
     datasourceInstance,
     isLive,
+    isPaused: isLivePaused,
     range,
     absoluteRange,
   };
@@ -183,6 +208,7 @@ const mapDispatchToProps = {
   toggleLogLevelAction,
   stopLive: changeRefreshIntervalAction,
   updateTimeRange,
+  setPausedStateAction,
 };
 
 export default hot(module)(
