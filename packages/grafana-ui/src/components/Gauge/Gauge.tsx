@@ -77,6 +77,7 @@ const MouseCursorAddon = ({ children, cursor }: MouseCursorRenderedProps) => {
     </>
   );
 };
+
 export interface Props extends Themeable {
   height: number;
   maxValue: number;
@@ -207,14 +208,10 @@ export class Gauge extends PureComponent<Props> {
 
   getDataLinksContextMenuItems = () => {
     const { links } = this.props;
-    return links
-      ? [
-          {
-            items: linkModelToContextMenuItems(links),
-            label: 'Data links',
-          },
-        ]
-      : [];
+    if (!links) {
+      return [];
+    }
+    return [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
   };
 
   renderVisualization = (onClick?: React.MouseEventHandler<HTMLElement>, hasLinks?: boolean) => {
@@ -264,6 +261,7 @@ export class Gauge extends PureComponent<Props> {
 
   render() {
     const { links } = this.props;
+
     return (
       <div
         style={{
