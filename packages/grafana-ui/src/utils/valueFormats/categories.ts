@@ -75,6 +75,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'TFLOP/s', id: 'tflops', fn: decimalSIPrefix('FLOP/s', 4) },
       { name: 'PFLOP/s', id: 'pflops', fn: decimalSIPrefix('FLOP/s', 5) },
       { name: 'EFLOP/s', id: 'eflops', fn: decimalSIPrefix('FLOP/s', 6) },
+      { name: 'ZFLOP/s', id: 'zflops', fn: decimalSIPrefix('FLOP/s', 6) },
     ],
   },
   {
@@ -124,6 +125,9 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'gibibytes', id: 'gbytes', fn: binarySIPrefix('B', 3) },
       { name: 'tebibytes', id: 'tbytes', fn: binarySIPrefix('B', 4) },
       { name: 'pebibytes', id: 'pbytes', fn: binarySIPrefix('B', 5) },
+      { name: 'exbibytes', id: 'ebytes', fn: binarySIPrefix('B', 6) },
+      { name: 'zobibytes', id: 'zbytes', fn: binarySIPrefix('B', 7) },
+      { name: 'yobibytes', id: 'ybytes', fn: binarySIPrefix('B', 8) },
     ],
   },
   {
@@ -136,6 +140,9 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'gigabytes', id: 'decgbytes', fn: decimalSIPrefix('B', 3) },
       { name: 'terabytes', id: 'dectbytes', fn: decimalSIPrefix('B', 4) },
       { name: 'petabytes', id: 'decpbytes', fn: decimalSIPrefix('B', 5) },
+      { name: 'exabytes', id: 'decebytes', fn: decimalSIPrefix('B', 6) },
+      { name: 'zettabytes', id: 'deczbytes', fn: decimalSIPrefix('B', 7) },
+      { name: 'yottabytes', id: 'decybytes', fn: decimalSIPrefix('B', 8) },
     ],
   },
   {
@@ -153,7 +160,13 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'terabytes/sec', id: 'TBs', fn: decimalSIPrefix('Bs', 4) },
       { name: 'terabits/sec', id: 'Gbits', fn: decimalSIPrefix('bps', 4) },
       { name: 'petabytes/sec', id: 'PBs', fn: decimalSIPrefix('Bs', 5) },
-      { name: 'petabits/sec', id: 'Gbits', fn: decimalSIPrefix('bps', 5) },
+      { name: 'petabits/sec', id: 'Pbits', fn: decimalSIPrefix('bps', 5) },
+      { name: 'exabytes/sec', id: 'EBs', fn: decimalSIPrefix('Bs', 6) },
+      { name: 'exabits/sec', id: 'Ebits', fn: decimalSIPrefix('bps', 6) },
+      { name: 'zettabytes/sec', id: 'ZBs', fn: decimalSIPrefix('Bs', 7) },
+      { name: 'zettabits/sec', id: 'Zbits', fn: decimalSIPrefix('bps', 7) },
+      { name: 'yottabytes/sec', id: 'YBs', fn: decimalSIPrefix('Bs', 8) },
+      { name: 'yottabits/sec', id: 'Ybits', fn: decimalSIPrefix('bps', 8) },
     ],
   },
   {
