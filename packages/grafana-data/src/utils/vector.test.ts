@@ -28,16 +28,24 @@ describe('Check Proxy Vector', () => {
 });
 
 describe('Check Circular Vector', () => {
-  it('should support constant values', () => {
-    const buffer = [3, 2, 1, 0];
+  it('should append values', () => {
+    const buffer = [1, 2, 3];
     const v = new CircularVector(buffer);
-    expect(v.length).toEqual(4);
-    expect(v.toJSON()).toEqual([3, 2, 1, 0]);
+    expect(v.toJSON()).toEqual([1, 2, 3]);
 
     v.append(4);
-    expect(v.toJSON()).toEqual([4, 3, 2, 1]);
+    expect(v.toJSON()).toEqual([2, 3, 4]);
 
     v.append(5);
-    expect(v.toJSON()).toEqual([5, 4, 3, 2]);
+    expect(v.toJSON()).toEqual([3, 4, 5]);
+
+    v.append(6);
+    expect(v.toJSON()).toEqual([4, 5, 6]);
+
+    v.append(7);
+    expect(v.toJSON()).toEqual([5, 6, 7]);
+
+    v.append(8);
+    expect(v.toJSON()).toEqual([6, 7, 8]);
   });
 });
