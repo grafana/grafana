@@ -122,6 +122,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'kibibytes', id: 'kbytes', fn: binarySIPrefix('B', 1) },
       { name: 'mebibytes', id: 'mbytes', fn: binarySIPrefix('B', 2) },
       { name: 'gibibytes', id: 'gbytes', fn: binarySIPrefix('B', 3) },
+      { name: 'tebibytes', id: 'tbytes', fn: binarySIPrefix('B', 4) },
+      { name: 'pebibytes', id: 'pbytes', fn: binarySIPrefix('B', 5) },
     ],
   },
   {
@@ -132,6 +134,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'kilobytes', id: 'deckbytes', fn: decimalSIPrefix('B', 1) },
       { name: 'megabytes', id: 'decmbytes', fn: decimalSIPrefix('B', 2) },
       { name: 'gigabytes', id: 'decgbytes', fn: decimalSIPrefix('B', 3) },
+      { name: 'terabytes', id: 'dectbytes', fn: decimalSIPrefix('B', 4) },
+      { name: 'petabytes', id: 'decpbytes', fn: decimalSIPrefix('B', 5) },
     ],
   },
   {
@@ -146,6 +150,10 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'megabits/sec', id: 'Mbits', fn: decimalSIPrefix('bps', 2) },
       { name: 'gigabytes/sec', id: 'GBs', fn: decimalSIPrefix('Bs', 3) },
       { name: 'gigabits/sec', id: 'Gbits', fn: decimalSIPrefix('bps', 3) },
+      { name: 'terabytes/sec', id: 'TBs', fn: decimalSIPrefix('Bs', 4) },
+      { name: 'terabits/sec', id: 'Gbits', fn: decimalSIPrefix('bps', 4) },
+      { name: 'petabytes/sec', id: 'PBs', fn: decimalSIPrefix('Bs', 5) },
+      { name: 'petabits/sec', id: 'Gbits', fn: decimalSIPrefix('bps', 5) },
     ],
   },
   {
