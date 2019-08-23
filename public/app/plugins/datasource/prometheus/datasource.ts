@@ -2,11 +2,10 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import { from, of, Observable } from 'rxjs';
-import { single, map, filter, catchError } from 'rxjs/operators';
-
+import { single, filter, catchError, mergeMap } from 'rxjs/operators';
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import { dateMath } from '@grafana/data';
+import { dateMath, TimeRange, DateTime, LoadingState, AnnotationEvent } from '@grafana/data';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
@@ -14,7 +13,6 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
-
 // Types
 import { PromQuery, PromOptions, PromQueryRequest, PromContext } from './types';
 import {
@@ -30,7 +28,6 @@ import { ExploreUrlState } from 'app/types/explore';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TimeRange, DateTime, LoadingState, AnnotationEvent } from '@grafana/data';
 
 export interface PromDataQueryResponse {
   data: {
@@ -198,17 +195,30 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         .pipe(
           single(), // unsubscribes automatically after first result
           filter((response: any) => (response.cancelled ? false : true)),
-          map((response: any) => {
-            const delta = this.processResult(response, query, target, queries.length);
+          mergeMap((response: any) => {
+            const data = this.processResult(response, query, target, queries.length);
             const state: DataStreamState = {
               key: `prometheus-${target.refId}`,
-              state: query.instant ? LoadingState.Loading : LoadingState.Done,
+              state: LoadingState.Loading,
               request: options,
-              delta,
+              data,
               unsubscribe: () => undefined,
             };
 
-            return state;
+            if (query.instant) {
+              return [state];
+            }
+
+            return [
+              state,
+              {
+                key: `prometheus-${target.refId}`,
+                state: LoadingState.Done,
+                request: { ...options, requestId: 'done' },
+                data: [],
+                unsubscribe: () => {},
+              },
+            ];
           }),
           catchError(err => {
             const error = this.handleErrors(err, target);

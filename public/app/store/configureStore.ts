@@ -20,7 +20,6 @@ import { stateSaveEpic } from 'app/features/explore/state/epics/stateSaveEpic';
 import { processQueryResultsEpic } from 'app/features/explore/state/epics/processQueryResultsEpic';
 import { processQueryErrorsEpic } from 'app/features/explore/state/epics/processQueryErrorsEpic';
 import { runQueriesEpic } from 'app/features/explore/state/epics/runQueriesEpic';
-import { runQueriesBatchEpic } from 'app/features/explore/state/epics/runQueriesBatchEpic';
 import {
   DataSourceApi,
   DataQueryResponse,
@@ -41,15 +40,15 @@ import {
   dateTimeForTimeZone,
 } from '@grafana/data';
 import { Observable } from 'rxjs';
-import { getQueryResponse } from 'app/core/utils/explore';
+import { getQueryResponse, getTimeRange } from 'app/core/utils/explore';
 import { StoreState } from 'app/types/store';
 import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
 import { timeEpic } from 'app/features/explore/state/epics/timeEpic';
 import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { UserState } from 'app/types/user';
-import { getTimeRange } from 'app/core/utils/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { runRequestEpic } from '../features/explore/state/epics/runRequestEpic';
 
 const rootReducers = {
   ...sharedReducers,
@@ -74,7 +73,8 @@ export const rootEpic: any = combineEpics(
   limitMessageRateEpic,
   stateSaveEpic,
   runQueriesEpic,
-  runQueriesBatchEpic,
+  // runQueriesBatchEpic,
+  runRequestEpic,
   processQueryResultsEpic,
   processQueryErrorsEpic,
   timeEpic

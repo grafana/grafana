@@ -30,9 +30,6 @@ import {
   queryStartAction,
   runQueriesAction,
   changeRangeAction,
-} from './actionTypes';
-import { reducerFactory } from 'app/core/redux';
-import {
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
@@ -52,11 +49,14 @@ import {
   queriesImportedAction,
   updateUIStateAction,
   toggleLogLevelAction,
+  changeLoadingStateAction,
 } from './actionTypes';
+import { reducerFactory } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { PanelQueryState } from '../../dashboard/state/PanelQueryState';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -113,6 +113,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   mode: null,
   isLive: false,
   urlReplaced: false,
+  queryState: new PanelQueryState(),
 });
 
 /**
@@ -572,6 +573,16 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         range,
         absoluteRange,
+      };
+    },
+  })
+  .addMapper({
+    filter: changeLoadingStateAction,
+    mapper: (state, action): ExploreItemState => {
+      const { loadingState } = action.payload;
+      return {
+        ...state,
+        loadingState,
       };
     },
   })

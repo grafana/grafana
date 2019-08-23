@@ -34,7 +34,7 @@ export const processQueryResultsEpic: Epic<ActionOf<any>, ActionOf<any>, StoreSt
       }
 
       const result = series || delta || [];
-      const replacePreviousResults = loadingState === LoadingState.Done && series && !delta ? true : false;
+      const replacePreviousResults = loadingState === LoadingState.Done && series ? true : false;
       const resultProcessor = new ResultProcessor(state$.value.explore[exploreId], replacePreviousResults, result);
       const graphResult = resultProcessor.getGraphResult();
       const tableResult = resultProcessor.getTableResult();

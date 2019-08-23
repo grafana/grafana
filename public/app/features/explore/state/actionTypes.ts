@@ -268,6 +268,11 @@ export interface UpdateTimeRangePayload {
   absoluteRange?: AbsoluteTimeRange;
 }
 
+export interface ChangeLoadingStatePayload {
+  exploreId: ExploreId;
+  loadingState: LoadingState;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -477,6 +482,10 @@ export const limitMessageRatePayloadAction = actionCreatorFactory<LimitMessageRa
 export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explore/CHANGE_RANGE').create();
 
 export const updateTimeRangeAction = actionCreatorFactory<UpdateTimeRangePayload>('explore/UPDATE_TIMERANGE').create();
+
+export const changeLoadingStateAction = actionCreatorFactory<ChangeLoadingStatePayload>(
+  'changeLoadingStateAction'
+).create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>
