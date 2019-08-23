@@ -29,7 +29,7 @@ export class ElasticQueryBuilder {
       return queryNode;
     }
 
-    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
+    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 0 : parseInt(aggDef.settings.size, 10);
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       if (aggDef.settings.orderBy === '_term' && this.esVersion >= 60) {
@@ -343,7 +343,7 @@ export class ElasticQueryBuilder {
       });
     }
 
-    let size = 500;
+    let size = 0;
     if (queryDef.size) {
       size = queryDef.size;
     }
@@ -388,7 +388,7 @@ export class ElasticQueryBuilder {
       });
     }
 
-    query = this.documentQuery(query, 500);
+    query = this.documentQuery(query, 0);
 
     return {
       ...query,
