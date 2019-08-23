@@ -108,16 +108,28 @@ export class LinkSrv implements LinkService {
     return info;
   };
 
-  getLinkSupplier = (display: FieldDisplay): LinkModelSupplier | undefined => {
-    const links = display.field.links;
+  getLinkSupplier = (value: FieldDisplay): LinkModelSupplier | undefined => {
+    const links = value.field.links;
     if (!links || !links.length) {
       return undefined;
     }
     return {
       getLinks: (scopedVarsIgnoredForNow?: any) => {
-        // TODO build up the scopedVars with the full options in
-        // display.view!
         const scopedVars: ScopedVars = {};
+
+        // TODO, add values to scopedVars and/or pass objects to event listeners
+        if (value.view) {
+          const field = value.column ? value.view.dataFrame.fields[value.column] : undefined;
+          if (field) {
+            console.log('Full Field Info:', field);
+          }
+          if (value.row) {
+            const row = value.view.get(value.row);
+            console.log('ROW:', row);
+          }
+        } else {
+          console.log('VALUE', value);
+        }
 
         return links.map(link => {
           return this.getDataLinkUIModel(link, scopedVars);

@@ -181,15 +181,15 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             field,
             reducers: calcs, // The stats to calculate
           });
+          let sparkline: GraphSeriesValue[][] | undefined = undefined;
 
-          // Single sparkline for a field
-          const points =
-            timeColumn < 0
-              ? undefined
-              : getFlotPairs({
-                  xField: series.fields[timeColumn],
-                  yField: series.fields[i],
-                });
+          // Single sparkline for every reducer
+          if (options.sparkline && timeColumn >= 0) {
+            sparkline = getFlotPairs({
+              xField: series.fields[timeColumn],
+              yField: series.fields[i],
+            });
+          }
 
           for (const calc of calcs) {
             scopedVars[VAR_CALC] = { value: calc, text: calc };
@@ -199,7 +199,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               name,
               field: config,
               display: displayValue,
-              sparkline: points,
+              sparkline,
               view,
               column: i,
             });
@@ -224,6 +224,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     // Don't show title for single item
     values[0].display.title = undefined;
   }
+
   return values;
 };
 
