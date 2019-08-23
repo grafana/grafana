@@ -81,6 +81,7 @@ describe('linkSrv', () => {
             title: 'Any title',
             url: `/d/1?$${DataLinkBuiltInVars.keepTime}`,
           },
+          {},
           {}
         ).href
       ).toEqual('/d/1?from=now-1h&to=now');
@@ -93,6 +94,7 @@ describe('linkSrv', () => {
             title: 'Any title',
             url: `/d/1?$${DataLinkBuiltInVars.includeVars}`,
           },
+          {},
           {}
         ).href
       ).toEqual('/d/1?var-test1=val1&var-test2=val2');
@@ -110,7 +112,8 @@ describe('linkSrv', () => {
               value: 'A-series',
               text: 'A-series',
             },
-          }
+          },
+          {}
         ).href
       ).toEqual('/d/1?var-test=A-series');
     });
@@ -126,7 +129,8 @@ describe('linkSrv', () => {
               value: dataPointMock.datapoint[0],
               text: dataPointMock.datapoint[0],
             },
-          }
+          },
+          {}
         ).href
       ).toEqual('/d/1?time=1000000001');
     });

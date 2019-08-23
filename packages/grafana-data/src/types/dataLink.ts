@@ -13,10 +13,11 @@ export type LinkTarget = '_blank' | '_self';
 /**
  * Processed Link Model.  The values are ready to use
  */
-export interface LinkModel {
+export interface LinkModel<T> {
   href: string;
   title: string;
   target: LinkTarget;
+  origin: T;
 }
 
 /**
@@ -24,6 +25,6 @@ export interface LinkModel {
  *
  * TODO: ScopedVars in in GrafanaUI package!
  */
-export interface LinkModelSupplier {
-  getLinks(scopedVars?: any): LinkModel[];
+export interface LinkModelSupplier<T extends object> {
+  getLinks(scopedVars?: any): Array<LinkModel<T>>;
 }

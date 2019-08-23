@@ -2,7 +2,7 @@ import React, { PureComponent, useRef, useContext } from 'react';
 import $ from 'jquery';
 import { Threshold, DisplayValue, LinkModelSupplier } from '@grafana/data';
 
-import { getColorFromHexRgbOrName } from '../../utils';
+import { getColorFromHexRgbOrName, FieldDisplay } from '../../utils';
 import { Themeable } from '../../types';
 import { selectThemeVariant, ThemeContext } from '../../themes';
 import { WithContextMenu } from '../ContextMenu/WithContextMenu';
@@ -87,7 +87,7 @@ export interface Props extends Themeable {
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
-  links?: LinkModelSupplier; // only exists if Links Exist
+  links?: LinkModelSupplier<FieldDisplay>; // only exists if Links Exist
 }
 
 const FONT_SCALE = 1;

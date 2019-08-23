@@ -196,11 +196,15 @@ class GraphElement {
           {
             items: [
               ...dataLinks.map<ContextMenuItem>(link => {
-                const linkUiModel = this.linkSrv.getDataLinkUIModel(link, {
-                  ...this.panel.scopedVars,
-                  [DataLinkBuiltInVars.seriesName]: { value: item.series.alias, text: item.series.alias },
-                  [DataLinkBuiltInVars.valueTime]: { value: item.datapoint[0], text: item.datapoint[0] },
-                });
+                const linkUiModel = this.linkSrv.getDataLinkUIModel(
+                  link,
+                  {
+                    ...this.panel.scopedVars,
+                    [DataLinkBuiltInVars.seriesName]: { value: item.series.alias, text: item.series.alias },
+                    [DataLinkBuiltInVars.valueTime]: { value: item.datapoint[0], text: item.datapoint[0] },
+                  },
+                  item
+                );
                 return {
                   label: linkUiModel.title,
                   url: linkUiModel.href,

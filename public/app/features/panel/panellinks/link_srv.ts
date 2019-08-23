@@ -3,10 +3,8 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { VariableSuggestion, ScopedVars, VariableOrigin, DataLinkBuiltInVars, FieldDisplay } from '@grafana/ui';
-import { DataLink, LinkModelSupplier, KeyValue, deprecationWarning } from '@grafana/data';
-
-export type FieldDisplayLinkFunction = (display: FieldDisplay) => LinkModel[] | undefined;
+import { VariableSuggestion, ScopedVars, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
+import { DataLink, KeyValue, deprecationWarning, LinkModel } from '@grafana/data';
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...templateSrv.variables.map(variable => ({
@@ -39,17 +37,8 @@ export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
   },
 ];
 
-type LinkTarget = '_blank' | '_self';
-
-export interface LinkModel {
-  href: string;
-  title: string;
-  target: LinkTarget;
-}
-
 export interface LinkService {
-  getDataLinkUIModel: (link: DataLink, scopedVars: ScopedVars) => LinkModel;
-  getLinkSupplier: (field: FieldDisplay) => LinkModelSupplier | undefined;
+  getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
 }
 
 export class LinkSrv implements LinkService {
@@ -80,14 +69,15 @@ export class LinkSrv implements LinkService {
     return info;
   }
 
-  getDataLinkUIModel = (link: DataLink, scopedVars: ScopedVars) => {
+  getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
-    const info: LinkModel = {
+    const info: LinkModel<T> = {
       href: link.url,
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
+      origin,
     };
 
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
@@ -108,36 +98,6 @@ export class LinkSrv implements LinkService {
     return info;
   };
 
-  getLinkSupplier = (value: FieldDisplay): LinkModelSupplier | undefined => {
-    const links = value.field.links;
-    if (!links || !links.length) {
-      return undefined;
-    }
-    return {
-      getLinks: (scopedVarsIgnoredForNow?: any) => {
-        const scopedVars: ScopedVars = {};
-
-        // TODO, add values to scopedVars and/or pass objects to event listeners
-        if (value.view) {
-          const field = value.column ? value.view.dataFrame.fields[value.column] : undefined;
-          if (field) {
-            console.log('Full Field Info:', field);
-          }
-          if (value.row) {
-            const row = value.view.get(value.row);
-            console.log('ROW:', row);
-          }
-        } else {
-          console.log('VALUE', value);
-        }
-
-        return links.map(link => {
-          return this.getDataLinkUIModel(link, scopedVars);
-        });
-      },
-    };
-  };
-
   /**
    * getPanelLinkAnchorInfo method is left for plugins compatibility reasons
    *
@@ -145,7 +105,7 @@ export class LinkSrv implements LinkService {
    */
   getPanelLinkAnchorInfo(link: DataLink, scopedVars: ScopedVars) {
     deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDataLinkUIModel');
-    return this.getDataLinkUIModel(link, scopedVars);
+    return this.getDataLinkUIModel(link, scopedVars, {});
   }
 }
 

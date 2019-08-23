@@ -5,7 +5,7 @@ import { css } from 'emotion';
 import { DisplayValue, LinkModelSupplier } from '@grafana/data';
 
 // Utils
-import { getColorFromHexRgbOrName } from '../../utils';
+import { getColorFromHexRgbOrName, FieldDisplay } from '../../utils';
 
 // Types
 import { Themeable } from '../../types';
@@ -30,7 +30,7 @@ export interface Props extends Themeable {
   suffix?: DisplayValue;
   sparkline?: BigValueSparkline;
   backgroundColor?: string;
-  links?: LinkModelSupplier; // only exists if Links Exist
+  links?: LinkModelSupplier<FieldDisplay>; // only exists if Links Exist
 }
 
 /*

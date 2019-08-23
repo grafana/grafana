@@ -18,8 +18,8 @@ import {
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
-import { LinkSrv } from './panellinks/link_srv';
 import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
+import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
 
 export class PanelCtrl {
   panel: any;
@@ -255,31 +255,31 @@ export class PanelCtrl {
       markdown = this.error || this.panel.description || '';
     }
 
-    const linkSrv: LinkSrv = this.$injector.get('linkSrv');
     const templateSrv: TemplateSrv = this.$injector.get('templateSrv');
     const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     let html = '<div class="markdown-html panel-info-content">';
 
     const md = renderMarkdown(interpolatedMarkdown);
     html += config.disableSanitizeHtml ? md : sanitize(md);
+    const links = this.panel.links && getPanelLinksSupplier(this.panel).getLinks();
 
-    if (this.panel.links && this.panel.links.length > 0) {
+    if (links && links.length > 0) {
       html += '<ul class="panel-info-corner-links">';
-      for (const link of this.panel.links) {
-        const info = linkSrv.getDataLinkUIModel(link, this.panel.scopedVars);
+      for (const link of links) {
         html +=
           '<li><a class="panel-menu-link" href="' +
-          escapeHtml(info.href) +
+          escapeHtml(link.href) +
           '" target="' +
-          escapeHtml(info.target) +
+          escapeHtml(link.target) +
           '">' +
-          escapeHtml(info.title) +
+          escapeHtml(link.title) +
           '</a></li>';
       }
       html += '</ul>';
     }
 
     html += '</div>';
+
     return html;
   }
 

@@ -4,7 +4,7 @@ import tinycolor from 'tinycolor2';
 import { Threshold, TimeSeriesValue, getActiveThreshold, DisplayValue, LinkModelSupplier } from '@grafana/data';
 
 // Utils
-import { getColorFromHexRgbOrName } from '../../utils';
+import { getColorFromHexRgbOrName, FieldDisplay } from '../../utils';
 
 // Types
 import { Themeable, VizOrientation } from '../../types';
@@ -26,7 +26,7 @@ export interface Props extends Themeable {
   orientation: VizOrientation;
   itemSpacing?: number;
   displayMode: 'basic' | 'lcd' | 'gradient';
-  links?: LinkModelSupplier; // only exists if Links Exist
+  links?: LinkModelSupplier<FieldDisplay>; // only exists if Links Exist
 }
 
 export class BarGauge extends PureComponent<Props> {

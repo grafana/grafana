@@ -10,7 +10,7 @@ import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay } from '@gra
 // Types
 import { BarGaugeOptions } from './types';
 import { PanelProps } from '@grafana/ui';
-import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
+import { getLinkSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
@@ -29,7 +29,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         displayMode={options.displayMode}
         minValue={field.min}
         maxValue={field.max}
-        links={getLinkSrv().getLinkSupplier(value)}
+        links={getLinkSupplier(value)}
       />
     );
   };

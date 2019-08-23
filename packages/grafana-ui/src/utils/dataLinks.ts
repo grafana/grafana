@@ -11,13 +11,17 @@ export const DataLinkBuiltInVars = {
 /**
  * Delays creating links until we need to open the ContextMenu
  */
-export const linkModelToContextMenuItems: (links: LinkModelSupplier) => ContextMenuItem[] = links => {
+export const linkModelToContextMenuItems: (links: LinkModelSupplier<any>) => ContextMenuItem[] = links => {
   return links.getLinks().map(link => {
     return {
       label: link.title,
       // TODO: rename to href
       url: link.href,
       target: link.target,
+      onClick: e => {
+        console.log('LINK:', link);
+        console.log('LINK ORIGIN:', link.origin);
+      },
     };
   });
 };
