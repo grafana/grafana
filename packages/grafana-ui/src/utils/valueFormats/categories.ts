@@ -75,7 +75,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'TFLOP/s', id: 'tflops', fn: decimalSIPrefix('FLOP/s', 4) },
       { name: 'PFLOP/s', id: 'pflops', fn: decimalSIPrefix('FLOP/s', 5) },
       { name: 'EFLOP/s', id: 'eflops', fn: decimalSIPrefix('FLOP/s', 6) },
-      { name: 'ZFLOP/s', id: 'zflops', fn: decimalSIPrefix('FLOP/s', 6) },
+      { name: 'ZFLOP/s', id: 'zflops', fn: decimalSIPrefix('FLOP/s', 7) },
+      { name: 'YFLOP/s', id: 'yflops', fn: decimalSIPrefix('FLOP/s', 8) },
     ],
   },
   {
