@@ -29,6 +29,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         displayMode={options.displayMode}
         minValue={field.min}
         maxValue={field.max}
+        links={getLinkSrv().getLinkSupplier(value)}
       />
     );
   };
@@ -40,7 +41,6 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
-      linker: getLinkSrv().fieldDisplayLinker,
     });
   };
 

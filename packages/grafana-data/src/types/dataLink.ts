@@ -18,3 +18,12 @@ export interface LinkModel {
   title: string;
   target: LinkTarget;
 }
+
+/**
+ * Provides a way to produce links on demand
+ *
+ * TODO: ScopedVars in in GrafanaUI package!
+ */
+export interface LinkModelSupplier {
+  getLinks(scopedVars?: any): LinkModel[];
+}

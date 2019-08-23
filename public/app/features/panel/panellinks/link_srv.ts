@@ -3,15 +3,10 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import {
-  VariableSuggestion,
-  ScopedVars,
-  VariableOrigin,
-  FieldDisplayLinkFunction,
-  FieldDisplayLinkOptions,
-  DataLinkBuiltInVars,
-} from '@grafana/ui';
-import { DataLink, KeyValue, deprecationWarning } from '@grafana/data';
+import { VariableSuggestion, ScopedVars, VariableOrigin, DataLinkBuiltInVars, FieldDisplay } from '@grafana/ui';
+import { DataLink, LinkModelSupplier, KeyValue, deprecationWarning } from '@grafana/data';
+
+export type FieldDisplayLinkFunction = (display: FieldDisplay) => LinkModel[] | undefined;
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...templateSrv.variables.map(variable => ({
@@ -54,7 +49,7 @@ export interface LinkModel {
 
 export interface LinkService {
   getDataLinkUIModel: (link: DataLink, scopedVars: ScopedVars) => LinkModel;
-  fieldDisplayLinker: FieldDisplayLinkFunction;
+  getLinkSupplier: (field: FieldDisplay) => LinkModelSupplier | undefined;
 }
 
 export class LinkSrv implements LinkService {
@@ -113,6 +108,24 @@ export class LinkSrv implements LinkService {
     return info;
   };
 
+  getLinkSupplier = (display: FieldDisplay): LinkModelSupplier | undefined => {
+    const links = display.field.links;
+    if (!links || !links.length) {
+      return undefined;
+    }
+    return {
+      getLinks: (scopedVarsIgnoredForNow?: any) => {
+        // TODO build up the scopedVars with the full options in
+        // display.view!
+        const scopedVars: ScopedVars = {};
+
+        return links.map(link => {
+          return this.getDataLinkUIModel(link, scopedVars);
+        });
+      },
+    };
+  };
+
   /**
    * getPanelLinkAnchorInfo method is left for plugins compatibility reasons
    *
@@ -122,15 +135,6 @@ export class LinkSrv implements LinkService {
     deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDataLinkUIModel');
     return this.getDataLinkUIModel(link, scopedVars);
   }
-
-  fieldDisplayLinker = (options: FieldDisplayLinkOptions): LinkModel[] | undefined => {
-    if (!options.links || !options.links.length) {
-      return undefined;
-    }
-    return options.links.map(link => {
-      return this.getDataLinkUIModel(link, options.scopedVars);
-    });
-  };
 }
 
 let singleton: LinkService;

@@ -1,14 +1,12 @@
 import {
   ReducerID,
   reduceField,
-  Field,
   FieldType,
   DataFrame,
   FieldConfig,
   DisplayValue,
   GraphSeriesValue,
-  DataLink,
-  LinkModel,
+  DataFrameView,
 } from '@grafana/data';
 
 import toNumber from 'lodash/toNumber';
@@ -63,27 +61,21 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
 }
 
 export interface FieldDisplay {
-  name: string; // NOT title!
+  name: string; // The field name (title is in display)
   field: FieldConfig;
   display: DisplayValue;
   sparkline?: GraphSeriesValue[][];
-  links?: LinkModel[]; // Links with the values escaped
-}
 
-export interface FieldDisplayLinkOptions {
-  links: DataLink[];
-  field: Field; // Includes config.links
-  value: DisplayValue; // Formatted display value
-  scopedVars: ScopedVars;
+  // Expose to the original values for delayed inspection (DataLinks etc)
+  view?: DataFrameView;
+  column?: number; // The field column index
+  row?: number; // only filled in when the value is from a row (ie, not a reduction)
 }
-
-export type FieldDisplayLinkFunction = (options: FieldDisplayLinkOptions) => LinkModel[] | undefined;
 
 export interface GetFieldDisplayValuesOptions {
   data?: DataFrame[];
   fieldOptions: FieldDisplayOptions;
   replaceVariables: InterpolateFunction;
-  linker: FieldDisplayLinkFunction;
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
 }
@@ -102,7 +94,7 @@ const getTimeColumnIdx = (series: DataFrame) => {
 };
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { data, replaceVariables, fieldOptions, linker } = options;
+  const { data, replaceVariables, fieldOptions } = options;
   const { defaults, override } = fieldOptions;
   const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
 
@@ -126,6 +118,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       scopedVars[DataLinkBuiltInVars.seriesName] = { text: 'Series', value: series.name };
 
       const timeColumn = getTimeColumnIdx(series);
+      const view = new DataFrameView(series);
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
         const field = series.fields[i];
@@ -150,7 +143,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
         const title = config.title ? config.title : defaultTitle;
 
-        // Show all number fields
+        // Show all rows
         if (fieldOptions.values) {
           const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
 
@@ -173,21 +166,9 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               name,
               field: config,
               display: displayValue,
-
-              links: config.links
-                ? linker({
-                    links: config.links,
-                    field,
-                    value: displayValue,
-                    scopedVars: {
-                      ...scopedVars,
-                      [DataLinkBuiltInVars.valueTime]: {
-                        value: timeColumn < 0 ? undefined : series.fields[timeColumn].values.get(j),
-                        text: 'Value time',
-                      },
-                    },
-                  })
-                : undefined,
+              view,
+              column: i,
+              row: j,
             });
 
             if (values.length >= limit) {
@@ -219,14 +200,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               field: config,
               display: displayValue,
               sparkline: points,
-              links: config.links
-                ? linker({
-                    links: config.links,
-                    field,
-                    value: displayValue,
-                    scopedVars,
-                  })
-                : undefined,
+              view,
+              column: i,
             });
           }
         }

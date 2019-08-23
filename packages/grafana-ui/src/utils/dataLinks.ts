@@ -1,5 +1,5 @@
 import { ContextMenuItem } from '../components/ContextMenu/ContextMenu';
-import { LinkModel } from '@grafana/data';
+import { LinkModelSupplier } from '@grafana/data';
 
 export const DataLinkBuiltInVars = {
   keepTime: '__url_time_range',
@@ -8,8 +8,11 @@ export const DataLinkBuiltInVars = {
   valueTime: '__value_time',
 };
 
-export const linkModelToContextMenuItems: (links: LinkModel[]) => ContextMenuItem[] = links => {
-  return links.map(link => {
+/**
+ * Delays creating links until we need to open the ContextMenu
+ */
+export const linkModelToContextMenuItems: (links: LinkModelSupplier) => ContextMenuItem[] = links => {
+  return links.getLinks().map(link => {
     return {
       label: link.title,
       // TODO: rename to href

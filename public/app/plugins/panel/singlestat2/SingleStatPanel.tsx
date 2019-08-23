@@ -31,7 +31,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
         width={width}
         height={height}
         theme={config.theme}
-        links={value.links}
+        links={getLinkSrv().getLinkSupplier(value)}
       />
     );
   };
@@ -44,7 +44,6 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
       theme: config.theme,
       data: data.series,
       sparkline: options.sparkline.show,
-      linker: getLinkSrv().fieldDisplayLinker,
     });
   };
 

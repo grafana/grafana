@@ -1,6 +1,6 @@
 import React, { PureComponent, useRef, useContext } from 'react';
 import $ from 'jquery';
-import { Threshold, DisplayValue, LinkModel } from '@grafana/data';
+import { Threshold, DisplayValue, LinkModelSupplier } from '@grafana/data';
 
 import { getColorFromHexRgbOrName } from '../../utils';
 import { Themeable } from '../../types';
@@ -86,7 +86,7 @@ export interface Props extends Themeable {
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
-  links?: LinkModel[];
+  links?: LinkModelSupplier; // only exists if Links Exist
 }
 
 const FONT_SCALE = 1;
@@ -275,7 +275,7 @@ export class Gauge extends PureComponent<Props> {
           overflow: 'hidden',
         }}
       >
-        {links && links.length ? (
+        {links ? (
           <WithContextMenu getContextMenuItems={this.getDataLinksContextMenuItems}>
             {({ openMenu }) => this.renderVisualization(openMenu, true)}
           </WithContextMenu>

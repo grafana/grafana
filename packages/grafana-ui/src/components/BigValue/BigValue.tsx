@@ -2,7 +2,7 @@
 import React, { PureComponent, ReactNode, CSSProperties } from 'react';
 import $ from 'jquery';
 import { css } from 'emotion';
-import { DisplayValue, LinkModel } from '@grafana/data';
+import { DisplayValue, LinkModelSupplier } from '@grafana/data';
 
 // Utils
 import { getColorFromHexRgbOrName } from '../../utils';
@@ -30,7 +30,7 @@ export interface Props extends Themeable {
   suffix?: DisplayValue;
   sparkline?: BigValueSparkline;
   backgroundColor?: string;
-  links?: LinkModel[];
+  links?: LinkModelSupplier; // only exists if Links Exist
 }
 
 /*
