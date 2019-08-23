@@ -58,10 +58,12 @@ The datasource can access metrics from four different services. You can configur
    - Application ID
    - API Key
 
-7. Paste these two items into the appropriate fields in the Application Insights API Details section:
+7. If you using Azure Resource Graph, then it will use the same credentials specified in Azure Monitor service. Default subscription chosen will be ignored; Instead all subscriptions will be used to query.
+
+8. Paste these two items into the appropriate fields in the Application Insights API Details section:
    {{< docs-imagebox img="/img/docs/v62/config_2_app_insights_api_details.png" class="docs-image--no-shadow" caption="Application Insights Configuration Details" >}}
 
-8. Test that the configuration details are correct by clicking on the "Save & Test" button:
+9. Test that the configuration details are correct by clicking on the "Save & Test" button:
    {{< docs-imagebox img="/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
 
 Alternatively on step 4 if creating a new Azure Active Directory App, use the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest):
@@ -72,7 +74,7 @@ az ad sp create-for-rbac -n "http://localhost:3000"
 
 ## Choose a Service
 
-In the query editor for a panel, after choosing your Azure Monitor datasource, the first option is to choose a service. There are three options here:
+In the query editor for a panel, after choosing your Azure Monitor datasource, the first option is to choose a service. There are four options here:
 
 - `Azure Monitor`
 - `Application Insights`
