@@ -82,28 +82,32 @@ func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
 // searchJSONForEmail searches the provided JSON response for an e-mail address
 // using the configured e-mail attribute path associated with the generic OAuth
 // provider.
-// Returns a non-nil error if the provided JSON response could not be decoded,
-// searched, or if an e-mail address is not found.
-func (s *SocialGenericOAuth) searchJSONForEmail(data []byte) (email string, err error) {
+// Returns an empty string if an e-mail address is not found.
+func (s *SocialGenericOAuth) searchJSONForEmail(data []byte) string {
 	if s.emailAttributePath == "" {
-		return "", errors.New("No e-mail attribute path specified")
+		s.log.Error("No e-mail attribute path specified")
+		return ""
 	}
 	if len(data) == 0 {
-		return "", errors.New("Empty user info JSON response provided")
+		s.log.Error("Empty user info JSON response provided")
+		return ""
 	}
 	var buf interface{}
 	if err := json.Unmarshal(data, &buf); err != nil {
-		return "", err
+		s.log.Error("Failed to unmarshal user info JSON response", "err", err.Error())
+		return ""
 	}
 	val, err := jmespath.Search(s.emailAttributePath, buf)
 	if err != nil {
-		return "", err
+		s.log.Error("Failed to search user info JSON response with provided path", "emailAttributePath", s.emailAttributePath, "err", err.Error())
+		return ""
 	}
 	strVal, ok := val.(string)
 	if ok {
-		return strVal, nil
+		return strVal
 	}
-	return "", fmt.Errorf("E-mail not found when searching JSON with provided path: %s", s.emailAttributePath)
+	s.log.Error("E-mail not found when searching JSON with provided path", "emailAttributePath", s.emailAttributePath)
+	return ""
 }
 
 func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
@@ -226,8 +230,8 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 	name := s.extractName(&data)
 
-	email, err := s.extractEmail(&data, rawUserInfoResponse.Body)
-	if err != nil {
+	email := s.extractEmail(&data, rawUserInfoResponse.Body)
+	if email == "" {
 		email, err = s.FetchPrivateEmail(client)
 		if err != nil {
 			return nil, err
@@ -273,13 +277,13 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 		return false
 	}
 
-	err = json.Unmarshal(payload, &data)
+	err = json.Unmarshal(payload, data)
 	if err != nil {
 		s.log.Error("Error decoding id_token JSON", "payload", string(payload), "err", err)
 		return false
 	}
 
-	if _, err := s.extractEmail(data, payload); err != nil {
+	if email := s.extractEmail(data, payload); email == "" {
 		s.log.Debug("No email found in id_token", "json", string(payload), "data", data)
 		return false
 	}
@@ -288,33 +292,32 @@ func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Toke
 	return true
 }
 
-func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byte) (string, error) {
+func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson, userInfoResp []byte) string {
 	if data.Email != "" {
-		return data.Email, nil
+		return data.Email
 	}
 
-	email, err := s.searchJSONForEmail(userInfoResp)
-	if err == nil {
-		return email, nil
-	}
 	if s.emailAttributePath != "" {
-		s.log.Debug("Failed to search user info JSON response for e-mail", "err", err.Error())
+		email := s.searchJSONForEmail(userInfoResp)
+		if email != "" {
+			return email
+		}
 	}
 
 	emails, ok := data.Attributes[s.emailAttributeName]
 	if ok && len(emails) != 0 {
-		return emails[0], nil
+		return emails[0]
 	}
 
 	if data.Upn != "" {
 		emailAddr, emailErr := mail.ParseAddress(data.Upn)
 		if emailErr == nil {
-			return emailAddr.Address, nil
+			return emailAddr.Address
 		}
 		s.log.Debug("Failed to parse e-mail address", "email", emailAddr, "err", emailErr.Error())
 	}
 
-	return "", errors.New("Failed to extract e-mail address from user info response")
+	return ""
 }
 
 func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson, email string) string {

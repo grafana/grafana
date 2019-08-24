@@ -1,41 +1,42 @@
 package social
 
 import (
+	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
 )
 
 func TestSearchJSONForEmail(t *testing.T) {
 	Convey("Given a generic OAuth provider", t, func() {
-		provider := SocialGenericOAuth{}
+		provider := SocialGenericOAuth{
+			SocialBase: &SocialBase{
+				log: log.New("generic_oauth_test"),
+			},
+		}
 
 		tests := []struct {
 			Name                 string
 			UserInfoJSONResponse []byte
 			EmailAttributePath   string
 			ExpectedResult       string
-			ErrorExpected        bool
 		}{
 			{
 				Name:                 "Given an invalid user info JSON response",
 				UserInfoJSONResponse: []byte("{"),
 				EmailAttributePath:   "attributes.email",
 				ExpectedResult:       "",
-				ErrorExpected:        true,
 			},
 			{
 				Name:                 "Given an empty user info JSON response and empty JMES path",
 				UserInfoJSONResponse: []byte{},
 				EmailAttributePath:   "",
 				ExpectedResult:       "",
-				ErrorExpected:        true,
 			},
 			{
 				Name:                 "Given an empty user info JSON response and valid JMES path",
 				UserInfoJSONResponse: []byte{},
 				EmailAttributePath:   "attributes.email",
 				ExpectedResult:       "",
-				ErrorExpected:        true,
 			},
 			{
 				Name: "Given a simple user info JSON response and valid JMES path",
@@ -77,13 +78,8 @@ func TestSearchJSONForEmail(t *testing.T) {
 		for _, test := range tests {
 			provider.emailAttributePath = test.EmailAttributePath
 			Convey(test.Name, func() {
-				actualResult, err := provider.searchJSONForEmail(test.UserInfoJSONResponse)
+				actualResult := provider.searchJSONForEmail(test.UserInfoJSONResponse)
 				So(actualResult, ShouldEqual, test.ExpectedResult)
-				if test.ErrorExpected {
-					So(err, ShouldNotBeNil)
-				} else {
-					So(err, ShouldBeNil)
-				}
 			})
 		}
 	})
