@@ -50,7 +50,6 @@ import { UserState } from 'app/types/user';
 import { getTimeRange } from 'app/core/utils/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { setPausedStateEpic } from '../features/explore/state/epics/setPausedStateEpic';
 
 const rootReducers = {
   ...sharedReducers,
@@ -78,8 +77,7 @@ export const rootEpic: any = combineEpics(
   runQueriesBatchEpic,
   processQueryResultsEpic,
   processQueryErrorsEpic,
-  timeEpic,
-  setPausedStateEpic
+  timeEpic
 );
 
 export interface EpicDependencies {
