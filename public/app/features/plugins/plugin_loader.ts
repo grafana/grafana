@@ -199,7 +199,7 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   });
 }
 
-import { getPanelPluginNotFound } from '../dashboard/dashgrid/PanelPluginNotFound';
+import { getPanelPluginNotFound, getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
 
 interface PanelCache {
   [key: string]: PanelPlugin;
@@ -233,7 +233,7 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
     })
     .catch(err => {
       // TODO, maybe a different error plugin
-      console.log('Error loading panel plugin', err);
-      return getPanelPluginNotFound(id);
+      console.warn('Error loading panel plugin: ' + id, err);
+      return getPanelPluginLoadError(meta, err);
     });
 }

@@ -2,12 +2,13 @@ import _ from 'lodash';
 import React, { Context } from 'react';
 import ReactDOM from 'react-dom';
 // @ts-ignore
-import { Change, Value } from 'slate';
+import { Change, Range, Value, Block } from 'slate';
 // @ts-ignore
 import { Editor } from 'slate-react';
 // @ts-ignore
 import Plain from 'slate-plain-serializer';
 import classnames from 'classnames';
+import { isKeyHotkey } from 'is-hotkey';
 
 import { CompletionItem, CompletionItemGroup, TypeaheadOutput } from 'app/types/explore';
 
@@ -19,6 +20,14 @@ import { makeFragment, makeValue } from '@grafana/ui';
 
 export const TYPEAHEAD_DEBOUNCE = 100;
 export const HIGHLIGHT_WAIT = 500;
+const SLATE_TAB = '  ';
+const isIndentLeftHotkey = isKeyHotkey('mod+[');
+const isIndentRightHotkey = isKeyHotkey('mod+]');
+const isSelectLeftHotkey = isKeyHotkey('shift+left');
+const isSelectRightHotkey = isKeyHotkey('shift+right');
+const isSelectUpHotkey = isKeyHotkey('shift+up');
+const isSelectDownHotkey = isKeyHotkey('shift+down');
+const isSelectLineHotkey = isKeyHotkey('mod+l');
 
 function getSuggestionByIndex(suggestions: CompletionItemGroup[], index: number): CompletionItem {
   // Flatten suggestion groups
@@ -305,8 +314,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       .focus();
   }
 
-  handleEnterAndTabKey = (event: KeyboardEvent, change: Change) => {
-    const { typeaheadIndex, suggestions } = this.state;
+  handleEnterKey = (event: KeyboardEvent, change: Change) => {
     event.preventDefault();
 
     if (event.shiftKey) {
@@ -315,7 +323,16 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     } else if (!this.menuEl) {
       this.executeOnChangeAndRunQueries();
       return true;
-    } else if (!suggestions || suggestions.length === 0) {
+    } else {
+      return this.selectSuggestion(change);
+    }
+  };
+
+  selectSuggestion = (change: Change) => {
+    const { typeaheadIndex, suggestions } = this.state;
+    event.preventDefault();
+
+    if (!suggestions || suggestions.length === 0) {
       return undefined;
     }
 
@@ -326,8 +343,131 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     return insertTextOperation ? true : undefined;
   };
 
+  handleTabKey = (change: Change): void => {
+    const {
+      startBlock,
+      endBlock,
+      selection: { startOffset, startKey, endOffset, endKey },
+    } = change.value;
+
+    if (this.menuEl) {
+      this.selectSuggestion(change);
+      return;
+    }
+
+    const first = startBlock.getFirstText();
+
+    const startBlockIsSelected =
+      startOffset === 0 && startKey === first.key && endOffset === first.text.length && endKey === first.key;
+
+    if (startBlockIsSelected || !startBlock.equals(endBlock)) {
+      this.handleIndent(change, 'right');
+    } else {
+      change.insertText(SLATE_TAB);
+    }
+  };
+
+  handleIndent = (change: Change, indentDirection: 'left' | 'right') => {
+    const curSelection = change.value.selection;
+    const selectedBlocks = change.value.document.getBlocksAtRange(curSelection);
+
+    if (indentDirection === 'left') {
+      for (const block of selectedBlocks) {
+        const blockWhitespace = block.text.length - block.text.trimLeft().length;
+
+        const rangeProperties = {
+          anchorKey: block.getFirstText().key,
+          anchorOffset: blockWhitespace,
+          focusKey: block.getFirstText().key,
+          focusOffset: blockWhitespace,
+        };
+
+        // @ts-ignore
+        const whitespaceToDelete = Range.create(rangeProperties);
+
+        change.deleteBackwardAtRange(whitespaceToDelete, Math.min(SLATE_TAB.length, blockWhitespace));
+      }
+    } else {
+      const { startText } = change.value;
+      const textBeforeCaret = startText.text.slice(0, curSelection.startOffset);
+      const isWhiteSpace = /^\s*$/.test(textBeforeCaret);
+
+      for (const block of selectedBlocks) {
+        change.insertTextByKey(block.getFirstText().key, 0, SLATE_TAB);
+      }
+
+      if (isWhiteSpace) {
+        change.moveStart(-SLATE_TAB.length);
+      }
+    }
+  };
+
+  handleSelectVertical = (change: Change, direction: 'up' | 'down') => {
+    const { focusBlock } = change.value;
+    const adjacentBlock =
+      direction === 'up'
+        ? change.value.document.getPreviousBlock(focusBlock.key)
+        : change.value.document.getNextBlock(focusBlock.key);
+
+    if (!adjacentBlock) {
+      return true;
+    }
+    const adjacentText = adjacentBlock.getFirstText();
+    change.moveFocusTo(adjacentText.key, Math.min(change.value.anchorOffset, adjacentText.text.length)).focus();
+    return true;
+  };
+
+  handleSelectUp = (change: Change) => this.handleSelectVertical(change, 'up');
+
+  handleSelectDown = (change: Change) => this.handleSelectVertical(change, 'down');
+
   onKeyDown = (event: KeyboardEvent, change: Change) => {
     const { typeaheadIndex } = this.state;
+
+    // Shortcuts
+    if (isIndentLeftHotkey(event)) {
+      event.preventDefault();
+      this.handleIndent(change, 'left');
+      return true;
+    } else if (isIndentRightHotkey(event)) {
+      event.preventDefault();
+      this.handleIndent(change, 'right');
+      return true;
+    } else if (isSelectLeftHotkey(event)) {
+      event.preventDefault();
+      if (change.value.focusOffset > 0) {
+        change.moveFocus(-1);
+      }
+      return true;
+    } else if (isSelectRightHotkey(event)) {
+      event.preventDefault();
+      if (change.value.focusOffset < change.value.startText.text.length) {
+        change.moveFocus(1);
+      }
+      return true;
+    } else if (isSelectUpHotkey(event)) {
+      event.preventDefault();
+      this.handleSelectUp(change);
+      return true;
+    } else if (isSelectDownHotkey(event)) {
+      event.preventDefault();
+      this.handleSelectDown(change);
+      return true;
+    } else if (isSelectLineHotkey(event)) {
+      event.preventDefault();
+      const { focusBlock, document } = change.value;
+
+      change.moveAnchorToStartOfBlock(focusBlock.key);
+
+      const nextBlock = document.getNextBlock(focusBlock.key);
+      if (nextBlock) {
+        change.moveFocusToStartOfNextBlock();
+      } else {
+        change.moveFocusToEndOfText();
+      }
+
+      return true;
+    }
 
     switch (event.key) {
       case 'Escape': {
@@ -348,10 +488,13 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
         }
         break;
       }
+
       case 'Enter':
+        return this.handleEnterKey(event, change);
+
       case 'Tab': {
-        return this.handleEnterAndTabKey(event, change);
-        break;
+        event.preventDefault();
+        return this.handleTabKey(change);
       }
 
       case 'ArrowDown': {
@@ -476,10 +619,32 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     );
   };
 
+  handleCopy = (event: ClipboardEvent, change: Editor) => {
+    event.preventDefault();
+    const selectedBlocks = change.value.document.getBlocksAtRange(change.value.selection);
+    event.clipboardData.setData('Text', selectedBlocks.map((block: Block) => block.text).join('\n'));
+
+    return true;
+  };
+
   handlePaste = (event: ClipboardEvent, change: Editor) => {
+    event.preventDefault();
     const pastedValue = event.clipboardData.getData('Text');
-    const newValue = change.value.change().insertText(pastedValue);
-    this.onChange(newValue);
+    const lines = pastedValue.split('\n');
+
+    if (lines.length) {
+      change.insertText(lines[0]);
+      for (const line of lines.slice(1)) {
+        change.splitBlock().insertText(line);
+      }
+    }
+
+    return true;
+  };
+
+  handleCut = (event: ClipboardEvent, change: Editor) => {
+    this.handleCopy(event, change);
+    change.deleteAtRange(change.value.selection);
 
     return true;
   };
@@ -499,7 +664,9 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
             onBlur={this.handleBlur}
             onKeyDown={this.onKeyDown}
             onChange={this.onChange}
+            onCopy={this.handleCopy}
             onPaste={this.handlePaste}
+            onCut={this.handleCut}
             placeholder={this.props.placeholder}
             plugins={this.plugins}
             spellCheck={false}
