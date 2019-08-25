@@ -1,12 +1,10 @@
 import { ActionsObservable, Epic } from 'redux-observable';
 import { Observable, Subject } from 'rxjs';
 import { mergeMap, catchError, takeUntil, filter } from 'rxjs/operators';
-import _, { isString } from 'lodash';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { DataStreamState, DataQueryResponse, DataQueryResponseData } from '@grafana/ui/src';
 
-import { LoadingState, DataFrame, AbsoluteTimeRange } from '@grafana/data';
-import { dateMath } from '@grafana/data';
+import { LoadingState, DataFrame } from '@grafana/data';
 
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { StoreState } from 'app/types/store';
@@ -24,9 +22,6 @@ import {
   queryStartAction,
   limitMessageRatePayloadAction,
   stateSaveAction,
-  changeRangeAction,
-  setPausedStateAction,
-  SetPausedStatePayload,
 } from '../actionTypes';
 import { ExploreId, ExploreItemState } from 'app/types';
 
@@ -117,26 +112,6 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
             }
 
             if (state === LoadingState.Streaming) {
-              if (event.request && event.request.range) {
-                let newRange = event.request.range;
-                let absoluteRange: AbsoluteTimeRange = {
-                  from: newRange.from.valueOf(),
-                  to: newRange.to.valueOf(),
-                };
-                if (isString(newRange.raw.from)) {
-                  newRange = {
-                    from: dateMath.parse(newRange.raw.from, false),
-                    to: dateMath.parse(newRange.raw.to, true),
-                    raw: newRange.raw,
-                  };
-                  absoluteRange = {
-                    from: newRange.from.valueOf(),
-                    to: newRange.to.valueOf(),
-                  };
-                }
-                outerObservable.next(changeRangeAction({ exploreId, range: newRange, absoluteRange }));
-              }
-
               outerObservable.next(
                 limitMessageRatePayloadAction({
                   exploreId,
