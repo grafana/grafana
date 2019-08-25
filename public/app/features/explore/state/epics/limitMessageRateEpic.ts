@@ -13,27 +13,30 @@ import {
   ProcessQueryResultsPayload,
 } from '../actionTypes';
 import { EpicDependencies } from 'app/store/configureStore';
+import { NUMBER_OF_ROWS_SHOWN } from '../../utils/ResultProcessor';
 
 /**
  * Epic that tries to deal with performance problems of showing stream with too much through put. In live tail right now
- * we show max 1000 lines of logs, so if there is high through put there is not point in passing on too much data anyway
- * and also too high refresh rate on rendering would slow down all the interactions.
+ * we show only fixed max number of rows, so if there is high through put there is not point in passing on too much data
+ * anyway and also too high refresh rate on rendering would slow down all the interactions.
  *
  * Right now this tries to buffer the messages in some time frame while capping the buffer and throwing away excess
  * messages that we would not render anyway.
  *
- * TODO: Ideally this would be somehow adaptive, we probably can append single lines in bit higher refresh rate than if
- * we have to render 1000 lines every few milliseconds for example.
- *
- * @param action$
+ * Ideally this would be somehow adaptive, we probably can append single lines in bit higher refresh rate than if
+ * we have to render 1000 lines every few milliseconds for example. But 500mills is probably enough refresh rate for
+ * this.
  */
-export const limitMessageRateEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDependencies> = action$ => {
-  return action$.ofType(limitMessageRatePayloadAction.type).pipe(
-    bufferTime(2000),
+export const limitMessageRateEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState, EpicDependencies> = (
+  action$,
+  state$
+) => {
+  const buffered$ = action$.ofType(limitMessageRatePayloadAction.type).pipe(bufferTime(500));
+  return buffered$.pipe(
     mergeMap((actions: Array<ActionOf<LimitMessageRatePayload>>) => {
       // There can be two different live tailing windows so need to split and group the messages accordingly
       const grouped = groupBy(actions, (action: ActionOf<LimitMessageRatePayload>) => action.payload.exploreId);
-      const resultActions = values(grouped).map(mapToProcessQueryResultsAction);
+      const resultActions = values(grouped).map(mapToProcessQueryResultsActionWithCap(NUMBER_OF_ROWS_SHOWN));
       return from(resultActions);
     })
   );
@@ -42,16 +45,14 @@ export const limitMessageRateEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState
 /**
  * Map actions to processQueryResultsAction, while trying to imperfectly cap the number of rows, passed on to the final
  * processing.
- * @param actions
  */
-const mapToProcessQueryResultsAction = (
+const mapToProcessQueryResultsActionWithCap = (cap: number) => (
   actions: Array<ActionOf<LimitMessageRatePayload>>
 ): ActionOf<ProcessQueryResultsPayload> => {
   const { datasourceId, exploreId } = actions[0].payload;
-  // We cap to 1000 because that is the number of rows that live tailing shows at max.
   // This is just approximate, the dataframes are merged and sliced later on when processing the result in different
-  // epic.
-  const delta = capDataFrameRows(1000, flatMap(actions.map(actions => actions.payload.series)));
+  // epic. The number should be the same as rows shown on the screen otherwise we will get gaps.
+  const delta = capDataFrameRows(cap, flatMap(actions.map(actions => actions.payload.series)));
 
   return processQueryResultsAction({
     exploreId,
@@ -70,11 +71,12 @@ const mapToProcessQueryResultsAction = (
  * @param dataFrames
  */
 const capDataFrameRows = (rows: number, dataFrames: DataFrame[]): DataFrame[] => {
+  dataFrames.reverse();
   let accumulatorCount = 0;
   const accumulator = [];
   for (const df of dataFrames) {
     if (accumulatorCount < rows) {
-      accumulator.push(df);
+      accumulator.unshift(df);
       accumulatorCount += df.length;
     }
   }

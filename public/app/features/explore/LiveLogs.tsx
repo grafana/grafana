@@ -45,10 +45,24 @@ export interface Props extends Themeable {
 
 export interface State {
   renderCount: number;
+  logsResultToRender: LogsModel;
 }
 
 class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement = null;
+
+  static getDerivedStateFromProps(nextProps: Props) {
+    if (!nextProps.isPaused) {
+      return {
+        // We update what we show only if not paused. We keep any background subscriptions running and keep updating
+        // our state, but we do not show the updates, this allows us start again showing correct result after resuming
+        // without creating a gap in the log results.
+        logsResultToRender: nextProps.logsResult,
+      };
+    } else {
+      return null;
+    }
+  }
 
   componentDidUpdate(prevProps: Props) {
     if (this.liveEndDiv) {
@@ -76,8 +90,13 @@ class LiveLogs extends PureComponent<Props, State> {
   render() {
     const { theme, timeZone, isPaused, onPause, onResume } = this.props;
     const styles = getStyles(theme);
-    const rowsToRender: LogRowModel[] = this.props.logsResult ? this.props.logsResult.rows : [];
+    let rowsToRender: LogRowModel[] = this.state.logsResultToRender ? this.state.logsResultToRender.rows : [];
     const showUtc = timeZone === 'utc';
+
+    if (!isPaused) {
+      // A perf optimisation here. Show just 100 rows when streaming and full length when the streaming is paused.
+      rowsToRender = rowsToRender.slice(-100);
+    }
 
     return (
       <>

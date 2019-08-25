@@ -18,6 +18,9 @@ import { sortLogsResult } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
+// Number or log rows we show on the screen when live tailing.
+export const NUMBER_OF_ROWS_SHOWN = 1000;
+
 export class ResultProcessor {
   private rawData: DataQueryResponseData[] = [];
   private metrics: TimeSeries[] = [];
@@ -101,7 +104,7 @@ export class ResultProcessor {
 
     const processedSeries = this.mergeGraphResults(sortedNewResults.series, seriesInState);
 
-    const slice = -1000;
+    const slice = -NUMBER_OF_ROWS_SHOWN;
     const rows = processedRows.slice(slice);
     const series = processedSeries.slice(slice);
 

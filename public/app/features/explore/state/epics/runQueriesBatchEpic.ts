@@ -1,4 +1,4 @@
-import { Epic } from 'redux-observable';
+import { ActionsObservable, Epic } from 'redux-observable';
 import { Observable, Subject } from 'rxjs';
 import { mergeMap, catchError, takeUntil, filter } from 'rxjs/operators';
 import _, { isString } from 'lodash';
@@ -195,44 +195,39 @@ export const runQueriesBatchEpic: Epic<ActionOf<any>, ActionOf<any>, StoreState>
         return unsubscribe;
       });
 
-      return observable.pipe(
-        takeUntil(
-          action$
-            .ofType(
-              runQueriesBatchAction.type,
-              resetExploreAction.type,
-              // stops subscriptions if user changes data source
-              updateDatasourceInstanceAction.type,
-              changeRefreshIntervalAction.type,
-              // stops subscriptions if user clears all queries
-              clearQueriesAction.type,
-              // Stops subscription if user pauses live streaming
-              setPausedStateAction.type
-            )
-            .pipe(
-              filter(action => {
-                if (action.type === resetExploreAction.type) {
-                  return true; // stops all subscriptions if user navigates away
-                }
-
-                if (action.payload.exploreId !== exploreId) {
-                  // Filter out actions which are not for current exploreId.
-                  return false;
-                }
-
-                if (action.type === changeRefreshIntervalAction.type) {
-                  return !isLive(action.payload.refreshInterval); // stops subscriptions if user changes refresh interval away from 'Live'
-                }
-
-                if (action.type === setPausedStateAction.type) {
-                  return (action as ActionOf<SetPausedStatePayload>).payload.isPaused;
-                }
-
-                return true;
-              })
-            )
-        )
-      );
+      const stopObservable$ = makeStopObservable(action$, exploreId);
+      return observable.pipe(takeUntil(stopObservable$));
     })
   );
+};
+
+const makeStopObservable = (action$: ActionsObservable<ActionOf<any>>, exploreId: ExploreId) => {
+  return action$
+    .ofType(
+      runQueriesBatchAction.type,
+      resetExploreAction.type,
+      // stops subscriptions if user changes data source
+      updateDatasourceInstanceAction.type,
+      changeRefreshIntervalAction.type,
+      // stops subscriptions if user clears all queries
+      clearQueriesAction.type
+    )
+    .pipe(
+      filter(action => {
+        if (action.type === resetExploreAction.type) {
+          return true; // stops all subscriptions if user navigates away
+        }
+
+        if (action.payload.exploreId !== exploreId) {
+          // Filter out actions which are not for current exploreId.
+          return false;
+        }
+
+        if (action.type === changeRefreshIntervalAction.type) {
+          return !isLive(action.payload.refreshInterval); // stops subscriptions if user changes refresh interval away from 'Live'
+        }
+
+        return true;
+      })
+    );
 };
