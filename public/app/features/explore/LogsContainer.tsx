@@ -48,7 +48,6 @@ interface LogsContainerProps {
   toggleLogLevelAction: typeof toggleLogLevelAction;
   changeDedupStrategy: typeof changeDedupStrategy;
   dedupStrategy: LogsDedupStrategy;
-  hiddenLogLevels: Set<LogLevel>;
   width: number;
   isLive: boolean;
   stopLive: typeof changeRefreshIntervalAction;
@@ -118,7 +117,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       scanning,
       range,
       width,
-      hiddenLogLevels,
       isLive,
     } = this.props;
 
@@ -157,7 +155,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
           scanning={scanning}
           scanRange={range.raw}
           width={width}
-          hiddenLogLevels={hiddenLogLevels}
           getRowContext={this.getLogRowContext}
         />
       </Panel>
@@ -182,7 +179,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   } = item;
   const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const { dedupStrategy } = exploreItemUIStateSelector(item);
-  const hiddenLogLevels = new Set(item.hiddenLogLevels);
   const dedupedResult = deduplicatedLogsSelector(item);
   const timeZone = getTimeZone(state.user);
 
@@ -193,7 +189,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     scanning,
     timeZone,
     dedupStrategy,
-    hiddenLogLevels,
     dedupedResult,
     datasourceInstance,
     isLive,

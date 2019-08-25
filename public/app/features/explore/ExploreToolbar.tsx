@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
-import { ExploreId, ExploreMode } from 'app/types/explore';
+import { ExploreId, ExploreItemState, ExploreMode } from 'app/types/explore';
 import { DataSourceSelectItem } from '@grafana/ui';
 import { RawTimeRange, TimeZone, TimeRange, LoadingState, SelectableValue } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
@@ -19,6 +19,7 @@ import {
 import { getTimeZone } from '../profile/state/selectors';
 import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 import { ExploreTimeControls } from './ExploreTimeControls';
+import memoizeOne from 'memoize-one';
 
 enum IconSide {
   left = 'left',
@@ -237,9 +238,45 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
   }
 }
 
+const getModeOptionsMemoized = memoizeOne(
+  (
+    supportedModes: ExploreMode[],
+    mode: ExploreMode
+  ): [Array<SelectableValue<ExploreMode>>, SelectableValue<ExploreMode>] => {
+    const supportedModeOptions: Array<SelectableValue<ExploreMode>> = [];
+    let selectedModeOption = null;
+    for (const supportedMode of supportedModes) {
+      switch (supportedMode) {
+        case ExploreMode.Metrics:
+          const option1 = {
+            value: ExploreMode.Metrics,
+            label: ExploreMode.Metrics,
+          };
+          supportedModeOptions.push(option1);
+          if (mode === ExploreMode.Metrics) {
+            selectedModeOption = option1;
+          }
+          break;
+        case ExploreMode.Logs:
+          const option2 = {
+            value: ExploreMode.Logs,
+            label: ExploreMode.Logs,
+          };
+          supportedModeOptions.push(option2);
+          if (mode === ExploreMode.Logs) {
+            selectedModeOption = option2;
+          }
+          break;
+      }
+    }
+
+    return [supportedModeOptions, selectedModeOption];
+  }
+);
+
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
   const splitted = state.explore.split;
-  const exploreItem = state.explore[exploreId];
+  const exploreItem: ExploreItemState = state.explore[exploreId];
   const {
     datasourceInstance,
     datasourceMissing,
@@ -258,32 +295,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
   const hasLiveOption =
     datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
 
-  const supportedModeOptions: Array<SelectableValue<ExploreMode>> = [];
-  let selectedModeOption = null;
-  for (const supportedMode of supportedModes) {
-    switch (supportedMode) {
-      case ExploreMode.Metrics:
-        const option1 = {
-          value: ExploreMode.Metrics,
-          label: ExploreMode.Metrics,
-        };
-        supportedModeOptions.push(option1);
-        if (mode === ExploreMode.Metrics) {
-          selectedModeOption = option1;
-        }
-        break;
-      case ExploreMode.Logs:
-        const option2 = {
-          value: ExploreMode.Logs,
-          label: ExploreMode.Logs,
-        };
-        supportedModeOptions.push(option2);
-        if (mode === ExploreMode.Logs) {
-          selectedModeOption = option2;
-        }
-        break;
-    }
-  }
+  const [supportedModeOptions, selectedModeOption] = getModeOptionsMemoized(supportedModes, mode);
 
   return {
     datasourceMissing,
