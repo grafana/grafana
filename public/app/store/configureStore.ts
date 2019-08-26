@@ -14,6 +14,7 @@ import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
 import userReducers from 'app/features/profile/state/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
+import ldapReducers from 'app/features/admin/state/reducers';
 import { setStore } from './store';
 import { limitMessageRateEpic } from 'app/features/explore/state/epics/limitMessageRateEpic';
 import { stateSaveEpic } from 'app/features/explore/state/epics/stateSaveEpic';
@@ -64,6 +65,7 @@ const rootReducers = {
   ...usersReducers,
   ...userReducers,
   ...organizationReducers,
+  ...ldapReducers
 };
 
 export function addRootReducer(reducers: any) {
