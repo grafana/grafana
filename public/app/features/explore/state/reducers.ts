@@ -7,6 +7,7 @@ import {
   DEFAULT_UI_STATE,
   generateNewKeyAndAddRefIdIfMissing,
   sortLogsResult,
+  refreshIntervalToSortOrder,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState } from '@grafana/data';
@@ -183,7 +184,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     mapper: (state, action): ExploreItemState => {
       const { refreshInterval } = action.payload;
       const live = isLive(refreshInterval);
-      const logsResult = sortLogsResult(state.logsResult, refreshInterval);
+      const sortOrder = refreshIntervalToSortOrder(refreshInterval);
+      const logsResult = sortLogsResult(state.logsResult, sortOrder);
 
       return {
         ...state,

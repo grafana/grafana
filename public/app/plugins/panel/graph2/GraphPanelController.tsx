@@ -1,11 +1,10 @@
 import React from 'react';
-import { PanelData } from '@grafana/ui';
+import { PanelData, GraphSeriesToggler } from '@grafana/ui';
 import { GraphSeriesXY } from '@grafana/data';
 
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 import { Options, SeriesOptions } from './types';
 import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from '@grafana/ui/src/components/Graph/GraphWithLegend';
-import { GraphSeriesToggler } from './GraphSeriesToggler';
 
 interface GraphPanelControllerAPI {
   series: GraphSeriesXY[];

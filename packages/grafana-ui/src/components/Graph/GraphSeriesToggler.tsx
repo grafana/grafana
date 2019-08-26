@@ -3,18 +3,18 @@ import { GraphSeriesXY } from '@grafana/data';
 import difference from 'lodash/difference';
 import isEqual from 'lodash/isEqual';
 
-interface GraphSeriesTogglerAPI {
+export interface GraphSeriesTogglerAPI {
   onSeriesToggle: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   toggledSeries: GraphSeriesXY[];
 }
 
-interface GraphSeriesTogglerProps {
+export interface GraphSeriesTogglerProps {
   children: (api: GraphSeriesTogglerAPI) => JSX.Element;
   series: GraphSeriesXY[];
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
 }
 
-interface GraphSeriesTogglerState {
+export interface GraphSeriesTogglerState {
   hiddenSeries: string[];
   toggledSeries: GraphSeriesXY[];
 }

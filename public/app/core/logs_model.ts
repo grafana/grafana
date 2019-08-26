@@ -1,7 +1,5 @@
 import _ from 'lodash';
-import ansicolor from 'vendor/ansicolor/ansicolor';
-
-import { colors, getFlotPairs } from '@grafana/ui';
+import { colors, getFlotPairs, ansicolor } from '@grafana/ui';
 
 import {
   Labels,
@@ -16,8 +14,6 @@ import {
   LogsModel,
   LogsMetaItem,
   LogsMetaKind,
-  LogsParser,
-  LogLabelStatsModel,
   LogsDedupStrategy,
   DataFrameHelper,
   GraphSeriesXY,
@@ -40,89 +36,6 @@ export const LogLevelColor = {
   [LogLevel.trace]: colors[2],
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
-
-export enum LogsDedupDescription {
-  none = 'No de-duplication',
-  exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
-  numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
-  signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
-}
-const LOGFMT_REGEXP = /(?:^|\s)(\w+)=("[^"]*"|\S+)/;
-
-export const LogsParsers: { [name: string]: LogsParser } = {
-  JSON: {
-    buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
-    getFields: line => {
-      const fields: string[] = [];
-      try {
-        const parsed = JSON.parse(line);
-        _.map(parsed, (value, key) => {
-          const fieldMatcher = new RegExp(`"${key}"\\s*:\\s*"?${_.escapeRegExp(JSON.stringify(value))}"?`);
-
-          const match = line.match(fieldMatcher);
-          if (match) {
-            fields.push(match[0]);
-          }
-        });
-      } catch {}
-      return fields;
-    },
-    getLabelFromField: field => (field.match(/^"(\w+)"\s*:/) || [])[1],
-    getValueFromField: field => (field.match(/:\s*(.*)$/) || [])[1],
-    test: line => {
-      try {
-        return JSON.parse(line);
-      } catch (error) {}
-    },
-  },
-
-  logfmt: {
-    buildMatcher: label => new RegExp(`(?:^|\\s)${label}=("[^"]*"|\\S+)`),
-    getFields: line => {
-      const fields: string[] = [];
-      line.replace(new RegExp(LOGFMT_REGEXP, 'g'), substring => {
-        fields.push(substring.trim());
-        return '';
-      });
-      return fields;
-    },
-    getLabelFromField: field => (field.match(LOGFMT_REGEXP) || [])[1],
-    getValueFromField: field => (field.match(LOGFMT_REGEXP) || [])[2],
-    test: line => LOGFMT_REGEXP.test(line),
-  },
-};
-
-export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): LogLabelStatsModel[] {
-  // Consider only rows that satisfy the matcher
-  const rowsWithField = rows.filter(row => extractor.test(row.entry));
-  const rowCount = rowsWithField.length;
-
-  // Get field value counts for eligible rows
-  const countsByValue = _.countBy(rowsWithField, row => (row as LogRowModel).entry.match(extractor)[1]);
-  const sortedCounts = _.chain(countsByValue)
-    .map((count, value) => ({ count, value, proportion: count / rowCount }))
-    .sortBy('count')
-    .reverse()
-    .value();
-
-  return sortedCounts;
-}
-
-export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
-  // Consider only rows that have the given label
-  const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
-  const rowCount = rowsWithLabel.length;
-
-  // Get label value counts for eligible rows
-  const countsByValue = _.countBy(rowsWithLabel, row => (row as LogRowModel).labels[label]);
-  const sortedCounts = _.chain(countsByValue)
-    .map((count, value) => ({ count, value, proportion: count / rowCount }))
-    .sortBy('count')
-    .reverse()
-    .value();
-
-  return sortedCounts;
-}
 
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
 function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedupStrategy): boolean {
@@ -163,19 +76,6 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
     ...logs,
     rows: dedupedRows,
   };
-}
-
-export function getParser(line: string): LogsParser {
-  let parser;
-  try {
-    if (LogsParsers.JSON.test(line)) {
-      parser = LogsParsers.JSON;
-    }
-  } catch (error) {}
-  if (!parser && LogsParsers.logfmt.test(line)) {
-    parser = LogsParsers.logfmt;
-  }
-  return parser;
 }
 
 export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>): LogsModel {
