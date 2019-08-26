@@ -6,15 +6,16 @@ export function logStreamToDataFrame(stream: LokiLogsStream, reverse?: boolean, 
   if (!labels && stream.labels) {
     labels = parseLabels(stream.labels);
   }
-  const time = new ArrayVector<string>([]);
+  const times = new ArrayVector<string>([]);
   const lines = new ArrayVector<string>([]);
 
   for (const entry of stream.entries) {
-    time.buffer.push(entry.ts || entry.timestamp);
-    lines.buffer.push(entry.line);
+    times.add(entry.ts || entry.timestamp);
+    lines.add(entry.line);
   }
+
   if (reverse) {
-    time.buffer = time.buffer.reverse();
+    times.buffer = times.buffer.reverse();
     lines.buffer = lines.buffer.reverse();
   }
 
@@ -22,9 +23,9 @@ export function logStreamToDataFrame(stream: LokiLogsStream, reverse?: boolean, 
     refId,
     labels,
     fields: [
-      { name: 'ts', type: FieldType.time, config: {}, values: time }, // Time
+      { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
       { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
     ],
-    length: time.length,
+    length: times.length,
   };
 }

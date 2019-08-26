@@ -209,21 +209,22 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
               liveTarget.lines.add(entry.line);
             }
 
+            const frame = {
+              refId,
+              fields: [
+                { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
+                { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
+              ],
+              length: times.length,
+            };
+
             const state: DataStreamState = {
               key: `loki-${refId}`,
               request: options,
               state: LoadingState.Streaming,
               isDelta,
-              data: [
-                {
-                  refId,
-                  fields: [
-                    { name: 'ts', type: FieldType.time, config: {}, values: times }, // Time
-                    { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
-                  ],
-                  length: times.length,
-                },
-              ],
+              data: [frame],
+              delta: [frame], // HACK -- send frame for both data and delta for now
               unsubscribe: () => this.unsubscribe(refId),
             };
 
