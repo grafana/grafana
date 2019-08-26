@@ -93,8 +93,30 @@ export class TimeSrv {
     return null;
   }
 
+  private getTimeWindow(time: string, timeWindow: string) {
+    const valueTime = parseInt(time, 10);
+    let timeWindowMs;
+
+    if (timeWindow.match(/^\d+$/) && parseInt(timeWindow, 10)) {
+      // when time window specified in ms
+      timeWindowMs = parseInt(timeWindow, 10);
+    } else {
+      timeWindowMs = kbn.interval_to_ms(timeWindow);
+    }
+
+    return {
+      from: toUtc(valueTime - timeWindowMs / 2),
+      to: toUtc(valueTime + timeWindowMs / 2),
+    };
+  }
+
   private initTimeFromUrl() {
     const params = this.$location.search();
+
+    if (params.time && params['time.window']) {
+      this.time = this.getTimeWindow(params.time, params['time.window']);
+    }
+
     if (params.from) {
       this.time.from = this.parseUrlParam(params.from) || this.time.from;
     }

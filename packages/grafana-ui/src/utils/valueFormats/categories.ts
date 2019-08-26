@@ -292,11 +292,13 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Throughput',
     formats: [
+      { name: 'counts/sec (cps)', id: 'cps', fn: simpleCountUnit('cps') },
       { name: 'ops/sec (ops)', id: 'ops', fn: simpleCountUnit('ops') },
       { name: 'requests/sec (rps)', id: 'reqps', fn: simpleCountUnit('reqps') },
       { name: 'reads/sec (rps)', id: 'rps', fn: simpleCountUnit('rps') },
       { name: 'writes/sec (wps)', id: 'wps', fn: simpleCountUnit('wps') },
       { name: 'I/O ops/sec (iops)', id: 'iops', fn: simpleCountUnit('iops') },
+      { name: 'counts/min (cpm)', id: 'cpm', fn: simpleCountUnit('cpm') },
       { name: 'ops/min (opm)', id: 'opm', fn: simpleCountUnit('opm') },
       { name: 'reads/min (rpm)', id: 'rpm', fn: simpleCountUnit('rpm') },
       { name: 'writes/min (wpm)', id: 'wpm', fn: simpleCountUnit('wpm') },
