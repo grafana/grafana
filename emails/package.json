@@ -8,10 +8,15 @@
     "email": "delder@riester.com",
     "url": "https://github.com/dnnsldr"
   },
+  "scripts": {
+    "build": "grunt",
+    "start": "grunt watch"
+  },
+
   "devDependencies": {
     "grunt": "^0.4.5",
-    "grunt-premailer": "^0.2.10",
-    "grunt-processhtml": "^0.3.3",
+    "grunt-premailer": "^1.1.10",
+    "grunt-processhtml": "^0.4.2",
     "grunt-uncss": "^0.3.7",
     "load-grunt-config": "^0.14.0",
     "grunt-contrib-watch": "^0.6.1",
