@@ -12,7 +12,8 @@ awsconfig
 /emails/dist
 
 # Enterprise emails
-/emails/templates/for-enterprise-*
+/emails/templates/enterprise_*
+/public/emails/enterprise_*
 
 /public_gen
 /public/vendor/npm
