@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, LinkButton } from '@grafana/ui';
-
 import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
@@ -50,6 +49,8 @@ export interface State {
 
 class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement = null;
+  private scrollContainerRef = React.createRef<HTMLDivElement>();
+  private lastScrollPos: number | null = null;
 
   static getDerivedStateFromProps(nextProps: Props) {
     if (!nextProps.isPaused) {
@@ -64,11 +65,20 @@ class LiveLogs extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Props) {
-    if (this.liveEndDiv) {
-      // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
-      // default.
-      this.liveEndDiv.scrollIntoView(false);
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
+    if (!prevProps.isPaused && this.props.isPaused) {
+      // So we paused the view and we changed the content size, but we want to keep the relative offset from the bottom.
+      if (this.lastScrollPos) {
+        // There is last scroll pos from when user scrolled up a bit so go to that position.
+        const { clientHeight, scrollHeight } = this.scrollContainerRef.current;
+        const scrollTop = scrollHeight - (this.lastScrollPos + clientHeight);
+        this.scrollContainerRef.current.scrollTo(0, scrollTop);
+        this.lastScrollPos = null;
+      } else {
+        // We do not have any position to jump to su the assumption is user just clicked pause. We can just scroll
+        // to the bottom.
+        this.liveEndDiv.scrollIntoView(false);
+      }
     }
   }
 
@@ -76,14 +86,14 @@ class LiveLogs extends PureComponent<Props, State> {
    * Handle pausing when user scrolls up so that we stop resetting his position to the bottom when new row arrives.
    * We do not need to throttle it here much, adding new rows should be throttled/buffered itself in the query epics
    * and after you pause we remove the handler and add it after you manually resume, so this should not be fired often.
-   * @param event
    */
   onScroll = (event: React.SyntheticEvent) => {
     const { isPaused, onPause } = this.props;
     const { scrollTop, clientHeight, scrollHeight } = event.currentTarget;
-    const scrolledAtTheBottom = scrollTop + clientHeight === scrollHeight;
-    if (!scrolledAtTheBottom && !isPaused) {
+    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    if (distanceFromBottom >= 5 && !isPaused) {
       onPause();
+      this.lastScrollPos = distanceFromBottom;
     }
   };
 
@@ -100,7 +110,11 @@ class LiveLogs extends PureComponent<Props, State> {
 
     return (
       <>
-        <div onScroll={isPaused ? undefined : this.onScroll} className={cx(['logs-rows', styles.logsRowsLive])}>
+        <div
+          onScroll={isPaused ? undefined : this.onScroll}
+          className={cx(['logs-rows', styles.logsRowsLive])}
+          ref={this.scrollContainerRef}
+        >
           {rowsToRender.map((row: any, index) => {
             return (
               <div
@@ -124,7 +138,9 @@ class LiveLogs extends PureComponent<Props, State> {
           <div
             ref={element => {
               this.liveEndDiv = element;
-              if (this.liveEndDiv) {
+              // This is triggered on every update so on every new row. It keeps the view scrolled at the bottom by
+              // default.
+              if (this.liveEndDiv && !isPaused) {
                 this.liveEndDiv.scrollIntoView(false);
               }
             }}
