@@ -56,11 +56,13 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
 
   async componentDidUpdate(prevProps: Props) {
     const { panelData } = this.props;
+
     if (!prevProps || prevProps.panelData !== panelData) {
       const query = this.props.panel.targets[0] as DashboardQuery;
       const defaultDS = await getDatasourceSrv().get(null);
       const dashboard = getDashboardSrv().getCurrent();
       const panel = dashboard.getPanelById(query.panelId);
+
       if (!panel) {
         this.setState({ defaultDatasource: defaultDS.name });
         return;
@@ -75,6 +77,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
 
         const qData = filterPanelDataToQuery(panelData, query.refId);
         const queryData = qData ? qData : panelData;
+
         info.push({
           refId: query.refId,
           query: fmt(query),
@@ -83,6 +86,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
           error: queryData.error,
         });
       }
+
       this.setState({ defaultDatasource: defaultDS.name, results: info });
     }
   }
@@ -126,9 +130,11 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   getPanelDescription = (panel: PanelModel): string => {
     const { defaultDatasource } = this.state;
     const dsname = panel.datasource ? panel.datasource : defaultDatasource;
+
     if (panel.targets.length === 1) {
       return '1 query to ' + dsname;
     }
+
     return panel.targets.length + ' queries to ' + dsname;
   };
 
@@ -138,6 +144,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
 
     let selected: SelectableValue<number>;
     const panels: Array<SelectableValue<number>> = [];
+
     for (const panel of dashboard.panels) {
       if (panel.targets && panel.datasource !== SHARED_DASHBODARD_QUERY) {
         const plugin = config.panels[panel.type];
@@ -147,7 +154,9 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
           description: this.getPanelDescription(panel),
           imgUrl: plugin.info.logos.small,
         };
+
         panels.push(item);
+
         if (query.panelId === panel.id) {
           selected = item;
         }
@@ -163,12 +172,12 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     }
 
     // Same as current URL, but different panelId
-    const editURL = `d/${dashboard.uid}/${dashboard.title}?orgId=1?&fullscreen&edit&panelId=${query.panelId}`;
+    const editURL = `d/${dashboard.uid}/${dashboard.title}?&fullscreen&edit&panelId=${query.panelId}`;
 
     return (
-      <div className={css({ padding: '16px' })}>
-        <h4>Use Results From:</h4>
+      <div>
         <div className="gf-form">
+          <div className="gf-form-label">Use results from panel</div>
           <Select
             placeholder="Choose Panel"
             isSearchable={true}
@@ -177,11 +186,8 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
             onChange={item => this.onPanelChanged(item.value)}
           />
         </div>
-        <br />
-        {query.panelId && this.renderQueryData(editURL)}
+        <div className={css({ padding: '16px' })}>{query.panelId && this.renderQueryData(editURL)}</div>
       </div>
     );
   }
 }
-
-export default DashboardQueryEditor;
