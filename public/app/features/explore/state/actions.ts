@@ -1,6 +1,4 @@
 // Libraries
-import _ from 'lodash';
-
 // Services & Utils
 import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -13,13 +11,15 @@ import {
   getTimeRangeFromUrl,
   generateNewKeyAndAddRefIdIfMissing,
   lastUsedDatasourceKeyForOrgId,
+  hasNonEmptyQuery,
+  buildQueryTransaction,
+  updateHistory,
 } from 'app/core/utils/explore';
-
 // Types
 import { ThunkResult } from 'app/types';
-import { DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction } from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction, PanelData } from '@grafana/ui';
 
-import { RawTimeRange, LogsDedupStrategy, AbsoluteTimeRange } from '@grafana/data';
+import { RawTimeRange, LogsDedupStrategy, AbsoluteTimeRange, LoadingState } from '@grafana/data';
 import { ExploreId, ExploreUIState, QueryTransaction, ExploreMode } from 'app/types/explore';
 import {
   updateDatasourceInstanceAction,
@@ -55,6 +55,12 @@ import {
   runQueriesAction,
   stateSaveAction,
   updateTimeRangeAction,
+  limitMessageRatePayloadAction,
+  changeLoadingStateAction,
+  historyUpdatedAction,
+  processQueryResultsAction,
+  processQueryErrorsAction,
+  queryStartAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -402,7 +408,105 @@ export function modifyQueries(
 export function runQueries(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(updateTimeRangeAction({ exploreId }));
-    dispatch(runQueriesAction({ exploreId }));
+
+    const exploreItemState = getState().explore[exploreId];
+    const {
+      datasourceInstance,
+      queries,
+      datasourceError,
+      containerWidth,
+      isLive: live,
+      queryState,
+      queryIntervals,
+      range,
+      scanning,
+      history,
+    } = exploreItemState;
+
+    if (datasourceError) {
+      // let's not run any queries if data source is in a faulty state
+      return;
+    }
+
+    if (!hasNonEmptyQuery(queries)) {
+      dispatch(clearQueriesAction({ exploreId }));
+      dispatch(stateSaveAction()); // Remember to save to state and update location
+      return;
+    }
+
+    // Some datasource's query builders allow per-query interval limits,
+    // but we're using the datasource interval limit for now
+    const interval = datasourceInstance.interval;
+
+    if (!queryState.isStarted()) {
+      queryState.cancel('New request issued');
+      queryState.closeStreams(false);
+    }
+    queryState.sendLegacy = true;
+
+    const queryOptions = { interval, maxDataPoints: containerWidth, live };
+    const datasourceId = datasourceInstance.meta.id;
+    const now = Date.now();
+    const transaction = buildQueryTransaction(queries, queryOptions, range, queryIntervals, scanning);
+    queryState.onStreamingDataUpdated = () => {
+      const data = queryState.validateStreamsAndGetPanelData();
+      const { state, error, legacy } = data;
+      if (!data && !error && !legacy) {
+        return;
+      }
+
+      if (state === LoadingState.Error) {
+        dispatch(processQueryErrorsAction({ exploreId, response: error, datasourceId }));
+        return;
+      }
+
+      if (state === LoadingState.Streaming) {
+        dispatch(
+          limitMessageRatePayloadAction({
+            exploreId,
+            series: legacy,
+            datasourceId,
+          })
+        );
+        dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
+        return;
+      }
+
+      if (state === LoadingState.Done) {
+        dispatch(changeLoadingStateAction({ exploreId, loadingState: state }));
+      }
+    };
+
+    dispatch(queryStartAction({ exploreId }));
+
+    queryState
+      .execute(datasourceInstance, transaction.options)
+      .then((response: PanelData) => {
+        const { state, legacy, error } = response;
+        if (error) {
+          dispatch(processQueryErrorsAction({ exploreId, response: error, datasourceId }));
+          return;
+        }
+
+        const latency = Date.now() - now;
+        // Side-effect: Saving history in localstorage
+        const nextHistory = updateHistory(history, datasourceId, queries);
+        dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+        dispatch(
+          processQueryResultsAction({
+            exploreId,
+            latency,
+            datasourceId,
+            loadingState: state,
+            series: legacy,
+            delta: null,
+          })
+        );
+        dispatch(stateSaveAction());
+      })
+      .catch(error => {
+        dispatch(processQueryErrorsAction({ exploreId, response: error, datasourceId }));
+      });
   };
 }
 

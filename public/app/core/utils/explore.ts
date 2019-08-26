@@ -37,6 +37,7 @@ import {
   ExploreMode,
 } from 'app/types/explore';
 import { config } from '../config';
+import { PanelQueryState } from '../../features/dashboard/state/PanelQueryState';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -533,4 +534,11 @@ export const getQueryResponse = (
   observer?: DataStreamObserver
 ) => {
   return from(datasourceInstance.query(options, observer));
+};
+
+export const stopQueryState = (queryState: PanelQueryState, reason: string) => {
+  if (queryState.isStarted()) {
+    queryState.cancel(reason);
+    queryState.closeStreams(false);
+  }
 };

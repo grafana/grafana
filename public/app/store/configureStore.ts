@@ -19,7 +19,6 @@ import { limitMessageRateEpic } from 'app/features/explore/state/epics/limitMess
 import { stateSaveEpic } from 'app/features/explore/state/epics/stateSaveEpic';
 import { processQueryResultsEpic } from 'app/features/explore/state/epics/processQueryResultsEpic';
 import { processQueryErrorsEpic } from 'app/features/explore/state/epics/processQueryErrorsEpic';
-import { runQueriesEpic } from 'app/features/explore/state/epics/runQueriesEpic';
 import {
   DataSourceApi,
   DataQueryResponse,
@@ -48,7 +47,6 @@ import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { UserState } from 'app/types/user';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { runRequestEpic } from '../features/explore/state/epics/runRequestEpic';
 
 const rootReducers = {
   ...sharedReducers,
@@ -72,9 +70,6 @@ export function addRootReducer(reducers: any) {
 export const rootEpic: any = combineEpics(
   limitMessageRateEpic,
   stateSaveEpic,
-  runQueriesEpic,
-  // runQueriesBatchEpic,
-  runRequestEpic,
   processQueryResultsEpic,
   processQueryErrorsEpic,
   timeEpic

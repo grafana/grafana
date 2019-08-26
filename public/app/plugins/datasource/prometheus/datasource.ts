@@ -183,13 +183,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
       const target = activeTargets[index];
-      let observable: Observable<any> = null;
-
-      if (query.instant) {
-        observable = from(this.performInstantQuery(query, end));
-      } else {
-        observable = from(this.performTimeSeriesQuery(query, query.start, query.end));
-      }
+      const observable: Observable<any> = from(this.performTimeSeriesQuery(query, query.start, query.end));
 
       observable
         .pipe(
@@ -204,10 +198,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
               data,
               unsubscribe: () => undefined,
             };
-
-            if (query.instant) {
-              return [state];
-            }
 
             return [
               state,
@@ -289,8 +279,32 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       options.targets.filter(target => target.context === PromContext.Explore).length === options.targets.length
     ) {
       // using observer to make the instant query return immediately
-      this.runObserverQueries(options, observer, queries, activeTargets, end);
-      return this.$q.when({ data: [] }) as Promise<{ data: any }>;
+      const instantQueries = queries.filter(query => query.instant);
+      const instantTargets = activeTargets.filter(target => target.instant);
+      const timeSeriesQueries = queries.filter(query => !query.instant);
+      const timeSeriesTargets = activeTargets.filter(target => !target.instant);
+      const allQueryPromise = instantQueries.map(query => this.performInstantQuery(query, end));
+
+      const allPromise = this.$q.all(allQueryPromise).then((responseList: any) => {
+        let result: any[] = [];
+
+        _.each(responseList, (response, index: number) => {
+          if (response.cancelled) {
+            return;
+          }
+
+          const target = instantTargets[index];
+          const query = instantQueries[index];
+          const series = this.processResult(response, query, target, queries.length);
+
+          result = [...result, ...series];
+        });
+
+        setTimeout(() => this.runObserverQueries(options, observer, timeSeriesQueries, timeSeriesTargets, end), 100);
+        return { data: result };
+      });
+
+      return allPromise as Promise<{ data: any }>;
     }
 
     const allQueryPromise = _.map(queries, query => {

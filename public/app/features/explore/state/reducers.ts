@@ -7,6 +7,7 @@ import {
   DEFAULT_UI_STATE,
   generateNewKeyAndAddRefIdIfMissing,
   sortLogsResult,
+  stopQueryState,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState } from '@grafana/data';
@@ -50,6 +51,7 @@ import {
   updateUIStateAction,
   toggleLogLevelAction,
   changeLoadingStateAction,
+  resetExploreAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
@@ -185,6 +187,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { refreshInterval } = action.payload;
       const live = isLive(refreshInterval);
       const logsResult = sortLogsResult(state.logsResult, refreshInterval);
+      if (isLive(state.refreshInterval) && !live) {
+        stopQueryState(state.queryState, 'Live streaming stopped');
+      }
 
       return {
         ...state,
@@ -199,6 +204,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: clearQueriesAction,
     mapper: (state): ExploreItemState => {
       const queries = ensureQueries();
+      stopQueryState(state.queryState, 'Queries cleared');
       return {
         ...state,
         queries: queries.slice(),
@@ -257,6 +263,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
+      stopQueryState(state.queryState, 'Datasource changed');
 
       return {
         ...state,
@@ -669,6 +676,19 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
       return {
         ...state,
         split,
+        [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
+        [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
+      };
+    }
+
+    case resetExploreAction.type: {
+      const leftState = state[ExploreId.left];
+      const rightState = state[ExploreId.right];
+      stopQueryState(leftState.queryState, 'Navigated away from Explore');
+      stopQueryState(rightState.queryState, 'Navigated away from Explore');
+
+      return {
+        ...state,
         [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
         [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
       };
