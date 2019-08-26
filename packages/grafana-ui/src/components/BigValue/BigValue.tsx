@@ -1,17 +1,14 @@
 // Library
 import React, { PureComponent, ReactNode, CSSProperties } from 'react';
 import $ from 'jquery';
-import { css } from 'emotion';
-import { DisplayValue, LinkModelSupplier } from '@grafana/data';
+import { css, cx } from 'emotion';
+import { DisplayValue } from '@grafana/data';
 
 // Utils
-import { getColorFromHexRgbOrName, FieldDisplay } from '../../utils';
+import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
 import { Themeable } from '../../types';
-import { linkModelToContextMenuItems } from '../../utils/dataLinks';
-
-import { WithContextMenu } from '../ContextMenu/WithContextMenu';
 
 export interface BigValueSparkline {
   data: any[][]; // [[number,number]]
@@ -30,7 +27,8 @@ export interface Props extends Themeable {
   suffix?: DisplayValue;
   sparkline?: BigValueSparkline;
   backgroundColor?: string;
-  links?: LinkModelSupplier<FieldDisplay>; // only exists if Links Exist
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  className?: string;
 }
 
 /*
@@ -46,15 +44,6 @@ export class BigValue extends PureComponent<Props> {
   componentDidUpdate() {
     this.draw();
   }
-
-  getDataLinksContextMenuItems = () => {
-    const { links } = this.props;
-    if (!links) {
-      return [];
-    }
-
-    return [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
-  };
 
   draw() {
     const { sparkline, theme } = this.props;
@@ -132,7 +121,7 @@ export class BigValue extends PureComponent<Props> {
   }
 
   render() {
-    const { height, width, value, prefix, suffix, sparkline, backgroundColor } = this.props;
+    const { height, width, value, prefix, suffix, sparkline, backgroundColor, onClick, className } = this.props;
 
     return (
       <div
@@ -156,29 +145,27 @@ export class BigValue extends PureComponent<Props> {
             {value.title}
           </div>
         )}
-        <WithContextMenu getContextMenuItems={this.getDataLinksContextMenuItems}>
-          {({ openMenu }) => {
-            return (
-              <span
-                className={css({
-                  lineHeight: 1,
-                  textAlign: 'center',
-                  zIndex: 1,
-                  display: 'table-cell',
-                  verticalAlign: 'middle',
-                  position: 'relative',
-                  fontSize: '3em',
-                  fontWeight: 500, // TODO: $font-weight-semi-bold
-                })}
-                onClick={openMenu}
-              >
-                {this.renderText(prefix, '0px 2px 0px 0px')}
-                {this.renderText(value)}
-                {this.renderText(suffix)}
-              </span>
-            );
-          }}
-        </WithContextMenu>
+
+        <span
+          className={cx(
+            css({
+              lineHeight: 1,
+              textAlign: 'center',
+              zIndex: 1,
+              display: 'table-cell',
+              verticalAlign: 'middle',
+              position: 'relative',
+              fontSize: '3em',
+              fontWeight: 500, // TODO: $font-weight-semi-bold
+            }),
+            className
+          )}
+          onClick={onClick}
+        >
+          {this.renderText(prefix, '0px 2px 0px 0px')}
+          {this.renderText(value)}
+          {this.renderText(suffix)}
+        </span>
 
         {sparkline && this.renderSparkline(sparkline)}
       </div>

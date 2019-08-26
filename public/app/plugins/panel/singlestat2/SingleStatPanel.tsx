@@ -6,7 +6,14 @@ import { config } from 'app/core/config';
 
 // Types
 import { SingleStatOptions } from './types';
-import { PanelProps, getFieldDisplayValues, VizRepeater, FieldDisplay, BigValue } from '@grafana/ui';
+import {
+  PanelProps,
+  getFieldDisplayValues,
+  VizRepeater,
+  FieldDisplay,
+  BigValue,
+  DataLinksContextMenu,
+} from '@grafana/ui';
 import { BigValueSparkline } from '@grafana/ui/src/components/BigValue/BigValue';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
@@ -25,14 +32,21 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
     }
 
     return (
-      <BigValue
-        value={value.display}
-        sparkline={sparkline}
-        width={width}
-        height={height}
-        theme={config.theme}
-        links={getFieldLinksSupplier(value)}
-      />
+      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+        {({ openMenu, targetClassName }) => {
+          return (
+            <BigValue
+              value={value.display}
+              sparkline={sparkline}
+              width={width}
+              height={height}
+              theme={config.theme}
+              onClick={openMenu}
+              className={targetClassName}
+            />
+          );
+        }}
+      </DataLinksContextMenu>
     );
   };
 

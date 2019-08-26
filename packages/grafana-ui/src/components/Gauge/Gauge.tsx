@@ -1,82 +1,10 @@
-import React, { PureComponent, useRef, useContext } from 'react';
+import React, { PureComponent } from 'react';
 import $ from 'jquery';
-import { Threshold, DisplayValue, LinkModelSupplier } from '@grafana/data';
+import { Threshold, DisplayValue } from '@grafana/data';
 
-import { getColorFromHexRgbOrName, FieldDisplay } from '../../utils';
+import { getColorFromHexRgbOrName } from '../../utils';
 import { Themeable } from '../../types';
-import { selectThemeVariant, ThemeContext } from '../../themes';
-import { WithContextMenu } from '../ContextMenu/WithContextMenu';
-import { linkModelToContextMenuItems } from '../../utils/dataLinks';
-import useMouseHovered from 'react-use/lib/useMouseHovered';
-import useHoverDirty from 'react-use/lib/useHoverDirty';
-import { Portal } from '../Portal/Portal';
-import { css, cx } from 'emotion';
-
-const DataLinkCursor = () => {
-  const theme = useContext(ThemeContext);
-  return (
-    <i
-      className={cx(
-        'fa',
-        'fa-link',
-        css`
-          opacity: 0.7;
-          width: 18px;
-          height: 18px;
-          display: inline-block;
-          margin-right: 10px;
-          font-size: 16px;
-          color: ${selectThemeVariant({ light: theme.colors.dark1, dark: theme.colors.gray5 }, theme.type)};
-          position: relative;
-          top: 4px;
-        `
-      )}
-    />
-  );
-};
-
-interface MouseCursorRenderedProps {
-  children: (props: { ref: any }) => JSX.Element;
-  cursor: JSX.Element;
-}
-
-const CustomCursor = ({ x, y, cursor }: { x: number; y: number; cursor: JSX.Element }) => {
-  return (
-    <div
-      className={css`
-        width: 18px;
-        height: 18px;
-        position: fixed;
-      `}
-      style={{
-        top: `${y - 10}px`,
-        left: `${x + 10}px`,
-      }}
-    >
-      {cursor}
-    </div>
-  );
-};
-
-const MouseCursorAddon = ({ children, cursor }: MouseCursorRenderedProps) => {
-  const elRef = useRef(null);
-  const { docX, docY } = useMouseHovered(elRef, {
-    bound: true,
-    whenHovered: true,
-  });
-  const hovered = useHoverDirty(elRef);
-
-  return (
-    <>
-      {children({ ref: elRef })}
-      {hovered && (
-        <Portal>
-          <CustomCursor x={docX} y={docY} cursor={cursor} />
-        </Portal>
-      )}
-    </>
-  );
-};
+import { selectThemeVariant } from '../../themes';
 
 export interface Props extends Themeable {
   height: number;
@@ -87,7 +15,8 @@ export interface Props extends Themeable {
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
-  links?: LinkModelSupplier<FieldDisplay>; // only exists if Links Exist
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  className?: string;
 }
 
 const FONT_SCALE = 1;
@@ -206,23 +135,16 @@ export class Gauge extends PureComponent<Props> {
     }
   }
 
-  getDataLinksContextMenuItems = () => {
-    const { links } = this.props;
-    if (!links) {
-      return [];
-    }
-    return [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
-  };
-
-  renderVisualization = (onClick?: React.MouseEventHandler<HTMLElement>, hasLinks?: boolean) => {
-    const { width, value, height } = this.props;
+  renderVisualization = () => {
+    const { width, value, height, onClick } = this.props;
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
 
-    const visualization = (
+    return (
       <>
         <div
           style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
           ref={element => (this.canvasElement = element)}
+          onClick={onClick}
         />
         {autoProps.showLabel && (
           <div
@@ -243,25 +165,9 @@ export class Gauge extends PureComponent<Props> {
         )}
       </>
     );
-
-    return hasLinks ? (
-      <MouseCursorAddon cursor={<DataLinkCursor />}>
-        {({ ref }) => {
-          return (
-            <div onClick={onClick} ref={ref}>
-              {visualization}
-            </div>
-          );
-        }}
-      </MouseCursorAddon>
-    ) : (
-      <div onClick={onClick}>{visualization}</div>
-    );
   };
 
   render() {
-    const { links } = this.props;
-
     return (
       <div
         style={{
@@ -272,14 +178,9 @@ export class Gauge extends PureComponent<Props> {
           justifyContent: 'center',
           overflow: 'hidden',
         }}
+        className={this.props.className}
       >
-        {links ? (
-          <WithContextMenu getContextMenuItems={this.getDataLinksContextMenuItems}>
-            {({ openMenu }) => this.renderVisualization(openMenu, true)}
-          </WithContextMenu>
-        ) : (
-          this.renderVisualization()
-        )}
+        {this.renderVisualization()}
       </div>
     );
   }

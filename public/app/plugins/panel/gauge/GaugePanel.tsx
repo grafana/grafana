@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { Gauge, FieldDisplay, getFieldDisplayValues, VizOrientation } from '@grafana/ui';
+import { Gauge, FieldDisplay, getFieldDisplayValues, VizOrientation, DataLinksContextMenu } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
@@ -17,21 +17,26 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     const { options } = this.props;
     const { field, display } = value;
 
-    const supplier = getFieldLinksSupplier(value);
-
     return (
-      <Gauge
-        value={display}
-        width={width}
-        height={height}
-        thresholds={field.thresholds}
-        showThresholdLabels={options.showThresholdLabels}
-        showThresholdMarkers={options.showThresholdMarkers}
-        minValue={field.min}
-        maxValue={field.max}
-        theme={config.theme}
-        links={supplier}
-      />
+      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+        {({ openMenu, targetClassName }) => {
+          return (
+            <Gauge
+              value={display}
+              width={width}
+              height={height}
+              thresholds={field.thresholds}
+              showThresholdLabels={options.showThresholdLabels}
+              showThresholdMarkers={options.showThresholdMarkers}
+              minValue={field.min}
+              maxValue={field.max}
+              theme={config.theme}
+              onClick={openMenu}
+              className={targetClassName}
+            />
+          );
+        }}
+      </DataLinksContextMenu>
     );
   };
 

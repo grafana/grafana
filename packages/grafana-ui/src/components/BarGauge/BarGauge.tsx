@@ -1,10 +1,10 @@
 // Library
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
-import { Threshold, TimeSeriesValue, getActiveThreshold, DisplayValue, LinkModelSupplier } from '@grafana/data';
+import { Threshold, TimeSeriesValue, getActiveThreshold, DisplayValue } from '@grafana/data';
 
 // Utils
-import { getColorFromHexRgbOrName, FieldDisplay } from '../../utils';
+import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
 import { Themeable, VizOrientation } from '../../types';
@@ -26,7 +26,8 @@ export interface Props extends Themeable {
   orientation: VizOrientation;
   itemSpacing?: number;
   displayMode: 'basic' | 'lcd' | 'gradient';
-  links?: LinkModelSupplier<FieldDisplay>; // only exists if Links Exist
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  className?: string;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -61,14 +62,23 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderBarAndValue() {
+    const { onClick, className } = this.props;
+    let barsElement;
     switch (this.props.displayMode) {
       case 'lcd':
-        return this.renderRetroBars();
+        barsElement = this.renderRetroBars();
+        break;
       case 'basic':
       case 'gradient':
       default:
-        return this.renderBasicAndGradientBars();
+        barsElement = this.renderBasicAndGradientBars();
     }
+
+    return (
+      <div onClick={onClick} className={className}>
+        {barsElement}
+      </div>
+    );
   }
 
   renderBasicAndGradientBars(): ReactNode {
