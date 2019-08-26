@@ -1,5 +1,4 @@
 import PluginPrism from 'app/features/explore/slate-plugins/prism';
-import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import ClearPlugin from 'app/features/explore/slate-plugins/clear';
 import NewlinePlugin from 'app/features/explore/slate-plugins/newline';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
@@ -68,7 +67,6 @@ class QueryField extends React.Component<any, any> {
     const { prismDefinition = {}, prismLanguage = 'kusto' } = props;
 
     this.plugins = [
-      BracesPlugin(),
       ClearPlugin(),
       RunnerPlugin({ handler: props.onPressEnter }),
       NewlinePlugin(),
