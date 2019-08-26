@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ChangeEvent } from 'react';
 
 // Types
 import { QueryEditorProps, Switch, FormField } from '@grafana/ui';
@@ -34,11 +34,11 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
     });
   };
 
-  onExprChange = (expr: string) => {
+  onExprChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
       query: {
         ...this.state.query,
-        expr,
+        expr: event.target.value,
       },
     });
   };
@@ -59,7 +59,7 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
 
     return (
       <div>
-        {/*   // WHY IS THIS FAILING       
+        {/*   // WHY IS THIS FAILING
         <LokiQueryField
           datasource={datasource}
           query={query}

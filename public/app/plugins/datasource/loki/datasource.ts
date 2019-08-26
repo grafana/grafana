@@ -5,7 +5,7 @@ import { webSocket } from 'rxjs/webSocket';
 import { catchError, map } from 'rxjs/operators';
 
 // Services & Utils
-import { dateMath } from '@grafana/data';
+import { dateMath, FieldType, CircularVector } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -28,7 +28,7 @@ import { LokiQuery, LokiOptions, LokiLogsStream } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
-import { LiveTarget, prepareLiveDataFrame } from './live_target';
+import { LiveTarget } from './live_target';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -39,7 +39,7 @@ const DEFAULT_QUERY_PARAMS = {
   query: '',
 };
 
-export function serializeParams(data: any) {
+function serializeParams(data: any) {
   return Object.keys(data)
     .map(k => {
       const v = data[k];
@@ -90,15 +90,30 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const baseUrl = this.instanceSettings.url;
     const params = serializeParams({ query, regexp });
     const url = convertToWebSocketUrl(`${baseUrl}/api/prom/tail?${params}`);
-    return prepareLiveDataFrame(
-      {
-        query,
-        regexp,
-        url,
-        refId,
-      },
-      options.maxDataPoints
-    );
+
+    const size = 1000; // options.maxDataPoints?
+
+    const times = new CircularVector<string>({ capacity: size });
+    const lines = new CircularVector<string>({ capacity: size });
+    const frame = {
+      refId: target.refId,
+      fields: [
+        { name: 'ts', type: FieldType.time, config: {}, values: times }, // Time
+        { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
+      ],
+      length: 0,
+    };
+    return {
+      query,
+      regexp,
+      url,
+      refId,
+
+      // The data
+      times,
+      lines,
+      frame,
+    };
   }
 
   prepareQueryTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
