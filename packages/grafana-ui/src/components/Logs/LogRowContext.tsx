@@ -1,24 +1,22 @@
 import React, { useContext, useRef, useState, useLayoutEffect } from 'react';
-import {
-  ThemeContext,
-  List,
-  GrafanaTheme,
-  selectThemeVariant,
-  ClickOutsideWrapper,
-  CustomScrollbar,
-  DataQueryError,
-} from '@grafana/ui';
-
 import { LogRowModel } from '@grafana/data';
 import { css, cx } from 'emotion';
-import { LogRowContextRows, HasMoreContextRows, LogRowContextQueryErrors } from './LogRowContextProvider';
-import { Alert } from './Error';
+
+import { Alert } from '../Alert/Alert';
+import { LogRowContextRows, LogRowContextQueryErrors, HasMoreContextRows } from './LogRowContextProvider';
+import { GrafanaTheme } from '../../types/theme';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import { DataQueryError } from '../../types/datasource';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { List } from '../List/List';
+import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 interface LogRowContextProps {
   row: LogRowModel;
   context: LogRowContextRows;
   errors?: LogRowContextQueryErrors;
-  hasMoreContextRows: HasMoreContextRows;
+  hasMoreContextRows?: HasMoreContextRows;
   onOutsideClick: () => void;
   onLoadMoreContext: () => void;
 }
@@ -143,7 +141,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
   const theme = useContext(ThemeContext);
   const { commonStyles, logs } = getLogRowContextStyles(theme);
   const [scrollTop, setScrollTop] = useState(0);
-  const listContainerRef = useRef<HTMLDivElement>();
+  const listContainerRef = useRef<HTMLDivElement>() as React.RefObject<HTMLDivElement>;
 
   useLayoutEffect(() => {
     if (shouldScrollToBottom && listContainerRef.current) {
@@ -211,7 +209,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
               top: -250px;
             `}
             shouldScrollToBottom
-            canLoadMoreRows={hasMoreContextRows.after}
+            canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.after : false}
             onLoadMoreContext={onLoadMoreContext}
           />
         )}
@@ -219,7 +217,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
         {context.before && (
           <LogRowContextGroup
             onLoadMoreContext={onLoadMoreContext}
-            canLoadMoreRows={hasMoreContextRows.before}
+            canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.before : false}
             row={row}
             rows={context.before}
             error={errors && errors.before}

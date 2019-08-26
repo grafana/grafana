@@ -1,30 +1,58 @@
 import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
-import { LegendDisplayMode, GraphWithLegend } from '@grafana/ui';
-import { TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone, LoadingState } from '@grafana/data';
+import { css, cx } from 'emotion';
+import { TimeZone, AbsoluteTimeRange, GraphSeriesXY, dateTimeForTimeZone } from '@grafana/data';
 
-import { GraphSeriesToggler } from 'app/plugins/panel/graph2/GraphSeriesToggler';
-import Panel from './Panel';
-import { StoreState, ExploreId, ExploreMode } from 'app/types';
-import { getTimeZone } from '../profile/state/selectors';
-import { toggleGraph, updateTimeRange } from './state/actions';
+import {
+  GrafanaTheme,
+  selectThemeVariant,
+  Themeable,
+  GraphWithLegend,
+  LegendDisplayMode,
+  withTheme,
+  Collapse,
+  GraphSeriesToggler,
+  GraphSeriesTogglerAPI,
+} from '@grafana/ui';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
-interface Props {
-  exploreId: ExploreId;
+const getStyles = (theme: GrafanaTheme) => ({
+  timeSeriesDisclaimer: css`
+    label: time-series-disclaimer;
+    width: 300px;
+    margin: ${theme.spacing.sm} auto;
+    padding: 10px 0;
+    border-radius: ${theme.border.radius.md};
+    text-align: center;
+    background-color: ${selectThemeVariant({ light: theme.colors.white, dark: theme.colors.dark4 }, theme.type)};
+  `,
+  disclaimerIcon: css`
+    label: disclaimer-icon;
+    color: ${theme.colors.yellow};
+    margin-right: ${theme.spacing.xs};
+  `,
+  showAllTimeSeries: css`
+    label: show-all-time-series;
+    cursor: pointer;
+    color: ${theme.colors.linkExternal};
+  `,
+});
+
+interface Props extends Themeable {
   series: GraphSeriesXY[];
   width: number;
-  absoluteRange?: AbsoluteTimeRange;
-  loading?: boolean;
-  mode?: ExploreMode;
-  showingGraph?: boolean;
-  showingTable?: boolean;
-  timeZone?: TimeZone;
+  absoluteRange: AbsoluteTimeRange;
+  loading: boolean;
+  showPanel: boolean;
+  showBars: boolean;
+  showLines: boolean;
+  isStacked: boolean;
+  showingGraph: boolean;
+  showingTable: boolean;
+  timeZone: TimeZone;
+  onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
+  onToggleGraph?: (showingGraph: boolean) => void;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  toggleGraph: typeof toggleGraph;
-  updateTimeRange: typeof updateTimeRange;
 }
 
 interface State {
@@ -32,7 +60,7 @@ interface State {
   showAllTimeSeries: boolean;
 }
 
-export class ExploreGraphPanel extends PureComponent<Props, State> {
+class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
   state: State = {
     hiddenSeries: [],
     showAllTimeSeries: false,
@@ -45,14 +73,15 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
   };
 
   onClickGraphButton = () => {
-    const { toggleGraph, exploreId, showingGraph } = this.props;
-    toggleGraph(exploreId, showingGraph);
+    const { onToggleGraph, showingGraph } = this.props;
+    if (onToggleGraph) {
+      onToggleGraph(showingGraph);
+    }
   };
 
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
-    const { exploreId, updateTimeRange } = this.props;
-
-    updateTimeRange({ exploreId, absoluteRange });
+    const { onUpdateTimeRange } = this.props;
+    onUpdateTimeRange(absoluteRange);
   };
 
   renderGraph = () => {
@@ -62,9 +91,12 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
       onHiddenSeriesChanged,
       timeZone,
       absoluteRange,
-      mode,
+      showPanel,
       showingGraph,
       showingTable,
+      showBars,
+      showLines,
+      isStacked,
     } = this.props;
     const { showAllTimeSeries } = this.state;
 
@@ -80,16 +112,13 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
         to: dateTimeForTimeZone(timeZone, absoluteRange.to),
       },
     };
-    const height = mode === ExploreMode.Logs ? 100 : showingGraph && showingTable ? 200 : 400;
-    const showBars = mode === ExploreMode.Logs ? true : false;
-    const showLines = mode === ExploreMode.Metrics ? true : false;
-    const isStacked = mode === ExploreMode.Logs ? true : false;
-    const lineWidth = mode === ExploreMode.Metrics ? 1 : 5;
+    const height = showPanel === false ? 100 : showingGraph && showingTable ? 200 : 400;
+    const lineWidth = showLines ? 1 : 5;
     const seriesToShow = showAllTimeSeries ? series : series.slice(0, MAX_NUMBER_OF_TIME_SERIES);
 
     return (
       <GraphSeriesToggler series={seriesToShow} onHiddenSeriesChanged={onHiddenSeriesChanged}>
-        {({ onSeriesToggle, toggledSeries }) => {
+        {({ onSeriesToggle, toggledSeries }: GraphSeriesTogglerAPI) => {
           return (
             <GraphWithLegend
               displayMode={LegendDisplayMode.List}
@@ -116,58 +145,39 @@ export class ExploreGraphPanel extends PureComponent<Props, State> {
   };
 
   render() {
-    const { series, mode, showingGraph, loading } = this.props;
+    const { series, showPanel, showingGraph, loading, theme } = this.props;
     const { showAllTimeSeries } = this.state;
+    const style = getStyles(theme);
 
     return (
       <>
         {series && series.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
-          <div className="time-series-disclaimer">
-            <i className="fa fa-fw fa-warning disclaimer-icon" />
+          <div className={cx([style.timeSeriesDisclaimer])}>
+            <i className={cx(['fa fa-fw fa-warning', style.disclaimerIcon])} />
             {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
-            <span className="show-all-time-series" onClick={this.onShowAllTimeSeries}>{`Show all ${
+            <span className={cx([style.showAllTimeSeries])} onClick={this.onShowAllTimeSeries}>{`Show all ${
               series.length
             }`}</span>
           </div>
         )}
 
-        {mode === ExploreMode.Metrics && (
-          <Panel label="Graph" collapsible isOpen={showingGraph} loading={loading} onToggle={this.onClickGraphButton}>
+        {showPanel && (
+          <Collapse
+            label="Graph"
+            collapsible
+            isOpen={showingGraph}
+            loading={loading}
+            onToggle={this.onClickGraphButton}
+          >
             {this.renderGraph()}
-          </Panel>
+          </Collapse>
         )}
 
-        {mode === ExploreMode.Logs && this.renderGraph()}
+        {!showPanel && this.renderGraph()}
       </>
     );
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
-  const explore = state.explore;
-  // @ts-ignore
-  const item: ExploreItemState = explore[exploreId];
-  const { loadingState, showingGraph, showingTable, absoluteRange, mode } = item;
-  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
-
-  return {
-    loading,
-    showingGraph,
-    showingTable,
-    timeZone: getTimeZone(state.user),
-    absoluteRange,
-    mode,
-  };
-}
-
-const mapDispatchToProps = {
-  toggleGraph,
-  updateTimeRange,
-};
-
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(ExploreGraphPanel)
-);
+export const ExploreGraphPanel = withTheme(UnThemedExploreGraphPanel);
+ExploreGraphPanel.displayName = 'ExploreGraphPanel';

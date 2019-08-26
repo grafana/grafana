@@ -23,7 +23,7 @@ describe('<QueryField />', () => {
     const wrapper = shallow(<QueryField initialQuery="my query" />);
     const instance = wrapper.instance() as QueryField;
     instance.executeOnChangeAndRunQueries = jest.fn();
-    const handleEnterAndTabKeySpy = jest.spyOn(instance, 'handleEnterAndTabKey');
+    const handleEnterAndTabKeySpy = jest.spyOn(instance, 'handleEnterKey');
     instance.onKeyDown({ key: 'Enter', preventDefault: () => {} } as KeyboardEvent, {});
     expect(handleEnterAndTabKeySpy).toBeCalled();
     expect(instance.executeOnChangeAndRunQueries).toBeCalled();
