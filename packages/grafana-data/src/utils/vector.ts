@@ -130,8 +130,31 @@ export class CircularVector<T = any> implements Vector<T> {
     }
   }
 
-  // Pick an add function that either writes forwards or backwards
+  /**
+   * This gets the appropriate add function depending on the buffer state:
+   *  * head vs tail
+   *  * growing buffer vs overwriting values
+   */
   private getAddFunction() {
+    // When we are not at capacity, it should actually modify the buffer
+    if (this.capacity > this.buffer.length) {
+      if (this.tail) {
+        return (value: T) => {
+          this.buffer.push(value);
+          if (this.buffer.length >= this.capacity) {
+            this.add = this.getAddFunction();
+          }
+        };
+      } else {
+        return (value: T) => {
+          this.buffer.unshift(value);
+          if (this.buffer.length >= this.capacity) {
+            this.add = this.getAddFunction();
+          }
+        };
+      }
+    }
+
     if (this.tail) {
       return (value: T) => {
         this.buffer[this.index] = value;
@@ -158,23 +181,6 @@ export class CircularVector<T = any> implements Vector<T> {
     const copy = this.toArray();
     if (v > this.length) {
       this.buffer = copy;
-
-      // Change the 'add' function so it actually appends
-      if (this.tail) {
-        this.add = (value: T) => {
-          this.buffer.push(value);
-          if (this.buffer.length >= this.capacity) {
-            this.add = this.getAddFunction();
-          }
-        };
-      } else {
-        this.add = (value: T) => {
-          this.buffer.unshift(value);
-          if (this.buffer.length >= this.capacity) {
-            this.add = this.getAddFunction();
-          }
-        };
-      }
     } else if (v < this.capacity) {
       // Shrink the buffer
       const delta = this.length - v;
@@ -186,6 +192,17 @@ export class CircularVector<T = any> implements Vector<T> {
     }
     this.capacity = v;
     this.index = 0;
+    this.add = this.getAddFunction();
+  }
+
+  setAppendMode(mode: 'head' | 'tail') {
+    const tail = 'head' !== mode;
+    if (tail !== this.tail) {
+      this.buffer = this.toArray().reverse();
+      this.index = 0;
+      this.tail = tail;
+      this.add = this.getAddFunction();
+    }
   }
 
   /**

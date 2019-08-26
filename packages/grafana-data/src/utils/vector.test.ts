@@ -139,4 +139,20 @@ describe('Check Circular Vector', () => {
     v.add(7);
     expect(v.toArray()).toEqual([7, 6, 5]);
   });
+
+  it('change buffer direction', () => {
+    const buffer = [1, 2, 3];
+    const v = new CircularVector({ buffer });
+    expect(v.toArray()).toEqual([1, 2, 3]);
+
+    v.setAppendMode('head');
+    expect(v.toArray()).toEqual([3, 2, 1]);
+
+    v.add(4);
+    expect(v.toArray()).toEqual([4, 3, 2]);
+
+    v.setAppendMode('tail');
+    v.add(5);
+    expect(v.toArray()).toEqual([3, 4, 5]);
+  });
 });
