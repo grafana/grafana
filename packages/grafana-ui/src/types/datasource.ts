@@ -363,6 +363,12 @@ export interface DataStreamState {
   data?: DataFrame[];
 
   /**
+   * True when the data represents changes since the last event rather
+   * than an entire DataFrame result
+   */
+  isDelta?: boolean;
+
+  /**
    * Error in stream (but may still be running)
    */
   error?: DataQueryError;
@@ -376,13 +382,6 @@ export interface DataStreamState {
    * additions.
    */
   delta?: DataFrame[];
-
-  /**
-   * Is the data the entire buffer, or just the changes
-   *
-   * NOTE: optional now, but should be required
-   */
-  shape?: StreamingResponseShape;
 
   /**
    * Stop listening to this stream
@@ -444,28 +443,9 @@ export interface ScopedVars {
   [key: string]: ScopedVar;
 }
 
-enum StreamingResponseShape {
-  /**
-   * Full DataFrames
-   */
-  full = 'full',
-
-  /**
-   * Send only the changes since the last notifiction
-   */
-  delta = 'delta',
-}
-
-interface ObserverConfig {
-  pause?: boolean;
-  throttle?: number;
-}
-
-export interface StramingQueryOptions {
+export interface StreamingQueryOptions {
   buffer?: number; // defaults to `maxDataPoints`
-  frames?: StreamingResponseShape; // defaults to `full`
-  listener?: ObserverConfig;
-  notification?: ObserverConfig;
+  asDelta?: boolean; // defaults to false
 }
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
@@ -482,7 +462,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
-  stream?: StramingQueryOptions;
+  stream?: StreamingQueryOptions;
 
   // Request Timing
   startTime: number;
