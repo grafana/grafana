@@ -1,8 +1,9 @@
-import { DataQueryResponse, DataQueryError } from '@grafana/ui';
-import { LogRowModel } from '@grafana/data';
+import { LogRowModel, toDataFrame, Field } from '@grafana/data';
 import { useState, useEffect } from 'react';
 import flatten from 'lodash/flatten';
 import useAsync from 'react-use/lib/useAsync';
+
+import { DataQueryResponse, DataQueryError } from '../../types/datasource';
 
 export interface LogRowContextRows {
   before?: string[];
@@ -16,6 +17,11 @@ export interface LogRowContextQueryErrors {
 export interface HasMoreContextRows {
   before: boolean;
   after: boolean;
+}
+
+interface ResultType {
+  data: string[][];
+  errors: string[];
 }
 
 interface LogRowContextProviderProps {
@@ -47,24 +53,44 @@ export const getRowContexts = async (
   const results: Array<DataQueryResponse | DataQueryError> = await Promise.all(promises.map(p => p.catch(e => e)));
 
   return {
-    data: results.map((result, index) => {
+    data: results.map(result => {
       const dataResult: DataQueryResponse = result as DataQueryResponse;
       if (!dataResult.data) {
         return [];
       }
 
-      // We need to filter out the row we're basing our search from because of how start/end params work in Loki API
-      // see https://github.com/grafana/loki/issues/597#issuecomment-506408980
-      // the alternative to create our own add 1 nanosecond method to the a timestamp string would be quite complex
-      return dataResult.data.map(series => {
-        const filteredRows = series.rows.filter((r: any) => r[0] !== row.timestamp);
-        return filteredRows.map((row: any) => row[1]);
-      });
+      const data: any[] = [];
+      for (let index = 0; index < dataResult.data.length; index++) {
+        const dataFrame = toDataFrame(dataResult.data[index]);
+        const timestampField: Field<string> = dataFrame.fields.filter(field => field.name === 'ts')[0];
+
+        for (let fieldIndex = 0; fieldIndex < timestampField.values.length; fieldIndex++) {
+          const timestamp = timestampField.values.get(fieldIndex);
+
+          // We need to filter out the row we're basing our search from because of how start/end params work in Loki API
+          // see https://github.com/grafana/loki/issues/597#issuecomment-506408980
+          // the alternative to create our own add 1 nanosecond method to the a timestamp string would be quite complex
+          if (timestamp === row.timestamp) {
+            continue;
+          }
+
+          const lineField: Field<string> = dataFrame.fields.filter(field => field.name === 'line')[0];
+          const line = lineField.values.get(fieldIndex); // assuming that both fields have same length
+
+          if (data.length === 0) {
+            data[0] = [line];
+          } else {
+            data[0].push(line);
+          }
+        }
+      }
+
+      return data;
     }),
     errors: results.map(result => {
       const errorResult: DataQueryError = result as DataQueryError;
       if (!errorResult.message) {
-        return null;
+        return '';
       }
 
       return errorResult.message;
@@ -85,10 +111,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // React Hook that creates an object state value called result to component state and a setter function called setResult
   // The intial value for result is null
   // Used for sorting the response from backend
-  const [result, setResult] = useState<{
-    data: string[][];
-    errors: string[];
-  }>(null);
+  const [result, setResult] = useState<ResultType>((null as any) as ResultType);
 
   // React Hook that creates an object state value called hasMoreContextRows to component state and a setter function called setHasMoreContextRows
   // The intial value for hasMoreContextRows is {before: true, after: true}
@@ -110,7 +133,7 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
   // The side effect changes the hasMoreContextRows state if there are more context rows before or after the current result
   useEffect(() => {
     if (value) {
-      setResult(currentResult => {
+      setResult((currentResult: any) => {
         let hasMoreLogsBefore = true,
           hasMoreLogsAfter = true;
 
@@ -138,8 +161,8 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
       after: result ? flatten(result.data[1]) : [],
     },
     errors: {
-      before: result ? result.errors[0] : null,
-      after: result ? result.errors[1] : null,
+      before: result ? result.errors[0] : undefined,
+      after: result ? result.errors[1] : undefined,
     },
     hasMoreContextRows,
     updateLimit: () => setLimit(limit + 10),

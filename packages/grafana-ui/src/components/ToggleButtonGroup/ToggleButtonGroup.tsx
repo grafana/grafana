@@ -1,5 +1,5 @@
 import React, { FC, ReactNode, PureComponent } from 'react';
-import { Tooltip } from '@grafana/ui';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 interface ToggleButtonGroupProps {
   label?: string;
@@ -7,7 +7,7 @@ interface ToggleButtonGroupProps {
   transparent?: boolean;
 }
 
-export default class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
+export class ToggleButtonGroup extends PureComponent<ToggleButtonGroupProps> {
   render() {
     const { children, label, transparent } = this.props;
 

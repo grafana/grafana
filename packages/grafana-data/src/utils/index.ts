@@ -11,6 +11,7 @@ export * from './labels';
 export * from './object';
 export * from './moment_wrapper';
 export * from './thresholds';
+export * from './text';
 export * from './dataFrameHelper';
 export * from './dataFrameView';
 export * from './vector';

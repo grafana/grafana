@@ -127,17 +127,31 @@ export function getColorFromThreshold(value: number, thresholds: Threshold[], th
   return getColorFromHexRgbOrName(thresholds[0].color, themeType);
 }
 
+// function getSignificantDigitCount(n: number): number {
+//   // remove decimal and make positive
+//   n = Math.abs(parseInt(String(n).replace('.', ''), 10));
+//   if (n === 0) {
+//     return 0;
+//   }
+//
+//   // kill the 0s at the end of n
+//   while (n !== 0 && n % 10 === 0) {
+//     n /= 10;
+//   }
+//
+//   // get number of digits
+//   return Math.floor(Math.log(n) / Math.LN10) + 1;
+// }
+
 export function getDecimalsForValue(value: number, decimalOverride?: DecimalCount): DecimalInfo {
   if (_.isNumber(decimalOverride)) {
     // It's important that scaledDecimals is null here
     return { decimals: decimalOverride, scaledDecimals: null };
   }
 
-  const delta = value / 2;
-  let dec = -Math.floor(Math.log(delta) / Math.LN10);
-
+  let dec = -Math.floor(Math.log(value) / Math.LN10) + 1;
   const magn = Math.pow(10, -dec);
-  const norm = delta / magn; // norm is between 1.0 and 10.0
+  const norm = value / magn; // norm is between 1.0 and 10.0
   let size;
 
   if (norm < 1.5) {
@@ -158,7 +172,7 @@ export function getDecimalsForValue(value: number, decimalOverride?: DecimalCoun
   size *= magn;
 
   // reduce starting decimals if not needed
-  if (Math.floor(value) === value) {
+  if (value % 1 === 0) {
     dec = 0;
   }
 
