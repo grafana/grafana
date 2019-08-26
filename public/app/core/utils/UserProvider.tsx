@@ -1,16 +1,18 @@
 import React, { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
-import { User } from 'app/types';
+import { User, Team } from 'app/types';
 
 export interface UserAPI {
   changePassword: (changePassword: ChangePasswordFields) => void;
   updateUserProfile: (profile: ProfileUpdateFields) => void;
   loadUser: () => void;
+  loadTeams: () => void;
 }
 
 interface LoadingStates {
   changePassword: boolean;
   loadUser: boolean;
+  loadTeams: boolean;
   updateUserProfile: boolean;
 }
 
@@ -28,24 +30,27 @@ export interface ProfileUpdateFields {
 
 export interface Props {
   userId?: number; // passed, will load user on mount
-  children: (api: UserAPI, states: LoadingStates, user?: User) => JSX.Element;
+  children: (api: UserAPI, states: LoadingStates, teams: Team[], user?: User) => JSX.Element;
 }
 
 export interface State {
   user?: User;
+  teams: Team[];
   loadingStates: LoadingStates;
 }
 
 export class UserProvider extends PureComponent<Props, State> {
   state: State = {
+    teams: [] as Team[],
     loadingStates: {
       changePassword: false,
       loadUser: true,
+      loadTeams: false,
       updateUserProfile: false,
     },
   };
 
-  componentDidMount() {
+  componentWillMount() {
     if (this.props.userId) {
       this.loadUser();
     }
@@ -65,6 +70,14 @@ export class UserProvider extends PureComponent<Props, State> {
     this.setState({ user, loadingStates: { ...this.state.loadingStates, loadUser: Object.keys(user).length === 0 } });
   };
 
+  loadTeams = async () => {
+    this.setState({
+      loadingStates: { ...this.state.loadingStates, loadTeams: true },
+    });
+    const teams = await getBackendSrv().get('/api/user/teams');
+    this.setState({ teams, loadingStates: { ...this.state.loadingStates, loadTeams: false } });
+  };
+
   updateUserProfile = async (payload: ProfileUpdateFields) => {
     this.setState({ loadingStates: { ...this.state.loadingStates, updateUserProfile: true } });
     await getBackendSrv()
@@ -80,15 +93,16 @@ export class UserProvider extends PureComponent<Props, State> {
 
   render() {
     const { children } = this.props;
-    const { loadingStates, user } = this.state;
+    const { loadingStates, teams, user } = this.state;
 
     const api = {
       changePassword: this.changePassword,
       loadUser: this.loadUser,
+      loadTeams: this.loadTeams,
       updateUserProfile: this.updateUserProfile,
     };
 
-    return <>{children(api, loadingStates, user)}</>;
+    return <>{children(api, loadingStates, teams, user)}</>;
   }
 }
 

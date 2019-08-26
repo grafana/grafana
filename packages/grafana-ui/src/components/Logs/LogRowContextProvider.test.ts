@@ -1,5 +1,7 @@
 import { DataFrameHelper, FieldType, LogRowModel } from '@grafana/data';
 import { getRowContexts } from './LogRowContextProvider';
+import { Labels, LogLevel } from '@grafana/data/src';
+import { DataQueryResponse } from '../../types';
 
 describe('getRowContexts', () => {
   describe('when called with a DataFrame and results are returned', () => {
@@ -22,10 +24,10 @@ describe('getRowContexts', () => {
       });
       const row: LogRowModel = {
         entry: '4',
-        labels: null,
+        labels: (null as any) as Labels,
         hasAnsi: false,
         raw: '4',
-        logLevel: null,
+        logLevel: LogLevel.info,
         timeEpochMs: 4,
         timeFromNow: '',
         timeLocal: '',
@@ -33,14 +35,18 @@ describe('getRowContexts', () => {
         timestamp: '4',
       };
 
-      const getRowContext = jest
-        .fn()
-        .mockResolvedValueOnce({ data: [firstResult] })
-        .mockResolvedValueOnce({ data: [secondResult] });
+      let called = false;
+      const getRowContextMock = (row: LogRowModel, options?: any): Promise<DataQueryResponse> => {
+        if (!called) {
+          called = true;
+          return Promise.resolve({ data: [firstResult] });
+        }
+        return Promise.resolve({ data: [secondResult] });
+      };
 
-      const result = await getRowContexts(getRowContext, row, 10);
+      const result = await getRowContexts(getRowContextMock, row, 10);
 
-      expect(result).toEqual({ data: [[['3', '2', '1']], [['6', '5', '4']]], errors: [null, null] });
+      expect(result).toEqual({ data: [[['3', '2', '1']], [['6', '5', '4']]], errors: ['', ''] });
     });
   });
 
@@ -50,10 +56,10 @@ describe('getRowContexts', () => {
       const secondError = new Error('Error 2');
       const row: LogRowModel = {
         entry: '4',
-        labels: null,
+        labels: (null as any) as Labels,
         hasAnsi: false,
         raw: '4',
-        logLevel: null,
+        logLevel: LogLevel.info,
         timeEpochMs: 4,
         timeFromNow: '',
         timeLocal: '',
@@ -61,12 +67,16 @@ describe('getRowContexts', () => {
         timestamp: '4',
       };
 
-      const getRowContext = jest
-        .fn()
-        .mockRejectedValueOnce(firstError)
-        .mockRejectedValueOnce(secondError);
+      let called = false;
+      const getRowContextMock = (row: LogRowModel, options?: any): Promise<DataQueryResponse> => {
+        if (!called) {
+          called = true;
+          return Promise.reject(firstError);
+        }
+        return Promise.reject(secondError);
+      };
 
-      const result = await getRowContexts(getRowContext, row, 10);
+      const result = await getRowContexts(getRowContextMock, row, 10);
 
       expect(result).toEqual({ data: [[], []], errors: ['Error 1', 'Error 2'] });
     });
