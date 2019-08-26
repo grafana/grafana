@@ -48,9 +48,11 @@ export class SharedQueryRunner {
       this.listenPanel = getDashboardSrv()
         .getCurrent()
         .getPanelById(panelId);
+
       if (!this.listenPanel) {
         return getQueryError('Unknown Panel: ' + panelId);
       }
+
       this.listenId = panelId;
       this.listenRunner = this.listenPanel.getQueryRunner();
       this.subscription = this.listenRunner.chain(this.runner);

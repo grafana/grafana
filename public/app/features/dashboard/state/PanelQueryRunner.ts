@@ -55,6 +55,7 @@ export class PanelQueryRunner {
 
   constructor(private panelId: number) {
     this.state.onStreamingDataUpdated = this.onStreamingDataUpdated;
+    this.subject = new Subject();
   }
 
   getPanelId() {
@@ -66,10 +67,6 @@ export class PanelQueryRunner {
    * the results will be immediatly passed to the observer
    */
   subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.frames): Unsubscribable {
-    if (!this.subject) {
-      this.subject = new Subject(); // Delay creating a subject until someone is listening
-    }
-
     if (format === PanelQueryRunnerFormat.legacy) {
       this.state.sendLegacy = true;
     } else if (format === PanelQueryRunnerFormat.both) {
@@ -93,12 +90,11 @@ export class PanelQueryRunner {
   chain(runner: PanelQueryRunner): Unsubscribable {
     const { sendLegacy, sendFrames } = runner.state;
     let format = sendFrames ? PanelQueryRunnerFormat.frames : PanelQueryRunnerFormat.legacy;
+
     if (sendLegacy) {
       format = PanelQueryRunnerFormat.both;
     }
-    if (!runner.subject) {
-      runner.subject = new Subject();
-    }
+
     return this.subscribe(runner.subject, format);
   }
 
@@ -107,10 +103,6 @@ export class PanelQueryRunner {
   }
 
   async run(options: QueryRunnerOptions): Promise<PanelData> {
-    if (!this.subject) {
-      this.subject = new Subject();
-    }
-
     const { state } = this;
 
     const {
