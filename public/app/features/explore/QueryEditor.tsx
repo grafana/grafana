@@ -73,7 +73,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
     const hasNewError = prevProps.error !== this.props.error;
 
     if (this.component) {
-      if (hasToggledEditorMode) {
+      if (hasToggledEditorMode && this.angularScope && this.angularScope.toggleEditorMode) {
         this.angularScope.toggleEditorMode();
       }
 
