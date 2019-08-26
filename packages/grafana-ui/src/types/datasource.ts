@@ -378,6 +378,13 @@ export interface DataStreamState {
   delta?: DataFrame[];
 
   /**
+   * Is the data the entire buffer, or just the changes
+   *
+   * NOTE: optional now, but should be required
+   */
+  shape?: StreamingResponseShape;
+
+  /**
    * Stop listening to this stream
    */
   unsubscribe: () => void;
@@ -437,6 +444,29 @@ export interface ScopedVars {
   [key: string]: ScopedVar;
 }
 
+enum StreamingResponseShape {
+  /**
+   * Full DataFrames
+   */
+  full = 'full',
+
+  /**
+   * Send only the changes since the last notifiction
+   */
+  delta = 'delta',
+}
+
+interface ObserverConfig {
+  pause?: boolean;
+  throttle?: number;
+}
+
+export interface StramingQueryOptions {
+  frames?: StreamingResponseShape;
+  listener?: ObserverConfig;
+  notification?: ObserverConfig;
+}
+
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
   timezone: string;
@@ -451,6 +481,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
+  stream?: StramingQueryOptions;
 
   // Request Timing
   startTime: number;
