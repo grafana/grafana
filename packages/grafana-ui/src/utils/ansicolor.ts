@@ -100,7 +100,9 @@ class Color {
 
     return rgb
       ? prop + 'rgba(' + [...rgb, alpha].join(',') + ');'
-      : !color.background && alpha < 1 ? 'color:rgba(0,0,0,0.5);' : ''; // Chrome does not support 'opacity' property...
+      : !color.background && alpha < 1
+      ? 'color:rgba(0,0,0,0.5);'
+      : ''; // Chrome does not support 'opacity' property...
   }
 }
 
@@ -118,11 +120,13 @@ class Code {
   static noColor = 39;
   static noBgColor = 49;
 
-  value: number;
+  value: number | undefined;
 
   constructor(n?: string | number) {
     if (n !== undefined) {
       this.value = Number(n);
+    } else {
+      this.value = undefined;
     }
   }
 
@@ -178,45 +182,42 @@ const camel = (a: string, b: string) => a + b.charAt(0).toUpperCase() + b.slice(
 
 const stringWrappingMethods = (() =>
   [
-    ...colorCodes.map(
-      (k, i) =>
-        !k
-          ? []
-          : [
-              // color methods
+    ...colorCodes.map((k, i) =>
+      !k
+        ? []
+        : [
+            // color methods
 
-              [k, 30 + i, Code.noColor],
-              [camel('bg', k), 40 + i, Code.noBgColor],
-            ]
+            [k, 30 + i, Code.noColor],
+            [camel('bg', k), 40 + i, Code.noBgColor],
+          ]
     ),
 
-    ...colorCodesLight.map(
-      (k, i) =>
-        !k
-          ? []
-          : [
-              // light color methods
+    ...colorCodesLight.map((k, i) =>
+      !k
+        ? []
+        : [
+            // light color methods
 
-              [k, 90 + i, Code.noColor],
-              [camel('bg', k), 100 + i, Code.noBgColor],
-            ]
+            [k, 90 + i, Code.noColor],
+            [camel('bg', k), 100 + i, Code.noBgColor],
+          ]
     ),
 
     /* THIS ONE IS FOR BACKWARDS COMPATIBILITY WITH PREVIOUS VERSIONS (had 'bright' instead of 'light' for backgrounds)
-         */
-    ...['', 'BrightRed', 'BrightGreen', 'BrightYellow', 'BrightBlue', 'BrightMagenta', 'BrightCyan'].map(
-      (k, i) => (!k ? [] : [['bg' + k, 100 + i, Code.noBgColor]])
+     */
+    ...['', 'BrightRed', 'BrightGreen', 'BrightYellow', 'BrightBlue', 'BrightMagenta', 'BrightCyan'].map((k, i) =>
+      !k ? [] : [['bg' + k, 100 + i, Code.noBgColor]]
     ),
 
-    ...styleCodes.map(
-      (k, i) =>
-        !k
-          ? []
-          : [
-              // style methods
+    ...styleCodes.map((k, i) =>
+      !k
+        ? []
+        : [
+            // style methods
 
-              [k, i, k === 'bright' || k === 'dim' ? Code.noBrightness : 20 + i],
-            ]
+            [k, i, k === 'bright' || k === 'dim' ? Code.noBrightness : 20 + i],
+          ]
     ),
   ].reduce((a, b) => a.concat(b)))();
 

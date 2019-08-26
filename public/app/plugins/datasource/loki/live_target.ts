@@ -22,8 +22,8 @@ export interface LiveTarget {
 }
 
 export function prepareLiveDataFrame(target: Partial<LiveTarget>, bufferLength: number): LiveTarget {
-  const times = new CircularVector<string>([]);
-  const lines = new CircularVector<string>([]);
+  const times = new CircularVector<string>();
+  const lines = new CircularVector<string>();
   const frame = {
     refId: target.refId,
     fields: [

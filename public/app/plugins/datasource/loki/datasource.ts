@@ -188,8 +188,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           map((results: LokiLogsStream) => {
             // Add each line
             for (const entry of results.entries) {
-              liveTarget.times.append(entry.ts || entry.timestamp);
-              liveTarget.lines.append(entry.line);
+              liveTarget.times.add(entry.ts || entry.timestamp);
+              liveTarget.lines.add(entry.line);
             }
 
             const state: DataStreamState = {
