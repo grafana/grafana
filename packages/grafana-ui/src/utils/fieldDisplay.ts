@@ -72,10 +72,6 @@ export interface FieldDisplay {
   row?: number; // only filled in when the value is from a row (ie, not a reduction)
 }
 
-export const isFieldDisplay = (arg: any): arg is FieldDisplay => {
-  return arg.field !== undefined && arg.display !== undefined;
-};
-
 export interface GetFieldDisplayValuesOptions {
   data?: DataFrame[];
   fieldOptions: FieldDisplayOptions;

@@ -10,14 +10,14 @@ import { Gauge, FieldDisplay, getFieldDisplayValues, VizOrientation } from '@gra
 // Types
 import { GaugeOptions } from './types';
 import { PanelProps, VizRepeater } from '@grafana/ui';
-import { getLinkSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
     const { field, display } = value;
 
-    const supplier = getLinkSupplier(value);
+    const supplier = getFieldLinksSupplier(value);
 
     return (
       <Gauge

@@ -1,13 +1,13 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { FieldDisplay, ScopedVars, isFieldDisplay } from '@grafana/ui';
-import { LinkModelSupplier } from '@grafana/data';
+import { FieldDisplay, ScopedVars, DataLinkBuiltInVars } from '@grafana/ui';
+import { LinkModelSupplier, DataFrameHelper, FieldType } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
 
 /**
  * Link suppliers creates link models based on a link origin
  */
 
-const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<FieldDisplay> => {
+export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<FieldDisplay> => {
   const links = value.field.links;
   if (!links || !links.length) {
     return undefined;
@@ -17,6 +17,10 @@ const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<FieldDisp
       const scopedVars: ScopedVars = {};
       // TODO, add values to scopedVars and/or pass objects to event listeners
       if (value.view) {
+        scopedVars[DataLinkBuiltInVars.seriesName] = {
+          text: 'Series',
+          value: value.view.dataFrame.name,
+        };
         const field = value.column ? value.view.dataFrame.fields[value.column] : undefined;
         if (field) {
           console.log('Full Field Info:', field);
@@ -24,6 +28,15 @@ const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<FieldDisp
         if (value.row) {
           const row = value.view.get(value.row);
           console.log('ROW:', row);
+          const dataFrame = new DataFrameHelper(value.view.dataFrame);
+
+          const timeField = dataFrame.getFirstFieldOfType(FieldType.time);
+          if (timeField) {
+            scopedVars[DataLinkBuiltInVars.valueTime] = {
+              text: 'Value time',
+              value: timeField.values.get(value.row),
+            };
+          }
         }
       } else {
         console.log('VALUE', value);
@@ -51,18 +64,3 @@ export const getPanelLinksSupplier = (value: PanelModel): LinkModelSupplier<Pane
     },
   };
 };
-
-export function getLinkSupplier<T extends object>(value: T): LinkModelSupplier<T> | undefined {
-  if (isFieldDisplay(value)) {
-    // TODO: any ideas how to make this ts problem gone?
-    // @ts-ignore
-    return getFieldLinksSupplier(value);
-  }
-
-  // if(isPanelModel(value)) {
-  //   return getPanelLinksSupplier(value);
-  // }
-
-  console.warn('No link supplier available for', value);
-  return undefined;
-}

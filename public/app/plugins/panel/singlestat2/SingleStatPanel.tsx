@@ -8,7 +8,7 @@ import { config } from 'app/core/config';
 import { SingleStatOptions } from './types';
 import { PanelProps, getFieldDisplayValues, VizRepeater, FieldDisplay, BigValue } from '@grafana/ui';
 import { BigValueSparkline } from '@grafana/ui/src/components/BigValue/BigValue';
-import { getLinkSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
@@ -31,7 +31,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
         width={width}
         height={height}
         theme={config.theme}
-        links={getLinkSupplier(value)}
+        links={getFieldLinksSupplier(value)}
       />
     );
   };
