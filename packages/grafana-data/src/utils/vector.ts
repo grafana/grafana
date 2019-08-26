@@ -8,7 +8,11 @@ export function vectorToArray<T>(v: Vector<T>): T[] {
   return arr;
 }
 
-export class ArrayVector<T = any> implements Vector<T> {
+export interface AppendingVector<T = any> extends Vector<T> {
+  add: (value: T) => void;
+}
+
+export class ArrayVector<T = any> implements AppendingVector<T> {
   buffer: T[];
 
   constructor(buffer?: T[]) {
@@ -17,6 +21,10 @@ export class ArrayVector<T = any> implements Vector<T> {
 
   get length() {
     return this.buffer.length;
+  }
+
+  add(value: T) {
+    this.buffer.push(value);
   }
 
   get(index: number): T {
@@ -112,7 +120,7 @@ interface CircularOptions<T> {
  * This supports addting to the 'head' or 'tail' and will grow the buffer
  * to match a configured capacity.
  */
-export class CircularVector<T = any> implements Vector<T> {
+export class CircularVector<T = any> implements AppendingVector<T> {
   private buffer: T[];
   private index: number;
   private capacity: number;

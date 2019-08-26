@@ -5,7 +5,7 @@ import { webSocket } from 'rxjs/webSocket';
 import { catchError, map } from 'rxjs/operators';
 
 // Services & Utils
-import { dateMath, FieldType, CircularVector } from '@grafana/data';
+import { dateMath, FieldType, ArrayVector, CircularVector } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -91,28 +91,21 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const params = serializeParams({ query, regexp });
     const url = convertToWebSocketUrl(`${baseUrl}/api/prom/tail?${params}`);
 
-    const size = 1000; // options.maxDataPoints?
+    const streamRequest = options.stream || {};
+    const size = streamRequest.buffer || options.maxDataPoints;
 
     const times = new CircularVector<string>({ capacity: size });
     const lines = new CircularVector<string>({ capacity: size });
-    const frame = {
-      refId: target.refId,
-      fields: [
-        { name: 'ts', type: FieldType.time, config: {}, values: times }, // Time
-        { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
-      ],
-      length: 0,
-    };
     return {
       query,
       regexp,
       url,
       refId,
+      isDelta: streamRequest.isDelta,
 
       // The data
       times,
       lines,
-      frame,
     };
   }
 
@@ -201,6 +194,15 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       liveTarget.subscription = webSocket(liveTarget.url)
         .pipe(
           map((results: LokiLogsStream) => {
+            const { isDelta, refId } = liveTarget;
+            let { times, lines } = liveTarget;
+
+            // For Delta requests, create a new frame with new buffers
+            if (isDelta) {
+              times = new ArrayVector<string>();
+              lines = new ArrayVector<string>();
+            }
+
             // Add each line
             for (const entry of results.entries) {
               liveTarget.times.add(entry.ts || entry.timestamp);
@@ -208,11 +210,21 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
             }
 
             const state: DataStreamState = {
-              key: `loki-${liveTarget.refId}`,
+              key: `loki-${refId}`,
               request: options,
               state: LoadingState.Streaming,
-              data: [liveTarget.frame],
-              unsubscribe: () => this.unsubscribe(liveTarget.refId),
+              isDelta,
+              data: [
+                {
+                  refId,
+                  fields: [
+                    { name: 'ts', type: FieldType.time, config: {}, values: times }, // Time
+                    { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
+                  ],
+                  length: times.length,
+                },
+              ],
+              unsubscribe: () => this.unsubscribe(refId),
             };
 
             return state;
