@@ -127,7 +127,7 @@ export class StreamWorker {
     for (let i = 0; i < append.length; i++) {
       const row = append[i];
       for (let j = 0; j < values.length; j++) {
-        values[j].append(row[j]); // Circular buffer will kick out old entries
+        values[j].add(row[j]); // Circular buffer will kick out old entries
       }
     }
     // Clear any cached values
@@ -178,8 +178,8 @@ export class SignalWorker extends StreamWorker {
     const { speed, buffer } = this.query;
     const request = this.stream.request;
     const maxRows = buffer ? buffer : request.maxDataPoints;
-    const times = new CircularVector(new Array<number>(maxRows));
-    const vals = new CircularVector(new Array<number>(maxRows));
+    const times = new CircularVector({ capacity: maxRows });
+    const vals = new CircularVector({ capacity: maxRows });
     this.values = [times, vals];
 
     const data = new DataFrameHelper({
@@ -193,8 +193,8 @@ export class SignalWorker extends StreamWorker {
 
     for (let i = 0; i < this.bands; i++) {
       const suffix = this.bands > 1 ? ` ${i + 1}` : '';
-      const min = new CircularVector(new Array<number>(maxRows));
-      const max = new CircularVector(new Array<number>(maxRows));
+      const min = new CircularVector({ capacity: maxRows });
+      const max = new CircularVector({ capacity: maxRows });
       this.values.push(min);
       this.values.push(max);
 
@@ -209,7 +209,7 @@ export class SignalWorker extends StreamWorker {
     for (let i = 0; i < maxRows; i++) {
       const row = this.nextRow(time);
       for (let j = 0; j < this.values.length; j++) {
-        this.values[j].append(row[j]);
+        this.values[j].add(row[j]);
       }
       time += speed;
     }
@@ -347,8 +347,8 @@ export class LogsWorker extends StreamWorker {
 
     const maxRows = buffer ? buffer : request.maxDataPoints;
 
-    const times = new CircularVector(new Array(maxRows));
-    const lines = new CircularVector(new Array(maxRows));
+    const times = new CircularVector({ capacity: maxRows });
+    const lines = new CircularVector({ capacity: maxRows });
 
     this.values = [times, lines];
     this.data = new DataFrameHelper({
@@ -364,8 +364,8 @@ export class LogsWorker extends StreamWorker {
     let time = Date.now() - maxRows * speed;
     for (let i = 0; i < maxRows; i++) {
       const row = this.nextRow(time);
-      times.append(row[0]);
-      lines.append(row[1]);
+      times.add(row[0]);
+      lines.add(row[1]);
       time += speed;
     }
   }
