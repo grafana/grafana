@@ -105,3 +105,10 @@ export interface LogsParser {
    */
   test: (line: string) => any;
 }
+
+export enum LogsDedupDescription {
+  none = 'No de-duplication',
+  exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
+  numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
+  signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
+}
