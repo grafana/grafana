@@ -93,7 +93,7 @@ export async function getExploreUrl(
       };
     }
 
-    const exploreState = JSON.stringify({ ...state, originPanel: panel.id });
+    const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
     url = renderUrl('/explore', { left: exploreState });
   }
   return url;
@@ -205,7 +205,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     range: DEFAULT_RANGE,
     ui: DEFAULT_UI_STATE,
     mode: null,
-    originPanel: null,
+    originPanelId: null,
   };
 
   if (!parsed) {
@@ -242,8 +242,8 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
       }
     : DEFAULT_UI_STATE;
 
-  const originPanel = parsedSegments.filter(segment => isSegment(segment, 'originPanel'))[0];
-  return { datasource, queries, range, ui, mode, originPanel };
+  const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
+  return { datasource, queries, range, ui, mode, originPanelId };
 }
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {

@@ -29,11 +29,13 @@ import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/SharedQ
 import { DashboardQueryEditor } from 'app/plugins/datasource/dashboard/DashboardQueryEditor';
 import { StoreState } from 'app/types';
 
+import { mergeExploreQueries } from '../utils/panel';
+
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   fromExplore?: boolean;
-  queryRows?: number;
+  queryRowCount?: number;
 }
 
 interface State {
@@ -65,37 +67,15 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   componentDidMount() {
-    const { panel, fromExplore, queryRows } = this.props;
+    const { panel, fromExplore, queryRowCount } = this.props;
     const queryRunner = panel.getQueryRunner();
 
     this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.both);
 
-    if (fromExplore) {
-      const datasourceType = this.datasources.filter(datasource => datasource.value === panel.datasource)[0].meta.id;
-      const exploreQueries: ReadonlyArray<DataQuery> = store
-        .getObject(`grafana.explore.history.${datasourceType}`)
-        .map(({ query }: any) => query);
+    panel.targets = mergeExploreQueries(panel, fromExplore, queryRowCount);
 
-      if (!exploreQueries) {
-        return;
-      }
-
-      const oldQueriesById = _.keyBy(panel.targets, 'refId');
-
-      const mergedQueries = exploreQueries
-        .slice(0, queryRows)
-        .reverse()
-        .map(query => ({
-          ...oldQueriesById[query.refId],
-          ...query,
-          context: 'panel',
-        }));
-
-      panel.targets = mergedQueries;
-
-      panel.refresh();
-      this.forceUpdate();
-    }
+    panel.refresh();
+    this.forceUpdate();
   }
 
   componentWillUnmount() {
@@ -308,7 +288,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
 const mapStateToProps = (state: StoreState) => ({
   fromExplore: !!state.location.query.fromExplore,
-  queryRows: state.location.query.queryRows,
+  queryRowCount: state.location.query.queryRowCount,
 });
 
 export default connectWithStore(QueriesTab, mapStateToProps);

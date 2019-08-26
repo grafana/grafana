@@ -90,7 +90,7 @@ interface ExploreProps {
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
-  originPanel: number;
+  originPanelId: number;
 }
 
 /**
@@ -135,7 +135,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       initialRange,
       mode,
       initialUI,
-      originPanel,
+      originPanelId,
     } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
@@ -150,7 +150,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         width,
         this.exploreEvents,
         initialUI,
-        originPanel
+        originPanelId
       );
     }
   }
@@ -362,7 +362,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryResponse,
   } = item;
 
-  const { datasource, queries, range: urlRange, mode: urlMode, ui, originPanel } = (urlState || {}) as ExploreUrlState;
+  const { datasource, queries, range: urlRange, mode: urlMode, ui, originPanelId } = (urlState ||
+    {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
   const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
   const initialRange = urlRange ? getTimeRangeFromUrlMemoized(urlRange, timeZone).raw : DEFAULT_RANGE;
@@ -408,7 +409,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showingTable,
     absoluteRange,
     queryResponse,
-    originPanel,
+    originPanelId,
   };
 }
 

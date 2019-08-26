@@ -1,3 +1,5 @@
+import keyBy from 'lodash/keyBy';
+
 // Store
 import store from 'app/core/store';
 
@@ -15,9 +17,11 @@ import config from 'app/core/config';
 
 // Services
 import templateSrv from 'app/features/templating/template_srv';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 // Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
+import { DataQuery, DataSourceSelectItem } from '@grafana/ui';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -178,4 +182,33 @@ export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: nu
     config.theme.panelPadding * 2 -
     PANEL_BORDER
   );
+}
+
+export function mergeExploreQueries(panel: PanelModel, fromExplore: boolean, queryRowCount: number): DataQuery[] {
+  if (!fromExplore) {
+    return panel.targets;
+  }
+
+  const datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
+  const datasourceType = datasources.filter(datasource => datasource.value === panel.datasource)[0].meta.id;
+  const exploreQueries: ReadonlyArray<DataQuery> = store
+    .getObject(`grafana.explore.history.${datasourceType}`)
+    .map(({ query }: any) => query);
+
+  if (!exploreQueries) {
+    return panel.targets;
+  }
+
+  const oldQueriesById = keyBy(panel.targets, 'refId');
+
+  const mergedQueries: DataQuery[] = exploreQueries
+    .slice(0, queryRowCount)
+    .reverse()
+    .map(query => ({
+      ...oldQueriesById[query.refId],
+      ...query,
+      context: 'panel',
+    }));
+
+  return mergedQueries;
 }

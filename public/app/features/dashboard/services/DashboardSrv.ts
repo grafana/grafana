@@ -8,7 +8,6 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { ILocationService } from 'angular';
 
 interface DashboardSaveOptions {
-  redirect?: boolean;
   folderId?: number;
   overwrite?: boolean;
   message?: string;
@@ -60,9 +59,11 @@ export class DashboardSrv {
     // I think it's appropriate. edit can be null/false/undefined and
     // here i want all of those to compare the same
     if (fullscreen === urlParams.fullscreen && edit === !!urlParams.edit) {
-      ['fullscreen', 'edit', 'panelId', 'tab'].forEach(key => {
+      const paramsToRemove = ['fullscreen', 'edit', 'panelId', 'tab'];
+      for (const key of paramsToRemove) {
         delete urlParams[key];
-      });
+      }
+
       this.$location.search(urlParams);
       return;
     }
@@ -139,41 +140,38 @@ export class DashboardSrv {
     }
   }
 
-  postSave(data: { version: number; url: string }, redirect = true) {
+  postSave(data: { version: number; url: string }) {
     this.dashboard.version = data.version;
 
-    // important that these happens before location redirect below
+    // important that these happen before location redirect below
     this.$rootScope.appEvent('dashboard-saved', this.dashboard);
     this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
 
-    if (redirect) {
-      const newUrl = locationUtil.stripBaseFromUrl(data.url);
-      const currentPath = this.$location.path();
+    const newUrl = locationUtil.stripBaseFromUrl(data.url);
+    const currentPath = this.$location.path();
 
-      if (newUrl !== currentPath) {
-        this.$location.url(newUrl).replace();
-      }
+    if (newUrl !== currentPath) {
+      this.$location.url(newUrl).replace();
     }
 
     return this.dashboard;
   }
 
-  save(clone: any, { redirect = true, folderId, overwrite, message }: DashboardSaveOptions = {}) {
+  save(clone: any, { folderId, overwrite = false, message }: DashboardSaveOptions = {}) {
     folderId = folderId >= 0 ? folderId : this.dashboard.meta.folderId || clone.folderId;
 
     return this.backendSrv
       .saveDashboard(clone, { folderId, overwrite, message })
-      .then((data: any) => this.postSave(data, redirect))
-      .catch(this.handleSaveDashboardError.bind(this, clone, { redirect, folderId }));
+      .then((data: any) => this.postSave(data))
+      .catch(this.handleSaveDashboardError.bind(this, clone, { folderId }));
   }
 
   saveDashboard(
     clone?: DashboardModel,
     {
       makeEditable = false,
-      redirect = true,
       folderId,
-      overwrite,
+      overwrite = false,
       message,
     }: DashboardSaveOptions & { makeEditable?: boolean } = {}
   ) {
@@ -194,10 +192,10 @@ export class DashboardSrv {
     }
 
     if (this.dashboard.version > 0) {
-      return this.showSaveModal(redirect);
+      return this.showSaveModal();
     }
 
-    return this.save(this.dashboard.getSaveModelClone(), { redirect, folderId, overwrite, message });
+    return this.save(this.dashboard.getSaveModelClone(), { folderId, overwrite, message });
   }
 
   saveJSONDashboard(json: string) {
@@ -217,9 +215,9 @@ export class DashboardSrv {
     });
   }
 
-  showSaveModal(redirect = true) {
+  showSaveModal() {
     this.$rootScope.appEvent('show-modal', {
-      templateHtml: `<save-dashboard-modal dismiss="dismiss()" redirect="${redirect}"></save-dashboard-modal>`,
+      templateHtml: `<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>`,
       modalClass: 'modal--narrow',
     });
   }

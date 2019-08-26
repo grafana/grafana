@@ -79,7 +79,6 @@ export class SaveDashboardModalCtrl {
   saveForm: any;
   isSaving: boolean;
   dismiss: () => void;
-  redirect = true;
   timeChange = false;
   variableValueChange = false;
 
@@ -107,9 +106,7 @@ export class SaveDashboardModalCtrl {
     const saveModel = dashboard.getSaveModelClone(options);
 
     this.isSaving = true;
-    return this.dashboardSrv
-      .save(saveModel, { ...options, redirect: this.redirect })
-      .then(this.postSave.bind(this, options));
+    return this.dashboardSrv.save(saveModel, options).then(this.postSave.bind(this, options));
   }
 
   postSave(options?: { saveVariables?: boolean; saveTimerange?: boolean }) {
@@ -132,7 +129,7 @@ export function saveDashboardModalDirective() {
     controller: SaveDashboardModalCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: { dismiss: '&', redirect: '=' },
+    scope: { dismiss: '&' },
   };
 }
 
