@@ -462,7 +462,8 @@ interface ObserverConfig {
 }
 
 export interface StramingQueryOptions {
-  frames?: StreamingResponseShape;
+  buffer?: number; // defaults to `maxDataPoints`
+  frames?: StreamingResponseShape; // defaults to `full`
   listener?: ObserverConfig;
   notification?: ObserverConfig;
 }
