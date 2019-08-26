@@ -444,8 +444,17 @@ export interface ScopedVars {
 }
 
 export interface StreamingQueryOptions {
-  buffer?: number; // defaults to `maxDataPoints`
-  asDelta?: boolean; // defaults to false
+  /**
+   * Request an explicit buffer size.  When not specified, this will
+   * default to `request.maxDataPoints`
+   */
+  buffer?: number;
+
+  /**
+   * Ask the DataSource to send only changes since the last notification
+   * rather than full buffered DataFrames
+   */
+  isDelta?: boolean;
 }
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
