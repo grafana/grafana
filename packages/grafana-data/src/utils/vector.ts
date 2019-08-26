@@ -132,19 +132,22 @@ export class CircularVector<T = any> implements Vector<T> {
 
   // Pick an add function that either writes forwards or backwards
   private getAddFunction() {
-    return this.tail
-      ? (value: T) => {
-          this.buffer[this.index] = value;
-          this.index = (this.index + 1) % this.buffer.length;
-        }
-      : (value: T) => {
-          let idx = this.index - 1;
-          if (idx < 0) {
-            idx = this.buffer.length - 1;
-          }
-          this.buffer[idx] = value;
-          this.index = idx;
-        };
+    if (this.tail) {
+      return (value: T) => {
+        this.buffer[this.index] = value;
+        this.index = (this.index + 1) % this.buffer.length;
+      };
+    }
+
+    // Append values to the head
+    return (value: T) => {
+      let idx = this.index - 1;
+      if (idx < 0) {
+        idx = this.buffer.length - 1;
+      }
+      this.buffer[idx] = value;
+      this.index = idx;
+    };
   }
 
   setCapacity(v: number) {
@@ -157,19 +160,21 @@ export class CircularVector<T = any> implements Vector<T> {
       this.buffer = copy;
 
       // Change the 'add' function so it actually appends
-      this.add = this.tail
-        ? (value: T) => {
-            this.buffer.push(value);
-            if (this.buffer.length >= this.capacity) {
-              this.add = this.getAddFunction();
-            }
+      if (this.tail) {
+        this.add = (value: T) => {
+          this.buffer.push(value);
+          if (this.buffer.length >= this.capacity) {
+            this.add = this.getAddFunction();
           }
-        : (value: T) => {
-            this.buffer.unshift(value);
-            if (this.buffer.length >= this.capacity) {
-              this.add = this.getAddFunction();
-            }
-          };
+        };
+      } else {
+        this.add = (value: T) => {
+          this.buffer.unshift(value);
+          if (this.buffer.length >= this.capacity) {
+            this.add = this.getAddFunction();
+          }
+        };
+      }
     } else if (v < this.capacity) {
       // Shrink the buffer
       const delta = this.length - v;
