@@ -2,11 +2,11 @@ package notifiers
 
 import (
 	"os"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
@@ -48,13 +48,7 @@ func NewEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	}
 
 	// split addresses with a few different ways
-	addresses := strings.FieldsFunc(addressesString, func(r rune) bool {
-		switch r {
-		case ',', ';', '\n':
-			return true
-		}
-		return false
-	})
+	addresses := util.SplitEmails(addressesString)
 
 	return &EmailNotifier{
 		NotifierBase: NewNotifierBase(model),
