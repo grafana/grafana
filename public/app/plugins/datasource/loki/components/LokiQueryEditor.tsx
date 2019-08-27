@@ -1,29 +1,16 @@
 // Libraries
-import React, { PureComponent, ChangeEvent } from 'react';
+import React, { PureComponent } from 'react';
 
 // Types
-import { QueryEditorProps, Switch, FormField } from '@grafana/ui';
+import { AbsoluteTimeRange } from '@grafana/data';
+import { QueryEditorProps, Switch, DataSourceStatus } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
-// ??? WHY DOES This fail?
-// import { LokiQueryField } from './LokiQueryField';
+import { LokiQueryField } from './LokiQueryField';
 
 type Props = QueryEditorProps<LokiDatasource, LokiQuery>;
 
 export class LokiQueryEditor extends PureComponent<Props> {
-  onQueryChange = (value: string, override?: boolean) => {
-    console.log('CHANGE', value, override);
-  };
-
-  onExprChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { query, onChange } = this.props;
-    onChange({
-      ...query,
-      expr: event.target.value,
-    });
-    this.props.onRunQuery();
-  };
-
   onToggleLive = () => {
     const { query, onChange } = this.props;
     onChange({
@@ -33,24 +20,40 @@ export class LokiQueryEditor extends PureComponent<Props> {
   };
 
   render() {
-    const { query, datasource, onRunQuery } = this.props;
-    const expr = query.expr || ''; // make sure it is defined, even if empty
+    const { query, panelData, datasource, onChange, onRunQuery } = this.props;
 
-    if (false) {
-      console.log('XX', datasource, onRunQuery);
+    let absolute: AbsoluteTimeRange;
+    if (panelData && panelData.request) {
+      const { range } = panelData.request;
+      absolute = {
+        from: range.from.valueOf(),
+        to: range.to.valueOf(),
+      };
+    } else {
+      absolute = {
+        from: Date.now() - 10000,
+        to: Date.now(),
+      };
     }
 
     return (
       <div>
-        {/* ??????? <LokiQueryField
+        <LokiQueryField
           datasource={datasource}
           query={query}
-          onQueryChange={this.onQueryChange}
-          onExecuteQuery={onRunQuery}
+          onChange={onChange}
+          onRunQuery={onRunQuery}
           history={[]}
-        /> */}
+          panelData={panelData}
+          // ??? What do we need here?
+          syntaxLoaded={false}
+          onLoadOptions={() => {}}
+          logLabelOptions={[]}
+          syntax={[]}
+          datasourceStatus={DataSourceStatus.Connected}
+          absoluteRange={absolute}
+        />
         <div className="gf-form-inline">
-          <FormField label="expr" labelWidth={6} onChange={this.onExprChange} value={expr} />
           <div className="gf-form">
             <Switch label="Live" checked={!!query.live} onChange={this.onToggleLive} />
           </div>

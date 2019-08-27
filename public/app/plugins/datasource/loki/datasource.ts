@@ -5,7 +5,7 @@ import { webSocket } from 'rxjs/webSocket';
 import { catchError, map } from 'rxjs/operators';
 
 // Services & Utils
-import { dateMath, FieldType, ArrayVector, CircularVector } from '@grafana/data';
+import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -23,12 +23,11 @@ import {
   DataQueryResponse,
 } from '@grafana/ui';
 
-import { DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
 import { LokiQuery, LokiOptions, LokiLogsStream } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
-import { LiveTarget } from './live_target';
+import { LiveTarget, getBufferedDataForLiveTarget } from './live_target';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -94,18 +93,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const streamRequest = options.stream || {};
     const size = streamRequest.buffer || options.maxDataPoints;
 
-    const times = new CircularVector<string>({ capacity: size });
-    const lines = new CircularVector<string>({ capacity: size });
     return {
       query,
       regexp,
       url,
       refId,
       isDelta: streamRequest.isDelta,
-
-      // The data
-      times,
-      lines,
+      buffer: size,
+      data: {},
     };
   }
 
@@ -193,38 +188,40 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     for (const liveTarget of liveTargets) {
       liveTarget.subscription = webSocket(liveTarget.url)
         .pipe(
-          map((results: LokiLogsStream) => {
+          map((response: any) => {
             const { isDelta, refId } = liveTarget;
-            let { times, lines } = liveTarget;
 
-            // For Delta requests, create a new frame with new buffers
+            // What should we do with:
+            // response.dropped_entries?
+
+            const streams: LokiLogsStream[] = response.streams;
+            if (streams) {
+              for (const stream of streams) {
+                // When isDelta, the buffer will be created new
+                const buffer = getBufferedDataForLiveTarget(stream.labels, liveTarget);
+
+                // Add each line
+                for (const entry of stream.entries) {
+                  buffer.times.add(entry.ts || entry.timestamp);
+                  buffer.lines.add(entry.line);
+                }
+                buffer.frame.length = buffer.times.length;
+              }
+            }
+
+            // A new array holding all the buffered data
+            const data = Object.values(liveTarget.data).map(v => v.frame);
             if (isDelta) {
-              times = new ArrayVector<string>();
-              lines = new ArrayVector<string>();
+              liveTarget.data = {}; // clear the cache
             }
-
-            // Add each line
-            for (const entry of results.entries) {
-              liveTarget.times.add(entry.ts || entry.timestamp);
-              liveTarget.lines.add(entry.line);
-            }
-
-            const frame = {
-              refId,
-              fields: [
-                { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
-                { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
-              ],
-              length: times.length,
-            };
 
             const state: DataStreamState = {
               key: `loki-${refId}`,
               request: options,
               state: LoadingState.Streaming,
               isDelta,
-              data: [frame],
-              delta: [frame], // HACK -- send frame for both data and delta for now
+              data,
+              delta: data, // HACK -- send frame for both data and delta for now
               unsubscribe: () => this.unsubscribe(refId),
             };
 
