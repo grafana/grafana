@@ -72,7 +72,6 @@ import {
   loadExploreDatasources,
   changeModeAction,
   scanStopAction,
-  runQueriesAction,
   changeLoadingStateAction,
   historyUpdatedAction,
   queryStartAction,
@@ -596,7 +595,7 @@ export const processQueryResults = (config: {
       if (_.size(result) === 0) {
         const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
         dispatch(updateTime({ exploreId, absoluteRange: range }));
-        dispatch(runQueriesAction({ exploreId }));
+        dispatch(runQueries(exploreId));
       } else {
         // We can stop scanning if we have a result
         dispatch(scanStopAction({ exploreId }));
@@ -743,7 +742,7 @@ export function scanStart(exploreId: ExploreId): ThunkResult<void> {
     const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
     // Set the new range to be displayed
     dispatch(updateTime({ exploreId, absoluteRange: range }));
-    dispatch(runQueriesAction({ exploreId }));
+    dispatch(runQueries(exploreId));
   };
 }
 
