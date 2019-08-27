@@ -4,33 +4,13 @@ JS is the primary source of theme variables for Grafana. Theme definitions are l
 
 #### Themes are implemented in pure js.
 
-This is because our goal is to share variables between app and SASS. To achieve that themes are necessary during build time to be exposed to sass loader via `node-sass` functions (https://github.com/sass/node-sass/blob/master/README.md#functions--v300---experimental). This retrieval is implemented in `getThemeVariable(variablePath, themeName)`.
+This is because our goal is to share variables between app and SASS.
 
 #### Themes are available to React components via `ThemeContext`
 
 Context is available via `import { ThemeContext } from '@grafana/ui';`
 
-**If you skip `themeName` param, then dark theme's variant will be used**
-
-## Using themes in Grafana
-
-### SASS
-
-`getThemeVariable` is a function, that's available in sass files. Use it i.e. like this:
-
-```scss
-// In theme agnostic SASS file
-.foo {
-  font-size: getThemeVariable('typography.size.m');
-}
-
-// In *.[themeName].scss
-.bar {
-  background-color: getThemeVariable('colors.blueLight', '[themeName]');
-}
-```
-
-### React
+## Using themes in Grafana's React components
 
 #### Using `ThemeContext` directly
 
@@ -38,6 +18,20 @@ Context is available via `import { ThemeContext } from '@grafana/ui';`
 import { ThemeContext } from '@grafana/ui';
 
 <ThemeContext.Consumer>{theme => <Foo theme={theme} />}</ThemeContext.Consumer>;
+```
+
+or
+
+```ts
+import React, { useContext } from 'react';
+import { ThemeContext } from '@grafana/ui';
+
+const Foo: React.FunctionComponent<FooProps> = () => {
+  const theme = useContext(ThemeContext);
+
+  // Your component has access to the theme variables now
+}
+
 ```
 
 #### Using `withTheme` HOC
