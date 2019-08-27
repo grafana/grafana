@@ -3,6 +3,18 @@ interface LdapMapping {
   ldapValue: string;
 }
 
+export interface LdapError {
+  title: string;
+  body: string;
+}
+
+export interface SyncInfo {
+  enabled: boolean;
+  scheduled: string;
+  nextScheduled: string;
+  lastSync: string;
+}
+
 export interface LdapRole {
   orgId: string;
   orgRole: string;
@@ -36,4 +48,6 @@ export interface LdapUser {
 
 export interface LdapState {
   user: LdapUser;
+  syncInfo: SyncInfo;
+  ldapError: LdapError;
 }

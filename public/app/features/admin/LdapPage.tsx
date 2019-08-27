@@ -5,6 +5,7 @@ import { css } from 'emotion';
 import { NavModel } from '@grafana/data';
 import { FormField } from '@grafana/ui';
 import Page from '../../core/components/Page/Page';
+import { AlertBox } from '../../core/components/AlertBox/AlertBox';
 import { LdapSyncInfo } from './LdapSyncInfo';
 import { LdapUserMappingInfo } from './LdapUserMappingInfo';
 import { LdapUserPermissions } from './LdapUserPermissions';
@@ -12,11 +13,13 @@ import { LdapUserGroups } from './LdapUserGroups';
 import { LdapUserTeams } from './LdapUserTeams';
 import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
-import { LdapUser, StoreState } from '../../types';
+import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo } from 'app/types';
 
 interface Props {
   navModel: NavModel;
   ldapUser: LdapUser;
+  ldapSyncInfo: SyncInfo;
+  ldapError: LdapError;
 }
 
 interface State {
@@ -28,15 +31,13 @@ export class LdapPage extends PureComponent<Props, State> {
     isLoading: false,
   };
 
-  componentDidMount(): void {}
-
   search = (event: any) => {
     event.preventDefault();
     console.log('derp');
   };
 
   render() {
-    const { ldapUser, navModel } = this.props;
+    const { ldapError, ldapUser, ldapSyncInfo, navModel } = this.props;
     const { isLoading } = this.state;
 
     const tableStyle = css`
@@ -47,6 +48,10 @@ export class LdapPage extends PureComponent<Props, State> {
       margin-bottom: 24px;
     `;
 
+    const searchStyle = css`
+      margin-bottom: 16px;
+    `;
+
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
@@ -55,33 +60,24 @@ export class LdapPage extends PureComponent<Props, State> {
             <i className="fa fa-fw fa-check text-success pull-right" />
           </div>
           {config.buildInfo.isEnterprise && (
-            <LdapSyncInfo
-              headingStyle={headingStyle}
-              tableStyle={tableStyle}
-              ldapSyncInfo={{
-                enabled: true,
-                scheduled: 'Once a week, between Saturday and Sunday',
-                nextScheduled: 'Tomorrow',
-                lastSync: 'Today',
-              }}
-            />
+            <LdapSyncInfo headingStyle={headingStyle} tableStyle={tableStyle} ldapSyncInfo={ldapSyncInfo} />
           )}
           <h4 className={headingStyle}>User mapping</h4>
-          <form onSubmit={this.search} className="gf-form-inline">
+          <form onSubmit={this.search} className={`${searchStyle} gf-form-inline`}>
             <FormField label="User name" labelWidth={8} inputWidth={30} type="text" />
             <button type="submit" className="btn btn-primary">
               Test LDAP mapping
             </button>
           </form>
-          {ldapUser &&
-            ldapUser.permissions && [
-              <LdapUserPermissions className={tableStyle} key="permissions" permissions={ldapUser.permissions} />,
-              <LdapUserMappingInfo className={tableStyle} key="mappingInfo" info={ldapUser.info} />,
-              ldapUser.roles.length > 0 && (
-                <LdapUserGroups className={tableStyle} key="groups" groups={ldapUser.roles} />
-              ),
-              ldapUser.teams.length > 0 && <LdapUserTeams className={tableStyle} key="teams" teams={ldapUser.teams} />,
-            ]}
+          {ldapError.title && (
+            <AlertBox title={ldapError.title} severity={AppNotificationSeverity.Error} body={ldapError.body} />
+          )}
+          {ldapUser.permissions && [
+            <LdapUserPermissions className={tableStyle} key="permissions" permissions={ldapUser.permissions} />,
+            <LdapUserMappingInfo className={tableStyle} key="mappingInfo" info={ldapUser.info} />,
+            ldapUser.roles.length > 0 && <LdapUserGroups className={tableStyle} key="groups" groups={ldapUser.roles} />,
+            ldapUser.teams.length > 0 && <LdapUserTeams className={tableStyle} key="teams" teams={ldapUser.teams} />,
+          ]}
         </Page.Contents>
       </Page>
     );
@@ -91,6 +87,8 @@ export class LdapPage extends PureComponent<Props, State> {
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'ldap'),
   ldapUser: state.ldap.user,
+  ldapSyncInfo: state.ldap.syncInfo,
+  ldapError: state.ldap.ldapError,
 });
 
 export default hot(module)(connect(mapStateToProps)(LdapPage));

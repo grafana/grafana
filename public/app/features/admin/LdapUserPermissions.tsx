@@ -17,12 +17,30 @@ export const LdapUserPermissions: FC<Props> = ({ className, permissions }) => {
         </thead>
         <tbody>
           <tr>
-            <td>Grafana admin</td>
-            <td>{permissions.isGrafanaAdmin ? 'Yes' : 'No'}</td>
+            <td className="width-15"> Grafana admin</td>
+            <td>
+              {permissions.isGrafanaAdmin ? (
+                <>
+                  <i className="gicon gicon-shield" /> Yes
+                </>
+              ) : (
+                'No'
+              )}
+            </td>
           </tr>
           <tr>
-            <td>Status</td>
-            <td>{permissions.isDisabled ? 'Inactive' : 'Active'}</td>
+            <td className="width-15">Status</td>
+            <td>
+              {permissions.isDisabled ? (
+                <>
+                  <i className="fa fa-fw fa-check" /> Active
+                </>
+              ) : (
+                <>
+                  <i className="fa fa-fw fa-times" /> Inactive
+                </>
+              )}
+            </td>
           </tr>
         </tbody>
       </table>
