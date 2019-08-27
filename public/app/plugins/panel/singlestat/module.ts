@@ -468,7 +468,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
           )
         ) {
           color = conditionalFormat.textColor;
-          valueString = conditionalFormat.text;
+          valueString = conditionalFormat.text || valueString;
         }
       });
       if (color) {
