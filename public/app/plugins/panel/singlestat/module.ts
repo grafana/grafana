@@ -44,6 +44,20 @@ export interface ShowData {
   colorMap: any;
 }
 
+export interface CompareOperator {
+  text: string;
+  value: string;
+}
+
+export interface ConditionalFormat {
+  operator: string;
+  value1: string;
+  value2: string;
+  text: string;
+  bgColor: string;
+  textColor: string;
+}
+
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
@@ -69,6 +83,31 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     { value: 'range', text: 'Range' },
     { value: 'last_time', text: 'Time of last point' },
   ];
+  compareOperators: CompareOperator[] = [
+    { text: 'equals', value: 'equals' },
+    { text: 'notequals', value: 'notequals' },
+    { text: 'contains', value: 'contains' },
+    { text: 'notcontains', value: 'notcontains' },
+    { text: 'startswith', value: 'startswith' },
+    { text: 'endswith', value: 'endswith' },
+    { text: 'in', value: 'in' },
+    { text: 'equals (ignore case)', value: 'equals ignorecase' },
+    { text: 'notequals (ignore case)', value: 'notequals ignorecase' },
+    { text: 'contains (ignore case)', value: 'contains ignorecase' },
+    { text: 'notcontains (ignore case)', value: 'notcontains ignorecase' },
+    { text: 'startswith (ignore case)', value: 'startswith ignorecase' },
+    { text: 'endswith (ignore case)', value: 'endswith ignorecase' },
+    { text: 'in (ignore case)', value: 'in ignorecase' },
+    { text: '==', value: '==' },
+    { text: '!=', value: '!=' },
+    { text: '<', value: '<' },
+    { text: '<=', value: '<=' },
+    { text: '>', value: '>' },
+    { text: '>=', value: '>=' },
+    { text: 'insiderange', value: 'insiderange' },
+    { text: 'outsiderange', value: 'outsiderange' },
+  ];
+  conditionalFormats: ConditionalFormat[] = [];
 
   // Set and populate defaults
   panelDefaults: any = {
@@ -110,6 +149,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       thresholdMarkers: true,
       thresholdLabels: false,
     },
+    conditionalFormats: [],
     tableColumn: '',
   };
 
@@ -132,7 +172,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   onInitEditMode() {
     this.fontSizes = ['20%', '30%', '50%', '70%', '80%', '100%', '110%', '120%', '150%', '170%', '200%'];
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
-    this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
+    this.addEditorTab('Conditional Formatting', 'public/app/plugins/panel/singlestat/formatting.html', 3);
+    this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 4);
     this.unitFormats = kbn.getUnitFormats();
   }
 
@@ -321,6 +362,79 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.panel.rangeMaps.push({ from: '', to: '', text: '' });
   }
 
+  addConditionalFormat() {
+    this.panel.conditionalFormats.push({
+      operator: 'equals',
+      value1: '',
+      value2: '',
+      text: '',
+      bgColor: 'red',
+      textColor: 'white',
+    });
+  }
+
+  conditionalFormatValue(conditionalFormat: ConditionalFormat, ref: string) {
+    if (ref === 'value1') {
+      switch (conditionalFormat.operator.replace('ignorecase', '').trim()) {
+        case 'between':
+        case 'insiderange':
+        case 'outsiderange':
+          return 'From';
+        case 'in':
+          return 'Values';
+        default:
+          return 'Value';
+      }
+    } else if (ref === 'value2') {
+      switch (conditionalFormat.operator.replace('ignorecase', '').trim()) {
+        case 'between':
+        case 'insiderange':
+        case 'outsiderange':
+          return 'To';
+        case 'in':
+          return 'Seperator';
+        default:
+          return '';
+      }
+    } else if (ref === 'canshowvalue2') {
+      switch (conditionalFormat.operator.replace('ignorecase', '').trim()) {
+        case 'between':
+        case 'insiderange':
+        case 'outsiderange':
+        case 'in':
+          return true;
+        default:
+          return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  conditionFormatApplyColor(index: number, colorType: string) {
+    return (color: string) => {
+      if (colorType === 'bg') {
+        this.panel.conditionalFormats[index].bgColor = color;
+      } else if (colorType === 'text') {
+        this.panel.conditionalFormats[index].textColor = color;
+      }
+      this.render();
+    };
+  }
+
+  moveConditionalFormat(index: number, direction: string) {
+    const tempElement = this.panel.conditionalFormats[Number(index)];
+    if (direction === 'UP') {
+      this.panel.conditionalFormats[Number(index)] = this.panel.conditionalFormats[Number(index) - 1];
+      this.panel.conditionalFormats[Number(index) - 1] = tempElement;
+    } else if (direction === 'DOWN') {
+      this.panel.conditionalFormats[Number(index)] = this.panel.conditionalFormats[Number(index) + 1];
+      this.panel.conditionalFormats[Number(index) + 1] = tempElement;
+    } else if (direction === 'REMOVE') {
+      this.panel.conditionalFormats.splice(Number(index), 1);
+    }
+  }
+
   link(scope: any, elem: JQuery, attrs: any, ctrl: any) {
     const $location = this.$location;
     const linkSrv = this.linkSrv;
@@ -338,13 +452,35 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       if (color) {
         return '<span style="color:' + color + '">' + valueString + '</span>';
       }
+      return valueString;
+    }
 
+    function computeTextColorBasedOnCondition(valueString: string) {
+      const data = ctrl.data;
+      let color = '';
+      _.each(ctrl.panel.conditionalFormats, conditionalFormat => {
+        if (
+          isConditionMatching(
+            data.display.text,
+            conditionalFormat.operator,
+            conditionalFormat.value1,
+            conditionalFormat.value2
+          )
+        ) {
+          color = conditionalFormat.textColor;
+          valueString = conditionalFormat.text;
+        }
+      });
+      if (color) {
+        return '<span style="color:' + color + '">' + valueString + '</span>';
+      }
       return valueString;
     }
 
     function getSpan(className: string, fontSizePercent: string, applyColoring: any, value: string) {
       value = $sanitize(templateSrv.replace(value, ctrl.data.scopedVars));
       value = applyColoring ? applyColoringThresholds(value) : value;
+      value = computeTextColorBasedOnCondition(value);
       const pixelSize = (parseInt(fontSizePercent, 10) / 100) * BASE_FONT_SIZE;
       return '<span class="' + className + '" style="font-size:' + pixelSize + 'px">' + value + '</span>';
     }
@@ -561,8 +697,23 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       const body = panel.gauge.show ? '' : getBigValueHtml();
 
-      if (panel.colorBackground) {
-        const color = getColorForValue(data, data.display.numeric);
+      if (panel.colorBackground || panel.conditionalFormats.length > 0) {
+        let color = ``;
+        if (panel.colorBackground) {
+          color = getColorForValue(data, data.display.numeric);
+        }
+        _.each(panel.conditionalFormats, conditionalFormat => {
+          if (
+            isConditionMatching(
+              data.display.text,
+              conditionalFormat.operator,
+              conditionalFormat.value1,
+              conditionalFormat.value2
+            ) === true
+          ) {
+            color = conditionalFormat.bgColor || color;
+          }
+        });
         if (color) {
           $panelContainer.css('background-color', color);
           if (scope.fullscreen) {
@@ -691,6 +842,103 @@ interface DistinctFieldsInfo {
   names: string[];
 }
 
+function isConditionMatching(ov: any, op: any, cv1: any, cv2: any): boolean {
+  let returnvalue = false;
+  op = op
+    .toLowerCase()
+    .replace(/\ /g, '')
+    .trim();
+  if (op.includes('ignorecase')) {
+    op = op.replace('ignorecase', '').trim();
+    ov = (ov || '').toLowerCase();
+    cv1 = (cv1 || '').toLowerCase();
+    cv2 = (cv2 || '').toLowerCase();
+  }
+  if (op.includes('ignorespace')) {
+    op = op.replace('ignorespace', '').trim();
+    ov = ov.replace(/\ /g, '');
+    cv1 = cv1.replace(/\ /g, '');
+    cv2 = cv2.replace(/\ /g, '');
+  }
+  switch (op.trim()) {
+    case 'equals':
+    case 'is':
+      returnvalue = +cv1 === +ov || cv1 === ov;
+      break;
+    case 'notequals':
+    case 'isnotequals':
+    case 'not':
+    case 'isnot':
+      returnvalue = cv1 !== ov;
+      break;
+    case 'contains':
+    case 'has':
+      returnvalue = ov.includes(cv1);
+      break;
+    case 'notcontains':
+    case 'nothas':
+    case 'nothave':
+      returnvalue = !ov.includes(cv1);
+      break;
+    case 'startswith':
+    case 'beginswith':
+    case 'beginwith':
+      returnvalue = ov.startsWith(cv1);
+      break;
+    case 'endswith':
+    case 'endwith':
+      returnvalue = ov.endsWith(cv1);
+      break;
+    case 'in':
+      returnvalue = cv1.split(cv2 || ' ').indexOf(ov) > -1;
+      break;
+    case '===':
+    case '==':
+    case '=':
+      returnvalue = +ov === +cv1 && !isNaN(ov) && !isNaN(cv1);
+      break;
+    case '!==':
+    case '!=':
+    case '<>':
+      returnvalue = +ov !== +cv1 && !isNaN(ov) && !isNaN(cv1);
+      break;
+    case '<':
+    case 'lessthan':
+    case 'below':
+      returnvalue = +ov < +cv1 && !isNaN(ov) && !isNaN(cv1);
+      break;
+    case '>':
+    case 'greaterthan':
+    case 'above':
+      returnvalue = +ov > +cv1 && !isNaN(ov) && !isNaN(cv1);
+      break;
+    case '>=':
+    case 'greaterthanorequalto':
+      returnvalue = +ov >= +cv1 && !isNaN(ov) && !isNaN(cv1);
+      break;
+    case '<=':
+    case 'lessthanorequalto':
+      returnvalue = +ov <= +cv1 && !isNaN(ov) && !isNaN(cv1);
+      break;
+    case 'insiderange':
+      returnvalue = +ov > _.min([+cv1, +cv2]) && +ov < _.max([+cv1, +cv2]) && !isNaN(ov) && !isNaN(cv1) && !isNaN(cv2);
+      break;
+    case 'outsiderange':
+      returnvalue =
+        ((+ov < _.min([+cv1, +cv2]) && +ov > _.max([+cv1, +cv2])) ||
+          (+ov < +cv1 && +ov < +cv2) ||
+          (+ov > +cv1 && +ov > +cv2)) &&
+        !isNaN(ov) &&
+        !isNaN(cv1) &&
+        !isNaN(cv2);
+      break;
+    default:
+      returnvalue = false;
+      break;
+  }
+  return returnvalue;
+}
+
 function getDistinctNames(data: DataFrame[]): DistinctFieldsInfo {
   const distinct: DistinctFieldsInfo = {
     byName: {},
@@ -724,4 +972,4 @@ function getDistinctNames(data: DataFrame[]): DistinctFieldsInfo {
   return distinct;
 }
 
-export { SingleStatCtrl, SingleStatCtrl as PanelCtrl, getColorForValue };
+export { SingleStatCtrl, SingleStatCtrl as PanelCtrl, getColorForValue, isConditionMatching };

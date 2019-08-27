@@ -1,0 +1,36 @@
+<div class="editor-row">
+    <div class="section gf-form-group">
+        <div class="gf-form-inline" ng-repeat="conditional_format in ctrl.panel.conditionalFormats track by $index" ng-if="ctrl.panel.conditionalFormats.length > 0">
+            <div class="gf-form">
+                <label class="gf-form-label width-5">If value</label>
+                <select class="gf-form-input width-12" ng-model="conditional_format.operator" ng-options="f.value as f.text for f in ctrl.compareOperators" ng-change="ctrl.render()"></select>
+                <input type="text" class="gf-form-input width-8" placeholder="{{ctrl.conditionalFormatValue(conditional_format,'value1')}}" ng-model="conditional_format.value1" ng-blur="ctrl.render()" data-ng-change="ctrl.render();" />
+                <input type="text" class="gf-form-input width-8" ng-if="ctrl.conditionalFormatValue(conditional_format,'canshowvalue2') === true"  placeholder="{{ctrl.conditionalFormatValue(conditional_format,'value2')}}" ng-model="conditional_format.value2" ng-blur="ctrl.render()" data-ng-change="ctrl.render();" />
+                <label class="gf-form-label width-6">BG Color</label>
+                <span class="gf-form-label">
+                    <color-picker color="conditional_format.bgColor" onChange="ctrl.conditionFormatApplyColor($index,'bg')"></color-picker>
+                </span>
+                <label class="gf-form-label width-6">Text Color</label>
+                <span class="gf-form-label">
+                    <color-picker color="conditional_format.textColor" onChange="ctrl.conditionFormatApplyColor($index,'text')"></color-picker>
+                </span>
+                <label class="gf-form-label width-5">Text</label>
+                <input type="text" class="gf-form-input width-12" placeholder="Text" ng-model="conditional_format.text" ng-blur="ctrl.render()" data-ng-change="ctrl.render();" />
+                <label class="gf-form-label" >
+                    <button class="btn btn-success btn-small"  ng-if="$index !== 0" ng-click="ctrl.moveConditionalFormat($index,'UP')"><i class="fa fa-arrow-up"></i></button>
+                    <button class="btn btn-success btn-small" ng-if="$index !== ctrl.panel.conditionalFormats.length -1" ng-click="ctrl.moveConditionalFormat($index,'DOWN')"><i class="fa fa-arrow-down"></i></button>
+                    <button type="button" class="btn btn-danger btn-small" ng-click="ctrl.moveConditionalFormat($index,'REMOVE'); ctrl.render(); "><i class="fa fa-trash"></i></button>
+                </label>
+            </div>
+        </div>        
+        <br/>
+        <div class="gf-form-inline">
+            <div class="gf-form">
+                <button class="btn btn-inverse" ng-click="ctrl.addConditionalFormat()">
+                    <i class="fa fa-plus"></i>
+                    Add Conditional Format
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
