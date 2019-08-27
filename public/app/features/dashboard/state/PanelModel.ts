@@ -76,6 +76,12 @@ const defaults: any = {
   transparent: false,
 };
 
+// TODO: This will be replaced after #16756
+export interface TransformationConfig {
+  id: string;
+  args?: string[];
+}
+
 export class PanelModel {
   id: number;
   gridPos: GridPos;
@@ -93,6 +99,7 @@ export class PanelModel {
   panels?: any;
   soloMode?: boolean;
   targets: DataQuery[];
+  transformation?: TransformationConfig;
   datasource: string;
   thresholds?: any;
   pluginVersion?: string;

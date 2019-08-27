@@ -186,6 +186,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         minInterval: panel.interval,
         scopedVars: panel.scopedVars,
         cacheTimeout: panel.cacheTimeout,
+        transformation: panel.transformation,
       });
     }
   };

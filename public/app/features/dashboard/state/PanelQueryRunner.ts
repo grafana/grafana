@@ -13,7 +13,8 @@ import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasourc
 // Types
 import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
 
-import { TimeRange } from '@grafana/data';
+import { DataFrame, TimeRange } from '@grafana/data';
+import { TransformationConfig } from './PanelModel';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -32,7 +33,7 @@ export interface QueryRunnerOptions<
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
-  transform?: any;
+  transformation?: TransformationConfig;
 }
 
 export enum PanelQueryRunnerFormat {
@@ -50,7 +51,7 @@ export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
 
   private state = new PanelQueryState();
-  private transform?: any;
+  private transformation?: TransformationConfig;
 
   // Listen to another panel for changes
   private sharedQueryRunner: SharedQueryRunner;
@@ -67,11 +68,26 @@ export class PanelQueryRunner {
   /**
    * Get the last result -- optionally skip the transformation
    */
-  getLastResult(transformed = true): PanelData {
-    const v = this.state.getDataAfterCheckingFormats();
-    if (this.transform && transformed) {
-      // TODO, transform it...
-      return v;
+  getCurrentData(transform = true): PanelData {
+    const v = this.state.validateStreamsAndGetPanelData();
+    if (transform && this.transformation && this.transformation.args) {
+      // Simple one now that just matches names
+      // TODO: use functions from: #16756
+      const names = this.transformation.args;
+      const processed: DataFrame[] = [];
+      for (const frame of v.series) {
+        const fields = frame.fields.filter(f => names.includes(f.name));
+        if (fields.length) {
+          processed.push({
+            ...frame,
+            fields,
+          });
+        }
+      }
+      return {
+        ...v,
+        series: processed,
+      };
     }
     return v;
   }
@@ -92,7 +108,9 @@ export class PanelQueryRunner {
 
     // Send the last result
     if (this.state.isStarted()) {
-      observer.next(this.getLastResult());
+      // Force check formats again?
+      this.state.getDataAfterCheckingFormats();
+      observer.next(this.getCurrentData()); // transformed
     }
 
     return this.subject.subscribe(observer);
@@ -110,10 +128,6 @@ export class PanelQueryRunner {
     }
 
     return this.subscribe(runner.subject, format);
-  }
-
-  getCurrentData(): PanelData {
-    return this.state.validateStreamsAndGetPanelData();
   }
 
   async run(options: QueryRunnerOptions): Promise<PanelData> {
@@ -214,7 +228,7 @@ export class PanelQueryRunner {
         }
       }, delayStateNotification || 500);
 
-      this.transform = options.transform;
+      this.transformation = options.transformation;
 
       const data = await state.execute(ds, request);
 
@@ -239,7 +253,7 @@ export class PanelQueryRunner {
    */
   onStreamingDataUpdated = throttle(
     () => {
-      this.subject.next(this.state.validateStreamsAndGetPanelData());
+      this.subject.next(this.getCurrentData());
     },
     50,
     { trailing: true, leading: true }

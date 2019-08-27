@@ -4,6 +4,7 @@ import React, { PureComponent } from 'react';
 // Types
 import { PanelModel } from '../state/index';
 import { PanelData } from '@grafana/ui';
+import { DataFrame } from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
@@ -11,27 +12,33 @@ interface Props {
 }
 
 interface State {
-  noTransform?: PanelData;
+  preTransform?: DataFrame[];
 }
 
 export class TransformResults extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-
-    const noTransform = props.panel.getQueryRunner().getLastResult(false);
     this.state = {
-      noTransform: noTransform === props.data ? undefined : noTransform,
+      preTransform: this.getPreTransformData(),
     };
   }
 
   componentDidUpdate(prevProps: Props) {
     const { data } = this.props;
     if (data !== prevProps.data) {
-      const noTransform = this.props.panel.getQueryRunner().getLastResult(false);
       this.setState({
-        noTransform: noTransform === data ? undefined : noTransform,
+        preTransform: this.getPreTransformData(),
       });
     }
+  }
+
+  private getPreTransformData(): DataFrame[] | undefined {
+    const { panel, data } = this.props;
+    const withoutTransform = panel.getQueryRunner().getCurrentData(false);
+    if (withoutTransform === data) {
+      return undefined;
+    }
+    return withoutTransform.series;
   }
 
   render() {
