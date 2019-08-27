@@ -13,6 +13,7 @@ import { LdapUserGroups } from './LdapUserGroups';
 import { LdapUserTeams } from './LdapUserTeams';
 import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
+import { clearError } from './state/actions';
 import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo } from 'app/types';
 
 interface Props {
@@ -20,6 +21,8 @@ interface Props {
   ldapUser: LdapUser;
   ldapSyncInfo: SyncInfo;
   ldapError: LdapError;
+
+  clearError: typeof clearError;
 }
 
 interface State {
@@ -34,6 +37,10 @@ export class LdapPage extends PureComponent<Props, State> {
   search = (event: any) => {
     event.preventDefault();
     console.log('derp');
+  };
+
+  onClearError = () => {
+    this.props.clearError();
   };
 
   render() {
@@ -69,8 +76,13 @@ export class LdapPage extends PureComponent<Props, State> {
               Test LDAP mapping
             </button>
           </form>
-          {ldapError.title && (
-            <AlertBox title={ldapError.title} severity={AppNotificationSeverity.Error} body={ldapError.body} />
+          {ldapError && ldapError.title && (
+            <AlertBox
+              title={ldapError.title}
+              severity={AppNotificationSeverity.Error}
+              body={ldapError.body}
+              onClose={this.onClearError}
+            />
           )}
           {ldapUser.permissions && [
             <LdapUserPermissions className={tableStyle} key="permissions" permissions={ldapUser.permissions} />,
@@ -91,4 +103,9 @@ const mapStateToProps = (state: StoreState) => ({
   ldapError: state.ldap.ldapError,
 });
 
-export default hot(module)(connect(mapStateToProps)(LdapPage));
+export default hot(module)(
+  connect(
+    mapStateToProps,
+    { clearError }
+  )(LdapPage)
+);

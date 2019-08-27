@@ -1,11 +1,11 @@
 import { reducerFactory } from 'app/core/redux';
 import { LdapState } from 'app/types';
-import { testLdapMapping } from './actions';
+import { clearError, testLdapMapping } from './actions';
 
 const initialState: LdapState = {
   ldapError: {
     title: 'Did not find a user',
-    body: 'User not found - try adjusting your search filters'
+    body: 'User not found - try adjusting your search filters',
   },
   syncInfo: {
     enabled: true,
@@ -59,6 +59,13 @@ const ldapReducer = reducerFactory(initialState)
     mapper: (state, action) => ({
       ...state,
       ...action.payload,
+    }),
+  })
+  .addMapper({
+    filter: clearError,
+    mapper: state => ({
+      ...state,
+      ldapError: null,
     }),
   })
   .create();
