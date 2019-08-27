@@ -28,6 +28,10 @@ import {
   scanStopAction,
   queryStartAction,
   changeRangeAction,
+  clearOriginAction,
+} from './actionTypes';
+
+import {
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
@@ -232,6 +236,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
         queryResponse: createEmptyQueryResponse(),
         loading: false,
+      };
+    },
+  })
+  .addMapper({
+    filter: clearOriginAction,
+    mapper: (state): ExploreItemState => {
+      return {
+        ...state,
+        originPanelId: undefined,
       };
     },
   })
@@ -709,7 +722,18 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
     }
 
     case ActionTypes.ResetExplore: {
-      return initialExploreState;
+      if (action.payload.force || !Number.isInteger(state.left.originPanelId)) {
+        return initialExploreState;
+      }
+
+      return {
+        ...initialExploreState,
+        left: {
+          ...initialExploreItemState,
+          queries: state.left.queries,
+          originPanelId: state.left.originPanelId,
+        },
+      };
     }
 
     case updateLocation.type: {

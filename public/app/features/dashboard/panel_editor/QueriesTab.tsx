@@ -14,8 +14,6 @@ import { QueryEditorRow } from './QueryEditorRow';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
-import store from 'app/core/store';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
@@ -27,15 +25,10 @@ import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 import { DashboardQueryEditor } from 'app/plugins/datasource/dashboard/DashboardQueryEditor';
-import { StoreState } from 'app/types';
-
-import { mergeExploreQueries } from '../utils/panel';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
-  fromExplore?: boolean;
-  queryRowCount?: number;
 }
 
 interface State {
@@ -67,15 +60,10 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   componentDidMount() {
-    const { panel, fromExplore, queryRowCount } = this.props;
+    const { panel } = this.props;
     const queryRunner = panel.getQueryRunner();
 
     this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.both);
-
-    panel.targets = mergeExploreQueries(panel, fromExplore, queryRowCount);
-
-    panel.refresh();
-    this.forceUpdate();
   }
 
   componentWillUnmount() {
@@ -286,9 +274,4 @@ export class QueriesTab extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  fromExplore: !!state.location.query.fromExplore,
-  queryRowCount: state.location.query.queryRowCount,
-});
-
-export default connectWithStore(QueriesTab, mapStateToProps);
+export default QueriesTab;

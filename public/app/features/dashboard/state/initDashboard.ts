@@ -23,6 +23,7 @@ import {
 // Types
 import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
 import { DashboardModel } from './DashboardModel';
+import { resetExploreAction } from 'app/features/explore/state/actionTypes';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -198,6 +199,15 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       console.log(err);
     }
 
+    const left = storeState.explore && storeState.explore.left;
+    if (left && left.originPanelId) {
+      const panelArrId = dashboard.panels.findIndex(panel => panel.id === left.originPanelId);
+      if (panelArrId > -1) {
+        dashboard.panels[panelArrId].targets = left.queries.map(query => ({ refId: query.refId, expr: query.expr }));
+      }
+      dashboard.startRefresh();
+      dispatch(resetExploreAction({ force: true }));
+    }
     // legacy srv state
     dashboardSrv.setCurrent(dashboard);
     // yay we are done

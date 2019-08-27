@@ -38,6 +38,7 @@ export interface DashboardMeta {
 }
 
 export interface DashboardDataDTO {
+  [x: string]: any;
   title: string;
 }
 

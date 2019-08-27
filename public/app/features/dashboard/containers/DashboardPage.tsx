@@ -40,7 +40,6 @@ export interface Props {
   editview?: string;
   urlPanelId?: string;
   urlFolderId?: string;
-  fromExplore?: boolean;
   $scope: any;
   $injector: any;
   routeInfo: DashboardRouteInfo;
