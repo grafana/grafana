@@ -544,7 +544,7 @@ export const getQueryResponse = (
 };
 
 export const stopQueryState = (queryState: PanelQueryState, reason: string) => {
-  if (queryState.isStarted()) {
+  if (queryState && queryState.isStarted()) {
     queryState.cancel(reason);
     queryState.closeStreams(false);
   }
