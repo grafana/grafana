@@ -28,7 +28,7 @@ export interface Props extends Themeable {
   sparkline?: BigValueSparkline;
   backgroundColor?: string;
   onClick?: React.MouseEventHandler<HTMLElement>;
-  className?: string;
+  clickTargetClassName?: string;
 }
 
 /*
@@ -121,7 +121,17 @@ export class BigValue extends PureComponent<Props> {
   }
 
   render() {
-    const { height, width, value, prefix, suffix, sparkline, backgroundColor, onClick, className } = this.props;
+    const {
+      height,
+      width,
+      value,
+      prefix,
+      suffix,
+      sparkline,
+      backgroundColor,
+      onClick,
+      clickTargetClassName,
+    } = this.props;
 
     return (
       <div
@@ -158,7 +168,7 @@ export class BigValue extends PureComponent<Props> {
               fontSize: '3em',
               fontWeight: 500, // TODO: $font-weight-semi-bold
             }),
-            className
+            clickTargetClassName
           )}
           onClick={onClick}
         >

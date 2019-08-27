@@ -33,7 +33,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
               minValue={field.min}
               maxValue={field.max}
               onClick={openMenu}
-              className={targetClassName}
+              clickTargetClassName={targetClassName}
             />
           );
         }}
