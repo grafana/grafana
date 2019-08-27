@@ -27,7 +27,7 @@ export interface Props extends Themeable {
   itemSpacing?: number;
   displayMode: 'basic' | 'lcd' | 'gradient';
   onClick?: React.MouseEventHandler<HTMLElement>;
-  clickTargetClassName?: string;
+  className?: string;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -45,16 +45,20 @@ export class BarGauge extends PureComponent<Props> {
   };
 
   render() {
+    const { onClick, className } = this.props;
     const { title } = this.props.value;
-
-    if (!title) {
-      return this.renderBarAndValue();
-    }
-
     const styles = getTitleStyles(this.props);
 
+    if (!title) {
+      return (
+        <div style={styles.wrapper} onClick={onClick} className={className}>
+          {this.renderBarAndValue()}
+        </div>
+      );
+    }
+
     return (
-      <div style={styles.wrapper}>
+      <div style={styles.wrapper} onClick={onClick} className={className}>
         <div style={styles.title}>{title}</div>
         {this.renderBarAndValue()}
       </div>
@@ -62,23 +66,14 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderBarAndValue() {
-    const { onClick, clickTargetClassName } = this.props;
-    let barsElement;
     switch (this.props.displayMode) {
       case 'lcd':
-        barsElement = this.renderRetroBars();
-        break;
+        return this.renderRetroBars();
       case 'basic':
       case 'gradient':
       default:
-        barsElement = this.renderBasicAndGradientBars();
+        return this.renderBasicAndGradientBars();
     }
-
-    return (
-      <div onClick={onClick} className={clickTargetClassName}>
-        {barsElement}
-      </div>
-    );
   }
 
   renderBasicAndGradientBars(): ReactNode {

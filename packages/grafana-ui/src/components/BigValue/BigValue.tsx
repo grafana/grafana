@@ -28,7 +28,7 @@ export interface Props extends Themeable {
   sparkline?: BigValueSparkline;
   backgroundColor?: string;
   onClick?: React.MouseEventHandler<HTMLElement>;
-  clickTargetClassName?: string;
+  className?: string;
 }
 
 /*
@@ -121,25 +121,19 @@ export class BigValue extends PureComponent<Props> {
   }
 
   render() {
-    const {
-      height,
-      width,
-      value,
-      prefix,
-      suffix,
-      sparkline,
-      backgroundColor,
-      onClick,
-      clickTargetClassName,
-    } = this.props;
+    const { height, width, value, prefix, suffix, sparkline, backgroundColor, onClick, className } = this.props;
 
     return (
       <div
-        className={css({
-          position: 'relative',
-          display: 'table',
-        })}
+        className={cx(
+          css({
+            position: 'relative',
+            display: 'table',
+          }),
+          className
+        )}
         style={{ width, height, backgroundColor }}
+        onClick={onClick}
       >
         {value.title && (
           <div
@@ -157,20 +151,16 @@ export class BigValue extends PureComponent<Props> {
         )}
 
         <span
-          className={cx(
-            css({
-              lineHeight: 1,
-              textAlign: 'center',
-              zIndex: 1,
-              display: 'table-cell',
-              verticalAlign: 'middle',
-              position: 'relative',
-              fontSize: '3em',
-              fontWeight: 500, // TODO: $font-weight-semi-bold
-            }),
-            clickTargetClassName
-          )}
-          onClick={onClick}
+          className={css({
+            lineHeight: 1,
+            textAlign: 'center',
+            zIndex: 1,
+            display: 'table-cell',
+            verticalAlign: 'middle',
+            position: 'relative',
+            fontSize: '3em',
+            fontWeight: 500, // TODO: $font-weight-semi-bold
+          })}
         >
           {this.renderText(prefix, '0px 2px 0px 0px')}
           {this.renderText(value)}

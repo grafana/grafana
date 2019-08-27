@@ -42,7 +42,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
               height={height}
               theme={config.theme}
               onClick={openMenu}
-              clickTargetClassName={targetClassName}
+              className={targetClassName}
             />
           );
         }}

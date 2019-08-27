@@ -16,7 +16,7 @@ export interface Props extends Themeable {
   width: number;
   value: DisplayValue;
   onClick?: React.MouseEventHandler<HTMLElement>;
-  clickTargetClassName?: string;
+  className?: string;
 }
 
 const FONT_SCALE = 1;
@@ -178,7 +178,7 @@ export class Gauge extends PureComponent<Props> {
           justifyContent: 'center',
           overflow: 'hidden',
         }}
-        className={this.props.clickTargetClassName}
+        className={this.props.className}
       >
         {this.renderVisualization()}
       </div>

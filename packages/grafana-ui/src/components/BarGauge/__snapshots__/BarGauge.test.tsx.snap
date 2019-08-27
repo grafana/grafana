@@ -1,7 +1,15 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`BarGauge Render with basic options should render 1`] = `
-<div>
+<div
+  style={
+    Object {
+      "display": "flex",
+      "flexDirection": "column",
+      "overflow": "hidden",
+    }
+  }
+>
   <div
     style={
       Object {

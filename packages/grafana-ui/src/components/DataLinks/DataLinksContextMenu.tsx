@@ -17,6 +17,8 @@ export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ chil
   const getDataLinksContextMenuItems = () => {
     return [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
   };
+
+  // Use this class name (exposed via render prop) to add context menu indicator to the click target of the visualization
   const targetClassName = css`
     cursor: context-menu;
   `;
