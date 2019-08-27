@@ -36,7 +36,7 @@ class PanelPluginError extends PureComponent<Props> {
 }
 
 export function getPanelPluginLoadError(meta: PanelPluginMeta, err: any): PanelPlugin {
-  const NotFound = class NotFound extends PureComponent<PanelProps> {
+  const LoadError = class LoadError extends PureComponent<PanelProps> {
     render() {
       const text = (
         <>
@@ -47,8 +47,9 @@ export function getPanelPluginLoadError(meta: PanelPluginMeta, err: any): PanelP
       return <PanelPluginError title={`Error loading: ${meta.id}`} text={text} />;
     }
   };
-  const plugin = new PanelPlugin(NotFound);
+  const plugin = new PanelPlugin(LoadError);
   plugin.meta = meta;
+  plugin.loadError = true;
   return plugin;
 }
 
