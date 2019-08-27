@@ -124,6 +124,9 @@ export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
   // Meta is filled in by the plugin loading system
   meta?: T;
 
+  // This is set if the plugin system had errors loading the plugin
+  loadError?: boolean;
+
   // Config control (app/datasource)
   angularConfigCtrl?: any;
 
