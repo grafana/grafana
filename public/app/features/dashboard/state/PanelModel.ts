@@ -326,7 +326,7 @@ export class PanelModel {
 
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
-      this.queryRunner = new PanelQueryRunner();
+      this.queryRunner = new PanelQueryRunner(this.id);
     }
     return this.queryRunner;
   }

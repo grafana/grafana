@@ -1,28 +1,34 @@
-import React, { PureComponent } from 'react';
+import React, { PureComponent, FunctionComponent, useContext } from 'react';
 import _ from 'lodash';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
-import classnames from 'classnames';
-
-import { calculateFieldStats, getParser } from 'app/core/logs_model';
-import { LogLabels } from './LogLabels';
-import { findHighlightChunksInText } from 'app/core/utils/text';
-import { LogLabelStats } from './LogLabelStats';
-import { LogMessageAnsi } from './LogMessageAnsi';
-import { css, cx } from 'emotion';
 import {
-  LogRowContextProvider,
-  LogRowContextRows,
-  HasMoreContextRows,
-  LogRowContextQueryErrors,
-} from './LogRowContextProvider';
-import { ThemeContext, selectThemeVariant, GrafanaTheme, DataQueryResponse } from '@grafana/ui';
-
-import { LogRowModel, LogLabelStatsModel, LogsParser, TimeZone } from '@grafana/data';
-import { LogRowContext } from './LogRowContext';
+  LogRowModel,
+  LogLabelStatsModel,
+  LogsParser,
+  TimeZone,
+  calculateFieldStats,
+  getParser,
+  findHighlightChunksInText,
+} from '@grafana/data';
 import tinycolor from 'tinycolor2';
+import { css, cx } from 'emotion';
+import { DataQueryResponse, GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
+import {
+  LogRowContextRows,
+  LogRowContextQueryErrors,
+  HasMoreContextRows,
+  LogRowContextProvider,
+} from './LogRowContextProvider';
+import { LogRowContext } from './LogRowContext';
+import { LogLabels } from './LogLabels';
+import { LogMessageAnsi } from './LogMessageAnsi';
+import { LogLabelStats } from './LogLabelStats';
+import { Themeable } from '../../types/theme';
+import { withTheme } from '../../themes/index';
+import { getLogRowStyles } from './getLogRowStyles';
 
-interface Props {
+interface Props extends Themeable {
   highlighterExpressions?: string[];
   row: LogRowModel;
   showDuplicates: boolean;
@@ -32,8 +38,7 @@ interface Props {
   getRows: () => LogRowModel[];
   onClickLabel?: (label: string, value: string) => void;
   onContextClick?: () => void;
-  getRowContext?: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
-  className?: string;
+  getRowContext: (row: LogRowModel, options?: any) => Promise<DataQueryResponse>;
 }
 
 interface State {
@@ -52,11 +57,16 @@ interface State {
  * Renders a highlighted field.
  * When hovering, a stats icon is shown.
  */
-const FieldHighlight = (onClick: any) => (props: any) => {
+const FieldHighlight = (onClick: any): FunctionComponent<any> => (props: any) => {
+  const theme = useContext(ThemeContext);
+  const style = getLogRowStyles(theme);
   return (
     <span className={props.className} style={props.style}>
       {props.children}
-      <span className="logs-row__field-highlight--icon fa fa-signal" onClick={() => onClick(props.children)} />
+      <span
+        className={cx([style, 'logs-row__field-highlight--icon', 'fa fa-signal'])}
+        onClick={() => onClick(props.children)}
+      />
     </span>
   );
 };
@@ -94,8 +104,8 @@ const getLogRowWithContextStyles = (theme: GrafanaTheme, state: State) => {
  * Once a parser is found, it will determine fields, that will be highlighted.
  * When the user requests stats for a field, they will be calculated and rendered below the row.
  */
-export class LogRow extends PureComponent<Props, State> {
-  mouseMessageTimer: NodeJS.Timer;
+class UnThemedLogRow extends PureComponent<Props, State> {
+  mouseMessageTimer: NodeJS.Timer | null = null;
 
   state: any = {
     fieldCount: 0,
@@ -110,7 +120,7 @@ export class LogRow extends PureComponent<Props, State> {
   };
 
   componentWillUnmount() {
-    clearTimeout(this.mouseMessageTimer);
+    this.clearMouseMessageTimer();
   }
 
   onClickClose = () => {
@@ -148,8 +158,14 @@ export class LogRow extends PureComponent<Props, State> {
       // See comment in onMouseOverMessage method
       return;
     }
-    clearTimeout(this.mouseMessageTimer);
+    this.clearMouseMessageTimer();
     this.setState({ parsed: false });
+  };
+
+  clearMouseMessageTimer = () => {
+    if (this.mouseMessageTimer) {
+      clearTimeout(this.mouseMessageTimer);
+    }
   };
 
   parseMessage = () => {
@@ -206,6 +222,7 @@ export class LogRow extends PureComponent<Props, State> {
       showLabels,
       timeZone,
       showTime,
+      theme,
     } = this.props;
     const {
       fieldCount,
@@ -217,13 +234,15 @@ export class LogRow extends PureComponent<Props, State> {
       showFieldStats,
       showContext,
     } = this.state;
+    const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
     const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
     const needsHighlighter = highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0;
-    const highlightClassName = classnames('logs-row__match-highlight', {
-      'logs-row__match-highlight--preview': previewHighlights,
-    });
+    const highlightClassName = previewHighlights
+      ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
+      : cx([style.logsRowMatchHighLight]);
+
     const showUtc = timeZone === 'utc';
 
     return (
@@ -233,28 +252,34 @@ export class LogRow extends PureComponent<Props, State> {
             ? cx(logRowStyles, getLogRowWithContextStyles(theme, this.state).row)
             : logRowStyles;
           return (
-            <div className={`logs-row ${this.props.className}`}>
+            <div className={cx([style.logsRow])}>
               {showDuplicates && (
-                <div className="logs-row__duplicates">{row.duplicates > 0 ? `${row.duplicates + 1}x` : null}</div>
+                <div className={cx([style.logsRowDuplicates])}>
+                  {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
+                </div>
               )}
-              <div className={row.logLevel ? `logs-row__level logs-row__level--${row.logLevel}` : ''} />
+              <div className={cx([style.logsRowLevel])} />
               {showTime && showUtc && (
-                <div className="logs-row__localtime" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                <div className={cx([style.logsRowLocalTime])} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
                   {row.timeUtc}
                 </div>
               )}
               {showTime && !showUtc && (
-                <div className="logs-row__localtime" title={`${row.timeUtc} (${row.timeFromNow})`}>
+                <div className={cx([style.logsRowLocalTime])} title={`${row.timeUtc} (${row.timeFromNow})`}>
                   {row.timeLocal}
                 </div>
               )}
               {showLabels && (
-                <div className="logs-row__labels">
-                  <LogLabels getRows={getRows} labels={row.uniqueLabels} onClickLabel={onClickLabel} />
+                <div className={cx([style.logsRowLabels])}>
+                  <LogLabels
+                    getRows={getRows}
+                    labels={row.uniqueLabels ? row.uniqueLabels : {}}
+                    onClickLabel={onClickLabel}
+                  />
                 </div>
               )}
               <div
-                className="logs-row__message"
+                className={cx([style.logsRowMessage])}
                 onMouseEnter={this.onMouseOverMessage}
                 onMouseLeave={this.onMouseOutMessage}
               >
@@ -285,7 +310,7 @@ export class LogRow extends PureComponent<Props, State> {
                         highlightTag={FieldHighlight(this.onClickHighlight)}
                         textToHighlight={entry}
                         searchWords={parsedFieldHighlights}
-                        highlightClassName="logs-row__field-highlight"
+                        highlightClassName={cx([style.logsRowFieldHighLight])}
                       />
                     )}
                     {!parsed && needsHighlighter && (
@@ -300,7 +325,7 @@ export class LogRow extends PureComponent<Props, State> {
                     {hasAnsi && !parsed && !needsHighlighter && <LogMessageAnsi value={raw} />}
                     {!hasAnsi && !parsed && !needsHighlighter && entry}
                     {showFieldStats && (
-                      <div className="logs-row__stats">
+                      <div className={cx([style.logsRowStats])}>
                         <LogLabelStats
                           stats={fieldStats}
                           label={fieldLabel}
@@ -320,7 +345,7 @@ export class LogRow extends PureComponent<Props, State> {
                         position: relative;
                         z-index: ${showContext ? 1 : 0};
                         cursor: pointer;
-                        .logs-row:hover & {
+                        .${style.logsRow}:hover & {
                           visibility: visible;
                           margin-left: 10px;
                           text-decoration: underline;
@@ -357,3 +382,6 @@ export class LogRow extends PureComponent<Props, State> {
     return this.renderLogRow();
   }
 }
+
+export const LogRow = withTheme(UnThemedLogRow);
+LogRow.displayName = 'LogRow';

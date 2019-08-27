@@ -1,23 +1,47 @@
-import { PanelQueryRunner } from './PanelQueryRunner';
+import { PanelQueryRunner, QueryRunnerOptions } from './PanelQueryRunner';
 import { PanelData, DataQueryRequest, DataStreamObserver, DataStreamState, ScopedVars } from '@grafana/ui';
 
 import { LoadingState, DataFrameHelper } from '@grafana/data';
 import { dateTime } from '@grafana/data';
+import { SHARED_DASHBODARD_QUERY } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
+import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
+import { PanelModel } from './PanelModel';
+import { Subject } from 'rxjs';
 
 jest.mock('app/core/services/backend_srv');
 
+// Defined within setup functions
+const panelsForCurrentDashboardMock: { [key: number]: PanelModel } = {};
+jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
+  getDashboardSrv: () => {
+    return {
+      getCurrent: () => {
+        return {
+          getPanelById: (id: number) => {
+            return panelsForCurrentDashboardMock[id];
+          },
+        };
+      },
+    };
+  },
+}));
+
 interface ScenarioContext {
   setup: (fn: () => void) => void;
+
+  // Options used in setup
   maxDataPoints?: number | null;
   widthPixels: number;
   dsInterval?: string;
   minInterval?: string;
+  scopedVars: ScopedVars;
+
+  // Filled in by the Scenario runner
   events?: PanelData[];
   res?: PanelData;
   queryCalledWith?: DataQueryRequest;
   observer: DataStreamObserver;
   runner: PanelQueryRunner;
-  scopedVars: ScopedVars;
 }
 
 type ScenarioFn = (ctx: ScenarioContext) => void;
@@ -31,7 +55,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
       scopedVars: {
         server: { text: 'Server1', value: 'server-1' },
       },
-      runner: new PanelQueryRunner(),
+      runner: new PanelQueryRunner(1),
       observer: (args: any) => {},
       setup: (fn: () => void) => {
         setupFn = fn;
@@ -39,7 +63,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
     };
 
     const response: any = {
-      data: [{ target: 'hello', datapoints: [] }],
+      data: [{ target: 'hello', datapoints: [[1, 1000], [2, 2000]] }],
     };
 
     beforeEach(async () => {
@@ -67,16 +91,23 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
           to: dateTime(),
           raw: { from: '1h', to: 'now' },
         },
-        panelId: 0,
+        panelId: 1,
         queries: [{ refId: 'A', test: 1 }],
       };
 
-      ctx.runner = new PanelQueryRunner();
+      ctx.runner = new PanelQueryRunner(1);
       ctx.runner.subscribe({
         next: (data: PanelData) => {
           ctx.events.push(data);
         },
       });
+
+      panelsForCurrentDashboardMock[1] = {
+        id: 1,
+        getQueryRunner: () => {
+          return ctx.runner;
+        },
+      } as PanelModel;
 
       ctx.events = [];
       ctx.res = await ctx.runner.run(args);
@@ -199,6 +230,62 @@ describe('PanelQueryRunner', () => {
     it('destroy should unsubscribe streams', async () => {
       ctx.runner.destroy();
       expect(isUnsubbed).toBe(true);
+    });
+  });
+
+  describeQueryRunnerScenario('Shared query request', ctx => {
+    ctx.setup(() => {});
+
+    it('should get the same results as the original', async () => {
+      // Get the results from
+      const q: DashboardQuery = { refId: 'Z', panelId: 1 };
+      const myPanelId = 7;
+
+      const runnerWantingSharedResults = new PanelQueryRunner(myPanelId);
+      panelsForCurrentDashboardMock[myPanelId] = {
+        id: myPanelId,
+        getQueryRunner: () => {
+          return runnerWantingSharedResults;
+        },
+      } as PanelModel;
+
+      const res = await runnerWantingSharedResults.run({
+        datasource: SHARED_DASHBODARD_QUERY,
+        queries: [q],
+
+        // Same query setup
+        scopedVars: ctx.scopedVars,
+        minInterval: ctx.minInterval,
+        widthPixels: ctx.widthPixels,
+        maxDataPoints: ctx.maxDataPoints,
+        timeRange: {
+          from: dateTime().subtract(1, 'days'),
+          to: dateTime(),
+          raw: { from: '1h', to: 'now' },
+        },
+        panelId: myPanelId, // Not 1
+      });
+
+      const req = res.request;
+      expect(req.panelId).toBe(1); // The source panel
+      expect(req.targets[0].datasource).toBe('TestDB');
+      expect(res.series.length).toBe(1);
+      expect(res.series[0].length).toBe(2);
+
+      // Get the private subject and check that someone is listening
+      const subject = (ctx.runner as any).subject as Subject<PanelData>;
+      expect(subject.observers.length).toBe(2);
+
+      // Now change the query and we should stop listening
+      try {
+        runnerWantingSharedResults.run({
+          datasource: 'unknown-datasource',
+          panelId: myPanelId, // Not 1
+        } as QueryRunnerOptions);
+      } catch {}
+      // runnerWantingSharedResults subject is now unsubscribed
+      // the test listener is still subscribed
+      expect(subject.observers.length).toBe(1);
     });
   });
 });
