@@ -37,6 +37,15 @@ export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
   },
 ];
 
+export const getCalculationValueDataLinksVariableSuggestions = (): VariableSuggestion[] => [
+  ...getPanelLinksVariableSuggestions(),
+  {
+    value: `${DataLinkBuiltInVars.seriesName}`,
+    documentation: 'Adds series name',
+    origin: VariableOrigin.BuiltIn,
+  },
+];
+
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
 }

@@ -20,7 +20,7 @@ import { Threshold, ValueMapping } from '@grafana/data';
 import { BarGaugeOptions, orientationOptions, displayModes } from './types';
 import {
   getDataLinksVariableSuggestions,
-  getPanelLinksVariableSuggestions,
+  getCalculationValueDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
@@ -67,7 +67,9 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
     const { fieldOptions } = options;
     const { defaults } = fieldOptions;
 
-    const suggestions = fieldOptions.values ? getDataLinksVariableSuggestions() : getPanelLinksVariableSuggestions();
+    const suggestions = fieldOptions.values
+      ? getDataLinksVariableSuggestions()
+      : getCalculationValueDataLinksVariableSuggestions();
     const labelWidth = 6;
 
     return (

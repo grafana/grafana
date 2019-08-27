@@ -19,7 +19,7 @@ import { FontSizeEditor } from './FontSizeEditor';
 import { SparklineEditor } from './SparklineEditor';
 import {
   getDataLinksVariableSuggestions,
-  getPanelLinksVariableSuggestions,
+  getCalculationValueDataLinksVariableSuggestions,
 } from 'app/features/panel/panellinks/link_srv';
 
 export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatOptions>> {
@@ -69,7 +69,9 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
     const { options } = this.props;
     const { fieldOptions } = options;
     const { defaults } = fieldOptions;
-    const suggestions = fieldOptions.values ? getDataLinksVariableSuggestions() : getPanelLinksVariableSuggestions();
+    const suggestions = fieldOptions.values
+      ? getDataLinksVariableSuggestions()
+      : getCalculationValueDataLinksVariableSuggestions();
 
     return (
       <>
