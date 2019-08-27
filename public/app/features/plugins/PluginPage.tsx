@@ -44,7 +44,6 @@ export function getLoadingNav(): NavModel {
 }
 
 function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
-  console.log('GET', pluginId);
   return getPluginSettings(pluginId).then(info => {
     if (info.type === PluginType.app) {
       return importAppPlugin(info);
