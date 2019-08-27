@@ -1,42 +1,42 @@
 import React, { FC } from 'react';
-import { LdapUserInfo } from '../../types';
+import { LdapUserInfo } from 'app/types';
 
 interface Props {
-  ldapUserInfo: LdapUserInfo;
+  info: LdapUserInfo;
+  className: string;
 }
 
-export const LdapUserMappingInfo: FC<Props> = ({ ldapUserInfo }) => {
+export const LdapUserMappingInfo: FC<Props> = ({ className, info }) => {
   return (
     <>
-      <h4>Mapping result</h4>
-      <table className="filter-table form-inline">
+      <table className={`${className} filter-table form-inline`}>
         <thead>
-        <tr>
-          <th colSpan={2}>User information</th>
-          <th>LDAP attribute</th>
-        </tr>
+          <tr>
+            <th colSpan={2}>User information</th>
+            <th>LDAP attribute</th>
+          </tr>
         </thead>
         <tbody>
-        <tr>
-          <td>First name</td>
-          <td>{ldapUserInfo.name.ldapValue}</td>
-          <td>{ldapUserInfo.name.cfgAttrValue}</td>
-        </tr>
-        <tr>
-          <td>Surname</td>
-          <td>{ldapUserInfo.surname.ldapValue}</td>
-          <td>{ldapUserInfo.surname.cfgAttrValue}</td>
-        </tr>
-        <tr>
-          <td>Username</td>
-          <td>{ldapUserInfo.login.ldapValue}</td>
-          <td>{ldapUserInfo.login.cfgAttrValue}</td>
-        </tr>
-        <tr>
-          <td>Email</td>
-          <td>{ldapUserInfo.email.ldapValue}</td>
-          <td>{ldapUserInfo.email.cfgAttrValue}</td>
-        </tr>
+          <tr>
+            <td>First name</td>
+            <td>{info.name.ldapValue}</td>
+            <td>{info.name.cfgAttrValue}</td>
+          </tr>
+          <tr>
+            <td>Surname</td>
+            <td>{info.surname.ldapValue}</td>
+            <td>{info.surname.cfgAttrValue}</td>
+          </tr>
+          <tr>
+            <td>Username</td>
+            <td>{info.login.ldapValue}</td>
+            <td>{info.login.cfgAttrValue}</td>
+          </tr>
+          <tr>
+            <td>Email</td>
+            <td>{info.email.ldapValue}</td>
+            <td>{info.email.cfgAttrValue}</td>
+          </tr>
         </tbody>
       </table>
     </>

@@ -4,11 +4,17 @@ interface LdapMapping {
 }
 
 export interface LdapRole {
-  orgId: number;
+  orgId: string;
   orgRole: string;
+  ldapAttribute: string;
 }
 
-interface LdapTeam {}
+export interface LdapTeam {
+  orgId: string;
+  teamId: string;
+  ldapAttribute: string;
+}
+
 export interface LdapUserInfo {
   name: LdapMapping;
   surname: LdapMapping;
@@ -16,7 +22,7 @@ export interface LdapUserInfo {
   login: LdapMapping;
 }
 
-interface LdapPermissions {
+export interface LdapPermissions {
   isGrafanaAdmin: boolean;
   isDisabled: boolean;
 }

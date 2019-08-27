@@ -1,10 +1,15 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
+import { css } from 'emotion';
 import { NavModel } from '@grafana/data';
 import { FormField } from '@grafana/ui';
 import Page from '../../core/components/Page/Page';
+import { LdapSyncInfo } from './LdapSyncInfo';
 import { LdapUserMappingInfo } from './LdapUserMappingInfo';
+import { LdapUserPermissions } from './LdapUserPermissions';
+import { LdapUserGroups } from './LdapUserGroups';
+import { LdapUserTeams } from './LdapUserTeams';
 import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
 import { LdapUser, StoreState } from '../../types';
@@ -23,6 +28,8 @@ export class LdapPage extends PureComponent<Props, State> {
     isLoading: false,
   };
 
+  componentDidMount(): void {}
+
   search = (event: any) => {
     event.preventDefault();
     console.log('derp');
@@ -32,6 +39,14 @@ export class LdapPage extends PureComponent<Props, State> {
     const { ldapUser, navModel } = this.props;
     const { isLoading } = this.state;
 
+    const tableStyle = css`
+      margin-bottom: 48px;
+    `;
+
+    const headingStyle = css`
+      margin-bottom: 24px;
+    `;
+
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
@@ -40,38 +55,33 @@ export class LdapPage extends PureComponent<Props, State> {
             <i className="fa fa-fw fa-check text-success pull-right" />
           </div>
           {config.buildInfo.isEnterprise && (
-            <>
-              <h4>LDAP Synchronisation</h4>
-              <table className="filter-table form-inline">
-                <tbody>
-                  <tr>
-                    <td>Active synchronisation</td>
-                    <td>Enabled</td>
-                  </tr>
-                  <tr>
-                    <td>Scheduled</td>
-                    <td>Once a week, between Saturday and Sunday</td>
-                  </tr>
-                  <tr>
-                    <td>Next scheduled synchronisation</td>
-                    <td />
-                  </tr>
-                  <tr>
-                    <td>Last synchronisation</td>
-                    <td />
-                  </tr>
-                </tbody>
-              </table>
-            </>
+            <LdapSyncInfo
+              headingStyle={headingStyle}
+              tableStyle={tableStyle}
+              ldapSyncInfo={{
+                enabled: true,
+                scheduled: 'Once a week, between Saturday and Sunday',
+                nextScheduled: 'Tomorrow',
+                lastSync: 'Today',
+              }}
+            />
           )}
-          <h4>User mapping</h4>
+          <h4 className={headingStyle}>User mapping</h4>
           <form onSubmit={this.search} className="gf-form-inline">
             <FormField label="User name" labelWidth={8} inputWidth={30} type="text" />
             <button type="submit" className="btn btn-primary">
               Test LDAP mapping
             </button>
           </form>
-          {ldapUser && ldapUser.info && <LdapUserMappingInfo ldapUserInfo={ldapUser.info}/>}
+          {ldapUser &&
+            ldapUser.permissions && [
+              <LdapUserPermissions className={tableStyle} key="permissions" permissions={ldapUser.permissions} />,
+              <LdapUserMappingInfo className={tableStyle} key="mappingInfo" info={ldapUser.info} />,
+              ldapUser.roles.length > 0 && (
+                <LdapUserGroups className={tableStyle} key="groups" groups={ldapUser.roles} />
+              ),
+              ldapUser.teams.length > 0 && <LdapUserTeams className={tableStyle} key="teams" teams={ldapUser.teams} />,
+            ]}
         </Page.Contents>
       </Page>
     );

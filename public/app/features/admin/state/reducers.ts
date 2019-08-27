@@ -28,11 +28,18 @@ const initialState: LdapState = {
     },
     roles: [
       {
-        orgId: 1,
+        orgId: 'Maini org',
         orgRole: 'Admin',
+        ldapAttribute: 'cn=admins,ou=groups,dc=grafana,dc=org',
       },
     ],
-    teams: null,
+    teams: [
+      {
+        orgId: 'Main org',
+        teamId: 'This Team',
+        ldapAttribute: 'cn=other-not-matching,ou=groups,dc=grafana,dc=org',
+      },
+    ],
   },
 };
 
