@@ -442,16 +442,18 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       queryState.cancel('New request issued');
       queryState.closeStreams(false);
     }
+    queryState.sendFrames = true;
     queryState.sendLegacy = true;
 
     const queryOptions = { interval, maxDataPoints: containerWidth, live };
     const datasourceId = datasourceInstance.meta.id;
     const now = Date.now();
     const transaction = buildQueryTransaction(queries, queryOptions, range, queryIntervals, scanning);
+    const isLokiDataSource = datasourceInstance.meta.name === 'Loki'; // temporary hack until we switch to PanelData
     queryState.onStreamingDataUpdated = () => {
       const data = queryState.validateStreamsAndGetPanelData();
-      const { state, error, legacy } = data;
-      if (!data && !error && !legacy) {
+      const { state, error, legacy, series } = data;
+      if (!data && !error && !legacy && !series) {
         return;
       }
 
@@ -464,7 +466,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
         dispatch(
           limitMessageRatePayloadAction({
             exploreId,
-            series: legacy,
+            series: isLokiDataSource ? series : legacy,
             datasourceId,
           })
         );
@@ -482,7 +484,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     queryState
       .execute(datasourceInstance, transaction.options)
       .then((response: PanelData) => {
-        const { state, legacy, error } = response;
+        const { state, legacy, error, series } = response;
         if (error) {
           dispatch(processQueryErrorsAction({ exploreId, response: error, datasourceId }));
           return;
@@ -498,7 +500,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
             latency,
             datasourceId,
             loadingState: state,
-            series: legacy,
+            series: isLokiDataSource ? series : legacy,
             delta: null,
           })
         );
