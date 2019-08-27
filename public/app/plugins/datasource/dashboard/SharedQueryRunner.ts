@@ -23,9 +23,9 @@ export function isSharedDashboardQuery(datasource: string | DataSourceApi) {
 
 export class SharedQueryRunner {
   private containerPanel: PanelModel;
-  private listenId: number;
-  private listenPanel: PanelModel;
-  private listenRunner: PanelQueryRunner;
+  private listenToPanelId: number;
+  private listenToPanel: PanelModel;
+  private listenToRunner: PanelQueryRunner;
   private subscription: Unsubscribable;
 
   constructor(private runner: PanelQueryRunner) {
@@ -36,31 +36,32 @@ export class SharedQueryRunner {
 
   process(options: QueryRunnerOptions): Promise<PanelData> {
     const panelId = getPanelIdFromQuery(options.queries);
+
     if (!panelId) {
       this.disconnect();
       return getQueryError('Missing panel reference ID');
     }
 
     // The requested panel changed
-    if (this.listenId !== panelId) {
+    if (this.listenToPanelId !== panelId) {
       this.disconnect();
 
-      this.listenPanel = getDashboardSrv()
+      this.listenToPanel = getDashboardSrv()
         .getCurrent()
         .getPanelById(panelId);
 
-      if (!this.listenPanel) {
+      if (!this.listenToPanel) {
         return getQueryError('Unknown Panel: ' + panelId);
       }
 
-      this.listenId = panelId;
-      this.listenRunner = this.listenPanel.getQueryRunner();
-      this.subscription = this.listenRunner.chain(this.runner);
-      console.log('Connecting panel: ', this.containerPanel.id, 'to:', this.listenId);
+      this.listenToPanelId = panelId;
+      this.listenToRunner = this.listenToPanel.getQueryRunner();
+      this.subscription = this.listenToRunner.chain(this.runner);
+      console.log('Connecting panel: ', this.containerPanel.id, 'to:', this.listenToPanelId);
     }
 
     // If the target has refreshed recently, use the exising data
-    const data = this.listenRunner.getCurrentData();
+    const data = this.listenToRunner.getCurrentData();
     if (data.request && data.request.startTime) {
       const elapsed = Date.now() - data.request.startTime;
       if (elapsed < 150) {
@@ -70,17 +71,18 @@ export class SharedQueryRunner {
 
     // When fullscreen run with the current panel settings
     if (this.containerPanel.fullscreen) {
-      const { datasource, targets } = this.listenPanel;
+      const { datasource, targets } = this.listenToPanel;
       const modified = {
         ...options,
         panelId,
         datasource,
         queries: targets,
       };
-      return this.listenRunner.run(modified);
+      return this.listenToRunner.run(modified);
     } else {
-      this.listenPanel.refresh();
+      this.listenToPanel.refresh();
     }
+
     return Promise.resolve(data);
   }
 
@@ -89,10 +91,10 @@ export class SharedQueryRunner {
       this.subscription.unsubscribe();
       this.subscription = null;
     }
-    if (this.listenPanel) {
-      this.listenPanel = null;
+    if (this.listenToPanel) {
+      this.listenToPanel = null;
     }
-    this.listenId = undefined;
+    this.listenToPanelId = undefined;
   }
 }
 
