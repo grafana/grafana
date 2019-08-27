@@ -9,16 +9,23 @@ export interface LdapRole {
 }
 
 interface LdapTeam {}
-
-export interface LdapUser {
+export interface LdapUserInfo {
   name: LdapMapping;
   surname: LdapMapping;
   email: LdapMapping;
   login: LdapMapping;
-  roles: LdapRole[];
-  teams: LdapTeam[];
+}
+
+interface LdapPermissions {
   isGrafanaAdmin: boolean;
   isDisabled: boolean;
+}
+
+export interface LdapUser {
+  info: LdapUserInfo;
+  permissions: LdapPermissions;
+  roles: LdapRole[];
+  teams: LdapTeam[];
 }
 
 export interface LdapState {

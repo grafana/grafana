@@ -3,10 +3,11 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
 import { FormField } from '@grafana/ui';
+import Page from '../../core/components/Page/Page';
+import { LdapUserMappingInfo } from './LdapUserMappingInfo';
+import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
 import { LdapUser, StoreState } from '../../types';
-import Page from '../../core/components/Page/Page';
-import config from '../../core/config';
 
 interface Props {
   navModel: NavModel;
@@ -70,22 +71,7 @@ export class LdapPage extends PureComponent<Props, State> {
               Test LDAP mapping
             </button>
           </form>
-          {ldapUser && (
-            <>
-              <h4>Mapping result</h4>
-              <table className="filter-table form-inline">
-                <thead>
-                  <th colSpan={2}>User information</th>
-                  <th>LDAP attribute</th>
-                </thead>
-                <tbody>
-                  {Object.keys(ldapUser).map((key, index) => {
-                    return <tr key={`${key}-${index}`}>{key}</tr>;
-                  })}
-                </tbody>
-              </table>
-            </>
-          )}
+          {ldapUser && ldapUser.info && <LdapUserMappingInfo ldapUserInfo={ldapUser.info}/>}
         </Page.Contents>
       </Page>
     );

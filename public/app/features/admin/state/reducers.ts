@@ -4,24 +4,28 @@ import { testLdapMapping } from './actions';
 
 const initialState: LdapState = {
   user: {
-    name: {
-      cfgAttrValue: 'givenName',
-      ldapValue: 'ldap-torkel',
+    info: {
+      name: {
+        cfgAttrValue: 'givenName',
+        ldapValue: 'peter',
+      },
+      surname: {
+        cfgAttrValue: 'sn',
+        ldapValue: 'h',
+      },
+      email: {
+        cfgAttrValue: 'email',
+        ldapValue: 'peterr@grafana.com',
+      },
+      login: {
+        cfgAttrValue: 'cn',
+        ldapValue: 'ldap-torkel',
+      },
     },
-    surname: {
-      cfgAttrValue: 'sn',
-      ldapValue: 'ldap-torkel',
+    permissions: {
+      isGrafanaAdmin: true,
+      isDisabled: false,
     },
-    email: {
-      cfgAttrValue: 'email',
-      ldapValue: '',
-    },
-    login: {
-      cfgAttrValue: 'cn',
-      ldapValue: 'ldap-torkel',
-    },
-    isGrafanaAdmin: true,
-    isDisabled: false,
     roles: [
       {
         orgId: 1,
