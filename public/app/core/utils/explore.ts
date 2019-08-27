@@ -510,10 +510,17 @@ const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
   return 0;
 };
 
-export const sortLogsResult = (logsResult: LogsModel, refreshInterval: string) => {
+export enum SortOrder {
+  Descending = 'Descending',
+  Ascending = 'Ascending',
+}
+
+export const refreshIntervalToSortOrder = (refreshInterval: string) =>
+  isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
+
+export const sortLogsResult = (logsResult: LogsModel, sortOrder: SortOrder) => {
   const rows = logsResult ? logsResult.rows : [];
-  const live = isLive(refreshInterval);
-  live ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
+  sortOrder === SortOrder.Ascending ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
   const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 
   return result;

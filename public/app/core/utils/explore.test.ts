@@ -9,11 +9,15 @@ import {
   getValueWithRefId,
   getFirstQueryErrorWithoutRefId,
   getRefIds,
+  refreshIntervalToSortOrder,
+  SortOrder,
+  sortLogsResult,
 } from './explore';
 import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { LogsDedupStrategy } from '@grafana/data';
+import { LogsDedupStrategy, LogsModel, LogLevel } from '@grafana/data';
 import { DataQueryError } from '@grafana/ui';
+import { liveOption, offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: null,
@@ -353,6 +357,98 @@ describe('getRefIds', () => {
       const result = getRefIds(input);
 
       expect(result).toEqual(['B', 'X', 'A']);
+    });
+  });
+});
+
+describe('refreshIntervalToSortOrder', () => {
+  describe('when called with live option', () => {
+    it('then it should return ascending', () => {
+      const result = refreshIntervalToSortOrder(liveOption.value);
+
+      expect(result).toBe(SortOrder.Ascending);
+    });
+  });
+
+  describe('when called with off option', () => {
+    it('then it should return descending', () => {
+      const result = refreshIntervalToSortOrder(offOption.value);
+
+      expect(result).toBe(SortOrder.Descending);
+    });
+  });
+
+  describe('when called with 5s option', () => {
+    it('then it should return descending', () => {
+      const result = refreshIntervalToSortOrder('5s');
+
+      expect(result).toBe(SortOrder.Descending);
+    });
+  });
+
+  describe('when called with undefined', () => {
+    it('then it should return descending', () => {
+      const result = refreshIntervalToSortOrder(undefined);
+
+      expect(result).toBe(SortOrder.Descending);
+    });
+  });
+});
+
+describe('sortLogsResult', () => {
+  const firstRow = {
+    timestamp: '2019-01-01T21:00:0.0000000Z',
+    entry: '',
+    hasAnsi: false,
+    labels: {},
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 0,
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+  };
+  const sameAsFirstRow = firstRow;
+  const secondRow = {
+    timestamp: '2019-01-01T22:00:0.0000000Z',
+    entry: '',
+    hasAnsi: false,
+    labels: {},
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 0,
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+  };
+
+  describe('when called with SortOrder.Descending', () => {
+    it('then it should sort descending', () => {
+      const logsResult: LogsModel = {
+        rows: [firstRow, sameAsFirstRow, secondRow],
+        hasUniqueLabels: false,
+      };
+      const result = sortLogsResult(logsResult, SortOrder.Descending);
+
+      expect(result).toEqual({
+        rows: [secondRow, firstRow, sameAsFirstRow],
+        hasUniqueLabels: false,
+      });
+    });
+  });
+
+  describe('when called with SortOrder.Ascending', () => {
+    it('then it should sort ascending', () => {
+      const logsResult: LogsModel = {
+        rows: [secondRow, firstRow, sameAsFirstRow],
+        hasUniqueLabels: false,
+      };
+      const result = sortLogsResult(logsResult, SortOrder.Ascending);
+
+      expect(result).toEqual({
+        rows: [firstRow, sameAsFirstRow, secondRow],
+        hasUniqueLabels: false,
+      });
     });
   });
 });

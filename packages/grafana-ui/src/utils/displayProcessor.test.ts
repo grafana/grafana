@@ -1,6 +1,5 @@
 import { MappingType, ValueMapping, DisplayProcessor, DisplayValue } from '@grafana/data';
-
-import { getDisplayProcessor, getColorFromThreshold, getDecimalsForValue } from './displayProcessor';
+import { getDisplayProcessor, getColorFromThreshold } from './displayProcessor';
 
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach(processor => {
@@ -135,17 +134,16 @@ describe('Format value', () => {
   });
 
   it('should set auto decimals, 1 significant', () => {
-    const value = '1.23';
+    const value = 3.23;
     const instance = getDisplayProcessor({ field: { decimals: null } });
-
-    expect(instance(value).text).toEqual('1.2');
+    expect(instance(value).text).toEqual('3.2');
   });
 
   it('should set auto decimals, 2 significant', () => {
-    const value = '0.0245';
+    const value = 0.0245;
     const instance = getDisplayProcessor({ field: { decimals: null } });
 
-    expect(instance(value).text).toEqual('0.02');
+    expect(instance(value).text).toEqual('0.025');
   });
 
   it('should use override decimals', () => {
@@ -164,20 +162,32 @@ describe('Format value', () => {
 
     expect(instance(value).text).toEqual('1-20');
   });
-});
 
-describe('getDecimalsForValue()', () => {
-  it('should calculate reasonable decimals precision for given value', () => {
-    expect(getDecimalsForValue(1.01)).toEqual({ decimals: 1, scaledDecimals: 4 });
-    expect(getDecimalsForValue(9.01)).toEqual({ decimals: 0, scaledDecimals: 2 });
-    expect(getDecimalsForValue(1.1)).toEqual({ decimals: 1, scaledDecimals: 4 });
-    expect(getDecimalsForValue(2)).toEqual({ decimals: 0, scaledDecimals: 2 });
-    expect(getDecimalsForValue(20)).toEqual({ decimals: 0, scaledDecimals: 1 });
-    expect(getDecimalsForValue(200)).toEqual({ decimals: 0, scaledDecimals: 0 });
-    expect(getDecimalsForValue(2000)).toEqual({ decimals: 0, scaledDecimals: 0 });
-    expect(getDecimalsForValue(20000)).toEqual({ decimals: 0, scaledDecimals: -2 });
-    expect(getDecimalsForValue(200000)).toEqual({ decimals: 0, scaledDecimals: -3 });
-    expect(getDecimalsForValue(200000000)).toEqual({ decimals: 0, scaledDecimals: -6 });
-    expect(getDecimalsForValue(100, 2)).toEqual({ decimals: 2, scaledDecimals: null });
+  //
+  // Below is current behavior but I it's clearly not working great
+  //
+
+  it('with value 1000 and unit short', () => {
+    const value = 1000;
+    const instance = getDisplayProcessor({ field: { decimals: null, unit: 'short' } });
+    expect(instance(value).text).toEqual('1.000 K');
+  });
+
+  it('with value 1200 and unit short', () => {
+    const value = 1200;
+    const instance = getDisplayProcessor({ field: { decimals: null, unit: 'short' } });
+    expect(instance(value).text).toEqual('1.200 K');
+  });
+
+  it('with value 1250 and unit short', () => {
+    const value = 1250;
+    const instance = getDisplayProcessor({ field: { decimals: null, unit: 'short' } });
+    expect(instance(value).text).toEqual('1.250 K');
+  });
+
+  it('with value 10000000 and unit short', () => {
+    const value = 1000000;
+    const instance = getDisplayProcessor({ field: { decimals: null, unit: 'short' } });
+    expect(instance(value).text).toEqual('1.000 Mil');
   });
 });

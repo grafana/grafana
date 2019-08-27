@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 
 import { ExploreId, ExploreMode } from 'app/types/explore';
-import { DataSourceSelectItem } from '@grafana/ui';
+import { DataSourceSelectItem, ToggleButtonGroup, ToggleButton } from '@grafana/ui';
 import { RawTimeRange, TimeZone, TimeRange, LoadingState, SelectableValue } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
@@ -17,7 +17,6 @@ import {
   changeMode,
 } from './state/actions';
 import { getTimeZone } from '../profile/state/selectors';
-import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
 import { ExploreTimeControls } from './ExploreTimeControls';
 
 enum IconSide {
