@@ -27,7 +27,7 @@ export interface Props extends Themeable {
   itemSpacing?: number;
   displayMode: 'basic' | 'lcd' | 'gradient';
   onClick?: React.MouseEventHandler<HTMLElement>;
-  className?: string;
+  clickTargetClassName?: string;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -62,7 +62,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderBarAndValue() {
-    const { onClick, className } = this.props;
+    const { onClick, clickTargetClassName } = this.props;
     let barsElement;
     switch (this.props.displayMode) {
       case 'lcd':
@@ -75,7 +75,7 @@ export class BarGauge extends PureComponent<Props> {
     }
 
     return (
-      <div onClick={onClick} className={className}>
+      <div onClick={onClick} className={clickTargetClassName}>
         {barsElement}
       </div>
     );

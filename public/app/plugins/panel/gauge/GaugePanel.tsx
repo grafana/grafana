@@ -32,7 +32,7 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
               maxValue={field.max}
               theme={config.theme}
               onClick={openMenu}
-              className={targetClassName}
+              clickTargetClassName={targetClassName}
             />
           );
         }}
