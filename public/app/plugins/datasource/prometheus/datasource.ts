@@ -180,10 +180,36 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     activeTargets: PromQuery[],
     end: number
   ) => {
+    // Because we want to get run instant and TimeSeries Prom queries in parallel but this isn't actually streaming
+    // we need to stop/cancel each posted event with a stop stream event (see below) to the observer so that the
+    // PanelQueryState stops the stream
+    const getStopState = (state: DataStreamState): DataStreamState => ({
+      ...state,
+      state: LoadingState.Done,
+      request: { ...options, requestId: 'done' },
+    });
+
+    const startLoadingEvent: DataStreamState = {
+      key: `prometheus-loading_indicator`,
+      state: LoadingState.Loading,
+      request: options,
+      data: [],
+      unsubscribe: () => undefined,
+    };
+
+    observer(startLoadingEvent); // Starts the loading indicator
+    const lastTimeSeriesQuery = queries.filter(query => !query.instant).pop();
+
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
       const target = activeTargets[index];
-      const observable: Observable<any> = from(this.performTimeSeriesQuery(query, query.start, query.end));
+      let observable: Observable<any> = null;
+
+      if (query.instant) {
+        observable = from(this.performInstantQuery(query, end));
+      } else {
+        observable = from(this.performTimeSeriesQuery(query, query.start, query.end));
+      }
 
       observable
         .pipe(
@@ -199,16 +225,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
               unsubscribe: () => undefined,
             };
 
-            return [
-              state,
-              {
-                key: `prometheus-${target.refId}`,
-                state: LoadingState.Done,
-                request: { ...options, requestId: 'done' },
-                data: [],
-                unsubscribe: () => {},
-              },
-            ];
+            const states = [state, getStopState(state)];
+
+            if (target.refId === lastTimeSeriesQuery.refId && target.expr === lastTimeSeriesQuery.expr) {
+              states.push(getStopState(startLoadingEvent)); // Stops the loading indicator
+            }
+
+            return states;
           }),
           catchError(err => {
             const error = this.handleErrors(err, target);
@@ -279,32 +302,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       options.targets.filter(target => target.context === PromContext.Explore).length === options.targets.length
     ) {
       // using observer to make the instant query return immediately
-      const instantQueries = queries.filter(query => query.instant);
-      const instantTargets = activeTargets.filter(target => target.instant);
-      const timeSeriesQueries = queries.filter(query => !query.instant);
-      const timeSeriesTargets = activeTargets.filter(target => !target.instant);
-      const allQueryPromise = instantQueries.map(query => this.performInstantQuery(query, end));
-
-      const allPromise = this.$q.all(allQueryPromise).then((responseList: any) => {
-        let result: any[] = [];
-
-        _.each(responseList, (response, index: number) => {
-          if (response.cancelled) {
-            return;
-          }
-
-          const target = instantTargets[index];
-          const query = instantQueries[index];
-          const series = this.processResult(response, query, target, queries.length);
-
-          result = [...result, ...series];
-        });
-
-        setTimeout(() => this.runObserverQueries(options, observer, timeSeriesQueries, timeSeriesTargets, end), 100);
-        return { data: result };
-      });
-
-      return allPromise as Promise<{ data: any }>;
+      this.runObserverQueries(options, observer, queries, activeTargets, end);
+      return this.$q.when({ data: [] }) as Promise<{ data: any }>;
     }
 
     const allQueryPromise = _.map(queries, query => {
