@@ -31,6 +31,7 @@ export interface QueryRunnerOptions<
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
+  transform?: any;
 }
 
 export enum PanelQueryRunnerFormat {
@@ -48,6 +49,7 @@ export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
 
   private state = new PanelQueryState();
+  private transform?: any;
 
   constructor() {
     this.state.onStreamingDataUpdated = this.onStreamingDataUpdated;
@@ -73,10 +75,22 @@ export class PanelQueryRunner {
 
     // Send the last result
     if (this.state.isStarted()) {
-      observer.next(this.state.getDataAfterCheckingFormats());
+      observer.next(this.getLastResult());
     }
 
     return this.subject.subscribe(observer);
+  }
+
+  /**
+   * Get the last result -- optionally skip the transformation
+   */
+  getLastResult(transformed = true): PanelData {
+    const v = this.state.getDataAfterCheckingFormats();
+    if (this.transform && transformed) {
+      // TODO, transform it...
+      return v;
+    }
+    return v;
   }
 
   async run(options: QueryRunnerOptions): Promise<PanelData> {
@@ -169,6 +183,8 @@ export class PanelQueryRunner {
           this.subject.next(this.state.validateStreamsAndGetPanelData());
         }
       }, delayStateNotification || 500);
+
+      this.transform = options.transform;
 
       const data = await state.execute(ds, request);
 

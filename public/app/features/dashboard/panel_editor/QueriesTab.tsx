@@ -23,6 +23,7 @@ import { LoadingState } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
+import { TransformResults } from './TransformResults';
 
 interface Props {
   panel: PanelModel;
@@ -228,6 +229,8 @@ export class QueriesTab extends PureComponent<Props, State> {
       render: this.renderHelp,
     };
 
+    const hasAlphaDatasources = true; //!!config.datasources['input'];
+
     return (
       <EditorTabBody
         heading="Query"
@@ -257,6 +260,11 @@ export class QueriesTab extends PureComponent<Props, State> {
           <PanelOptionsGroup>
             <QueryOptions panel={panel} datasource={currentDS} />
           </PanelOptionsGroup>
+          {hasAlphaDatasources && (
+            <PanelOptionsGroup>
+              <TransformResults panel={panel} data={data} />
+            </PanelOptionsGroup>
+          )}
         </>
       </EditorTabBody>
     );
