@@ -9,7 +9,7 @@ import { getLinkSrv } from './link_srv';
 
 export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<FieldDisplay> | undefined => {
   const links = value.field.links;
-  if (!links || (links && links.length === 0)) {
+  if (!links || links.length === 0) {
     return undefined;
   }
   return {
@@ -52,7 +52,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
 export const getPanelLinksSupplier = (value: PanelModel): LinkModelSupplier<PanelModel> => {
   const links = value.links;
 
-  if (!links || (links && links.length === 0)) {
+  if (!links || links.length === 0) {
     return undefined;
   }
 
