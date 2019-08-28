@@ -175,9 +175,9 @@ export class SignalWorker extends StreamWorker {
   };
 
   initBuffer(refId: string) {
-    const { speed, buffer } = this.query;
+    const { speed } = this.query;
     const request = this.stream.request;
-    const maxRows = buffer ? buffer : request.maxDataPoints;
+    const maxRows = request.maxDataPoints || 1000;
     const times = new CircularVector({ capacity: maxRows });
     const vals = new CircularVector({ capacity: maxRows });
     this.values = [times, vals];
@@ -341,11 +341,11 @@ export class LogsWorker extends StreamWorker {
   };
 
   initBuffer(refId: string) {
-    const { speed, buffer } = this.query;
+    const { speed } = this.query;
 
     const request = this.stream.request;
 
-    const maxRows = buffer ? buffer : request.maxDataPoints;
+    const maxRows = request.maxDataPoints || 1000;
 
     const times = new CircularVector({ capacity: maxRows });
     const lines = new CircularVector({ capacity: maxRows });
