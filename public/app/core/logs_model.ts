@@ -178,6 +178,7 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
   const metricSeries: DataFrame[] = [];
   const logSeries: DataFrame[] = [];
 
+  debugger;
   for (const series of dataFrame) {
     if (isLogsData(series)) {
       logSeries.push(series);

@@ -43,7 +43,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
 
       if (queries.length === 0) {
         subscriber.next({ data: [] });
-        subscriber.complete();
+        return;
       }
 
       getBackendSrv()
@@ -81,7 +81,6 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           }
 
           subscriber.next({ data: data });
-          subscriber.complete();
         })
         .catch((err: any) => {
           subscriber.error(err);

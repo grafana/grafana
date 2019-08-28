@@ -357,8 +357,6 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
     state.panelData.state = LoadingState.Loading;
 
     if (!datasource.observe) {
-      subscriber.next(state.panelData);
-      subscriber.complete();
       return null;
     }
 
@@ -371,14 +369,10 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
         request.endTime = Date.now();
 
         state = processResponsePacket(packet, state);
-
         subscriber.next(state.panelData);
       },
       error(error: any) {
         subscriber.error(error);
-      },
-      complete() {
-        subscriber.complete();
       },
     });
 
