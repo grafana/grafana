@@ -53,6 +53,8 @@ import {
   toggleLogLevelAction,
   changeLoadingStateAction,
   resetExploreAction,
+  queryEndedAction,
+  queryStreamUpdatedAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
@@ -60,6 +62,7 @@ import { LocationUpdate } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { PanelQueryState } from '../../dashboard/state/PanelQueryState';
+import { ResultProcessor } from '../utils/ResultProcessor';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -106,7 +109,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   scanRange: null,
   showingGraph: true,
   showingTable: true,
-  loadingState: LoadingState.NotStarted,
+  loading: false,
   queryKeys: [],
   urlState: null,
   update: makeInitialUpdateState(),
@@ -117,6 +120,13 @@ export const makeExploreItemState = (): ExploreItemState => ({
   isLive: false,
   urlReplaced: false,
   queryState: new PanelQueryState(),
+  queryResponse: {
+    state: LoadingState.NotStarted,
+    request: null,
+    series: [],
+    legacy: null,
+    error: null,
+  },
 });
 
 /**
@@ -196,8 +206,12 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         refreshInterval,
-        loadingState: live ? LoadingState.Streaming : LoadingState.NotStarted,
+        queryResponse: {
+          ...state.queryResponse,
+          state: live ? LoadingState.Streaming : LoadingState.NotStarted,
+        },
         isLive: live,
+        loading: live,
         logsResult,
       };
     },
@@ -272,7 +286,14 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         datasourceInstance,
         queryErrors: [],
         latency: 0,
-        loadingState: LoadingState.NotStarted,
+        queryResponse: {
+          state: LoadingState.NotStarted,
+          request: null,
+          series: [],
+          legacy: null,
+          error: null,
+        },
+        loading: false,
         StartPage,
         showingStartPage: Boolean(StartPage),
         queryKeys: [],
@@ -359,7 +380,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         logsResult: null,
         latency: 0,
         queryErrors,
-        loadingState: LoadingState.Error,
         update: makeInitialUpdateState(),
       };
     },
@@ -371,7 +391,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         queryErrors: [],
         latency: 0,
-        loadingState: LoadingState.Loading,
+        queryResponse: {
+          ...state.queryResponse,
+          state: LoadingState.Loading,
+        },
+        loading: true,
         update: makeInitialUpdateState(),
       };
     },
@@ -379,11 +403,10 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: querySuccessAction,
     mapper: (state, action): ExploreItemState => {
-      const { latency, loadingState, graphResult, tableResult, logsResult } = action.payload;
+      const { latency, graphResult, tableResult, logsResult } = action.payload;
 
       return {
         ...state,
-        loadingState,
         graphResult,
         tableResult,
         logsResult,
@@ -591,7 +614,60 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const { loadingState } = action.payload;
       return {
         ...state,
-        loadingState,
+        queryResponse: {
+          ...state.queryResponse,
+          state: loadingState,
+        },
+        loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
+      };
+    },
+  })
+  .addMapper({
+    //queryStreamUpdatedAction
+    filter: queryEndedAction,
+    mapper: (state, action): ExploreItemState => {
+      const { response } = action.payload;
+      const { request, state: loadingState, series, legacy } = response;
+
+      const latency = request.endTime - request.startTime;
+
+      // temporary hack until we switch to PanelData, Loki already converts to DataFrame so using legacy will destroy the format
+      const isLokiDataSource = state.datasourceInstance.meta.name === 'Loki';
+      const processor = new ResultProcessor(state, true, isLokiDataSource ? series : legacy);
+
+      return {
+        ...state,
+        latency,
+        queryResponse: response,
+        graphResult: processor.getGraphResult(),
+        tableResult: processor.getTableResult(),
+        logsResult: processor.getLogsResult(),
+        loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
+        showingStartPage: false,
+        update: makeInitialUpdateState(),
+      };
+    },
+  })
+  .addMapper({
+    filter: queryStreamUpdatedAction,
+    mapper: (state, action): ExploreItemState => {
+      const { response } = action.payload;
+      const { state: loadingState, series, legacy } = response;
+
+      // temporary hack until we switch to PanelData, Loki already converts to DataFrame so using legacy will destroy the format
+      const isLokiDataSource = state.datasourceInstance.meta.name === 'Loki';
+      const processor = new ResultProcessor(state, false, isLokiDataSource ? series : legacy);
+
+      return {
+        ...state,
+        latency: 0,
+        queryResponse: response,
+        graphResult: processor.getGraphResult(),
+        tableResult: processor.getTableResult(),
+        logsResult: processor.getLogsResult(),
+        loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
+        showingStartPage: false,
+        update: makeInitialUpdateState(),
       };
     },
   })

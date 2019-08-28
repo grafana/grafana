@@ -11,7 +11,6 @@ import {
   LogsModel,
   LogRowModel,
   LogsDedupStrategy,
-  LoadingState,
   TimeRange,
 } from '@grafana/data';
 
@@ -146,14 +145,13 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const {
     logsHighlighterExpressions,
     logsResult,
-    loadingState,
+    loading,
     scanning,
     datasourceInstance,
     isLive,
     range,
     absoluteRange,
   } = item;
-  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const { dedupStrategy } = exploreItemUIStateSelector(item);
   const hiddenLogLevels = new Set(item.hiddenLogLevels);
   const dedupedResult = deduplicatedLogsSelector(item);

@@ -1,6 +1,6 @@
 // Types
 import { Emitter } from 'app/core/core';
-import { DataQuery, DataSourceSelectItem, DataSourceApi, QueryFixAction, DataQueryError } from '@grafana/ui';
+import { DataQuery, DataSourceSelectItem, DataSourceApi, QueryFixAction, DataQueryError, PanelData } from '@grafana/ui';
 
 import { LogLevel, TimeRange, LogsModel, LoadingState, AbsoluteTimeRange, GraphSeriesXY } from '@grafana/data';
 import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode } from 'app/types/explore';
@@ -127,6 +127,11 @@ export interface QueryFailurePayload {
 
 export interface QueryStartPayload {
   exploreId: ExploreId;
+}
+
+export interface QueryEndedPayload {
+  exploreId: ExploreId;
+  response: PanelData;
 }
 
 export interface QuerySuccessPayload {
@@ -317,6 +322,11 @@ export const queryFailureAction = actionCreatorFactory<QueryFailurePayload>('exp
 
 export const queryStartAction = actionCreatorFactory<QueryStartPayload>('explore/QUERY_START').create();
 
+export const queryEndedAction = actionCreatorFactory<QueryEndedPayload>('explore/QUERY_ENDED').create();
+
+export const queryStreamUpdatedAction = actionCreatorFactory<QueryEndedPayload>(
+  'explore/QUERY_STREAM_UPDATED'
+).create();
 /**
  * Complete a query transaction, mark the transaction as `done` and store query state in URL.
  * If the transaction was started by a scanner, it keeps on scanning for more results.

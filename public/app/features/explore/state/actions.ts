@@ -13,12 +13,12 @@ import {
   lastUsedDatasourceKeyForOrgId,
   hasNonEmptyQuery,
   buildQueryTransaction,
-  updateHistory,
   getRefIds,
   instanceOfDataQueryError,
   clearQueryKeys,
   serializeStateToUrlParam,
   stopQueryState,
+  updateHistory,
 } from 'app/core/utils/explore';
 // Types
 import { ThunkResult, ExploreUrlState } from 'app/types';
@@ -73,14 +73,15 @@ import {
   loadExploreDatasources,
   changeModeAction,
   scanStopAction,
-  changeLoadingStateAction,
-  historyUpdatedAction,
   queryStartAction,
   resetQueryErrorAction,
   querySuccessAction,
   queryFailureAction,
   setUrlReplacedAction,
   changeRangeAction,
+  historyUpdatedAction,
+  queryEndedAction,
+  queryStreamUpdatedAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -466,36 +467,37 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     stopQueryState(queryState, 'New request issued');
 
     queryState.sendFrames = true;
-    queryState.sendLegacy = true; // temporary hack until we switch to PanelData
+    queryState.sendLegacy = true;
 
     const queryOptions = { interval, maxDataPoints: containerWidth, live };
     const datasourceId = datasourceInstance.meta.id;
-    const now = Date.now();
+    // const now = Date.now();
     const transaction = buildQueryTransaction(queries, queryOptions, range, queryIntervals, scanning);
 
     // temporary hack until we switch to PanelData, Loki already converts to DataFrame so using legacy will destroy the format
-    const isLokiDataSource = datasourceInstance.meta.name === 'Loki';
+    // const isLokiDataSource = datasourceInstance.meta.name === 'Loki';
 
     queryState.onStreamingDataUpdated = () => {
-      const data = queryState.validateStreamsAndGetPanelData();
-      const { state, error, legacy, series } = data;
-      if (!data && !error && !legacy && !series) {
-        return;
-      }
-
-      if (state === LoadingState.Error) {
-        dispatch(processErrorResults({ exploreId, response: error, datasourceId }));
-        return;
-      }
-
-      if (state === LoadingState.Streaming) {
-        dispatch(limitMessageRate(exploreId, isLokiDataSource ? series : legacy, datasourceId));
-        return;
-      }
-
-      if (state === LoadingState.Done) {
-        dispatch(changeLoadingStateAction({ exploreId, loadingState: state }));
-      }
+      const response = queryState.validateStreamsAndGetPanelData();
+      dispatch(queryStreamUpdatedAction({ exploreId, response }));
+      // const { state, error, series } = data;
+      // if (!data && !error && !series) {
+      //   return;
+      // }
+      //
+      // if (state === LoadingState.Error) {
+      //   dispatch(processErrorResults({ exploreId, response: error, datasourceId }));
+      //   return;
+      // }
+      //
+      // if (state === LoadingState.Streaming) {
+      //   dispatch(limitMessageRate(exploreId, isLokiDataSource ? series : legacy, datasourceId));
+      //   return;
+      // }
+      //
+      // if (state === LoadingState.Done) {
+      //   dispatch(changeLoadingStateAction({ exploreId, loadingState: state }));
+      // }
     };
 
     dispatch(queryStartAction({ exploreId }));
@@ -503,29 +505,35 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     queryState
       .execute(datasourceInstance, transaction.options)
       .then((response: PanelData) => {
-        const { legacy, error, series } = response;
-        if (error) {
-          dispatch(processErrorResults({ exploreId, response: error, datasourceId }));
-          return;
+        if (!response.error) {
+          // Side-effect: Saving history in localstorage
+          const nextHistory = updateHistory(history, datasourceId, queries);
+          dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
         }
 
-        const latency = Date.now() - now;
-        // Side-effect: Saving history in localstorage
-        const nextHistory = updateHistory(history, datasourceId, queries);
-        dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-        dispatch(
-          processQueryResults({
-            exploreId,
-            latency,
-            datasourceId,
-            loadingState: LoadingState.Done,
-            series: isLokiDataSource ? series : legacy,
-          })
-        );
+        dispatch(queryEndedAction({ exploreId, response }));
         dispatch(stateSave());
+
+        // Keep scanning for results if this was the last scanning transaction
+        if (getState().explore[exploreId].scanning) {
+          if (_.size(response.series) === 0) {
+            const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
+            dispatch(updateTime({ exploreId, absoluteRange: range }));
+            dispatch(runQueries(exploreId));
+          } else {
+            // We can stop scanning if we have a result
+            dispatch(scanStopAction({ exploreId }));
+          }
+        }
       })
       .catch(error => {
-        dispatch(processErrorResults({ exploreId, response: error, datasourceId }));
+        dispatch(
+          queryEndedAction({
+            exploreId,
+            response: { error, legacy: [], series: [], request: transaction.options, state: LoadingState.Error },
+          })
+        );
+        // dispatch(processErrorResults({ exploreId, response: error, datasourceId }));
       });
   };
 }

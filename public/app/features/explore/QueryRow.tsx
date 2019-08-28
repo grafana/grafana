@@ -4,16 +4,13 @@ import _ from 'lodash';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
-
 // Components
 import QueryEditor from './QueryEditor';
-
 // Actions
 import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
-
 // Types
 import { StoreState } from 'app/types';
-import { TimeRange, AbsoluteTimeRange, toDataFrame, guessFieldTypes } from '@grafana/data';
+import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
 import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData, DataQueryError } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -208,21 +205,15 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     range,
     absoluteRange,
     datasourceError,
-    graphResult,
-    loadingState,
     latency,
     queryErrors,
     mode,
+    queryResponse,
   } = item;
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
-  const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
-  const series = graphResult ? graphResult.map(serie => guessFieldTypes(toDataFrame(serie))) : []; // TODO: use DataFrame
-  const queryResponse: PanelData = {
-    series,
-    state: loadingState,
-    error,
-  };
+  // const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
+  // const series = graphResult ? graphResult.map(serie => guessFieldTypes(toDataFrame(serie))) : []; // TODO: use DataFrame
 
   return {
     datasourceInstance,

@@ -3,19 +3,15 @@ import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
-import _ from 'lodash';
 import { AutoSizer } from 'react-virtualized';
-
 // Services & Utils
 import store from 'app/core/store';
-
 // Components
-import { Alert } from '@grafana/ui';
+import { Alert, DataQuery, ExploreStartPageProps, DataSourceApi, DataQueryError } from '@grafana/ui';
 import ErrorBoundary from './ErrorBoundary';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
-
 // Actions
 import {
   changeSize,
@@ -28,11 +24,8 @@ import {
   updateTimeRange,
   toggleGraph,
 } from './state/actions';
-
 // Types
-import { RawTimeRange, GraphSeriesXY, LoadingState, TimeZone, AbsoluteTimeRange } from '@grafana/data';
-
-import { DataQuery, ExploreStartPageProps, DataSourceApi, DataQueryError } from '@grafana/ui';
+import { RawTimeRange, GraphSeriesXY, TimeZone, AbsoluteTimeRange } from '@grafana/data';
 import {
   ExploreItemState,
   ExploreUrlState,
@@ -348,7 +341,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     supportedModes,
     mode,
     graphResult,
-    loadingState,
+    loading,
     showingGraph,
     showingTable,
     absoluteRange,
@@ -376,7 +369,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   }
 
   const initialUI = ui || DEFAULT_UI_STATE;
-  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
 
   return {
     StartPage,
