@@ -4,10 +4,20 @@ import { of } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { catchError, map } from 'rxjs/operators';
 // Services & Utils
-import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
+import {
+  dateMath,
+  DataFrame,
+  LogRowModel,
+  LoadingState,
+  DateTime,
+  CircularVector,
+  FieldType,
+  Labels,
+  parseLabels,
+} from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
-import { logStreamToDataFrame } from './result_transformer';
+import { logStreamToDataFrame, appendLiveStreamBuffer } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 // Types
 import {
@@ -21,11 +31,11 @@ import {
   DataQueryResponse,
 } from '@grafana/ui';
 
-import { LokiQuery, LokiOptions, LokiLogsStream } from './types';
+import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
-import { LiveTarget, getBufferedDataForLiveTarget } from './live_target';
+import { LiveTarget } from './live_target';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -87,17 +97,38 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const baseUrl = this.instanceSettings.url;
     const params = serializeParams({ query, regexp });
     const url = convertToWebSocketUrl(`${baseUrl}/api/prom/tail?${params}`);
+    const queryLabels = parseLabels(query);
 
     const streamRequest = options.stream || {};
     const size = streamRequest.buffer || options.maxDataPoints;
+
+    const times = new CircularVector<string>({ capacity: size });
+    const lines = new CircularVector<string>({ capacity: size });
+    const labels = new CircularVector<Labels>({ capacity: size });
+
+    const data = {
+      times,
+      lines,
+      labels,
+      frame: {
+        refId: target.refId,
+        labels: queryLabels,
+        fields: [
+          { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
+          { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
+          { name: 'labels', type: FieldType.other, config: {}, values: labels }, // Labels
+        ],
+        length: 0, // will be updated after values are added
+      },
+    };
 
     return {
       query,
       regexp,
       url,
       refId,
-      buffer: size,
-      data: {},
+      queryLabels,
+      data,
     };
   }
 
@@ -186,35 +217,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       liveTarget.subscription = webSocket(liveTarget.url)
         .pipe(
           map((response: any) => {
-            const { refId } = liveTarget;
-
-            // What should we do with:
-            // response.dropped_entries?
-
-            const streams: LokiLogsStream[] = response.streams;
-            if (streams) {
-              for (const stream of streams) {
-                const buffer = getBufferedDataForLiveTarget(stream.labels, liveTarget);
-
-                // Add each line
-                for (const entry of stream.entries) {
-                  buffer.times.add(entry.ts || entry.timestamp);
-                  buffer.lines.add(entry.line);
-                }
-                buffer.frame.length = buffer.times.length;
-              }
-            }
-
-            // A new array holding all the buffered data
-            const data = Object.values(liveTarget.data).map(v => v.frame);
+            const data = appendLiveStreamBuffer(response, liveTarget);
             const state: DataStreamState = {
-              key: `loki-${refId}`,
+              key: `loki-${liveTarget.refId}`,
               request: options,
               state: LoadingState.Streaming,
               data,
-              unsubscribe: () => this.unsubscribe(refId),
+              unsubscribe: () => this.unsubscribe(liveTarget.refId),
             };
-
             return state;
           }),
           catchError(err => {

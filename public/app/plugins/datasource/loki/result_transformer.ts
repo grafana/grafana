@@ -1,5 +1,6 @@
 import { LokiLogsStream } from './types';
-import { parseLabels, FieldType, Labels, DataFrame, ArrayVector } from '@grafana/data';
+import { parseLabels, FieldType, Labels, DataFrame, ArrayVector, findUniqueLabels } from '@grafana/data';
+import { LiveTarget } from './live_target';
 
 export function logStreamToDataFrame(stream: LokiLogsStream, reverse?: boolean, refId?: string): DataFrame {
   let labels: Labels = stream.parsedLabels;
@@ -28,4 +29,29 @@ export function logStreamToDataFrame(stream: LokiLogsStream, reverse?: boolean, 
     ],
     length: times.length,
   };
+}
+
+export function appendLiveStreamBuffer(response: any, liveTarget: LiveTarget): DataFrame[] {
+  const { data, queryLabels } = liveTarget;
+
+  // Should we do anythign with: response.dropped_entries?
+
+  const streams: LokiLogsStream[] = response.streams;
+  if (streams) {
+    for (const stream of streams) {
+      // Find unique labels
+      const labels = parseLabels(stream.labels);
+      const unique = findUniqueLabels(queryLabels, labels);
+
+      // Add each line
+      for (const entry of stream.entries) {
+        data.times.add(entry.ts || entry.timestamp);
+        data.lines.add(entry.line);
+        data.labels.add(unique);
+      }
+      data.frame.length = data.times.length;
+    }
+  }
+
+  return [data.frame];
 }
