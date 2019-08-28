@@ -29,6 +29,8 @@ export const NoDataSourceCallToAction = () => {
 
   const cardClassName = css`
     max-width: ${theme.breakpoints.lg};
+    margin-top: ${theme.spacing.md};
+    align-self: center;
   `;
 
   return (
