@@ -8,6 +8,7 @@ import { Editor } from 'slate-react';
 // @ts-ignore
 import Plain from 'slate-plain-serializer';
 import classnames from 'classnames';
+// @ts-ignore
 import { isKeyHotkey } from 'is-hotkey';
 
 import { CompletionItem, CompletionItemGroup, TypeaheadOutput } from 'app/types/explore';

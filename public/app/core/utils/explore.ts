@@ -2,24 +2,9 @@
 import _ from 'lodash';
 import { from } from 'rxjs';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-
 // Services & Utils
-import { dateMath } from '@grafana/data';
-import { renderUrl } from 'app/core/utils/url';
-import kbn from 'app/core/utils/kbn';
-import store from 'app/core/store';
-import { getNextRefIdChar } from './query';
-
-// Types
 import {
-  DataQuery,
-  DataSourceApi,
-  DataQueryError,
-  DataSourceJsonData,
-  DataQueryRequest,
-  DataStreamObserver,
-} from '@grafana/ui';
-import {
+  dateMath,
   toUtc,
   TimeRange,
   RawTimeRange,
@@ -30,6 +15,19 @@ import {
   LogsModel,
   LogsDedupStrategy,
 } from '@grafana/data';
+import { renderUrl } from 'app/core/utils/url';
+import kbn from 'app/core/utils/kbn';
+import store from 'app/core/store';
+import { getNextRefIdChar } from './query';
+// Types
+import {
+  DataQuery,
+  DataSourceApi,
+  DataQueryError,
+  DataSourceJsonData,
+  DataQueryRequest,
+  DataStreamObserver,
+} from '@grafana/ui';
 import {
   ExploreUrlState,
   HistoryItem,
@@ -39,6 +37,7 @@ import {
   ExploreMode,
 } from 'app/types/explore';
 import { config } from '../config';
+import { PanelQueryState } from '../../features/dashboard/state/PanelQueryState';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -145,6 +144,7 @@ export function buildQueryTransaction(
     panelId,
     targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
     range,
+    requestId: 'explore',
     rangeRaw: range.raw,
     scopedVars: {
       __interval: { text: interval, value: interval },
@@ -510,10 +510,17 @@ const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
   return 0;
 };
 
-export const sortLogsResult = (logsResult: LogsModel, refreshInterval: string) => {
+export enum SortOrder {
+  Descending = 'Descending',
+  Ascending = 'Ascending',
+}
+
+export const refreshIntervalToSortOrder = (refreshInterval: string) =>
+  isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
+
+export const sortLogsResult = (logsResult: LogsModel, sortOrder: SortOrder) => {
   const rows = logsResult ? logsResult.rows : [];
-  const live = isLive(refreshInterval);
-  live ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
+  sortOrder === SortOrder.Ascending ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
   const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 
   return result;
@@ -534,4 +541,11 @@ export const getQueryResponse = (
   observer?: DataStreamObserver
 ) => {
   return from(datasourceInstance.query(options, observer));
+};
+
+export const stopQueryState = (queryState: PanelQueryState, reason: string) => {
+  if (queryState && queryState.isStarted()) {
+    queryState.cancel(reason);
+    queryState.closeStreams(false);
+  }
 };

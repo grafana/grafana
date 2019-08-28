@@ -61,6 +61,13 @@ export {
   LegendPlacement,
   LegendDisplayMode,
 } from './Legend/Legend';
+export { Alert } from './Alert/Alert';
+export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
+export { Collapse } from './Collapse/Collapse';
+export { LogLabels } from './Logs/LogLabels';
+export { LogRows } from './Logs/LogRows';
+export { getLogRowStyles } from './Logs/getLogRowStyles';
+export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
@@ -69,4 +76,5 @@ export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
 export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggestions';
 export { DataLinksEditor } from './DataLinks/DataLinksEditor';
+export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';

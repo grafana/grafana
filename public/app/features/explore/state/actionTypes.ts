@@ -1,25 +1,9 @@
 // Types
 import { Emitter } from 'app/core/core';
-import {
-  DataQuery,
-  DataSourceSelectItem,
-  DataSourceApi,
-  QueryFixAction,
-  DataQueryError,
-  DataQueryResponseData,
-} from '@grafana/ui';
+import { DataQuery, DataSourceSelectItem, DataSourceApi, QueryFixAction, DataQueryError } from '@grafana/ui';
 
-import {
-  RawTimeRange,
-  LogLevel,
-  TimeRange,
-  DataFrame,
-  LogsModel,
-  LoadingState,
-  AbsoluteTimeRange,
-  GraphSeriesXY,
-} from '@grafana/data';
-import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode, QueryOptions } from 'app/types/explore';
+import { LogLevel, TimeRange, LogsModel, LoadingState, AbsoluteTimeRange, GraphSeriesXY } from '@grafana/data';
+import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode } from 'app/types/explore';
 import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 import TableModel from 'app/core/table_model';
 
@@ -230,42 +214,15 @@ export interface SetUrlReplacedPayload {
   exploreId: ExploreId;
 }
 
-export interface ProcessQueryErrorsPayload {
-  exploreId: ExploreId;
-  response: any;
-  datasourceId: string;
-}
-
-export interface ProcessQueryResultsPayload {
-  exploreId: ExploreId;
-  latency: number;
-  datasourceId: string;
-  loadingState: LoadingState;
-  series?: DataQueryResponseData[];
-  delta?: DataFrame[];
-}
-
-export interface RunQueriesBatchPayload {
-  exploreId: ExploreId;
-  queryOptions: QueryOptions;
-}
-
-export interface LimitMessageRatePayload {
-  series: DataFrame[];
-  exploreId: ExploreId;
-  datasourceId: string;
-}
-
 export interface ChangeRangePayload {
   exploreId: ExploreId;
   range: TimeRange;
   absoluteRange: AbsoluteTimeRange;
 }
 
-export interface UpdateTimeRangePayload {
+export interface ChangeLoadingStatePayload {
   exploreId: ExploreId;
-  rawRange?: RawTimeRange;
-  absoluteRange?: AbsoluteTimeRange;
+  loadingState: LoadingState;
 }
 
 /**
@@ -410,8 +367,6 @@ export const splitCloseAction = actionCreatorFactory<SplitCloseActionPayload>('e
  */
 export const splitOpenAction = actionCreatorFactory<SplitOpenPayload>('explore/SPLIT_OPEN').create();
 
-export const stateSaveAction = noPayloadActionCreatorFactory('explore/STATE_SAVE').create();
-
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */
@@ -460,23 +415,11 @@ export const resetQueryErrorAction = actionCreatorFactory<ResetQueryErrorPayload
 
 export const setUrlReplacedAction = actionCreatorFactory<SetUrlReplacedPayload>('explore/SET_URL_REPLACED').create();
 
-export const processQueryErrorsAction = actionCreatorFactory<ProcessQueryErrorsPayload>(
-  'explore/PROCESS_QUERY_ERRORS'
-).create();
-
-export const processQueryResultsAction = actionCreatorFactory<ProcessQueryResultsPayload>(
-  'explore/PROCESS_QUERY_RESULTS'
-).create();
-
-export const runQueriesBatchAction = actionCreatorFactory<RunQueriesBatchPayload>('explore/RUN_QUERIES_BATCH').create();
-
-export const limitMessageRatePayloadAction = actionCreatorFactory<LimitMessageRatePayload>(
-  'explore/LIMIT_MESSAGE_RATE_PAYLOAD'
-).create();
-
 export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explore/CHANGE_RANGE').create();
 
-export const updateTimeRangeAction = actionCreatorFactory<UpdateTimeRangePayload>('explore/UPDATE_TIMERANGE').create();
+export const changeLoadingStateAction = actionCreatorFactory<ChangeLoadingStatePayload>(
+  'changeLoadingStateAction'
+).create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>

@@ -21,6 +21,7 @@ import {
 
 import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
+import { PanelQueryState } from '../features/dashboard/state/PanelQueryState';
 
 export enum ExploreMode {
   Metrics = 'Metrics',
@@ -255,6 +256,8 @@ export interface ExploreItemState {
 
   isLive: boolean;
   urlReplaced: boolean;
+
+  queryState: PanelQueryState;
 }
 
 export interface ExploreUpdateState {
@@ -332,11 +335,4 @@ export interface QueryTransaction {
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
-}
-
-export interface TextMatch {
-  text: string;
-  start: number;
-  length: number;
-  end: number;
 }

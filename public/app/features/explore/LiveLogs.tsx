@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, LinkButton } from '@grafana/ui';
+import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, LinkButton, getLogRowStyles } from '@grafana/ui';
 
 import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
 
@@ -73,6 +73,7 @@ class LiveLogs extends PureComponent<Props, State> {
     const styles = getStyles(theme);
     const rowsToRender: LogRowModel[] = this.props.logsResult ? this.props.logsResult.rows : [];
     const showUtc = timeZone === 'utc';
+    const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
     return (
       <>
@@ -80,20 +81,20 @@ class LiveLogs extends PureComponent<Props, State> {
           {rowsToRender.map((row: any, index) => {
             return (
               <div
-                className={row.fresh ? cx(['logs-row', styles.logsRowFresh]) : cx(['logs-row', styles.logsRowOld])}
+                className={row.fresh ? cx([logsRow, styles.logsRowFresh]) : cx([logsRow, styles.logsRowOld])}
                 key={`${row.timeEpochMs}-${index}`}
               >
                 {showUtc && (
-                  <div className="logs-row__localtime" title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
+                  <div className={cx([logsRowLocalTime])} title={`Local: ${row.timeLocal} (${row.timeFromNow})`}>
                     {row.timeUtc}
                   </div>
                 )}
                 {!showUtc && (
-                  <div className="logs-row__localtime" title={`${row.timeUtc} (${row.timeFromNow})`}>
+                  <div className={cx([logsRowLocalTime])} title={`${row.timeUtc} (${row.timeFromNow})`}>
                     {row.timeLocal}
                   </div>
                 )}
-                <div className="logs-row__message">{row.entry}</div>
+                <div className={cx([logsRowMessage])}>{row.entry}</div>
               </div>
             );
           })}

@@ -14,7 +14,7 @@ import {
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
-import { sortLogsResult } from 'app/core/utils/explore';
+import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
@@ -80,14 +80,19 @@ export class ResultProcessor {
     const graphInterval = this.state.queryIntervals.intervalMs;
     const dataFrame = this.rawData.map(result => guessFieldTypes(toDataFrame(result)));
     const newResults = this.rawData ? dataFrameToLogsModel(dataFrame, graphInterval) : null;
-    const sortedNewResults = sortLogsResult(newResults, this.state.refreshInterval);
+    const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
+    const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
     if (this.replacePreviousResults) {
-      return sortedNewResults;
+      const slice = 1000;
+      const rows = sortedNewResults.rows.slice(0, slice);
+      const series = sortedNewResults.series;
+
+      return { ...sortedNewResults, rows, series };
     }
 
     const prevLogsResult: LogsModel = this.state.logsResult || { hasUniqueLabels: false, rows: [] };
-    const sortedLogResult = sortLogsResult(prevLogsResult, this.state.refreshInterval);
+    const sortedLogResult = sortLogsResult(prevLogsResult, sortOrder);
     const rowsInState = sortedLogResult.rows;
     const seriesInState = sortedLogResult.series || [];
 
