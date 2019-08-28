@@ -1,23 +1,10 @@
 // Libraries
 import _ from 'lodash';
-import { of } from 'rxjs';
-import { webSocket } from 'rxjs/webSocket';
-import { catchError, map } from 'rxjs/operators';
 // Services & Utils
-import {
-  dateMath,
-  DataFrame,
-  LogRowModel,
-  LoadingState,
-  DateTime,
-  CircularVector,
-  FieldType,
-  Labels,
-  parseLabels,
-} from '@grafana/data';
+import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime, parseLabels } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
-import { logStreamToDataFrame, appendResponseToLiveTarget } from './result_transformer';
+import { logStreamToDataFrame } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 // Types
 import {
@@ -35,7 +22,7 @@ import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
-import { LiveTarget } from './live_target';
+import { LiveTarget, LiveStream } from './live_stream';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -61,7 +48,7 @@ interface LokiContextQueryOptions {
 }
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
-  private streams: { [key: string]: LiveTarget } = null;
+  private streams: { [key: string]: LiveStream } = null;
   languageProvider: LanguageProvider;
   maxLines: number;
 
@@ -97,38 +84,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const baseUrl = this.instanceSettings.url;
     const params = serializeParams({ query, regexp });
     const url = convertToWebSocketUrl(`${baseUrl}/api/prom/tail?${params}`);
-    const queryLabels = parseLabels(query);
 
     const streamRequest = options.stream || {};
     const size = streamRequest.buffer || options.maxDataPoints;
-
-    const times = new CircularVector<string>({ capacity: size });
-    const lines = new CircularVector<string>({ capacity: size });
-    const labels = new CircularVector<Labels>({ capacity: size });
-
-    const data = {
-      times,
-      lines,
-      labels,
-      frame: {
-        refId: target.refId,
-        labels: queryLabels,
-        fields: [
-          { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
-          { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
-          { name: 'labels', type: FieldType.other, config: {}, values: labels }, // Labels
-        ],
-        length: 0, // will be updated after values are added
-      },
-    };
 
     return {
       query,
       regexp,
       url,
       refId,
-      queryLabels,
-      data,
+      size,
     };
   }
 
@@ -148,17 +113,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       refId,
     };
   }
-
-  unsubscribe = (refId: string) => {
-    const stream = this.streams[refId];
-    if (!stream || !stream.subscription) {
-      return;
-    }
-    if (!stream.subscription.closed) {
-      stream.subscription.unsubscribe();
-    }
-    delete this.streams[refId];
-  };
 
   processError = (err: any, target: any): DataQueryError => {
     const error: DataQueryError = {
@@ -208,43 +162,71 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return series;
   };
 
+  /**
+   * This will run a backbround check on any open streams and close any
+   * streams that have no listenters.
+   */
+  validateOpenStreams = () => {
+    _.delay(() => {
+      for (const stream of Object.values(this.streams)) {
+        if (!stream.hasObservers()) {
+          stream.close();
+          delete this.streams[stream.url];
+          console.log('Closing stream without listeners: ', stream.url, Object.keys(this.streams));
+        }
+      }
+    }, 500);
+  };
+
   runLiveQueries = (options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) => {
     const liveTargets = options.targets
       .filter(target => target.expr && !target.hide && target.live)
       .map(target => this.prepareLiveTarget(target, options));
 
     for (const liveTarget of liveTargets) {
-      liveTarget.subscription = webSocket(liveTarget.url)
-        .pipe(
-          map((response: any) => {
-            appendResponseToLiveTarget(response, liveTarget);
-            const state: DataStreamState = {
-              key: `loki-${liveTarget.refId}`,
-              request: options,
-              state: LoadingState.Streaming,
-              data: [liveTarget.data.frame],
-              unsubscribe: () => this.unsubscribe(liveTarget.refId),
-            };
-            return state;
-          }),
-          catchError(err => {
-            const error = this.processError(err, liveTarget);
-            const state: DataStreamState = {
-              key: `loki-${liveTarget.refId}`,
-              request: options,
-              state: LoadingState.Error,
-              error,
-              unsubscribe: () => this.unsubscribe(liveTarget.refId),
-            };
+      let stream = this.streams[liveTarget.url];
+      if (!stream || !stream.isOpen()) {
+        const labels = parseLabels(liveTarget.query);
+        stream = new LiveStream(liveTarget.url, labels, liveTarget.size);
+        this.streams[liveTarget.url] = stream;
+        console.log('Starting new stream ', stream.url, labels);
+      } else {
+        console.log('REUSE ', stream.url);
+      }
 
-            return of(state);
-          })
-        )
-        .subscribe({
-          next: state => observer(state),
-        });
-
-      this.streams[liveTarget.refId] = liveTarget;
+      const subscription = stream.subscribe({
+        next: (data: DataFrame[]) => {
+          const state: DataStreamState = {
+            key: `loki-${liveTarget.refId}`,
+            request: options,
+            state: LoadingState.Streaming,
+            data,
+            unsubscribe: () => {
+              subscription.unsubscribe();
+              this.validateOpenStreams();
+              console.log('UNSUBSCRIBED', liveTarget);
+            },
+          };
+          console.log('UPDATE', state);
+          observer(state);
+        },
+        error: (err: any) => {
+          const error = this.processError(err, liveTarget);
+          const state: DataStreamState = {
+            key: `loki-${liveTarget.refId}`,
+            request: options,
+            state: LoadingState.Error,
+            error,
+            unsubscribe: () => {
+              subscription.unsubscribe();
+              this.validateOpenStreams();
+              console.log('UNSUBSCRIBED (ERR)', liveTarget);
+            },
+          };
+          console.log('ERRR', state);
+          observer(state);
+        },
+      });
     }
   };
 
@@ -277,7 +259,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           series = series.concat(this.processResult(result.data, queryTargets[i]));
         }
       }
-
       return { data: series };
     });
   };
