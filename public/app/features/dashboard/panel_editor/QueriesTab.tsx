@@ -19,7 +19,7 @@ import config from 'app/core/config';
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { DataQuery, DataSourceSelectItem, PanelData } from '@grafana/ui';
-import { LoadingState } from '@grafana/data';
+import { LoadingState, dataTransformers, DataTransformerConfig } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
@@ -212,6 +212,10 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
+  onTransformersChange = (transformers: Array<DataTransformerConfig<any>>) => {
+    this.props.panel.setTransformations(transformers);
+  };
+
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
     this.setState({ scrollTop: target.scrollTop });
@@ -272,7 +276,12 @@ export class QueriesTab extends PureComponent<Props, State> {
 
           {hasAlphaDatasources && (
             <PanelOptionsGroup>
-              <TransformResults panel={panel} data={data} />
+              <TransformResults
+                panel={panel}
+                data={data}
+                transformers={dataTransformers.list()}
+                onChange={this.onTransformersChange}
+              />
             </PanelOptionsGroup>
           )}
         </>

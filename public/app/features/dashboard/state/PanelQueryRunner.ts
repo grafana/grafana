@@ -13,8 +13,7 @@ import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasourc
 // Types
 import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
 
-import { DataFrame, TimeRange } from '@grafana/data';
-import { TransformationConfig } from './PanelModel';
+import { TimeRange, DataTransformerConfig, dataTransformers } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -33,7 +32,7 @@ export interface QueryRunnerOptions<
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
-  transformation?: TransformationConfig;
+  transformations?: Array<DataTransformerConfig<any>>;
 }
 
 export enum PanelQueryRunnerFormat {
@@ -51,7 +50,7 @@ export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
 
   private state = new PanelQueryState();
-  private transformation?: TransformationConfig;
+  private transformations?: Array<DataTransformerConfig<any>>;
 
   // Listen to another panel for changes
   private sharedQueryRunner: SharedQueryRunner;
@@ -68,22 +67,16 @@ export class PanelQueryRunner {
   /**
    * Get the last result -- optionally skip the transformation
    */
+  //  TODO: add tests
   getCurrentData(transform = true): PanelData {
     const v = this.state.validateStreamsAndGetPanelData();
-    if (transform && this.transformation && this.transformation.args) {
-      // Simple one now that just matches names
-      // TODO: use functions from: #16756
-      const names = this.transformation.args;
-      const processed: DataFrame[] = [];
-      for (const frame of v.series) {
-        const fields = frame.fields.filter(f => names.includes(f.name));
-        if (fields.length) {
-          processed.push({
-            ...frame,
-            fields,
-          });
-        }
-      }
+    if (transform && this.transformations && this.transformations.length) {
+      const processed = this.transformations.reduce((acc, t) => {
+        const transformation = dataTransformers.get(t.id);
+        return transformation.transformer(t.options)(acc);
+      }, v.series);
+      console.log('INPUT SERIES:', v.series);
+      console.log('PROCESSED SERIES:', processed);
       return {
         ...v,
         series: processed,
@@ -132,11 +125,15 @@ export class PanelQueryRunner {
 
   /**
    * Change the current transformation and notify all listeners
+   * Should be used only by panel editor to update the transformers
    */
-  setTransform(transformation?: TransformationConfig) {
-    this.transformation = transformation;
-    this.onStreamingDataUpdated();
-  }
+  setTransform = (transformations?: Array<DataTransformerConfig<any>>) => {
+    this.transformations = transformations;
+    console.log('UPDATING TRANSFORMATION:', transformations);
+    if (this.state.isStarted) {
+      this.onStreamingDataUpdated();
+    }
+  };
 
   async run(options: QueryRunnerOptions): Promise<PanelData> {
     const { state } = this;
@@ -236,7 +233,8 @@ export class PanelQueryRunner {
         }
       }, delayStateNotification || 500);
 
-      this.transformation = options.transformation;
+      console.log('PERSISTED', options.transformations);
+      this.transformations = options.transformations;
 
       const data = await state.execute(ds, request);
 
@@ -244,7 +242,7 @@ export class PanelQueryRunner {
       clearTimeout(loadingStateTimeoutId);
 
       // Broadcast results
-      this.subject.next(data);
+      this.subject.next(this.getCurrentData());
       return data;
     } catch (err) {
       clearTimeout(loadingStateTimeoutId);

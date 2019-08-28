@@ -7,7 +7,7 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 
 // Types
 import { DataQuery, ScopedVars, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
-import { DataLink } from '@grafana/data';
+import { DataLink, DataTransformerConfig } from '@grafana/data';
 
 import config from 'app/core/config';
 
@@ -99,7 +99,7 @@ export class PanelModel {
   panels?: any;
   soloMode?: boolean;
   targets: DataQuery[];
-  transformation?: TransformationConfig;
+  transformations?: Array<DataTransformerConfig<any>>;
   datasource: string;
   thresholds?: any;
   pluginVersion?: string;
@@ -350,6 +350,14 @@ export class PanelModel {
       this.queryRunner.destroy();
       this.queryRunner = null;
     }
+  }
+
+  setTransformations(transformations: Array<DataTransformerConfig<any>>) {
+    // save for persistence
+    this.transformations = transformations;
+
+    // update query runner transformers
+    this.getQueryRunner().setTransform(transformations);
   }
 }
 
