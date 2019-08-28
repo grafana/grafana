@@ -200,6 +200,8 @@ export class PanelQueryRunner {
       //
       // const data = await state.execute(ds, request);
 
+      // this is not working 100% the outer subjects is marked as completed when this obserable completes, so only works
+      // for one request.
       runRequest(ds, request).subscribe(this.subject);
 
       // Clear the delayed loading state timeout
