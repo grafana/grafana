@@ -12,11 +12,16 @@ import {
   FormLabel,
   PanelEditorProps,
   Select,
+  DataLinksEditor,
 } from '@grafana/ui';
-import { FieldConfig } from '@grafana/data';
+import { FieldConfig, DataLink } from '@grafana/data';
 
 import { Threshold, ValueMapping } from '@grafana/data';
 import { BarGaugeOptions, orientationOptions, displayModes } from './types';
+import {
+  getDataLinksVariableSuggestions,
+  getCalculationValueDataLinksVariableSuggestions,
+} from 'app/features/panel/panellinks/link_srv';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) => {
@@ -51,11 +56,20 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
   onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
   onDisplayModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
 
+  onDataLinksChanged = (links: DataLink[]) => {
+    this.onDefaultsChange({
+      ...this.props.options.fieldOptions.defaults,
+      links,
+    });
+  };
   render() {
     const { options } = this.props;
     const { fieldOptions } = options;
     const { defaults } = fieldOptions;
 
+    const suggestions = fieldOptions.values
+      ? getDataLinksVariableSuggestions()
+      : getCalculationValueDataLinksVariableSuggestions();
     const labelWidth = 6;
 
     return (
@@ -92,6 +106,15 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+
+        <PanelOptionsGroup title="Data links">
+          <DataLinksEditor
+            value={defaults.links}
+            onChange={this.onDataLinksChanged}
+            suggestions={suggestions}
+            maxLinks={10}
+          />
+        </PanelOptionsGroup>
       </>
     );
   }

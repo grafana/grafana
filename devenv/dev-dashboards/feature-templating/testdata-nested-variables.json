@@ -15,14 +15,15 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1565097360786,
+  "id": 13844,
+  "iteration": 1566896059256,
   "links": [],
   "panels": [
     {
       "content": "## Data center = $datacenter\n\n### server = $server\n\n#### pod = $pod",
       "gridPos": {
-        "h": 6,
-        "w": 14,
+        "h": 9,
+        "w": 12,
         "x": 0,
         "y": 0
       },
@@ -55,9 +56,9 @@
         "thresholdMarkers": true
       },
       "gridPos": {
-        "h": 6,
-        "w": 10,
-        "x": 14,
+        "h": 9,
+        "w": 4,
+        "x": 12,
         "y": 0
       },
       "id": 6,
@@ -117,6 +118,117 @@
       "valueName": "avg"
     },
     {
+      "cacheTimeout": null,
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 8,
+      "links": [],
+      "options": {
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "links": [
+              {
+                "targetBlank": true,
+                "title": "Go to drilldown",
+                "url": "/d/O6GmNPvWk/dashboard-tests-nested-template-variables-drilldown?orgId=1&${__all_variables}&${__url_time_range}"
+              }
+            ],
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "nullValueMode": "connected",
+            "thresholds": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "unit": "none"
+          },
+          "override": {},
+          "values": false
+        },
+        "orientation": "horizontal",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "6.4.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "React gauge datalink",
+      "type": "gauge"
+    },
+    {
+      "cacheTimeout": null,
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 9,
+      "links": [],
+      "options": {
+        "displayMode": "basic",
+        "fieldOptions": {
+          "calcs": ["mean"],
+          "defaults": {
+            "links": [
+              {
+                "targetBlank": true,
+                "title": "Go to drilldown",
+                "url": "/d/O6GmNPvWk/dashboard-tests-nested-template-variables-drilldown?orgId=1&${__all_variables}&${__url_time_range}"
+              }
+            ],
+            "mappings": [],
+            "max": 100,
+            "min": 0,
+            "nullValueMode": "connected",
+            "thresholds": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ],
+            "unit": "none"
+          },
+          "override": {},
+          "values": false
+        },
+        "orientation": "vertical"
+      },
+      "pluginVersion": "6.4.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "React gauge datalink",
+      "type": "bargauge"
+    },
+    {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
@@ -128,7 +240,7 @@
         "h": 13,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 9
       },
       "id": 2,
       "legend": {
@@ -296,5 +408,5 @@
   "timezone": "",
   "title": "Templating - Nested Template Variables",
   "uid": "-Y-tnEDWk",
-  "version": 11
+  "version": 2
 }
