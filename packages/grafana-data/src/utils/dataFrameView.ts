@@ -44,6 +44,10 @@ export class DataFrameView<T = any> implements Vector<T> {
     this.obj = obj;
   }
 
+  get dataFrame() {
+    return this.data;
+  }
+
   get length() {
     return this.data.length;
   }
