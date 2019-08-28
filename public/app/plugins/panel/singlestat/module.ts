@@ -24,9 +24,10 @@ import {
   DisplayValue,
   fieldReducers,
   KeyValue,
+  LinkModel,
 } from '@grafana/data';
 import { auto } from 'angular';
-import { LinkSrv, LinkModel } from 'app/features/panel/panellinks/link_srv';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 
@@ -328,7 +329,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     const $sanitize = this.$sanitize;
     const panel = ctrl.panel;
     const templateSrv = this.templateSrv;
-    let linkInfo: LinkModel | null = null;
+    let linkInfo: LinkModel<any> | null = null;
     const $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 
@@ -592,7 +593,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       elem.toggleClass('pointer', panel.links.length > 0);
 
       if (panel.links.length > 0) {
-        linkInfo = linkSrv.getDataLinkUIModel(panel.links[0], data.scopedVars);
+        linkInfo = linkSrv.getDataLinkUIModel(panel.links[0], data.scopedVars, {});
       } else {
         linkInfo = null;
       }
