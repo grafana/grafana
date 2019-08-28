@@ -89,7 +89,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       regexp,
       url,
       refId,
-      size: options.maxDataPoints || 1000,
+      size: options.maxDataPoints || DEFAULT_MAX_LINES,
     };
   }
 
@@ -159,10 +159,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   /**
-   * This will run a backbround check on any open streams and close any
-   * streams that have no listenters.
+   * This will run a background check on all open streams and close any
+   * streams that have no listenters.  This has a small delay because
+   * query editors will often refresh queries in a way that disconnects
+   * and then reconnects quickly.  With the small delay the reconnect
+   * simply listens to the previous stream rather than a full shutdown
+   * and restart
    */
-  validateOpenStreams = () => {
+  private validateOpenStreams = () => {
     _.delay(() => {
       for (const stream of Object.values(this.streams)) {
         if (!stream.hasObservers()) {
@@ -245,6 +249,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           series = series.concat(this.processResult(result.data, queryTargets[i]));
         }
       }
+
       return { data: series };
     });
   };
