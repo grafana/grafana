@@ -56,7 +56,7 @@ import { filterFieldsTransformer, filterFramesTransformer } from './filter';
  * Registry of transformation options that can be driven by
  * stored configuration files.
  */
-class TransformerRegisry extends Registry<DataTransformerInfo> {
+class TransformerRegistry extends Registry<DataTransformerInfo> {
   // ------------------------------------------------------------
   // Nacent options for more functional programming
   // The API to these functions should change to match the actual
@@ -74,7 +74,7 @@ class TransformerRegisry extends Registry<DataTransformerInfo> {
   }
 }
 
-export const dataTransformers = new TransformerRegisry(() => [
+export const dataTransformers = new TransformerRegistry(() => [
   filterFieldsTransformer,
   filterFramesTransformer,
   appendTransformer,
