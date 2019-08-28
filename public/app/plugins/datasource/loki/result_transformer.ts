@@ -31,13 +31,16 @@ export function logStreamToDataFrame(stream: LokiLogsStream, reverse?: boolean, 
   };
 }
 
-export function appendLiveStreamBuffer(response: any, liveTarget: LiveTarget): DataFrame[] {
-  const { data, queryLabels } = liveTarget;
-
+/**
+ * This takes the streaming entries from the response and adds them to a
+ * rolling buffer saved in liveTarget.
+ */
+export function appendResponseToLiveTarget(response: any, liveTarget: LiveTarget) {
   // Should we do anythign with: response.dropped_entries?
 
   const streams: LokiLogsStream[] = response.streams;
-  if (streams) {
+  if (streams && streams.length) {
+    const { data, queryLabels } = liveTarget;
     for (const stream of streams) {
       // Find unique labels
       const labels = parseLabels(stream.labels);
@@ -49,9 +52,7 @@ export function appendLiveStreamBuffer(response: any, liveTarget: LiveTarget): D
         data.lines.add(entry.line);
         data.labels.add(unique);
       }
-      data.frame.length = data.times.length;
     }
+    data.frame.length = data.times.length;
   }
-
-  return [data.frame];
 }

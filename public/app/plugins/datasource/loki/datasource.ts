@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
-import { logStreamToDataFrame, appendLiveStreamBuffer } from './result_transformer';
+import { logStreamToDataFrame, appendResponseToLiveTarget } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 // Types
 import {
@@ -217,12 +217,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       liveTarget.subscription = webSocket(liveTarget.url)
         .pipe(
           map((response: any) => {
-            const data = appendLiveStreamBuffer(response, liveTarget);
+            appendResponseToLiveTarget(response, liveTarget);
             const state: DataStreamState = {
               key: `loki-${liveTarget.refId}`,
               request: options,
               state: LoadingState.Streaming,
-              data,
+              data: [liveTarget.data.frame],
               unsubscribe: () => this.unsubscribe(liveTarget.refId),
             };
             return state;
