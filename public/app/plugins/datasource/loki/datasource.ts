@@ -98,7 +98,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       regexp,
       url,
       refId,
-      isDelta: streamRequest.isDelta,
       buffer: size,
       data: {},
     };
@@ -189,7 +188,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       liveTarget.subscription = webSocket(liveTarget.url)
         .pipe(
           map((response: any) => {
-            const { isDelta, refId } = liveTarget;
+            const { refId } = liveTarget;
 
             // What should we do with:
             // response.dropped_entries?
@@ -197,7 +196,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
             const streams: LokiLogsStream[] = response.streams;
             if (streams) {
               for (const stream of streams) {
-                // When isDelta, the buffer will be created new
                 const buffer = getBufferedDataForLiveTarget(stream.labels, liveTarget);
 
                 // Add each line
@@ -211,17 +209,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
             // A new array holding all the buffered data
             const data = Object.values(liveTarget.data).map(v => v.frame);
-            if (isDelta) {
-              liveTarget.data = {}; // clear the cache
-            }
-
             const state: DataStreamState = {
               key: `loki-${refId}`,
               request: options,
               state: LoadingState.Streaming,
-              isDelta,
               data,
-              delta: data, // HACK -- send frame for both data and delta for now
               unsubscribe: () => this.unsubscribe(refId),
             };
 

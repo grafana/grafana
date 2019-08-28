@@ -363,12 +363,6 @@ export interface DataStreamState {
   data?: DataFrame[];
 
   /**
-   * True when the data represents changes since the last event rather
-   * than an entire DataFrame result
-   */
-  isDelta?: boolean;
-
-  /**
    * Error in stream (but may still be running)
    */
   error?: DataQueryError;
@@ -449,12 +443,6 @@ export interface StreamingQueryOptions {
    * default to `request.maxDataPoints`
    */
   buffer?: number;
-
-  /**
-   * Ask the DataSource to send only changes since the last notification
-   * rather than full buffered DataFrames
-   */
-  isDelta?: boolean;
 }
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
