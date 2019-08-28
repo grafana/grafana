@@ -3,10 +3,11 @@ import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
 import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
 import { Portal, List } from '../index';
+import { LinkTarget } from '@grafana/data';
 
 export interface ContextMenuItem {
   label: string;
-  target?: string;
+  target?: LinkTarget;
   icon?: string;
   url?: string;
   onClick?: (event?: React.SyntheticEvent<HTMLElement>) => void;
