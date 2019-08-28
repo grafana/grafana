@@ -18,6 +18,7 @@ import {
   instanceOfDataQueryError,
   clearQueryKeys,
   serializeStateToUrlParam,
+  stopQueryState,
 } from 'app/core/utils/explore';
 // Types
 import { ThunkResult, ExploreUrlState } from 'app/types';
@@ -462,10 +463,8 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
-    if (!queryState.isStarted()) {
-      queryState.cancel('New request issued');
-      queryState.closeStreams(false);
-    }
+    stopQueryState(queryState, 'New request issued');
+
     queryState.sendFrames = true;
     queryState.sendLegacy = true; // temporary hack until we switch to PanelData
 
