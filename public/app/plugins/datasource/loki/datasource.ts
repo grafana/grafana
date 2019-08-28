@@ -3,14 +3,12 @@ import _ from 'lodash';
 import { of } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { catchError, map } from 'rxjs/operators';
-
 // Services & Utils
 import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-
 // Types
 import {
   PluginMeta,

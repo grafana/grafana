@@ -7,6 +7,7 @@ import {
   DEFAULT_UI_STATE,
   generateNewKeyAndAddRefIdIfMissing,
   sortLogsResult,
+  stopQueryState,
   refreshIntervalToSortOrder,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
@@ -31,9 +32,6 @@ import {
   queryStartAction,
   runQueriesAction,
   changeRangeAction,
-} from './actionTypes';
-import { reducerFactory } from 'app/core/redux';
-import {
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
@@ -53,11 +51,15 @@ import {
   queriesImportedAction,
   updateUIStateAction,
   toggleLogLevelAction,
+  changeLoadingStateAction,
+  resetExploreAction,
 } from './actionTypes';
+import { reducerFactory } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { PanelQueryState } from '../../dashboard/state/PanelQueryState';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -114,6 +116,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   mode: null,
   isLive: false,
   urlReplaced: false,
+  queryState: new PanelQueryState(),
 });
 
 /**
@@ -186,6 +189,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const live = isLive(refreshInterval);
       const sortOrder = refreshIntervalToSortOrder(refreshInterval);
       const logsResult = sortLogsResult(state.logsResult, sortOrder);
+      if (isLive(state.refreshInterval) && !live) {
+        stopQueryState(state.queryState, 'Live streaming stopped');
+      }
 
       return {
         ...state,
@@ -200,6 +206,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: clearQueriesAction,
     mapper: (state): ExploreItemState => {
       const queries = ensureQueries();
+      stopQueryState(state.queryState, 'Queries cleared');
       return {
         ...state,
         queries: queries.slice(),
@@ -258,6 +265,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
+      stopQueryState(state.queryState, 'Datasource changed');
 
       return {
         ...state,
@@ -577,6 +585,16 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
+  .addMapper({
+    filter: changeLoadingStateAction,
+    mapper: (state, action): ExploreItemState => {
+      const { loadingState } = action.payload;
+      return {
+        ...state,
+        loadingState,
+      };
+    },
+  })
   .create();
 
 export const updateChildRefreshState = (
@@ -660,6 +678,19 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
       return {
         ...state,
         split,
+        [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
+        [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
+      };
+    }
+
+    case resetExploreAction.type: {
+      const leftState = state[ExploreId.left];
+      const rightState = state[ExploreId.right];
+      stopQueryState(leftState.queryState, 'Navigated away from Explore');
+      stopQueryState(rightState.queryState, 'Navigated away from Explore');
+
+      return {
+        ...state,
         [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
         [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
       };

@@ -230,7 +230,6 @@
     "react-window": "1.7.1",
     "redux": "4.0.1",
     "redux-logger": "3.0.6",
-    "redux-observable": "1.1.0",
     "redux-thunk": "2.3.0",
     "reselect": "4.0.0",
     "rst2html": "github:thoward/rst2html#990cb89",
