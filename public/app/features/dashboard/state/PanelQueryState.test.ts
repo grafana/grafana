@@ -207,4 +207,19 @@ describe('stream handling', () => {
     expect(data.series[0].refId).toBe('F');
     expect(state.streams.length).toBe(0); // no streams
   });
+
+  it('should close streams on error', () => {
+    // Post a stream event
+    state.dataStreamObserver({
+      state: LoadingState.Error,
+      key: 'C',
+      error: { message: 'EEEEE' },
+      data: [],
+      request: state.request,
+      unsubscribe: () => {},
+    });
+
+    expect(state.streams.length).toBe(0);
+    expect(state.response.state).toBe(LoadingState.Error);
+  });
 });

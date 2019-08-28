@@ -3,14 +3,12 @@ import _ from 'lodash';
 import { Subscription, of } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { catchError, map } from 'rxjs/operators';
-
 // Services & Utils
-import { dateMath } from '@grafana/data';
+import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
 import { formatQuery, parseQuery, getHighlighterExpressionsFromQuery } from './query_utils';
-
 // Types
 import {
   PluginMeta,
@@ -22,8 +20,6 @@ import {
   DataStreamState,
   DataQueryResponse,
 } from '@grafana/ui';
-
-import { DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
 import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -179,12 +175,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const subscription = webSocket(liveTarget.url)
         .pipe(
           map((results: any[]) => {
-            const delta = this.processResult(results, liveTarget);
+            const data = this.processResult(results, liveTarget);
             const state: DataStreamState = {
               key: `loki-${liveTarget.refId}`,
               request: options,
               state: LoadingState.Streaming,
-              delta,
+              data,
               unsubscribe: () => this.unsubscribe(liveTarget.refId),
             };
 

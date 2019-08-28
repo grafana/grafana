@@ -1,12 +1,12 @@
 // Libraries
 import _ from 'lodash';
 import $ from 'jquery';
-import { from, of, Observable } from 'rxjs';
-import { single, map, filter, catchError } from 'rxjs/operators';
-
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import { dateMath } from '@grafana/data';
+import { dateMath, TimeRange, DateTime, AnnotationEvent, LoadingState } from '@grafana/data';
+import { Observable, from, of } from 'rxjs';
+import { single, filter, mergeMap, catchError } from 'rxjs/operators';
+
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
 import PrometheusLanguageProvider from './language_provider';
@@ -14,7 +14,6 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
-
 // Types
 import { PromQuery, PromOptions, PromQueryRequest, PromContext } from './types';
 import {
@@ -23,14 +22,13 @@ import {
   DataSourceInstanceSettings,
   DataQueryError,
   DataStreamObserver,
-  DataStreamState,
   DataQueryResponseData,
+  DataStreamState,
 } from '@grafana/ui';
 import { ExploreUrlState } from 'app/types/explore';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TimeRange, DateTime, LoadingState, AnnotationEvent } from '@grafana/data';
 
 export interface PromDataQueryResponse {
   data: {
@@ -183,6 +181,26 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     activeTargets: PromQuery[],
     end: number
   ) => {
+    // Because we want to get run instant and TimeSeries Prom queries in parallel but this isn't actually streaming
+    // we need to stop/cancel each posted event with a stop stream event (see below) to the observer so that the
+    // PanelQueryState stops the stream
+    const getStopState = (state: DataStreamState): DataStreamState => ({
+      ...state,
+      state: LoadingState.Done,
+      request: { ...options, requestId: 'done' },
+    });
+
+    const startLoadingEvent: DataStreamState = {
+      key: `prometheus-loading_indicator`,
+      state: LoadingState.Loading,
+      request: options,
+      data: [],
+      unsubscribe: () => undefined,
+    };
+
+    observer(startLoadingEvent); // Starts the loading indicator
+    const lastTimeSeriesQuery = queries.filter(query => !query.instant).pop();
+
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
       const target = activeTargets[index];
@@ -198,17 +216,23 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         .pipe(
           single(), // unsubscribes automatically after first result
           filter((response: any) => (response.cancelled ? false : true)),
-          map((response: any) => {
-            const delta = this.processResult(response, query, target, queries.length);
+          mergeMap((response: any) => {
+            const data = this.processResult(response, query, target, queries.length);
             const state: DataStreamState = {
               key: `prometheus-${target.refId}`,
-              state: query.instant ? LoadingState.Loading : LoadingState.Done,
+              state: LoadingState.Loading,
               request: options,
-              delta,
+              data,
               unsubscribe: () => undefined,
             };
 
-            return state;
+            const states = [state, getStopState(state)];
+
+            if (target.refId === lastTimeSeriesQuery.refId && target.expr === lastTimeSeriesQuery.expr) {
+              states.push(getStopState(startLoadingEvent)); // Stops the loading indicator
+            }
+
+            return states;
           }),
           catchError(err => {
             const error = this.handleErrors(err, target);
@@ -282,7 +306,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       this.runObserverQueries(options, observer, queries, activeTargets, end);
       return this.$q.when({ data: [] }) as Promise<{ data: any }>;
     }
-
     const allQueryPromise = _.map(queries, query => {
       if (query.instant) {
         return this.performInstantQuery(query, end);
