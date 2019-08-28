@@ -83,13 +83,12 @@ export class LiveStream {
     return this.subject.subscribe(observer);
   }
 
-  isOpen() {
-    return !this.socket.isStopped;
+  hasObservers() {
+    return this.subject.observers.length > 0;
   }
 
-  hasObservers() {
-    console.log('CURRENT', this.subject.observers.length, this.url);
-    return this.subject.observers.length > 0;
+  isOpen() {
+    return !this.socket.isStopped;
   }
 
   close() {

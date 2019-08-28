@@ -437,14 +437,6 @@ export interface ScopedVars {
   [key: string]: ScopedVar;
 }
 
-export interface StreamingQueryOptions {
-  /**
-   * Request an explicit buffer size.  When not specified, this will
-   * default to `request.maxDataPoints`
-   */
-  buffer?: number;
-}
-
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
   timezone: string;
@@ -459,7 +451,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   intervalMs: number;
   maxDataPoints: number;
   scopedVars: ScopedVars;
-  stream?: StreamingQueryOptions;
 
   // Request Timing
   startTime: number;

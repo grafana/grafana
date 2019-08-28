@@ -14,7 +14,6 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataStreamObserver,
-  DataStreamState,
   DataQueryResponse,
 } from '@grafana/ui';
 
@@ -85,15 +84,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     const params = serializeParams({ query, regexp });
     const url = convertToWebSocketUrl(`${baseUrl}/api/prom/tail?${params}`);
 
-    const streamRequest = options.stream || {};
-    const size = streamRequest.buffer || options.maxDataPoints;
-
     return {
       query,
       regexp,
       url,
       refId,
-      size,
+      size: options.maxDataPoints || 1000,
     };
   }
 
@@ -172,7 +168,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         if (!stream.hasObservers()) {
           stream.close();
           delete this.streams[stream.url];
-          console.log('Closing stream without listeners: ', stream.url, Object.keys(this.streams));
         }
       }
     }, 500);
@@ -184,19 +179,17 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       .map(target => this.prepareLiveTarget(target, options));
 
     for (const liveTarget of liveTargets) {
+      // Reuse an existing stream if one is already running
       let stream = this.streams[liveTarget.url];
       if (!stream || !stream.isOpen()) {
         const labels = parseLabels(liveTarget.query);
         stream = new LiveStream(liveTarget.url, labels, liveTarget.size);
         this.streams[liveTarget.url] = stream;
-        console.log('Starting new stream ', stream.url, labels);
-      } else {
-        console.log('REUSE ', stream.url);
       }
 
       const subscription = stream.subscribe({
         next: (data: DataFrame[]) => {
-          const state: DataStreamState = {
+          observer({
             key: `loki-${liveTarget.refId}`,
             request: options,
             state: LoadingState.Streaming,
@@ -204,27 +197,20 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
             unsubscribe: () => {
               subscription.unsubscribe();
               this.validateOpenStreams();
-              console.log('UNSUBSCRIBED', liveTarget);
             },
-          };
-          console.log('UPDATE', state);
-          observer(state);
+          });
         },
         error: (err: any) => {
-          const error = this.processError(err, liveTarget);
-          const state: DataStreamState = {
+          observer({
             key: `loki-${liveTarget.refId}`,
             request: options,
             state: LoadingState.Error,
-            error,
+            error: this.processError(err, liveTarget),
             unsubscribe: () => {
               subscription.unsubscribe();
               this.validateOpenStreams();
-              console.log('UNSUBSCRIBED (ERR)', liveTarget);
             },
-          };
-          console.log('ERRR', state);
-          observer(state);
+          });
         },
       });
     }
