@@ -130,6 +130,14 @@ export class PanelQueryRunner {
     return this.subscribe(runner.subject, format);
   }
 
+  /**
+   * Change the current transformation and notify all listeners
+   */
+  setTransform(transformation?: TransformationConfig) {
+    this.transformation = transformation;
+    this.onStreamingDataUpdated();
+  }
+
   async run(options: QueryRunnerOptions): Promise<PanelData> {
     const { state } = this;
 
