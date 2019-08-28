@@ -1,5 +1,6 @@
 // Libraries
-import { isArray, isEqual, isString } from 'lodash';
+import { isArray, isEqual, isString, map, flatten } from 'lodash';
+import { Observable } from 'rxjs';
 
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -21,6 +22,7 @@ import {
   DataQueryError,
   DataStreamObserver,
   DataStreamState,
+  DataQueryResponsePacket,
   DataQueryResponseData,
 } from '@grafana/ui';
 
@@ -302,6 +304,89 @@ export class PanelQueryState {
     };
     return this.validateStreamsAndGetPanelData();
   }
+}
+
+type MapOfResponsePackets = { [str: string]: DataQueryResponsePacket };
+
+interface RunningQueryState {
+  packets: { [key: string]: DataQueryResponsePacket };
+  panelData: PanelData;
+}
+
+/*
+ * This function should handle composing a PanelData from multiple responses
+ * Does not handle deltas yet
+ */
+export function processResponsePacket(packet: DataQueryResponsePacket, state: RunningQueryState): RunningQueryState {
+  const packets: MapOfResponsePackets = {
+    ...state.packets,
+  };
+
+  packets[packet.key || 'A'] = packet;
+
+  const panelData = {
+    state: LoadingState.Done,
+    series: flatten(
+      map(packets, packet => {
+        return packet.data.map(v => toDataFrame(v));
+      })
+    ),
+  };
+
+  return { packets, panelData };
+}
+
+export function runRequest(datasource: DataSourceApi, request: DataQueryRequest): Observable<PanelData> {
+  return new Observable<PanelData>(subscriber => {
+    let state: RunningQueryState = {
+      panelData: {
+        state: LoadingState.NotStarted,
+        series: [],
+        request: request,
+      },
+      packets: {},
+    };
+
+    // Return early if there are no queries to run
+    if (!request.targets.length) {
+      console.log('No queries, so return early');
+      request.endTime = Date.now();
+    }
+
+    // Set the loading state immediatly
+    state.panelData.state = LoadingState.Loading;
+
+    if (!datasource.observe) {
+      subscriber.next(state.panelData);
+      subscriber.complete();
+      return null;
+    }
+
+    const subscription = datasource.observe(request).subscribe({
+      next(packet: DataQueryResponsePacket) {
+        if (!isArray(packet.data)) {
+          throw new Error(`Expected response data to be array, got ${typeof packet.data}.`);
+        }
+
+        request.endTime = Date.now();
+
+        state = processResponsePacket(packet, state);
+
+        subscriber.next(state.panelData);
+      },
+      error(error: any) {
+        subscriber.error(error);
+      },
+      complete() {
+        subscriber.complete();
+      },
+    });
+
+    return () => {
+      console.log('PanelQueryState.unsubscribe');
+      subscription.unsubscribe();
+    };
+  });
 }
 
 export function shouldDisconnect(source: DataQueryRequest, state: DataStreamState) {

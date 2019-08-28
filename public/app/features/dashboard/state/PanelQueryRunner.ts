@@ -1,14 +1,13 @@
 // Libraries
 import cloneDeep from 'lodash/cloneDeep';
-import throttle from 'lodash/throttle';
+// import throttle from 'lodash/throttle';
 import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-import { PanelQueryState } from './PanelQueryState';
-import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
+import { PanelQueryState, runRequest } from './PanelQueryState';
 
 // Types
 import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
@@ -51,10 +50,9 @@ export class PanelQueryRunner {
   private state = new PanelQueryState();
 
   // Listen to another panel for changes
-  private sharedQueryRunner: SharedQueryRunner;
+  // private sharedQueryRunner: SharedQueryRunner;
 
   constructor(private panelId: number) {
-    this.state.onStreamingDataUpdated = this.onStreamingDataUpdated;
     this.subject = new Subject();
   }
 
@@ -67,19 +65,19 @@ export class PanelQueryRunner {
    * the results will be immediatly passed to the observer
    */
   subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.frames): Unsubscribable {
-    if (format === PanelQueryRunnerFormat.legacy) {
-      this.state.sendLegacy = true;
-    } else if (format === PanelQueryRunnerFormat.both) {
-      this.state.sendFrames = true;
-      this.state.sendLegacy = true;
-    } else {
-      this.state.sendFrames = true;
-    }
-
-    // Send the last result
-    if (this.state.isStarted()) {
-      observer.next(this.state.getDataAfterCheckingFormats());
-    }
+    // if (format === PanelQueryRunnerFormat.legacy) {
+    //   this.state.sendLegacy = true;
+    // } else if (format === PanelQueryRunnerFormat.both) {
+    //   this.state.sendFrames = true;
+    //   this.state.sendLegacy = true;
+    // } else {
+    //   this.state.sendFrames = true;
+    // }
+    //
+    // // Send the last result
+    // if (this.state.isStarted()) {
+    //   observer.next(this.state.getDataAfterCheckingFormats());
+    // }
 
     return this.subject.subscribe(observer);
   }
@@ -88,21 +86,21 @@ export class PanelQueryRunner {
    * Subscribe one runner to another
    */
   chain(runner: PanelQueryRunner): Unsubscribable {
-    const { sendLegacy, sendFrames } = runner.state;
-    let format = sendFrames ? PanelQueryRunnerFormat.frames : PanelQueryRunnerFormat.legacy;
+    // const { sendLegacy, sendFrames } = runner.state;
+    // let format = sendFrames ? PanelQueryRunnerFormat.frames : PanelQueryRunnerFormat.legacy;
+    //
+    // if (sendLegacy) {
+    //   format = PanelQueryRunnerFormat.both;
+    // }
 
-    if (sendLegacy) {
-      format = PanelQueryRunnerFormat.both;
-    }
-
-    return this.subscribe(runner.subject, format);
+    return this.subscribe(runner.subject);
   }
 
   getCurrentData(): PanelData {
-    return this.state.validateStreamsAndGetPanelData();
+    return null;
   }
 
-  async run(options: QueryRunnerOptions): Promise<PanelData> {
+  async run(options: QueryRunnerOptions) {
     const { state } = this;
 
     const {
@@ -118,19 +116,19 @@ export class PanelQueryRunner {
       maxDataPoints,
       scopedVars,
       minInterval,
-      delayStateNotification,
+      // delayStateNotification,
     } = options;
 
     // Support shared queries
-    if (isSharedDashboardQuery(datasource)) {
-      if (!this.sharedQueryRunner) {
-        this.sharedQueryRunner = new SharedQueryRunner(this);
-      }
-      return this.sharedQueryRunner.process(options);
-    } else if (this.sharedQueryRunner) {
-      this.sharedQueryRunner.disconnect();
-      this.sharedQueryRunner = null;
-    }
+    // if (isSharedDashboardQuery(datasource)) {
+    //   if (!this.sharedQueryRunner) {
+    //     this.sharedQueryRunner = new SharedQueryRunner(this);
+    //   }
+    //   return this.sharedQueryRunner.process(options);
+    // } else if (this.sharedQueryRunner) {
+    //   this.sharedQueryRunner.disconnect();
+    //   this.sharedQueryRunner = null;
+    // }
 
     const request: DataQueryRequest = {
       requestId: getNextRequestId(),
@@ -151,7 +149,7 @@ export class PanelQueryRunner {
     // Add deprecated property
     (request as any).rangeRaw = timeRange.raw;
 
-    let loadingStateTimeoutId = 0;
+    // let loadingStateTimeoutId = 0;
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
@@ -182,52 +180,52 @@ export class PanelQueryRunner {
       request.intervalMs = norm.intervalMs;
 
       // Check if we can reuse the already issued query
-      const active = state.getActiveRunner();
-      if (active) {
-        if (state.isSameQuery(ds, request)) {
-          // Maybe cancel if it has run too long?
-          console.log('Trying to execute query while last one has yet to complete, returning same promise');
-          return active;
-        } else {
-          state.cancel('Query Changed while running');
-        }
-      }
+      // const active = state.getActiveRunner();
+      // if (active) {
+      //   if (state.isSameQuery(ds, request)) {
+      //     // Maybe cancel if it has run too long?
+      //     console.log('Trying to execute query while last one has yet to complete, returning same promise');
+      //     return active;
+      //   } else {
+      //     state.cancel('Query Changed while running');
+      //   }
+      // }
+      //
+      // // Send a loading status event on slower queries
+      // loadingStateTimeoutId = window.setTimeout(() => {
+      //   if (state.getActiveRunner()) {
+      //     this.subject.next(this.state.validateStreamsAndGetPanelData());
+      //   }
+      // }, delayStateNotification || 500);
+      //
+      // const data = await state.execute(ds, request);
 
-      // Send a loading status event on slower queries
-      loadingStateTimeoutId = window.setTimeout(() => {
-        if (state.getActiveRunner()) {
-          this.subject.next(this.state.validateStreamsAndGetPanelData());
-        }
-      }, delayStateNotification || 500);
-
-      const data = await state.execute(ds, request);
+      runRequest(ds, request).subscribe(this.subject);
 
       // Clear the delayed loading state timeout
-      clearTimeout(loadingStateTimeoutId);
+      // clearTimeout(loadingStateTimeoutId);
 
       // Broadcast results
-      this.subject.next(data);
-      return data;
+      // this.subject.next(data);
     } catch (err) {
-      clearTimeout(loadingStateTimeoutId);
+      // clearTimeout(loadingStateTimeoutId);
 
       const data = state.setError(err);
       this.subject.next(data);
-      return data;
     }
   }
 
-  /**
-   * Called after every streaming event.  This should be throttled so we
-   * avoid accidentally overwhelming the browser
-   */
-  onStreamingDataUpdated = throttle(
-    () => {
-      this.subject.next(this.state.validateStreamsAndGetPanelData());
-    },
-    50,
-    { trailing: true, leading: true }
-  );
+  // /**
+  //  * Called after every streaming event.  This should be throttled so we
+  //  * avoid accidentally overwhelming the browser
+  //  */
+  // onStreamingDataUpdated = throttle(
+  //   () => {
+  //     this.subject.next(this.state.validateStreamsAndGetPanelData());
+  //   },
+  //   50,
+  //   { trailing: true, leading: true }
+  // );
 
   /**
    * Called when the panel is closed

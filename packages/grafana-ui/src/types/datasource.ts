@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
+import { Observable } from 'rxjs';
 
 // NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
@@ -207,6 +208,7 @@ export abstract class DataSourceApi<
    * unsubscribe if unexpected results are returned.
    */
   abstract query(request: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
+  observe?(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -389,6 +391,16 @@ export interface DataQueryResponse {
    * or a partial result set
    */
   data: DataQueryResponseData[];
+}
+
+/**
+ * New response type for returning responses in multiple parts & streams
+ *
+ */
+export interface DataQueryResponsePacket {
+  data: DataQueryResponseData[];
+  key?: string;
+  isDelta?: boolean;
 }
 
 export interface DataQuery {

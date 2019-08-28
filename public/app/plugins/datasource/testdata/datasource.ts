@@ -2,6 +2,7 @@ import _ from 'lodash';
 import {
   DataSourceApi,
   DataQueryRequest,
+  DataQueryResponsePacket,
   DataSourceInstanceSettings,
   DataStreamObserver,
   MetricFindValue,
@@ -11,6 +12,7 @@ import { TestDataQuery, Scenario } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { StreamHandler } from './StreamHandler';
 import { queryMetricTree } from './metricTree';
+import { Observable } from 'rxjs';
 import templateSrv from 'app/features/templating/template_srv';
 
 type TestData = TimeSeries | TableData;
@@ -25,6 +27,66 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   /** @ngInject */
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
+  }
+
+  observe(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponsePacket> {
+    return new Observable(subscriber => {
+      const queries = options.targets.map(item => {
+        return {
+          ...item,
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          datasourceId: this.id,
+          alias: templateSrv.replace(item.alias || ''),
+        };
+      });
+
+      if (queries.length === 0) {
+        subscriber.next({ data: [] });
+        subscriber.complete();
+      }
+
+      getBackendSrv()
+        .datasourceRequest({
+          method: 'POST',
+          url: '/api/tsdb/query',
+          data: {
+            from: options.range.from.valueOf().toString(),
+            to: options.range.to.valueOf().toString(),
+            queries: queries,
+          },
+          // This sets up a cancel token
+          requestId: options.requestId,
+        })
+        .then((res: any) => {
+          const data: TestData[] = [];
+
+          for (const query of queries) {
+            const results = res.data.results[query.refId];
+            if (!results) {
+              console.warn('No Results for:', query);
+              continue;
+            }
+
+            for (const t of results.tables || []) {
+              const table = t as TableData;
+              table.refId = query.refId;
+              table.name = query.alias;
+              data.push(table);
+            }
+
+            for (const series of results.series || []) {
+              data.push({ target: series.name, datapoints: series.points, refId: query.refId });
+            }
+          }
+
+          subscriber.next({ data: data });
+          subscriber.complete();
+        })
+        .catch((err: any) => {
+          subscriber.error(err);
+        });
+    });
   }
 
   query(options: DataQueryRequest<TestDataQuery>, observer: DataStreamObserver) {
