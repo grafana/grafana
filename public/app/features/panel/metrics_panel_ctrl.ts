@@ -6,7 +6,7 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { toLegacyResponseData, isDataFrame, TimeRange, LoadingState, DataFrame } from '@grafana/data';
+import { toLegacyResponseData, isDataFrame, TimeRange, LoadingState, DataFrame, toDataFrameDTO } from '@grafana/data';
 
 import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
@@ -154,9 +154,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
         // Make the results look like they came directly from a <6.2 datasource request
         // NOTE: any object other than 'data' is no longer supported supported
-        this.handleQueryResult({
-          data: data.legacy,
-        });
+        this.handleQueryResult({ data: data.legacy });
       } else {
         this.handleDataFrames(data.series);
       }
@@ -218,10 +216,17 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   handleDataFrames(data: DataFrame[]) {
+    this.loading = false;
+
     if (this.dashboard && this.dashboard.snapshot) {
-      this.panel.snapshotData = data;
+      this.panel.snapshotData = data.map(frame => toDataFrameDTO(frame));
     }
-    // Subclasses that asked for DataFrame will override
+
+    try {
+      this.events.emit('data-frames-received', data);
+    } catch (err) {
+      this.processDataError(err);
+    }
   }
 
   handleQueryResult(result: DataQueryResponse) {
@@ -236,7 +241,11 @@ class MetricsPanelCtrl extends PanelCtrl {
       result = { data: [] };
     }
 
-    this.events.emit('data-received', result.data);
+    try {
+      this.events.emit('data-received', result.data);
+    } catch (err) {
+      this.processDataError(err);
+    }
   }
 
   getAdditionalMenuItems() {
