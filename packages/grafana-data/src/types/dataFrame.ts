@@ -67,7 +67,7 @@ export interface Field<T = any, V = Vector<T>> {
   name: string; // The column name
   type: FieldType;
   config: FieldConfig;
-  values: V; // `buffer` when JSON
+  values: V; // The raw field balues
 
   /**
    * Cache of reduced values
