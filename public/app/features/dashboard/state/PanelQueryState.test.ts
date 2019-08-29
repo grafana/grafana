@@ -54,6 +54,19 @@ describe('PanelQueryState', () => {
   });
 });
 
+describe('When cancelling request', () => {
+  it('Should call rejector', () => {
+    const state = new PanelQueryState();
+    state.request = {};
+    state.rejector = (obj: any) => {
+      expect(obj.cancelled).toBe(true);
+      expect(obj.message).toBe('OHH');
+    };
+
+    state.cancel('OHH');
+  });
+});
+
 describe('getProcessedDataFrame', () => {
   it('converts timeseries to table skipping nulls', () => {
     const input1 = {
