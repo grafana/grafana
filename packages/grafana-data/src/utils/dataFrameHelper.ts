@@ -1,7 +1,7 @@
 import { Field, FieldType, DataFrame, Vector, FieldDTO, DataFrameDTO } from '../types/dataFrame';
 import { Labels, QueryResultMeta, KeyValue } from '../types/data';
 import { guessFieldTypeForField, guessFieldTypeFromValue, toDataFrameDTO } from './processDataFrame';
-import { ArrayVector, AppendingVector, vectorToArray } from './vector';
+import { ArrayVector, MutableVector, vectorToArray, CircularVector } from './vector';
 import isArray from 'lodash/isArray';
 
 export class DataFrameHelper implements DataFrame {
@@ -232,42 +232,47 @@ function makeFieldParser(value: string, field: Field): (value: string) => any {
   return (value: string) => value;
 }
 
-interface AppendingDataFrameOptions {
-  frame?: DataFrame | DataFrameDTO;
-  newVector?: (buffer?: any[]) => AppendingVector;
-}
+export type MutableField<T = any> = Field<T, MutableVector<T>>;
 
-export type AppendingField<T = any> = Field<T, AppendingVector<T>>;
+type MutableVectorCreator = (buffer?: any[]) => MutableVector;
 
-export class AppendingDataFrame<T = any> implements DataFrame, AppendingVector<T> {
+export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
   name?: string;
   labels?: Labels;
   refId?: string;
   meta?: QueryResultMeta;
 
-  fields: AppendingField[] = [];
-  values: KeyValue<AppendingVector> = {};
+  fields: MutableField[] = [];
+  values: KeyValue<MutableVector> = {};
 
   private first: Vector = new ArrayVector();
-  private newVector: (buffer?: any[]) => AppendingVector;
+  private creator: MutableVectorCreator;
 
-  constructor(options?: AppendingDataFrameOptions) {
-    options = options || {};
-
-    this.newVector = options.newVector
-      ? options.newVector
+  constructor(source?: DataFrame | DataFrameDTO, creator?: MutableVectorCreator) {
+    // This creates the underlying storage buffers
+    this.creator = creator
+      ? creator
       : (buffer?: any[]) => {
           return new ArrayVector(buffer);
         };
-    if (options.frame) {
-      const frame = options.frame;
-      this.name = frame.name;
-      this.labels = frame.labels;
-      this.refId = frame.refId;
-      this.meta = frame.meta;
 
-      if (frame.fields) {
-        for (const f of frame.fields) {
+    // Copy values from
+    if (source) {
+      const { name, labels, refId, meta, fields } = source;
+      if (name) {
+        this.name = name;
+      }
+      if (labels) {
+        this.labels = labels;
+      }
+      if (refId) {
+        this.refId = refId;
+      }
+      if (meta) {
+        this.meta = meta;
+      }
+      if (fields) {
+        for (const f of fields) {
           this.addField(f);
         }
       }
@@ -317,11 +322,11 @@ export class AppendingDataFrame<T = any> implements DataFrame, AppendingVector<T
       return;
     }
 
-    const field: AppendingField = {
+    const field: MutableField = {
       name,
       type,
       config: f.config || {},
-      values: this.newVector(buffer),
+      values: this.creator(buffer),
     };
     this.values[name] = field.values;
     this.fields.push(field);
@@ -378,6 +383,9 @@ export class AppendingDataFrame<T = any> implements DataFrame, AppendingVector<T
     }
   }
 
+  /**
+   * Get an object with a property for each field in the DataFrame
+   */
   get(idx: number): T {
     const v: any = {};
     for (const field of this.fields) {
@@ -390,7 +398,30 @@ export class AppendingDataFrame<T = any> implements DataFrame, AppendingVector<T
     return vectorToArray(this);
   }
 
+  /**
+   * The simplified JSON values used in JSON.stringify()
+   */
   toJSON() {
     return toDataFrameDTO(this);
+  }
+}
+
+interface CircularOptions {
+  append?: 'head' | 'tail';
+  capacity?: number;
+}
+
+/**
+ * This dataframe can have values constantly added, and will never
+ * exceed the given capacity
+ */
+export class CircularDataFrame<T = any> extends MutableDataFrame<T> {
+  constructor(options: CircularOptions) {
+    super(undefined, (buffer?: any[]) => {
+      return new CircularVector({
+        buffer,
+        ...options,
+      });
+    });
   }
 }

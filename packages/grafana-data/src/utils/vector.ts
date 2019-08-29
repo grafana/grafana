@@ -8,15 +8,21 @@ export function vectorToArray<T>(v: Vector<T>): T[] {
   return arr;
 }
 
-export interface WriteableVector<T = any> extends Vector<T> {
+/**
+ * Apache arrow vectors are Read/Write
+ */
+export interface ReadWriteVector<T = any> extends Vector<T> {
   set: (index: number, value: T) => void;
 }
 
-export interface AppendingVector<T = any> extends WriteableVector<T> {
+/**
+ * Vector with standard manipulation functions
+ */
+export interface MutableVector<T = any> extends ReadWriteVector<T> {
   add: (value: T) => void;
 }
 
-export class ArrayVector<T = any> implements AppendingVector<T> {
+export class ArrayVector<T = any> implements MutableVector<T> {
   buffer: T[];
 
   constructor(buffer?: T[]) {
@@ -125,7 +131,7 @@ interface CircularOptions<T> {
  * This supports addting to the 'head' or 'tail' and will grow the buffer
  * to match a configured capacity.
  */
-export class CircularVector<T = any> implements AppendingVector<T> {
+export class CircularVector<T = any> implements MutableVector<T> {
   private buffer: T[];
   private index: number;
   private capacity: number;

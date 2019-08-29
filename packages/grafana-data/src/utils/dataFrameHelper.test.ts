@@ -1,5 +1,5 @@
 import { DataFrameDTO, FieldDTO, FieldType } from '../types';
-import { DataFrameHelper, AppendingDataFrame } from './dataFrameHelper';
+import { DataFrameHelper, MutableDataFrame } from './dataFrameHelper';
 
 describe('dataFrameHelper', () => {
   const frame: DataFrameDTO = {
@@ -124,7 +124,7 @@ describe('Apending DataFrame', () => {
       ],
     };
 
-    const frame = new AppendingDataFrame({ frame: dto });
+    const frame = new MutableDataFrame(dto);
     expect(frame.values.time.toArray()).toEqual([100, undefined, undefined]);
 
     // Set a value on the second row
