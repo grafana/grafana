@@ -1,3 +1,4 @@
+import omitBy from 'lodash/omitBy';
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
@@ -126,18 +127,21 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
 
     const dashboardSrv = getDashboardSrv();
     const dash = dashboardSrv.getCurrent();
-
     const titleSlug = kbn.slugifyForUrl(dash.title);
 
     if (!withChanges) {
       this.props.clearOrigin();
     }
 
+    const dashViewOptions = {
+      fullscreen: withChanges || dash.meta.fullscreen,
+      edit: withChanges || dash.meta.isEditing,
+    };
+
     getLocationSrv().update({
       path: `/d/${dash.uid}/:${titleSlug}`,
       query: {
-        fullscreen: true,
-        edit: true,
+        ...omitBy(dashViewOptions, v => !v),
         panelId: originPanelId,
       },
     });

@@ -24,6 +24,7 @@ import {
 import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
 import { DashboardModel } from './DashboardModel';
 import { resetExploreAction } from 'app/features/explore/state/actionTypes';
+import { DataQuery } from '@grafana/ui';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -203,7 +204,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     if (left && left.originPanelId) {
       const panelArrId = dashboard.panels.findIndex(panel => panel.id === left.originPanelId);
       if (panelArrId > -1) {
-        dashboard.panels[panelArrId].targets = left.queries.map(query => ({ refId: query.refId, expr: query.expr }));
+        dashboard.panels[panelArrId].targets = left.queries.map((query: DataQuery & { context?: string }) => {
+          delete query.context;
+          delete query.key;
+          return query;
+        });
       }
       dashboard.startRefresh();
       dispatch(resetExploreAction({ force: true }));

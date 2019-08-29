@@ -414,8 +414,6 @@ export interface DataQuery {
   datasource?: string | null;
 
   metric?: any;
-
-  expr?: string;
 }
 
 export interface DataQueryError {

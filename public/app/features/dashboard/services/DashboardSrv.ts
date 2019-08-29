@@ -217,7 +217,7 @@ export class DashboardSrv {
 
   showSaveModal() {
     this.$rootScope.appEvent('show-modal', {
-      templateHtml: `<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>`,
+      templateHtml: '<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>',
       modalClass: 'modal--narrow',
     });
   }
