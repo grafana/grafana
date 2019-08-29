@@ -13,7 +13,7 @@ import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasourc
 // Types
 import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
 
-import { TimeRange, DataTransformerConfig, dataTransformers } from '@grafana/data';
+import { TimeRange, DataTransformerConfig, transformDataFrame } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -50,7 +50,7 @@ export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
 
   private state = new PanelQueryState();
-  private transformations?: Array<DataTransformerConfig<any>>;
+  private transformations?: DataTransformerConfig[];
 
   // Listen to another panel for changes
   private sharedQueryRunner: SharedQueryRunner;
@@ -71,10 +71,7 @@ export class PanelQueryRunner {
   getCurrentData(transform = true): PanelData {
     const v = this.state.validateStreamsAndGetPanelData();
     if (transform && this.transformations && this.transformations.length) {
-      const processed = this.transformations.reduce((acc, t) => {
-        const transformation = dataTransformers.get(t.id);
-        return transformation.transformer(t.options)(acc);
-      }, v.series);
+      const processed = transformDataFrame(this.transformations, v.series);
       console.log('INPUT SERIES:', v.series);
       console.log('PROCESSED SERIES:', processed);
       return {
@@ -127,7 +124,7 @@ export class PanelQueryRunner {
    * Change the current transformation and notify all listeners
    * Should be used only by panel editor to update the transformers
    */
-  setTransform = (transformations?: Array<DataTransformerConfig<any>>) => {
+  setTransform = (transformations?: DataTransformerConfig[]) => {
     this.transformations = transformations;
     console.log('UPDATING TRANSFORMATION:', transformations);
     if (this.state.isStarted) {

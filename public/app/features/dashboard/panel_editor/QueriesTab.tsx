@@ -212,7 +212,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
-  onTransformersChange = (transformers: Array<DataTransformerConfig<any>>) => {
+  onTransformersChange = (transformers: DataTransformerConfig[]) => {
     this.props.panel.setTransformations(transformers);
   };
 

@@ -14,7 +14,7 @@ interface Props {
   panel: PanelModel;
   data: PanelData;
   transformers: Array<DataTransformerInfo<any>>;
-  onChange: (value: Array<DataTransformerConfig<any>>) => void;
+  onChange: (value: DataTransformerConfig[]) => void;
 }
 
 interface State {
@@ -32,7 +32,7 @@ export class TransformResults extends PureComponent<Props, State> {
     return panel.getQueryRunner().getCurrentData(false).series;
   }
 
-  onChange = (config: Array<DataTransformerConfig<any>>) => {
+  onChange = (config: DataTransformerConfig[]) => {
     const { onChange } = this.props;
     onChange(config);
     this.setState({ updateCounter: this.state.updateCounter + 1 });
