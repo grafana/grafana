@@ -291,5 +291,36 @@ describe('Prometheus Result Transformer', () => {
         },
       ]);
     });
+
+    it('should transform a vector into a time series with a constant value', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'vector',
+          result: [
+            {
+              metric: { __name__: 'test', job: 'testjob' },
+              value: [2, '3846'],
+            },
+          ],
+        },
+      };
+
+      const options = {
+        format: 'timeseries',
+        step: 1,
+        start: 0,
+        end: 2,
+      };
+
+      const result = ctx.resultTransformer.transform({ data: response }, options);
+      expect(result).toEqual([
+        {
+          target: 'test{job="testjob"}',
+          datapoints: [[3846, 0], [3846, 1000], [3846, 2000]],
+          labels: { job: 'testjob' },
+        },
+      ]);
+    });
   });
 });

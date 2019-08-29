@@ -140,7 +140,14 @@ export class ResultTransformer {
     const dps = [];
     let metricLabel = null;
     metricLabel = this.createMetricLabel(md.metric, options);
-    dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
+    // Produce constant series from single value, ending on ts from instant result
+    const value = parseFloat(md.value[1]);
+    const start = options.start;
+    const end = md.value[0];
+    const step = options.step;
+    for (let ts = start; ts <= end; ts += step) {
+      dps.push([value, ts * 1000]);
+    }
     return { target: metricLabel, datapoints: dps, labels: md.metric };
   }
 
