@@ -1,4 +1,5 @@
-import { LinkSrv, DataLinkBuiltInVars } from '../link_srv';
+import { LinkSrv } from '../link_srv';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 import _ from 'lodash';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -80,6 +81,7 @@ describe('linkSrv', () => {
             title: 'Any title',
             url: `/d/1?$${DataLinkBuiltInVars.keepTime}`,
           },
+          {},
           {}
         ).href
       ).toEqual('/d/1?from=now-1h&to=now');
@@ -92,32 +94,43 @@ describe('linkSrv', () => {
             title: 'Any title',
             url: `/d/1?$${DataLinkBuiltInVars.includeVars}`,
           },
+          {},
           {}
         ).href
       ).toEqual('/d/1?var-test1=val1&var-test2=val2');
     });
 
-    it('should interpolate series name from datapoint', () => {
+    it('should interpolate series name', () => {
       expect(
         linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
             url: `/d/1?var-test=$${DataLinkBuiltInVars.seriesName}`,
           },
-          {},
-          dataPointMock
+          {
+            [DataLinkBuiltInVars.seriesName]: {
+              value: 'A-series',
+              text: 'A-series',
+            },
+          },
+          {}
         ).href
       ).toEqual('/d/1?var-test=A-series');
     });
-    it('should interpolate time range based on datapoint timestamp', () => {
+    it('should interpolate value time', () => {
       expect(
         linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
             url: `/d/1?time=$${DataLinkBuiltInVars.valueTime}`,
           },
-          {},
-          dataPointMock
+          {
+            [DataLinkBuiltInVars.valueTime]: {
+              value: dataPointMock.datapoint[0],
+              text: dataPointMock.datapoint[0],
+            },
+          },
+          {}
         ).href
       ).toEqual('/d/1?time=1000000001');
     });

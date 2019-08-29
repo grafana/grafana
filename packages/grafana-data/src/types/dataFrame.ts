@@ -3,6 +3,7 @@ import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { FieldCalcs } from '../utils/index';
 import { DisplayProcessor } from './displayValue';
+import { DataLink } from './dataLink';
 
 export enum FieldType {
   time = 'time', // or date
@@ -35,6 +36,9 @@ export interface FieldConfig {
 
   // Used when reducing field values
   nullValueMode?: NullValueMode;
+
+  // The behavior when clicking on a result
+  links?: DataLink[];
 
   // Alternative to empty string
   noValue?: string;

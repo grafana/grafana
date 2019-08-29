@@ -159,6 +159,12 @@ export class PanelQueryState {
     // Streams only work with the 'series' format
     this.sendFrames = true;
 
+    if (stream.state === LoadingState.Error) {
+      this.setError(stream.error);
+      this.onStreamingDataUpdated();
+      return;
+    }
+
     // Add the stream to our list
     let found = false;
     const active = this.streams.map(s => {

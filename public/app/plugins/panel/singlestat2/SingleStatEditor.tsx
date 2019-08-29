@@ -9,13 +9,18 @@ import {
   FieldDisplayEditor,
   FieldPropertiesEditor,
   PanelOptionsGroup,
+  DataLinksEditor,
 } from '@grafana/ui';
-import { Threshold, ValueMapping, FieldConfig } from '@grafana/data';
+import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { SingleStatOptions, SparklineOptions } from './types';
 import { ColoringEditor } from './ColoringEditor';
 import { FontSizeEditor } from './FontSizeEditor';
 import { SparklineEditor } from './SparklineEditor';
+import {
+  getDataLinksVariableSuggestions,
+  getCalculationValueDataLinksVariableSuggestions,
+} from 'app/features/panel/panellinks/link_srv';
 
 export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) => {
@@ -53,10 +58,20 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
     });
   };
 
+  onDataLinksChanged = (links: DataLink[]) => {
+    this.onDefaultsChange({
+      ...this.props.options.fieldOptions.defaults,
+      links,
+    });
+  };
+
   render() {
     const { options } = this.props;
     const { fieldOptions } = options;
     const { defaults } = fieldOptions;
+    const suggestions = fieldOptions.values
+      ? getDataLinksVariableSuggestions()
+      : getCalculationValueDataLinksVariableSuggestions();
 
     return (
       <>
@@ -77,6 +92,15 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+
+        <PanelOptionsGroup title="Data links">
+          <DataLinksEditor
+            value={defaults.links}
+            onChange={this.onDataLinksChanged}
+            suggestions={suggestions}
+            maxLinks={10}
+          />
+        </PanelOptionsGroup>
       </>
     );
   }

@@ -1,0 +1,9 @@
+{
+  "type": "datasource",
+  "name": "-- Dashboard --",
+  "id": "dashboard",
+  "state": "alpha",
+
+  "builtIn": true,
+  "metrics": true
+}

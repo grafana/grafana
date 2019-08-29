@@ -68,7 +68,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
 
       {(!value || (value && value.length < (maxLinks || Infinity))) && (
         <Button variant="inverse" icon="fa fa-plus" onClick={() => onAdd()}>
-          Create link
+          Add link
         </Button>
       )}
     </>
