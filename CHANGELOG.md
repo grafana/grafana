@@ -5,6 +5,10 @@
 * **Annotations**: There are some breaking changes in the annotations HTTP API for region annotations. Region
     annotations are now represented using a single event instead of two seperate events. Check HTTP docs for more details.
 
+# 6.3.4 (2019-08-29)
+
+* **Security**: Urgent security patch release. Please read more in our [blog](https://grafana.com/blog/2019/08/29/grafana-5.4.5-and-6.3.4-released-with-important-security-fix/)
+
 # 6.3.3 (2019-08-15)
 
 ### Bug Fixes
@@ -539,6 +543,10 @@ repo on July 1st. Make sure you have switched to the new repo by then. The new r
 ### Breaking changes
 * **Text Panel**: The text panel does no longer by default allow unsantizied HTML. [#4117](https://github.com/grafana/grafana/issues/4117). This means that if you have text panels with scripts tags they will no longer work as before. To enable unsafe javascript execution in text panels enable the settings `disable_sanitize_html` under the section `[panels]` in your Grafana ini file, or set env variable  `GF_PANELS_DISABLE_SANITIZE_HTML=true`.
 * **Dashboard**: Panel property `minSpan` replaced by `maxPerRow`. Dashboard migration will automatically migrate all dashboard panels using the `minSpan` property to the new `maxPerRow` property [#12991](https://github.com/grafana/grafana/pull/12991)
+
+# 5.4.5 (2019-08-29)
+
+* **Security**: Urgent security patch release. Please read more in our [blog](https://grafana.com/blog/2019/08/29/grafana-5.4.5-and-6.3.4-released-with-important-security-fix/)
 
 # 5.4.4 (2019-04-29)
 

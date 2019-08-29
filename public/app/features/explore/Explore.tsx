@@ -5,6 +5,7 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import _ from 'lodash';
 import { AutoSizer } from 'react-virtualized';
+import memoizeOne from 'memoize-one';
 
 // Services & Utils
 import store from 'app/core/store';
@@ -327,6 +328,9 @@ export class Explore extends React.PureComponent<ExploreProps> {
   }
 }
 
+const ensureQueriesMemoized = memoizeOne(ensureQueries);
+const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
+
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const explore = state.explore;
   const { split } = explore;
@@ -356,8 +360,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
 
   const { datasource, queries, range: urlRange, mode: urlMode, ui } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
-  const initialQueries: DataQuery[] = ensureQueries(queries);
-  const initialRange = urlRange ? getTimeRangeFromUrl(urlRange, timeZone).raw : DEFAULT_RANGE;
+  const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
+  const initialRange = urlRange ? getTimeRangeFromUrlMemoized(urlRange, timeZone).raw : DEFAULT_RANGE;
 
   let newMode: ExploreMode;
   if (supportedModes.length) {
