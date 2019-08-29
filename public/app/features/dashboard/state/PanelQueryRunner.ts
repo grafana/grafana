@@ -32,7 +32,7 @@ export interface QueryRunnerOptions<
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
-  transformations?: Array<DataTransformerConfig<any>>;
+  transformations?: DataTransformerConfig[];
 }
 
 export enum PanelQueryRunnerFormat {

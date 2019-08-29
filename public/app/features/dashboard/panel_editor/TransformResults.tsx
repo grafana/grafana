@@ -3,12 +3,9 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { PanelModel } from '../state/index';
-import { PanelData, Button, Select, StatsPicker } from '@grafana/ui';
-import { DataFrame, DataTransformerInfo, DataTransformerConfig, DataTransformerID } from '@grafana/data';
-// import { ByNameTransform } from './ByNameTransform';
-// import { TransformationConfig } from '../state/PanelModel';
+import { PanelData, Button, Select, transformersUIRegistry } from '@grafana/ui';
+import { DataFrame, DataTransformerInfo, DataTransformerConfig } from '@grafana/data';
 import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
-import { ReduceOptions } from '@grafana/data/src/utils/transformers/reduce';
 
 interface Props {
   panel: PanelModel;
@@ -77,29 +74,35 @@ export class TransformResults extends PureComponent<Props, State> {
       return this.renderTransformersSelect();
     }
 
-    // TODO pass to any transformer UI
-    // @ts-ignore
     const input = this.getPreTransformData();
+
+    const transformationEditors = transformations.map(t => {
+      const editorComponent = transformersUIRegistry.getIfExists(t.id);
+
+      if (editorComponent) {
+        return React.createElement(editorComponent.component, {
+          key: t.id,
+          options: t.options,
+          input,
+          onChange: (options: any) => {
+            this.onChange([
+              {
+                id: transformations[0].id,
+                options,
+              },
+            ]);
+          },
+        });
+      }
+      // undefined?
+      return <h1>No ui</h1>;
+    });
 
     return (
       <div>
-        {/* <ByNameTransform input={input} config={transformation[0]} onChange={this.onChange} /> */}
         <JSONFormatter json={transformations} />
+        {transformationEditors}
 
-        {/* TODO: now works with reduce transformation */}
-        {transformations[0].id === DataTransformerID.reduce && (
-          <ReduceOptions
-            options={transformations[0].options}
-            onChange={options => {
-              this.onChange([
-                {
-                  id: transformations[0].id,
-                  options,
-                },
-              ]);
-            }}
-          />
-        )}
         <Button variant={'inverse'} onClick={() => this.onChange([])}>
           Remove Transformation
         </Button>
@@ -107,27 +110,3 @@ export class TransformResults extends PureComponent<Props, State> {
     );
   }
 }
-
-const ReduceOptions = ({
-  options,
-  onChange,
-}: {
-  options: ReduceOptions;
-  onChange: (options: ReduceOptions) => void;
-}) => {
-  console.log('options', options);
-  return (
-    <StatsPicker
-      width={12}
-      placeholder="Choose Stat"
-      allowMultiple
-      stats={options.reducers || []}
-      onChange={stats => {
-        onChange({
-          ...options,
-          reducers: stats,
-        });
-      }}
-    />
-  );
-};

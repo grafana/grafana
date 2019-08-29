@@ -78,3 +78,4 @@ export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggesti
 export { DataLinksEditor } from './DataLinks/DataLinksEditor';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
+export { transformersUIRegistry } from './TransformersUI/transformers';
