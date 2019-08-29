@@ -272,6 +272,14 @@ export class AppendingDataFrame<T = any> implements DataFrame, AppendingVector<T
         }
       }
     }
+
+    // Get Length to show up if you use spread
+    Object.defineProperty(this, 'length', {
+      enumerable: true,
+      get: () => {
+        return this.first.length;
+      },
+    });
   }
 
   // Defined for Vector interface

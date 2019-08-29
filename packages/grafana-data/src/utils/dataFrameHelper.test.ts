@@ -144,7 +144,10 @@ describe('Apending DataFrame', () => {
       { time: undefined, name: undefined, value: undefined, value2: 'XXX' }, // 4
     ]);
 
-    // const copy = { ...frame };
-    // expect(copy.length).toBe(frame.length);
+    // Make sure length survives a spread operator
+    const keys = Object.keys(frame);
+    const copy = { ...frame } as any;
+    expect(keys).toContain('length');
+    expect(copy.length).toEqual(frame.length);
   });
 });
