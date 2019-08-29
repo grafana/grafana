@@ -253,7 +253,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   async explore() {
-    const url = await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
+    const url = await getExploreUrl(this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
     if (url) {
       this.$timeout(() => this.$location.url(url));
     }
