@@ -62,6 +62,7 @@ export default class QueryEditor extends PureComponent<QueryEditorProps, any> {
 
     this.component = loader.load(this.element, scopeProps, template);
     this.angularScope = scopeProps.ctrl;
+
     setTimeout(() => {
       this.props.onQueryChange(target);
       this.props.onExecuteQuery();
