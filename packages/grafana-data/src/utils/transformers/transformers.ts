@@ -49,8 +49,9 @@ export function transformDataFrame(options: DataTransformerConfig[], data: DataF
 // Initalize the Registry
 
 import { appendTransformer, AppendOptions } from './append';
-import { reduceTransformer, ReduceOptions } from './reduce';
+import { reduceTransformer, ReduceTransformerOptions } from './reduce';
 import { filterFieldsTransformer, filterFramesTransformer } from './filter';
+import { filterFieldsByNameTransformer, FilterFieldsByNameTransformerOptions } from './filterByName';
 
 /**
  * Registry of transformation options that can be driven by
@@ -69,14 +70,17 @@ class TransformerRegistry extends Registry<DataTransformerInfo> {
     return appendTransformer.transformer(options || appendTransformer.defaultOptions)(data)[0];
   }
 
-  reduce(data: DataFrame[], options: ReduceOptions): DataFrame[] {
+  reduce(data: DataFrame[], options: ReduceTransformerOptions): DataFrame[] {
     return reduceTransformer.transformer(options)(data);
   }
 }
 
 export const dataTransformers = new TransformerRegistry(() => [
   filterFieldsTransformer,
+  filterFieldsByNameTransformer,
   filterFramesTransformer,
   appendTransformer,
   reduceTransformer,
 ]);
+
+export { ReduceTransformerOptions, FilterFieldsByNameTransformerOptions };

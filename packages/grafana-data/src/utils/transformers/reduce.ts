@@ -8,12 +8,12 @@ import { KeyValue } from '../../types/data';
 import { ArrayVector } from '../vector';
 import { guessFieldTypeForField } from '../processDataFrame';
 
-export interface ReduceOptions {
+export interface ReduceTransformerOptions {
   reducers: string[];
   fields?: MatcherConfig; // Assume all fields
 }
 
-export const reduceTransformer: DataTransformerInfo<ReduceOptions> = {
+export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = {
   id: DataTransformerID.reduce,
   name: 'Reducer',
   description: 'Return a DataFrame with the reduction results',
@@ -25,7 +25,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceOptions> = {
    * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
-  transformer: (options: ReduceOptions) => {
+  transformer: (options: ReduceTransformerOptions) => {
     const matcher = options.fields ? getFieldMatcher(options.fields) : alwaysFieldMatcher;
     const calculators = fieldReducers.list(options.reducers);
     const reducers = calculators.map(c => c.id);
