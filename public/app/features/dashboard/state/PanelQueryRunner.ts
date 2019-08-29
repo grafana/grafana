@@ -7,7 +7,8 @@ import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-import { PanelQueryState, runRequest } from './PanelQueryState';
+import { PanelQueryState } from './PanelQueryState';
+import { runRequest } from './RequestRunner';
 
 // Types
 import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
@@ -46,6 +47,7 @@ function getNextRequestId() {
 
 export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
+  private subscription?: Unsubscribable;
 
   private state = new PanelQueryState();
 
@@ -202,7 +204,12 @@ export class PanelQueryRunner {
 
       // this is not working 100% the outer subjects is marked as completed when this obserable completes, so only works
       // for one request.
-      runRequest(ds, request).subscribe(this.subject);
+      //
+      if (this.subscription) {
+        this.subscription.unsubscribe();
+      }
+
+      this.subscription = runRequest(ds, request).subscribe(this.subject);
 
       // Clear the delayed loading state timeout
       // clearTimeout(loadingStateTimeoutId);
@@ -236,6 +243,10 @@ export class PanelQueryRunner {
     // Tell anyone listening that we are done
     if (this.subject) {
       this.subject.complete();
+    }
+
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
 
     // Will cancel and disconnect any open requets
