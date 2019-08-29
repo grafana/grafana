@@ -40,28 +40,10 @@ export interface Props extends Themeable {
   stopLive: () => void;
 }
 
-export interface State {
-  renderCount: number;
-}
-
-class LiveLogs extends PureComponent<Props, State> {
+class LiveLogs extends PureComponent<Props> {
   private liveEndDiv: HTMLDivElement = null;
 
-  constructor(props: Props) {
-    super(props);
-    this.state = { renderCount: 0 };
-  }
-
   componentDidUpdate(prevProps: Props) {
-    const prevRows: LogRowModel[] = prevProps.logsResult ? prevProps.logsResult.rows : [];
-    const rows: LogRowModel[] = this.props.logsResult ? this.props.logsResult.rows : [];
-
-    if (prevRows !== rows) {
-      this.setState({
-        renderCount: this.state.renderCount + 1,
-      });
-    }
-
     if (this.liveEndDiv) {
       this.liveEndDiv.scrollIntoView(false);
     }
@@ -69,7 +51,6 @@ class LiveLogs extends PureComponent<Props, State> {
 
   render() {
     const { theme, timeZone } = this.props;
-    const { renderCount } = this.state;
     const styles = getStyles(theme);
     const rowsToRender: LogRowModel[] = this.props.logsResult ? this.props.logsResult.rows : [];
     const showUtc = timeZone === 'utc';
@@ -109,7 +90,7 @@ class LiveLogs extends PureComponent<Props, State> {
         </div>
         <div className={cx([styles.logsRowsIndicator])}>
           <span>
-            Last line received: <ElapsedTime renderCount={renderCount} humanize={true} /> ago
+            Last line received: <ElapsedTime resetKey={this.props.logsResult} humanize={true} /> ago
           </span>
           <LinkButton
             onClick={this.props.stopLive}
