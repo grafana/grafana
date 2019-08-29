@@ -5,7 +5,9 @@ const INTERVAL = 150;
 
 export interface Props {
   time?: number;
-  renderCount?: number;
+  // Use this to reset the timer. Any value is allowed just need to be !== from the previous.
+  // Keep in mind things like [] !== [] or {} !== {}.
+  resetKey?: any;
   className?: string;
   humanize?: boolean;
 }
@@ -14,6 +16,9 @@ export interface State {
   elapsed: number;
 }
 
+/**
+ * Shows an incremental time ticker of elapsed time from some event.
+ */
 export default class ElapsedTime extends PureComponent<Props, State> {
   offset: number;
   timer: number;
@@ -40,7 +45,7 @@ export default class ElapsedTime extends PureComponent<Props, State> {
       this.start();
     }
 
-    if (nextProps.renderCount) {
+    if (nextProps.resetKey !== this.props.resetKey) {
       clearInterval(this.timer);
       this.start();
     }
