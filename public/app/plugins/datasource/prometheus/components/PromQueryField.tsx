@@ -10,6 +10,7 @@ import Prism from 'prismjs';
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 
 // dom also includes Element polyfills
+import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
@@ -124,6 +125,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
 
     this.plugins = [
+      BracesPlugin(),
       PluginPrism({
         onlyIn: (node: any) => node.type === 'code_block',
         getSyntax: (node: any) => 'promql',

@@ -8,6 +8,10 @@ import PluginPrism from 'slate-prism';
 // Components
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
 
+// Utils & Services
+// dom also includes Element polyfills
+import BracesPlugin from 'app/features/explore/slate-plugins/braces';
+
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
@@ -80,6 +84,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     super(props, context);
 
     this.plugins = [
+      BracesPlugin(),
       PluginPrism({
         onlyIn: (node: any) => node.type === 'code_block',
         getSyntax: (node: any) => 'promql',
