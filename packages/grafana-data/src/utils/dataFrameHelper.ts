@@ -1,7 +1,7 @@
 import { Field, FieldType, DataFrame, Vector, FieldDTO, DataFrameDTO } from '../types/dataFrame';
-import { Labels, QueryResultMeta } from '../types/data';
-import { guessFieldTypeForField, guessFieldTypeFromValue } from './processDataFrame';
-import { ArrayVector } from './vector';
+import { Labels, QueryResultMeta, KeyValue } from '../types/data';
+import { guessFieldTypeForField, guessFieldTypeFromValue, toDataFrameDTO } from './processDataFrame';
+import { ArrayVector, AppendingVector, vectorToArray } from './vector';
 import isArray from 'lodash/isArray';
 
 export class DataFrameHelper implements DataFrame {
@@ -200,6 +200,10 @@ export class DataFrameHelper implements DataFrame {
   getFieldByName(name: string): Field | undefined {
     return this.fieldByName[name];
   }
+
+  toJSON() {
+    return toDataFrameDTO(this);
+  }
 }
 
 function makeFieldParser(value: string, field: Field): (value: string) => any {
@@ -226,4 +230,159 @@ function makeFieldParser(value: string, field: Field): (value: string) => any {
 
   // Just pass the string back
   return (value: string) => value;
+}
+
+interface AppendingDataFrameOptions {
+  frame?: DataFrame | DataFrameDTO;
+  newVector?: (buffer?: any[]) => AppendingVector;
+}
+
+export type AppendingField<T = any> = Field<T, AppendingVector<T>>;
+
+export class AppendingDataFrame<T = any> implements DataFrame, AppendingVector<T> {
+  name?: string;
+  labels?: Labels;
+  refId?: string;
+  meta?: QueryResultMeta;
+
+  fields: AppendingField[] = [];
+  values: KeyValue<AppendingVector> = {};
+
+  private first: Vector = new ArrayVector();
+  private newVector: (buffer?: any[]) => AppendingVector;
+
+  constructor(options?: AppendingDataFrameOptions) {
+    options = options || {};
+
+    this.newVector = options.newVector
+      ? options.newVector
+      : (buffer?: any[]) => {
+          return new ArrayVector(buffer);
+        };
+    if (options.frame) {
+      const frame = options.frame;
+      this.name = frame.name;
+      this.labels = frame.labels;
+      this.refId = frame.refId;
+      this.meta = frame.meta;
+
+      if (frame.fields) {
+        for (const f of frame.fields) {
+          this.addField(f);
+        }
+      }
+    }
+  }
+
+  // Defined for Vector interface
+  get length() {
+    return this.first.length;
+  }
+
+  private addField(f: Field | FieldDTO) {
+    let buffer: any[] | undefined = undefined;
+    if (f.values) {
+      if (isArray(f.values)) {
+        buffer = f.values as any[];
+      } else {
+        buffer = (f.values as Vector).toArray();
+      }
+    }
+    let type = f.type;
+    if (!type && buffer && buffer.length) {
+      type = guessFieldTypeFromValue(buffer[0]);
+    }
+    if (!type) {
+      type = FieldType.other;
+    }
+
+    // Make sure it has a name
+    let name = f.name;
+    if (!name) {
+      if (type === FieldType.time) {
+        name = this.values['Time'] ? `Time ${this.fields.length + 1}` : 'Time';
+      } else {
+        name = `Field ${this.fields.length + 1}`;
+      }
+    }
+    if (this.values[name]) {
+      return;
+    }
+
+    const field: AppendingField = {
+      name,
+      type,
+      config: f.config || {},
+      values: this.newVector(buffer),
+    };
+    this.values[name] = field.values;
+    this.fields.push(field);
+    this.first = this.fields[0].values;
+
+    // Make sure all arrays are the same length
+    const length = this.fields.reduce((v: number, f) => {
+      return Math.max(v, f.values.length);
+    }, 0);
+    for (const field of this.fields) {
+      while (field.values.length !== length) {
+        field.values.add(undefined);
+      }
+    }
+  }
+
+  private addMissingFieldsFor(value: any) {
+    for (const key of Object.keys(value)) {
+      if (!this.values[key]) {
+        this.addField({
+          name: key,
+          type: guessFieldTypeFromValue(value[key]),
+        });
+      }
+    }
+  }
+
+  /**
+   * Add all properties of the value as fields on the frame
+   */
+  add(value: T, addMissingFields?: boolean) {
+    if (addMissingFields) {
+      this.addMissingFieldsFor(value);
+    }
+    // Will add one value for every field
+    const obj = value as any;
+    for (const field of this.fields) {
+      field.values.add(obj[field.name]);
+    }
+  }
+
+  set(index: number, value: T, addMissingFields?: boolean) {
+    if (index > this.length) {
+      throw new Error('Unable ot set value beyond current length');
+    }
+
+    if (addMissingFields) {
+      this.addMissingFieldsFor(value);
+    }
+
+    const obj = (value as any) || {};
+    for (const field of this.fields) {
+      field.values.set(index, obj[field.name]);
+    }
+  }
+
+  get(idx: number): T {
+    const v: any = {};
+    for (const field of this.fields) {
+      v[field.name] = field.values.get(idx);
+    }
+    return v as T;
+  }
+
+  toArray(): T[] {
+    return vectorToArray(this);
+  }
+
+  toJSON() {
+    return toDataFrameDTO(this);
+  }
 }

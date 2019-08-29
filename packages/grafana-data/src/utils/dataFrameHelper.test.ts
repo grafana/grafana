@@ -1,5 +1,5 @@
 import { DataFrameDTO, FieldDTO, FieldType } from '../types';
-import { DataFrameHelper } from './dataFrameHelper';
+import { DataFrameHelper, AppendingDataFrame } from './dataFrameHelper';
 
 describe('dataFrameHelper', () => {
   const frame: DataFrameDTO = {
@@ -111,5 +111,40 @@ describe('reverse', () => {
       expect(helper.getFieldByName('name')!.values.toArray()).toEqual(['c', 'b', 'a']);
       expect(helper.getFieldByName('value')!.values.toArray()).toEqual([3, 2, 1]);
     });
+  });
+});
+
+describe('Apending DataFrame', () => {
+  it('Should append values', () => {
+    const dto: DataFrameDTO = {
+      fields: [
+        { name: 'time', type: FieldType.time, values: [100] },
+        { name: 'name', type: FieldType.string, values: ['a', 'b'] },
+        { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    };
+
+    const frame = new AppendingDataFrame({ frame: dto });
+    expect(frame.values.time.toArray()).toEqual([100, undefined, undefined]);
+
+    // Set a value on the second row
+    frame.set(1, { time: 200, name: 'BB', value: 20 });
+    expect(frame.toArray()).toEqual([
+      { time: 100, name: 'a', value: 1 }, // 1
+      { time: 200, name: 'BB', value: 20 }, // 2
+      { time: undefined, name: undefined, value: 3 }, // 3
+    ]);
+
+    // Set a value on the second row
+    frame.add({ value2: 'XXX' }, true);
+    expect(frame.toArray()).toEqual([
+      { time: 100, name: 'a', value: 1, value2: undefined }, // 1
+      { time: 200, name: 'BB', value: 20, value2: undefined }, // 2
+      { time: undefined, name: undefined, value: 3, value2: undefined }, // 3
+      { time: undefined, name: undefined, value: undefined, value2: 'XXX' }, // 4
+    ]);
+
+    // const copy = { ...frame };
+    // expect(copy.length).toBe(frame.length);
   });
 });
