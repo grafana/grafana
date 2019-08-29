@@ -160,7 +160,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.onFramesReceived(getProcessedDataFrames(dataList));
   }
 
-  // Directly support DataFrame skipping event callbacks
   onFramesReceived(frames: DataFrame[]) {
     const { panel } = this;
 
