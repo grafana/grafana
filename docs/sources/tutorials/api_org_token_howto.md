@@ -15,7 +15,7 @@ Use the Grafana API to setup new Grafana organizations or to add dynamically gen
 
 There are two authentication methods to access the API: 
 
-- Basic authentication: A Grafana Admin user can access some parts of the Graphana API through basic authentication. 
+- Basic authentication: A Grafana Admin user can access some parts of the Grafana API through basic authentication. 
 - API Tokens: All organization actions are accessed through an API Token. An API Token is associated with an organization. It can be used to create dashboards and other components specific for that organization.
 
 ## How To Create A New Organization and an API Token
@@ -72,4 +72,4 @@ Using the Token that was created in the previous step, you can create a dashboar
   }' http://localhost:3000/api/dashboards/db
   ```
 
-  This import will not work if you export the dashboard using the Share -> Export menu in the Grafana UI (it strips out data source names etc.). View the JSON and save it to a file instead or fetch the dashboard JSON through the API.
+  > **Note.** If you export a dashboard for sharing externally using the Share > Export menu in the Grafana UI, you cannot import that dashboard. Instead, click **View JSON** and save it to a file or fetch the JSON output through the API.
