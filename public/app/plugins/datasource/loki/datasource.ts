@@ -1,7 +1,7 @@
 // Libraries
 import _ from 'lodash';
 // Services & Utils
-import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime, parseLabels } from '@grafana/data';
+import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -21,7 +21,7 @@ import { LokiQuery, LokiOptions } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
-import { LiveTarget, LiveStream } from './live_stream';
+import { LiveTarget, LiveStreams } from './live_streams';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -47,7 +47,7 @@ interface LokiContextQueryOptions {
 }
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
-  private streams: { [key: string]: LiveStream } = null;
+  private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
 
@@ -61,7 +61,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines, 10) || DEFAULT_MAX_LINES;
-    this.streams = {};
   }
 
   _request(apiUrl: string, data?: any, options?: any) {
@@ -158,25 +157,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return series;
   };
 
-  /**
-   * This will run a background check on all open streams and close any
-   * streams that have no listenters.  This has a small delay because
-   * query editors will often refresh queries in a way that disconnects
-   * and then reconnects quickly.  With the small delay the reconnect
-   * simply listens to the previous stream rather than a full shutdown
-   * and restart
-   */
-  private validateOpenStreams = () => {
-    _.delay(() => {
-      for (const stream of Object.values(this.streams)) {
-        if (!stream.hasObservers()) {
-          stream.close();
-          delete this.streams[stream.url];
-        }
-      }
-    }, 500);
-  };
-
   runLiveQueries = (options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) => {
     const liveTargets = options.targets
       .filter(target => target.expr && !target.hide && target.live)
@@ -184,13 +164,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     for (const liveTarget of liveTargets) {
       // Reuse an existing stream if one is already running
-      let stream = this.streams[liveTarget.url];
-      if (!stream || !stream.isOpen()) {
-        const labels = parseLabels(liveTarget.query);
-        stream = new LiveStream(liveTarget.url, labels, liveTarget.size);
-        this.streams[liveTarget.url] = stream;
-      }
-
+      const stream = this.streams.observe(liveTarget);
       const subscription = stream.subscribe({
         next: (data: DataFrame[]) => {
           observer({
@@ -200,7 +174,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
             data,
             unsubscribe: () => {
               subscription.unsubscribe();
-              this.validateOpenStreams();
             },
           });
         },
@@ -212,7 +185,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
             error: this.processError(err, liveTarget),
             unsubscribe: () => {
               subscription.unsubscribe();
-              this.validateOpenStreams();
             },
           });
         },
