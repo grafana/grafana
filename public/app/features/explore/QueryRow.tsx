@@ -11,7 +11,7 @@ import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/act
 // Types
 import { StoreState } from 'app/types';
 import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData, DataQueryError } from '@grafana/ui';
+import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
@@ -40,7 +40,6 @@ interface QueryRowProps extends PropsFromParent {
   runQueries: typeof runQueries;
   queryResponse: PanelData;
   latency: number;
-  queryErrors: DataQueryError[];
   mode: ExploreMode;
 }
 
@@ -118,11 +117,11 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       datasourceStatus,
       queryResponse,
       latency,
-      queryErrors,
       mode,
     } = this.props;
     const canToggleEditorModes =
       mode === ExploreMode.Metrics && _.has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+    const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
     if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
@@ -206,7 +205,6 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     absoluteRange,
     datasourceError,
     latency,
-    queryErrors,
     mode,
     queryResponse,
   } = item;
@@ -224,7 +222,6 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     datasourceStatus,
     queryResponse,
     latency,
-    queryErrors,
     mode,
   };
 }

@@ -5,7 +5,6 @@ import {
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
-  DataQueryError,
   PanelData,
 } from '@grafana/ui';
 
@@ -247,8 +246,6 @@ export interface ExploreItemState {
   urlState: ExploreUrlState;
 
   update: ExploreUpdateState;
-
-  queryErrors: DataQueryError[];
 
   latency: number;
   supportedModes: ExploreMode[];

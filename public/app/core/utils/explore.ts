@@ -460,7 +460,7 @@ export const getFirstQueryErrorWithoutRefId = (errors: DataQueryError[]) => {
     return null;
   }
 
-  return errors.filter(error => (error.refId ? false : true))[0];
+  return errors.filter(error => (error && error.refId ? false : true))[0];
 };
 
 export const getRefIds = (value: any): string[] => {

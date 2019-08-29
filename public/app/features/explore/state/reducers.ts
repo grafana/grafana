@@ -9,6 +9,7 @@ import {
   sortLogsResult,
   stopQueryState,
   refreshIntervalToSortOrder,
+  instanceOfDataQueryError,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState } from '@grafana/data';
@@ -24,11 +25,9 @@ import {
   loadExploreDatasources,
   historyUpdatedAction,
   changeModeAction,
-  queryFailureAction,
   setUrlReplacedAction,
   querySuccessAction,
   scanStopAction,
-  resetQueryErrorAction,
   queryStartAction,
   runQueriesAction,
   changeRangeAction,
@@ -61,7 +60,7 @@ import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { PanelQueryState } from '../../dashboard/state/PanelQueryState';
+import { PanelQueryState, toDataQueryError } from '../../dashboard/state/PanelQueryState';
 import { ResultProcessor } from '../utils/ResultProcessor';
 
 export const DEFAULT_RANGE = {
@@ -113,7 +112,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   queryKeys: [],
   urlState: null,
   update: makeInitialUpdateState(),
-  queryErrors: [],
   latency: 0,
   supportedModes: [],
   mode: null,
@@ -284,7 +282,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         datasourceInstance,
-        queryErrors: [],
         latency: 0,
         queryResponse: {
           state: LoadingState.NotStarted,
@@ -367,33 +364,33 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
-    filter: queryFailureAction,
-    mapper: (state, action): ExploreItemState => {
-      const { response } = action.payload;
-      const queryErrors = state.queryErrors.concat(response);
-
-      return {
-        ...state,
-        graphResult: null,
-        tableResult: null,
-        logsResult: null,
-        latency: 0,
-        queryErrors,
-        update: makeInitialUpdateState(),
-      };
-    },
-  })
+  // .addMapper({
+  //   filter: queryFailureAction,
+  //   mapper: (state, action): ExploreItemState => {
+  //     const { response } = action.payload;
+  //     const queryErrors = state.queryErrors.concat(response);
+  //
+  //     return {
+  //       ...state,
+  //       graphResult: null,
+  //       tableResult: null,
+  //       logsResult: null,
+  //       latency: 0,
+  //       queryErrors,
+  //       update: makeInitialUpdateState(),
+  //     };
+  //   },
+  // })
   .addMapper({
     filter: queryStartAction,
     mapper: (state): ExploreItemState => {
       return {
         ...state,
-        queryErrors: [],
         latency: 0,
         queryResponse: {
           ...state.queryResponse,
           state: LoadingState.Loading,
+          error: null,
         },
         loading: true,
         update: makeInitialUpdateState(),
@@ -570,24 +567,24 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       };
     },
   })
-  .addMapper({
-    filter: resetQueryErrorAction,
-    mapper: (state, action): ExploreItemState => {
-      const { refIds } = action.payload;
-      const queryErrors = state.queryErrors.reduce((allErrors, error) => {
-        if (error.refId && refIds.indexOf(error.refId) !== -1) {
-          return allErrors;
-        }
-
-        return allErrors.concat(error);
-      }, []);
-
-      return {
-        ...state,
-        queryErrors,
-      };
-    },
-  })
+  // .addMapper({
+  //   filter: resetQueryErrorAction,
+  //   mapper: (state, action): ExploreItemState => {
+  //     const { refIds } = action.payload;
+  //     const queryErrors = state.queryErrors.reduce((allErrors, error) => {
+  //       if (error.refId && refIds.indexOf(error.refId) !== -1) {
+  //         return allErrors;
+  //       }
+  //
+  //       return allErrors.concat(error);
+  //     }, []);
+  //
+  //     return {
+  //       ...state,
+  //       queryErrors,
+  //     };
+  //   },
+  // })
   .addMapper({
     filter: setUrlReplacedAction,
     mapper: (state): ExploreItemState => {
@@ -627,13 +624,36 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: queryEndedAction,
     mapper: (state, action): ExploreItemState => {
       const { response } = action.payload;
-      const { request, state: loadingState, series, legacy } = response;
+      const { request, state: loadingState, series, legacy, error } = response;
+
+      if (error) {
+        // For Angular editors
+        state.eventBridge.emit('data-error', error);
+
+        console.error(error); // To help finding problems with query syntax
+
+        if (!instanceOfDataQueryError(error)) {
+          response.error = toDataQueryError(error);
+        }
+
+        return {
+          ...state,
+          loading: false,
+          queryResponse: response,
+          graphResult: null,
+          tableResult: null,
+          logsResult: null,
+        };
+      }
 
       const latency = request.endTime - request.startTime;
 
       // temporary hack until we switch to PanelData, Loki already converts to DataFrame so using legacy will destroy the format
       const isLokiDataSource = state.datasourceInstance.meta.name === 'Loki';
       const processor = new ResultProcessor(state, true, isLokiDataSource ? series : legacy);
+
+      // For Angular editors
+      state.eventBridge.emit('data-received', processor.getRawData());
 
       return {
         ...state,
@@ -652,11 +672,34 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: queryStreamUpdatedAction,
     mapper: (state, action): ExploreItemState => {
       const { response } = action.payload;
-      const { state: loadingState, series, legacy } = response;
+      const { state: loadingState, series, legacy, error } = response;
+
+      if (error) {
+        // For Angular editors
+        state.eventBridge.emit('data-error', error);
+
+        console.error(error); // To help finding problems with query syntax
+
+        if (!instanceOfDataQueryError(error)) {
+          response.error = toDataQueryError(error);
+        }
+
+        return {
+          ...state,
+          loading: false,
+          queryResponse: response,
+          graphResult: null,
+          tableResult: null,
+          logsResult: null,
+        };
+      }
 
       // temporary hack until we switch to PanelData, Loki already converts to DataFrame so using legacy will destroy the format
       const isLokiDataSource = state.datasourceInstance.meta.name === 'Loki';
       const processor = new ResultProcessor(state, false, isLokiDataSource ? series : legacy);
+
+      // For Angular editors
+      state.eventBridge.emit('data-received', processor.getRawData());
 
       return {
         ...state,
