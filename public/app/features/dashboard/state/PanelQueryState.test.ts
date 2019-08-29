@@ -1,7 +1,7 @@
 import { toDataQueryError, PanelQueryState, getProcessedDataFrames } from './PanelQueryState';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { LoadingState, getDataFrameRow } from '@grafana/data';
-import { DataQueryResponse } from '@grafana/ui';
+import { DataQueryResponse, DataQueryRequest, DataQuery } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('PanelQueryState', () => {
@@ -57,8 +57,8 @@ describe('PanelQueryState', () => {
 describe('When cancelling request', () => {
   it('Should call rejector', () => {
     const state = new PanelQueryState();
-    state.request = {};
-    state.rejector = (obj: any) => {
+    state.request = {} as DataQueryRequest<DataQuery>;
+    (state as any).rejector = (obj: any) => {
       expect(obj.cancelled).toBe(true);
       expect(obj.message).toBe('OHH');
     };
