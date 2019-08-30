@@ -1,7 +1,7 @@
 package extensions
 
 import (
-	// Upgrade ldapsync from cron to cron.v3 and 
+	// Upgrade ldapsync from cron to cron.v3 and
 	// remove the cron (v1) dependency
 
 	_ "github.com/crewjam/saml"
