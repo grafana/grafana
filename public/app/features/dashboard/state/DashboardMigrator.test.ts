@@ -415,6 +415,10 @@ describe('DashboardModel', () => {
                 dashUri: '',
                 title: 'test',
               },
+              {
+                type: 'dashboard',
+                keepTime: true,
+              },
             ],
           },
         ],

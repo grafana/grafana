@@ -643,6 +643,11 @@ function upgradePanelLink(link: any): DataLink {
     url = `/dashboard/${link.dashUri}`;
   }
 
+  // some models are incomplete and have no dashboard or dashUri
+  if (!url) {
+    url = '/';
+  }
+
   if (link.keepTime) {
     url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.keepTime}`);
   }
