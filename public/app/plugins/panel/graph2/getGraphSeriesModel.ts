@@ -25,7 +25,7 @@ export const getGraphSeriesModel = (
     }
 
     for (const field of series.fields) {
-      if (field.type !== FieldType.time) {
+      if (field.type !== FieldType.number) {
         continue;
       }
 
