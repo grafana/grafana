@@ -1,4 +1,5 @@
 import { GrafanaDatasource } from '../datasource';
+import { TemplateSrv } from '../../../../features/templating/template_srv';
 // @ts-ignore
 import q from 'q';
 import { dateTime } from '@grafana/data';
@@ -13,11 +14,14 @@ describe('grafana data source', () => {
       },
     };
 
-    const templateSrvStub = {
-      replace: (val: string) => {
-        return val.replace('$var2', 'replaced__delimiter__replaced2').replace('$var', 'replaced');
-      },
-    };
+    const templateSrvStub = new TemplateSrv();
+    templateSrvStub.init([
+      { type: 'query', name: 'var', current: { value: 'replaced' } },
+      { type: 'query', name: 'var2', current: { value: ['replaced', 'replaced2'] } },
+      { type: 'query', name: 'var3', current: { value: ['replaced3', 'replaced4'] } },
+      { type: 'query', name: 'var4', current: { value: ['replaced?', 'replaced?2'] } },
+      { type: 'query', name: 'var5', current: { value: ['replaced?3', 'replaced?4'] } },
+    ]);
 
     const ds = new GrafanaDatasource(backendSrvStub as any, q, templateSrvStub as any);
 
@@ -34,7 +38,7 @@ describe('grafana data source', () => {
     });
 
     describe('with tags that have multi value template variables', () => {
-      const options = setupAnnotationQueryOptions({ tags: ['$var2'] });
+      const options = setupAnnotationQueryOptions({ tags: ['$var2', '$var3'] });
 
       beforeEach(() => {
         return ds.annotationQuery(options);
@@ -43,6 +47,51 @@ describe('grafana data source', () => {
       it('should interpolate template variables in tags in query options', () => {
         expect(calledBackendSrvParams.tags[0]).toBe('replaced');
         expect(calledBackendSrvParams.tags[1]).toBe('replaced2');
+        expect(calledBackendSrvParams.tags[2]).toBe('replaced3');
+        expect(calledBackendSrvParams.tags[3]).toBe('replaced4');
+      });
+    });
+
+    describe('with key-value tags that have one variable having mutiple values', () => {
+      const options = setupAnnotationQueryOptions({ tags: ['tag1:${var2}'] });
+
+      beforeEach(() => {
+        return ds.annotationQuery(options);
+      });
+
+      it('should interpolate template variables in tags in query options', () => {
+        expect(calledBackendSrvParams.tags[0]).toBe('tag1:replaced');
+        expect(calledBackendSrvParams.tags[1]).toBe('tag1:replaced2');
+      });
+    });
+
+    describe('with key-value tags that have multiple template variables having mutiple values', () => {
+      const options = setupAnnotationQueryOptions({ tags: ['tag1:$var2-$var3-trailing'] });
+
+      beforeEach(() => {
+        return ds.annotationQuery(options);
+      });
+
+      it('should interpolate template variables in tags in query options', () => {
+        expect(calledBackendSrvParams.tags[0]).toBe('tag1:replaced-replaced3-trailing');
+        expect(calledBackendSrvParams.tags[1]).toBe('tag1:replaced-replaced4-trailing');
+        expect(calledBackendSrvParams.tags[2]).toBe('tag1:replaced2-replaced3-trailing');
+        expect(calledBackendSrvParams.tags[3]).toBe('tag1:replaced2-replaced4-trailing');
+      });
+    });
+
+    describe('with key-value tags including one having specific format', () => {
+      const options = setupAnnotationQueryOptions({ tags: ['tag1:$var4-${var5:percentencode}-trailing'] });
+
+      beforeEach(() => {
+        return ds.annotationQuery(options);
+      });
+
+      it('should interpolate template variables in tags in query options', () => {
+        expect(calledBackendSrvParams.tags[0]).toBe('tag1:replaced?-replaced%3F3-trailing');
+        expect(calledBackendSrvParams.tags[1]).toBe('tag1:replaced?-replaced%3F4-trailing');
+        expect(calledBackendSrvParams.tags[2]).toBe('tag1:replaced?2-replaced%3F3-trailing');
+        expect(calledBackendSrvParams.tags[3]).toBe('tag1:replaced?2-replaced%3F4-trailing');
       });
     });
 

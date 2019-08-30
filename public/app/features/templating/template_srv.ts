@@ -8,6 +8,12 @@ function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
 
+export interface TargetToken {
+  value: any | any[];
+  format?: string | Function;
+  variable?: any;
+}
+
 export class TemplateSrv {
   variables: any[];
 
@@ -229,41 +235,60 @@ export class TemplateSrv {
     if (!target) {
       return target;
     }
+    return this.replaceWithoutFormatting(target, scopedVars, format)
+      .map(t => this.formatValue(t.value, t.format, t.variable))
+      .join('');
+  }
 
-    let variable, systemValue, value, fmt;
+  replaceWithoutFormatting(target: string, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {
     this.regex.lastIndex = 0;
-
-    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fmt3) => {
-      variable = this.index[var1 || var2 || var3];
-      fmt = fmt2 || fmt3 || format;
-      if (scopedVars) {
-        value = scopedVars[var1 || var2 || var3];
-        if (value) {
-          return this.formatValue(value.value, fmt, variable);
-        }
+    let lastIndex = 0;
+    let tokens: TargetToken[] = [];
+    let regexExec = this.regex.exec(target);
+    while (regexExec !== null) {
+      if (regexExec.index > lastIndex) {
+        tokens.push({ value: target.substring(lastIndex, regexExec.index) });
       }
+      tokens = tokens.concat(this.replaceVariable(regexExec, scopedVars, format));
+      lastIndex = this.regex.lastIndex;
+      regexExec = this.regex.exec(target);
+    }
+    if (target.length > lastIndex) {
+      tokens.push({ value: target.substring(lastIndex, target.length) });
+    }
+    return tokens;
+  }
 
-      if (!variable) {
-        return match;
+  private replaceVariable(regexExec: any, scopedVars?: ScopedVars, format?: string | Function): TargetToken[] {
+    let variable, fmt, systemValue, value, match, var1, var2, fmt2, var3, fmt3;
+    [match, var1, var2, fmt2, var3, fmt3] = regexExec;
+    variable = this.index[var1 || var2 || var3];
+    fmt = fmt2 || fmt3 || format;
+    if (scopedVars) {
+      value = scopedVars[var1 || var2 || var3];
+      if (value) {
+        return [{ value: value.value, format: fmt, variable: variable }];
       }
+    }
 
-      systemValue = this.grafanaVariables[variable.current.value];
-      if (systemValue) {
-        return this.formatValue(systemValue, fmt, variable);
+    if (!variable) {
+      return [{ value: match }];
+    }
+
+    systemValue = this.grafanaVariables[variable.current.value];
+    if (systemValue) {
+      return [{ value: systemValue, format: fmt, variable: variable }];
+    }
+
+    value = variable.current.value;
+    if (this.isAllValue(value)) {
+      value = this.getAllValue(variable);
+      // skip formatting of custom all values
+      if (variable.allValue) {
+        return this.replaceWithoutFormatting(value);
       }
-
-      value = variable.current.value;
-      if (this.isAllValue(value)) {
-        value = this.getAllValue(variable);
-        // skip formatting of custom all values
-        if (variable.allValue) {
-          return this.replace(value);
-        }
-      }
-
-      const res = this.formatValue(value, fmt, variable);
-      return res;
-    });
+    }
+    return [{ value: value, format: fmt, variable: variable }];
   }
 
   isAllValue(value: any) {

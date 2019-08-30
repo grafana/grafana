@@ -60,24 +60,28 @@ class GrafanaDatasource {
       if (!_.isArray(options.annotation.tags) || options.annotation.tags.length === 0) {
         return this.$q.when([]);
       }
-      const delimiter = '__delimiter__';
-      const tags = [];
+      let tags: string[] = [];
       for (const t of params.tags) {
-        const renderedValues = this.templateSrv.replace(t, {}, (value: any) => {
-          if (typeof value === 'string') {
-            return value;
-          }
-
-          return value.join(delimiter);
-        });
-        for (const tt of renderedValues.split(delimiter)) {
-          tags.push(tt);
-        }
+        const tokens = GrafanaDatasource.cartesianProduct(
+          this.templateSrv.replaceWithoutFormatting(t, {}).map(targetToken => {
+            if (_.isArray(targetToken.value)) {
+              return targetToken.value.map(v =>
+                this.templateSrv.formatValue(v, targetToken.format, targetToken.variable)
+              );
+            } else {
+              return [this.templateSrv.formatValue(targetToken.value, targetToken.format, targetToken.variable)];
+            }
+          })
+        );
+        tags = tags.concat(tokens.map(t => t.join('')));
       }
       params.tags = tags;
     }
-
     return this.backendSrv.get('/api/annotations', params);
+  }
+
+  static cartesianProduct(arr: any[][]) {
+    return arr.reduce((a, b) => a.map(x => b.map(y => x.concat(y))).reduce((a, b) => a.concat(b), []), [[]]);
   }
 }
 
