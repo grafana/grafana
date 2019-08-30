@@ -1,8 +1,8 @@
 package extensions
 
 import (
-	// Need to remove "github.com/robfig/cron" with v3
-	// version after it will be used everywhere
+	// Upgrade ldapsync from cron to cron.v3 and 
+	// remove the cron (v1) dependency
 
 	_ "github.com/crewjam/saml"
 	_ "github.com/gobwas/glob"
