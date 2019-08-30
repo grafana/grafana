@@ -29,25 +29,6 @@ export class DataFrameHelper implements DataFrame {
     }
   }
 
-  addFieldFor(value: any, name?: string): Field {
-    if (!name) {
-      name = `Field ${this.fields.length + 1}`;
-    }
-    return this.addField({
-      name,
-      type: guessFieldTypeFromValue(value),
-    });
-  }
-
-  /**
-   * Reverse the direction of all fields
-   */
-  reverse() {
-    for (const f of this.fields) {
-      f.values.toArray().reverse();
-    }
-  }
-
   private updateTypeIndex(field: Field) {
     // Make sure it has a type
     if (field.type === FieldType.other) {
@@ -114,56 +95,6 @@ export class DataFrameHelper implements DataFrame {
 
     this.fields.push(field);
     return field;
-  }
-
-  /**
-   * This will add each value to the corresponding column
-   */
-  appendRow(row: any[]) {
-    for (let i = this.fields.length; i < row.length; i++) {
-      this.addFieldFor(row[i]);
-    }
-
-    // The first line may change the field types
-    if (this.length < 1) {
-      this.fieldByType = {};
-      for (let i = 0; i < this.fields.length; i++) {
-        const f = this.fields[i];
-        if (!f.type || f.type === FieldType.other) {
-          f.type = guessFieldTypeFromValue(row[i]);
-        }
-        this.updateTypeIndex(f);
-      }
-    }
-
-    for (let i = 0; i < this.fields.length; i++) {
-      const f = this.fields[i];
-      let v = row[i];
-      if (!f.parse) {
-        f.parse = makeFieldParser(v, f);
-      }
-      v = f.parse(v);
-
-      const arr = f.values as ArrayVector;
-      arr.buffer.push(v); // may be undefined
-    }
-    this.length++;
-  }
-
-  /**
-   * Add any values that match the field names
-   */
-  appendRowFrom(obj: { [key: string]: any }) {
-    for (const f of this.fields) {
-      const v = obj[f.name];
-      if (!f.parse) {
-        f.parse = makeFieldParser(v, f);
-      }
-
-      const arr = f.values as ArrayVector;
-      arr.buffer.push(f.parse(v)); // may be undefined
-    }
-    this.length++;
   }
 
   getFields(type?: FieldType): Field[] {
@@ -292,7 +223,14 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
     return this.first.length;
   }
 
-  private addField(f: Field | FieldDTO) {
+  addFieldFor(value: any, name?: string): MutableField {
+    return this.addField({
+      name: name || '', // Will be filled in
+      type: guessFieldTypeFromValue(value),
+    });
+  }
+
+  addField(f: Field | FieldDTO): MutableField {
     let buffer: any[] | undefined = undefined;
     if (f.values) {
       if (isArray(f.values)) {
@@ -318,8 +256,9 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
         name = `Field ${this.fields.length + 1}`;
       }
     }
+    // The Field Already exists
     if (this.values[name]) {
-      return;
+      throw new Error('Duplicate field name: ' + name);
     }
 
     const field: MutableField = {
@@ -341,6 +280,7 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
         field.values.add(undefined);
       }
     }
+    return field;
   }
 
   private addMissingFieldsFor(value: any) {
@@ -351,6 +291,47 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
           type: guessFieldTypeFromValue(value[key]),
         });
       }
+    }
+  }
+
+  /**
+   * Reverse all values
+   */
+  reverse() {
+    for (const f of this.fields) {
+      f.values.reverse();
+    }
+  }
+
+  /**
+   * This will add each value to the corresponding column
+   */
+  appendRow(row: any[]) {
+    // Add any extra columns
+    for (let i = this.fields.length; i < row.length; i++) {
+      this.addField({
+        name: `Field ${i + 1}`,
+        type: guessFieldTypeFromValue(row[i]),
+      });
+    }
+
+    // The first line may change the field types
+    if (this.length < 1) {
+      for (let i = 0; i < this.fields.length; i++) {
+        const f = this.fields[i];
+        if (!f.type || f.type === FieldType.other) {
+          f.type = guessFieldTypeFromValue(row[i]);
+        }
+      }
+    }
+
+    for (let i = 0; i < this.fields.length; i++) {
+      const f = this.fields[i];
+      const v = row[i];
+      if (!f.parse) {
+        f.parse = makeFieldParser(v, f);
+      }
+      f.values.add(f.parse(v));
     }
   }
 

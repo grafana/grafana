@@ -99,17 +99,17 @@ describe('reverse', () => {
         ],
       };
 
-      const helper = new DataFrameHelper(frame);
+      const helper = new MutableDataFrame(frame);
 
-      expect(helper.getFieldByName('time')!.values.toArray()).toEqual([100, 200, 300]);
-      expect(helper.getFieldByName('name')!.values.toArray()).toEqual(['a', 'b', 'c']);
-      expect(helper.getFieldByName('value')!.values.toArray()).toEqual([1, 2, 3]);
+      expect(helper.values.time.toArray()).toEqual([100, 200, 300]);
+      expect(helper.values.name.toArray()).toEqual(['a', 'b', 'c']);
+      expect(helper.values.value.toArray()).toEqual([1, 2, 3]);
 
       helper.reverse();
 
-      expect(helper.getFieldByName('time')!.values.toArray()).toEqual([300, 200, 100]);
-      expect(helper.getFieldByName('name')!.values.toArray()).toEqual(['c', 'b', 'a']);
-      expect(helper.getFieldByName('value')!.values.toArray()).toEqual([3, 2, 1]);
+      expect(helper.values.time.toArray()).toEqual([300, 200, 100]);
+      expect(helper.values.name.toArray()).toEqual(['c', 'b', 'a']);
+      expect(helper.values.value.toArray()).toEqual([3, 2, 1]);
     });
   });
 });

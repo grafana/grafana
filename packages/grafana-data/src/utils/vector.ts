@@ -19,7 +19,15 @@ export interface ReadWriteVector<T = any> extends Vector<T> {
  * Vector with standard manipulation functions
  */
 export interface MutableVector<T = any> extends ReadWriteVector<T> {
+  /**
+   * Adds the value to the vector
+   */
   add: (value: T) => void;
+
+  /**
+   * modifies the vector so it is now the oposite order
+   */
+  reverse: () => void;
 }
 
 export class ArrayVector<T = any> implements MutableVector<T> {
@@ -43,6 +51,10 @@ export class ArrayVector<T = any> implements MutableVector<T> {
 
   set(index: number, value: T) {
     this.buffer[index] = value;
+  }
+
+  reverse() {
+    this.buffer.reverse();
   }
 
   toArray(): T[] {
@@ -222,6 +234,10 @@ export class CircularVector<T = any> implements MutableVector<T> {
       this.tail = tail;
       this.add = this.getAddFunction();
     }
+  }
+
+  reverse() {
+    this.buffer.reverse();
   }
 
   /**
