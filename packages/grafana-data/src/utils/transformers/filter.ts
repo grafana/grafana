@@ -1,4 +1,5 @@
-import { DataTransformerInfo, NoopDataTransformer } from './transformers';
+import { DataTransformerInfo } from './transformers';
+import { noopTransformer } from './noop';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { FieldMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
@@ -23,7 +24,7 @@ export const filterFieldsTransformer: DataTransformerInfo<FilterOptions> = {
    */
   transformer: (options: FilterOptions) => {
     if (!options.include && !options.exclude) {
-      return NoopDataTransformer;
+      return noopTransformer.transformer({});
     }
 
     const include = options.include ? getFieldMatcher(options.include) : null;
@@ -75,7 +76,7 @@ export const filterFramesTransformer: DataTransformerInfo<FilterOptions> = {
    */
   transformer: (options: FilterOptions) => {
     if (!options.include && !options.exclude) {
-      return NoopDataTransformer;
+      return noopTransformer.transformer({});
     }
 
     const include = options.include ? getFrameMatchers(options.include) : null;

@@ -15,9 +15,6 @@ export interface DataTransformerConfig<TOptions = any> {
   options: TOptions;
 }
 
-// Transformer that does nothing
-export const NoopDataTransformer = (data: DataFrame[]) => data;
-
 /**
  * Apply configured transformations to the input data
  */
@@ -52,6 +49,7 @@ import { appendTransformer, AppendOptions } from './append';
 import { reduceTransformer, ReduceTransformerOptions } from './reduce';
 import { filterFieldsTransformer, filterFramesTransformer } from './filter';
 import { filterFieldsByNameTransformer, FilterFieldsByNameTransformerOptions } from './filterByName';
+import { noopTransformer } from './noop';
 
 /**
  * Registry of transformation options that can be driven by
@@ -76,6 +74,7 @@ class TransformerRegistry extends Registry<DataTransformerInfo> {
 }
 
 export const dataTransformers = new TransformerRegistry(() => [
+  noopTransformer,
   filterFieldsTransformer,
   filterFieldsByNameTransformer,
   filterFramesTransformer,
