@@ -148,6 +148,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on('render', this.onRender.bind(this));
+    this.events.on('data-frames-received', this.onDataFramesReceived.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
@@ -210,13 +211,11 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   // This should only be called from the snapshot callback
   onDataReceived(dataList: LegacyResponseData[]) {
-    this.handleDataFrame(getProcessedDataFrame(dataList));
+    this.onDataFramesReceived(getProcessedDataFrame(dataList));
   }
 
   // Directly support DataFrame skipping event callbacks
-  handleDataFrame(data: DataFrame[]) {
-    super.handleDataFrame(data);
-
+  onDataFramesReceived(data: DataFrame[]) {
     this.dataList = data;
     this.seriesList = this.processor.getSeriesList({
       dataList: this.dataList,

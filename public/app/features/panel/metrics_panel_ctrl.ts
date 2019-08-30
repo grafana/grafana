@@ -152,9 +152,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
         // Make the results look like they came directly from a <6.2 datasource request
         // NOTE: any object other than 'data' is no longer supported supported
-        this.handleQueryResult({
-          data: data.legacy,
-        });
+        this.handleQueryResult({ data: data.legacy });
       } else {
         this.handleDataFrame(data.series);
       }
@@ -219,7 +217,12 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (this.dashboard && this.dashboard.snapshot) {
       this.panel.snapshotData = data;
     }
-    // Subclasses that asked for DataFrame will override
+
+    try {
+      this.events.emit('data-frames-received', data);
+    } catch (err) {
+      this.processDataError(err);
+    }
   }
 
   handleQueryResult(result: DataQueryResponse) {
@@ -234,7 +237,11 @@ class MetricsPanelCtrl extends PanelCtrl {
       result = { data: [] };
     }
 
-    this.events.emit('data-received', result.data);
+    try {
+      this.events.emit('data-received', result.data);
+    } catch (err) {
+      this.processDataError(err);
+    }
   }
 
   getAdditionalMenuItems() {
