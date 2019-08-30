@@ -164,7 +164,7 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
     });
   }
 
-  addField(f: Field | FieldDTO): MutableField {
+  addField(f: Field | FieldDTO, startLength?: number): MutableField {
     let buffer: any[] | undefined = undefined;
     if (f.values) {
       if (isArray(f.values)) {
@@ -216,7 +216,15 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
     } else {
       this.values[name] = field.values;
     }
-    this.validate();
+
+    // Make sure the field starts with a given length
+    if (startLength) {
+      while (field.values.length < startLength) {
+        field.values.add(undefined);
+      }
+    } else {
+      this.validate();
+    }
     return field;
   }
 

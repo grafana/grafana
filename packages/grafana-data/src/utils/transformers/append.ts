@@ -32,14 +32,18 @@ export const appendTransformer: DataTransformerInfo<AppendOptions> = {
 
       for (let i = 1; i < data.length; i++) {
         const frame = data[i];
+        const startLength = frame.length;
         for (let j = 0; j < frame.fields.length; j++) {
           const src = frame.fields[j];
           let vals = processed.values[src.name];
           if (!vals) {
-            vals = processed.addField({
-              ...src,
-              values: [],
-            }).values;
+            vals = processed.addField(
+              {
+                ...src,
+                values: [],
+              },
+              startLength
+            ).values;
           }
 
           // Add each row
