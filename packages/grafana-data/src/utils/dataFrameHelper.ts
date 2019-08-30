@@ -4,26 +4,11 @@ import { guessFieldTypeForField, guessFieldTypeFromValue, toDataFrameDTO } from 
 import { ArrayVector, MutableVector, vectorToArray, CircularVector } from './vector';
 import isArray from 'lodash/isArray';
 
-export class DataFrameHelper implements DataFrame {
-  refId?: string;
-  meta?: QueryResultMeta;
-  name?: string;
-  fields: Field[];
-  labels?: Labels;
-  length = 0; // updated so it is the length of all fields
-
+export class FieldCache {
   private fieldByName: { [key: string]: Field } = {};
   private fieldByType: { [key: string]: Field[] } = {};
 
-  constructor(data?: DataFrame | DataFrameDTO) {
-    if (!data) {
-      data = { fields: [] }; //
-    }
-    this.refId = data.refId;
-    this.meta = data.meta;
-    this.name = data.name;
-    this.labels = data.labels;
-    this.fields = [];
+  constructor(private data:DataFrame) {
     for (let i = 0; i < data.fields.length; i++) {
       this.addField(data.fields[i]);
     }
@@ -43,7 +28,7 @@ export class DataFrameHelper implements DataFrame {
     this.fieldByType[field.type].push(field);
   }
 
-  addField(f: Field | FieldDTO): Field {
+  private addField(f: Field | FieldDTO) {
     const type = f.type || FieldType.other;
     const values =
       !f.values || isArray(f.values)
@@ -53,13 +38,10 @@ export class DataFrameHelper implements DataFrame {
     // And a name
     let name = f.name;
     if (!name) {
-      if (type === FieldType.time) {
-        name = `Time ${this.fields.length + 1}`;
-      } else {
-        name = `Column ${this.fields.length + 1}`;
-      }
+      name = "XX";
     }
     const field: Field = {
+      ...f,
       name,
       type,
       config: f.config || {},
@@ -72,34 +54,11 @@ export class DataFrameHelper implements DataFrame {
     } else {
       this.fieldByName[field.name] = field;
     }
-
-    // Make sure the lengths all match
-    if (field.values.length !== this.length) {
-      if (field.values.length > this.length) {
-        // Add `null` to all other values
-        const newlen = field.values.length;
-        for (const fx of this.fields) {
-          const arr = fx.values as ArrayVector;
-          while (fx.values.length !== newlen) {
-            arr.buffer.push(null);
-          }
-        }
-        this.length = field.values.length;
-      } else {
-        const arr = field.values as ArrayVector;
-        while (field.values.length !== this.length) {
-          arr.buffer.push(null);
-        }
-      }
-    }
-
-    this.fields.push(field);
-    return field;
   }
 
   getFields(type?: FieldType): Field[] {
     if (!type) {
-      return [...this.fields]; // All fields
+      return [...this.data.fields]; // All fields
     }
     const fields = this.fieldByType[type];
     if (fields) {
@@ -130,10 +89,6 @@ export class DataFrameHelper implements DataFrame {
    */
   getFieldByName(name: string): Field | undefined {
     return this.fieldByName[name];
-  }
-
-  toJSON() {
-    return toDataFrameDTO(this);
   }
 }
 
@@ -345,7 +300,11 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
     // Will add one value for every field
     const obj = value as any;
     for (const field of this.fields) {
-      field.values.add(obj[field.name]);
+      const val = obj[field.name];
+      if (!field.parse) {
+        field.parse = makeFieldParser(val, field);
+      }
+      field.values.add(field.parse(val));
     }
   }
 
