@@ -210,6 +210,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         queries: queries.slice(),
+        graphResult: null,
+        tableResult: null,
+        logsResult: null,
         showingStartPage: Boolean(state.StartPage),
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
       };
