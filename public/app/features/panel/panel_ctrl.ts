@@ -249,23 +249,25 @@ export class PanelCtrl {
   }
 
   getInfoContent(options: { mode: string }) {
-    let markdown = this.panel.description || '';
+    const { panel } = this;
+    let markdown = panel.description || '';
 
     if (options.mode === 'tooltip') {
-      markdown = this.error || this.panel.description || '';
+      markdown = this.error || panel.description || '';
     }
 
     const templateSrv: TemplateSrv = this.$injector.get('templateSrv');
-    const interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
+    const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
     let html = '<div class="markdown-html panel-info-content">';
 
     const md = renderMarkdown(interpolatedMarkdown);
     html += config.disableSanitizeHtml ? md : sanitize(md);
-    const links = this.panel.links && getPanelLinksSupplier(this.panel).getLinks();
 
-    if (links && links.length > 0) {
+    if (panel.links && panel.links.length > 0) {
+      const interpolatedLinks = getPanelLinksSupplier(panel).getLinks();
+
       html += '<ul class="panel-info-corner-links">';
-      for (const link of links) {
+      for (const link of interpolatedLinks) {
         html +=
           '<li><a class="panel-menu-link" href="' +
           escapeHtml(link.href) +

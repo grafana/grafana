@@ -79,7 +79,7 @@ export class PanelQueryState {
       // call rejector to reject the executor promise
       if (!request.endTime) {
         request.endTime = Date.now();
-        this.rejector('Canceled:' + reason);
+        this.rejector({ cancelled: true, message: reason });
       }
 
       // Cancel any open HTTP request with the same ID
