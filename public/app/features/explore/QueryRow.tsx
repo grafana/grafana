@@ -210,8 +210,6 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
   } = item;
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
-  // const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
-  // const series = graphResult ? graphResult.map(serie => guessFieldTypes(toDataFrame(serie))) : []; // TODO: use DataFrame
 
   return {
     datasourceInstance,
