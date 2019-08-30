@@ -8,8 +8,8 @@ import (
 	_ "github.com/gobwas/glob"
 	_ "github.com/jung-kurt/gofpdf"
 	_ "github.com/robfig/cron"
+	_ "github.com/robfig/cron/v3"
 	_ "github.com/stretchr/testify/require"
-	_ "gopkg.in/robfig/cron.v3"
 	_ "gopkg.in/square/go-jose.v2"
 )
 

@@ -188,6 +188,8 @@ github.com/prometheus/procfs/internal/util
 github.com/rainycape/unidecode
 # github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 github.com/robfig/cron
+# github.com/robfig/cron/v3 v3.0.0
+github.com/robfig/cron/v3
 # github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7
 github.com/russellhaering/goxmldsig
 github.com/russellhaering/goxmldsig/etreeutils
