@@ -202,6 +202,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     const left = storeState.explore && storeState.explore.left;
     if (left && left.originPanelId) {
+      // When returning to the origin panel from explore, if we're doing
+      // so with changes all the explore state is reset _except_ the queries
+      // and the origin panel ID.
       const panelArrId = dashboard.panels.findIndex(panel => panel.id === left.originPanelId);
       if (panelArrId > -1) {
         dashboard.panels[panelArrId].targets = left.queries.map((query: DataQuery & { context?: string }) => {
@@ -211,6 +214,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         });
       }
       dashboard.startRefresh();
+      // Force-reset explore so that on subsequent dashboard loads we aren't
+      // taking the modified queries from explore again.
       dispatch(resetExploreAction({ force: true }));
     }
     // legacy srv state
