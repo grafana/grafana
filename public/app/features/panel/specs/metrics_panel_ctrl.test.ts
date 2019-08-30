@@ -58,6 +58,9 @@ function setupController({ hasAccessToExplore } = { hasAccessToExplore: false })
         case 'contextSrv': {
           return { hasAccessToExplore: () => hasAccessToExplore };
         }
+        case 'timeSrv': {
+          return { timeRangeForUrl: () => {} };
+        }
         default: {
           return jest.fn();
         }
