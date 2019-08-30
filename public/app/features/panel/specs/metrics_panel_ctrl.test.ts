@@ -37,14 +37,14 @@ describe('MetricsPanelCtrl', () => {
       });
     });
 
-    // describe('and has datasource set that supports explore and user has access to explore', () => {
-    //   it('should return one item', async () => {
-    //     const ctrl = setupController({ hasAccessToExplore: true });
-    //     ctrl.datasource = { meta: { explore: true } } as any;
+    describe('and has datasource set that supports explore and user has access to explore', () => {
+      it('should return one item', async () => {
+        const ctrl = setupController({ hasAccessToExplore: true });
+        ctrl.datasource = { meta: { explore: true } } as any;
 
-    //     expect((await ctrl.getAdditionalMenuItems()).length).toBe(1);
-    //   });
-    // });
+        expect((await ctrl.getAdditionalMenuItems()).length).toBe(1);
+      });
+    });
   });
 });
 

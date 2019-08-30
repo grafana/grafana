@@ -253,23 +253,12 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (this.contextSrv.hasAccessToExplore() && this.datasource) {
       items.push({
         text: 'Explore',
-        click: 'ctrl.explore($event);',
         icon: 'gicon gicon-explore',
         shortcut: 'x',
         href: await getExploreUrl(this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv),
       });
     }
     return items;
-  }
-
-  async explore(e: any) {
-    const url = await getExploreUrl(this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
-    if (url) {
-      if (!(e.shiftKey || e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        this.$timeout(() => this.$location.url(url));
-      }
-    }
   }
 }
 
