@@ -7,11 +7,19 @@ import { FormLabel } from '../FormLabel/FormLabel';
 import { UnitPicker } from '../UnitPicker/UnitPicker';
 
 // Types
-import { toIntegerOrUndefined, SelectableValue, FieldConfig, toFloatOrUndefined, toNumberString } from '@grafana/data';
+import {
+  toIntegerOrUndefined,
+  SelectableValue,
+  FieldConfig,
+  toFloatOrUndefined,
+  toNumberString,
+  NullValueMode,
+} from '@grafana/data';
 
 import { VAR_SERIES_NAME, VAR_FIELD_NAME, VAR_CALC, VAR_CELL_PREFIX } from '../../utils/fieldDisplay';
+import Select from '../Select/Select';
 
-const labelWidth = 6;
+const labelWidth = 8;
 
 export interface Props {
   showMinMax: boolean;
@@ -19,8 +27,26 @@ export interface Props {
   onChange: (value: FieldConfig, event?: React.SyntheticEvent<HTMLElement>) => void;
 }
 
+const nullValueModes: Array<SelectableValue<NullValueMode>> = [
+  {
+    value: NullValueMode.AsZero,
+    label: 'As Zero',
+    description: 'Show the result as zero',
+  },
+  {
+    value: NullValueMode.Ignore,
+    label: 'Ignore',
+    description: 'Ignore null values.  In a graph this will look connected',
+  },
+  {
+    value: NullValueMode.Null,
+    label: 'As Null',
+    description: 'Show missing values',
+  },
+];
+
 export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMinMax }) => {
-  const { unit, title } = value;
+  const { unit, title, nullValueMode } = value;
 
   const [decimals, setDecimals] = useState(
     value.decimals !== undefined && value.decimals !== null ? value.decimals.toString() : ''
@@ -55,6 +81,10 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
 
   const onUnitChange = (unit: SelectableValue<string>) => {
     onChange({ ...value, unit: unit.value });
+  };
+
+  const onNullValueModeChange = (item: SelectableValue<NullValueMode>) => {
+    onChange({ ...value, nullValueMode: item.value });
   };
 
   const commitChanges = useCallback(() => {
@@ -122,6 +152,21 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
         value={decimals}
         type="number"
       />
+
+      <div className="gf-form">
+        <FormLabel width={labelWidth} tooltip="How should null values be shown?">
+          Null Values
+        </FormLabel>
+        <Select
+          width={12}
+          value={nullValueModes.find(v => v.value === nullValueMode)}
+          isClearable={true}
+          isSearchable={true}
+          options={nullValueModes}
+          placeholder="Auto"
+          onChange={onNullValueModeChange}
+        />
+      </div>
     </>
   );
 };

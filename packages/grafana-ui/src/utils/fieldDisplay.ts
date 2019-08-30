@@ -7,6 +7,7 @@ import {
   DisplayValue,
   GraphSeriesValue,
   DataFrameView,
+  NullValueMode,
 } from '@grafana/data';
 
 import toNumber from 'lodash/toNumber';
@@ -128,7 +129,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           continue;
         }
         const config = getFieldProperties(defaults, field.config || {}, override);
-
+        const ignoreNull = config.nullValueMode === NullValueMode.Ignore;
         let name = field.name;
         if (!name) {
           name = `Field[${s}]`;
@@ -160,7 +161,12 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               }
             }
 
-            const displayValue = display(field.values.get(j));
+            const rawValue = field.values.get(i);
+            if (ignoreNull && (rawValue === null || rawValue === undefined)) {
+              continue;
+            }
+
+            const displayValue = display(rawValue);
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
               name,
@@ -193,7 +199,11 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
           for (const calc of calcs) {
             scopedVars[VAR_CALC] = { value: calc, text: calc };
-            const displayValue = display(results[calc]);
+            const rawValue = results[calc];
+            if (ignoreNull && (rawValue === null || rawValue === undefined)) {
+              continue;
+            }
+            const displayValue = display(rawValue);
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
               name,
@@ -210,14 +220,21 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
   }
 
   if (values.length === 0) {
+    let noValue = 'No data';
+    if (defaults && defaults.noValue) {
+      noValue = defaults.noValue;
+    }
+    if (override && override.noValue) {
+      noValue = override.noValue;
+    }
     values.push({
-      name: 'No data',
+      name: noValue,
       field: {
         ...defaults,
       },
       display: {
         numeric: 0,
-        text: 'No data',
+        text: noValue,
       },
     });
   } else if (values.length === 1 && !fieldOptions.defaults.title) {
