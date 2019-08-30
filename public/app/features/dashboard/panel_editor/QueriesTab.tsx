@@ -7,7 +7,7 @@ import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import { PanelOptionsGroup } from '@grafana/ui';
+import { PanelOptionsGroup, TransformationsEditor } from '@grafana/ui';
 import { QueryEditorRow } from './QueryEditorRow';
 
 // Services
@@ -19,11 +19,10 @@ import config from 'app/core/config';
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { DataQuery, DataSourceSelectItem, PanelData } from '@grafana/ui';
-import { LoadingState, dataTransformers, DataTransformerConfig } from '@grafana/data';
+import { LoadingState, DataTransformerConfig } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
-import { TransformResults } from './TransformResults';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 import { DashboardQueryEditor } from 'app/plugins/datasource/dashboard/DashboardQueryEditor';
 
@@ -275,11 +274,9 @@ export class QueriesTab extends PureComponent<Props, State> {
           )}
 
           {hasAlphaDatasources && (
-            <PanelOptionsGroup>
-              <TransformResults
-                panel={panel}
-                data={data}
-                transformers={dataTransformers.list()}
+            <PanelOptionsGroup title="Result transformations">
+              <TransformationsEditor
+                transformations={this.props.panel.transformations || []}
                 onChange={this.onTransformersChange}
               />
             </PanelOptionsGroup>

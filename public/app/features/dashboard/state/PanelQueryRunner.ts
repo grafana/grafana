@@ -68,7 +68,7 @@ export class PanelQueryRunner {
    * Get the last result -- optionally skip the transformation
    */
   //  TODO: add tests
-  getCurrentData(transform = true): PanelData {
+  getCurrentData(transform = true, depth?: number): PanelData {
     const v = this.state.validateStreamsAndGetPanelData();
     if (transform && this.transformations && this.transformations.length) {
       const processed = transformDataFrame(this.transformations, v.series);

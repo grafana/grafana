@@ -79,3 +79,5 @@ export { DataLinksEditor } from './DataLinks/DataLinksEditor';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
 export { transformersUIRegistry } from './TransformersUI/transformers';
+export { TransformationRow } from './TransformersUI/TransformationRow';
+export { TransformationsEditor } from './TransformersUI/TransformationsEditor';
