@@ -1,5 +1,5 @@
-﻿import React, { PureComponent, createRef } from 'react';
-import { JsonExplorer } from 'app/core/core'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
+import React, { PureComponent, createRef } from 'react';
+import { JsonExplorer } from './json_explorer/json_explorer'; // We have made some monkey-patching of json-formatter-js so we can't switch right now
 
 interface Props {
   className?: string;
@@ -31,10 +31,13 @@ export class JSONFormatter extends PureComponent<Props> {
     const { json, config, open, onDidRender } = this.props;
     const wrapperEl = this.wrapperRef.current;
     const formatter = new JsonExplorer(json, open, config);
+    // @ts-ignore
     const hasChildren: boolean = wrapperEl.hasChildNodes();
     if (hasChildren) {
+      // @ts-ignore
       wrapperEl.replaceChild(formatter.render(), wrapperEl.lastChild);
     } else {
+      // @ts-ignore
       wrapperEl.appendChild(formatter.render());
     }
 
