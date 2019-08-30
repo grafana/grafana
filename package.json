@@ -208,6 +208,7 @@
     "jquery": "3.4.1",
     "lodash": "4.17.14",
     "marked": "0.6.2",
+    "memoize-one": "5.1.1",
     "moment": "2.24.0",
     "mousetrap": "1.6.3",
     "mousetrap-global-bind": "1.1.0",

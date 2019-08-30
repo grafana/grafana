@@ -341,7 +341,7 @@ export class DashboardModel {
 
     // remove panels
     _.pull(this.panels, ...panelsToRemove);
-
+    panelsToRemove.map(p => p.destroy());
     this.sortPanelsByGridPos();
     this.events.emit('repeats-processed');
   }
