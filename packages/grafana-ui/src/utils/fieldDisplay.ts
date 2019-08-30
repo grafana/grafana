@@ -161,7 +161,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               }
             }
 
-            const rawValue = field.values.get(i);
+            const rawValue = field.values.get(j);
             if (ignoreNull && (rawValue === null || rawValue === undefined)) {
               continue;
             }
