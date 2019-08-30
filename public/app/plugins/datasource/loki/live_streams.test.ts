@@ -1,7 +1,7 @@
 import { Subject, Observable } from 'rxjs';
 import * as rxJsWebSocket from 'rxjs/webSocket';
 import { LiveStreams } from './live_streams';
-import { DataFrameView } from '@grafana/data';
+import { DataFrameView, Labels, formatLabels } from '@grafana/data';
 import { first } from 'rxjs/operators';
 
 function getValue<T>(observable: Observable<T>): Promise<T> {
@@ -32,25 +32,29 @@ describe('Live Stream Tests', () => {
   };
 
   it('reads the values into the buffer', async () => {
+    const labels: Labels = { job: 'varlogs' };
     const stream = new LiveStreams().observe({
       url: 'fake',
       size: 10,
-      query: "{ job: 'varlogs' }",
+      query: formatLabels(labels),
       refId: 'A',
       regexp: '',
     });
 
+    // Send it the initial list of things
     fakeSocket.next(initialRawResponse);
 
-    let frames = await getValue(stream);
-    expect(frames[0].length).toBe(7);
+    let frame = (await getValue(stream))[0];
+    expect(frame.length).toBe(7);
+    expect(frame.labels).toEqual(labels);
 
+    // Send it a single update
     fakeSocket.next(msg0);
-    frames = await getValue(stream);
-    expect(frames[0].length).toBe(8); // it changed
+    frame = (await getValue(stream))[0];
+    expect(frame.length).toBe(8); // it changed
 
     // Get the values from the last line
-    const view = new DataFrameView(frames[0]);
+    const view = new DataFrameView(frame);
     const last = { ...view.get(view.length - 1) };
     expect(last).toEqual({
       ts: '2019-08-28T20:50:40.118944705Z',
