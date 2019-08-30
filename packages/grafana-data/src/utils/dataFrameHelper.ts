@@ -3,6 +3,7 @@ import { Labels, QueryResultMeta, KeyValue } from '../types/data';
 import { guessFieldTypeForField, guessFieldTypeFromValue, toDataFrameDTO } from './processDataFrame';
 import { ArrayVector, MutableVector, vectorToArray, CircularVector } from './vector';
 import isArray from 'lodash/isArray';
+import isString from 'lodash/isString';
 
 export class FieldCache {
   fields: Field[] = [];
@@ -70,7 +71,7 @@ export class FieldCache {
   }
 }
 
-function makeFieldParser(value: string, field: Field): (value: string) => any {
+function makeFieldParser(value: any, field: Field): (value: string) => any {
   if (!field.type) {
     if (field.name === 'time' || field.name === 'Time') {
       field.type = FieldType.time;
@@ -277,11 +278,14 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
 
     for (let i = 0; i < this.fields.length; i++) {
       const f = this.fields[i];
-      const v = row[i];
-      if (!f.parse) {
-        f.parse = makeFieldParser(v, f);
+      let v = row[i];
+      if (f.type !== FieldType.string && isString(v)) {
+        if (!f.parse) {
+          f.parse = makeFieldParser(v, f);
+        }
+        v = f.parse(v);
       }
-      f.values.add(f.parse(v));
+      f.values.add(v);
     }
   }
 
