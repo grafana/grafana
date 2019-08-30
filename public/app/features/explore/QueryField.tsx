@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import React, { Context } from 'react';
 import ReactDOM from 'react-dom';
-import { List } from 'immutable';
 // @ts-ignore
 import { Change, Range, Value, Block } from 'slate';
 // @ts-ignore
@@ -621,39 +620,30 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     );
   };
 
-  handleCopy = (event: ClipboardEvent, change: Editor) => {
-    event.preventDefault();
-    const selectedBlocks: List<Block> = change.value.document.getBlocksAtRange(change.value.selection);
-
-    if (!selectedBlocks.size) {
+  getCopiedText(textBlocks: string[], startOffset: number, endOffset: number) {
+    if (!textBlocks.length) {
       return undefined;
     }
 
-    const { startOffset, endOffset } = change.value;
-    let copiedText = '';
+    const excludingLastLineLength = textBlocks.slice(0, -1).join('').length + textBlocks.length - 1;
+    return textBlocks.join('\n').slice(startOffset, excludingLastLineLength + endOffset);
+  }
 
-    if (selectedBlocks.size === 1) {
-      copiedText = selectedBlocks.first().text.slice(startOffset, endOffset);
-    } else {
-      const startingText = selectedBlocks.first().text.slice(startOffset);
-      const endingText = selectedBlocks.last().text.slice(0, endOffset);
-      if (selectedBlocks.size > 2) {
-        const middleText = selectedBlocks
-          .slice(1, -1)
-          .map((block: Block) => block.text)
-          .join('\n');
+  handleCopy = (event: ClipboardEvent, change: Change) => {
+    event.preventDefault();
 
-        copiedText = [startingText, middleText, endingText].join('\n');
-      } else {
-        copiedText = [startingText, endingText].join('\n');
-      }
+    const { document, selection, startOffset, endOffset } = change.value;
+    const selectedBlocks = document.getBlocksAtRangeAsArray(selection).map((block: Block) => block.text);
+
+    const copiedText = this.getCopiedText(selectedBlocks, startOffset, endOffset);
+    if (copiedText) {
+      event.clipboardData.setData('Text', copiedText);
     }
 
-    event.clipboardData.setData('Text', copiedText);
     return true;
   };
 
-  handlePaste = (event: ClipboardEvent, change: Editor) => {
+  handlePaste = (event: ClipboardEvent, change: Change) => {
     event.preventDefault();
     const pastedValue = event.clipboardData.getData('Text');
     const lines = pastedValue.split('\n');
@@ -668,7 +658,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     return true;
   };
 
-  handleCut = (event: ClipboardEvent, change: Editor) => {
+  handleCut = (event: ClipboardEvent, change: Change) => {
     this.handleCopy(event, change);
     change.deleteAtRange(change.value.selection);
 
