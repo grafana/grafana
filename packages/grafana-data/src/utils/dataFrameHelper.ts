@@ -173,11 +173,15 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
       }
     }
     let type = f.type;
-    if (!type && buffer && buffer.length) {
-      type = guessFieldTypeFromValue(buffer[0]);
-    }
-    if (!type) {
-      type = FieldType.other;
+    if (!type && ('time' === f.name || 'Time' === f.name)) {
+      type = FieldType.time;
+    } else {
+      if (!type && buffer && buffer.length) {
+        type = guessFieldTypeFromValue(buffer[0]);
+      }
+      if (!type) {
+        type = FieldType.other;
+      }
     }
 
     // Make sure it has a name
