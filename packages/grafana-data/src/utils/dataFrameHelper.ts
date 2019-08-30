@@ -307,11 +307,14 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
     // Will add one value for every field
     const obj = value as any;
     for (const field of this.fields) {
-      const val = obj[field.name];
-      if (!field.parse) {
-        field.parse = makeFieldParser(val, field);
+      let val = obj[field.name];
+      if (field.type !== FieldType.string && isString(val)) {
+        if (!field.parse) {
+          field.parse = makeFieldParser(val, field);
+        }
+        val = field.parse(val);
       }
-      field.values.add(field.parse(val));
+      field.values.add(val);
     }
   }
 
