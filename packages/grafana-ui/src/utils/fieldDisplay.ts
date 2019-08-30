@@ -7,7 +7,7 @@ import {
   DisplayValue,
   GraphSeriesValue,
   DataFrameView,
-  getTimeColumnIdx,
+  getTimeField,
 } from '@grafana/data';
 
 import toNumber from 'lodash/toNumber';
@@ -107,7 +107,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
       scopedVars[DataLinkBuiltInVars.seriesName] = { text: 'Series', value: series.name };
 
-      const timeColumn = getTimeColumnIdx(series);
+      const { timeField } = getTimeField(series);
       const view = new DataFrameView(series);
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
@@ -174,9 +174,9 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           let sparkline: GraphSeriesValue[][] | undefined = undefined;
 
           // Single sparkline for every reducer
-          if (options.sparkline && timeColumn >= 0) {
+          if (options.sparkline && timeField) {
             sparkline = getFlotPairs({
-              xField: series.fields[timeColumn],
+              xField: timeField,
               yField: series.fields[i],
             });
           }

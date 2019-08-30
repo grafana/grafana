@@ -363,13 +363,16 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
   };
 }
 
-export const getTimeColumnIdx = (series: DataFrame) => {
+export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
   for (let i = 0; i < series.fields.length; i++) {
     if (series.fields[i].type === FieldType.time) {
-      return i;
+      return {
+        timeField: series.fields[i],
+        timeIndex: i,
+      };
     }
   }
-  return -1;
+  return {};
 };
 
 /**
