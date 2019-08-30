@@ -193,10 +193,6 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
         name = `Field ${this.fields.length + 1}`;
       }
     }
-    // The Field Already exists
-    if (this.values[name]) {
-      throw new Error('Duplicate field name: ' + name);
-    }
 
     const field: MutableField = {
       name,
@@ -210,9 +206,15 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
         field.type = type;
       }
     }
-    this.values[name] = field.values;
     this.fields.push(field);
     this.first = this.fields[0].values;
+
+    // The Field Already exists
+    if (this.values[name]) {
+      console.warn(`Duplicate field names found: ${name}, only the first will be accessible`);
+    } else {
+      this.values[name] = field.values;
+    }
     this.validate();
     return field;
   }
