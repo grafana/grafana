@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import React, { Context } from 'react';
 import ReactDOM from 'react-dom';
+import { List } from 'immutable';
 // @ts-ignore
 import { Change, Range, Value, Block } from 'slate';
 // @ts-ignore
@@ -622,9 +623,33 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
   handleCopy = (event: ClipboardEvent, change: Editor) => {
     event.preventDefault();
-    const selectedBlocks = change.value.document.getBlocksAtRange(change.value.selection);
-    event.clipboardData.setData('Text', selectedBlocks.map((block: Block) => block.text).join('\n'));
+    const selectedBlocks: List<Block> = change.value.document.getBlocksAtRange(change.value.selection);
 
+    if (!selectedBlocks.size) {
+      return undefined;
+    }
+
+    const { startOffset, endOffset } = change.value;
+    let copiedText = '';
+
+    if (selectedBlocks.size === 1) {
+      copiedText = selectedBlocks.first().text.slice(startOffset, endOffset);
+    } else {
+      const startingText = selectedBlocks.first().text.slice(startOffset);
+      const endingText = selectedBlocks.last().text.slice(0, endOffset);
+      if (selectedBlocks.size > 2) {
+        const middleText = selectedBlocks
+          .slice(1, -1)
+          .map((block: Block) => block.text)
+          .join('\n');
+
+        copiedText = [startingText, middleText, endingText].join('\n');
+      } else {
+        copiedText = [startingText, endingText].join('\n');
+      }
+    }
+
+    event.clipboardData.setData('Text', copiedText);
     return true;
   };
 
