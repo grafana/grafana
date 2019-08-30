@@ -134,6 +134,8 @@ github.com/jmespath/go-jmespath
 github.com/jonboulle/clockwork
 # github.com/jtolds/gls v4.20.0+incompatible
 github.com/jtolds/gls
+# github.com/jung-kurt/gofpdf v1.10.1
+github.com/jung-kurt/gofpdf
 # github.com/klauspost/compress v1.4.1
 github.com/klauspost/compress/gzip
 github.com/klauspost/compress/flate
