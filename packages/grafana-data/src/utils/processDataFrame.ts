@@ -362,6 +362,15 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
   };
 }
 
+export const getTimeColumnIdx = (series: DataFrame) => {
+  for (let i = 0; i < series.fields.length; i++) {
+    if (series.fields[i].type === FieldType.time) {
+      return i;
+    }
+  }
+  return -1;
+};
+
 /**
  * Wrapper to get an array from each field value
  */

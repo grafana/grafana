@@ -5,54 +5,32 @@ import { ArrayVector, MutableVector, vectorToArray, CircularVector } from './vec
 import isArray from 'lodash/isArray';
 
 export class FieldCache {
+  fields: Field[] = [];
+
   private fieldByName: { [key: string]: Field } = {};
   private fieldByType: { [key: string]: Field[] } = {};
 
-  constructor(private data:DataFrame) {
-    for (let i = 0; i < data.fields.length; i++) {
-      this.addField(data.fields[i]);
-    }
-  }
+  constructor(private data: DataFrame) {
+    this.fields = data.fields;
 
-  private updateTypeIndex(field: Field) {
-    // Make sure it has a type
-    if (field.type === FieldType.other) {
-      const t = guessFieldTypeForField(field);
-      if (t) {
-        field.type = t;
+    for (const field of data.fields) {
+      // Make sure it has a type
+      if (field.type === FieldType.other) {
+        const t = guessFieldTypeForField(field);
+        if (t) {
+          field.type = t;
+        }
       }
-    }
-    if (!this.fieldByType[field.type]) {
-      this.fieldByType[field.type] = [];
-    }
-    this.fieldByType[field.type].push(field);
-  }
+      if (!this.fieldByType[field.type]) {
+        this.fieldByType[field.type] = [];
+      }
+      this.fieldByType[field.type].push(field);
 
-  private addField(f: Field | FieldDTO) {
-    const type = f.type || FieldType.other;
-    const values =
-      !f.values || isArray(f.values)
-        ? new ArrayVector(f.values as any[] | undefined) // array or empty
-        : (f.values as Vector);
-
-    // And a name
-    let name = f.name;
-    if (!name) {
-      name = "XX";
-    }
-    const field: Field = {
-      ...f,
-      name,
-      type,
-      config: f.config || {},
-      values,
-    };
-    this.updateTypeIndex(field);
-
-    if (this.fieldByName[field.name]) {
-      console.warn('Duplicate field names in DataFrame: ', field.name);
-    } else {
-      this.fieldByName[field.name] = field;
+      if (this.fieldByName[field.name]) {
+        console.warn('Duplicate field names in DataFrame: ', field.name);
+      } else {
+        this.fieldByName[field.name] = field;
+      }
     }
   }
 
@@ -222,20 +200,31 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
       config: f.config || {},
       values: this.creator(buffer),
     };
+    if (type === FieldType.other) {
+      type = guessFieldTypeForField(field);
+      if (type) {
+        field.type = type;
+      }
+    }
     this.values[name] = field.values;
     this.fields.push(field);
     this.first = this.fields[0].values;
+    this.validate();
+    return field;
+  }
 
+  validate() {
     // Make sure all arrays are the same length
     const length = this.fields.reduce((v: number, f) => {
       return Math.max(v, f.values.length);
     }, 0);
+
+    // Add empty elements until everything mastches
     for (const field of this.fields) {
       while (field.values.length !== length) {
         field.values.add(undefined);
       }
     }
-    return field;
   }
 
   private addMissingFieldsFor(value: any) {

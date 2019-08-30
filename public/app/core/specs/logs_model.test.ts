@@ -5,7 +5,7 @@ import {
   LogsMetaKind,
   LogsDedupStrategy,
   LogLevel,
-  DataFrameHelper,
+  MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
 import { dedupLogRows, dataFrameToLogsModel } from '../logs_model';
@@ -168,7 +168,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given series without a time field should return empty logs model', () => {
     const series: DataFrame[] = [
-      new DataFrameHelper({
+      new MutableDataFrame({
         fields: [
           {
             name: 'message',
@@ -183,7 +183,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given series without a string field should return empty logs model', () => {
     const series: DataFrame[] = [
-      new DataFrameHelper({
+      new MutableDataFrame({
         fields: [
           {
             name: 'time',
@@ -198,7 +198,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series should return expected logs model', () => {
     const series: DataFrame[] = [
-      new DataFrameHelper({
+      new MutableDataFrame({
         labels: {
           filename: '/var/log/grafana/grafana.log',
           job: 'grafana',
@@ -259,7 +259,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series without labels should return expected logs model', () => {
     const series: DataFrame[] = [
-      new DataFrameHelper({
+      new MutableDataFrame({
         fields: [
           {
             name: 'time',

@@ -1,20 +1,17 @@
-import { DataFrameDTO, FieldDTO, FieldType } from '../types';
-import { DataFrameHelper, MutableDataFrame } from './dataFrameHelper';
+import { DataFrameDTO, FieldType } from '../types';
+import { FieldCache, MutableDataFrame } from './dataFrameHelper';
+import { toDataFrame } from './processDataFrame';
 
 describe('dataFrameHelper', () => {
-  const frame: DataFrameDTO = {
+  const frame = toDataFrame({
     fields: [
       { name: 'time', type: FieldType.time, values: [100, 200, 300] },
       { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
       { name: 'value', type: FieldType.number, values: [1, 2, 3] },
       { name: 'value', type: FieldType.number, values: [4, 5, 6] },
     ],
-  };
-  const ext = new DataFrameHelper(frame);
-
-  it('Should get a valid count for the fields', () => {
-    expect(ext.length).toEqual(3);
   });
+  const ext = new FieldCache(frame);
 
   it('Should get the first field with a duplicate name', () => {
     const field = ext.getFieldByName('value');
@@ -25,15 +22,17 @@ describe('dataFrameHelper', () => {
 
 describe('FieldCache', () => {
   it('when creating a new FieldCache from fields should be able to query cache', () => {
-    const fields: FieldDTO[] = [
-      { name: 'time', type: FieldType.time },
-      { name: 'string', type: FieldType.string },
-      { name: 'number', type: FieldType.number },
-      { name: 'boolean', type: FieldType.boolean },
-      { name: 'other', type: FieldType.other },
-      { name: 'undefined' },
-    ];
-    const fieldCache = new DataFrameHelper({ fields });
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time },
+        { name: 'string', type: FieldType.string },
+        { name: 'number', type: FieldType.number },
+        { name: 'boolean', type: FieldType.boolean },
+        { name: 'other', type: FieldType.other },
+        { name: 'undefined' },
+      ],
+    });
+    const fieldCache = new FieldCache(frame);
     const allFields = fieldCache.getFields();
     expect(allFields).toHaveLength(6);
 

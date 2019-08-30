@@ -1,5 +1,5 @@
 import { colors, getFlotPairs, getColorFromHexRgbOrName, getDisplayProcessor, PanelData } from '@grafana/ui';
-import { NullValueMode, reduceField, DataFrameHelper, FieldType, DisplayValue, GraphSeriesXY } from '@grafana/data';
+import { NullValueMode, reduceField, FieldType, DisplayValue, GraphSeriesXY, getTimeColumnIdx } from '@grafana/data';
 
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
@@ -19,13 +19,16 @@ export const getGraphSeriesModel = (
   });
 
   for (const series of data.series) {
-    const data = new DataFrameHelper(series);
-    const timeColumn = data.getFirstFieldOfType(FieldType.time);
+    const timeColumn = series.fields[getTimeColumnIdx(series)];
     if (!timeColumn) {
       continue;
     }
 
-    for (const field of data.getFields(FieldType.number)) {
+    for (const field of series.fields) {
+      if (field.type !== FieldType.time) {
+        continue;
+      }
+
       // Use external calculator just to make sure it works :)
       const points = getFlotPairs({
         xField: timeColumn,

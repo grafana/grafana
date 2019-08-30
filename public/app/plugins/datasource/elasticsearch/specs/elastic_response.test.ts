@@ -1,5 +1,5 @@
 import { ElasticResponse } from '../elastic_response';
-import { DataFrameHelper, DataFrameView, KeyValue } from '@grafana/data';
+import { MutableDataFrame, DataFrameView, KeyValue } from '@grafana/data';
 
 describe('ElasticResponse', () => {
   let targets;
@@ -859,7 +859,7 @@ describe('ElasticResponse', () => {
 
     it('should return histogram aggregation and documents', () => {
       expect(result.data.length).toBe(2);
-      const logResults = result.data[0] as DataFrameHelper;
+      const logResults = result.data[0] as MutableDataFrame;
       const fields = logResults.fields.map(f => {
         return {
           name: f.name,
@@ -883,7 +883,7 @@ describe('ElasticResponse', () => {
 
       // Make a map from the histogram results
       const hist: KeyValue<number> = {};
-      const histogramResults = new DataFrameHelper(result.data[1]);
+      const histogramResults = new MutableDataFrame(result.data[1]);
       rows = new DataFrameView(histogramResults);
       for (let i = 0; i < rows.length; i++) {
         const row = rows.get(i);

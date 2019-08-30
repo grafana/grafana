@@ -7,6 +7,7 @@ import {
   DisplayValue,
   GraphSeriesValue,
   DataFrameView,
+  getTimeColumnIdx,
 } from '@grafana/data';
 
 import toNumber from 'lodash/toNumber';
@@ -81,17 +82,6 @@ export interface GetFieldDisplayValuesOptions {
 }
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
-
-const getTimeColumnIdx = (series: DataFrame) => {
-  let timeColumn = -1;
-  for (let i = 0; i < series.fields.length; i++) {
-    if (series.fields[i].type === FieldType.time) {
-      timeColumn = i;
-      break;
-    }
-  }
-  return timeColumn;
-};
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
   const { data, replaceVariables, fieldOptions } = options;
