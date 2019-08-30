@@ -146,6 +146,7 @@
     "start": "grafana-toolkit core:start --watchTheme",
     "start:hot": "grafana-toolkit core:start --hot --watchTheme",
     "start:ignoreTheme": "grafana-toolkit core:start --hot",
+    "start:noTsCheck": "grafana-toolkit core:start --noTsCheck",
     "watch": "yarn start -d watch,start core:start --watchTheme ",
     "build": "grunt build",
     "test": "grunt test",
