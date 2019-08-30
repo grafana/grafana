@@ -1,4 +1,4 @@
-import { DataTransformerID, DataTransformerConfig, dataTransformers } from '@grafana/data';
+import { DataTransformerID, DataTransformerConfig, dataTransformers, DataFrame } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { transformersUIRegistry } from './transformers';
 import React from 'react';
@@ -12,6 +12,7 @@ interface TransformationsEditorState {
 interface TransformationsEditorProps {
   onChange: (transformations: DataTransformerConfig[]) => void;
   transformations: DataTransformerConfig[];
+  getCurrentData: (depth?: number) => DataFrame[];
 }
 export class TransformationsEditor extends React.PureComponent<TransformationsEditorProps, TransformationsEditorState> {
   state = { updateCounter: 0 };
@@ -45,7 +46,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   };
 
   renderTransformationEditors = () => {
-    const { transformations } = this.props;
+    const { transformations, getCurrentData } = this.props;
     const hasTransformations = transformations.length > 0;
 
     if (!hasTransformations) {
@@ -62,7 +63,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
     return (
       <>
         {transformations.map((t, i) => {
-          let editor;
+          let editor, input;
           if (t.id === DataTransformerID.noop) {
             return (
               <Select
@@ -82,10 +83,11 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
           const transformerDescriptor = dataTransformers.getIfExists(t.id);
 
           if (editorComponent) {
+            input = getCurrentData(i);
             editor = React.createElement(editorComponent.component, {
               key: `${t.id}-${i}`, // this key is making troubles when the same transformers are next to each other and one is removed
               options: t.options,
-              input: [],
+              input,
               onChange: (options: any) => {
                 this.onTransformationChange(i, {
                   id: t.id,
@@ -97,6 +99,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
 
           return (
             <TransformationRow
+              input={input || []}
               onRemove={() => this.onTransformationRemove(i)}
               editor={editor}
               name={transformerDescriptor ? transformerDescriptor.name : ''}

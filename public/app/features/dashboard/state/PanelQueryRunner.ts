@@ -71,7 +71,13 @@ export class PanelQueryRunner {
   getCurrentData(transform = true, depth?: number): PanelData {
     const v = this.state.validateStreamsAndGetPanelData();
     if (transform && this.transformations && this.transformations.length) {
-      const processed = transformDataFrame(this.transformations, v.series);
+      // When retrieving the data for the transformations editor, we want the input data to be transformed using onle preceeding transformers
+      // This will be a performance bottleneck for large data sets as transformations will be executed multiple times for differnt editors
+      // We need to implement memoization for the transformers to optimize it
+      const transformationsToApply = depth !== undefined ? this.transformations.slice(0, depth) : this.transformations;
+      console.log('Depth: ', depth, 'Transformations to apply: ', transformationsToApply);
+
+      const processed = transformDataFrame(transformationsToApply, v.series);
       console.log('INPUT SERIES:', v.series);
       console.log('PROCESSED SERIES:', processed);
       return {

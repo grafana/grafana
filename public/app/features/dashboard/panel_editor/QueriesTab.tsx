@@ -220,6 +220,11 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
+  getCurrentTransformData = (depth?: number) => {
+    const queryRunner = this.props.panel.getQueryRunner();
+    return queryRunner.getCurrentData(true, depth).series;
+  };
+
   render() {
     const { panel, dashboard } = this.props;
     const { currentDS, scrollTop, data } = this.state;
@@ -278,6 +283,7 @@ export class QueriesTab extends PureComponent<Props, State> {
               <TransformationsEditor
                 transformations={this.props.panel.transformations || []}
                 onChange={this.onTransformersChange}
+                getCurrentData={this.getCurrentTransformData}
               />
             </PanelOptionsGroup>
           )}
