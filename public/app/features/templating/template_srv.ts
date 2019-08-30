@@ -251,7 +251,7 @@ export class TemplateSrv {
       }
       tokens = tokens.concat(this.replaceVariable(regexExec, scopedVars, format));
       lastIndex = this.regex.lastIndex;
-      regexExec = this.regex.exec(target);
+      regexExec = lastIndex === 0 ? null : this.regex.exec(target);
     }
     if (target.length > lastIndex) {
       tokens.push({ value: target.substring(lastIndex, target.length) });
@@ -285,7 +285,7 @@ export class TemplateSrv {
       value = this.getAllValue(variable);
       // skip formatting of custom all values
       if (variable.allValue) {
-        return this.replaceWithoutFormatting(value);
+        return [{ value: value }];
       }
     }
     return [{ value: value, format: fmt, variable: variable }];
