@@ -59,7 +59,7 @@ describe('Next id to add', () => {
   it('should be 4', () => {
     const { instance } = setup();
 
-    instance.addMapping();
+    instance.onAddMapping();
 
     expect(instance.state.nextIdToAdd).toEqual(4);
   });

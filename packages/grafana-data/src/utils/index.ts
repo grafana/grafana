@@ -22,3 +22,8 @@ export { getMappedValue } from './valueMappings';
 import * as dateMath from './datemath';
 import * as rangeUtil from './rangeutil';
 export { dateMath, rangeUtil };
+
+export * from './matchers/ids';
+export * from './matchers/matchers';
+export * from './transformers/ids';
+export * from './transformers/transformers';

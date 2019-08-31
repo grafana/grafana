@@ -3,15 +3,8 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { VariableSuggestion, ScopedVars, VariableOrigin } from '@grafana/ui';
-import { TimeSeriesValue, DateTime, dateTime, DataLink, KeyValue, deprecationWarning } from '@grafana/data';
-
-export const DataLinkBuiltInVars = {
-  keepTime: '__url_time_range',
-  includeVars: '__all_variables',
-  seriesName: '__series_name',
-  valueTime: '__value_time',
-};
+import { VariableSuggestion, ScopedVars, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
+import { DataLink, KeyValue, deprecationWarning, LinkModel } from '@grafana/data';
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...templateSrv.variables.map(variable => ({
@@ -44,22 +37,17 @@ export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
   },
 ];
 
-type LinkTarget = '_blank' | '_self';
+export const getCalculationValueDataLinksVariableSuggestions = (): VariableSuggestion[] => [
+  ...getPanelLinksVariableSuggestions(),
+  {
+    value: `${DataLinkBuiltInVars.seriesName}`,
+    documentation: 'Adds series name',
+    origin: VariableOrigin.BuiltIn,
+  },
+];
 
-export interface LinkModel {
-  href: string;
-  title: string;
-  target: LinkTarget;
-}
-
-interface LinkDataPoint {
-  datapoint: TimeSeriesValue[];
-  seriesName: string;
-  [key: number]: any;
-}
 export interface LinkService {
-  getDataLinkUIModel: (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => LinkModel;
-  getDataPointVars: (seriesName: string, dataPointTs: DateTime) => ScopedVars;
+  getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
 }
 
 export class LinkSrv implements LinkService {
@@ -90,33 +78,20 @@ export class LinkSrv implements LinkService {
     return info;
   }
 
-  getDataPointVars = (seriesName: string, valueTime: DateTime) => {
-    return {
-      [DataLinkBuiltInVars.valueTime]: {
-        text: valueTime.valueOf(),
-        value: valueTime.valueOf(),
-      },
-      [DataLinkBuiltInVars.seriesName]: {
-        text: seriesName,
-        value: seriesName,
-      },
-    };
-  };
-
-  getDataLinkUIModel = (link: DataLink, scopedVars: ScopedVars, dataPoint?: LinkDataPoint) => {
+  getDataLinkUIModel = <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => {
     const params: KeyValue = {};
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
-    const info: LinkModel = {
+    const info: LinkModel<T> = {
       href: link.url,
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
+      origin,
     };
 
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
     const variablesQuery = toUrlParams(params);
-
     info.href = this.templateSrv.replace(link.url, {
       ...scopedVars,
       [DataLinkBuiltInVars.keepTime]: {
@@ -129,13 +104,6 @@ export class LinkSrv implements LinkService {
       },
     });
 
-    if (dataPoint) {
-      info.href = this.templateSrv.replace(
-        info.href,
-        this.getDataPointVars(dataPoint.seriesName, dateTime(dataPoint.datapoint[0]))
-      );
-    }
-
     return info;
   };
 
@@ -146,7 +114,7 @@ export class LinkSrv implements LinkService {
    */
   getPanelLinkAnchorInfo(link: DataLink, scopedVars: ScopedVars) {
     deprecationWarning('link_srv.ts', 'getPanelLinkAnchorInfo', 'getDataLinkUIModel');
-    return this.getDataLinkUIModel(link, scopedVars);
+    return this.getDataLinkUIModel(link, scopedVars, {});
   }
 }
 

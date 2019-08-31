@@ -96,10 +96,11 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
 function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
   const x = new ArrayVector();
   const y = new ArrayVector();
+
   for (let i = 0; i < graphSeries.data.length; i++) {
     const row = graphSeries.data[i];
-    x.buffer.push(row[0]);
-    y.buffer.push(row[1]);
+    x.buffer.push(row[1]);
+    y.buffer.push(row[0]);
   }
 
   return {

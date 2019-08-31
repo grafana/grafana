@@ -1,10 +1,9 @@
 // Libraries
 import { isArray, isEqual, isString } from 'lodash';
-
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dateMath } from '@grafana/data';
 import {
+  dateMath,
   guessFieldTypes,
   LoadingState,
   toLegacyResponseData,
@@ -12,7 +11,6 @@ import {
   toDataFrame,
   isDataFrame,
 } from '@grafana/data';
-
 // Types
 import {
   DataSourceApi,
@@ -81,7 +79,7 @@ export class PanelQueryState {
       // call rejector to reject the executor promise
       if (!request.endTime) {
         request.endTime = Date.now();
-        this.rejector('Canceled:' + reason);
+        this.rejector({ cancelled: true, message: reason });
       }
 
       // Cancel any open HTTP request with the same ID
@@ -160,6 +158,12 @@ export class PanelQueryState {
   dataStreamObserver: DataStreamObserver = (stream: DataStreamState) => {
     // Streams only work with the 'series' format
     this.sendFrames = true;
+
+    if (stream.state === LoadingState.Error) {
+      this.setError(stream.error);
+      this.onStreamingDataUpdated();
+      return;
+    }
 
     // Add the stream to our list
     let found = false;

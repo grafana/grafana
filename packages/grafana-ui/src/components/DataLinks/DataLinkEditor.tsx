@@ -59,6 +59,7 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
           onBlur={onTitleBlur}
           inputWidth={15}
           labelWidth={5}
+          placeholder="Show details"
         />
 
         <FormField
