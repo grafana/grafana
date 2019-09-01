@@ -119,22 +119,40 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   annotationQuery(options: any) {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
+    const timeEndField = annotation.timeEndField || null;
     const queryString = annotation.query || '*';
     const tagsField = annotation.tagsField || 'tags';
     const textField = annotation.textField || null;
 
-    const range: any = {};
-    range[timeField] = {
+    const dateRanges = [];
+    const rangeStart: any = {};
+    rangeStart[timeField] = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       format: 'epoch_millis',
     };
+    dateRanges.push({ range: rangeStart });
+
+    if (timeEndField) {
+      const rangeEnd: any = {};
+      rangeEnd[timeEndField] = {
+        from: options.range.from.valueOf(),
+        to: options.range.to.valueOf(),
+        format: 'epoch_millis',
+      };
+      dateRanges.push({ range: rangeEnd });
+    }
 
     const queryInterpolated = this.templateSrv.replace(queryString, {}, 'lucene');
     const query = {
       bool: {
         filter: [
-          { range: range },
+          {
+            bool: {
+              should: dateRanges,
+              minimum_should_match: 1,
+            },
+          },
           {
             query_string: {
               query: queryInterpolated,
@@ -201,12 +219,25 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           }
         }
 
-        const event = {
+        const event: {
+          annotation: any;
+          time: number;
+          timeEnd?: number;
+          text: string;
+          tags: string | string[];
+        } = {
           annotation: annotation,
           time: toUtc(time).valueOf(),
           text: getFieldFromSource(source, textField),
           tags: getFieldFromSource(source, tagsField),
         };
+
+        if (timeEndField) {
+          const timeEnd = getFieldFromSource(source, timeEndField);
+          if (timeEnd) {
+            event.timeEnd = toUtc(timeEnd).valueOf();
+          }
+        }
 
         // legacy support for title tield
         if (annotation.titleField) {

@@ -180,6 +180,7 @@ Name | Description
 ------------ | -------------
 Query | You can leave the search query blank or specify a lucene query
 Time | The name of the time field, needs to be date field.
+Time End | Optional name of the time end field, needs to be date field. If set, then annotations will be marked as a regions between time and time-end.
 Text | Event description field.
 Tags | Optional field name to use for event tags (can be an array or a CSV string).
 
