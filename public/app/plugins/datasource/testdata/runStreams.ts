@@ -61,7 +61,7 @@ export function runSignalStream(
     const speed = streamQuery.speed;
 
     let value = Math.random() * 100;
-    let time = new Date().getTime() - maxDataPoints * speed;
+    let time = new Date().getTime();
     let timeoutId: any = null;
 
     const pushNextValue = () => {

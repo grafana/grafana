@@ -7,7 +7,6 @@ import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-import { PanelQueryState } from './PanelQueryState';
 import { runRequest } from './RequestRunner';
 
 // Types
@@ -48,8 +47,6 @@ function getNextRequestId() {
 export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
   private subscription?: Unsubscribable;
-
-  private state = new PanelQueryState();
 
   // Listen to another panel for changes
   // private sharedQueryRunner: SharedQueryRunner;
@@ -103,8 +100,6 @@ export class PanelQueryRunner {
   }
 
   async run(options: QueryRunnerOptions) {
-    const { state } = this;
-
     const {
       queries,
       timezone,
@@ -217,10 +212,10 @@ export class PanelQueryRunner {
       // Broadcast results
       // this.subject.next(data);
     } catch (err) {
+      console.log(err);
       // clearTimeout(loadingStateTimeoutId);
-
-      const data = state.setError(err);
-      this.subject.next(data);
+      // const data = state.setError(err);
+      // this.subject.next(data);
     }
   }
 
@@ -248,9 +243,6 @@ export class PanelQueryRunner {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
-
-    // Will cancel and disconnect any open requets
-    this.state.cancel('destroy');
   }
 }
 

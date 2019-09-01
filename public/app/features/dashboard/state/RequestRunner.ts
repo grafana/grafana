@@ -1,10 +1,10 @@
 // Libraries
 import { Observable, of } from 'rxjs';
-import { flatten, map as lodashMap, isArray } from 'lodash';
+import { flatten, map as lodashMap, isArray, isString } from 'lodash';
 import { map } from 'rxjs/operators';
 
 // Utils & Services
-import { LoadingState, toDataFrame } from '@grafana/data';
+import { LoadingState, toDataFrame, dateMath } from '@grafana/data';
 
 // Types
 import { DataSourceApi, DataQueryRequest, PanelData, DataQueryResponsePacket } from '@grafana/ui';
@@ -21,19 +21,37 @@ interface RunningQueryState {
  * Does not handle deltas yet
  */
 export function processResponsePacket(packet: DataQueryResponsePacket, state: RunningQueryState): RunningQueryState {
+  const request = state.panelData.request;
   const packets: MapOfResponsePackets = {
     ...state.packets,
   };
 
   packets[packet.key || 'A'] = packet;
 
+  // Update the time range
+  let timeRange = request.range;
+  if (isString(timeRange.raw.from)) {
+    timeRange = {
+      from: dateMath.parse(timeRange.raw.from, false),
+      to: dateMath.parse(timeRange.raw.to, true),
+      raw: timeRange.raw,
+    };
+  }
+
+  // Update DataFrame array
+  const dataFrames = flatten(
+    lodashMap(packets, (packet: DataQueryResponsePacket) => {
+      return packet.data.map(v => toDataFrame(v));
+    })
+  );
+
   const panelData = {
     state: LoadingState.Done,
-    series: flatten(
-      lodashMap(packets, (packet: DataQueryResponsePacket) => {
-        return packet.data.map(v => toDataFrame(v));
-      })
-    ),
+    series: dataFrames,
+    request: {
+      ...request,
+      range: timeRange,
+    },
   };
 
   return { packets, panelData };
