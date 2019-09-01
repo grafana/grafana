@@ -12,7 +12,7 @@ import { TestDataQuery, Scenario } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { StreamHandler } from './StreamHandler';
 import { queryMetricTree } from './metricTree';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import templateSrv from 'app/features/templating/template_srv';
 
 type TestData = TimeSeries | TableData;
@@ -30,22 +30,21 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   }
 
   observe(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponsePacket> {
+    const queries = options.targets.map(item => {
+      return {
+        ...item,
+        intervalMs: options.intervalMs,
+        maxDataPoints: options.maxDataPoints,
+        datasourceId: this.id,
+        alias: templateSrv.replace(item.alias || ''),
+      };
+    });
+
+    if (queries.length === 0) {
+      return of({ data: [] });
+    }
+
     return new Observable(subscriber => {
-      const queries = options.targets.map(item => {
-        return {
-          ...item,
-          intervalMs: options.intervalMs,
-          maxDataPoints: options.maxDataPoints,
-          datasourceId: this.id,
-          alias: templateSrv.replace(item.alias || ''),
-        };
-      });
-
-      if (queries.length === 0) {
-        subscriber.next({ data: [] });
-        return;
-      }
-
       getBackendSrv()
         .datasourceRequest({
           method: 'POST',
@@ -101,12 +100,6 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
 
     if (queries.length === 0) {
       return Promise.resolve({ data: [] });
-    }
-
-    // Currently we do not support mixed with client only streaming
-    const resp = this.streams.process(options, observer);
-    if (resp) {
-      return Promise.resolve(resp);
     }
 
     return getBackendSrv()
