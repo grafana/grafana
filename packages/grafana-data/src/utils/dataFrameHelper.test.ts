@@ -1,20 +1,17 @@
-import { DataFrameDTO, FieldDTO, FieldType } from '../types';
-import { DataFrameHelper } from './dataFrameHelper';
+import { DataFrameDTO, FieldType } from '../types';
+import { FieldCache, MutableDataFrame } from './dataFrameHelper';
+import { toDataFrame } from './processDataFrame';
 
 describe('dataFrameHelper', () => {
-  const frame: DataFrameDTO = {
+  const frame = toDataFrame({
     fields: [
       { name: 'time', type: FieldType.time, values: [100, 200, 300] },
       { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
       { name: 'value', type: FieldType.number, values: [1, 2, 3] },
       { name: 'value', type: FieldType.number, values: [4, 5, 6] },
     ],
-  };
-  const ext = new DataFrameHelper(frame);
-
-  it('Should get a valid count for the fields', () => {
-    expect(ext.length).toEqual(3);
   });
+  const ext = new FieldCache(frame);
 
   it('Should get the first field with a duplicate name', () => {
     const field = ext.getFieldByName('value');
@@ -25,15 +22,17 @@ describe('dataFrameHelper', () => {
 
 describe('FieldCache', () => {
   it('when creating a new FieldCache from fields should be able to query cache', () => {
-    const fields: FieldDTO[] = [
-      { name: 'time', type: FieldType.time },
-      { name: 'string', type: FieldType.string },
-      { name: 'number', type: FieldType.number },
-      { name: 'boolean', type: FieldType.boolean },
-      { name: 'other', type: FieldType.other },
-      { name: 'undefined' },
-    ];
-    const fieldCache = new DataFrameHelper({ fields });
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time },
+        { name: 'string', type: FieldType.string },
+        { name: 'number', type: FieldType.number },
+        { name: 'boolean', type: FieldType.boolean },
+        { name: 'other', type: FieldType.other },
+        { name: 'undefined' },
+      ],
+    });
+    const fieldCache = new FieldCache(frame);
     const allFields = fieldCache.getFields();
     expect(allFields).toHaveLength(6);
 
@@ -99,17 +98,55 @@ describe('reverse', () => {
         ],
       };
 
-      const helper = new DataFrameHelper(frame);
+      const helper = new MutableDataFrame(frame);
 
-      expect(helper.getFieldByName('time')!.values.toArray()).toEqual([100, 200, 300]);
-      expect(helper.getFieldByName('name')!.values.toArray()).toEqual(['a', 'b', 'c']);
-      expect(helper.getFieldByName('value')!.values.toArray()).toEqual([1, 2, 3]);
+      expect(helper.values.time.toArray()).toEqual([100, 200, 300]);
+      expect(helper.values.name.toArray()).toEqual(['a', 'b', 'c']);
+      expect(helper.values.value.toArray()).toEqual([1, 2, 3]);
 
       helper.reverse();
 
-      expect(helper.getFieldByName('time')!.values.toArray()).toEqual([300, 200, 100]);
-      expect(helper.getFieldByName('name')!.values.toArray()).toEqual(['c', 'b', 'a']);
-      expect(helper.getFieldByName('value')!.values.toArray()).toEqual([3, 2, 1]);
+      expect(helper.values.time.toArray()).toEqual([300, 200, 100]);
+      expect(helper.values.name.toArray()).toEqual(['c', 'b', 'a']);
+      expect(helper.values.value.toArray()).toEqual([3, 2, 1]);
     });
+  });
+});
+
+describe('Apending DataFrame', () => {
+  it('Should append values', () => {
+    const dto: DataFrameDTO = {
+      fields: [
+        { name: 'time', type: FieldType.time, values: [100] },
+        { name: 'name', type: FieldType.string, values: ['a', 'b'] },
+        { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    };
+
+    const frame = new MutableDataFrame(dto);
+    expect(frame.values.time.toArray()).toEqual([100, null, null]);
+
+    // Set a value on the second row
+    frame.set(1, { time: 200, name: 'BB', value: 20 });
+    expect(frame.toArray()).toEqual([
+      { time: 100, name: 'a', value: 1 }, // 1
+      { time: 200, name: 'BB', value: 20 }, // 2
+      { time: null, name: null, value: 3 }, // 3
+    ]);
+
+    // Set a value on the second row
+    frame.add({ value2: 'XXX' }, true);
+    expect(frame.toArray()).toEqual([
+      { time: 100, name: 'a', value: 1, value2: null }, // 1
+      { time: 200, name: 'BB', value: 20, value2: null }, // 2
+      { time: null, name: null, value: 3, value2: null }, // 3
+      { time: null, name: null, value: null, value2: 'XXX' }, // 4
+    ]);
+
+    // Make sure length survives a spread operator
+    const keys = Object.keys(frame);
+    const copy = { ...frame } as any;
+    expect(keys).toContain('length');
+    expect(copy.length).toEqual(frame.length);
   });
 });

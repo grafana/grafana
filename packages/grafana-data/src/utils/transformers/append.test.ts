@@ -35,7 +35,7 @@ describe('Append Transformer', () => {
     const fieldC = processed.fields[2];
 
     expect(fieldA.values.toArray()).toEqual([1, 2, 3, 4]);
-    expect(fieldB.values.toArray()).toEqual([100, 200, undefined, undefined]);
-    expect(fieldC.values.toArray()).toEqual([undefined, undefined, 3000, 4000]);
+    expect(fieldB.values.toArray()).toEqual([100, 200, null, null]);
+    expect(fieldC.values.toArray()).toEqual([null, null, 3000, 4000]);
   });
 });
