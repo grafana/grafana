@@ -2,7 +2,7 @@ import { DataTransformerID } from './ids';
 import { dataTransformers } from './transformers';
 import { toDataFrame } from '../processDataFrame';
 import { ReducerID } from '../fieldReducer';
-import { DataFrameView } from '../dataFrameView';
+import { DataFrameView } from '../DataFrameView';
 
 describe('Transformers', () => {
   it('should load all transformeres', () => {

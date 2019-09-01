@@ -19,7 +19,7 @@ import {
 } from '../types/index';
 import { isDateTime } from './moment_wrapper';
 import { ArrayVector, SortedVector } from './vector';
-import { MutableDataFrame } from './dataFrameHelper';
+import { MutableDataFrame } from './MutableDataFrame';
 import { deprecationWarning } from './deprecationWarning';
 
 function convertTableToDataFrame(table: TableData): DataFrame {

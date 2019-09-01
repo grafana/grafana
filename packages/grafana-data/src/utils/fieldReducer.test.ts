@@ -2,7 +2,7 @@ import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import _ from 'lodash';
 import { Field, FieldType } from '../types/index';
-import { MutableDataFrame } from './dataFrameHelper';
+import { MutableDataFrame } from './MutableDataFrame';
 import { ArrayVector } from './vector';
 import { guessFieldTypeFromValue } from './processDataFrame';
 
