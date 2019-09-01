@@ -124,23 +124,23 @@ describe('Apending DataFrame', () => {
     };
 
     const frame = new MutableDataFrame(dto);
-    expect(frame.values.time.toArray()).toEqual([100, undefined, undefined]);
+    expect(frame.values.time.toArray()).toEqual([100, null, null]);
 
     // Set a value on the second row
     frame.set(1, { time: 200, name: 'BB', value: 20 });
     expect(frame.toArray()).toEqual([
       { time: 100, name: 'a', value: 1 }, // 1
       { time: 200, name: 'BB', value: 20 }, // 2
-      { time: undefined, name: undefined, value: 3 }, // 3
+      { time: null, name: null, value: 3 }, // 3
     ]);
 
     // Set a value on the second row
     frame.add({ value2: 'XXX' }, true);
     expect(frame.toArray()).toEqual([
-      { time: 100, name: 'a', value: 1, value2: undefined }, // 1
-      { time: 200, name: 'BB', value: 20, value2: undefined }, // 2
-      { time: undefined, name: undefined, value: 3, value2: undefined }, // 3
-      { time: undefined, name: undefined, value: undefined, value2: 'XXX' }, // 4
+      { time: 100, name: 'a', value: 1, value2: null }, // 1
+      { time: 200, name: 'BB', value: 20, value2: null }, // 2
+      { time: null, name: null, value: 3, value2: null }, // 3
+      { time: null, name: null, value: null, value2: 'XXX' }, // 4
     ]);
 
     // Make sure length survives a spread operator
