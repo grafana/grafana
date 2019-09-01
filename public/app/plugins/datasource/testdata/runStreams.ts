@@ -44,8 +44,8 @@ export function runSignalStream(
         refId: query.refId,
         name: 'Signal ' + query.refId,
         fields: [
-          { name: 'Time', type: FieldType.time, values: [] },
-          { name: 'Value', type: FieldType.number, values: [] },
+          { name: 'time', type: FieldType.time, values: [] },
+          { name: 'value', type: FieldType.number, values: [] },
         ],
       },
       (buffer: any[]) => {
@@ -62,8 +62,9 @@ export function runSignalStream(
 
     let value = Math.random() * 100;
     let time = new Date().getTime() - maxDataPoints * speed;
+    let timeoutId: any = null;
 
-    for (let i = 0; i < maxDataPoints; i++) {
+    const pushNextValue = () => {
       data.add({
         time: time,
         value: value,
@@ -71,15 +72,20 @@ export function runSignalStream(
 
       time += speed;
       value += (Math.random() - 0.5) * spread;
-    }
 
-    subscriber.next({
-      data: [data],
-      key: streamId,
-    });
+      subscriber.next({
+        data: [data],
+        key: streamId,
+      });
+
+      timeoutId = setTimeout(pushNextValue, speed);
+    };
+
+    setTimeout(pushNextValue, 10);
 
     return () => {
       console.log('unsubscribing to stream ' + streamId);
+      clearTimeout(timeoutId);
     };
   });
 }
