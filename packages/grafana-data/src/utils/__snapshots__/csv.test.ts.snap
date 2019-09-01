@@ -30,7 +30,7 @@ Object {
       "name": "Field 3",
       "type": "number",
       "values": Array [
-        undefined,
+        null,
         4,
         undefined,
         NaN,
@@ -41,9 +41,9 @@ Object {
       "name": "Field 4",
       "type": "number",
       "values": Array [
-        undefined,
-        undefined,
-        undefined,
+        null,
+        null,
+        null,
         7,
       ],
     },
