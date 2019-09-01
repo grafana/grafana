@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { translate } from '../../../locale/translator';
 
 export interface Props {
   child: any;
@@ -12,7 +13,7 @@ const DropDownChild: FC<Props> = props => {
     <li className={listItemClassName}>
       <a href={child.url}>
         {child.icon && <i className={child.icon} />}
-        {child.text}
+        {translate(child.text)}
       </a>
     </li>
   );
