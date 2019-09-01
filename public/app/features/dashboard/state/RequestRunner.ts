@@ -1,13 +1,13 @@
 // Libraries
 import { Observable, of } from 'rxjs';
 import { flatten, map as lodashMap, isArray, isString } from 'lodash';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 
 // Utils & Services
 import { LoadingState, toDataFrame, dateMath } from '@grafana/data';
 
 // Types
-import { DataSourceApi, DataQueryRequest, PanelData, DataQueryResponsePacket } from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, PanelData, DataQueryResponsePacket, DataQueryError } from '@grafana/ui';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponsePacket };
 
@@ -90,31 +90,38 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
 
       state = processResponsePacket(packet, state);
       return state.panelData;
-    })
+    }),
+    catchError(err =>
+      of({
+        ...state.panelData,
+        state: LoadingState.Error,
+        error: processQueryError(err),
+      })
+    )
   );
 }
 
-// export function toDataQueryError(err: any): DataQueryError {
-//   const error = (err || {}) as DataQueryError;
-//   if (!error.message) {
-//     if (typeof err === 'string' || err instanceof String) {
-//       return { message: err } as DataQueryError;
-//     }
-//
-//     let message = 'Query error';
-//     if (error.message) {
-//       message = error.message;
-//     } else if (error.data && error.data.message) {
-//       message = error.data.message;
-//     } else if (error.data && error.data.error) {
-//       message = error.data.error;
-//     } else if (error.status) {
-//       message = `Query error: ${error.status} ${error.statusText}`;
-//     }
-//     error.message = message;
-//   }
-//   return error;
-// }
+export function processQueryError(err: any): DataQueryError {
+  const error = (err || {}) as DataQueryError;
+  if (!error.message) {
+    if (typeof err === 'string' || err instanceof String) {
+      return { message: err } as DataQueryError;
+    }
+
+    let message = 'Query error';
+    if (error.message) {
+      message = error.message;
+    } else if (error.data && error.data.message) {
+      message = error.data.message;
+    } else if (error.data && error.data.error) {
+      message = error.data.error;
+    } else if (error.status) {
+      message = `Query error: ${error.status} ${error.statusText}`;
+    }
+    error.message = message;
+  }
+  return error;
+}
 //
 // function translateToLegacyData(data: DataQueryResponseData) {
 //   return data.map((v: any) => {

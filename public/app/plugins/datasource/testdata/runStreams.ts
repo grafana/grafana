@@ -61,16 +61,14 @@ export function runSignalStream(
     const speed = streamQuery.speed;
 
     let value = Math.random() * 100;
-    let time = new Date().getTime();
     let timeoutId: any = null;
 
     const pushNextValue = () => {
       data.add({
-        time: time,
+        time: Date.now(),
         value: value,
       });
 
-      time += speed;
       value += (Math.random() - 0.5) * spread;
 
       subscriber.next({

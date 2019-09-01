@@ -76,19 +76,27 @@ export class QueriesTab extends PureComponent<Props, State> {
   // Updates the response with information from the stream
   panelDataObserver = {
     next: (data: PanelData) => {
-      try {
-        const { panel } = this.props;
-        if (data.state === LoadingState.Error) {
-          panel.events.emit('data-error', data.error);
-        } else if (data.state === LoadingState.Done) {
-          panel.events.emit('data-received', data.legacy);
-        }
-      } catch (err) {
-        console.log('Panel.events handler error', err);
+      if (this.props.panel.isAngularPlugin) {
+        this.notifyAngularQueryEditorsOfData(data);
       }
+
       this.setState({ data });
     },
   };
+
+  notifyAngularQueryEditorsOfData(data: PanelData) {
+    const { panel } = this.props;
+
+    try {
+      if (data.state === LoadingState.Error) {
+        panel.events.emit('data-error', data.error);
+      } else if (data.state === LoadingState.Done) {
+        panel.events.emit('data-received', data.legacy);
+      }
+    } catch (err) {
+      console.log('Panel.events handler error', err);
+    }
+  }
 
   findCurrentDataSource(): DataSourceSelectItem {
     const { panel } = this.props;

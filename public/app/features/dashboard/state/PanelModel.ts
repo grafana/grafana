@@ -335,6 +335,10 @@ export class PanelModel {
     return this.title && this.title.length > 0;
   }
 
+  isAngularPlugin(): boolean {
+    return this.plugin && !!this.plugin.angularPanelCtrl;
+  }
+
   destroy() {
     this.events.emit('panel-teardown');
     this.events.removeAllListeners();
