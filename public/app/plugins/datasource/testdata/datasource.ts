@@ -13,6 +13,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { StreamHandler } from './StreamHandler';
 import { queryMetricTree } from './metricTree';
 import { Observable, of } from 'rxjs';
+import { runStreams, hasStreamingClientQuery } from './runStreams';
 import templateSrv from 'app/features/templating/template_srv';
 
 type TestData = TimeSeries | TableData;
@@ -42,6 +43,10 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
 
     if (queries.length === 0) {
       return of({ data: [] });
+    }
+
+    if (hasStreamingClientQuery(options)) {
+      return runStreams(queries, options);
     }
 
     return new Observable(subscriber => {

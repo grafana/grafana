@@ -1,18 +1,10 @@
+import { defaults } from 'lodash';
 import { Observable, merge } from 'rxjs';
 // import { map } from 'rxjs/operators';
 
 import { DataQueryRequest, DataQueryResponsePacket } from '@grafana/ui';
 
-// import {
-//   FieldType,
-//   Field,
-//   LoadingState,
-//   LogLevel,
-//   CSVReader,
-//   DataFrameHelper,
-//   CircularVector,
-//   DataFrame,
-// } from '@grafana/data';
+import { FieldType, CircularVector, MutableDataFrame } from '@grafana/data';
 
 import { TestDataQuery, StreamingQuery } from './types';
 
@@ -28,9 +20,12 @@ export function hasStreamingClientQuery(req: DataQueryRequest<TestDataQuery>): b
   return req.targets.some(query => query.scenarioId === 'streaming_client');
 }
 
-export function runStreams(req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponsePacket> {
+export function runStreams(
+  queries: TestDataQuery[],
+  req: DataQueryRequest<TestDataQuery>
+): Observable<DataQueryResponsePacket> {
   return merge(
-    ...req.targets.map(query => {
+    ...queries.map(query => {
       return runSignalStream(query, req);
     })
   );
@@ -41,6 +36,50 @@ export function runSignalStream(
   req: DataQueryRequest<TestDataQuery>
 ): Observable<DataQueryResponsePacket> {
   return new Observable<DataQueryResponsePacket>(subscriber => {
-    setTimeout(() => {}, 10);
+    const streamId = `panel-${req.panelId}-refId-${query.refId}`;
+    const maxDataPoints = query.stream.buffer || req.maxDataPoints;
+
+    const data = new MutableDataFrame(
+      {
+        refId: query.refId,
+        name: 'Signal ' + query.refId,
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [] },
+          { name: 'Value', type: FieldType.number, values: [] },
+        ],
+      },
+      (buffer: any[]) => {
+        return new CircularVector({
+          append: 'tail',
+          capacity: maxDataPoints,
+        });
+      }
+    );
+
+    const streamQuery = defaults(query.stream, defaultQuery);
+    const spread = streamQuery.spread;
+    const speed = streamQuery.speed;
+
+    let value = Math.random() * 100;
+    let time = new Date().getTime() - maxDataPoints * speed;
+
+    for (let i = 0; i < maxDataPoints; i++) {
+      data.add({
+        time: time,
+        value: value,
+      });
+
+      time += speed;
+      value += (Math.random() - 0.5) * spread;
+    }
+
+    subscriber.next({
+      data: [data],
+      key: streamId,
+    });
+
+    return () => {
+      console.log('unsubscribing to stream ' + streamId);
+    };
   });
 }
