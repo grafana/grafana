@@ -73,4 +73,12 @@ describe('dataFrameView', () => {
     expect(first.name).toEqual('b');
     expect(first.name).toEqual(second.name);
   });
+
+  it('toJSON returns plain object', () => {
+    expect(vector.toJSON()[0]).toEqual({
+      time: 100,
+      name: 'a',
+      value: 1,
+    });
+  });
 });
