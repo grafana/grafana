@@ -55,10 +55,10 @@ function renderMenuItem(item: AngularPanelMenuItem, ctrl: any) {
   return html;
 }
 
-function createMenuTemplate(ctrl: any) {
+async function createMenuTemplate(ctrl: any) {
   let html = '';
 
-  for (const item of ctrl.getMenu()) {
+  for (const item of await ctrl.getMenu()) {
     html += renderMenuItem(item, ctrl);
   }
 
@@ -75,7 +75,7 @@ function panelHeader($compile: any) {
       let menuScope: any;
       let isDragged: boolean;
 
-      elem.click((evt: any) => {
+      elem.click(async (evt: any) => {
         const targetClass = evt.target.className;
 
         // remove existing scope
@@ -84,7 +84,7 @@ function panelHeader($compile: any) {
         }
 
         menuScope = scope.$new();
-        const menuHtml = createMenuTemplate(scope.ctrl);
+        const menuHtml = await createMenuTemplate(scope.ctrl);
         menuElem.html(menuHtml);
         $compile(menuElem)(menuScope);
 
