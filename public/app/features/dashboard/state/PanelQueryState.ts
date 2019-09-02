@@ -95,7 +95,10 @@ export class PanelQueryState {
   }
 
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
-    this.request = req;
+    this.request = {
+      ...req,
+      startTime: Date.now(),
+    };
     this.datasource = ds;
 
     // Return early if there are no queries to run
@@ -112,7 +115,7 @@ export class PanelQueryState {
       );
     }
 
-    // Set the loading state immediatly
+    // Set the loading state immediately
     this.response.state = LoadingState.Loading;
     this.executor = new Promise<PanelData>((resolve, reject) => {
       this.rejector = reject;
