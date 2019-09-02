@@ -59,7 +59,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   headerCollapsed: css`
     label: collapse__header--collapsed;
     cursor: pointer;
-    padding: ${theme.panelPadding}px;
+    padding: ${theme.spacing.sm} ${theme.spacing.md} 0 ${theme.spacing.md};
   `,
   headerButtons: css`
     label: collapse__header-buttons;
