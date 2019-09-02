@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, LinkButton, getLogRowStyles } from '@grafana/ui';
+import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, getLogRowStyles } from '@grafana/ui';
 
 import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
 
@@ -44,13 +44,20 @@ export interface Props extends Themeable {
 }
 
 interface State {
-  logsResultToRender: LogsModel;
+  logsResultToRender?: LogsModel;
 }
 
 class LiveLogs extends PureComponent<Props, State> {
   private liveEndDiv: HTMLDivElement = null;
   private scrollContainerRef = React.createRef<HTMLDivElement>();
   private lastScrollPos: number | null = null;
+
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      logsResultToRender: props.logsResult,
+    };
+  }
 
   componentDidUpdate(prevProps: Props) {
     if (!prevProps.isPaused && this.props.isPaused) {
@@ -154,25 +161,24 @@ class LiveLogs extends PureComponent<Props, State> {
           />
         </div>
         <div className={cx([styles.logsRowsIndicator])}>
-          <span>
-            Last line received: <ElapsedTime resetKey={this.props.logsResult} humanize={true} /> ago
-          </span>
-          <LinkButton
+          <button
             onClick={isPaused ? onResume : onPause}
-            size="md"
-            variant="transparent"
-            style={{ color: theme.colors.orange }}
+            style={{ marginRight: theme.spacing.sm }}
+            className={'btn btn-secondary'}
           >
+            <i className={cx('fa', isPaused ? 'fa-play' : 'fa-pause')} />
+            &nbsp;
             {isPaused ? 'Resume' : 'Pause'}
-          </LinkButton>
-          <LinkButton
-            onClick={this.props.stopLive}
-            size="md"
-            variant="transparent"
-            style={{ color: theme.colors.orange }}
-          >
-            Stop Live
-          </LinkButton>
+          </button>
+          <button onClick={this.props.stopLive} style={{ marginRight: theme.spacing.sm }} className={'btn btn-inverse'}>
+            <i className={'fa fa-stop'} />
+            &nbsp; Stop
+          </button>
+          {isPaused || (
+            <span>
+              Last line received: <ElapsedTime resetKey={this.props.logsResult} humanize={true} /> ago
+            </span>
+          )}
         </div>
       </>
     );
