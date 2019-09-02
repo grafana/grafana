@@ -32,6 +32,9 @@ const getStyles = (theme: GrafanaTheme) => ({
     display: flex;
     align-items: center;
   `,
+  button: css`
+    margin-right: ${theme.spacing.sm};
+  `,
 });
 
 export interface Props extends Themeable {
@@ -161,16 +164,12 @@ class LiveLogs extends PureComponent<Props, State> {
           />
         </div>
         <div className={cx([styles.logsRowsIndicator])}>
-          <button
-            onClick={isPaused ? onResume : onPause}
-            style={{ marginRight: theme.spacing.sm }}
-            className={'btn btn-secondary'}
-          >
+          <button onClick={isPaused ? onResume : onPause} className={cx('btn btn-secondary', styles.button)}>
             <i className={cx('fa', isPaused ? 'fa-play' : 'fa-pause')} />
             &nbsp;
             {isPaused ? 'Resume' : 'Pause'}
           </button>
-          <button onClick={this.props.stopLive} style={{ marginRight: theme.spacing.sm }} className={'btn btn-inverse'}>
+          <button onClick={this.props.stopLive} className={cx('btn btn-inverse', styles.button)}>
             <i className={'fa fa-stop'} />
             &nbsp; Stop
           </button>
