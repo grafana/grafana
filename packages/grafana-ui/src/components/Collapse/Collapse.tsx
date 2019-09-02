@@ -12,7 +12,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   `,
   collapseBody: css`
     label: collapse__body;
-    padding: ${theme.panelPadding};
+    padding: ${theme.panelPadding}px;
   `,
   loader: css`
     label: collapse__loader;
