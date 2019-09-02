@@ -1055,7 +1055,7 @@ describe('PrometheusDatasource', () => {
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
-
+      // @ts-ignore
       templateSrv.replace = jest.fn(str => str);
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
@@ -1097,6 +1097,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+      // @ts-ignore
       templateSrv.replace = jest.fn(str => str);
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
@@ -1138,6 +1139,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=0&end=400&step=100';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+      // @ts-ignore
       templateSrv.replace = jest.fn(str => str);
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
@@ -1184,6 +1186,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=50&end=400&step=50';
 
+      // @ts-ignore
       templateSrv.replace = jest.fn(str => str);
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
@@ -1272,6 +1275,7 @@ describe('PrometheusDatasource', () => {
         end +
         '&step=60';
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
+      // @ts-ignore
       templateSrv.replace = jest.fn(str => str);
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
       await ctx.ds.query(query);
@@ -1323,6 +1327,7 @@ describe('PrometheusDatasource', () => {
         query.targets[0].expr
       )}&start=0&end=3600&step=60`;
 
+      // @ts-ignore
       templateSrv.replace = jest.fn(str => str);
       backendSrv.datasourceRequest = jest.fn(() => Promise.resolve(response));
       ctx.ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);

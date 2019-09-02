@@ -247,6 +247,25 @@ describe('templateSrv', () => {
     });
   });
 
+  describe('list format', () => {
+    beforeEach(() => {
+      initTemplateSrv([
+        { type: 'query', name: 'var', current: { value: ['replaced?', 'replaced?2'] } },
+        { type: 'query', name: 'var2', current: { value: ['replaced?3', 'replaced?4'] } },
+      ]);
+    });
+
+    it('should properly return all possible values', () => {
+      const target = _templateSrv.replace('prefix-$var-${var2:percentencode}-suffix', {}, 'list');
+      expect(target).toStrictEqual([
+        'prefix-replaced?-replaced%3F3-suffix',
+        'prefix-replaced?-replaced%3F4-suffix',
+        'prefix-replaced?2-replaced%3F3-suffix',
+        'prefix-replaced?2-replaced%3F4-suffix',
+      ]);
+    });
+  });
+
   describe('format variable to string values', () => {
     it('single value should return value', () => {
       const result = _templateSrv.formatValue('test');

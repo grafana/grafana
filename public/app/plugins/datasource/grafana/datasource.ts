@@ -62,26 +62,11 @@ class GrafanaDatasource {
       }
       let tags: string[] = [];
       for (const t of params.tags) {
-        const tokens = GrafanaDatasource.cartesianProduct(
-          this.templateSrv.replaceWithoutFormatting(t, {}).map(targetToken => {
-            if (_.isArray(targetToken.value)) {
-              return targetToken.value.map(v =>
-                this.templateSrv.formatValue(v, targetToken.format, targetToken.variable)
-              );
-            } else {
-              return [this.templateSrv.formatValue(targetToken.value, targetToken.format, targetToken.variable)];
-            }
-          })
-        );
-        tags = tags.concat(tokens.map(t => t.join('')));
+        tags = tags.concat(this.templateSrv.replace(t, {}, 'list'));
       }
       params.tags = tags;
     }
     return this.backendSrv.get('/api/annotations', params);
-  }
-
-  static cartesianProduct(arr: any[][]) {
-    return arr.reduce((a, b) => a.map(x => b.map(y => x.concat(y))).reduce((a, b) => a.concat(b), []), [[]]);
   }
 }
 
