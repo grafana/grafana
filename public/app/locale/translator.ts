@@ -13,7 +13,7 @@ export function Translator(vocabulary: Vocabs) {
 
     return function translate(key = "") {
         const term = key.toLowerCase();
-        return dictionary[term] || term;
+        return dictionary[term] || key;
     };
 }
 

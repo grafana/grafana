@@ -1,6 +1,7 @@
 import React, { useContext, MouseEvent } from 'react';
 import { CallToActionCard, LinkButton, ThemeContext } from '@grafana/ui';
 import { css } from 'emotion';
+import { translate } from 'app/locale/translator';
 export interface Props {
   title: string;
   buttonIcon: string;
@@ -45,9 +46,9 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
         {proTip ? (
           <span key="proTipFooter">
             <i className="fa fa-rocket" />
-            <> ProTip: {proTip} </>
+            <> {translate("ProTip")}: {translate(proTip)} </>
             <a href={proTipLink} target={proTipTarget} className="text-link">
-              {proTipLinkTitle}
+              {translate(proTipLinkTitle)}
             </a>
           </span>
         ) : (
@@ -55,7 +56,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
         )}
         {infoBox ? (
           <div key="infoBoxHtml" className={`grafana-info-box ${infoBoxStyles}`}>
-            {infoBoxTitle && <h5>{infoBoxTitle}</h5>}
+            {infoBoxTitle && <h5>{translate(infoBoxTitle)}</h5>}
             <div dangerouslySetInnerHTML={infoBox} />
           </div>
         ) : (
@@ -73,7 +74,7 @@ const EmptyListCTA: React.FunctionComponent<Props> = ({
 
   const ctaElement = (
     <LinkButton size="lg" onClick={onClick} href={buttonLink} icon={buttonIcon} className={ctaElementClassName}>
-      {buttonTitle}
+      {translate(buttonTitle)}
     </LinkButton>
   );
 

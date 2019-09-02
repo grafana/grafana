@@ -36,6 +36,7 @@ import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
 import { setLocale } from '@grafana/data';
 import { setMarkdownOptions } from '@grafana/data';
+import { translate } from './locale/translator';
 
 // import symlinked extensions
 const extensionsIndex = (require as any).context('.', true, /extensions\/index.ts/);
@@ -67,6 +68,7 @@ export class GrafanaApp {
 
   init() {
     const app = angular.module('grafana', []);
+    app.filter("translate", () => translate);
 
     setLocale(config.bootData.user.locale);
 
