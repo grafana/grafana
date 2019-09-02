@@ -108,7 +108,7 @@ interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasourc
 interface PromQueryFieldState {
   metricsOptions: any[];
   syntaxLoaded: boolean;
-  hint: QueryHint;
+  hint: QueryHint | null;
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
@@ -153,8 +153,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidUpdate(prevProps: PromQueryFieldProps) {
     const { queryResponse } = this.props;
-    const currentHasSeries = queryResponse && queryResponse.series && queryResponse.series.length > 0 ? true : false;
-    if (currentHasSeries && prevProps.queryResponse && prevProps.queryResponse.series !== queryResponse.series) {
+    if (prevProps.queryResponse && prevProps.queryResponse.series !== queryResponse.series) {
       this.refreshHint();
     }
 
@@ -176,7 +175,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   refreshHint = () => {
     const { datasource, query, queryResponse } = this.props;
-    if (!queryResponse || !queryResponse.series || queryResponse.series.length === 0) {
+
+    if (!queryResponse.series || queryResponse.series.length === 0) {
+      this.setState({ hint: null });
       return;
     }
 

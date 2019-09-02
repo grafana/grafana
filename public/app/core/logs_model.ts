@@ -15,13 +15,13 @@ import {
   LogsMetaItem,
   LogsMetaKind,
   LogsDedupStrategy,
-  DataFrameHelper,
   GraphSeriesXY,
   LoadingState,
   dateTime,
   toUtc,
   NullValueMode,
   toDataFrame,
+  FieldCache,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -238,22 +238,22 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
 
   for (let i = 0; i < logSeries.length; i++) {
     const series = logSeries[i];
-    const data = new DataFrameHelper(series);
+    const fieldCache = new FieldCache(series);
     const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
       hasUniqueLabels = true;
     }
 
-    const timeFieldIndex = data.getFirstFieldOfType(FieldType.time);
-    const stringField = data.getFirstFieldOfType(FieldType.string);
-    const logLevelField = data.getFieldByName('level');
+    const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time);
+    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+    const logLevelField = fieldCache.getFieldByName('level');
 
     let seriesLogLevel: LogLevel | undefined = undefined;
     if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
       seriesLogLevel = getLogLevelFromKey(series.labels['level']);
     }
 
-    for (let j = 0; j < data.length; j++) {
+    for (let j = 0; j < series.length; j++) {
       const ts = timeFieldIndex.values.get(j);
       const time = dateTime(ts);
       const timeEpochMs = time.valueOf();

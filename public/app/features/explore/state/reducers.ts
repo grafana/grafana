@@ -225,6 +225,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         queries: queries.slice(),
+        graphResult: null,
+        tableResult: null,
+        logsResult: null,
         showingStartPage: Boolean(state.StartPage),
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
         queryResponse: createEmptyQueryResponse(),
@@ -287,6 +290,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         datasourceInstance,
+        graphResult: null,
+        tableResult: null,
+        logsResult: null,
         latency: 0,
         queryResponse: createEmptyQueryResponse(),
         loading: false,
