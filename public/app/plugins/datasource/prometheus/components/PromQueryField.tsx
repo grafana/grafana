@@ -154,7 +154,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidUpdate(prevProps: PromQueryFieldProps) {
     const { queryResponse } = this.props;
-    if (prevProps.queryResponse && prevProps.queryResponse.series !== queryResponse.series) {
+
+    if (queryResponse && prevProps.queryResponse && prevProps.queryResponse.series !== queryResponse.series) {
       this.refreshHint();
     }
 
@@ -177,7 +178,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   refreshHint = () => {
     const { datasource, query, queryResponse } = this.props;
 
-    if (!queryResponse.series || queryResponse.series.length === 0) {
+    if (!queryResponse || queryResponse.series.length === 0) {
       this.setState({ hint: null });
       return;
     }
