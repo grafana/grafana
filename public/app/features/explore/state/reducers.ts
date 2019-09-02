@@ -53,6 +53,7 @@ import {
   toggleLogLevelAction,
   changeLoadingStateAction,
   resetExploreAction,
+  setPausedStateAction,
 } from './actionTypes';
 import { reducerFactory } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
@@ -115,6 +116,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   supportedModes: [],
   mode: null,
   isLive: false,
+  isPaused: false,
   urlReplaced: false,
   queryState: new PanelQueryState(),
 });
@@ -198,6 +200,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         refreshInterval,
         loadingState: live ? LoadingState.Streaming : LoadingState.NotStarted,
         isLive: live,
+        isPaused: false,
         logsResult,
       };
     },
@@ -598,6 +601,16 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         loadingState,
+      };
+    },
+  })
+  .addMapper({
+    filter: setPausedStateAction,
+    mapper: (state, action): ExploreItemState => {
+      const { isPaused } = action.payload;
+      return {
+        ...state,
+        isPaused: isPaused,
       };
     },
   })
