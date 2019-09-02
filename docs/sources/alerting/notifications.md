@@ -165,6 +165,15 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
+### Webex Teams
+
+To set up Webex Teams, all you have to do is to provide a Bot Token and a Webex Teams Space ID.
+
+Setting | Description
+---------- | -----------
+Space ID | Space ID for Webex Teams.
+Bot Token | Access Token for a Webex Teams Bot
+
 ### All supported notifiers
 
 Name | Type | Supports images | Support alert rule tags
@@ -187,6 +196,7 @@ Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
 Webhook | `webhook` | yes, external only | yes
+Webex Teams | `webexteams` | yes, external only | no
 
 # Enable images in notifications {#external-image-store}
 
