@@ -103,3 +103,16 @@ func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
 		}
 	}
 }
+
+func SnapshotPublicModeOrSignedIn() macaron.Handler {
+	return func(c *m.ReqContext) {
+		if setting.SnapshotPublicMode {
+			return
+		}
+
+		_, err := c.Invoke(ReqSignedIn)
+		if err != nil {
+			c.JsonApiErr(500, "Failed to invoke required signed in middleware", err)
+		}
+	}
+}

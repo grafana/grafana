@@ -1,4 +1,5 @@
-﻿import { Component } from 'react';
+import React, { PureComponent, ReactNode } from 'react';
+import { Alert } from '@grafana/ui';
 
 interface ErrorInfo {
   componentStack: string;
@@ -10,7 +11,7 @@ interface RenderProps {
 }
 
 interface Props {
-  children: (r: RenderProps) => JSX.Element;
+  children: (r: RenderProps) => ReactNode;
 }
 
 interface State {
@@ -18,7 +19,7 @@ interface State {
   errorInfo: ErrorInfo;
 }
 
-class ErrorBoundary extends Component<Props, State> {
+export class ErrorBoundary extends PureComponent<Props, State> {
   readonly state: State = {
     error: null,
     errorInfo: null,
@@ -41,4 +42,36 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary;
+interface WithAlertBoxProps {
+  title?: string;
+  children: ReactNode;
+}
+
+export class ErrorBoundaryAlert extends PureComponent<WithAlertBoxProps> {
+  static defaultProps: Partial<WithAlertBoxProps> = {
+    title: 'An unexpected error happened',
+  };
+
+  render() {
+    const { title, children } = this.props;
+    return (
+      <ErrorBoundary>
+        {({ error, errorInfo }) => {
+          if (!errorInfo) {
+            return children;
+          }
+
+          return (
+            <Alert title={title}>
+              <details style={{ whiteSpace: 'pre-wrap' }}>
+                {error && error.toString()}
+                <br />
+                {errorInfo.componentStack}
+              </details>
+            </Alert>
+          );
+        }}
+      </ErrorBoundary>
+    );
+  }
+}
