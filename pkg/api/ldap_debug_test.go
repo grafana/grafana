@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
@@ -102,6 +103,15 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 		},
 	}
 
+	mockOrgSearchResult := []*models.OrgDTO{
+		{Id: 1, Name: "Main Org."},
+	}
+
+	bus.AddHandler("test", func(query *models.SearchOrgsQuery) error {
+		query.Result = mockOrgSearchResult
+		return nil
+	})
+
 	getLDAPConfig = func() (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
@@ -134,7 +144,7 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 			"isGrafanaAdmin": true,
 			"isDisabled": false,
 			"roles": [
-				{ "orgId": 1, "orgRole": "Admin", "groupDN": "cn=admins,ou=groups,dc=grafana,dc=org" }
+				{ "orgId": 1, "orgRole": "Admin", "orgName": "Main Org.", "groupDN": "cn=admins,ou=groups,dc=grafana,dc=org" }
 			],
 			"teams": null
 		}

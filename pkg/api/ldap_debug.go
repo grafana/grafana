@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
@@ -22,6 +23,7 @@ type LDAPAttribute struct {
 // RoleDTO is a serializer for mapped roles from LDAP
 type RoleDTO struct {
 	OrgId   int64           `json:"orgId"`
+	OrgName string          `json:"orgName"`
 	OrgRole models.RoleType `json:"orgRole"`
 	GroupDN string          `json:"groupDN"`
 }
@@ -40,8 +42,34 @@ type LDAPUserDTO struct {
 	Username       *LDAPAttribute `json:"login"`
 	IsGrafanaAdmin *bool          `json:"isGrafanaAdmin"`
 	IsDisabled     bool           `json:"isDisabled"`
-	OrgRoles       *[]RoleDTO     `json:"roles"`
-	Teams          *[]TeamDTO     `json:"teams"`
+	OrgRoles       []RoleDTO      `json:"roles"`
+	Teams          []TeamDTO      `json:"teams"`
+}
+
+func (user *LDAPUserDTO) FetchOrgs() error {
+	orgIds := []int64{}
+
+	for _, or := range user.OrgRoles {
+		orgIds = append(orgIds, or.OrgId)
+	}
+
+	q := &models.SearchOrgsQuery{}
+	q.Ids = orgIds
+
+	if err := bus.Dispatch(q); err != nil {
+		return err
+	}
+
+	// Optimise this loop
+	for _, org := range q.Result {
+		for i, or := range user.OrgRoles {
+			if org.Id == or.OrgId {
+				user.OrgRoles[i].OrgName = org.Name
+			}
+		}
+	}
+
+	return nil
 }
 
 // ReloadLDAPCfg reloads the LDAP configuration
@@ -107,7 +135,13 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 		}
 	}
 
-	u.OrgRoles = &orgRoles
+	u.OrgRoles = orgRoles
+
+	err = u.FetchOrgs()
+
+	if err != nil {
+		return Error(500, "Failed to query the user's organizations", err)
+	}
 
 	return JSON(200, u)
 }
