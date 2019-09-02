@@ -57,7 +57,19 @@ export class ErrorBoundaryAlert extends PureComponent<WithAlertBoxProps> {
     return (
       <ErrorBoundary>
         {({ error, errorInfo }) => {
-          if (errorInfo) {
+          if (!errorInfo) {
+            return children;
+          }
+          
+          return (
+            <Alert title={title}>
+              <details style={{ whiteSpace: 'pre-wrap' }}>
+                {error && error.toString()}
+                <br />
+                {errorInfo.componentStack}
+              </details>
+            </Alert>
+          );
             return (
               <Alert title={title}>
                 <details style={{ whiteSpace: 'pre-wrap' }}>
