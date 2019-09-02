@@ -1,6 +1,6 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { FieldDisplay, ScopedVars, DataLinkBuiltInVars } from '@grafana/ui';
-import { LinkModelSupplier, DataFrameHelper, FieldType } from '@grafana/data';
+import { LinkModelSupplier, getTimeField } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
 
 /**
@@ -28,9 +28,9 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         if (value.row) {
           const row = value.view.get(value.row);
           console.log('ROW:', row);
-          const dataFrame = new DataFrameHelper(value.view.dataFrame);
+          const dataFrame = value.view.dataFrame;
 
-          const timeField = dataFrame.getFirstFieldOfType(FieldType.time);
+          const { timeField } = getTimeField(dataFrame);
           if (timeField) {
             scopedVars[DataLinkBuiltInVars.valueTime] = {
               text: 'Value time',

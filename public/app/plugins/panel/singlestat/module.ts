@@ -119,7 +119,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on('data-received', this.onDataReceived.bind(this));
+    this.events.on('data-frames-received', this.onFramesReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
@@ -157,14 +157,23 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   // This should only be called from the snapshot callback
   onDataReceived(dataList: LegacyResponseData[]) {
-    this.handleDataFrames(getProcessedDataFrames(dataList));
+    this.onFramesReceived(getProcessedDataFrames(dataList));
   }
 
-  // Directly support DataFrame skipping event callbacks
-  handleDataFrames(frames: DataFrame[]) {
+  onFramesReceived(frames: DataFrame[]) {
     const { panel } = this;
-    super.handleDataFrames(frames);
-    this.loading = false;
+
+    if (frames && frames.length > 1) {
+      this.data = {
+        value: 0,
+        display: {
+          text: 'Only queries that return single series/table is supported',
+          numeric: NaN,
+        },
+      };
+      this.render();
+      return;
+    }
 
     const distinct = getDistinctNames(frames);
     let fieldInfo = distinct.byName[panel.tableColumn]; //

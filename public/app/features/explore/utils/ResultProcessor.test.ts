@@ -163,6 +163,8 @@ describe('ResultProcessor', () => {
         const { resultProcessor } = testContext({ mode: ExploreMode.Logs, observerResponse: null });
         const theResult = resultProcessor.getLogsResult();
 
+        console.log(JSON.stringify(theResult));
+
         expect(theResult).toEqual({
           hasUniqueLabels: false,
           meta: [],
