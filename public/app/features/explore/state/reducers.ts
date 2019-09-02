@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import {
-  getIntervals,
   ensureQueries,
   getQueryKeys,
   parseUrlState,
@@ -26,10 +25,8 @@ import {
   historyUpdatedAction,
   changeModeAction,
   setUrlReplacedAction,
-  querySuccessAction,
   scanStopAction,
   queryStartAction,
-  runQueriesAction,
   changeRangeAction,
   addQueryRowAction,
   changeQueryAction,
@@ -386,22 +383,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: querySuccessAction,
-    mapper: (state, action): ExploreItemState => {
-      const { latency, graphResult, tableResult, logsResult } = action.payload;
-
-      return {
-        ...state,
-        graphResult,
-        tableResult,
-        logsResult,
-        latency,
-        showingStartPage: false,
-        update: makeInitialUpdateState(),
-      };
-    },
-  })
-  .addMapper({
     filter: removeQueryRowAction,
     mapper: (state, action): ExploreItemState => {
       const { queries, queryKeys } = state;
@@ -525,24 +506,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       return {
         ...state,
         exploreDatasources: action.payload.exploreDatasources,
-      };
-    },
-  })
-  .addMapper({
-    filter: runQueriesAction,
-    mapper: (state): ExploreItemState => {
-      const { range } = state;
-      const { datasourceInstance, containerWidth } = state;
-      let interval = '1s';
-      if (datasourceInstance && datasourceInstance.interval) {
-        interval = datasourceInstance.interval;
-      }
-      const queryIntervals = getIntervals(range, interval, containerWidth);
-      return {
-        ...state,
-        range,
-        queryIntervals,
-        showingStartPage: false,
       };
     },
   })

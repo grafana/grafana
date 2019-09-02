@@ -18,7 +18,6 @@ import {
   splitCloseAction,
   changeModeAction,
   scanStopAction,
-  runQueriesAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -173,30 +172,6 @@ describe('Explore item reducer', () => {
             .whenActionIsDispatched(updateDatasourceInstanceAction({ exploreId: ExploreId.left, datasourceInstance }))
             .thenStateShouldEqual(expectedState);
         });
-      });
-    });
-  });
-
-  describe('run queries', () => {
-    describe('when runQueriesAction is dispatched', () => {
-      it('then it should set correct state', () => {
-        const initalState: Partial<ExploreItemState> = {
-          showingStartPage: true,
-          range: null,
-        };
-        const expectedState: any = {
-          queryIntervals: {
-            interval: '1s',
-            intervalMs: 1000,
-          },
-          showingStartPage: false,
-          range: null,
-        };
-
-        reducerTester()
-          .givenReducer(itemReducer, initalState)
-          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(expectedState);
       });
     });
   });
