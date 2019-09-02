@@ -5,8 +5,8 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit, DashboardDTO } from 'app/types';
 
 export interface Props {
-  dashboardsClassName?: string;
-  onDashboardSelect: (dashboard: DashboardDTO) => void;
+  className?: string;
+  onSelect: (dashboard: DashboardDTO) => void;
 }
 
 export interface State {
@@ -48,19 +48,19 @@ export class DashboardPicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboardsClassName } = this.props;
+    const { className, onSelect } = this.props;
     const { isLoading } = this.state;
 
     return (
       <div className="gf-form-inline">
         <div className="gf-form">
           <AsyncSelect
-            className={dashboardsClassName}
+            className={className}
             isLoading={isLoading}
             isClearable={true}
             defaultOptions={true}
             loadOptions={this.debouncedSearch}
-            onChange={this.props.onDashboardSelect}
+            onChange={onSelect}
             placeholder="Select dashboard"
             noOptionsMessage={() => 'No dashboards found'}
           />
