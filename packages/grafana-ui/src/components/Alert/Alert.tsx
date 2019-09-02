@@ -1,15 +1,16 @@
-import React, { FC } from 'react';
+import React, { FC, ReactNode } from 'react';
 
 interface Props {
-  message: any;
+  title: string;
   button?: {
     text: string;
     onClick: (event: React.MouseEvent) => void;
   };
+  children?: ReactNode;
 }
 
 export const Alert: FC<Props> = props => {
-  const { message, button } = props;
+  const { title, button, children } = props;
   return (
     <div className="alert-container">
       <div className="alert-error alert">
@@ -17,7 +18,8 @@ export const Alert: FC<Props> = props => {
           <i className="fa fa-exclamation-triangle" />
         </div>
         <div className="alert-body">
-          <div className="alert-title">{message}</div>
+          <div className="alert-title">{title}</div>
+          {children && <div className="alert-text">{children}</div>}
         </div>
         {button && (
           <div className="alert-button">
