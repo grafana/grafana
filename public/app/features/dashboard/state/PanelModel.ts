@@ -335,6 +335,10 @@ export class PanelModel {
     return this.title && this.title.length > 0;
   }
 
+  isReactPlugin(): boolean {
+    return this.plugin && !!this.plugin.panel;
+  }
+
   destroy() {
     this.events.emit('panel-teardown');
     this.events.removeAllListeners();
