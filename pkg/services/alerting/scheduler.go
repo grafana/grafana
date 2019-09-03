@@ -30,9 +30,8 @@ func (s *schedulerImpl) Update(rules []*Rule) {
 		if s.jobs[rule.ID] != nil {
 			job = s.jobs[rule.ID]
 		} else {
-			job = &Job{
-				Running: false,
-			}
+			job = &Job{}
+			job.SetRunning(false)
 		}
 
 		job.Rule = rule
@@ -52,7 +51,7 @@ func (s *schedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 	now := tickTime.Unix()
 
 	for _, job := range s.jobs {
-		if job.Running || job.Rule.State == models.AlertStatePaused {
+		if job.GetRunning() || job.Rule.State == models.AlertStatePaused {
 			continue
 		}
 

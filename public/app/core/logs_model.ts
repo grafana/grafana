@@ -16,7 +16,6 @@ import {
   LogsMetaKind,
   LogsDedupStrategy,
   GraphSeriesXY,
-  LoadingState,
   dateTime,
   toUtc,
   NullValueMode,
@@ -193,7 +192,7 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
       logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
     } else {
       logsModel.series = getGraphSeriesModel(
-        { series: metricSeries, state: LoadingState.Done },
+        metricSeries,
         {},
         { showBars: true, showLines: false, showPoints: false },
         {

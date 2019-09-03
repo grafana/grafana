@@ -611,13 +611,10 @@ export const processQueryResponse = (
   }
 
   const latency = request.endTime - request.startTime;
-
-  // temporary hack until we switch to PanelData, Loki already converts to DataFrame so using legacy will destroy the format
-  const isLokiDataSource = state.datasourceInstance.meta.name === 'Loki';
-  const processor = new ResultProcessor(state, replacePreviousResults, isLokiDataSource ? series : legacy);
+  const processor = new ResultProcessor(state, replacePreviousResults, series);
 
   // For Angular editors
-  state.eventBridge.emit('data-received', processor.getRawData());
+  state.eventBridge.emit('data-received', legacy);
 
   return {
     ...state,
