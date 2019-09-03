@@ -222,10 +222,7 @@ jobs:
           command: './scripts/build/sign_packages.sh'
       - run:
           name: verify signed packages
-          command: |
-            mkdir -p ~/.rpmdb/pubkeys
-            curl -s https://packages.grafana.com/gpg.key > ~/.rpmdb/pubkeys/grafana.key
-            ./scripts/build/verify_signed_packages.sh dist/*.rpm
+          command: './scripts/build/verify_signed_packages.sh'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -496,10 +493,7 @@ jobs:
         command: './scripts/build/sign_packages.sh'
     - run:
         name: verify signed packages
-        command: |
-          mkdir -p ~/.rpmdb/pubkeys
-          curl -s https://packages.grafana.com/gpg.key > ~/.rpmdb/pubkeys/grafana.key
-          ./scripts/build/verify_signed_packages.sh dist/*.rpm
+        command: './scripts/build/verify_signed_packages.sh'
     - run:
         name: sha-sum packages
         command: 'go run build.go sha-dist'
