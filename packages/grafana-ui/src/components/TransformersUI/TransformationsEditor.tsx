@@ -4,6 +4,7 @@ import { transformersUIRegistry } from './transformers';
 import React from 'react';
 import { TransformationRow } from './TransformationRow';
 import { Button } from '../Button/Button';
+import { css } from 'emotion';
 
 interface TransformationsEditorState {
   updateCounter: number;
@@ -69,9 +70,12 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
           if (t.id === DataTransformerID.noop) {
             return (
               <Select
+                className={css`
+                  margin-bottom: 10px;
+                `}
                 key={`${t.id}-${i}`}
                 options={availableTransformers}
-                placeholder="Add Transformation"
+                placeholder="Select transformation"
                 onChange={v => {
                   this.onTransformationChange(i, {
                     id: v.value as string,
