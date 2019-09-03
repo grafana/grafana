@@ -202,7 +202,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
               key: `prometheus-${target.refId}`,
               state: LoadingState.Done,
               request: options,
-              data,
+              // TODO this is obviously wrong as data is not a DataFrame and needs to be dealt with later on
+              //  in PanelQueryState
+              data: data as any,
               unsubscribe: () => undefined,
             };
 
