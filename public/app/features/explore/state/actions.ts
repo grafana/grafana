@@ -19,7 +19,7 @@ import {
   updateHistory,
 } from 'app/core/utils/explore';
 // Types
-import { ThunkResult, ExploreUrlState } from 'app/types';
+import { ThunkResult, ExploreUrlState, ExploreItemState } from 'app/types';
 import { DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction, PanelData } from '@grafana/ui';
 
 import {
@@ -31,7 +31,7 @@ import {
   isDateTime,
   dateTimeForTimeZone,
 } from '@grafana/data';
-import { ExploreId, ExploreUIState, QueryTransaction, ExploreMode } from 'app/types/explore';
+import { ExploreId, ExploreUIState, ExploreMode } from 'app/types/explore';
 import {
   updateDatasourceInstanceAction,
   changeQueryAction,
@@ -466,7 +466,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     dispatch(queryStartAction({ exploreId }));
 
     queryState
-      .execute(datasourceInstance, transaction.options)
+      .execute(datasourceInstance, transaction.request)
       .then((response: PanelData) => {
         if (!response.error) {
           // Side-effect: Saving history in localstorage
@@ -493,7 +493,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
         dispatch(
           queryEndedAction({
             exploreId,
-            response: { error, legacy: [], series: [], request: transaction.options, state: LoadingState.Error },
+            response: { error, legacy: [], series: [], request: transaction.request, state: LoadingState.Error },
           })
         );
       });
@@ -649,12 +649,9 @@ export function splitOpen(): ThunkResult<void> {
     const leftState = getState().explore[ExploreId.left];
     const queryState = getState().location.query[ExploreId.left] as string;
     const urlState = parseUrlState(queryState);
-    const queryTransactions: QueryTransaction[] = [];
-    const itemState = {
+    const itemState: ExploreItemState = {
       ...leftState,
-      queryTransactions,
       queries: leftState.queries.slice(),
-      exploreId: ExploreId.right,
       urlState,
     };
     dispatch(splitOpenAction({ itemState }));
