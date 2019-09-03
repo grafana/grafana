@@ -1,0 +1,25 @@
+@import '../../node_modules/rc-time-picker/assets/index.css';
+
+.rc-time-picker-input,
+.rc-time-picker-panel-input-wrap,
+.rc-time-picker-panel-inner {
+  background-color: $input-bg;
+  color: $input-color;
+  border-color: $input-border-color;
+  font-size: $font-size-base;
+}
+
+.rc-time-picker-input {
+  padding: $input-padding;
+  height: $input-height;
+}
+
+.rc-time-picker-panel-select {
+  .rc-time-picker-panel-select-option-selected {
+    background-color: $menu-dropdown-hover-bg;
+  }
+
+  li:hover {
+    background-color: $menu-dropdown-hover-bg;
+  }
+}
