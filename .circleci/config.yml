@@ -556,8 +556,14 @@ jobs:
           name: Update Debian repository
           command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "enterprise-dist"'
       - run:
+          name: Publish Debian repository
+          command: './scripts/build/update_repo/publish-deb.sh "enterprise"'
+      - run:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "enterprise-dist"'
+      - run:
+          name: Publish RPM repository
+          command: './scripts/build/update_repo/publish-rpm.sh "enterprise" "$CIRCLE_TAG"'
 
 
   deploy-master:
@@ -614,8 +620,14 @@ jobs:
           name: Update Debian repository
           command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
       - run:
+          name: Publish Debian repository
+          command: './scripts/build/update_repo/publish-deb.sh "oss"'
+      - run:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
+      - run:
+          name: Publish RPM repository
+          command: './scripts/build/update_repo/publish-rpm.sh "oss" "$CIRCLE_TAG"'
 
   build-oss-msi:
     docker:

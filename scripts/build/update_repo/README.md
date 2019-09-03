@@ -21,8 +21,10 @@ docker cp <gpg.key used for signing> <container_name>:/private.key
 ./script/build/update_repo/load-signing-key.sh
 cd dist && wget https://dl.grafana.com/oss/release/grafana_5.4.3_amd64.deb && wget https://dl.grafana.com/oss/release/grafana-5.4.3-1.x86_64.rpm && cd ..
 
-#run these scripts:
+#run these scripts to update local deb and rpm repos and publish them:
 ./script/build/update_repo/test-update-deb-repo.sh <gpg key password>
+./script/build/update_repo/test-publish-deb-repo.sh
 ./script/build/update_repo/test-update-rpm-repo.sh <gpg key password>
+./script/build/update_repo/test-publish-rpm-repo.sh
 
 ```
