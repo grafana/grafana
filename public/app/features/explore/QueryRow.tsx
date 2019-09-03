@@ -2,6 +2,7 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
 import { hot } from 'react-hot-loader';
+import memoizeOne from 'memoize-one';
 // @ts-ignore
 import { connect } from 'react-redux';
 
@@ -13,7 +14,7 @@ import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/act
 
 // Types
 import { StoreState } from 'app/types';
-import { TimeRange, AbsoluteTimeRange, toDataFrame, guessFieldTypes } from '@grafana/data';
+import { TimeRange, AbsoluteTimeRange, toDataFrame, guessFieldTypes, GraphSeriesXY, LoadingState } from '@grafana/data';
 import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData, DataQueryError } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
@@ -198,6 +199,17 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
   }
 }
 
+const makeQueryResponseMemoized = memoizeOne(
+  (graphResult: GraphSeriesXY[], error: DataQueryError, loadingState: LoadingState): PanelData => {
+    const series = graphResult ? graphResult.map(serie => guessFieldTypes(toDataFrame(serie))) : []; // TODO: use DataFrame
+    return {
+      series,
+      state: loadingState,
+      error,
+    };
+  }
+);
+
 function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore[exploreId];
@@ -217,12 +229,7 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
   const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
-  const series = graphResult ? graphResult.map(serie => guessFieldTypes(toDataFrame(serie))) : []; // TODO: use DataFrame
-  const queryResponse: PanelData = {
-    series,
-    state: loadingState,
-    error,
-  };
+  const queryResponse = makeQueryResponseMemoized(graphResult, error, loadingState);
 
   return {
     datasourceInstance,

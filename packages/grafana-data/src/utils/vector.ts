@@ -8,7 +8,29 @@ export function vectorToArray<T>(v: Vector<T>): T[] {
   return arr;
 }
 
-export class ArrayVector<T = any> implements Vector<T> {
+/**
+ * Apache arrow vectors are Read/Write
+ */
+export interface ReadWriteVector<T = any> extends Vector<T> {
+  set: (index: number, value: T) => void;
+}
+
+/**
+ * Vector with standard manipulation functions
+ */
+export interface MutableVector<T = any> extends ReadWriteVector<T> {
+  /**
+   * Adds the value to the vector
+   */
+  add: (value: T) => void;
+
+  /**
+   * modifies the vector so it is now the oposite order
+   */
+  reverse: () => void;
+}
+
+export class ArrayVector<T = any> implements MutableVector<T> {
   buffer: T[];
 
   constructor(buffer?: T[]) {
@@ -19,8 +41,20 @@ export class ArrayVector<T = any> implements Vector<T> {
     return this.buffer.length;
   }
 
+  add(value: T) {
+    this.buffer.push(value);
+  }
+
   get(index: number): T {
     return this.buffer[index];
+  }
+
+  set(index: number, value: T) {
+    this.buffer[index] = value;
+  }
+
+  reverse() {
+    this.buffer.reverse();
   }
 
   toArray(): T[] {
@@ -109,7 +143,7 @@ interface CircularOptions<T> {
  * This supports addting to the 'head' or 'tail' and will grow the buffer
  * to match a configured capacity.
  */
-export class CircularVector<T = any> implements Vector<T> {
+export class CircularVector<T = any> implements MutableVector<T> {
   private buffer: T[];
   private index: number;
   private capacity: number;
@@ -202,6 +236,10 @@ export class CircularVector<T = any> implements Vector<T> {
     }
   }
 
+  reverse() {
+    this.buffer.reverse();
+  }
+
   /**
    * Add the value to the buffer
    */
@@ -209,6 +247,10 @@ export class CircularVector<T = any> implements Vector<T> {
 
   get(index: number) {
     return this.buffer[(index + this.index) % this.buffer.length];
+  }
+
+  set(index: number, value: T) {
+    this.buffer[(index + this.index) % this.buffer.length] = value;
   }
 
   get length() {
