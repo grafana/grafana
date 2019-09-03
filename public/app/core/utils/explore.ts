@@ -1,6 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import { from } from 'rxjs';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 // Services & Utils
 import {
@@ -9,25 +8,16 @@ import {
   TimeRange,
   RawTimeRange,
   TimeZone,
-  IntervalValues,
   TimeFragment,
   LogRowModel,
   LogsModel,
   LogsDedupStrategy,
 } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
-import kbn from 'app/core/utils/kbn';
 import store from 'app/core/store';
 import { getNextRefIdChar } from './query';
 // Types
-import {
-  DataQuery,
-  DataSourceApi,
-  DataQueryError,
-  DataSourceJsonData,
-  DataQueryRequest,
-  DataStreamObserver,
-} from '@grafana/ui';
+import { DataQuery, DataSourceApi, DataQueryError } from '@grafana/ui';
 import {
   ExploreUrlState,
   HistoryItem,
@@ -321,14 +311,6 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
   );
 }
 
-export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
-  if (!resolution) {
-    return { interval: '1s', intervalMs: 1000 };
-  }
-
-  return kbn.calculateInterval(range, resolution, lowLimit);
-}
-
 /**
  * Update the query history. Side-effect: store history in local storage
  */
@@ -448,7 +430,7 @@ export const getFirstQueryErrorWithoutRefId = (errors: DataQueryError[]) => {
     return null;
   }
 
-  return errors.filter(error => (error.refId ? false : true))[0];
+  return errors.filter(error => (error && error.refId ? false : true))[0];
 };
 
 export const getRefIds = (value: any): string[] => {
@@ -521,14 +503,6 @@ export const convertToWebSocketUrl = (url: string) => {
     backend = backend.slice(0, backend.length - 1);
   }
   return `${backend}${url}`;
-};
-
-export const getQueryResponse = (
-  datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData>,
-  options: DataQueryRequest<DataQuery>,
-  observer?: DataStreamObserver
-) => {
-  return from(datasourceInstance.query(options, observer));
 };
 
 export const stopQueryState = (queryState: PanelQueryState, reason: string) => {

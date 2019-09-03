@@ -1,5 +1,5 @@
 // Libraries
-import _ from 'lodash';
+
 import React from 'react';
 import { css } from 'emotion';
 import { GraphSeriesValue, AbsoluteTimeRange } from '@grafana/data';

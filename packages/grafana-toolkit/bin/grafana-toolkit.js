@@ -7,7 +7,8 @@ var path = require('path') ;
 var tsProjectPath = path.resolve(__dirname, '../tsconfig.json');
 
 require('ts-node').register({
-  project: tsProjectPath
+  project: tsProjectPath,
+  transpileOnly: true
 });
 
 require('../src/cli/index.ts').run(true);
