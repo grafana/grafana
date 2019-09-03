@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -108,9 +109,11 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 			404, "No user was found on the LDAP server(s)", err)
 	}
 
+	name, surname := splitName(user.Name)
+
 	u := &LDAPUserDTO{
-		Name:           &LDAPAttribute{serverConfig.Attr.Name, user.Name},
-		Surname:        &LDAPAttribute{serverConfig.Attr.Surname, user.Name},
+		Name:           &LDAPAttribute{serverConfig.Attr.Name, name},
+		Surname:        &LDAPAttribute{serverConfig.Attr.Surname, surname},
 		Email:          &LDAPAttribute{serverConfig.Attr.Email, user.Email},
 		Username:       &LDAPAttribute{serverConfig.Attr.Username, user.Login},
 		IsGrafanaAdmin: user.IsGrafanaAdmin,
@@ -150,4 +153,18 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 // Since we allow one role per organization. If it's set, we were able to match it.
 func isMatchToLDAPGroup(user *models.ExternalUserInfo, groupConfig *ldap.GroupToOrgRole) bool {
 	return user.OrgRoles[groupConfig.OrgID] == groupConfig.OrgRole
+}
+
+// splitName receives the full name of a user and splits it into two parts: A name and a surname.
+func splitName(name string) (string, string) {
+	names := util.SplitString(name)
+
+	switch len(names) {
+	case 0:
+		return "", ""
+	case 1:
+		return names[0], ""
+	default:
+		return names[0], names[1]
+	}
 }
