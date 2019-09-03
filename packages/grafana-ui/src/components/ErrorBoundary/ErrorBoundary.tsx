@@ -1,13 +1,14 @@
 import React, { PureComponent, ReactNode } from 'react';
-import { Alert } from '@grafana/ui';
+import { Alert } from '../Alert/Alert';
+import { css } from 'emotion';
 
 interface ErrorInfo {
   componentStack: string;
 }
 
 interface RenderProps {
-  error: Error;
-  errorInfo: ErrorInfo;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
 interface Props {
@@ -15,8 +16,8 @@ interface Props {
 }
 
 interface State {
-  error: Error;
-  errorInfo: ErrorInfo;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
 }
 
 export class ErrorBoundary extends PureComponent<Props, State> {
@@ -35,6 +36,7 @@ export class ErrorBoundary extends PureComponent<Props, State> {
   render() {
     const { children } = this.props;
     const { error, errorInfo } = this.state;
+
     return children({
       error,
       errorInfo,
@@ -42,18 +44,28 @@ export class ErrorBoundary extends PureComponent<Props, State> {
   }
 }
 
+function getAlertPageStyle() {
+  return css`
+    width: 500px;
+    margin: 64px auto;
+  `;
+}
+
 interface WithAlertBoxProps {
   title?: string;
   children: ReactNode;
+  style?: 'page' | 'alertbox';
 }
 
 export class ErrorBoundaryAlert extends PureComponent<WithAlertBoxProps> {
   static defaultProps: Partial<WithAlertBoxProps> = {
     title: 'An unexpected error happened',
+    style: 'alertbox',
   };
 
   render() {
-    const { title, children } = this.props;
+    const { title, children, style } = this.props;
+
     return (
       <ErrorBoundary>
         {({ error, errorInfo }) => {
@@ -61,15 +73,28 @@ export class ErrorBoundaryAlert extends PureComponent<WithAlertBoxProps> {
             return children;
           }
 
-          return (
-            <Alert title={title}>
-              <details style={{ whiteSpace: 'pre-wrap' }}>
-                {error && error.toString()}
-                <br />
-                {errorInfo.componentStack}
-              </details>
-            </Alert>
-          );
+          if (style === 'alertbox') {
+            return (
+              <Alert title={title || ''}>
+                <details style={{ whiteSpace: 'pre-wrap' }}>
+                  {error && error.toString()}
+                  <br />
+                  {errorInfo.componentStack}
+                </details>
+              </Alert>
+            );
+          } else {
+            return (
+              <div className={getAlertPageStyle()}>
+                <h2>{title}</h2>
+                <details style={{ whiteSpace: 'pre-wrap' }}>
+                  {error && error.toString()}
+                  <br />
+                  {errorInfo.componentStack}
+                </details>
+              </div>
+            );
+          }
         }}
       </ErrorBoundary>
     );

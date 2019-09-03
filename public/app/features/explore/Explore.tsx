@@ -11,8 +11,7 @@ import memoizeOne from 'memoize-one';
 import store from 'app/core/store';
 
 // Components
-import { Alert } from '@grafana/ui';
-import { ErrorBoundary } from './ErrorBoundary';
+import { Alert, ErrorBoundaryAlert } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -281,7 +280,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
                 return (
                   <main className="m-t-2" style={{ width }}>
-                    <ErrorBoundary>
+                    <ErrorBoundaryAlert>
                       {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
                       {!showingStartPage && (
                         <>
@@ -316,7 +315,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                           )}
                         </>
                       )}
-                    </ErrorBoundary>
+                    </ErrorBoundaryAlert>
                   </main>
                 );
               }}
