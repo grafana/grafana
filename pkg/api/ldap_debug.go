@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -13,6 +14,10 @@ import (
 var (
 	getLDAPConfig = multildap.GetConfig
 	newLDAP       = multildap.New
+
+	errOrganizationNotFound = func(orgId int64) error {
+		return fmt.Errorf("Unable to find organization with ID '%d'", orgId)
+	}
 )
 
 // LDAPAttribute is a serializer for user attributes mapped from LDAP. Is meant to display both the serialized value and the LDAP key we received it from.
@@ -48,6 +53,7 @@ type LDAPUserDTO struct {
 	Teams          []TeamDTO      `json:"teams"`
 }
 
+// FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
 func (user *LDAPUserDTO) FetchOrgs() error {
 	orgIds := []int64{}
 
@@ -62,12 +68,18 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 		return err
 	}
 
-	// Optimise this loop
+	orgNamesById := map[int64]string{}
 	for _, org := range q.Result {
-		for i, or := range user.OrgRoles {
-			if org.Id == or.OrgId {
-				user.OrgRoles[i].OrgName = org.Name
-			}
+		orgNamesById[org.Id] = org.Name
+	}
+
+	for i, orgDTO := range user.OrgRoles {
+		orgName := orgNamesById[orgDTO.OrgId]
+
+		if orgName != "" {
+			user.OrgRoles[i].OrgName = orgName
+		} else {
+			return errOrganizationNotFound(orgDTO.OrgId)
 		}
 	}
 
@@ -106,8 +118,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	user, serverConfig, err := ldap.User(username)
 
 	if user == nil {
-		return Error(
-			404, "No user was found on the LDAP server(s)", err)
+		return Error(http.StatusNotFound, "No user was found on the LDAP server(s)", err)
 	}
 
 	name, surname := splitName(user.Name)
@@ -133,6 +144,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 
 			orgRoles = append(orgRoles, *role)
 		} else {
+			role.OrgId = g.OrgID
 			role.GroupDN = g.GroupDN
 
 			orgRoles = append(orgRoles, *role)
@@ -144,7 +156,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	err = u.FetchOrgs()
 
 	if err != nil {
-		return Error(500, "Failed to query the user's organizations", err)
+		return Error(http.StatusBadRequest, "Organization not found - Please verify your LDAP configuration", err)
 	}
 
 	return JSON(200, u)

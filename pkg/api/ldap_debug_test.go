@@ -77,6 +77,73 @@ func TestGetUserFromLDAPApiEndpoint_UserNotFound(t *testing.T) {
 	assert.Equal(t, "{\"message\":\"No user was found on the LDAP server(s)\"}", responseString)
 }
 
+func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
+	isAdmin := true
+	userSearchResult = &models.ExternalUserInfo{
+		Name:           "John Doe",
+		Email:          "john.doe@example.com",
+		Login:          "johndoe",
+		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN, 2: models.ROLE_VIEWER},
+		IsGrafanaAdmin: &isAdmin,
+	}
+
+	userSearchConfig = ldap.ServerConfig{
+		Attr: ldap.AttributeMap{
+			Name:     "ldap-name",
+			Surname:  "ldap-surname",
+			Email:    "ldap-email",
+			Username: "ldap-username",
+		},
+		Groups: []*ldap.GroupToOrgRole{
+			{
+				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
+				OrgID:   1,
+				OrgRole: models.ROLE_ADMIN,
+			},
+			{
+				GroupDN: "cn=admins,ou=groups,dc=grafana2,dc=org",
+				OrgID:   2,
+				OrgRole: models.ROLE_VIEWER,
+			},
+		},
+	}
+
+	mockOrgSearchResult := []*models.OrgDTO{
+		{Id: 1, Name: "Main Org."},
+	}
+
+	bus.AddHandler("test", func(query *models.SearchOrgsQuery) error {
+		query.Result = mockOrgSearchResult
+		return nil
+	})
+
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe")
+
+	require.Equal(t, sc.resp.Code, http.StatusBadRequest)
+
+	jsonResponse, err := getJSONbody(sc.resp)
+	assert.Nil(t, err)
+
+	expected := `
+	{
+		"error": "Unable to find organization with ID '2'",
+		"message": "Organization not found - Please verify your LDAP configuration"
+	}
+	`
+	var expectedJSON interface{}
+	_ = json.Unmarshal([]byte(expected), &expectedJSON)
+
+	assert.Equal(t, jsonResponse, expectedJSON)
+}
+
 func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 	isAdmin := true
 	userSearchResult = &models.ExternalUserInfo{
