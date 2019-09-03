@@ -30,8 +30,8 @@ export class LiveStreams {
     let stream = this.streams[target.url];
     if (!stream) {
       const data = new CircularDataFrame({ capacity: target.size });
-      (data.labels = parseLabels(target.query)),
-        data.addField({ name: 'ts', type: FieldType.time, config: { title: 'Time' } });
+      data.labels = parseLabels(target.query);
+      data.addField({ name: 'ts', type: FieldType.time, config: { title: 'Time' } });
       data.addField({ name: 'line', type: FieldType.string });
       data.addField({ name: 'labels', type: FieldType.other });
 
@@ -67,7 +67,7 @@ export function appendResponseToBufferedData(response: any, data: MutableDataFra
       // Add each line
       for (const entry of stream.entries) {
         data.values.ts.add(entry.ts || entry.timestamp);
-        data.values.lines.add(entry.line);
+        data.values.line.add(entry.line);
         data.values.labels.add(unique);
       }
     }
