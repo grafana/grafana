@@ -432,6 +432,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       range,
       scanning,
       history,
+      mode,
     } = exploreItemState;
 
     if (datasourceError) {
@@ -454,7 +455,13 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     queryState.sendFrames = true;
     queryState.sendLegacy = true;
 
-    const queryOptions = { interval, maxDataPoints: containerWidth, live };
+    const queryOptions = {
+      interval,
+      // This is used for logs streaming for buffer size.
+      // TODO: not sure if this makes sense for normal query when using both graph and table
+      maxDataPoints: mode === ExploreMode.Logs ? 1000 : containerWidth,
+      live,
+    };
     const datasourceId = datasourceInstance.meta.id;
     const transaction = buildQueryTransaction(queries, queryOptions, range, queryIntervals, scanning);
 

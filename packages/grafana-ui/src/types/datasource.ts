@@ -378,6 +378,12 @@ export interface DataStreamState {
   delta?: DataFrame[];
 
   /**
+   * Signal that the event is for delta of the data and that listener should handle
+   * any buffering.
+   */
+  isDelta?: boolean;
+
+  /**
    * Stop listening to this stream
    */
   unsubscribe: () => void;

@@ -7,11 +7,7 @@ import { dataFrameToLogsModel } from 'app/core/logs_model';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export class ResultProcessor {
-  constructor(
-    private state: ExploreItemState,
-    private replacePreviousResults: boolean,
-    private dataFrames: DataFrame[]
-  ) {}
+  constructor(private state: ExploreItemState, private dataFrames: DataFrame[]) {}
 
   getGraphResult(): GraphSeriesXY[] {
     if (this.state.mode !== ExploreMode.Metrics) {
@@ -68,7 +64,7 @@ export class ResultProcessor {
     return mergeTablesIntoModel(new TableModel(), ...tables);
   }
 
-  getLogsResult(): LogsModel {
+  getLogsResult(replacePreviousResults: boolean): LogsModel {
     if (this.state.mode !== ExploreMode.Logs) {
       return null;
     }
@@ -79,11 +75,9 @@ export class ResultProcessor {
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
-    if (this.replacePreviousResults) {
-      const slice = 1000;
-      const rows = sortedNewResults.rows.slice(0, slice);
+    if (replacePreviousResults) {
+      const rows = sortedNewResults.rows;
       const series = sortedNewResults.series;
-
       return { ...sortedNewResults, rows, series };
     }
 
@@ -93,10 +87,10 @@ export class ResultProcessor {
 
     const processedRows: LogRowModel[] = [];
     for (const row of rowsInState) {
-      processedRows.push({ ...row, fresh: false });
+      processedRows.push(row);
     }
     for (const row of sortedNewResults.rows) {
-      processedRows.push({ ...row, fresh: true });
+      processedRows.push(row);
     }
 
     const slice = -1000;

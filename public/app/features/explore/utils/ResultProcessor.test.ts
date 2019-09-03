@@ -40,7 +40,6 @@ const testContext = (options: any = {}) => {
 
   const defaultOptions = {
     mode: ExploreMode.Metrics,
-    replacePreviousResults: true,
     dataFrames: [timeSeries, table],
     graphResult: [] as TimeSeries[],
     tableResult: new TableModel(),
@@ -57,11 +56,7 @@ const testContext = (options: any = {}) => {
     queryIntervals: { intervalMs: 10 },
   } as any) as ExploreItemState;
 
-  const resultProcessor = new ResultProcessor(
-    state,
-    combinedOptions.replacePreviousResults,
-    combinedOptions.dataFrames
-  );
+  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames);
 
   return {
     dataFrames: combinedOptions.dataFrames,
@@ -92,7 +87,7 @@ describe('ResultProcessor', () => {
     describe('when calling getLogsResult', () => {
       it('then it should return null', () => {
         const { resultProcessor } = testContext({ dataFrames: [] });
-        const theResult = resultProcessor.getLogsResult();
+        const theResult = resultProcessor.getLogsResult(false);
 
         expect(theResult).toBeNull();
       });
@@ -141,7 +136,7 @@ describe('ResultProcessor', () => {
     describe('when calling getLogsResult', () => {
       it('then it should return correct logs result', () => {
         const { resultProcessor } = testContext({ mode: ExploreMode.Logs });
-        const theResult = resultProcessor.getLogsResult();
+        const theResult = resultProcessor.getLogsResult(false);
 
         expect(theResult).toEqual({
           hasUniqueLabels: false,
@@ -212,7 +207,6 @@ describe('ResultProcessor', () => {
       it('then it should return correct logs result', () => {
         const { resultProcessor } = testContext({
           mode: ExploreMode.Logs,
-          replacePreviousResults: false,
           logsResult: {
             hasUniqueLabels: false,
             meta: [],
@@ -263,7 +257,7 @@ describe('ResultProcessor', () => {
           },
         });
 
-        const theResult = resultProcessor.getLogsResult();
+        const theResult = resultProcessor.getLogsResult(false);
         const expected = {
           hasUniqueLabels: false,
           meta: [] as LogsMetaItem[],

@@ -585,8 +585,7 @@ export const processQueryResponse = (
   action: ActionOf<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, legacy, error } = response;
-  const replacePreviousResults = action.type === queryEndedAction.type;
+  const { request, state: loadingState, series, legacy, error, isDelta } = response;
 
   if (error) {
     // For Angular editors
@@ -611,18 +610,19 @@ export const processQueryResponse = (
   }
 
   const latency = request.endTime - request.startTime;
-  const processor = new ResultProcessor(state, replacePreviousResults, series);
+  const processor = new ResultProcessor(state, series);
 
   // For Angular editors
   state.eventBridge.emit('data-received', legacy);
 
+  const replacePreviousResults = !isDelta;
   return {
     ...state,
     latency,
     queryResponse: response,
     graphResult: processor.getGraphResult(),
     tableResult: processor.getTableResult(),
-    logsResult: processor.getLogsResult(),
+    logsResult: processor.getLogsResult(replacePreviousResults),
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showingStartPage: false,
     update: makeInitialUpdateState(),
