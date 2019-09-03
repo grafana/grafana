@@ -52,6 +52,7 @@ import {
   queryEndedAction,
   queryStreamUpdatedAction,
   QueryEndedPayload,
+  setPausedStateAction,
 } from './actionTypes';
 import { reducerFactory, ActionOf } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
@@ -114,6 +115,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   supportedModes: [],
   mode: null,
   isLive: false,
+  isPaused: false,
   urlReplaced: false,
   queryState: new PanelQueryState(),
   queryResponse: createEmptyQueryResponse(),
@@ -209,6 +211,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
           state: live ? LoadingState.Streaming : LoadingState.NotStarted,
         },
         isLive: live,
+        isPaused: false,
         loading: live,
         logsResult,
       };
@@ -549,6 +552,16 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
           state: loadingState,
         },
         loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
+      };
+    },
+  })
+  .addMapper({
+    filter: setPausedStateAction,
+    mapper: (state, action): ExploreItemState => {
+      const { isPaused } = action.payload;
+      return {
+        ...state,
+        isPaused: isPaused,
       };
     },
   })
