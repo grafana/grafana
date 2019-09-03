@@ -6,6 +6,7 @@ import {
   QueryHint,
   ExploreStartPageProps,
   PanelData,
+  DataQueryRequest,
 } from '@grafana/ui';
 
 import {
@@ -338,7 +339,7 @@ export interface QueryTransaction {
   error?: string | JSX.Element;
   hints?: QueryHint[];
   latency: number;
-  options: any;
+  request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
