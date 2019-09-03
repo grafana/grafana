@@ -8,6 +8,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Emitter } from 'app/core/utils/emitter';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { ErrorBoundaryAlert } from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
@@ -257,7 +258,9 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             </button>
           </div>
         </div>
-        <div className={bodyClasses}>{this.renderPluginEditor()}</div>
+        <div className={bodyClasses}>
+          <ErrorBoundaryAlert title="Data source query editor failed">{this.renderPluginEditor()}</ErrorBoundaryAlert>
+        </div>
       </div>
     );
   }

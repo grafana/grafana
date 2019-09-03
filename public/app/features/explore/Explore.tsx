@@ -12,7 +12,7 @@ import store from 'app/core/store';
 
 // Components
 import { Alert } from '@grafana/ui';
-import ErrorBoundary from './ErrorBoundary';
+import { ErrorBoundary } from './ErrorBoundary';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -263,7 +263,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         <FadeIn duration={datasourceError ? 150 : 5} in={datasourceError ? true : false}>
           <div className="explore-container">
             <Alert
-              message={`Error connecting to datasource: ${datasourceError}`}
+              title={`Error connecting to datasource: ${datasourceError}`}
               button={{ text: 'Reconnect', onClick: this.onReconnect }}
             />
           </div>

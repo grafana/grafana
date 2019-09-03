@@ -120,7 +120,7 @@ export class PanelCtrl {
     }
   }
 
-  getMenu() {
+  async getMenu() {
     const menu = [];
     menu.push({
       text: 'View',
@@ -147,7 +147,7 @@ export class PanelCtrl {
     });
 
     // Additional items from sub-class
-    menu.push(...this.getAdditionalMenuItems());
+    menu.push(...(await this.getAdditionalMenuItems()));
 
     const extendedMenu = this.getExtendedMenu();
     menu.push({
@@ -198,7 +198,7 @@ export class PanelCtrl {
   }
 
   // Override in sub-class to add items before extended menu
-  getAdditionalMenuItems(): any[] {
+  async getAdditionalMenuItems(): Promise<any[]> {
     return [];
   }
 

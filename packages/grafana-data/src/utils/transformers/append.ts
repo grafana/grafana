@@ -1,9 +1,7 @@
 import { DataTransformerInfo } from './transformers';
 import { DataFrame } from '../../types/dataFrame';
 import { DataTransformerID } from './ids';
-import { DataFrameHelper } from '../dataFrameHelper';
-import { KeyValue } from '../../types/data';
-import { AppendedVectors } from '../vector';
+import { MutableDataFrame } from '../dataFrameHelper';
 
 export interface AppendOptions {}
 
@@ -23,34 +21,37 @@ export const appendTransformer: DataTransformerInfo<AppendOptions> = {
         return data;
       }
 
-      let length = 0;
-      const processed = new DataFrameHelper();
-      for (let i = 0; i < data.length; i++) {
+      // Add the first row
+      const processed = new MutableDataFrame();
+      for (const f of data[0].fields) {
+        processed.addField({
+          ...f,
+          values: [...f.values.toArray()],
+        });
+      }
+
+      for (let i = 1; i < data.length; i++) {
         const frame = data[i];
-        const used: KeyValue<boolean> = {};
+        const startLength = frame.length;
         for (let j = 0; j < frame.fields.length; j++) {
           const src = frame.fields[j];
-          if (used[src.name]) {
-            continue;
+          let vals = processed.values[src.name];
+          if (!vals) {
+            vals = processed.addField(
+              {
+                ...src,
+                values: [],
+              },
+              startLength
+            ).values;
           }
-          used[src.name] = true;
 
-          let f = processed.getFieldByName(src.name);
-          if (!f) {
-            f = processed.addField({
-              ...src,
-              values: new AppendedVectors(length),
-            });
+          // Add each row
+          for (let k = 0; k < frame.length; k++) {
+            vals.add(src.values.get(k));
           }
-          (f.values as AppendedVectors).append(src.values);
         }
-
-        // Make sure all fields have their length updated
-        length += frame.length;
-        processed.length = length;
-        for (const f of processed.fields) {
-          (f.values as AppendedVectors).setLength(processed.length);
-        }
+        processed.validate();
       }
       return [processed];
     };
