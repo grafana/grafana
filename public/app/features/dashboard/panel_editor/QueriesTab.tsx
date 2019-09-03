@@ -224,7 +224,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  getCurrentTransformData = (applyTransformations = true) => {
+  getCurrentData = (applyTransformations = true) => {
     const queryRunner = this.props.panel.getQueryRunner();
     return queryRunner.getCurrentData(applyTransformations).series;
   };
@@ -282,12 +282,12 @@ export class QueriesTab extends PureComponent<Props, State> {
             </>
           )}
 
-          {hasAlphaDatasources && (
+          {hasAlphaDatasources && this.state.data.state === LoadingState.Done && (
             <PanelOptionsGroup title="Result transformations">
               <TransformationsEditor
                 transformations={this.props.panel.transformations || []}
                 onChange={this.onTransformersChange}
-                getCurrentData={this.getCurrentTransformData}
+                getCurrentData={this.getCurrentData}
               />
             </PanelOptionsGroup>
           )}
