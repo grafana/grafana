@@ -251,7 +251,15 @@ export interface ExploreItemState {
   supportedModes: ExploreMode[];
   mode: ExploreMode;
 
+  /**
+   * If true, the view is in live tailing mode.
+   */
   isLive: boolean;
+
+  /**
+   * If true, the live tailing view is paused.
+   */
+  isPaused: boolean;
   urlReplaced: boolean;
 
   queryState: PanelQueryState;

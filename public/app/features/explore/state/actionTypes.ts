@@ -197,6 +197,11 @@ export interface ChangeLoadingStatePayload {
   loadingState: LoadingState;
 }
 
+export interface SetPausedStatePayload {
+  exploreId: ExploreId;
+  isPaused: boolean;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
@@ -370,6 +375,8 @@ export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explo
 export const changeLoadingStateAction = actionCreatorFactory<ChangeLoadingStatePayload>(
   'changeLoadingStateAction'
 ).create();
+
+export const setPausedStateAction = actionCreatorFactory<SetPausedStatePayload>('explore/SET_PAUSED_STATE').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>
