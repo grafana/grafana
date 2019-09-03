@@ -18,7 +18,7 @@ export class ResultProcessor {
       return [];
     }
 
-    const onlyTimeSeries = this.dataFrames.filter(series => series.fields.length === 2);
+    const onlyTimeSeries = this.dataFrames.filter(isTimeSeries);
 
     return getGraphSeriesModel(
       onlyTimeSeries,
@@ -36,14 +36,7 @@ export class ResultProcessor {
     // For now ignore time series
     // We can change this later, just need to figure out how to
     // Ignore time series only for prometheus
-    const onlyTables = this.dataFrames.filter(frame => {
-      if (frame.fields.length === 2) {
-        if (frame.fields[1].type === FieldType.time) {
-          return false;
-        }
-      }
-      return true;
-    });
+    const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
 
     const tables = onlyTables.map(frame => {
       const { fields } = frame;
@@ -112,4 +105,14 @@ export class ResultProcessor {
 
     return { ...sortedNewResults, rows, series };
   }
+}
+
+export function isTimeSeries(frame: DataFrame): boolean {
+  if (frame.fields.length === 2) {
+    if (frame.fields[1].type === FieldType.time) {
+      return true;
+    }
+  }
+
+  return false;
 }
