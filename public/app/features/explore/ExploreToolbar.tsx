@@ -20,10 +20,9 @@ import {
   changeMode,
   clearOrigin,
 } from './state/actions';
-
+import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
-import { getLocationSrv } from '@grafana/runtime';
 import kbn from '../../core/utils/kbn';
 import { ExploreTimeControls } from './ExploreTimeControls';
 
@@ -91,6 +90,7 @@ interface DispatchProps {
   changeRefreshInterval: typeof changeRefreshInterval;
   changeMode: typeof changeMode;
   clearOrigin: typeof clearOrigin;
+  updateLocation: typeof updateLocation;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -138,7 +138,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       edit: withChanges || dash.meta.isEditing,
     };
 
-    getLocationSrv().update({
+    this.props.updateLocation({
       path: `/d/${dash.uid}/:${titleSlug}`,
       query: {
         ...omitBy(dashViewOptions, v => !v),
@@ -168,9 +168,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       originPanelId,
     } = this.props;
 
-    const curDashboard = getDashboardSrv().getCurrent();
-    const originDashboardIsEditable =
-      Number.isInteger(originPanelId) && curDashboard.meta.canSave && !curDashboard.meta.provisioned;
+    const originDashboardIsEditable = Number.isInteger(originPanelId);
     const panelReturnClasses = classNames('btn', 'navbar-button', {
       'btn--radius-right-0': originDashboardIsEditable,
       'navbar-button navbar-button--border-right-0': originDashboardIsEditable,
@@ -378,6 +376,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
 
 const mapDispatchToProps: DispatchProps = {
   changeDatasource,
+  updateLocation,
   changeRefreshInterval,
   clearAll: clearQueries,
   runQueries,

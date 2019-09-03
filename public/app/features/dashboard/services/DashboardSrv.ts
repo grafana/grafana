@@ -11,6 +11,7 @@ interface DashboardSaveOptions {
   folderId?: number;
   overwrite?: boolean;
   message?: string;
+  makeEditable?: boolean;
 }
 
 export class DashboardSrv {
@@ -157,23 +158,18 @@ export class DashboardSrv {
     return this.dashboard;
   }
 
-  save(clone: any, { folderId, overwrite = false, message }: DashboardSaveOptions = {}) {
-    folderId = folderId >= 0 ? folderId : this.dashboard.meta.folderId || clone.folderId;
+  save(clone: any, options?: DashboardSaveOptions) {
+    options.folderId = options.folderId >= 0 ? options.folderId : this.dashboard.meta.folderId || clone.folderId;
 
     return this.backendSrv
-      .saveDashboard(clone, { folderId, overwrite, message })
+      .saveDashboard(clone, options)
       .then((data: any) => this.postSave(data))
-      .catch(this.handleSaveDashboardError.bind(this, clone, { folderId }));
+      .catch(this.handleSaveDashboardError.bind(this, clone, { folderId: options.folderId }));
   }
 
   saveDashboard(
     clone?: DashboardModel,
-    {
-      makeEditable = false,
-      folderId,
-      overwrite = false,
-      message,
-    }: DashboardSaveOptions & { makeEditable?: boolean } = {}
+    { makeEditable = false, folderId, overwrite = false, message }: DashboardSaveOptions = {}
   ) {
     if (clone) {
       this.setCurrent(this.create(clone, this.dashboard.meta));

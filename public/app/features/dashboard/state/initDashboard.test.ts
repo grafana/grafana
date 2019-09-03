@@ -4,6 +4,7 @@ import { initDashboard, InitDashboardArgs } from './initDashboard';
 import { DashboardRouteInfo } from 'app/types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { dashboardInitFetching, dashboardInitCompleted, dashboardInitServices } from './actions';
+import { resetExploreAction } from 'app/features/explore/state/actionTypes';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -77,6 +78,12 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
           query: {},
         },
         user: {},
+        explore: {
+          left: {
+            originPanelId: undefined,
+            queries: [],
+          },
+        },
       },
       setup: (fn: () => void) => {
         setupFn = fn;
@@ -101,6 +108,19 @@ describeInitScenario('Initializing new dashboard', ctx => {
   ctx.setup(() => {
     ctx.storeState.user.orgId = 12;
     ctx.args.routeInfo = DashboardRouteInfo.New;
+    ctx.storeState.explore.left.originPanelId = 2;
+    ctx.storeState.explore.left.queries = [
+      {
+        context: 'explore',
+        key: 'jdasldsa98dsa9',
+        refId: 'A',
+      },
+      {
+        context: 'explore',
+        key: 'fdsjkfds78fd',
+        refId: 'B',
+      },
+    ];
   });
 
   it('Should send action dashboardInitFetching', () => {
@@ -116,12 +136,17 @@ describeInitScenario('Initializing new dashboard', ctx => {
     expect(ctx.actions[2].payload.query.orgId).toBe(12);
   });
 
-  it('Should send action dashboardInitCompleted', () => {
-    expect(ctx.actions[3].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[3].payload.title).toBe('New dashboard');
+  it('Should send resetExploreAction', () => {
+    expect(ctx.actions[3].type).toBe(resetExploreAction.type);
+    expect(ctx.actions[3].payload.force).toBe(true);
   });
 
-  it('Should Initializing services', () => {
+  it('Should send action dashboardInitCompleted', () => {
+    expect(ctx.actions[4].type).toBe(dashboardInitCompleted.type);
+    expect(ctx.actions[4].payload.title).toBe('New dashboard');
+  });
+
+  it('Should initialize services', () => {
     expect(ctx.timeSrv.init).toBeCalled();
     expect(ctx.annotationsSrv.init).toBeCalled();
     expect(ctx.variableSrv.init).toBeCalled();

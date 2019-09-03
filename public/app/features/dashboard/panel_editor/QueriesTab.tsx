@@ -273,5 +273,3 @@ export class QueriesTab extends PureComponent<Props, State> {
     );
   }
 }
-
-export default QueriesTab;
