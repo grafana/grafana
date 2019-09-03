@@ -217,6 +217,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   onTransformersChange = (transformers: DataTransformerConfig[]) => {
     this.props.panel.setTransformations(transformers);
+    this.forceUpdate();
   };
 
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {

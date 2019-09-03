@@ -212,6 +212,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       minInterval: panel.interval,
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
+      transformations: panel.transformations,
     });
   }
 
