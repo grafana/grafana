@@ -1,27 +1,16 @@
 import {
-  AppendingVector,
   DataFrame,
-  Labels,
-  CircularVector,
+  MutableDataFrame,
   FieldType,
   parseLabels,
   findUniqueLabels,
   KeyValue,
+  CircularDataFrame,
 } from '@grafana/data';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { LokiLogsStream } from './types';
 import { map } from 'rxjs/operators';
-
-export interface BufferedData {
-  // Direct Access
-  times: AppendingVector<string>;
-  lines: AppendingVector<string>;
-  labels: AppendingVector<Labels>;
-
-  // Structured
-  frame: DataFrame;
-}
 
 /**
  * Maps directly to a query in the UI (refId is key)
@@ -40,30 +29,18 @@ export class LiveStreams {
   observe(target: LiveTarget): Observable<DataFrame[]> {
     let stream = this.streams[target.url];
     if (!stream) {
-      const times = new CircularVector<string>({ capacity: target.size });
-      const lines = new CircularVector<string>({ capacity: target.size });
-      const labels = new CircularVector<Labels>({ capacity: target.size });
-      const data = {
-        times,
-        lines,
-        labels,
-        frame: {
-          labels: parseLabels(target.query),
-          fields: [
-            { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
-            { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
-            { name: 'labels', type: FieldType.other, config: {}, values: labels }, // Labels
-          ],
-          length: 0, // will be updated after values are added
-        },
-      };
+      const data = new CircularDataFrame({ capacity: target.size });
+      (data.labels = parseLabels(target.query)),
+        data.addField({ name: 'ts', type: FieldType.time, config: { title: 'Time' } });
+      data.addField({ name: 'line', type: FieldType.string });
+      data.addField({ name: 'labels', type: FieldType.other });
 
       const subject = new BehaviorSubject<DataFrame[]>([]);
       webSocket(target.url)
         .pipe(
           map((response: any) => {
             appendResponseToBufferedData(response, data);
-            return [data.frame];
+            return [data];
           })
         )
         .subscribe(subject);
@@ -77,7 +54,7 @@ export class LiveStreams {
  * This takes the streaming entries from the response and adds them to a
  * rolling buffer saved in liveTarget.
  */
-export function appendResponseToBufferedData(response: any, data: BufferedData) {
+export function appendResponseToBufferedData(response: any, data: MutableDataFrame) {
   // Should we do anythign with: response.dropped_entries?
 
   const streams: LokiLogsStream[] = response.streams;
@@ -85,15 +62,14 @@ export function appendResponseToBufferedData(response: any, data: BufferedData) 
     for (const stream of streams) {
       // Find unique labels
       const labels = parseLabels(stream.labels);
-      const unique = findUniqueLabels(labels, data.frame.labels);
+      const unique = findUniqueLabels(labels, data.labels);
 
       // Add each line
       for (const entry of stream.entries) {
-        data.times.add(entry.ts || entry.timestamp);
-        data.lines.add(entry.line);
-        data.labels.add(unique);
+        data.values.ts.add(entry.ts || entry.timestamp);
+        data.values.lines.add(entry.line);
+        data.values.labels.add(unique);
       }
     }
-    data.frame.length = data.times.length;
   }
 }
