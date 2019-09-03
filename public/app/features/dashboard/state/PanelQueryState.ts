@@ -274,8 +274,6 @@ export class PanelQueryState {
 
     return {
       state: done ? LoadingState.Done : LoadingState.Streaming,
-      // This should not be needed but unfortunately Prometheus datasource sends non DataFrame here bypassing the
-      // typing.
       series: this.sendFrames ? getProcessedDataFrames(series) : [],
       legacy: this.sendLegacy ? translateToLegacyData(series) : undefined,
       request: {
