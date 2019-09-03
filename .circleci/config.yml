@@ -215,6 +215,9 @@ jobs:
           name: build and package grafana
           command: './scripts/build/build-all.sh'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
       - run:
@@ -249,6 +252,9 @@ jobs:
       - run:
           name: build and package grafana
           command: './scripts/build/build.sh'
+      - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
@@ -361,6 +367,9 @@ jobs:
           name: package grafana
           command: './scripts/build/build.sh --fast --package-only'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
       - run:
@@ -436,6 +445,9 @@ jobs:
           name: build and package enterprise
           command: './scripts/build/build.sh -enterprise'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
       - run:
@@ -476,6 +488,9 @@ jobs:
     - run:
         name: build and package grafana
         command: './scripts/build/build-all.sh -enterprise'
+    - run:
+        name: Prepare GPG private key
+        command: './scripts/build/prepare_signing_key.sh'
     - run:
         name: sign packages
         command: './scripts/build/sign_packages.sh'
@@ -538,8 +553,11 @@ jobs:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh --enterprise'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: Load GPG private key
-          command: './scripts/build/load-signing-key.sh'
+          command: './scripts/build/update_repo/load-signing-key.sh'
       - run:
           name: Update Debian repository
           command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "enterprise-dist"'
@@ -593,8 +611,11 @@ jobs:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: Load GPG private key
-          command: './scripts/build/load-signing-key.sh'
+          command: './scripts/build/update_repo/load-signing-key.sh'
       - run:
           name: Update Debian repository
           command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
