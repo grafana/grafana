@@ -97,6 +97,7 @@ func TestAlertRuleModel(t *testing.T) {
 					OrgId:       1,
 					DashboardId: 1,
 					PanelId:     1,
+					NoDataFlag:  true,
 
 					Settings: alertJSON,
 				}
@@ -105,6 +106,7 @@ func TestAlertRuleModel(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(len(alertRule.Conditions), ShouldEqual, 1)
+				So(alertRule.NoDataFlag, ShouldBeTrue)
 
 				Convey("Can read notifications", func() {
 					So(len(alertRule.Notifications), ShouldEqual, 2)

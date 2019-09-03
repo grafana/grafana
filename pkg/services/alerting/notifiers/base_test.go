@@ -23,6 +23,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		sendReminder bool
 		frequency    time.Duration
 		state        *models.AlertNotificationState
+		noDataFlag   bool
 
 		expect bool
 	}{
@@ -157,6 +158,28 @@ func TestShouldSendAlertNotification(t *testing.T) {
 
 			expect: false,
 		},
+		{
+			name:      "no_data -> ok",
+			prevState: models.AlertStateNoData,
+			newState:  models.AlertStateOK,
+
+			expect: true,
+		},
+		{
+			name:      "pending -> ok",
+			prevState: models.AlertStatePending,
+			newState:  models.AlertStateOK,
+
+			expect: false,
+		},
+		{
+			name:       "no_data -> pending -> ok",
+			prevState:  models.AlertStatePending,
+			newState:   models.AlertStateOK,
+			noDataFlag: true,
+
+			expect: true,
+		},
 	}
 
 	for _, tc := range tcs {
@@ -169,6 +192,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		}
 
 		evalContext.Rule.State = tc.newState
+		evalContext.Rule.NoDataFlag = tc.noDataFlag
 		nb := &NotifierBase{SendReminder: tc.sendReminder, Frequency: tc.frequency}
 
 		r := nb.ShouldNotify(evalContext.Ctx, evalContext, tc.state)

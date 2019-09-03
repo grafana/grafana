@@ -134,6 +134,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			Message:     jsonAlert.Get("message").MustString(),
 			Frequency:   frequency,
 			For:         forValue,
+			NoDataFlag:  jsonAlert.Get("no_data_flag").MustBool(),
 		}
 
 		for _, condition := range jsonAlert.Get("conditions").MustArray() {
