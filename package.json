@@ -147,6 +147,7 @@
     "start:hot": "grafana-toolkit core:start --hot --watchTheme",
     "start:ignoreTheme": "grafana-toolkit core:start --hot",
     "start:noTsCheck": "grafana-toolkit core:start --noTsCheck",
+    "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "watch": "yarn start -d watch,start core:start --watchTheme ",
     "build": "grunt build",
     "test": "grunt test",

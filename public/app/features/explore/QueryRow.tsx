@@ -1,6 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import debounce from 'lodash/debounce';
+import has from 'lodash/has';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
@@ -97,7 +98,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
   };
 
-  updateLogsHighlights = _.debounce((value: DataQuery) => {
+  updateLogsHighlights = debounce((value: DataQuery) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance.getHighlighterExpression) {
       const { exploreId } = this.props;
@@ -120,7 +121,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       mode,
     } = this.props;
     const canToggleEditorModes =
-      mode === ExploreMode.Metrics && _.has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+      mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
     const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
