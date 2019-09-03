@@ -258,7 +258,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           </div>
         </div>
         <div className={bodyClasses}>
-          <ErrorBoundaryAlert title="Data source query editor failed">{this.renderPluginEditor()}</ErrorBoundaryAlert>
+          <ErrorBoundaryAlert>{this.renderPluginEditor()}</ErrorBoundaryAlert>
         </div>
       </div>
     );
