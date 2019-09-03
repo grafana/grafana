@@ -9,6 +9,7 @@ import {
   TimeSeries,
   GraphSeriesXY,
   LoadingState,
+  LogRowModel,
 } from '@grafana/data';
 
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
@@ -96,7 +97,7 @@ export class ResultProcessor {
     const rowsInState = sortedLogResult.rows;
     const seriesInState = sortedLogResult.series || [];
 
-    const processedRows = [];
+    const processedRows: LogRowModel[] = [];
     for (const row of rowsInState) {
       processedRows.push({ ...row, fresh: false });
     }

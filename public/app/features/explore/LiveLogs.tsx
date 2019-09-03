@@ -132,7 +132,7 @@ class LiveLogs extends PureComponent<Props, State> {
           className={cx(['logs-rows', styles.logsRowsLive])}
           ref={this.scrollContainerRef}
         >
-          {this.rowsToRender().map((row: any, index) => {
+          {this.rowsToRender().map((row: LogRowModel, index) => {
             return (
               <div
                 className={row.fresh ? cx([logsRow, styles.logsRowFresh]) : cx([logsRow, styles.logsRowOld])}
