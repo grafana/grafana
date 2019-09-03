@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { LoadingState } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
@@ -40,11 +39,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const { loadingState, showingTable, tableResult } = item;
-  const loading =
-    tableResult && tableResult.rows.length > 0
-      ? false
-      : loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
+  const { loading: loadingInState, showingTable, tableResult } = item;
+  const loading = tableResult && tableResult.rows.length > 0 ? false : loadingInState;
   return { loading, showingTable, tableResult };
 }
 

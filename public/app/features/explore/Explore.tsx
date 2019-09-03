@@ -3,20 +3,17 @@ import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
-import _ from 'lodash';
 import { AutoSizer } from 'react-virtualized';
 import memoizeOne from 'memoize-one';
 
 // Services & Utils
 import store from 'app/core/store';
-
 // Components
-import { Alert } from '@grafana/ui';
+import { Alert, DataQuery, ExploreStartPageProps, DataSourceApi, PanelData } from '@grafana/ui';
 import { ErrorBoundary } from './ErrorBoundary';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
-
 // Actions
 import {
   changeSize,
@@ -29,11 +26,8 @@ import {
   updateTimeRange,
   toggleGraph,
 } from './state/actions';
-
 // Types
-import { RawTimeRange, GraphSeriesXY, LoadingState, TimeZone, AbsoluteTimeRange } from '@grafana/data';
-
-import { DataQuery, ExploreStartPageProps, DataSourceApi, DataQueryError } from '@grafana/ui';
+import { RawTimeRange, GraphSeriesXY, TimeZone, AbsoluteTimeRange } from '@grafana/data';
 import {
   ExploreItemState,
   ExploreUrlState,
@@ -86,7 +80,6 @@ interface ExploreProps {
   initialRange: RawTimeRange;
   mode: ExploreMode;
   initialUI: ExploreUIState;
-  queryErrors: DataQueryError[];
   isLive: boolean;
   updateTimeRange: typeof updateTimeRange;
   graphResult?: GraphSeriesXY[];
@@ -97,6 +90,7 @@ interface ExploreProps {
   timeZone?: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   toggleGraph: typeof toggleGraph;
+  queryResponse: PanelData;
 }
 
 /**
@@ -243,7 +237,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
       showingStartPage,
       split,
       queryKeys,
-      queryErrors,
       mode,
       graphResult,
       loading,
@@ -251,6 +244,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       showingGraph,
       showingTable,
       timeZone,
+      queryResponse,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
 
@@ -272,7 +266,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
         {datasourceInstance && (
           <div className="explore-container">
             <QueryRows exploreEvents={this.exploreEvents} exploreId={exploreId} queryKeys={queryKeys} />
-            <ErrorContainer queryErrors={queryErrors} />
+            <ErrorContainer queryErrors={[queryResponse.error]} />
             <AutoSizer onResize={this.onResize} disableHeight>
               {({ width }) => {
                 if (width === 0) {
@@ -347,15 +341,15 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryKeys,
     urlState,
     update,
-    queryErrors,
     isLive,
     supportedModes,
     mode,
     graphResult,
-    loadingState,
+    loading,
     showingGraph,
     showingTable,
     absoluteRange,
+    queryResponse,
   } = item;
 
   const { datasource, queries, range: urlRange, mode: urlMode, ui } = (urlState || {}) as ExploreUrlState;
@@ -380,7 +374,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   }
 
   const initialUI = ui || DEFAULT_UI_STATE;
-  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
 
   return {
     StartPage,
@@ -398,13 +391,13 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     initialRange,
     mode: newMode,
     initialUI,
-    queryErrors,
     isLive,
     graphResult,
     loading,
     showingGraph,
     showingTable,
     absoluteRange,
+    queryResponse,
   };
 }
 

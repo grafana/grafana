@@ -5,7 +5,7 @@ import {
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
-  DataQueryError,
+  PanelData,
 } from '@grafana/ui';
 
 import {
@@ -14,7 +14,6 @@ import {
   TimeRange,
   LogsModel,
   LogsDedupStrategy,
-  LoadingState,
   AbsoluteTimeRange,
   GraphSeriesXY,
 } from '@grafana/data';
@@ -218,7 +217,7 @@ export interface ExploreItemState {
    */
   showingTable: boolean;
 
-  loadingState: LoadingState;
+  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -248,8 +247,6 @@ export interface ExploreItemState {
 
   update: ExploreUpdateState;
 
-  queryErrors: DataQueryError[];
-
   latency: number;
   supportedModes: ExploreMode[];
   mode: ExploreMode;
@@ -258,6 +255,8 @@ export interface ExploreItemState {
   urlReplaced: boolean;
 
   queryState: PanelQueryState;
+
+  queryResponse: PanelData;
 }
 
 export interface ExploreUpdateState {
