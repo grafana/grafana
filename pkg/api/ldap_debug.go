@@ -31,8 +31,9 @@ type RoleDTO struct {
 
 // TeamDTO is a serializer for mapped Teams from LDAP
 type TeamDTO struct {
-	GroupDN string `json:"groupDN"`
-	TeamId  int64  `json:"teamId"`
+	GroupDN  string `json:"groupDN"`
+	TeamId   int64  `json:"teamId"`
+	TeamName string `json:"teamName"`
 }
 
 // LDAPUserDTO is a serializer for users mapped from LDAP
