@@ -5,9 +5,10 @@ import { DateTime, dateTimeAsMoment } from '@grafana/data';
 interface Props {
   onSelected: (value: any) => void;
   value: DateTime;
+  showHour?: boolean;
 }
 
-export const TimeOfDayPicker: FC<Props> = ({ value, onSelected }) => {
+export const TimeOfDayPicker: FC<Props> = ({ showHour = true, onSelected, value }) => {
   return (
     <div>
       <RcTimePicker
@@ -16,6 +17,7 @@ export const TimeOfDayPicker: FC<Props> = ({ value, onSelected }) => {
         allowEmpty={false}
         showSecond={false}
         value={dateTimeAsMoment(value)}
+        showHour={showHour}
       />
     </div>
   );
