@@ -109,6 +109,10 @@ func (server *HTTPServer) ReloadLDAPCfg() Response {
 
 // GetLDAPStatus attempts to connect to all the configured LDAP servers and returns information on whenever they're availabe or not.
 func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
+	if !ldap.IsEnabled() {
+		return Error(400, "LDAP is not enabled", nil)
+	}
+
 	ldapConfig, err := getLDAPConfig()
 
 	if err != nil {
@@ -144,6 +148,10 @@ func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 
 // GetUserFromLDAP finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.
 func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
+	if !ldap.IsEnabled() {
+		return Error(400, "LDAP is not enabled", nil)
+	}
+
 	ldapConfig, err := getLDAPConfig()
 
 	if err != nil {
