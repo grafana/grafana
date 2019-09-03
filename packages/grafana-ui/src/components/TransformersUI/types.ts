@@ -1,8 +1,9 @@
 import React from 'react';
-import { DataFrame, RegistryItem } from '@grafana/data';
+import { DataFrame, RegistryItem, DataTransformerInfo } from '@grafana/data';
 
 export interface TransformerUIRegistyItem extends RegistryItem {
   component: React.ComponentType<any>;
+  transformer: DataTransformerInfo<any>;
 }
 
 export interface TransformerUIProps<T> {

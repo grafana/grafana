@@ -1,10 +1,7 @@
-import { Registry, RegistryItem } from '@grafana/data';
+import { Registry } from '@grafana/data';
 import { reduceTransformRegistryItem } from './ReduceTransformerEditor';
 import { filterFieldsByNameTransformRegistryItem } from './FilterByNameTransformerEditor';
-
-interface TransformerUIRegistyItem extends RegistryItem {
-  component: React.ComponentType<any>;
-}
+import { TransformerUIRegistyItem } from './types';
 
 export const transformersUIRegistry = new Registry<TransformerUIRegistyItem>(() => {
   return [reduceTransformRegistryItem, filterFieldsByNameTransformRegistryItem];

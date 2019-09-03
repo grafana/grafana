@@ -1,5 +1,5 @@
 import React from 'react';
-import { FilterFieldsByNameTransformerOptions, DataTransformerID } from '@grafana/data';
+import { FilterFieldsByNameTransformerOptions, DataTransformerID, dataTransformers } from '@grafana/data';
 import { TransformerUIProps, TransformerUIRegistyItem } from './types';
 import { FormField } from '../FormField/FormField';
 
@@ -49,6 +49,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
 export const filterFieldsByNameTransformRegistryItem: TransformerUIRegistyItem = {
   id: DataTransformerID.filterFieldsByName,
   component: FilterByNameTransformerEditor,
+  transformer: dataTransformers.get(DataTransformerID.filterFieldsByName),
   name: 'FilterByNameTransformerEditor',
   description: 'UI for filter by name transformation',
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { StatsPicker } from '../StatsPicker/StatsPicker';
 import { ReduceTransformerOptions, DataTransformerID } from '@grafana/data';
 import { TransformerUIRegistyItem, TransformerUIProps } from './types';
+import { dataTransformers } from '@grafana/data';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransformerOptions>> = ({
@@ -28,6 +29,7 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
 export const reduceTransformRegistryItem: TransformerUIRegistyItem = {
   id: DataTransformerID.reduce,
   component: ReduceTransformerEditor,
+  transformer: dataTransformers.get(DataTransformerID.reduce),
   name: 'ReduceTransformerEditor',
   description: 'UI for reduce transformation',
 };

@@ -53,10 +53,10 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
       return undefined;
     }
 
-    const availableTransformers = dataTransformers.list().map(t => {
+    const availableTransformers = transformersUIRegistry.list().map(t => {
       return {
-        value: t.id,
-        label: t.name,
+        value: t.transformer.id,
+        label: t.transformer.name,
       };
     });
 
@@ -79,12 +79,10 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
               />
             );
           }
-          const editorComponent = transformersUIRegistry.getIfExists(t.id);
-          const transformerDescriptor = dataTransformers.getIfExists(t.id);
+          const transforationUI = transformersUIRegistry.getIfExists(t.id);
 
-          if (editorComponent) {
-            input = getCurrentData(i);
-            editor = React.createElement(editorComponent.component, {
+          if (transforationUI) {
+            editor = React.createElement(transforationUI.component, {
               key: `${t.id}-${i}`, // this key is making troubles when the same transformers are next to each other and one is removed
               options: t.options,
               input,
@@ -102,8 +100,8 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
               input={input || []}
               onRemove={() => this.onTransformationRemove(i)}
               editor={editor}
-              name={transformerDescriptor ? transformerDescriptor.name : ''}
-              description={transformerDescriptor ? transformerDescriptor.description : ''}
+              name={transforationUI ? transforationUI.name : ''}
+              description={transforationUI ? transforationUI.description : ''}
             />
           );
         })}
