@@ -274,7 +274,7 @@ export class PanelQueryState {
 
     return {
       state: done ? LoadingState.Done : LoadingState.Streaming,
-      series, // Union of series from response and all streams
+      series: this.sendFrames ? getProcessedDataFrames(series) : [],
       legacy: this.sendLegacy ? translateToLegacyData(series) : undefined,
       request: {
         ...this.request,
