@@ -20,7 +20,7 @@ type LDAPMock struct {
 }
 
 var userSearchResult *models.ExternalUserInfo
-var userSearchConfig *ldap.ServerConfig
+var userSearchConfig ldap.ServerConfig
 
 func (m *LDAPMock) Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
 	return &models.ExternalUserInfo{}, nil
@@ -31,7 +31,7 @@ func (m *LDAPMock) Users(logins []string) ([]*models.ExternalUserInfo, error) {
 	return s, nil
 }
 
-func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, *ldap.ServerConfig, error) {
+func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConfig, error) {
 	return userSearchResult, userSearchConfig, nil
 }
 
@@ -87,7 +87,7 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 		IsGrafanaAdmin: &isAdmin,
 	}
 
-	userSearchConfig = &ldap.ServerConfig{
+	userSearchConfig = ldap.ServerConfig{
 		Attr: ldap.AttributeMap{
 			Name:     "ldap-name",
 			Surname:  "ldap-surname",

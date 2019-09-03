@@ -39,7 +39,7 @@ type IMultiLDAP interface {
 	)
 
 	User(login string) (
-		*models.ExternalUserInfo, *ldap.ServerConfig, error,
+		*models.ExternalUserInfo, ldap.ServerConfig, error,
 	)
 }
 
@@ -95,12 +95,12 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 // User attempts to find an user by login/username by searching into all of the configured LDAP servers. Then, if the user is found it returns the user alongisde the server it was found.
 func (multiples *MultiLDAP) User(login string) (
 	*models.ExternalUserInfo,
-	*ldap.ServerConfig,
+	ldap.ServerConfig,
 	error,
 ) {
 
 	if len(multiples.configs) == 0 {
-		return nil, nil, ErrNoLDAPServers
+		return nil, ldap.ServerConfig{}, ErrNoLDAPServers
 	}
 
 	search := []string{login}
@@ -108,26 +108,26 @@ func (multiples *MultiLDAP) User(login string) (
 		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
-			return nil, config, err
+			return nil, *config, err
 		}
 
 		defer server.Close()
 
 		if err := server.Bind(); err != nil {
-			return nil, config, err
+			return nil, *config, err
 		}
 
 		users, err := server.Users(search)
 		if err != nil {
-			return nil, config, err
+			return nil, *config, err
 		}
 
 		if len(users) != 0 {
-			return users[0], config, nil
+			return users[0], *config, nil
 		}
 	}
 
-	return nil, nil, ErrDidNotFindUser
+	return nil, ldap.ServerConfig{}, ErrDidNotFindUser
 }
 
 // Users gets users from multiple LDAP servers
