@@ -12,12 +12,13 @@ import {
   LogRowModel,
   LogsModel,
   LogsDedupStrategy,
+  DefaultTimeZone,
 } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import { getNextRefIdChar } from './query';
 // Types
-import { DataQuery, DataSourceApi, DataQueryError } from '@grafana/ui';
+import { DataQuery, DataSourceApi, DataQueryError, DataQueryRequest } from '@grafana/ui';
 import {
   ExploreUrlState,
   HistoryItem,
@@ -49,7 +50,6 @@ export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DAT
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
  *
- * @param panel Origin panel of the jump to Explore
  * @param panelTargets The origin panel's query targets
  * @param panelDatasource The origin panel's datasource
  * @param datasourceSrv Datasource service to query other datasources in case the panel datasource is mixed
@@ -107,19 +107,23 @@ export function buildQueryTransaction(
     return combinedKey;
   }, '');
 
-  // Clone range for query request
-  // const queryRange: RawTimeRange = { ...range };
-  // const { from, to, raw } = this.timeSrv.timeRange();
   // Most datasource is using `panelId + query.refId` for cancellation logic.
   // Using `format` here because it relates to the view panel that the request is for.
   // However, some datasources don't use `panelId + query.refId`, but only `panelId`.
   // Therefore panel id has to be unique.
   const panelId = `${key}`;
 
-  const options = {
+  const request: DataQueryRequest = {
+    dashboardId: 0,
+    // TODO probably should be taken from preferences but does not seem to be used anyway.
+    timezone: DefaultTimeZone,
+    // This is set to correct time later on before the query is actually run.
+    startTime: 0,
     interval,
     intervalMs,
-    panelId,
+    // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
+    // issues down the road.
+    panelId: panelId as any,
     targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
     range,
     requestId: 'explore',
@@ -133,7 +137,7 @@ export function buildQueryTransaction(
 
   return {
     queries,
-    options,
+    request,
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
