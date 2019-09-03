@@ -8,6 +8,7 @@ import { Editor } from 'slate-react';
 // @ts-ignore
 import Plain from 'slate-plain-serializer';
 import classnames from 'classnames';
+// @ts-ignore
 import { isKeyHotkey } from 'is-hotkey';
 
 import { CompletionItem, CompletionItemGroup, TypeaheadOutput } from 'app/types/explore';
@@ -619,15 +620,30 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     );
   };
 
-  handleCopy = (event: ClipboardEvent, change: Editor) => {
+  getCopiedText(textBlocks: string[], startOffset: number, endOffset: number) {
+    if (!textBlocks.length) {
+      return undefined;
+    }
+
+    const excludingLastLineLength = textBlocks.slice(0, -1).join('').length + textBlocks.length - 1;
+    return textBlocks.join('\n').slice(startOffset, excludingLastLineLength + endOffset);
+  }
+
+  handleCopy = (event: ClipboardEvent, change: Change) => {
     event.preventDefault();
-    const selectedBlocks = change.value.document.getBlocksAtRange(change.value.selection);
-    event.clipboardData.setData('Text', selectedBlocks.map((block: Block) => block.text).join('\n'));
+
+    const { document, selection, startOffset, endOffset } = change.value;
+    const selectedBlocks = document.getBlocksAtRangeAsArray(selection).map((block: Block) => block.text);
+
+    const copiedText = this.getCopiedText(selectedBlocks, startOffset, endOffset);
+    if (copiedText) {
+      event.clipboardData.setData('Text', copiedText);
+    }
 
     return true;
   };
 
-  handlePaste = (event: ClipboardEvent, change: Editor) => {
+  handlePaste = (event: ClipboardEvent, change: Change) => {
     event.preventDefault();
     const pastedValue = event.clipboardData.getData('Text');
     const lines = pastedValue.split('\n');
@@ -642,7 +658,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     return true;
   };
 
-  handleCut = (event: ClipboardEvent, change: Editor) => {
+  handleCut = (event: ClipboardEvent, change: Change) => {
     this.handleCopy(event, change);
     change.deleteAtRange(change.value.selection);
 

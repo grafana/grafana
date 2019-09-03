@@ -25,7 +25,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat, ContextMenuItem, ContextMenuGroup } from '@grafana/ui';
+import { getValueFormat, ContextMenuItem, ContextMenuGroup, DataLinkBuiltInVars } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { DataLink, toUtc } from '@grafana/data';
 import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';
@@ -196,10 +196,15 @@ class GraphElement {
           {
             items: [
               ...dataLinks.map<ContextMenuItem>(link => {
-                const linkUiModel = this.linkSrv.getDataLinkUIModel(link, this.panel.scopedVars, {
-                  seriesName: item.series.alias,
-                  datapoint: item.datapoint,
-                });
+                const linkUiModel = this.linkSrv.getDataLinkUIModel(
+                  link,
+                  {
+                    ...this.panel.scopedVars,
+                    [DataLinkBuiltInVars.seriesName]: { value: item.series.alias, text: item.series.alias },
+                    [DataLinkBuiltInVars.valueTime]: { value: item.datapoint[0], text: item.datapoint[0] },
+                  },
+                  item
+                );
                 return {
                   label: linkUiModel.title,
                   url: linkUiModel.href,

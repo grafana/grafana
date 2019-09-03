@@ -8,7 +8,29 @@ export function vectorToArray<T>(v: Vector<T>): T[] {
   return arr;
 }
 
-export class ArrayVector<T = any> implements Vector<T> {
+/**
+ * Apache arrow vectors are Read/Write
+ */
+export interface ReadWriteVector<T = any> extends Vector<T> {
+  set: (index: number, value: T) => void;
+}
+
+/**
+ * Vector with standard manipulation functions
+ */
+export interface MutableVector<T = any> extends ReadWriteVector<T> {
+  /**
+   * Adds the value to the vector
+   */
+  add: (value: T) => void;
+
+  /**
+   * modifies the vector so it is now the oposite order
+   */
+  reverse: () => void;
+}
+
+export class ArrayVector<T = any> implements MutableVector<T> {
   buffer: T[];
 
   constructor(buffer?: T[]) {
@@ -19,8 +41,20 @@ export class ArrayVector<T = any> implements Vector<T> {
     return this.buffer.length;
   }
 
+  add(value: T) {
+    this.buffer.push(value);
+  }
+
   get(index: number): T {
     return this.buffer[index];
+  }
+
+  set(index: number, value: T) {
+    this.buffer[index] = value;
+  }
+
+  reverse() {
+    this.buffer.reverse();
   }
 
   toArray(): T[] {
@@ -44,11 +78,8 @@ export class ConstantVector<T = any> implements Vector<T> {
   }
 
   toArray(): T[] {
-    const arr: T[] = [];
-    for (let i = 0; i < this.length; i++) {
-      arr[i] = this.value;
-    }
-    return arr;
+    const arr = new Array<T>(this.length);
+    return arr.fill(this.value);
   }
 
   toJSON(): T[] {
@@ -112,7 +143,7 @@ interface CircularOptions<T> {
  * This supports addting to the 'head' or 'tail' and will grow the buffer
  * to match a configured capacity.
  */
-export class CircularVector<T = any> implements Vector<T> {
+export class CircularVector<T = any> implements MutableVector<T> {
   private buffer: T[];
   private index: number;
   private capacity: number;
@@ -205,6 +236,10 @@ export class CircularVector<T = any> implements Vector<T> {
     }
   }
 
+  reverse() {
+    this.buffer.reverse();
+  }
+
   /**
    * Add the value to the buffer
    */
@@ -214,8 +249,83 @@ export class CircularVector<T = any> implements Vector<T> {
     return this.buffer[(index + this.index) % this.buffer.length];
   }
 
+  set(index: number, value: T) {
+    this.buffer[(index + this.index) % this.buffer.length] = value;
+  }
+
   get length() {
     return this.buffer.length;
+  }
+
+  toArray(): T[] {
+    return vectorToArray(this);
+  }
+
+  toJSON(): T[] {
+    return vectorToArray(this);
+  }
+}
+
+interface AppendedVectorInfo<T> {
+  start: number;
+  end: number;
+  values: Vector<T>;
+}
+
+/**
+ * This may be more trouble than it is worth.  This trades some computation time for
+ * RAM -- rather than allocate a new array the size of all previous arrays, this just
+ * points the correct index to their original array values
+ */
+export class AppendedVectors<T = any> implements Vector<T> {
+  length = 0;
+  source: Array<AppendedVectorInfo<T>> = new Array<AppendedVectorInfo<T>>();
+
+  constructor(startAt = 0) {
+    this.length = startAt;
+  }
+
+  /**
+   * Make the vector look like it is this long
+   */
+  setLength(length: number) {
+    if (length > this.length) {
+      // make the vector longer (filling with undefined)
+      this.length = length;
+    } else if (length < this.length) {
+      // make the array shorter
+      const sources: Array<AppendedVectorInfo<T>> = new Array<AppendedVectorInfo<T>>();
+      for (const src of this.source) {
+        sources.push(src);
+        if (src.end > length) {
+          src.end = length;
+          break;
+        }
+      }
+      this.source = sources;
+      this.length = length;
+    }
+  }
+
+  append(v: Vector<T>): AppendedVectorInfo<T> {
+    const info = {
+      start: this.length,
+      end: this.length + v.length,
+      values: v,
+    };
+    this.length = info.end;
+    this.source.push(info);
+    return info;
+  }
+
+  get(index: number): T {
+    for (let i = 0; i < this.source.length; i++) {
+      const src = this.source[i];
+      if (index >= src.start && index < src.end) {
+        return src.values.get(index - src.start);
+      }
+    }
+    return (undefined as unknown) as T;
   }
 
   toArray(): T[] {

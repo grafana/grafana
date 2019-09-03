@@ -131,6 +131,7 @@ class NewDataSourcePage extends PureComponent<Props> {
             className="btn btn-inverse"
             href="https://grafana.com/plugins?type=datasource&utm_source=new-data-source"
             target="_blank"
+            rel="noopener"
           >
             Find more data source plugins on grafana.com
           </a>
@@ -198,6 +199,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
             className="btn btn-inverse"
             href={`${learnMoreLink}?utm_source=grafana_add_ds`}
             target="_blank"
+            rel="noopener"
             onClick={onLearnMoreClick}
           >
             Learn more <i className="fa fa-external-link add-datasource-item-actions__btn-icon" />

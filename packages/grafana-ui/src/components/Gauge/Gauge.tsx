@@ -15,6 +15,8 @@ export interface Props extends Themeable {
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  className?: string;
 }
 
 const FONT_SCALE = 1;
@@ -133,24 +135,16 @@ export class Gauge extends PureComponent<Props> {
     }
   }
 
-  render() {
-    const { width, value, height } = this.props;
+  renderVisualization = () => {
+    const { width, value, height, onClick } = this.props;
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
 
     return (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }}
-      >
+      <>
         <div
           style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
           ref={element => (this.canvasElement = element)}
+          onClick={onClick}
         />
         {autoProps.showLabel && (
           <div
@@ -163,11 +157,30 @@ export class Gauge extends PureComponent<Props> {
               position: 'relative',
               width: '100%',
               top: '-4px',
+              cursor: 'default',
             }}
           >
             {value.title}
           </div>
         )}
+      </>
+    );
+  };
+
+  render() {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+        className={this.props.className}
+      >
+        {this.renderVisualization()}
       </div>
     );
   }
