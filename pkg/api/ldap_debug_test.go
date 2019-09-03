@@ -130,10 +130,10 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 	expected := `
 		{
 		  "name": {
-				"cfgAttrValue": "ldap-name", "ldapValue": "John Doe"
+				"cfgAttrValue": "ldap-name", "ldapValue": "John"
 			},
 			"surname": {
-				"cfgAttrValue": "ldap-surname", "ldapValue": "John Doe"
+				"cfgAttrValue": "ldap-surname", "ldapValue": "Doe"
 			},
 			"email": {
 				"cfgAttrValue": "ldap-email", "ldapValue": "john.doe@example.com"
