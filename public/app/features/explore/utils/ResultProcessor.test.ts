@@ -16,15 +16,7 @@ jest.mock('@grafana/data/src/utils/moment_wrapper', () => ({
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import {
-  TimeSeries,
-  LogRowModel,
-  LogsMetaItem,
-  GraphSeriesXY,
-  MutableDataFrame,
-  toDataFrame,
-  FieldType,
-} from '@grafana/data';
+import { TimeSeries, LogRowModel, LogsMetaItem, GraphSeriesXY, toDataFrame, FieldType } from '@grafana/data';
 
 const testContext = (options: any = {}) => {
   const timeSeries = toDataFrame({
