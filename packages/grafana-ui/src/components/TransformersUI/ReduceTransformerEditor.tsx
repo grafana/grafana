@@ -30,6 +30,6 @@ export const reduceTransformRegistryItem: TransformerUIRegistyItem = {
   id: DataTransformerID.reduce,
   component: ReduceTransformerEditor,
   transformer: dataTransformers.get(DataTransformerID.reduce),
-  name: 'ReduceTransformerEditor',
+  name: 'Reduce',
   description: 'UI for reduce transformation',
 };
