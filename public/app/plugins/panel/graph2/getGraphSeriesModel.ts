@@ -1,11 +1,19 @@
-import { colors, getFlotPairs, getColorFromHexRgbOrName, getDisplayProcessor, PanelData } from '@grafana/ui';
-import { NullValueMode, reduceField, FieldType, DisplayValue, GraphSeriesXY, getTimeField } from '@grafana/data';
+import { colors, getFlotPairs, getColorFromHexRgbOrName, getDisplayProcessor } from '@grafana/ui';
+import {
+  NullValueMode,
+  reduceField,
+  FieldType,
+  DisplayValue,
+  GraphSeriesXY,
+  getTimeField,
+  DataFrame,
+} from '@grafana/data';
 
 import { SeriesOptions, GraphOptions } from './types';
 import { GraphLegendEditorLegendOptions } from './GraphLegendEditor';
 
 export const getGraphSeriesModel = (
-  data: PanelData,
+  dataFrames: DataFrame[],
   seriesOptions: SeriesOptions,
   graphOptions: GraphOptions,
   legendOptions: GraphLegendEditorLegendOptions
@@ -18,7 +26,7 @@ export const getGraphSeriesModel = (
     },
   });
 
-  for (const series of data.series) {
+  for (const series of dataFrames) {
     const { timeField } = getTimeField(series);
     if (!timeField) {
       continue;
