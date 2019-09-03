@@ -17,7 +17,7 @@ import {
   DataQueryResponse,
 } from '@grafana/ui';
 
-import { LokiQuery, LokiOptions } from './types';
+import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
@@ -133,17 +133,18 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   };
 
-  processResult = (data: any, target: any): DataFrame[] => {
+  processResult = (data: LokiLogsStream | LokiResponse, target: any): DataFrame[] => {
     const series: DataFrame[] = [];
 
     if (Object.keys(data).length === 0) {
       return series;
     }
 
-    if (!data.streams) {
-      return [logStreamToDataFrame(data, target.refId)];
+    if (!(data as any).streams) {
+      return [logStreamToDataFrame(data as LokiLogsStream, false, target.refId)];
     }
 
+    data = data as LokiResponse;
     for (const stream of data.streams || []) {
       const dataFrame = logStreamToDataFrame(stream);
       dataFrame.refId = target.refId;
@@ -164,7 +165,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     for (const liveTarget of liveTargets) {
       // Reuse an existing stream if one is already running
-      const stream = this.streams.observe(liveTarget);
+      const stream = this.streams.getStream(liveTarget);
       const subscription = stream.subscribe({
         next: (data: DataFrame[]) => {
           observer({

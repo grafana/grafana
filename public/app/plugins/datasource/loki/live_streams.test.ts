@@ -33,7 +33,7 @@ describe('Live Stream Tests', () => {
 
   it('reads the values into the buffer', async () => {
     const labels: Labels = { job: 'varlogs' };
-    const stream = new LiveStreams().observe({
+    const stream = new LiveStreams().getStream({
       url: 'fake',
       size: 10,
       query: formatLabels(labels),

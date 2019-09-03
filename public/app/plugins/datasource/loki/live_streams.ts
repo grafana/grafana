@@ -1,16 +1,9 @@
-import {
-  DataFrame,
-  MutableDataFrame,
-  FieldType,
-  parseLabels,
-  findUniqueLabels,
-  KeyValue,
-  CircularDataFrame,
-} from '@grafana/data';
+import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
 import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
-import { LokiLogsStream } from './types';
+import { LokiResponse } from './types';
 import { map } from 'rxjs/operators';
+import { appendResponseToBufferedData } from './result_transformer';
 
 /**
  * Maps directly to a query in the UI (refId is key)
@@ -23,10 +16,14 @@ export interface LiveTarget {
   size: number;
 }
 
+/**
+ * Cache of websocket streams that can be returned as observable. In case there already is a stream for particular
+ * target it is returned and on subscription returns the latest dataFrame.
+ */
 export class LiveStreams {
   private streams: KeyValue<Subject<DataFrame[]>> = {};
 
-  observe(target: LiveTarget): Observable<DataFrame[]> {
+  getStream(target: LiveTarget): Observable<DataFrame[]> {
     let stream = this.streams[target.url];
     if (!stream) {
       const data = new CircularDataFrame({ capacity: target.size });
@@ -38,7 +35,7 @@ export class LiveStreams {
       const subject = new BehaviorSubject<DataFrame[]>([]);
       webSocket(target.url)
         .pipe(
-          map((response: any) => {
+          map((response: LokiResponse) => {
             appendResponseToBufferedData(response, data);
             return [data];
           })
@@ -47,29 +44,5 @@ export class LiveStreams {
       stream = this.streams[target.url] = subject;
     }
     return stream.asObservable();
-  }
-}
-
-/**
- * This takes the streaming entries from the response and adds them to a
- * rolling buffer saved in liveTarget.
- */
-export function appendResponseToBufferedData(response: any, data: MutableDataFrame) {
-  // Should we do anythign with: response.dropped_entries?
-
-  const streams: LokiLogsStream[] = response.streams;
-  if (streams && streams.length) {
-    for (const stream of streams) {
-      // Find unique labels
-      const labels = parseLabels(stream.labels);
-      const unique = findUniqueLabels(labels, data.labels);
-
-      // Add each line
-      for (const entry of stream.entries) {
-        data.values.ts.add(entry.ts || entry.timestamp);
-        data.values.line.add(entry.line);
-        data.values.labels.add(unique);
-      }
-    }
   }
 }

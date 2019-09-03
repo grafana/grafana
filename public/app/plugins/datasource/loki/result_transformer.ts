@@ -1,6 +1,17 @@
-import { LokiLogsStream } from './types';
-import { parseLabels, FieldType, Labels, DataFrame, ArrayVector } from '@grafana/data';
+import { LokiLogsStream, LokiResponse } from './types';
+import {
+  parseLabels,
+  FieldType,
+  Labels,
+  DataFrame,
+  ArrayVector,
+  MutableDataFrame,
+  findUniqueLabels,
+} from '@grafana/data';
 
+/**
+ * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries.
+ */
 export function logStreamToDataFrame(stream: LokiLogsStream, reverse?: boolean, refId?: string): DataFrame {
   let labels: Labels = stream.parsedLabels;
   if (!labels && stream.labels) {
@@ -28,4 +39,29 @@ export function logStreamToDataFrame(stream: LokiLogsStream, reverse?: boolean, 
     ],
     length: times.length,
   };
+}
+
+/**
+ * Transform LokiResponse data and appends it to MutableDataFrame. Used for streaming where the dataFrame can be
+ * a CircularDataFrame creating a fixed size rolling buffer.
+ * TODO: Probably could be unified with the logStreamToDataFrame function.
+ */
+export function appendResponseToBufferedData(response: LokiResponse, data: MutableDataFrame) {
+  // Should we do anythign with: response.dropped_entries?
+
+  const streams: LokiLogsStream[] = response.streams;
+  if (streams && streams.length) {
+    for (const stream of streams) {
+      // Find unique labels
+      const labels = parseLabels(stream.labels);
+      const unique = findUniqueLabels(labels, data.labels);
+
+      // Add each line
+      for (const entry of stream.entries) {
+        data.values.ts.add(entry.ts || entry.timestamp);
+        data.values.line.add(entry.line);
+        data.values.labels.add(unique);
+      }
+    }
+  }
 }
