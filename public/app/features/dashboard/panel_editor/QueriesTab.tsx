@@ -224,9 +224,9 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  getCurrentTransformData = (depth?: number) => {
+  getCurrentTransformData = (applyTransformations = true) => {
     const queryRunner = this.props.panel.getQueryRunner();
-    return queryRunner.getCurrentData(true, depth).series;
+    return queryRunner.getCurrentData(applyTransformations).series;
   };
 
   render() {
