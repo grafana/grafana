@@ -1,4 +1,4 @@
-import { TableData, LogsModel, TimeSeries, GraphSeriesXY, DataFrame } from '@grafana/data';
+import { LogsModel, GraphSeriesXY, DataFrame, FieldType } from '@grafana/data';
 
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
@@ -33,13 +33,46 @@ export class ResultProcessor {
       return new TableModel();
     }
 
-    return new TableModel();
-    // const tables = this.panelData.series.map(frame => {
-    // });
-    // const prevTableResults: any[] | TableModel = this.state.tableResult || [];
-    // const tablesToMerge = this.replacePreviousResults ? this.tables : [].concat(prevTableResults, this.tables);
-    //
-    // return mergeTablesIntoModel(new TableModel(), ...tablesToMerge);
+    // For now ignore time series
+    // We can change this later, just need to figure out how to
+    // Ignore time series only for prometheus
+    const onlyTables = this.dataFrames.filter(frame => {
+      if (frame.fields.length === 2) {
+        if (frame.fields[1].type === FieldType.time) {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    const tables = onlyTables.map(frame => {
+      const { fields } = frame;
+      const fieldCount = fields.length;
+      const rowCount = fields[0].values.length;
+
+      const columns = fields.map(field => ({
+        text: field.name,
+        type: field.type,
+        filterable: field.config.filterable,
+      }));
+
+      const rows: any[][] = [];
+      for (let i = 0; i < rowCount; i++) {
+        const row: any[] = [];
+        for (let j = 0; j < fieldCount; j++) {
+          row.push(frame.fields[j].values.get(i));
+        }
+        rows.push(row);
+      }
+
+      return new TableModel({
+        columns,
+        rows,
+        meta: frame.meta,
+      });
+    });
+
+    return mergeTablesIntoModel(new TableModel(), ...tables);
   }
 
   getLogsResult(): LogsModel {
@@ -79,54 +112,4 @@ export class ResultProcessor {
 
     return { ...sortedNewResults, rows, series };
   }
-
-  // private isSameGraphSeries = (a: GraphSeriesXY, b: GraphSeriesXY) => {
-  //   if (a.hasOwnProperty('label') && b.hasOwnProperty('label')) {
-  //     const aValue = a.label;
-  //     const bValue = b.label;
-  //     if (aValue !== undefined && bValue !== undefined && aValue === bValue) {
-  //       return true;
-  //     }
-  //   }
-  //
-  //   return false;
-  // };
-  //
-  // private mergeGraphResults = (newResults: GraphSeriesXY[], prevResults: GraphSeriesXY[]): GraphSeriesXY[] => {
-  //   if (!prevResults || prevResults.length === 0 || this.replacePreviousResults) {
-  //     return newResults; // Hack before we use GraphSeriesXY instead
-  //   }
-  //
-  //   const results: GraphSeriesXY[] = prevResults.slice() as GraphSeriesXY[];
-  //
-  //   // update existing results
-  //   for (let index = 0; index < results.length; index++) {
-  //     const prevResult = results[index];
-  //     for (const newResult of newResults) {
-  //       const isSame = this.isSameGraphSeries(prevResult, newResult);
-  //
-  //       if (isSame) {
-  //         prevResult.data = prevResult.data.concat(newResult.data);
-  //         break;
-  //       }
-  //     }
-  //   }
-  //
-  //   // add new results
-  //   for (const newResult of newResults) {
-  //     let isNew = true;
-  //     for (const prevResult of results) {
-  //       const isSame = this.isSameGraphSeries(prevResult, newResult);
-  //       if (isSame) {
-  //         isNew = false;
-  //         break;
-  //       }
-  //     }
-  //
-  //     if (isNew) {
-  //       results.push(newResult);
-  //     }
-  //   }
-  //   return results;
-  // };
 }

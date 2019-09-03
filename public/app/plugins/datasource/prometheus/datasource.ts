@@ -181,8 +181,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     activeTargets: PromQuery[],
     end: number
   ) => {
-    const lastTimeSeriesQuery = queries.filter(query => !query.instant).pop();
-
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
       const target = activeTargets[index];
