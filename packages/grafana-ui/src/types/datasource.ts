@@ -455,6 +455,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   // Request Timing
   startTime: number;
   endTime?: number;
+  cancelled?: boolean;
 }
 
 export interface QueryFix {

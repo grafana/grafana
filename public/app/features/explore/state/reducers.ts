@@ -589,6 +589,10 @@ export const processQueryResponse = (
   const replacePreviousResults = action.type === queryEndedAction.type;
 
   if (error) {
+    if (error.cancelled) {
+      return state;
+    }
+
     // For Angular editors
     state.eventBridge.emit('data-error', error);
 
