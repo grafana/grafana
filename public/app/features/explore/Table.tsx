@@ -46,7 +46,7 @@ export default class Table extends PureComponent<TableProps> {
       show: text !== 'Time',
       Cell: (row: any) => (
         <span className={filterable ? 'link' : ''} title={text + ': ' + row.value}>
-          {row.value}
+          {typeof row.value === 'string' ? row.value : JSON.stringify(row.value)}
         </span>
       ),
     }));
