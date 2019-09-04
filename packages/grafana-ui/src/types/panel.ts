@@ -19,11 +19,6 @@ export interface PanelData {
 
   // Data format expected by Angular panels
   legacy?: LegacyResponseData[];
-
-  // Signal to receiver whether the data is some kind of delta or a full dataFrame.
-  // Both can be used for streaming. If streaming and delta = true the assumption is datasource is buffering the
-  // responses and gives you full view capped to maxDataPoints.
-  isDelta?: boolean;
 }
 
 export interface PanelProps<T = any> {

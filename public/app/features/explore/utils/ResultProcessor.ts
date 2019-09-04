@@ -1,4 +1,4 @@
-import { LogsModel, GraphSeriesXY, LogRowModel, DataFrame, FieldType } from '@grafana/data';
+import { LogsModel, GraphSeriesXY, DataFrame, FieldType } from '@grafana/data';
 
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
@@ -64,7 +64,7 @@ export class ResultProcessor {
     return mergeTablesIntoModel(new TableModel(), ...tables);
   }
 
-  getLogsResult(replacePreviousResults: boolean): LogsModel {
+  getLogsResult(): LogsModel {
     if (this.state.mode !== ExploreMode.Logs) {
       return null;
     }
@@ -75,28 +75,8 @@ export class ResultProcessor {
     const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
-    if (replacePreviousResults) {
-      const rows = sortedNewResults.rows;
-      const series = sortedNewResults.series;
-      return { ...sortedNewResults, rows, series };
-    }
-
-    const prevLogsResult: LogsModel = this.state.logsResult || { hasUniqueLabels: false, rows: [] };
-    const sortedLogResult = sortLogsResult(prevLogsResult, sortOrder);
-    const rowsInState = sortedLogResult.rows;
-
-    const processedRows: LogRowModel[] = [];
-    for (const row of rowsInState) {
-      processedRows.push(row);
-    }
-    for (const row of sortedNewResults.rows) {
-      processedRows.push(row);
-    }
-
-    const slice = -1000;
-    const rows = processedRows.slice(slice);
-    const series = sortedNewResults.series.slice(slice);
-
+    const rows = sortedNewResults.rows;
+    const series = sortedNewResults.series;
     return { ...sortedNewResults, rows, series };
   }
 }

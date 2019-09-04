@@ -585,7 +585,7 @@ export const processQueryResponse = (
   action: ActionOf<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, legacy, error, isDelta } = response;
+  const { request, state: loadingState, series, legacy, error } = response;
 
   if (error) {
     // For Angular editors
@@ -615,14 +615,13 @@ export const processQueryResponse = (
   // For Angular editors
   state.eventBridge.emit('data-received', legacy);
 
-  const replacePreviousResults = !isDelta;
   return {
     ...state,
     latency,
     queryResponse: response,
     graphResult: processor.getGraphResult(),
     tableResult: processor.getTableResult(),
-    logsResult: processor.getLogsResult(replacePreviousResults),
+    logsResult: processor.getLogsResult(),
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showingStartPage: false,
     update: makeInitialUpdateState(),

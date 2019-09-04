@@ -87,7 +87,7 @@ describe('ResultProcessor', () => {
     describe('when calling getLogsResult', () => {
       it('then it should return null', () => {
         const { resultProcessor } = testContext({ dataFrames: [] });
-        const theResult = resultProcessor.getLogsResult(false);
+        const theResult = resultProcessor.getLogsResult();
 
         expect(theResult).toBeNull();
       });
@@ -136,7 +136,7 @@ describe('ResultProcessor', () => {
     describe('when calling getLogsResult', () => {
       it('then it should return correct logs result', () => {
         const { resultProcessor } = testContext({ mode: ExploreMode.Logs });
-        const theResult = resultProcessor.getLogsResult(false);
+        const theResult = resultProcessor.getLogsResult();
 
         expect(theResult).toEqual({
           hasUniqueLabels: false,
@@ -257,7 +257,7 @@ describe('ResultProcessor', () => {
           },
         });
 
-        const theResult = resultProcessor.getLogsResult(false);
+        const theResult = resultProcessor.getLogsResult();
         const expected = {
           hasUniqueLabels: false,
           meta: [] as LogsMetaItem[],

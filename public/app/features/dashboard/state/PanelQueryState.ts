@@ -282,8 +282,6 @@ export class PanelQueryState {
         ...this.request,
         range: timeRange, // update the time range
       },
-      // We assume that streams either all delta or not.
-      isDelta: streams[0].isDelta,
     };
   }
 
