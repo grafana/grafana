@@ -9,7 +9,7 @@ import { AlertTab } from '../../alerting/AlertTab';
 import config from 'app/core/config';
 import { store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
-import { AngularComponent } from 'app/core/services/AngularLoader';
+import { AngularComponent } from '@grafana/runtime';
 
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
@@ -20,7 +20,7 @@ interface PanelEditorProps {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   angularPanel?: AngularComponent;
-  onTypeChanged: (newType: PanelPluginMeta) => void;
+  onPluginTypeChange: (newType: PanelPluginMeta) => void;
 }
 
 interface PanelEditorTab {
@@ -70,7 +70,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
   };
 
   renderCurrentTab(activeTab: string) {
-    const { panel, dashboard, onTypeChanged, plugin, angularPanel } = this.props;
+    const { panel, dashboard, onPluginTypeChange, plugin, angularPanel } = this.props;
 
     switch (activeTab) {
       case 'advanced':
@@ -85,7 +85,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
             panel={panel}
             dashboard={dashboard}
             plugin={plugin}
-            onTypeChanged={onTypeChanged}
+            onPluginTypeChange={onPluginTypeChange}
             angularPanel={angularPanel}
           />
         );

@@ -6,17 +6,9 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import {
-  toLegacyResponseData,
-  isSeriesData,
-  LegacyResponseData,
-  TimeRange,
-  DataSourceApi,
-  PanelData,
-  LoadingState,
-  DataQueryResponse,
-  SeriesData,
-} from '@grafana/ui';
+import { toLegacyResponseData, isDataFrame, TimeRange, LoadingState, DataFrame, toDataFrameDTO } from '@grafana/data';
+
+import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
 import { PanelQueryRunnerFormat } from '../dashboard/state/PanelQueryRunner';
@@ -89,16 +81,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = true;
 
     // load datasource service
-    return (
-      this.datasourceSrv
-        .get(this.panel.datasource, this.panel.scopedVars)
-        .then(this.updateTimeRange.bind(this))
-        .then(this.issueQueries.bind(this))
-        // NOTE handleQueryResult is called by panelDataObserver
-        .catch((err: any) => {
-          this.processDataError(err);
-        })
-    );
+    return this.datasourceSrv
+      .get(this.panel.datasource, this.panel.scopedVars)
+      .then(this.updateTimeRange.bind(this))
+      .then(this.issueQueries.bind(this))
+      .catch((err: any) => {
+        this.processDataError(err);
+      });
   }
 
   processDataError(err: any) {
@@ -121,8 +110,10 @@ class MetricsPanelCtrl extends PanelCtrl {
       }
     }
 
-    this.events.emit('data-error', err);
     console.log('Panel data error:', err);
+    return this.$timeout(() => {
+      this.events.emit('data-error', err);
+    });
   }
 
   // Updates the response with information from the stream
@@ -134,7 +125,11 @@ class MetricsPanelCtrl extends PanelCtrl {
         return;
       }
 
-      this.loading = false;
+      // Ignore data in loading state
+      if (data.state === LoadingState.Loading) {
+        this.loading = true;
+        return;
+      }
 
       if (data.request) {
         const { range, timeInfo } = data.request;
@@ -150,7 +145,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         // The result should already be processed, but just in case
         if (!data.legacy) {
           data.legacy = data.series.map(v => {
-            if (isSeriesData(v)) {
+            if (isDataFrame(v)) {
               return toLegacyResponseData(v);
             }
             return v;
@@ -159,11 +154,9 @@ class MetricsPanelCtrl extends PanelCtrl {
 
         // Make the results look like they came directly from a <6.2 datasource request
         // NOTE: any object other than 'data' is no longer supported supported
-        this.handleQueryResult({
-          data: data.legacy,
-        });
+        this.handleQueryResult({ data: data.legacy });
       } else {
-        this.handleSeriesData(data.series);
+        this.handleDataFrames(data.series);
       }
     },
   };
@@ -222,14 +215,18 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
   }
 
-  handleSeriesData(data: SeriesData[]) {
+  handleDataFrames(data: DataFrame[]) {
     this.loading = false;
 
     if (this.dashboard && this.dashboard.snapshot) {
-      this.panel.snapshotData = data;
+      this.panel.snapshotData = data.map(frame => toDataFrameDTO(frame));
     }
 
-    // Subclasses that asked for SeriesData will override
+    try {
+      this.events.emit('data-frames-received', data);
+    } catch (err) {
+      this.processDataError(err);
+    }
   }
 
   handleQueryResult(result: DataQueryResponse) {
@@ -244,27 +241,24 @@ class MetricsPanelCtrl extends PanelCtrl {
       result = { data: [] };
     }
 
-    this.events.emit('data-received', result.data);
+    try {
+      this.events.emit('data-received', result.data);
+    } catch (err) {
+      this.processDataError(err);
+    }
   }
 
-  getAdditionalMenuItems() {
+  async getAdditionalMenuItems() {
     const items = [];
     if (this.contextSrv.hasAccessToExplore() && this.datasource) {
       items.push({
         text: 'Explore',
-        click: 'ctrl.explore();',
         icon: 'gicon gicon-explore',
         shortcut: 'x',
+        href: await getExploreUrl(this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv),
       });
     }
     return items;
-  }
-
-  async explore() {
-    const url = await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
-    if (url) {
-      this.$timeout(() => this.$location.url(url));
-    }
   }
 }
 

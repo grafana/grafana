@@ -1,8 +1,8 @@
 import { deduplicatedLogsSelector } from './selectors';
-import { LogsDedupStrategy } from 'app/core/logs_model';
+import { LogsDedupStrategy } from '@grafana/data';
 import { ExploreItemState } from 'app/types';
 
-const state = {
+const state: any = {
   logsResult: {
     rows: [
       {

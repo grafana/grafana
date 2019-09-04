@@ -1,15 +1,18 @@
 import _ from 'lodash';
 import {
-  calculateResultsFromQueryTransactions,
-  getIntervals,
   ensureQueries,
   getQueryKeys,
   parseUrlState,
   DEFAULT_UI_STATE,
   generateNewKeyAndAddRefIdIfMissing,
+  sortLogsResult,
+  stopQueryState,
+  refreshIntervalToSortOrder,
+  instanceOfDataQueryError,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { DataQuery } from '@grafana/ui/src/types';
+import { LoadingState } from '@grafana/data';
+import { DataQuery, PanelData } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -19,17 +22,15 @@ import {
   splitCloseAction,
   SplitCloseActionPayload,
   loadExploreDatasources,
-  runQueriesAction,
   historyUpdatedAction,
-  resetQueryErrorAction,
   changeModeAction,
-} from './actionTypes';
-import { reducerFactory } from 'app/core/redux';
-import {
+  setUrlReplacedAction,
+  scanStopAction,
+  queryStartAction,
+  changeRangeAction,
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
-  changeTimeAction,
   changeRefreshIntervalAction,
   clearQueriesAction,
   highlightLogsExpressionAction,
@@ -39,22 +40,27 @@ import {
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
   modifyQueriesAction,
-  queryFailureAction,
-  queryStartAction,
-  querySuccessAction,
   removeQueryRowAction,
-  scanRangeAction,
   scanStartAction,
-  scanStopAction,
   setQueriesAction,
   toggleTableAction,
   queriesImportedAction,
   updateUIStateAction,
   toggleLogLevelAction,
+  changeLoadingStateAction,
+  resetExploreAction,
+  queryEndedAction,
+  queryStreamUpdatedAction,
+  QueryEndedPayload,
+  setPausedStateAction,
 } from './actionTypes';
+import { reducerFactory, ActionOf } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
-import { LocationUpdate } from 'app/types';
+import { LocationUpdate } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
+import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
+import { PanelQueryState, toDataQueryError } from '../../dashboard/state/PanelQueryState';
+import { ResultProcessor } from '../utils/ResultProcessor';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -68,6 +74,7 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
   datasource: false,
   queries: false,
   range: false,
+  mode: false,
   ui: false,
 });
 
@@ -92,23 +99,34 @@ export const makeExploreItemState = (): ExploreItemState => ({
     to: null,
     raw: DEFAULT_RANGE,
   },
+  absoluteRange: {
+    from: null,
+    to: null,
+  },
   scanning: false,
   scanRange: null,
   showingGraph: true,
   showingTable: true,
-  graphIsLoading: false,
-  logIsLoading: false,
-  tableIsLoading: false,
-  supportsGraph: null,
-  supportsLogs: null,
-  supportsTable: null,
+  loading: false,
   queryKeys: [],
   urlState: null,
   update: makeInitialUpdateState(),
-  queryErrors: [],
   latency: 0,
   supportedModes: [],
   mode: null,
+  isLive: false,
+  isPaused: false,
+  urlReplaced: false,
+  queryState: new PanelQueryState(),
+  queryResponse: createEmptyQueryResponse(),
+});
+
+export const createEmptyQueryResponse = (): PanelData => ({
+  state: LoadingState.NotStarted,
+  request: null,
+  series: [],
+  legacy: null,
+  error: null,
 });
 
 /**
@@ -175,18 +193,27 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: changeTimeAction,
-    mapper: (state, action): ExploreItemState => {
-      return { ...state, range: action.payload.range };
-    },
-  })
-  .addMapper({
     filter: changeRefreshIntervalAction,
     mapper: (state, action): ExploreItemState => {
       const { refreshInterval } = action.payload;
+      const live = isLive(refreshInterval);
+      const sortOrder = refreshIntervalToSortOrder(refreshInterval);
+      const logsResult = sortLogsResult(state.logsResult, sortOrder);
+      if (isLive(state.refreshInterval) && !live) {
+        stopQueryState(state.queryState, 'Live streaming stopped');
+      }
+
       return {
         ...state,
-        refreshInterval: refreshInterval,
+        refreshInterval,
+        queryResponse: {
+          ...state.queryResponse,
+          state: live ? LoadingState.Streaming : LoadingState.NotStarted,
+        },
+        isLive: live,
+        isPaused: false,
+        loading: live,
+        logsResult,
       };
     },
   })
@@ -194,11 +221,17 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: clearQueriesAction,
     mapper: (state): ExploreItemState => {
       const queries = ensureQueries();
+      stopQueryState(state.queryState, 'Queries cleared');
       return {
         ...state,
         queries: queries.slice(),
+        graphResult: null,
+        tableResult: null,
+        logsResult: null,
         showingStartPage: Boolean(state.StartPage),
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
+        queryResponse: createEmptyQueryResponse(),
+        loading: false,
       };
     },
   })
@@ -212,12 +245,13 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: initializeExploreAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, eventBridge, queries, range, ui } = action.payload;
+      const { containerWidth, eventBridge, queries, range, mode, ui } = action.payload;
       return {
         ...state,
         containerWidth,
         eventBridge,
         range,
+        mode,
         queries,
         initialized: true,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
@@ -233,9 +267,8 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       // Capabilities
       const supportsGraph = datasourceInstance.meta.metrics;
       const supportsLogs = datasourceInstance.meta.logs;
-      const supportsTable = datasourceInstance.meta.tables;
 
-      let mode = ExploreMode.Metrics;
+      let mode = state.mode || ExploreMode.Metrics;
       const supportedModes: ExploreMode[] = [];
 
       if (supportsGraph) {
@@ -252,21 +285,20 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
+      stopQueryState(state.queryState, 'Datasource changed');
 
       return {
         ...state,
         datasourceInstance,
-        queryErrors: [],
+        graphResult: null,
+        tableResult: null,
+        logsResult: null,
         latency: 0,
-        graphIsLoading: false,
-        logIsLoading: false,
-        tableIsLoading: false,
-        supportsGraph,
-        supportsLogs,
-        supportsTable,
+        queryResponse: createEmptyQueryResponse(),
+        loading: false,
         StartPage,
         showingStartPage: Boolean(StartPage),
-        queryKeys: getQueryKeys(state.queries, datasourceInstance),
+        queryKeys: [],
         supportedModes,
         mode,
       };
@@ -338,57 +370,17 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: queryFailureAction,
-    mapper: (state, action): ExploreItemState => {
-      const { resultType, response } = action.payload;
-      const queryErrors = state.queryErrors.concat(response);
-
-      return {
-        ...state,
-        graphResult: resultType === 'Graph' ? null : state.graphResult,
-        tableResult: resultType === 'Table' ? null : state.tableResult,
-        logsResult: resultType === 'Logs' ? null : state.logsResult,
-        latency: 0,
-        queryErrors,
-        graphIsLoading: resultType === 'Graph' ? false : state.graphIsLoading,
-        logIsLoading: resultType === 'Logs' ? false : state.logIsLoading,
-        tableIsLoading: resultType === 'Table' ? false : state.tableIsLoading,
-        update: makeInitialUpdateState(),
-      };
-    },
-  })
-  .addMapper({
     filter: queryStartAction,
-    mapper: (state, action): ExploreItemState => {
-      const { resultType } = action.payload;
-
+    mapper: (state): ExploreItemState => {
       return {
         ...state,
-        queryErrors: [],
         latency: 0,
-        graphIsLoading: resultType === 'Graph' ? true : state.graphIsLoading,
-        logIsLoading: resultType === 'Logs' ? true : state.logIsLoading,
-        tableIsLoading: resultType === 'Table' ? true : state.tableIsLoading,
-        update: makeInitialUpdateState(),
-      };
-    },
-  })
-  .addMapper({
-    filter: querySuccessAction,
-    mapper: (state, action): ExploreItemState => {
-      const { queryIntervals } = state;
-      const { result, resultType, latency } = action.payload;
-      const results = calculateResultsFromQueryTransactions(result, resultType, queryIntervals.intervalMs);
-
-      return {
-        ...state,
-        graphResult: resultType === 'Graph' ? results.graphResult : state.graphResult,
-        tableResult: resultType === 'Table' ? results.tableResult : state.tableResult,
-        logsResult: resultType === 'Logs' ? results.logsResult : state.logsResult,
-        latency,
-        graphIsLoading: false,
-        logIsLoading: false,
-        tableIsLoading: false,
+        queryResponse: {
+          ...state.queryResponse,
+          state: LoadingState.Loading,
+          error: null,
+        },
+        loading: true,
         update: makeInitialUpdateState(),
       };
     },
@@ -415,15 +407,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: scanRangeAction,
-    mapper: (state, action): ExploreItemState => {
-      return { ...state, scanRange: action.payload.range };
-    },
-  })
-  .addMapper({
     filter: scanStartAction,
     mapper: (state, action): ExploreItemState => {
-      return { ...state, scanning: true, scanner: action.payload.scanner };
+      return { ...state, scanning: true };
     },
   })
   .addMapper({
@@ -433,7 +419,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         scanning: false,
         scanRange: undefined,
-        scanner: undefined,
         update: makeInitialUpdateState(),
       };
     },
@@ -528,22 +513,6 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: runQueriesAction,
-    mapper: (state): ExploreItemState => {
-      const { range, datasourceInstance, containerWidth } = state;
-      let interval = '1s';
-      if (datasourceInstance && datasourceInstance.interval) {
-        interval = datasourceInstance.interval;
-      }
-      const queryIntervals = getIntervals(range, interval, containerWidth);
-      return {
-        ...state,
-        queryIntervals,
-        showingStartPage: false,
-      };
-    },
-  })
-  .addMapper({
     filter: historyUpdatedAction,
     mapper: (state, action): ExploreItemState => {
       return {
@@ -553,24 +522,112 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    filter: resetQueryErrorAction,
-    mapper: (state, action): ExploreItemState => {
-      const { refIds } = action.payload;
-      const queryErrors = state.queryErrors.reduce((allErrors, error) => {
-        if (error.refId && refIds.indexOf(error.refId) !== -1) {
-          return allErrors;
-        }
-
-        return allErrors.concat(error);
-      }, []);
-
+    filter: setUrlReplacedAction,
+    mapper: (state): ExploreItemState => {
       return {
         ...state,
-        queryErrors,
+        urlReplaced: true,
       };
     },
   })
+  .addMapper({
+    filter: changeRangeAction,
+    mapper: (state, action): ExploreItemState => {
+      const { range, absoluteRange } = action.payload;
+      return {
+        ...state,
+        range,
+        absoluteRange,
+      };
+    },
+  })
+  .addMapper({
+    filter: changeLoadingStateAction,
+    mapper: (state, action): ExploreItemState => {
+      const { loadingState } = action.payload;
+      return {
+        ...state,
+        queryResponse: {
+          ...state.queryResponse,
+          state: loadingState,
+        },
+        loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
+      };
+    },
+  })
+  .addMapper({
+    filter: setPausedStateAction,
+    mapper: (state, action): ExploreItemState => {
+      const { isPaused } = action.payload;
+      return {
+        ...state,
+        isPaused: isPaused,
+      };
+    },
+  })
+  .addMapper({
+    //queryStreamUpdatedAction
+    filter: queryEndedAction,
+    mapper: (state, action): ExploreItemState => {
+      return processQueryResponse(state, action);
+    },
+  })
+  .addMapper({
+    filter: queryStreamUpdatedAction,
+    mapper: (state, action): ExploreItemState => {
+      return processQueryResponse(state, action);
+    },
+  })
   .create();
+
+export const processQueryResponse = (
+  state: ExploreItemState,
+  action: ActionOf<QueryEndedPayload>
+): ExploreItemState => {
+  const { response } = action.payload;
+  const { request, state: loadingState, series, legacy, error } = response;
+  const replacePreviousResults = action.type === queryEndedAction.type;
+
+  if (error) {
+    // For Angular editors
+    state.eventBridge.emit('data-error', error);
+
+    console.error(error); // To help finding problems with query syntax
+
+    if (!instanceOfDataQueryError(error)) {
+      response.error = toDataQueryError(error);
+    }
+
+    return {
+      ...state,
+      loading: false,
+      queryResponse: response,
+      graphResult: null,
+      tableResult: null,
+      logsResult: null,
+      showingStartPage: false,
+      update: makeInitialUpdateState(),
+    };
+  }
+
+  const latency = request.endTime - request.startTime;
+  const processor = new ResultProcessor(state, replacePreviousResults, series);
+
+  // For Angular editors
+  state.eventBridge.emit('data-received', legacy);
+
+  return {
+    ...state,
+    latency,
+    queryResponse: response,
+    graphResult: processor.getGraphResult(),
+    tableResult: processor.getTableResult(),
+    logsResult: processor.getLogsResult(),
+    loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
+    showingStartPage: false,
+    update: makeInitialUpdateState(),
+  };
+};
 
 export const updateChildRefreshState = (
   state: Readonly<ExploreItemState>,
@@ -589,13 +646,14 @@ export const updateChildRefreshState = (
     return {
       ...state,
       urlState,
-      update: { datasource: false, queries: false, range: false, ui: false },
+      update: { datasource: false, queries: false, range: false, mode: false, ui: false },
     };
   }
 
   const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;
   const queries = _.isEqual(urlState ? urlState.queries : [], state.urlState.queries) === false;
   const range = _.isEqual(urlState ? urlState.range : DEFAULT_RANGE, state.urlState.range) === false;
+  const mode = _.isEqual(urlState ? urlState.mode : ExploreMode.Metrics, state.urlState.mode) === false;
   const ui = _.isEqual(urlState ? urlState.ui : DEFAULT_UI_STATE, state.urlState.ui) === false;
 
   return {
@@ -606,6 +664,7 @@ export const updateChildRefreshState = (
       datasource,
       queries,
       range,
+      mode,
       ui,
     },
   };
@@ -655,11 +714,25 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
         [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
       };
     }
+
+    case resetExploreAction.type: {
+      const leftState = state[ExploreId.left];
+      const rightState = state[ExploreId.right];
+      stopQueryState(leftState.queryState, 'Navigated away from Explore');
+      stopQueryState(rightState.queryState, 'Navigated away from Explore');
+
+      return {
+        ...state,
+        [ExploreId.left]: updateChildRefreshState(leftState, action.payload, ExploreId.left),
+        [ExploreId.right]: updateChildRefreshState(rightState, action.payload, ExploreId.right),
+      };
+    }
   }
 
   if (action.payload) {
     const { exploreId } = action.payload as any;
     if (exploreId !== undefined) {
+      // @ts-ignore
       const exploreItemState = state[exploreId];
       return { ...state, [exploreId]: itemReducer(exploreItemState, action) };
     }

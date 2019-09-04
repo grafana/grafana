@@ -1,34 +1,44 @@
 // Libraries
 import React, { PureComponent } from 'react';
 
-// Components
 import {
   ThresholdsEditor,
   ValueMappingsEditor,
   PanelOptionsGrid,
   FieldDisplayEditor,
   FieldDisplayOptions,
-  Field,
   FieldPropertiesEditor,
   PanelOptionsGroup,
+  FormLabel,
+  PanelEditorProps,
+  Select,
+  DataLinksEditor,
 } from '@grafana/ui';
+import { FieldConfig, DataLink } from '@grafana/data';
 
-// Types
-import { FormLabel, PanelEditorProps, Threshold, Select, ValueMapping } from '@grafana/ui';
+import { Threshold, ValueMapping } from '@grafana/data';
 import { BarGaugeOptions, orientationOptions, displayModes } from './types';
+import {
+  getDataLinksVariableSuggestions,
+  getCalculationValueDataLinksVariableSuggestions,
+} from 'app/features/panel/panellinks/link_srv';
 
 export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGaugeOptions>> {
-  onThresholdsChanged = (thresholds: Threshold[]) =>
-    this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
+  onThresholdsChanged = (thresholds: Threshold[]) => {
+    const current = this.props.options.fieldOptions.defaults;
+    this.onDefaultsChange({
+      ...current,
       thresholds,
     });
+  };
 
-  onValueMappingsChanged = (mappings: ValueMapping[]) =>
-    this.onDisplayOptionsChanged({
-      ...this.props.options.fieldOptions,
+  onValueMappingsChanged = (mappings: ValueMapping[]) => {
+    const current = this.props.options.fieldOptions.defaults;
+    this.onDefaultsChange({
+      ...current,
       mappings,
     });
+  };
 
   onDisplayOptionsChanged = (fieldOptions: FieldDisplayOptions) =>
     this.props.onOptionsChange({
@@ -36,20 +46,30 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
       fieldOptions,
     });
 
-  onDefaultsChange = (field: Partial<Field>) => {
+  onDefaultsChange = (field: FieldConfig) => {
     this.onDisplayOptionsChanged({
       ...this.props.options.fieldOptions,
       defaults: field,
     });
   };
 
-  onOrientationChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
-  onDisplayModeChange = ({ value }) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
+  onOrientationChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, orientation: value });
+  onDisplayModeChange = ({ value }: any) => this.props.onOptionsChange({ ...this.props.options, displayMode: value });
 
+  onDataLinksChanged = (links: DataLink[]) => {
+    this.onDefaultsChange({
+      ...this.props.options.fieldOptions.defaults,
+      links,
+    });
+  };
   render() {
     const { options } = this.props;
     const { fieldOptions } = options;
+    const { defaults } = fieldOptions;
 
+    const suggestions = fieldOptions.values
+      ? getDataLinksVariableSuggestions()
+      : getCalculationValueDataLinksVariableSuggestions();
     const labelWidth = 6;
 
     return (
@@ -79,13 +99,22 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
             </div>
           </PanelOptionsGroup>
           <PanelOptionsGroup title="Field">
-            <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={fieldOptions.defaults} />
+            <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
           </PanelOptionsGroup>
 
-          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={fieldOptions.thresholds} />
+          <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
 
-        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={fieldOptions.mappings} />
+        <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+
+        <PanelOptionsGroup title="Data links">
+          <DataLinksEditor
+            value={defaults.links}
+            onChange={this.onDataLinksChanged}
+            suggestions={suggestions}
+            maxLinks={10}
+          />
+        </PanelOptionsGroup>
       </>
     );
   }

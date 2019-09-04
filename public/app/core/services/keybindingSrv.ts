@@ -39,23 +39,15 @@ export class KeybindingSrv {
   }
 
   setupGlobal() {
-    this.bind(['?', 'h'], this.showHelpModal);
-    this.bind('g h', this.goToHome);
-    this.bind('g a', this.openAlerting);
-    this.bind('g p', this.goToProfile);
-    this.bind('s s', this.openSearchStarred);
-    this.bind('s o', this.openSearch);
-    this.bind('s t', this.openSearchTags);
-    this.bind('f', this.openSearch);
-    this.bindGlobal('esc', this.exit);
-  }
-
-  openSearchStarred() {
-    appEvents.emit('show-dash-search', { starred: true });
-  }
-
-  openSearchTags() {
-    appEvents.emit('show-dash-search', { tagsMode: true });
+    if (!(this.$location.path() === '/login')) {
+      this.bind(['?', 'h'], this.showHelpModal);
+      this.bind('g h', this.goToHome);
+      this.bind('g a', this.openAlerting);
+      this.bind('g p', this.goToProfile);
+      this.bind('s o', this.openSearch);
+      this.bind('f', this.openSearch);
+      this.bindGlobal('esc', this.exit);
+    }
   }
 
   openSearch() {
@@ -79,7 +71,7 @@ export class KeybindingSrv {
   }
 
   exit() {
-    const popups = $('.popover.in');
+    const popups = $('.popover.in, .slate-typeahead');
     if (popups.length > 0) {
       return;
     }
@@ -170,11 +162,11 @@ export class KeybindingSrv {
     });
 
     this.bind('t left', () => {
-      scope.appEvent('shift-time-backward');
+      scope.appEvent('shift-time', -1);
     });
 
     this.bind('t right', () => {
-      scope.appEvent('shift-time-forward');
+      scope.appEvent('shift-time', 1);
     });
 
     // edit panel
@@ -207,7 +199,7 @@ export class KeybindingSrv {
         if (dashboard.meta.focusPanelId) {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
           const datasource = await this.datasourceSrv.get(panel.datasource);
-          const url = await getExploreUrl(panel, panel.targets, datasource, this.datasourceSrv, this.timeSrv);
+          const url = await getExploreUrl(panel.targets, datasource, this.datasourceSrv, this.timeSrv);
           if (url) {
             this.$timeout(() => this.$location.url(url));
           }

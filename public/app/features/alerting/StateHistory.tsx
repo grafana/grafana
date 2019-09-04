@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import alertDef from './state/alertDef';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import appEvents from '../../core/app_events';
 

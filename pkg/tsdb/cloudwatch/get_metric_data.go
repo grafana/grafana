@@ -37,7 +37,7 @@ func (e *CloudWatchExecutor) executeGetMetricDataQuery(ctx context.Context, regi
 		if err != nil {
 			return queryResponses, err
 		}
-		metrics.M_Aws_CloudWatch_GetMetricData.Add(float64(len(params.MetricDataQueries)))
+		metrics.MAwsCloudWatchGetMetricData.Add(float64(len(params.MetricDataQueries)))
 
 		for _, r := range resp.MetricDataResults {
 			if _, ok := mdr[*r.Id]; !ok {

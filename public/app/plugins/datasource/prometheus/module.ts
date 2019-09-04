@@ -1,5 +1,5 @@
 import { PrometheusDatasource } from './datasource';
-import { PrometheusQueryCtrl } from './query_ctrl';
+import { PromQueryEditor } from './components/PromQueryEditor';
 import { PrometheusConfigCtrl } from './config_ctrl';
 
 import PrometheusStartPage from './components/PromStart';
@@ -11,7 +11,7 @@ class PrometheusAnnotationsQueryCtrl {
 
 export {
   PrometheusDatasource as Datasource,
-  PrometheusQueryCtrl as QueryCtrl,
+  PromQueryEditor as QueryEditor,
   PrometheusConfigCtrl as ConfigCtrl,
   PrometheusAnnotationsQueryCtrl as AnnotationsQueryCtrl,
   PromQueryField as ExploreQueryField,

@@ -45,7 +45,7 @@ func TestTeamsNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(teamsNotifier.Name, ShouldEqual, "ops")
 				So(teamsNotifier.Type, ShouldEqual, "teams")
-				So(teamsNotifier.Url, ShouldEqual, "http://google.com")
+				So(teamsNotifier.URL, ShouldEqual, "http://google.com")
 			})
 
 			Convey("from settings with Recipient and Mention", func() {
@@ -67,9 +67,8 @@ func TestTeamsNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(teamsNotifier.Name, ShouldEqual, "ops")
 				So(teamsNotifier.Type, ShouldEqual, "teams")
-				So(teamsNotifier.Url, ShouldEqual, "http://google.com")
+				So(teamsNotifier.URL, ShouldEqual, "http://google.com")
 			})
-
 		})
 	})
 }

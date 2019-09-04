@@ -1,6 +1,5 @@
 import { ComponentClass, ComponentType } from 'react';
-import { LoadingState, SeriesData } from './data';
-import { TimeRange } from './time';
+import { LoadingState, DataFrame, TimeRange, TimeZone } from '@grafana/data';
 import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 
@@ -14,7 +13,7 @@ export interface PanelPluginMeta extends PluginMeta {
 
 export interface PanelData {
   state: LoadingState;
-  series: SeriesData[];
+  series: DataFrame[];
   request?: DataQueryRequest;
   error?: DataQueryError;
 
@@ -25,12 +24,12 @@ export interface PanelData {
 export interface PanelProps<T = any> {
   id: number; // ID within the current dashboard
   data: PanelData;
-  // TODO: annotation?: PanelData;
-
   timeRange: TimeRange;
+  timeZone: TimeZone;
   options: T;
   onOptionsChange: (options: T) => void;
   renderCounter: number;
+  transparent: boolean;
   width: number;
   height: number;
   replaceVariables: InterpolateFunction;
@@ -123,27 +122,14 @@ export interface PanelMenuItem {
   subMenu?: PanelMenuItem[];
 }
 
-export enum MappingType {
-  ValueToText = 1,
-  RangeToText = 2,
-}
-
-interface BaseMap {
-  id: number;
-  operator: string;
+export interface AngularPanelMenuItem {
+  click: Function;
+  icon: string;
+  href: string;
+  divider: boolean;
   text: string;
-  type: MappingType;
-}
-
-export type ValueMapping = ValueMap | RangeMap;
-
-export interface ValueMap extends BaseMap {
-  value: string;
-}
-
-export interface RangeMap extends BaseMap {
-  from: string;
-  to: string;
+  shortcut: string;
+  submenu: any[];
 }
 
 export enum VizOrientation {

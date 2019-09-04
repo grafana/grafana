@@ -1,6 +1,6 @@
 import { StoreState } from 'app/types';
 import { ThunkAction } from 'redux-thunk';
-import { getBackendSrv } from '../../../core/services/backend_srv';
+import { getBackendSrv } from '@grafana/runtime';
 import { LayoutMode } from '../../../core/components/LayoutSelector/LayoutSelector';
 import { PluginDashboard } from '../../../types/plugins';
 import { PluginMeta } from '@grafana/ui';

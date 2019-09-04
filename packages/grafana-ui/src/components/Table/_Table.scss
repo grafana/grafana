@@ -70,6 +70,7 @@
 
   text-overflow: ellipsis;
   white-space: nowrap;
+  overflow: hidden;
 
   border-right: 2px solid $body-bg;
   border-bottom: 2px solid $body-bg;

@@ -1,6 +1,6 @@
-import * as rangeUtil from '@grafana/ui/src/utils/rangeutil';
+import { rangeUtil } from '@grafana/data';
 import _ from 'lodash';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 describe('rangeUtil', () => {
   describe('Can get range grouped list of ranges', () => {
@@ -72,7 +72,7 @@ describe('rangeUtil', () => {
         from: dateTime([2014, 10, 10, 2, 3, 4]),
         to: 'now',
       });
-      expect(text).toBe('Nov 10, 2014 02:03:04 to a few seconds ago');
+      expect(text).toBe('2014-11-10 02:03:04 to a few seconds ago');
     });
 
     it('Date range with absolute to relative', () => {
@@ -80,7 +80,7 @@ describe('rangeUtil', () => {
         from: dateTime([2014, 10, 10, 2, 3, 4]),
         to: 'now-1d',
       });
-      expect(text).toBe('Nov 10, 2014 02:03:04 to a day ago');
+      expect(text).toBe('2014-11-10 02:03:04 to a day ago');
     });
 
     it('Date range with relative to absolute', () => {
@@ -88,7 +88,7 @@ describe('rangeUtil', () => {
         from: 'now-7d',
         to: dateTime([2014, 10, 10, 2, 3, 4]),
       });
-      expect(text).toBe('7 days ago to Nov 10, 2014 02:03:04');
+      expect(text).toBe('7 days ago to 2014-11-10 02:03:04');
     });
 
     it('Date range with non matching default ranges', () => {

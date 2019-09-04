@@ -1,16 +1,16 @@
 import defaults from 'lodash/defaults';
+import { DataQueryRequest, DataQueryResponse, DataQueryError, DataStreamObserver, DataStreamState } from '@grafana/ui';
+
 import {
-  DataQueryRequest,
   FieldType,
-  SeriesData,
-  DataQueryResponse,
-  DataQueryError,
-  DataStreamObserver,
-  DataStreamState,
+  Field,
   LoadingState,
   LogLevel,
   CSVReader,
-} from '@grafana/ui';
+  MutableDataFrame,
+  CircularVector,
+  DataFrame,
+} from '@grafana/data';
 import { TestDataQuery, StreamingQuery } from './types';
 
 export const defaultQuery: StreamingQuery = {
@@ -18,6 +18,7 @@ export const defaultQuery: StreamingQuery = {
   speed: 250, // ms
   spread: 3.5,
   noise: 2.2,
+  bands: 1,
 };
 
 type StreamWorkers = {
@@ -42,7 +43,7 @@ export class StreamHandler {
       // set stream option defaults
       query.stream = defaults(query.stream, defaultQuery);
       // create stream key
-      const key = req.dashboardId + '/' + req.panelId + '/' + query.refId;
+      const key = req.dashboardId + '/' + req.panelId + '/' + query.refId + '@' + query.stream.bands;
 
       if (this.workers[key]) {
         const existing = this.workers[key];
@@ -82,6 +83,10 @@ export class StreamWorker {
   last = -1;
   timeoutId = 0;
 
+  // The values within
+  values: CircularVector[] = [];
+  data: DataFrame = { fields: [], length: 0 };
+
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     this.stream = {
       key,
@@ -111,26 +116,25 @@ export class StreamWorker {
     }
     this.query = query.stream;
     this.stream.request = request; // OK?
-    console.log('Reuse Test Stream: ', this);
     return true;
   }
 
   appendRows(append: any[][]) {
     // Trim the maximum row count
-    const { query, stream } = this;
-    const maxRows = query.buffer ? query.buffer : stream.request.maxDataPoints;
+    const { stream, values, data } = this;
 
-    // Edit the first series
-    const series = stream.series[0];
-    let rows = series.rows.concat(append);
-    const extra = maxRows - rows.length;
-    if (extra < 0) {
-      rows = rows.slice(extra * -1);
+    // Append all rows
+    for (let i = 0; i < append.length; i++) {
+      const row = append[i];
+      for (let j = 0; j < values.length; j++) {
+        values[j].add(row[j]); // Circular buffer will kick out old entries
+      }
     }
-    series.rows = rows;
-
-    // Tell the event about only the rows that changed (it may want to process them)
-    stream.delta = [{ ...series, rows: append }];
+    // Clear any cached values
+    for (let j = 0; j < data.fields.length; j++) {
+      data.fields[j].calcs = undefined;
+    }
+    stream.data = [data];
 
     // Broadcast the changes
     if (this.observer) {
@@ -146,49 +150,70 @@ export class StreamWorker {
 export class SignalWorker extends StreamWorker {
   value: number;
 
+  bands = 1;
+
   constructor(key: string, query: TestDataQuery, request: DataQueryRequest, observer: DataStreamObserver) {
     super(key, query, request, observer);
     setTimeout(() => {
-      this.stream.series = [this.initBuffer(query.refId)];
+      this.initBuffer(query.refId);
       this.looper();
     }, 10);
+
+    this.bands = query.stream.bands ? query.stream.bands : 0;
   }
 
   nextRow = (time: number) => {
     const { spread, noise } = this.query;
     this.value += (Math.random() - 0.5) * spread;
-    return [
-      time,
-      this.value, // Value
-      this.value - Math.random() * noise, // MIN
-      this.value + Math.random() * noise, // MAX
-    ];
+    const row = [time, this.value];
+    for (let i = 0; i < this.bands; i++) {
+      const v = row[row.length - 1];
+      row.push(v - Math.random() * noise); // MIN
+      row.push(v + Math.random() * noise); // MAX
+    }
+    return row;
   };
 
-  initBuffer(refId: string): SeriesData {
+  initBuffer(refId: string) {
     const { speed, buffer } = this.query;
-    const data = {
+    const request = this.stream.request;
+    const maxRows = buffer ? buffer : request.maxDataPoints;
+    const times = new CircularVector({ capacity: maxRows });
+    const vals = new CircularVector({ capacity: maxRows });
+    this.values = [times, vals];
+
+    const data = new MutableDataFrame({
       fields: [
-        { name: 'Time', type: FieldType.time },
-        { name: 'Value', type: FieldType.number },
-        { name: 'Min', type: FieldType.number },
-        { name: 'Max', type: FieldType.number },
+        { name: 'Time', type: FieldType.time, values: times }, // The time field
+        { name: 'Value', type: FieldType.number, values: vals },
       ],
-      rows: [],
       refId,
       name: 'Signal ' + refId,
-    } as SeriesData;
+    });
 
-    const request = this.stream.request;
+    for (let i = 0; i < this.bands; i++) {
+      const suffix = this.bands > 1 ? ` ${i + 1}` : '';
+      const min = new CircularVector({ capacity: maxRows });
+      const max = new CircularVector({ capacity: maxRows });
+      this.values.push(min);
+      this.values.push(max);
+
+      data.addField({ name: 'Min' + suffix, type: FieldType.number, values: min });
+      data.addField({ name: 'Max' + suffix, type: FieldType.number, values: max });
+    }
+
+    console.log('START', data);
 
     this.value = Math.random() * 100;
-    const maxRows = buffer ? buffer : request.maxDataPoints;
     let time = Date.now() - maxRows * speed;
     for (let i = 0; i < maxRows; i++) {
-      data.rows.push(this.nextRow(time));
+      const row = this.nextRow(time);
+      for (let j = 0; j < this.values.length; j++) {
+        this.values[j].add(row[j]);
+      }
       time += speed;
     }
-    return data;
+    this.data = data;
   }
 
   looper = () => {
@@ -251,9 +276,10 @@ export class FetchWorker extends StreamWorker {
     return this.reader.read().then(this.processChunk);
   };
 
-  onHeader = (series: SeriesData) => {
-    series.refId = this.refId;
-    this.stream.series = [series];
+  onHeader = (fields: Field[]) => {
+    console.warn('TODO!!!', fields);
+    // series.refId = this.refId;
+    // this.stream.data = [series];
   };
 
   onRow = (row: any[]) => {
@@ -269,7 +295,7 @@ export class LogsWorker extends StreamWorker {
     super(key, query, request, observer);
 
     window.setTimeout(() => {
-      this.stream.series = [this.initBuffer(query.refId)];
+      this.initBuffer(query.refId);
       this.looper();
     }, 10);
   }
@@ -314,24 +340,34 @@ export class LogsWorker extends StreamWorker {
     return [time, '[' + this.getRandomLogLevel() + '] ' + this.getRandomLine()];
   };
 
-  initBuffer(refId: string): SeriesData {
+  initBuffer(refId: string) {
     const { speed, buffer } = this.query;
-    const data = {
-      fields: [{ name: 'Time', type: FieldType.time }, { name: 'Line', type: FieldType.string }],
-      rows: [],
-      refId,
-      name: 'Logs ' + refId,
-    } as SeriesData;
 
     const request = this.stream.request;
 
     const maxRows = buffer ? buffer : request.maxDataPoints;
+
+    const times = new CircularVector({ capacity: maxRows });
+    const lines = new CircularVector({ capacity: maxRows });
+
+    this.values = [times, lines];
+    this.data = new MutableDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: times },
+        { name: 'Line', type: FieldType.string, values: lines },
+      ],
+      refId,
+      name: 'Logs ' + refId,
+    });
+
+    // Fill up the buffer
     let time = Date.now() - maxRows * speed;
     for (let i = 0; i < maxRows; i++) {
-      data.rows.push(this.nextRow(time));
+      const row = this.nextRow(time);
+      times.add(row[0]);
+      lines.add(row[1]);
       time += speed;
     }
-    return data;
   }
 
   looper = () => {

@@ -182,7 +182,7 @@ func TestMetrics(t *testing.T) {
 			setting.BuildVersion = "5.0.0"
 			setting.AnonymousEnabled = true
 			setting.BasicAuthEnabled = true
-			setting.LdapEnabled = true
+			setting.LDAPEnabled = true
 			setting.AuthProxyEnabled = true
 			setting.Packaging = "deb"
 

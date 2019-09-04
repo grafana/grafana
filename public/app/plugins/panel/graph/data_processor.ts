@@ -1,15 +1,16 @@
 import _ from 'lodash';
-import { TimeRange, colors, getColorFromHexRgbOrName, FieldCache, FieldType, Field, SeriesData } from '@grafana/ui';
+import { colors, getColorFromHexRgbOrName } from '@grafana/ui';
+import { TimeRange, FieldType, Field, DataFrame, getTimeField } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 
 type Options = {
-  dataList: SeriesData[];
+  dataList: DataFrame[];
   range?: TimeRange;
 };
 
 export class DataProcessor {
-  constructor(private panel) {}
+  constructor(private panel: any) {}
 
   getSeriesList(options: Options): TimeSeries[] {
     const list: TimeSeries[] = [];
@@ -20,35 +21,26 @@ export class DataProcessor {
     }
 
     for (const series of dataList) {
-      const { fields } = series;
-      const cache = new FieldCache(fields);
-      const time = cache.getFirstFieldOfType(FieldType.time);
-
-      if (!time) {
+      const { timeField } = getTimeField(series);
+      if (!timeField) {
         continue;
       }
 
       const seriesName = series.name ? series.name : series.refId;
-
-      for (let i = 0; i < fields.length; i++) {
-        if (fields[i].type !== FieldType.number) {
+      for (const field of series.fields) {
+        if (field.type !== FieldType.number) {
           continue;
         }
 
-        const field = fields[i];
-        let name = field.title;
-
-        if (!field.title) {
-          name = field.name;
-        }
+        let name = field.config && field.config.title ? field.config.title : field.name;
 
         if (seriesName && dataList.length > 0 && name !== seriesName) {
           name = seriesName + ' ' + name;
         }
 
         const datapoints = [];
-        for (const row of series.rows) {
-          datapoints.push([row[i], row[time.index]]);
+        for (let r = 0; r < series.length; r++) {
+          datapoints.push([field.values.get(r), timeField.values.get(r)]);
         }
 
         list.push(this.toTimeSeries(field, name, datapoints, list.length, range));
@@ -75,7 +67,7 @@ export class DataProcessor {
       datapoints: datapoints || [],
       alias: alias,
       color: getColorFromHexRgbOrName(color, config.theme.type),
-      unit: field.unit,
+      unit: field.config ? field.config.unit : undefined,
     });
 
     if (datapoints && datapoints.length > 0 && range) {
@@ -140,7 +132,7 @@ export class DataProcessor {
     }
   }
 
-  getXAxisValueOptions(options) {
+  getXAxisValueOptions(options: any) {
     switch (this.panel.xaxis.mode) {
       case 'series': {
         return [

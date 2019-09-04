@@ -13,8 +13,14 @@ var GetConfig = ldap.GetConfig
 // IsEnabled checks if LDAP is enabled
 var IsEnabled = ldap.IsEnabled
 
+// newLDAP return instance of the single LDAP server
+var newLDAP = ldap.New
+
 // ErrInvalidCredentials is returned if username and password do not match
 var ErrInvalidCredentials = ldap.ErrInvalidCredentials
+
+// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
+var ErrCouldNotFindUser = ldap.ErrCouldNotFindUser
 
 // ErrNoLDAPServers is returned when there is no LDAP servers specified
 var ErrNoLDAPServers = errors.New("No LDAP servers are configured")
@@ -33,11 +39,8 @@ type IMultiLDAP interface {
 	)
 
 	User(login string) (
-		*models.ExternalUserInfo, error,
+		*models.ExternalUserInfo, ldap.ServerConfig, error,
 	)
-
-	Add(dn string, values map[string][]string) error
-	Remove(dn string) error
 }
 
 // MultiLDAP is basic struct of LDAP authorization
@@ -52,65 +55,17 @@ func New(configs []*ldap.ServerConfig) IMultiLDAP {
 	}
 }
 
-// Add adds user to the *first* defined LDAP
-func (multiples *MultiLDAP) Add(
-	dn string,
-	values map[string][]string,
-) error {
-	if len(multiples.configs) == 0 {
-		return ErrNoLDAPServers
-	}
-
-	config := multiples.configs[0]
-	ldap := ldap.New(config)
-
-	if err := ldap.Dial(); err != nil {
-		return err
-	}
-
-	defer ldap.Close()
-
-	err := ldap.Add(dn, values)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Remove removes user from the *first* defined LDAP
-func (multiples *MultiLDAP) Remove(dn string) error {
-	if len(multiples.configs) == 0 {
-		return ErrNoLDAPServers
-	}
-
-	config := multiples.configs[0]
-	ldap := ldap.New(config)
-
-	if err := ldap.Dial(); err != nil {
-		return err
-	}
-
-	defer ldap.Close()
-
-	err := ldap.Remove(dn)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Login tries to log in the user in multiples LDAP
 func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
+
 	if len(multiples.configs) == 0 {
 		return nil, ErrNoLDAPServers
 	}
 
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
 			return nil, err
@@ -119,58 +74,60 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 		defer server.Close()
 
 		user, err := server.Login(query)
-
 		if user != nil {
 			return user, nil
 		}
 
 		// Continue if we couldn't find the user
-		if err == ErrInvalidCredentials {
+		if err == ErrCouldNotFindUser {
 			continue
 		}
 
 		if err != nil {
 			return nil, err
 		}
-
-		return user, nil
 	}
 
 	// Return invalid credentials if we couldn't find the user anywhere
 	return nil, ErrInvalidCredentials
 }
 
-// User gets a user by login
+// User attempts to find an user by login/username by searching into all of the configured LDAP servers. Then, if the user is found it returns the user alongisde the server it was found.
 func (multiples *MultiLDAP) User(login string) (
 	*models.ExternalUserInfo,
+	ldap.ServerConfig,
 	error,
 ) {
 
 	if len(multiples.configs) == 0 {
-		return nil, ErrNoLDAPServers
+		return nil, ldap.ServerConfig{}, ErrNoLDAPServers
 	}
 
 	search := []string{login}
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
-			return nil, err
+			return nil, *config, err
 		}
 
 		defer server.Close()
 
+		if err := server.Bind(); err != nil {
+			return nil, *config, err
+		}
+
 		users, err := server.Users(search)
 		if err != nil {
-			return nil, err
+			return nil, *config, err
 		}
 
 		if len(users) != 0 {
-			return users[0], nil
+			return users[0], *config, nil
 		}
 	}
 
-	return nil, ErrDidNotFindUser
+	return nil, ldap.ServerConfig{}, ErrDidNotFindUser
 }
 
 // Users gets users from multiple LDAP servers
@@ -185,13 +142,17 @@ func (multiples *MultiLDAP) Users(logins []string) (
 	}
 
 	for _, config := range multiples.configs {
-		server := ldap.New(config)
+		server := newLDAP(config)
 
 		if err := server.Dial(); err != nil {
 			return nil, err
 		}
 
 		defer server.Close()
+
+		if err := server.Bind(); err != nil {
+			return nil, err
+		}
 
 		users, err := server.Users(logins)
 		if err != nil {

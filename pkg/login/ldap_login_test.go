@@ -4,20 +4,19 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 var errTest = errors.New("Test error")
 
-func TestLdapLogin(t *testing.T) {
+func TestLDAPLogin(t *testing.T) {
 	Convey("Login using ldap", t, func() {
 		Convey("Given ldap enabled and no server configured", func() {
-			setting.LdapEnabled = true
+			setting.LDAPEnabled = true
 
 			LDAPLoginScenario("When login", func(sc *LDAPLoginScenarioContext) {
 				sc.withLoginResult(false)
@@ -29,7 +28,7 @@ func TestLdapLogin(t *testing.T) {
 					return config, nil
 				}
 
-				enabled, err := loginUsingLdap(sc.loginUserQuery)
+				enabled, err := loginUsingLDAP(sc.loginUserQuery)
 
 				Convey("it should return true", func() {
 					So(enabled, ShouldBeTrue)
@@ -46,11 +45,11 @@ func TestLdapLogin(t *testing.T) {
 		})
 
 		Convey("Given ldap disabled", func() {
-			setting.LdapEnabled = false
+			setting.LDAPEnabled = false
 
 			LDAPLoginScenario("When login", func(sc *LDAPLoginScenarioContext) {
 				sc.withLoginResult(false)
-				enabled, err := loginUsingLdap(&models.LoginUserQuery{
+				enabled, err := loginUsingLDAP(&models.LoginUserQuery{
 					Username: "user",
 					Password: "pwd",
 				})
@@ -98,9 +97,10 @@ func (auth *mockAuth) Users(logins []string) (
 
 func (auth *mockAuth) User(login string) (
 	*models.ExternalUserInfo,
+	ldap.ServerConfig,
 	error,
 ) {
-	return nil, nil
+	return nil, ldap.ServerConfig{}, nil
 }
 
 func (auth *mockAuth) Add(dn string, values map[string][]string) error {

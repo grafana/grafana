@@ -1,7 +1,8 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { DataSourceDashboards, Props } from './DataSourceDashboards';
-import { NavModel, DataSourceSettings } from '@grafana/ui';
+import { DataSourceSettings } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 import { PluginDashboard } from 'app/types';
 
 const setup = (propOverrides?: object) => {

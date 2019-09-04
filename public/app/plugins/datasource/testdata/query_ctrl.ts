@@ -3,7 +3,22 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { defaultQuery } from './StreamHandler';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
+
+export const defaultPulse: any = {
+  timeStep: 60,
+  onCount: 3,
+  onValue: 2,
+  offCount: 3,
+  offValue: 1,
+};
+
+export const defaultCSVWave: any = {
+  timeStep: 60,
+  valuesCSV: '0,0,2,2,1,1',
+};
+
+const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
 
 export class TestDataQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -14,6 +29,8 @@ export class TestDataQueryCtrl extends QueryCtrl {
   newPointTime: any;
   selectedPoint: any;
 
+  showLabels = false;
+
   /** @ngInject */
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -22,6 +39,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.scenarioList = [];
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
+    this.showLabels = showLabelsFor.includes(this.target.scenarioId);
   }
 
   getPoints() {
@@ -33,7 +51,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     });
   }
 
-  pointSelected(option) {
+  pointSelected(option: any) {
     this.selectedPoint = option;
   }
 
@@ -53,7 +71,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   $onInit() {
     return getBackendSrv()
       .get('/api/tsdb/testdata/scenarios')
-      .then(res => {
+      .then((res: any) => {
         this.scenarioList = res;
         this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
       });
@@ -62,6 +80,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   scenarioChanged() {
     this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
     this.target.stringInput = this.scenario.stringInput;
+    this.showLabels = showLabelsFor.includes(this.target.scenarioId);
 
     if (this.target.scenarioId === 'manual_entry') {
       this.target.points = this.target.points || [];
@@ -73,6 +92,18 @@ export class TestDataQueryCtrl extends QueryCtrl {
       this.target.stream = _.defaults(this.target.stream || {}, defaultQuery);
     } else {
       delete this.target.stream;
+    }
+
+    if (this.target.scenarioId === 'predictable_pulse') {
+      this.target.pulseWave = _.defaults(this.target.pulseWave || {}, defaultPulse);
+    } else {
+      delete this.target.pulseWave;
+    }
+
+    if (this.target.scenarioId === 'predictable_csv_wave') {
+      this.target.csvWave = _.defaults(this.target.csvWave || {}, defaultCSVWave);
+    } else {
+      delete this.target.csvWave;
     }
 
     this.refresh();

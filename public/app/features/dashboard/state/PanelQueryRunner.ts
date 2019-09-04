@@ -8,17 +8,12 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
 import { PanelQueryState } from './PanelQueryState';
+import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 
 // Types
-import {
-  PanelData,
-  DataQuery,
-  TimeRange,
-  ScopedVars,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceJsonData,
-} from '@grafana/ui';
+import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
+
+import { TimeRange } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -40,7 +35,7 @@ export interface QueryRunnerOptions<
 }
 
 export enum PanelQueryRunnerFormat {
-  series = 'series',
+  frames = 'frames',
   legacy = 'legacy',
   both = 'both',
 }
@@ -55,26 +50,30 @@ export class PanelQueryRunner {
 
   private state = new PanelQueryState();
 
-  constructor() {
+  // Listen to another panel for changes
+  private sharedQueryRunner: SharedQueryRunner;
+
+  constructor(private panelId: number) {
     this.state.onStreamingDataUpdated = this.onStreamingDataUpdated;
+    this.subject = new Subject();
+  }
+
+  getPanelId() {
+    return this.panelId;
   }
 
   /**
    * Listen for updates to the PanelData.  If a query has already run for this panel,
    * the results will be immediatly passed to the observer
    */
-  subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.series): Unsubscribable {
-    if (!this.subject) {
-      this.subject = new Subject(); // Delay creating a subject until someone is listening
-    }
-
+  subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.frames): Unsubscribable {
     if (format === PanelQueryRunnerFormat.legacy) {
       this.state.sendLegacy = true;
     } else if (format === PanelQueryRunnerFormat.both) {
-      this.state.sendSeries = true;
+      this.state.sendFrames = true;
       this.state.sendLegacy = true;
     } else {
-      this.state.sendSeries = true;
+      this.state.sendFrames = true;
     }
 
     // Send the last result
@@ -85,11 +84,25 @@ export class PanelQueryRunner {
     return this.subject.subscribe(observer);
   }
 
-  async run(options: QueryRunnerOptions): Promise<PanelData> {
-    if (!this.subject) {
-      this.subject = new Subject();
+  /**
+   * Subscribe one runner to another
+   */
+  chain(runner: PanelQueryRunner): Unsubscribable {
+    const { sendLegacy, sendFrames } = runner.state;
+    let format = sendFrames ? PanelQueryRunnerFormat.frames : PanelQueryRunnerFormat.legacy;
+
+    if (sendLegacy) {
+      format = PanelQueryRunnerFormat.both;
     }
 
+    return this.subscribe(runner.subject, format);
+  }
+
+  getCurrentData(): PanelData {
+    return this.state.validateStreamsAndGetPanelData();
+  }
+
+  async run(options: QueryRunnerOptions): Promise<PanelData> {
     const { state } = this;
 
     const {
@@ -108,8 +121,16 @@ export class PanelQueryRunner {
       delayStateNotification,
     } = options;
 
-    // filter out hidden queries & deep clone them
-    const clonedAndFilteredQueries = cloneDeep(queries.filter(q => !q.hide));
+    // Support shared queries
+    if (isSharedDashboardQuery(datasource)) {
+      if (!this.sharedQueryRunner) {
+        this.sharedQueryRunner = new SharedQueryRunner(this);
+      }
+      return this.sharedQueryRunner.process(options);
+    } else if (this.sharedQueryRunner) {
+      this.sharedQueryRunner.disconnect();
+      this.sharedQueryRunner = null;
+    }
 
     const request: DataQueryRequest = {
       requestId: getNextRequestId(),
@@ -120,7 +141,7 @@ export class PanelQueryRunner {
       timeInfo,
       interval: '',
       intervalMs: 0,
-      targets: clonedAndFilteredQueries,
+      targets: cloneDeep(queries),
       maxDataPoints: maxDataPoints || widthPixels,
       scopedVars: scopedVars || {},
       cacheTimeout,
@@ -134,6 +155,10 @@ export class PanelQueryRunner {
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
+
+      if (ds.meta && !ds.meta.hiddenQueries) {
+        request.targets = request.targets.filter(q => !q.hide);
+      }
 
       // Attach the datasource name to each query
       request.targets = request.targets.map(query => {

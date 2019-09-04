@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
-import ErrorBoundary from './ErrorBoundary';
+import { ErrorBoundary } from './ErrorBoundary';
 import Explore from './Explore';
 import { CustomScrollbar } from '@grafana/ui';
 import { resetExploreAction } from './state/actionTypes';
@@ -25,7 +25,7 @@ export class Wrapper extends Component<WrapperProps> {
 
     return (
       <div className="page-scrollbar-wrapper">
-        <CustomScrollbar autoHeightMin={'100%'} className="custom-scrollbar--page">
+        <CustomScrollbar autoHeightMin={'100%'} autoHeightMax={''} className="custom-scrollbar--page">
           <div className="explore-wrapper">
             <ErrorBoundary>
               <Explore exploreId={ExploreId.left} />

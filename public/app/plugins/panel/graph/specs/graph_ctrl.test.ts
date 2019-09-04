@@ -1,5 +1,5 @@
 import { GraphCtrl } from '../module';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 jest.mock('../graph', () => ({}));
 
@@ -33,7 +33,7 @@ describe('GraphCtrl', () => {
   const ctx = {} as any;
 
   beforeEach(() => {
-    ctx.ctrl = new GraphCtrl(scope, injector, {});
+    ctx.ctrl = new GraphCtrl(scope, injector as any, {} as any);
     ctx.ctrl.events = {
       emit: () => {},
     };
@@ -86,7 +86,7 @@ describe('GraphCtrl', () => {
 
   describe('datapointsCount given 2 series', () => {
     beforeEach(() => {
-      const data = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
+      const data: any = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
       ctx.ctrl.onDataReceived(data);
     });
 

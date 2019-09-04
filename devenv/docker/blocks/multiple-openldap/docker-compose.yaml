@@ -1,5 +1,7 @@
   admins-openldap:
-    build: docker/blocks/multiple-openldap/admins-ldap-server
+    build: 
+      context: docker/blocks/multiple-openldap
+      dockerfile: ./admins-ldap-server.Dockerfile
     environment:
       SLAPD_PASSWORD: grafana
       SLAPD_DOMAIN: grafana.org
@@ -8,7 +10,9 @@
       - "389:389"
 
   openldap:
-    build: docker/blocks/multiple-openldap/ldap-server
+    build: 
+      context: docker/blocks/multiple-openldap
+      dockerfile: ./ldap-server.Dockerfile
     environment:
       SLAPD_PASSWORD: grafana
       SLAPD_DOMAIN: grafana.org

@@ -10,6 +10,8 @@ import templateSrv from 'app/features/templating/template_srv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { ClickOutsideWrapper } from '@grafana/ui';
+import { DataLink } from '@grafana/data';
+import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export interface Props {
   panel: PanelModel;
@@ -18,7 +20,7 @@ export interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  links?: [];
+  links?: DataLink[];
   error?: string;
   isFullscreen: boolean;
 }
@@ -87,7 +89,7 @@ export class PanelHeader extends Component<Props, State> {
             title={panel.title}
             description={panel.description}
             scopedVars={panel.scopedVars}
-            links={panel.links}
+            links={getPanelLinksSupplier(panel)}
             error={error}
           />
           <div

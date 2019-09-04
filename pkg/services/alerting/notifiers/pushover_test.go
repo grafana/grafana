@@ -53,7 +53,7 @@ func TestPushoverNotifier(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(pushoverNotifier.Name, ShouldEqual, "Pushover")
 				So(pushoverNotifier.Type, ShouldEqual, "pushover")
-				So(pushoverNotifier.ApiToken, ShouldEqual, "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve")
+				So(pushoverNotifier.APIToken, ShouldEqual, "4SrUFQL4A5V5TQ1z5Pg9nxHXPXSTve")
 				So(pushoverNotifier.UserKey, ShouldEqual, "tzNZYf36y0ohWwXo4XoUrB61rz1A4o")
 				So(pushoverNotifier.Priority, ShouldEqual, 1)
 				So(pushoverNotifier.AlertingSound, ShouldEqual, "pushover")

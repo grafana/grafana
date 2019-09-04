@@ -2,7 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import { OrgDetailsPage, Props } from './OrgDetailsPage';
 import { Organization } from '../../types';
-import { NavModel } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {

@@ -26,6 +26,7 @@ func init() {
 
 }
 
+// NewTeamsNotifier is the constructor for Teams notifier.
 func NewTeamsNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
@@ -34,23 +35,26 @@ func NewTeamsNotifier(model *models.AlertNotification) (alerting.Notifier, error
 
 	return &TeamsNotifier{
 		NotifierBase: NewNotifierBase(model),
-		Url:          url,
+		URL:          url,
 		log:          log.New("alerting.notifier.teams"),
 	}, nil
 }
 
+// TeamsNotifier is responsible for sending
+// alert notifications to Microsoft teams.
 type TeamsNotifier struct {
 	NotifierBase
-	Url string
+	URL string
 	log log.Logger
 }
 
-func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Executing teams notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
+// Notify send an alert notification to Microsoft teams.
+func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
+	tn.log.Info("Executing teams notification", "ruleId", evalContext.Rule.ID, "notification", tn.Name)
 
-	ruleUrl, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
-		this.log.Error("Failed get rule link", "error", err)
+		tn.log.Error("Failed get rule link", "error", err)
 		return err
 	}
 
@@ -79,9 +83,9 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	images := make([]map[string]interface{}, 0)
-	if evalContext.ImagePublicUrl != "" {
+	if evalContext.ImagePublicURL != "" {
 		images = append(images, map[string]interface{}{
-			"image": evalContext.ImagePublicUrl,
+			"image": evalContext.ImagePublicURL,
 		})
 	}
 
@@ -108,7 +112,7 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"name":     "View Rule",
 				"targets": []map[string]interface{}{
 					{
-						"os": "default", "uri": ruleUrl,
+						"os": "default", "uri": ruleURL,
 					},
 				},
 			},
@@ -118,7 +122,7 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"name":     "View Graph",
 				"targets": []map[string]interface{}{
 					{
-						"os": "default", "uri": evalContext.ImagePublicUrl,
+						"os": "default", "uri": evalContext.ImagePublicURL,
 					},
 				},
 			},
@@ -126,10 +130,10 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	data, _ := json.Marshal(&body)
-	cmd := &models.SendWebhookSync{Url: this.Url, Body: string(data)}
+	cmd := &models.SendWebhookSync{Url: tn.URL, Body: string(data)}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		this.log.Error("Failed to send teams notification", "error", err, "webhook", this.Name)
+		tn.log.Error("Failed to send teams notification", "error", err, "webhook", tn.Name)
 		return err
 	}
 

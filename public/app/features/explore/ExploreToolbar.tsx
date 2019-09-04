@@ -1,16 +1,11 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
+import memoizeOne from 'memoize-one';
 
 import { ExploreId, ExploreMode } from 'app/types/explore';
-import {
-  DataSourceSelectItem,
-  RawTimeRange,
-  ClickOutsideWrapper,
-  TimeZone,
-  TimeRange,
-  SelectOptionItem,
-} from '@grafana/ui';
+import { DataSourceSelectItem, ToggleButtonGroup, ToggleButton } from '@grafana/ui';
+import { RawTimeRange, TimeZone, TimeRange, SelectableValue } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -22,10 +17,8 @@ import {
   changeRefreshInterval,
   changeMode,
 } from './state/actions';
-import TimePicker from './TimePicker';
 import { getTimeZone } from '../profile/state/selectors';
-import { RefreshPicker, SetInterval } from '@grafana/ui';
-import ToggleButtonGroup, { ToggleButton } from 'app/core/components/ToggleButtonGroup/ToggleButtonGroup';
+import { ExploreTimeControls } from './ExploreTimeControls';
 
 enum IconSide {
   left = 'left',
@@ -39,15 +32,20 @@ const createResponsiveButton = (options: {
   buttonClassName?: string;
   iconClassName?: string;
   iconSide?: IconSide;
+  disabled?: boolean;
 }) => {
   const defaultOptions = {
     iconSide: IconSide.left,
   };
   const props = { ...options, defaultOptions };
-  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide } = props;
+  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide, disabled } = props;
 
   return (
-    <button className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`} onClick={onClick}>
+    <button
+      className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`}
+      onClick={onClick}
+      disabled={disabled || false}
+    >
       {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
       <span className="btn-title">{!splitted ? title : ''}</span>
       {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
@@ -57,7 +55,6 @@ const createResponsiveButton = (options: {
 
 interface OwnProps {
   exploreId: ExploreId;
-  timepickerRef: React.RefObject<TimePicker>;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
 }
 
@@ -70,8 +67,10 @@ interface StateProps {
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
   refreshInterval: string;
-  supportedModeOptions: Array<SelectOptionItem<ExploreMode>>;
-  selectedModeOption: SelectOptionItem<ExploreMode>;
+  supportedModeOptions: Array<SelectableValue<ExploreMode>>;
+  selectedModeOption: SelectableValue<ExploreMode>;
+  hasLiveOption: boolean;
+  isLive: boolean;
 }
 
 interface DispatchProps {
@@ -91,7 +90,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     super(props);
   }
 
-  onChangeDatasource = async option => {
+  onChangeDatasource = async (option: { value: any }) => {
     this.props.changeDatasource(this.props.exploreId, option.value);
   };
 
@@ -101,10 +100,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
 
   onRunQuery = () => {
     return this.props.runQueries(this.props.exploreId);
-  };
-
-  onCloseTimePicker = () => {
-    this.props.timepickerRef.current.setState({ isOpen: false });
   };
 
   onChangeRefreshInterval = (item: string) => {
@@ -128,12 +123,13 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       timeZone,
       selectedDatasource,
       splitted,
-      timepickerRef,
       refreshInterval,
       onChangeTime,
       split,
       supportedModeOptions,
       selectedModeOption,
+      hasLiveOption,
+      isLive,
     } = this.props;
 
     return (
@@ -199,21 +195,23 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                   onClick: split,
                   iconClassName: 'fa fa-fw fa-columns icon-margin-right',
                   iconSide: IconSide.left,
+                  disabled: isLive,
                 })}
               </div>
             ) : null}
-            <div className="explore-toolbar-content-item timepicker">
-              <ClickOutsideWrapper onClick={this.onCloseTimePicker}>
-                <TimePicker ref={timepickerRef} range={range} isUtc={timeZone.isUtc} onChangeTime={onChangeTime} />
-              </ClickOutsideWrapper>
-
-              <RefreshPicker
-                onIntervalChanged={this.onChangeRefreshInterval}
-                onRefresh={this.onRunQuery}
-                value={refreshInterval}
-                tooltip="Refresh"
+            <div className="explore-toolbar-content-item">
+              <ExploreTimeControls
+                exploreId={exploreId}
+                hasLiveOption={hasLiveOption}
+                isLive={isLive}
+                loading={loading}
+                range={range}
+                refreshInterval={refreshInterval}
+                timeZone={timeZone}
+                onChangeTime={onChangeTime}
+                onChangeRefreshInterval={this.onChangeRefreshInterval}
+                onRunQuery={this.onRunQuery}
               />
-              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
 
             <div className="explore-toolbar-content-item">
@@ -227,7 +225,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 title: 'Run Query',
                 onClick: this.onRunQuery,
                 buttonClassName: 'navbar-button--secondary',
-                iconClassName: loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
+                iconClassName:
+                  loading && !isLive ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
                 iconSide: IconSide.right,
               })}
             </div>
@@ -238,6 +237,41 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
   }
 }
 
+const getModeOptionsMemoized = memoizeOne(
+  (
+    supportedModes: ExploreMode[],
+    mode: ExploreMode
+  ): [Array<SelectableValue<ExploreMode>>, SelectableValue<ExploreMode>] => {
+    const supportedModeOptions: Array<SelectableValue<ExploreMode>> = [];
+    let selectedModeOption = null;
+    for (const supportedMode of supportedModes) {
+      switch (supportedMode) {
+        case ExploreMode.Metrics:
+          const option1 = {
+            value: ExploreMode.Metrics,
+            label: ExploreMode.Metrics,
+          };
+          supportedModeOptions.push(option1);
+          if (mode === ExploreMode.Metrics) {
+            selectedModeOption = option1;
+          }
+          break;
+        case ExploreMode.Logs:
+          const option2 = {
+            value: ExploreMode.Logs,
+            label: ExploreMode.Logs,
+          };
+          supportedModeOptions.push(option2);
+          if (mode === ExploreMode.Logs) {
+            selectedModeOption = option2;
+          }
+          break;
+      }
+    }
+    return [supportedModeOptions, selectedModeOption];
+  }
+);
+
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
   const splitted = state.explore.split;
   const exploreItem = state.explore[exploreId];
@@ -247,43 +281,18 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     exploreDatasources,
     range,
     refreshInterval,
-    graphIsLoading,
-    logIsLoading,
-    tableIsLoading,
+    loading,
     supportedModes,
     mode,
+    isLive,
   } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
-  const loading = graphIsLoading || logIsLoading || tableIsLoading;
+  const hasLiveOption =
+    datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
 
-  const supportedModeOptions: Array<SelectOptionItem<ExploreMode>> = [];
-  let selectedModeOption = null;
-  for (const supportedMode of supportedModes) {
-    switch (supportedMode) {
-      case ExploreMode.Metrics:
-        const option1 = {
-          value: ExploreMode.Metrics,
-          label: ExploreMode.Metrics,
-        };
-        supportedModeOptions.push(option1);
-        if (mode === ExploreMode.Metrics) {
-          selectedModeOption = option1;
-        }
-        break;
-      case ExploreMode.Logs:
-        const option2 = {
-          value: ExploreMode.Logs,
-          label: ExploreMode.Logs,
-        };
-        supportedModeOptions.push(option2);
-        if (mode === ExploreMode.Logs) {
-          selectedModeOption = option2;
-        }
-        break;
-    }
-  }
+  const [supportedModeOptions, selectedModeOption] = getModeOptionsMemoized(supportedModes, mode);
 
   return {
     datasourceMissing,
@@ -296,6 +305,8 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     refreshInterval,
     supportedModeOptions,
     selectedModeOption,
+    hasLiveOption,
+    isLive,
   };
 };
 

@@ -354,7 +354,7 @@ func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
 	// If the tokens are not the same, update the entry in the DB
 	if token.AccessToken != authInfoQuery.Result.OAuthAccessToken {
 		updateAuthCommand := &m.UpdateAuthInfoCommand{
-			UserId:     authInfoQuery.Result.Id,
+			UserId:     authInfoQuery.Result.UserId,
 			AuthModule: authInfoQuery.Result.AuthModule,
 			AuthId:     authInfoQuery.Result.AuthId,
 			OAuthToken: token,

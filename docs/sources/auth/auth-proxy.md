@@ -27,14 +27,14 @@ header_name = X-WEBAUTH-USER
 header_property = username
 # Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
 auto_sign_up = true
-# If combined with Grafana LDAP integration define sync interval
+# If combined with Grafana LDAP integration define sync interval in minutes
 ldap_sync_ttl = 60
 # Limit where auth proxy requests come from by configuring a list of IP addresses.
 # This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 # Example `whitelist = 192.168.1.1, 192.168.1.0/24, 2001::23, 2001::0/120`
 whitelist =
 # Optionally define more headers to sync other user attributes
-# Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL`
+# Example `headers = Name:X-WEBAUTH-NAME Email:X-WEBAUTH-EMAIL Groups:X-WEBAUTH-GROUPS`
 headers =
 ```
 
@@ -218,3 +218,78 @@ ProxyPassReverse / http://grafana:3000/
 ### Use grafana.
 
 With our Grafana and Apache containers running, you can now connect to http://localhost/ and log in using the username/password we created in the htpasswd file.
+
+### Team Sync (Enterprise only)
+
+> Only available in Grafana Enterprise v6.3+
+
+With Team Sync, it's possible to set up synchronization between teams in your authentication provider and Grafana. You can send Grafana values as part of an HTTP header and have Grafana map them to your team structure. This allows you to put users into specific teams automatically.
+
+To support the feature, auth proxy allows optional headers to map additional user attributes. The specific attribute to support team sync  is `Groups`.
+
+```bash
+# Optionally define more headers to sync other user attributes
+headers = "Groups:X-WEBAUTH-GROUPS"
+```
+
+You use the `X-WEBAUTH-GROUPS` header to send the team information for each user. Specifically, the set of Grafana's group IDs that the user belongs to.
+
+First, we need to set up the mapping between your authentication provider and Grafana. Follow [these instructions]({{< relref "auth/team-sync.md#enable-synchronization-for-a-team" >}}) to add groups to a team within Grafana.
+
+Once that's done. You can verify your mappings by querying the API.
+
+```bash
+# First, inspect your teams and obtain the corresponding ID of the team we want to inspect the groups for.
+curl -H "X-WEBAUTH-USER: admin" http://localhost:3000/api/teams/search
+{
+  "totalCount": 2,
+  "teams": [
+    {
+      "id": 1,
+      "orgId": 1,
+      "name": "Core",
+      "email": "core@grafana.com",
+      "avatarUrl": "/avatar/327a5353552d2dc3966e2e646908f540",
+      "memberCount": 1,
+      "permission": 0
+    },
+    {
+      "id": 2,
+      "orgId": 1,
+      "name": "Loki",
+      "email": "loki@grafana.com",
+      "avatarUrl": "/avatar/102f937d5344d33fdb37b65d430f36ef",
+      "memberCount": 0,
+      "permission": 0
+    }
+  ],
+  "page": 1,
+  "perPage": 1000
+}
+
+# Then, query the groups for that particular team. In our case, the Loki team which has an ID of "2".
+curl -H "X-WEBAUTH-USER: admin" http://localhost:3000/api/teams/2/groups
+[
+  {
+    "orgId": 1,
+    "teamId": 2,
+    "groupId": "lokiTeamOnExternalSystem"
+  }
+]
+```
+
+Finally, whenever Grafana receives a request with a header of `X-WEBAUTH-GROUPS: lokiTeamOnExternalSystem`, the user under authentication will be placed into the specified team. Placement in multiple teams is supported by using comma-separated values e.g. `lokiTeamOnExternalSystem,CoreTeamOnExternalSystem`.
+
+```bash
+curl -H "X-WEBAUTH-USER: leonard" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem" http://localhost:3000/dashboards/home
+{
+  "meta": {
+    "isHome": true,
+    "canSave": false,
+    ...
+}
+```
+
+With this, the user `leonard` will be automatically placed into the Loki team as part of Grafana authentication.
+
+[Learn more about Team Sync]({{< relref "auth/team-sync.md" >}})

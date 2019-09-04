@@ -2,11 +2,11 @@ package notifiers
 
 import (
 	"os"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,12 +30,16 @@ func init() {
 	})
 }
 
+// EmailNotifier is responsible for sending
+// alert notifications over email.
 type EmailNotifier struct {
 	NotifierBase
 	Addresses []string
 	log       log.Logger
 }
 
+// NewEmailNotifier is the constructor function
+// for the EmailNotifier.
 func NewEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	addressesString := model.Settings.Get("addresses").MustString()
 
@@ -44,13 +48,7 @@ func NewEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	}
 
 	// split addresses with a few different ways
-	addresses := strings.FieldsFunc(addressesString, func(r rune) bool {
-		switch r {
-		case ',', ';', '\n':
-			return true
-		}
-		return false
-	})
+	addresses := util.SplitEmails(addressesString)
 
 	return &EmailNotifier{
 		NotifierBase: NewNotifierBase(model),
@@ -59,12 +57,13 @@ func NewEmailNotifier(model *models.AlertNotification) (alerting.Notifier, error
 	}, nil
 }
 
-func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Sending alert notification to", "addresses", this.Addresses)
+// Notify sends the alert notification.
+func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
+	en.log.Info("Sending alert notification to", "addresses", en.Addresses)
 
-	ruleUrl, err := evalContext.GetRuleUrl()
+	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
-		this.log.Error("Failed get rule link", "error", err)
+		en.log.Error("Failed get rule link", "error", err)
 		return err
 	}
 
@@ -83,20 +82,20 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"StateModel":    evalContext.GetStateModel(),
 				"Message":       evalContext.Rule.Message,
 				"Error":         error,
-				"RuleUrl":       ruleUrl,
+				"RuleUrl":       ruleURL,
 				"ImageLink":     "",
 				"EmbeddedImage": "",
 				"AlertPageUrl":  setting.AppUrl + "alerting",
 				"EvalMatches":   evalContext.EvalMatches,
 			},
-			To:           this.Addresses,
+			To:           en.Addresses,
 			Template:     "alert_notification.html",
 			EmbededFiles: []string{},
 		},
 	}
 
-	if evalContext.ImagePublicUrl != "" {
-		cmd.Data["ImageLink"] = evalContext.ImagePublicUrl
+	if evalContext.ImagePublicURL != "" {
+		cmd.Data["ImageLink"] = evalContext.ImagePublicURL
 	} else {
 		file, err := os.Stat(evalContext.ImageOnDiskPath)
 		if err == nil {
@@ -108,9 +107,9 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 	err = bus.DispatchCtx(evalContext.Ctx, cmd)
 
 	if err != nil {
-		this.log.Error("Failed to send alert notification email", "error", err)
+		en.log.Error("Failed to send alert notification email", "error", err)
 		return err
 	}
-	return nil
 
+	return nil
 }
