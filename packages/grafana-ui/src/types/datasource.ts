@@ -425,6 +425,7 @@ export interface DataQueryError {
   status?: string;
   statusText?: string;
   refId?: string;
+  cancelled?: boolean;
 }
 
 export interface ScopedVar {
@@ -455,7 +456,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   // Request Timing
   startTime: number;
   endTime?: number;
-  cancelled?: boolean;
 }
 
 export interface QueryFix {
