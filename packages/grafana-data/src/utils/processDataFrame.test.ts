@@ -9,7 +9,7 @@ import {
 } from './processDataFrame';
 import { FieldType, TimeSeries, TableData, DataFrameDTO } from '../types/index';
 import { dateTime } from './moment_wrapper';
-import { DataFrameHelper } from './dataFrameHelper';
+import { MutableDataFrame } from './dataFrameHelper';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
@@ -89,7 +89,7 @@ describe('toDataFrame', () => {
   });
 
   it('Guess Colum Types from series', () => {
-    const series = new DataFrameHelper({
+    const series = new MutableDataFrame({
       fields: [
         { name: 'A (number)', values: [123, null] },
         { name: 'B (strings)', values: [null, 'Hello'] },

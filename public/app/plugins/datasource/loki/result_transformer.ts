@@ -1,7 +1,7 @@
 import { LokiLogsStream } from './types';
-import { parseLabels, FieldType, Labels, DataFrameHelper } from '@grafana/data';
+import { parseLabels, FieldType, Labels, MutableDataFrame } from '@grafana/data';
 
-export function logStreamToDataFrame(stream: LokiLogsStream, refId?: string): DataFrameHelper {
+export function logStreamToDataFrame(stream: LokiLogsStream, refId?: string): MutableDataFrame {
   let labels: Labels = stream.parsedLabels;
   if (!labels && stream.labels) {
     labels = parseLabels(stream.labels);
@@ -14,7 +14,7 @@ export function logStreamToDataFrame(stream: LokiLogsStream, refId?: string): Da
     lines.push(entry.line);
   }
 
-  return new DataFrameHelper({
+  return new MutableDataFrame({
     refId,
     labels,
     fields: [

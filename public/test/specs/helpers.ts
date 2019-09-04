@@ -1,4 +1,6 @@
-import _ from 'lodash';
+import each from 'lodash/each';
+import template from 'lodash/template';
+
 import config from 'app/core/config';
 import { dateMath } from '@grafana/data';
 import { angularMocks, sinon } from '../lib/common';
@@ -37,7 +39,7 @@ export function ControllerTestContext(this: any) {
       $provide.value('templateSrv', self.templateSrv);
       $provide.value('$element', self.$element);
       $provide.value('$sanitize', self.$sanitize);
-      _.each(mocks, (value: any, key: any) => {
+      each(mocks, (value: any, key: any) => {
         $provide.value(key, value);
       });
     });
@@ -118,7 +120,7 @@ export function ServiceTestContext(this: any) {
 
   this.providePhase = (mocks: any) => {
     return angularMocks.module(($provide: any) => {
-      _.each(mocks, (key: string) => {
+      each(mocks, (key: string) => {
         $provide.value(key, self[key]);
       });
     });
@@ -184,7 +186,7 @@ export function TemplateSrvStub(this: any) {
   this.templateSettings = { interpolate: /\[\[([\s\S]+?)\]\]/g };
   this.data = {};
   this.replace = (text: string) => {
-    return _.template(text, this.templateSettings)(this.data);
+    return template(text, this.templateSettings)(this.data);
   };
   this.init = () => {};
   this.getAdhocFilters = (): any => {

@@ -4,12 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 var errTest = errors.New("Test error")
@@ -98,9 +97,10 @@ func (auth *mockAuth) Users(logins []string) (
 
 func (auth *mockAuth) User(login string) (
 	*models.ExternalUserInfo,
+	ldap.ServerConfig,
 	error,
 ) {
-	return nil, nil
+	return nil, ldap.ServerConfig{}, nil
 }
 
 func (auth *mockAuth) Add(dn string, values map[string][]string) error {

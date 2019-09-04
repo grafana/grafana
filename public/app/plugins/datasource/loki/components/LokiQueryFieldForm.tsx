@@ -4,14 +4,11 @@ import React from 'react';
 import Cascader from 'rc-cascader';
 // @ts-ignore
 import PluginPrism from 'slate-prism';
-
 // Components
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
-
 // Utils & Services
 // dom also includes Element polyfills
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
@@ -158,6 +155,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
     const chooserText = getChooserText(syntaxLoaded, hasLogLabels, datasourceStatus);
     const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;
+    const showError = queryResponse && queryResponse.error && queryResponse.error.refId === query.refId;
 
     return (
       <>
@@ -194,9 +192,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
           </div>
         </div>
         <div>
-          {queryResponse && queryResponse.error ? (
-            <div className="prom-query-field-info text-error">{queryResponse.error.message}</div>
-          ) : null}
+          {showError ? <div className="prom-query-field-info text-error">{queryResponse.error.message}</div> : null}
         </div>
       </>
     );

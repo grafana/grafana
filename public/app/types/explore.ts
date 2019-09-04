@@ -5,7 +5,8 @@ import {
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
-  DataQueryError,
+  PanelData,
+  DataQueryRequest,
 } from '@grafana/ui';
 
 import {
@@ -14,7 +15,6 @@ import {
   TimeRange,
   LogsModel,
   LogsDedupStrategy,
-  LoadingState,
   AbsoluteTimeRange,
   GraphSeriesXY,
 } from '@grafana/data';
@@ -218,7 +218,7 @@ export interface ExploreItemState {
    */
   showingTable: boolean;
 
-  loadingState: LoadingState;
+  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -248,16 +248,24 @@ export interface ExploreItemState {
 
   update: ExploreUpdateState;
 
-  queryErrors: DataQueryError[];
-
   latency: number;
   supportedModes: ExploreMode[];
   mode: ExploreMode;
 
+  /**
+   * If true, the view is in live tailing mode.
+   */
   isLive: boolean;
+
+  /**
+   * If true, the live tailing view is paused.
+   */
+  isPaused: boolean;
   urlReplaced: boolean;
 
   queryState: PanelQueryState;
+
+  queryResponse: PanelData;
 }
 
 export interface ExploreUpdateState {
@@ -331,7 +339,7 @@ export interface QueryTransaction {
   error?: string | JSX.Element;
   hints?: QueryHint[];
   latency: number;
-  options: any;
+  request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;

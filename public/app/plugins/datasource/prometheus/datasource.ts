@@ -181,26 +181,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     activeTargets: PromQuery[],
     end: number
   ) => {
-    // Because we want to get run instant and TimeSeries Prom queries in parallel but this isn't actually streaming
-    // we need to stop/cancel each posted event with a stop stream event (see below) to the observer so that the
-    // PanelQueryState stops the stream
-    const getStopState = (state: DataStreamState): DataStreamState => ({
-      ...state,
-      state: LoadingState.Done,
-      request: { ...options, requestId: 'done' },
-    });
-
-    const startLoadingEvent: DataStreamState = {
-      key: `prometheus-loading_indicator`,
-      state: LoadingState.Loading,
-      request: options,
-      data: [],
-      unsubscribe: () => undefined,
-    };
-
-    observer(startLoadingEvent); // Starts the loading indicator
-    const lastTimeSeriesQuery = queries.filter(query => !query.instant).pop();
-
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
       const target = activeTargets[index];
@@ -220,19 +200,15 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             const data = this.processResult(response, query, target, queries.length);
             const state: DataStreamState = {
               key: `prometheus-${target.refId}`,
-              state: LoadingState.Loading,
+              state: LoadingState.Done,
               request: options,
-              data,
+              // TODO this is obviously wrong as data is not a DataFrame and needs to be dealt with later on
+              //  in PanelQueryState
+              data: data as any,
               unsubscribe: () => undefined,
             };
 
-            const states = [state, getStopState(state)];
-
-            if (target.refId === lastTimeSeriesQuery.refId && target.expr === lastTimeSeriesQuery.expr) {
-              states.push(getStopState(startLoadingEvent)); // Stops the loading indicator
-            }
-
-            return states;
+            return [state];
           }),
           catchError(err => {
             const error = this.handleErrors(err, target);
@@ -306,6 +282,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       this.runObserverQueries(options, observer, queries, activeTargets, end);
       return this.$q.when({ data: [] }) as Promise<{ data: any }>;
     }
+
     const allQueryPromise = _.map(queries, query => {
       if (query.instant) {
         return this.performInstantQuery(query, end);

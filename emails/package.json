@@ -12,7 +12,6 @@
     "build": "grunt",
     "start": "grunt watch"
   },
-
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-premailer": "^1.1.10",

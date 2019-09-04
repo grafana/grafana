@@ -179,7 +179,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
                 }}
               />
             )}
-            {error && <Alert message={error} />}
+            {error && <Alert title={error} />}
           </div>
         </CustomScrollbar>
       </div>
