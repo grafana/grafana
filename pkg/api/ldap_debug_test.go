@@ -51,6 +51,10 @@ func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 
 	sc := setupScenarioContext(requestURL)
 
+	ldap := setting.LDAPEnabled
+	setting.LDAPEnabled = true
+	defer func() { setting.LDAPEnabled = ldap }()
+
 	hs := &HTTPServer{Cfg: setting.NewCfg()}
 
 	sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
@@ -242,6 +246,10 @@ func getLDAPStatusContext(t *testing.T) *scenarioContext {
 
 	requestURL := "/api/admin/ldap/status"
 	sc := setupScenarioContext(requestURL)
+
+	ldap := setting.LDAPEnabled
+	setting.LDAPEnabled = true
+	defer func() { setting.LDAPEnabled = ldap }()
 
 	hs := &HTTPServer{Cfg: setting.NewCfg()}
 
