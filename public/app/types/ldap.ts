@@ -46,7 +46,17 @@ export interface LdapUser {
   teams: LdapTeam[];
 }
 
+export interface LdapServerInfo {
+  available: boolean;
+  host: string;
+  port: number;
+  error: string;
+}
+
+export type LdapConnectionInfo = LdapServerInfo[];
+
 export interface LdapState {
+  connectionInfo: LdapConnectionInfo;
   user: LdapUser;
   syncInfo: SyncInfo;
   ldapError: LdapError;

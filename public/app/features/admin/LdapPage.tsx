@@ -6,6 +6,7 @@ import { NavModel } from '@grafana/data';
 import { FormField } from '@grafana/ui';
 import Page from '../../core/components/Page/Page';
 import { AlertBox } from '../../core/components/AlertBox/AlertBox';
+import { LdapConnectionStatus } from './LdapConnectionStatus';
 import { LdapSyncInfo } from './LdapSyncInfo';
 import { LdapUserMappingInfo } from './LdapUserMappingInfo';
 import { LdapUserPermissions } from './LdapUserPermissions';
@@ -13,11 +14,12 @@ import { LdapUserGroups } from './LdapUserGroups';
 import { LdapUserTeams } from './LdapUserTeams';
 import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
-import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo } from 'app/types';
+import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo } from 'app/types';
 import { loadLdapState, clearError } from './state/actions';
 
 interface Props {
   navModel: NavModel;
+  ldapConnectionInfo: LdapConnectionInfo;
   ldapUser: LdapUser;
   ldapSyncInfo: SyncInfo;
   ldapError: LdapError;
@@ -41,8 +43,7 @@ export class LdapPage extends PureComponent<Props, State> {
 
   async fetchLDAPStatus() {
     const { loadLdapState } = this.props;
-    const ldapStatus = await loadLdapState();
-    console.log(ldapStatus);
+    return await loadLdapState();
   }
 
   search = (event: any) => {
@@ -55,7 +56,7 @@ export class LdapPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { ldapError, ldapUser, ldapSyncInfo, navModel } = this.props;
+    const { ldapError, ldapUser, ldapSyncInfo, ldapConnectionInfo, navModel } = this.props;
     const { isLoading } = this.state;
 
     const tableStyle = css`
@@ -74,10 +75,11 @@ export class LdapPage extends PureComponent<Props, State> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           <>
-            <div className="grafana-info-box">
-              LDAP server connected
-              <i className="fa fa-fw fa-check text-success pull-right" />
-            </div>
+            <LdapConnectionStatus
+              headingStyle={headingStyle}
+              tableStyle={tableStyle}
+              ldapConnectionInfo={ldapConnectionInfo}
+            />
             {config.buildInfo.isEnterprise && (
               <LdapSyncInfo headingStyle={headingStyle} tableStyle={tableStyle} ldapSyncInfo={ldapSyncInfo} />
             )}
@@ -113,6 +115,7 @@ export class LdapPage extends PureComponent<Props, State> {
 
 const mapStateToProps = (state: StoreState) => ({
   navModel: getNavModel(state.navIndex, 'ldap'),
+  ldapConnectionInfo: state.ldap.connectionInfo,
   ldapUser: state.ldap.user,
   ldapSyncInfo: state.ldap.syncInfo,
   ldapError: state.ldap.ldapError,
