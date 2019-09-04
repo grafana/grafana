@@ -5,7 +5,7 @@ import memoizeOne from 'memoize-one';
 
 import { ExploreId, ExploreMode } from 'app/types/explore';
 import { DataSourceSelectItem, ToggleButtonGroup, ToggleButton } from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange, LoadingState, SelectableValue } from '@grafana/data';
+import { RawTimeRange, TimeZone, TimeRange, SelectableValue } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -281,7 +281,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     exploreDatasources,
     range,
     refreshInterval,
-    loadingState,
+    loading,
     supportedModes,
     mode,
     isLive,
@@ -289,7 +289,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
-  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const hasLiveOption =
     datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
 

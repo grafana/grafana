@@ -27,8 +27,7 @@ module.exports = (env = {}) =>
     },
 
     module: {
-      rules: [
-        {
+      rules: [{
           test: /\.tsx?$/,
           enforce: 'pre',
           exclude: /node_modules/,
@@ -37,8 +36,8 @@ module.exports = (env = {}) =>
             options: {
               emitErrors: true,
               typeCheck: false,
-            },
-          },
+            }
+          }
         },
         {
           test: /\.tsx?$/,
@@ -46,48 +45,55 @@ module.exports = (env = {}) =>
           use: {
             loader: 'ts-loader',
             options: {
-              transpileOnly: true,
+              transpileOnly: true
             },
           },
         },
-        require('./sass.rule.js')({ sourceMap: false, preserveUrl: false }),
+        require('./sass.rule.js')({
+          sourceMap: false,
+          preserveUrl: false
+        }),
         {
           test: /\.(png|jpg|gif|ttf|eot|svg|woff(2)?)(\?[a-z0-9=&.]+)?$/,
-          loader: 'file-loader',
+          loader: 'file-loader'
         },
-      ],
+      ]
     },
 
     plugins: [
       new CleanWebpackPlugin(),
-      env.noTsCheck
-        ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
-        : new ForkTsCheckerWebpackPlugin({
-            checkSyntacticErrors: true,
-          }),
+      env.noTsCheck ?
+      new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
+      :
+      new ForkTsCheckerWebpackPlugin({
+        checkSyntacticErrors: true,
+      }),
       new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[hash].css',
+        filename: "grafana.[name].[hash].css"
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/error.html'),
         template: path.resolve(__dirname, '../../public/views/error-template.html'),
         inject: false,
+        chunksSortMode: 'none',
+        excludeChunks: ['dark', 'light']
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
         template: path.resolve(__dirname, '../../public/views/index-template.html'),
         inject: 'body',
-        chunks: ['manifest', 'vendor', 'app'],
+        chunksSortMode: 'none',
+        excludeChunks: ['dark', 'light']
       }),
       new webpack.NamedModulesPlugin(),
       new webpack.HotModuleReplacementPlugin(),
       new webpack.DefinePlugin({
         'process.env': {
-          NODE_ENV: JSON.stringify('development'),
-        },
+          'NODE_ENV': JSON.stringify('development')
+        }
       }),
       // new BundleAnalyzerPlugin({
       //   analyzerPort: 8889
       // })
-    ],
+    ]
   });

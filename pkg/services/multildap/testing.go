@@ -91,10 +91,10 @@ func (mock *MockMultiLDAP) Users(logins []string) (
 
 // User test fn
 func (mock *MockMultiLDAP) User(login string) (
-	*models.ExternalUserInfo, error,
+	*models.ExternalUserInfo, ldap.ServerConfig, error,
 ) {
 	mock.UserCalledTimes = mock.UserCalledTimes + 1
-	return nil, nil
+	return nil, ldap.ServerConfig{}, nil
 }
 
 func setup() *MockLDAP {

@@ -1,4 +1,5 @@
 const path = require('path');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = {
   target: 'web',
@@ -13,63 +14,88 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
-    alias: {
-    },
-    modules: [
-      path.resolve('public'),
-      path.resolve('node_modules')
-    ],
+    alias: {},
+    modules: [path.resolve('public'), path.resolve('node_modules')],
   },
   stats: {
     children: false,
-    warningsFilter: /export .* was not found in/
+    warningsFilter: /export .* was not found in/,
+    source: false
   },
   node: {
     fs: 'empty',
   },
   module: {
-    rules: [
-      {
+    rules: [{
         test: require.resolve('jquery'),
-        use: [
-          {
+        use: [{
             loader: 'expose-loader',
-            query: 'jQuery'
+            query: 'jQuery',
           },
           {
             loader: 'expose-loader',
-            query: '$'
-          }
-        ]
+            query: '$',
+          },
+        ],
       },
       {
         test: /\.html$/,
         exclude: /(index|error)\-template\.html/,
-        use: [
-          { loader: 'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, '../../public')) + '&prefix=public' },
+        use: [{
+            loader: 'ngtemplate-loader?relativeTo=' + path.resolve(__dirname, '../../public') + '&prefix=public',
+          },
           {
             loader: 'html-loader',
             options: {
               attrs: [],
               minimize: true,
               removeComments: false,
-              collapseWhitespace: false
-            }
-          }
-        ]
-      }
-    ]
+              collapseWhitespace: false,
+            },
+          },
+        ],
+      },
+    ],
   },
   // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3
   optimization: {
+    moduleIds: 'hashed',
+    runtimeChunk: 'single',
     splitChunks: {
+      chunks: 'all',
+      minChunks: 1,
       cacheGroups: {
-        commons: {
+        moment: {
+          test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: 20,
+          enforce: true
+        },
+        angular: {
+          test: /[\\/]node_modules[\\/]angular[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: 50,
+          enforce: true
+        },
+        vendors: {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
-          name: 'vendor',
-          chunks: 'all'
-        }
-      }
-    }
-  }
+          chunks: 'initial',
+          priority: -10,
+          reuseExistingChunk: true,
+          enforce: true
+        },
+        default: {
+          priority: -20,
+          chunks: 'all',
+          test: /.*[jt]sx?$/,
+          reuseExistingChunk: true
+        },
+      },
+    },
+  },
+  plugins: [
+    new ForkTsCheckerWebpackPlugin({
+      checkSyntacticErrors: true,
+    })
+  ],
 };

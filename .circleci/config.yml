@@ -221,7 +221,7 @@ jobs:
           name: verify signed packages
           command: |
             mkdir -p ~/.rpmdb/pubkeys
-            curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+            curl -s https://packages.grafana.com/gpg.key > ~/.rpmdb/pubkeys/grafana.key
             ./scripts/build/verify_signed_packages.sh dist/*.rpm
       - run:
           name: sha-sum packages
@@ -483,7 +483,7 @@ jobs:
         name: verify signed packages
         command: |
           mkdir -p ~/.rpmdb/pubkeys
-          curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+          curl -s https://packages.grafana.com/gpg.key > ~/.rpmdb/pubkeys/grafana.key
           ./scripts/build/verify_signed_packages.sh dist/*.rpm
     - run:
         name: sha-sum packages
@@ -509,9 +509,6 @@ jobs:
           name: sign in to gcp
           command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
       - run:
-          name: deploy to s3
-          command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/master'
-      - run:
           name: deploy to gcp
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/master'
       - run:
@@ -535,9 +532,6 @@ jobs:
           name: sign in to gcp
           command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
       - run:
-          name: deploy to s3
-          command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/release'
-      - run:
           name: deploy to gcp
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/release'
       - run:
@@ -560,12 +554,6 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run:
-          name: deploy to s3
-          command: |
-            # Also
-            cp dist/grafana-latest.linux-x64.tar.gz dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
-            aws s3 sync ./dist s3://$BUCKET_NAME/master
       - run:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
@@ -592,9 +580,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run:
-          name: deploy to s3
-          command: 'aws s3 sync ./dist s3://$BUCKET_NAME/release'
       - run:
           name: gcp credentials
           command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
