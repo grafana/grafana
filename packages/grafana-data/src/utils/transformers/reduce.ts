@@ -9,7 +9,7 @@ import { ArrayVector } from '../vector';
 import { guessFieldTypeForField } from '../processDataFrame';
 
 export interface ReduceTransformerOptions {
-  reducers: string[];
+  reducers: ReducerID[];
   fields?: MatcherConfig; // Assume all fields
 }
 
@@ -18,7 +18,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
   name: 'Reducer',
   description: 'Return a DataFrame with the reduction results',
   defaultOptions: {
-    calcs: [ReducerID.min, ReducerID.max, ReducerID.mean, ReducerID.last],
+    reducers: [ReducerID.min, ReducerID.max, ReducerID.mean, ReducerID.last],
   },
 
   /**
@@ -27,7 +27,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
    */
   transformer: (options: ReduceTransformerOptions) => {
     const matcher = options.fields ? getFieldMatcher(options.fields) : alwaysFieldMatcher;
-    const calculators = fieldReducers.list(options.reducers);
+    const calculators = options.reducers && options.reducers.length ? fieldReducers.list(options.reducers) : [];
     const reducers = calculators.map(c => c.id);
 
     return (data: DataFrame[]) => {

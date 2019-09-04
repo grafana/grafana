@@ -120,14 +120,6 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
   }
 }
 
-export const filterFieldsByNameTransformRegistryItem: TransformerUIRegistyItem = {
-  id: DataTransformerID.filterFieldsByName,
-  component: FilterByNameTransformerEditor,
-  transformer: dataTransformers.get(DataTransformerID.filterFieldsByName),
-  name: 'Filter by name',
-  description: 'UI for filter by name transformation',
-};
-
 interface FilterPillProps {
   selected: boolean;
   label: string;
@@ -160,4 +152,12 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
       {label}
     </div>
   );
+};
+
+export const filterFieldsByNameTransformRegistryItem: TransformerUIRegistyItem<FilterFieldsByNameTransformerOptions> = {
+  id: DataTransformerID.filterFieldsByName,
+  component: FilterByNameTransformerEditor,
+  transformer: dataTransformers.get(DataTransformerID.filterFieldsByName),
+  name: 'Filter by name',
+  description: 'UI for filter by name transformation',
 };

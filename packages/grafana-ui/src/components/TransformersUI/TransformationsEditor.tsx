@@ -91,7 +91,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
           if (transformationUI) {
             editor = React.createElement(transformationUI.component, {
               key: `${t.id}-${i}`, // this key is making troubles when the same transformers are next to each other and one is removed
-              options: t.options,
+              options: { ...transformationUI.transformer.defaultOptions, ...t.options },
               input,
               onChange: (options: any) => {
                 this.onTransformationChange(i, {

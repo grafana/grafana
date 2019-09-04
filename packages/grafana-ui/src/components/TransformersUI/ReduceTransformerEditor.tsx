@@ -1,6 +1,6 @@
 import React from 'react';
 import { StatsPicker } from '../StatsPicker/StatsPicker';
-import { ReduceTransformerOptions, DataTransformerID } from '@grafana/data';
+import { ReduceTransformerOptions, DataTransformerID, ReducerID } from '@grafana/data';
 import { TransformerUIRegistyItem, TransformerUIProps } from './types';
 import { dataTransformers } from '@grafana/data';
 
@@ -19,14 +19,14 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
       onChange={stats => {
         onChange({
           ...options,
-          reducers: stats,
+          reducers: stats as ReducerID[],
         });
       }}
     />
   );
 };
 
-export const reduceTransformRegistryItem: TransformerUIRegistyItem = {
+export const reduceTransformRegistryItem: TransformerUIRegistyItem<ReduceTransformerOptions> = {
   id: DataTransformerID.reduce,
   component: ReduceTransformerEditor,
   transformer: dataTransformers.get(DataTransformerID.reduce),
