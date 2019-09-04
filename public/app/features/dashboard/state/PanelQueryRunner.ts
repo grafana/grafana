@@ -1,6 +1,6 @@
 // Libraries
 import { isArray, cloneDeep } from 'lodash';
-import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
+import { ReplaySubject, Unsubscribable, PartialObserver } from 'rxjs';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -52,14 +52,14 @@ function getNextRequestId() {
 }
 
 export class PanelQueryRunner {
-  private subject?: Subject<PanelData>;
+  private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
 
   // Listen to another panel for changes
   // private sharedQueryRunner: SharedQueryRunner;
 
   constructor(private panelId: number) {
-    this.subject = new Subject();
+    this.subject = new ReplaySubject(1);
   }
 
   getPanelId() {

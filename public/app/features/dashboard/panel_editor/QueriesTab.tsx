@@ -76,6 +76,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   // Updates the response with information from the stream
   panelDataObserver = {
     next: (data: PanelData) => {
+      console.log('got data', data);
       if (!this.props.panel.isAngularPlugin()) {
         this.notifyAngularQueryEditorsOfData(data);
       }
