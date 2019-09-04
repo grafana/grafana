@@ -260,7 +260,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
       const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
 
-      const message = stringField.values.get(j);
+      let message = stringField.values.get(j);
+      // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
+      message = typeof message === 'string' ? message : JSON.stringify(message);
 
       let logLevel = LogLevel.unknown;
       if (logLevelField) {
