@@ -78,6 +78,9 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 
 			// Update the last state change of the alert rule in memory
 			evalContext.Rule.LastStateChange = time.Now()
+
+			// Update the flag of the alert rule in memory
+			evalContext.Rule.NoDataFlag = cmd.NoDataFlag
 		}
 
 		// save annotation
