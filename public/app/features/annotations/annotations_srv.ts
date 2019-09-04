@@ -62,7 +62,9 @@ export class AnnotationsSrv {
         annotations = dedupAnnotations(annotations);
         for (let i = 0; i < annotations.length; i++) {
           const a = annotations[i];
-          a.isRegion = a.time !== a.timeEnd;
+          if (a.timeEnd) {
+            a.isRegion = a.time !== a.timeEnd;
+          }
         }
 
         // look for alert state for this panel
