@@ -208,7 +208,8 @@ export abstract class DataSourceApi<
    * unsubscribe if unexpected results are returned.
    */
   abstract query(request: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
-  observe?(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
+
+  observe?(request: DataQueryRequest<TQuery>): Observable<DataQueryResponsePacket>;
 
   /**
    * Test & verify datasource settings & connection details

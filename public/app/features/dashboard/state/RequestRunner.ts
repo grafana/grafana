@@ -77,7 +77,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
   state.panelData.state = LoadingState.Loading;
 
   if (!datasource.observe) {
-    return null;
+    datasource.observe = wrapOldQueryMethod(datasource);
   }
 
   return datasource.observe(request).pipe(
@@ -99,6 +99,24 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
       })
     )
   );
+}
+
+export function wrapOldQueryMethod(datasource: DataSourceApi) {
+  return (req: DataQueryRequest) => {
+    return new Observable<DataQueryResponsePacket>(subscriber => {
+      datasource
+        .query(req)
+        .then(resp => {
+          subscriber.next({
+            data: resp.data,
+            key: 'A',
+          });
+        })
+        .catch(err => {
+          subscriber.error(err);
+        });
+    });
+  };
 }
 
 export function processQueryError(err: any): DataQueryError {
