@@ -7,7 +7,6 @@ export class PlaylistsCtrl {
   playlists: any;
   navModel: any;
 
-  //angular is evaluating these expressions and they need to be references instead of string literals directly
   emptyListCta = {
     title: 'There are no playlists created yet',
     buttonIcon: 'fa fa-plus',

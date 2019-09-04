@@ -53,6 +53,7 @@
     </table>
   </div>
   <div ng-if="ctrl.playlists.length === 0">
+    <!--angular is evaluating these expressions and they need to be references instead of string literals directly-->
     <empty-list-cta
       title=ctrl.emptyListCta.title
       buttonIcon=ctrl.emptyListCta.buttonIcon

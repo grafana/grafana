@@ -18,7 +18,6 @@ export class DashLinksEditorCtrl {
   mode: any;
   link: any;
 
-  //angular is evaluating these expressions and they need to be references instead of string literals directly
   emptyListCta = {
     title: 'There are no dashboard links added yet',
     buttonIcon: 'gicon gicon-link',

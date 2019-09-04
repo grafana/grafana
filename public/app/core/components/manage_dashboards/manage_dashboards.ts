@@ -67,7 +67,6 @@ export class ManageDashboardsCtrl {
 
   hasEditPermissionInFolders: boolean;
 
-  //angular is evaluating these expressions and they need to be references instead of string literals directly
   emptyListCta = {
     title: "This folder doesn't have any dashboards yet",
     buttonIcon: 'gicon gicon-dashboard-new',
