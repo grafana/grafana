@@ -67,6 +67,17 @@ export class ManageDashboardsCtrl {
 
   hasEditPermissionInFolders: boolean;
 
+  emptyListCta = {
+    title: "This folder doesn't have any dashboards yet",
+    buttonIcon: 'gicon gicon-dashboard-new',
+    buttonLink: 'dashboard/new?folderId={{ctrl.folderId}}',
+    buttonTitle: 'Create Dashboard',
+    proTip: 'Add/move dashboards to your folder at ->',
+    proTipLink: 'dashboards',
+    proTipLinkTitle: 'Manage dashboards',
+    proTipTarget: '',
+  };
+
   /** @ngInject */
   constructor(
     private backendSrv: BackendSrv,
