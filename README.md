@@ -205,7 +205,7 @@ ENV BROWSER=1 SLOWMO=1 yarn e2e-tests
 ### Datasource and dashboard provisioning
 
 [Here](https://github.com/grafana/grafana/tree/master/devenv) you can find helpful scripts and docker-compose setup
-that will populate your dev environment for quicker testing end experimenting.
+that will populate your dev environment for quicker testing and experimenting.
 
 ## Contribute
 
