@@ -7,6 +7,7 @@ import {
   DisplayValue,
   GraphSeriesValue,
   DataFrameView,
+  getTimeField,
 } from '@grafana/data';
 
 import toNumber from 'lodash/toNumber';
@@ -82,17 +83,6 @@ export interface GetFieldDisplayValuesOptions {
 
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
-const getTimeColumnIdx = (series: DataFrame) => {
-  let timeColumn = -1;
-  for (let i = 0; i < series.fields.length; i++) {
-    if (series.fields[i].type === FieldType.time) {
-      timeColumn = i;
-      break;
-    }
-  }
-  return timeColumn;
-};
-
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
   const { data, replaceVariables, fieldOptions } = options;
   const { defaults, override } = fieldOptions;
@@ -117,7 +107,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
       scopedVars[DataLinkBuiltInVars.seriesName] = { text: 'Series', value: series.name };
 
-      const timeColumn = getTimeColumnIdx(series);
+      const { timeField } = getTimeField(series);
       const view = new DataFrameView(series);
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
@@ -184,9 +174,9 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           let sparkline: GraphSeriesValue[][] | undefined = undefined;
 
           // Single sparkline for every reducer
-          if (options.sparkline && timeColumn >= 0) {
+          if (options.sparkline && timeField) {
             sparkline = getFlotPairs({
-              xField: series.fields[timeColumn],
+              xField: timeField,
               yField: series.fields[i],
             });
           }

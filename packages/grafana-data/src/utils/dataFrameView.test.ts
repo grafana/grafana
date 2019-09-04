@@ -1,5 +1,5 @@
 import { FieldType, DataFrameDTO } from '../types/index';
-import { DataFrameHelper } from './dataFrameHelper';
+import { MutableDataFrame } from './dataFrameHelper';
 import { DataFrameView } from './dataFrameView';
 import { DateTime } from './moment_wrapper';
 
@@ -18,7 +18,7 @@ describe('dataFrameView', () => {
       { name: 'value', type: FieldType.number, values: [1, 2, 3] },
     ],
   };
-  const ext = new DataFrameHelper(frame);
+  const ext = new MutableDataFrame(frame);
   const vector = new DataFrameView<MySpecialObject>(ext);
 
   it('Should get a typed vector', () => {
@@ -72,5 +72,13 @@ describe('dataFrameView', () => {
     // the values for 'first' have changed
     expect(first.name).toEqual('b');
     expect(first.name).toEqual(second.name);
+  });
+
+  it('toJSON returns plain object', () => {
+    expect(vector.toJSON()[0]).toEqual({
+      time: 100,
+      name: 'a',
+      value: 1,
+    });
   });
 });
