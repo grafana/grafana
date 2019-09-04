@@ -67,11 +67,12 @@ export class ManageDashboardsCtrl {
 
   hasEditPermissionInFolders: boolean;
 
+  //angular is evaluating these expressions and they need to be references instead of string literals directly
   emptyListCta = {
     title: "This folder doesn't have any dashboards yet",
     buttonIcon: 'gicon gicon-dashboard-new',
-    buttonLink: 'dashboard/new?folderId={{ctrl.folderId}}',
     buttonTitle: 'Create Dashboard',
+    buttonLink: '',
     proTip: 'Add/move dashboards to your folder at ->',
     proTipLink: 'dashboards',
     proTipLinkTitle: 'Manage dashboards',
@@ -100,6 +101,7 @@ export class ManageDashboardsCtrl {
 
     if (this.folderId) {
       this.query.folderIds = [this.folderId];
+      this.emptyListCta.buttonLink = `dashboard/new?folderId=${this.folderId}`;
     }
 
     this.selectedStarredFilter = this.starredFilterOptions[0];
