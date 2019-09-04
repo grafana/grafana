@@ -97,12 +97,12 @@ type LDAPServerDTO struct {
 // ReloadLDAPCfg reloads the LDAP configuration
 func (server *HTTPServer) ReloadLDAPCfg() Response {
 	if !ldap.IsEnabled() {
-		return Error(400, "LDAP is not enabled", nil)
+		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
 	err := ldap.ReloadConfig()
 	if err != nil {
-		return Error(500, "Failed to reload ldap config.", err)
+		return Error(http.StatusInternalServerError, "Failed to reload ldap config.", err)
 	}
 	return Success("LDAP config reloaded")
 }
@@ -110,7 +110,7 @@ func (server *HTTPServer) ReloadLDAPCfg() Response {
 // GetLDAPStatus attempts to connect to all the configured LDAP servers and returns information on whenever they're availabe or not.
 func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 	if !ldap.IsEnabled() {
-		return Error(400, "LDAP is not enabled", nil)
+		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
 	ldapConfig, err := getLDAPConfig()
@@ -124,8 +124,7 @@ func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 	statuses, err := ldap.Ping()
 
 	if err != nil {
-		//TODO: Better error message. Technically, this is not reaching.
-		return Error(http.StatusBadRequest, "Failed to reach LDAP server(s)", err)
+		return Error(http.StatusBadRequest, "Failed to connect to the LDAP server(s)", err)
 	}
 
 	serverDTOs := []*LDAPServerDTO{}
@@ -149,13 +148,13 @@ func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 // GetUserFromLDAP finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.
 func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	if !ldap.IsEnabled() {
-		return Error(400, "LDAP is not enabled", nil)
+		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
 	ldapConfig, err := getLDAPConfig()
 
 	if err != nil {
-		return Error(400, "Failed to obtain the LDAP configuration. Please ", err)
+		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please ", err)
 	}
 
 	ldap := newLDAP(ldapConfig.Servers)
