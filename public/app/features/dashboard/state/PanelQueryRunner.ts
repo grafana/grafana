@@ -127,7 +127,8 @@ export class PanelQueryRunner {
   setTransform = (transformations?: DataTransformerConfig[]) => {
     this.transformations = transformations;
     console.log('UPDATING TRANSFORMATION:', transformations);
-    if (this.state.isStarted) {
+
+    if (this.state.isStarted()) {
       this.onStreamingDataUpdated();
     }
   };
