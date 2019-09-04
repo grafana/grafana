@@ -235,7 +235,6 @@ export class PanelQueryRunner {
       this.transformations = options.transformations;
 
       const data = await state.execute(ds, request);
-
       // Clear the delayed loading state timeout
       clearTimeout(loadingStateTimeoutId);
 
@@ -275,6 +274,14 @@ export class PanelQueryRunner {
     // Will cancel and disconnect any open requets
     this.state.cancel('destroy');
   }
+
+  setState = (state: PanelQueryState) => {
+    this.state = state;
+  };
+
+  getState = () => {
+    return this.state;
+  };
 }
 
 async function getDataSource(
