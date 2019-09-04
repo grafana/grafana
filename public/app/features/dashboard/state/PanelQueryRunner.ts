@@ -1,6 +1,5 @@
 // Libraries
-import cloneDeep from 'lodash/cloneDeep';
-// import throttle from 'lodash/throttle';
+import { isArray, cloneDeep } from 'lodash';
 import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
 
 // Services & Utils
@@ -10,9 +9,17 @@ import templateSrv from 'app/features/templating/template_srv';
 import { runRequest } from './RequestRunner';
 
 // Types
-import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
+import {
+  PanelData,
+  DataQuery,
+  ScopedVars,
+  DataQueryRequest,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataQueryResponseData,
+} from '@grafana/ui';
 
-import { TimeRange } from '@grafana/data';
+import { TimeRange, toDataFrame, DataFrame, isDataFrame, toLegacyResponseData, guessFieldTypes } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -64,34 +71,25 @@ export class PanelQueryRunner {
    * the results will be immediatly passed to the observer
    */
   subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.frames): Unsubscribable {
-    // if (format === PanelQueryRunnerFormat.legacy) {
-    //   this.state.sendLegacy = true;
-    // } else if (format === PanelQueryRunnerFormat.both) {
-    //   this.state.sendFrames = true;
-    //   this.state.sendLegacy = true;
-    // } else {
-    //   this.state.sendFrames = true;
-    // }
-    //
-    // // Send the last result
-    // if (this.state.isStarted()) {
-    //   observer.next(this.state.getDataAfterCheckingFormats());
-    // }
+    return this.subject.subscribe({
+      next: (data: PanelData) => {
+        let { series, legacy } = data;
 
-    return this.subject.subscribe(observer);
+        if (format === PanelQueryRunnerFormat.legacy || format === PanelQueryRunnerFormat.both) {
+          legacy = translateToLegacyData(series);
+        } else if (format === PanelQueryRunnerFormat.frames || format === PanelQueryRunnerFormat.both) {
+          series = getProcessedDataFrames(series);
+        }
+
+        observer.next({ ...data, series, legacy });
+      },
+    });
   }
 
   /**
    * Subscribe one runner to another
    */
   chain(runner: PanelQueryRunner): Unsubscribable {
-    // const { sendLegacy, sendFrames } = runner.state;
-    // let format = sendFrames ? PanelQueryRunnerFormat.frames : PanelQueryRunnerFormat.legacy;
-    //
-    // if (sendLegacy) {
-    //   format = PanelQueryRunnerFormat.both;
-    // }
-
     return this.subscribe(runner.subject);
   }
 
@@ -254,4 +252,33 @@ async function getDataSource(
     return datasource as DataSourceApi;
   }
   return await getDatasourceSrv().get(datasource as string, scopedVars);
+}
+
+function translateToLegacyData(data: DataQueryResponseData) {
+  return data.map((v: any) => {
+    if (isDataFrame(v)) {
+      return toLegacyResponseData(v);
+    }
+    return v;
+  });
+}
+
+/**
+ * All panels will be passed tables that have our best guess at colum type set
+ *
+ * This is also used by PanelChrome for snapshot support
+ */
+export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
+  if (!isArray(results)) {
+    return [];
+  }
+
+  const series: DataFrame[] = [];
+  for (const r of results) {
+    if (r) {
+      series.push(guessFieldTypes(toDataFrame(r)));
+    }
+  }
+
+  return series;
 }

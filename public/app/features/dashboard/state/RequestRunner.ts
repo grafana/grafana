@@ -4,7 +4,7 @@ import { flatten, map as lodashMap, isArray, isString } from 'lodash';
 import { map, catchError } from 'rxjs/operators';
 
 // Utils & Services
-import { LoadingState, toDataFrame, dateMath } from '@grafana/data';
+import { LoadingState, dateMath } from '@grafana/data';
 
 // Types
 import { DataSourceApi, DataQueryRequest, PanelData, DataQueryResponsePacket, DataQueryError } from '@grafana/ui';
@@ -38,16 +38,15 @@ export function processResponsePacket(packet: DataQueryResponsePacket, state: Ru
     };
   }
 
-  // Update DataFrame array
-  const dataFrames = flatten(
+  const combinedData = flatten(
     lodashMap(packets, (packet: DataQueryResponsePacket) => {
-      return packet.data.map(v => toDataFrame(v));
+      return packet.data;
     })
   );
 
   const panelData = {
     state: LoadingState.Done,
-    series: dataFrames,
+    series: combinedData,
     request: {
       ...request,
       range: timeRange,
@@ -140,32 +139,3 @@ export function processQueryError(err: any): DataQueryError {
   }
   return error;
 }
-//
-// function translateToLegacyData(data: DataQueryResponseData) {
-//   return data.map((v: any) => {
-//     if (isDataFrame(v)) {
-//       return toLegacyResponseData(v);
-//     }
-//     return v;
-//   });
-// }
-//
-// /**
-//  * All panels will be passed tables that have our best guess at colum type set
-//  *
-//  * This is also used by PanelChrome for snapshot support
-//  */
-// export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
-//   if (!isArray(results)) {
-//     return [];
-//   }
-//
-//   const series: DataFrame[] = [];
-//   for (const r of results) {
-//     if (r) {
-//       series.push(guessFieldTypes(toDataFrame(r)));
-//     }
-//   }
-//
-//   return series;
-// }
