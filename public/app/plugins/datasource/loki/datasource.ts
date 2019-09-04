@@ -88,7 +88,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       regexp,
       url,
       refId,
-      size: options.maxDataPoints || this.maxLines,
+      size: Math.min(options.maxDataPoints || Infinity, this.maxLines),
     };
   }
 
@@ -104,7 +104,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       regexp,
       start,
       end,
-      limit: options.maxDataPoints || this.maxLines,
+      limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
       refId,
     };
   }
