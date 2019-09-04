@@ -99,7 +99,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
     share()
   );
 
-  // Set loading state after no response
+  // If 50ms without a response emit a loading state
   return merge(
     timer(50).pipe(
       mapTo(state.panelData),
