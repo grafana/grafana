@@ -36,13 +36,14 @@ func (stub *TestMultiLDAP) Login(query *models.LoginUserQuery) (
 
 func (stub *TestMultiLDAP) User(login string) (
 	*models.ExternalUserInfo,
+	ldap.ServerConfig,
 	error,
 ) {
 	stub.userCalled = true
 	result := &models.ExternalUserInfo{
 		UserId: stub.ID,
 	}
-	return result, nil
+	return result, ldap.ServerConfig{}, nil
 }
 
 func prepareMiddleware(t *testing.T, req *http.Request, store *remotecache.RemoteCache) *AuthProxy {

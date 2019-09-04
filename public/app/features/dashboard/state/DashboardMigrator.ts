@@ -20,7 +20,7 @@ import {
   MIN_PANEL_HEIGHT,
   DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
-import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -641,6 +641,11 @@ function upgradePanelLink(link: any): DataLink {
 
   if (!url && link.dashUri) {
     url = `/dashboard/${link.dashUri}`;
+  }
+
+  // some models are incomplete and have no dashboard or dashUri
+  if (!url) {
+    url = '/';
   }
 
   if (link.keepTime) {

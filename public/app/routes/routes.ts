@@ -3,28 +3,9 @@ import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
 
 // Pages
-import ChangePasswordPage from 'app/features/profile/ChangePasswordPage';
-import ServerStats from 'app/features/admin/ServerStats';
-import AlertRuleList from 'app/features/alerting/AlertRuleList';
-import TeamPages from 'app/features/teams/TeamPages';
-import TeamList from 'app/features/teams/TeamList';
-import ApiKeys from 'app/features/api-keys/ApiKeysPage';
-import PluginListPage from 'app/features/plugins/PluginListPage';
-import FolderSettingsPage from 'app/features/folders/FolderSettingsPage';
-import FolderPermissions from 'app/features/folders/FolderPermissions';
 import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
-import DataSourcesListPage from 'app/features/datasources/DataSourcesListPage';
-import NewDataSourcePage from '../features/datasources/NewDataSourcePage';
-import UsersListPage from 'app/features/users/UsersListPage';
-import DataSourceDashboards from 'app/features/datasources/DataSourceDashboards';
-import DataSourceSettingsPage from '../features/datasources/settings/DataSourceSettingsPage';
-import OrgDetailsPage from '../features/org/OrgDetailsPage';
-import SoloPanelPage from '../features/dashboard/containers/SoloPanelPage';
-import DashboardPage from '../features/dashboard/containers/DashboardPage';
-import PluginPage from '../features/plugins/PluginPage';
-import AppRootPage from 'app/features/plugins/AppRootPage';
 import LdapPage from 'app/features/admin/LdapPage';
 import config from 'app/core/config';
 import { route, ILocationProvider } from 'angular';
@@ -40,6 +21,9 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
   // Routes here are guarded both here and server side for react-container routes or just on the server for angular
   // ones. That means angular ones could be navigated to in case there is a client side link some where.
 
+  const importDashboardPage = () =>
+    import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage');
+
   $routeProvider
     .when('/', {
       template: '<react-container />',
@@ -48,7 +32,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.Home,
       reloadOnSearch: false,
       resolve: {
-        component: () => DashboardPage,
+        component: importDashboardPage,
       },
     })
     .when('/d/:uid/:slug', {
@@ -57,7 +41,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
       resolve: {
-        component: () => DashboardPage,
+        component: importDashboardPage,
       },
     })
     .when('/d/:uid', {
@@ -66,7 +50,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       reloadOnSearch: false,
       routeInfo: DashboardRouteInfo.Normal,
       resolve: {
-        component: () => DashboardPage,
+        component: importDashboardPage,
       },
     })
     .when('/dashboard/:type/:slug', {
@@ -75,7 +59,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
       resolve: {
-        component: () => DashboardPage,
+        component: importDashboardPage,
       },
     })
     .when('/dashboard/new', {
@@ -84,7 +68,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.New,
       reloadOnSearch: false,
       resolve: {
-        component: () => DashboardPage,
+        component: importDashboardPage,
       },
     })
     .when('/d-solo/:uid/:slug', {
@@ -93,7 +77,8 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
       resolve: {
-        component: () => SoloPanelPage,
+        component: () =>
+          import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage'),
       },
     })
     .when('/dashboard-solo/:type/:slug', {
@@ -102,7 +87,8 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.Normal,
       reloadOnSearch: false,
       resolve: {
-        component: () => SoloPanelPage,
+        component: () =>
+          import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage'),
       },
     })
     .when('/dashboard/import', {
@@ -113,26 +99,29 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/datasources', {
       template: '<react-container />',
       resolve: {
-        component: () => DataSourcesListPage,
+        component: () =>
+          import(/* webpackChunkName: "DataSourcesListPage"*/ 'app/features/datasources/DataSourcesListPage'),
       },
     })
     .when('/datasources/edit/:id/', {
       template: '<react-container />',
       reloadOnSearch: false, // for tabs
       resolve: {
-        component: () => DataSourceSettingsPage,
+        component: () =>
+          import(/* webpackChunkName: "DataSourceSettingsPage"*/ '../features/datasources/settings/DataSourceSettingsPage'),
       },
     })
     .when('/datasources/edit/:id/dashboards', {
       template: '<react-container />',
       resolve: {
-        component: () => DataSourceDashboards,
+        component: () =>
+          import(/* webpackChunkName: "DataSourceDashboards"*/ 'app/features/datasources/DataSourceDashboards'),
       },
     })
     .when('/datasources/new', {
       template: '<react-container />',
       resolve: {
-        component: () => NewDataSourcePage,
+        component: () => import(/* webpackChunkName: "NewDataSourcePage"*/ '../features/datasources/NewDataSourcePage'),
       },
     })
     .when('/dashboards', {
@@ -148,13 +137,13 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/dashboards/f/:uid/:slug/permissions', {
       template: '<react-container />',
       resolve: {
-        component: () => FolderPermissions,
+        component: () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions'),
       },
     })
     .when('/dashboards/f/:uid/:slug/settings', {
       template: '<react-container />',
       resolve: {
-        component: () => FolderSettingsPage,
+        component: () => import(/* webpackChunkName: "FolderSettingsPage"*/ 'app/features/folders/FolderSettingsPage'),
       },
     })
     .when('/dashboards/f/:uid/:slug', {
@@ -180,13 +169,13 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
-        component: () => AppRootPage,
+        component: () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/AppRootPage'),
       },
     })
     .when('/org', {
       template: '<react-container />',
       resolve: {
-        component: () => OrgDetailsPage,
+        component: () => import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage'),
       },
     })
     .when('/org/new', {
@@ -196,7 +185,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/org/users', {
       template: '<react-container />',
       resolve: {
-        component: () => UsersListPage,
+        component: () => import(/* webpackChunkName: "UsersListPage" */ 'app/features/users/UsersListPage'),
       },
     })
     .when('/org/users/invite', {
@@ -208,14 +197,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       resolve: {
         roles: () => ['Editor', 'Admin'],
-        component: () => ApiKeys,
+        component: () => import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage'),
       },
     })
     .when('/org/teams', {
       template: '<react-container />',
       resolve: {
         roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
-        component: () => TeamList,
+        component: () => import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList'),
       },
     })
     .when('/org/teams/new', {
@@ -227,7 +216,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       resolve: {
         roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
-        component: () => TeamPages,
+        component: () => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages'),
       },
     })
     .when('/profile', {
@@ -238,7 +227,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/profile/password', {
       template: '<react-container />',
       resolve: {
-        component: () => ChangePasswordPage,
+        component: () => import(/* webPackChunkName: "ChangePasswordPage" */ 'app/features/profile/ChangePasswordPage'),
       },
     })
     .when('/profile/select-org', {
@@ -282,7 +271,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/admin/stats', {
       template: '<react-container />',
       resolve: {
-        component: () => ServerStats,
+        component: () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats'),
       },
     })
     .when('/admin/ldap', {
@@ -327,14 +316,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/plugins', {
       template: '<react-container />',
       resolve: {
-        component: () => PluginListPage,
+        component: () => import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage'),
       },
     })
     .when('/plugins/:pluginId/', {
       template: '<react-container />',
       reloadOnSearch: false, // tabs from query parameters
       resolve: {
-        component: () => PluginPage,
+        component: () => import(/* webpackChunkName: "PluginPage" */ '../features/plugins/PluginPage'),
       },
     })
     .when('/plugins/:pluginId/page/:slug', {
@@ -354,7 +343,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
-        component: () => AlertRuleList,
+        component: () => import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList'),
       },
     })
     .when('/alerting/notifications', {

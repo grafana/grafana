@@ -1,5 +1,5 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { ReducerID, Threshold, DataFrameHelper } from '@grafana/data';
+import { ReducerID, Threshold, toDataFrame } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
@@ -34,7 +34,7 @@ describe('FieldDisplay', () => {
   // Simple test dataset
   const options: GetFieldDisplayValuesOptions = {
     data: [
-      new DataFrameHelper({
+      toDataFrame({
         name: 'Series Name',
         fields: [
           { name: 'Field 1', values: ['a', 'b', 'c'] },
