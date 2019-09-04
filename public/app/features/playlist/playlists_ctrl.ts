@@ -7,6 +7,17 @@ export class PlaylistsCtrl {
   playlists: any;
   navModel: any;
 
+  emptyListCta = {
+    title: 'There are no playlists created yet',
+    buttonIcon: 'fa fa-plus',
+    buttonLink: 'playlists/create',
+    buttonTitle: ' Create Playlist',
+    proTip: 'You can use playlists to cycle dashboards on TVs without user control',
+    proTipLink: 'http://docs.grafana.org/reference/playlist/',
+    proTipLinkTitle: 'Learn more',
+    proTipTarget: '_blank',
+  };
+
   /** @ngInject */
   constructor(private $scope: any, private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
