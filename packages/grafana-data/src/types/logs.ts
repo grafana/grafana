@@ -49,8 +49,6 @@ export interface LogRowModel {
   timeLocal: string;
   timeUtc: string;
   uniqueLabels?: Labels;
-  // Used for changing the styling when live tailing
-  fresh?: boolean;
 }
 
 export interface LogsModel {
