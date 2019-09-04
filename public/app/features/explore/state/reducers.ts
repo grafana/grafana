@@ -588,6 +588,10 @@ export const processQueryResponse = (
   const { request, state: loadingState, series, legacy, error } = response;
 
   if (error) {
+    if (error.cancelled) {
+      return state;
+    }
+
     // For Angular editors
     state.eventBridge.emit('data-error', error);
 
