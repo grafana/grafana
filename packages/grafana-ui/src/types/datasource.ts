@@ -401,7 +401,6 @@ export interface DataQueryResponse {
 export interface DataQueryResponsePacket {
   data: DataQueryResponseData[];
   key?: string;
-  isDelta?: boolean;
 }
 
 export interface DataQuery {
