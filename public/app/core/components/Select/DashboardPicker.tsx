@@ -38,7 +38,7 @@ export class DashboardPicker extends PureComponent<Props, State> {
       .then((result: DashboardSearchHit[]) => {
         const dashboards = result.map((item: DashboardSearchHit) => {
           return {
-            id: item.uid,
+            id: item.id,
             value: item.id,
             label: `${item.folderTitle ? item.folderTitle : 'General'}/${item.title}`,
           };
