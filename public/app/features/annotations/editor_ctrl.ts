@@ -4,6 +4,7 @@ import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
 import DatasourceSrv from '../plugins/datasource_srv';
+import appEvents from 'app/core/app_events';
 
 export class AnnotationsEditorCtrl {
   mode: any;
@@ -97,6 +98,11 @@ export class AnnotationsEditorCtrl {
   }
 
   add() {
+    const sameName: any = _.find(this.annotations, { name: this.currentAnnotation.name });
+    if (sameName) {
+      appEvents.emit('alert-warning', ['Validation', 'Annotations with the same name already exists']);
+      return;
+    }
     this.annotations.push(this.currentAnnotation);
     this.reset();
     this.mode = 'list';
