@@ -13,8 +13,8 @@ import { LdapUserGroups } from './LdapUserGroups';
 import { LdapUserTeams } from './LdapUserTeams';
 import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
-import { clearError } from './state/actions';
 import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo } from 'app/types';
+import { loadLdapState, clearError } from './state/actions';
 
 interface Props {
   navModel: NavModel;
@@ -22,6 +22,7 @@ interface Props {
   ldapSyncInfo: SyncInfo;
   ldapError: LdapError;
 
+  loadLdapState: typeof loadLdapState;
   clearError: typeof clearError;
 }
 
@@ -33,6 +34,16 @@ export class LdapPage extends PureComponent<Props, State> {
   state = {
     isLoading: false,
   };
+
+  componentDidMount() {
+    this.fetchLDAPStatus();
+  }
+
+  async fetchLDAPStatus() {
+    const { loadLdapState } = this.props;
+    const ldapStatus = await loadLdapState();
+    console.log(ldapStatus);
+  }
 
   search = (event: any) => {
     event.preventDefault();
@@ -62,34 +73,38 @@ export class LdapPage extends PureComponent<Props, State> {
     return (
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
-          <div className="grafana-info-box">
-            LDAP server connected
-            <i className="fa fa-fw fa-check text-success pull-right" />
-          </div>
-          {config.buildInfo.isEnterprise && (
-            <LdapSyncInfo headingStyle={headingStyle} tableStyle={tableStyle} ldapSyncInfo={ldapSyncInfo} />
-          )}
-          <h4 className={headingStyle}>User mapping</h4>
-          <form onSubmit={this.search} className={`${searchStyle} gf-form-inline`}>
-            <FormField label="User name" labelWidth={8} inputWidth={30} type="text" />
-            <button type="submit" className="btn btn-primary">
-              Test LDAP mapping
-            </button>
-          </form>
-          {ldapError && ldapError.title && (
-            <AlertBox
-              title={ldapError.title}
-              severity={AppNotificationSeverity.Error}
-              body={ldapError.body}
-              onClose={this.onClearError}
-            />
-          )}
-          {ldapUser.permissions && [
-            <LdapUserPermissions className={tableStyle} key="permissions" permissions={ldapUser.permissions} />,
-            <LdapUserMappingInfo className={tableStyle} key="mappingInfo" info={ldapUser.info} />,
-            ldapUser.roles.length > 0 && <LdapUserGroups className={tableStyle} key="groups" groups={ldapUser.roles} />,
-            ldapUser.teams.length > 0 && <LdapUserTeams className={tableStyle} key="teams" teams={ldapUser.teams} />,
-          ]}
+          <>
+            <div className="grafana-info-box">
+              LDAP server connected
+              <i className="fa fa-fw fa-check text-success pull-right" />
+            </div>
+            {config.buildInfo.isEnterprise && (
+              <LdapSyncInfo headingStyle={headingStyle} tableStyle={tableStyle} ldapSyncInfo={ldapSyncInfo} />
+            )}
+            <h4 className={headingStyle}>User mapping</h4>
+            <form onSubmit={this.search} className={`${searchStyle} gf-form-inline`}>
+              <FormField label="User name" labelWidth={8} inputWidth={30} type="text" />
+              <button type="submit" className="btn btn-primary">
+                Test LDAP mapping
+              </button>
+            </form>
+            {ldapError && ldapError.title && (
+              <AlertBox
+                title={ldapError.title}
+                severity={AppNotificationSeverity.Error}
+                body={ldapError.body}
+                onClose={this.onClearError}
+              />
+            )}
+            {ldapUser.permissions && [
+              <LdapUserPermissions className={tableStyle} key="permissions" permissions={ldapUser.permissions} />,
+              <LdapUserMappingInfo className={tableStyle} key="mappingInfo" info={ldapUser.info} />,
+              ldapUser.roles.length > 0 && (
+                <LdapUserGroups className={tableStyle} key="groups" groups={ldapUser.roles} />
+              ),
+              ldapUser.teams.length > 0 && <LdapUserTeams className={tableStyle} key="teams" teams={ldapUser.teams} />,
+            ]}
+          </>
         </Page.Contents>
       </Page>
     );
@@ -103,9 +118,14 @@ const mapStateToProps = (state: StoreState) => ({
   ldapError: state.ldap.ldapError,
 });
 
+const mapDispatchToProps = {
+  loadLdapState,
+  clearError,
+};
+
 export default hot(module)(
   connect(
     mapStateToProps,
-    { clearError }
+    mapDispatchToProps
   )(LdapPage)
 );
