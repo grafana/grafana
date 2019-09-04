@@ -569,8 +569,7 @@ jobs:
       - run:
           name: Publish to Grafana.com
           command: |
-            rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
-            rm dist/*latest*
+            rm dist/*latest* || true
             cd dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
 
   deploy-release:
