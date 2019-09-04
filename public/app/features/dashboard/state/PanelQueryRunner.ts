@@ -6,7 +6,7 @@ import { ReplaySubject, Unsubscribable, PartialObserver } from 'rxjs';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-import { runRequest } from './RequestRunner';
+import { runRequest } from './runRequest';
 
 // Types
 import {
