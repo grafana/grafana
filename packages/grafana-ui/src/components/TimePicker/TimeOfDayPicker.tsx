@@ -6,9 +6,10 @@ interface Props {
   onSelected: (value: any) => void;
   value: DateTime;
   showHour?: boolean;
+  minuteStep?: number;
 }
 
-export const TimeOfDayPicker: FC<Props> = ({ showHour = true, onSelected, value }) => {
+export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, onSelected, value }) => {
   return (
     <div>
       <RcTimePicker
@@ -18,6 +19,7 @@ export const TimeOfDayPicker: FC<Props> = ({ showHour = true, onSelected, value 
         showSecond={false}
         value={dateTimeAsMoment(value)}
         showHour={showHour}
+        minuteStep={minuteStep}
       />
     </div>
   );

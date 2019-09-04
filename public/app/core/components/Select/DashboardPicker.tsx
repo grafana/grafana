@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 import { AsyncSelect } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 import { debounce } from 'lodash';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchHit, DashboardDTO } from 'app/types';
@@ -7,6 +8,7 @@ import { DashboardSearchHit, DashboardDTO } from 'app/types';
 export interface Props {
   className?: string;
   onSelected: (dashboard: DashboardDTO) => void;
+  current: SelectableValue<string>;
 }
 
 export interface State {
@@ -48,7 +50,7 @@ export class DashboardPicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { className, onSelected } = this.props;
+    const { className, onSelected, current } = this.props;
     const { isLoading } = this.state;
 
     return (
@@ -63,6 +65,7 @@ export class DashboardPicker extends PureComponent<Props, State> {
             onChange={onSelected}
             placeholder="Select dashboard"
             noOptionsMessage={() => 'No dashboards found'}
+            value={current}
           />
         </div>
       </div>
