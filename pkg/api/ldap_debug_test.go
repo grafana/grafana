@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -21,6 +22,12 @@ type LDAPMock struct {
 
 var userSearchResult *models.ExternalUserInfo
 var userSearchConfig ldap.ServerConfig
+var pingResult []*multildap.ServerStatus
+var pingError error
+
+func (m *LDAPMock) Ping() ([]*multildap.ServerStatus, error) {
+	return pingResult, pingError
+}
 
 func (m *LDAPMock) Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
 	return &models.ExternalUserInfo{}, nil
@@ -35,10 +42,18 @@ func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConf
 	return userSearchResult, userSearchConfig, nil
 }
 
+//***
+// GetUserFromLDAP tests
+//***
+
 func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 	t.Helper()
 
 	sc := setupScenarioContext(requestURL)
+
+	ldap := setting.LDAPEnabled
+	setting.LDAPEnabled = true
+	defer func() { setting.LDAPEnabled = ldap }()
 
 	hs := &HTTPServer{Cfg: setting.NewCfg()}
 
@@ -141,7 +156,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 	var expectedJSON interface{}
 	_ = json.Unmarshal([]byte(expected), &expectedJSON)
 
-	assert.Equal(t, jsonResponse, expectedJSON)
+	assert.Equal(t, expectedJSON, jsonResponse)
 }
 
 func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
@@ -219,5 +234,70 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 	var expectedJSON interface{}
 	_ = json.Unmarshal([]byte(expected), &expectedJSON)
 
-	assert.Equal(t, jsonResponse, expectedJSON)
+	assert.Equal(t, expectedJSON, jsonResponse)
+}
+
+//***
+// GetLDAPStatus tests
+//***
+
+func getLDAPStatusContext(t *testing.T) *scenarioContext {
+	t.Helper()
+
+	requestURL := "/api/admin/ldap/status"
+	sc := setupScenarioContext(requestURL)
+
+	ldap := setting.LDAPEnabled
+	setting.LDAPEnabled = true
+	defer func() { setting.LDAPEnabled = ldap }()
+
+	hs := &HTTPServer{Cfg: setting.NewCfg()}
+
+	sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.context = c
+		return hs.GetLDAPStatus(c)
+	})
+
+	sc.m.Get("/api/admin/ldap/status", sc.defaultHandler)
+
+	sc.resp = httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, requestURL, nil)
+	sc.req = req
+	sc.exec()
+
+	return sc
+}
+
+func TestGetLDAPStatusApiEndpoint(t *testing.T) {
+	pingResult = []*multildap.ServerStatus{
+		{Host: "10.0.0.3", Port: 361, Available: true, Error: nil},
+		{Host: "10.0.0.3", Port: 362, Available: true, Error: nil},
+		{Host: "10.0.0.5", Port: 361, Available: false, Error: errors.New("something is awfully wrong")},
+	}
+
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	sc := getLDAPStatusContext(t)
+
+	require.Equal(t, http.StatusOK, sc.resp.Code)
+	jsonResponse, err := getJSONbody(sc.resp)
+	assert.Nil(t, err)
+
+	expected := `
+	[
+		{ "host": "10.0.0.3", "port": 361, "available": true, "error": "" },
+		{ "host": "10.0.0.3", "port": 362, "available": true, "error": "" },
+		{ "host": "10.0.0.5", "port": 361, "available": false, "error": "something is awfully wrong" }
+	]
+	`
+	var expectedJSON interface{}
+	_ = json.Unmarshal([]byte(expected), &expectedJSON)
+
+	assert.Equal(t, expectedJSON, jsonResponse)
 }
