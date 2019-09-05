@@ -23,7 +23,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     label: logs-row-fresh;
     color: ${theme.colors.text};
     background-color: ${selectThemeVariant(
-      { light: theme.background.liveLogs, dark: theme.background.liveLogs },
+      { light: theme.background.logsFresh, dark: theme.background.logsFresh },
       theme.type
     )};
   `,

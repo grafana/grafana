@@ -74,7 +74,7 @@ exports[`Render should render with base threshold 1`] = `
                           Object {
                             "background": Object {
                               "dropdown": "#1f1f20",
-                              "liveLogs": "#1250B0",
+                              "logsFresh": "#1250B0",
                               "scrollbar": "#343436",
                               "scrollbar2": "#343436",
                             },
@@ -236,7 +236,7 @@ exports[`Render should render with base threshold 1`] = `
                                 Object {
                                   "background": Object {
                                     "dropdown": "#1f1f20",
-                                    "liveLogs": "#1250B0",
+                                    "logsFresh": "#1250B0",
                                     "scrollbar": "#343436",
                                     "scrollbar2": "#343436",
                                   },
