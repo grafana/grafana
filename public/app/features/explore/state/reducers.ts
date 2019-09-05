@@ -12,7 +12,7 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState } from '@grafana/data';
-import { DataQuery, PanelData } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -264,25 +264,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: updateDatasourceInstanceAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance } = action.payload;
-      // Capabilities
-      const supportsGraph = datasourceInstance.meta.metrics;
-      const supportsLogs = datasourceInstance.meta.logs;
-
-      let mode = state.mode || ExploreMode.Metrics;
-      const supportedModes: ExploreMode[] = [];
-
-      if (supportsGraph) {
-        supportedModes.push(ExploreMode.Metrics);
-      }
-
-      if (supportsLogs) {
-        supportedModes.push(ExploreMode.Logs);
-      }
-
-      if (supportedModes.length === 1) {
-        mode = supportedModes[0];
-      }
-
+      const [supportedModes, mode] = getModesForDatasource(datasourceInstance, state.mode);
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
       stopQueryState(state.queryState, 'Datasource changed');
@@ -586,7 +568,6 @@ export const processQueryResponse = (
 ): ExploreItemState => {
   const { response } = action.payload;
   const { request, state: loadingState, series, legacy, error } = response;
-  const replacePreviousResults = action.type === queryEndedAction.type;
 
   if (error) {
     if (error.cancelled) {
@@ -615,7 +596,7 @@ export const processQueryResponse = (
   }
 
   const latency = request.endTime - request.startTime;
-  const processor = new ResultProcessor(state, replacePreviousResults, series);
+  const processor = new ResultProcessor(state, series);
 
   // For Angular editors
   state.eventBridge.emit('data-received', legacy);
@@ -672,6 +653,31 @@ export const updateChildRefreshState = (
       ui,
     },
   };
+};
+
+const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMode): [ExploreMode[], ExploreMode] => {
+  // Temporary hack here. We want Loki to work in dashboards for which it needs to have metrics = true which is weird
+  // for Explore.
+  // TODO: need to figure out a better way to handle this situation
+  const supportsGraph = dataSource.meta.name === 'Loki' ? false : dataSource.meta.metrics;
+  const supportsLogs = dataSource.meta.logs;
+
+  let mode = currentMode || ExploreMode.Metrics;
+  const supportedModes: ExploreMode[] = [];
+
+  if (supportsGraph) {
+    supportedModes.push(ExploreMode.Metrics);
+  }
+
+  if (supportsLogs) {
+    supportedModes.push(ExploreMode.Logs);
+  }
+
+  if (supportedModes.length === 1) {
+    mode = supportedModes[0];
+  }
+
+  return [supportedModes, mode];
 };
 
 /**
