@@ -32,7 +32,6 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   };
 
   onTransformationChange = (idx: number, config: DataTransformerConfig) => {
-    console.log('CHANGING:', idx, config);
     const { transformations, onChange } = this.props;
     transformations[idx] = config;
     onChange(transformations);
@@ -40,7 +39,6 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   };
 
   onTransformationRemove = (idx: number) => {
-    console.log('Removing:', idx);
     const { transformations, onChange } = this.props;
     transformations.splice(idx, 1);
     onChange(transformations);
@@ -90,7 +88,6 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
 
           if (transformationUI) {
             editor = React.createElement(transformationUI.component, {
-              key: `${t.id}-${i}`, // this key is making troubles when the same transformers are next to each other and one is removed
               options: { ...transformationUI.transformer.defaultOptions, ...t.options },
               input,
               onChange: (options: any) => {
@@ -104,6 +101,7 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
 
           return (
             <TransformationRow
+              key={`${t.id}-${i}`}
               input={input || []}
               onRemove={() => this.onTransformationRemove(i)}
               editor={editor}
