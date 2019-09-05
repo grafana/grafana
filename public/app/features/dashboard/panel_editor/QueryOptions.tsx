@@ -71,7 +71,7 @@ export class QueryOptions extends PureComponent<Props, State> {
       tooltipInfo: (
         <>
           The maximum data points the query should return. For graphs this is automatically set to one data point per
-          pixel.
+          pixel. For some data sources this can also be capped in the datasource settings page.
         </>
       ),
     },

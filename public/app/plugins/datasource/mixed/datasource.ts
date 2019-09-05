@@ -17,17 +17,23 @@ class MixedDatasource extends DataSourceApi<DataQuery> {
         return Promise.resolve([]);
       }
 
-      const filtered = _.filter(targets, (t: DataQuery) => {
-        return !t.hide;
-      });
-
-      if (filtered.length === 0) {
+      if (targets.length === 0) {
         return { data: [] };
       }
 
       return this.datasourceSrv.get(dsName).then(ds => {
+        // Remove any unused hidden queries
+        if (!ds.meta.hiddenQueries) {
+          targets = _.filter(targets, (t: DataQuery) => {
+            return !t.hide;
+          });
+          if (targets.length === 0) {
+            return { data: [] };
+          }
+        }
+
         const opt = _.cloneDeep(options);
-        opt.targets = filtered;
+        opt.targets = targets;
         return ds.query(opt);
       });
     });

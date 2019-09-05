@@ -30,6 +30,7 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
     showingLogs: true,
     dedupStrategy: LogsDedupStrategy.none,
   },
+  originPanelId: undefined,
 };
 
 describe('state functions', () => {

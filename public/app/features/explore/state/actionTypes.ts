@@ -1,11 +1,10 @@
 // Types
 import { Emitter } from 'app/core/core';
-import { DataQuery, DataSourceSelectItem, DataSourceApi, QueryFixAction, DataQueryError } from '@grafana/ui';
+import { DataQuery, DataSourceSelectItem, DataSourceApi, QueryFixAction, PanelData } from '@grafana/ui';
 
-import { LogLevel, TimeRange, LogsModel, LoadingState, AbsoluteTimeRange, GraphSeriesXY } from '@grafana/data';
+import { LogLevel, TimeRange, LoadingState, AbsoluteTimeRange } from '@grafana/data';
 import { ExploreId, ExploreItemState, HistoryItem, ExploreUIState, ExploreMode } from 'app/types/explore';
-import { actionCreatorFactory, noPayloadActionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
-import TableModel from 'app/core/table_model';
+import { actionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFactory';
 
 /**  Higher order actions
  *
@@ -62,6 +61,10 @@ export interface ClearQueriesPayload {
   exploreId: ExploreId;
 }
 
+export interface ClearOriginPayload {
+  exploreId: ExploreId;
+}
+
 export interface ClearRefreshIntervalPayload {
   exploreId: ExploreId;
 }
@@ -79,11 +82,7 @@ export interface InitializeExplorePayload {
   range: TimeRange;
   mode: ExploreMode;
   ui: ExploreUIState;
-}
-
-export interface LoadDatasourceFailurePayload {
-  exploreId: ExploreId;
-  error: string;
+  originPanelId: number;
 }
 
 export interface LoadDatasourceMissingPayload {
@@ -120,22 +119,13 @@ export interface ModifyQueriesPayload {
   modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
 }
 
-export interface QueryFailurePayload {
-  exploreId: ExploreId;
-  response: DataQueryError;
-}
-
 export interface QueryStartPayload {
   exploreId: ExploreId;
 }
 
-export interface QuerySuccessPayload {
+export interface QueryEndedPayload {
   exploreId: ExploreId;
-  latency: number;
-  loadingState: LoadingState;
-  graphResult: GraphSeriesXY[];
-  tableResult: TableModel;
-  logsResult: LogsModel;
+  response: PanelData;
 }
 
 export interface HistoryUpdatedPayload {
@@ -201,15 +191,6 @@ export interface LoadExploreDataSourcesPayload {
   exploreDatasources: DataSourceSelectItem[];
 }
 
-export interface RunQueriesPayload {
-  exploreId: ExploreId;
-}
-
-export interface ResetQueryErrorPayload {
-  exploreId: ExploreId;
-  refIds: string[];
-}
-
 export interface SetUrlReplacedPayload {
   exploreId: ExploreId;
 }
@@ -225,15 +206,19 @@ export interface ChangeLoadingStatePayload {
   loadingState: LoadingState;
 }
 
+export interface SetPausedStatePayload {
+  exploreId: ExploreId;
+  isPaused: boolean;
+}
+
+export interface ResetExplorePayload {
+  force?: boolean;
+}
+
 /**
  * Adds a query row after the row with the given index.
  */
 export const addQueryRowAction = actionCreatorFactory<AddQueryRowPayload>('explore/ADD_QUERY_ROW').create();
-
-/**
- * Loads a new datasource identified by the given name.
- */
-export const changeDatasourceAction = noPayloadActionCreatorFactory('explore/CHANGE_DATASOURCE').create();
 
 /**
  * Change the mode of Explore.
@@ -263,6 +248,11 @@ export const changeRefreshIntervalAction = actionCreatorFactory<ChangeRefreshInt
  * Clear all queries and results.
  */
 export const clearQueriesAction = actionCreatorFactory<ClearQueriesPayload>('explore/CLEAR_QUERIES').create();
+
+/**
+ * Clear origin panel id.
+ */
+export const clearOriginAction = actionCreatorFactory<ClearOriginPayload>('explore/CLEAR_ORIGIN').create();
 
 /**
  * Highlight expressions in the log results
@@ -309,33 +299,18 @@ export const loadDatasourceReadyAction = actionCreatorFactory<LoadDatasourceRead
  */
 export const modifyQueriesAction = actionCreatorFactory<ModifyQueriesPayload>('explore/MODIFY_QUERIES').create();
 
-/**
- * Mark a query transaction as failed with an error extracted from the query response.
- * The transaction will be marked as `done`.
- */
-export const queryFailureAction = actionCreatorFactory<QueryFailurePayload>('explore/QUERY_FAILURE').create();
-
 export const queryStartAction = actionCreatorFactory<QueryStartPayload>('explore/QUERY_START').create();
 
-/**
- * Complete a query transaction, mark the transaction as `done` and store query state in URL.
- * If the transaction was started by a scanner, it keeps on scanning for more results.
- * Side-effect: the query is stored in localStorage.
- * @param exploreId Explore area
- * @param transactionId ID
- * @param result Response from `datasourceInstance.query()`
- * @param latency Duration between request and response
- * @param queries Queries from all query rows
- * @param datasourceId Origin datasource instance, used to discard results if current datasource is different
- */
-export const querySuccessAction = actionCreatorFactory<QuerySuccessPayload>('explore/QUERY_SUCCESS').create();
+export const queryEndedAction = actionCreatorFactory<QueryEndedPayload>('explore/QUERY_ENDED').create();
+
+export const queryStreamUpdatedAction = actionCreatorFactory<QueryEndedPayload>(
+  'explore/QUERY_STREAM_UPDATED'
+).create();
 
 /**
  * Remove query row of the given index, as well as associated query results.
  */
 export const removeQueryRowAction = actionCreatorFactory<RemoveQueryRowPayload>('explore/REMOVE_QUERY_ROW').create();
-
-export const runQueriesAction = actionCreatorFactory<RunQueriesPayload>('explore/RUN_QUERIES').create();
 
 /**
  * Start a scan for more results using the given scanner.
@@ -394,7 +369,7 @@ export const toggleLogLevelAction = actionCreatorFactory<ToggleLogLevelPayload>(
 /**
  * Resets state for explore.
  */
-export const resetExploreAction = noPayloadActionCreatorFactory('explore/RESET_EXPLORE').create();
+export const resetExploreAction = actionCreatorFactory<ResetExplorePayload>('explore/RESET_EXPLORE').create();
 export const queriesImportedAction = actionCreatorFactory<QueriesImportedPayload>('explore/QueriesImported').create();
 export const testDataSourcePendingAction = actionCreatorFactory<TestDatasourcePendingPayload>(
   'explore/TEST_DATASOURCE_PENDING'
@@ -411,8 +386,6 @@ export const loadExploreDatasources = actionCreatorFactory<LoadExploreDataSource
 
 export const historyUpdatedAction = actionCreatorFactory<HistoryUpdatedPayload>('explore/HISTORY_UPDATED').create();
 
-export const resetQueryErrorAction = actionCreatorFactory<ResetQueryErrorPayload>('explore/RESET_QUERY_ERROR').create();
-
 export const setUrlReplacedAction = actionCreatorFactory<SetUrlReplacedPayload>('explore/SET_URL_REPLACED').create();
 
 export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explore/CHANGE_RANGE').create();
@@ -420,6 +393,8 @@ export const changeRangeAction = actionCreatorFactory<ChangeRangePayload>('explo
 export const changeLoadingStateAction = actionCreatorFactory<ChangeLoadingStatePayload>(
   'changeLoadingStateAction'
 ).create();
+
+export const setPausedStateAction = actionCreatorFactory<SetPausedStatePayload>('explore/SET_PAUSED_STATE').create();
 
 export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>

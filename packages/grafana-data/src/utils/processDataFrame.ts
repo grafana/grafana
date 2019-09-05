@@ -19,7 +19,7 @@ import {
 } from '../types/index';
 import { isDateTime } from './moment_wrapper';
 import { ArrayVector, SortedVector } from './vector';
-import { DataFrameHelper } from './dataFrameHelper';
+import { MutableDataFrame } from './dataFrameHelper';
 import { deprecationWarning } from './deprecationWarning';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
@@ -221,7 +221,7 @@ export const toDataFrame = (data: any): DataFrame => {
   if (data.hasOwnProperty('fields')) {
     // @deprecated -- remove in 6.5
     if (data.hasOwnProperty('rows')) {
-      const v = new DataFrameHelper(data as DataFrameDTO);
+      const v = new MutableDataFrame(data as DataFrameDTO);
       const rows = data.rows as any[][];
       for (let i = 0; i < rows.length; i++) {
         v.appendRow(rows[i]);
@@ -234,7 +234,9 @@ export const toDataFrame = (data: any): DataFrame => {
     if (data.hasOwnProperty('length')) {
       return data as DataFrame;
     }
-    return new DataFrameHelper(data as DataFrameDTO);
+
+    // This will convert the array values into Vectors
+    return new MutableDataFrame(data as DataFrameDTO);
   }
   if (data.hasOwnProperty('datapoints')) {
     return convertTimeSeriesToDataFrame(data);
@@ -343,6 +345,35 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
     }),
   };
 }
+
+/**
+ * Returns a copy with all values reversed
+ */
+export function reverseDataFrame(data: DataFrame): DataFrame {
+  return {
+    ...data,
+    fields: data.fields.map(f => {
+      const copy = [...f.values.toArray()];
+      copy.reverse();
+      return {
+        ...f,
+        values: new ArrayVector(copy),
+      };
+    }),
+  };
+}
+
+export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
+  for (let i = 0; i < series.fields.length; i++) {
+    if (series.fields[i].type === FieldType.time) {
+      return {
+        timeField: series.fields[i],
+        timeIndex: i,
+      };
+    }
+  }
+  return {};
+};
 
 /**
  * Wrapper to get an array from each field value

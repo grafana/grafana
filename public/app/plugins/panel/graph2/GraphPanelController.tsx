@@ -35,7 +35,7 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
 
     this.state = {
       graphSeriesModel: getGraphSeriesModel(
-        props.data,
+        props.data.series,
         props.options.series,
         props.options.graph,
         props.options.legend
@@ -47,7 +47,7 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     return {
       ...state,
       graphSeriesModel: getGraphSeriesModel(
-        props.data,
+        props.data.series,
         props.options.series,
         props.options.graph,
         props.options.legend

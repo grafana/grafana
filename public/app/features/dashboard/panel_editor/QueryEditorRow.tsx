@@ -11,7 +11,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, ErrorBoundaryAlert } from '@grafana/ui';
 import { TimeRange, LoadingState } from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
 
@@ -257,7 +257,9 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             </button>
           </div>
         </div>
-        <div className={bodyClasses}>{this.renderPluginEditor()}</div>
+        <div className={bodyClasses}>
+          <ErrorBoundaryAlert>{this.renderPluginEditor()}</ErrorBoundaryAlert>
+        </div>
       </div>
     );
   }

@@ -218,7 +218,7 @@ export class PanelQueryRunner {
   }
 
   /**
-   * Called after every streaming event.  This should be throttled so we
+   * Called after every streaming event. This should be throttled so we
    * avoid accidentally overwhelming the browser
    */
   onStreamingDataUpdated = throttle(

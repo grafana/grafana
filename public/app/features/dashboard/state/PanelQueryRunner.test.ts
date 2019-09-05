@@ -1,7 +1,7 @@
 import { PanelQueryRunner, QueryRunnerOptions } from './PanelQueryRunner';
 import { PanelData, DataQueryRequest, DataStreamObserver, DataStreamState, ScopedVars } from '@grafana/ui';
 
-import { LoadingState, DataFrameHelper } from '@grafana/data';
+import { LoadingState, MutableDataFrame } from '@grafana/data';
 import { dateTime } from '@grafana/data';
 import { SHARED_DASHBODARD_QUERY } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
@@ -200,7 +200,7 @@ describe('PanelQueryRunner', () => {
         state: LoadingState.Streaming,
         key: 'test-stream-1',
         data: [
-          new DataFrameHelper({
+          new MutableDataFrame({
             fields: [],
             name: 'I am a magic stream',
           }),
