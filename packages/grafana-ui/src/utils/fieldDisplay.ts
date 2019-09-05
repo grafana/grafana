@@ -1,20 +1,32 @@
+import {
+  ReducerID,
+  reduceField,
+  FieldType,
+  DataFrame,
+  FieldConfig,
+  DisplayValue,
+  GraphSeriesValue,
+  DataFrameView,
+  getTimeField,
+} from '@grafana/data';
+
 import toNumber from 'lodash/toNumber';
 import toString from 'lodash/toString';
 
-import { DisplayValue, GrafanaTheme, InterpolateFunction, ScopedVars, GraphSeriesValue } from '../types/index';
-import { getDisplayProcessor } from './displayValue';
+import { GrafanaTheme, InterpolateFunction, ScopedVars } from '../types/index';
+import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from './flotPairs';
-import { ReducerID, reduceField, FieldType, NullValueMode, DataFrame, Field } from '@grafana/data';
+import { DataLinkBuiltInVars } from '../utils/dataLinks';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
   limit?: number; // if showing all values limit
   calcs: string[]; // when !values, pick one value for the whole field
 
-  defaults: Partial<Field>; // Use these values unless otherwise stated
-  override: Partial<Field>; // Set these values regardless of the source
+  defaults: FieldConfig; // Use these values unless otherwise stated
+  override: FieldConfig; // Set these values regardless of the source
 }
-
+// TODO: use built in variables, same as for data links?
 export const VAR_SERIES_NAME = '__series_name';
 export const VAR_FIELD_NAME = '__field_name';
 export const VAR_CALC = '__calc';
@@ -50,9 +62,15 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
 }
 
 export interface FieldDisplay {
-  field: Field;
+  name: string; // The field name (title is in display)
+  field: FieldConfig;
   display: DisplayValue;
   sparkline?: GraphSeriesValue[][];
+
+  // Expose to the original values for delayed inspection (DataLinks etc)
+  view?: DataFrameView;
+  column?: number; // The field column index
+  row?: number; // only filled in when the value is from a row (ie, not a reduction)
 }
 
 export interface GetFieldDisplayValuesOptions {
@@ -66,7 +84,7 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { data, replaceVariables, fieldOptions, sparkline } = options;
+  const { data, replaceVariables, fieldOptions } = options;
   const { defaults, override } = fieldOptions;
   const calcs = fieldOptions.calcs.length ? fieldOptions.calcs : [ReducerID.last];
 
@@ -86,59 +104,61 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           name: series.refId ? series.refId : `Series[${s}]`,
         };
       }
-      scopedVars[VAR_SERIES_NAME] = { text: 'Series', value: series.name };
 
-      let timeColumn = -1;
-      if (sparkline) {
-        for (let i = 0; i < series.fields.length; i++) {
-          if (series.fields[i].type === FieldType.time) {
-            timeColumn = i;
-            break;
-          }
-        }
-      }
+      scopedVars[DataLinkBuiltInVars.seriesName] = { text: 'Series', value: series.name };
+
+      const { timeField } = getTimeField(series);
+      const view = new DataFrameView(series);
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
-        const field = getFieldProperties(defaults, series.fields[i], override);
+        const field = series.fields[i];
 
         // Show all number fields
         if (field.type !== FieldType.number) {
           continue;
         }
+        const config = getFieldProperties(defaults, field.config || {}, override);
 
-        if (!field.name) {
-          field.name = `Field[${s}]`; // it is a copy, so safe to edit
+        let name = field.name;
+        if (!name) {
+          name = `Field[${s}]`;
         }
 
-        scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: field.name };
+        scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: name };
 
         const display = getDisplayProcessor({
-          field,
+          field: config,
           theme: options.theme,
         });
 
-        const title = field.title ? field.title : defaultTitle;
+        const title = config.title ? config.title : defaultTitle;
 
-        // Show all number fields
+        // Show all rows
         if (fieldOptions.values) {
           const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
 
-          for (const row of series.rows) {
+          for (let j = 0; j < field.values.length; j++) {
             // Add all the row variables
             if (usesCellValues) {
-              for (let j = 0; j < series.fields.length; j++) {
-                scopedVars[VAR_CELL_PREFIX + j] = {
-                  value: row[j],
-                  text: toString(row[j]),
+              for (let k = 0; k < series.fields.length; k++) {
+                const f = series.fields[k];
+                const v = f.values.get(j);
+                scopedVars[VAR_CELL_PREFIX + k] = {
+                  value: v,
+                  text: toString(v),
                 };
               }
             }
 
-            const displayValue = display(row[i]);
+            const displayValue = display(field.values.get(j));
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
-              field,
+              name,
+              field: config,
               display: displayValue,
+              view,
+              column: i,
+              row: j,
             });
 
             if (values.length >= limit) {
@@ -148,31 +168,30 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           }
         } else {
           const results = reduceField({
-            series,
-            fieldIndex: i,
+            field,
             reducers: calcs, // The stats to calculate
-            nullValueMode: NullValueMode.Null,
           });
+          let sparkline: GraphSeriesValue[][] | undefined = undefined;
 
-          // Single sparkline for a field
-          const points =
-            timeColumn < 0
-              ? undefined
-              : getFlotPairs({
-                  series,
-                  xIndex: timeColumn,
-                  yIndex: i,
-                  nullValueMode: NullValueMode.Null,
-                });
+          // Single sparkline for every reducer
+          if (options.sparkline && timeField) {
+            sparkline = getFlotPairs({
+              xField: timeField,
+              yField: series.fields[i],
+            });
+          }
 
           for (const calc of calcs) {
             scopedVars[VAR_CALC] = { value: calc, text: calc };
             const displayValue = display(results[calc]);
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
-              field,
+              name,
+              field: config,
               display: displayValue,
-              sparkline: points,
+              sparkline,
+              view,
+              column: i,
             });
           }
         }
@@ -182,9 +201,9 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
   if (values.length === 0) {
     values.push({
+      name: 'No data',
       field: {
         ...defaults,
-        name: 'No Data',
       },
       display: {
         numeric: 0,
@@ -212,7 +231,7 @@ const numericFieldProps: any = {
  * For numeric values, only valid numbers will be applied
  * for units, 'none' will be skipped
  */
-export function applyFieldProperties(field: Field, props?: Partial<Field>): Field {
+export function applyFieldProperties(field: FieldConfig, props?: FieldConfig): FieldConfig {
   if (!props) {
     return field;
   }
@@ -240,14 +259,11 @@ export function applyFieldProperties(field: Field, props?: Partial<Field>): Fiel
       copy[key] = val;
     }
   }
-  return copy as Field;
+  return copy as FieldConfig;
 }
 
-type PartialField = Partial<Field>;
-
-export function getFieldProperties(...props: PartialField[]): Field {
-  let field = props[0] as Field;
-
+export function getFieldProperties(...props: FieldConfig[]): FieldConfig {
+  let field = props[0] as FieldConfig;
   for (let i = 1; i < props.length; i++) {
     field = applyFieldProperties(field, props[i]);
   }

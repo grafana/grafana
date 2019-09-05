@@ -1,7 +1,7 @@
 import { toDataQueryError, PanelQueryState, getProcessedDataFrames } from './PanelQueryState';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { LoadingState } from '@grafana/data';
-import { DataQueryResponse } from '@grafana/ui';
+import { LoadingState, getDataFrameRow } from '@grafana/data';
+import { DataQueryResponse, DataQueryRequest, DataQuery } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('PanelQueryState', () => {
@@ -54,6 +54,19 @@ describe('PanelQueryState', () => {
   });
 });
 
+describe('When cancelling request', () => {
+  it('Should call rejector', () => {
+    const state = new PanelQueryState();
+    state.request = {} as DataQueryRequest<DataQuery>;
+    (state as any).rejector = (obj: any) => {
+      expect(obj.cancelled).toBe(true);
+      expect(obj.message).toBe('OHH');
+    };
+
+    state.cancel('OHH');
+  });
+});
+
 describe('getProcessedDataFrame', () => {
   it('converts timeseries to table skipping nulls', () => {
     const input1 = {
@@ -68,16 +81,18 @@ describe('getProcessedDataFrame', () => {
     const data = getProcessedDataFrames([null, input1, input2, null, null]);
     expect(data.length).toBe(2);
     expect(data[0].fields[0].name).toBe(input1.target);
-    expect(data[0].rows).toBe(input1.datapoints);
+
+    const cmp = [getDataFrameRow(data[0], 0), getDataFrameRow(data[0], 1)];
+    expect(cmp).toEqual(input1.datapoints);
 
     // Default name
     expect(data[1].fields[0].name).toEqual('Value');
 
     // Every colun should have a name and a type
     for (const table of data) {
-      for (const column of table.fields) {
-        expect(column.name).toBeDefined();
-        expect(column.type).toBeDefined();
+      for (const field of table.fields) {
+        expect(field.name).toBeDefined();
+        expect(field.type).toBeDefined();
       }
     }
   });
@@ -92,8 +107,7 @@ describe('getProcessedDataFrame', () => {
 
 function makeSeriesStub(refId: string) {
   return {
-    fields: [{ name: 'a' }],
-    rows: [],
+    fields: [{ name: undefined }],
     refId,
   } as any;
 }
@@ -205,5 +219,20 @@ describe('stream handling', () => {
     expect(data.series.length).toBe(1);
     expect(data.series[0].refId).toBe('F');
     expect(state.streams.length).toBe(0); // no streams
+  });
+
+  it('should close streams on error', () => {
+    // Post a stream event
+    state.dataStreamObserver({
+      state: LoadingState.Error,
+      key: 'C',
+      error: { message: 'EEEEE' },
+      data: [],
+      request: state.request,
+      unsubscribe: () => {},
+    });
+
+    expect(state.streams.length).toBe(0);
+    expect(state.response.state).toBe(LoadingState.Error);
   });
 });

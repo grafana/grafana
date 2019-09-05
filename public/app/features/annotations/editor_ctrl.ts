@@ -4,6 +4,7 @@ import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
 import DatasourceSrv from '../plugins/datasource_srv';
+import appEvents from 'app/core/app_events';
 
 export class AnnotationsEditorCtrl {
   mode: any;
@@ -21,6 +22,25 @@ export class AnnotationsEditorCtrl {
     enable: true,
     showIn: 0,
     hide: false,
+  };
+
+  emptyListCta = {
+    title: 'There are no custom annotation queries added yet',
+    buttonIcon: 'gicon gicon-annotation',
+    buttonTitle: 'Add Annotation Query',
+    infoBox: {
+      __html: `<p>Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines
+    and icons on all graph panels. When you hover over an annotation icon you can get event text &amp; tags for
+    the event. You can add annotation events directly from grafana by holding CTRL or CMD + click on graph (or
+    drag region). These will be stored in Grafana's annotation database.
+  </p>
+  Checkout the
+  <a class='external-link' target='_blank' href='http://docs.grafana.org/reference/annotations/'
+    >Annotations documentation</a
+  >
+  for more information.`,
+    },
+    infoBoxTitle: 'What are annotations?',
   };
 
   showOptions: any = [{ text: 'All Panels', value: 0 }, { text: 'Specific Panels', value: 1 }];
@@ -63,10 +83,10 @@ export class AnnotationsEditorCtrl {
     this.mode = 'list';
   }
 
-  setupNew() {
+  setupNew = () => {
     this.mode = 'new';
     this.reset();
-  }
+  };
 
   backToList() {
     this.mode = 'list';
@@ -78,6 +98,11 @@ export class AnnotationsEditorCtrl {
   }
 
   add() {
+    const sameName: any = _.find(this.annotations, { name: this.currentAnnotation.name });
+    if (sameName) {
+      appEvents.emit('alert-warning', ['Validation', 'Annotations with the same name already exists']);
+      return;
+    }
     this.annotations.push(this.currentAnnotation);
     this.reset();
     this.mode = 'list';

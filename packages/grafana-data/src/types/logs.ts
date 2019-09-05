@@ -1,4 +1,5 @@
-import { Labels, TimeSeries } from './data';
+import { Labels } from './data';
+import { GraphSeriesXY } from './graph';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -54,7 +55,7 @@ export interface LogsModel {
   hasUniqueLabels: boolean;
   meta?: LogsMetaItem[];
   rows: LogRowModel[];
-  series?: TimeSeries[];
+  series?: GraphSeriesXY[];
 }
 
 export interface LogSearchMatch {
@@ -103,4 +104,11 @@ export interface LogsParser {
    * The parser accepts the line unless it returns undefined.
    */
   test: (line: string) => any;
+}
+
+export enum LogsDedupDescription {
+  none = 'No de-duplication',
+  exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
+  numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
+  signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
 }

@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/base32"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -252,28 +253,38 @@ func TestMiddlewareContext(t *testing.T) {
 			maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour)
 			maxAge := (maxAgeHours + time.Hour).Seconds()
 
-			expectedCookie := &http.Cookie{
-				Name:     setting.LoginCookieName,
-				Value:    "rotated",
-				Path:     setting.AppSubUrl + "/",
-				HttpOnly: true,
-				MaxAge:   int(maxAge),
-				Secure:   setting.CookieSecure,
-				SameSite: setting.CookieSameSite,
+			sameSitePolicies := []http.SameSite{
+				http.SameSiteDefaultMode,
+				http.SameSiteLaxMode,
+				http.SameSiteStrictMode,
 			}
+			for _, sameSitePolicy := range sameSitePolicies {
+				setting.CookieSameSite = sameSitePolicy
+				expectedCookie := &http.Cookie{
+					Name:     setting.LoginCookieName,
+					Value:    "rotated",
+					Path:     setting.AppSubUrl + "/",
+					HttpOnly: true,
+					MaxAge:   int(maxAge),
+					Secure:   setting.CookieSecure,
+				}
+				if sameSitePolicy != http.SameSiteDefaultMode {
+					expectedCookie.SameSite = sameSitePolicy
+				}
 
-			sc.fakeReq("GET", "/").exec()
+				sc.fakeReq("GET", "/").exec()
 
-			Convey("Should init context with user info", func() {
-				So(sc.context.IsSignedIn, ShouldBeTrue)
-				So(sc.context.UserId, ShouldEqual, 12)
-				So(sc.context.UserToken.UserId, ShouldEqual, 12)
-				So(sc.context.UserToken.UnhashedToken, ShouldEqual, "rotated")
-			})
+				Convey(fmt.Sprintf("Should init context with user info and setting.SameSite=%v", sameSitePolicy), func() {
+					So(sc.context.IsSignedIn, ShouldBeTrue)
+					So(sc.context.UserId, ShouldEqual, 12)
+					So(sc.context.UserToken.UserId, ShouldEqual, 12)
+					So(sc.context.UserToken.UnhashedToken, ShouldEqual, "rotated")
+				})
 
-			Convey("Should set cookie", func() {
-				So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
-			})
+				Convey(fmt.Sprintf("Should set cookie with setting.SameSite=%v", sameSitePolicy), func() {
+					So(sc.resp.Header().Get("Set-Cookie"), ShouldEqual, expectedCookie.String())
+				})
+			}
 		})
 
 		middlewareScenario(t, "Invalid/expired auth token in cookie", func(sc *scenarioContext) {
@@ -364,7 +375,7 @@ func TestMiddlewareContext(t *testing.T) {
 				sc.exec()
 
 				assert.False(t, *actualAuthProxyAutoSignUp)
-				assert.Equal(t, sc.resp.Code, 500)
+				assert.Equal(t, sc.resp.Code, 407)
 				assert.Nil(t, sc.context)
 			})
 
@@ -463,6 +474,36 @@ func TestMiddlewareContext(t *testing.T) {
 				sc.fakeReq("GET", "/")
 				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
 				sc.req.RemoteAddr = "[2001::23]:12345"
+				sc.exec()
+
+				Convey("Should return 407 status code", func() {
+					So(sc.resp.Code, ShouldEqual, 407)
+					So(sc.context, ShouldBeNil)
+				})
+			})
+
+			middlewareScenario(t, "Should return 407 status code if LDAP says no", func(sc *scenarioContext) {
+				bus.AddHandler("LDAP", func(cmd *models.UpsertUserCommand) error {
+					return errors.New("Do not add user")
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+				sc.exec()
+
+				Convey("Should return 407 status code", func() {
+					So(sc.resp.Code, ShouldEqual, 407)
+					So(sc.context, ShouldBeNil)
+				})
+			})
+
+			middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(sc *scenarioContext) {
+				bus.AddHandler("Do not have the user", func(query *models.GetSignedInUserQuery) error {
+					return errors.New("Do not add user")
+				})
+
+				sc.fakeReq("GET", "/")
+				sc.req.Header.Add(setting.AuthProxyHeaderName, name)
 				sc.exec()
 
 				Convey("Should return 407 status code", func() {

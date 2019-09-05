@@ -11,7 +11,7 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { DataFrame, DataLink } from '@grafana/data';
+import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
 import { getColorFromHexRgbOrName, LegacyResponseData, VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
@@ -149,6 +149,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
+    this.events.on('data-frames-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
@@ -162,7 +163,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditorComponent);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html');
     this.addEditorTab('Thresholds & Time Regions', 'public/app/plugins/panel/graph/tab_thresholds_time_regions.html');
-    this.addEditorTab('Data link', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
+    this.addEditorTab('Data links', 'public/app/plugins/panel/graph/tab_drilldown_links.html');
     this.subTabIndex = 0;
   }
 
@@ -210,13 +211,11 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   // This should only be called from the snapshot callback
   onDataReceived(dataList: LegacyResponseData[]) {
-    this.handleDataFrames(getProcessedDataFrames(dataList));
+    this.onDataFramesReceived(getProcessedDataFrames(dataList));
   }
 
   // Directly support DataFrame skipping event callbacks
-  handleDataFrames(data: DataFrame[]) {
-    super.handleDataFrames(data);
-
+  onDataFramesReceived(data: DataFrame[]) {
     this.dataList = data;
     this.seriesList = this.processor.getSeriesList({
       dataList: this.dataList,
@@ -339,6 +338,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onContextMenuClose = () => {
     this.contextMenuCtrl.toggleMenu();
+  };
+
+  formatDate = (date: DateTimeInput, format?: string) => {
+    return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
   };
 }
 

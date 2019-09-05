@@ -25,7 +25,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat, ContextMenuItem, ContextMenuGroup } from '@grafana/ui';
+import { getValueFormat, ContextMenuItem, ContextMenuGroup, DataLinkBuiltInVars } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
 import { DataLink, toUtc } from '@grafana/data';
 import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';
@@ -135,9 +135,6 @@ class GraphElement {
   }
 
   onPanelTeardown() {
-    this.thresholdManager = null;
-    this.timeRegionManager = null;
-
     if (this.plot) {
       this.plot.destroy();
       this.plot = null;
@@ -199,10 +196,15 @@ class GraphElement {
           {
             items: [
               ...dataLinks.map<ContextMenuItem>(link => {
-                const linkUiModel = this.linkSrv.getDataLinkUIModel(link, this.panel.scopedVariables, {
-                  seriesName: item.series.alias,
-                  datapoint: item.datapoint,
-                });
+                const linkUiModel = this.linkSrv.getDataLinkUIModel(
+                  link,
+                  {
+                    ...this.panel.scopedVars,
+                    [DataLinkBuiltInVars.seriesName]: { value: item.series.alias, text: item.series.alias },
+                    [DataLinkBuiltInVars.valueTime]: { value: item.datapoint[0], text: item.datapoint[0] },
+                  },
+                  item
+                );
                 return {
                   label: linkUiModel.title,
                   url: linkUiModel.href,
@@ -587,19 +589,24 @@ class GraphElement {
   }
 
   addXHistogramAxis(options: any, bucketSize: number) {
-    let ticks, min, max;
+    let ticks: number | number[];
+    let min: number | undefined;
+    let max: number | undefined;
+
     const defaultTicks = this.panelWidth / 50;
 
     if (this.data.length && bucketSize) {
       const tickValues = [];
+
       for (const d of this.data) {
         for (const point of d.data) {
           tickValues[point[0]] = true;
         }
       }
+
       ticks = Object.keys(tickValues).map(v => Number(v));
-      min = _.min(ticks);
-      max = _.max(ticks);
+      min = _.min(ticks)!;
+      max = _.max(ticks)!;
 
       // Adjust tick step
       let tickStep = bucketSize;
@@ -819,7 +826,7 @@ class GraphElement {
     };
   }
 
-  time_format(ticks: number, min: number, max: number) {
+  time_format(ticks: number, min: number | null, max: number | null) {
     if (min && max && ticks) {
       const range = max - min;
       const secPerTick = range / ticks / 1000;

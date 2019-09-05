@@ -218,7 +218,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 		return 0, newError("Failed to get LDAP config", nil)
 	}
 
-	extUser, err := newLDAP(config.Servers).User(auth.header)
+	extUser, _, err := newLDAP(config.Servers).User(auth.header)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
@@ -238,7 +238,6 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 }
 
 // LoginViaHeader logs in user from the header only
-// TODO: refactor - cyclomatic complexity should be much lower
 func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "authproxy",

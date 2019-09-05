@@ -2,7 +2,7 @@ import AzureMonitorDatasource from '../datasource';
 // @ts-ignore
 import Q from 'q';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { toUtc } from '@grafana/data';
+import { toUtc, DataFrame } from '@grafana/data';
 
 describe('AzureMonitorDatasource', () => {
   const ctx: any = {
@@ -132,11 +132,12 @@ describe('AzureMonitorDatasource', () => {
     it('should return a list of datapoints', () => {
       return ctx.ds.query(options).then((results: any) => {
         expect(results.data.length).toBe(1);
-        expect(results.data[0].name).toEqual('Percentage CPU');
-        expect(results.data[0].rows[0][1]).toEqual(1558278660000);
-        expect(results.data[0].rows[0][0]).toEqual(2.2075);
-        expect(results.data[0].rows[1][1]).toEqual(1558278720000);
-        expect(results.data[0].rows[1][0]).toEqual(2.29);
+        const data = results.data[0] as DataFrame;
+        expect(data.name).toEqual('Percentage CPU');
+        expect(data.fields[1].values.get(0)).toEqual(1558278660000);
+        expect(data.fields[0].values.get(0)).toEqual(2.2075);
+        expect(data.fields[1].values.get(1)).toEqual(1558278720000);
+        expect(data.fields[0].values.get(1)).toEqual(2.29);
       });
     });
   });

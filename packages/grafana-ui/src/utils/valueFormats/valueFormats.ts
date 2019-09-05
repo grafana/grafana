@@ -1,5 +1,6 @@
+import { DecimalCount } from '@grafana/data';
+
 import { getCategories } from './categories';
-import { DecimalCount } from '../../types';
 
 export type ValueFormatter = (
   value: number,

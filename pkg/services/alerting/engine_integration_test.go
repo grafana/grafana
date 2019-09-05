@@ -22,7 +22,7 @@ func TestEngineTimeouts(t *testing.T) {
 		setting.AlertingNotificationTimeout = 30 * time.Second
 		setting.AlertingMaxAttempts = 3
 		engine.resultHandler = &FakeResultHandler{}
-		job := &Job{Running: true, Rule: &Rule{}}
+		job := &Job{running: true, Rule: &Rule{}}
 
 		Convey("Should trigger as many retries as needed", func() {
 			Convey("pended alert for datasource -> result handler should be worked", func() {

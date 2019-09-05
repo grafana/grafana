@@ -8,7 +8,6 @@ import PluginPrism from 'slate-prism';
 import Prism from 'prismjs';
 
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
-
 // dom also includes Element polyfills
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
@@ -109,7 +108,7 @@ interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasourc
 interface PromQueryFieldState {
   metricsOptions: any[];
   syntaxLoaded: boolean;
-  hint: QueryHint;
+  hint: QueryHint | null;
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
@@ -154,8 +153,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   componentDidUpdate(prevProps: PromQueryFieldProps) {
     const { queryResponse } = this.props;
-    const currentHasSeries = queryResponse && queryResponse.series && queryResponse.series.length > 0 ? true : false;
-    if (currentHasSeries && prevProps.queryResponse && prevProps.queryResponse.series !== queryResponse.series) {
+
+    if (queryResponse && prevProps.queryResponse && prevProps.queryResponse.series !== queryResponse.series) {
       this.refreshHint();
     }
 
@@ -177,7 +176,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   refreshHint = () => {
     const { datasource, query, queryResponse } = this.props;
-    if (!queryResponse || !queryResponse.series || queryResponse.series.length === 0) {
+
+    if (!queryResponse || queryResponse.series.length === 0) {
+      this.setState({ hint: null });
       return;
     }
 
@@ -301,6 +302,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, datasourceStatus);
     const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;
+    const showError = queryResponse && queryResponse.error && queryResponse.error.refId === query.refId;
 
     return (
       <>
@@ -327,9 +329,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
             />
           </div>
         </div>
-        {queryResponse && queryResponse.error ? (
-          <div className="prom-query-field-info text-error">{queryResponse.error.message}</div>
-        ) : null}
+        {showError ? <div className="prom-query-field-info text-error">{queryResponse.error.message}</div> : null}
         {hint ? (
           <div className="prom-query-field-info text-warning">
             {hint.label}{' '}

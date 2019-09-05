@@ -1,5 +1,5 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { FieldType, ReducerID, Threshold } from '@grafana/data';
+import { ReducerID, Threshold, toDataFrame } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
@@ -8,7 +8,6 @@ describe('FieldDisplay', () => {
     const f0 = {
       min: 0,
       max: 100,
-      dateFormat: 'YYYY',
     };
     const f1 = {
       unit: 'ms',
@@ -20,7 +19,6 @@ describe('FieldDisplay', () => {
     expect(field.min).toEqual(0);
     expect(field.max).toEqual(100);
     expect(field.unit).toEqual('ms');
-    expect(field.dateFormat).toEqual('YYYY');
 
     // last one overrieds
     const f2 = {
@@ -36,19 +34,14 @@ describe('FieldDisplay', () => {
   // Simple test dataset
   const options: GetFieldDisplayValuesOptions = {
     data: [
-      {
+      toDataFrame({
         name: 'Series Name',
         fields: [
-          { name: 'Field 1', type: FieldType.string },
-          { name: 'Field 2', type: FieldType.number },
-          { name: 'Field 3', type: FieldType.number },
+          { name: 'Field 1', values: ['a', 'b', 'c'] },
+          { name: 'Field 2', values: [1, 3, 5] },
+          { name: 'Field 3', values: [2, 4, 6] },
         ],
-        rows: [
-          ['a', 1, 2], // 0
-          ['b', 3, 4], // 1
-          ['c', 5, 6], // 2
-        ],
-      },
+      }),
     ],
     replaceVariables: (value: string) => {
       return value; // Return it unchanged
@@ -142,7 +135,7 @@ describe('FieldDisplay', () => {
         {
           name: 'No data',
           fields: [],
-          rows: [],
+          length: 0,
         },
       ],
       replaceVariables: (value: string) => {

@@ -1,13 +1,14 @@
 // Library
 import React, { PureComponent, ReactNode, CSSProperties } from 'react';
 import $ from 'jquery';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
+import { DisplayValue } from '@grafana/data';
 
 // Utils
 import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
-import { Themeable, DisplayValue } from '../../types';
+import { Themeable } from '../../types';
 
 export interface BigValueSparkline {
   data: any[][]; // [[number,number]]
@@ -26,6 +27,8 @@ export interface Props extends Themeable {
   suffix?: DisplayValue;
   sparkline?: BigValueSparkline;
   backgroundColor?: string;
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  className?: string;
 }
 
 /*
@@ -118,15 +121,19 @@ export class BigValue extends PureComponent<Props> {
   }
 
   render() {
-    const { height, width, value, prefix, suffix, sparkline, backgroundColor } = this.props;
+    const { height, width, value, prefix, suffix, sparkline, backgroundColor, onClick, className } = this.props;
 
     return (
       <div
-        className={css({
-          position: 'relative',
-          display: 'table',
-        })}
+        className={cx(
+          css({
+            position: 'relative',
+            display: 'table',
+          }),
+          className
+        )}
         style={{ width, height, backgroundColor }}
+        onClick={onClick}
       >
         {value.title && (
           <div
@@ -142,6 +149,7 @@ export class BigValue extends PureComponent<Props> {
             {value.title}
           </div>
         )}
+
         <span
           className={css({
             lineHeight: 1,

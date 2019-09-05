@@ -5,11 +5,12 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { Gauge, FieldDisplay, getFieldDisplayValues, VizOrientation } from '@grafana/ui';
+import { Gauge, FieldDisplay, getFieldDisplayValues, VizOrientation, DataLinksContextMenu } from '@grafana/ui';
 
 // Types
 import { GaugeOptions } from './types';
 import { PanelProps, VizRepeater } from '@grafana/ui';
+import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
@@ -17,17 +18,25 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     const { field, display } = value;
 
     return (
-      <Gauge
-        value={display}
-        width={width}
-        height={height}
-        thresholds={field.thresholds}
-        showThresholdLabels={options.showThresholdLabels}
-        showThresholdMarkers={options.showThresholdMarkers}
-        minValue={field.min}
-        maxValue={field.max}
-        theme={config.theme}
-      />
+      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+        {({ openMenu, targetClassName }) => {
+          return (
+            <Gauge
+              value={display}
+              width={width}
+              height={height}
+              thresholds={field.thresholds}
+              showThresholdLabels={options.showThresholdLabels}
+              showThresholdMarkers={options.showThresholdMarkers}
+              minValue={field.min}
+              maxValue={field.max}
+              theme={config.theme}
+              onClick={openMenu}
+              className={targetClassName}
+            />
+          );
+        }}
+      </DataLinksContextMenu>
     );
   };
 

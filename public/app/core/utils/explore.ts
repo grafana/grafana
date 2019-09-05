@@ -1,35 +1,24 @@
 // Libraries
 import _ from 'lodash';
-import { from } from 'rxjs';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-
 // Services & Utils
-import { dateMath } from '@grafana/data';
-import { renderUrl } from 'app/core/utils/url';
-import kbn from 'app/core/utils/kbn';
-import store from 'app/core/store';
-import { getNextRefIdChar } from './query';
-
-// Types
 import {
-  DataQuery,
-  DataSourceApi,
-  DataQueryError,
-  DataSourceJsonData,
-  DataQueryRequest,
-  DataStreamObserver,
-} from '@grafana/ui';
-import {
+  dateMath,
   toUtc,
   TimeRange,
   RawTimeRange,
   TimeZone,
-  IntervalValues,
   TimeFragment,
   LogRowModel,
   LogsModel,
   LogsDedupStrategy,
+  DefaultTimeZone,
 } from '@grafana/data';
+import { renderUrl } from 'app/core/utils/url';
+import store from 'app/core/store';
+import { getNextRefIdChar } from './query';
+// Types
+import { DataQuery, DataSourceApi, DataQueryError, DataQueryRequest } from '@grafana/ui';
 import {
   ExploreUrlState,
   HistoryItem,
@@ -39,6 +28,7 @@ import {
   ExploreMode,
 } from 'app/types/explore';
 import { config } from '../config';
+import { PanelQueryState } from '../../features/dashboard/state/PanelQueryState';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -60,43 +50,30 @@ export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DAT
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
  *
- * @param panel Origin panel of the jump to Explore
  * @param panelTargets The origin panel's query targets
  * @param panelDatasource The origin panel's datasource
  * @param datasourceSrv Datasource service to query other datasources in case the panel datasource is mixed
  * @param timeSrv Time service to get the current dashboard range from
  */
-export async function getExploreUrl(
-  panel: any,
-  panelTargets: any[],
-  panelDatasource: any,
-  datasourceSrv: any,
-  timeSrv: any
-) {
+export async function getExploreUrl(panelTargets: any[], panelDatasource: any, datasourceSrv: any, timeSrv: any) {
   let exploreDatasource = panelDatasource;
   let exploreTargets: DataQuery[] = panelTargets;
   let url: string;
 
   // Mixed datasources need to choose only one datasource
-  if (panelDatasource.meta.id === 'mixed' && panelTargets) {
+  if (panelDatasource.meta.id === 'mixed' && exploreTargets) {
     // Find first explore datasource among targets
-    let mixedExploreDatasource: any;
-    for (const t of panel.targets) {
+    for (const t of exploreTargets) {
       const datasource = await datasourceSrv.get(t.datasource);
-      if (datasource && datasource.meta.explore) {
-        mixedExploreDatasource = datasource;
+      if (datasource) {
+        exploreDatasource = datasource;
+        exploreTargets = panelTargets.filter(t => t.datasource === datasource.name);
         break;
       }
     }
-
-    // Add all its targets
-    if (mixedExploreDatasource) {
-      exploreDatasource = mixedExploreDatasource;
-      exploreTargets = panelTargets.filter(t => t.datasource === mixedExploreDatasource.name);
-    }
   }
 
-  if (panelDatasource) {
+  if (exploreDatasource) {
     const range = timeSrv.timeRangeForUrl();
     let state: Partial<ExploreUrlState> = { range };
     if (exploreDatasource.getExploreState) {
@@ -104,8 +81,8 @@ export async function getExploreUrl(
     } else {
       state = {
         ...state,
-        datasource: panelDatasource.name,
-        queries: exploreTargets.map(t => ({ ...t, datasource: panelDatasource.name })),
+        datasource: exploreDatasource.name,
+        queries: exploreTargets.map(t => ({ ...t, datasource: exploreDatasource.name })),
       };
     }
 
@@ -130,21 +107,26 @@ export function buildQueryTransaction(
     return combinedKey;
   }, '');
 
-  // Clone range for query request
-  // const queryRange: RawTimeRange = { ...range };
-  // const { from, to, raw } = this.timeSrv.timeRange();
   // Most datasource is using `panelId + query.refId` for cancellation logic.
   // Using `format` here because it relates to the view panel that the request is for.
   // However, some datasources don't use `panelId + query.refId`, but only `panelId`.
   // Therefore panel id has to be unique.
   const panelId = `${key}`;
 
-  const options = {
+  const request: DataQueryRequest = {
+    dashboardId: 0,
+    // TODO probably should be taken from preferences but does not seem to be used anyway.
+    timezone: DefaultTimeZone,
+    // This is set to correct time later on before the query is actually run.
+    startTime: 0,
     interval,
     intervalMs,
-    panelId,
+    // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
+    // issues down the road.
+    panelId: panelId as any,
     targets: configuredQueries, // Datasources rely on DataQueries being passed under the targets key.
     range,
+    requestId: 'explore',
     rangeRaw: range.raw,
     scopedVars: {
       __interval: { text: interval, value: interval },
@@ -155,7 +137,7 @@ export function buildQueryTransaction(
 
   return {
     queries,
-    options,
+    request,
     scanning,
     id: generateKey(), // reusing for unique ID
     done: false,
@@ -333,14 +315,6 @@ export function hasNonEmptyQuery<TQuery extends DataQuery = any>(queries: TQuery
   );
 }
 
-export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
-  if (!resolution) {
-    return { interval: '1s', intervalMs: 1000 };
-  }
-
-  return kbn.calculateInterval(range, resolution, lowLimit);
-}
-
 /**
  * Update the query history. Side-effect: store history in local storage
  */
@@ -460,7 +434,7 @@ export const getFirstQueryErrorWithoutRefId = (errors: DataQueryError[]) => {
     return null;
   }
 
-  return errors.filter(error => (error.refId ? false : true))[0];
+  return errors.filter(error => (error && error.refId ? false : true))[0];
 };
 
 export const getRefIds = (value: any): string[] => {
@@ -510,10 +484,17 @@ const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
   return 0;
 };
 
-export const sortLogsResult = (logsResult: LogsModel, refreshInterval: string) => {
+export enum SortOrder {
+  Descending = 'Descending',
+  Ascending = 'Ascending',
+}
+
+export const refreshIntervalToSortOrder = (refreshInterval: string) =>
+  isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
+
+export const sortLogsResult = (logsResult: LogsModel, sortOrder: SortOrder) => {
   const rows = logsResult ? logsResult.rows : [];
-  const live = isLive(refreshInterval);
-  live ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
+  sortOrder === SortOrder.Ascending ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
   const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
 
   return result;
@@ -528,10 +509,9 @@ export const convertToWebSocketUrl = (url: string) => {
   return `${backend}${url}`;
 };
 
-export const getQueryResponse = (
-  datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData>,
-  options: DataQueryRequest<DataQuery>,
-  observer?: DataStreamObserver
-) => {
-  return from(datasourceInstance.query(options, observer));
+export const stopQueryState = (queryState: PanelQueryState, reason: string) => {
+  if (queryState && queryState.isStarted()) {
+    queryState.cancel(reason);
+    queryState.closeStreams(false);
+  }
 };

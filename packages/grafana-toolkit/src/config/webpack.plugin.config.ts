@@ -151,6 +151,8 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       'slate-react',
       'react',
       'react-dom',
+      'react-redux',
+      'redux',
       'rxjs',
       'd3',
       'angular',
@@ -181,7 +183,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
             {
               loader: 'babel-loader',
               options: {
-                presets: ['@babel/preset-env'],
+                presets: [['@babel/preset-env', { modules: false }]],
                 plugins: ['angularjs-annotate'],
               },
             },

@@ -134,14 +134,17 @@ github.com/jmespath/go-jmespath
 github.com/jonboulle/clockwork
 # github.com/jtolds/gls v4.20.0+incompatible
 github.com/jtolds/gls
+# github.com/jung-kurt/gofpdf v1.10.1
+github.com/jung-kurt/gofpdf
 # github.com/klauspost/compress v1.4.1
 github.com/klauspost/compress/gzip
 github.com/klauspost/compress/flate
 # github.com/klauspost/cpuid v1.2.0
 github.com/klauspost/cpuid
-# github.com/lib/pq v1.0.0
+# github.com/lib/pq v1.2.0
 github.com/lib/pq
 github.com/lib/pq/oid
+github.com/lib/pq/scram
 # github.com/mattn/go-colorable v0.1.1
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.7
@@ -185,6 +188,8 @@ github.com/prometheus/procfs/internal/util
 github.com/rainycape/unidecode
 # github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 github.com/robfig/cron
+# github.com/robfig/cron/v3 v3.0.0
+github.com/robfig/cron/v3
 # github.com/russellhaering/goxmldsig v0.0.0-20180430223755-7acd5e4a6ef7
 github.com/russellhaering/goxmldsig
 github.com/russellhaering/goxmldsig/etreeutils
@@ -205,7 +210,7 @@ github.com/stretchr/testify/require
 github.com/stretchr/testify/assert
 # github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
 github.com/teris-io/shortid
-# github.com/ua-parser/uap-go v0.0.0-20190303233514-1004ccd816b3
+# github.com/ua-parser/uap-go v0.0.0-20190826212731-daf92ba38329
 github.com/ua-parser/uap-go/uaparser
 # github.com/uber/jaeger-client-go v2.16.0+incompatible
 github.com/uber/jaeger-client-go/config
@@ -313,8 +318,6 @@ google.golang.org/grpc/balancer/base
 gopkg.in/alexcesaro/quotedprintable.v3
 # gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
 gopkg.in/asn1-ber.v1
-# gopkg.in/bufio.v1 v1.0.0-20140618132640-567b2bfa514e
-gopkg.in/bufio.v1
 # gopkg.in/ini.v1 v1.42.0
 gopkg.in/ini.v1
 # gopkg.in/ldap.v3 v3.0.2
@@ -323,8 +326,13 @@ gopkg.in/ldap.v3
 gopkg.in/macaron.v1
 # gopkg.in/mail.v2 v2.3.1
 gopkg.in/mail.v2
-# gopkg.in/redis.v2 v2.3.2
-gopkg.in/redis.v2
+# gopkg.in/redis.v5 v5.2.9
+gopkg.in/redis.v5
+gopkg.in/redis.v5/internal
+gopkg.in/redis.v5/internal/consistenthash
+gopkg.in/redis.v5/internal/hashtag
+gopkg.in/redis.v5/internal/pool
+gopkg.in/redis.v5/internal/proto
 # gopkg.in/square/go-jose.v2 v2.3.0
 gopkg.in/square/go-jose.v2
 gopkg.in/square/go-jose.v2/cipher
