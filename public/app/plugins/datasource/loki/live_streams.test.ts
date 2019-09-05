@@ -1,19 +1,20 @@
 import { Subject, Observable } from 'rxjs';
 import * as rxJsWebSocket from 'rxjs/webSocket';
 import { LiveStreams } from './live_streams';
-import { DataFrameView, Labels, formatLabels } from '@grafana/data';
-import { first } from 'rxjs/operators';
+import { DataFrameView, Labels, formatLabels, DataFrame } from '@grafana/data';
+import { noop } from 'lodash';
 
-function getValue<T>(observable: Observable<T>): Promise<T> {
-  return observable.pipe(first()).toPromise();
-}
+let fakeSocket: Subject<any>;
+jest.mock('rxjs/webSocket', () => {
+  return {
+    __esModule: true,
+    webSocket: () => fakeSocket,
+  };
+});
 
 describe('Live Stream Tests', () => {
-  let fakeSocket: Subject<any>;
-
-  beforeEach(async () => {
-    fakeSocket = new Subject<any>();
-    spyOn(rxJsWebSocket, 'webSocket').and.returnValue(fakeSocket);
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
   const msg0: any = {
@@ -31,38 +32,97 @@ describe('Live Stream Tests', () => {
     dropped_entries: null,
   };
 
-  it('reads the values into the buffer', async () => {
+  it('reads the values into the buffer', done => {
+    fakeSocket = new Subject<any>();
     const labels: Labels = { job: 'varlogs' };
-    const stream = new LiveStreams().getStream({
-      url: 'fake',
-      size: 10,
-      query: formatLabels(labels),
-      refId: 'A',
-      regexp: '',
+    const target = makeTarget('fake', labels);
+    const stream = new LiveStreams().getStream(target);
+    expect.assertions(5);
+
+    const tests = [
+      (val: DataFrame[]) => expect(val).toEqual([]),
+      (val: DataFrame[]) => {
+        expect(val[0].length).toEqual(7);
+        expect(val[0].labels).toEqual(labels);
+      },
+      (val: DataFrame[]) => {
+        expect(val[0].length).toEqual(8);
+        const view = new DataFrameView(val[0]);
+        const last = { ...view.get(view.length - 1) };
+        expect(last).toEqual({
+          ts: '2019-08-28T20:50:40.118944705Z',
+          line: 'Kittens',
+          labels: { filename: '/var/log/sntpc.log' },
+        });
+      },
+    ];
+    stream.subscribe({
+      next: val => {
+        const test = tests.shift();
+        test(val);
+      },
+      complete: () => done(),
     });
 
     // Send it the initial list of things
     fakeSocket.next(initialRawResponse);
-
-    let frame = (await getValue(stream))[0];
-    expect(frame.length).toBe(7);
-    expect(frame.labels).toEqual(labels);
-
     // Send it a single update
     fakeSocket.next(msg0);
-    frame = (await getValue(stream))[0];
-    expect(frame.length).toBe(8); // it changed
+    fakeSocket.complete();
+  });
 
-    // Get the values from the last line
-    const view = new DataFrameView(frame);
-    const last = { ...view.get(view.length - 1) };
-    expect(last).toEqual({
-      ts: '2019-08-28T20:50:40.118944705Z',
-      line: 'Kittens',
-      labels: { filename: '/var/log/sntpc.log' },
+  it('returns the same subscription if the url matches existing one', () => {
+    fakeSocket = new Subject<any>();
+    const liveStreams = new LiveStreams();
+    const stream1 = liveStreams.getStream(makeTarget('url_to_match'));
+    const stream2 = liveStreams.getStream(makeTarget('url_to_match'));
+    expect(stream1).toBe(stream2);
+  });
+
+  it('returns new subscription when the previous unsubscribed', () => {
+    fakeSocket = new Subject<any>();
+    const liveStreams = new LiveStreams();
+    const stream1 = liveStreams.getStream(makeTarget('url_to_match'));
+    const subscription = stream1.subscribe({
+      next: noop,
     });
+    subscription.unsubscribe();
+
+    const stream2 = liveStreams.getStream(makeTarget('url_to_match'));
+    expect(stream1).not.toBe(stream2);
+  });
+
+  it('returns new subscription when the previous is unsubscribed and correctly unsubscribes from source', () => {
+    let unsubscribed = false;
+    fakeSocket = new Observable(() => {
+      return () => (unsubscribed = true);
+    }) as any;
+    const spy = spyOn(rxJsWebSocket, 'webSocket');
+    spy.and.returnValue(fakeSocket);
+
+    const liveStreams = new LiveStreams();
+    const stream1 = liveStreams.getStream(makeTarget('url_to_match'));
+    const subscription = stream1.subscribe({
+      next: noop,
+    });
+    subscription.unsubscribe();
+    expect(unsubscribed).toBe(true);
   });
 });
+
+/**
+ * Create target (query to run). Url is what is used as cache key.
+ */
+function makeTarget(url: string, labels?: Labels) {
+  labels = labels || { job: 'varlogs' };
+  return {
+    url,
+    size: 10,
+    query: formatLabels(labels),
+    refId: 'A',
+    regexp: '',
+  };
+}
 
 //----------------------------------------------------------------
 // Added this at the end so the top is more readable

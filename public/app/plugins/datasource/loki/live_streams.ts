@@ -1,8 +1,8 @@
 import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
-import { Subject, Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { LokiResponse } from './types';
-import { map } from 'rxjs/operators';
+import { finalize, map, multicast, refCount } from 'rxjs/operators';
 import { appendResponseToBufferedData } from './result_transformer';
 
 /**
@@ -21,7 +21,7 @@ export interface LiveTarget {
  * target it is returned and on subscription returns the latest dataFrame.
  */
 export class LiveStreams {
-  private streams: KeyValue<Subject<DataFrame[]>> = {};
+  private streams: KeyValue<Observable<DataFrame[]>> = {};
 
   getStream(target: LiveTarget): Observable<DataFrame[]> {
     let stream = this.streams[target.url];
@@ -33,16 +33,19 @@ export class LiveStreams {
       data.addField({ name: 'labels', type: FieldType.other });
 
       const subject = new BehaviorSubject<DataFrame[]>([]);
-      webSocket(target.url)
-        .pipe(
-          map((response: LokiResponse) => {
-            appendResponseToBufferedData(response, data);
-            return [data];
-          })
-        )
-        .subscribe(subject);
-      stream = this.streams[target.url] = subject;
+      stream = webSocket(target.url).pipe(
+        finalize(() => {
+          delete this.streams[target.url];
+        }),
+        map((response: LokiResponse) => {
+          appendResponseToBufferedData(response, data);
+          return [data];
+        }),
+        multicast(subject),
+        refCount()
+      );
+      this.streams[target.url] = stream;
     }
-    return stream.asObservable();
+    return stream;
   }
 }
