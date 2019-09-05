@@ -10,10 +10,9 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
-	"gopkg.in/ldap.v3"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"gopkg.in/ldap.v3"
 )
 
 // IConnection is interface for LDAP connection manipulation

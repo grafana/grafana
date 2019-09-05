@@ -31,28 +31,34 @@ describe('LokiDatasource', () => {
       replace: (a: string) => a,
     } as unknown) as TemplateSrv;
 
+    const testLimit = makeLimitTest(instanceSettings, backendSrvMock, backendSrv, templateSrvMock, testResp);
+
     test('should use default max lines when no limit given', () => {
-      const ds = new LokiDatasource(instanceSettings, backendSrv, templateSrvMock);
-      backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
-      const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B' }] });
-
-      ds.query(options);
-
-      expect(backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
-      expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain('limit=1000');
+      testLimit({
+        expectedLimit: 1000,
+      });
     });
 
     test('should use custom max lines if limit is set', () => {
-      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
-      const customSettings = { ...instanceSettings, jsonData: customData };
-      const ds = new LokiDatasource(customSettings, backendSrv, templateSrvMock);
-      backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
+      testLimit({
+        maxLines: 20,
+        expectedLimit: 20,
+      });
+    });
 
-      const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B' }] });
-      ds.query(options);
+    test('should use custom maxDataPoints if set in request', () => {
+      testLimit({
+        maxDataPoints: 500,
+        expectedLimit: 500,
+      });
+    });
 
-      expect(backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
-      expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain('limit=20');
+    test('should use datasource maxLimit if maxDataPoints is higher', () => {
+      testLimit({
+        maxLines: 20,
+        maxDataPoints: 500,
+        expectedLimit: 20,
+      });
     });
 
     test('should return series data', async done => {
@@ -166,3 +172,39 @@ describe('LokiDatasource', () => {
     });
   });
 });
+
+type LimitTestArgs = {
+  maxDataPoints?: number;
+  maxLines?: number;
+  expectedLimit: number;
+};
+function makeLimitTest(
+  instanceSettings: any,
+  backendSrvMock: any,
+  backendSrv: any,
+  templateSrvMock: any,
+  testResp: any
+) {
+  return ({ maxDataPoints, maxLines, expectedLimit }: LimitTestArgs) => {
+    let settings = instanceSettings;
+    if (Number.isFinite(maxLines)) {
+      const customData = { ...(instanceSettings.jsonData || {}), maxLines: 20 };
+      settings = { ...instanceSettings, jsonData: customData };
+    }
+    const ds = new LokiDatasource(settings, backendSrv, templateSrvMock);
+    backendSrvMock.datasourceRequest = jest.fn(() => Promise.resolve(testResp));
+
+    const options = getQueryOptions<LokiQuery>({ targets: [{ expr: 'foo', refId: 'B' }] });
+    if (Number.isFinite(maxDataPoints)) {
+      options.maxDataPoints = maxDataPoints;
+    } else {
+      // By default is 500
+      delete options.maxDataPoints;
+    }
+
+    ds.query(options);
+
+    expect(backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
+    expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain(`limit=${expectedLimit}`);
+  };
+}

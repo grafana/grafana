@@ -1,6 +1,7 @@
+import difference from 'lodash/difference';
+
 import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
-import _ from 'lodash';
 import { Field, FieldType } from '../types/index';
 import { MutableDataFrame } from './dataFrameHelper';
 import { ArrayVector } from './vector';
@@ -42,7 +43,7 @@ describe('Stats Calculators', () => {
     expect(stats.length).toBe(2);
 
     const found = stats.map(v => v.id);
-    const notFound = _.difference(names, found);
+    const notFound = difference(names, found);
     expect(notFound.length).toBe(2);
 
     expect(notFound[0]).toBe('not a stat');

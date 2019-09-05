@@ -1,90 +1,66 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { memo } from 'react';
 
 // Types
-import { QueryEditorProps } from '@grafana/ui';
+import { AbsoluteTimeRange } from '@grafana/data';
+import { QueryEditorProps, Switch, DataSourceStatus } from '@grafana/ui';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
-// import { LokiQueryField } from './LokiQueryField';
+import { LokiQueryField } from './LokiQueryField';
+import { useLokiSyntax } from './useLokiSyntax';
 
 type Props = QueryEditorProps<LokiDatasource, LokiQuery>;
 
-// interface State {
-//   query: LokiQuery;
-// }
+export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
+  const { query, panelData, datasource, onChange, onRunQuery } = props;
 
-export class LokiQueryEditor extends PureComponent<Props> {
-  // state: State = {
-  //   query: this.props.query,
-  // };
-  //
-  // onRunQuery = () => {
-  //   const { query } = this.state;
-  //
-  //   this.props.onChange(query);
-  //   this.props.onRunQuery();
-  // };
-  //
-  // onFieldChange = (query: LokiQuery, override?) => {
-  //   this.setState({
-  //     query: {
-  //       ...this.state.query,
-  //       expr: query.expr,
-  //     },
-  //   });
-  // };
-  //
-  // onFormatChanged = (option: SelectableValue) => {
-  //   this.props.onChange({
-  //     ...this.state.query,
-  //     resultFormat: option.value,
-  //   });
-  // };
-
-  render() {
-    // const { query } = this.state;
-    // const { datasource } = this.props;
-    // const formatOptions: SelectableValue[] = [
-    //   { label: 'Time Series', value: 'time_series' },
-    //   { label: 'Table', value: 'table' },
-    // ];
-    //
-    // query.resultFormat = query.resultFormat || 'time_series';
-    // const currentFormat = formatOptions.find(item => item.value === query.resultFormat);
-
-    return (
-      <div>
-        <div className="gf-form">
-          <div className="gf-form-label">
-            Loki is currently not supported as dashboard data source. We are working on it!
-          </div>
-        </div>
-        {/*
-        <LokiQueryField
-          datasource={datasource}
-          query={query}
-          onQueryChange={this.onFieldChange}
-          onExecuteQuery={this.onRunQuery}
-          history={[]}
-        />
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <div className="gf-form-label">Format as</div>
-            <Select
-              isSearchable={false}
-              options={formatOptions}
-              onChange={this.onFormatChanged}
-              value={currentFormat}
-            />
-          </div>
-          <div className="gf-form gf-form--grow">
-            <div className="gf-form-label gf-form-label--grow" />
-          </div>
-        </div>
-        */}
-      </div>
-    );
+  let absolute: AbsoluteTimeRange;
+  if (panelData && panelData.request) {
+    const { range } = panelData.request;
+    absolute = {
+      from: range.from.valueOf(),
+      to: range.to.valueOf(),
+    };
+  } else {
+    absolute = {
+      from: Date.now() - 10000,
+      to: Date.now(),
+    };
   }
-}
+
+  const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
+    datasource.languageProvider,
+    // TODO maybe use real status
+    DataSourceStatus.Connected,
+    absolute
+  );
+
+  return (
+    <div>
+      <LokiQueryField
+        datasource={datasource}
+        datasourceStatus={DataSourceStatus.Connected}
+        query={query}
+        onChange={onChange}
+        onRunQuery={onRunQuery}
+        history={[]}
+        panelData={panelData}
+        onLoadOptions={setActiveOption}
+        onLabelsRefresh={refreshLabels}
+        syntaxLoaded={isSyntaxReady}
+        absoluteRange={absolute}
+        {...syntaxProps}
+      />
+      <div className="gf-form-inline">
+        <div className="gf-form">
+          <Switch label="Live" checked={!!query.live} onChange={() => onChange({ ...query, live: !query.live })} />
+        </div>
+        <div className="gf-form gf-form--grow">
+          <div className="gf-form-label gf-form-label--grow" />
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export default LokiQueryEditor;

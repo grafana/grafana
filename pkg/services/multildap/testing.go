@@ -69,8 +69,15 @@ type MockMultiLDAP struct {
 	LoginCalledTimes int
 	UsersCalledTimes int
 	UserCalledTimes  int
+	PingCalledTimes  int
 
 	UsersResult []*models.ExternalUserInfo
+}
+
+func (mock *MockMultiLDAP) Ping() ([]*ServerStatus, error) {
+	mock.PingCalledTimes = mock.PingCalledTimes + 1
+
+	return nil, nil
 }
 
 // Login test fn
@@ -91,10 +98,10 @@ func (mock *MockMultiLDAP) Users(logins []string) (
 
 // User test fn
 func (mock *MockMultiLDAP) User(login string) (
-	*models.ExternalUserInfo, error,
+	*models.ExternalUserInfo, ldap.ServerConfig, error,
 ) {
 	mock.UserCalledTimes = mock.UserCalledTimes + 1
-	return nil, nil
+	return nil, ldap.ServerConfig{}, nil
 }
 
 func setup() *MockLDAP {

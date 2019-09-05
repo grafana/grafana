@@ -8,7 +8,6 @@ import PluginPrism from 'slate-prism';
 import Prism from 'prismjs';
 
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
-
 // dom also includes Element polyfills
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
 import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
@@ -303,6 +302,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, datasourceStatus);
     const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;
+    const showError = queryResponse && queryResponse.error && queryResponse.error.refId === query.refId;
 
     return (
       <>
@@ -329,9 +329,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
             />
           </div>
         </div>
-        {queryResponse && queryResponse.error ? (
-          <div className="prom-query-field-info text-error">{queryResponse.error.message}</div>
-        ) : null}
+        {showError ? <div className="prom-query-field-info text-error">{queryResponse.error.message}</div> : null}
         {hint ? (
           <div className="prom-query-field-info text-warning">
             {hint.label}{' '}

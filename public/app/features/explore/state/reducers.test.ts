@@ -4,6 +4,7 @@ import {
   exploreReducer,
   makeInitialUpdateState,
   initialExploreState,
+  createEmptyQueryResponse,
 } from './reducers';
 import { ExploreId, ExploreItemState, ExploreUrlState, ExploreState, ExploreMode } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
@@ -17,7 +18,6 @@ import {
   splitCloseAction,
   changeModeAction,
   scanStopAction,
-  runQueriesAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -25,7 +25,7 @@ import { updateLocation } from 'app/core/actions/location';
 import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
 import { DataSourceApi, DataQuery } from '@grafana/ui';
-import { LogsModel, LogsDedupStrategy, LoadingState } from '@grafana/data';
+import { LogsModel, LogsDedupStrategy } from '@grafana/data';
 import { PanelQueryState } from '../../dashboard/state/PanelQueryState';
 
 describe('Explore item reducer', () => {
@@ -162,9 +162,9 @@ describe('Explore item reducer', () => {
             tableResult: null,
             supportedModes: [ExploreMode.Metrics, ExploreMode.Logs],
             mode: ExploreMode.Metrics,
-            loadingState: LoadingState.NotStarted,
             latency: 0,
-            queryErrors: [],
+            loading: false,
+            queryResponse: createEmptyQueryResponse(),
           };
 
           reducerTester()
@@ -172,30 +172,6 @@ describe('Explore item reducer', () => {
             .whenActionIsDispatched(updateDatasourceInstanceAction({ exploreId: ExploreId.left, datasourceInstance }))
             .thenStateShouldEqual(expectedState);
         });
-      });
-    });
-  });
-
-  describe('run queries', () => {
-    describe('when runQueriesAction is dispatched', () => {
-      it('then it should set correct state', () => {
-        const initalState: Partial<ExploreItemState> = {
-          showingStartPage: true,
-          range: null,
-        };
-        const expectedState: any = {
-          queryIntervals: {
-            interval: '1s',
-            intervalMs: 1000,
-          },
-          showingStartPage: false,
-          range: null,
-        };
-
-        reducerTester()
-          .givenReducer(itemReducer, initalState)
-          .whenActionIsDispatched(runQueriesAction({ exploreId: ExploreId.left }))
-          .thenStateShouldEqual(expectedState);
       });
     });
   });
