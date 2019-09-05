@@ -159,13 +159,6 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			expect: false,
 		},
 		{
-			name:      "no_data -> ok",
-			prevState: models.AlertStateNoData,
-			newState:  models.AlertStateOK,
-
-			expect: true,
-		},
-		{
 			name:      "pending -> ok",
 			prevState: models.AlertStatePending,
 			newState:  models.AlertStateOK,
