@@ -13,7 +13,7 @@ import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasourc
 // Types
 import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
 
-import { TimeRange, DataTransformerConfig, transformDataFrame } from '@grafana/data';
+import { TimeRange, DataTransformerConfig, transformDataFrame, toLegacyResponseData } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -77,6 +77,7 @@ export class PanelQueryRunner {
       return {
         ...v,
         series: processed,
+        legacy: processed.map(p => toLegacyResponseData(p)),
       };
     }
     return v;
