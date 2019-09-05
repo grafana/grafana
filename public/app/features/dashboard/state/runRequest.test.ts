@@ -1,6 +1,6 @@
 jest.mock('app/core/services/backend_srv');
 
-import { DataFrame, LoadingState } from '@grafana/data';
+import { DataFrame, LoadingState, dateTime } from '@grafana/data';
 import { PanelData, DataSourceApi, DataQueryRequest, DataQueryResponsePacket } from '@grafana/ui';
 import { Subscriber, Observable, Subscription } from 'rxjs';
 import { runRequest } from './runRequest';
@@ -14,6 +14,9 @@ class ScenarioCtx {
   results: PanelData[];
   subscription: Subscription;
   wasStarted = false;
+  error: Error = null;
+  toStartTime = dateTime();
+  fromStartTime = dateTime();
 
   reset() {
     this.wasStarted = false;
@@ -21,6 +24,11 @@ class ScenarioCtx {
 
     this.results = [];
     this.request = {
+      range: {
+        from: this.toStartTime,
+        to: this.fromStartTime,
+        raw: { from: '1h', to: 'now' },
+      },
       targets: [
         {
           refId: 'A',
@@ -34,8 +42,11 @@ class ScenarioCtx {
           this.subscriber = subscriber;
           this.wasStarted = true;
 
+          if (this.error) {
+            throw this.error;
+          }
+
           return () => {
-            console.log('unsubbed');
             this.isUnsubbed = true;
           };
         });
@@ -46,14 +57,12 @@ class ScenarioCtx {
   start() {
     this.subscription = runRequest(this.ds, this.request).subscribe({
       next: (data: PanelData) => {
-        console.log('got data');
         this.results.push(data);
       },
     });
   }
 
   emitPacket(packet: DataQueryResponsePacket) {
-    console.log('emitting');
     this.subscriber.next(packet);
   }
 
@@ -68,7 +77,7 @@ function runRequestScenario(desc: string, fn: (ctx: ScenarioCtx) => void) {
 
     beforeEach(() => {
       ctx.reset();
-      ctx.setupFn();
+      return ctx.setupFn();
     });
 
     fn(ctx);
@@ -102,29 +111,71 @@ describe('runRequest', () => {
     });
   });
 
-  // runRequestScenario('After tree responses, 2 with different keys', ctx => {
-  //   ctx.setup(() => {
-  //     ctx.start();
-  //     ctx.emitPacket({
-  //       data: [{ name: 'DataA-1' } as DataFrame],
-  //       key: 'A',
-  //     });
-  //     ctx.emitPacket({
-  //       data: [{ name: 'DataA-2' } as DataFrame],
-  //       key: 'A',
-  //     });
-  //     ctx.emitPacket({
-  //       data: [{ name: 'DataB-1' } as DataFrame],
-  //       key: 'B',
-  //     });
-  //   });
-  //
-  //   it('should emit 3 seperate results', () => {
-  //     expect(ctx.results.length).toBe(3);
-  //   });
-  //
-  //   it('should combine results and return latest data for key A', () => {
-  //     expect(ctx.results[2].series).toEqual([{ name: 'DataA-2' }, { name: 'DataB-1' }]);
-  //   });
-  // });
+  runRequestScenario('After tree responses, 2 with different keys', ctx => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [{ name: 'DataA-1' } as DataFrame],
+        key: 'A',
+      });
+      ctx.emitPacket({
+        data: [{ name: 'DataA-2' } as DataFrame],
+        key: 'A',
+      });
+      ctx.emitPacket({
+        data: [{ name: 'DataB-1' } as DataFrame],
+        key: 'B',
+      });
+    });
+
+    it('should emit 3 seperate results', () => {
+      expect(ctx.results.length).toBe(3);
+    });
+
+    it('should combine results and return latest data for key A', () => {
+      expect(ctx.results[2].series).toEqual([{ name: 'DataA-2' }, { name: 'DataB-1' }]);
+    });
+  });
+
+  runRequestScenario('If no response after 50ms', ctx => {
+    ctx.setup(() => {
+      ctx.start();
+      return new Promise(resolve => {
+        setTimeout(resolve, 80);
+      });
+    });
+
+    it('should emit 1 result with loading state', () => {
+      expect(ctx.results.length).toBe(1);
+    });
+  });
+
+  runRequestScenario('on thrown error', ctx => {
+    ctx.setup(() => {
+      ctx.error = new Error('Ohh no');
+      ctx.start();
+    });
+
+    it('should emit 1 error result', () => {
+      expect(ctx.results[0].error.message).toBe('Ohh no');
+      expect(ctx.results[0].state).toBe(LoadingState.Error);
+    });
+  });
+
+  runRequestScenario('If time range is relative', ctx => {
+    ctx.setup(() => {
+      ctx.start();
+      // wait a bit
+      return new Promise(resolve => {
+        setTimeout(() => {
+          ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
+          resolve();
+        }, 20);
+      });
+    });
+
+    it('should update returned request range', () => {
+      expect(ctx.results[0].request.range.to.valueOf()).not.toBe(ctx.fromStartTime);
+    });
+  });
 });
