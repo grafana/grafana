@@ -127,7 +127,6 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
 
 function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
   return () => {
-    console.log('Unsubscribabe');
     getBackendSrv().resolveCancelerIfExists(req.requestId);
   };
 }
