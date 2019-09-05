@@ -1,14 +1,14 @@
 ## Core changes
 
-JS is the primary source of theme variables for Grafana. Theme definitions are located in `@grafana/ui/themes` directory.
+JS is the primary source of theme variables for Grafana. Theme definitions are located in `packages/grafana-ui/src/themes` directory.
 
 #### Themes are implemented in pure js.
 
-This is because our goal is to share variables between app and SASS.
+That's because our goal is to share variables between Grafana app and SASS files.
 
 #### Themes are available to React components via `ThemeContext`
 
-Context is available via `import { ThemeContext } from '@grafana/ui';`
+ThemeContext is available via `import { ThemeContext } from '@grafana/ui';`
 
 ## Using themes in Grafana's React components
 
@@ -73,7 +73,7 @@ BarStories.add('Story' () => {
 
 ### Angular
 
-There should be very few cases when theme would be used in Angular context. For this purpise there is a function available that retrieves current theme: `import { getCurrentTheme } from app/core/utils/ConfigProvider`
+There should be very few cases where theme would be used in Angular context. For this purpise there is a function available that retrieves current theme: `import { getCurrentTheme } from app/core/utils/ConfigProvider`
 
 ## Limitations
 
