@@ -246,6 +246,7 @@ type Cfg struct {
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	DisableSanitizeHtml              bool
+	EnableTransformationsAlpha       bool
 	EnterpriseLicensePath            string
 
 	// Auth
@@ -940,6 +941,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
+	cfg.EnableTransformationsAlpha = pluginsSection.Key("enable_transformations_alpha").MustBool(false)
 
 	// check old location for this option
 	if panelsSection.Key("enable_alpha").MustBool(false) {

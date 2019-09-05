@@ -233,7 +233,6 @@ export class QueriesTab extends PureComponent<Props, State> {
   render() {
     const { panel, dashboard } = this.props;
     const { currentDS, scrollTop, data } = this.state;
-
     const queryInspector: EditorToolbarView = {
       title: 'Query Inspector',
       render: this.renderQueryInspector,
@@ -245,7 +244,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       render: this.renderHelp,
     };
 
-    const enableTransformations = currentDS.meta.id === 'input';
+    const enableTransformations = config.enableTransformationsAlpha;
 
     return (
       <EditorTabBody
