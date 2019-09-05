@@ -17,27 +17,39 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
       const scopedVars: ScopedVars = {};
 
       if (value.view) {
-        scopedVars[DataLinkBuiltInVars.seriesName] = {
-          text: 'Series',
-          value: value.view.dataFrame.name,
+        const { dataFrame } = value.view;
+
+        // scopedVars[DataLinkBuiltInVars.seriesName] = {
+        //   text: 'Series',
+        //   value: value.view.dataFrame.name,
+        // };
+        //
+        scopedVars['__series'] = {
+          value: {
+            name: dataFrame.name,
+            labels: dataFrame.labels,
+          },
+          text: '',
         };
 
-        const field = value.column ? value.view.dataFrame.fields[value.column] : undefined;
+        const field = value.colIndex !== undefined ? dataFrame.fields[value.colIndex] : undefined;
 
         if (field) {
           console.log('Full Field Info:', field);
+          scopedVars['__field'] = {
+            value: {
+              name: field.name,
+            },
+            text: '',
+          };
         }
 
-        if (value.row) {
-          const row = value.view.get(value.row);
-          console.log('ROW:', row);
-          const dataFrame = value.view.dataFrame;
-
+        if (value.rowIndex) {
           const { timeField } = getTimeField(dataFrame);
           if (timeField) {
             scopedVars[DataLinkBuiltInVars.valueTime] = {
               text: 'Value time',
-              value: timeField.values.get(value.row),
+              value: timeField.values.get(value.rowIndex),
             };
           }
         }

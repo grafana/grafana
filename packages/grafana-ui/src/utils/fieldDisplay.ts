@@ -69,8 +69,8 @@ export interface FieldDisplay {
 
   // Expose to the original values for delayed inspection (DataLinks etc)
   view?: DataFrameView;
-  column?: number; // The field column index
-  row?: number; // only filled in when the value is from a row (ie, not a reduction)
+  colIndex?: number; // The field column index
+  rowIndex?: number; // only filled in when the value is from a row (ie, not a reduction)
 }
 
 export interface GetFieldDisplayValuesOptions {
@@ -157,8 +157,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               field: config,
               display: displayValue,
               view,
-              column: i,
-              row: j,
+              colIndex: i,
+              rowIndex: j,
             });
 
             if (values.length >= limit) {
@@ -191,7 +191,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               display: displayValue,
               sparkline,
               view,
-              column: i,
+              colIndex: i,
             });
           }
         }
