@@ -5,7 +5,7 @@ import { Unsubscribable } from 'rxjs';
 
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary } from 'app/core/components/ErrorBoundary/ErrorBoundary';
+import { ErrorBoundary } from '@grafana/ui';
 
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';

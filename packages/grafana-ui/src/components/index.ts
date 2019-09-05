@@ -83,3 +83,5 @@ export { TransformationRow } from './TransformersUI/TransformationRow';
 export { TransformationsEditor } from './TransformersUI/TransformationsEditor';
 export { JSONFormatter } from './JSONFormatter/JSONFormatter';
 export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
+
+export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';

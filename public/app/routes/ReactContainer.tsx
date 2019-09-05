@@ -8,11 +8,14 @@ import coreModule from 'app/core/core_module';
 import { store } from 'app/store/store';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
+import { ErrorBoundaryAlert } from '@grafana/ui';
 
 function WrapInProvider(store: any, Component: any, props: any) {
   return (
     <Provider store={store}>
-      <Component {...props} />
+      <ErrorBoundaryAlert style="page">
+        <Component {...props} />
+      </ErrorBoundaryAlert>
     </Provider>
   );
 }
