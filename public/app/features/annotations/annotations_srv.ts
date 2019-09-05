@@ -60,12 +60,6 @@ export class AnnotationsSrv {
         });
 
         annotations = dedupAnnotations(annotations);
-        for (let i = 0; i < annotations.length; i++) {
-          const a = annotations[i];
-          if (a.timeEnd) {
-            a.isRegion = a.time !== a.timeEnd;
-          }
-        }
 
         // look for alert state for this panel
         const alertState: any = _.find(results[1], { panelId: options.panel.id });
@@ -183,7 +177,9 @@ export class AnnotationsSrv {
 
     for (const item of results) {
       item.source = annotation;
+      item.isRegion = item.timeEnd && item.time !== item.timeEnd;
     }
+
     return results;
   }
 }
