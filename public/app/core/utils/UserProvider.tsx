@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
 import { getBackendSrv } from '@grafana/runtime';
 import { User, Team } from 'app/types';
+import { config } from 'app/core/config';
 
 export interface UserAPI {
   changePassword: (changePassword: ChangePasswordFields) => void;
@@ -107,7 +108,7 @@ export class UserProvider extends PureComponent<Props, State> {
     await getBackendSrv()
       .post('/api/user/using/' + org.orgId, {})
       .then(() => {
-        this.loadUser();
+        window.location.href = config.appSubUrl + '/profile';
       })
       .finally(() => {
         this.setState({ loadingStates: { ...this.state.loadingStates, updateUserOrg: false } });
