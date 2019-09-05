@@ -13,7 +13,7 @@ You can either add grafana-toolkit to your extension's `package.json` file by ru
 - [Angular Panel](https://github.com/grafana/simple-angular-panel)
 
 ### Updating your extension to use grafana-toolkit
-In order to star using grafana-toolkit in your extension you need to follow the steps below:
+In order to start using grafana-toolkit in your extension you need to follow the steps below:
 1. Add `@grafana/toolkit` package to your project
 2. Create `tsconfig.json` file in the root dir of your extension and paste the code below:
 ```json
