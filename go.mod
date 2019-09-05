@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go v1.18.5
 	github.com/beevik/etree v1.1.0 // indirect
 	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
-	github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737
+	github.com/bradfitz/gomemcache v0.0.0-20190329173943-551aad21a668
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/codegangsta/cli v1.20.0
 	github.com/crewjam/saml v0.0.0-20190521120225-344d075952c9
@@ -24,7 +24,7 @@ require (
 	github.com/fatih/color v1.7.0
 	github.com/go-macaron/binding v0.0.0-20190806013118-0b4f37bab25b
 	github.com/go-macaron/gzip v0.0.0-20160222043647-cad1c6580a07
-	github.com/go-macaron/session v0.0.0-20190131233854-0a0a789bf193
+	github.com/go-macaron/session v0.0.0-20190805070824-1a3cdc6f5659
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/go-stack/stack v1.8.0
 	github.com/go-xorm/core v0.6.2
@@ -47,9 +47,7 @@ require (
 	github.com/lib/pq v1.2.0
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7
-	github.com/mattn/go-sqlite3 v1.10.0
-	github.com/onsi/ginkgo v1.8.0 // indirect
-	github.com/onsi/gomega v1.5.0 // indirect
+	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v0.9.2
