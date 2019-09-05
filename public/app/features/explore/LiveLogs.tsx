@@ -22,7 +22,10 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFresh: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    background-color: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.gray1 }, theme.type)};
+    background-color: ${selectThemeVariant(
+      { light: theme.background.liveLogs, dark: theme.background.liveLogs },
+      theme.type
+    )};
   `,
   logsRowOld: css`
     label: logs-row-old;
