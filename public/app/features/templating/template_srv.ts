@@ -8,6 +8,10 @@ function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
 
+interface FieldAccessorCache {
+  [key: string]: (obj: any) => any;
+}
+
 export class TemplateSrv {
   variables: any[];
 
@@ -16,6 +20,7 @@ export class TemplateSrv {
   private grafanaVariables: any = {};
   private builtIns: any = {};
   private timeRange: TimeRange = null;
+  private fieldAccessorCache: FieldAccessorCache = {};
 
   constructor() {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
@@ -225,14 +230,23 @@ export class TemplateSrv {
     return values;
   }
 
-  getVariableValue(variableName: string, fieldName: string | undefined, scopedVars: ScopedVars) {
+  getFieldAccessor(fieldPath: string) {
+    const accessor = this.fieldAccessorCache[fieldPath];
+    if (accessor) {
+      return accessor;
+    }
+
+    return (this.fieldAccessorCache[fieldPath] = _.property(fieldPath));
+  }
+
+  getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars) {
     const scopedVar = scopedVars[variableName];
     if (!scopedVar) {
       return null;
     }
 
-    if (fieldName) {
-      return _.property(fieldName)(scopedVar);
+    if (fieldPath) {
+      return this.getFieldAccessor(fieldPath)(scopedVar.value);
     }
 
     return scopedVar.value;
@@ -245,13 +259,13 @@ export class TemplateSrv {
 
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldName, fmt3) => {
+    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
       const variable = this.index[variableName];
       const fmt = fmt2 || fmt3 || format;
 
       if (scopedVars) {
-        const value = this.getVariableValue(variableName, fieldName, scopedVars);
+        const value = this.getVariableValue(variableName, fieldPath, scopedVars);
         if (value !== null && value !== undefined) {
           return this.formatValue(value, fmt, variable);
         }
