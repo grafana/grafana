@@ -28,6 +28,10 @@ import {
   scanStopAction,
   queryStartAction,
   changeRangeAction,
+  clearOriginAction,
+} from './actionTypes';
+
+import {
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
@@ -236,6 +240,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
+    filter: clearOriginAction,
+    mapper: (state): ExploreItemState => {
+      return {
+        ...state,
+        originPanelId: undefined,
+      };
+    },
+  })
+  .addMapper({
     filter: highlightLogsExpressionAction,
     mapper: (state, action): ExploreItemState => {
       const { expressions } = action.payload;
@@ -245,7 +258,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: initializeExploreAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, eventBridge, queries, range, mode, ui } = action.payload;
+      const { containerWidth, eventBridge, queries, range, mode, ui, originPanelId } = action.payload;
       return {
         ...state,
         containerWidth,
@@ -256,6 +269,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         initialized: true,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
         ...ui,
+        originPanelId,
         update: makeInitialUpdateState(),
       };
     },
@@ -265,6 +279,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance } = action.payload;
       const [supportedModes, mode] = getModesForDatasource(datasourceInstance, state.mode);
+
+      const originPanelId = state.urlState && state.urlState.originPanelId;
+
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
       stopQueryState(state.queryState, 'Datasource changed');
@@ -283,6 +300,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         queryKeys: [],
         supportedModes,
         mode,
+        originPanelId,
       };
     },
   })
@@ -704,7 +722,18 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
     }
 
     case ActionTypes.ResetExplore: {
-      return initialExploreState;
+      if (action.payload.force || !Number.isInteger(state.left.originPanelId)) {
+        return initialExploreState;
+      }
+
+      return {
+        ...initialExploreState,
+        left: {
+          ...initialExploreItemState,
+          queries: state.left.queries,
+          originPanelId: state.left.originPanelId,
+        },
+      };
     }
 
     case updateLocation.type: {
