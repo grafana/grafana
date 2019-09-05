@@ -173,6 +173,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
 
+    const left = storeState.explore && storeState.explore.left;
+    dashboard.meta.fromExplore = !!(left && left.originPanelId);
+
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     try {
@@ -200,9 +203,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       console.log(err);
     }
 
-    const left = storeState.explore && storeState.explore.left;
-    const comingFromExplore = left && left.originPanelId;
-    if (comingFromExplore) {
+    if (dashboard.meta.fromExplore) {
       updateQueriesWhenComingFromExplore(dispatch, dashboard, left);
     }
 
