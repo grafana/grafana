@@ -245,7 +245,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       render: this.renderHelp,
     };
 
-    const hasAlphaDatasources = true; //!!config.datasources['input'];
+    const enableTransformations = currentDS.meta.id === 'input';
 
     return (
       <EditorTabBody
@@ -283,7 +283,7 @@ export class QueriesTab extends PureComponent<Props, State> {
             </>
           )}
 
-          {hasAlphaDatasources && this.state.data.state === LoadingState.Done && (
+          {enableTransformations && this.state.data.state === LoadingState.Done && (
             <PanelOptionsGroup title="Result transformations">
               <TransformationsEditor
                 transformations={this.props.panel.transformations || []}
