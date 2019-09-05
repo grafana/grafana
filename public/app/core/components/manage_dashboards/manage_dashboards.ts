@@ -67,17 +67,6 @@ export class ManageDashboardsCtrl {
 
   hasEditPermissionInFolders: boolean;
 
-  emptyListCta = {
-    title: "This folder doesn't have any dashboards yet",
-    buttonIcon: 'gicon gicon-dashboard-new',
-    buttonTitle: 'Create Dashboard',
-    buttonLink: '',
-    proTip: 'Add/move dashboards to your folder at ->',
-    proTipLink: 'dashboards',
-    proTipLinkTitle: 'Manage dashboards',
-    proTipTarget: '',
-  };
-
   /** @ngInject */
   constructor(
     private backendSrv: BackendSrv,
@@ -100,7 +89,6 @@ export class ManageDashboardsCtrl {
 
     if (this.folderId) {
       this.query.folderIds = [this.folderId];
-      this.emptyListCta.buttonLink = `dashboard/new?folderId=${this.folderId}`;
     }
 
     this.selectedStarredFilter = this.starredFilterOptions[0];
