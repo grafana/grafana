@@ -1,5 +1,5 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { ReducerID, Threshold, toDataFrame } from '@grafana/data';
+import { ReducerID, Threshold, toDataFrame, NullValueMode } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
@@ -153,5 +153,41 @@ describe('FieldDisplay', () => {
 
     const display = getFieldDisplayValues(options);
     expect(display[0].field.thresholds!.length).toEqual(1);
+  });
+
+  it('Should ignore null values settings', () => {
+    const options: GetFieldDisplayValuesOptions = {
+      data: [
+        toDataFrame({
+          name: 'Check Nulls',
+          fields: [
+            { name: 'zero', config: { nullValueMode: NullValueMode.AsZero }, values: [null, 10, null, 20, null] },
+            { name: 'ignore', config: { nullValueMode: NullValueMode.Ignore }, values: [null, 10, null, 20, null] },
+            { name: 'null', config: { nullValueMode: NullValueMode.Null }, values: [null, 10, null, 20, null] },
+          ],
+        }),
+      ],
+      replaceVariables: (value: string) => {
+        return value;
+      },
+      fieldOptions: {
+        calcs: [ReducerID.count, ReducerID.last, ReducerID.lastNotNull, ReducerID.mean],
+        override: {},
+        defaults: {
+          noValue: 'NONONO',
+        },
+      },
+      theme: getTheme(GrafanaThemeType.Dark),
+    };
+
+    const display = getFieldDisplayValues(options);
+    const mapped = display.map(disp => {
+      return {
+        // title:disp.display.title,
+        text: disp.display.text,
+        numeric: disp.display.numeric,
+      };
+    });
+    expect(mapped).toMatchSnapshot();
   });
 });

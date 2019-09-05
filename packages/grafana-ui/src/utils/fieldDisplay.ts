@@ -188,12 +188,13 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           }
 
           for (const calc of calcs) {
-            scopedVars[VAR_CALC] = { value: calc, text: calc };
             const rawValue = results[calc];
             if (ignoreNull && (rawValue === null || rawValue === undefined)) {
               continue;
             }
+
             const displayValue = display(rawValue);
+            scopedVars[VAR_CALC] = { value: calc, text: calc };
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
               name,
