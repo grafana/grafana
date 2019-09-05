@@ -19,20 +19,21 @@ export const LdapConnectionStatus: FC<Props> = ({ ldapConnectionInfo, headingSty
           </tr>
         </thead>
         <tbody>
-          {ldapConnectionInfo.map((serverInfo, index) => (
-            <tr key={index}>
-              <td>{serverInfo.host}</td>
-              <td>{serverInfo.port}</td>
-              <td>{serverInfo.error}</td>
-              <td>
-                {serverInfo.available ? (
-                  <i className="fa fa-fw fa-check text-success pull-right" />
-                ) : (
-                  <i className="fa fa-fw fa-remove text-error pull-right" />
-                )}
-              </td>
-            </tr>
-          ))}
+          {ldapConnectionInfo &&
+            ldapConnectionInfo.map((serverInfo, index) => (
+              <tr key={index}>
+                <td>{serverInfo.host}</td>
+                <td>{serverInfo.port}</td>
+                <td>{serverInfo.error}</td>
+                <td>
+                  {serverInfo.available ? (
+                    <i className="fa fa-fw fa-check text-success pull-right" />
+                  ) : (
+                    <i className="fa fa-fw fa-remove text-error pull-right" />
+                  )}
+                </td>
+              </tr>
+            ))}
         </tbody>
       </table>
     </>

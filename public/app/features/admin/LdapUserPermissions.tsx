@@ -33,11 +33,11 @@ export const LdapUserPermissions: FC<Props> = ({ className, permissions }) => {
             <td>
               {permissions.isDisabled ? (
                 <>
-                  <i className="fa fa-fw fa-check" /> Active
+                  <i className="fa fa-fw fa-times" /> Inactive
                 </>
               ) : (
                 <>
-                  <i className="fa fa-fw fa-times" /> Inactive
+                  <i className="fa fa-fw fa-check" /> Active
                 </>
               )}
             </td>

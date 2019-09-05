@@ -15,7 +15,7 @@ import { LdapUserTeams } from './LdapUserTeams';
 import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
 import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo } from 'app/types';
-import { loadLdapState, clearError } from './state/actions';
+import { loadLdapState, loadUserMapping, clearError, clearUserError } from './state/actions';
 
 interface Props {
   navModel: NavModel;
@@ -23,9 +23,12 @@ interface Props {
   ldapUser: LdapUser;
   ldapSyncInfo: SyncInfo;
   ldapError: LdapError;
+  userError?: LdapError;
 
   loadLdapState: typeof loadLdapState;
+  loadUserMapping: typeof loadUserMapping;
   clearError: typeof clearError;
+  clearUserError: typeof clearUserError;
 }
 
 interface State {
@@ -46,17 +49,29 @@ export class LdapPage extends PureComponent<Props, State> {
     return await loadLdapState();
   }
 
+  async fetchUserMapping(username: string) {
+    const { loadUserMapping } = this.props;
+    return await loadUserMapping(username);
+  }
+
   search = (event: any) => {
     event.preventDefault();
-    console.log('derp');
+    // console.log('search', event);
+    const username = event.target.elements['username'].value;
+    console.log(username);
+    this.fetchUserMapping(username);
   };
 
   onClearError = () => {
     this.props.clearError();
   };
 
+  onClearUserError = () => {
+    this.props.clearUserError();
+  };
+
   render() {
-    const { ldapError, ldapUser, ldapSyncInfo, ldapConnectionInfo, navModel } = this.props;
+    const { ldapUser, userError, ldapSyncInfo, ldapConnectionInfo, navModel } = this.props;
     const { isLoading } = this.state;
 
     const tableStyle = css`
@@ -80,31 +95,35 @@ export class LdapPage extends PureComponent<Props, State> {
               tableStyle={tableStyle}
               ldapConnectionInfo={ldapConnectionInfo}
             />
+
             {config.buildInfo.isEnterprise && (
               <LdapSyncInfo headingStyle={headingStyle} tableStyle={tableStyle} ldapSyncInfo={ldapSyncInfo} />
             )}
+
             <h4 className={headingStyle}>User mapping</h4>
             <form onSubmit={this.search} className={`${searchStyle} gf-form-inline`}>
-              <FormField label="User name" labelWidth={8} inputWidth={30} type="text" />
+              <FormField label="User name" labelWidth={8} inputWidth={30} type="text" id="username" name="username" />
               <button type="submit" className="btn btn-primary">
                 Test LDAP mapping
               </button>
             </form>
-            {ldapError && ldapError.title && (
+            {userError && userError.title && (
               <AlertBox
-                title={ldapError.title}
+                title={userError.title}
                 severity={AppNotificationSeverity.Error}
-                body={ldapError.body}
-                onClose={this.onClearError}
+                body={userError.body}
+                onClose={this.onClearUserError}
               />
             )}
-            {ldapUser.permissions && [
+            {ldapUser && [
               <LdapUserPermissions className={tableStyle} key="permissions" permissions={ldapUser.permissions} />,
               <LdapUserMappingInfo className={tableStyle} key="mappingInfo" info={ldapUser.info} />,
-              ldapUser.roles.length > 0 && (
+              ldapUser.roles && ldapUser.roles.length > 0 && (
                 <LdapUserGroups className={tableStyle} key="groups" groups={ldapUser.roles} />
               ),
-              ldapUser.teams.length > 0 && <LdapUserTeams className={tableStyle} key="teams" teams={ldapUser.teams} />,
+              ldapUser.teams && ldapUser.teams.length > 0 && (
+                <LdapUserTeams className={tableStyle} key="teams" teams={ldapUser.teams} />
+              ),
             ]}
           </>
         </Page.Contents>
@@ -119,11 +138,14 @@ const mapStateToProps = (state: StoreState) => ({
   ldapUser: state.ldap.user,
   ldapSyncInfo: state.ldap.syncInfo,
   ldapError: state.ldap.ldapError,
+  userError: state.ldap.userError,
 });
 
 const mapDispatchToProps = {
   loadLdapState,
+  loadUserMapping,
   clearError,
+  clearUserError,
 };
 
 export default hot(module)(
