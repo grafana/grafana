@@ -204,3 +204,80 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		assert.Equal(t, tc.expected, newState, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, string(newState))
 	}
 }
+
+func TestGetNewNoDataFlag(t *testing.T) {
+	tcs := []struct {
+		name           string
+		ruleNoDataFlag bool
+		ruleState      models.AlertStateType
+		expected       bool
+	}{
+		{
+			name:           "NoDataFlag=false and state=unknown -> false",
+			ruleNoDataFlag: false,
+			ruleState:      models.AlertStateUnknown,
+			expected:       false,
+		},
+		{
+			name:           "NoDataFlag=false and state=pending -> false",
+			ruleNoDataFlag: false,
+			ruleState:      models.AlertStatePending,
+			expected:       false,
+		},
+		{
+			name:           "NoDataFlag=false and state=ok -> false",
+			ruleNoDataFlag: false,
+			ruleState:      models.AlertStateOK,
+			expected:       false,
+		},
+		{
+			name:           "NoDataFlag=false and state=alerting -> false",
+			ruleNoDataFlag: false,
+			ruleState:      models.AlertStateAlerting,
+			expected:       false,
+		},
+		{
+			name:           "NoDataFlag=false and state=no_date -> true",
+			ruleNoDataFlag: false,
+			ruleState:      models.AlertStateNoData,
+			expected:       true,
+		},
+		{
+			name:           "NoDataFlag=true and state=unknown -> true",
+			ruleNoDataFlag: true,
+			ruleState:      models.AlertStateUnknown,
+			expected:       true,
+		},
+		{
+			name:           "NoDataFlag=true and state=pending -> true",
+			ruleNoDataFlag: true,
+			ruleState:      models.AlertStatePending,
+			expected:       true,
+		},
+		{
+			name:           "NoDataFlag=true and state=ok -> false",
+			ruleNoDataFlag: true,
+			ruleState:      models.AlertStateOK,
+			expected:       false,
+		},
+		{
+			name:           "NoDataFlag=true and state=alerting -> false",
+			ruleNoDataFlag: true,
+			ruleState:      models.AlertStateAlerting,
+			expected:       false,
+		},
+		{
+			name:           "NoDataFlag=true and state=no_data -> true",
+			ruleNoDataFlag: true,
+			ruleState:      models.AlertStateNoData,
+			expected:       true,
+		},
+	}
+	for _, tc := range tcs {
+
+		evalContext := NewEvalContext(context.Background(), &Rule{State: tc.ruleState, NoDataFlag: tc.ruleNoDataFlag})
+
+		newNoDataFlag := evalContext.GetNewNoDataFlag()
+		assert.Equal(t, tc.expected, newNoDataFlag, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, newNoDataFlag)
+	}
+}

@@ -60,12 +60,14 @@ func TestAlertingDataAccess(t *testing.T) {
 		Convey("Can set new states", func() {
 			Convey("new state ok", func() {
 				cmd := &m.SetAlertStateCommand{
-					AlertId: 1,
-					State:   m.AlertStateOK,
+					AlertId:    1,
+					State:      m.AlertStateOK,
+					NoDataFlag: true,
 				}
 
 				err = SetAlertState(cmd)
 				So(err, ShouldBeNil)
+				So(cmd.Result.NoDataFlag, ShouldBeTrue)
 			})
 
 			alert, _ := getAlertById(1)

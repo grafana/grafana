@@ -49,11 +49,12 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		handler.log.Info("New state change", "ruleId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
 		cmd := &models.SetAlertStateCommand{
-			AlertId:  evalContext.Rule.ID,
-			OrgId:    evalContext.Rule.OrgID,
-			State:    evalContext.Rule.State,
-			Error:    executionError,
-			EvalData: annotationData,
+			AlertId:    evalContext.Rule.ID,
+			OrgId:      evalContext.Rule.OrgID,
+			State:      evalContext.Rule.State,
+			Error:      executionError,
+			EvalData:   annotationData,
+			NoDataFlag: evalContext.GetNewNoDataFlag(),
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {

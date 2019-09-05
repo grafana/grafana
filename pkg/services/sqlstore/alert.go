@@ -197,7 +197,8 @@ func updateAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *DBS
 			if alertToUpdate.ContainsUpdates(alert) {
 				alert.Updated = timeNow()
 				alert.State = alertToUpdate.State
-				sess.MustCols("message", "for")
+				alert.NoDataFlag = alertToUpdate.NoDataFlag
+				sess.MustCols("message", "for", "no_data_flag")
 
 				_, err := sess.ID(alert.Id).Update(alert)
 				if err != nil {
@@ -291,6 +292,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		alert.StateChanges++
 		alert.NewStateDate = timeNow()
 		alert.EvalData = cmd.EvalData
+		alert.NoDataFlag = cmd.NoDataFlag
 
 		if cmd.Error == "" {
 			alert.ExecutionError = " " //without this space, xorm skips updating this field
@@ -298,7 +300,9 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 			alert.ExecutionError = cmd.Error
 		}
 
-		_, err := sess.ID(alert.Id).Update(&alert)
+		// UseBool is required because boolean columns are not updated by default
+		// See also: https://github.com/go-xorm/xorm/issues/706
+		_, err := sess.ID(alert.Id).UseBool().Update(&alert)
 		if err != nil {
 			return err
 		}

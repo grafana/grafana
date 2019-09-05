@@ -146,6 +146,20 @@ func (c *EvalContext) GetNewState() models.AlertStateType {
 	return models.AlertStatePending
 }
 
+func (c *EvalContext) GetNewNoDataFlag() bool {
+	if c.Rule.NoDataFlag {
+		okOrAlerting := c.Rule.State == models.AlertStateOK || c.Rule.State == models.AlertStateAlerting
+		if okOrAlerting {
+			return false
+		}
+	} else {
+		if c.Rule.State == models.AlertStateNoData {
+			return true
+		}
+	}
+	return c.Rule.NoDataFlag
+}
+
 func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	if c.Error != nil {
 		c.log.Error("Alert Rule Result Error",

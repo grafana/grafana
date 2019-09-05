@@ -78,6 +78,7 @@ type Alert struct {
 	ExecutionError string
 	Frequency      int64
 	For            time.Duration
+	NoDataFlag     bool
 
 	EvalData     *simplejson.Json
 	NewStateDate time.Time
@@ -171,11 +172,12 @@ type PauseAllAlertCommand struct {
 }
 
 type SetAlertStateCommand struct {
-	AlertId  int64
-	OrgId    int64
-	State    AlertStateType
-	Error    string
-	EvalData *simplejson.Json
+	AlertId    int64
+	OrgId      int64
+	State      AlertStateType
+	Error      string
+	EvalData   *simplejson.Json
+	NoDataFlag bool
 
 	Result Alert
 }

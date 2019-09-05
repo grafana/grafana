@@ -85,7 +85,9 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 
 	// Do not notify when we become OK from pending
 	if prevState == models.AlertStatePending && newState == models.AlertStateOK {
-		return false
+		if !context.Rule.NoDataFlag {
+			return false
+		}
 	}
 
 	// Do not notify when we OK -> Pending

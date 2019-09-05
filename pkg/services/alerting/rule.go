@@ -36,6 +36,7 @@ type Rule struct {
 	Conditions          []Condition
 	Notifications       []string
 	AlertRuleTags       []*models.Tag
+	NoDataFlag          bool
 
 	StateChanges int64
 }
@@ -126,6 +127,7 @@ func NewRuleFromDBAlert(ruleDef *models.Alert) (*Rule, error) {
 	model.NoDataState = models.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
 	model.ExecutionErrorState = models.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 	model.StateChanges = ruleDef.StateChanges
+	model.NoDataFlag = ruleDef.NoDataFlag
 
 	model.Frequency = ruleDef.Frequency
 	// frequency cannot be zero since that would not execute the alert rule.
