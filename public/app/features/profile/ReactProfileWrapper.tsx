@@ -3,12 +3,13 @@ import { UserProvider } from 'app/core/utils/UserProvider';
 import { UserProfileEditForm } from './UserProfileEditForm';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { UserTeams } from './UserTeams';
+import { UserOrganizations } from './UserOrganizations';
 import { config } from '@grafana/runtime';
 import { LoadingPlaceholder } from '@grafana/ui';
 
 export const ReactProfileWrapper = () => (
   <UserProvider userId={config.bootData.user.id}>
-    {(api, states, teams, user) => {
+    {(api, states, teams, orgs, user) => {
       return (
         <>
           {states.loadUser ? (
@@ -22,6 +23,13 @@ export const ReactProfileWrapper = () => (
           )}
           <SharedPreferences resourceUri="user" />
           <UserTeams isLoading={states.loadTeams} loadTeams={api.loadTeams} teams={teams} />
+          <UserOrganizations
+            isLoading={states.loadOrgs}
+            setUserOrg={api.setUserOrg}
+            loadOrgs={api.loadOrgs}
+            orgs={orgs}
+            user={user}
+          />
         </>
       );
     }}
