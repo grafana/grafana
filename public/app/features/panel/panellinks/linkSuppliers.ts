@@ -15,16 +15,19 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
   return {
     getLinks: (_scopedVars?: any) => {
       const scopedVars: ScopedVars = {};
-      // TODO, add values to scopedVars and/or pass objects to event listeners
+
       if (value.view) {
         scopedVars[DataLinkBuiltInVars.seriesName] = {
           text: 'Series',
           value: value.view.dataFrame.name,
         };
+
         const field = value.column ? value.view.dataFrame.fields[value.column] : undefined;
+
         if (field) {
           console.log('Full Field Info:', field);
         }
+
         if (value.row) {
           const row = value.view.get(value.row);
           console.log('ROW:', row);
