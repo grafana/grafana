@@ -2,18 +2,38 @@ package sqlstore
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAccountDataAccess(t *testing.T) {
 	Convey("Testing Account DB Access", t, func() {
 		InitTestDB(t)
+
+		Convey("Given we have organizations, we can query them by IDs", func() {
+			var err error
+			var cmd *m.CreateOrgCommand
+			ids := []int64{}
+
+			for i := 1; i < 4; i++ {
+				cmd = &m.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+				err = CreateOrg(cmd)
+				So(err, ShouldBeNil)
+
+				ids = append(ids, cmd.Result.Id)
+			}
+
+			query := &m.SearchOrgsQuery{Ids: ids}
+			err = SearchOrgs(query)
+
+			So(err, ShouldBeNil)
+			So(len(query.Result), ShouldEqual, 3)
+		})
 
 		Convey("Given single org mode", func() {
 			setting.AutoAssignOrg = true

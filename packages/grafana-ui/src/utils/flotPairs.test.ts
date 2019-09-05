@@ -1,8 +1,8 @@
 import { getFlotPairs } from './flotPairs';
-import { DataFrameHelper } from '@grafana/data';
+import { MutableDataFrame } from '@grafana/data';
 
 describe('getFlotPairs', () => {
-  const series = new DataFrameHelper({
+  const series = new MutableDataFrame({
     fields: [
       { name: 'a', values: [1, 2, 3] },
       { name: 'b', values: [100, 200, 300] },

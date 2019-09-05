@@ -1,9 +1,24 @@
 import execa from 'execa';
 import path from 'path';
 import fs from 'fs';
+import { KeyValue } from '@grafana/data';
 import { PluginDevInfo, ExtensionSize, ZipFileInfo, PluginBuildReport, PluginHistory } from './types';
 
 const md5File = require('md5-file');
+
+export function getGrafanaVersions(): KeyValue<string> {
+  const dir = path.resolve(process.cwd(), 'node_modules', '@grafana');
+  const versions: KeyValue = {};
+  try {
+    fs.readdirSync(dir).forEach(file => {
+      const json = require(path.resolve(dir, file, 'package.json'));
+      versions[file] = json.version;
+    });
+  } catch (err) {
+    console.warn('Error reading toolkit versions', err);
+  }
+  return versions;
+}
 
 export function getFileSizeReportInFolder(dir: string, info?: ExtensionSize): ExtensionSize {
   const acc: ExtensionSize = info ? info : {};

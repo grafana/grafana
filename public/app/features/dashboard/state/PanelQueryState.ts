@@ -1,10 +1,9 @@
 // Libraries
 import { isArray, isEqual, isString } from 'lodash';
-
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dateMath } from '@grafana/data';
 import {
+  dateMath,
   guessFieldTypes,
   LoadingState,
   toLegacyResponseData,
@@ -12,7 +11,6 @@ import {
   toDataFrame,
   isDataFrame,
 } from '@grafana/data';
-
 // Types
 import {
   DataSourceApi,
@@ -81,7 +79,7 @@ export class PanelQueryState {
       // call rejector to reject the executor promise
       if (!request.endTime) {
         request.endTime = Date.now();
-        this.rejector('Canceled:' + reason);
+        this.rejector({ cancelled: true, message: reason });
       }
 
       // Cancel any open HTTP request with the same ID
@@ -97,7 +95,10 @@ export class PanelQueryState {
   }
 
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
-    this.request = req;
+    this.request = {
+      ...req,
+      startTime: Date.now(),
+    };
     this.datasource = ds;
 
     // Return early if there are no queries to run
@@ -114,7 +115,7 @@ export class PanelQueryState {
       );
     }
 
-    // Set the loading state immediatly
+    // Set the loading state immediately
     this.response.state = LoadingState.Loading;
     this.executor = new Promise<PanelData>((resolve, reject) => {
       this.rejector = reject;
@@ -160,6 +161,12 @@ export class PanelQueryState {
   dataStreamObserver: DataStreamObserver = (stream: DataStreamState) => {
     // Streams only work with the 'series' format
     this.sendFrames = true;
+
+    if (stream.state === LoadingState.Error) {
+      this.setError(stream.error);
+      this.onStreamingDataUpdated();
+      return;
+    }
 
     // Add the stream to our list
     let found = false;
@@ -267,7 +274,9 @@ export class PanelQueryState {
 
     return {
       state: done ? LoadingState.Done : LoadingState.Streaming,
-      series, // Union of series from response and all streams
+      // This should not be needed but unfortunately Prometheus datasource sends non DataFrame here bypassing the
+      // typings
+      series: this.sendFrames ? getProcessedDataFrames(series) : [],
       legacy: this.sendLegacy ? translateToLegacyData(series) : undefined,
       request: {
         ...this.request,

@@ -1,12 +1,10 @@
 import React, { Component } from 'react';
 
-import { renderMarkdown } from '@grafana/data';
+import { renderMarkdown, LinkModelSupplier } from '@grafana/data';
 import { Tooltip, ScopedVars, PopoverContent } from '@grafana/ui';
-import { DataLink } from '@grafana/data';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';
-import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 enum InfoMode {
@@ -20,7 +18,7 @@ interface Props {
   title?: string;
   description?: string;
   scopedVars?: ScopedVars;
-  links?: DataLink[];
+  links?: LinkModelSupplier<PanelModel>;
   error?: string;
 }
 
@@ -45,22 +43,21 @@ export class PanelHeaderCorner extends Component<Props> {
   getInfoContent = (): JSX.Element => {
     const { panel } = this.props;
     const markdown = panel.description || '';
-    const linkSrv = new LinkSrv(templateSrv, this.timeSrv);
     const interpolatedMarkdown = templateSrv.replace(markdown, panel.scopedVars);
     const markedInterpolatedMarkdown = renderMarkdown(interpolatedMarkdown);
+    const links = this.props.links && this.props.links.getLinks(panel);
 
     return (
       <div className="panel-info-content markdown-html">
         <div dangerouslySetInnerHTML={{ __html: markedInterpolatedMarkdown }} />
 
-        {panel.links && panel.links.length > 0 && (
+        {links && links.length > 0 && (
           <ul className="panel-info-corner-links">
-            {panel.links.map((link, idx) => {
-              const info = linkSrv.getDataLinkUIModel(link, panel.scopedVars);
+            {links.map((link, idx) => {
               return (
                 <li key={idx}>
-                  <a className="panel-info-corner-links__item" href={info.href} target={info.target}>
-                    {info.title}
+                  <a className="panel-info-corner-links__item" href={link.href} target={link.target}>
+                    {link.title}
                   </a>
                 </li>
               );

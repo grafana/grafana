@@ -3,6 +3,7 @@ import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
 import { FieldCalcs } from '../utils/index';
 import { DisplayProcessor } from './displayValue';
+import { DataLink } from './dataLink';
 
 export enum FieldType {
   time = 'time', // or date
@@ -36,6 +37,9 @@ export interface FieldConfig {
   // Used when reducing field values
   nullValueMode?: NullValueMode;
 
+  // The behavior when clicking on a result
+  links?: DataLink[];
+
   // Alternative to empty string
   noValue?: string;
 }
@@ -59,11 +63,11 @@ export interface Vector<T = any> {
   toJSON(): any; // same results as toArray()
 }
 
-export interface Field<T = any> {
+export interface Field<T = any, V = Vector<T>> {
   name: string; // The column name
   type: FieldType;
   config: FieldConfig;
-  values: Vector<T>; // `buffer` when JSON
+  values: V; // The raw field values
 
   /**
    * Cache of reduced values

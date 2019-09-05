@@ -1,5 +1,5 @@
-// @ts-ignore
-import _ from 'lodash';
+import each from 'lodash/each';
+import groupBy from 'lodash/groupBy';
 
 import { RawTimeRange } from '../types/time';
 
@@ -64,12 +64,12 @@ const rangeOptions = [
 const absoluteFormat = 'YYYY-MM-DD HH:mm:ss';
 
 const rangeIndex: any = {};
-_.each(rangeOptions, (frame: any) => {
+each(rangeOptions, (frame: any) => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
 
 export function getRelativeTimesList(timepickerSettings: any, currentDisplay: any) {
-  const groups = _.groupBy(rangeOptions, (option: any) => {
+  const groups = groupBy(rangeOptions, (option: any) => {
     option.active = option.display === currentDisplay;
     return option.section;
   });

@@ -1,7 +1,7 @@
 import { toDataQueryError, PanelQueryState, getProcessedDataFrames } from './PanelQueryState';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { LoadingState, getDataFrameRow } from '@grafana/data';
-import { DataQueryResponse } from '@grafana/ui';
+import { DataQueryResponse, DataQueryRequest, DataQuery } from '@grafana/ui';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 describe('PanelQueryState', () => {
@@ -51,6 +51,19 @@ describe('PanelQueryState', () => {
     // Check for differnet queries
     expect(state.isSameQuery(new MockDataSourceApi('test'), query)).toBeFalsy();
     expect(state.isSameQuery(ds, getQueryOptions({ targets: [{ refId: 'differnet' }] }))).toBeFalsy();
+  });
+});
+
+describe('When cancelling request', () => {
+  it('Should call rejector', () => {
+    const state = new PanelQueryState();
+    state.request = {} as DataQueryRequest<DataQuery>;
+    (state as any).rejector = (obj: any) => {
+      expect(obj.cancelled).toBe(true);
+      expect(obj.message).toBe('OHH');
+    };
+
+    state.cancel('OHH');
   });
 });
 
@@ -206,5 +219,20 @@ describe('stream handling', () => {
     expect(data.series.length).toBe(1);
     expect(data.series[0].refId).toBe('F');
     expect(state.streams.length).toBe(0); // no streams
+  });
+
+  it('should close streams on error', () => {
+    // Post a stream event
+    state.dataStreamObserver({
+      state: LoadingState.Error,
+      key: 'C',
+      error: { message: 'EEEEE' },
+      data: [],
+      request: state.request,
+      unsubscribe: () => {},
+    });
+
+    expect(state.streams.length).toBe(0);
+    expect(state.response.state).toBe(LoadingState.Error);
   });
 });
