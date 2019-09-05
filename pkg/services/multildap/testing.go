@@ -69,8 +69,15 @@ type MockMultiLDAP struct {
 	LoginCalledTimes int
 	UsersCalledTimes int
 	UserCalledTimes  int
+	PingCalledTimes  int
 
 	UsersResult []*models.ExternalUserInfo
+}
+
+func (mock *MockMultiLDAP) Ping() ([]*ServerStatus, error) {
+	mock.PingCalledTimes = mock.PingCalledTimes + 1
+
+	return nil, nil
 }
 
 // Login test fn

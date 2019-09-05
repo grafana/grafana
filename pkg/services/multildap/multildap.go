@@ -28,8 +28,17 @@ var ErrNoLDAPServers = errors.New("No LDAP servers are configured")
 // ErrDidNotFindUser if request for user is unsuccessful
 var ErrDidNotFindUser = errors.New("Did not find a user")
 
+// ServerStatus holds the LDAP server status
+type ServerStatus struct {
+	Host      string
+	Port      int
+	Available bool
+	Error     error
+}
+
 // IMultiLDAP is interface for MultiLDAP
 type IMultiLDAP interface {
+	Ping() ([]*ServerStatus, error)
 	Login(query *models.LoginUserQuery) (
 		*models.ExternalUserInfo, error,
 	)
@@ -53,6 +62,39 @@ func New(configs []*ldap.ServerConfig) IMultiLDAP {
 	return &MultiLDAP{
 		configs: configs,
 	}
+}
+
+// Ping dials each of the LDAP servers and returns their status. If the server is unavailable, it also returns the error.
+func (multiples *MultiLDAP) Ping() ([]*ServerStatus, error) {
+
+	if len(multiples.configs) == 0 {
+		return nil, ErrNoLDAPServers
+	}
+
+	serverStatuses := []*ServerStatus{}
+	for _, config := range multiples.configs {
+
+		status := &ServerStatus{}
+
+		status.Host = config.Host
+		status.Port = config.Port
+
+		server := newLDAP(config)
+		err := server.Dial()
+
+		if err == nil {
+			status.Available = true
+			serverStatuses = append(serverStatuses, status)
+		} else {
+			status.Available = false
+			status.Error = err
+			serverStatuses = append(serverStatuses, status)
+		}
+
+		defer server.Close()
+	}
+
+	return serverStatuses, nil
 }
 
 // Login tries to log in the user in multiples LDAP
