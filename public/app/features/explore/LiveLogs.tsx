@@ -9,6 +9,8 @@ import ElapsedTime from './ElapsedTime';
 const getStyles = (theme: GrafanaTheme) => ({
   logsRowsLive: css`
     label: logs-rows-live;
+    font-family: ${theme.typography.fontFamily.monospace};
+    font-size: ${theme.typography.size.sm};
     display: flex;
     flex-flow: column nowrap;
     height: 65vh;
