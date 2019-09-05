@@ -145,6 +145,7 @@ describe('runRequest', () => {
 
     it('should emit 1 result with loading state', () => {
       expect(ctx.results.length).toBe(1);
+      expect(ctx.results[0].state).toBe(LoadingState.Loading);
     });
   });
 
