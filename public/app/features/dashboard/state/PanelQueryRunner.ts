@@ -8,6 +8,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
 import { PanelQueryState } from './PanelQueryState';
+import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 
 // Types
 import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
@@ -49,8 +50,16 @@ export class PanelQueryRunner {
 
   private state = new PanelQueryState();
 
-  constructor() {
+  // Listen to another panel for changes
+  private sharedQueryRunner: SharedQueryRunner;
+
+  constructor(private panelId: number) {
     this.state.onStreamingDataUpdated = this.onStreamingDataUpdated;
+    this.subject = new Subject();
+  }
+
+  getPanelId() {
+    return this.panelId;
   }
 
   /**
@@ -58,10 +67,6 @@ export class PanelQueryRunner {
    * the results will be immediatly passed to the observer
    */
   subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.frames): Unsubscribable {
-    if (!this.subject) {
-      this.subject = new Subject(); // Delay creating a subject until someone is listening
-    }
-
     if (format === PanelQueryRunnerFormat.legacy) {
       this.state.sendLegacy = true;
     } else if (format === PanelQueryRunnerFormat.both) {
@@ -79,11 +84,25 @@ export class PanelQueryRunner {
     return this.subject.subscribe(observer);
   }
 
-  async run(options: QueryRunnerOptions): Promise<PanelData> {
-    if (!this.subject) {
-      this.subject = new Subject();
+  /**
+   * Subscribe one runner to another
+   */
+  chain(runner: PanelQueryRunner): Unsubscribable {
+    const { sendLegacy, sendFrames } = runner.state;
+    let format = sendFrames ? PanelQueryRunnerFormat.frames : PanelQueryRunnerFormat.legacy;
+
+    if (sendLegacy) {
+      format = PanelQueryRunnerFormat.both;
     }
 
+    return this.subscribe(runner.subject, format);
+  }
+
+  getCurrentData(): PanelData {
+    return this.state.validateStreamsAndGetPanelData();
+  }
+
+  async run(options: QueryRunnerOptions): Promise<PanelData> {
     const { state } = this;
 
     const {
@@ -101,6 +120,17 @@ export class PanelQueryRunner {
       minInterval,
       delayStateNotification,
     } = options;
+
+    // Support shared queries
+    if (isSharedDashboardQuery(datasource)) {
+      if (!this.sharedQueryRunner) {
+        this.sharedQueryRunner = new SharedQueryRunner(this);
+      }
+      return this.sharedQueryRunner.process(options);
+    } else if (this.sharedQueryRunner) {
+      this.sharedQueryRunner.disconnect();
+      this.sharedQueryRunner = null;
+    }
 
     const request: DataQueryRequest = {
       requestId: getNextRequestId(),

@@ -16,7 +16,9 @@ type RegexesDefinitions struct {
 	UA     []*uaParser     `yaml:"user_agent_parsers"`
 	OS     []*osParser     `yaml:"os_parsers"`
 	Device []*deviceParser `yaml:"device_parsers"`
+	_        [4]byte  // padding for alignment
 	sync.RWMutex
+
 }
 
 type UserAgentSorter []*uaParser
@@ -32,6 +34,7 @@ type uaParser struct {
 	V1Replacement     string `yaml:"v1_replacement"`
 	V2Replacement     string `yaml:"v2_replacement"`
 	V3Replacement     string `yaml:"v3_replacement"`
+	_        [4]byte  // padding for alignment
 	MatchesCount      uint64
 }
 
@@ -64,6 +67,7 @@ type osParser struct {
 	V2Replacement string `yaml:"os_v2_replacement"`
 	V3Replacement string `yaml:"os_v3_replacement"`
 	V4Replacement string `yaml:"os_v4_replacement"`
+	_        [4]byte  // padding for alignment
 	MatchesCount  uint64
 }
 
@@ -97,6 +101,7 @@ type deviceParser struct {
 	DeviceReplacement string `yaml:"device_replacement"`
 	BrandReplacement  string `yaml:"brand_replacement"`
 	ModelReplacement  string `yaml:"model_replacement"`
+	_        [4]byte  // padding for alignment
 	MatchesCount      uint64
 }
 

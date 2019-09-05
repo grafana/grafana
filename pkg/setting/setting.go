@@ -29,6 +29,7 @@ type Scheme string
 const (
 	HTTP              Scheme = "http"
 	HTTPS             Scheme = "https"
+	HTTP2             Scheme = "h2"
 	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
 )
@@ -107,6 +108,7 @@ var (
 	ExternalSnapshotName  string
 	ExternalEnabled       bool
 	SnapShotRemoveExpired bool
+	SnapshotPublicMode    bool
 
 	// Dashboard history
 	DashboardVersionsToKeep int
@@ -639,6 +641,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
+	if protocolStr == "h2" {
+		Protocol = HTTP2
+		CertFile = server.Key("cert_file").String()
+		KeyFile = server.Key("cert_key").String()
+	}
 	if protocolStr == "socket" {
 		Protocol = SOCKET
 		SocketPath = server.Key("socket").String()
@@ -728,6 +735,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")

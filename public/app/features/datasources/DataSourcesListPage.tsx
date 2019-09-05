@@ -79,7 +79,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
-            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA model={emptyListModel} />}
+            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyListModel} />}
             {hasFetched &&
               dataSourcesCount > 0 && [
                 <OrgActionBar

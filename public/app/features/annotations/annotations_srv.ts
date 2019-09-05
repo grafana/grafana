@@ -7,14 +7,14 @@ import './editor_ctrl';
 import coreModule from 'app/core/core_module';
 
 // Utils & Services
-import { makeRegions, dedupAnnotations } from './events_processing';
+import { dedupAnnotations } from './events_processing';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
+import { AnnotationEvent } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
-import { AnnotationEvent } from '@grafana/data';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -48,7 +48,7 @@ export class AnnotationsSrv {
       .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
-        let annotations: any[] = _.flattenDeep(results[0]);
+        let annotations: AnnotationEvent[] = _.flattenDeep(results[0]);
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
@@ -60,7 +60,6 @@ export class AnnotationsSrv {
         });
 
         annotations = dedupAnnotations(annotations);
-        annotations = makeRegions(annotations, options);
 
         // look for alert state for this panel
         const alertState: any = _.find(results[1], { panelId: options.panel.id });
@@ -163,10 +162,7 @@ export class AnnotationsSrv {
 
   deleteAnnotationEvent(annotation: AnnotationEvent) {
     this.globalAnnotationsPromise = null;
-    let deleteUrl = `/api/annotations/${annotation.id}`;
-    if (annotation.isRegion) {
-      deleteUrl = `/api/annotations/region/${annotation.regionId}`;
-    }
+    const deleteUrl = `/api/annotations/${annotation.id}`;
 
     return this.backendSrv.delete(deleteUrl);
   }
@@ -181,7 +177,9 @@ export class AnnotationsSrv {
 
     for (const item of results) {
       item.source = annotation;
+      item.isRegion = item.timeEnd && item.time !== item.timeEnd;
     }
+
     return results;
   }
 }

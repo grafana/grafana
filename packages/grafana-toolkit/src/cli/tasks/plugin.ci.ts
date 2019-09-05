@@ -9,7 +9,7 @@ import { PluginMeta } from '@grafana/ui';
 import execa = require('execa');
 import path = require('path');
 import fs from 'fs';
-import { getPackageDetails, findImagesInFolder, appendPluginHistory } from '../../plugins/utils';
+import { getPackageDetails, findImagesInFolder, appendPluginHistory, getGrafanaVersions } from '../../plugins/utils';
 import {
   job,
   getJobFolder,
@@ -318,6 +318,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
 
   const pluginJsonFile = path.resolve(ciDir, 'dist', 'plugin.json');
   console.log('Load info from: ' + pluginJsonFile);
+
   const pluginMeta = getPluginJson(pluginJsonFile);
   const report: PluginBuildReport = {
     plugin: pluginMeta,
@@ -326,6 +327,7 @@ const pluginReportRunner: TaskRunner<PluginCIOptions> = async ({ upload }) => {
     coverage: agregateCoverageInfo(),
     tests: agregateTestInfo(),
     artifactsBaseURL: await getCircleDownloadBaseURL(),
+    grafanaVersion: getGrafanaVersions(),
   };
   const pr = getPullRequestNumber();
   if (pr) {

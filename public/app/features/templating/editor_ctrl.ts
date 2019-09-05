@@ -14,6 +14,24 @@ export class VariableEditorCtrl {
     $scope.namePattern = /^(?!__).*$/;
     $scope._ = _;
     $scope.optionsLimit = 20;
+    $scope.emptyListCta = {
+      title: 'There are no variables yet',
+      buttonTitle: 'Add variable',
+      buttonIcon: 'gicon gicon-variable',
+      infoBox: {
+        __html: ` <p>
+      Variables enable more interactive and dynamic dashboards. Instead of hard-coding things like server or
+      sensor names in your metric queries you can use variables in their place. Variables are shown as dropdown
+      select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in
+      your dashboard. Check out the
+      <a class="external-link" href="http://docs.grafana.org/reference/templating/" target="_blank">
+        Templating documentation
+      </a>
+      for more information.
+    </p>`,
+        infoBoxTitle: 'What do variables do?',
+      },
+    };
 
     $scope.refreshOptions = [
       { value: 0, text: 'Never' },
@@ -48,6 +66,10 @@ export class VariableEditorCtrl {
 
     $scope.setMode = (mode: any) => {
       $scope.mode = mode;
+    };
+
+    $scope.setNewMode = () => {
+      $scope.setMode('new');
     };
 
     $scope.add = () => {

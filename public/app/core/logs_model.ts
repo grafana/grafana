@@ -1,7 +1,5 @@
 import _ from 'lodash';
-import ansicolor from 'vendor/ansicolor/ansicolor';
-
-import { colors, getFlotPairs } from '@grafana/ui';
+import { colors, getFlotPairs, ansicolor } from '@grafana/ui';
 
 import {
   Labels,
@@ -10,21 +8,19 @@ import {
   findCommonLabels,
   findUniqueLabels,
   getLogLevel,
-  FieldCache,
   FieldType,
   getLogLevelFromKey,
   LogRowModel,
   LogsModel,
   LogsMetaItem,
   LogsMetaKind,
-  LogsParser,
-  LogLabelStatsModel,
   LogsDedupStrategy,
   GraphSeriesXY,
-  LoadingState,
   dateTime,
   toUtc,
   NullValueMode,
+  toDataFrame,
+  FieldCache,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -39,89 +35,6 @@ export const LogLevelColor = {
   [LogLevel.trace]: colors[2],
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#dde4ed'),
 };
-
-export enum LogsDedupDescription {
-  none = 'No de-duplication',
-  exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
-  numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
-  signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
-}
-const LOGFMT_REGEXP = /(?:^|\s)(\w+)=("[^"]*"|\S+)/;
-
-export const LogsParsers: { [name: string]: LogsParser } = {
-  JSON: {
-    buildMatcher: label => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
-    getFields: line => {
-      const fields: string[] = [];
-      try {
-        const parsed = JSON.parse(line);
-        _.map(parsed, (value, key) => {
-          const fieldMatcher = new RegExp(`"${key}"\\s*:\\s*"?${_.escapeRegExp(JSON.stringify(value))}"?`);
-
-          const match = line.match(fieldMatcher);
-          if (match) {
-            fields.push(match[0]);
-          }
-        });
-      } catch {}
-      return fields;
-    },
-    getLabelFromField: field => (field.match(/^"(\w+)"\s*:/) || [])[1],
-    getValueFromField: field => (field.match(/:\s*(.*)$/) || [])[1],
-    test: line => {
-      try {
-        return JSON.parse(line);
-      } catch (error) {}
-    },
-  },
-
-  logfmt: {
-    buildMatcher: label => new RegExp(`(?:^|\\s)${label}=("[^"]*"|\\S+)`),
-    getFields: line => {
-      const fields: string[] = [];
-      line.replace(new RegExp(LOGFMT_REGEXP, 'g'), substring => {
-        fields.push(substring.trim());
-        return '';
-      });
-      return fields;
-    },
-    getLabelFromField: field => (field.match(LOGFMT_REGEXP) || [])[1],
-    getValueFromField: field => (field.match(LOGFMT_REGEXP) || [])[2],
-    test: line => LOGFMT_REGEXP.test(line),
-  },
-};
-
-export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): LogLabelStatsModel[] {
-  // Consider only rows that satisfy the matcher
-  const rowsWithField = rows.filter(row => extractor.test(row.entry));
-  const rowCount = rowsWithField.length;
-
-  // Get field value counts for eligible rows
-  const countsByValue = _.countBy(rowsWithField, row => (row as LogRowModel).entry.match(extractor)[1]);
-  const sortedCounts = _.chain(countsByValue)
-    .map((count, value) => ({ count, value, proportion: count / rowCount }))
-    .sortBy('count')
-    .reverse()
-    .value();
-
-  return sortedCounts;
-}
-
-export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
-  // Consider only rows that have the given label
-  const rowsWithLabel = rows.filter(row => row.labels[label] !== undefined);
-  const rowCount = rowsWithLabel.length;
-
-  // Get label value counts for eligible rows
-  const countsByValue = _.countBy(rowsWithLabel, row => (row as LogRowModel).labels[label]);
-  const sortedCounts = _.chain(countsByValue)
-    .map((count, value) => ({ count, value, proportion: count / rowCount }))
-    .sortBy('count')
-    .reverse()
-    .value();
-
-  return sortedCounts;
-}
 
 const isoDateRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-6]\d[,\.]\d+([+-][0-2]\d:[0-5]\d|Z)/g;
 function isDuplicateRow(row: LogRowModel, other: LogRowModel, strategy: LogsDedupStrategy): boolean {
@@ -162,19 +75,6 @@ export function dedupLogRows(logs: LogsModel, strategy: LogsDedupStrategy): Logs
     ...logs,
     rows: dedupedRows,
   };
-}
-
-export function getParser(line: string): LogsParser {
-  let parser;
-  try {
-    if (LogsParsers.JSON.test(line)) {
-      parser = LogsParsers.JSON;
-    }
-  } catch (error) {}
-  if (!parser && LogsParsers.logfmt.test(line)) {
-    parser = LogsParsers.logfmt;
-  }
-  return parser;
 }
 
 export function filterLogLevels(logs: LogsModel, hiddenLogLevels: Set<LogLevel>): LogsModel {
@@ -245,10 +145,11 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
       return a[1] - b[1];
     });
 
+    // EEEP: converts GraphSeriesXY to DataFrame and back again!
+    const data = toDataFrame(series);
     const points = getFlotPairs({
-      rows: series.datapoints,
-      xIndex: 1,
-      yIndex: 0,
+      xField: data.fields[1],
+      yField: data.fields[0],
       nullValueMode: NullValueMode.Null,
     });
 
@@ -291,7 +192,7 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
       logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
     } else {
       logsModel.series = getGraphSeriesModel(
-        { series: metricSeries, state: LoadingState.Done },
+        metricSeries,
         {},
         { showBars: true, showLines: false, showPoints: false },
         {
@@ -336,14 +237,58 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
 
   for (let i = 0; i < logSeries.length; i++) {
     const series = logSeries[i];
-    const fieldCache = new FieldCache(series.fields);
+    const fieldCache = new FieldCache(series);
     const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
       hasUniqueLabels = true;
     }
 
-    for (let j = 0; j < series.rows.length; j++) {
-      rows.push(processLogSeriesRow(series, fieldCache, j, uniqueLabels));
+    const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time);
+    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+    const logLevelField = fieldCache.getFieldByName('level');
+
+    let seriesLogLevel: LogLevel | undefined = undefined;
+    if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
+      seriesLogLevel = getLogLevelFromKey(series.labels['level']);
+    }
+
+    for (let j = 0; j < series.length; j++) {
+      const ts = timeFieldIndex.values.get(j);
+      const time = dateTime(ts);
+      const timeEpochMs = time.valueOf();
+      const timeFromNow = time.fromNow();
+      const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
+      const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
+
+      let message = stringField.values.get(j);
+      // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
+      message = typeof message === 'string' ? message : JSON.stringify(message);
+
+      let logLevel = LogLevel.unknown;
+      if (logLevelField) {
+        logLevel = getLogLevelFromKey(logLevelField.values.get(j));
+      } else if (seriesLogLevel) {
+        logLevel = seriesLogLevel;
+      } else {
+        logLevel = getLogLevel(message);
+      }
+      const hasAnsi = hasAnsiCodes(message);
+      const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
+
+      rows.push({
+        logLevel,
+        timeFromNow,
+        timeEpochMs,
+        timeLocal,
+        timeUtc,
+        uniqueLabels,
+        hasAnsi,
+        searchWords,
+        entry: hasAnsi ? ansicolor.strip(message) : message,
+        raw: message,
+        labels: series.labels,
+        timestamp: ts,
+      });
     }
   }
 
@@ -371,51 +316,5 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     hasUniqueLabels,
     meta,
     rows,
-  };
-}
-
-export function processLogSeriesRow(
-  series: DataFrame,
-  fieldCache: FieldCache,
-  rowIndex: number,
-  uniqueLabels: Labels
-): LogRowModel {
-  const row = series.rows[rowIndex];
-  const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time).index;
-  const ts = row[timeFieldIndex];
-  const stringFieldIndex = fieldCache.getFirstFieldOfType(FieldType.string).index;
-  const message = row[stringFieldIndex];
-  const time = dateTime(ts);
-  const timeEpochMs = time.valueOf();
-  const timeFromNow = time.fromNow();
-  const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
-  const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
-
-  let logLevel = LogLevel.unknown;
-  const logLevelField = fieldCache.getFieldByName('level');
-
-  if (logLevelField) {
-    logLevel = getLogLevelFromKey(row[logLevelField.index]);
-  } else if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
-    logLevel = getLogLevelFromKey(series.labels['level']);
-  } else {
-    logLevel = getLogLevel(message);
-  }
-  const hasAnsi = hasAnsiCodes(message);
-  const searchWords = series.meta && series.meta.searchWords ? series.meta.searchWords : [];
-
-  return {
-    logLevel,
-    timeFromNow,
-    timeEpochMs,
-    timeLocal,
-    timeUtc,
-    uniqueLabels,
-    hasAnsi,
-    searchWords,
-    entry: hasAnsi ? ansicolor.strip(message) : message,
-    raw: message,
-    labels: series.labels,
-    timestamp: ts,
   };
 }

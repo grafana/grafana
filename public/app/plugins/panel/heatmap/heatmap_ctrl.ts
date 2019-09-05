@@ -80,6 +80,8 @@ const colorSchemes = [
   { name: 'Reds', value: 'interpolateReds', invert: 'dark' },
 
   // Sequential (Multi-Hue)
+  { name: 'Turbo', value: 'interpolateTurbo', invert: 'light' },
+  { name: 'Cividis', value: 'interpolateCividis', invert: 'light' },
   { name: 'Viridis', value: 'interpolateViridis', invert: 'light' },
   { name: 'Magma', value: 'interpolateMagma', invert: 'light' },
   { name: 'Inferno', value: 'interpolateInferno', invert: 'light' },

@@ -98,5 +98,6 @@
   },
   "_moduleAliases": {
     "puppeteer": "node_modules/puppeteer-core"
-  }
+  },
+  "types": "src/index.ts"
 }

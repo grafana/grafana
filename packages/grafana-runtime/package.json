@@ -39,5 +39,6 @@
     "rollup-plugin-typescript2": "0.19.3",
     "rollup-plugin-visualizer": "0.9.2",
     "typescript": "3.5.3"
-  }
+  },
+  "types": "src/index.ts"
 }

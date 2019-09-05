@@ -1,22 +1,28 @@
 // Types
-import { NullValueMode, GraphSeriesValue } from '@grafana/data';
+import { NullValueMode, GraphSeriesValue, Field } from '@grafana/data';
 
 export interface FlotPairsOptions {
-  rows: any[][];
-  xIndex: number;
-  yIndex: number;
+  xField: Field;
+  yField: Field;
   nullValueMode?: NullValueMode;
 }
 
-export function getFlotPairs({ rows, xIndex, yIndex, nullValueMode }: FlotPairsOptions): GraphSeriesValue[][] {
+export function getFlotPairs({ xField, yField, nullValueMode }: FlotPairsOptions): GraphSeriesValue[][] {
+  const vX = xField.values;
+  const vY = yField.values;
+  const length = vX.length;
+  if (vY.length !== length) {
+    throw new Error('Unexpected field length');
+  }
+
   const ignoreNulls = nullValueMode === NullValueMode.Ignore;
   const nullAsZero = nullValueMode === NullValueMode.AsZero;
 
   const pairs: any[][] = [];
 
-  for (let i = 0; i < rows.length; i++) {
-    const x = rows[i][xIndex];
-    let y = rows[i][yIndex];
+  for (let i = 0; i < length; i++) {
+    const x = vX.get(i);
+    let y = vY.get(i);
 
     if (y === null) {
       if (ignoreNulls) {

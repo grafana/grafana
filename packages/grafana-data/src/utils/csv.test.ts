@@ -1,7 +1,9 @@
 import { readCSV, toCSV, CSVHeaderStyle } from './csv';
+import { getDataFrameRow } from './processDataFrame';
 
 // Test with local CSV files
-const fs = require('fs');
+import fs from 'fs';
+import { toDataFrameDTO } from './processDataFrame';
 
 describe('read csv', () => {
   it('should get X and y', () => {
@@ -11,14 +13,31 @@ describe('read csv', () => {
 
     const series = data[0];
     expect(series.fields.length).toBe(4);
-    expect(series.rows.length).toBe(3);
+
+    const rows = 4;
+    expect(series.length).toBe(rows);
 
     // Make sure everythign it padded properly
-    for (const row of series.rows) {
-      expect(row.length).toBe(series.fields.length);
+    for (const field of series.fields) {
+      expect(field.values.length).toBe(rows);
     }
 
-    expect(series).toMatchSnapshot();
+    const dto = toDataFrameDTO(series);
+    expect(dto).toMatchSnapshot();
+  });
+
+  it('should read single string OK', () => {
+    const text = 'a,b,c';
+    const data = readCSV(text);
+    expect(data.length).toBe(1);
+
+    const series = data[0];
+    expect(series.fields.length).toBe(3);
+    expect(series.length).toBe(0);
+
+    expect(series.fields[0].name).toEqual('a');
+    expect(series.fields[1].name).toEqual('b');
+    expect(series.fields[2].name).toEqual('c');
   });
 
   it('should read csv from local file system', () => {
@@ -28,7 +47,7 @@ describe('read csv', () => {
     const csv = fs.readFileSync(path, 'utf8');
     const data = readCSV(csv);
     expect(data.length).toBe(1);
-    expect(data[0]).toMatchSnapshot();
+    expect(toDataFrameDTO(data[0])).toMatchSnapshot();
   });
 
   it('should read csv with headers', () => {
@@ -38,7 +57,7 @@ describe('read csv', () => {
     const csv = fs.readFileSync(path, 'utf8');
     const data = readCSV(csv);
     expect(data.length).toBe(1);
-    expect(data[0]).toMatchSnapshot();
+    expect(toDataFrameDTO(data[0])).toMatchSnapshot();
   });
 });
 
@@ -54,7 +73,7 @@ describe('write csv', () => {
     const data = readCSV(csv);
     const out = toCSV(data, { headerStyle: CSVHeaderStyle.full });
     expect(data.length).toBe(1);
-    expect(data[0].rows[0]).toEqual(firstRow);
+    expect(getDataFrameRow(data[0], 0)).toEqual(firstRow);
     expect(data[0].fields.length).toBe(3);
     expect(norm(out)).toBe(norm(csv));
 
@@ -65,7 +84,7 @@ describe('write csv', () => {
     const f = readCSV(shorter);
     const fields = f[0].fields;
     expect(fields.length).toBe(3);
-    expect(f[0].rows[0]).toEqual(firstRow);
+    expect(getDataFrameRow(f[0], 0)).toEqual(firstRow);
     expect(fields.map(f => f.name).join(',')).toEqual('a,b,c'); // the names
   });
 });

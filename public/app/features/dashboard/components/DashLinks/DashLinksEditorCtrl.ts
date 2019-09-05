@@ -18,6 +18,19 @@ export class DashLinksEditorCtrl {
   mode: any;
   link: any;
 
+  emptyListCta = {
+    title: 'There are no dashboard links added yet',
+    buttonIcon: 'gicon gicon-link',
+    buttonTitle: 'Add Dashboard Link',
+    infoBox: {
+      __html: `<p>
+      Dashboard Links allow you to place links to other dashboards and web sites directly in below the dashboard
+      header.
+    </p>`,
+    },
+    infoBoxTitle: 'What are Dashboard Links?',
+  };
+
   /** @ngInject */
   constructor($scope: any, $rootScope: any) {
     this.iconMap = iconMap;
@@ -33,10 +46,10 @@ export class DashLinksEditorCtrl {
     this.mode = 'list';
   }
 
-  setupNew() {
+  setupNew = () => {
     this.mode = 'new';
     this.link = { type: 'dashboards', icon: 'external link' };
-  }
+  };
 
   addLink() {
     this.dashboard.links.push(this.link);

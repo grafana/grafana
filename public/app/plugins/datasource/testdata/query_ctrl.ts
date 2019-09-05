@@ -18,6 +18,8 @@ export const defaultCSVWave: any = {
   valuesCSV: '0,0,2,2,1,1',
 };
 
+const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
+
 export class TestDataQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
@@ -27,6 +29,8 @@ export class TestDataQueryCtrl extends QueryCtrl {
   newPointTime: any;
   selectedPoint: any;
 
+  showLabels = false;
+
   /** @ngInject */
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -35,6 +39,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
     this.scenarioList = [];
     this.newPointTime = dateTime();
     this.selectedPoint = { text: 'Select point', value: null };
+    this.showLabels = showLabelsFor.includes(this.target.scenarioId);
   }
 
   getPoints() {
@@ -75,6 +80,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
   scenarioChanged() {
     this.scenario = _.find(this.scenarioList, { id: this.target.scenarioId });
     this.target.stringInput = this.scenario.stringInput;
+    this.showLabels = showLabelsFor.includes(this.target.scenarioId);
 
     if (this.target.scenarioId === 'manual_entry') {
       this.target.points = this.target.points || [];
