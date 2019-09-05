@@ -138,11 +138,9 @@ describe('runRequest', () => {
   });
 
   runRequestScenario('If no response after 50ms', ctx => {
-    ctx.setup(() => {
+    ctx.setup(async () => {
       ctx.start();
-      return new Promise(resolve => {
-        setTimeout(resolve, 80);
-      });
+      await sleep(80);
     });
 
     it('should emit 1 result with loading state', () => {
@@ -163,15 +161,12 @@ describe('runRequest', () => {
   });
 
   runRequestScenario('If time range is relative', ctx => {
-    ctx.setup(() => {
+    ctx.setup(async () => {
       ctx.start();
       // wait a bit
-      return new Promise(resolve => {
-        setTimeout(() => {
-          ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
-          resolve();
-        }, 20);
-      });
+      await sleep(20);
+
+      ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
     });
 
     it('should update returned request range', () => {
@@ -179,3 +174,9 @@ describe('runRequest', () => {
     });
   });
 });
+
+async function sleep(ms: number) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+}
