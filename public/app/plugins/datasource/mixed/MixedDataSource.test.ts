@@ -35,7 +35,7 @@ describe('MixedDatasource', () => {
 
     const ds = await getDatasourceSrv().get('A');
     const res = await ds.query(requestMixed, dummyStream);
-    expect(res.data[0]).toEqual('AAAA');
+    expect(res.data).toEqual(['AAAA', 'BBBB', 'CCCC']);
     expect(counter).toBe(0);
     expect(lastEvent).toBeUndefined();
   });
