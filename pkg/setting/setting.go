@@ -944,7 +944,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
 
 	// Read and populate feature toggles list
-	featureTogglesSection := iniFile.Section("featureToggles")
+	featureTogglesSection := iniFile.Section("feature_toggles")
 	cfg.FeatureToggles = make(map[string]bool)
 	featuresTogglesStr, err := valueAsString(featureTogglesSection, "enable", "")
 	if err != nil {
