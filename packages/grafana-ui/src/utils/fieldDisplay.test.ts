@@ -164,35 +164,31 @@ describe('FieldDisplay', () => {
     };
 
     // NullValueMode.Ignore
-    let vals = getDisplayValuesFor(
+    checkReducerDisplay(
       {
         ...field,
         config: {
           nullValueMode: NullValueMode.Ignore,
         },
       },
-      [ReducerID.last]
-    ).map(disp => {
-      return disp.display.text;
-    });
-    expect(vals).toEqual(['20']);
+      ReducerID.last,
+      '20'
+    );
 
     // NullValueMode.AsZero
-    vals = getDisplayValuesFor(
+    checkReducerDisplay(
       {
         ...field,
         config: {
           nullValueMode: NullValueMode.AsZero,
         },
       },
-      [ReducerID.last]
-    ).map(disp => {
-      return disp.display.text;
-    });
-    expect(vals).toEqual(['0']);
+      ReducerID.last,
+      '0'
+    );
 
     // NullValueMode.AsZero
-    vals = getDisplayValuesFor(
+    checkReducerDisplay(
       {
         ...field,
         config: {
@@ -200,13 +196,22 @@ describe('FieldDisplay', () => {
           noValue: 'kittens',
         },
       },
-      [ReducerID.last]
-    ).map(disp => {
-      return disp.display.text;
-    });
-    expect(vals).toEqual(['kittens']);
+      ReducerID.last,
+      'kittens'
+    );
   });
 });
+
+/**
+ * This makes sure the single path and `standard` path come up with the same results
+ */
+function checkReducerDisplay(field: Field, calc: string, match: string) {
+  const val0 = getDisplayValuesFor(field, [calc])[0].display;
+  const val1 = getDisplayValuesFor(field, [calc, ReducerID.sum])[0].display;
+  // Same results
+  expect(val0).toEqual(val1);
+  expect(val0.text).toEqual(match);
+}
 
 function getDisplayValuesFor(field: Field, calcs: string[]) {
   const options: GetFieldDisplayValuesOptions = {
