@@ -54,7 +54,6 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
     }
 
     return () => {
-      console.log('runSharedRequest: unsubscribe to other PanelQueryRunner');
       subscription.unsubscribe();
     };
   });
