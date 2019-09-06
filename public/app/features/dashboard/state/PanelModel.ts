@@ -292,7 +292,6 @@ export class PanelModel {
       } else if (oldOptions && oldOptions.options) {
         old = oldOptions.options;
       }
-
       this.options = this.options || {};
       Object.assign(this.options, newPlugin.onPanelTypeChanged(this.options, oldPluginId, old));
     }

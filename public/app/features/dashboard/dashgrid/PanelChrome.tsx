@@ -243,7 +243,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     const PanelComponent = plugin.panel;
     const innerPanelHeight = calculateInnerPanelHeight(panel, height);
 
-    console.log('PANEL DATA:', data.series);
     return (
       <>
         {loading === LoadingState.Loading && this.renderLoadingState()}

@@ -72,8 +72,6 @@ export class PanelQueryRunner {
     const v = this.state.validateStreamsAndGetPanelData();
     if (transform && this.transformations && this.transformations.length) {
       const processed = transformDataFrame(this.transformations, v.series);
-      console.log('INPUT SERIES:', v.series);
-      console.log('PROCESSED SERIES:', processed);
       return {
         ...v,
         series: processed,
@@ -127,7 +125,6 @@ export class PanelQueryRunner {
    */
   setTransform = (transformations?: DataTransformerConfig[]) => {
     this.transformations = transformations;
-    console.log('UPDATING TRANSFORMATION:', transformations);
 
     if (this.state.isStarted()) {
       this.onStreamingDataUpdated();
@@ -232,7 +229,6 @@ export class PanelQueryRunner {
         }
       }, delayStateNotification || 500);
 
-      console.log('PERSISTED', options.transformations);
       this.transformations = options.transformations;
 
       const data = await state.execute(ds, request);
