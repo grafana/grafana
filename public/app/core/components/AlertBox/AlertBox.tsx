@@ -1,4 +1,5 @@
 import React, { FunctionComponent, ReactNode } from 'react';
+import classNames from 'classnames';
 import { AppNotificationSeverity } from 'app/types';
 
 interface Props {
@@ -6,6 +7,7 @@ interface Props {
   icon?: string;
   body?: ReactNode;
   severity: AppNotificationSeverity;
+  iconOnTop?: boolean;
   onClose?: () => void;
 }
 
@@ -22,9 +24,10 @@ function getIconFromSeverity(severity: AppNotificationSeverity): string {
   }
 }
 
-export const AlertBox: FunctionComponent<Props> = ({ title, icon, body, severity, onClose }) => {
+export const AlertBox: FunctionComponent<Props> = ({ title, icon, body, severity, iconOnTop, onClose }) => {
+  const alertClass = classNames('alert', `alert-${severity}`, { 'alert-icon-on-top': iconOnTop });
   return (
-    <div className={`alert alert-${severity}`}>
+    <div className={alertClass}>
       <div className="alert-icon">
         <i className={icon || getIconFromSeverity(severity)} />
       </div>

@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { AlertBox } from '../../core/components/AlertBox/AlertBox';
-import { AppNotificationSeverity, LdapConnectionInfo } from 'app/types';
+import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
   ldapConnectionInfo: LdapConnectionInfo;
@@ -9,18 +9,6 @@ interface Props {
 }
 
 export const LdapConnectionStatus: FC<Props> = ({ ldapConnectionInfo, headingStyle, tableStyle }) => {
-  const hasError = ldapConnectionInfo.some(info => info.error);
-  const connectionError = ldapConnectionInfo.map((info, index) => {
-    return info.error ? (
-      <div key={index} style={{ marginTop: '0.4rem' }}>
-        <span>
-          {info.host}:{info.port}
-          <br />
-        </span>
-        <span>{info.error}</span>
-      </div>
-    ) : null;
-  });
   return (
     <>
       <h4 className={headingStyle}>LDAP Connection</h4>
@@ -29,7 +17,7 @@ export const LdapConnectionStatus: FC<Props> = ({ ldapConnectionInfo, headingSty
           <thead>
             <tr>
               <th>Host</th>
-              <th colSpan={3}>Port</th>
+              <th colSpan={2}>Port</th>
             </tr>
           </thead>
           <tbody>
@@ -38,7 +26,6 @@ export const LdapConnectionStatus: FC<Props> = ({ ldapConnectionInfo, headingSty
                 <tr key={index}>
                   <td>{serverInfo.host}</td>
                   <td>{serverInfo.port}</td>
-                  <td>{serverInfo.error}</td>
                   <td>
                     {serverInfo.available ? (
                       <i className="fa fa-fw fa-check pull-right" />
@@ -50,10 +37,46 @@ export const LdapConnectionStatus: FC<Props> = ({ ldapConnectionInfo, headingSty
               ))}
           </tbody>
         </table>
-        {hasError && (
-          <AlertBox title="Connection error" severity={AppNotificationSeverity.Error} body={connectionError} />
-        )}
+        <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
       </div>
     </>
+  );
+};
+
+interface LdapConnectionErrorProps {
+  ldapConnectionInfo: LdapConnectionInfo;
+}
+
+export const LdapErrorBox: FC<LdapConnectionErrorProps> = ({ ldapConnectionInfo }) => {
+  const hasError = ldapConnectionInfo.some(info => info.error);
+  if (!hasError) {
+    return null;
+  }
+
+  const connectionErrors: LdapServerInfo[] = [];
+  ldapConnectionInfo.forEach(info => {
+    if (info.error) {
+      connectionErrors.push(info);
+    }
+  });
+
+  const errorElements = connectionErrors.map((info, index) => (
+    <div key={index}>
+      <span style={{ fontWeight: 500 }}>
+        {info.host}:{info.port}
+        <br />
+      </span>
+      <span>{info.error}</span>
+      {index !== connectionErrors.length - 1 && (
+        <>
+          <br />
+          <br />
+        </>
+      )}
+    </div>
+  ));
+
+  return (
+    <AlertBox title="Connection error" iconOnTop={true} severity={AppNotificationSeverity.Error} body={errorElements} />
   );
 };
