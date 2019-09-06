@@ -159,20 +159,11 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      // Check if we can reuse the already issued query
-      // const active = state.getActiveRunner();
-      // if (active) {
-      //   if (state.isSameQuery(ds, request)) {
-      //     // Maybe cancel if it has run too long?
-      //     console.log('Trying to execute query while last one has yet to complete, returning same promise');
-      //     return active;
-      //   } else {
-      //     state.cancel('Query Changed while running');
-      //   }
-      // }
-      //
-
-      this.subscription = runRequest(ds, request).subscribe(this.subject);
+      this.subscription = runRequest(ds, request).subscribe({
+        next: data => {
+          this.subject.next(data);
+        },
+      });
     } catch (err) {
       console.log('PanelQueryRunner Error', err);
     }
