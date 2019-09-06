@@ -4,12 +4,12 @@ import { action } from '@storybook/addon-actions';
 
 import { TimeOfDayPicker } from './TimeOfDayPicker';
 import { UseState } from '../../utils/storybook/UseState';
-import { withRightAlignedStory } from '../../utils/storybook/withRightAlignedStory';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { dateTime } from '@grafana/data';
 
 const TimeOfDayPickerStories = storiesOf('UI/TimeOfDayPicker', module);
 
-TimeOfDayPickerStories.addDecorator(withRightAlignedStory);
+TimeOfDayPickerStories.addDecorator(withCenteredStory);
 
 TimeOfDayPickerStories.add('default', () => {
   return (
@@ -25,7 +25,26 @@ TimeOfDayPickerStories.add('default', () => {
               action('on selected')(newValue);
               updateValue(newValue);
             }}
-            value={dateTime(value.value)}
+            value={value.value}
+          />
+        );
+      }}
+    </UseState>
+  );
+});
+
+TimeOfDayPickerStories.add('only minutes', () => {
+  return (
+    <UseState initialState={{ value: dateTime(Date.now()) }}>
+      {(value, updateValue) => {
+        return (
+          <TimeOfDayPicker
+            onSelected={newValue => {
+              action('on selected')(newValue);
+              updateValue(newValue);
+            }}
+            value={value.value}
+            showHour={false}
           />
         );
       }}
