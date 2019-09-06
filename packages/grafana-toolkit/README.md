@@ -1,5 +1,5 @@
 
-# grafana-toolkikt
+# grafana-toolkit
 grafana-toolkit is CLI that enables efficient development of Grafana extensions
 
 ## Rationale
