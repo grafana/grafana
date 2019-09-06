@@ -164,7 +164,7 @@ describe('FieldDisplay', () => {
     };
 
     // NullValueMode.Ignore
-    let check = {
+    let check: Field = {
       ...field,
       config: {
         nullValueMode: NullValueMode.Ignore,
@@ -196,7 +196,9 @@ describe('FieldDisplay', () => {
     };
     expect(getDisplayValuesFor(check, [ReducerID.last])).toEqual(['kittens']);
     check.calcs = undefined;
-    expect(getDisplayValuesFor(check, [ReducerID.last, ReducerID.mean])).toEqual(['kittens', '6']);
+
+    // Default 'mean' behavior is ignore
+    expect(getDisplayValuesFor(check, [ReducerID.last, ReducerID.mean])).toEqual(['kittens', '15']);
   });
 });
 
