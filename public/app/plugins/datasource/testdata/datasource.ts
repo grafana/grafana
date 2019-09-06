@@ -60,7 +60,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
         // This sets up a cancel token
         requestId: options.requestId,
       })
-      .then(res => this.processQueryResult(queries, res));
+      .then((res: any) => this.processQueryResult(queries, res));
   }
 
   processQueryResult(queries: any, res: any): DataQueryResponse {
