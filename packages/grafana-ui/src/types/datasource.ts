@@ -542,3 +542,13 @@ export interface DataSourceSelectItem {
   meta: DataSourcePluginMeta;
   sort: string;
 }
+
+export interface AnnotationQueryRequest<MoreOptions = {}> {
+  range: TimeRange;
+  rangeRaw: RawTimeRange;
+  annotation: {
+    datasource: string;
+    enable: boolean;
+    name: string;
+  } & MoreOptions;
+}

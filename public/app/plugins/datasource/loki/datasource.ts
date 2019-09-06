@@ -1,7 +1,16 @@
 // Libraries
 import _ from 'lodash';
 // Services & Utils
-import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
+import {
+  dateMath,
+  DataFrame,
+  LogRowModel,
+  LoadingState,
+  DateTime,
+  dateTime,
+  AnnotationEvent,
+  DataFrameView,
+} from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -15,6 +24,7 @@ import {
   DataQueryRequest,
   DataStreamObserver,
   DataQueryResponse,
+  AnnotationQueryRequest,
 } from '@grafana/ui';
 
 import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
@@ -193,7 +203,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     }
   };
 
-  runQueries = async (options: DataQueryRequest<LokiQuery>) => {
+  runQueries = async (options: DataQueryRequest<LokiQuery>): Promise<{ data: DataFrame[] }> => {
     const queryTargets = options.targets
       .filter(target => target.expr && !target.hide && !target.live)
       .map(target => this.prepareQueryTarget(target, options));
@@ -367,6 +377,47 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         }
         return { status: 'error', message: message };
       });
+  }
+
+  async annotationQuery(options: AnnotationQueryRequest<{ expr: string }>): Promise<AnnotationEvent[]> {
+    const annotation = options.annotation;
+    const expr = annotation.expr || '';
+
+    if (!expr) {
+      return [];
+    }
+
+    const target: LokiQuery = {
+      refId: options.annotation.name,
+      expr,
+      live: false,
+    };
+
+    const query: DataQueryRequest<LokiQuery> = {
+      requestId: '',
+      timezone: 'utc',
+      range: {
+        from: dateTime(options.range.from),
+        to: dateTime(options.range.to),
+      },
+      targets: [target],
+    } as any;
+
+    const { data } = await this.runQueries(query);
+    const annotations: AnnotationEvent[] = [];
+    for (const frame of data) {
+      const tags = Object.values(frame.labels);
+      const view = new DataFrameView<{ ts: string; line: string }>(frame);
+      view.forEachRow(row => {
+        annotations.push({
+          time: new Date(row.ts).valueOf(),
+          text: row.line,
+          tags,
+        });
+      });
+    }
+
+    return annotations;
   }
 }
 
