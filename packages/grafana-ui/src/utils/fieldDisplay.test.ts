@@ -1,5 +1,5 @@
 import { getFieldProperties, getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
-import { ReducerID, Threshold, toDataFrame, NullValueMode } from '@grafana/data';
+import { ReducerID, Threshold, toDataFrame, NullValueMode, ArrayVector, Field, FieldType } from '@grafana/data';
 import { GrafanaThemeType } from '../types/theme';
 import { getTheme } from '../themes/index';
 
@@ -155,39 +155,79 @@ describe('FieldDisplay', () => {
     expect(display[0].field.thresholds!.length).toEqual(1);
   });
 
-  it('Should ignore null values settings', () => {
-    const options: GetFieldDisplayValuesOptions = {
-      data: [
-        toDataFrame({
-          name: 'Check Nulls',
-          fields: [
-            { name: 'zero', config: { nullValueMode: NullValueMode.AsZero }, values: [null, 10, null, 20, null] },
-            { name: 'ignore', config: { nullValueMode: NullValueMode.Ignore }, values: [null, 10, null, 20, null] },
-            { name: 'null', config: { nullValueMode: NullValueMode.Null }, values: [null, 10, null, 20, null] },
-          ],
-        }),
-      ],
-      replaceVariables: (value: string) => {
-        return value;
-      },
-      fieldOptions: {
-        calcs: [ReducerID.count, ReducerID.last, ReducerID.lastNotNull, ReducerID.mean],
-        override: {},
-        defaults: {
-          noValue: 'NONONO',
-        },
-      },
-      theme: getTheme(GrafanaThemeType.Dark),
+  it('Should respect nullValueMode', () => {
+    const field: Field = {
+      name: 'input',
+      type: FieldType.number,
+      config: {},
+      values: new ArrayVector([null, 10, null, 20, null]),
     };
 
-    const display = getFieldDisplayValues(options);
-    const mapped = display.map(disp => {
-      return {
-        // title:disp.display.title,
-        text: disp.display.text,
-        numeric: disp.display.numeric,
-      };
+    // NullValueMode.Ignore
+    let vals = getDisplayValuesFor(
+      {
+        ...field,
+        config: {
+          nullValueMode: NullValueMode.Ignore,
+        },
+      },
+      [ReducerID.last]
+    ).map(disp => {
+      return disp.display.text;
     });
-    expect(mapped).toMatchSnapshot();
+    expect(vals).toEqual(['20']);
+
+    // NullValueMode.AsZero
+    vals = getDisplayValuesFor(
+      {
+        ...field,
+        config: {
+          nullValueMode: NullValueMode.AsZero,
+        },
+      },
+      [ReducerID.last]
+    ).map(disp => {
+      return disp.display.text;
+    });
+    expect(vals).toEqual(['0']);
+
+    // NullValueMode.AsZero
+    vals = getDisplayValuesFor(
+      {
+        ...field,
+        config: {
+          nullValueMode: NullValueMode.Null,
+          noValue: 'kittens',
+        },
+      },
+      [ReducerID.last]
+    ).map(disp => {
+      return disp.display.text;
+    });
+    expect(vals).toEqual(['kittens']);
   });
 });
+
+function getDisplayValuesFor(field: Field, calcs: string[]) {
+  const options: GetFieldDisplayValuesOptions = {
+    data: [
+      {
+        name: 'Test',
+        fields: [field],
+        length: field.values.length,
+      },
+    ],
+    replaceVariables: (value: string) => {
+      return value;
+    },
+    fieldOptions: {
+      calcs,
+      override: {},
+      defaults: {
+        noValue: 'DEFAULT NO VALUE',
+      },
+    },
+    theme: getTheme(GrafanaThemeType.Dark),
+  };
+  return getFieldDisplayValues(options);
+}

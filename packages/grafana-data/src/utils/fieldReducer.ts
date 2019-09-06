@@ -367,10 +367,21 @@ function calculateFirstNotNull(field: Field, ignoreNulls: boolean, nullAsZero: b
 }
 
 function calculateLast(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
+  if (ignoreNulls) {
+    const value = calculateLastNotNull(field, ignoreNulls, nullAsZero)['lastNotNull'];
+    return { last: value };
+  }
   const data = field.values;
-  return { last: data.get(data.length - 1) };
+  const value = data.get(data.length - 1);
+  if (!value && nullAsZero) {
+    return { last: 0 };
+  }
+  return { last: value };
 }
 
+/**
+ * ignoreNulls and nullAsZero don't really matter for this
+ */
 function calculateLastNotNull(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const data = field.values;
   let idx = data.length - 1;
