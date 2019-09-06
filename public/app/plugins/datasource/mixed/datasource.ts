@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { DataSourceApi, DataQuery, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
 import DatasourceSrv from 'app/features/plugins/datasource_srv';
 
 class MixedDatasource extends DataSourceApi<DataQuery> {
@@ -34,7 +34,8 @@ class MixedDatasource extends DataSourceApi<DataQuery> {
 
         const opt = _.cloneDeep(options);
         opt.targets = targets;
-        return ds.query(opt);
+
+        return ds.query(opt) as Promise<DataQueryResponse>;
       });
     });
 

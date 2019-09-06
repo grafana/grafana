@@ -95,62 +95,63 @@ export class PanelQueryState {
   }
 
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
-    this.request = {
-      ...req,
-      startTime: Date.now(),
-    };
-    this.datasource = ds;
-
-    // Return early if there are no queries to run
-    if (!req.targets.length) {
-      console.log('No queries, so return early');
-      this.request.endTime = Date.now();
-      this.closeStreams();
-      return Promise.resolve(
-        (this.response = {
-          state: LoadingState.Done,
-          series: [], // Clear the data
-          legacy: [],
-        })
-      );
-    }
-
-    // Set the loading state immediately
-    this.response.state = LoadingState.Loading;
-    this.executor = new Promise<PanelData>((resolve, reject) => {
-      this.rejector = reject;
-
-      return ds
-        .query(this.request, this.dataStreamObserver)
-        .then(resp => {
-          if (!isArray(resp.data)) {
-            throw new Error(`Expected response data to be array, got ${typeof resp.data}.`);
-          }
-
-          this.request.endTime = Date.now();
-          this.executor = null;
-
-          // Make sure we send something back -- called run() w/o subscribe!
-          if (!(this.sendFrames || this.sendLegacy)) {
-            this.sendFrames = true;
-          }
-
-          // Save the result state
-          this.response = {
-            state: LoadingState.Done,
-            request: this.request,
-            series: this.sendFrames ? getProcessedDataFrames(resp.data) : [],
-            legacy: this.sendLegacy ? translateToLegacyData(resp.data) : undefined,
-          };
-          resolve(this.validateStreamsAndGetPanelData());
-        })
-        .catch(err => {
-          this.executor = null;
-          resolve(this.setError(err));
-        });
-    });
-
-    return this.executor;
+    return null;
+    // this.request = {
+    //   ...req,
+    //   startTime: Date.now(),
+    // };
+    // this.datasource = ds;
+    //
+    // // Return early if there are no queries to run
+    // if (!req.targets.length) {
+    //   console.log('No queries, so return early');
+    //   this.request.endTime = Date.now();
+    //   this.closeStreams();
+    //   return Promise.resolve(
+    //     (this.response = {
+    //       state: LoadingState.Done,
+    //       series: [], // Clear the data
+    //       legacy: [],
+    //     })
+    //   );
+    // }
+    //
+    // // Set the loading state immediately
+    // this.response.state = LoadingState.Loading;
+    // this.executor = new Promise<PanelData>((resolve, reject) => {
+    //   this.rejector = reject;
+    //
+    //   return ds
+    //     .query(this.request, this.dataStreamObserver)
+    //     .then(resp => {
+    //       if (!isArray(resp.data)) {
+    //         throw new Error(`Expected response data to be array, got ${typeof resp.data}.`);
+    //       }
+    //
+    //       this.request.endTime = Date.now();
+    //       this.executor = null;
+    //
+    //       // Make sure we send something back -- called run() w/o subscribe!
+    //       if (!(this.sendFrames || this.sendLegacy)) {
+    //         this.sendFrames = true;
+    //       }
+    //
+    //       // Save the result state
+    //       this.response = {
+    //         state: LoadingState.Done,
+    //         request: this.request,
+    //         series: this.sendFrames ? getProcessedDataFrames(resp.data) : [],
+    //         legacy: this.sendLegacy ? translateToLegacyData(resp.data) : undefined,
+    //       };
+    //       resolve(this.validateStreamsAndGetPanelData());
+    //     })
+    //     .catch(err => {
+    //       this.executor = null;
+    //       resolve(this.setError(err));
+    //     });
+    // });
+    //
+    // return this.executor;
   }
 
   // Send a notice when the stream has updated the current model

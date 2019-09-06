@@ -1,14 +1,14 @@
 jest.mock('app/core/services/backend_srv');
 
 import { DataFrame, LoadingState, dateTime } from '@grafana/data';
-import { PanelData, DataSourceApi, DataQueryRequest, DataQueryResponsePacket } from '@grafana/ui';
+import { PanelData, DataSourceApi, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
 import { Subscriber, Observable, Subscription } from 'rxjs';
 import { runRequest } from './runRequest';
 
 class ScenarioCtx {
   ds: DataSourceApi;
   request: DataQueryRequest;
-  subscriber: Subscriber<DataQueryResponsePacket>;
+  subscriber: Subscriber<DataQueryResponse>;
   isUnsubbed = false;
   setupFn: () => void = () => {};
   results: PanelData[];
@@ -37,8 +37,8 @@ class ScenarioCtx {
     } as DataQueryRequest;
 
     this.ds = {
-      observe: (request: DataQueryRequest) => {
-        return new Observable<DataQueryResponsePacket>(subscriber => {
+      query: (request: DataQueryRequest) => {
+        return new Observable<DataQueryResponse>(subscriber => {
           this.subscriber = subscriber;
           this.wasStarted = true;
 
@@ -62,7 +62,7 @@ class ScenarioCtx {
     });
   }
 
-  emitPacket(packet: DataQueryResponsePacket) {
+  emitPacket(packet: DataQueryResponse) {
     this.subscriber.next(packet);
   }
 

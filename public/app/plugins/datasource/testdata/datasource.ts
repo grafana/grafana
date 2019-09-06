@@ -2,9 +2,8 @@ import _ from 'lodash';
 import {
   DataSourceApi,
   DataQueryRequest,
-  DataQueryResponsePacket,
   DataSourceInstanceSettings,
-  DataStreamObserver,
+  DataQueryResponse,
   MetricFindValue,
 } from '@grafana/ui';
 import { TableData, TimeSeries } from '@grafana/data';
@@ -12,7 +11,7 @@ import { TestDataQuery, Scenario } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { StreamHandler } from './StreamHandler';
 import { queryMetricTree } from './metricTree';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { runStreams, hasStreamingClientQuery } from './runStreams';
 import templateSrv from 'app/features/templating/template_srv';
 
@@ -30,7 +29,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     super(instanceSettings);
   }
 
-  observe(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponsePacket> {
+  query(options: DataQueryRequest<TestDataQuery>) {
     const queries = options.targets.map(item => {
       return {
         ...item,
@@ -49,64 +48,6 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       return runStreams(queries, options);
     }
 
-    return new Observable(subscriber => {
-      getBackendSrv()
-        .datasourceRequest({
-          method: 'POST',
-          url: '/api/tsdb/query',
-          data: {
-            from: options.range.from.valueOf().toString(),
-            to: options.range.to.valueOf().toString(),
-            queries: queries,
-          },
-          // This sets up a cancel token
-          requestId: options.requestId,
-        })
-        .then((res: any) => {
-          const data: TestData[] = [];
-
-          for (const query of queries) {
-            const results = res.data.results[query.refId];
-            if (!results) {
-              console.warn('No Results for:', query);
-              continue;
-            }
-
-            for (const t of results.tables || []) {
-              const table = t as TableData;
-              table.refId = query.refId;
-              table.name = query.alias;
-              data.push(table);
-            }
-
-            for (const series of results.series || []) {
-              data.push({ target: series.name, datapoints: series.points, refId: query.refId });
-            }
-          }
-
-          subscriber.next({ data: data });
-        })
-        .catch((err: any) => {
-          subscriber.error(err);
-        });
-    });
-  }
-
-  query(options: DataQueryRequest<TestDataQuery>, observer: DataStreamObserver) {
-    const queries = options.targets.map(item => {
-      return {
-        ...item,
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
-        datasourceId: this.id,
-        alias: templateSrv.replace(item.alias || ''),
-      };
-    });
-
-    if (queries.length === 0) {
-      return Promise.resolve({ data: [] });
-    }
-
     return getBackendSrv()
       .datasourceRequest({
         method: 'POST',
@@ -116,36 +57,31 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
           to: options.range.to.valueOf().toString(),
           queries: queries,
         },
-
         // This sets up a cancel token
         requestId: options.requestId,
       })
-      .then((res: any) => {
-        const data: TestData[] = [];
+      .then(res => this.processQueryResult(queries, res));
+  }
 
-        // Returns data in the order it was asked for.
-        // if the response has data with different refId, it is ignored
-        for (const query of queries) {
-          const results = res.data.results[query.refId];
-          if (!results) {
-            console.warn('No Results for:', query);
-            continue;
-          }
+  processQueryResult(queries: any, res: any): DataQueryResponse {
+    const data: TestData[] = [];
 
-          for (const t of results.tables || []) {
-            const table = t as TableData;
-            table.refId = query.refId;
-            table.name = query.alias;
-            data.push(table);
-          }
+    for (const query of queries) {
+      const results = res.data.results[query.refId];
 
-          for (const series of results.series || []) {
-            data.push({ target: series.name, datapoints: series.points, refId: query.refId });
-          }
-        }
+      for (const t of results.tables || []) {
+        const table = t as TableData;
+        table.refId = query.refId;
+        table.name = query.alias;
+        data.push(table);
+      }
 
-        return { data: data };
-      });
+      for (const series of results.series || []) {
+        data.push({ target: series.name, datapoints: series.points, refId: query.refId });
+      }
+    }
+
+    return { data };
   }
 
   annotationQuery(options: any) {

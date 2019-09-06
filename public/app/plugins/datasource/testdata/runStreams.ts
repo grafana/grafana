@@ -2,7 +2,7 @@ import { defaults } from 'lodash';
 import { Observable, merge } from 'rxjs';
 // import { map } from 'rxjs/operators';
 
-import { DataQueryRequest, DataQueryResponsePacket } from '@grafana/ui';
+import { DataQueryRequest, DataQueryResponse } from '@grafana/ui';
 
 import { FieldType, CircularVector, MutableDataFrame } from '@grafana/data';
 
@@ -23,7 +23,7 @@ export function hasStreamingClientQuery(req: DataQueryRequest<TestDataQuery>): b
 export function runStreams(
   queries: TestDataQuery[],
   req: DataQueryRequest<TestDataQuery>
-): Observable<DataQueryResponsePacket> {
+): Observable<DataQueryResponse> {
   return merge(
     ...queries.map(query => {
       return runSignalStream(query, req);
@@ -34,8 +34,8 @@ export function runStreams(
 export function runSignalStream(
   query: TestDataQuery,
   req: DataQueryRequest<TestDataQuery>
-): Observable<DataQueryResponsePacket> {
-  return new Observable<DataQueryResponsePacket>(subscriber => {
+): Observable<DataQueryResponse> {
+  return new Observable<DataQueryResponse>(subscriber => {
     const streamId = `panel-${req.panelId}-refId-${query.refId}`;
     const maxDataPoints = query.stream.buffer || req.maxDataPoints;
 

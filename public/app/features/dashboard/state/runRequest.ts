@@ -1,5 +1,5 @@
 // Libraries
-import { Observable, of, timer, merge } from 'rxjs';
+import { Observable, of, timer, merge, from } from 'rxjs';
 import { flatten, map as lodashMap, isArray, isString } from 'lodash';
 import { map, catchError, takeUntil, mapTo, share, finalize } from 'rxjs/operators';
 
@@ -8,19 +8,19 @@ import { LoadingState, dateMath } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 // Types
-import { DataSourceApi, DataQueryRequest, PanelData, DataQueryResponsePacket, DataQueryError } from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, PanelData, DataQueryResponse, DataQueryError } from '@grafana/ui';
 
-type MapOfResponsePackets = { [str: string]: DataQueryResponsePacket };
+type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
 interface RunningQueryState {
-  packets: { [key: string]: DataQueryResponsePacket };
+  packets: { [key: string]: DataQueryResponse };
   panelData: PanelData;
 }
 
 /*
  * This function should handle composing a PanelData from multiple responses
  */
-export function processResponsePacket(packet: DataQueryResponsePacket, state: RunningQueryState): RunningQueryState {
+export function processResponsePacket(packet: DataQueryResponse, state: RunningQueryState): RunningQueryState {
   const request = state.panelData.request;
   const packets: MapOfResponsePackets = {
     ...state.packets,
@@ -39,7 +39,7 @@ export function processResponsePacket(packet: DataQueryResponsePacket, state: Ru
   }
 
   const combinedData = flatten(
-    lodashMap(packets, (packet: DataQueryResponsePacket) => {
+    lodashMap(packets, (packet: DataQueryResponse) => {
       return packet.data;
     })
   );
@@ -81,13 +81,9 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
     return of(state.panelData);
   }
 
-  if (!datasource.observe) {
-    datasource.observe = wrapOldQueryMethod(datasource);
-  }
-
-  const dataObservable = datasource.observe(request).pipe(
+  const dataObservable = callQueryMethod(datasource, request).pipe(
     // Transform response packets into PanelData with merged results
-    map((packet: DataQueryResponsePacket) => {
+    map((packet: DataQueryResponse) => {
       if (!isArray(packet.data)) {
         throw new Error(`Expected response data to be array, got ${typeof packet.data}.`);
       }
@@ -130,22 +126,25 @@ function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
   };
 }
 
-export function wrapOldQueryMethod(datasource: DataSourceApi) {
-  return (req: DataQueryRequest) => {
-    return new Observable<DataQueryResponsePacket>(subscriber => {
-      datasource
-        .query(req)
-        .then(resp => {
-          subscriber.next({
-            data: resp.data,
-            key: 'A',
-          });
-        })
-        .catch(err => {
-          subscriber.error(err);
-        });
-    });
-  };
+export function callQueryMethod(datasource: DataSourceApi, request: DataQueryRequest) {
+  const returnVal = datasource.query(request);
+  return from(returnVal);
+
+  // return (req: DataQueryRequest) => {
+  //   return new Observable<DataQueryResponse>(subscriber => {
+  //     datasource
+  //       .query(req)
+  //       .then(resp => {
+  //         subscriber.next({
+  //           data: resp.data,
+  //           key: 'A',
+  //         });
+  //       })
+  //       .catch(err => {
+  //         subscriber.error(err);
+  //       });
+  //   });
+  // };
 }
 
 export function processQueryError(err: any): DataQueryError {

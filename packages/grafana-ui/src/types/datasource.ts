@@ -188,28 +188,9 @@ export abstract class DataSourceApi<
   init?: () => void;
 
   /**
-   * Query for data, and optionally stream results to an observer.
-   *
-   * Are you reading these docs aiming to execute a query?
-   * +-> If Yes, then consider using panelQueryRunner/State instead.  see:
-   *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryRunner.ts PanelQueryRunner.ts}
-   *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryState.ts PanelQueryState.ts}
-   *
-   * If you are implementing a simple request-response query,
-   * then you can ignore the `observer` entirely.
-   *
-   * When streaming behavior is required, the Promise can return at any time
-   * with empty or partial data in the response and optionally a state.
-   * NOTE: The data in this initial response will not be replaced with any
-   * data from subsequent events. {@see DataStreamState}
-   *
-   * The request object will be passed in each observer callback
-   * so the callback could assert that the correct events are streaming and
-   * unsubscribe if unexpected results are returned.
+   * Query for data, and optionally stream results
    */
-  abstract query(request: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
-
-  observe?(request: DataQueryRequest<TQuery>): Observable<DataQueryResponsePacket>;
+  abstract query(request: DataQueryRequest<TQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -392,14 +373,12 @@ export interface DataQueryResponse {
    * or a partial result set
    */
   data: DataQueryResponseData[];
-}
 
-/**
- * New response type for returning responses in multiple parts & streams
- *
- */
-export interface DataQueryResponsePacket {
-  data: DataQueryResponseData[];
+  /**
+   * When returning multiple partial responses or streams
+   * Use this key to inform Grafana how to combine the partial responses
+   * Multiple responses with same key are replaced (latest used)
+   */
   key?: string;
 }
 
