@@ -91,6 +91,8 @@ export class DashboardSrv {
     options: DashboardSaveOptions,
     err: { data: { status: string; message: any }; isHandled: boolean }
   ) {
+    options.overwrite = true;
+
     if (err.data && err.data.status === 'version-mismatch') {
       err.isHandled = true;
 
