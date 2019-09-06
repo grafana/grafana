@@ -246,7 +246,6 @@ type Cfg struct {
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	DisableSanitizeHtml              bool
-	EnableTransformationsAlpha       bool
 	EnterpriseLicensePath            string
 
 	// Auth
@@ -267,6 +266,8 @@ type Cfg struct {
 	EditorsCanAdmin bool
 
 	ApiKeyMaxSecondsToLive int64
+
+	FeatureToggles map[string]bool
 }
 
 type CommandLineArgs struct {
@@ -941,7 +942,17 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
-	cfg.EnableTransformationsAlpha = pluginsSection.Key("enable_transformations_alpha").MustBool(false)
+
+	// Read and populate feature toggles list
+	featureTogglesSection := iniFile.Section("featureToggles")
+	cfg.FeatureToggles = make(map[string]bool)
+	featuresTogglesStr, err := valueAsString(featureTogglesSection, "enable", "")
+	if err != nil {
+		return err
+	}
+	for _, feature := range util.SplitString(featuresTogglesStr) {
+		cfg.FeatureToggles[feature] = true
+	}
 
 	// check old location for this option
 	if panelsSection.Key("enable_alpha").MustBool(false) {

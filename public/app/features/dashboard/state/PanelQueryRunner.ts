@@ -14,6 +14,7 @@ import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasourc
 import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
 
 import { TimeRange, DataTransformerConfig, transformDataFrame, toLegacyResponseData } from '@grafana/data';
+import config from 'app/core/config';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -70,7 +71,10 @@ export class PanelQueryRunner {
   //  TODO: add tests
   getCurrentData(transform = true): PanelData {
     const v = this.state.validateStreamsAndGetPanelData();
-    if (transform && this.transformations && this.transformations.length) {
+    const transformData = config.featureToggles.transformations && transform;
+    const hasTransformations = this.transformations && this.transformations.length;
+
+    if (transformData && hasTransformations) {
       const processed = transformDataFrame(this.transformations, v.series);
       return {
         ...v,
@@ -78,6 +82,7 @@ export class PanelQueryRunner {
         legacy: processed.map(p => toLegacyResponseData(p)),
       };
     }
+
     return v;
   }
 

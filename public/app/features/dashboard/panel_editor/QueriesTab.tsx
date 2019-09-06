@@ -244,7 +244,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       render: this.renderHelp,
     };
 
-    const enableTransformations = config.enableTransformationsAlpha;
+    const enableTransformations = config.featureToggles.transformations;
 
     return (
       <EditorTabBody

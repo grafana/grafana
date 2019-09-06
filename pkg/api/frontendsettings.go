@@ -186,7 +186,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 		"editorsCanAdmin":            hs.Cfg.EditorsCanAdmin,
 		"disableSanitizeHtml":        hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":           pluginsToPreload,
-		"enableTransformationsAlpha": hs.Cfg.EnableTransformationsAlpha,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
@@ -196,6 +195,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"env":           setting.Env,
 			"isEnterprise":  setting.IsEnterprise,
 		},
+		"featureToggles": hs.Cfg.FeatureToggles,
 	}
 
 	return jsonObj, nil
