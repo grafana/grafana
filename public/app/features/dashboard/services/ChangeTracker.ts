@@ -65,7 +65,7 @@ export class ChangeTracker {
       return false;
     });
 
-    if (originalCopyDelay) {
+    if (originalCopyDelay && !dashboard.meta.fromExplore) {
       this.$timeout(() => {
         // wait for different services to patch the dashboard (missing properties)
         this.original = dashboard.getSaveModelClone();
