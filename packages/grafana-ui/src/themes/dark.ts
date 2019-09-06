@@ -75,7 +75,7 @@ const darkTheme: GrafanaTheme = {
     dropdown: basicColors.dark3,
     scrollbar: basicColors.dark9,
     scrollbar2: basicColors.dark9,
-    logsFresh: '#1250B0',
+    logsFresh: '#303032',
   },
 };
 
