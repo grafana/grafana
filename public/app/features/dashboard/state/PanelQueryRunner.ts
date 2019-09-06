@@ -7,6 +7,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
 import { runRequest } from './runRequest';
+import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
 
 // Types
 import {
@@ -55,9 +56,6 @@ export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
 
-  // Listen to another panel for changes
-  // private sharedQueryRunner: SharedQueryRunner;
-
   constructor(private panelId: number) {
     this.subject = new ReplaySubject(1);
   }
@@ -86,17 +84,6 @@ export class PanelQueryRunner {
     });
   }
 
-  /**
-   * Subscribe one runner to another
-   */
-  chain(runner: PanelQueryRunner): Unsubscribable {
-    return this.subscribe(runner.subject);
-  }
-
-  getCurrentData(): PanelData {
-    return null;
-  }
-
   async run(options: QueryRunnerOptions) {
     const {
       queries,
@@ -114,16 +101,16 @@ export class PanelQueryRunner {
       // delayStateNotification,
     } = options;
 
+    // cancel any still running queries
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+
     // Support shared queries
-    // if (isSharedDashboardQuery(datasource)) {
-    //   if (!this.sharedQueryRunner) {
-    //     this.sharedQueryRunner = new SharedQueryRunner(this);
-    //   }
-    //   return this.sharedQueryRunner.process(options);
-    // } else if (this.sharedQueryRunner) {
-    //   this.sharedQueryRunner.disconnect();
-    //   this.sharedQueryRunner = null;
-    // }
+    if (isSharedDashboardQuery(datasource)) {
+      this.subscription = runSharedRequest(options).subscribe(this.subject);
+      return;
+    }
 
     const request: DataQueryRequest = {
       requestId: getNextRequestId(),
@@ -184,10 +171,6 @@ export class PanelQueryRunner {
       //   }
       // }
       //
-
-      if (this.subscription) {
-        this.subscription.unsubscribe();
-      }
 
       this.subscription = runRequest(ds, request).subscribe(this.subject);
     } catch (err) {

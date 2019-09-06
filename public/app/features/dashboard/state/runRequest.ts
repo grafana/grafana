@@ -19,7 +19,6 @@ interface RunningQueryState {
 
 /*
  * This function should handle composing a PanelData from multiple responses
- * Does not handle deltas yet
  */
 export function processResponsePacket(packet: DataQueryResponsePacket, state: RunningQueryState): RunningQueryState {
   const request = state.panelData.request;
