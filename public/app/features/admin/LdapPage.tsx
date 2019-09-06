@@ -15,7 +15,7 @@ import { LdapUserTeams } from './LdapUserTeams';
 import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
 import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo } from 'app/types';
-import { loadLdapState, loadUserMapping, clearError, clearUserError } from './state/actions';
+import { loadLdapState, loadUserMapping, clearUserError } from './state/actions';
 
 interface Props {
   navModel: NavModel;
@@ -27,7 +27,6 @@ interface Props {
 
   loadLdapState: typeof loadLdapState;
   loadUserMapping: typeof loadUserMapping;
-  clearError: typeof clearError;
   clearUserError: typeof clearUserError;
 }
 
@@ -37,11 +36,12 @@ interface State {
 
 export class LdapPage extends PureComponent<Props, State> {
   state = {
-    isLoading: false,
+    isLoading: true,
   };
 
-  componentDidMount() {
-    this.fetchLDAPStatus();
+  async componentDidMount() {
+    await this.fetchLDAPStatus();
+    this.setState({ isLoading: false });
   }
 
   async fetchLDAPStatus() {
@@ -56,14 +56,10 @@ export class LdapPage extends PureComponent<Props, State> {
 
   search = (event: any) => {
     event.preventDefault();
-    // console.log('search', event);
     const username = event.target.elements['username'].value;
-    console.log(username);
-    this.fetchUserMapping(username);
-  };
-
-  onClearError = () => {
-    this.props.clearError();
+    if (username) {
+      this.fetchUserMapping(username);
+    }
   };
 
   onClearUserError = () => {
@@ -137,14 +133,12 @@ const mapStateToProps = (state: StoreState) => ({
   ldapConnectionInfo: state.ldap.connectionInfo,
   ldapUser: state.ldap.user,
   ldapSyncInfo: state.ldap.syncInfo,
-  ldapError: state.ldap.ldapError,
   userError: state.ldap.userError,
 });
 
 const mapDispatchToProps = {
   loadLdapState,
   loadUserMapping,
-  clearError,
   clearUserError,
 };
 

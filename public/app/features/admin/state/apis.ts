@@ -1,4 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { LdapUser, LdapConnectionInfo } from 'app/types';
 
 export interface ServerStat {
   name: string;
@@ -28,6 +29,25 @@ export const getServerStats = async (): Promise<ServerStat[]> => {
     ];
   } catch (error) {
     console.error(error);
+    throw error;
+  }
+};
+
+export const getLdapState = async (): Promise<LdapConnectionInfo> => {
+  return await getBackendSrv().get(`/api/admin/ldap/status`);
+};
+
+export const getUserInfo = async (username: string): Promise<LdapUser> => {
+  try {
+    const response = await getBackendSrv().get(`/api/admin/ldap/${username}`);
+    const { name, surname, email, login, isGrafanaAdmin, isDisabled, roles, teams } = response;
+    return {
+      info: { name, surname, email, login },
+      permissions: { isGrafanaAdmin, isDisabled },
+      roles,
+      teams,
+    };
+  } catch (error) {
     throw error;
   }
 };
