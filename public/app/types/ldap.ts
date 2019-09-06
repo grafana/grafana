@@ -16,9 +16,10 @@ export interface SyncInfo {
 }
 
 export interface LdapRole {
-  orgId: string;
+  orgId: number;
+  orgName: string;
   orgRole: string;
-  ldapAttribute: string;
+  groupDN: string;
 }
 
 export interface LdapTeam {
