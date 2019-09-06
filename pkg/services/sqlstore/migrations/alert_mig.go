@@ -170,6 +170,6 @@ func addAlertMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Add column no_data_flag in alert", NewAddColumnMigration(alertV1, &Column{
-		Name: "no_data_flag", Type: DB_Bool, Default: "0",
+		Name: "no_data_flag", Type: DB_Bool, Nullable: true, Default: "0",
 	}))
 }
