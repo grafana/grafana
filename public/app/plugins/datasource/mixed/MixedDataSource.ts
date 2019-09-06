@@ -25,7 +25,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   async query(request: DataQueryRequest<DataQuery>, observer: DataStreamObserver): Promise<DataQueryResponse> {
     // Remove any invalid queries
     const queries = request.targets.filter(t => {
-      return t.datasource === MIXED_DATASOURCE_NAME;
+      return t.datasource !== MIXED_DATASOURCE_NAME;
     });
 
     if (!queries.length) {

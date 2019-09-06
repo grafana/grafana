@@ -1,17 +1,19 @@
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { DataStreamState, DataStreamObserver } from '@grafana/ui';
+import { DataSourceInstanceSettings } from '@grafana/ui';
+import { MixedDatasource } from './module';
 
-const defaultDS = new MockDataSourceApi('DefaultDS', { data: ['A', 'B'] });
+const defaultDS = new MockDataSourceApi('DefaultDS', { data: ['DDD'] });
 const datasourceSrv = new DatasourceSrvMock(defaultDS, {
+  '-- Mixed --': new MixedDatasource({ name: 'mixed', id: 5 } as DataSourceInstanceSettings),
   A: new MockDataSourceApi('DSA', { data: ['AAAA'] }),
   B: new MockDataSourceApi('DSB', { data: ['BBBB'] }),
   C: new MockDataSourceApi('DSC', { data: ['CCCC'] }),
 });
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: () => {
+jest.mock('@grafana/runtime', () => ({
+  getDataSourceSrv: () => {
     return datasourceSrv;
   },
 }));
@@ -26,17 +28,8 @@ describe('MixedDatasource', () => {
   });
 
   it('direct query should return results', async () => {
-    let counter = 0;
-    let lastEvent: DataStreamState;
-    const dummyStream: DataStreamObserver = (event: DataStreamState) => {
-      lastEvent = event;
-      counter++;
-    };
-
-    const ds = await getDatasourceSrv().get('A');
-    const res = await ds.query(requestMixed, dummyStream);
+    const ds = await getDataSourceSrv().get('-- Mixed --');
+    const res = await ds.query(requestMixed);
     expect(res.data).toEqual(['AAAA', 'BBBB', 'CCCC']);
-    expect(counter).toBe(0);
-    expect(lastEvent).toBeUndefined();
   });
 });
