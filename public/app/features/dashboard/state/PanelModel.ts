@@ -66,6 +66,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   transparent: true,
   pluginVersion: true,
   queryRunner: true,
+  transformations: true,
 };
 
 const defaults: any = {
