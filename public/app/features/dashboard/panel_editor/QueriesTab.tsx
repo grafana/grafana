@@ -1,6 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
+import { css } from 'emotion';
 
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
@@ -18,7 +19,7 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { DataQuery, DataSourceSelectItem, PanelData } from '@grafana/ui';
+import { DataQuery, DataSourceSelectItem, PanelData, AlphaNotice, PluginState } from '@grafana/ui';
 import { LoadingState, DataTransformerConfig } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
@@ -282,8 +283,20 @@ export class QueriesTab extends PureComponent<Props, State> {
             </>
           )}
 
-          {enableTransformations && this.state.data.state === LoadingState.Done && (
-            <PanelOptionsGroup title="Result transformations">
+          {enableTransformations && (
+            <PanelOptionsGroup
+              title={
+                <>
+                  Transform query results
+                  <AlphaNotice
+                    state={PluginState.alpha}
+                    className={css`
+                      margin-left: 16px;
+                    `}
+                  />
+                </>
+              }
+            >
               <TransformationsEditor
                 transformations={this.props.panel.transformations || []}
                 onChange={this.onTransformersChange}
