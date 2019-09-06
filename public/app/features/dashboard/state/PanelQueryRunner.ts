@@ -144,8 +144,6 @@ export class PanelQueryRunner {
     // Add deprecated property
     (request as any).rangeRaw = timeRange.raw;
 
-    // let loadingStateTimeoutId = 0;
-
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
 
@@ -186,48 +184,16 @@ export class PanelQueryRunner {
       //   }
       // }
       //
-      // // Send a loading status event on slower queries
-      // loadingStateTimeoutId = window.setTimeout(() => {
-      //   if (state.getActiveRunner()) {
-      //     this.subject.next(this.state.validateStreamsAndGetPanelData());
-      //   }
-      // }, delayStateNotification || 500);
-      //
-      // const data = await state.execute(ds, request);
 
-      // this is not working 100% the outer subjects is marked as completed when this obserable completes, so only works
-      // for one request.
-      //
       if (this.subscription) {
         this.subscription.unsubscribe();
       }
 
       this.subscription = runRequest(ds, request).subscribe(this.subject);
-
-      // Clear the delayed loading state timeout
-      // clearTimeout(loadingStateTimeoutId);
-
-      // Broadcast results
-      // this.subject.next(data);
     } catch (err) {
-      console.log(err);
-      // clearTimeout(loadingStateTimeoutId);
-      // const data = state.setError(err);
-      // this.subject.next(data);
+      console.log('PanelQueryRunner Error', err);
     }
   }
-
-  // /**
-  //  * Called after every streaming event.  This should be throttled so we
-  //  * avoid accidentally overwhelming the browser
-  //  */
-  // onStreamingDataUpdated = throttle(
-  //   () => {
-  //     this.subject.next(this.state.validateStreamsAndGetPanelData());
-  //   },
-  //   50,
-  //   { trailing: true, leading: true }
-  // );
 
   /**
    * Called when the panel is closed
