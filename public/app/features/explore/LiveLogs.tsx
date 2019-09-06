@@ -22,18 +22,25 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFresh: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    background-color: ${selectThemeVariant(
-      { light: theme.background.logsFresh, dark: theme.background.logsFresh },
-      theme.type
-    )};
+    animation: fade 1.5s linear 0s 1 normal forwards;
+    @keyframes fade {
+      from {
+        background-color: ${selectThemeVariant(
+          { light: theme.background.logsFresh, dark: theme.background.logsFresh },
+          theme.type
+        )};
+      }
+      to {
+        background-color: transparent;
+      }
+    }
   `,
   logsRowOld: css`
     label: logs-row-old;
-    opacity: 0.8;
   `,
   logsRowsIndicator: css`
     font-size: ${theme.typography.size.md};
-    padding: ${theme.spacing.sm} 0;
+    padding-top: ${theme.spacing.sm};
     display: flex;
     align-items: center;
   `,
