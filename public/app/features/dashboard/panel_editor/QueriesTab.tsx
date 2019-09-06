@@ -297,11 +297,13 @@ export class QueriesTab extends PureComponent<Props, State> {
                 </>
               }
             >
-              <TransformationsEditor
-                transformations={this.props.panel.transformations || []}
-                onChange={this.onTransformersChange}
-                getCurrentData={this.getCurrentData}
-              />
+              {this.state.data.state !== LoadingState.NotStarted && (
+                <TransformationsEditor
+                  transformations={this.props.panel.transformations || []}
+                  onChange={this.onTransformersChange}
+                  getCurrentData={this.getCurrentData}
+                />
+              )}
             </PanelOptionsGroup>
           )}
         </>
