@@ -69,6 +69,7 @@ import {
   historyUpdatedAction,
   queryEndedAction,
   queryStreamUpdatedAction,
+  clearOriginAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -208,6 +209,12 @@ export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
   };
 }
 
+export function clearOrigin(): ThunkResult<void> {
+  return dispatch => {
+    dispatch(clearOriginAction({ exploreId: ExploreId.left }));
+  };
+}
+
 /**
  * Loads all explore data sources and sets the chosen datasource.
  * If there are no datasources a missing datasource action is dispatched.
@@ -250,7 +257,8 @@ export function initializeExplore(
   mode: ExploreMode,
   containerWidth: number,
   eventBridge: Emitter,
-  ui: ExploreUIState
+  ui: ExploreUIState,
+  originPanelId: number
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
     const timeZone = getTimeZone(getState().user);
@@ -265,6 +273,7 @@ export function initializeExplore(
         range,
         mode,
         ui,
+        originPanelId,
       })
     );
     dispatch(updateTime({ exploreId }));
@@ -722,7 +731,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     }
 
     const { urlState, update, containerWidth, eventBridge } = itemState;
-    const { datasource, queries, range: urlRange, mode, ui } = urlState;
+    const { datasource, queries, range: urlRange, mode, ui, originPanelId } = urlState;
     const refreshQueries: DataQuery[] = [];
     for (let index = 0; index < queries.length; index++) {
       const query = queries[index];
@@ -734,7 +743,19 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
     // need to refresh datasource
     if (update.datasource) {
       const initialQueries = ensureQueries(queries);
-      dispatch(initializeExplore(exploreId, datasource, initialQueries, range, mode, containerWidth, eventBridge, ui));
+      dispatch(
+        initializeExplore(
+          exploreId,
+          datasource,
+          initialQueries,
+          range,
+          mode,
+          containerWidth,
+          eventBridge,
+          ui,
+          originPanelId
+        )
+      );
       return;
     }
 

@@ -25,10 +25,10 @@ import {
   DataQueryResponseData,
   DataStreamState,
 } from '@grafana/ui';
-import { ExploreUrlState } from 'app/types/explore';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { ExploreUrlState } from 'app/types';
 
 export interface PromDataQueryResponse {
   data: {
@@ -603,15 +603,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   getExploreState(queries: PromQuery[]): Partial<ExploreUrlState> {
     let state: Partial<ExploreUrlState> = { datasource: this.name };
     if (queries && queries.length > 0) {
-      const expandedQueries = queries.map(query => ({
-        ...query,
-        expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
-        context: 'explore',
+      const expandedQueries = queries.map(query => {
+        const expandedQuery = {
+          ...query,
+          expr: this.templateSrv.replace(query.expr, {}, this.interpolateQueryExpr),
+          context: 'explore',
+        };
 
-        // null out values we don't support in Explore yet
-        legendFormat: null,
-        step: null,
-      }));
+        return expandedQuery;
+      });
+
       state = {
         ...state,
         queries: expandedQueries,

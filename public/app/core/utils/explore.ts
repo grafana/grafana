@@ -18,7 +18,7 @@ import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
 import { getNextRefIdChar } from './query';
 // Types
-import { DataQuery, DataSourceApi, DataQueryError, DataQueryRequest } from '@grafana/ui';
+import { DataQuery, DataSourceApi, DataQueryError, DataQueryRequest, PanelModel } from '@grafana/ui';
 import {
   ExploreUrlState,
   HistoryItem,
@@ -29,6 +29,7 @@ import {
 } from 'app/types/explore';
 import { config } from '../config';
 import { PanelQueryState } from '../../features/dashboard/state/PanelQueryState';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export const DEFAULT_RANGE = {
   from: 'now-1h',
@@ -55,7 +56,13 @@ export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DAT
  * @param datasourceSrv Datasource service to query other datasources in case the panel datasource is mixed
  * @param timeSrv Time service to get the current dashboard range from
  */
-export async function getExploreUrl(panelTargets: any[], panelDatasource: any, datasourceSrv: any, timeSrv: any) {
+export async function getExploreUrl(
+  panel: PanelModel,
+  panelTargets: DataQuery[],
+  panelDatasource: any,
+  datasourceSrv: any,
+  timeSrv: TimeSrv
+) {
   let exploreDatasource = panelDatasource;
   let exploreTargets: DataQuery[] = panelTargets;
   let url: string;
@@ -86,7 +93,7 @@ export async function getExploreUrl(panelTargets: any[], panelDatasource: any, d
       };
     }
 
-    const exploreState = JSON.stringify(state);
+    const exploreState = JSON.stringify({ ...state, originPanelId: panel.id });
     url = renderUrl('/explore', { left: exploreState });
   }
   return url;
@@ -198,6 +205,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     range: DEFAULT_RANGE,
     ui: DEFAULT_UI_STATE,
     mode: null,
+    originPanelId: null,
   };
 
   if (!parsed) {
@@ -234,7 +242,8 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
       }
     : DEFAULT_UI_STATE;
 
-  return { datasource, queries, range, ui, mode };
+  const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
+  return { datasource, queries, range, ui, mode, originPanelId };
 }
 
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
