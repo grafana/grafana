@@ -25,6 +25,8 @@ To setup a local development environment we recommend reading [Building Grafana 
 
 ## Pull Request Checklist
 
+Whether you are contributing or doing code review, first read and understand https://google.github.io/eng-practices/review/reviewer/ for general engineering practices around code reviews that we also use.
+
 - Branch from the master branch and, if needed, rebase to the current master branch before submitting your pull request. If it doesn't merge cleanly with master you may be asked to rebase your changes.
 
 - If your patch is not getting reviewed or you need a specific person to review it, you can @-reply a reviewer asking for a review in the pull request or a comment.
