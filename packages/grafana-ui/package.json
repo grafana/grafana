@@ -69,7 +69,6 @@
     "@types/storybook__addon-knobs": "4.0.4",
     "@types/storybook__react": "4.0.1",
     "@types/tinycolor2": "1.4.1",
-    "awesome-typescript-loader": "5.2.1",
     "pretty-format": "24.5.0",
     "react-docgen-typescript-loader": "3.0.1",
     "react-docgen-typescript-webpack-plugin": "1.1.0",
