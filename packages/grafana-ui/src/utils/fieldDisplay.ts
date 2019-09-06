@@ -151,12 +151,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               }
             }
 
-            const rawValue = field.values.get(j);
-            if (ignoreNull && (rawValue === null || rawValue === undefined)) {
+            const displayValue = display(field.values.get(j));
+            if (ignoreNull && displayValue.isNoValue) {
               continue;
             }
-
-            const displayValue = display(rawValue);
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
               name,
@@ -188,12 +186,10 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           }
 
           for (const calc of calcs) {
-            const rawValue = results[calc];
-            if (ignoreNull && (rawValue === null || rawValue === undefined)) {
+            const displayValue = display(results[calc]);
+            if (ignoreNull && displayValue.isNoValue) {
               continue;
             }
-
-            const displayValue = display(rawValue);
             scopedVars[VAR_CALC] = { value: calc, text: calc };
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({

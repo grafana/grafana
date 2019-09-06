@@ -35,6 +35,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       const { mappings, thresholds } = field;
       let color;
 
+      let isNoValue = false;
       let text = _.toString(value);
       let numeric = toNumber(value);
 
@@ -73,13 +74,14 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
 
       if (!text) {
+        isNoValue = true;
         if (field && field.noValue) {
           text = field.noValue;
         } else {
           text = ''; // No data?
         }
       }
-      return { text, numeric, color };
+      return { text, numeric, color, isNoValue };
     };
   }
 
@@ -101,7 +103,7 @@ function toNumber(value: any): number {
 }
 
 function toStringProcessor(value: any): DisplayValue {
-  return { text: _.toString(value), numeric: toNumber(value) };
+  return { text: _.toString(value), numeric: toNumber(value), isNoValue: !(value || value === 0) };
 }
 
 export function getColorFromThreshold(value: number, thresholds: Threshold[], theme?: GrafanaTheme): string {

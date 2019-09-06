@@ -348,6 +348,18 @@ function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean
     calcs.diff = calcs.lastNotNull - calcs.firstNotNull;
   }
 
+  if (ignoreNulls) {
+    calcs.first = calcs.firstNotNull;
+    calcs.last = calcs.lastNotNull;
+  } else if (nullAsZero) {
+    if (!calcs.first) {
+      calcs.first = 0;
+    }
+    if (!calcs.last) {
+      calcs.last = 0;
+    }
+  }
+
   return calcs;
 }
 

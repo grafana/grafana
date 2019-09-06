@@ -157,63 +157,50 @@ describe('FieldDisplay', () => {
 
   it('Should respect nullValueMode', () => {
     const field: Field = {
-      name: 'input',
+      name: 'test',
       type: FieldType.number,
       config: {},
       values: new ArrayVector([null, 10, null, 20, null]),
     };
 
     // NullValueMode.Ignore
-    checkReducerDisplay(
-      {
-        ...field,
-        config: {
-          nullValueMode: NullValueMode.Ignore,
-        },
+    let check = {
+      ...field,
+      config: {
+        nullValueMode: NullValueMode.Ignore,
       },
-      ReducerID.last,
-      '20'
-    );
+    };
+    expect(getDisplayValuesFor(check, [ReducerID.last])).toEqual(['20']);
+    check.calcs = undefined;
+    expect(getDisplayValuesFor(check, [ReducerID.last, ReducerID.mean])).toEqual(['20', '15']);
 
     // NullValueMode.AsZero
-    checkReducerDisplay(
-      {
-        ...field,
-        config: {
-          nullValueMode: NullValueMode.AsZero,
-        },
+    check = {
+      ...field,
+      config: {
+        nullValueMode: NullValueMode.AsZero,
       },
-      ReducerID.last,
-      '0'
-    );
+    };
+    expect(getDisplayValuesFor(check, [ReducerID.last])).toEqual(['0']);
 
-    // NullValueMode.AsZero
-    checkReducerDisplay(
-      {
-        ...field,
-        config: {
-          nullValueMode: NullValueMode.Null,
-          noValue: 'kittens',
-        },
+    check.calcs = undefined;
+    expect(getDisplayValuesFor(check, [ReducerID.last, ReducerID.mean])).toEqual(['0', '6']);
+
+    // NullValueMode.AsNull
+    check = {
+      ...field,
+      config: {
+        nullValueMode: NullValueMode.Null,
+        noValue: 'kittens',
       },
-      ReducerID.last,
-      'kittens'
-    );
+    };
+    expect(getDisplayValuesFor(check, [ReducerID.last])).toEqual(['kittens']);
+    check.calcs = undefined;
+    expect(getDisplayValuesFor(check, [ReducerID.last, ReducerID.mean])).toEqual(['kittens', '6']);
   });
 });
 
-/**
- * This makes sure the single path and `standard` path come up with the same results
- */
-function checkReducerDisplay(field: Field, calc: string, match: string) {
-  const val0 = getDisplayValuesFor(field, [calc])[0].display;
-  const val1 = getDisplayValuesFor(field, [calc, ReducerID.sum])[0].display;
-  // Same results
-  expect(val0).toEqual(val1);
-  expect(val0.text).toEqual(match);
-}
-
-function getDisplayValuesFor(field: Field, calcs: string[]) {
+function getDisplayValuesFor(field: Field, calcs: string[]): string[] {
   const options: GetFieldDisplayValuesOptions = {
     data: [
       {
@@ -234,5 +221,5 @@ function getDisplayValuesFor(field: Field, calcs: string[]) {
     },
     theme: getTheme(GrafanaThemeType.Dark),
   };
-  return getFieldDisplayValues(options);
+  return getFieldDisplayValues(options).map(v => v.display.text);
 }

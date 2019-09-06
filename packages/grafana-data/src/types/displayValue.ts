@@ -6,6 +6,7 @@ export interface DisplayValue {
   color?: string; // color based on configs or Threshold
   title?: string;
   fontSize?: string;
+  isNoValue?: boolean;
 }
 
 export type DecimalCount = number | null | undefined;
