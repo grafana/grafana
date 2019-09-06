@@ -4252,19 +4252,6 @@ autoprefixer@^9.4.9:
     postcss "^7.0.16"
     postcss-value-parser "^3.3.1"
 
-awesome-typescript-loader@5.2.1, awesome-typescript-loader@^5.2.1:
-  version "5.2.1"
-  resolved "https://registry.yarnpkg.com/awesome-typescript-loader/-/awesome-typescript-loader-5.2.1.tgz#a41daf7847515f4925cdbaa3075d61f289e913fc"
-  dependencies:
-    chalk "^2.4.1"
-    enhanced-resolve "^4.0.0"
-    loader-utils "^1.1.0"
-    lodash "^4.17.5"
-    micromatch "^3.1.9"
-    mkdirp "^0.5.1"
-    source-map-support "^0.5.3"
-    webpack-log "^1.2.0"
-
 aws-sdk@^2.495.0:
   version "2.495.0"
   resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.495.0.tgz#0b0ad8fcf581cb7bb858864fab88d461f0e67677"
@@ -11860,7 +11847,7 @@ micromatch@^2.3.11:
     parse-glob "^3.0.4"
     regex-cache "^0.4.2"
 
-micromatch@^3.0.4, micromatch@^3.1.10, micromatch@^3.1.4, micromatch@^3.1.8, micromatch@^3.1.9:
+micromatch@^3.0.4, micromatch@^3.1.10, micromatch@^3.1.4, micromatch@^3.1.8:
   version "3.1.10"
   resolved "https://registry.yarnpkg.com/micromatch/-/micromatch-3.1.10.tgz#70859bc95c9840952f359a068a3fc49f9ecfac23"
   dependencies:
@@ -16667,7 +16654,7 @@ source-map-resolve@^0.5.0:
     source-map-url "^0.4.0"
     urix "^0.1.0"
 
-source-map-support@^0.5.3, source-map-support@^0.5.6, source-map-support@~0.5.10:
+source-map-support@^0.5.6, source-map-support@~0.5.10:
   version "0.5.12"
   resolved "https://registry.yarnpkg.com/source-map-support/-/source-map-support-0.5.12.tgz#b4f3b10d51857a5af0138d3ce8003b201613d599"
   dependencies:
@@ -18357,7 +18344,7 @@ webpack-hot-middleware@^2.24.3:
     querystring "^0.2.0"
     strip-ansi "^3.0.0"
 
-webpack-log@^1.1.2, webpack-log@^1.2.0:
+webpack-log@^1.1.2:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/webpack-log/-/webpack-log-1.2.0.tgz#a4b34cda6b22b518dbb0ab32e567962d5c72a43d"
   dependencies:
