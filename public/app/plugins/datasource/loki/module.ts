@@ -1,6 +1,6 @@
 import Datasource from './datasource';
 
-import LokiStartPage from './components/LokiStartPage';
+import LokiStartPage from './components/LokiCheatSheet';
 import LokiQueryField from './components/LokiQueryField';
 import LokiQueryEditor from './components/LokiQueryEditor';
 import { LokiAnnotationsQueryCtrl } from './LokiAnnotationsQueryCtrl';

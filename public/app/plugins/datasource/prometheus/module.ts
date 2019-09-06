@@ -2,7 +2,7 @@ import { PrometheusDatasource } from './datasource';
 import { PromQueryEditor } from './components/PromQueryEditor';
 import { PrometheusConfigCtrl } from './config_ctrl';
 
-import PrometheusStartPage from './components/PromStart';
+import PrometheusStartPage from './components/PromCheatSheet';
 import PromQueryField from './components/PromQueryField';
 
 class PrometheusAnnotationsQueryCtrl {
