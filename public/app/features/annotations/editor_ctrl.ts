@@ -56,17 +56,19 @@ export class AnnotationsEditorCtrl {
     this.reset();
 
     this.onColorChange = this.onColorChange.bind(this);
-  }
 
-  async datasourceChanged() {
-    return (this.currentDatasource = await this.datasourceSrv.get(this.currentAnnotation.datasource));
+    $scope.$watch('ctrl.currentAnnotation.datasource', async (value: string) => {
+      const newDatasource = await this.datasourceSrv.get(this.currentAnnotation.datasource);
+      $scope.$apply(() => {
+        this.currentDatasource = newDatasource;
+      });
+    });
   }
 
   edit(annotation: any) {
     this.currentAnnotation = annotation;
     this.currentAnnotation.showIn = this.currentAnnotation.showIn || 0;
     this.currentIsNew = false;
-    this.datasourceChanged();
     this.mode = 'edit';
     $('.tooltip.in').remove();
   }
@@ -75,7 +77,6 @@ export class AnnotationsEditorCtrl {
     this.currentAnnotation = angular.copy(this.annotationDefaults);
     this.currentAnnotation.datasource = this.datasources[0].name;
     this.currentIsNew = true;
-    this.datasourceChanged();
   }
 
   update() {
