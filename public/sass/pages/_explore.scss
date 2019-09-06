@@ -320,14 +320,18 @@
   z-index: inherit;
 }
 
-// React-component cascade fix: show "loading" even though item can expand
-
+// React-component cascade fix: show "loading" when loading children
 .rc-cascader-menu-item-loading:after {
   position: absolute;
   right: 12px;
   content: 'loading';
   color: #767980;
   font-style: italic;
+}
+
+// React-component cascade fix: vertical alignment issue with Safari
+.rc-cascader-menu {
+  vertical-align: top;
 }
 
 // TODO Experimental
