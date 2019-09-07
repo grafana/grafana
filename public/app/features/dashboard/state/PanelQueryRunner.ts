@@ -70,31 +70,11 @@ export class PanelQueryRunner {
    * the results will be immediatly passed to the observer
    */
   subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.frames): Unsubscribable {
-    let lastResult: PanelData = null;
-
-    return this.subject.subscribe({
-      next: (data: PanelData) => {
-        let { series, legacy } = data;
-
-        //  for loading states with no data, use last result
-        if (data.state === LoadingState.Loading && series.length === 0) {
-          observer.next({
-            ...lastResult,
-            state: LoadingState.Loading,
-          });
-          return;
-        }
-
-        if (format === PanelQueryRunnerFormat.legacy || format === PanelQueryRunnerFormat.both) {
-          legacy = translateToLegacyData(series);
-        } else if (format === PanelQueryRunnerFormat.frames || format === PanelQueryRunnerFormat.both) {
-          series = getProcessedDataFrames(series);
-        }
-
-        lastResult = { ...data, series, legacy };
-        observer.next(lastResult);
-      },
-    });
+    return this.subject.subscribe(
+      postProcessPanelData(format, (data: PanelData) => {
+        observer.next(data);
+      })
+    );
   }
 
   async run(options: QueryRunnerOptions) {
@@ -234,4 +214,29 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   }
 
   return series;
+}
+
+export function postProcessPanelData(format = PanelQueryRunnerFormat.frames, callback: (data: PanelData) => void) {
+  let lastResult: PanelData = null;
+
+  return {
+    next: (data: PanelData) => {
+      let { series, legacy } = data;
+
+      //  for loading states with no data, use last result
+      if (data.state === LoadingState.Loading && series.length === 0) {
+        callback({ ...lastResult, state: LoadingState.Loading });
+        return;
+      }
+
+      if (format === PanelQueryRunnerFormat.legacy || format === PanelQueryRunnerFormat.both) {
+        legacy = translateToLegacyData(series);
+      } else if (format === PanelQueryRunnerFormat.frames || format === PanelQueryRunnerFormat.both) {
+        series = getProcessedDataFrames(series);
+      }
+
+      lastResult = { ...data, series, legacy };
+      callback(lastResult);
+    },
+  };
 }

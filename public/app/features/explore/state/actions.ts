@@ -78,6 +78,7 @@ import _ from 'lodash';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { runRequest } from '../../dashboard/state/runRequest';
+import { PanelQueryRunnerFormat, postProcessPanelData } from '../../dashboard/state/PanelQueryRunner';
 
 /**
  * Updates UI state and save it to the URL
@@ -481,8 +482,8 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     let firstResponse = true;
 
-    const newQuerySub = runRequest(datasourceInstance, transaction.request).subscribe({
-      next: (data: PanelData) => {
+    const newQuerySub = runRequest(datasourceInstance, transaction.request).subscribe(
+      postProcessPanelData(PanelQueryRunnerFormat.both, (data: PanelData) => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
@@ -505,8 +506,8 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
         }
 
         firstResponse = true;
-      },
-    });
+      })
+    );
   };
 }
 

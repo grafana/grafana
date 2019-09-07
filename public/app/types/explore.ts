@@ -263,7 +263,7 @@ export interface ExploreItemState {
   isPaused: boolean;
   urlReplaced: boolean;
 
-  querySubscription: Unsubscribable;
+  querySubscription?: Unsubscribable;
 
   queryResponse: PanelData;
   originPanelId?: number;
