@@ -204,7 +204,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const sortOrder = refreshIntervalToSortOrder(refreshInterval);
       const logsResult = sortLogsResult(state.logsResult, sortOrder);
       if (isLive(state.refreshInterval) && !live) {
-        stopQueryState(state.queryState, 'Live streaming stopped');
+        stopQueryState(state.queryState);
       }
 
       return {
@@ -225,7 +225,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: clearQueriesAction,
     mapper: (state): ExploreItemState => {
       const queries = ensureQueries();
-      stopQueryState(state.queryState, 'Queries cleared');
+      stopQueryState(state.querySubscription);
       return {
         ...state,
         queries: queries.slice(),
@@ -284,7 +284,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
-      stopQueryState(state.queryState, 'Datasource changed');
+      stopQueryState(state.querySubscription);
 
       return {
         ...state,
@@ -757,8 +757,8 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
     case resetExploreAction.type: {
       const leftState = state[ExploreId.left];
       const rightState = state[ExploreId.right];
-      stopQueryState(leftState.queryState, 'Navigated away from Explore');
-      stopQueryState(rightState.queryState, 'Navigated away from Explore');
+      stopQueryState(leftState.querySubscription);
+      stopQueryState(rightState.querySubscription);
 
       return {
         ...state,

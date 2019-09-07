@@ -78,6 +78,7 @@ import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import _ from 'lodash';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
+import { runRequest } from '../../dashboard/state/runRequest';
 
 /**
  * Updates UI state and save it to the URL
@@ -436,10 +437,10 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       datasourceError,
       containerWidth,
       isLive: live,
-      queryState,
       queryIntervals,
       range,
       scanning,
+      querySubscription,
       history,
       mode,
     } = exploreItemState;
@@ -459,10 +460,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     // but we're using the datasource interval limit for now
     const interval = datasourceInstance.interval;
 
-    stopQueryState(queryState, 'New request issued');
-
-    queryState.sendFrames = true;
-    queryState.sendLegacy = true;
+    stopQueryState(querySubscription);
 
     const queryOptions = {
       interval,
@@ -471,19 +469,19 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       maxDataPoints: mode === ExploreMode.Logs ? 1000 : containerWidth,
       live,
     };
+
     const datasourceId = datasourceInstance.meta.id;
     const transaction = buildQueryTransaction(queries, queryOptions, range, queryIntervals, scanning);
 
-    queryState.onStreamingDataUpdated = () => {
-      const response = queryState.validateStreamsAndGetPanelData();
-      dispatch(queryStreamUpdatedAction({ exploreId, response }));
-    };
+    // queryState.onStreamingDataUpdated = () => {
+    //   const response = queryState.validateStreamsAndGetPanelData();
+    //   dispatch(queryStreamUpdatedAction({ exploreId, response }));
+    // };
 
     dispatch(queryStartAction({ exploreId }));
 
-    queryState
-      .execute(datasourceInstance, transaction.request)
-      .then((response: PanelData) => {
+    querySubscription = runRequest(datasourceInstance, transaction.request).subscribe({
+      next: (data: PanelData) => {
         if (!response.error) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
@@ -504,15 +502,8 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
             dispatch(scanStopAction({ exploreId }));
           }
         }
-      })
-      .catch(error => {
-        dispatch(
-          queryEndedAction({
-            exploreId,
-            response: { error, legacy: [], series: [], request: transaction.request, state: LoadingState.Error },
-          })
-        );
-      });
+      },
+    });
   };
 }
 

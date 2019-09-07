@@ -1,5 +1,6 @@
 // Libraries
 import _ from 'lodash';
+import { Unsubscribable } from 'rxjs';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 // Services & Utils
 import {
@@ -28,7 +29,6 @@ import {
   ExploreMode,
 } from 'app/types/explore';
 import { config } from '../config';
-import { PanelQueryState } from '../../features/dashboard/state/PanelQueryState';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export const DEFAULT_RANGE = {
@@ -518,9 +518,8 @@ export const convertToWebSocketUrl = (url: string) => {
   return `${backend}${url}`;
 };
 
-export const stopQueryState = (queryState: PanelQueryState, reason: string) => {
-  if (queryState && queryState.isStarted()) {
-    queryState.cancel(reason);
-    queryState.closeStreams(false);
+export const stopQueryState = (querySubscription: Unsubscribable) => {
+  if (querySubscription) {
+    querySubscription.unsubscribe();
   }
 };
