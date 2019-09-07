@@ -409,10 +409,6 @@ export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): Ti
   };
 };
 
-export const instanceOfDataQueryError = (value: any): value is DataQueryError => {
-  return value.message !== undefined && value.status !== undefined && value.statusText !== undefined;
-};
-
 export const getValueWithRefId = (value: any): any | null => {
   if (!value) {
     return null;

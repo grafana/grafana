@@ -67,7 +67,6 @@ import {
   setUrlReplacedAction,
   changeRangeAction,
   historyUpdatedAction,
-  queryEndedAction,
   queryStreamUpdatedAction,
   clearOriginAction,
 } from './actionTypes';
@@ -480,20 +479,22 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     dispatch(queryStartAction({ exploreId }));
 
-    querySubscription = runRequest(datasourceInstance, transaction.request).subscribe({
+    let firstResponse = true;
+
+    const newQuerySub = runRequest(datasourceInstance, transaction.request).subscribe({
       next: (data: PanelData) => {
-        if (!response.error) {
+        if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
           dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
         }
 
-        dispatch(queryEndedAction({ exploreId, response }));
+        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
         dispatch(stateSave());
 
         // Keep scanning for results if this was the last scanning transaction
         if (getState().explore[exploreId].scanning) {
-          if (_.size(response.series) === 0) {
+          if (data.state === LoadingState.Done && data.series.length === 0) {
             const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
             dispatch(updateTime({ exploreId, absoluteRange: range }));
             dispatch(runQueries(exploreId));
@@ -502,6 +503,8 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
             dispatch(scanStopAction({ exploreId }));
           }
         }
+
+        firstResponse = true;
       },
     });
   };

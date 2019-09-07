@@ -8,7 +8,6 @@ import {
   sortLogsResult,
   stopQueryState,
   refreshIntervalToSortOrder,
-  instanceOfDataQueryError,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState } from '@grafana/data';
@@ -63,7 +62,6 @@ import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { PanelQueryState, toDataQueryError } from '../../dashboard/state/PanelQueryState';
 import { ResultProcessor } from '../utils/ResultProcessor';
 
 export const DEFAULT_RANGE = {
@@ -121,7 +119,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   isLive: false,
   isPaused: false,
   urlReplaced: false,
-  queryState: new PanelQueryState(),
   queryResponse: createEmptyQueryResponse(),
 });
 
@@ -203,8 +200,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const live = isLive(refreshInterval);
       const sortOrder = refreshIntervalToSortOrder(refreshInterval);
       const logsResult = sortLogsResult(state.logsResult, sortOrder);
+
       if (isLive(state.refreshInterval) && !live) {
-        stopQueryState(state.queryState);
+        stopQueryState(state.querySubscription);
       }
 
       return {
@@ -594,12 +592,6 @@ export const processQueryResponse = (
 
     // For Angular editors
     state.eventBridge.emit('data-error', error);
-
-    console.error(error); // To help finding problems with query syntax
-
-    if (!instanceOfDataQueryError(error)) {
-      response.error = toDataQueryError(error);
-    }
 
     return {
       ...state,
