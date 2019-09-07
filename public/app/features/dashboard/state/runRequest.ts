@@ -129,22 +129,6 @@ function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
 export function callQueryMethod(datasource: DataSourceApi, request: DataQueryRequest) {
   const returnVal = datasource.query(request);
   return from(returnVal);
-
-  // return (req: DataQueryRequest) => {
-  //   return new Observable<DataQueryResponse>(subscriber => {
-  //     datasource
-  //       .query(req)
-  //       .then(resp => {
-  //         subscriber.next({
-  //           data: resp.data,
-  //           key: 'A',
-  //         });
-  //       })
-  //       .catch(err => {
-  //         subscriber.error(err);
-  //       });
-  //   });
-  // };
 }
 
 export function processQueryError(err: any): DataQueryError {
