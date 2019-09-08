@@ -5,7 +5,7 @@ import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import { dateMath, TimeRange, DateTime, AnnotationEvent } from '@grafana/data';
 import { Observable, from, of, merge } from 'rxjs';
-import { single, filter,  map } from 'rxjs/operators';
+import { single, filter, map } from 'rxjs/operators';
 
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
@@ -182,18 +182,19 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         continue;
       }
 
+      target.requestId = options.panelId + target.refId;
+
       if (target.context === PromContext.Explore) {
         target.format = 'time_series';
         target.instant = false;
+
         const instantTarget: any = _.cloneDeep(target);
         instantTarget.format = 'table';
         instantTarget.instant = true;
         instantTarget.valueWithRefId = true;
         delete instantTarget.maxDataPoints;
+
         instantTarget.requestId += '_instant';
-        // Changing refId is not a good idea, then the error/response
-        // cannot be matched to the query row
-        instantTarget.refId += '_instant';
         activeTargets.push(instantTarget);
         queries.push(this.createQuery(instantTarget, options, start, end));
       }
@@ -233,12 +234,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
           const data = this.processResult(response, query, target, queries.length);
-          return { data, key: query.refId } as DataQueryResponse;
-        }),
-        // catchError((err: any) => {
-        //   const error = this.handleErrors(err, target);
-        //   return of({ key: query.refId, error });
-        // })
+          return { data, key: query.requestId } as DataQueryResponse;
+        })
       );
     });
 
@@ -251,8 +248,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       instant: target.instant,
       step: 0,
       expr: '',
-      requestId: '',
-      refId: '',
+      requestId: target.requestId,
+      refId: target.refId,
       start: 0,
       end: 0,
     };
@@ -294,8 +291,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
-    query.requestId = options.panelId + target.refId;
-    query.refId = target.refId;
 
     // Align query interval with step to allow query caching and to ensure
     // that about-same-time query results look the same.
@@ -453,9 +448,17 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       ...options,
       interval: step,
     };
+
     // Unsetting min interval for accurate event resolution
     const minStep = '1s';
-    const query = this.createQuery({ expr, interval: minStep, refId: 'X' }, queryOptions, start, end);
+    const queryModel = {
+      expr,
+      interval: minStep,
+      refId: 'X',
+      requestId: `prom-query-${annotation.name}`,
+    };
+
+    const query = this.createQuery(queryModel, queryOptions, start, end);
 
     const self = this;
     return this.performTimeSeriesQuery(query, query.start, query.end).then((results: PromDataQueryResponse) => {
