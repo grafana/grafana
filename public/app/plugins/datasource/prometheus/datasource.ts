@@ -5,7 +5,7 @@ import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import { dateMath, TimeRange, DateTime, AnnotationEvent } from '@grafana/data';
 import { Observable, from, of, merge } from 'rxjs';
-import { single, filter, map } from 'rxjs/operators';
+import { single, filter,  map } from 'rxjs/operators';
 
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
@@ -193,7 +193,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         instantTarget.requestId += '_instant';
         // Changing refId is not a good idea, then the error/response
         // cannot be matched to the query row
-        // instantTarget.refId += '_instant';
+        instantTarget.refId += '_instant';
         activeTargets.push(instantTarget);
         queries.push(this.createQuery(instantTarget, options, start, end));
       }
@@ -234,7 +234,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         map((response: any) => {
           const data = this.processResult(response, query, target, queries.length);
           return { data, key: query.refId } as DataQueryResponse;
-        })
+        }),
         // catchError((err: any) => {
         //   const error = this.handleErrors(err, target);
         //   return of({ key: query.refId, error });
