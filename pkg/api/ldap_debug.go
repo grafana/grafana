@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
@@ -14,6 +15,8 @@ import (
 var (
 	getLDAPConfig = multildap.GetConfig
 	newLDAP       = multildap.New
+
+	logger = log.New("LDAP.debug")
 
 	errOrganizationNotFound = func(orgId int64) error {
 		return fmt.Errorf("Unable to find organization with ID '%d'", orgId)
@@ -34,23 +37,16 @@ type RoleDTO struct {
 	GroupDN string          `json:"groupDN"`
 }
 
-// TeamDTO is a serializer for mapped Teams from LDAP
-type TeamDTO struct {
-	GroupDN  string `json:"groupDN"`
-	TeamId   int64  `json:"teamId"`
-	TeamName string `json:"teamName"`
-}
-
 // LDAPUserDTO is a serializer for users mapped from LDAP
 type LDAPUserDTO struct {
-	Name           *LDAPAttribute `json:"name"`
-	Surname        *LDAPAttribute `json:"surname"`
-	Email          *LDAPAttribute `json:"email"`
-	Username       *LDAPAttribute `json:"login"`
-	IsGrafanaAdmin *bool          `json:"isGrafanaAdmin"`
-	IsDisabled     bool           `json:"isDisabled"`
-	OrgRoles       []RoleDTO      `json:"roles"`
-	Teams          []TeamDTO      `json:"teams"`
+	Name           *LDAPAttribute           `json:"name"`
+	Surname        *LDAPAttribute           `json:"surname"`
+	Email          *LDAPAttribute           `json:"email"`
+	Username       *LDAPAttribute           `json:"login"`
+	IsGrafanaAdmin *bool                    `json:"isGrafanaAdmin"`
+	IsDisabled     bool                     `json:"isDisabled"`
+	OrgRoles       []RoleDTO                `json:"roles"`
+	Teams          []models.TeamOrgGroupDTO `json:"teams"`
 }
 
 // FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
@@ -154,7 +150,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	ldapConfig, err := getLDAPConfig()
 
 	if err != nil {
-		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please ", err)
+		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration", err)
 	}
 
 	ldap := newLDAP(ldapConfig.Servers)
@@ -170,6 +166,8 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	if user == nil {
 		return Error(http.StatusNotFound, "No user was found on the LDAP server(s)", err)
 	}
+
+	logger.Debug("user found", "user", user)
 
 	name, surname := splitName(user.Name)
 
@@ -203,11 +201,21 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 
 	u.OrgRoles = orgRoles
 
+	logger.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
 	err = u.FetchOrgs()
 
 	if err != nil {
-		return Error(http.StatusBadRequest, "Organization not found - Please verify your LDAP configuration", err)
+		return Error(http.StatusBadRequest, "An oganization was not found - Please verify your LDAP configuration", err)
 	}
+
+	cmd := &models.GetTeamsForLDAPGroupCommand{Groups: user.Groups}
+	err = bus.Dispatch(cmd)
+
+	if err != bus.ErrHandlerNotFound && err != nil {
+		return Error(http.StatusBadRequest, "Unable to find the teams for this user", err)
+	}
+
+	u.Teams = cmd.Result
 
 	return JSON(200, u)
 }
