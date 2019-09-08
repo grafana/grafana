@@ -1,10 +1,12 @@
 import path = require('path');
 import fs from 'fs';
-import { DefaultOptions } from 'jest';
 
 export const whitelistedJestConfigOverrides = ['snapshotSerializers', 'moduleNameMapper'];
 
-type EnabledJestConfigOverrides = Pick<DefaultOptions, 'snapshotSerializers' | 'moduleNameMapper'>;
+interface EnabledJestConfigOverrides {
+  snapshotSerializers: string[];
+  moduleNameMapper: { [key: string]: string };
+}
 
 export const jestConfig = (baseDir: string = process.cwd()) => {
   const jestConfigOverrides = (require(path.resolve(baseDir, 'package.json')).jest || {}) as EnabledJestConfigOverrides;
