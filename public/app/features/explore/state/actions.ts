@@ -63,11 +63,11 @@ import {
   loadExploreDatasources,
   changeModeAction,
   scanStopAction,
-  queryStartAction,
   setUrlReplacedAction,
   changeRangeAction,
   historyUpdatedAction,
   queryStreamUpdatedAction,
+  queryStoreSubscriptionAction,
   clearOriginAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
@@ -473,13 +473,6 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     const datasourceId = datasourceInstance.meta.id;
     const transaction = buildQueryTransaction(queries, queryOptions, range, queryIntervals, scanning);
 
-    // queryState.onStreamingDataUpdated = () => {
-    //   const response = queryState.validateStreamsAndGetPanelData();
-    //   dispatch(queryStreamUpdatedAction({ exploreId, response }));
-    // };
-
-    // dispatch(queryStartAction({ exploreId }));
-
     let firstResponse = true;
 
     const newQuerySub = runRequest(datasourceInstance, transaction.request).subscribe(
@@ -508,6 +501,8 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
         }
       })
     );
+
+    dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
   };
 }
 

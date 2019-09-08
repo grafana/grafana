@@ -52,9 +52,9 @@ import {
   toggleLogLevelAction,
   changeLoadingStateAction,
   resetExploreAction,
-  queryEndedAction,
   queryStreamUpdatedAction,
   QueryEndedPayload,
+  queryStoreSubscriptionAction,
   setPausedStateAction,
 } from './actionTypes';
 import { reducerFactory, ActionOf } from 'app/core/redux';
@@ -564,10 +564,13 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    //queryStreamUpdatedAction
-    filter: queryEndedAction,
+    filter: queryStoreSubscriptionAction,
     mapper: (state, action): ExploreItemState => {
-      return processQueryResponse(state, action);
+      const { querySubscription } = action.payload;
+      return {
+        ...state,
+        querySubscription,
+      };
     },
   })
   .addMapper({
@@ -605,7 +608,7 @@ export const processQueryResponse = (
     };
   }
 
-  const latency = request.endTime - request.startTime;
+  const latency = request.endTime ? request.endTime - request.startTime : 0;
   const processor = new ResultProcessor(state, series);
 
   // For Angular editors

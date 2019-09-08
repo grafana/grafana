@@ -125,7 +125,7 @@ export function buildQueryTransaction(
     // TODO probably should be taken from preferences but does not seem to be used anyway.
     timezone: DefaultTimeZone,
     // This is set to correct time later on before the query is actually run.
-    startTime: 0,
+    startTime: Date.now(),
     interval,
     intervalMs,
     // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
