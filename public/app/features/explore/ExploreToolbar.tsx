@@ -1,11 +1,13 @@
+import omitBy from 'lodash/omitBy';
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import memoizeOne from 'memoize-one';
+import classNames from 'classnames';
 
 import { ExploreId, ExploreMode } from 'app/types/explore';
-import { DataSourceSelectItem, ToggleButtonGroup, ToggleButton } from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange, LoadingState, SelectableValue } from '@grafana/data';
+import { DataSourceSelectItem, ToggleButtonGroup, ToggleButton, DataQuery, Tooltip, ButtonSelect } from '@grafana/ui';
+import { RawTimeRange, TimeZone, TimeRange, SelectableValue } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -16,8 +18,12 @@ import {
   splitOpen,
   changeRefreshInterval,
   changeMode,
+  clearOrigin,
 } from './state/actions';
+import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
+import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
+import kbn from '../../core/utils/kbn';
 import { ExploreTimeControls } from './ExploreTimeControls';
 
 enum IconSide {
@@ -71,6 +77,8 @@ interface StateProps {
   selectedModeOption: SelectableValue<ExploreMode>;
   hasLiveOption: boolean;
   isLive: boolean;
+  originPanelId: number;
+  queries: DataQuery[];
 }
 
 interface DispatchProps {
@@ -81,6 +89,8 @@ interface DispatchProps {
   split: typeof splitOpen;
   changeRefreshInterval: typeof changeRefreshInterval;
   changeMode: typeof changeMode;
+  clearOrigin: typeof clearOrigin;
+  updateLocation: typeof updateLocation;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -112,6 +122,31 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     changeMode(exploreId, mode);
   };
 
+  returnToPanel = async ({ withChanges = false } = {}) => {
+    const { originPanelId } = this.props;
+
+    const dashboardSrv = getDashboardSrv();
+    const dash = dashboardSrv.getCurrent();
+    const titleSlug = kbn.slugifyForUrl(dash.title);
+
+    if (!withChanges) {
+      this.props.clearOrigin();
+    }
+
+    const dashViewOptions = {
+      fullscreen: withChanges || dash.meta.fullscreen,
+      edit: withChanges || dash.meta.isEditing,
+    };
+
+    this.props.updateLocation({
+      path: `/d/${dash.uid}/:${titleSlug}`,
+      query: {
+        ...omitBy(dashViewOptions, v => !v),
+        panelId: originPanelId,
+      },
+    });
+  };
+
   render() {
     const {
       datasourceMissing,
@@ -130,7 +165,14 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       selectedModeOption,
       hasLiveOption,
       isLive,
+      originPanelId,
     } = this.props;
+
+    const originDashboardIsEditable = Number.isInteger(originPanelId);
+    const panelReturnClasses = classNames('btn', 'navbar-button', {
+      'btn--radius-right-0': originDashboardIsEditable,
+      'navbar-button navbar-button--border-right-0': originDashboardIsEditable,
+    });
 
     return (
       <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
@@ -186,6 +228,24 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                 ) : null}
               </div>
             ) : null}
+
+            {Number.isInteger(originPanelId) && !splitted && (
+              <div className="explore-toolbar-content-item">
+                <Tooltip content={'Return to panel'} placement="bottom">
+                  <button className={panelReturnClasses} onClick={() => this.returnToPanel()}>
+                    <i className="fa fa-arrow-left" />
+                  </button>
+                </Tooltip>
+                {originDashboardIsEditable && (
+                  <ButtonSelect
+                    className="navbar-button--attached btn--radius-left-0$"
+                    options={[{ label: 'Return to panel with changes', value: '' }]}
+                    onChange={() => this.returnToPanel({ withChanges: true })}
+                    maxMenuHeight={380}
+                  />
+                )}
+              </div>
+            )}
 
             {exploreId === 'left' && !splitted ? (
               <div className="explore-toolbar-content-item">
@@ -281,15 +341,16 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     exploreDatasources,
     range,
     refreshInterval,
-    loadingState,
+    loading,
     supportedModes,
     mode,
     isLive,
+    originPanelId,
+    queries,
   } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
     : undefined;
-  const loading = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const hasLiveOption =
     datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
 
@@ -308,17 +369,21 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     selectedModeOption,
     hasLiveOption,
     isLive,
+    originPanelId,
+    queries,
   };
 };
 
 const mapDispatchToProps: DispatchProps = {
   changeDatasource,
+  updateLocation,
   changeRefreshInterval,
   clearAll: clearQueries,
   runQueries,
   closeSplit: splitClose,
   split: splitOpen,
   changeMode: changeMode,
+  clearOrigin,
 };
 
 export const ExploreToolbar = hot(module)(

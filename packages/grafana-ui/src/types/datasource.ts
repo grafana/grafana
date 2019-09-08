@@ -425,6 +425,7 @@ export interface DataQueryError {
   status?: string;
   statusText?: string;
   refId?: string;
+  cancelled?: boolean;
 }
 
 export interface ScopedVar {

@@ -2,17 +2,19 @@ package api
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
 )
 
 func mockSetIndexViewData() {
@@ -48,6 +50,18 @@ func getBody(resp *httptest.ResponseRecorder) (string, error) {
 		return "", err
 	}
 	return string(responseData), nil
+}
+
+func getJSONbody(resp *httptest.ResponseRecorder) (interface{}, error) {
+	var j interface{}
+
+	err := json.Unmarshal(resp.Body.Bytes(), &j)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return j, nil
 }
 
 func TestLoginErrorCookieApiEndpoint(t *testing.T) {

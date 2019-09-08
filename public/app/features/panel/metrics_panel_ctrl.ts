@@ -248,21 +248,21 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
   }
 
-  getAdditionalMenuItems() {
+  async getAdditionalMenuItems() {
     const items = [];
     if (this.contextSrv.hasAccessToExplore() && this.datasource) {
       items.push({
         text: 'Explore',
-        click: 'ctrl.explore();',
         icon: 'gicon gicon-explore',
         shortcut: 'x',
+        href: await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv),
       });
     }
     return items;
   }
 
   async explore() {
-    const url = await getExploreUrl(this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
+    const url = await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
     if (url) {
       this.$timeout(() => this.$location.url(url));
     }

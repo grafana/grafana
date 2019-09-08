@@ -7,7 +7,7 @@ import {
   LoadingState,
   LogLevel,
   CSVReader,
-  DataFrameHelper,
+  MutableDataFrame,
   CircularVector,
   DataFrame,
 } from '@grafana/data';
@@ -182,7 +182,7 @@ export class SignalWorker extends StreamWorker {
     const vals = new CircularVector({ capacity: maxRows });
     this.values = [times, vals];
 
-    const data = new DataFrameHelper({
+    const data = new MutableDataFrame({
       fields: [
         { name: 'Time', type: FieldType.time, values: times }, // The time field
         { name: 'Value', type: FieldType.number, values: vals },
@@ -351,7 +351,7 @@ export class LogsWorker extends StreamWorker {
     const lines = new CircularVector({ capacity: maxRows });
 
     this.values = [times, lines];
-    this.data = new DataFrameHelper({
+    this.data = new MutableDataFrame({
       fields: [
         { name: 'Time', type: FieldType.time, values: times },
         { name: 'Line', type: FieldType.string, values: lines },

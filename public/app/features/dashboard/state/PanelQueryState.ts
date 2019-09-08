@@ -95,7 +95,10 @@ export class PanelQueryState {
   }
 
   execute(ds: DataSourceApi, req: DataQueryRequest): Promise<PanelData> {
-    this.request = req;
+    this.request = {
+      ...req,
+      startTime: Date.now(),
+    };
     this.datasource = ds;
 
     // Return early if there are no queries to run
@@ -112,7 +115,7 @@ export class PanelQueryState {
       );
     }
 
-    // Set the loading state immediatly
+    // Set the loading state immediately
     this.response.state = LoadingState.Loading;
     this.executor = new Promise<PanelData>((resolve, reject) => {
       this.rejector = reject;
@@ -209,7 +212,7 @@ export class PanelQueryState {
 
     this.streams = [];
 
-    // Move the series from streams to the resposne
+    // Move the series from streams to the response
     if (keepSeries) {
       const { response } = this;
       this.response = {
@@ -271,7 +274,9 @@ export class PanelQueryState {
 
     return {
       state: done ? LoadingState.Done : LoadingState.Streaming,
-      series, // Union of series from response and all streams
+      // This should not be needed but unfortunately Prometheus datasource sends non DataFrame here bypassing the
+      // typings
+      series: this.sendFrames ? getProcessedDataFrames(series) : [],
       legacy: this.sendLegacy ? translateToLegacyData(series) : undefined,
       request: {
         ...this.request,

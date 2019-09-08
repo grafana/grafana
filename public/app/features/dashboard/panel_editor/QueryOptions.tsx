@@ -70,9 +70,9 @@ export class QueryOptions extends PureComponent<Props, State> {
       name: 'maxDataPoints',
       tooltipInfo: (
         <>
-          The maximum data points the query should return. This is used to calculate a reasonable interval that is
-          passed via template variables. With streaming data, this value is used for the rolling buffer. The default
-          value allows one point for each width pixel.
+          The maximum data points the query should return. For graphs this is automatically set to one data point per
+          pixel. For some data sources this can also be capped in the datasource settings page. With streaming data,
+          this value is used for the rolling buffer.
         </>
       ),
     },

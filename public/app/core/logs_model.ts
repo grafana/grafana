@@ -15,13 +15,12 @@ import {
   LogsMetaItem,
   LogsMetaKind,
   LogsDedupStrategy,
-  DataFrameHelper,
   GraphSeriesXY,
-  LoadingState,
   dateTime,
   toUtc,
   NullValueMode,
   toDataFrame,
+  FieldCache,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -193,7 +192,7 @@ export function dataFrameToLogsModel(dataFrame: DataFrame[], intervalMs: number)
       logsModel.series = makeSeriesForLogs(logsModel.rows, intervalMs);
     } else {
       logsModel.series = getGraphSeriesModel(
-        { series: metricSeries, state: LoadingState.Done },
+        metricSeries,
         {},
         { showBars: true, showLines: false, showPoints: false },
         {
@@ -238,22 +237,22 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
 
   for (let i = 0; i < logSeries.length; i++) {
     const series = logSeries[i];
-    const data = new DataFrameHelper(series);
+    const fieldCache = new FieldCache(series);
     const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
       hasUniqueLabels = true;
     }
 
-    const timeFieldIndex = data.getFirstFieldOfType(FieldType.time);
-    const stringField = data.getFirstFieldOfType(FieldType.string);
-    const logLevelField = data.getFieldByName('level');
+    const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time);
+    const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
+    const logLevelField = fieldCache.getFieldByName('level');
 
     let seriesLogLevel: LogLevel | undefined = undefined;
     if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
       seriesLogLevel = getLogLevelFromKey(series.labels['level']);
     }
 
-    for (let j = 0; j < data.length; j++) {
+    for (let j = 0; j < series.length; j++) {
       const ts = timeFieldIndex.values.get(j);
       const time = dateTime(ts);
       const timeEpochMs = time.valueOf();
@@ -261,7 +260,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
       const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
 
-      const message = stringField.values.get(j);
+      let message = stringField.values.get(j);
+      // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
+      message = typeof message === 'string' ? message : JSON.stringify(message);
 
       let logLevel = LogLevel.unknown;
       if (logLevelField) {
