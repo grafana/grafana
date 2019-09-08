@@ -478,7 +478,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     //   dispatch(queryStreamUpdatedAction({ exploreId, response }));
     // };
 
-    dispatch(queryStartAction({ exploreId }));
+    // dispatch(queryStartAction({ exploreId }));
 
     let firstResponse = true;
 
@@ -488,10 +488,12 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
           dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+          dispatch(stateSave());
         }
 
+        firstResponse = true;
+
         dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
-        dispatch(stateSave());
 
         // Keep scanning for results if this was the last scanning transaction
         if (getState().explore[exploreId].scanning) {
@@ -504,8 +506,6 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
             dispatch(scanStopAction({ exploreId }));
           }
         }
-
-        firstResponse = true;
       })
     );
   };

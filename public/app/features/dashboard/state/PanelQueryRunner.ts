@@ -225,13 +225,19 @@ export function postProcessPanelData(format = PanelQueryRunnerFormat.frames, cal
 
       //  for loading states with no data, use last result
       if (data.state === LoadingState.Loading && series.length === 0) {
+        if (!lastResult) {
+          lastResult = data;
+        }
+
         callback({ ...lastResult, state: LoadingState.Loading });
         return;
       }
 
       if (format === PanelQueryRunnerFormat.legacy || format === PanelQueryRunnerFormat.both) {
         legacy = translateToLegacyData(series);
-      } else if (format === PanelQueryRunnerFormat.frames || format === PanelQueryRunnerFormat.both) {
+      }
+
+      if (format === PanelQueryRunnerFormat.frames || format === PanelQueryRunnerFormat.both) {
         series = getProcessedDataFrames(series);
       }
 
