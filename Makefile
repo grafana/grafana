@@ -73,7 +73,7 @@ scripts/go/bin/gosec: scripts/go/go.mod
 
 scripts/go/bin/bra: scripts/go/go.mod
 	@cd scripts/go; \
-	$(GO) build -o ./bin/bra github.com/Unknwon/bra
+	$(GO) build -o ./bin/bra github.com/unknwon/bra
 
 scripts/go/bin/golangci-lint: scripts/go/go.mod
 	@cd scripts/go; \
