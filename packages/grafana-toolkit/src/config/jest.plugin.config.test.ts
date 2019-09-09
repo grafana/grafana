@@ -1,4 +1,4 @@
-import { jestConfig, whitelistedJestConfigOverrides } from './jest.plugin.config';
+import { jestConfig, allowedJestConfigOverrides } from './jest.plugin.config';
 
 describe('Jest config', () => {
   it('should throw if not supported overrides provided', () => {
@@ -7,11 +7,11 @@ describe('Jest config', () => {
     expect(getConfig).toThrow('Provided Jest config is not supported');
   });
 
-  it(`should allow ${whitelistedJestConfigOverrides} settings overrides`, () => {
+  it(`should allow ${allowedJestConfigOverrides} settings overrides`, () => {
     const config = jestConfig(`${__dirname}/mocks/jestSetup/overrides`);
     const configKeys = Object.keys(config);
 
-    for (const whitelistedOption of whitelistedJestConfigOverrides) {
+    for (const whitelistedOption of allowedJestConfigOverrides) {
       expect(configKeys).toContain(whitelistedOption);
     }
   });

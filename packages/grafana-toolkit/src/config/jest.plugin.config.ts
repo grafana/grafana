@@ -1,7 +1,7 @@
 import path = require('path');
 import fs from 'fs';
 
-export const whitelistedJestConfigOverrides = ['snapshotSerializers', 'moduleNameMapper'];
+export const allowedJestConfigOverrides = ['snapshotSerializers', 'moduleNameMapper'];
 
 interface EnabledJestConfigOverrides {
   snapshotSerializers: string[];
@@ -11,13 +11,13 @@ interface EnabledJestConfigOverrides {
 export const jestConfig = (baseDir: string = process.cwd()) => {
   const jestConfigOverrides = (require(path.resolve(baseDir, 'package.json')).jest || {}) as EnabledJestConfigOverrides;
 
-  const blacklistedOverrides = jestConfigOverrides
-    ? Object.keys(jestConfigOverrides).filter(override => whitelistedJestConfigOverrides.indexOf(override) === -1)
+  const deniedOverrides = jestConfigOverrides
+    ? Object.keys(jestConfigOverrides).filter(override => allowedJestConfigOverrides.indexOf(override) === -1)
     : [];
 
-  if (blacklistedOverrides.length > 0) {
-    console.error("\ngrafana-toolkit doesn't support following Jest options: ", blacklistedOverrides);
-    console.log('Supported Jest options are: ', JSON.stringify(whitelistedJestConfigOverrides));
+  if (deniedOverrides.length > 0) {
+    console.error("\ngrafana-toolkit doesn't support following Jest options: ", deniedOverrides);
+    console.log('Supported Jest options are: ', JSON.stringify(allowedJestConfigOverrides));
     throw new Error('Provided Jest config is not supported');
   }
 
