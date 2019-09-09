@@ -23,6 +23,7 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFresh: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
+    /*Background color with 25% opacity using Hexadecimal color code for transparency*/
     background-color: ${theme.colors.blueLight}40;
     animation: fade 1s ease-out 1s 1 normal forwards;
     @keyframes fade {
