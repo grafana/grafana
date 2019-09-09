@@ -55,8 +55,6 @@ interface LokiContextQueryOptions {
   limit?: number;
 }
 
-type LokiAnnotationsQuery = AnnotationQueryRequest<{ expr: string }>;
-
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
@@ -380,12 +378,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       });
   }
 
-  async annotationQuery(options: LokiAnnotationsQuery): Promise<AnnotationEvent[]> {
+  async annotationQuery(options: AnnotationQueryRequest<LokiQuery>): Promise<AnnotationEvent[]> {
     if (!options.annotation.expr) {
       return [];
     }
 
-    console.log({ options });
     const query = queryRequestFromAnnotationOptions(options);
     const { data } = await this.runQueries(query);
     const annotations: AnnotationEvent[] = [];
@@ -405,13 +402,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   }
 }
 
-function queryRequestFromAnnotationOptions(options: LokiAnnotationsQuery): DataQueryRequest<LokiQuery> {
+function queryRequestFromAnnotationOptions(options: AnnotationQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> {
   const refId = `annotation-${options.annotation.name}`;
   const target: LokiQuery = { refId, expr: options.annotation.expr };
 
   return {
     requestId: refId,
-    timezone: 'utc',
     range: options.range,
     targets: [target],
     dashboardId: options.dashboard.id,
@@ -422,6 +418,7 @@ function queryRequestFromAnnotationOptions(options: LokiAnnotationsQuery): DataQ
     maxDataPoints: 0,
 
     // Dummy values, are required in type but not used here.
+    timezone: 'utc',
     panelId: 0,
     interval: '',
     intervalMs: 0,
