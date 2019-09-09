@@ -8,14 +8,11 @@ import Page from '../../core/components/Page/Page';
 import { AlertBox } from '../../core/components/AlertBox/AlertBox';
 import { LdapConnectionStatus } from './LdapConnectionStatus';
 import { LdapSyncInfo } from './LdapSyncInfo';
-import { LdapUserMappingInfo } from './LdapUserMappingInfo';
-import { LdapUserPermissions } from './LdapUserPermissions';
-import { LdapUserGroups } from './LdapUserGroups';
-import { LdapUserTeams } from './LdapUserTeams';
 import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
 import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo } from 'app/types';
 import { loadLdapState, loadUserMapping, clearUserError } from './state/actions';
+import { LdapUserInfo } from './LdapUserInfo';
 
 interface Props {
   navModel: NavModel;
@@ -111,16 +108,7 @@ export class LdapPage extends PureComponent<Props, State> {
                 onClose={this.onClearUserError}
               />
             )}
-            {ldapUser && [
-              <LdapUserPermissions className={tableStyle} key="permissions" permissions={ldapUser.permissions} />,
-              <LdapUserMappingInfo className={tableStyle} key="mappingInfo" info={ldapUser.info} />,
-              ldapUser.roles && ldapUser.roles.length > 0 && (
-                <LdapUserGroups className={tableStyle} key="groups" groups={ldapUser.roles} />
-              ),
-              ldapUser.teams && ldapUser.teams.length > 0 && (
-                <LdapUserTeams className={tableStyle} key="teams" teams={ldapUser.teams} />
-              ),
-            ]}
+            {ldapUser && <LdapUserInfo className={tableStyle} ldapUser={ldapUser} />}
           </>
         </Page.Contents>
       </Page>
