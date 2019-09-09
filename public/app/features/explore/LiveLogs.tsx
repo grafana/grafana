@@ -1,7 +1,8 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, getLogRowStyles } from '@grafana/ui';
+import { last } from 'lodash';
 
+import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, getLogRowStyles } from '@grafana/ui';
 import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
@@ -48,6 +49,7 @@ export interface Props extends Themeable {
 
 interface State {
   logsResultToRender?: LogsModel;
+  lastTimestamp: number;
 }
 
 class LiveLogs extends PureComponent<Props, State> {
@@ -59,6 +61,7 @@ class LiveLogs extends PureComponent<Props, State> {
     super(props);
     this.state = {
       logsResultToRender: props.logsResult,
+      lastTimestamp: 0,
     };
   }
 
@@ -81,13 +84,17 @@ class LiveLogs extends PureComponent<Props, State> {
     }
   }
 
-  static getDerivedStateFromProps(nextProps: Props) {
+  static getDerivedStateFromProps(nextProps: Props, state: State) {
     if (!nextProps.isPaused) {
       return {
         // We update what we show only if not paused. We keep any background subscriptions running and keep updating
         // our state, but we do not show the updates, this allows us start again showing correct result after resuming
         // without creating a gap in the log results.
         logsResultToRender: nextProps.logsResult,
+        lastTimestamp:
+          state.logsResultToRender && last(state.logsResultToRender.rows)
+            ? last(state.logsResultToRender.rows).timeEpochMs
+            : 0,
       };
     } else {
       return null;
@@ -119,6 +126,15 @@ class LiveLogs extends PureComponent<Props, State> {
     return rowsToRender;
   };
 
+  /**
+   * Check if row is fresh so we can apply special styling. This is bit naive and does not take into account rows
+   * which arrive out of order. Because loki datasource sends full data instead of deltas we need to compare the
+   * data and this is easier than doing some intersection of some uuid of each row (which we do not have now anyway)
+   */
+  isFresh = (row: LogRowModel): boolean => {
+    return row.timeEpochMs > this.state.lastTimestamp;
+  };
+
   render() {
     const { theme, timeZone, onPause, onResume, isPaused } = this.props;
     const styles = getStyles(theme);
@@ -132,10 +148,10 @@ class LiveLogs extends PureComponent<Props, State> {
           className={cx(['logs-rows', styles.logsRowsLive])}
           ref={this.scrollContainerRef}
         >
-          {this.rowsToRender().map((row: any, index) => {
+          {this.rowsToRender().map((row: LogRowModel, index) => {
             return (
               <div
-                className={row.fresh ? cx([logsRow, styles.logsRowFresh]) : cx([logsRow, styles.logsRowOld])}
+                className={cx(logsRow, this.isFresh(row) ? styles.logsRowFresh : styles.logsRowOld)}
                 key={`${row.timeEpochMs}-${index}`}
               >
                 {showUtc && (

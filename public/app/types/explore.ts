@@ -266,6 +266,7 @@ export interface ExploreItemState {
   queryState: PanelQueryState;
 
   queryResponse: PanelData;
+  originPanelId?: number;
 }
 
 export interface ExploreUpdateState {
@@ -289,6 +290,7 @@ export interface ExploreUrlState {
   mode: ExploreMode;
   range: RawTimeRange;
   ui: ExploreUIState;
+  originPanelId?: number;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {

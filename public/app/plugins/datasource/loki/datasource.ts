@@ -1,8 +1,5 @@
 // Libraries
 import _ from 'lodash';
-import { Subscription, of } from 'rxjs';
-import { webSocket } from 'rxjs/webSocket';
-import { catchError, map } from 'rxjs/operators';
 // Services & Utils
 import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
@@ -17,13 +14,14 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataStreamObserver,
-  DataStreamState,
   DataQueryResponse,
 } from '@grafana/ui';
-import { LokiQuery, LokiOptions } from './types';
+
+import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
+import { LiveTarget, LiveStreams } from './live_streams';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -49,7 +47,7 @@ interface LokiContextQueryOptions {
 }
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
-  private subscriptions: { [key: string]: Subscription } = null;
+  private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
 
@@ -63,7 +61,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines, 10) || DEFAULT_MAX_LINES;
-    this.subscriptions = {};
   }
 
   _request(apiUrl: string, data?: any, options?: any) {
@@ -78,18 +75,20 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return this.backendSrv.datasourceRequest(req);
   }
 
-  prepareLiveTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>) {
+  prepareLiveTarget(target: LokiQuery, options: DataQueryRequest<LokiQuery>): LiveTarget {
     const interpolated = this.templateSrv.replace(target.expr);
     const { query, regexp } = parseQuery(interpolated);
     const refId = target.refId;
     const baseUrl = this.instanceSettings.url;
     const params = serializeParams({ query, regexp });
     const url = convertToWebSocketUrl(`${baseUrl}/api/prom/tail?${params}`);
+
     return {
       query,
       regexp,
       url,
       refId,
+      size: Math.min(options.maxDataPoints || Infinity, this.maxLines),
     };
   }
 
@@ -105,18 +104,10 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       regexp,
       start,
       end,
-      limit: this.maxLines,
+      limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
       refId,
     };
   }
-
-  unsubscribe = (refId: string) => {
-    const subscription = this.subscriptions[refId];
-    if (subscription && !subscription.closed) {
-      subscription.unsubscribe();
-      delete this.subscriptions[refId];
-    }
-  };
 
   processError = (err: any, target: any): DataQueryError => {
     const error: DataQueryError = {
@@ -142,17 +133,18 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return error;
   };
 
-  processResult = (data: any, target: any): DataFrame[] => {
+  processResult = (data: LokiLogsStream | LokiResponse, target: any): DataFrame[] => {
     const series: DataFrame[] = [];
 
     if (Object.keys(data).length === 0) {
       return series;
     }
 
-    if (!data.streams) {
-      return [logStreamToDataFrame(data, target.refId)];
+    if (!(data as any).streams) {
+      return [logStreamToDataFrame(data as LokiLogsStream, false, target.refId)];
     }
 
+    data = data as LokiResponse;
     for (const stream of data.streams || []) {
       const dataFrame = logStreamToDataFrame(stream);
       dataFrame.refId = target.refId;
@@ -172,38 +164,32 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       .map(target => this.prepareLiveTarget(target, options));
 
     for (const liveTarget of liveTargets) {
-      const subscription = webSocket(liveTarget.url)
-        .pipe(
-          map((results: any[]) => {
-            const data = this.processResult(results, liveTarget);
-            const state: DataStreamState = {
-              key: `loki-${liveTarget.refId}`,
-              request: options,
-              state: LoadingState.Streaming,
-              data,
-              unsubscribe: () => this.unsubscribe(liveTarget.refId),
-            };
-
-            return state;
-          }),
-          catchError(err => {
-            const error = this.processError(err, liveTarget);
-            const state: DataStreamState = {
-              key: `loki-${liveTarget.refId}`,
-              request: options,
-              state: LoadingState.Error,
-              error,
-              unsubscribe: () => this.unsubscribe(liveTarget.refId),
-            };
-
-            return of(state);
-          })
-        )
-        .subscribe({
-          next: state => observer(state),
-        });
-
-      this.subscriptions[liveTarget.refId] = subscription;
+      // Reuse an existing stream if one is already running
+      const stream = this.streams.getStream(liveTarget);
+      const subscription = stream.subscribe({
+        next: (data: DataFrame[]) => {
+          observer({
+            key: `loki-${liveTarget.refId}`,
+            request: options,
+            state: LoadingState.Streaming,
+            data,
+            unsubscribe: () => {
+              subscription.unsubscribe();
+            },
+          });
+        },
+        error: (err: any) => {
+          observer({
+            key: `loki-${liveTarget.refId}`,
+            request: options,
+            state: LoadingState.Error,
+            error: this.processError(err, liveTarget),
+            unsubscribe: () => {
+              subscription.unsubscribe();
+            },
+          });
+        },
+      });
     }
   };
 
@@ -330,11 +316,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const result = await this._request('/api/prom/query', target);
       if (result.data) {
         for (const stream of result.data.streams || []) {
-          const dataFrame = logStreamToDataFrame(stream);
-          if (reverse) {
-            dataFrame.reverse();
-          }
-          series.push(dataFrame);
+          series.push(logStreamToDataFrame(stream, reverse));
         }
       }
 

@@ -212,7 +212,7 @@ export class PanelQueryState {
 
     this.streams = [];
 
-    // Move the series from streams to the resposne
+    // Move the series from streams to the response
     if (keepSeries) {
       const { response } = this;
       this.response = {

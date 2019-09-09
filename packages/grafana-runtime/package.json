@@ -28,7 +28,6 @@
   },
   "devDependencies": {
     "@types/systemjs": "^0.20.6",
-    "awesome-typescript-loader": "^5.2.1",
     "lodash": "^4.17.10",
     "pretty-format": "^24.5.0",
     "rollup": "1.6.0",

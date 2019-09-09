@@ -212,6 +212,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       minInterval: panel.interval,
       scopedVars: panel.scopedVars,
       cacheTimeout: panel.cacheTimeout,
+      transformations: panel.transformations,
     });
   }
 
@@ -255,10 +256,17 @@ class MetricsPanelCtrl extends PanelCtrl {
         text: 'Explore',
         icon: 'gicon gicon-explore',
         shortcut: 'x',
-        href: await getExploreUrl(this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv),
+        href: await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv),
       });
     }
     return items;
+  }
+
+  async explore() {
+    const url = await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
+    if (url) {
+      this.$timeout(() => this.$location.url(url));
+    }
   }
 }
 
