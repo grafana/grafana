@@ -46,7 +46,7 @@ export class AnnotationsEditorCtrl {
   showOptions: any = [{ text: 'All Panels', value: 0 }, { text: 'Specific Panels', value: 1 }];
 
   /** @ngInject */
-  constructor($scope: any, private datasourceSrv: DatasourceSrv) {
+  constructor(private $scope: any, private datasourceSrv: DatasourceSrv) {
     $scope.ctrl = this;
 
     this.dashboard = $scope.dashboard;
@@ -56,12 +56,12 @@ export class AnnotationsEditorCtrl {
     this.reset();
 
     this.onColorChange = this.onColorChange.bind(this);
+  }
 
-    $scope.$watch('ctrl.currentAnnotation.datasource', async (value: string) => {
-      const newDatasource = await this.datasourceSrv.get(this.currentAnnotation.datasource);
-      $scope.$apply(() => {
-        this.currentDatasource = newDatasource;
-      });
+  async datasourceChanged() {
+    const newDatasource = await this.datasourceSrv.get(this.currentAnnotation.datasource);
+    this.$scope.$apply(() => {
+      this.currentDatasource = newDatasource;
     });
   }
 
@@ -69,6 +69,7 @@ export class AnnotationsEditorCtrl {
     this.currentAnnotation = annotation;
     this.currentAnnotation.showIn = this.currentAnnotation.showIn || 0;
     this.currentIsNew = false;
+    this.datasourceChanged();
     this.mode = 'edit';
     $('.tooltip.in').remove();
   }
@@ -77,6 +78,7 @@ export class AnnotationsEditorCtrl {
     this.currentAnnotation = angular.copy(this.annotationDefaults);
     this.currentAnnotation.datasource = this.datasources[0].name;
     this.currentIsNew = true;
+    this.datasourceChanged();
   }
 
   update() {
