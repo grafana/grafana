@@ -13,10 +13,15 @@ describe('dataFrameHelper', () => {
   });
   const ext = new FieldCache(frame);
 
-  it('Should get the first field with a duplicate name', () => {
+  it('should get the first field with a duplicate name', () => {
     const field = ext.getFieldByName('value');
-    expect(field!.name).toEqual('value');
-    expect(field!.values.toJSON()).toEqual([1, 2, 3]);
+    expect(field!.field.name).toEqual('value');
+    expect(field!.field.values.toJSON()).toEqual([1, 2, 3]);
+  });
+
+  it('should return index of the field', () => {
+    const field = ext.getFirstFieldOfType(FieldType.number);
+    expect(field!.idx).toEqual(2);
   });
 });
 
@@ -38,7 +43,7 @@ describe('FieldCache', () => {
 
     const expectedFieldNames = ['time', 'string', 'number', 'boolean', 'other', 'undefined'];
 
-    expect(allFields.map(f => f.name)).toEqual(expectedFieldNames);
+    expect(allFields.map(f => f.field.name)).toEqual(expectedFieldNames);
 
     expect(fieldCache.hasFieldOfType(FieldType.time)).toBeTruthy();
     expect(fieldCache.hasFieldOfType(FieldType.string)).toBeTruthy();
@@ -46,28 +51,28 @@ describe('FieldCache', () => {
     expect(fieldCache.hasFieldOfType(FieldType.boolean)).toBeTruthy();
     expect(fieldCache.hasFieldOfType(FieldType.other)).toBeTruthy();
 
-    expect(fieldCache.getFields(FieldType.time).map(f => f.name)).toEqual([expectedFieldNames[0]]);
-    expect(fieldCache.getFields(FieldType.string).map(f => f.name)).toEqual([expectedFieldNames[1]]);
-    expect(fieldCache.getFields(FieldType.number).map(f => f.name)).toEqual([expectedFieldNames[2]]);
-    expect(fieldCache.getFields(FieldType.boolean).map(f => f.name)).toEqual([expectedFieldNames[3]]);
-    expect(fieldCache.getFields(FieldType.other).map(f => f.name)).toEqual([
+    expect(fieldCache.getFields(FieldType.time).map(f => f.field.name)).toEqual([expectedFieldNames[0]]);
+    expect(fieldCache.getFields(FieldType.string).map(f => f.field.name)).toEqual([expectedFieldNames[1]]);
+    expect(fieldCache.getFields(FieldType.number).map(f => f.field.name)).toEqual([expectedFieldNames[2]]);
+    expect(fieldCache.getFields(FieldType.boolean).map(f => f.field.name)).toEqual([expectedFieldNames[3]]);
+    expect(fieldCache.getFields(FieldType.other).map(f => f.field.name)).toEqual([
       expectedFieldNames[4],
       expectedFieldNames[5],
     ]);
 
-    expect(fieldCache.fields[0].name).toEqual(expectedFieldNames[0]);
-    expect(fieldCache.fields[1].name).toEqual(expectedFieldNames[1]);
-    expect(fieldCache.fields[2].name).toEqual(expectedFieldNames[2]);
-    expect(fieldCache.fields[3].name).toEqual(expectedFieldNames[3]);
-    expect(fieldCache.fields[4].name).toEqual(expectedFieldNames[4]);
-    expect(fieldCache.fields[5].name).toEqual(expectedFieldNames[5]);
+    expect(fieldCache.fields[0].field.name).toEqual(expectedFieldNames[0]);
+    expect(fieldCache.fields[1].field.name).toEqual(expectedFieldNames[1]);
+    expect(fieldCache.fields[2].field.name).toEqual(expectedFieldNames[2]);
+    expect(fieldCache.fields[3].field.name).toEqual(expectedFieldNames[3]);
+    expect(fieldCache.fields[4].field.name).toEqual(expectedFieldNames[4]);
+    expect(fieldCache.fields[5].field.name).toEqual(expectedFieldNames[5]);
     expect(fieldCache.fields[6]).toBeUndefined();
 
-    expect(fieldCache.getFirstFieldOfType(FieldType.time)!.name).toEqual(expectedFieldNames[0]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.string)!.name).toEqual(expectedFieldNames[1]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.number)!.name).toEqual(expectedFieldNames[2]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.boolean)!.name).toEqual(expectedFieldNames[3]);
-    expect(fieldCache.getFirstFieldOfType(FieldType.other)!.name).toEqual(expectedFieldNames[4]);
+    expect(fieldCache.getFirstFieldOfType(FieldType.time)!.field.name).toEqual(expectedFieldNames[0]);
+    expect(fieldCache.getFirstFieldOfType(FieldType.string)!.field.name).toEqual(expectedFieldNames[1]);
+    expect(fieldCache.getFirstFieldOfType(FieldType.number)!.field.name).toEqual(expectedFieldNames[2]);
+    expect(fieldCache.getFirstFieldOfType(FieldType.boolean)!.field.name).toEqual(expectedFieldNames[3]);
+    expect(fieldCache.getFirstFieldOfType(FieldType.other)!.field.name).toEqual(expectedFieldNames[4]);
 
     expect(fieldCache.hasFieldNamed('tim')).toBeFalsy();
     expect(fieldCache.hasFieldNamed('time')).toBeTruthy();
@@ -77,12 +82,12 @@ describe('FieldCache', () => {
     expect(fieldCache.hasFieldNamed('other')).toBeTruthy();
     expect(fieldCache.hasFieldNamed('undefined')).toBeTruthy();
 
-    expect(fieldCache.getFieldByName('time')!.name).toEqual(expectedFieldNames[0]);
-    expect(fieldCache.getFieldByName('string')!.name).toEqual(expectedFieldNames[1]);
-    expect(fieldCache.getFieldByName('number')!.name).toEqual(expectedFieldNames[2]);
-    expect(fieldCache.getFieldByName('boolean')!.name).toEqual(expectedFieldNames[3]);
-    expect(fieldCache.getFieldByName('other')!.name).toEqual(expectedFieldNames[4]);
-    expect(fieldCache.getFieldByName('undefined')!.name).toEqual(expectedFieldNames[5]);
+    expect(fieldCache.getFieldByName('time')!.field.name).toEqual(expectedFieldNames[0]);
+    expect(fieldCache.getFieldByName('string')!.field.name).toEqual(expectedFieldNames[1]);
+    expect(fieldCache.getFieldByName('number')!.field.name).toEqual(expectedFieldNames[2]);
+    expect(fieldCache.getFieldByName('boolean')!.field.name).toEqual(expectedFieldNames[3]);
+    expect(fieldCache.getFieldByName('other')!.field.name).toEqual(expectedFieldNames[4]);
+    expect(fieldCache.getFieldByName('undefined')!.field.name).toEqual(expectedFieldNames[5]);
     expect(fieldCache.getFieldByName('null')).toBeUndefined();
   });
 });

@@ -243,7 +243,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       hasUniqueLabels = true;
     }
 
-    const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
 
@@ -253,20 +253,20 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     }
 
     for (let j = 0; j < series.length; j++) {
-      const ts = timeFieldIndex.values.get(j);
+      const ts = timeField!.field.values.get(j);
       const time = dateTime(ts);
       const timeEpochMs = time.valueOf();
       const timeFromNow = time.fromNow();
       const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
       const timeUtc = toUtc(ts).format('YYYY-MM-DD HH:mm:ss');
 
-      let message = stringField.values.get(j);
+      let message = stringField!.field.values.get(j);
       // This should be string but sometimes isn't (eg elastic) because the dataFrame is not strongly typed.
       message = typeof message === 'string' ? message : JSON.stringify(message);
 
       let logLevel = LogLevel.unknown;
       if (logLevelField) {
-        logLevel = getLogLevelFromKey(logLevelField.values.get(j));
+        logLevel = getLogLevelFromKey(logLevelField!.field.values.get(j));
       } else if (seriesLogLevel) {
         logLevel = seriesLogLevel;
       } else {
