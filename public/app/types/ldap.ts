@@ -23,9 +23,9 @@ export interface LdapRole {
 }
 
 export interface LdapTeam {
-  orgId: string;
-  teamId: string;
-  ldapAttribute: string;
+  orgName: string;
+  teamName: string;
+  groupDN: string;
 }
 
 export interface LdapUserInfo {

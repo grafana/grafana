@@ -1,4 +1,6 @@
 import React, { FC } from 'react';
+import { css } from 'emotion';
+import { Tooltip } from '@grafana/ui';
 import { LdapTeam } from '../../types';
 
 interface Props {
@@ -7,6 +9,10 @@ interface Props {
 }
 
 export const LdapUserTeams: FC<Props> = ({ className, teams }) => {
+  const noMatchPlaceholderStyle = css`
+    display: flex;
+  `;
+
   return (
     <table className={`${className} filter-table form-inline`}>
       <thead>
@@ -19,10 +25,21 @@ export const LdapUserTeams: FC<Props> = ({ className, teams }) => {
       <tbody>
         {teams.map((team, index) => {
           return (
-            <tr key={`${team.teamId}-${index}`}>
-              <td className="width-16">{team.orgId}</td>
-              <td className="width-14">{team.teamId}</td>
-              <td>{team.ldapAttribute}</td>
+            <tr key={`${team.teamName}-${index}`}>
+              <td className="width-16">
+                {team.orgName || (
+                  <div className={`text-warning ${noMatchPlaceholderStyle}`}>
+                    No match
+                    <Tooltip placement="top" content="No matching teams found" theme={'info'}>
+                      <div className="gf-form-help-icon gf-form-help-icon--right-normal">
+                        <i className="fa fa-info-circle" />
+                      </div>
+                    </Tooltip>
+                  </div>
+                )}
+              </td>
+              <td className="width-14">{team.teamName}</td>
+              <td>{team.groupDN}</td>
             </tr>
           );
         })}

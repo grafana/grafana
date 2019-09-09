@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { LdapRole } from '../../types';
 import { Tooltip } from '@grafana/ui';
+import { LdapRole } from '../../types';
 
 interface Props {
   groups: LdapRole[];
