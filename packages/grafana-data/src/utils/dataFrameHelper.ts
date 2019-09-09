@@ -5,19 +5,18 @@ import { ArrayVector, MutableVector, vectorToArray, CircularVector } from './vec
 import isArray from 'lodash/isArray';
 import isString from 'lodash/isString';
 
-interface FieldCacheItem {
-  field: Field;
+interface FieldWithIndex extends Field {
   idx: number;
 }
 export class FieldCache {
-  fields: FieldCacheItem[] = [];
+  fields: FieldWithIndex[] = [];
 
-  private fieldByName: { [key: string]: FieldCacheItem } = {};
-  private fieldByType: { [key: string]: FieldCacheItem[] } = {};
+  private fieldByName: { [key: string]: FieldWithIndex } = {};
+  private fieldByType: { [key: string]: FieldWithIndex[] } = {};
 
   constructor(data: DataFrame) {
     this.fields = data.fields.map((field, idx) => ({
-      field,
+      ...field,
       idx,
     }));
 
@@ -33,19 +32,19 @@ export class FieldCache {
         this.fieldByType[field.type] = [];
       }
       this.fieldByType[field.type].push({
-        field,
+        ...field,
         idx: index,
       });
 
       if (this.fieldByName[field.name]) {
         console.warn('Duplicate field names in DataFrame: ', field.name);
       } else {
-        this.fieldByName[field.name] = { field, idx: index };
+        this.fieldByName[field.name] = { ...field, idx: index };
       }
     }
   }
 
-  getFields(type?: FieldType): FieldCacheItem[] {
+  getFields(type?: FieldType): FieldWithIndex[] {
     if (!type) {
       return [...this.fields]; // All fields
     }
@@ -61,7 +60,7 @@ export class FieldCache {
     return types && types.length > 0;
   }
 
-  getFirstFieldOfType(type: FieldType): FieldCacheItem | undefined {
+  getFirstFieldOfType(type: FieldType): FieldWithIndex | undefined {
     const arr = this.fieldByType[type];
     if (arr && arr.length > 0) {
       return arr[0];
@@ -76,7 +75,7 @@ export class FieldCache {
   /**
    * Returns the first field with the given name.
    */
-  getFieldByName(name: string): FieldCacheItem | undefined {
+  getFieldByName(name: string): FieldWithIndex | undefined {
     return this.fieldByName[name];
   }
 }
