@@ -1,7 +1,7 @@
 // Libraries
 import _ from 'lodash';
 // Services & Utils
-import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
+import { dateMath, DataFrame, LogRowModel, DateTime } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -13,7 +13,6 @@ import {
   DataSourceInstanceSettings,
   DataQueryError,
   DataQueryRequest,
-  DataStreamObserver,
   DataQueryResponse,
 } from '@grafana/ui';
 
@@ -22,6 +21,8 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import { LiveTarget, LiveStreams } from './live_streams';
+import { Observable, from, merge } from 'rxjs';
+import { map, single, filter } from 'rxjs/operators';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -158,52 +159,23 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return series;
   };
 
-  runLiveQueries = (options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) => {
-    const liveTargets = options.targets
-      .filter(target => target.expr && !target.hide && target.live)
-      .map(target => this.prepareLiveTarget(target, options));
-
-    for (const liveTarget of liveTargets) {
-      // Reuse an existing stream if one is already running
-      const stream = this.streams.getStream(liveTarget);
-      const subscription = stream.subscribe({
-        next: (data: DataFrame[]) => {
-          observer({
-            key: `loki-${liveTarget.refId}`,
-            request: options,
-            state: LoadingState.Streaming,
-            data,
-            unsubscribe: () => {
-              subscription.unsubscribe();
-            },
-          });
-        },
-        error: (err: any) => {
-          observer({
-            key: `loki-${liveTarget.refId}`,
-            request: options,
-            state: LoadingState.Error,
-            error: this.processError(err, liveTarget),
-            unsubscribe: () => {
-              subscription.unsubscribe();
-            },
-          });
-        },
-      });
-    }
+  runLiveQuery = (options: DataQueryRequest<LokiQuery>, target: LokiQuery): Observable<DataQueryResponse> => {
+    const liveTarget = this.prepareLiveTarget(target, options);
+    const stream = this.streams.getStream(liveTarget);
+    return stream.pipe(
+      map(data => {
+        return {
+          data,
+          key: `loki-${liveTarget.refId}`,
+        };
+      })
+    );
   };
 
-  runQueries = async (options: DataQueryRequest<LokiQuery>) => {
-    const queryTargets = options.targets
-      .filter(target => target.expr && !target.hide && !target.live)
-      .map(target => this.prepareQueryTarget(target, options));
-
-    if (queryTargets.length === 0) {
-      return Promise.resolve({ data: [] });
-    }
-
-    const queries = queryTargets.map(target =>
-      this._request('/api/prom/query', target).catch((err: any) => {
+  runQuery = (options: DataQueryRequest<LokiQuery>, target: LokiQuery): Observable<DataQueryResponse> => {
+    const query = this.prepareQueryTarget(target, options);
+    return from(
+      this._request('/api/prom/query', query).catch((err: any) => {
         if (err.cancelled) {
           return err;
         }
@@ -211,26 +183,27 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         const error: DataQueryError = this.processError(err, target);
         throw error;
       })
+    ).pipe(
+      single(),
+      filter((response: any) => (response.cancelled ? false : true)),
+      map((response: any) => {
+        const data = this.processResult(response.data, target);
+        return { data, key: target.refId };
+      })
     );
-
-    return Promise.all(queries).then((results: any[]) => {
-      let series: DataFrame[] = [];
-
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        if (result.data) {
-          series = series.concat(this.processResult(result.data, queryTargets[i]));
-        }
-      }
-
-      return { data: series };
-    });
   };
 
-  async query(options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) {
-    this.runLiveQueries(options, observer);
+  query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+    const subQueries = options.targets
+      .filter(target => target.expr && !target.hide)
+      .map(target => {
+        if (target.live) {
+          return this.runLiveQuery(options, target);
+        }
+        return this.runQuery(options, target);
+      });
 
-    return this.runQueries(options);
+    return merge(...subQueries);
   }
 
   async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
