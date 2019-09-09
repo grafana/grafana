@@ -21,7 +21,7 @@ TimeOfDayPickerStories.add('default', () => {
       {(value, updateValue) => {
         return (
           <TimeOfDayPicker
-            onSelected={newValue => {
+            onChange={newValue => {
               action('on selected')(newValue);
               updateValue(newValue);
             }}
@@ -39,7 +39,7 @@ TimeOfDayPickerStories.add('only minutes', () => {
       {(value, updateValue) => {
         return (
           <TimeOfDayPicker
-            onSelected={newValue => {
+            onChange={newValue => {
               action('on selected')(newValue);
               updateValue(newValue);
             }}

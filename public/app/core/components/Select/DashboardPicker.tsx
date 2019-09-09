@@ -8,7 +8,7 @@ import { DashboardSearchHit, DashboardDTO } from 'app/types';
 export interface Props {
   className?: string;
   onSelected: (dashboard: DashboardDTO) => void;
-  current: SelectableValue<string>;
+  value: SelectableValue<number>;
 }
 
 export interface State {
@@ -50,7 +50,7 @@ export class DashboardPicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { className, onSelected, current } = this.props;
+    const { className, onSelected, value } = this.props;
     const { isLoading } = this.state;
 
     return (
@@ -65,7 +65,7 @@ export class DashboardPicker extends PureComponent<Props, State> {
             onChange={onSelected}
             placeholder="Select dashboard"
             noOptionsMessage={() => 'No dashboards found'}
-            value={current}
+            value={value}
           />
         </div>
       </div>

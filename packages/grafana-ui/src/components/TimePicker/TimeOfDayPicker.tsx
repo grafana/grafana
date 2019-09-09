@@ -3,18 +3,18 @@ import RcTimePicker from 'rc-time-picker';
 import { DateTime, dateTimeAsMoment } from '@grafana/data';
 
 interface Props {
-  onSelected: (value: any) => void;
+  onChange: (value: any) => void;
   value: DateTime;
   showHour?: boolean;
   minuteStep?: number;
 }
 
-export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, onSelected, value }) => {
+export const TimeOfDayPicker: FC<Props> = ({ minuteStep = 1, showHour = true, onChange, value }) => {
   return (
     <div>
       <RcTimePicker
         defaultValue={dateTimeAsMoment()}
-        onChange={onSelected}
+        onChange={onChange}
         allowEmpty={false}
         showSecond={false}
         value={dateTimeAsMoment(value)}
