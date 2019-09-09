@@ -6,9 +6,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -139,6 +141,65 @@ func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 	}
 
 	return JSON(http.StatusOK, serverDTOs)
+}
+
+func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
+	if !ldap.IsEnabled() {
+		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
+	}
+
+	ldapConfig, err := getLDAPConfig()
+
+	if err != nil {
+		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again.", err)
+	}
+
+	userId := c.ParamsInt64(":id")
+
+	query := models.GetUserByIdQuery{Id: userId}
+
+	err = bus.Dispatch(query)
+
+	if err := bus.Dispatch(&query); err != nil {
+		if err == models.ErrUserNotFound {
+			return Error(404, models.ErrUserNotFound.Error(), nil)
+		}
+
+		return Error(500, "Failed to get user", err)
+	}
+
+	// Check for users only from LDAP
+
+	ldapServer := newLDAP(ldapConfig.Servers)
+	user, _, err := ldapServer.User(query.Result.Login)
+
+	if err != nil {
+		if err == ldap.ErrCouldNotFindUser { // User was not in the LDAP server - we need to take action:
+
+			if setting.AdminUser == query.Result.Login { // User is *the* Grafana Admin. We cannot disable it.
+				errMsg := fmt.Sprintf(`Refusing to sync grafana super admin "%s" - it would be disabled`, query.Result.Login)
+				logger.Error(errMsg)
+				return Error(http.StatusBadRequest, errMsg, err)
+			}
+
+			// Since the user was not in the LDAP server. Let's disable it.
+			login.DisableExternalUser(query.Result.Login)
+			return JSON(http.StatusOK, "User disabled without any updates in the information") // should this be a success?
+		}
+	}
+
+	upsertCmd := &models.UpsertUserCommand{
+		ExternalUser:  user,
+		SignupAllowed: setting.LDAPAllowSignup,
+	}
+
+	err = bus.Dispatch(upsertCmd)
+
+	if err != nil {
+		return Error(http.StatusInternalServerError, "Failed to udpate the user", err)
+	}
+
+	return JSON(http.StatusOK, "user synced")
 }
 
 // GetUserFromLDAP finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.
