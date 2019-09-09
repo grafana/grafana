@@ -8,9 +8,8 @@ import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
 import ElapsedTime from './ElapsedTime';
 
 /*
-setting alpha using Hexadecimal notation: #RRGGBB[AA]
-R,G, B and A (alpha) are hexadecimal characters. A is optional.
-https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
+  Setting alpha using Hexadecimal notation: #RRGGBB[AA], where A is optional.
+  https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
 */
 const setAlpha = (hex: string, alpha: number) => {
   const hexAlpha = ((alpha * 255) | (1 << 8)).toString(16).slice(1);
