@@ -34,7 +34,7 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
   };
 
   return (
-    <div>
+    <div className="gf-form-group">
       <LokiQueryFieldForm
         datasource={datasource}
         datasourceStatus={DataSourceStatus.Connected}
