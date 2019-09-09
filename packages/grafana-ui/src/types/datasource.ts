@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
-import { DashboardModel } from '../../../../../public/app/features/dashboard/state';
 
 // NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
@@ -557,7 +556,8 @@ export interface DataSourceSelectItem {
 export interface AnnotationQueryRequest<MoreOptions = {}> {
   range: TimeRange;
   rangeRaw: RawTimeRange;
-  dashboard: DashboardModel;
+  // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
+  dashboard: any;
   annotation: {
     datasource: string;
     enable: boolean;
