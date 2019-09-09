@@ -26,7 +26,7 @@ import { GraphLegendProps, Legend } from './Legend/Legend';
 import { GraphCtrl } from './module';
 import { getValueFormat, ContextMenuGroup, FieldDisplay, ContextMenuItem } from '@grafana/ui';
 import { provideTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc, DataFrameView, LinkModelSupplier } from '@grafana/data';
+import { toUtc, DataFrameView, LinkModelSupplier, FieldCache, FieldType } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -234,18 +234,18 @@ class GraphElement {
       return;
     } else {
       this.tooltip.clear(this.plot);
-      let linksSupplier: LinkModelSupplier<FieldDisplay> | undefined;
+      let linksSupplier: LinkModelSupplier<FieldDisplay>;
 
       if (item) {
         const seriesName = item.series.alias;
         const dataFrame = this.ctrl.getDataFrameByName(seriesName);
-        // const fieldCache = new FieldCache(dataFrame);
-        // const field = fieldCache.getFirstFieldOfType(FieldType.number);
+        const fieldCache = new FieldCache(dataFrame);
+        const field = fieldCache.getFirstFieldOfType(FieldType.number);
 
         linksSupplier = this.panel.options.dataLinks
           ? getFieldLinksSupplier({
               view: new DataFrameView(dataFrame),
-              colIndex: 0, // maybe extend field cache to return field index as well?
+              colIndex: field!.idx,
               rowIndex: item.dataIndex,
               field: {
                 links: this.panel.options.dataLinks || [],
