@@ -10,6 +10,9 @@ export interface BuildInfo {
   hasUpdate: boolean;
 }
 
+interface FeatureToggles {
+  transformations: boolean;
+}
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -41,6 +44,9 @@ export class GrafanaBootConfig {
   disableSanitizeHtml = false;
   theme: GrafanaTheme;
   pluginsToPreload: string[] = [];
+  featureToggles: FeatureToggles = {
+    transformations: false,
+  };
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
