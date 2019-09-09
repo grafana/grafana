@@ -10,6 +10,8 @@ import ElapsedTime from './ElapsedTime';
 const getStyles = (theme: GrafanaTheme) => ({
   logsRowsLive: css`
     label: logs-rows-live;
+    font-family: ${theme.typography.fontFamily.monospace};
+    font-size: ${theme.typography.size.sm};
     display: flex;
     flex-flow: column nowrap;
     height: 65vh;
@@ -21,15 +23,29 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFresh: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    background-color: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.gray1 }, theme.type)};
+    background-color: ${selectThemeVariant(
+      { light: theme.background.logsFresh, dark: theme.background.logsFresh },
+      theme.type
+    )};
+    animation: fade 1s ease-out 1s 1 normal forwards;
+    @keyframes fade {
+      from {
+        background-color: ${selectThemeVariant(
+          { light: theme.background.logsFresh, dark: theme.background.logsFresh },
+          theme.type
+        )};
+      }
+      to {
+        background-color: transparent;
+      }
+    }
   `,
   logsRowOld: css`
     label: logs-row-old;
-    opacity: 0.8;
   `,
   logsRowsIndicator: css`
     font-size: ${theme.typography.size.md};
-    padding: ${theme.spacing.sm} 0;
+    padding-top: ${theme.spacing.sm};
     display: flex;
     align-items: center;
   `,
@@ -186,8 +202,8 @@ class LiveLogs extends PureComponent<Props, State> {
             {isPaused ? 'Resume' : 'Pause'}
           </button>
           <button onClick={this.props.stopLive} className={cx('btn btn-inverse', styles.button)}>
-            <i className={'fa fa-stop'} />
-            &nbsp; Stop
+            <i className={'fa fa-times'} />
+            &nbsp; Exit live mode
           </button>
           {isPaused || (
             <span>
