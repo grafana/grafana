@@ -7,6 +7,16 @@ import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
 
+/*
+setting alpha using Hexadecimal notation: #RRGGBB[AA]
+R,G, B and A (alpha) are hexadecimal characters. A is optional.
+https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
+*/
+const setAlpha = (hex: string, alpha: number) => {
+  const hexAlpha = ((alpha * 255) | (1 << 8)).toString(16).slice(1);
+  return hex + hexAlpha;
+};
+
 const getStyles = (theme: GrafanaTheme) => ({
   logsRowsLive: css`
     label: logs-rows-live;
@@ -23,12 +33,11 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFresh: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    /* applying 25% opacity to background color using HEX color code for transparency */
-    background-color: ${theme.colors.blueLight}40;
+    background-color: ${setAlpha(theme.colors.blueLight, 0.25)};
     animation: fade 1s ease-out 1s 1 normal forwards;
     @keyframes fade {
       from {
-        background-color: ${theme.colors.blueLight}40;
+        background-color: ${setAlpha(theme.colors.blueLight, 0.25)};
       }
       to {
         background-color: transparent;
