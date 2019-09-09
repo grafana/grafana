@@ -7,11 +7,13 @@ if [ -z "$GPG_KEY_PASSWORD" ]; then
     exit 1
 fi
 
+_files=$*
+
 gpg --allow-secret-key-import --import /private.key
 
 cp ./scripts/build/rpmmacros ~/.rpmmacros
 
-for package in dist/*.rpm; do
+for package in $_files; do
     [ -e "$package" ] || continue
     ./scripts/build/sign_expect "$GPG_KEY_PASSWORD" "$package"
 done

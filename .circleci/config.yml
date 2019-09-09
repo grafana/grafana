@@ -219,10 +219,10 @@ jobs:
           command: './scripts/build/prepare_signing_key.sh'
       - run:
           name: sign packages
-          command: './scripts/build/sign_packages.sh'
+          command: './scripts/build/sign_packages.sh dist/*.rpm'
       - run:
           name: verify signed packages
-          command: './scripts/build/verify_signed_packages.sh'
+          command: './scripts/build/verify_signed_packages.sh dist/*.rpm'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -254,7 +254,7 @@ jobs:
           command: './scripts/build/prepare_signing_key.sh'
       - run:
           name: sign packages
-          command: './scripts/build/sign_packages.sh'
+          command: './scripts/build/sign_packages.sh dist/*.rpm'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -368,7 +368,7 @@ jobs:
           command: './scripts/build/prepare_signing_key.sh'
       - run:
           name: sign packages
-          command: './scripts/build/sign_packages.sh'
+          command: './scripts/build/sign_packages.sh dist/*.rpm'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -446,7 +446,7 @@ jobs:
           command: './scripts/build/prepare_signing_key.sh'
       - run:
           name: sign packages
-          command: './scripts/build/sign_packages.sh'
+          command: './scripts/build/sign_packages.sh dist/*.rpm'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -490,10 +490,10 @@ jobs:
         command: './scripts/build/prepare_signing_key.sh'
     - run:
         name: sign packages
-        command: './scripts/build/sign_packages.sh'
+        command: './scripts/build/sign_packages.sh dist/*.rpm'
     - run:
         name: verify signed packages
-        command: './scripts/build/verify_signed_packages.sh'
+        command: './scripts/build/verify_signed_packages.sh dist/*.rpm'
     - run:
         name: sha-sum packages
         command: 'go run build.go sha-dist'

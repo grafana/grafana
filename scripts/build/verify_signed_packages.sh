@@ -1,11 +1,13 @@
 #!/bin/bash
 
+_files=$*
+
 mkdir -p ~/.rpmdb/pubkeys
 curl -s https://packages.grafana.com/gpg.key > ~/.rpmdb/pubkeys/grafana.key
 
 ALL_SIGNED=0
 
-for file in dist/*.rpm; do
+for file in $_files; do
   if rpm -K "$file" | grep "pgp.*OK" -q ; then
     echo "$file" OK
   else
