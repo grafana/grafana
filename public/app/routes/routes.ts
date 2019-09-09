@@ -7,6 +7,7 @@ import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import LdapPage from 'app/features/admin/LdapPage';
+import LdapUserPage from 'app/features/admin/LdapUserPage';
 import config from 'app/core/config';
 import { route, ILocationProvider } from 'angular';
 
@@ -257,6 +258,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/admin/users/edit/:id', {
       templateUrl: 'public/app/features/admin/partials/edit_user.html',
       controller: 'AdminEditUserCtrl',
+    })
+    .when('/admin/users/ldap/edit/:login', {
+      template: '<react-container />',
+      resolve: {
+        component: () => LdapUserPage,
+      },
     })
     .when('/admin/orgs', {
       templateUrl: 'public/app/features/admin/partials/orgs.html',

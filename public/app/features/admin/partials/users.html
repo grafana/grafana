@@ -55,7 +55,12 @@
             </a>
           </td>
           <td class="text-right">
-            <span class="label label-tag" ng-style="user.authLabelStyle" ng-if="user.authLabel">
+            <a href="/admin/users/ldap/edit/{{user.login}}" ng-if="user.authLabel === 'LDAP'">
+              <span class="label label-tag" ng-style="user.authLabelStyle" ng-if="user.authLabel">
+                {{user.authLabel}}
+              </span>
+            </a>
+            <span class="label label-tag" ng-style="user.authLabelStyle" ng-if="user.authLabel && user.authLabel !== 'LDAP'">
               {{user.authLabel}}
             </span>
           </td>
