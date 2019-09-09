@@ -173,8 +173,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   };
 
   runQuery = (options: DataQueryRequest<LokiQuery>, target: LokiQuery): Observable<DataQueryResponse> => {
-    const query = from(
-      this._request('/api/prom/query', target).catch((err: any) => {
+    const query = this.prepareQueryTarget(target, options);
+    return from(
+      this._request('/api/prom/query', query).catch((err: any) => {
         if (err.cancelled) {
           return err;
         }
@@ -182,9 +183,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         const error: DataQueryError = this.processError(err, target);
         throw error;
       })
-    );
-
-    return query.pipe(
+    ).pipe(
       single(),
       filter((response: any) => (response.cancelled ? false : true)),
       map((response: any) => {
