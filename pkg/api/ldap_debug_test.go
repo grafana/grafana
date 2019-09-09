@@ -150,7 +150,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 	expected := `
 	{
 		"error": "Unable to find organization with ID '2'",
-		"message": "Organization not found - Please verify your LDAP configuration"
+		"message": "An oganization was not found - Please verify your LDAP configuration"
 	}
 	`
 	var expectedJSON interface{}
@@ -229,6 +229,89 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 				{ "orgId": 1, "orgRole": "Admin", "orgName": "Main Org.", "groupDN": "cn=admins,ou=groups,dc=grafana,dc=org" }
 			],
 			"teams": null
+		}
+	`
+	var expectedJSON interface{}
+	_ = json.Unmarshal([]byte(expected), &expectedJSON)
+
+	assert.Equal(t, expectedJSON, jsonResponse)
+}
+
+func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
+	isAdmin := true
+	userSearchResult = &models.ExternalUserInfo{
+		Name:           "John Doe",
+		Email:          "john.doe@example.com",
+		Login:          "johndoe",
+		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN},
+		IsGrafanaAdmin: &isAdmin,
+	}
+
+	userSearchConfig = ldap.ServerConfig{
+		Attr: ldap.AttributeMap{
+			Name:     "ldap-name",
+			Surname:  "ldap-surname",
+			Email:    "ldap-email",
+			Username: "ldap-username",
+		},
+		Groups: []*ldap.GroupToOrgRole{
+			{
+				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
+				OrgID:   1,
+				OrgRole: models.ROLE_ADMIN,
+			},
+		},
+	}
+
+	mockOrgSearchResult := []*models.OrgDTO{
+		{Id: 1, Name: "Main Org."},
+	}
+
+	bus.AddHandler("test", func(query *models.SearchOrgsQuery) error {
+		query.Result = mockOrgSearchResult
+		return nil
+	})
+
+	bus.AddHandler("test", func(cmd *models.GetTeamsForLDAPGroupCommand) error {
+		cmd.Result = []models.TeamOrgGroupDTO{}
+		return nil
+	})
+
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe")
+
+	require.Equal(t, sc.resp.Code, http.StatusOK)
+
+	jsonResponse, err := getJSONbody(sc.resp)
+	assert.Nil(t, err)
+
+	expected := `
+		{
+		  "name": {
+				"cfgAttrValue": "ldap-name", "ldapValue": "John"
+			},
+			"surname": {
+				"cfgAttrValue": "ldap-surname", "ldapValue": "Doe"
+			},
+			"email": {
+				"cfgAttrValue": "ldap-email", "ldapValue": "john.doe@example.com"
+			},
+			"login": {
+				"cfgAttrValue": "ldap-username", "ldapValue": "johndoe"
+			},
+			"isGrafanaAdmin": true,
+			"isDisabled": false,
+			"roles": [
+				{ "orgId": 1, "orgRole": "Admin", "orgName": "Main Org.", "groupDN": "cn=admins,ou=groups,dc=grafana,dc=org" }
+			],
+			"teams": []
 		}
 	`
 	var expectedJSON interface{}
