@@ -177,7 +177,7 @@ func FetchFiles(client *http.Client, files []RawFile, header http.Header) error 
 	return nil
 }
 
-// FetchFiles uses command `curl` to fetch files specified by the rawURL field in parallel.
+// FetchFilesCurl uses command `curl` to fetch files specified by the rawURL field in parallel.
 func FetchFilesCurl(files []RawFile, curlOptions ...string) error {
 	ch := make(chan error, len(files))
 	for i := range files {

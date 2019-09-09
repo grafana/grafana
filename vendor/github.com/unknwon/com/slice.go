@@ -44,7 +44,7 @@ func CompareSliceStr(s1, s2 []string) bool {
 	return true
 }
 
-// CompareSliceStr compares two 'string' type slices.
+// CompareSliceStrU compares two 'string' type slices.
 // It returns true if elements are the same, and ignores the order.
 func CompareSliceStrU(s1, s2 []string) bool {
 	if len(s1) != len(s2) {
