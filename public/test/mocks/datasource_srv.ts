@@ -33,9 +33,7 @@ export class MockDataSourceApi extends DataSourceApi {
       this.result = result;
     }
 
-    this.meta = {
-      // ?
-    } as DataSourcePluginMeta;
+    this.meta = {} as DataSourcePluginMeta;
   }
 
   query(request: DataQueryRequest): Promise<DataQueryResponse> {
