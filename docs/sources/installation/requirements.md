@@ -29,7 +29,7 @@ Installation of Grafana on other operating systems is possible, but not supporte
 
 ## Hardware requirements
 
-Grafana does not use a lot of resources and is very lightweight in use of memory and CPU. Minimum recommendation of 255mb memory and 1 CPU.
+Grafana does not use a lot of resources and is very lightweight in use of memory and CPU. Minimum recommendation is 255mb of memory and 1 CPU.
 
 Depending on what features are being used and to what extent the requirements varies. Features that consume and requires more resources:
 
