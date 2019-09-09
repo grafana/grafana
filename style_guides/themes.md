@@ -1,36 +1,16 @@
 ## Core changes
 
-JS is the primary source of theme variables for Grafana. Theme definitions are located in `@grafana/ui/themes` directory.
+JS is the primary source of theme variables for Grafana. Theme definitions are located in `packages/grafana-ui/src/themes` directory.
 
 #### Themes are implemented in pure js.
 
-This is because our goal is to share variables between app and SASS. To achieve that themes are necessary during build time to be exposed to sass loader via `node-sass` functions (https://github.com/sass/node-sass/blob/master/README.md#functions--v300---experimental). This retrieval is implemented in `getThemeVariable(variablePath, themeName)`.
+That's because our goal is to share variables between Grafana app and SASS files.
 
 #### Themes are available to React components via `ThemeContext`
 
-Context is available via `import { ThemeContext } from '@grafana/ui';`
+ThemeContext is available via `import { ThemeContext } from '@grafana/ui';`
 
-**If you skip `themeName` param, then dark theme's variant will be used**
-
-## Using themes in Grafana
-
-### SASS
-
-`getThemeVariable` is a function, that's available in sass files. Use it i.e. like this:
-
-```scss
-// In theme agnostic SASS file
-.foo {
-  font-size: getThemeVariable('typography.size.m');
-}
-
-// In *.[themeName].scss
-.bar {
-  background-color: getThemeVariable('colors.blueLight', '[themeName]');
-}
-```
-
-### React
+## Using themes in Grafana's React components
 
 #### Using `ThemeContext` directly
 
@@ -38,6 +18,20 @@ Context is available via `import { ThemeContext } from '@grafana/ui';`
 import { ThemeContext } from '@grafana/ui';
 
 <ThemeContext.Consumer>{theme => <Foo theme={theme} />}</ThemeContext.Consumer>;
+```
+
+or
+
+```ts
+import React, { useContext } from 'react';
+import { ThemeContext } from '@grafana/ui';
+
+const Foo: React.FunctionComponent<FooProps> = () => {
+  const theme = useContext(ThemeContext);
+
+  // Your component has access to the theme variables now
+}
+
 ```
 
 #### Using `withTheme` HOC
@@ -79,7 +73,7 @@ BarStories.add('Story' () => {
 
 ### Angular
 
-There should be very few cases when theme would be used in Angular context. For this purpise there is a function available that retrieves current theme: `import { getCurrentTheme } from app/core/utils/ConfigProvider`
+There should be very few cases where theme would be used in Angular context. For this purpise there is a function available that retrieves current theme: `import { getCurrentTheme } from app/core/utils/ConfigProvider`
 
 ## Limitations
 
