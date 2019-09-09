@@ -14,7 +14,6 @@ export class AnnotationsEditorCtrl {
   currentDatasource: any;
   currentIsNew: any;
   dashboard: DashboardModel;
-  $scope: any;
 
   annotationDefaults: any = {
     name: '',
@@ -47,10 +46,9 @@ export class AnnotationsEditorCtrl {
   showOptions: any = [{ text: 'All Panels', value: 0 }, { text: 'Specific Panels', value: 1 }];
 
   /** @ngInject */
-  constructor($scope: any, private datasourceSrv: DatasourceSrv) {
+  constructor(private $scope: any, private datasourceSrv: DatasourceSrv) {
     $scope.ctrl = this;
 
-    this.$scope = $scope;
     this.dashboard = $scope.dashboard;
     this.mode = 'list';
     this.datasources = datasourceSrv.getAnnotationSources();
