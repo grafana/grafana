@@ -7,7 +7,6 @@ import {
   LogRowModel,
   LoadingState,
   DateTime,
-  dateTime,
   AnnotationEvent,
   DataFrameView,
 } from '@grafana/data';
@@ -55,6 +54,8 @@ interface LokiContextQueryOptions {
   direction?: 'BACKWARD' | 'FORWARD';
   limit?: number;
 }
+
+type LokiAnnotationsQuery = AnnotationQueryRequest<{ expr: string }>;
 
 export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
   private streams = new LiveStreams();
@@ -379,30 +380,13 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       });
   }
 
-  async annotationQuery(options: AnnotationQueryRequest<{ expr: string }>): Promise<AnnotationEvent[]> {
-    const annotation = options.annotation;
-    const expr = annotation.expr || '';
-
-    if (!expr) {
+  async annotationQuery(options: LokiAnnotationsQuery): Promise<AnnotationEvent[]> {
+    if (!options.annotation.expr) {
       return [];
     }
 
-    const target: LokiQuery = {
-      refId: options.annotation.name,
-      expr,
-      live: false,
-    };
-
-    const query: DataQueryRequest<LokiQuery> = {
-      requestId: '',
-      timezone: 'utc',
-      range: {
-        from: dateTime(options.range.from),
-        to: dateTime(options.range.to),
-      },
-      targets: [target],
-    } as any;
-
+    console.log({ options });
+    const query = queryRequestFromAnnotationOptions(options);
     const { data } = await this.runQueries(query);
     const annotations: AnnotationEvent[] = [];
     for (const frame of data) {
@@ -419,6 +403,29 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     return annotations;
   }
+}
+
+function queryRequestFromAnnotationOptions(options: LokiAnnotationsQuery): DataQueryRequest<LokiQuery> {
+  const refId = `annotation-${options.annotation.name}`;
+  const target: LokiQuery = { refId, expr: options.annotation.expr };
+
+  return {
+    requestId: refId,
+    timezone: 'utc',
+    range: options.range,
+    targets: [target],
+    dashboardId: options.dashboard.id,
+    scopedVars: null,
+    startTime: Date.now(),
+
+    // This should mean the default defined on datasource is used.
+    maxDataPoints: 0,
+
+    // Dummy values, are required in type but not used here.
+    panelId: 0,
+    interval: '',
+    intervalMs: 0,
+  };
 }
 
 export default LokiDatasource;

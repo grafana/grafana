@@ -69,7 +69,7 @@ export class DataFrameView<T = any> implements Vector<T> {
     return this.toArray();
   }
 
-  forEachRow<U>(iterator: (row: T) => void) {
+  forEachRow(iterator: (row: T) => void) {
     for (let i = 0; i < this.data.length; i++) {
       iterator(this.get(i));
     }

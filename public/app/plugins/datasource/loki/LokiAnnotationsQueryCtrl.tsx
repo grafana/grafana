@@ -1,3 +1,6 @@
+/**
+ * Just a simple wrapper for a react component that is actually implementing the query editor.
+ */
 export class LokiAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
   annotation: any;

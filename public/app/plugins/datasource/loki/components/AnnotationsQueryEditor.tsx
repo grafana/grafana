@@ -2,14 +2,21 @@
 import React, { memo } from 'react';
 
 // Types
-import { DataSourceStatus } from '@grafana/ui';
+import { DataSourceApi, DataSourceJsonData, DataSourceStatus } from '@grafana/ui';
 import { LokiQuery } from '../types';
 import { useLokiSyntax } from './useLokiSyntax';
 import { LokiQueryFieldForm } from './LokiQueryFieldForm';
 
-export const LokiAnnotationQueryEditor = memo(function LokiAnnotationQueryEditor(props: any) {
+interface Props {
+  expr: string;
+  datasource: DataSourceApi<LokiQuery, DataSourceJsonData>;
+  onChange: (expr: string) => void;
+}
+
+export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEditor(props: Props) {
   const { expr, datasource, onChange } = props;
 
+  // Timerange to get existing labels from. Hard coding like this seems to be good enough right now.
   const absolute = {
     from: Date.now() - 10000,
     to: Date.now(),
@@ -17,7 +24,6 @@ export const LokiAnnotationQueryEditor = memo(function LokiAnnotationQueryEditor
 
   const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
     datasource.languageProvider,
-    // TODO maybe use real status
     DataSourceStatus.Connected,
     absolute
   );
@@ -46,5 +52,3 @@ export const LokiAnnotationQueryEditor = memo(function LokiAnnotationQueryEditor
     </div>
   );
 });
-
-export default LokiAnnotationQueryEditor;

@@ -8,9 +8,11 @@ import {
   LogRowModel,
   LoadingState,
   DataFrameDTO,
+  AnnotationEvent,
 } from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
+import { DashboardModel } from '../../../../../public/app/features/dashboard/state';
 
 // NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
@@ -276,6 +278,12 @@ export abstract class DataSourceApi<
    * Used in explore
    */
   languageProvider?: any;
+
+  /**
+   * Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible
+   * in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
+   */
+  annotationQuery?<T>(options: AnnotationQueryRequest<T>): Promise<AnnotationEvent[]>;
 }
 
 export interface QueryEditorProps<
@@ -543,9 +551,13 @@ export interface DataSourceSelectItem {
   sort: string;
 }
 
+/**
+ * Options passed to the datasource.annotationQuery method. See docs/plugins/developing/datasource.md
+ */
 export interface AnnotationQueryRequest<MoreOptions = {}> {
   range: TimeRange;
   rangeRaw: RawTimeRange;
+  dashboard: DashboardModel;
   annotation: {
     datasource: string;
     enable: boolean;

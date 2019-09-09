@@ -12,7 +12,7 @@ import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
 import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
 import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
-import LokiAnnotationQueryEditor from '../plugins/datasource/loki/components/AnnotationQueryEditor';
+import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 
 export function registerAngularDirectives() {
   react2AngularDirective('sidemenu', SideMenu, []);
@@ -104,7 +104,7 @@ export function registerAngularDirectives() {
 
   react2AngularDirective('reactProfileWrapper', ReactProfileWrapper, []);
 
-  react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationQueryEditor, [
+  react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
     'expr',
     'onChange',
     ['datasource', { watchDepth: 'reference' }],
