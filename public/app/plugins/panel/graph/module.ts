@@ -343,6 +343,10 @@ class GraphCtrl extends MetricsPanelCtrl {
   formatDate = (date: DateTimeInput, format?: string) => {
     return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
   };
+
+  getDataFrameByName = (seriesName: string) => {
+    return this.dataList.filter(dataFrame => dataFrame.name === seriesName)[0];
+  };
 }
 
 export { GraphCtrl, GraphCtrl as PanelCtrl };
