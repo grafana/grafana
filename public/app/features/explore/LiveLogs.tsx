@@ -22,7 +22,11 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFresh: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    animation: fade 2s linear 0s 1 normal forwards;
+    background-color: ${selectThemeVariant(
+      { light: theme.background.logsFresh, dark: theme.background.logsFresh },
+      theme.type
+    )};
+    animation: fade 1s ease-out 1s 1 normal forwards;
     @keyframes fade {
       from {
         background-color: ${selectThemeVariant(
