@@ -592,6 +592,11 @@ func getGitSha() string {
 }
 
 func buildStamp() int64 {
+	// use SOURCE_DATE_EPOCH if set.
+	if s, _ := strconv.ParseInt(os.Getenv("SOURCE_DATE_EPOCH"), 10, 64); s > 0 {
+		return s
+	}
+
 	bs, err := runError("git", "show", "-s", "--format=%ct")
 	if err != nil {
 		return time.Now().Unix()
