@@ -105,7 +105,7 @@ const getLogRowWithContextStyles = (theme: GrafanaTheme, state: State) => {
  * When the user requests stats for a field, they will be calculated and rendered below the row.
  */
 class UnThemedLogRow extends PureComponent<Props, State> {
-  mouseMessageTimer: NodeJS.Timer | null = null;
+  mouseMessageTimer: number | null = null;
 
   state: any = {
     fieldCount: 0,
@@ -150,7 +150,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return;
     }
     // Don't parse right away, user might move along
-    this.mouseMessageTimer = setTimeout(this.parseMessage, 500);
+    this.mouseMessageTimer = window.setTimeout(this.parseMessage, 500);
   };
 
   onMouseOutMessage = () => {

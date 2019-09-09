@@ -4,11 +4,15 @@
   "id": "loki",
   "category": "logging",
 
-  "metrics": false,
+  "metrics": true,
   "alerting": false,
   "annotations": false,
   "logs": true,
   "streaming": true,
+
+  "queryOptions": {
+    "maxDataPoints": true
+  },
 
   "info": {
     "description": "Like Prometheus but for logs. OSS logging solution from Grafana Labs",
@@ -29,7 +33,6 @@
         "name": "GitHub Project",
         "url": "https://github.com/grafana/loki"
       }
-    ],
-    "version": "5.3.0"
+    ]
   }
 }

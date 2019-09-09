@@ -57,6 +57,7 @@ export class SharedQueryRunner {
       this.listenToPanelId = panelId;
       this.listenToRunner = this.listenToPanel.getQueryRunner();
       this.subscription = this.listenToRunner.chain(this.runner);
+      this.runner.setState(this.listenToRunner.getState());
       console.log('Connecting panel: ', this.containerPanel.id, 'to:', this.listenToPanelId);
     }
 

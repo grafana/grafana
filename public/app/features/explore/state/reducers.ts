@@ -12,7 +12,7 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState } from '@grafana/data';
-import { DataQuery, PanelData } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -28,6 +28,10 @@ import {
   scanStopAction,
   queryStartAction,
   changeRangeAction,
+  clearOriginAction,
+} from './actionTypes';
+
+import {
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
@@ -236,6 +240,15 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
+    filter: clearOriginAction,
+    mapper: (state): ExploreItemState => {
+      return {
+        ...state,
+        originPanelId: undefined,
+      };
+    },
+  })
+  .addMapper({
     filter: highlightLogsExpressionAction,
     mapper: (state, action): ExploreItemState => {
       const { expressions } = action.payload;
@@ -245,7 +258,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
   .addMapper({
     filter: initializeExploreAction,
     mapper: (state, action): ExploreItemState => {
-      const { containerWidth, eventBridge, queries, range, mode, ui } = action.payload;
+      const { containerWidth, eventBridge, queries, range, mode, ui, originPanelId } = action.payload;
       return {
         ...state,
         containerWidth,
@@ -256,6 +269,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         initialized: true,
         queryKeys: getQueryKeys(queries, state.datasourceInstance),
         ...ui,
+        originPanelId,
         update: makeInitialUpdateState(),
       };
     },
@@ -264,24 +278,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: updateDatasourceInstanceAction,
     mapper: (state, action): ExploreItemState => {
       const { datasourceInstance } = action.payload;
-      // Capabilities
-      const supportsGraph = datasourceInstance.meta.metrics;
-      const supportsLogs = datasourceInstance.meta.logs;
+      const [supportedModes, mode] = getModesForDatasource(datasourceInstance, state.mode);
 
-      let mode = state.mode || ExploreMode.Metrics;
-      const supportedModes: ExploreMode[] = [];
-
-      if (supportsGraph) {
-        supportedModes.push(ExploreMode.Metrics);
-      }
-
-      if (supportsLogs) {
-        supportedModes.push(ExploreMode.Logs);
-      }
-
-      if (supportedModes.length === 1) {
-        mode = supportedModes[0];
-      }
+      const originPanelId = state.urlState && state.urlState.originPanelId;
 
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
@@ -301,6 +300,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         queryKeys: [],
         supportedModes,
         mode,
+        originPanelId,
       };
     },
   })
@@ -586,7 +586,6 @@ export const processQueryResponse = (
 ): ExploreItemState => {
   const { response } = action.payload;
   const { request, state: loadingState, series, legacy, error } = response;
-  const replacePreviousResults = action.type === queryEndedAction.type;
 
   if (error) {
     if (error.cancelled) {
@@ -615,7 +614,7 @@ export const processQueryResponse = (
   }
 
   const latency = request.endTime - request.startTime;
-  const processor = new ResultProcessor(state, replacePreviousResults, series);
+  const processor = new ResultProcessor(state, series);
 
   // For Angular editors
   state.eventBridge.emit('data-received', legacy);
@@ -674,6 +673,31 @@ export const updateChildRefreshState = (
   };
 };
 
+const getModesForDatasource = (dataSource: DataSourceApi, currentMode: ExploreMode): [ExploreMode[], ExploreMode] => {
+  // Temporary hack here. We want Loki to work in dashboards for which it needs to have metrics = true which is weird
+  // for Explore.
+  // TODO: need to figure out a better way to handle this situation
+  const supportsGraph = dataSource.meta.name === 'Loki' ? false : dataSource.meta.metrics;
+  const supportsLogs = dataSource.meta.logs;
+
+  let mode = currentMode || ExploreMode.Metrics;
+  const supportedModes: ExploreMode[] = [];
+
+  if (supportsGraph) {
+    supportedModes.push(ExploreMode.Metrics);
+  }
+
+  if (supportsLogs) {
+    supportedModes.push(ExploreMode.Logs);
+  }
+
+  if (supportedModes.length === 1) {
+    mode = supportedModes[0];
+  }
+
+  return [supportedModes, mode];
+};
+
 /**
  * Global Explore reducer that handles multiple Explore areas (left and right).
  * Actions that have an `exploreId` get routed to the ExploreItemReducer.
@@ -698,7 +722,18 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
     }
 
     case ActionTypes.ResetExplore: {
-      return initialExploreState;
+      if (action.payload.force || !Number.isInteger(state.left.originPanelId)) {
+        return initialExploreState;
+      }
+
+      return {
+        ...initialExploreState,
+        left: {
+          ...initialExploreItemState,
+          queries: state.left.queries,
+          originPanelId: state.left.originPanelId,
+        },
+      };
     }
 
     case updateLocation.type: {

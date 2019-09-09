@@ -43,6 +43,7 @@ export interface Props<T> {
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   tabSelectsValue?: boolean;
+  autoFocus?: boolean;
 }
 
 export class ButtonSelect<T> extends PureComponent<Props<T>> {
@@ -65,14 +66,16 @@ export class ButtonSelect<T> extends PureComponent<Props<T>> {
       onOpenMenu,
       onCloseMenu,
       tabSelectsValue,
+      autoFocus = true,
     } = this.props;
     const combinedComponents = {
       ...components,
       Control: ButtonComponent({ label, className, iconClass }),
     };
+
     return (
       <Select
-        autoFocus
+        autoFocus={autoFocus}
         backspaceRemovesValue={false}
         isClearable={false}
         isSearchable={false}

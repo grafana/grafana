@@ -28,7 +28,6 @@ export interface JsonExplorerConfig {
 const _defaultConfig: JsonExplorerConfig = {
   animateOpen: true,
   animateClose: true,
-  theme: null,
 };
 
 /**
@@ -39,10 +38,10 @@ const _defaultConfig: JsonExplorerConfig = {
  */
 export class JsonExplorer {
   // Hold the open state after the toggler is used
-  private _isOpen: boolean = null;
+  private _isOpen: boolean | null = null;
 
   // A reference to the element that we render to
-  private element: Element;
+  private element: Element | null = null;
 
   private skipChildren = false;
 
@@ -366,7 +365,7 @@ export class JsonExplorer {
    * Animated option is used when user triggers this via a click
    */
   appendChildren(animated = false) {
-    const children = this.element.querySelector(`div.${cssClass('children')}`);
+    const children = this.element && this.element.querySelector(`div.${cssClass('children')}`);
 
     if (!children || this.isEmpty) {
       return;
@@ -404,7 +403,8 @@ export class JsonExplorer {
    * Animated option is used when user triggers this via a click
    */
   removeChildren(animated = false) {
-    const childrenElement = this.element.querySelector(`div.${cssClass('children')}`) as HTMLDivElement;
+    const childrenElement =
+      this.element && (this.element.querySelector(`div.${cssClass('children')}`) as HTMLDivElement);
 
     if (animated) {
       let childrenRemoved = 0;
