@@ -9,7 +9,14 @@ import { StatsPicker } from '../StatsPicker/StatsPicker';
 // Types
 import { FieldDisplayOptions, DEFAULT_FIELD_DISPLAY_VALUES_LIMIT } from '../../utils/fieldDisplay';
 import Select from '../Select/Select';
-import { ReducerID, toNumberString, toIntegerOrUndefined, SelectableValue, FieldConfig } from '@grafana/data';
+import {
+  ReducerID,
+  toNumberString,
+  toIntegerOrUndefined,
+  SelectableValue,
+  FieldConfig,
+  NullValueMode,
+} from '@grafana/data';
 
 const showOptions: Array<SelectableValue<boolean>> = [
   {
@@ -21,6 +28,24 @@ const showOptions: Array<SelectableValue<boolean>> = [
     value: false,
     label: 'Calculation',
     description: 'Calculate a value based on the response',
+  },
+];
+
+const nullValueModes: Array<SelectableValue<NullValueMode>> = [
+  {
+    value: NullValueMode.AsZero,
+    label: 'As Zero',
+    description: 'Show the result as zero',
+  },
+  {
+    value: NullValueMode.Ignore,
+    label: 'Ignore',
+    description: 'Ignore null values.  In a graph this will look connected',
+  },
+  {
+    value: NullValueMode.Null,
+    label: 'As Null',
+    description: 'Show missing values',
   },
 ];
 
@@ -51,11 +76,16 @@ export class FieldDisplayEditor extends PureComponent<Props> {
     });
   };
 
+  onNullValueModeChange = (item: SelectableValue<NullValueMode>) => {
+    this.onDefaultsChange({ ...this.props.value.defaults, nullValueMode: item.value });
+  };
+
   render() {
     const { value } = this.props;
-    const { calcs, values, limit } = value;
+    const { calcs, values, limit, defaults } = value;
+    const { nullValueMode } = defaults;
 
-    const labelWidth = this.props.labelWidth || 5;
+    const labelWidth = this.props.labelWidth || 6;
 
     return (
       <>
@@ -89,6 +119,21 @@ export class FieldDisplayEditor extends PureComponent<Props> {
             />
           </div>
         )}
+
+        <div className="gf-form">
+          <FormLabel width={labelWidth} tooltip="How should null values be shown?">
+            Null Values
+          </FormLabel>
+          <Select
+            width={12}
+            value={nullValueModes.find(v => v.value === nullValueMode)}
+            isClearable={true}
+            isSearchable={true}
+            options={nullValueModes}
+            placeholder="Auto"
+            onChange={this.onNullValueModeChange}
+          />
+        </div>
       </>
     );
   }

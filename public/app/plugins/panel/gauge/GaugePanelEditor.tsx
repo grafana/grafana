@@ -21,7 +21,7 @@ import {
 } from 'app/features/panel/panellinks/link_srv';
 
 export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOptions>> {
-  labelWidth = 6;
+  labelWidth = 8;
 
   onToggleThresholdLabels = () =>
     this.props.onOptionsChange({ ...this.props.options, showThresholdLabels: !this.props.options.showThresholdLabels });
