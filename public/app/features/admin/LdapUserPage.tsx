@@ -5,21 +5,34 @@ import { css } from 'emotion';
 import { NavModel } from '@grafana/data';
 import Page from '../../core/components/Page/Page';
 import { AlertBox } from '../../core/components/AlertBox/AlertBox';
-// import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
-import { AppNotificationSeverity, LdapError, LdapUser, StoreState } from 'app/types';
-import { loadUserMapping, clearUserError } from './state/actions';
+import { AppNotificationSeverity, LdapError, LdapUser, StoreState, User, UserSession } from 'app/types';
+import {
+  loadUserMapping,
+  clearUserError,
+  loadUser,
+  loadUserSessions,
+  revokeSession,
+  revokeAllSessions,
+} from './state/actions';
 import { LdapUserInfo } from './LdapUserInfo';
-import { getRouteParamsLogin } from 'app/core/selectors/location';
+import { getRouteParamsId } from 'app/core/selectors/location';
+import { UserSessions } from './UserSessions';
 
 interface Props {
   navModel: NavModel;
-  login: string;
+  userId: number;
+  user: User;
+  sessions: UserSession[];
   ldapUser: LdapUser;
   userError?: LdapError;
 
+  loadUser: typeof loadUser;
   loadUserMapping: typeof loadUserMapping;
   clearUserError: typeof clearUserError;
+  loadUserSessions: typeof loadUserSessions;
+  revokeSession: typeof revokeSession;
+  revokeAllSessions: typeof revokeAllSessions;
 }
 
 interface State {
@@ -32,22 +45,33 @@ export class LdapUserPage extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const { login } = this.props;
-    await this.fetchUserInfo(login);
-    this.setState({ isLoading: false });
-  }
-
-  async fetchUserInfo(username: string) {
-    const { loadUserMapping } = this.props;
-    return await loadUserMapping(username);
+    const { userId, loadUser, loadUserMapping, loadUserSessions } = this.props;
+    try {
+      await loadUser(userId);
+      await loadUserSessions(userId);
+      const { user } = this.props;
+      await loadUserMapping(user.login);
+    } finally {
+      this.setState({ isLoading: false });
+    }
   }
 
   onClearUserError = () => {
     this.props.clearUserError();
   };
 
+  onSessionRevoke = (tokenId: number) => {
+    const { userId, revokeSession } = this.props;
+    revokeSession(tokenId, userId);
+  };
+
+  onAllSessionsRevoke = () => {
+    const { userId, revokeAllSessions } = this.props;
+    revokeAllSessions(userId);
+  };
+
   render() {
-    const { ldapUser, userError, navModel } = this.props;
+    const { ldapUser, userError, navModel, sessions } = this.props;
     const { isLoading } = this.state;
 
     const tableStyle = css`
@@ -73,6 +97,20 @@ export class LdapUserPage extends PureComponent<Props, State> {
             />
           )}
           {ldapUser && <LdapUserInfo className={tableStyle} ldapUser={ldapUser} />}
+
+          <h4 className={headingStyle}>Sessions</h4>
+          {sessions && (
+            <div className="gf-form-group">
+              <div className="gf-form">
+                <UserSessions sessions={sessions} onSessionRevoke={this.onSessionRevoke} />
+              </div>
+              <div className="gf-form-button-row">
+                <button className="btn btn-danger" onClick={this.onAllSessionsRevoke}>
+                  Logout user from all devices
+                </button>
+              </div>
+            </div>
+          )}
         </Page.Contents>
       </Page>
     );
@@ -80,15 +118,21 @@ export class LdapUserPage extends PureComponent<Props, State> {
 }
 
 const mapStateToProps = (state: StoreState) => ({
-  login: getRouteParamsLogin(state.location),
+  userId: getRouteParamsId(state.location),
   navModel: getNavModel(state.navIndex, 'global-users'),
-  ldapUser: state.ldap.user,
-  userError: state.ldap.userError,
+  user: state.ldapUser.user,
+  ldapUser: state.ldapUser.ldapUser,
+  userError: state.ldapUser.userError,
+  sessions: state.ldapUser.sessions,
 });
 
 const mapDispatchToProps = {
   loadUserMapping,
   clearUserError,
+  loadUser,
+  loadUserSessions,
+  revokeSession,
+  revokeAllSessions,
 };
 
 export default hot(module)(

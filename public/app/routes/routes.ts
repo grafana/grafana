@@ -259,7 +259,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       templateUrl: 'public/app/features/admin/partials/edit_user.html',
       controller: 'AdminEditUserCtrl',
     })
-    .when('/admin/users/ldap/edit/:login', {
+    .when('/admin/users/ldap/edit/:id', {
       template: '<react-container />',
       resolve: {
         component: () => LdapUserPage,

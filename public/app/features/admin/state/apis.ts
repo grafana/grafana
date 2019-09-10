@@ -1,5 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { LdapUser, LdapConnectionInfo } from 'app/types';
+import { dateTime } from '@grafana/data';
+import { LdapUser, LdapConnectionInfo, UserSession } from 'app/types';
 
 export interface ServerStat {
   name: string;
@@ -50,4 +51,38 @@ export const getUserInfo = async (username: string): Promise<LdapUser> => {
   } catch (error) {
     throw error;
   }
+};
+
+export const getUser = async (id: number) => {
+  return await getBackendSrv().get('/api/users/' + id);
+};
+
+export const getUserSessions = async (id: number) => {
+  const sessions = await getBackendSrv().get('/api/admin/users/' + id + '/auth-tokens');
+  sessions.reverse();
+
+  return sessions.map((session: UserSession) => {
+    return {
+      id: session.id,
+      isActive: session.isActive,
+      seenAt: dateTime(session.seenAt).fromNow(),
+      createdAt: dateTime(session.createdAt).format('MMMM DD, YYYY'),
+      clientIp: session.clientIp,
+      browser: session.browser,
+      browserVersion: session.browserVersion,
+      os: session.os,
+      osVersion: session.osVersion,
+      device: session.device,
+    };
+  });
+};
+
+export const revokeUserSession = async (tokenId: number, userId: number) => {
+  return await getBackendSrv().post(`/api/admin/users/${userId}/revoke-auth-token`, {
+    authTokenId: tokenId,
+  });
+};
+
+export const revokeAllUserSessions = async (userId: number) => {
+  return await getBackendSrv().post(`/api/admin/users/${userId}/logout`);
 };

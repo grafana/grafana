@@ -1,8 +1,15 @@
 import { reducerFactory } from 'app/core/redux';
-import { LdapState } from 'app/types';
-import { ldapConnectionInfoLoadedAction, userInfoLoadedAction, userInfoFailedAction, clearUserError } from './actions';
+import { LdapState, LdapUserState } from 'app/types';
+import {
+  ldapConnectionInfoLoadedAction,
+  userInfoLoadedAction,
+  userInfoFailedAction,
+  clearUserError,
+  userLoadedAction,
+  userSessionsLoadedAction,
+} from './actions';
 
-const initialState: LdapState = {
+const initialLdapState: LdapState = {
   connectionInfo: [],
   syncInfo: {
     enabled: true,
@@ -15,7 +22,13 @@ const initialState: LdapState = {
   userError: null,
 };
 
-const ldapReducer = reducerFactory(initialState)
+const initialLdapUserState: LdapUserState = {
+  user: null,
+  ldapUser: null,
+  sessions: [],
+};
+
+const ldapReducer = reducerFactory(initialLdapState)
   .addMapper({
     filter: ldapConnectionInfoLoadedAction,
     mapper: (state, action) => ({
@@ -47,6 +60,46 @@ const ldapReducer = reducerFactory(initialState)
   })
   .create();
 
+const ldapUserReducer = reducerFactory(initialLdapUserState)
+  .addMapper({
+    filter: userInfoLoadedAction,
+    mapper: (state, action) => ({
+      ...state,
+      ldapUser: action.payload,
+    }),
+  })
+  .addMapper({
+    filter: userInfoFailedAction,
+    mapper: (state, action) => ({
+      ...state,
+      ldapUser: null,
+      userError: action.payload,
+    }),
+  })
+  .addMapper({
+    filter: clearUserError,
+    mapper: state => ({
+      ...state,
+      userError: null,
+    }),
+  })
+  .addMapper({
+    filter: userLoadedAction,
+    mapper: (state, action) => ({
+      ...state,
+      user: action.payload,
+    }),
+  })
+  .addMapper({
+    filter: userSessionsLoadedAction,
+    mapper: (state, action) => ({
+      ...state,
+      sessions: action.payload,
+    }),
+  })
+  .create();
+
 export default {
   ldap: ldapReducer,
+  ldapUser: ldapUserReducer,
 };

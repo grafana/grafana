@@ -14,7 +14,7 @@ import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
 import { NavIndex } from '@grafana/data';
 import { ApplicationState } from './application';
-import { LdapState } from './ldap';
+import { LdapState, LdapUserState } from './ldap';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -33,6 +33,7 @@ export interface StoreState {
   plugins: PluginsState;
   application: ApplicationState;
   ldap: LdapState;
+  ldapUser: LdapUserState;
 }
 
 /*
