@@ -21,7 +21,15 @@ import {
   DataQueryResponseData,
 } from '@grafana/ui';
 
-import { TimeRange, toDataFrame, DataFrame, isDataFrame, toLegacyResponseData, guessFieldTypes } from '@grafana/data';
+import {
+  TimeRange,
+  toDataFrame,
+  DataFrame,
+  isDataFrame,
+  toLegacyResponseData,
+  guessFieldTypes,
+  DataTransformerConfig,
+} from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -40,6 +48,7 @@ export interface QueryRunnerOptions<
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
+  transformations?: DataTransformerConfig[];
 }
 
 export enum PanelQueryRunnerFormat {
@@ -56,13 +65,10 @@ function getNextRequestId() {
 export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
+  private transformations?: DataTransformerConfig[];
 
-  constructor(private panelId: number) {
+  constructor() {
     this.subject = new ReplaySubject(1);
-  }
-
-  getPanelId() {
-    return this.panelId;
   }
 
   /**
@@ -160,6 +166,36 @@ export class PanelQueryRunner {
     } catch (err) {
       console.log('PanelQueryRunner Error', err);
     }
+  }
+
+  /**
+   * Get the last result -- optionally skip the transformation
+   */
+  //  TODO: add tests
+  getCurrentData(transform = true): PanelData {
+    // const v = this.state.validateStreamsAndGetPanelData();
+    // const transformData = config.featureToggles.transformations && transform;
+    // const hasTransformations = this.transformations && this.transformations.length;
+
+    // if (transformData && hasTransformations) {
+    //   const processed = transformDataFrame(this.transformations, v.series);
+    //   return {
+    //     ...v,
+    //     series: processed,
+    //     legacy: processed.map(p => toLegacyResponseData(p)),
+    //   };
+    // }
+
+    // return v;
+    return {
+      state: LoadingState.Done,
+      series: [],
+    } as PanelData;
+  }
+
+  setTransformations(transformations?: DataTransformerConfig[]) {
+    this.transformations = transformations;
+    console.log(this.transformations);
   }
 
   /**

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Unknwon/com"
+	"github.com/unknwon/com"
 
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"

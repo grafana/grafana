@@ -121,9 +121,7 @@ export class AlertNotificationEditCtrl {
       settings: this.model.settings,
     };
 
-    this.backendSrv.post(`/api/alert-notifications/test`, payload).then((res: any) => {
-      appEvents.emit('alert-success', ['Test notification sent', '']);
-    });
+    this.backendSrv.post(`/api/alert-notifications/test`, payload);
   }
 }
 
