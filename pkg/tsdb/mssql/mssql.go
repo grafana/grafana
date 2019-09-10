@@ -3,15 +3,17 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"net/url"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/go-xorm/core"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -27,7 +29,7 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 
-	config := tsdb.SqlQueryEndpointConfiguration{
+	config := sqleng.SqlQueryEndpointConfiguration{
 		DriverName:        "mssql",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
@@ -38,7 +40,7 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		log: logger,
 	}
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
+	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
 }
 
 func generateConnectionString(datasource *models.DataSource) string {
