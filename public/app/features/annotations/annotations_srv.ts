@@ -15,6 +15,7 @@ import { AnnotationEvent } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { DataSourceApi } from '@grafana/ui';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -126,7 +127,7 @@ export class AnnotationsSrv {
       dsPromises.push(datasourcePromise);
       promises.push(
         datasourcePromise
-          .then((datasource: any) => {
+          .then((datasource: DataSourceApi) => {
             // issue query against data source
             return datasource.annotationQuery({
               range: range,
