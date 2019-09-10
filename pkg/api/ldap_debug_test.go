@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -87,10 +86,7 @@ func TestGetUserFromLDAPApiEndpoint_UserNotFound(t *testing.T) {
 	sc := getUserFromLDAPContext(t, "/api/admin/ldap/user-that-does-not-exist")
 
 	require.Equal(t, sc.resp.Code, http.StatusNotFound)
-	responseString, err := getBody(sc.resp)
-
-	assert.Nil(t, err)
-	assert.Equal(t, "{\"message\":\"No user was found on the LDAP server(s)\"}", responseString)
+	assert.JSONEq(t, "{\"message\":\"No user was found on the LDAP server(s)\"}", sc.resp.Body.String())
 }
 
 func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
@@ -145,19 +141,13 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 
 	require.Equal(t, sc.resp.Code, http.StatusBadRequest)
 
-	jsonResponse, err := getJSONbody(sc.resp)
-	assert.Nil(t, err)
-
 	expected := `
 	{
 		"error": "Unable to find organization with ID '2'",
 		"message": "An oganization was not found - Please verify your LDAP configuration"
 	}
 	`
-	var expectedJSON interface{}
-	_ = json.Unmarshal([]byte(expected), &expectedJSON)
-
-	assert.Equal(t, expectedJSON, jsonResponse)
+	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
 func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
@@ -207,9 +197,6 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 
 	require.Equal(t, sc.resp.Code, http.StatusOK)
 
-	jsonResponse, err := getJSONbody(sc.resp)
-	assert.Nil(t, err)
-
 	expected := `
 		{
 		  "name": {
@@ -232,10 +219,8 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 			"teams": null
 		}
 	`
-	var expectedJSON interface{}
-	_ = json.Unmarshal([]byte(expected), &expectedJSON)
 
-	assert.Equal(t, expectedJSON, jsonResponse)
+	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
 func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
@@ -290,9 +275,6 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 
 	require.Equal(t, sc.resp.Code, http.StatusOK)
 
-	jsonResponse, err := getJSONbody(sc.resp)
-	assert.Nil(t, err)
-
 	expected := `
 		{
 		  "name": {
@@ -315,10 +297,8 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 			"teams": []
 		}
 	`
-	var expectedJSON interface{}
-	_ = json.Unmarshal([]byte(expected), &expectedJSON)
 
-	assert.Equal(t, expectedJSON, jsonResponse)
+	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
 //***
@@ -370,8 +350,6 @@ func TestGetLDAPStatusApiEndpoint(t *testing.T) {
 	sc := getLDAPStatusContext(t)
 
 	require.Equal(t, http.StatusOK, sc.resp.Code)
-	jsonResponse, err := getJSONbody(sc.resp)
-	assert.Nil(t, err)
 
 	expected := `
 	[
@@ -380,10 +358,7 @@ func TestGetLDAPStatusApiEndpoint(t *testing.T) {
 		{ "host": "10.0.0.5", "port": 361, "available": false, "error": "something is awfully wrong" }
 	]
 	`
-	var expectedJSON interface{}
-	_ = json.Unmarshal([]byte(expected), &expectedJSON)
-
-	assert.Equal(t, expectedJSON, jsonResponse)
+	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
 //***

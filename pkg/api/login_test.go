@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -50,18 +49,6 @@ func getBody(resp *httptest.ResponseRecorder) (string, error) {
 		return "", err
 	}
 	return string(responseData), nil
-}
-
-func getJSONbody(resp *httptest.ResponseRecorder) (interface{}, error) {
-	var j interface{}
-
-	err := json.Unmarshal(resp.Body.Bytes(), &j)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return j, nil
 }
 
 func TestLoginErrorCookieApiEndpoint(t *testing.T) {
