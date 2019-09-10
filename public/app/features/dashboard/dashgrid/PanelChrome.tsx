@@ -17,8 +17,8 @@ import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { ScopedVars, PanelData, PanelPlugin } from '@grafana/ui';
-import { LoadingState } from '@grafana/data';
+import { PanelData, PanelPlugin } from '@grafana/ui';
+import { LoadingState, ScopedVars } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 

@@ -96,7 +96,6 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     dropdown: string;
     scrollbar: string;
     scrollbar2: string;
-    logsFresh: string;
   };
   colors: {
     black: string;

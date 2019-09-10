@@ -1,6 +1,6 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { FieldDisplay, ScopedVars, ScopedVar } from '@grafana/ui';
-import { LinkModelSupplier, getTimeField, Labels } from '@grafana/data';
+import { FieldDisplay } from '@grafana/ui';
+import { LinkModelSupplier, getTimeField, Labels, ScopedVars, ScopedVar } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
 
 interface SeriesVars {
