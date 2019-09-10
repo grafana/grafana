@@ -5,5 +5,7 @@ export enum DataTransformerID {
   reduce = 'reduce', // Run calculations on fields
 
   filterFields = 'filterFields', // Pick some fields (keep all frames)
+  filterFieldsByName = 'filterFieldsByName', // Pick fields with name matching regex (keep all frames)
   filterFrames = 'filterFrames', // Pick some frames (keep all fields)
+  noop = 'noop', // Does nothing to the dataframe
 }

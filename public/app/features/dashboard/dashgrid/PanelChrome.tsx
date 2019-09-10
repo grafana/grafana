@@ -172,7 +172,6 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (!this.querySubscription) {
         this.querySubscription = queryRunner.subscribe(this.panelDataObserver);
       }
-
       queryRunner.run({
         datasource: panel.datasource,
         queries: panel.targets,
@@ -186,6 +185,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         minInterval: panel.interval,
         scopedVars: panel.scopedVars,
         cacheTimeout: panel.cacheTimeout,
+        transformations: panel.transformations,
       });
     }
   };

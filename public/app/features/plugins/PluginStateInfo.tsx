@@ -1,13 +1,12 @@
-import React, { FC, useContext } from 'react';
+import React, { FC } from 'react';
+import { PluginState, AlphaNotice } from '@grafana/ui';
 import { css } from 'emotion';
-import { PluginState, Tooltip, ThemeContext } from '@grafana/ui';
-import { PopoverContent } from '@grafana/ui/src/components/Tooltip/Tooltip';
 
 interface Props {
   state?: PluginState;
 }
 
-function getPluginStateInfoText(state?: PluginState): PopoverContent | null {
+function getPluginStateInfoText(state?: PluginState): JSX.Element | null {
   switch (state) {
     case PluginState.alpha:
       return (
@@ -30,30 +29,15 @@ function getPluginStateInfoText(state?: PluginState): PopoverContent | null {
 
 const PluginStateinfo: FC<Props> = props => {
   const text = getPluginStateInfoText(props.state);
-  if (!text) {
-    return null;
-  }
-
-  const theme = useContext(ThemeContext);
-
-  const styles = css`
-    background: linear-gradient(to bottom, ${theme.colors.blueBase}, ${theme.colors.blueShade});
-    color: ${theme.colors.gray7};
-    white-space: nowrap;
-    border-radius: 3px;
-    text-shadow: none;
-    font-size: 13px;
-    padding: 4px 8px;
-    margin-left: 16px;
-    cursor: help;
-  `;
 
   return (
-    <Tooltip content={text} theme={'info'} placement={'top'}>
-      <div className={styles}>
-        <i className="fa fa-warning" /> {props.state}
-      </div>
-    </Tooltip>
+    <AlphaNotice
+      state={props.state}
+      text={text}
+      className={css`
+        margin-left: 16px;
+      `}
+    />
   );
 };
 
