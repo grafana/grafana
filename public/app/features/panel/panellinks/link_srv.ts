@@ -3,8 +3,8 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
-import { VariableSuggestion, ScopedVars, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
-import { DataLink, KeyValue, deprecationWarning, LinkModel } from '@grafana/data';
+import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
+import { DataLink, KeyValue, deprecationWarning, LinkModel, ScopedVars } from '@grafana/data';
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...templateSrv.variables.map(variable => ({

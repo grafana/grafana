@@ -1,7 +1,7 @@
 import { PanelQueryRunner, QueryRunnerOptions } from './PanelQueryRunner';
-import { PanelData, DataQueryRequest, DataStreamObserver, DataStreamState, ScopedVars } from '@grafana/ui';
+import { PanelData, DataQueryRequest, DataStreamObserver, DataStreamState } from '@grafana/ui';
 
-import { LoadingState, MutableDataFrame } from '@grafana/data';
+import { LoadingState, MutableDataFrame, ScopedVars } from '@grafana/data';
 import { dateTime } from '@grafana/data';
 import { SHARED_DASHBODARD_QUERY } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
