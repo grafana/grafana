@@ -100,7 +100,7 @@ func (server *HTTPServer) ReloadLDAPCfg() Response {
 
 	err := ldap.ReloadConfig()
 	if err != nil {
-		return Error(http.StatusInternalServerError, "Failed to reload ldap config.", err)
+		return Error(http.StatusInternalServerError, "Failed to reload ldap config", err)
 	}
 	return Success("LDAP config reloaded")
 }
@@ -114,7 +114,7 @@ func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 	ldapConfig, err := getLDAPConfig()
 
 	if err != nil {
-		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again.", err)
+		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
 	}
 
 	ldap := newLDAP(ldapConfig.Servers)
@@ -151,14 +151,14 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 	ldapConfig, err := getLDAPConfig()
 
 	if err != nil {
-		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again.", err)
+		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
 	}
 
 	userId := c.ParamsInt64(":id")
 
 	query := models.GetUserByIdQuery{Id: userId}
 
-	err = bus.Dispatch(query)
+	err = bus.Dispatch(&query)
 
 	if err := bus.Dispatch(&query); err != nil {
 		if err == models.ErrUserNotFound {
@@ -199,7 +199,7 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 		return Error(http.StatusInternalServerError, "Failed to udpate the user", err)
 	}
 
-	return JSON(http.StatusOK, "user synced")
+	return Success("User synced successfully")
 }
 
 // GetUserFromLDAP finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.

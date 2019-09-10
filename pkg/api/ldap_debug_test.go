@@ -22,6 +22,7 @@ type LDAPMock struct {
 
 var userSearchResult *models.ExternalUserInfo
 var userSearchConfig ldap.ServerConfig
+var userSearchError error
 var pingResult []*multildap.ServerStatus
 var pingError error
 
@@ -39,7 +40,7 @@ func (m *LDAPMock) Users(logins []string) ([]*models.ExternalUserInfo, error) {
 }
 
 func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConfig, error) {
-	return userSearchResult, userSearchConfig, nil
+	return userSearchResult, userSearchConfig, userSearchError
 }
 
 //***
@@ -383,4 +384,136 @@ func TestGetLDAPStatusApiEndpoint(t *testing.T) {
 	_ = json.Unmarshal([]byte(expected), &expectedJSON)
 
 	assert.Equal(t, expectedJSON, jsonResponse)
+}
+
+//***
+// PostSyncUserWithLDAP tests
+//***
+
+func postSyncUserWithLDAPContext(t *testing.T, requestURL string) *scenarioContext {
+	t.Helper()
+
+	sc := setupScenarioContext(requestURL)
+
+	ldap := setting.LDAPEnabled
+	setting.LDAPEnabled = true
+	defer func() { setting.LDAPEnabled = ldap }()
+
+	hs := &HTTPServer{Cfg: setting.NewCfg()}
+
+	sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.context = c
+		return hs.PostSyncUserWithLDAP(c)
+	})
+
+	sc.m.Post("/api/admin/ldap/sync/:id", sc.defaultHandler)
+
+	sc.resp = httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodPost, requestURL, nil)
+	sc.req = req
+	sc.exec()
+
+	return sc
+}
+
+func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	userSearchResult = &models.ExternalUserInfo{
+		Login: "ldap-daniel",
+	}
+
+	bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+		require.Equal(t, "ldap-daniel", cmd.ExternalUser.Login)
+		return nil
+	})
+
+	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		require.Equal(t, q.Id, int64(34))
+
+		q.Result = &models.User{Login: "ldap-daniel"}
+		return nil
+	})
+
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34")
+
+	assert.Equal(t, http.StatusOK, sc.resp.Code)
+
+	expected := `
+	{
+		"message": "User synced successfully"
+	}
+	`
+
+	assert.JSONEq(t, expected, sc.resp.Body.String())
+}
+
+func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		require.Equal(t, q.Id, int64(34))
+
+		return models.ErrUserNotFound
+	})
+
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34")
+
+	assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+
+	expected := `
+	{
+		"message": "User not found"
+	}
+	`
+
+	assert.JSONEq(t, expected, sc.resp.Body.String())
+}
+
+func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	userSearchError = ldap.ErrCouldNotFindUser
+
+	admin := setting.AdminUser
+	setting.AdminUser = "ldap-daniel"
+	defer func() { setting.AdminUser = admin }()
+
+	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		require.Equal(t, q.Id, int64(34))
+
+		q.Result = &models.User{Login: "ldap-daniel"}
+		return nil
+	})
+
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34")
+
+	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
+
+	expected := `
+	{
+		"error": "Can't find user in LDAP",
+		"message": "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled"
+	}
+	`
+
+	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
