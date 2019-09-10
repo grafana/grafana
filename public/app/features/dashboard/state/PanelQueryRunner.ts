@@ -1,8 +1,7 @@
 // Libraries
 import { cloneDeep } from 'lodash';
-import { ReplaySubject, Unsubscribable, PartialObserver } from 'rxjs';
+import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { LoadingState } from '@grafana/data';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -59,11 +58,19 @@ export class PanelQueryRunner {
   }
 
   /**
-   * Listen for updates to the PanelData.  If a query has already run for this panel,
-   * the results will be immediatly passed to the observer
+   * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
+   * Here the caller can also control if transformations should be applied or not
    */
-  subscribe(observer: PartialObserver<PanelData>, format = PanelDataFormat.Frames): Unsubscribable {
-    return this.subject.pipe(map(postProcessPanelData(format))).subscribe(observer);
+  getData(format: PanelDataFormat = PanelDataFormat.Frames, applyTransforms = false): Observable<PanelData> {
+    return this.subject.pipe(map(postProcessPanelData(format)));
+  }
+
+  /**
+   * Useful when chaining PanelQueryRunners (for shared query results feature)
+   * To avoid double postProcessPanelData processing & transformations
+   */
+  getDataRaw(): Observable<PanelData> {
+    return this.subject.pipe();
   }
 
   async run(options: QueryRunnerOptions) {
@@ -83,14 +90,8 @@ export class PanelQueryRunner {
       // delayStateNotification,
     } = options;
 
-    // cancel any still running queries
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
-
-    // Support shared queries
     if (isSharedDashboardQuery(datasource)) {
-      this.subscription = runSharedRequest(options).subscribe(this.subject);
+      this.pipeToSubject(runSharedRequest(options));
       return;
     }
 
@@ -141,39 +142,22 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this.subscription = runRequest(ds, request).subscribe({
-        next: data => {
-          this.subject.next(data);
-        },
-      });
+      this.pipeToSubject(runRequest(ds, request));
     } catch (err) {
       console.log('PanelQueryRunner Error', err);
     }
   }
 
-  /**
-   * Get the last result -- optionally skip the transformation
-   */
-  //  TODO: add tests
-  getCurrentData(transform = true): PanelData {
-    // const v = this.state.validateStreamsAndGetPanelData();
-    // const transformData = config.featureToggles.transformations && transform;
-    // const hasTransformations = this.transformations && this.transformations.length;
+  private pipeToSubject(observable: Observable<PanelData>) {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
 
-    // if (transformData && hasTransformations) {
-    //   const processed = transformDataFrame(this.transformations, v.series);
-    //   return {
-    //     ...v,
-    //     series: processed,
-    //     legacy: processed.map(p => toLegacyResponseData(p)),
-    //   };
-    // }
-
-    // return v;
-    return {
-      state: LoadingState.Done,
-      series: [],
-    } as PanelData;
+    this.subscription = observable.subscribe({
+      next: (data: PanelData) => {
+        this.subject.next(data);
+      },
+    });
   }
 
   setTransformations(transformations?: DataTransformerConfig[]) {

@@ -62,7 +62,9 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const queryRunner = panel.getQueryRunner();
 
-    this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelDataFormat.Both);
+    this.querySubscription = queryRunner.getData(PanelDataFormat.Both, false).subscribe({
+      next: (data: PanelData) => this.onPanelDataUpdate(data),
+    });
   }
 
   componentWillUnmount() {
@@ -72,17 +74,14 @@ export class QueriesTab extends PureComponent<Props, State> {
     }
   }
 
-  // Updates the response with information from the stream
-  panelDataObserver = {
-    next: (data: PanelData) => {
-      console.log('got data', data);
-      if (!this.props.panel.isAngularPlugin()) {
-        this.notifyAngularQueryEditorsOfData(data);
-      }
+  onPanelDataUpdate(data: PanelData) {
+    console.log('got data', data);
+    if (!this.props.panel.isAngularPlugin()) {
+      this.notifyAngularQueryEditorsOfData(data);
+    }
 
-      this.setState({ data });
-    },
-  };
+    this.setState({ data });
+  }
 
   notifyAngularQueryEditorsOfData(data: PanelData) {
     const { panel } = this.props;
@@ -233,11 +232,6 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  getCurrentData = (applyTransformations = true) => {
-    const queryRunner = this.props.panel.getQueryRunner();
-    return queryRunner.getCurrentData(applyTransformations).series;
-  };
-
   render() {
     const { panel, dashboard } = this.props;
     const { currentDS, scrollTop, data } = this.state;
@@ -308,7 +302,7 @@ export class QueriesTab extends PureComponent<Props, State> {
                 <TransformationsEditor
                   transformations={this.props.panel.transformations || []}
                   onChange={this.onTransformersChange}
-                  getCurrentData={this.getCurrentData}
+                  dataFrames={data.series}
                 />
               )}
             </PanelOptionsGroup>

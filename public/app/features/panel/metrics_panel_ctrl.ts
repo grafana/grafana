@@ -196,7 +196,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     const queryRunner = panel.getQueryRunner();
 
     if (!this.querySubscription) {
-      this.querySubscription = queryRunner.subscribe(this.panelDataObserver, this.dataFormat);
+      this.querySubscription = queryRunner.getData(this.dataFormat).subscribe(this.panelDataObserver);
     }
 
     return queryRunner.run({

@@ -22,7 +22,7 @@ export interface PanelData {
 }
 
 export enum PanelDataFormat {
-  none = 0,
+  None = 0,
   Frames = 1 << 0, // 0001
   Legacy = 1 << 1, // 0010
   Both = Frames | Legacy,

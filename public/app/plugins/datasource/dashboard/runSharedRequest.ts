@@ -37,7 +37,12 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
     }
 
     const listenToRunner = listenToPanel.getQueryRunner();
-    const subscription = listenToRunner.subscribe(subscriber);
+    const subscription = listenToRunner.getDataRaw().subscribe({
+      next: (data: PanelData) => {
+        console.log('got data from other panel', data);
+        subscriber.next(data);
+      },
+    });
 
     // If we are in fullscreen the other panel will not execute any queries
     // So we have to trigger it from here
@@ -53,6 +58,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
     }
 
     return () => {
+      console.log('runSharedRequest unsubscribe');
       subscription.unsubscribe();
     };
   });
