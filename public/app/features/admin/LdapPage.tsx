@@ -108,7 +108,7 @@ export class LdapPage extends PureComponent<Props, State> {
                 onClose={this.onClearUserError}
               />
             )}
-            {ldapUser && <LdapUserInfo className={tableStyle} ldapUser={ldapUser} />}
+            {ldapUser && <LdapUserInfo className={tableStyle} ldapUser={ldapUser} showAttributeMapping={true} />}
           </>
         </Page.Contents>
       </Page>

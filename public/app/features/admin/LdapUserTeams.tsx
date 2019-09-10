@@ -6,9 +6,10 @@ import { LdapTeam } from '../../types';
 interface Props {
   teams: LdapTeam[];
   className: string;
+  showAttributeMapping?: boolean;
 }
 
-export const LdapUserTeams: FC<Props> = ({ className, teams }) => {
+export const LdapUserTeams: FC<Props> = ({ className, teams, showAttributeMapping }) => {
   const noMatchPlaceholderStyle = css`
     display: flex;
   `;
@@ -19,7 +20,7 @@ export const LdapUserTeams: FC<Props> = ({ className, teams }) => {
         <tr>
           <th>Organisation</th>
           <th>Team</th>
-          <th>LDAP</th>
+          {showAttributeMapping && <th>LDAP</th>}
         </tr>
       </thead>
       <tbody>
@@ -39,7 +40,7 @@ export const LdapUserTeams: FC<Props> = ({ className, teams }) => {
                 )}
               </td>
               <td className="width-14">{team.teamName}</td>
-              <td>{team.groupDN}</td>
+              {showAttributeMapping && <td>{team.groupDN}</td>}
             </tr>
           );
         })}

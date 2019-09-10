@@ -4,38 +4,39 @@ import { LdapUserInfo } from 'app/types';
 interface Props {
   info: LdapUserInfo;
   className: string;
+  showAttributeMapping?: boolean;
 }
 
-export const LdapUserMappingInfo: FC<Props> = ({ className, info }) => {
+export const LdapUserMappingInfo: FC<Props> = ({ className, info, showAttributeMapping }) => {
   return (
     <>
       <table className={`${className} filter-table form-inline`}>
         <thead>
           <tr>
             <th colSpan={2}>User information</th>
-            <th>LDAP attribute</th>
+            {showAttributeMapping && <th>LDAP attribute</th>}
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>First name</td>
+            <td className="width-16">First name</td>
             <td>{info.name.ldapValue}</td>
-            <td>{info.name.cfgAttrValue}</td>
+            {showAttributeMapping && <td>{info.name.cfgAttrValue}</td>}
           </tr>
           <tr>
-            <td>Surname</td>
+            <td className="width-16">Surname</td>
             <td>{info.surname.ldapValue}</td>
-            <td>{info.surname.cfgAttrValue}</td>
+            {showAttributeMapping && <td>{info.surname.cfgAttrValue}</td>}
           </tr>
           <tr>
-            <td>Username</td>
+            <td className="width-16">Username</td>
             <td>{info.login.ldapValue}</td>
-            <td>{info.login.cfgAttrValue}</td>
+            {showAttributeMapping && <td>{info.login.cfgAttrValue}</td>}
           </tr>
           <tr>
-            <td>Email</td>
+            <td className="width-16">Email</td>
             <td>{info.email.ldapValue}</td>
-            <td>{info.email.cfgAttrValue}</td>
+            {showAttributeMapping && <td>{info.email.cfgAttrValue}</td>}
           </tr>
         </tbody>
       </table>

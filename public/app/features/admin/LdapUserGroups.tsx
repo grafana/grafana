@@ -5,16 +5,17 @@ import { LdapRole } from '../../types';
 interface Props {
   groups: LdapRole[];
   className: string;
+  showAttributeMapping?: boolean;
 }
 
-export const LdapUserGroups: FC<Props> = ({ className, groups }) => {
+export const LdapUserGroups: FC<Props> = ({ className, groups, showAttributeMapping }) => {
   return (
     <table className={`${className} filter-table form-inline`}>
       <thead>
         <tr>
           <th>Organisation</th>
           <th>Role</th>
-          <th colSpan={2}>LDAP Group</th>
+          {showAttributeMapping && <th colSpan={2}>LDAP Group</th>}
         </tr>
       </thead>
       <tbody>
@@ -23,19 +24,23 @@ export const LdapUserGroups: FC<Props> = ({ className, groups }) => {
             <tr key={`${group.orgId}-${index}`}>
               <td className="width-16">{group.orgName}</td>
               <td className="width-14">{group.orgRole}</td>
-              <td>{group.groupDN}</td>
-              <td>
-                {!group.orgRole && (
-                  <span className="text-warning pull-right">
-                    No match
-                    <Tooltip placement="top" content="No matching groups found" theme={'info'}>
-                      <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-                        <i className="fa fa-info-circle" />
-                      </div>
-                    </Tooltip>
-                  </span>
-                )}
-              </td>
+              {showAttributeMapping && (
+                <>
+                  <td>{group.groupDN}</td>
+                  <td>
+                    {!group.orgRole && (
+                      <span className="text-warning pull-right">
+                        No match
+                        <Tooltip placement="top" content="No matching groups found" theme={'info'}>
+                          <div className="gf-form-help-icon gf-form-help-icon--right-normal">
+                            <i className="fa fa-info-circle" />
+                          </div>
+                        </Tooltip>
+                      </span>
+                    )}
+                  </td>
+                </>
+              )}
             </tr>
           );
         })}

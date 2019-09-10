@@ -8,19 +8,18 @@ import { LdapUser } from 'app/types';
 interface Props {
   ldapUser: LdapUser;
   className: string;
+  showAttributeMapping?: boolean;
 }
 
-export const LdapUserInfo: FC<Props> = ({ className, ldapUser }) => {
+export const LdapUserInfo: FC<Props> = ({ className, ldapUser, showAttributeMapping }) => {
   return (
     <>
-      <LdapUserPermissions className={className} key="permissions" permissions={ldapUser.permissions} />
-      <LdapUserMappingInfo className={className} key="mappingInfo" info={ldapUser.info} />
+      <LdapUserPermissions className={className} permissions={ldapUser.permissions} />
+      <LdapUserMappingInfo className={className} info={ldapUser.info} showAttributeMapping={showAttributeMapping} />
       {ldapUser.roles && ldapUser.roles.length > 0 && (
-        <LdapUserGroups className={className} key="groups" groups={ldapUser.roles} />
+        <LdapUserGroups className={className} groups={ldapUser.roles} showAttributeMapping={showAttributeMapping} />
       )}
-      {ldapUser.teams && ldapUser.teams.length > 0 && (
-        <LdapUserTeams className={className} key="teams" teams={ldapUser.teams} />
-      )}
+      {ldapUser.teams && ldapUser.teams.length > 0 && <LdapUserTeams className={className} teams={ldapUser.teams} />}
     </>
   );
 };

@@ -16,6 +16,7 @@ import {
   revokeAllSessions,
 } from './state/actions';
 import { LdapUserInfo } from './LdapUserInfo';
+import { LdapUserPermissions } from './LdapUserPermissions';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { UserSessions } from './UserSessions';
 
@@ -71,7 +72,7 @@ export class LdapUserPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { ldapUser, userError, navModel, sessions } = this.props;
+    const { user, ldapUser, userError, navModel, sessions } = this.props;
     const { isLoading } = this.state;
 
     const tableStyle = css`
@@ -97,6 +98,15 @@ export class LdapUserPage extends PureComponent<Props, State> {
             />
           )}
           {ldapUser && <LdapUserInfo className={tableStyle} ldapUser={ldapUser} />}
+          {!ldapUser && user && (
+            <LdapUserPermissions
+              className={tableStyle}
+              permissions={{
+                isGrafanaAdmin: (user as any).isGrafanaAdmin,
+                isDisabled: (user as any).isDisabled,
+              }}
+            />
+          )}
 
           <h4 className={headingStyle}>Sessions</h4>
           {sessions && (

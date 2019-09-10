@@ -17,7 +17,7 @@ export const LdapUserPermissions: FC<Props> = ({ className, permissions }) => {
         </thead>
         <tbody>
           <tr>
-            <td className="width-15"> Grafana admin</td>
+            <td className="width-16"> Grafana admin</td>
             <td>
               {permissions.isGrafanaAdmin ? (
                 <>
@@ -29,7 +29,7 @@ export const LdapUserPermissions: FC<Props> = ({ className, permissions }) => {
             </td>
           </tr>
           <tr>
-            <td className="width-15">Status</td>
+            <td className="width-16">Status</td>
             <td>
               {permissions.isDisabled ? (
                 <>
