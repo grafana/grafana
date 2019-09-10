@@ -380,6 +380,12 @@ export interface DataQueryResponse {
    * Multiple responses with same key are replaced (latest used)
    */
   key?: string;
+
+  /**
+   * Use this to control which state the response should have
+   * Defaults to LoadingState.Done if state is not defined
+   */
+  state?: LoadingState;
 }
 
 export interface DataQuery {

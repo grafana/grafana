@@ -1,9 +1,9 @@
-jest.mock('app/core/services/backend_srv');
-
 import { DataFrame, LoadingState, dateTime } from '@grafana/data';
 import { PanelData, DataSourceApi, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
 import { Subscriber, Observable, Subscription } from 'rxjs';
 import { runRequest } from './runRequest';
+
+jest.mock('app/core/services/backend_srv');
 
 class ScenarioCtx {
   ds: DataSourceApi;
@@ -134,6 +134,29 @@ describe('runRequest', () => {
 
     it('should combine results and return latest data for key A', () => {
       expect(ctx.results[2].series).toEqual([{ name: 'DataA-2' }, { name: 'DataB-1' }]);
+    });
+
+    it('should have loading state Done', () => {
+      expect(ctx.results[2].state).toEqual(LoadingState.Done);
+    });
+  });
+
+  runRequestScenario('After response with state Streaming', ctx => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [{ name: 'DataA-1' } as DataFrame],
+        key: 'A',
+      });
+      ctx.emitPacket({
+        data: [{ name: 'DataA-2' } as DataFrame],
+        key: 'A',
+        state: LoadingState.Streaming,
+      });
+    });
+
+    it('should have loading state Streaming', () => {
+      expect(ctx.results[1].state).toEqual(LoadingState.Streaming);
     });
   });
 
