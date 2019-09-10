@@ -1,12 +1,9 @@
 import React, { PureComponent } from 'react';
+import { dateTime } from '@grafana/data';
+import { SyncInfo } from 'app/types';
 
 interface Props {
-  ldapSyncInfo: {
-    enabled: boolean;
-    scheduled: string;
-    nextScheduled: string;
-    lastSync: string;
-  };
+  ldapSyncInfo: SyncInfo;
   headingStyle: string;
   tableStyle: string;
 }
@@ -14,6 +11,8 @@ interface Props {
 interface State {
   isSyncing: boolean;
 }
+
+const syncTimeFormat = 'dddd YYYY-MM-DD HH:mm zz';
 
 export class LdapSyncInfo extends PureComponent<Props, State> {
   state = {
@@ -28,6 +27,10 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
   render() {
     const { headingStyle, ldapSyncInfo, tableStyle } = this.props;
     const { isSyncing } = this.state;
+    const nextSyncTime = dateTime(ldapSyncInfo.nextSync).format(syncTimeFormat);
+    const prevSyncSuccessful = ldapSyncInfo && ldapSyncInfo.prevSync;
+    const prevSyncTime = prevSyncSuccessful ? dateTime(ldapSyncInfo.prevSync.started).format(syncTimeFormat) : '';
+
     return (
       <>
         <h4 className={headingStyle}>
@@ -41,19 +44,24 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
           <tbody>
             <tr>
               <td>Active synchronisation</td>
-              <td>{ldapSyncInfo.enabled ? 'Enabled' : 'Disabled'}</td>
+              <td colSpan={2}>{ldapSyncInfo.enabled ? 'Enabled' : 'Disabled'}</td>
             </tr>
             <tr>
               <td>Scheduled</td>
-              <td>{ldapSyncInfo.scheduled}</td>
+              <td>{ldapSyncInfo.schedule}</td>
             </tr>
             <tr>
               <td>Next scheduled synchronisation</td>
-              <td>{ldapSyncInfo.nextScheduled}</td>
+              <td>{nextSyncTime}</td>
             </tr>
             <tr>
               <td>Last synchronisation</td>
-              <td>{ldapSyncInfo.lastSync}</td>
+              {prevSyncSuccessful && (
+                <>
+                  <td>{prevSyncTime}</td>
+                  <td>Successful</td>
+                </>
+              )}
             </tr>
           </tbody>
         </table>

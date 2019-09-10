@@ -7,16 +7,12 @@ import {
   clearUserError,
   userLoadedAction,
   userSessionsLoadedAction,
+  ldapSyncStatusLoadedAction,
 } from './actions';
 
 const initialLdapState: LdapState = {
   connectionInfo: [],
-  syncInfo: {
-    enabled: true,
-    scheduled: 'Once a week, between Saturday and Sunday',
-    nextScheduled: 'Tomorrow',
-    lastSync: 'Today',
-  },
+  syncInfo: null,
   user: null,
   connectionError: null,
   userError: null,
@@ -34,6 +30,13 @@ const ldapReducer = reducerFactory(initialLdapState)
     mapper: (state, action) => ({
       ...state,
       connectionInfo: action.payload,
+    }),
+  })
+  .addMapper({
+    filter: ldapSyncStatusLoadedAction,
+    mapper: (state, action) => ({
+      ...state,
+      syncInfo: action.payload,
     }),
   })
   .addMapper({

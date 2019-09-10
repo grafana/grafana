@@ -11,7 +11,7 @@ import { LdapSyncInfo } from './LdapSyncInfo';
 import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
 import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo } from 'app/types';
-import { loadLdapState, loadUserMapping, clearUserError } from './state/actions';
+import { loadLdapState, loadLdapSyncStatus, loadUserMapping, clearUserError } from './state/actions';
 import { LdapUserInfo } from './LdapUserInfo';
 
 interface Props {
@@ -23,6 +23,7 @@ interface Props {
   userError?: LdapError;
 
   loadLdapState: typeof loadLdapState;
+  loadLdapSyncStatus: typeof loadLdapSyncStatus;
   loadUserMapping: typeof loadUserMapping;
   clearUserError: typeof clearUserError;
 }
@@ -42,8 +43,8 @@ export class LdapPage extends PureComponent<Props, State> {
   }
 
   async fetchLDAPStatus() {
-    const { loadLdapState } = this.props;
-    return await loadLdapState();
+    const { loadLdapState, loadLdapSyncStatus } = this.props;
+    return Promise.all([loadLdapState(), loadLdapSyncStatus()]);
   }
 
   async fetchUserMapping(username: string) {
@@ -89,7 +90,7 @@ export class LdapPage extends PureComponent<Props, State> {
               ldapConnectionInfo={ldapConnectionInfo}
             />
 
-            {config.buildInfo.isEnterprise && (
+            {config.buildInfo.isEnterprise && ldapSyncInfo && (
               <LdapSyncInfo headingStyle={headingStyle} tableStyle={tableStyle} ldapSyncInfo={ldapSyncInfo} />
             )}
 
@@ -126,6 +127,7 @@ const mapStateToProps = (state: StoreState) => ({
 
 const mapDispatchToProps = {
   loadLdapState,
+  loadLdapSyncStatus,
   loadUserMapping,
   clearUserError,
 };

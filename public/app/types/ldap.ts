@@ -12,9 +12,22 @@ export interface LdapError {
 
 export interface SyncInfo {
   enabled: boolean;
-  scheduled: string;
-  nextScheduled: string;
-  lastSync: string;
+  schedule: string;
+  nextSync: string;
+  prevSync?: SyncResult;
+}
+
+export interface SyncResult {
+  started: string;
+  elapsed: string;
+  UpdatedUserIds: number[];
+  MissingUserIds: number[];
+  FailedUsers?: FailedUser[];
+}
+
+export interface FailedUser {
+  Login: string;
+  Error: string;
 }
 
 export interface LdapRole {
