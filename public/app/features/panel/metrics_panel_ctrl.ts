@@ -8,10 +8,9 @@ import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/u
 import { ContextSrv } from 'app/core/services/context_srv';
 import { toLegacyResponseData, isDataFrame, TimeRange, LoadingState, DataFrame, toDataFrameDTO } from '@grafana/data';
 
-import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse } from '@grafana/ui';
+import { LegacyResponseData, DataSourceApi, PanelData, PanelDataFormat, DataQueryResponse } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
-import { PanelQueryRunnerFormat } from '../dashboard/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -30,7 +29,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   skipDataOnInit: boolean;
   dataList: LegacyResponseData[];
   querySubscription?: Unsubscribable;
-  dataFormat = PanelQueryRunnerFormat.legacy;
+  dataFormat = PanelDataFormat.Legacy;
 
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -141,7 +140,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         }
       }
 
-      if (this.dataFormat === PanelQueryRunnerFormat.legacy) {
+      if (this.dataFormat & PanelDataFormat.Legacy) {
         // The result should already be processed, but just in case
         if (!data.legacy) {
           data.legacy = data.series.map(v => {

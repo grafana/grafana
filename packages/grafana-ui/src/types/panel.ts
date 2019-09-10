@@ -21,6 +21,13 @@ export interface PanelData {
   legacy?: LegacyResponseData[];
 }
 
+export enum PanelDataFormat {
+  none = 0,
+  Frames = 1 << 0, // 0001
+  Legacy = 1 << 1, // 0010
+  Both = Frames | Legacy,
+}
+
 export interface PanelProps<T = any> {
   id: number; // ID within the current dashboard
   data: PanelData;

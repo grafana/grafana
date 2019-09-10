@@ -1,4 +1,5 @@
 // Libraries
+import { map } from 'rxjs/operators';
 // Services & Utils
 import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -20,7 +21,14 @@ import {
 } from 'app/core/utils/explore';
 // Types
 import { ThunkResult, ExploreUrlState, ExploreItemState } from 'app/types';
-import { DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction, PanelData } from '@grafana/ui';
+import {
+  DataSourceApi,
+  DataQuery,
+  DataSourceSelectItem,
+  QueryFixAction,
+  PanelData,
+  PanelDataFormat,
+} from '@grafana/ui';
 
 import {
   RawTimeRange,
@@ -77,8 +85,7 @@ import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import _ from 'lodash';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { runRequest } from '../../dashboard/state/runRequest';
-import { PanelQueryRunnerFormat, postProcessPanelData } from '../../dashboard/state/PanelQueryRunner';
+import { runRequest, postProcessPanelData } from '../../dashboard/state/runRequest';
 
 /**
  * Updates UI state and save it to the URL
@@ -475,8 +482,9 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     let firstResponse = true;
 
-    const newQuerySub = runRequest(datasourceInstance, transaction.request).subscribe(
-      postProcessPanelData(PanelQueryRunnerFormat.both, (data: PanelData) => {
+    const newQuerySub = runRequest(datasourceInstance, transaction.request)
+      .pipe(map(postProcessPanelData(PanelDataFormat.Both)))
+      .subscribe((data: PanelData) => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
@@ -499,8 +507,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
             dispatch(scanStopAction({ exploreId }));
           }
         }
-      })
-    );
+      });
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
   };

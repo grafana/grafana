@@ -1,35 +1,28 @@
 // Libraries
-import { isArray, cloneDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import { ReplaySubject, Unsubscribable, PartialObserver } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { LoadingState } from '@grafana/data';
 
 // Services & Utils
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-import { runRequest } from './runRequest';
+import { runRequest, postProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
 
 // Types
 import {
   PanelData,
+  PanelDataFormat,
   DataQuery,
   ScopedVars,
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
-  DataQueryResponseData,
 } from '@grafana/ui';
 
-import {
-  TimeRange,
-  toDataFrame,
-  DataFrame,
-  isDataFrame,
-  toLegacyResponseData,
-  guessFieldTypes,
-  DataTransformerConfig,
-} from '@grafana/data';
+import { TimeRange, DataTransformerConfig } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -51,12 +44,6 @@ export interface QueryRunnerOptions<
   transformations?: DataTransformerConfig[];
 }
 
-export enum PanelQueryRunnerFormat {
-  frames = 'frames',
-  legacy = 'legacy',
-  both = 'both',
-}
-
 let counter = 100;
 function getNextRequestId() {
   return 'Q' + counter++;
@@ -75,12 +62,8 @@ export class PanelQueryRunner {
    * Listen for updates to the PanelData.  If a query has already run for this panel,
    * the results will be immediatly passed to the observer
    */
-  subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.frames): Unsubscribable {
-    return this.subject.subscribe(
-      postProcessPanelData(format, (data: PanelData) => {
-        observer.next(data);
-      })
-    );
+  subscribe(observer: PartialObserver<PanelData>, format = PanelDataFormat.Frames): Unsubscribable {
+    return this.subject.pipe(map(postProcessPanelData(format))).subscribe(observer);
   }
 
   async run(options: QueryRunnerOptions) {
@@ -221,64 +204,4 @@ async function getDataSource(
     return datasource as DataSourceApi;
   }
   return await getDatasourceSrv().get(datasource as string, scopedVars);
-}
-
-function translateToLegacyData(data: DataQueryResponseData) {
-  return data.map((v: any) => {
-    if (isDataFrame(v)) {
-      return toLegacyResponseData(v);
-    }
-    return v;
-  });
-}
-
-/**
- * All panels will be passed tables that have our best guess at colum type set
- *
- * This is also used by PanelChrome for snapshot support
- */
-export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
-  if (!isArray(results)) {
-    return [];
-  }
-
-  const series: DataFrame[] = [];
-  for (const r of results) {
-    if (r) {
-      series.push(guessFieldTypes(toDataFrame(r)));
-    }
-  }
-
-  return series;
-}
-
-export function postProcessPanelData(format = PanelQueryRunnerFormat.frames, callback: (data: PanelData) => void) {
-  let lastResult: PanelData = null;
-
-  return {
-    next: (data: PanelData) => {
-      let { series, legacy } = data;
-
-      //  for loading states with no data, use last result
-      if (data.state === LoadingState.Loading && series.length === 0) {
-        if (!lastResult) {
-          lastResult = data;
-        }
-
-        callback({ ...lastResult, state: LoadingState.Loading });
-        return;
-      }
-
-      if (format === PanelQueryRunnerFormat.legacy || format === PanelQueryRunnerFormat.both) {
-        legacy = translateToLegacyData(series);
-      }
-
-      if (format === PanelQueryRunnerFormat.frames || format === PanelQueryRunnerFormat.both) {
-        series = getProcessedDataFrames(series);
-      }
-
-      lastResult = { ...data, series, legacy };
-      callback(lastResult);
-    },
-  };
 }

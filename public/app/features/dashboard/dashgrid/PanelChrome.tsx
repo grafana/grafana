@@ -11,7 +11,7 @@ import { ErrorBoundary } from '@grafana/ui';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
-import { getProcessedDataFrames } from '../state/PanelQueryState';
+import { getProcessedDataFrames } from '../state/runRequest';
 import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 

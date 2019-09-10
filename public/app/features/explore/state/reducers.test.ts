@@ -26,14 +26,12 @@ import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
 import { DataSourceApi, DataQuery } from '@grafana/ui';
 import { LogsModel, LogsDedupStrategy } from '@grafana/data';
-import { PanelQueryState } from '../../dashboard/state/PanelQueryState';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
     it('should start scanning', () => {
       const initalState = {
         ...makeExploreItemState(),
-        queryState: null as PanelQueryState,
         scanning: false,
       };
 
@@ -42,14 +40,12 @@ describe('Explore item reducer', () => {
         .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
-          queryState: null as PanelQueryState,
           scanning: true,
         });
     });
     it('should stop scanning', () => {
       const initalState = {
         ...makeExploreItemState(),
-        queryState: null as PanelQueryState,
         scanning: true,
         scanRange: {},
       };
@@ -59,7 +55,6 @@ describe('Explore item reducer', () => {
         .whenActionIsDispatched(scanStopAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
-          queryState: null as PanelQueryState,
           scanning: false,
           scanRange: undefined,
         });

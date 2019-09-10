@@ -4,11 +4,28 @@ import { flatten, map as lodashMap, isArray, isString } from 'lodash';
 import { map, catchError, takeUntil, mapTo, share, finalize } from 'rxjs/operators';
 
 // Utils & Services
-import { LoadingState, dateMath } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 
 // Types
-import { DataSourceApi, DataQueryRequest, PanelData, DataQueryResponse, DataQueryError } from '@grafana/ui';
+import {
+  DataSourceApi,
+  DataQueryRequest,
+  PanelData,
+  PanelDataFormat,
+  DataQueryResponse,
+  DataQueryResponseData,
+  DataQueryError,
+} from '@grafana/ui';
+
+import {
+  LoadingState,
+  dateMath,
+  toDataFrame,
+  DataFrame,
+  isDataFrame,
+  toLegacyResponseData,
+  guessFieldTypes,
+} from '@grafana/data';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -133,6 +150,7 @@ export function callQueryMethod(datasource: DataSourceApi, request: DataQueryReq
 
 export function processQueryError(err: any): DataQueryError {
   const error = (err || {}) as DataQueryError;
+
   if (!error.message) {
     if (typeof err === 'string' || err instanceof String) {
       return { message: err } as DataQueryError;
@@ -150,5 +168,63 @@ export function processQueryError(err: any): DataQueryError {
     }
     error.message = message;
   }
+
   return error;
+}
+
+function translateToLegacyData(data: DataQueryResponseData) {
+  return data.map((v: any) => {
+    if (isDataFrame(v)) {
+      return toLegacyResponseData(v);
+    }
+    return v;
+  });
+}
+
+/**
+ * All panels will be passed tables that have our best guess at colum type set
+ *
+ * This is also used by PanelChrome for snapshot support
+ */
+export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
+  if (!isArray(results)) {
+    return [];
+  }
+
+  const series: DataFrame[] = [];
+  for (const r of results) {
+    if (r) {
+      series.push(guessFieldTypes(toDataFrame(r)));
+    }
+  }
+
+  return series;
+}
+
+export function postProcessPanelData(format: PanelDataFormat) {
+  let lastResult: PanelData = null;
+
+  return function mapper(data: PanelData) {
+    let { series, legacy } = data;
+
+    //  for loading states with no data, use last result
+    if (data.state === LoadingState.Loading && series.length === 0) {
+      if (!lastResult) {
+        lastResult = data;
+      }
+
+      return { ...lastResult, state: LoadingState.Loading };
+    }
+
+    if (format & PanelDataFormat.Legacy) {
+      legacy = translateToLegacyData(series);
+    }
+
+    if (format & PanelDataFormat.Frames) {
+      series = getProcessedDataFrames(series);
+    }
+
+    lastResult = { ...data, series, legacy };
+    return lastResult;
+  };
 }

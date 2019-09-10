@@ -19,10 +19,9 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { DataQuery, DataSourceSelectItem, PanelData, AlphaNotice, PluginState } from '@grafana/ui';
+import { DataQuery, DataSourceSelectItem, PanelData, PanelDataFormat, AlphaNotice, PluginState } from '@grafana/ui';
 import { LoadingState, DataTransformerConfig } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
-import { PanelQueryRunnerFormat } from '../state/PanelQueryRunner';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
 
@@ -63,7 +62,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const queryRunner = panel.getQueryRunner();
 
-    this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelQueryRunnerFormat.both);
+    this.querySubscription = queryRunner.subscribe(this.panelDataObserver, PanelDataFormat.Both);
   }
 
   componentWillUnmount() {

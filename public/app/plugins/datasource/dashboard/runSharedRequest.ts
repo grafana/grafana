@@ -1,7 +1,6 @@
 import { Observable } from 'rxjs';
 import { DataQuery, PanelData, DataSourceApi } from '@grafana/ui';
 import { QueryRunnerOptions } from 'app/features/dashboard/state/PanelQueryRunner';
-import { toDataQueryError } from 'app/features/dashboard/state/PanelQueryState';
 import { DashboardQuery } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { LoadingState } from '@grafana/data';
@@ -71,6 +70,6 @@ function getQueryError(msg: string): PanelData {
     state: LoadingState.Error,
     series: [],
     legacy: [],
-    error: toDataQueryError(msg),
+    error: { message: msg },
   };
 }
