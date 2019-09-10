@@ -1,6 +1,6 @@
 import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
 import { css, cx } from 'emotion';
-import { groupBy, capitalize } from 'lodash';
+import _ from 'lodash';
 import React, { useRef, useContext, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 import { List } from '../index';
@@ -131,7 +131,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
   });
 
   const groupedSuggestions = useMemo(() => {
-    return groupBy(suggestions, s => s.origin);
+    return _.groupBy(suggestions, s => s.origin);
   }, [suggestions]);
 
   const styles = getStyles(theme);
@@ -152,7 +152,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
           <DataLinkSuggestionsList
             {...otherProps}
             suggestions={groupedSuggestions[key]}
-            label={`${capitalize(key)} variables`}
+            label={`${_.capitalize(key)} variables`}
             activeIndex={otherProps.activeIndex}
             activeIndexOffset={indexOffset}
             key={key}
