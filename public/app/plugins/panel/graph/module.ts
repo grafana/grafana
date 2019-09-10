@@ -344,8 +344,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
   };
 
-  getDataFrameByName = (seriesName: string) => {
-    return this.dataList.filter(dataFrame => dataFrame.name === seriesName)[0];
+  getDataFrameByRefId = (refId: string) => {
+    return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];
   };
 }
 

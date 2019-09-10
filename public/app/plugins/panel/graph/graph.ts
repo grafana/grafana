@@ -24,9 +24,9 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat, ContextMenuGroup, FieldDisplay, ContextMenuItem } from '@grafana/ui';
-import { provideTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc, DataFrameView, LinkModelSupplier, FieldCache, FieldType } from '@grafana/data';
+import { getValueFormat, ContextMenuGroup, FieldDisplay, ContextMenuItem, getFieldDisplayValues } from '@grafana/ui';
+import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
+import { toUtc, LinkModelSupplier } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -237,21 +237,30 @@ class GraphElement {
       let linksSupplier: LinkModelSupplier<FieldDisplay>;
 
       if (item) {
-        const seriesName = item.series.alias;
-        const dataFrame = this.ctrl.getDataFrameByName(seriesName);
-        const fieldCache = new FieldCache(dataFrame);
-        const field = fieldCache.getFirstFieldOfType(FieldType.number);
+        const dataFrame = this.ctrl.getDataFrameByRefId(item.series.refId);
+        // pickup y-axis index to know which field's config to apply
+        const yAxisConfig = this.panel.yaxes[item.series.yAxis === 2 ? 1 : 0];
+        const fieldOptions = {
+          decimals: yAxisConfig.decimals,
+          links: this.panel.options.dataLinks || [],
+        };
 
-        linksSupplier = this.panel.options.dataLinks
-          ? getFieldLinksSupplier({
-              view: new DataFrameView(dataFrame),
-              colIndex: field!.idx,
-              rowIndex: item.dataIndex,
-              field: {
-                links: this.panel.options.dataLinks || [],
-              },
-            } as FieldDisplay)
-          : undefined;
+        // get current series display values
+        const displayValues = getFieldDisplayValues({
+          data: [dataFrame],
+          fieldOptions: {
+            values: true,
+            limit: Infinity, // give me all you have
+            calcs: [],
+            defaults: fieldOptions,
+            override: {},
+          },
+          // don't interpolate anything for now
+          replaceVariables: value => value,
+          theme: getCurrentTheme(),
+        });
+        const field = displayValues[item.dataIndex];
+        linksSupplier = this.panel.options.dataLinks ? getFieldLinksSupplier(field) : undefined;
       }
 
       this.scope.$apply(() => {
