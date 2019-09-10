@@ -408,6 +408,7 @@ describe('sortLogsResult', () => {
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
+    uid: '1',
   };
   const sameAsFirstRow = firstRow;
   const secondRow = {
@@ -421,6 +422,7 @@ describe('sortLogsResult', () => {
     timeFromNow: '',
     timeLocal: '',
     timeUtc: '',
+    uid: '2',
   };
 
   describe('when called with SortOrder.Descending', () => {
