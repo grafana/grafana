@@ -437,7 +437,14 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
 		require.Equal(t, q.Id, int64(34))
 
-		q.Result = &models.User{Login: "ldap-daniel"}
+		q.Result = &models.User{Login: "ldap-daniel", Id: 34}
+		return nil
+	})
+
+	bus.AddHandler("test", func(q *models.GetAuthInfoQuery) error {
+		require.Equal(t, q.UserId, int64(34))
+		require.Equal(t, q.AuthModule, models.AuthModuleLDAP)
+
 		return nil
 	})
 
@@ -500,7 +507,14 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
 		require.Equal(t, q.Id, int64(34))
 
-		q.Result = &models.User{Login: "ldap-daniel"}
+		q.Result = &models.User{Login: "ldap-daniel", Id: 34}
+		return nil
+	})
+
+	bus.AddHandler("test", func(q *models.GetAuthInfoQuery) error {
+		require.Equal(t, q.UserId, int64(34))
+		require.Equal(t, q.AuthModule, models.AuthModuleLDAP)
+
 		return nil
 	})
 

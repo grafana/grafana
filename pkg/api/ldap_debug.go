@@ -158,9 +158,7 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 
 	query := models.GetUserByIdQuery{Id: userId}
 
-	err = bus.Dispatch(&query)
-
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.Dispatch(&query); err != nil { // validate the userId exists
 		if err == models.ErrUserNotFound {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -168,7 +166,15 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 		return Error(500, "Failed to get user", err)
 	}
 
-	// Check for users only from LDAP
+	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.Id, AuthModule: models.AuthModuleLDAP}
+
+	if err := bus.Dispatch(authModuleQuery); err != nil { // validate the userId comes from LDAP
+		if err == models.ErrUserNotFound {
+			return Error(404, models.ErrUserNotFound.Error(), nil)
+		}
+
+		return Error(500, "Failed to get user", err)
+	}
 
 	ldapServer := newLDAP(ldapConfig.Servers)
 	user, _, err := ldapServer.User(query.Result.Login)
