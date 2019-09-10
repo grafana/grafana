@@ -21,7 +21,7 @@ describe('dataFrameHelper', () => {
 
   it('should return index of the field', () => {
     const field = ext.getFirstFieldOfType(FieldType.number);
-    expect(field!.idx).toEqual(2);
+    expect(field!.index).toEqual(2);
   });
 });
 

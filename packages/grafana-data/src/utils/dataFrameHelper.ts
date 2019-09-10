@@ -6,7 +6,7 @@ import isArray from 'lodash/isArray';
 import isString from 'lodash/isString';
 
 interface FieldWithIndex extends Field {
-  idx: number;
+  index: number;
 }
 export class FieldCache {
   fields: FieldWithIndex[] = [];
@@ -17,7 +17,7 @@ export class FieldCache {
   constructor(data: DataFrame) {
     this.fields = data.fields.map((field, idx) => ({
       ...field,
-      idx,
+      index: idx,
     }));
 
     for (const [index, field] of data.fields.entries()) {
@@ -33,13 +33,13 @@ export class FieldCache {
       }
       this.fieldByType[field.type].push({
         ...field,
-        idx: index,
+        index,
       });
 
       if (this.fieldByName[field.name]) {
         console.warn('Duplicate field names in DataFrame: ', field.name);
       } else {
-        this.fieldByName[field.name] = { ...field, idx: index };
+        this.fieldByName[field.name] = { ...field, index };
       }
     }
   }
