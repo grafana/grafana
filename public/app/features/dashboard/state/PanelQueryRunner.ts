@@ -11,9 +11,9 @@ import { PanelQueryState } from './PanelQueryState';
 import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
 
 // Types
-import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
+import { PanelData, DataQuery, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
 
-import { TimeRange, DataTransformerConfig, transformDataFrame, toLegacyResponseData } from '@grafana/data';
+import { TimeRange, DataTransformerConfig, transformDataFrame, toLegacyResponseData, ScopedVars } from '@grafana/data';
 import config from 'app/core/config';
 
 export interface QueryRunnerOptions<
