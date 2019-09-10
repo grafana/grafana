@@ -9,6 +9,7 @@ import {
   LoadingState,
   DataFrameDTO,
   AnnotationEvent,
+  ScopedVars,
 } from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
@@ -433,16 +434,6 @@ export interface DataQueryError {
   statusText?: string;
   refId?: string;
   cancelled?: boolean;
-}
-
-export interface ScopedVar {
-  text: any;
-  value: any;
-  [key: string]: any;
-}
-
-export interface ScopedVars {
-  [key: string]: ScopedVar;
 }
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
