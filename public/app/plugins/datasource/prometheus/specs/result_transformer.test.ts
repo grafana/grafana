@@ -151,19 +151,19 @@ describe('Prometheus Result Transformer', () => {
           target: '1',
           query: undefined,
           datapoints: [[10, 1445000010000], [10, 1445000020000], [0, 1445000030000]],
-          labels: { __name__: 'test', job: 'testjob', le: '1' },
+          tags: { __name__: 'test', job: 'testjob', le: '1' },
         },
         {
           target: '2',
           query: undefined,
           datapoints: [[10, 1445000010000], [0, 1445000020000], [30, 1445000030000]],
-          labels: { __name__: 'test', job: 'testjob', le: '2' },
+          tags: { __name__: 'test', job: 'testjob', le: '2' },
         },
         {
           target: '3',
           query: undefined,
           datapoints: [[10, 1445000010000], [0, 1445000020000], [10, 1445000030000]],
-          labels: { __name__: 'test', job: 'testjob', le: '3' },
+          tags: { __name__: 'test', job: 'testjob', le: '3' },
         },
       ]);
     });
@@ -225,7 +225,7 @@ describe('Prometheus Result Transformer', () => {
           target: 'test{job="testjob"}',
           query: undefined,
           datapoints: [[10, 0], [10, 1000], [0, 2000]],
-          labels: { job: 'testjob' },
+          tags: { job: 'testjob' },
         },
       ]);
     });
@@ -256,7 +256,7 @@ describe('Prometheus Result Transformer', () => {
           target: 'test{job="testjob"}',
           query: undefined,
           datapoints: [[null, 0], [10, 1000], [0, 2000]],
-          labels: { job: 'testjob' },
+          tags: { job: 'testjob' },
         },
       ]);
     });
@@ -287,7 +287,7 @@ describe('Prometheus Result Transformer', () => {
           target: 'test{job="testjob"}',
           query: undefined,
           datapoints: [[null, 0], [null, 2000], [10, 4000], [null, 6000], [10, 8000]],
-          labels: { job: 'testjob' },
+          tags: { job: 'testjob' },
         },
       ]);
     });
