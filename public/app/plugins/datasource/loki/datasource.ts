@@ -22,7 +22,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import { LiveTarget, LiveStreams } from './live_streams';
 import { Observable, from, merge } from 'rxjs';
-import { map, single, filter } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -184,7 +184,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         throw error;
       })
     ).pipe(
-      single(),
       filter((response: any) => (response.cancelled ? false : true)),
       map((response: any) => {
         const data = this.processResult(response.data, target);
