@@ -66,7 +66,13 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
 
     if (plugin.editor) {
-      return <plugin.editor options={this.getReactPanelOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+      return (
+        <plugin.editor
+          data={this.props.panel.getQueryRunner().getCurrentData()}
+          options={this.getReactPanelOptions()}
+          onOptionsChange={this.onPanelOptionsChanged}
+        />
+      );
     }
 
     return <p>Visualization has no options</p>;
