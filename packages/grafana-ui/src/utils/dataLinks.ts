@@ -4,8 +4,8 @@ import { LinkModelSupplier } from '@grafana/data';
 export const DataLinkBuiltInVars = {
   keepTime: '__url_time_range',
   includeVars: '__all_variables',
-  seriesName: '__series_name',
-  valueTime: '__value_time',
+  seriesName: '__series.name',
+  valueTime: '__value.time',
 };
 
 /**
