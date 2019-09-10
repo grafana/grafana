@@ -1,20 +1,12 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
+import tinycolor from 'tinycolor2';
 import { last } from 'lodash';
 
 import { Themeable, withTheme, GrafanaTheme, getLogRowStyles } from '@grafana/ui';
 import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
-
-/*
-  Setting alpha using Hexadecimal notation: #RRGGBB[AA], where A is optional.
-  https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
-*/
-const setAlpha = (hex: string, alpha: number) => {
-  const hexAlpha = ((alpha * 255) | (1 << 8)).toString(16).slice(1);
-  return hex + hexAlpha;
-};
 
 const getStyles = (theme: GrafanaTheme) => ({
   logsRowsLive: css`
@@ -32,11 +24,15 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFresh: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    background-color: ${setAlpha(theme.colors.blueLight, 0.25)};
+    background-color: ${tinycolor(theme.colors.blueLight)
+      .setAlpha(0.25)
+      .toString()};
     animation: fade 1s ease-out 1s 1 normal forwards;
     @keyframes fade {
       from {
-        background-color: ${setAlpha(theme.colors.blueLight, 0.25)};
+        background-color: ${tinycolor(theme.colors.blueLight)
+          .setAlpha(0.25)
+          .toString()};
       }
       to {
         background-color: transparent;
