@@ -33,7 +33,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 19;
+    this.dashboard.schemaVersion = 20;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -436,6 +436,28 @@ export class DashboardMigrator {
       });
     }
 
+    if (oldVersion < 20) {
+      panelUpgrades.push((panel: any) => {
+        // For graph panel
+        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+          panel.options.dataLinks = panel.options.dataLinks.map(updateDataLinksSyntax);
+        }
+
+        // For panel with fieldOptions
+        if (
+          panel.options &&
+          panel.options.fieldOptions &&
+          panel.options.fieldOptions.defaults &&
+          panel.options.fieldOptions.defaults.links &&
+          _.isArray(panel.options.fieldOptions.defaults.links)
+        ) {
+          panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(
+            updateDataLinksSyntax
+          );
+        }
+      });
+    }
+
     if (panelUpgrades.length === 0) {
       return;
     }
@@ -664,5 +686,26 @@ function upgradePanelLink(link: any): DataLink {
     url: url,
     title: link.title,
     targetBlank: link.targetBlank,
+  };
+}
+
+function updateDataLinksSyntax(link: any): DataLink {
+  let url: string = link.url;
+
+  const legacyVariableNamesRegex = /(__series_name)|(__value_time)/g;
+
+  url = url.replace(legacyVariableNamesRegex, (match, seriesName, valueTime) => {
+    if (seriesName) {
+      return '__series.name';
+    }
+    if (valueTime) {
+      return '__value.time';
+    }
+    return match;
+  });
+
+  return {
+    ...link,
+    url,
   };
 }
