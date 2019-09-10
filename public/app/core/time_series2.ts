@@ -70,6 +70,7 @@ export function getDataMinMax(data: TimeSeries[]) {
 export default class TimeSeries {
   datapoints: any;
   id: string;
+  refId: string;
   label: string;
   alias: string;
   aliasEscaped: string;
@@ -110,6 +111,7 @@ export default class TimeSeries {
     this.stats = {};
     this.legend = true;
     this.unit = opts.unit;
+    this.refId = opts.refId;
     this.hasMsResolution = this.isMsResolutionNeeded();
   }
 
