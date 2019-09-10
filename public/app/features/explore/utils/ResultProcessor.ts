@@ -11,10 +11,14 @@ export class ResultProcessor {
 
   getGraphResult(): GraphSeriesXY[] {
     if (this.state.mode !== ExploreMode.Metrics) {
-      return [];
+      return null;
     }
 
     const onlyTimeSeries = this.dataFrames.filter(isTimeSeries);
+
+    if (onlyTimeSeries.length === 0) {
+      return null;
+    }
 
     return getGraphSeriesModel(
       onlyTimeSeries,
@@ -26,13 +30,17 @@ export class ResultProcessor {
 
   getTableResult(): TableModel {
     if (this.state.mode !== ExploreMode.Metrics) {
-      return new TableModel();
+      return null;
     }
 
     // For now ignore time series
     // We can change this later, just need to figure out how to
     // Ignore time series only for prometheus
     const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
+
+    if (onlyTables.length === 0) {
+      return null;
+    }
 
     const tables = onlyTables.map(frame => {
       const { fields } = frame;

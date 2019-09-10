@@ -2,10 +2,8 @@
 import { Observable, of, timer, merge, from } from 'rxjs';
 import { flatten, map as lodashMap, isArray, isString } from 'lodash';
 import { map, catchError, takeUntil, mapTo, share, finalize } from 'rxjs/operators';
-
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
-
 // Types
 import {
   DataSourceApi,
@@ -62,7 +60,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   );
 
   const panelData = {
-    state: LoadingState.Done,
+    state: packet.state || LoadingState.Done,
     series: combinedData,
     request: {
       ...request,
