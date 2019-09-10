@@ -76,7 +76,7 @@ export class ResultTransformer {
       datapoints: dps,
       query: options.query,
       target: metricLabel,
-      labels: metricData.metric,
+      tags: metricData.metric,
     };
   }
 

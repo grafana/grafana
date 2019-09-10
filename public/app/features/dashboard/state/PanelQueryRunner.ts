@@ -13,7 +13,8 @@ import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasourc
 // Types
 import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
 
-import { TimeRange } from '@grafana/data';
+import { TimeRange, DataTransformerConfig, transformDataFrame, toLegacyResponseData } from '@grafana/data';
+import config from 'app/core/config';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -32,6 +33,7 @@ export interface QueryRunnerOptions<
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
   delayStateNotification?: number; // default 100ms.
+  transformations?: DataTransformerConfig[];
 }
 
 export enum PanelQueryRunnerFormat {
@@ -49,6 +51,7 @@ export class PanelQueryRunner {
   private subject?: Subject<PanelData>;
 
   private state = new PanelQueryState();
+  private transformations?: DataTransformerConfig[];
 
   // Listen to another panel for changes
   private sharedQueryRunner: SharedQueryRunner;
@@ -60,6 +63,27 @@ export class PanelQueryRunner {
 
   getPanelId() {
     return this.panelId;
+  }
+
+  /**
+   * Get the last result -- optionally skip the transformation
+   */
+  //  TODO: add tests
+  getCurrentData(transform = true): PanelData {
+    const v = this.state.validateStreamsAndGetPanelData();
+    const transformData = config.featureToggles.transformations && transform;
+    const hasTransformations = this.transformations && this.transformations.length;
+
+    if (transformData && hasTransformations) {
+      const processed = transformDataFrame(this.transformations, v.series);
+      return {
+        ...v,
+        series: processed,
+        legacy: processed.map(p => toLegacyResponseData(p)),
+      };
+    }
+
+    return v;
   }
 
   /**
@@ -78,7 +102,9 @@ export class PanelQueryRunner {
 
     // Send the last result
     if (this.state.isStarted()) {
-      observer.next(this.state.getDataAfterCheckingFormats());
+      // Force check formats again?
+      this.state.getDataAfterCheckingFormats();
+      observer.next(this.getCurrentData()); // transformed
     }
 
     return this.subject.subscribe(observer);
@@ -98,9 +124,17 @@ export class PanelQueryRunner {
     return this.subscribe(runner.subject, format);
   }
 
-  getCurrentData(): PanelData {
-    return this.state.validateStreamsAndGetPanelData();
-  }
+  /**
+   * Change the current transformation and notify all listeners
+   * Should be used only by panel editor to update the transformers
+   */
+  setTransform = (transformations?: DataTransformerConfig[]) => {
+    this.transformations = transformations;
+
+    if (this.state.isStarted()) {
+      this.onStreamingDataUpdated();
+    }
+  };
 
   async run(options: QueryRunnerOptions): Promise<PanelData> {
     const { state } = this;
@@ -200,13 +234,14 @@ export class PanelQueryRunner {
         }
       }, delayStateNotification || 500);
 
-      const data = await state.execute(ds, request);
+      this.transformations = options.transformations;
 
+      const data = await state.execute(ds, request);
       // Clear the delayed loading state timeout
       clearTimeout(loadingStateTimeoutId);
 
       // Broadcast results
-      this.subject.next(data);
+      this.subject.next(this.getCurrentData());
       return data;
     } catch (err) {
       clearTimeout(loadingStateTimeoutId);
@@ -223,7 +258,7 @@ export class PanelQueryRunner {
    */
   onStreamingDataUpdated = throttle(
     () => {
-      this.subject.next(this.state.validateStreamsAndGetPanelData());
+      this.subject.next(this.getCurrentData());
     },
     50,
     { trailing: true, leading: true }
@@ -241,6 +276,14 @@ export class PanelQueryRunner {
     // Will cancel and disconnect any open requets
     this.state.cancel('destroy');
   }
+
+  setState = (state: PanelQueryState) => {
+    this.state = state;
+  };
+
+  getState = () => {
+    return this.state;
+  };
 }
 
 async function getDataSource(
