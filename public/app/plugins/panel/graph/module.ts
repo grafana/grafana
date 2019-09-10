@@ -37,7 +37,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   subTabIndex: number;
   processor: DataProcessor;
   contextMenuCtrl: GraphContextMenuCtrl;
-  linkVariableSuggestions: VariableSuggestion[] = getDataLinksVariableSuggestions();
+  linkVariableSuggestions: VariableSuggestion[] = [];
 
   panelDefaults: any = {
     // datasource name, null = default datasource
@@ -221,6 +221,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       dataList: this.dataList,
       range: this.range,
     });
+    this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
 
     this.dataWarning = null;
     const datapointsCount = this.seriesList.reduce((prev, series) => {

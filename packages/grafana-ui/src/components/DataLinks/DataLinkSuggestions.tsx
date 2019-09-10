@@ -1,16 +1,22 @@
 import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
 import { css, cx } from 'emotion';
+import { groupBy, capitalize } from 'lodash';
 import React, { useRef, useContext, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 import { List } from '../index';
+import tinycolor from 'tinycolor2';
 
 export enum VariableOrigin {
-  BuiltIn = 'builtin',
+  Series = 'series',
+  Field = 'field',
+  Value = 'value',
+  BuiltIn = 'built-in',
   Template = 'template',
 }
 
 export interface VariableSuggestion {
   value: string;
+  label: string;
   documentation?: string;
   origin: VariableOrigin;
 }
@@ -71,6 +77,10 @@ const getStyles = (theme: GrafanaTheme) => {
     theme.type
   );
 
+  const labelBg = tinycolor(wrapperBg.toString())
+    .darken(2)
+    .toString();
+
   return {
     wrapper: css`
       background: ${wrapperBg};
@@ -91,7 +101,8 @@ const getStyles = (theme: GrafanaTheme) => {
       color: ${theme.colors.textWeak};
       font-size: ${theme.typography.size.sm};
       line-height: ${theme.typography.lineHeight.lg};
-      padding: ${theme.spacing.sm};
+      padding: ${theme.spacing.xs} ${theme.spacing.sm};
+      background: ${labelBg};
     `,
     activeItem: css`
       background: ${itemBgActive};
@@ -119,34 +130,35 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
     }
   });
 
-  const templateSuggestions = useMemo(() => {
-    return suggestions.filter(suggestion => suggestion.origin === VariableOrigin.Template);
-  }, [suggestions]);
-
-  const builtInSuggestions = useMemo(() => {
-    return suggestions.filter(suggestion => suggestion.origin === VariableOrigin.BuiltIn);
+  const groupedSuggestions = useMemo(() => {
+    return groupBy(suggestions, s => s.origin);
   }, [suggestions]);
 
   const styles = getStyles(theme);
   return (
     <div ref={ref} className={styles.wrapper}>
-      {templateSuggestions.length > 0 && (
-        <DataLinkSuggestionsList
-          {...otherProps}
-          suggestions={templateSuggestions}
-          label="Template variables"
-          activeIndex={otherProps.activeIndex}
-          activeIndexOffset={0}
-        />
-      )}
-      {builtInSuggestions.length > 0 && (
-        <DataLinkSuggestionsList
-          {...otherProps}
-          suggestions={builtInSuggestions}
-          label="Built-in variables"
-          activeIndexOffset={templateSuggestions.length}
-        />
-      )}
+      {Object.keys(groupedSuggestions).map((key, i) => {
+        const indexOffset =
+          i === 0
+            ? 0
+            : Object.keys(groupedSuggestions).reduce((acc, current, index) => {
+                if (index >= i) {
+                  return acc;
+                }
+                return acc + groupedSuggestions[current].length;
+              }, 0);
+
+        return (
+          <DataLinkSuggestionsList
+            {...otherProps}
+            suggestions={groupedSuggestions[key]}
+            label={`${capitalize(key)} variables`}
+            activeIndex={otherProps.activeIndex}
+            activeIndexOffset={indexOffset}
+            key={key}
+          />
+        );
+      })}
     </div>
   );
 };
@@ -175,9 +187,9 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
                 onClick={() => {
                   onSuggestionSelect(item);
                 }}
+                title={item.documentation}
               >
-                <div className={styles.itemValue}>{item.value}</div>
-                {item.documentation && <div className={styles.itemDocs}>{item.documentation}</div>}
+                <div className={styles.itemValue}>{item.label}</div>
               </div>
             );
           }}

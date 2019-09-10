@@ -4,45 +4,80 @@ import templateSrv, { TemplateSrv } from 'app/features/templating/template_srv';
 import coreModule from 'app/core/core_module';
 import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { VariableSuggestion, ScopedVars, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
-import { DataLink, KeyValue, deprecationWarning, LinkModel } from '@grafana/data';
+import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame } from '@grafana/data';
 
 export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...templateSrv.variables.map(variable => ({
     value: variable.name as string,
+    label: variable.name,
     origin: VariableOrigin.Template,
   })),
   {
     value: `${DataLinkBuiltInVars.includeVars}`,
+    label: 'All variables',
     documentation: 'Adds current variables',
-    origin: VariableOrigin.BuiltIn,
+    origin: VariableOrigin.Template,
   },
   {
     value: `${DataLinkBuiltInVars.keepTime}`,
+    label: 'Current time range',
     documentation: 'Adds current time range',
     origin: VariableOrigin.BuiltIn,
   },
 ];
 
-export const getDataLinksVariableSuggestions = (): VariableSuggestion[] => [
-  ...getPanelLinksVariableSuggestions(),
-  {
-    value: `${DataLinkBuiltInVars.seriesName}`,
-    documentation: 'Adds series name',
-    origin: VariableOrigin.BuiltIn,
-  },
-  {
-    value: `${DataLinkBuiltInVars.valueTime}`,
-    documentation: 'Time value of the clicked datapoint (in ms epoch)',
-    origin: VariableOrigin.BuiltIn,
-  },
-];
+export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+  const labels = _.flatten(dataFrames.map(df => Object.keys(df.labels || {})));
+
+  const seriesVars = [
+    {
+      value: `${DataLinkBuiltInVars.seriesName}`,
+      label: 'Name',
+      documentation: 'Name of the series',
+      origin: VariableOrigin.Series,
+    },
+    {
+      value: `${DataLinkBuiltInVars.seriesRefId}`,
+      label: 'RefId',
+      documentation: 'Series refId',
+      origin: VariableOrigin.Series,
+    },
+    ...labels.map(label => ({
+      value: `__series.labels.${label}`,
+      label: `Label: ${label}`,
+      documentation: 'Adds series name',
+      origin: VariableOrigin.Series,
+    })),
+  ];
+
+  const fieldVars = [
+    {
+      value: `${DataLinkBuiltInVars.fieldName}`,
+      label: 'Name',
+      documentation: 'Time value of the clicked datapoint (in ms epoch)',
+      origin: VariableOrigin.Field,
+    },
+  ];
+
+  const valueVars = [
+    {
+      value: `${DataLinkBuiltInVars.valueTime}`,
+      label: 'Time',
+      documentation: 'Time value of the clicked datapoint (in ms epoch)',
+      origin: VariableOrigin.Value,
+    },
+  ];
+
+  return [...seriesVars, ...fieldVars, ...valueVars, ...getPanelLinksVariableSuggestions()];
+};
 
 export const getCalculationValueDataLinksVariableSuggestions = (): VariableSuggestion[] => [
   ...getPanelLinksVariableSuggestions(),
   {
     value: `${DataLinkBuiltInVars.seriesName}`,
+    label: 'Name',
     documentation: 'Adds series name',
-    origin: VariableOrigin.BuiltIn,
+    origin: VariableOrigin.Series,
   },
 ];
 

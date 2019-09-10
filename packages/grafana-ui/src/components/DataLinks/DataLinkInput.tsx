@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useContext } from 'react';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
-import { makeValue, ThemeContext } from '../../index';
+import { makeValue, ThemeContext, DataLinkBuiltInVars } from '../../index';
 import { SelectionReference } from './SelectionReference';
 import { Portal } from '../index';
 // @ts-ignore
@@ -132,7 +132,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
 
     const change = linkUrl.change();
 
-    if (item.origin === VariableOrigin.BuiltIn) {
+    if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
       change.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
     } else {
       change.insertText(`var-${item.value}=$\{${item.value}}`);

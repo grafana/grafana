@@ -72,8 +72,10 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
     const { options } = this.props;
     const { fieldOptions, showThresholdLabels, showThresholdMarkers } = options;
     const { defaults } = fieldOptions;
+
+    // TODO: probably better to allow lazy initialization
     const suggestions = fieldOptions.values
-      ? getDataLinksVariableSuggestions()
+      ? getDataLinksVariableSuggestions(this.props.data.series)
       : getCalculationValueDataLinksVariableSuggestions();
 
     return (

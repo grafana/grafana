@@ -5,7 +5,10 @@ export const DataLinkBuiltInVars = {
   keepTime: '__url_time_range',
   includeVars: '__all_variables',
   seriesName: '__series.name',
+  fieldName: '__field.name',
   valueTime: '__value.time',
+  valueNumeric: '__value.numeric',
+  seriesRefId: '__series.refId',
 };
 
 /**
