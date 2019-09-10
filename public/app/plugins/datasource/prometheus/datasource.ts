@@ -5,7 +5,7 @@ import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import { dateMath, TimeRange, DateTime, AnnotationEvent } from '@grafana/data';
 import { Observable, from, of, merge } from 'rxjs';
-import { single, filter, map } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
@@ -28,6 +28,7 @@ import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ExploreUrlState } from 'app/types';
+import { LoadingState } from '@grafana/data/src/types/data';
 
 export interface PromDataQueryResponse {
   data: {
@@ -230,11 +231,14 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
 
       return observable.pipe(
-        single(),
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
           const data = this.processResult(response, query, target, queries.length);
-          return { data, key: query.requestId } as DataQueryResponse;
+          return {
+            data,
+            key: query.requestId,
+            state: query.instant ? LoadingState.Loading : LoadingState.Done,
+          } as DataQueryResponse;
         })
       );
     });
