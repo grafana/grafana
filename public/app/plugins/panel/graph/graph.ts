@@ -239,7 +239,7 @@ class GraphElement {
       if (item) {
         const dataFrame = this.ctrl.getDataFrameByRefId(item.series.refId);
         // pickup y-axis index to know which field's config to apply
-        const yAxisConfig = this.panel.yaxes[item.series.yAxis === 2 ? 1 : 0];
+        const yAxisConfig = this.panel.yaxes[item.series.yaxis.n === 2 ? 1 : 0];
         const fieldOptions = {
           decimals: yAxisConfig.decimals,
           links: this.panel.options.dataLinks || [],
