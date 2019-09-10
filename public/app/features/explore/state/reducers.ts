@@ -28,9 +28,6 @@ import {
   queryStartAction,
   changeRangeAction,
   clearOriginAction,
-} from './actionTypes';
-
-import {
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
@@ -610,6 +607,9 @@ export const processQueryResponse = (
 
   const latency = request.endTime ? request.endTime - request.startTime : 0;
   const processor = new ResultProcessor(state, series);
+  const graphResult = processor.getGraphResult() || state.graphResult; // don't replace results until we receive new results
+  const tableResult = processor.getTableResult() || state.tableResult || new TableModel(); // don't replace results until we receive new results
+  const logsResult = processor.getLogsResult();
 
   // For Angular editors
   state.eventBridge.emit('data-received', legacy);
@@ -618,9 +618,9 @@ export const processQueryResponse = (
     ...state,
     latency,
     queryResponse: response,
-    graphResult: processor.getGraphResult(),
-    tableResult: processor.getTableResult(),
-    logsResult: processor.getLogsResult(),
+    graphResult,
+    tableResult,
+    logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showingStartPage: false,
     update: makeInitialUpdateState(),
