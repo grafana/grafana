@@ -1,7 +1,30 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { FieldDisplay, ScopedVars, DataLinkBuiltInVars } from '@grafana/ui';
-import { LinkModelSupplier, getTimeField } from '@grafana/data';
+import { FieldDisplay, ScopedVars, ScopedVar } from '@grafana/ui';
+import { LinkModelSupplier, getTimeField, Labels } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
+
+interface SeriesVars {
+  name: string;
+  labels: Labels;
+  refId?: string;
+}
+
+interface FieldVars {
+  name: string;
+}
+
+interface ValueVars {
+  raw: number;
+  numeric: number;
+  text: string;
+  time?: number;
+}
+
+interface DataLinkScopedVars extends ScopedVars {
+  __series?: ScopedVar<SeriesVars>;
+  __field?: ScopedVar<FieldVars>;
+  __value?: ScopedVar<ValueVars>;
+}
 
 /**
  * Link suppliers creates link models based on a link origin
@@ -14,22 +37,18 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
   }
   return {
     getLinks: (_scopedVars?: any) => {
-      const scopedVars: ScopedVars = {};
+      const scopedVars: DataLinkScopedVars = {};
 
       if (value.view) {
         const { dataFrame } = value.view;
 
-        // scopedVars[DataLinkBuiltInVars.seriesName] = {
-        //   text: 'Series',
-        //   value: value.view.dataFrame.name,
-        // };
-        //
         scopedVars['__series'] = {
           value: {
             name: dataFrame.name,
             labels: dataFrame.labels,
+            refId: dataFrame.refId,
           },
-          text: '',
+          text: 'Series',
         };
 
         const field = value.colIndex !== undefined ? dataFrame.fields[value.colIndex] : undefined;
@@ -40,16 +59,22 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
             value: {
               name: field.name,
             },
-            text: '',
+            text: 'Field',
           };
         }
 
         if (value.rowIndex) {
           const { timeField } = getTimeField(dataFrame);
+
           if (timeField) {
-            scopedVars[DataLinkBuiltInVars.valueTime] = {
-              text: 'Value time',
-              value: timeField.values.get(value.rowIndex),
+            scopedVars['__value'] = {
+              value: {
+                raw: field.values.get(value.rowIndex),
+                numeric: value.display.numeric,
+                text: value.display.text,
+                time: timeField.values.get(value.rowIndex),
+              },
+              text: 'Value',
             };
           }
         }

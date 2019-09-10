@@ -428,9 +428,9 @@ export interface DataQueryError {
   cancelled?: boolean;
 }
 
-export interface ScopedVar {
+export interface ScopedVar<T = any> {
   text: any;
-  value: any;
+  value: T;
   [key: string]: any;
 }
 
