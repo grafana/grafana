@@ -4,6 +4,7 @@ import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 // Services & Utils
+import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
@@ -21,7 +22,7 @@ import {
   DataSourceJsonData,
 } from '@grafana/ui';
 
-import { TimeRange, DataTransformerConfig } from '@grafana/data';
+import { TimeRange, DataTransformerConfig, transformDataFrame } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -61,13 +62,30 @@ export class PanelQueryRunner {
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    * Here the caller can also control if transformations should be applied or not
    */
-  getData(format: PanelDataFormat = PanelDataFormat.Frames, applyTransforms = false): Observable<PanelData> {
-    return this.subject.pipe(map(postProcessPanelData(format)));
+  getData(format: PanelDataFormat = PanelDataFormat.Frames, applyTransforms = true): Observable<PanelData> {
+    const ensureFormats = postProcessPanelData(format);
+
+    return this.subject.pipe(
+      map((data: PanelData) => {
+        const transformedData = ensureFormats(data);
+
+        if (applyTransforms && this.hasTransformations()) {
+          const newSeries = transformDataFrame(this.transformations, transformedData.series);
+          return { ...transformedData, series: newSeries };
+        }
+
+        return transformedData;
+      })
+    );
+  }
+
+  hasTransformations() {
+    return config.featureToggles.transformations && this.transformations && this.transformations.length > 0;
   }
 
   /**
    * Useful when chaining PanelQueryRunners (for shared query results feature)
-   * To avoid double postProcessPanelData processing & transformations
+   * To avoid double post-processing & transformations
    */
   getDataRaw(): Observable<PanelData> {
     return this.subject.pipe();
@@ -162,7 +180,6 @@ export class PanelQueryRunner {
 
   setTransformations(transformations?: DataTransformerConfig[]) {
     this.transformations = transformations;
-    console.log(this.transformations);
   }
 
   /**
