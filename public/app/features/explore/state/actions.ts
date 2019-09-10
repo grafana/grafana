@@ -484,7 +484,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
           dispatch(stateSave());
         }
 
-        firstResponse = true;
+        firstResponse = false;
 
         dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
