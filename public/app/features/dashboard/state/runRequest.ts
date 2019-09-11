@@ -202,7 +202,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
     dataFrames.push(dataFrame);
   }
 
-  return results;
+  return dataFrames;
 }
 
 export function postProcessPanelData(format: PanelDataFormat) {
