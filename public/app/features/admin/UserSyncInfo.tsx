@@ -57,7 +57,7 @@ export class UserSyncInfo extends PureComponent<Props, State> {
             <tr>
               <td>Last synchronisation</td>
               <td>{prevSyncTime}</td>
-              {prevSyncSuccessful && <td>Successful</td>}
+              {prevSyncSuccessful && <td className="pull-right">Successful</td>}
             </tr>
           </tbody>
         </table>

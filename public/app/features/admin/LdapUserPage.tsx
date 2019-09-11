@@ -97,12 +97,12 @@ export class LdapUserPage extends PureComponent<Props, State> {
     const { user, ldapUser, userError, navModel, sessions, ldapSyncInfo } = this.props;
     const { isLoading } = this.state;
 
-    let userSyncInfo: LdapUserSyncInfo;
+    const userSyncInfo: LdapUserSyncInfo = {};
     if (ldapSyncInfo) {
-      userSyncInfo = {
-        nextSync: ldapSyncInfo.nextSync,
-        prevSync: null,
-      };
+      userSyncInfo.nextSync = ldapSyncInfo.nextSync;
+    }
+    if (user) {
+      userSyncInfo.prevSync = (user as any).updatedAt;
     }
 
     const tableStyle = css`

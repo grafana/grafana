@@ -18,8 +18,8 @@ export interface SyncInfo {
 }
 
 export interface LdapUserSyncInfo {
-  nextSync: string;
-  prevSync: string;
+  nextSync?: string;
+  prevSync?: string;
   status?: string;
 }
 
