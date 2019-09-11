@@ -8,6 +8,8 @@ import {
   AzureDataSourceJsonData,
   AzureMonitorMetricDefinitionsResponse,
   AzureMonitorResourceGroupsResponse,
+  AzureMonitorResourceResponse,
+  Resource,
 } from '../types';
 import { DataQueryRequest, DataQueryResponseData, DataSourceInstanceSettings } from '@grafana/ui';
 
@@ -337,12 +339,31 @@ export default class AzureMonitorDatasource {
     });
   }
 
+  async getResources(subscriptionIds: string[]): Promise<Array<Resource>> {
+    const responses: Array<Resource[]> = await Promise.all(
+      subscriptionIds.map(subscriptionId =>
+        this.doRequest(`${this.baseUrl}/${subscriptionId}/resources?api-version=2018-02-01`).then(
+          (res: AzureMonitorResourceResponse) =>
+            res.data.value
+              .map(r => ({
+                ...r,
+                group: /.*\/resourceGroups\/(.*?)\//.exec(r.id)[1], // /.*\/resourceGroups\/(.*)\//.test(r.id),
+                subscriptionId,
+              }))
+              .filter(({ type }) => this.supportedMetricNamespaces.includes(type))
+        )
+      )
+    );
+
+    return responses.reduce((result, resources) => [...result, ...resources], []);
+  }
+
   getMetricNames(
     subscriptionId: string,
     resourceGroup: string,
     metricDefinition: string,
     resourceName: string,
-    metricNamespace: string
+    metricNamespace?: string
   ) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.baseUrl,
@@ -350,8 +371,8 @@ export default class AzureMonitorDatasource {
       resourceGroup,
       metricDefinition,
       resourceName,
-      metricNamespace,
-      this.apiVersion
+      this.apiVersion,
+      metricNamespace
     );
 
     return this.doRequest(url).then((result: any) => {
@@ -373,8 +394,8 @@ export default class AzureMonitorDatasource {
       resourceGroup,
       metricDefinition,
       resourceName,
-      metricNamespace,
-      this.apiVersion
+      this.apiVersion,
+      metricNamespace
     );
 
     return this.doRequest(url).then((result: any) => {

@@ -29,8 +29,8 @@ export default class UrlBuilder {
     resourceGroup: string,
     metricDefinition: string,
     resourceName: string,
-    metricNamespace: string,
-    apiVersion: string
+    apiVersion: string,
+    metricNamespace?: string
   ) {
     if ((metricDefinition.match(/\//g) || []).length > 1) {
       const rn = resourceName.split('/');
@@ -44,11 +44,10 @@ export default class UrlBuilder {
       );
     }
 
+    const metricNameSpaceParam = metricNamespace ? `&metricnamespace=${encodeURIComponent(metricNamespace)}` : '';
     return (
       `${baseUrl}/${subscriptionId}/resourceGroups/${resourceGroup}/providers/${metricDefinition}/${resourceName}` +
-      `/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}&metricnamespace=${encodeURIComponent(
-        metricNamespace
-      )}`
+      `/providers/microsoft.insights/metricdefinitions?api-version=${apiVersion}${metricNameSpaceParam}`
     );
   }
 }

@@ -67,6 +67,24 @@ export interface AzureMonitorResourceGroupsResponse {
   statusText: string;
 }
 
+export interface Resource {
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  kind: string;
+  subscriptionId: string;
+  group: string;
+}
+
+export interface AzureMonitorResourceResponse {
+  data: {
+    value: Array<Resource>;
+    status: number;
+    statusText: string;
+  };
+}
+
 // Azure Log Analytics types
 export interface KustoSchema {
   Databases: { [key: string]: KustoDatabase };

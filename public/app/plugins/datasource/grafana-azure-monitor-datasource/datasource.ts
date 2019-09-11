@@ -163,7 +163,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     resourceGroup: string,
     metricDefinition: string,
     resourceName: string,
-    metricNamespace: string
+    metricNamespace?: string
   ) {
     return this.azureMonitorDatasource.getMetricNames(
       subscriptionId,
@@ -199,6 +199,10 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       metricNamespace,
       metricName
     );
+  }
+
+  getResources(subscriptions: string[]) {
+    return this.azureMonitorDatasource.getResources(subscriptions);
   }
 
   /* Application Insights API method */
