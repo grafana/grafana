@@ -16,13 +16,11 @@ import {
   PanelData,
   PanelDataFormat,
   DataQuery,
-  ScopedVars,
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
 } from '@grafana/ui';
-
-import { TimeRange, DataTransformerConfig, transformDataFrame } from '@grafana/data';
+import { TimeRange, DataTransformerConfig, transformDataFrame, ScopedVars } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,

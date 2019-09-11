@@ -250,11 +250,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       isUtc: dashboard.isTimezoneUtc && dashboard.isTimezoneUtc(),
     });
 
+    const sparkline: any[] = [];
     const data = {
       field: fieldInfo.field,
       value: val,
       display: processor(val),
       scopedVars: _.extend({}, panel.scopedVars),
+      sparkline,
     };
 
     data.scopedVars['__name'] = name;
@@ -262,7 +264,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     // Get the fields for a sparkline
     if (panel.sparkline && panel.sparkline.show && fieldInfo.frame.firstTimeField) {
-      this.data.sparkline = getFlotPairs({
+      data.sparkline = getFlotPairs({
         xField: fieldInfo.frame.firstTimeField,
         yField: fieldInfo.field,
         nullValueMode: panel.nullPointMode,
