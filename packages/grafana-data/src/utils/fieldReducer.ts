@@ -247,13 +247,17 @@ function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean
     // Just used for calcutations -- not exposed as a stat
     previousDeltaUp: true,
   } as FieldCalcs;
+
   const data = field.values;
+  calcs.count = data.length;
 
   for (let i = 0; i < data.length; i++) {
     let currentValue = data.get(i);
+
     if (i === 0) {
       calcs.first = currentValue;
     }
+
     calcs.last = currentValue;
 
     if (currentValue === null) {
