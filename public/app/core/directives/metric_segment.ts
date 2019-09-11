@@ -163,7 +163,6 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
       });
 
       $button.contextmenu(evt => {
-        // Select the full field name
         window.getSelection().selectAllChildren(evt.target);
       });
 
