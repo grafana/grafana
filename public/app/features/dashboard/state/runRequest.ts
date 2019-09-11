@@ -116,7 +116,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
         error: processQueryError(err),
       })
     ),
-    // finalize is triggered subscriber unsubscribes
+    // finalize is triggered when subscriber unsubscribes
     // This makes sure any still running network requests are cancelled
     finalize(cancelNetworkRequestsOnUnsubscribe(request)),
     // this makes it possible to share this observable in takeUntil

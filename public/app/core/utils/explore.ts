@@ -124,7 +124,6 @@ export function buildQueryTransaction(
     dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
     timezone: DefaultTimeZone,
-    // This is set to correct time later on before the query is actually run.
     startTime: Date.now(),
     interval,
     intervalMs,
