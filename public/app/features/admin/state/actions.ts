@@ -15,8 +15,9 @@ export const ldapConnectionInfoLoadedAction = actionCreatorFactory<LdapConnectio
   'ldap/CONNECTION_INFO_LOADED'
 ).create();
 export const ldapSyncStatusLoadedAction = actionCreatorFactory<SyncInfo>('ldap/SYNC_STATUS_LOADED').create();
-export const userInfoLoadedAction = actionCreatorFactory<LdapUser>('ldap/USER_INFO_LOADED').create();
-export const userInfoFailedAction = actionCreatorFactory<LdapError>('ldap/USER_INFO_FAILED').create();
+export const userMappingInfoLoadedAction = actionCreatorFactory<LdapUser>('ldap/USER_INFO_LOADED').create();
+export const userMappingInfoFailedAction = actionCreatorFactory<LdapError>('ldap/USER_INFO_FAILED').create();
+export const clearUserMappingInfoAction = noPayloadActionCreatorFactory('ldap/CLEAR_USER_MAPPING_INFO').create();
 export const clearUserError = noPayloadActionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
 export const userLoadedAction = actionCreatorFactory<User>('USER_LOADED').create();
 export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('USER_SESSIONS_LOADED').create();
@@ -42,15 +43,24 @@ export function loadLdapSyncStatus(): ThunkResult<void> {
 export function loadUserMapping(username: string): ThunkResult<void> {
   return async dispatch => {
     try {
+      dispatch(clearUserMappingInfoAction());
+      dispatch(clearUserError());
       const userInfo = await getUserInfo(username);
-      dispatch(userInfoLoadedAction(userInfo));
+      dispatch(userMappingInfoLoadedAction(userInfo));
     } catch (error) {
       const userError = {
         title: error.data.message,
         body: error.data.error,
       };
-      dispatch(userInfoFailedAction(userError));
+      dispatch(userMappingInfoFailedAction(userError));
     }
+  };
+}
+
+export function clearUserMappingInfo(): ThunkResult<void> {
+  return async dispatch => {
+    dispatch(clearUserError());
+    dispatch(clearUserMappingInfoAction());
   };
 }
 
@@ -66,6 +76,23 @@ export function syncUser(userId: number): ThunkResult<void> {
   };
 }
 
+export function loadLdapUserInfo(userId: number): ThunkResult<void> {
+  return async dispatch => {
+    try {
+      dispatch(clearUserError());
+      const user = await getUser(userId);
+      dispatch(userLoadedAction(user));
+      dispatch(loadUserMapping(user.login));
+    } catch (error) {
+      const userError = {
+        title: error.data.message,
+        body: error.data.error,
+      };
+      dispatch(userMappingInfoFailedAction(userError));
+    }
+  };
+}
+
 export function loadUser(userId: number): ThunkResult<void> {
   return async dispatch => {
     try {
@@ -77,7 +104,7 @@ export function loadUser(userId: number): ThunkResult<void> {
         title: error.data.message,
         body: error.data.error,
       };
-      dispatch(userInfoFailedAction(userError));
+      dispatch(userMappingInfoFailedAction(userError));
     }
   };
 }

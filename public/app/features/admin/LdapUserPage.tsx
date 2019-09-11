@@ -19,6 +19,7 @@ import {
 import {
   loadUserMapping,
   clearUserError,
+  loadLdapUserInfo,
   loadUser,
   loadUserSessions,
   revokeSession,
@@ -41,6 +42,7 @@ interface Props {
   userError?: LdapError;
   ldapSyncInfo?: SyncInfo;
 
+  loadLdapUserInfo: typeof loadLdapUserInfo;
   loadUser: typeof loadUser;
   loadUserMapping: typeof loadUserMapping;
   clearUserError: typeof clearUserError;
@@ -61,13 +63,10 @@ export class LdapUserPage extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const { userId, loadUser, loadUserMapping, loadUserSessions, loadLdapSyncStatus } = this.props;
+    const { userId, loadLdapUserInfo, loadLdapSyncStatus } = this.props;
     try {
-      await loadUser(userId);
-      await loadUserSessions(userId);
+      await loadLdapUserInfo(userId);
       await loadLdapSyncStatus();
-      const { user } = this.props;
-      await loadUserMapping(user.login);
     } finally {
       this.setState({ isLoading: false });
     }
@@ -169,6 +168,7 @@ const mapStateToProps = (state: StoreState) => ({
 });
 
 const mapDispatchToProps = {
+  loadLdapUserInfo,
   loadUserMapping,
   clearUserError,
   loadUser,

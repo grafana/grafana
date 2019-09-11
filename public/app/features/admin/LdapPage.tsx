@@ -11,7 +11,13 @@ import { LdapSyncInfo } from './LdapSyncInfo';
 import config from '../../core/config';
 import { getNavModel } from '../../core/selectors/navModel';
 import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo } from 'app/types';
-import { loadLdapState, loadLdapSyncStatus, loadUserMapping, clearUserError } from './state/actions';
+import {
+  loadLdapState,
+  loadLdapSyncStatus,
+  loadUserMapping,
+  clearUserError,
+  clearUserMappingInfo,
+} from './state/actions';
 import { LdapUserInfo } from './LdapUserInfo';
 
 interface Props {
@@ -26,6 +32,7 @@ interface Props {
   loadLdapSyncStatus: typeof loadLdapSyncStatus;
   loadUserMapping: typeof loadUserMapping;
   clearUserError: typeof clearUserError;
+  clearUserMappingInfo: typeof clearUserMappingInfo;
 }
 
 interface State {
@@ -38,6 +45,7 @@ export class LdapPage extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
+    await this.props.clearUserMappingInfo();
     await this.fetchLDAPStatus();
     this.setState({ isLoading: false });
   }
@@ -130,6 +138,7 @@ const mapDispatchToProps = {
   loadLdapSyncStatus,
   loadUserMapping,
   clearUserError,
+  clearUserMappingInfo,
 };
 
 export default hot(module)(

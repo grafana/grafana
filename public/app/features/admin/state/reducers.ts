@@ -2,12 +2,13 @@ import { reducerFactory } from 'app/core/redux';
 import { LdapState, LdapUserState } from 'app/types';
 import {
   ldapConnectionInfoLoadedAction,
-  userInfoLoadedAction,
-  userInfoFailedAction,
+  userMappingInfoLoadedAction,
+  userMappingInfoFailedAction,
   clearUserError,
   userLoadedAction,
   userSessionsLoadedAction,
   ldapSyncStatusLoadedAction,
+  clearUserMappingInfoAction,
 } from './actions';
 
 const initialLdapState: LdapState = {
@@ -41,18 +42,25 @@ const ldapReducer = reducerFactory(initialLdapState)
     }),
   })
   .addMapper({
-    filter: userInfoLoadedAction,
+    filter: userMappingInfoLoadedAction,
     mapper: (state, action) => ({
       ...state,
       user: action.payload,
     }),
   })
   .addMapper({
-    filter: userInfoFailedAction,
+    filter: userMappingInfoFailedAction,
     mapper: (state, action) => ({
       ...state,
       user: null,
       userError: action.payload,
+    }),
+  })
+  .addMapper({
+    filter: clearUserMappingInfoAction,
+    mapper: (state, action) => ({
+      ...state,
+      user: null,
     }),
   })
   .addMapper({
@@ -66,14 +74,14 @@ const ldapReducer = reducerFactory(initialLdapState)
 
 const ldapUserReducer = reducerFactory(initialLdapUserState)
   .addMapper({
-    filter: userInfoLoadedAction,
+    filter: userMappingInfoLoadedAction,
     mapper: (state, action) => ({
       ...state,
       ldapUser: action.payload,
     }),
   })
   .addMapper({
-    filter: userInfoFailedAction,
+    filter: userMappingInfoFailedAction,
     mapper: (state, action) => ({
       ...state,
       ldapUser: null,
