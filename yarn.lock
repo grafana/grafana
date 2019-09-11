@@ -12068,7 +12068,7 @@ module-alias@2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/module-alias/-/module-alias-2.2.0.tgz#a2e32275381642252bf0c51405f7a09a367479b5"
 
-moment@2.24.0:
+moment@2.24.0, moment@2.x:
   version "2.24.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.24.0.tgz#0d055d53f5052aa653c9f6eb68bb5d12bf5c2b5b"
 
@@ -14629,7 +14629,7 @@ qw@~1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/qw/-/qw-1.0.1.tgz#efbfdc740f9ad054304426acb183412cc8b996d4"
 
-raf@^3.1.0, raf@^3.4.0:
+raf@^3.1.0, raf@^3.4.0, raf@^3.4.1:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/raf/-/raf-3.4.1.tgz#0742e99a4a6552f445d73e3ee0328af0ff1ede39"
   dependencies:
@@ -14721,6 +14721,18 @@ rc-cascader@0.14.0:
     rc-util "^4.0.4"
     shallow-equal "^1.0.0"
     warning "^4.0.1"
+
+rc-time-picker@^3.7.2:
+  version "3.7.2"
+  resolved "https://registry.yarnpkg.com/rc-time-picker/-/rc-time-picker-3.7.2.tgz#fabe5501adf1374d31a2d3b47f1ba89fc2dc2467"
+  integrity sha512-UVWO9HXGyZoM4I2THlJsEAFcZQz+tYwdcpoHXCEFZsRLz9L2+7vV4EMp9Wa3UrtzMFEt83qSAX/90dCJeKl9sg==
+  dependencies:
+    classnames "2.x"
+    moment "2.x"
+    prop-types "^15.5.8"
+    raf "^3.4.1"
+    rc-trigger "^2.2.0"
+    react-lifecycles-compat "^3.0.4"
 
 rc-trigger@^2.2.0:
   version "2.6.2"
