@@ -6,7 +6,7 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { toLegacyResponseData, isDataFrame, TimeRange, LoadingState, DataFrame, toDataFrameDTO } from '@grafana/data';
+import { toLegacyResponseData, TimeRange, LoadingState, DataFrame, toDataFrameDTO } from '@grafana/data';
 
 import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
@@ -141,18 +141,12 @@ class MetricsPanelCtrl extends PanelCtrl {
       }
 
       if (this.useDataFrames) {
-        const legacy = data.series.map(v => {
-          if (isDataFrame(v)) {
-            return toLegacyResponseData(v);
-          }
-          return v;
-        });
-
-        // Make the results look like they came directly from a <6.2 datasource request
-        // NOTE: any object other than 'data' is no longer supported supported
-        this.handleQueryResult({ data: legacy });
-      } else {
         this.handleDataFrames(data.series);
+      } else {
+        // Make the results look as if they came directly from a <6.2 datasource request
+        const legacy = data.series.map(v => toLegacyResponseData(v));
+
+        this.handleQueryResult({ data: legacy });
       }
     },
   };

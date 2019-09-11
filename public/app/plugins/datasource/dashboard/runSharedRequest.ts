@@ -75,7 +75,6 @@ function getQueryError(msg: string): PanelData {
   return {
     state: LoadingState.Error,
     series: [],
-    legacy: [],
     error: { message: msg },
   };
 }
