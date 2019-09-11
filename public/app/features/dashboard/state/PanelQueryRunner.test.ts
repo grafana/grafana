@@ -50,7 +50,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
       scopedVars: {
         server: { text: 'Server1', value: 'server-1' },
       },
-      runner: new PanelQueryRunner(1),
+      runner: new PanelQueryRunner(),
       setup: (fn: () => void) => {
         setupFn = fn;
       },
@@ -88,7 +88,7 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         queries: [{ refId: 'A', test: 1 }],
       };
 
-      ctx.runner = new PanelQueryRunner(1);
+      ctx.runner = new PanelQueryRunner();
       ctx.runner.getData().subscribe({
         next: (data: PanelData) => {
           ctx.res = data;
