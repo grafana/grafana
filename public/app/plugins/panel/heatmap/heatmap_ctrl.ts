@@ -17,6 +17,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { LegacyResponseData } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 import { DataFrame, getTimeField, FieldType } from '@grafana/data';
+import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
 const Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -133,6 +134,9 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.opacityScales = opacityScales;
     this.colorModes = colorModes;
     this.colorSchemes = colorSchemes;
+
+    // Use DataFrames
+    this.dataFormat = PanelQueryRunnerFormat.frames;
 
     // Bind grafana panel events
     this.events.on('render', this.onRender.bind(this));
