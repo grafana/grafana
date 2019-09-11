@@ -21,7 +21,6 @@ export class UserSyncInfo extends PureComponent<Props, State> {
   };
 
   handleSyncClick = async () => {
-    console.log('Sync now');
     const { onSync } = this.props;
     this.setState({ isSyncing: true });
     try {
