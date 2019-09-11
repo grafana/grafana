@@ -188,8 +188,7 @@ describe('runRequest', () => {
     ctx.setup(async () => {
       ctx.start();
       // wait a bit
-      await sleep(20);
-
+      await sleep(250);
       ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
     });
 
