@@ -20,7 +20,7 @@ import config from 'app/core/config';
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
 import { DataQuery, DataSourceSelectItem, PanelData, AlphaNotice, PluginState } from '@grafana/ui';
-import { LoadingState, DataTransformerConfig, toLegacyResponseData, isDataFrame } from '@grafana/data';
+import { LoadingState, DataTransformerConfig, toLegacyResponseData } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
@@ -75,7 +75,8 @@ export class QueriesTab extends PureComponent<Props, State> {
   }
 
   onPanelDataUpdate(data: PanelData) {
-    console.log('got data', data);
+    // Does the *panel* type matter?  I would think only
+    // the datasource type matters...
     if (!this.props.panel.isAngularPlugin()) {
       this.notifyAngularQueryEditorsOfData(data);
     }
@@ -90,12 +91,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       if (data.state === LoadingState.Error) {
         panel.events.emit('data-error', data.error);
       } else if (data.state === LoadingState.Done) {
-        const legacy = data.series.map(v => {
-          if (isDataFrame(v)) {
-            return toLegacyResponseData(v);
-          }
-          return v;
-        });
+        const legacy = data.series.map(v => toLegacyResponseData(v));
         panel.events.emit('data-received', legacy);
       }
     } catch (err) {
