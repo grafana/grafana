@@ -185,23 +185,33 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       target.requestId = options.panelId + target.refId;
 
-      if (target.context === PromContext.Explore) {
-        target.format = 'time_series';
-        target.instant = false;
+      if (target.context !== PromContext.Explore) {
+        activeTargets.push(target);
+        queries.push(this.createQuery(target, options, start, end));
+        continue;
+      }
 
+      if (target.showingTable) {
+        // create instant target only if Table is showed in Explore
         const instantTarget: any = _.cloneDeep(target);
         instantTarget.format = 'table';
         instantTarget.instant = true;
         instantTarget.valueWithRefId = true;
         delete instantTarget.maxDataPoints;
-
         instantTarget.requestId += '_instant';
+
         activeTargets.push(instantTarget);
         queries.push(this.createQuery(instantTarget, options, start, end));
       }
 
-      activeTargets.push(target);
-      queries.push(this.createQuery(target, options, start, end));
+      if (target.showingGraph) {
+        // create time series target only if Graph is showed in Explore
+        target.format = 'time_series';
+        target.instant = false;
+
+        activeTargets.push(target);
+        queries.push(this.createQuery(target, options, start, end));
+      }
     }
 
     return {
@@ -220,9 +230,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return of({ data: [] });
     }
 
+    const allInstant = queries.filter(query => query.instant).length === queries.length;
+    const allTimeSeries = queries.filter(query => !query.instant).length === queries.length;
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
       let observable: Observable<any> = null;
+      const state: LoadingState =
+        allInstant || allTimeSeries ? LoadingState.Done : query.instant ? LoadingState.Loading : LoadingState.Done;
 
       if (query.instant) {
         observable = from(this.performInstantQuery(query, end));
@@ -237,7 +251,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           return {
             data,
             key: query.requestId,
-            state: query.instant ? LoadingState.Loading : LoadingState.Done,
+            state,
           } as DataQueryResponse;
         })
       );

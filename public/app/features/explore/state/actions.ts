@@ -82,7 +82,6 @@ import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import _ from 'lodash';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { runRequest, postProcessPanelData } from '../../dashboard/state/runRequest';
@@ -450,6 +449,8 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       querySubscription,
       history,
       mode,
+      showingGraph,
+      showingTable,
     } = exploreItemState;
 
     if (datasourceError) {
@@ -475,6 +476,8 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       // TODO: not sure if this makes sense for normal query when using both graph and table
       maxDataPoints: mode === ExploreMode.Logs ? 1000 : containerWidth,
       live,
+      showingGraph,
+      showingTable,
     };
 
     const datasourceId = datasourceInstance.meta.id;
