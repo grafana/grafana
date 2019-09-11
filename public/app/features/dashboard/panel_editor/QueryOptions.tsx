@@ -165,66 +165,94 @@ export class QueryOptions extends PureComponent<Props, State> {
     const { datasource } = this.props;
     const queryOptions: any = datasource.meta.queryOptions || {};
 
-    return Object.keys(this.allOptions).map(key => {
-      const options = this.allOptions[key];
-      const panelKey = options.panelKey || key;
-      // @ts-ignore
-      const value = this.state[panelKey];
-      if (value || queryOptions[key]) {
-        return (
-          <DataSourceOption
-            key={key}
-            {...options}
-            onChange={this.onDataSourceOptionChange(panelKey)}
-            onBlur={this.onDataSourceOptionBlur(panelKey)}
-            value={value}
-          />
-        );
-      }
-      return null; // nothing to render
-    });
+    if (queryOptions.minInterval) {
+      return (
+        <div className="gf-form-query">
+          <div className="gf-form">
+            <label className="gf-form-label width-9">Max data points</label>
+            <label className="gf-form-label query-segment-operator">=</label>
+            <label className="gf-form-label muted width-4">1023</label>
+            <label className="gf-form-label query-segment-operator">=</label>
+            <label className="gf-form-label width-15">
+              Pixel width of panel <i className="muted fa fa-caret-down" />
+            </label>
+          </div>
+
+          <div className="gf-form">
+            <label className="gf-form-label width-9">Min interval/step</label>
+            <label className="gf-form-label query-segment-operator">=</label>
+            {/* <label className="gf-form-label">interval from datasource settings (15s)</label> */}
+            <label className="gf-form-label muted width-4">5m</label>
+            <label className="gf-form-label query-segment-operator">=</label>
+            <label className="gf-form-label width-15">
+              Time range / Max data points <i className="muted fa fa-caret-down" />
+            </label>
+          </div>
+        </div>
+      );
+    }
+
+    // return Object.keys(this.allOptions).map(key => {
+    //   const options = this.allOptions[key];
+    //   const panelKey = options.panelKey || key;
+    //   // @ts-ignore
+    //   const value = this.state[panelKey];
+    //   if (value || queryOptions[key]) {
+    //     return (
+    //       <DataSourceOption
+    //         key={key}
+    //         {...options}
+    //         onChange={this.onDataSourceOptionChange(panelKey)}
+    //         onBlur={this.onDataSourceOptionBlur(panelKey)}
+    //         value={value}
+    //       />
+    //     );
+    //   }
+    //   return null; // nothing to render
+    // });
   };
 
   render() {
     const { hideTimeOverride } = this.state;
     const { relativeTime, timeShift } = this.state;
     return (
-      <div className="gf-form-inline">
+      <>
         {this.renderOptions()}
-
-        <div className="gf-form">
-          <FormLabel>Relative time</FormLabel>
-          <Input
-            type="text"
-            className="width-6"
-            placeholder="1h"
-            onChange={this.onRelativeTimeChange}
-            onBlur={this.onOverrideTime}
-            validationEvents={timeRangeValidationEvents}
-            hideErrorMessage={true}
-            value={relativeTime}
-          />
+        <div className="gf-form-inline">
+          {/* <div className="gf-form"> */}
+          {/*   <FormLabel>Relative time</FormLabel> */}
+          {/*   <Input */}
+          {/*     type="text" */}
+          {/*     className="width-6" */}
+          {/*     placeholder="1h" */}
+          {/*     onChange={this.onRelativeTimeChange} */}
+          {/*     onBlur={this.onOverrideTime} */}
+          {/*     validationEvents={timeRangeValidationEvents} */}
+          {/*     hideErrorMessage={true} */}
+          {/*     value={relativeTime} */}
+          {/*   /> */}
+          {/* </div> */}
+          {/*  */}
+          {/* <div className="gf-form"> */}
+          {/*   <span className="gf-form-label">Time shift</span> */}
+          {/*   <Input */}
+          {/*     type="text" */}
+          {/*     className="width-6" */}
+          {/*     placeholder="1h" */}
+          {/*     onChange={this.onTimeShiftChange} */}
+          {/*     onBlur={this.onTimeShift} */}
+          {/*     validationEvents={timeRangeValidationEvents} */}
+          {/*     hideErrorMessage={true} */}
+          {/*     value={timeShift} */}
+          {/*   /> */}
+          {/* </div> */}
+          {/* {(timeShift || relativeTime) && ( */}
+          {/*   <div className="gf-form-inline"> */}
+          {/*     <Switch label="Hide time info" checked={hideTimeOverride} onChange={this.onToggleTimeOverride} /> */}
+          {/*   </div> */}
+          {/* )} */}
         </div>
-
-        <div className="gf-form">
-          <span className="gf-form-label">Time shift</span>
-          <Input
-            type="text"
-            className="width-6"
-            placeholder="1h"
-            onChange={this.onTimeShiftChange}
-            onBlur={this.onTimeShift}
-            validationEvents={timeRangeValidationEvents}
-            hideErrorMessage={true}
-            value={timeShift}
-          />
-        </div>
-        {(timeShift || relativeTime) && (
-          <div className="gf-form-inline">
-            <Switch label="Hide time info" checked={hideTimeOverride} onChange={this.onToggleTimeOverride} />
-          </div>
-        )}
-      </div>
+      </>
     );
   }
 }

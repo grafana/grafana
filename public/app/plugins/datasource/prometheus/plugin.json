@@ -25,7 +25,8 @@
   "alerting": true,
   "annotations": true,
   "queryOptions": {
-    "minInterval": true
+    "minInterval": true,
+    "maxDataPoints": true
   },
   "info": {
     "description": "Open source time series database & alerting",

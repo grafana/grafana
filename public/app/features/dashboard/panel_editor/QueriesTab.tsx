@@ -277,7 +277,7 @@ export class QueriesTab extends PureComponent<Props, State> {
                   />
                 ))}
               </div>
-              <PanelOptionsGroup>
+              <PanelOptionsGroup title="Options">
                 <QueryOptions panel={panel} datasource={currentDS} />
               </PanelOptionsGroup>
             </>
