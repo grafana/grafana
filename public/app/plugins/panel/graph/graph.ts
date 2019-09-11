@@ -243,10 +243,11 @@ class GraphElement {
           decimals: yAxisConfig.decimals,
           links: this.panel.options.dataLinks || [],
         };
+        const dataFrame = this.ctrl.dataList[item.series.dataFrameIndex];
 
         // get current series display values
         const displayValues = getFieldDisplayValues({
-          data: [item.series.view.data],
+          data: [dataFrame],
           fieldOptions: {
             values: true,
             limit: Infinity, // give me all you have
