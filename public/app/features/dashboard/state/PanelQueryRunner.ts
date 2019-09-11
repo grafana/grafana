@@ -12,9 +12,8 @@ import { runRequest, postProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
 
 // Types
-import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
-
-import { TimeRange, DataTransformerConfig, transformDataFrame } from '@grafana/data';
+import { PanelData, DataQuery, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
+import { TimeRange, DataTransformerConfig, transformDataFrame, ScopedVars } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,

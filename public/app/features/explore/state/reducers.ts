@@ -53,6 +53,7 @@ import {
   QueryEndedPayload,
   queryStoreSubscriptionAction,
   setPausedStateAction,
+  toggleGraphAction,
 } from './actionTypes';
 import { reducerFactory, ActionOf } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
@@ -436,14 +437,25 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
+    filter: toggleGraphAction,
+    mapper: (state): ExploreItemState => {
+      const showingGraph = !state.showingGraph;
+      if (showingGraph) {
+        return { ...state, showingGraph };
+      }
+
+      return { ...state, showingGraph, graphResult: null };
+    },
+  })
+  .addMapper({
     filter: toggleTableAction,
     mapper: (state): ExploreItemState => {
       const showingTable = !state.showingTable;
       if (showingTable) {
-        return { ...state };
+        return { ...state, showingTable };
       }
 
-      return { ...state, tableResult: new TableModel() };
+      return { ...state, showingTable, tableResult: new TableModel() };
     },
   })
   .addMapper({

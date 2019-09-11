@@ -1,6 +1,6 @@
 import { ComponentClass, ComponentType } from 'react';
-import { LoadingState, DataFrame, TimeRange, TimeZone } from '@grafana/data';
-import { ScopedVars, DataQueryRequest, DataQueryError } from './datasource';
+import { LoadingState, DataFrame, TimeRange, TimeZone, ScopedVars } from '@grafana/data';
+import { DataQueryRequest, DataQueryError } from './datasource';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;

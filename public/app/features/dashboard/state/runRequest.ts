@@ -107,7 +107,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
         error: processQueryError(err),
       })
     ),
-    // finalize is triggered subscriber unsubscribes
+    // finalize is triggered when subscriber unsubscribes
     // This makes sure any still running network requests are cancelled
     finalize(cancelNetworkRequestsOnUnsubscribe(request)),
     // this makes it possible to share this observable in takeUntil
@@ -118,7 +118,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
   // mapTo will translate the timer event into state.panelData (which has state set to loading)
   // takeUntil will cancel the timer emit when first response packet is received on the dataObservable
   return merge(
-    timer(50).pipe(
+    timer(200).pipe(
       mapTo(state.panelData),
       takeUntil(dataObservable)
     ),
@@ -171,14 +171,20 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
     return [];
   }
 
-  const series: DataFrame[] = [];
-  for (const r of results) {
-    if (r) {
-      series.push(guessFieldTypes(toDataFrame(r)));
+  const dataFrames: DataFrame[] = [];
+
+  for (const result of results) {
+    const dataFrame = guessFieldTypes(toDataFrame(result));
+
+    // clear out any cached calcs
+    for (const field of dataFrame.fields) {
+      field.calcs = null;
     }
+
+    dataFrames.push(dataFrame);
   }
 
-  return series;
+  return dataFrames;
 }
 
 export function postProcessPanelData() {

@@ -160,10 +160,10 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('If no response after 50ms', ctx => {
+  runRequestScenario('If no response after 250ms', ctx => {
     ctx.setup(async () => {
       ctx.start();
-      await sleep(80);
+      await sleep(250);
     });
 
     it('should emit 1 result with loading state', () => {
