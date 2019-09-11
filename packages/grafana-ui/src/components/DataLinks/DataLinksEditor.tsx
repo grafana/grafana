@@ -19,7 +19,7 @@ interface DataLinksEditorProps {
 
 Prism.languages['links'] = {
   builtInVariable: {
-    pattern: /(\${\w+})/,
+    pattern: /(\${\S+?})/,
   },
 };
 
