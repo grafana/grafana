@@ -14,6 +14,9 @@ import {
 } from './heatmap_data_converter';
 import { auto } from 'angular';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { LegacyResponseData } from '@grafana/ui';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
+import { DataFrame, getTimeField, FieldType } from '@grafana/data';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
 const Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -114,7 +117,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   selectionActivated: boolean;
   unitFormats: any;
   data: any;
-  series: any[];
+  series: TimeSeries[];
   timeSrv: any;
   dataWarning: any;
   decimals: number;
@@ -134,6 +137,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     // Bind grafana panel events
     this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
+    this.events.on('data-frames-received', this.onDataFramesReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
@@ -279,8 +283,14 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     }
   }
 
-  onDataReceived(dataList: any) {
-    this.series = dataList.map(this.seriesHandler.bind(this));
+  // This should only be called from the snapshot callback
+  onDataReceived(dataList: LegacyResponseData[]) {
+    this.onDataFramesReceived(getProcessedDataFrames(dataList));
+  }
+
+  // Directly support DataFrame skipping event callbacks
+  onDataFramesReceived(data: DataFrame[]) {
+    this.series = this.framesToTimeSeries(data);
 
     this.dataWarning = null;
     const datapointsCount = _.reduce(
@@ -321,31 +331,53 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  seriesHandler(dataFrame: any) {
-    if (dataFrame.datapoints === undefined) {
-      throw new Error('Heatmap error: data should be a time series');
-    }
+  framesToTimeSeries(dataFrames: DataFrame[]): TimeSeries[] {
+    const allSeries: TimeSeries[] = [];
+    for (const frame of dataFrames) {
+      const { timeField } = getTimeField(frame);
+      if (!timeField) {
+        continue;
+      }
 
-    const series = new TimeSeries({
-      datapoints: dataFrame.datapoints,
-      alias: dataFrame.target,
-    });
+      const seriesName = frame.name ? frame.name : frame.refId;
+      for (const field of frame.fields) {
+        if (field.type !== FieldType.number) {
+          continue;
+        }
 
-    series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
+        let name = field.config && field.config.title ? field.config.title : field.name;
 
-    const datapoints = dataFrame.datapoints || [];
-    if (datapoints && datapoints.length > 0) {
-      const last = datapoints[datapoints.length - 1][1];
-      const from = this.range.from;
-      if (last - from.valueOf() < -10000) {
-        series.isOutsideRange = true;
+        if (seriesName && name !== seriesName) {
+          name = seriesName + ' ' + name;
+        }
+
+        const datapoints: any[] = [];
+        for (let r = 0; r < frame.length; r++) {
+          datapoints.push([field.values.get(r), timeField.values.get(r)]);
+        }
+
+        const series = new TimeSeries({
+          datapoints,
+          alias: name,
+        });
+
+        series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
+
+        if (datapoints && datapoints.length > 0) {
+          const last = datapoints[datapoints.length - 1][1];
+          const from = this.range.from;
+          if (last - from.valueOf() < -10000) {
+            series.isOutsideRange = true;
+          }
+        }
+
+        allSeries.push(series);
       }
     }
-
-    return series;
+    return allSeries;
   }
 
-  parseSeries(series: any[]) {
+  parseSeries(series: TimeSeries[]) {
     const min = _.min(_.map(series, s => s.stats.min));
     const minLog = _.min(_.map(series, s => s.stats.logmin));
     const max = _.max(_.map(series, s => s.stats.max));
@@ -357,7 +389,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     };
   }
 
-  parseHistogramSeries(series: any[]) {
+  parseHistogramSeries(series: TimeSeries[]) {
     const bounds = _.map(series, s => Number(s.alias));
     const min = _.min(bounds);
     const minLog = _.min(bounds);
