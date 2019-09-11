@@ -24,9 +24,9 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat, ContextMenuGroup, FieldDisplay, ContextMenuItem, getFieldDisplayValues } from '@grafana/ui';
+import { getValueFormat, ContextMenuGroup, FieldDisplay, ContextMenuItem, getDisplayProcessor } from '@grafana/ui';
 import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc, LinkModelSupplier } from '@grafana/data';
+import { toUtc, LinkModelSupplier, DataFrameView, FieldCache } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -239,33 +239,29 @@ class GraphElement {
       if (item) {
         // pickup y-axis index to know which field's config to apply
         const yAxisConfig = this.panel.yaxes[item.series.yaxis.n === 2 ? 1 : 0];
-        const fieldOptions = {
+        const fieldConfig = {
           decimals: yAxisConfig.decimals,
           links: this.panel.options.dataLinks || [],
         };
         const dataFrame = this.ctrl.dataList[item.series.dataFrameIndex];
+        const cache = new FieldCache(dataFrame);
+        const field = cache.getFieldByName(item.series.fieldName);
 
-        // get current series display values
-        const displayValues = getFieldDisplayValues({
-          data: [dataFrame],
-          fieldOptions: {
-            values: true,
-            limit: Infinity, // give me all you have
-            calcs: [],
-            defaults: fieldOptions,
-            override: {},
-          },
-          // don't interpolate anything for now
-          replaceVariables: value => value,
+        const fieldDisplay = getDisplayProcessor({
+          config: fieldConfig,
           theme: getCurrentTheme(),
-        }).filter(f => {
-          // get row corresponding to the clicked item
-          return f.rowIndex === item.dataIndex;
-        });
+        })(field.values.get(item.dataIndex));
 
-        // pickup the field that the item represents
-        const field = displayValues.filter(field => field.name === item.series.fieldName)[0];
-        linksSupplier = this.panel.options.dataLinks ? getFieldLinksSupplier(field) : undefined;
+        linksSupplier = this.panel.options.dataLinks
+          ? getFieldLinksSupplier({
+              display: fieldDisplay,
+              name: item.series.fieldName,
+              view: new DataFrameView(dataFrame),
+              rowIndex: item.dataIndex,
+              colIndex: field.index,
+              field: fieldConfig,
+            })
+          : undefined;
       }
 
       this.scope.$apply(() => {
