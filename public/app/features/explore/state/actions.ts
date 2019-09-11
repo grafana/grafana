@@ -1,5 +1,5 @@
 // Libraries
-import { map } from 'rxjs/operators';
+import { map, throttleTime } from 'rxjs/operators';
 // Services & Utils
 import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -85,6 +85,7 @@ import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { runRequest, postProcessPanelData } from '../../dashboard/state/runRequest';
+import { identity } from 'rxjs';
 
 /**
  * Updates UI state and save it to the URL
@@ -486,7 +487,13 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     let firstResponse = true;
 
     const newQuerySub = runRequest(datasourceInstance, transaction.request)
-      .pipe(map(postProcessPanelData(PanelDataFormat.Both)))
+      .pipe(
+        map(postProcessPanelData(PanelDataFormat.Both)),
+        // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
+        // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
+        // actually can see what is happening.
+        live ? throttleTime(500) : identity
+      )
       .subscribe((data: PanelData) => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage

@@ -1,26 +1,25 @@
 // Libraries
 import { cloneDeep } from 'lodash';
-import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-
+import { interval, merge, Observable, ReplaySubject, Unsubscribable } from 'rxjs';
+import { delay, filter, map, share, tap, throttle } from 'rxjs/operators';
 // Services & Utils
 import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-import { runRequest, postProcessPanelData } from './runRequest';
-import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
-
+import { postProcessPanelData, runRequest } from './runRequest';
+import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
 // Types
 import {
-  PanelData,
-  PanelDataFormat,
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
+  PanelData,
+  PanelDataFormat,
 } from '@grafana/ui';
-import { TimeRange, DataTransformerConfig, transformDataFrame, ScopedVars } from '@grafana/data';
+import { DataTransformerConfig, ScopedVars, TimeRange, transformDataFrame } from '@grafana/data';
+import { LoadingState } from '@grafana/data/src/types/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -158,7 +157,20 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      this.pipeToSubject(runRequest(ds, request));
+      const reqObservable = runRequest(ds, request);
+      this.pipeToSubject(
+        reqObservable.pipe(
+          throttle(
+            ev => {
+              return merge(
+                interval(1000),
+                reqObservable.pipe(filter((data: PanelData) => data.state === LoadingState.Done))
+              );
+            },
+            { leading: false, trailing: true }
+          )
+        )
+      );
     } catch (err) {
       console.log('PanelQueryRunner Error', err);
     }

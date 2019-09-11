@@ -1,29 +1,32 @@
 // Libraries
-import { Observable, of, timer, merge, from } from 'rxjs';
-import { flatten, map as lodashMap, isArray, isString } from 'lodash';
-import { map, catchError, takeUntil, mapTo, share, finalize } from 'rxjs/operators';
+import { from, merge, Observable, of, timer } from 'rxjs';
+import { flatten, isArray, isString, map as lodashMap } from 'lodash';
+import { catchError, finalize, map, mapTo, share, takeUntil } from 'rxjs/operators';
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
 // Types
 import {
-  DataSourceApi,
+  DataQueryError,
   DataQueryRequest,
-  PanelData,
-  PanelDataFormat,
   DataQueryResponse,
   DataQueryResponseData,
-  DataQueryError,
+  DataSourceApi,
+  PanelData,
+  PanelDataFormat,
 } from '@grafana/ui';
 
 import {
-  LoadingState,
-  dateMath,
-  toDataFrame,
   DataFrame,
-  isDataFrame,
-  toLegacyResponseData,
+  dateMath,
   guessFieldTypes,
+  isDataFrame,
+  LoadingState,
+  toDataFrame,
+  toLegacyResponseData,
 } from '@grafana/data';
+
+// In case of only one response we just make up a dummy key
+const DUMMY_KEY = 'A';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -41,7 +44,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     ...state.packets,
   };
 
-  packets[packet.key || 'A'] = packet;
+  packets[packet.key || DUMMY_KEY] = packet;
 
   // Update the time range
   let timeRange = request.range;
@@ -59,8 +62,16 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     })
   );
 
+  // In packets we only have data from requests that already returned some data. We could prefill them with some
+  // initial value, but we do not know the key of returned packet from the request so we would not be able to match
+  // the packet to the initialised dummy values.
+  const packetStates = Object.values(packets).map(p => p.state);
+  if (packetStates.length < request.targets.length) {
+    packetStates.push(...new Array(request.targets.length - packetStates.length).fill(LoadingState.Loading));
+  }
+
   const panelData = {
-    state: packet.state || LoadingState.Done,
+    state: getCombinedState(packetStates),
     series: combinedData,
     request: {
       ...request,
@@ -69,6 +80,28 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   };
 
   return { packets, panelData };
+}
+
+function getCombinedState(states: LoadingState[]) {
+  if (states.includes(LoadingState.Error)) {
+    return LoadingState.Error;
+  }
+
+  if (states.includes(LoadingState.Streaming)) {
+    return LoadingState.Streaming;
+  }
+
+  if (states.includes(LoadingState.Loading)) {
+    return LoadingState.Loading;
+  }
+  if (states.filter(s => s !== LoadingState.Done).length === 0) {
+    return LoadingState.Done;
+  }
+  if (states.filter(s => s !== LoadingState.NotStarted).length === 0) {
+    return LoadingState.NotStarted;
+  }
+  // This should only a case when there are some Done and some NotStarted. Not sure if that's real possibility
+  return LoadingState.Loading;
 }
 
 /**
@@ -86,7 +119,12 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
       series: [],
       request: request,
     },
-    packets: {},
+    packets: {
+      C: {
+        state: LoadingState.Loading,
+        data: [],
+      },
+    },
   };
 
   // Return early if there are no queries to run
