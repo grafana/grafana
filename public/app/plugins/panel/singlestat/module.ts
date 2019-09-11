@@ -240,7 +240,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     const processor = getDisplayProcessor({
-      field: {
+      config: {
         ...fieldInfo.field.config,
         unit: panel.format,
         decimals: panel.decimals,

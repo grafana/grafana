@@ -127,7 +127,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         scopedVars['__field'] = { text: 'Field', value: { name } };
 
         const display = getDisplayProcessor({
-          field: config,
+          config,
           theme: options.theme,
         });
 
