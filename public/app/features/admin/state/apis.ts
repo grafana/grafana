@@ -42,6 +42,10 @@ export const getLdapSyncStatus = async (): Promise<SyncInfo> => {
   return await getBackendSrv().get(`/api/admin/ldap-sync-status`);
 };
 
+export const syncLdapUser = async (userId: number) => {
+  return await getBackendSrv().post(`/api/admin/ldap/sync/${userId}`);
+};
+
 export const getUserInfo = async (username: string): Promise<LdapUser> => {
   try {
     const response = await getBackendSrv().get(`/api/admin/ldap/${username}`);

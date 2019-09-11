@@ -3,6 +3,7 @@ import { ThunkResult, SyncInfo, LdapUser, LdapConnectionInfo, LdapError, UserSes
 import {
   getUserInfo,
   getLdapState,
+  syncLdapUser,
   getUser,
   getUserSessions,
   revokeUserSession,
@@ -19,6 +20,8 @@ export const userInfoFailedAction = actionCreatorFactory<LdapError>('ldap/USER_I
 export const clearUserError = noPayloadActionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
 export const userLoadedAction = actionCreatorFactory<User>('USER_LOADED').create();
 export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('USER_SESSIONS_LOADED').create();
+export const userSyncedAction = noPayloadActionCreatorFactory('USER_SYNCED').create();
+export const userSyncFailedAction = noPayloadActionCreatorFactory('USER_SYNC_FAILED').create();
 export const revokeUserSessionAction = noPayloadActionCreatorFactory('REVOKE_USER_SESSION').create();
 export const revokeAllUserSessionsAction = noPayloadActionCreatorFactory('REVOKE_ALL_USER_SESSIONS').create();
 
@@ -47,6 +50,18 @@ export function loadUserMapping(username: string): ThunkResult<void> {
         body: error.data.error,
       };
       dispatch(userInfoFailedAction(userError));
+    }
+  };
+}
+
+export function syncUser(userId: number): ThunkResult<void> {
+  return async dispatch => {
+    try {
+      // await syncLdapUser(userId);
+      dispatch(loadUser(userId));
+      dispatch(loadLdapSyncStatus());
+    } catch (error) {
+      dispatch(userSyncFailedAction());
     }
   };
 }

@@ -21,6 +21,7 @@ const initialLdapState: LdapState = {
 const initialLdapUserState: LdapUserState = {
   user: null,
   ldapUser: null,
+  ldapSyncInfo: null,
   sessions: [],
 };
 
@@ -84,6 +85,13 @@ const ldapUserReducer = reducerFactory(initialLdapUserState)
     mapper: state => ({
       ...state,
       userError: null,
+    }),
+  })
+  .addMapper({
+    filter: ldapSyncStatusLoadedAction,
+    mapper: (state, action) => ({
+      ...state,
+      ldapSyncInfo: action.payload,
     }),
   })
   .addMapper({

@@ -17,6 +17,12 @@ export interface SyncInfo {
   prevSync?: SyncResult;
 }
 
+export interface LdapUserSyncInfo {
+  nextSync: string;
+  prevSync: string;
+  status?: string;
+}
+
 export interface SyncResult {
   started: string;
   elapsed: string;
@@ -82,6 +88,7 @@ export interface LdapState {
 export interface LdapUserState {
   user?: User;
   ldapUser?: LdapUser;
+  ldapSyncInfo?: SyncInfo;
   sessions?: UserSession[];
   userError?: LdapError;
 }

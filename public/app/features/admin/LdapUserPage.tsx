@@ -6,7 +6,16 @@ import { NavModel } from '@grafana/data';
 import Page from '../../core/components/Page/Page';
 import { AlertBox } from '../../core/components/AlertBox/AlertBox';
 import { getNavModel } from '../../core/selectors/navModel';
-import { AppNotificationSeverity, LdapError, LdapUser, StoreState, User, UserSession } from 'app/types';
+import {
+  AppNotificationSeverity,
+  LdapError,
+  LdapUser,
+  StoreState,
+  User,
+  UserSession,
+  SyncInfo,
+  LdapUserSyncInfo,
+} from 'app/types';
 import {
   loadUserMapping,
   clearUserError,
@@ -14,11 +23,14 @@ import {
   loadUserSessions,
   revokeSession,
   revokeAllSessions,
+  loadLdapSyncStatus,
+  syncUser,
 } from './state/actions';
 import { LdapUserInfo } from './LdapUserInfo';
 import { getRouteParamsId } from 'app/core/selectors/location';
 import { UserSessions } from './UserSessions';
 import { UserInfo } from './UserInfo';
+import { UserSyncInfo } from './UserSyncInfo';
 
 interface Props {
   navModel: NavModel;
@@ -27,10 +39,13 @@ interface Props {
   sessions: UserSession[];
   ldapUser: LdapUser;
   userError?: LdapError;
+  ldapSyncInfo?: SyncInfo;
 
   loadUser: typeof loadUser;
   loadUserMapping: typeof loadUserMapping;
   clearUserError: typeof clearUserError;
+  loadLdapSyncStatus: typeof loadLdapSyncStatus;
+  syncUser: typeof syncUser;
   loadUserSessions: typeof loadUserSessions;
   revokeSession: typeof revokeSession;
   revokeAllSessions: typeof revokeAllSessions;
@@ -46,10 +61,11 @@ export class LdapUserPage extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const { userId, loadUser, loadUserMapping, loadUserSessions } = this.props;
+    const { userId, loadUser, loadUserMapping, loadUserSessions, loadLdapSyncStatus } = this.props;
     try {
       await loadUser(userId);
       await loadUserSessions(userId);
+      await loadLdapSyncStatus();
       const { user } = this.props;
       await loadUserMapping(user.login);
     } finally {
@@ -59,6 +75,13 @@ export class LdapUserPage extends PureComponent<Props, State> {
 
   onClearUserError = () => {
     this.props.clearUserError();
+  };
+
+  onSyncUser = () => {
+    const { syncUser, user } = this.props;
+    if (syncUser && user) {
+      syncUser(user.id);
+    }
   };
 
   onSessionRevoke = (tokenId: number) => {
@@ -72,8 +95,16 @@ export class LdapUserPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { user, ldapUser, userError, navModel, sessions } = this.props;
+    const { user, ldapUser, userError, navModel, sessions, ldapSyncInfo } = this.props;
     const { isLoading } = this.state;
+
+    let userSyncInfo: LdapUserSyncInfo;
+    if (ldapSyncInfo) {
+      userSyncInfo = {
+        nextSync: ldapSyncInfo.nextSync,
+        prevSync: null,
+      };
+    }
 
     const tableStyle = css`
       margin-bottom: 48px;
@@ -95,6 +126,14 @@ export class LdapUserPage extends PureComponent<Props, State> {
               severity={AppNotificationSeverity.Error}
               body={userError.body}
               onClose={this.onClearUserError}
+            />
+          )}
+          {userSyncInfo && (
+            <UserSyncInfo
+              headingStyle={headingStyle}
+              tableStyle={tableStyle}
+              syncInfo={userSyncInfo}
+              onSync={this.onSyncUser}
             />
           )}
           {ldapUser && <LdapUserInfo className={tableStyle} ldapUser={ldapUser} />}
@@ -125,6 +164,7 @@ const mapStateToProps = (state: StoreState) => ({
   user: state.ldapUser.user,
   ldapUser: state.ldapUser.ldapUser,
   userError: state.ldapUser.userError,
+  ldapSyncInfo: state.ldapUser.ldapSyncInfo,
   sessions: state.ldapUser.sessions,
 });
 
@@ -132,6 +172,8 @@ const mapDispatchToProps = {
   loadUserMapping,
   clearUserError,
   loadUser,
+  loadLdapSyncStatus,
+  syncUser,
   loadUserSessions,
   revokeSession,
   revokeAllSessions,
