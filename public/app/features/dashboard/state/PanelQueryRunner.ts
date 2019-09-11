@@ -69,18 +69,6 @@ export class PanelQueryRunner {
     );
   }
 
-  /**
-   * Get the raw response from queries
-   */
-  getQueryResponseData(): Observable<PanelData> {
-    const ensureFormats = postProcessPanelData();
-    return this.subject.pipe(
-      map((data: PanelData) => {
-        return ensureFormats(data);
-      })
-    );
-  }
-
   hasTransformations() {
     return config.featureToggles.transformations && this.transformations && this.transformations.length > 0;
   }
@@ -90,7 +78,13 @@ export class PanelQueryRunner {
    * To avoid double post-processing & transformations
    */
   getDataRaw(): Observable<PanelData> {
-    return this.subject.pipe();
+    const ensureFormats = postProcessPanelData();
+
+    return this.subject.pipe(
+      map((data: PanelData) => {
+        return ensureFormats(data);
+      })
+    );
   }
 
   async run(options: QueryRunnerOptions) {
