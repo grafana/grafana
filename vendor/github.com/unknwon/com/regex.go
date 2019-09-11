@@ -37,19 +37,19 @@ func init() {
 	regex_url = regexp.MustCompile(regex_url_pattern)
 }
 
-// validate string is an email address, if not return false
+// IsEmail validates string is an email address, if not return false
 // basically validation can match 99% cases
 func IsEmail(email string) bool {
 	return regex_email.MatchString(email)
 }
 
-// validate string is an email address, if not return false
+// IsEmailRFC validates string is an email address, if not return false
 // this validation omits RFC 2822
 func IsEmailRFC(email string) bool {
 	return regex_strict_email.MatchString(email)
 }
 
-// validate string is a url link, if not return false
+// IsUrl validates string is a url link, if not return false
 // simple validation can match 99% cases
 func IsUrl(url string) bool {
 	return regex_url.MatchString(url)

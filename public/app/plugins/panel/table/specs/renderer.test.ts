@@ -1,7 +1,8 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
-import { getColorDefinitionByName, ScopedVars } from '@grafana/ui';
+import { getColorDefinitionByName } from '@grafana/ui';
+import { ScopedVars } from '@grafana/data';
 
 describe('when rendering table', () => {
   const SemiDarkOrange = getColorDefinitionByName('semi-dark-orange');

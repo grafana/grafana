@@ -3,6 +3,7 @@ import Datasource from './datasource';
 import LokiStartPage from './components/LokiStartPage';
 import LokiQueryField from './components/LokiQueryField';
 import LokiQueryEditor from './components/LokiQueryEditor';
+import { LokiAnnotationsQueryCtrl } from './LokiAnnotationsQueryCtrl';
 
 export class LokiConfigCtrl {
   static templateUrl = 'partials/config.html';
@@ -14,4 +15,5 @@ export {
   LokiConfigCtrl as ConfigCtrl,
   LokiQueryField as ExploreQueryField,
   LokiStartPage as ExploreStartPage,
+  LokiAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
