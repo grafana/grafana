@@ -54,12 +54,11 @@ class StateHistory extends PureComponent<Props, State> {
             panelId: panelId,
           })
           .then(() => {
+            this.setState({
+              stateHistoryItems: [],
+            });
             onRefresh();
           });
-
-        this.setState({
-          stateHistoryItems: [],
-        });
       },
     });
   };
