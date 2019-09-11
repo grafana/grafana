@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { colors, getColorFromHexRgbOrName } from '@grafana/ui';
-import { TimeRange, FieldType, Field, DataFrame, getTimeField } from '@grafana/data';
+import { TimeRange, FieldType, Field, DataFrame, getTimeField, DataFrameView } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 
@@ -43,7 +43,7 @@ export class DataProcessor {
           datapoints.push([field.values.get(r), timeField.values.get(r)]);
         }
 
-        list.push(this.toTimeSeries(field, name, datapoints, list.length, range));
+        list.push(this.toTimeSeries(field, name, new DataFrameView(series), datapoints, list.length, range));
       }
     }
 
@@ -56,10 +56,18 @@ export class DataProcessor {
       }
       return [first];
     }
+
     return list;
   }
 
-  private toTimeSeries(field: Field, alias: string, datapoints: any[][], index: number, range?: TimeRange) {
+  private toTimeSeries(
+    field: Field,
+    alias: string,
+    view: DataFrameView,
+    datapoints: any[][],
+    index: number,
+    range?: TimeRange
+  ) {
     const colorIndex = index % colors.length;
     const color = this.panel.aliasColors[alias] || colors[colorIndex];
 
@@ -68,6 +76,8 @@ export class DataProcessor {
       alias: alias,
       color: getColorFromHexRgbOrName(color, config.theme.type),
       unit: field.config ? field.config.unit : undefined,
+      fieldName: field.name,
+      view,
     });
 
     if (datapoints && datapoints.length > 0 && range) {
