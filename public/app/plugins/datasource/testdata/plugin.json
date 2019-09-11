@@ -9,7 +9,8 @@
   "annotations": true,
 
   "queryOptions": {
-    "minInterval": true
+    "minInterval": true,
+    "maxDataPoints": true
   },
 
   "info": {

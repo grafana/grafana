@@ -71,7 +71,8 @@ export class QueryOptions extends PureComponent<Props, State> {
       tooltipInfo: (
         <>
           The maximum data points the query should return. For graphs this is automatically set to one data point per
-          pixel. For some data sources this can also be capped in the datasource settings page.
+          pixel. For some data sources this can also be capped in the datasource settings page. With streaming data,
+          this value is used for the rolling buffer.
         </>
       ),
     },
@@ -156,27 +157,31 @@ export class QueryOptions extends PureComponent<Props, State> {
     this.setState({ ...this.state, [panelKey]: event.target.value });
   };
 
+  /**
+   * Show options for any value that is set, or values that the
+   * current datasource says it will use
+   */
   renderOptions = () => {
     const { datasource } = this.props;
-    const { queryOptions } = datasource.meta;
+    const queryOptions: any = datasource.meta.queryOptions || {};
 
-    if (!queryOptions) {
-      return null;
-    }
-
-    return Object.keys(queryOptions).map(key => {
+    return Object.keys(this.allOptions).map(key => {
       const options = this.allOptions[key];
       const panelKey = options.panelKey || key;
-      return (
-        <DataSourceOption
-          key={key}
-          {...options}
-          onChange={this.onDataSourceOptionChange(panelKey)}
-          onBlur={this.onDataSourceOptionBlur(panelKey)}
-          // @ts-ignore
-          value={this.state[panelKey]}
-        />
-      );
+      // @ts-ignore
+      const value = this.state[panelKey];
+      if (value || queryOptions[key]) {
+        return (
+          <DataSourceOption
+            key={key}
+            {...options}
+            onChange={this.onDataSourceOptionChange(panelKey)}
+            onBlur={this.onDataSourceOptionBlur(panelKey)}
+            value={value}
+          />
+        );
+      }
+      return null; // nothing to render
     });
   };
 
