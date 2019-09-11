@@ -189,14 +189,20 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
     return [];
   }
 
-  const series: DataFrame[] = [];
-  for (const r of results) {
-    if (r) {
-      series.push(guessFieldTypes(toDataFrame(r)));
+  const dataFrames: DataFrame[] = [];
+
+  for (const result of results) {
+    const dataFrame = guessFieldTypes(toDataFrame(result));
+
+    // clear out any cached calcs
+    for (const field of dataFrame.fields) {
+      field.calcs = null;
     }
+
+    dataFrames.push(dataFrame);
   }
 
-  return series;
+  return results;
 }
 
 export function postProcessPanelData(format: PanelDataFormat) {
