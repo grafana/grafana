@@ -1,7 +1,7 @@
 // Libraries
 import _ from 'lodash';
 // Services & Utils
-import { dateMath, DataFrame, LogRowModel, DateTime } from '@grafana/data';
+import { dateMath, DataFrame, LogRowModel, DateTime, AnnotationEvent, DataFrameView } from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -14,6 +14,7 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
+  AnnotationQueryRequest,
 } from '@grafana/ui';
 
 import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
@@ -22,7 +23,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import { LiveTarget, LiveStreams } from './live_streams';
 import { Observable, from, merge } from 'rxjs';
-import { map, single, filter } from 'rxjs/operators';
+import { map, filter } from 'rxjs/operators';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -184,7 +185,6 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         throw error;
       })
     ).pipe(
-      single(),
       filter((response: any) => (response.cancelled ? false : true)),
       map((response: any) => {
         const data = this.processResult(response.data, target);
@@ -341,6 +341,54 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         return { status: 'error', message: message };
       });
   }
+
+  async annotationQuery(options: AnnotationQueryRequest<LokiQuery>): Promise<AnnotationEvent[]> {
+    if (!options.annotation.expr) {
+      return [];
+    }
+
+    const request = queryRequestFromAnnotationOptions(options);
+    const { data } = await this.runQuery(request, request.targets[0]).toPromise();
+    const annotations: AnnotationEvent[] = [];
+
+    for (const frame of data) {
+      const tags = Object.values(frame.labels) as string[];
+      const view = new DataFrameView<{ ts: string; line: string }>(frame);
+
+      view.forEachRow(row => {
+        annotations.push({
+          time: new Date(row.ts).valueOf(),
+          text: row.line,
+          tags,
+        });
+      });
+    }
+
+    return annotations;
+  }
+}
+
+function queryRequestFromAnnotationOptions(options: AnnotationQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> {
+  const refId = `annotation-${options.annotation.name}`;
+  const target: LokiQuery = { refId, expr: options.annotation.expr };
+
+  return {
+    requestId: refId,
+    range: options.range,
+    targets: [target],
+    dashboardId: options.dashboard.id,
+    scopedVars: null,
+    startTime: Date.now(),
+
+    // This should mean the default defined on datasource is used.
+    maxDataPoints: 0,
+
+    // Dummy values, are required in type but not used here.
+    timezone: 'utc',
+    panelId: 0,
+    interval: '',
+    intervalMs: 0,
+  };
 }
 
 export default LokiDatasource;

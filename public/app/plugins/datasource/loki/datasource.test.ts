@@ -1,8 +1,8 @@
 import LokiDatasource from './datasource';
 import { LokiQuery } from './types';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { DataSourceApi } from '@grafana/ui';
-import { DataFrame } from '@grafana/data';
+import { AnnotationQueryRequest, DataSourceApi } from '@grafana/ui';
+import { DataFrame, dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -22,15 +22,15 @@ describe('LokiDatasource', () => {
     },
   };
 
+  const backendSrvMock = { datasourceRequest: jest.fn() };
+  const backendSrv = (backendSrvMock as unknown) as BackendSrv;
+
+  const templateSrvMock = ({
+    getAdhocFilters: (): any[] => [],
+    replace: (a: string) => a,
+  } as unknown) as TemplateSrv;
+
   describe('when querying', () => {
-    const backendSrvMock = { datasourceRequest: jest.fn() };
-    const backendSrv = (backendSrvMock as unknown) as BackendSrv;
-
-    const templateSrvMock = ({
-      getAdhocFilters: (): any[] => [],
-      replace: (a: string) => a,
-    } as unknown) as TemplateSrv;
-
     const testLimit = makeLimitTest(instanceSettings, backendSrvMock, backendSrv, templateSrvMock, testResp);
 
     test('should use default max lines when no limit given', () => {
@@ -171,6 +171,37 @@ describe('LokiDatasource', () => {
       });
     });
   });
+
+  describe('annotationQuery', () => {
+    it('should transform the loki data to annototion response', async () => {
+      const ds = new LokiDatasource(instanceSettings, backendSrv, templateSrvMock);
+      backendSrvMock.datasourceRequest = jest.fn(() =>
+        Promise.resolve({
+          data: {
+            streams: [
+              {
+                entries: [{ ts: '2019-02-01T10:27:37.498180581Z', line: 'hello' }],
+                labels: '{label="value"}',
+              },
+              {
+                entries: [{ ts: '2019-02-01T12:27:37.498180581Z', line: 'hello 2' }],
+                labels: '{label2="value2"}',
+              },
+            ],
+          },
+        })
+      );
+      const query = makeAnnotationQueryRequest();
+
+      const res = await ds.annotationQuery(query);
+      expect(res.length).toBe(2);
+      expect(res[0].text).toBe('hello');
+      expect(res[0].tags).toEqual(['value']);
+
+      expect(res[1].text).toBe('hello 2');
+      expect(res[1].tags).toEqual(['value2']);
+    });
+  });
 });
 
 type LimitTestArgs = {
@@ -206,5 +237,29 @@ function makeLimitTest(
 
     expect(backendSrvMock.datasourceRequest.mock.calls.length).toBe(1);
     expect(backendSrvMock.datasourceRequest.mock.calls[0][0].url).toContain(`limit=${expectedLimit}`);
+  };
+}
+
+function makeAnnotationQueryRequest(): AnnotationQueryRequest<LokiQuery> {
+  const timeRange = {
+    from: dateTime(),
+    to: dateTime(),
+  };
+  return {
+    annotation: {
+      expr: '{test=test}',
+      refId: '',
+      datasource: 'loki',
+      enable: true,
+      name: 'test-annotation',
+    },
+    dashboard: {
+      id: 1,
+    } as any,
+    range: {
+      ...timeRange,
+      raw: timeRange,
+    },
+    rangeRaw: timeRange,
   };
 }

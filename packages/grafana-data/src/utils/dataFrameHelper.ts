@@ -5,16 +5,22 @@ import { ArrayVector, MutableVector, vectorToArray, CircularVector } from './vec
 import isArray from 'lodash/isArray';
 import isString from 'lodash/isString';
 
+interface FieldWithIndex extends Field {
+  index: number;
+}
 export class FieldCache {
-  fields: Field[] = [];
+  fields: FieldWithIndex[] = [];
 
-  private fieldByName: { [key: string]: Field } = {};
-  private fieldByType: { [key: string]: Field[] } = {};
+  private fieldByName: { [key: string]: FieldWithIndex } = {};
+  private fieldByType: { [key: string]: FieldWithIndex[] } = {};
 
-  constructor(private data: DataFrame) {
-    this.fields = data.fields;
+  constructor(data: DataFrame) {
+    this.fields = data.fields.map((field, idx) => ({
+      ...field,
+      index: idx,
+    }));
 
-    for (const field of data.fields) {
+    for (const [index, field] of data.fields.entries()) {
       // Make sure it has a type
       if (field.type === FieldType.other) {
         const t = guessFieldTypeForField(field);
@@ -25,19 +31,22 @@ export class FieldCache {
       if (!this.fieldByType[field.type]) {
         this.fieldByType[field.type] = [];
       }
-      this.fieldByType[field.type].push(field);
+      this.fieldByType[field.type].push({
+        ...field,
+        index,
+      });
 
       if (this.fieldByName[field.name]) {
         console.warn('Duplicate field names in DataFrame: ', field.name);
       } else {
-        this.fieldByName[field.name] = field;
+        this.fieldByName[field.name] = { ...field, index };
       }
     }
   }
 
-  getFields(type?: FieldType): Field[] {
+  getFields(type?: FieldType): FieldWithIndex[] {
     if (!type) {
-      return [...this.data.fields]; // All fields
+      return [...this.fields]; // All fields
     }
     const fields = this.fieldByType[type];
     if (fields) {
@@ -51,7 +60,7 @@ export class FieldCache {
     return types && types.length > 0;
   }
 
-  getFirstFieldOfType(type: FieldType): Field | undefined {
+  getFirstFieldOfType(type: FieldType): FieldWithIndex | undefined {
     const arr = this.fieldByType[type];
     if (arr && arr.length > 0) {
       return arr[0];
@@ -66,7 +75,7 @@ export class FieldCache {
   /**
    * Returns the first field with the given name.
    */
-  getFieldByName(name: string): Field | undefined {
+  getFieldByName(name: string): FieldWithIndex | undefined {
     return this.fieldByName[name];
   }
 }
