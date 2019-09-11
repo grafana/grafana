@@ -1,22 +1,15 @@
 import React, { FC, useContext } from 'react';
 import { css, cx } from 'emotion';
 import { PluginState, ThemeContext } from '../../index';
-import { Tooltip } from '../index';
 
 interface Props {
   state?: PluginState;
-  text?: JSX.Element;
+  text?: string;
   className?: string;
 }
 
 export const AlphaNotice: FC<Props> = ({ state, text, className }) => {
-  const tooltipContent = text || (
-    <div>
-      <h5>Alpha Feature</h5>
-      <p>This feature is a work in progress and updates may include breaking changes.</p>
-    </div>
-  );
-
+  const tooltipContent = text || 'This feature is a work in progress and updates may include breaking changes';
   const theme = useContext(ThemeContext);
 
   const styles = cx(
@@ -35,10 +28,8 @@ export const AlphaNotice: FC<Props> = ({ state, text, className }) => {
   );
 
   return (
-    <Tooltip content={tooltipContent} theme={'info'} placement={'top'}>
-      <div className={styles}>
-        <i className="fa fa-warning" /> {state}
-      </div>
-    </Tooltip>
+    <div className={styles} title={tooltipContent}>
+      <i className="fa fa-warning" /> {state}
+    </div>
   );
 };

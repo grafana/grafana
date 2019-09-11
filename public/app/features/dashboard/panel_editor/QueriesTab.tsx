@@ -288,7 +288,7 @@ export class QueriesTab extends PureComponent<Props, State> {
             <PanelOptionsGroup
               title={
                 <>
-                  Transform query results
+                  Query results
                   <AlphaNotice
                     state={PluginState.alpha}
                     className={css`
