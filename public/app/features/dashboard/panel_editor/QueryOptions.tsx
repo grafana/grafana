@@ -168,9 +168,11 @@ export class QueryOptions extends PureComponent<Props, State> {
     return Object.keys(this.allOptions).map(key => {
       const options = this.allOptions[key];
       const panelKey = options.panelKey || key;
+
       // @ts-ignore
       const value = this.state[panelKey];
-      if (value || queryOptions[key]) {
+
+      if (queryOptions[key]) {
         return (
           <DataSourceOption
             key={key}
