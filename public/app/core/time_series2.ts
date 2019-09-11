@@ -70,7 +70,7 @@ export function getDataMinMax(data: TimeSeries[]) {
 export default class TimeSeries {
   datapoints: any;
   id: string;
-  view: DataFrameView;
+  dataFrameIndex: number;
   fieldName: string;
   label: string;
   alias: string;
@@ -113,7 +113,7 @@ export default class TimeSeries {
     this.legend = true;
     this.unit = opts.unit;
     this.fieldName = opts.fieldName;
-    this.view = opts.view;
+    this.dataFrameIndex = opts.dataFrameIndex;
     this.hasMsResolution = this.isMsResolutionNeeded();
   }
 

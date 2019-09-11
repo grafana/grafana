@@ -9,6 +9,7 @@ Array [
       "fillColor": "#7EB26D",
     },
     "color": "#7EB26D",
+    "dataFrameIndex": 0,
     "datapoints": Array [
       Array [
         1,
@@ -31,20 +32,6 @@ Array [
     "stats": Object {},
     "unit": "watt",
     "valueFormater": [Function],
-    "view": Array [
-      Object {
-        "Time": 1001,
-        "Value": 1,
-      },
-      Object {
-        "Time": 1002,
-        "Value": 2,
-      },
-      Object {
-        "Time": 1003,
-        "Value": 3,
-      },
-    ],
   },
   TimeSeries {
     "alias": "table_data v1",
@@ -53,6 +40,7 @@ Array [
       "fillColor": "#EAB839",
     },
     "color": "#EAB839",
+    "dataFrameIndex": 1,
     "datapoints": Array [
       Array [
         0.1,
@@ -75,26 +63,6 @@ Array [
     "stats": Object {},
     "unit": "ohm",
     "valueFormater": [Function],
-    "view": Array [
-      Object {
-        "string": "a",
-        "time": 1001,
-        "v1": 0.1,
-        "v2": 1.1,
-      },
-      Object {
-        "string": "b",
-        "time": 1002,
-        "v1": 0.2,
-        "v2": 2.2,
-      },
-      Object {
-        "string": "c",
-        "time": 1003,
-        "v1": 0.3,
-        "v2": 3.3,
-      },
-    ],
   },
   TimeSeries {
     "alias": "table_data v2",
@@ -103,6 +71,7 @@ Array [
       "fillColor": "#6ED0E0",
     },
     "color": "#6ED0E0",
+    "dataFrameIndex": 1,
     "datapoints": Array [
       Array [
         1.1,
@@ -125,26 +94,6 @@ Array [
     "stats": Object {},
     "unit": undefined,
     "valueFormater": [Function],
-    "view": Array [
-      Object {
-        "string": "a",
-        "time": 1001,
-        "v1": 0.1,
-        "v2": 1.1,
-      },
-      Object {
-        "string": "b",
-        "time": 1002,
-        "v1": 0.2,
-        "v2": 2.2,
-      },
-      Object {
-        "string": "c",
-        "time": 1003,
-        "v1": 0.3,
-        "v2": 3.3,
-      },
-    ],
   },
   TimeSeries {
     "alias": "series v1",
@@ -153,6 +102,7 @@ Array [
       "fillColor": "#EF843C",
     },
     "color": "#EF843C",
+    "dataFrameIndex": 2,
     "datapoints": Array [
       Array [
         0.1,
@@ -175,26 +125,6 @@ Array [
     "stats": Object {},
     "unit": undefined,
     "valueFormater": [Function],
-    "view": Array [
-      Object {
-        "string": "a",
-        "time": 1001,
-        "v1": 0.1,
-        "v2": 1.1,
-      },
-      Object {
-        "string": "b",
-        "time": 1002,
-        "v1": 0.2,
-        "v2": 2.2,
-      },
-      Object {
-        "string": "c",
-        "time": 1003,
-        "v1": 0.3,
-        "v2": 3.3,
-      },
-    ],
   },
   TimeSeries {
     "alias": "series v2",
@@ -203,6 +133,7 @@ Array [
       "fillColor": "#E24D42",
     },
     "color": "#E24D42",
+    "dataFrameIndex": 2,
     "datapoints": Array [
       Array [
         1.1,
@@ -225,26 +156,6 @@ Array [
     "stats": Object {},
     "unit": undefined,
     "valueFormater": [Function],
-    "view": Array [
-      Object {
-        "string": "a",
-        "time": 1001,
-        "v1": 0.1,
-        "v2": 1.1,
-      },
-      Object {
-        "string": "b",
-        "time": 1002,
-        "v1": 0.2,
-        "v2": 2.2,
-      },
-      Object {
-        "string": "c",
-        "time": 1003,
-        "v1": 0.3,
-        "v2": 3.3,
-      },
-    ],
   },
 ]
 `;
@@ -258,6 +169,7 @@ Array [
       "fillColor": "#7EB26D",
     },
     "color": "#7EB26D",
+    "dataFrameIndex": 0,
     "datapoints": Array [
       Array [
         1,
@@ -328,20 +240,6 @@ Array [
     "stats": Object {},
     "unit": "watt",
     "valueFormater": [Function],
-    "view": Array [
-      Object {
-        "Time": 1001,
-        "Value": 1,
-      },
-      Object {
-        "Time": 1002,
-        "Value": 2,
-      },
-      Object {
-        "Time": 1003,
-        "Value": 3,
-      },
-    ],
   },
 ]
 `;
