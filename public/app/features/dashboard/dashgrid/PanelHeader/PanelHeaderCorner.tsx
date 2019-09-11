@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 
-import { renderMarkdown, LinkModelSupplier } from '@grafana/data';
-import { Tooltip, ScopedVars, PopoverContent } from '@grafana/ui';
+import { renderMarkdown, LinkModelSupplier, ScopedVars } from '@grafana/data';
+import { Tooltip, PopoverContent } from '@grafana/ui';
 
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import templateSrv from 'app/features/templating/template_srv';

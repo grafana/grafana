@@ -195,6 +195,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			"env":           setting.Env,
 			"isEnterprise":  setting.IsEnterprise,
 		},
+		"featureToggles": hs.Cfg.FeatureToggles,
 	}
 
 	return jsonObj, nil

@@ -149,7 +149,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
-    this.events.on('data-frames-received', this.onDataReceived.bind(this));
+    this.events.on('data-frames-received', this.onDataFramesReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));

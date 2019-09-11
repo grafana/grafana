@@ -17,8 +17,8 @@ import config from 'app/core/config';
 
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { ScopedVars, PanelData, PanelPlugin } from '@grafana/ui';
-import { LoadingState } from '@grafana/data';
+import { PanelData, PanelPlugin } from '@grafana/ui';
+import { LoadingState, ScopedVars } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -172,7 +172,6 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (!this.querySubscription) {
         this.querySubscription = queryRunner.subscribe(this.panelDataObserver);
       }
-
       queryRunner.run({
         datasource: panel.datasource,
         queries: panel.targets,
@@ -186,6 +185,7 @@ export class PanelChrome extends PureComponent<Props, State> {
         minInterval: panel.interval,
         scopedVars: panel.scopedVars,
         cacheTimeout: panel.cacheTimeout,
+        transformations: panel.transformations,
       });
     }
   };

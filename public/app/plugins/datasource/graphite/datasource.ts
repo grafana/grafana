@@ -1,11 +1,10 @@
 import _ from 'lodash';
-import { dateMath } from '@grafana/data';
+import { dateMath, ScopedVars } from '@grafana/data';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import gfunc from './gfunc';
 import { IQService } from 'angular';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { ScopedVars } from '@grafana/ui';
 
 export class GraphiteDatasource {
   basicAuth: string;
