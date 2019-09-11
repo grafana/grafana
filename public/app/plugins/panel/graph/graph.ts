@@ -237,7 +237,6 @@ class GraphElement {
       let linksSupplier: LinkModelSupplier<FieldDisplay>;
 
       if (item) {
-        const dataFrame = this.ctrl.getDataFrameByRefId(item.series.refId);
         // pickup y-axis index to know which field's config to apply
         const yAxisConfig = this.panel.yaxes[item.series.yaxis.n === 2 ? 1 : 0];
         const fieldOptions = {
@@ -247,7 +246,7 @@ class GraphElement {
 
         // get current series display values
         const displayValues = getFieldDisplayValues({
-          data: [dataFrame],
+          data: [item.series.view.data],
           fieldOptions: {
             values: true,
             limit: Infinity, // give me all you have
@@ -258,8 +257,13 @@ class GraphElement {
           // don't interpolate anything for now
           replaceVariables: value => value,
           theme: getCurrentTheme(),
+        }).filter(f => {
+          // get row corresponding to the clicked item
+          return f.rowIndex === item.dataIndex;
         });
-        const field = displayValues[item.dataIndex];
+
+        // pickup the field that the item represents
+        const field = displayValues.filter(field => field.name === item.series.fieldName)[0];
         linksSupplier = this.panel.options.dataLinks ? getFieldLinksSupplier(field) : undefined;
       }
 
@@ -386,7 +390,6 @@ class GraphElement {
     this.thresholdManager.addFlotOptions(options, this.panel);
     this.timeRegionManager.addFlotOptions(options, this.panel);
     this.eventManager.addFlotEvents(this.annotations, options);
-
     this.sortedSeries = this.sortSeries(this.data, this.panel);
     this.callPlot(options, true);
   }

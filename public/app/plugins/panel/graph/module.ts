@@ -221,6 +221,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       dataList: this.dataList,
       range: this.range,
     });
+
     this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
 
     this.dataWarning = null;
