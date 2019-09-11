@@ -13,7 +13,6 @@ import {
   sortSeriesByLabel,
 } from './heatmap_data_converter';
 import { auto } from 'angular';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { LegacyResponseData } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
 import { DataFrame, getTimeField, FieldType } from '@grafana/data';
@@ -119,15 +118,13 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   unitFormats: any;
   data: any;
   series: TimeSeries[];
-  timeSrv: any;
   dataWarning: any;
   decimals: number;
   scaledDecimals: number;
 
   /** @ngInject */
-  constructor($scope: any, $injector: auto.IInjectorService, timeSrv: TimeSrv) {
+  constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
-    this.timeSrv = timeSrv;
     this.selectionActivated = false;
 
     _.defaultsDeep(this.panel, panelDefaults);
