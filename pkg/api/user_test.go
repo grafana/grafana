@@ -22,7 +22,7 @@ func TestUserApiEndpoint(t *testing.T) {
 			TotalCount: 2,
 		}
 
-		loggedInUserScenario("hen calling GET on", "api/users/:id", func(sc *scenarioContext) {
+		loggedInUserScenario("When calling GET on", "api/users/:id", func(sc *scenarioContext) {
 			fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 			bus.AddHandler("test", func(query *models.GetUserProfileQuery) error {
 				query.Result = models.UserProfileDTO{
