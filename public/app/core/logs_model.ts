@@ -106,7 +106,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
   const bucketSize = intervalMs * 10;
   const seriesList: any[] = [];
 
-  const sortedRows = rows.sort((a, b) => (a.timeEpochMs >= b.timeEpochMs ? -1 : 1));
+  const sortedRows = rows.sort((a, b) => (a.timeEpochMs <= b.timeEpochMs ? -1 : 1));
   for (const row of sortedRows) {
     let series = seriesByLevel[row.logLevel];
 
