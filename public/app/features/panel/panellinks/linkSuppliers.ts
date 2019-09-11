@@ -4,8 +4,8 @@ import { LinkModelSupplier, getTimeField, Labels, ScopedVars, ScopedVar } from '
 import { getLinkSrv } from './link_srv';
 
 interface SeriesVars {
-  name: string;
-  labels: Labels;
+  name?: string;
+  labels?: Labels;
   refId?: string;
 }
 
@@ -14,7 +14,7 @@ interface FieldVars {
 }
 
 interface ValueVars {
-  raw: number;
+  raw: any;
   numeric: number;
   text: string;
   time?: number;
@@ -66,17 +66,15 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         if (value.rowIndex) {
           const { timeField } = getTimeField(dataFrame);
 
-          if (timeField) {
-            scopedVars['__value'] = {
-              value: {
-                raw: field.values.get(value.rowIndex),
-                numeric: value.display.numeric,
-                text: value.display.text,
-                time: timeField.values.get(value.rowIndex),
-              },
-              text: 'Value',
-            };
-          }
+          scopedVars['__value'] = {
+            value: {
+              raw: field.values.get(value.rowIndex),
+              numeric: value.display.numeric,
+              text: value.display.text,
+              time: timeField ? timeField.values.get(value.rowIndex) : undefined,
+            },
+            text: 'Value',
+          };
         }
       } else {
         console.log('VALUE', value);
