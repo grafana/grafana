@@ -12,15 +12,7 @@ import { runRequest, postProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
 
 // Types
-import {
-  PanelData,
-  PanelDataFormat,
-  DataQuery,
-  ScopedVars,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceJsonData,
-} from '@grafana/ui';
+import { PanelData, DataQuery, ScopedVars, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
 
 import { TimeRange, DataTransformerConfig, transformDataFrame } from '@grafana/data';
 
@@ -60,21 +52,32 @@ export class PanelQueryRunner {
 
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
-   * Here the caller can also control if transformations should be applied or not
    */
-  getData(format: PanelDataFormat = PanelDataFormat.Frames, applyTransforms = true): Observable<PanelData> {
-    const ensureFormats = postProcessPanelData(format);
+  getData(): Observable<PanelData> {
+    const ensureFormats = postProcessPanelData();
 
     return this.subject.pipe(
       map((data: PanelData) => {
         const transformedData = ensureFormats(data);
 
-        if (applyTransforms && this.hasTransformations()) {
+        if (this.hasTransformations()) {
           const newSeries = transformDataFrame(this.transformations, transformedData.series);
           return { ...transformedData, series: newSeries };
         }
 
         return transformedData;
+      })
+    );
+  }
+
+  /**
+   * Get the raw response from queries
+   */
+  getQueryResponseData(): Observable<PanelData> {
+    const ensureFormats = postProcessPanelData();
+    return this.subject.pipe(
+      map((data: PanelData) => {
+        return ensureFormats(data);
       })
     );
   }

@@ -12,7 +12,7 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
-import { getColorFromHexRgbOrName, LegacyResponseData, VariableSuggestion, PanelDataFormat } from '@grafana/ui';
+import { getColorFromHexRgbOrName, LegacyResponseData, VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -142,7 +142,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
     _.defaults(this.panel.options, this.panelDefaults.options);
 
-    this.dataFormat = PanelDataFormat.Frames;
+    this.useDataFrames = true;
     this.processor = new DataProcessor(this.panel);
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 

@@ -19,8 +19,8 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { DataQuery, DataSourceSelectItem, PanelData, PanelDataFormat, AlphaNotice, PluginState } from '@grafana/ui';
-import { LoadingState, DataTransformerConfig } from '@grafana/data';
+import { DataQuery, DataSourceSelectItem, PanelData, AlphaNotice, PluginState } from '@grafana/ui';
+import { LoadingState, DataTransformerConfig, toLegacyResponseData, isDataFrame } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
@@ -62,7 +62,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const queryRunner = panel.getQueryRunner();
 
-    this.querySubscription = queryRunner.getData(PanelDataFormat.Both, false).subscribe({
+    this.querySubscription = queryRunner.getQueryResponseData().subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
   }
@@ -90,7 +90,13 @@ export class QueriesTab extends PureComponent<Props, State> {
       if (data.state === LoadingState.Error) {
         panel.events.emit('data-error', data.error);
       } else if (data.state === LoadingState.Done) {
-        panel.events.emit('data-received', data.legacy);
+        const legacy = data.series.map(v => {
+          if (isDataFrame(v)) {
+            return toLegacyResponseData(v);
+          }
+          return v;
+        });
+        panel.events.emit('data-received', legacy);
       }
     } catch (err) {
       console.log('Panel.events handler error', err);
