@@ -2,7 +2,7 @@ import defaultTheme from './default';
 import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
 const basicColors = {
-  black: '#000000',
+  black: '#000000', //Hintergrundfarbe Sidebar
   white: '#ffffff',
   dark1: '#141414',
   dark2: '#161719',
@@ -14,19 +14,19 @@ const basicColors = {
   dark8: '#2f2f32',
   dark9: '#343436',
   dark10: '#424345',
-  gray1: '#555555',
-  gray2: '#8e8e8e',
-  gray3: '#b3b3b3',
+  gray1: '#e4e2e2', //ILLIG Grau 1 228,226,226
+  gray2: '#58585a', //ILLIG Grau 2 88,88,90
+  gray3: '#d4d3d2', //ILLIG secondary gray 212,211,210
   gray4: '#d8d9da',
   gray5: '#ececec',
   gray6: '#f4f5f8', // not used in dark theme
   gray7: '#fbfbfb', // not used in dark theme
   grayBlue: '#212327',
-  blueBase: '#3274d9',
-  blueShade: '#1f60c4',
-  blueLight: '#5794f2',
+  blueBase: '#00457b', //ILLIG Blue 0,69,123
+  blueShade: '#66839d', //ILLIG secondary mid blue 102,131,157
+  blueLight: '#d0d8e0', //ILLIG secondary light blue 208,216,224
   blueFaint: '#041126',
-  redBase: '#e02f44',
+  redBase: '#79132c', //ILLIG Bordeaux 121,19,44
   redShade: '#c4162a',
   greenBase: '#299c46',
   greenShade: '#23843b',
@@ -44,7 +44,7 @@ const darkTheme: GrafanaTheme = {
   name: 'Grafana Dark',
   colors: {
     ...basicColors,
-    inputBlack: '#09090b',
+    inputBlack: basicColors.blueBase,
     brandPrimary: basicColors.orange,
     brandSuccess: basicColors.greenBase,
     brandWarning: basicColors.orange,
@@ -57,24 +57,24 @@ const darkTheme: GrafanaTheme = {
     online: basicColors.greenBase,
     warn: '#f79520',
     critical: basicColors.redBase,
-    bodyBg: basicColors.dark2,
-    pageBg: basicColors.dark2,
-    body: basicColors.gray4,
-    text: basicColors.gray4,
-    textStrong: basicColors.white,
+    bodyBg: basicColors.gray1,
+    pageBg: basicColors.gray1,
+    body: basicColors.gray2, // Überschriften und Bezeichner
+    text: basicColors.gray2,
+    textStrong: basicColors.gray2,
     textWeak: basicColors.gray2,
-    textEmphasis: basicColors.gray5,
-    textFaint: basicColors.dark5,
-    link: basicColors.gray4,
+    textEmphasis: basicColors.gray2,
+    textFaint: basicColors.gray2,
+    link: basicColors.yellow,
     linkDisabled: basicColors.gray2,
     linkHover: basicColors.white,
     linkExternal: basicColors.blue,
-    headingColor: basicColors.gray4,
+    headingColor: basicColors.gray2,
   },
   background: {
-    dropdown: basicColors.dark3,
-    scrollbar: basicColors.dark9,
-    scrollbar2: basicColors.dark9,
+    dropdown: basicColors.gray1,
+    scrollbar: basicColors.gray1,
+    scrollbar2: basicColors.gray1,
   },
 };
 

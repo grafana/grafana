@@ -14,19 +14,19 @@ const basicColors = {
   dark8: '#2f2f32', // not used in light theme
   dark9: '#343436', // not used in light theme
   dark10: '#424345', // not used in light theme
-  gray1: '#52545c',
-  gray2: '#767980',
-  gray3: '#acb6bf',
+  gray1: '#e4e2e2', //ILLIG Grau 1 228,226,226
+  gray2: '#58585a', //ILLIG Grau 2 88,88,90
+  gray3: '#d4d3d2', //ILLIG secondary gray 212,211,210
   gray4: '#c7d0d9',
   gray5: '#dde4ed',
   gray6: '#e9edf2',
   gray7: '#f7f8fa',
   grayBlue: '#212327', // not used in light theme
-  blueBase: '#3274d9',
-  blueShade: '#1f60c4',
-  blueLight: '#5794f2',
+  blueBase: '#00457b', //ILLIG Blue 0,69,123
+  blueShade: '#66839d', //ILLIG secondary mid blue 102,131,157
+  blueLight: '#d0d8e0', //ILLIG secondary light blue 208,216,224
   blueFaint: '#f5f9ff',
-  redBase: '#e02f44',
+  redBase: '#79132c', //ILLIG Bordeaux 121,19,44
   redShade: '#c4162a',
   greenBase: '#3eb15b',
   greenShade: '#369b4f',
@@ -60,17 +60,17 @@ const lightTheme: GrafanaTheme = {
     critical: basicColors.redShade,
     bodyBg: basicColors.gray7,
     pageBg: basicColors.gray7,
-    body: basicColors.gray1,
-    text: basicColors.gray1,
+    body: basicColors.gray2,
+    text: basicColors.gray2,
     textStrong: basicColors.dark2,
     textWeak: basicColors.gray2,
     textEmphasis: basicColors.dark5,
     textFaint: basicColors.dark4,
-    link: basicColors.gray1,
+    link: basicColors.gray2,
     linkDisabled: basicColors.gray3,
     linkHover: basicColors.dark1,
     linkExternal: basicColors.blueLight,
-    headingColor: basicColors.gray1,
+    headingColor: basicColors.gray2,
   },
   background: {
     dropdown: basicColors.white,

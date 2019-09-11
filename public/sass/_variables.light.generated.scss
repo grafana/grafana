@@ -16,10 +16,10 @@ $theme-name: light;
 // New Colors
 // -------------------------
 $blue-faint: #f5f9ff;
-$blue-light: #5794f2;
-$blue-base: #3274d9;
-$blue-shade: #1f60c4;
-$red-base: #e02f44;
+$blue-light: #d0d8e0;
+$blue-base: #00457b;
+$blue-shade: #66839d;
+$red-base: #79132c;
 $red-shade: #c4162a;
 $green-base: #3eb15b;
 $green-shade: #369b4f;
@@ -32,9 +32,9 @@ $dark-1: #1e2028;
 $dark-2: #41444b;
 $dark-4: #35373f;
 $dark-10: #424345;
-$gray-1: #52545c;
-$gray-2: #767980;
-$gray-3: #acb6bf;
+$gray-1: #e4e2e2;
+$gray-2: #58585a;
+$gray-3: #d4d3d2;
 $gray-4: #c7d0d9;
 $gray-5: #dde4ed;
 $gray-6: #e9edf2;
@@ -54,13 +54,13 @@ $variable: #0083b3;
 $brand-primary: #ff7941;
 $brand-success: #3eb15b;
 $brand-warning: #ff7941;
-$brand-danger: #e02f44;
+$brand-danger: #79132c;
 
-$query-red: #e02f44;
+$query-red: #79132c;
 $query-green: #3eb15b;
 $query-purple: #9954bb;
 $query-orange: #ff7941;
-$query-keyword: #3274d9;
+$query-keyword: #00457b;
 
 // Status colors
 // -------------------------
@@ -73,31 +73,31 @@ $critical: #c4162a;
 $body-bg: #f7f8fa;
 $page-bg: #f7f8fa;
 
-$body-color: #52545c;
-$text-color: #52545c;
+$body-color: #58585a;
+$text-color: #58585a;
 $text-color-strong: #41444b;
-$text-color-weak: #767980;
+$text-color-weak: #58585a;
 $text-color-faint: #35373f;
 $text-color-emphasis: #41444b;
 
 $text-shadow-faint: none;
 
 // gradients
-$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
-$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
+$brand-gradient-horizontal: linear-gradient(to right, #F05A28 30%, #FBCA0A 99%);
+$brand-gradient-vertical: linear-gradient(#F05A28 30%, #FBCA0A 99%);
 $page-gradient: linear-gradient(180deg, $white 10px, $gray-7 100px);
 $edit-gradient: linear-gradient(-60deg, $gray-7, #f5f6f9 70%, $gray-7 98%);
 
 // Links
 // -------------------------
-$link-color: #52545c;
-$link-color-disabled: #acb6bf;
+$link-color: #58585a;
+$link-color-disabled: #d4d3d2;
 $link-hover-color: #1e2028;
-$external-link-color: #5794f2;
+$external-link-color: #d0d8e0;
 
 // Typography
 // -------------------------
-$headings-color: #52545c;
+$headings-color: #58585a;
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -168,7 +168,7 @@ $btn-danger-bg-hl: $red-shade;
 $btn-inverse-bg: $gray-5;
 $btn-inverse-bg-hl: darken($gray-5, 5%);
 $btn-inverse-bg-hl: $gray-4;
-$btn-inverse-text-color: $gray-1;
+$btn-inverse-text-color: $gray-2;
 $btn-inverse-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 
 $btn-link-color: $gray-1;
@@ -180,21 +180,21 @@ $btn-divider-right: $gray-7;
 
 $btn-drag-image: '../img/grab_light.svg';
 
-$navbar-btn-gicon-brightness: brightness(1.5);
+$navbar-btn-gicon-brightness: brightness(2.7);
 
 // Forms
 // -------------------------
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: $dark-2;
+$input-color: $gray-2;
 $input-border-color: $gray-5;
 $input-box-shadow: none;
 $input-border-focus: $gray-5 !default;
 $input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: $gray-4 !default;
 $input-label-bg: $gray-5;
-$input-label-border-color: $gray-5;
+$input-label-border-color: $gray-2;
 $input-color-select-arrow: $gray-1;
 
 // Input placeholder text color
@@ -230,7 +230,7 @@ $horizontalComponentOffset: 180px;
 // -------------------------
 $navbarHeight: 52px;
 
-$navbarBackground: $white;
+$navbarBackground: $blue-base;
 $navbarBorder: 1px solid $gray-5;
 
 $navbarButtonBackground: lighten($navbarBackground, 3%);
@@ -238,12 +238,14 @@ $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 
 $navbar-button-border: $gray-4;
 
+$navbar-page-btn-color: $blue-base;
+
 // Sidemenu
 // -------------------------
-$side-menu-bg: $dark-1;
+$side-menu-bg: $blue-base; //$dark-1;
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
 $side-menu-item-hover-bg: $gray-1;
-$side-menu-shadow: 5px 0px 10px -5px $gray-1;
+$side-menu-shadow: 0px 0px 0px -0px $gray-1;
 $side-menu-link-color: $gray-6;
 
 // Menu dropdowns

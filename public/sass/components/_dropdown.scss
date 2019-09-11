@@ -107,6 +107,7 @@
 
   &--menu,
   &--navbar,
+
   &--sidemenu {
     background: $menu-dropdown-bg;
     box-shadow: $menu-dropdown-shadow;
@@ -155,7 +156,7 @@
 .dropdown-menu > .active > a,
 .dropdown-menu > .active > a:hover,
 .dropdown-menu > .active > a:focus {
-  color: $dropdownLinkColorActive;
+  color: $black; //$dropdownLinkColorActive;
   text-decoration: none;
   outline: 0;
   background-color: $dropdownLinkBackgroundHover;

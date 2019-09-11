@@ -9,6 +9,7 @@
   transition-duration: 350ms;
   transition-timing-function: ease-in-out;
   transition-property: box-shadow, border-bottom;
+  background: $navbarBackground;
 
   @include media-breakpoint-up(md) {
     padding-left: $dashboard-padding;
@@ -62,29 +63,44 @@
   white-space: nowrap;
   display: block;
   margin: 0;
-  color: $headings-color;
   font-size: $font-size-lg;
   min-height: $navbarHeight;
   line-height: $navbarHeight;
+  box
+  > li > i {
+    color: $white;
+  }
 
   .gicon {
     top: -2px;
     position: relative;
     font-size: 17px;
     line-height: 8px;
-    opacity: 0.75;
+    opacity: 1.0;
     margin-right: 10px;
     display: none;
 
     @include media-breakpoint-up(md) {
       display: inline-block;
     }
+    filter: $navbar-btn-gicon-brightness;
+  }
+    /*&:hover {
+      .gicon {
+        filter: brightness(0.2);
+      }
+    }*/
+  
+  > a {
+    color: $gray-1;
   }
 }
 
 .navbar-page-btn__folder {
+  background-color:blue;
   color: $text-color-weak;
   display: none;
+  color: $gray-1;
 
   @include media-breakpoint-up(lg) {
     display: inline-block;
@@ -94,7 +110,7 @@
 // element is needed here to override font-awesome specificity
 i.navbar-page-btn__folder-icon {
   font-size: $font-size-sm;
-  color: $text-color-weak;
+  color: $gray-1;
   padding: 0 $space-sm;
   position: relative;
   top: -1px;
@@ -104,6 +120,7 @@ i.navbar-page-btn__folder-icon {
 i.navbar-page-btn__search {
   font-size: $font-size-xs;
   padding: 0 $space-xs;
+  color: $gray-1;
 }
 
 .navbar-buttons {
@@ -112,6 +129,8 @@ i.navbar-page-btn__search {
   align-items: center;
   justify-content: flex-end;
   margin-left: 10px;
+  color: $gray-1;
+
 
   &--close {
     display: none;
@@ -128,14 +147,13 @@ i.navbar-page-btn__search {
 }
 
 .navbar-button {
+  //@include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
   @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
-
   display: flex;
   align-items: center;
   font-weight: $btn-font-weight;
   padding: 6px $space-sm;
   line-height: 18px;
-  color: $text-muted;
   border: 1px solid $navbar-button-border;
   margin-left: $space-xs;
   white-space: nowrap;
@@ -167,15 +185,8 @@ i.navbar-page-btn__search {
   }
 
   &--settings {
-    .gicon {
-      filter: $navbar-btn-gicon-brightness;
+    font-size: 16px;
     }
-    &:hover {
-      .gicon {
-        filter: brightness(0.8);
-      }
-    }
-  }
 
   &--tight {
     padding: 7px 4px;
@@ -204,6 +215,7 @@ i.navbar-page-btn__search {
   height: $navbarHeight;
   align-items: center;
   padding-right: 13px;
+  color: $gray-1;
 }
 
 .navbar-edit__back-btn {
@@ -213,24 +225,24 @@ i.navbar-page-btn__search {
   width: 34px;
   height: 34px;
   transition: transform 0.1s ease 0.1s;
-  color: $text-color;
+  color: $gray-1;
 
   i {
     font-size: $font-size-lg;
     position: relative;
     top: 2px;
+    color: $gray-1;
   }
 
   &:hover {
     color: $text-color-strong;
-    border-color: $text-color-strong;
+    border-color: $gray-2;
   }
 }
 
 .navbar-settings-title {
   display: block;
   margin: 0;
-  color: $headings-color;
   font-size: $font-size-lg;
   min-height: $navbarHeight;
   line-height: $navbarHeight;

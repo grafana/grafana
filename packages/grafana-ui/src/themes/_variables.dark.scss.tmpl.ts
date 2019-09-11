@@ -108,17 +108,17 @@ $text-muted: $text-color-weak;
 
 $hr-border-color: $dark-9;
 
-// Panel
+// Panel Hintergrund der Diagramme
 // -------------------------
-$panel-bg: $dark-4;
-$panel-border: solid 1px $dark-1;
-$panel-header-hover-bg: $dark-9;
+$panel-bg: $gray-2;
+$panel-border: solid 1px $gray-2;
+$panel-header-hover-bg: $gray-2;
 $panel-corner: $panel-bg;
 
-// page header
-$page-header-bg: linear-gradient(90deg, $dark-7, $black);
-$page-header-shadow: inset 0px -4px 14px $dark-3;
-$page-header-border-color: $dark-9;
+// page header Kopfzeile
+$page-header-bg: linear-gradient(90deg, $blue-base, $blue-light);
+$page-header-shadow: inset 0px -4px 14px $blue-base;
+$page-header-border-color: $blue-base;
 
 $divider-border-color: $gray-1;
 
@@ -172,7 +172,7 @@ $btn-danger-bg-hl: $red-shade;
 
 $btn-inverse-bg: $dark-6;
 $btn-inverse-bg-hl: lighten($dark-6, 4%);
-$btn-inverse-text-color: $link-color;
+$btn-inverse-text-color: $gray-2;
 $btn-inverse-text-shadow: 0px 1px 0 rgba(0, 0, 0, 0.1);
 
 $btn-link-color: $gray-3;
@@ -242,9 +242,11 @@ $navbarButtonBackgroundHighlight: $body-bg;
 
 $navbar-button-border: #2f2f32;
 
+$navbar-page-btn-color: $blue-base;
+
 // Sidemenu
 // -------------------------
-$side-menu-bg: $black;
+$side-menu-bg: $blue-base;
 $side-menu-bg-mobile: $side-menu-bg;
 $side-menu-item-hover-bg: $dark-3;
 $side-menu-shadow: 0 0 20px black;

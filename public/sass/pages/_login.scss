@@ -1,4 +1,4 @@
-$login-border: #8daac5;
+$login-border: #79132c;
 
 .login {
   min-height: 100vh;
@@ -6,11 +6,11 @@ $login-border: #8daac5;
   background-repeat: no-repeat;
   min-width: 100%;
   margin-left: 0;
-  background-color: $black;
+  background-color: $white;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-image: url(../img/heatmap_bg_test.svg);
+  //background-image: url(../img/heatmap_bg_test.svg);
   background-size: cover;
   color: #d8d9da;
 
@@ -81,7 +81,7 @@ select:-webkit-autofill:focus {
   & .btn-inverse {
     color: #e3e3e3;
     text-shadow: 0px 1px 0 rgba(0, 0, 0, 0.1);
-    background-color: #2a2a2c;
+    background-color: $gray-1;
     background-image: linear-gradient(to bottom, #262628, #303032);
     background-repeat: repeat-x;
     border-color: #262628;
@@ -124,15 +124,15 @@ select:-webkit-autofill:focus {
     margin-bottom: 15px;
   }
 }
-
+/*
 .app-grafana {
   .logo-wordmark {
-    background: url('../img/grafana_typelogo.svg') top center no-repeat;
+    background: url('../img/Logo_Illig_4C_EN_claim.svg') top center no-repeat;
     width: 100%;
     height: 70px;
   }
 }
-
+*/
 .app-enterprise {
   .logo-wordmark {
     background: url('../img/grafana_enterprise_typelogo.svg') top center no-repeat;

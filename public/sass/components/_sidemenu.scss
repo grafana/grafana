@@ -61,7 +61,7 @@ $mobile-menu-breakpoint: md;
     &.active,
     &:hover {
       background-color: $side-menu-item-hover-bg;
-      @include left-brand-border-gradient();
+      //@include left-brand-border-gradient();
 
       .dropdown-menu {
         margin: 0;
@@ -91,6 +91,9 @@ $mobile-menu-breakpoint: md;
   font-size: 16px;
   border: 1px solid transparent;
   text-align: center;
+  &:hover{
+    filter: brightness(0);
+  }
 
   img {
     border-radius: 50%;
@@ -98,6 +101,11 @@ $mobile-menu-breakpoint: md;
     height: 28px;
     box-shadow: 0 0 14px 2px rgba(255, 255, 255, 0.05);
   }
+  /*
+  .gicon{
+    filter: brightness(0);
+  }
+  */
 }
 
 @include keyframes(dropdown-anim) {
@@ -199,7 +207,7 @@ li.sidemenu-org-switcher {
 
 .sidemenu__logo {
   display: block;
-  padding: 6px 14px 6px 9px;
+  padding: 2px 2px 2px 2px;
   min-height: $navbarHeight;
   position: relative;
   height: $navbarHeight - 1px;
@@ -209,9 +217,9 @@ li.sidemenu-org-switcher {
   }
 
   img {
-    width: 30px;
+    width: 50px;
     position: relative;
-    top: 5px;
+    top: 10px;
     left: 4px;
   }
 }
@@ -250,7 +258,8 @@ li.sidemenu-org-switcher {
   .sidemenu {
     .sidemenu__logo {
       display: none;
-    }
+      }
+    
 
     .sidemenu__logo_small_breakpoint {
       padding: 14px 10px 26px 13px;
@@ -261,6 +270,7 @@ li.sidemenu-org-switcher {
 
       .fa-bars {
         font-size: 25px;
+        filter: $navbar-btn-gicon-brightness;
       }
     }
 

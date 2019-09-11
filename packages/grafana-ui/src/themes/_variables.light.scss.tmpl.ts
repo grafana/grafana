@@ -165,7 +165,7 @@ $btn-danger-bg-hl: $red-shade;
 $btn-inverse-bg: $gray-5;
 $btn-inverse-bg-hl: darken($gray-5, 5%);
 $btn-inverse-bg-hl: $gray-4;
-$btn-inverse-text-color: $gray-1;
+$btn-inverse-text-color: $gray-2;
 $btn-inverse-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 
 $btn-link-color: $gray-1;
@@ -177,21 +177,21 @@ $btn-divider-right: $gray-7;
 
 $btn-drag-image: '../img/grab_light.svg';
 
-$navbar-btn-gicon-brightness: brightness(1.5);
+$navbar-btn-gicon-brightness: brightness(2.7);
 
 // Forms
 // -------------------------
 $input-bg: $white;
 $input-bg-disabled: $gray-5;
 
-$input-color: $dark-2;
+$input-color: $gray-2;
 $input-border-color: $gray-5;
 $input-box-shadow: none;
 $input-border-focus: $gray-5 !default;
 $input-box-shadow-focus: $blue-light !default;
 $input-color-placeholder: $gray-4 !default;
 $input-label-bg: $gray-5;
-$input-label-border-color: $gray-5;
+$input-label-border-color: $gray-2;
 $input-color-select-arrow: $gray-1;
 
 // Input placeholder text color
@@ -227,7 +227,7 @@ $horizontalComponentOffset: 180px;
 // -------------------------
 $navbarHeight: 52px;
 
-$navbarBackground: $white;
+$navbarBackground: $blue-base;
 $navbarBorder: 1px solid $gray-5;
 
 $navbarButtonBackground: lighten($navbarBackground, 3%);
@@ -235,12 +235,14 @@ $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 
 $navbar-button-border: $gray-4;
 
+$navbar-page-btn-color: $blue-base;
+
 // Sidemenu
 // -------------------------
-$side-menu-bg: $dark-1;
+$side-menu-bg: $blue-base; //$dark-1;
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
 $side-menu-item-hover-bg: $gray-1;
-$side-menu-shadow: 5px 0px 10px -5px $gray-1;
+$side-menu-shadow: 0px 0px 0px -0px $gray-1;
 $side-menu-link-color: $gray-6;
 
 // Menu dropdowns
