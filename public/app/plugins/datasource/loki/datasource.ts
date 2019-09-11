@@ -1,7 +1,15 @@
 // Libraries
 import _ from 'lodash';
 // Services & Utils
-import { dateMath, DataFrame, LogRowModel, DateTime, AnnotationEvent, DataFrameView, LoadingState } from '@grafana/data';
+import {
+  dateMath,
+  DataFrame,
+  LogRowModel,
+  DateTime,
+  AnnotationEvent,
+  DataFrameView,
+  LoadingState,
+} from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
