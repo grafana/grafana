@@ -8,7 +8,8 @@ export const DataLinkBuiltInVars = {
   fieldName: '__field.name',
   valueTime: '__value.time',
   valueNumeric: '__value.numeric',
-  seriesRefId: '__series.refId',
+  valueText: '__value.text',
+  valueRaw: '__value.raw',
 };
 
 /**

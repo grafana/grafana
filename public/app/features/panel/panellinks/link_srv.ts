@@ -36,16 +36,10 @@ export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): Variab
       documentation: 'Name of the series',
       origin: VariableOrigin.Series,
     },
-    {
-      value: `${DataLinkBuiltInVars.seriesRefId}`,
-      label: 'RefId',
-      documentation: 'Series refId',
-      origin: VariableOrigin.Series,
-    },
     ...labels.map(label => ({
       value: `__series.labels.${label}`,
-      label: `Label: ${label}`,
-      documentation: 'Adds series name',
+      label: `labels.${label}`,
+      documentation: `${label} label value`,
       origin: VariableOrigin.Series,
     })),
   ];
@@ -54,7 +48,7 @@ export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): Variab
     {
       value: `${DataLinkBuiltInVars.fieldName}`,
       label: 'Name',
-      documentation: 'Time value of the clicked datapoint (in ms epoch)',
+      documentation: 'Field name of the clicked datapoint (in ms epoch)',
       origin: VariableOrigin.Field,
     },
   ];
@@ -64,6 +58,24 @@ export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): Variab
       value: `${DataLinkBuiltInVars.valueTime}`,
       label: 'Time',
       documentation: 'Time value of the clicked datapoint (in ms epoch)',
+      origin: VariableOrigin.Value,
+    },
+    {
+      value: `${DataLinkBuiltInVars.valueNumeric}`,
+      label: 'Numeric',
+      documentation: 'Numeric representation of selected value',
+      origin: VariableOrigin.Value,
+    },
+    {
+      value: `${DataLinkBuiltInVars.valueText}`,
+      label: 'Text',
+      documentation: 'Text representation of selected value',
+      origin: VariableOrigin.Value,
+    },
+    {
+      value: `${DataLinkBuiltInVars.valueRaw}`,
+      label: 'Raw',
+      documentation: 'Raw value',
       origin: VariableOrigin.Value,
     },
   ];
