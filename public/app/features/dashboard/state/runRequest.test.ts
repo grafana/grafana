@@ -160,10 +160,10 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('If no response after 50ms', ctx => {
+  runRequestScenario('If no response after 250ms', ctx => {
     ctx.setup(async () => {
       ctx.start();
-      await sleep(80);
+      await sleep(250);
     });
 
     it('should emit 1 result with loading state', () => {
@@ -188,7 +188,8 @@ describe('runRequest', () => {
     ctx.setup(async () => {
       ctx.start();
       // wait a bit
-      await sleep(250);
+      await sleep(20);
+
       ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
     });
 
