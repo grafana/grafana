@@ -9,8 +9,8 @@ import {
   prometheusSpecialRegexEscape,
 } from '../datasource';
 import { dateTime } from '@grafana/data';
-import { DataSourceInstanceSettings, DataQueryResponseData } from '@grafana/ui';
-import { PromOptions } from '../types';
+import { DataSourceInstanceSettings, DataQueryResponseData, DataQueryRequest } from '@grafana/ui';
+import { PromOptions, PromQuery, PromContext } from '../types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { CustomVariable } from 'app/features/templating/custom_variable';
@@ -1424,6 +1424,214 @@ describe('PrometheusDatasource for POST', () => {
       ctx.ds._addTracingHeaders(httpOptions, options);
       expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
       expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
+    });
+  });
+});
+
+const getPrepareTargetsContext = (target: PromQuery) => {
+  const instanceSettings = ({
+    url: 'proxied',
+    directUrl: 'direct',
+    user: 'test',
+    password: 'mupp',
+    jsonData: { httpMethod: 'POST' },
+  } as unknown) as DataSourceInstanceSettings<PromOptions>;
+  const start = 0;
+  const end = 1;
+  const panelId = '2';
+  const options = ({ targets: [target], interval: '1s', panelId } as any) as DataQueryRequest<PromQuery>;
+
+  const ds = new PrometheusDatasource(instanceSettings, q, backendSrv as any, templateSrv as any, timeSrv as any);
+  const { queries, activeTargets } = ds.prepareTargets(options, start, end);
+
+  return {
+    queries,
+    activeTargets,
+    start,
+    end,
+    panelId,
+  };
+};
+
+describe('prepareTargets', () => {
+  describe('when run from a Panel', () => {
+    it('then it should just add targets', () => {
+      const target: PromQuery = {
+        refId: 'A',
+        expr: 'up',
+        context: PromContext.Panel,
+      };
+
+      const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
+
+      expect(queries.length).toBe(1);
+      expect(activeTargets.length).toBe(1);
+      expect(queries[0]).toEqual({
+        end,
+        expr: 'up',
+        headers: {
+          'X-Dashboard-Id': undefined,
+          'X-Panel-Id': panelId,
+        },
+        hinting: undefined,
+        instant: undefined,
+        refId: target.refId,
+        requestId: panelId + target.refId,
+        start,
+        step: 1,
+      });
+      expect(activeTargets[0]).toEqual(target);
+    });
+  });
+
+  describe('when run from Explore', () => {
+    describe('and both Graph and Table are shown', () => {
+      it('then it should return both instant and time series related objects', () => {
+        const target: PromQuery = {
+          refId: 'A',
+          expr: 'up',
+          context: PromContext.Explore,
+          showingGraph: true,
+          showingTable: true,
+        };
+
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
+
+        expect(queries.length).toBe(2);
+        expect(activeTargets.length).toBe(2);
+        expect(queries[0]).toEqual({
+          end,
+          expr: 'up',
+          headers: {
+            'X-Dashboard-Id': undefined,
+            'X-Panel-Id': panelId,
+          },
+          hinting: undefined,
+          instant: true,
+          refId: target.refId,
+          requestId: panelId + target.refId + '_instant',
+          start,
+          step: 1,
+        });
+        expect(activeTargets[0]).toEqual({
+          ...target,
+          format: 'table',
+          instant: true,
+          requestId: panelId + target.refId + '_instant',
+          valueWithRefId: true,
+        });
+        expect(queries[1]).toEqual({
+          end,
+          expr: 'up',
+          headers: {
+            'X-Dashboard-Id': undefined,
+            'X-Panel-Id': panelId,
+          },
+          hinting: undefined,
+          instant: false,
+          refId: target.refId,
+          requestId: panelId + target.refId,
+          start,
+          step: 1,
+        });
+        expect(activeTargets[1]).toEqual({
+          ...target,
+          format: 'time_series',
+          instant: false,
+          requestId: panelId + target.refId,
+        });
+      });
+    });
+    describe('and both Graph and Table are hidden', () => {
+      it('then it should return empty arrays', () => {
+        const target: PromQuery = {
+          refId: 'A',
+          expr: 'up',
+          context: PromContext.Explore,
+          showingGraph: false,
+          showingTable: false,
+        };
+
+        const { queries, activeTargets } = getPrepareTargetsContext(target);
+
+        expect(queries.length).toBe(0);
+        expect(activeTargets.length).toBe(0);
+      });
+    });
+
+    describe('and Graph is hidden', () => {
+      it('then it should return only intant related objects', () => {
+        const target: PromQuery = {
+          refId: 'A',
+          expr: 'up',
+          context: PromContext.Explore,
+          showingGraph: false,
+          showingTable: true,
+        };
+
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
+
+        expect(queries.length).toBe(1);
+        expect(activeTargets.length).toBe(1);
+        expect(queries[0]).toEqual({
+          end,
+          expr: 'up',
+          headers: {
+            'X-Dashboard-Id': undefined,
+            'X-Panel-Id': panelId,
+          },
+          hinting: undefined,
+          instant: true,
+          refId: target.refId,
+          requestId: panelId + target.refId + '_instant',
+          start,
+          step: 1,
+        });
+        expect(activeTargets[0]).toEqual({
+          ...target,
+          format: 'table',
+          instant: true,
+          requestId: panelId + target.refId + '_instant',
+          valueWithRefId: true,
+        });
+      });
+    });
+
+    describe('and Table is hidden', () => {
+      it('then it should return only time series related objects', () => {
+        const target: PromQuery = {
+          refId: 'A',
+          expr: 'up',
+          context: PromContext.Explore,
+          showingGraph: true,
+          showingTable: false,
+        };
+
+        const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
+
+        expect(queries.length).toBe(1);
+        expect(activeTargets.length).toBe(1);
+        expect(queries[0]).toEqual({
+          end,
+          expr: 'up',
+          headers: {
+            'X-Dashboard-Id': undefined,
+            'X-Panel-Id': panelId,
+          },
+          hinting: undefined,
+          instant: false,
+          refId: target.refId,
+          requestId: panelId + target.refId,
+          start,
+          step: 1,
+        });
+        expect(activeTargets[0]).toEqual({
+          ...target,
+          format: 'time_series',
+          instant: false,
+          requestId: panelId + target.refId,
+        });
+      });
     });
   });
 });
