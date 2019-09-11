@@ -1,7 +1,7 @@
 // Libraries
 import { cloneDeep } from 'lodash';
 import { interval, merge, Observable, ReplaySubject, Unsubscribable } from 'rxjs';
-import { delay, filter, map, share, tap, throttle } from 'rxjs/operators';
+import { last, map, sample, share } from 'rxjs/operators';
 // Services & Utils
 import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -19,7 +19,6 @@ import {
   PanelDataFormat,
 } from '@grafana/ui';
 import { DataTransformerConfig, ScopedVars, TimeRange, transformDataFrame } from '@grafana/data';
-import { LoadingState } from '@grafana/data/src/types/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -157,18 +156,18 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      const reqObservable = runRequest(ds, request);
+      const reqObservable = runRequest(ds, request).pipe(share());
+      const timer = interval(1000);
+
       this.pipeToSubject(
-        reqObservable.pipe(
-          throttle(
-            ev => {
-              return merge(
-                interval(1000),
-                reqObservable.pipe(filter((data: PanelData) => data.state === LoadingState.Done))
-              );
-            },
-            { leading: false, trailing: true }
-          )
+        merge(
+          // We need this so the last value is emitted. Otherwise when the reqObservable completes, the sampled
+          // observable does not emit the last value.
+          reqObservable.pipe(last()),
+          // Using sample instead of throttle here as we do not want to wait for the first value and count the window
+          // from there. We want to wait some time from start of the request, let runRequest buffer the data in that
+          // time and than pass the latest value.
+          reqObservable.pipe(sample(timer))
         )
       );
     } catch (err) {
