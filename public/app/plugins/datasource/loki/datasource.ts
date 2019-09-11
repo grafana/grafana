@@ -1,7 +1,15 @@
 // Libraries
 import _ from 'lodash';
 // Services & Utils
-import { dateMath, DataFrame, LogRowModel, DateTime, AnnotationEvent, DataFrameView } from '@grafana/data';
+import {
+  dateMath,
+  DataFrame,
+  LogRowModel,
+  DateTime,
+  AnnotationEvent,
+  DataFrameView,
+  LoadingState,
+} from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -168,6 +176,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         return {
           data,
           key: `loki-${liveTarget.refId}`,
+          state: LoadingState.Streaming,
         };
       })
     );
@@ -181,14 +190,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
           return err;
         }
 
-        const error: DataQueryError = this.processError(err, target);
+        const error: DataQueryError = this.processError(err, query);
         throw error;
       })
     ).pipe(
       filter((response: any) => (response.cancelled ? false : true)),
       map((response: any) => {
-        const data = this.processResult(response.data, target);
-        return { data, key: target.refId };
+        const data = this.processResult(response.data, query);
+        return { data, key: query.refId };
       })
     );
   };
