@@ -1,7 +1,7 @@
 import { getFlotTickDecimals } from 'app/core/utils/ticks';
 import _ from 'lodash';
 import { getValueFormat, ValueFormatter } from '@grafana/ui';
-import { stringToJsRegex, DecimalCount } from '@grafana/data';
+import { stringToJsRegex, DecimalCount, DataFrameView } from '@grafana/data';
 
 function matchSeriesOverride(aliasOrRegex: string, seriesAlias: string) {
   if (!aliasOrRegex) {
@@ -70,7 +70,8 @@ export function getDataMinMax(data: TimeSeries[]) {
 export default class TimeSeries {
   datapoints: any;
   id: string;
-  refId: string;
+  view: DataFrameView;
+  fieldName: string;
   label: string;
   alias: string;
   aliasEscaped: string;
@@ -111,7 +112,8 @@ export default class TimeSeries {
     this.stats = {};
     this.legend = true;
     this.unit = opts.unit;
-    this.refId = opts.refId;
+    this.fieldName = opts.fieldName;
+    this.view = opts.view;
     this.hasMsResolution = this.isMsResolutionNeeded();
   }
 
