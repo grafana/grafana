@@ -437,23 +437,28 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 20) {
+      const updateLinks = (link: DataLink) => {
+        return {
+          ...link,
+          url: updateVariablesSyntax(link.url),
+        };
+      };
       panelUpgrades.push((panel: any) => {
         // For graph panel
         if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
-          panel.options.dataLinks = panel.options.dataLinks.map(updateDataLinksSyntax);
+          panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
         }
 
         // For panel with fieldOptions
-        if (
-          panel.options &&
-          panel.options.fieldOptions &&
-          panel.options.fieldOptions.defaults &&
-          panel.options.fieldOptions.defaults.links &&
-          _.isArray(panel.options.fieldOptions.defaults.links)
-        ) {
-          panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(
-            updateDataLinksSyntax
-          );
+        if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
+          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+            panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
+          }
+          if (panel.options.fieldOptions.defaults.title) {
+            panel.options.fieldOptions.defaults.title = updateVariablesSyntax(
+              panel.options.fieldOptions.defaults.title
+            );
+          }
         }
       });
     }
@@ -689,23 +694,25 @@ function upgradePanelLink(link: any): DataLink {
   };
 }
 
-function updateDataLinksSyntax(link: any): DataLink {
-  let url: string = link.url;
+function updateVariablesSyntax(text: string) {
+  const legacyVariableNamesRegex = /(__series_name)|(\$__series_name)|(__value_time)|(__field_name)|(\$__field_name)/g;
 
-  const legacyVariableNamesRegex = /(__series_name)|(__value_time)/g;
-
-  url = url.replace(legacyVariableNamesRegex, (match, seriesName, valueTime) => {
+  return text.replace(legacyVariableNamesRegex, (match, seriesName, seriesName1, valueTime, fieldName, fieldName1) => {
     if (seriesName) {
       return '__series.name';
+    }
+    if (seriesName1) {
+      return '${__series.name}';
     }
     if (valueTime) {
       return '__value.time';
     }
+    if (fieldName) {
+      return '__field.name';
+    }
+    if (fieldName1) {
+      return '${__field.name}';
+    }
     return match;
   });
-
-  return {
-    ...link,
-    url,
-  };
 }

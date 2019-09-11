@@ -442,7 +442,7 @@ describe('DashboardModel', () => {
     });
   });
 
-  describe('when migrating data links', () => {
+  describe('when migrating variables', () => {
     let model: any;
     beforeEach(() => {
       model = new DashboardModel({
@@ -473,6 +473,7 @@ describe('DashboardModel', () => {
                       url: 'http://mylink.com?series=${__value_time}',
                     },
                   ],
+                  title: '$__cell_0 * $__field_name * $__series_name',
                 },
               },
             },
@@ -481,18 +482,28 @@ describe('DashboardModel', () => {
       });
     });
 
-    it('should replace __series_name variable with __series.name', () => {
-      expect(model.panels[0].options.dataLinks[0].url).toBe('http://mylink.com?series=${__series.name}');
-      expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
-        'http://mylink.com?series=${__series.name}'
-      );
+    describe('data links', () => {
+      it('should replace __series_name variable with __series.name', () => {
+        expect(model.panels[0].options.dataLinks[0].url).toBe('http://mylink.com?series=${__series.name}');
+        expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
+          'http://mylink.com?series=${__series.name}'
+        );
+      });
+
+      it('should replace __value_time variable with __value.time', () => {
+        expect(model.panels[0].options.dataLinks[1].url).toBe('http://mylink.com?series=${__value.time}');
+        expect(model.panels[1].options.fieldOptions.defaults.links[1].url).toBe(
+          'http://mylink.com?series=${__value.time}'
+        );
+      });
     });
 
-    it('should replace __value_time variable with __value.time', () => {
-      expect(model.panels[0].options.dataLinks[1].url).toBe('http://mylink.com?series=${__value.time}');
-      expect(model.panels[1].options.fieldOptions.defaults.links[1].url).toBe(
-        'http://mylink.com?series=${__value.time}'
-      );
+    describe('field display', () => {
+      it('should replace __series_name and __field_name variables with new syntax', () => {
+        expect(model.panels[1].options.fieldOptions.defaults.title).toBe(
+          '$__cell_0 * ${__field.name} * ${__series.name}'
+        );
+      });
     });
   });
 });

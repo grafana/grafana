@@ -17,7 +17,6 @@ import toString from 'lodash/toString';
 import { GrafanaTheme, InterpolateFunction } from '../types/index';
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from './flotPairs';
-import { DataLinkBuiltInVars } from '../utils/dataLinks';
 
 export interface FieldDisplayOptions {
   values?: boolean; // If true show each row value
@@ -28,8 +27,8 @@ export interface FieldDisplayOptions {
   override: FieldConfig; // Set these values regardless of the source
 }
 // TODO: use built in variables, same as for data links?
-export const VAR_SERIES_NAME = '__series_name';
-export const VAR_FIELD_NAME = '__field_name';
+export const VAR_SERIES_NAME = '__series.name';
+export const VAR_FIELD_NAME = '__field.name';
 export const VAR_CALC = '__calc';
 export const VAR_CELL_PREFIX = '__cell_'; // consistent with existing table templates
 
@@ -54,7 +53,7 @@ function getTitleTemplate(title: string | undefined, stats: string[], data?: Dat
     parts.push('$' + VAR_CALC);
   }
   if (data.length > 1) {
-    parts.push('$' + VAR_SERIES_NAME);
+    parts.push('${' + VAR_SERIES_NAME + '}');
   }
   if (fieldCount > 1 || !parts.length) {
     parts.push('$' + VAR_FIELD_NAME);
@@ -106,7 +105,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         };
       }
 
-      scopedVars[DataLinkBuiltInVars.seriesName] = { text: 'Series', value: series.name };
+      scopedVars['__series'] = { text: 'Series', value: { name: series.name } };
 
       const { timeField } = getTimeField(series);
       const view = new DataFrameView(series);
@@ -125,7 +124,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           name = `Field[${s}]`;
         }
 
-        scopedVars[VAR_FIELD_NAME] = { text: 'Field', value: name };
+        scopedVars['__field'] = { text: 'Field', value: { name } };
 
         const display = getDisplayProcessor({
           field: config,
@@ -133,7 +132,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         });
 
         const title = config.title ? config.title : defaultTitle;
-
         // Show all rows
         if (fieldOptions.values) {
           const usesCellValues = title.indexOf(VAR_CELL_PREFIX) >= 0;
