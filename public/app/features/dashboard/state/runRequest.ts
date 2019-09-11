@@ -127,7 +127,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
   // mapTo will translate the timer event into state.panelData (which has state set to loading)
   // takeUntil will cancel the timer emit when first response packet is received on the dataObservable
   return merge(
-    timer(50).pipe(
+    timer(200).pipe(
       mapTo(state.panelData),
       takeUntil(dataObservable)
     ),
