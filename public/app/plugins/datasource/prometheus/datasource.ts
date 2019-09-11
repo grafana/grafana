@@ -179,7 +179,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const activeTargets: PromQuery[] = [];
 
     for (const target of options.targets) {
-      if (!target.expr || target.hide || (target.showingGraph === false && target.showingTable === false)) {
+      if (!target.expr || target.hide) {
         continue;
       }
 
