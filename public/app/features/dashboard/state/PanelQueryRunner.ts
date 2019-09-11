@@ -52,39 +52,25 @@ export class PanelQueryRunner {
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
-  getData(): Observable<PanelData> {
+  getData(transform = true): Observable<PanelData> {
     const ensureFormats = postProcessPanelData();
 
     return this.subject.pipe(
       map((data: PanelData) => {
-        const transformedData = ensureFormats(data);
+        const processed = ensureFormats(data);
 
-        if (this.hasTransformations()) {
-          const newSeries = transformDataFrame(this.transformations, transformedData.series);
-          return { ...transformedData, series: newSeries };
+        if (transform && this.hasTransformations()) {
+          const newSeries = transformDataFrame(this.transformations, processed.series);
+          return { ...processed, series: newSeries };
         }
 
-        return transformedData;
+        return processed;
       })
     );
   }
 
   hasTransformations() {
     return config.featureToggles.transformations && this.transformations && this.transformations.length > 0;
-  }
-
-  /**
-   * Useful when chaining PanelQueryRunners (for shared query results feature)
-   * To avoid double post-processing & transformations
-   */
-  getDataRaw(): Observable<PanelData> {
-    const ensureFormats = postProcessPanelData();
-
-    return this.subject.pipe(
-      map((data: PanelData) => {
-        return ensureFormats(data);
-      })
-    );
   }
 
   async run(options: QueryRunnerOptions) {
