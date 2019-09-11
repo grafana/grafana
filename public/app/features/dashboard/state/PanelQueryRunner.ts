@@ -203,7 +203,7 @@ export class PanelQueryRunner {
       });
 
       const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
-      const norm = kbn.calculateInterval(timeRange, options.maxDataPoints, lowerIntervalLimit); // By default this is widthPixels
+      const norm = kbn.calculateInterval(timeRange, widthPixels, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms
