@@ -77,20 +77,34 @@ const getStyles = (theme: GrafanaTheme) => {
     theme.type
   );
 
-  const labelBg = tinycolor(wrapperBg.toString())
-    .darken(2)
-    .toString();
+  const separatorColor = selectThemeVariant(
+    {
+      light: tinycolor(wrapperBg.toString())
+        .darken(10)
+        .toString(),
+      dark: tinycolor(wrapperBg.toString())
+        .lighten(10)
+        .toString(),
+    },
+    theme.type
+  );
 
   return {
+    list: css`
+      border-bottom: 1px solid ${separatorColor};
+      &:last-child {
+        border: none;
+      }
+    `,
     wrapper: css`
       background: ${wrapperBg};
       z-index: 1;
-      width: 200px;
+      width: 250px;
       box-shadow: 0 5px 10px 0 ${wrapperShadow};
     `,
     item: css`
       background: none;
-      padding: 4px 8px;
+      padding: 2px 8px;
       color: ${itemColor};
       cursor: pointer;
       &:hover {
@@ -99,10 +113,6 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     label: css`
       color: ${theme.colors.textWeak};
-      font-size: ${theme.typography.size.sm};
-      line-height: ${theme.typography.lineHeight.lg};
-      padding: ${theme.spacing.xs} ${theme.spacing.sm};
-      background: ${labelBg};
     `,
     activeItem: css`
       background: ${itemBgActive};
@@ -112,11 +122,11 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     itemValue: css`
       font-family: ${theme.typography.fontFamily.monospace};
+      font-size: ${theme.typography.size.xs};
     `,
     itemDocs: css`
       margin-top: ${theme.spacing.xs};
       color: ${itemDocsColor};
-      font-size: ${theme.typography.size.sm};
     `,
   };
 };
@@ -152,7 +162,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
           <DataLinkSuggestionsList
             {...otherProps}
             suggestions={groupedSuggestions[key]}
-            label={`${_.capitalize(key)} variables`}
+            label={`${_.capitalize(key)}`}
             activeIndex={otherProps.activeIndex}
             activeIndexOffset={indexOffset}
             key={key}
@@ -177,8 +187,8 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
 
     return (
       <>
-        <div className={styles.label}>{label}</div>
         <List
+          className={styles.list}
           items={suggestions}
           renderItem={(item, index) => {
             return (
@@ -189,7 +199,9 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
                 }}
                 title={item.documentation}
               >
-                <div className={styles.itemValue}>{item.label}</div>
+                <span className={styles.itemValue}>
+                  <span className={styles.label}>{label}</span> {item.label}
+                </span>
               </div>
             );
           }}

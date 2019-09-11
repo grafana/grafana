@@ -165,7 +165,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
               modifiers={{
                 preventOverflow: { enabled: true, boundariesElement: 'window' },
                 arrow: { enabled: false },
-                offset: { offset: 200 }, // width of the suggestions menu
+                offset: { offset: 250 }, // width of the suggestions menu
               }}
             >
               {({ ref, style, placement }) => {
