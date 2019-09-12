@@ -185,7 +185,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             const displayValue = display(results[calc]);
             displayValue.title = replaceVariables(title, scopedVars);
             values.push({
-              name,
+              name: calc,
               field: config,
               display: displayValue,
               sparkline,

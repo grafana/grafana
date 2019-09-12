@@ -10,6 +10,8 @@ export const DataLinkBuiltInVars = {
   valueNumeric: '__value.numeric',
   valueText: '__value.text',
   valueRaw: '__value.raw',
+  // name of the calculation represented by the value
+  valueCalc: '__value.calc',
 };
 
 /**

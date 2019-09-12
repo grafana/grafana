@@ -26,6 +26,36 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
   },
 ];
 
+const fieldVars = [
+  {
+    value: `${DataLinkBuiltInVars.fieldName}`,
+    label: 'Name',
+    documentation: 'Field name of the clicked datapoint (in ms epoch)',
+    origin: VariableOrigin.Field,
+  },
+];
+
+const valueVars = [
+  {
+    value: `${DataLinkBuiltInVars.valueNumeric}`,
+    label: 'Numeric',
+    documentation: 'Numeric representation of selected value',
+    origin: VariableOrigin.Value,
+  },
+  {
+    value: `${DataLinkBuiltInVars.valueText}`,
+    label: 'Text',
+    documentation: 'Text representation of selected value',
+    origin: VariableOrigin.Value,
+  },
+  {
+    value: `${DataLinkBuiltInVars.valueRaw}`,
+    label: 'Raw',
+    documentation: 'Raw value',
+    origin: VariableOrigin.Value,
+  },
+];
+
 export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
   const labels = _.flatten(dataFrames.map(df => Object.keys(df.labels || {})));
 
@@ -44,54 +74,25 @@ export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): Variab
     })),
   ];
 
-  const fieldVars = [
-    {
-      value: `${DataLinkBuiltInVars.fieldName}`,
-      label: 'Name',
-      documentation: 'Field name of the clicked datapoint (in ms epoch)',
-      origin: VariableOrigin.Field,
-    },
-  ];
+  const valueTimeVar = {
+    value: `${DataLinkBuiltInVars.valueTime}`,
+    label: 'Time',
+    documentation: 'Time value of the clicked datapoint (in ms epoch)',
+    origin: VariableOrigin.Value,
+  };
 
-  const valueVars = [
-    {
-      value: `${DataLinkBuiltInVars.valueTime}`,
-      label: 'Time',
-      documentation: 'Time value of the clicked datapoint (in ms epoch)',
-      origin: VariableOrigin.Value,
-    },
-    {
-      value: `${DataLinkBuiltInVars.valueNumeric}`,
-      label: 'Numeric',
-      documentation: 'Numeric representation of selected value',
-      origin: VariableOrigin.Value,
-    },
-    {
-      value: `${DataLinkBuiltInVars.valueText}`,
-      label: 'Text',
-      documentation: 'Text representation of selected value',
-      origin: VariableOrigin.Value,
-    },
-    {
-      value: `${DataLinkBuiltInVars.valueRaw}`,
-      label: 'Raw',
-      documentation: 'Raw value',
-      origin: VariableOrigin.Value,
-    },
-  ];
-
-  return [...seriesVars, ...fieldVars, ...valueVars, ...getPanelLinksVariableSuggestions()];
+  return [...seriesVars, ...fieldVars, ...valueVars, valueTimeVar, ...getPanelLinksVariableSuggestions()];
 };
 
-export const getCalculationValueDataLinksVariableSuggestions = (): VariableSuggestion[] => [
-  ...getPanelLinksVariableSuggestions(),
-  {
-    value: `${DataLinkBuiltInVars.seriesName}`,
-    label: 'Name',
-    documentation: 'Adds series name',
-    origin: VariableOrigin.Series,
-  },
-];
+export const getCalculationValueDataLinksVariableSuggestions = (): VariableSuggestion[] => {
+  const valueCalcVar = {
+    value: `${DataLinkBuiltInVars.valueCalc}`,
+    label: 'Calculation name',
+    documentation: 'Name of the calculation the value is a result of',
+    origin: VariableOrigin.Value,
+  };
+  return [...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
+};
 
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, scopedVars: ScopedVars, origin: T) => LinkModel<T>;
