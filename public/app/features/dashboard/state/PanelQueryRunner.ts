@@ -1,7 +1,8 @@
 // Libraries
 import { cloneDeep } from 'lodash';
-import { interval, merge, Observable, ReplaySubject, Unsubscribable } from 'rxjs';
+import { ReplaySubject, Unsubscribable, Observable, interval, merge } from 'rxjs';
 import { last, map, sample, share } from 'rxjs/operators';
+
 // Services & Utils
 import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';

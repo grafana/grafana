@@ -1,23 +1,20 @@
 // Libraries
-import { from, merge, Observable, of, timer } from 'rxjs';
-import { flatten, isArray, isString, map as lodashMap } from 'lodash';
-import { catchError, finalize, map, mapTo, share, takeUntil } from 'rxjs/operators';
+import { Observable, of, timer, merge, from } from 'rxjs';
+import { flatten, map as lodashMap, isArray, isString } from 'lodash';
+import { map, catchError, takeUntil, mapTo, share, finalize } from 'rxjs/operators';
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
 // Types
 import {
-  DataQueryError,
+  DataSourceApi,
   DataQueryRequest,
   PanelData,
   DataQueryResponse,
   DataQueryResponseData,
-  DataSourceApi,
+  DataQueryError,
 } from '@grafana/ui';
 
 import { LoadingState, dateMath, toDataFrame, DataFrame, guessFieldTypes } from '@grafana/data';
-
-// In case of only one response we just make up a dummy key
-const DUMMY_KEY = 'A';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
 
@@ -35,7 +32,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     ...state.packets,
   };
 
-  packets[packet.key || DUMMY_KEY] = packet;
+  packets[packet.key || 'A'] = packet;
 
   // Update the time range
   let timeRange = request.range;
