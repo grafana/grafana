@@ -17,7 +17,7 @@ Head to [docs.grafana.org](http://docs.grafana.org/installation/) for documentat
 
 ## Documentation & Support
 
-Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
+Be sure to read the [Getting Started](http://docs.grafana.org/guides/gettingstarted/) guide and the other feature guides.
 
 ## Run from master
 
