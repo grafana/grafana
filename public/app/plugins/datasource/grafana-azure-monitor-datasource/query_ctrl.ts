@@ -10,6 +10,7 @@ import { Resource } from './types';
 import { migrateTargetSchema } from './migrations';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
+import './multi-select.directive';
 
 export interface ResultFormat {
   text: string;
@@ -138,6 +139,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   lastQuery: string;
   lastQueryError?: string;
   subscriptions: Array<{ text: string; value: string }>;
+  subscriptionValues: string[];
   resources: Resource[];
 
   /** @ngInject */
@@ -157,7 +159,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
     this.resultFormats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
     this.resources = Array<Resource>();
+    this.subscriptionValues = [];
     this.getSubscriptions();
+
     if (this.target.queryType === 'Azure Log Analytics') {
       this.getWorkspaces();
     }
@@ -269,6 +273,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     return this.datasource.azureMonitorDatasource.getSubscriptions().then((subs: any) => {
       this.subscriptions = subs;
+      this.subscriptionValues = subs.map((s: { value: string }) => s.value);
 
       if (!this.target.subscriptions.length) {
         this.target.subscriptions = subs.map((s: { value: string }) => s.value);

@@ -20,14 +20,18 @@
     <div class="gf-form" ng-if="(ctrl.target.queryType === 'Azure Monitor' && ctrl.target.azureMonitor.queryMode === 'singleResource') || ctrl.target.queryType === 'Azure Log Analytics'">
       <label class="gf-form-label query-keyword width-9">Subscription</label>
       <gf-form-dropdown model="ctrl.target.subscription" allow-custom="true" lookup-text="true"
-        get-options="ctrl.getSubscriptions()" on-change="ctrl.onSubscriptionsChange()" css-class="min-width-6">
+        get-options="ctrl.getSubscriptions()" on-change="ctrl.onSubscriptionChange()" css-class="min-width-6">
       </gf-form-dropdown>
     </div>
     <div class="gf-form" ng-if="(ctrl.target.queryType === 'Azure Monitor' && ctrl.target.azureMonitor.queryMode === 'crossResource')">
-      <label class="gf-form-label query-keyword width-9">Subscriptions</label>
-      <gf-form-dropdown model="ctrl.target.subscriptions" allow-custom="false" lookup-text="true"
-        get-options="ctrl.onSubscriptionsChange()" css-class="min-width-6">
-      </gf-form-dropdown>
+        <label class="gf-form-label query-keyword width-9">Subscription</label>
+      <div class="gf-form-select-wrapper max-width-20">
+        <multi-select ng-if="ctrl.subscriptionValues.length"
+          values="ctrl.target.subscriptions"
+          options="ctrl.subscriptionValues"
+          on-change="ctrl.onSubscriptionsChange()">
+        </multi-select>
+      </div>
     </div>
   </div>
   <div ng-if="ctrl.target.queryType === 'Azure Monitor'">
