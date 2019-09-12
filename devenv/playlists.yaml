@@ -1,0 +1,11 @@
+apiVersion: 1
+
+playlists:
+- uid: demo-playlist
+  name: Demo Playlist
+  interval: 1m
+  items:
+  - type: dashboard_by_tag
+    value: demo
+    order: 1
+    title: Demo dashboards

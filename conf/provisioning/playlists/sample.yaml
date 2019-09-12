@@ -1,0 +1,17 @@
+# # config file version
+apiVersion: 1
+
+# playlists:
+#   - org_name: Main Org.
+#     uid: playlist1
+#     name: First playlist
+#     interval: 5m
+#     items:
+#       - type: dashboard_by_tag
+#         value: myTag
+#         order: 1
+#         title: Tagged dashboards
+#
+# delete_playlists:
+#   - org_name: Main Org.
+#     uid: playlist2

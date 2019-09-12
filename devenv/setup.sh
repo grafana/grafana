@@ -47,6 +47,12 @@ devDatasources() {
 		ln -s -f ../../../devenv/datasources.yaml ../conf/provisioning/datasources/dev.yaml
 }
 
+devPlaylists() {
+		echo -e "\xE2\x9C\x94 Setting up all dev playlists using provisioning"
+
+		ln -s -f ../../../devenv/playlists.yaml ../conf/provisioning/playlists/dev.yaml
+}
+
 usage() {
 	echo -e "\n"
 	echo "Usage:"
@@ -70,6 +76,7 @@ main() {
 	else
 		devDashboards
 		devDatasources
+    devPlaylists
 	fi
 
   if [[ -z "$cmd" ]]; then
