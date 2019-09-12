@@ -56,7 +56,7 @@ More information [here](https://community.grafana.com/t/using-grafanas-query-ins
 This option is now renamed (and moved to Options sub section above your queries):
 ![image|519x120](upload://ySjHOVpavV6yk9LHQxL9nq2HIsT.png)
 
-Datas source selection & options & help are now above your metric queries.
+Data source selection & options & help are now above your metric queries.
 ![image|690x179](upload://5kNDxKgMz1BycOKgG3iWYLsEVXv.png)
 
 ### Minor Changes
