@@ -35,7 +35,7 @@ import { runEndToEndTests } from '../../plugins/e2e/launcher';
 import { getEndToEndSettings } from '../../plugins/index';
 
 export interface PluginCIOptions {
-  backend?: string;
+  backend?: boolean;
   full?: boolean;
   upload?: boolean;
 }
@@ -58,14 +58,18 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
   fs.mkdirSync(workDir);
 
   if (backend) {
-    console.log('TODO, backend support?');
-    fs.mkdirSync(path.resolve(process.cwd(), 'dist'));
-    const file = path.resolve(process.cwd(), 'dist', `README_${backend}.txt`);
-    fs.writeFile(file, `TODO... build bakend plugin: ${backend}!`, err => {
-      if (err) {
-        throw new Error('Unable to write: ' + file);
-      }
-    });
+    const makefile = path.resolve(process.cwd(), 'Makefile');
+    if (!fs.existsSync(makefile)) {
+      throw new Error('Backend plugins are build with makefiles.  Missing: ' + makefile);
+    }
+
+    // Run make
+    let exe = await execa('make');
+    console.log(exe.stdout);
+
+    // Run tests
+    exe = await execa('make', ['test']);
+    console.log(exe.stdout);
   } else {
     // Do regular build process with coverage
     await pluginBuildRunner({ coverage: true });
