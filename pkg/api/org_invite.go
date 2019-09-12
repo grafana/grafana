@@ -40,11 +40,11 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 	} else {
 		return inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
 	}
-	
+
 	if setting.DisableLoginForm {
 		return Error(400, "Cannot invite when login is disabled.", nil)
 	}
-	
+
 	cmd := m.CreateTempUserCommand{}
 	cmd.OrgId = c.OrgId
 	cmd.Email = inviteDto.LoginOrEmail
