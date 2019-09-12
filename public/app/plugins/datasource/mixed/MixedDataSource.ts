@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import groupBy from 'lodash/groupBy';
-import { from, of, Observable, forkJoin, merge } from 'rxjs';
+import { from, of, Observable, merge } from 'rxjs';
 
 import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -41,6 +41,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
           }
 
           datasourceRequest.targets = newTargets;
+          datasourceRequest.requestId = `${dsName}${datasourceRequest.requestId || ''}`;
           return {
             dataSourceApi,
             datasourceRequest,
@@ -73,9 +74,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       observables.push(merge(noTargets, hasTargets));
     }
 
-    return forkJoin<DataQueryResponse>(...observables).pipe(
-      mergeMap(result => result) // unwraps the result array and returns each entry separate
-    );
+    return merge(...observables);
   }
 
   testDatasource() {
