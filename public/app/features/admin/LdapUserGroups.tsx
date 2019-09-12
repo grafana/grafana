@@ -9,6 +9,9 @@ interface Props {
 }
 
 export const LdapUserGroups: FC<Props> = ({ className, groups, showAttributeMapping }) => {
+  const items = showAttributeMapping ? groups : groups.filter(item => item.orgRole);
+  const roleColumnClass = showAttributeMapping && 'width-14';
+
   return (
     <table className={`${className} filter-table form-inline`}>
       <thead>
@@ -19,11 +22,11 @@ export const LdapUserGroups: FC<Props> = ({ className, groups, showAttributeMapp
         </tr>
       </thead>
       <tbody>
-        {groups.map((group, index) => {
+        {items.map((group, index) => {
           return (
             <tr key={`${group.orgId}-${index}`}>
               <td className="width-16">{group.orgName}</td>
-              <td className="width-14">{group.orgRole}</td>
+              <td className={roleColumnClass}>{group.orgRole}</td>
               {showAttributeMapping && (
                 <>
                   <td>{group.groupDN}</td>

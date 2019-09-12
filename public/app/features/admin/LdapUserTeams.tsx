@@ -10,6 +10,8 @@ interface Props {
 }
 
 export const LdapUserTeams: FC<Props> = ({ className, teams, showAttributeMapping }) => {
+  const items = showAttributeMapping ? teams : teams.filter(item => item.teamName);
+  const teamColumnClass = showAttributeMapping && 'width-14';
   const noMatchPlaceholderStyle = css`
     display: flex;
   `;
@@ -24,7 +26,7 @@ export const LdapUserTeams: FC<Props> = ({ className, teams, showAttributeMappin
         </tr>
       </thead>
       <tbody>
-        {teams.map((team, index) => {
+        {items.map((team, index) => {
           return (
             <tr key={`${team.teamName}-${index}`}>
               <td className="width-16">
@@ -39,7 +41,7 @@ export const LdapUserTeams: FC<Props> = ({ className, teams, showAttributeMappin
                   </div>
                 )}
               </td>
-              <td className="width-14">{team.teamName}</td>
+              <td className={teamColumnClass}>{team.teamName}</td>
               {showAttributeMapping && <td>{team.groupDN}</td>}
             </tr>
           );
