@@ -622,9 +622,8 @@ export const processQueryResponse = (
   const tableResult = processor.getTableResult() || state.tableResult || new TableModel(); // don't replace results until we receive new results
   const logsResult = processor.getLogsResult();
 
-  // For Angular editors
-  if (true) {
-    // TODO? can we check if angular editors are used?
+  // Send legacy data to Angular editors
+  if (state.datasourceInstance.components.QueryCtrl) {
     const legacy = series.map(v => toLegacyResponseData(v));
 
     state.eventBridge.emit('data-received', legacy);
