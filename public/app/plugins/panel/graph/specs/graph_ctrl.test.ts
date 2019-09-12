@@ -76,7 +76,7 @@ describe('GraphCtrl', () => {
       ];
 
       ctx.ctrl.range = range;
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onDataSnapshotLoad(data);
     });
 
     it('should set datapointsOutside', () => {
@@ -87,7 +87,7 @@ describe('GraphCtrl', () => {
   describe('datapointsCount given 2 series', () => {
     beforeEach(() => {
       const data: any = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onDataSnapshotLoad(data);
     });
 
     it('should set datapointsCount warning', () => {
