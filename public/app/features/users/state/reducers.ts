@@ -6,7 +6,7 @@ export const initialState: UsersState = {
   invitees: [] as Invitee[],
   users: [] as OrgUser[],
   searchQuery: '',
-  canInvite: !config.disableLoginForm && !config.externalUserMngLinkName,
+  canInvite: !config.externalUserMngLinkName,
   externalUserMngInfo: config.externalUserMngInfo,
   externalUserMngLinkName: config.externalUserMngLinkName,
   externalUserMngLinkUrl: config.externalUserMngLinkUrl,
