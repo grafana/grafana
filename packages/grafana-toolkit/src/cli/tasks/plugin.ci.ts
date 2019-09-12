@@ -63,12 +63,12 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
       throw new Error('Backend plugins are build with makefiles.  Missing: ' + makefile);
     }
 
-    // Run make
-    let exe = await execa('make');
+    // Run tests
+    let exe = await execa('make', ['test']);
     console.log(exe.stdout);
 
-    // Run tests
-    exe = await execa('make', ['test']);
+    // Run build.  Make should figure out the right platform internally
+    exe = await execa('make');
     console.log(exe.stdout);
   } else {
     // Do regular build process with coverage
