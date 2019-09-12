@@ -31,6 +31,13 @@ describe('templateSrv', () => {
       expect(target).toBe('Server1 nested');
     });
 
+    it('scoped vars should support objects with propert names with dot', () => {
+      const target = _templateSrv.replace('${series.name} ${series.nested["field.with.dot"]}', {
+        series: { value: { name: 'Server1', nested: { 'field.with.dot': 'nested' } } },
+      });
+      expect(target).toBe('Server1 nested');
+    });
+
     it('scoped vars should support arrays of objects', () => {
       const target = _templateSrv.replace('${series.rows[0].name} ${series.rows[1].name}', {
         series: { value: { rows: [{ name: 'first' }, { name: 'second' }] } },

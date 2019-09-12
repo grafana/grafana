@@ -56,6 +56,10 @@ const valueVars = [
   },
 ];
 
+const buildLabelPath = (label: string) => {
+  return label.indexOf('.') > -1 ? `["${label}"]` : `.${label}`;
+};
+
 export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
   const labels = _.flatten(dataFrames.map(df => Object.keys(df.labels || {})));
 
@@ -67,7 +71,7 @@ export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): Variab
       origin: VariableOrigin.Series,
     },
     ...labels.map(label => ({
-      value: `__series.labels.${label}`,
+      value: `__series.labels${buildLabelPath(label)}`,
       label: `labels.${label}`,
       documentation: `${label} label value`,
       origin: VariableOrigin.Series,
