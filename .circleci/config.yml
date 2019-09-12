@@ -672,6 +672,21 @@ jobs:
           name: Release next packages
           command: './scripts/circle-release-next-packages.sh'
 
+  release-packages:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run:
+          name: Boostrap lerna
+          command: 'npx lerna bootstrap'
+      - run:
+          name: npm - Prepare auth token
+          command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
+      - run:
+          name: Release packages
+          command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
+
 workflows:
   version: 2
   build-master:
@@ -754,6 +769,7 @@ workflows:
             - build-all
             - test-frontend
           filters: *filter-only-master
+
   release:
     jobs:
       - build-all:
@@ -809,6 +825,18 @@ workflows:
             - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+          filters: *filter-only-release
+      - release-packages:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+            - build-oss-msi
           filters: *filter-only-release
       - build-oss-msi:
           requires:
