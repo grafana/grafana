@@ -200,8 +200,5 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData) {
   }
 
   // Makes sure the data is properly formatted
-  series = getProcessedDataFrames(series);
-
-  lastResult = { ...data, series };
-  return lastResult;
+  return getProcessedDataFrames(series);
 }
