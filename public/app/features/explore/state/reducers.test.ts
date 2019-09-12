@@ -18,6 +18,8 @@ import {
   splitCloseAction,
   changeModeAction,
   scanStopAction,
+  toggleGraphAction,
+  toggleTableAction,
 } from './actionTypes';
 import { Reducer } from 'redux';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
@@ -26,14 +28,12 @@ import { serializeStateToUrlParam } from 'app/core/utils/explore';
 import TableModel from 'app/core/table_model';
 import { DataSourceApi, DataQuery } from '@grafana/ui';
 import { LogsModel, LogsDedupStrategy } from '@grafana/data';
-import { PanelQueryState } from '../../dashboard/state/PanelQueryState';
 
 describe('Explore item reducer', () => {
   describe('scanning', () => {
     it('should start scanning', () => {
       const initalState = {
         ...makeExploreItemState(),
-        queryState: null as PanelQueryState,
         scanning: false,
       };
 
@@ -42,14 +42,12 @@ describe('Explore item reducer', () => {
         .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
-          queryState: null as PanelQueryState,
           scanning: true,
         });
     });
     it('should stop scanning', () => {
       const initalState = {
         ...makeExploreItemState(),
-        queryState: null as PanelQueryState,
         scanning: true,
         scanRange: {},
       };
@@ -59,7 +57,6 @@ describe('Explore item reducer', () => {
         .whenActionIsDispatched(scanStopAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
           ...makeExploreItemState(),
-          queryState: null as PanelQueryState,
           scanning: false,
           scanRange: undefined,
         });
@@ -172,6 +169,30 @@ describe('Explore item reducer', () => {
             .whenActionIsDispatched(updateDatasourceInstanceAction({ exploreId: ExploreId.left, datasourceInstance }))
             .thenStateShouldEqual(expectedState);
         });
+      });
+    });
+  });
+
+  describe('toggling panels', () => {
+    describe('when toggleGraphAction is dispatched', () => {
+      it('then it should set correct state', () => {
+        reducerTester()
+          .givenReducer(itemReducer, { graphResult: [] })
+          .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual({ showingGraph: true, graphResult: [] })
+          .whenActionIsDispatched(toggleGraphAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual({ showingGraph: false, graphResult: null });
+      });
+    });
+
+    describe('when toggleTableAction is dispatched', () => {
+      it('then it should set correct state', () => {
+        reducerTester()
+          .givenReducer(itemReducer, { tableResult: {} })
+          .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual({ showingTable: true, tableResult: {} })
+          .whenActionIsDispatched(toggleTableAction({ exploreId: ExploreId.left }))
+          .thenStateShouldEqual({ showingTable: false, tableResult: new TableModel() });
       });
     });
   });

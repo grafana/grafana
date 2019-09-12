@@ -394,8 +394,8 @@ export class CircularDataFrame<T = any> extends MutableDataFrame<T> {
   constructor(options: CircularOptions) {
     super(undefined, (buffer?: any[]) => {
       return new CircularVector({
-        buffer,
         ...options,
+        buffer,
       });
     });
   }

@@ -1,7 +1,7 @@
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { DataSourceInstanceSettings } from '@grafana/ui';
+import { DataSourceInstanceSettings, DataQueryResponse } from '@grafana/ui';
 import { MixedDatasource } from './module';
 
 const defaultDS = new MockDataSourceApi('DefaultDS', { data: ['DDD'] });
@@ -29,7 +29,7 @@ describe('MixedDatasource', () => {
 
   it('direct query should return results', async () => {
     const ds = await getDataSourceSrv().get('-- Mixed --');
-    const res = await ds.query(requestMixed);
+    const res = await (ds.query(requestMixed) as Promise<DataQueryResponse>);
     expect(res.data).toEqual(['AAAA', 'BBBB', 'CCCC']);
   });
 });

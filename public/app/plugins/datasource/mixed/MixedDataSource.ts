@@ -4,14 +4,7 @@ import map from 'lodash/map';
 import flatten from 'lodash/flatten';
 import filter from 'lodash/filter';
 
-import {
-  DataSourceApi,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataStreamObserver,
-  DataSourceInstanceSettings,
-} from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 
@@ -22,7 +15,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     super(instanceSettings);
   }
 
-  async query(request: DataQueryRequest<DataQuery>, observer: DataStreamObserver): Promise<DataQueryResponse> {
+  async query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> {
     // Remove any invalid queries
     const queries = request.targets.filter(t => {
       return t.datasource !== MIXED_DATASOURCE_NAME;
@@ -52,7 +45,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
           }
 
           opt.targets = targets;
-          return ds.query(opt);
+          return ds.query(opt) as Promise<DataQueryResponse>;
         });
     });
 

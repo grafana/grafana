@@ -1,20 +1,19 @@
 // Libraries
-import cloneDeep from 'lodash/cloneDeep';
-import throttle from 'lodash/throttle';
-import { Subject, Unsubscribable, PartialObserver } from 'rxjs';
+import { cloneDeep } from 'lodash';
+import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 // Services & Utils
+import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-import { PanelQueryState } from './PanelQueryState';
-import { isSharedDashboardQuery, SharedQueryRunner } from 'app/plugins/datasource/dashboard/SharedQueryRunner';
+import { runRequest, preProcessPanelData } from './runRequest';
+import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
 
 // Types
 import { PanelData, DataQuery, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
-
-import { TimeRange, DataTransformerConfig, transformDataFrame, toLegacyResponseData, ScopedVars } from '@grafana/data';
-import config from 'app/core/config';
+import { TimeRange, DataTransformerConfig, transformDataFrame, ScopedVars } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -36,109 +35,45 @@ export interface QueryRunnerOptions<
   transformations?: DataTransformerConfig[];
 }
 
-export enum PanelQueryRunnerFormat {
-  frames = 'frames',
-  legacy = 'legacy',
-  both = 'both',
-}
-
 let counter = 100;
 function getNextRequestId() {
   return 'Q' + counter++;
 }
 
 export class PanelQueryRunner {
-  private subject?: Subject<PanelData>;
-
-  private state = new PanelQueryState();
+  private subject?: ReplaySubject<PanelData>;
+  private subscription?: Unsubscribable;
   private transformations?: DataTransformerConfig[];
 
-  // Listen to another panel for changes
-  private sharedQueryRunner: SharedQueryRunner;
-
-  constructor(private panelId: number) {
-    this.state.onStreamingDataUpdated = this.onStreamingDataUpdated;
-    this.subject = new Subject();
-  }
-
-  getPanelId() {
-    return this.panelId;
+  constructor() {
+    this.subject = new ReplaySubject(1);
   }
 
   /**
-   * Get the last result -- optionally skip the transformation
+   * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
-  //  TODO: add tests
-  getCurrentData(transform = true): PanelData {
-    const v = this.state.validateStreamsAndGetPanelData();
-    const transformData = config.featureToggles.transformations && transform;
-    const hasTransformations = this.transformations && this.transformations.length;
-
-    if (transformData && hasTransformations) {
-      const processed = transformDataFrame(this.transformations, v.series);
-      return {
-        ...v,
-        series: processed,
-        legacy: processed.map(p => toLegacyResponseData(p)),
-      };
+  getData(transform = true): Observable<PanelData> {
+    if (transform) {
+      return this.subject.pipe(
+        map((data: PanelData) => {
+          if (this.hasTransformations()) {
+            const newSeries = transformDataFrame(this.transformations, data.series);
+            return { ...data, series: newSeries };
+          }
+          return data;
+        })
+      );
     }
 
-    return v;
+    // Just pass it directly
+    return this.subject.pipe();
   }
 
-  /**
-   * Listen for updates to the PanelData.  If a query has already run for this panel,
-   * the results will be immediatly passed to the observer
-   */
-  subscribe(observer: PartialObserver<PanelData>, format = PanelQueryRunnerFormat.frames): Unsubscribable {
-    if (format === PanelQueryRunnerFormat.legacy) {
-      this.state.sendLegacy = true;
-    } else if (format === PanelQueryRunnerFormat.both) {
-      this.state.sendFrames = true;
-      this.state.sendLegacy = true;
-    } else {
-      this.state.sendFrames = true;
-    }
-
-    // Send the last result
-    if (this.state.isStarted()) {
-      // Force check formats again?
-      this.state.getDataAfterCheckingFormats();
-      observer.next(this.getCurrentData()); // transformed
-    }
-
-    return this.subject.subscribe(observer);
+  hasTransformations() {
+    return config.featureToggles.transformations && this.transformations && this.transformations.length > 0;
   }
 
-  /**
-   * Subscribe one runner to another
-   */
-  chain(runner: PanelQueryRunner): Unsubscribable {
-    const { sendLegacy, sendFrames } = runner.state;
-    let format = sendFrames ? PanelQueryRunnerFormat.frames : PanelQueryRunnerFormat.legacy;
-
-    if (sendLegacy) {
-      format = PanelQueryRunnerFormat.both;
-    }
-
-    return this.subscribe(runner.subject, format);
-  }
-
-  /**
-   * Change the current transformation and notify all listeners
-   * Should be used only by panel editor to update the transformers
-   */
-  setTransform = (transformations?: DataTransformerConfig[]) => {
-    this.transformations = transformations;
-
-    if (this.state.isStarted()) {
-      this.onStreamingDataUpdated();
-    }
-  };
-
-  async run(options: QueryRunnerOptions): Promise<PanelData> {
-    const { state } = this;
-
+  async run(options: QueryRunnerOptions) {
     const {
       queries,
       timezone,
@@ -152,18 +87,12 @@ export class PanelQueryRunner {
       maxDataPoints,
       scopedVars,
       minInterval,
-      delayStateNotification,
+      // delayStateNotification,
     } = options;
 
-    // Support shared queries
     if (isSharedDashboardQuery(datasource)) {
-      if (!this.sharedQueryRunner) {
-        this.sharedQueryRunner = new SharedQueryRunner(this);
-      }
-      return this.sharedQueryRunner.process(options);
-    } else if (this.sharedQueryRunner) {
-      this.sharedQueryRunner.disconnect();
-      this.sharedQueryRunner = null;
+      this.pipeToSubject(runSharedRequest(options));
+      return;
     }
 
     const request: DataQueryRequest = {
@@ -184,8 +113,6 @@ export class PanelQueryRunner {
 
     // Add deprecated property
     (request as any).rangeRaw = timeRange.raw;
-
-    let loadingStateTimeoutId = 0;
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
@@ -215,54 +142,30 @@ export class PanelQueryRunner {
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
 
-      // Check if we can reuse the already issued query
-      const active = state.getActiveRunner();
-      if (active) {
-        if (state.isSameQuery(ds, request)) {
-          // Maybe cancel if it has run too long?
-          console.log('Trying to execute query while last one has yet to complete, returning same promise');
-          return active;
-        } else {
-          state.cancel('Query Changed while running');
-        }
-      }
-
-      // Send a loading status event on slower queries
-      loadingStateTimeoutId = window.setTimeout(() => {
-        if (state.getActiveRunner()) {
-          this.subject.next(this.state.validateStreamsAndGetPanelData());
-        }
-      }, delayStateNotification || 500);
-
-      this.transformations = options.transformations;
-
-      const data = await state.execute(ds, request);
-      // Clear the delayed loading state timeout
-      clearTimeout(loadingStateTimeoutId);
-
-      // Broadcast results
-      this.subject.next(this.getCurrentData());
-      return data;
+      this.pipeToSubject(runRequest(ds, request));
     } catch (err) {
-      clearTimeout(loadingStateTimeoutId);
-
-      const data = state.setError(err);
-      this.subject.next(data);
-      return data;
+      console.log('PanelQueryRunner Error', err);
     }
   }
 
-  /**
-   * Called after every streaming event. This should be throttled so we
-   * avoid accidentally overwhelming the browser
-   */
-  onStreamingDataUpdated = throttle(
-    () => {
-      this.subject.next(this.getCurrentData());
-    },
-    50,
-    { trailing: true, leading: true }
-  );
+  private pipeToSubject(observable: Observable<PanelData>) {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
+
+    // Makes sure everything is a proper DataFrame
+    const prepare = preProcessPanelData();
+
+    this.subscription = observable.subscribe({
+      next: (data: PanelData) => {
+        this.subject.next(prepare(data));
+      },
+    });
+  }
+
+  setTransformations(transformations?: DataTransformerConfig[]) {
+    this.transformations = transformations;
+  }
 
   /**
    * Called when the panel is closed
@@ -273,17 +176,10 @@ export class PanelQueryRunner {
       this.subject.complete();
     }
 
-    // Will cancel and disconnect any open requets
-    this.state.cancel('destroy');
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
-
-  setState = (state: PanelQueryState) => {
-    this.state = state;
-  };
-
-  getState = () => {
-    return this.state;
-  };
 }
 
 async function getDataSource(

@@ -293,6 +293,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
   onDataReceived(dataList: any) {
     this.lastQueryMeta = null;
     this.lastQueryError = null;
+    console.log('postgres query data received', dataList);
 
     const anySeriesFromQuery: any = _.find(dataList, { refId: this.target.refId });
     if (anySeriesFromQuery) {

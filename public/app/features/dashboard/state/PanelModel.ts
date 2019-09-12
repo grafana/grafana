@@ -327,13 +327,18 @@ export class PanelModel {
 
   getQueryRunner(): PanelQueryRunner {
     if (!this.queryRunner) {
-      this.queryRunner = new PanelQueryRunner(this.id);
+      this.queryRunner = new PanelQueryRunner();
+      this.setTransformations(this.transformations);
     }
     return this.queryRunner;
   }
 
   hasTitle() {
     return this.title && this.title.length > 0;
+  }
+
+  isAngularPlugin(): boolean {
+    return this.plugin && !!this.plugin.angularPanelCtrl;
   }
 
   destroy() {
@@ -347,11 +352,8 @@ export class PanelModel {
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
-    // save for persistence
     this.transformations = transformations;
-
-    // update query runner transformers
-    this.getQueryRunner().setTransform(transformations);
+    this.getQueryRunner().setTransformations(transformations);
   }
 }
 

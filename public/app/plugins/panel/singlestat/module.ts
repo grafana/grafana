@@ -28,8 +28,7 @@ import {
 } from '@grafana/data';
 import { auto } from 'angular';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
-import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 
 const BASE_FONT_SIZE = 38;
 
@@ -124,7 +123,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 
-    this.dataFormat = PanelQueryRunnerFormat.frames;
+    this.useDataFrames = true;
 
     this.onSparklineColorChange = this.onSparklineColorChange.bind(this);
     this.onSparklineFillChange = this.onSparklineFillChange.bind(this);
