@@ -30,6 +30,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   dataList: LegacyResponseData[];
   querySubscription?: Unsubscribable;
   dataFormat = PanelDataFormat.Legacy;
+  isFirstLoad = true;
 
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -96,7 +97,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       return;
     }
 
-    this.loading = false;
     this.error = err.message || 'Request Error';
     this.inspector = { error: err };
 
@@ -127,7 +127,15 @@ class MetricsPanelCtrl extends PanelCtrl {
       // Ignore data in loading state
       if (data.state === LoadingState.Loading) {
         this.loading = true;
-        return;
+        if (this.isFirstLoad) {
+          return;
+        }
+      }
+
+      if (data.state === LoadingState.Done) {
+        this.isFirstLoad = false;
+        console.log('done');
+        this.loading = false;
       }
 
       if (data.request) {
@@ -216,8 +224,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   handleDataFrames(data: DataFrame[]) {
-    this.loading = false;
-
     if (this.dashboard && this.dashboard.snapshot) {
       this.panel.snapshotData = data.map(frame => toDataFrameDTO(frame));
     }
@@ -230,8 +236,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   handleQueryResult(result: DataQueryResponse) {
-    this.loading = false;
-
     if (this.dashboard.snapshot) {
       this.panel.snapshotData = result.data;
     }

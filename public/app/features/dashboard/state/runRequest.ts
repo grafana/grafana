@@ -62,16 +62,8 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     })
   );
 
-  // In packets we only have data from requests that already returned some data. We could prefill them with some
-  // initial value, but we do not know the key of returned packet from the request so we would not be able to match
-  // the packet to the initialised dummy values.
-  const packetStates = Object.values(packets).map(p => p.state);
-  if (packetStates.length < request.targets.length) {
-    packetStates.push(...new Array(request.targets.length - packetStates.length).fill(LoadingState.Loading));
-  }
-
   const panelData = {
-    state: getCombinedState(packetStates),
+    state: packet.state || LoadingState.Done,
     series: combinedData,
     request: {
       ...request,
@@ -80,28 +72,6 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   };
 
   return { packets, panelData };
-}
-
-function getCombinedState(states: LoadingState[]) {
-  if (states.includes(LoadingState.Error)) {
-    return LoadingState.Error;
-  }
-
-  if (states.includes(LoadingState.Streaming)) {
-    return LoadingState.Streaming;
-  }
-
-  if (states.includes(LoadingState.Loading)) {
-    return LoadingState.Loading;
-  }
-  if (states.filter(s => s !== LoadingState.Done).length === 0) {
-    return LoadingState.Done;
-  }
-  if (states.filter(s => s !== LoadingState.NotStarted).length === 0) {
-    return LoadingState.NotStarted;
-  }
-  // This should only a case when there are some Done and some NotStarted. Not sure if that's real possibility
-  return LoadingState.Loading;
 }
 
 /**
@@ -119,12 +89,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
       series: [],
       request: request,
     },
-    packets: {
-      C: {
-        state: LoadingState.Loading,
-        data: [],
-      },
-    },
+    packets: {},
   };
 
   // Return early if there are no queries to run

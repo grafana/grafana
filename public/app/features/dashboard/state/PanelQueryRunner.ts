@@ -157,7 +157,7 @@ export class PanelQueryRunner {
       request.intervalMs = norm.intervalMs;
 
       const reqObservable = runRequest(ds, request).pipe(share());
-      const timer = interval(1000);
+      const timer = interval(250);
 
       this.pipeToSubject(
         merge(
