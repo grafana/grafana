@@ -37,7 +37,6 @@ describe('MixedDatasource', () => {
   });
 
   it('direct query should return results', async () => {
-    console.log(results);
     expect(results.length).toBe(3);
     expect(results[0].data).toEqual(['AAAA']);
     expect(results[1].data).toEqual(['BBBB']);
