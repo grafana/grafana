@@ -221,7 +221,7 @@
     "papaparse": "4.6.3",
     "prismjs": "1.16.0",
     "prop-types": "15.7.2",
-    "rc-cascader": "0.14.0",
+    "rc-cascader": "0.17.5",
     "react": "16.8.6",
     "react-dom": "16.8.6",
     "react-grid-layout": "0.16.6",
