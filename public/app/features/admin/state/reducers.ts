@@ -4,7 +4,7 @@ import {
   ldapConnectionInfoLoadedAction,
   userMappingInfoLoadedAction,
   userMappingInfoFailedAction,
-  clearUserError,
+  clearUserErrorAction,
   userLoadedAction,
   userSessionsLoadedAction,
   ldapSyncStatusLoadedAction,
@@ -64,7 +64,7 @@ const ldapReducer = reducerFactory(initialLdapState)
     }),
   })
   .addMapper({
-    filter: clearUserError,
+    filter: clearUserErrorAction,
     mapper: state => ({
       ...state,
       userError: null,
@@ -89,7 +89,7 @@ const ldapUserReducer = reducerFactory(initialLdapUserState)
     }),
   })
   .addMapper({
-    filter: clearUserError,
+    filter: clearUserErrorAction,
     mapper: state => ({
       ...state,
       userError: null,

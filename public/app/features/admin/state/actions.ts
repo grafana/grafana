@@ -11,6 +11,8 @@ import {
   getLdapSyncStatus,
 } from './apis';
 
+// Action types
+
 export const ldapConnectionInfoLoadedAction = actionCreatorFactory<LdapConnectionInfo>(
   'ldap/CONNECTION_INFO_LOADED'
 ).create();
@@ -18,13 +20,15 @@ export const ldapSyncStatusLoadedAction = actionCreatorFactory<SyncInfo>('ldap/S
 export const userMappingInfoLoadedAction = actionCreatorFactory<LdapUser>('ldap/USER_INFO_LOADED').create();
 export const userMappingInfoFailedAction = actionCreatorFactory<LdapError>('ldap/USER_INFO_FAILED').create();
 export const clearUserMappingInfoAction = noPayloadActionCreatorFactory('ldap/CLEAR_USER_MAPPING_INFO').create();
-export const clearUserError = noPayloadActionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
+export const clearUserErrorAction = noPayloadActionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
+
 export const userLoadedAction = actionCreatorFactory<User>('USER_LOADED').create();
 export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('USER_SESSIONS_LOADED').create();
-export const userSyncedAction = noPayloadActionCreatorFactory('USER_SYNCED').create();
 export const userSyncFailedAction = noPayloadActionCreatorFactory('USER_SYNC_FAILED').create();
 export const revokeUserSessionAction = noPayloadActionCreatorFactory('REVOKE_USER_SESSION').create();
 export const revokeAllUserSessionsAction = noPayloadActionCreatorFactory('REVOKE_ALL_USER_SESSIONS').create();
+
+// Actions
 
 export function loadLdapState(): ThunkResult<void> {
   return async dispatch => {
@@ -57,9 +61,15 @@ export function loadUserMapping(username: string): ThunkResult<void> {
   };
 }
 
+export function clearUserError(): ThunkResult<void> {
+  return dispatch => {
+    dispatch(clearUserErrorAction());
+  };
+}
+
 export function clearUserMappingInfo(): ThunkResult<void> {
-  return async dispatch => {
-    dispatch(clearUserError());
+  return dispatch => {
+    dispatch(clearUserErrorAction());
     dispatch(clearUserMappingInfoAction());
   };
 }
