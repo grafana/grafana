@@ -20,7 +20,8 @@ export class FieldCache {
       index: idx,
     }));
 
-    for (const [index, field] of data.fields.entries()) {
+    for (let i = 0; i < data.fields.length; i++) {
+      const field = data.fields[i];
       // Make sure it has a type
       if (field.type === FieldType.other) {
         const t = guessFieldTypeForField(field);
@@ -33,13 +34,13 @@ export class FieldCache {
       }
       this.fieldByType[field.type].push({
         ...field,
-        index,
+        index: i,
       });
 
       if (this.fieldByName[field.name]) {
         console.warn('Duplicate field names in DataFrame: ', field.name);
       } else {
-        this.fieldByName[field.name] = { ...field, index };
+        this.fieldByName[field.name] = { ...field, index: i };
       }
     }
   }
