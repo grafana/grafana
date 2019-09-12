@@ -3,9 +3,9 @@ import groupBy from 'lodash/groupBy';
 import map from 'lodash/map';
 import flatten from 'lodash/flatten';
 import filter from 'lodash/filter';
+import { from } from 'rxjs';
 
 import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
-
 import { getDataSourceSrv } from '@grafana/runtime';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
@@ -45,7 +45,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
           }
 
           opt.targets = targets;
-          return ds.query(opt) as Promise<DataQueryResponse>;
+          const queryObservable = from(ds.query(opt));
         });
     });
 
