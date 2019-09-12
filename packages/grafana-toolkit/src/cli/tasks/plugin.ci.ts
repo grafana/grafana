@@ -64,7 +64,7 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
     }
 
     // Run plugin-ci task
-    execa('make', ['backend-plugin-ci']).stdout.pipe(process.stdout);
+    execa('make', ['backend-plugin-ci']).stdout!.pipe(process.stdout);
   } else {
     // Do regular build process with coverage
     await pluginBuildRunner({ coverage: true });
