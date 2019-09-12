@@ -21,14 +21,7 @@ import {
 } from 'app/core/utils/explore';
 // Types
 import { ThunkResult, ExploreUrlState, ExploreItemState } from 'app/types';
-import {
-  DataSourceApi,
-  DataQuery,
-  DataSourceSelectItem,
-  QueryFixAction,
-  PanelData,
-  PanelDataFormat,
-} from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction, PanelData } from '@grafana/ui';
 
 import {
   RawTimeRange,
@@ -84,7 +77,7 @@ import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicke
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { runRequest, postProcessPanelData } from '../../dashboard/state/runRequest';
+import { runRequest, preProcessPanelData } from '../../dashboard/state/runRequest';
 
 /**
  * Updates UI state and save it to the URL
@@ -486,7 +479,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     let firstResponse = true;
 
     const newQuerySub = runRequest(datasourceInstance, transaction.request)
-      .pipe(map(postProcessPanelData(PanelDataFormat.Both)))
+      .pipe(map(preProcessPanelData()))
       .subscribe((data: PanelData) => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage

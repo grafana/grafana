@@ -37,7 +37,7 @@ export function runSharedRequest(options: QueryRunnerOptions): Observable<PanelD
     }
 
     const listenToRunner = listenToPanel.getQueryRunner();
-    const subscription = listenToRunner.getDataRaw().subscribe({
+    const subscription = listenToRunner.getData(false).subscribe({
       next: (data: PanelData) => {
         console.log('got data from other panel', data);
         subscriber.next(data);
@@ -75,7 +75,6 @@ function getQueryError(msg: string): PanelData {
   return {
     state: LoadingState.Error,
     series: [],
-    legacy: [],
     error: { message: msg },
   };
 }

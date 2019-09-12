@@ -1,6 +1,6 @@
 import { ComponentClass, ComponentType } from 'react';
 import { LoadingState, DataFrame, TimeRange, TimeZone, ScopedVars } from '@grafana/data';
-import { DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
+import { DataQueryRequest, DataQueryError } from './datasource';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
@@ -16,16 +16,6 @@ export interface PanelData {
   series: DataFrame[];
   request?: DataQueryRequest;
   error?: DataQueryError;
-
-  // Data format expected by Angular panels
-  legacy?: LegacyResponseData[];
-}
-
-export enum PanelDataFormat {
-  None = 0,
-  Frames = 1 << 0, // 0001
-  Legacy = 1 << 1, // 0010
-  Both = Frames | Legacy,
 }
 
 export interface PanelProps<T = any> {
