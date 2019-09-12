@@ -188,7 +188,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
 }
 
 export function preProcessPanelData(data: PanelData, lastResult: PanelData) {
-  let { series } = data;
+  const { series } = data;
 
   //  for loading states with no data, use last result
   if (data.state === LoadingState.Loading && series.length === 0) {
