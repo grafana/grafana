@@ -1,8 +1,9 @@
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { DataSourceInstanceSettings, DataQueryResponse } from '@grafana/ui';
+import { DataSourceInstanceSettings } from '@grafana/ui';
 import { MixedDatasource } from './module';
+import { from } from 'rxjs';
 
 const defaultDS = new MockDataSourceApi('DefaultDS', { data: ['DDD'] });
 const datasourceSrv = new DatasourceSrvMock(defaultDS, {
@@ -26,10 +27,20 @@ describe('MixedDatasource', () => {
       { refId: 'QC', datasource: 'C' }, // 3
     ],
   });
+  const results: any[] = [];
+
+  beforeEach(async () => {
+    const ds = await getDataSourceSrv().get('-- Mixed --');
+    from(ds.query(requestMixed)).subscribe(result => {
+      results.push(result);
+    });
+  });
 
   it('direct query should return results', async () => {
-    const ds = await getDataSourceSrv().get('-- Mixed --');
-    const res = await (ds.query(requestMixed) as Promise<DataQueryResponse>);
-    expect(res.data).toEqual(['AAAA', 'BBBB', 'CCCC']);
+    console.log(results);
+    expect(results.length).toBe(3);
+    expect(results[0].data).toEqual(['AAAA']);
+    expect(results[1].data).toEqual(['BBBB']);
+    expect(results[2].data).toEqual(['CCCC']);
   });
 });
