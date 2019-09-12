@@ -1,3 +1,4 @@
+import { groupBy } from 'lodash/groupBy';
 import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
@@ -19,7 +20,6 @@ export interface ResultFormat {
 
 interface AzureMonitor {
   resourceGroup: string;
-  resourceType: string;
   resourceName: string;
   metricDefinition: string;
   metricNamespace: string;
@@ -83,7 +83,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         singleResource: {
           resourceGroup: this.defaultDropdownValue,
           metricDefinition: this.defaultDropdownValue,
-          resourceName: this.defaultDropdownValue,
           metricNamespace: this.defaultDropdownValue,
           metricName: this.defaultDropdownValue,
           dimensionFilter: '*',
@@ -91,10 +90,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         },
         crossResource: {
           resourceGroup: 'all',
-          resourceType: this.defaultDropdownValue,
           metricDefinition: this.defaultDropdownValue,
           resourceName: this.defaultDropdownValue,
-          metricNamespace: this.defaultDropdownValue,
           metricName: this.defaultDropdownValue,
           dimensionFilter: '*',
           timeGrain: 'auto',
@@ -343,7 +340,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       );
   }
 
-  async getResourceTypes(query: any) {
+  async getCrossResourceMetricDefinitions(query: any) {
     const { location: selectedLocation, resourceGroup } = this.target.azureMonitor.data.crossResource;
     return this.resources
       .filter(({ location, group }) =>
@@ -430,11 +427,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     const {
       location: selectedLocation,
       resourceGroup: selectedResourceGroup,
-      resourceType,
+      metricDefinition,
     } = this.target.azureMonitor.data.crossResource;
 
     const resources = this.resources.filter(({ type, location, name, group }) => {
-      const filter = type === resourceType && location === selectedLocation;
+      const filter = type === metricDefinition && location === selectedLocation;
       return selectedResourceGroup === 'all' ? filter : group === selectedResourceGroup && filter;
     });
 
@@ -444,7 +441,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     const responses = await Promise.all(
       uniqueResources.map(({ subscriptionId, group, type, name }) =>
-        this.datasource.getMetricNames(subscriptionId, group, type, name)
+        this.datasource
+          .getMetricNames(subscriptionId, group, type, name)
+          .then((metrics: any) => metrics.map((m: any) => ({ ...m, subscriptionIds: [subscriptionId] })))
       )
     );
 
@@ -494,17 +493,19 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   onCrossResourceGroupChange() {
     const { queryMode } = this.target.azureMonitor;
-    this.target.azureMonitor.data[queryMode].resourceType = '';
-    this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
+    this.target.azureMonitor.data[queryMode].metricDefinition = '';
+    this.target.azureMonitor.data[queryMode].metricName = '';
+    this.refresh();
   }
 
-  onResourceTypeGroupChange() {
+  onCrossResourceMetricDefinitionChange() {
     this.target.azureMonitor.data.crossResource.metricName = this.defaultDropdownValue;
+    this.refresh();
   }
 
   onLocationChange() {
     const { queryMode } = this.target.azureMonitor;
-    this.target.azureMonitor.data[queryMode].resourceType = '';
+    this.target.azureMonitor.data[queryMode].metricDefinition = '';
     this.target.azureMonitor.data[queryMode].resourceGroup = '';
     this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
   }
@@ -540,6 +541,63 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.data[queryMode].dimension = '';
   }
 
+  setMetricMetadata(metadata: any) {
+    const { queryMode } = this.target.azureMonitor;
+    this.target.azureMonitor.data[queryMode].aggOptions = metadata.supportedAggTypes || [metadata.primaryAggType];
+    this.target.azureMonitor.data[queryMode].aggregation = metadata.primaryAggType;
+    this.target.azureMonitor.data[queryMode].timeGrains = [{ text: 'auto', value: 'auto' }].concat(
+      metadata.supportedTimeGrains
+    );
+    this.target.azureMonitor.data[queryMode].timeGrain = 'auto';
+
+    this.target.azureMonitor.data[queryMode].allowedTimeGrainsMs = this.convertTimeGrainsToMs(
+      metadata.supportedTimeGrains || []
+    );
+
+    this.target.azureMonitor.data[queryMode].dimensions = metadata.dimensions;
+    if (metadata.dimensions.length > 0) {
+      this.target.azureMonitor.data[queryMode].dimension = metadata.dimensions[0].value;
+    }
+    return this.refresh();
+  }
+
+  onCrossResourceMetricNameChange() {
+    const { queryMode } = this.target.azureMonitor;
+    if (
+      !this.target.azureMonitor.data[queryMode].metricName ||
+      this.target.azureMonitor.data[queryMode].metricName === this.defaultDropdownValue
+    ) {
+      return;
+    }
+
+    const {
+      resourceGroup: currentResourceGroup,
+      metricDefinition,
+      resourceName: currentResourceName,
+      metricName,
+    } = this.target.azureMonitor.data[queryMode];
+
+    let resourceGroup = currentResourceGroup;
+    let resourceName = currentResourceName;
+    if (currentResourceGroup === 'all') {
+      resourceGroup = this.resources.find(({ type, name }) => type === metricDefinition && name === resourceName).group;
+    } else {
+      resourceName = this.resources.find(({ type, group }) => group === resourceGroup && type === metricDefinition)
+        .name;
+    }
+
+    return this.datasource
+      .getMetricMetadata(
+        this.replace(this.target.subscription),
+        resourceGroup,
+        metricDefinition,
+        resourceName,
+        metricName
+      )
+      .then(this.setMetricMetadata.bind(this))
+      .catch(this.handleQueryCtrlError.bind(this));
+  }
+
   onMetricNameChange() {
     const { queryMode } = this.target.azureMonitor;
     if (
@@ -555,27 +613,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
         this.replace(this.target.azureMonitor.data[queryMode].resourceGroup),
         this.replace(this.target.azureMonitor.data[queryMode].metricDefinition),
         this.replace(this.target.azureMonitor.data[queryMode].resourceName),
-        this.replace(this.target.azureMonitor.data[queryMode].metricNamespace),
-        this.replace(this.target.azureMonitor.data[queryMode].metricName)
+        this.replace(this.target.azureMonitor.data[queryMode].metricName),
+        this.replace(this.target.azureMonitor.data[queryMode].metricNamespace)
       )
-      .then((metadata: any) => {
-        this.target.azureMonitor.data[queryMode].aggOptions = metadata.supportedAggTypes || [metadata.primaryAggType];
-        this.target.azureMonitor.data[queryMode].aggregation = metadata.primaryAggType;
-        this.target.azureMonitor.data[queryMode].timeGrains = [{ text: 'auto', value: 'auto' }].concat(
-          metadata.supportedTimeGrains
-        );
-        this.target.azureMonitor.data[queryMode].timeGrain = 'auto';
-
-        this.target.azureMonitor.data[queryMode].allowedTimeGrainsMs = this.convertTimeGrainsToMs(
-          metadata.supportedTimeGrains || []
-        );
-
-        this.target.azureMonitor.data[queryMode].dimensions = metadata.dimensions;
-        if (metadata.dimensions.length > 0) {
-          this.target.azureMonitor.data[queryMode].dimension = metadata.dimensions[0].value;
-        }
-        return this.refresh();
-      })
+      .then(this.setMetricMetadata.bind(this))
       .catch(this.handleQueryCtrlError.bind(this));
   }
 

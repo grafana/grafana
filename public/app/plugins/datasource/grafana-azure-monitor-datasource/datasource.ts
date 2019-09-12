@@ -188,16 +188,16 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     resourceGroup: string,
     metricDefinition: string,
     resourceName: string,
-    metricNamespace: string,
-    metricName: string
+    metricName: string,
+    metricNamespace?: string
   ) {
     return this.azureMonitorDatasource.getMetricMetadata(
       subscriptionId,
       resourceGroup,
       metricDefinition,
       resourceName,
-      metricNamespace,
-      metricName
+      metricName,
+      metricNamespace
     );
   }
 

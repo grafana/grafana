@@ -399,8 +399,8 @@ export default class AzureMonitorDatasource {
     resourceGroup: string,
     metricDefinition: string,
     resourceName: string,
-    metricNamespace: string,
-    metricName: string
+    metricName: string,
+    metricNamespace?: string
   ) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.baseUrl,
