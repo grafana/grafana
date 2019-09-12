@@ -338,16 +338,16 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
       {
-        entry: 'WARN boooo',
-        labels: { foo: 'bar', baz: '1' },
-        logLevel: LogLevel.debug,
-        uniqueLabels: { baz: '1' },
-      },
-      {
         entry: 'INFO 1',
         labels: { foo: 'bar', baz: '2' },
         logLevel: LogLevel.error,
         uniqueLabels: { baz: '2' },
+      },
+      {
+        entry: 'WARN boooo',
+        labels: { foo: 'bar', baz: '1' },
+        logLevel: LogLevel.debug,
+        uniqueLabels: { baz: '1' },
       },
       {
         entry: 'INFO 2',
