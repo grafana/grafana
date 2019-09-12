@@ -8,7 +8,7 @@ import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-import { runRequest, postProcessPanelData } from './runRequest';
+import { runRequest, preProcessPanelData } from './runRequest';
 import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
 
 // Types
@@ -53,20 +53,20 @@ export class PanelQueryRunner {
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
    */
   getData(transform = true): Observable<PanelData> {
-    const ensureFormats = postProcessPanelData();
+    if (transform) {
+      return this.subject.pipe(
+        map((data: PanelData) => {
+          if (this.hasTransformations()) {
+            const newSeries = transformDataFrame(this.transformations, data.series);
+            return { ...data, series: newSeries };
+          }
+          return data;
+        })
+      );
+    }
 
-    return this.subject.pipe(
-      map((data: PanelData) => {
-        const processed = ensureFormats(data);
-
-        if (transform && this.hasTransformations()) {
-          const newSeries = transformDataFrame(this.transformations, processed.series);
-          return { ...processed, series: newSeries };
-        }
-
-        return processed;
-      })
-    );
+    // Just pass it directly
+    return this.subject.pipe();
   }
 
   hasTransformations() {
@@ -153,9 +153,12 @@ export class PanelQueryRunner {
       this.subscription.unsubscribe();
     }
 
+    // Makes sure everything is a proper DataFrame
+    const prepare = preProcessPanelData();
+
     this.subscription = observable.subscribe({
       next: (data: PanelData) => {
-        this.subject.next(data);
+        this.subject.next(prepare(data));
       },
     });
   }
