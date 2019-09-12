@@ -238,16 +238,19 @@ export const toDataFrame = (data: any): DataFrame => {
     // This will convert the array values into Vectors
     return new MutableDataFrame(data as DataFrameDTO);
   }
+
   if (data.hasOwnProperty('datapoints')) {
     return convertTimeSeriesToDataFrame(data);
   }
+
   if (data.hasOwnProperty('data')) {
     return convertGraphSeriesToDataFrame(data);
   }
+
   if (data.hasOwnProperty('columns')) {
     return convertTableToDataFrame(data);
   }
-  // TODO, try to convert JSON/Array to table?
+
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
 };

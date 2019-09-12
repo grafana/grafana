@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 import { PanelData } from './panel';
+import { Observable } from 'rxjs';
 
 // NOTE: this seems more general than just DataSource
 export interface DataSourcePluginOptionsEditorProps<TOptions> {
@@ -189,26 +190,9 @@ export abstract class DataSourceApi<
   init?: () => void;
 
   /**
-   * Query for data, and optionally stream results to an observer.
-   *
-   * Are you reading these docs aiming to execute a query?
-   * +-> If Yes, then consider using panelQueryRunner/State instead.  see:
-   *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryRunner.ts PanelQueryRunner.ts}
-   *  * {@link https://github.com/grafana/grafana/blob/master/public/app/features/dashboard/state/PanelQueryState.ts PanelQueryState.ts}
-   *
-   * If you are implementing a simple request-response query,
-   * then you can ignore the `observer` entirely.
-   *
-   * When streaming behavior is required, the Promise can return at any time
-   * with empty or partial data in the response and optionally a state.
-   * NOTE: The data in this initial response will not be replaced with any
-   * data from subsequent events. {@see DataStreamState}
-   *
-   * The request object will be passed in each observer callback
-   * so the callback could assert that the correct events are streaming and
-   * unsubscribe if unexpected results are returned.
+   * Query for data, and optionally stream results
    */
-  abstract query(request: DataQueryRequest<TQuery>, observer?: DataStreamObserver): Promise<DataQueryResponse>;
+  abstract query(request: DataQueryRequest<TQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse>;
 
   /**
    * Test & verify datasource settings & connection details
@@ -397,6 +381,19 @@ export interface DataQueryResponse {
    * or a partial result set
    */
   data: DataQueryResponseData[];
+
+  /**
+   * When returning multiple partial responses or streams
+   * Use this key to inform Grafana how to combine the partial responses
+   * Multiple responses with same key are replaced (latest used)
+   */
+  key?: string;
+
+  /**
+   * Use this to control which state the response should have
+   * Defaults to LoadingState.Done if state is not defined
+   */
+  state?: LoadingState;
 }
 
 export interface DataQuery {

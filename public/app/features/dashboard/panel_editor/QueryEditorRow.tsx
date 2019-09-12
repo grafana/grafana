@@ -12,7 +12,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, ErrorBoundaryAlert } from '@grafana/ui';
-import { TimeRange, LoadingState } from '@grafana/data';
+import { TimeRange, LoadingState, toLegacyResponseData } from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
@@ -89,7 +89,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     const { loadedDataSourceValue } = this.state;
-    const { data, query } = this.props;
+    const { data, query, panel } = this.props;
 
     if (data !== prevProps.data) {
       this.setState({ queryResponse: filterPanelDataToQuery(data, query.refId) });
@@ -99,9 +99,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       }
 
       if (this.angularQueryEditor) {
-        // Some query controllers listen to data error events and need a digest
-        // for some reason this needs to be done in next tick
-        setTimeout(this.angularQueryEditor.digest);
+        notifyAngularQueryEditorsOfData(panel, data, this.angularQueryEditor);
       }
     }
 
@@ -263,6 +261,25 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       </div>
     );
   }
+}
+
+// To avoid sending duplicate events for each row we have this global cached object here
+// So we can check if we already emitted this legacy data event
+let globalLastPanelDataCache: PanelData = null;
+
+function notifyAngularQueryEditorsOfData(panel: PanelModel, data: PanelData, editor: AngularComponent) {
+  if (data === globalLastPanelDataCache) {
+    return;
+  }
+
+  globalLastPanelDataCache = data;
+
+  const legacy = data.series.map(v => toLegacyResponseData(v));
+  panel.events.emit('data-received', legacy);
+
+  // Some query controllers listen to data error events and need a digest
+  // for some reason this needs to be done in next tick
+  setTimeout(editor.digest);
 }
 
 export interface AngularQueryComponentScope {
