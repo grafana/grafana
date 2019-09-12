@@ -67,9 +67,18 @@ export function getDataMinMax(data: TimeSeries[]) {
   return { datamin, datamax };
 }
 
+/**
+ * @deprecated: This class should not be used in new panels
+ *
+ * Use DataFrame and helpers instead
+ */
 export default class TimeSeries {
   datapoints: any;
   id: string;
+  // Represents index of original data frame in the quey response
+  dataFrameIndex: number;
+  // Represents index of field in the data frame
+  fieldIndex: number;
   label: string;
   alias: string;
   aliasEscaped: string;
@@ -110,6 +119,8 @@ export default class TimeSeries {
     this.stats = {};
     this.legend = true;
     this.unit = opts.unit;
+    this.dataFrameIndex = opts.dataFrameIndex;
+    this.fieldIndex = opts.fieldIndex;
     this.hasMsResolution = this.isMsResolutionNeeded();
   }
 

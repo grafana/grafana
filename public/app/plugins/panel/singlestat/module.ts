@@ -9,7 +9,6 @@ import {
   getDisplayProcessor,
   convertOldAngulrValueMapping,
   getColorFromHexRgbOrName,
-  PanelDataFormat,
 } from '@grafana/ui';
 
 import kbn from 'app/core/utils/kbn';
@@ -124,7 +123,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 
-    this.dataFormat = PanelDataFormat.Frames;
+    this.useDataFrames = true;
 
     this.onSparklineColorChange = this.onSparklineColorChange.bind(this);
     this.onSparklineFillChange = this.onSparklineFillChange.bind(this);

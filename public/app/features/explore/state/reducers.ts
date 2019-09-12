@@ -10,7 +10,7 @@ import {
   refreshIntervalToSortOrder,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { LoadingState } from '@grafana/data';
+import { LoadingState, toLegacyResponseData } from '@grafana/data';
 import { DataQuery, DataSourceApi, PanelData } from '@grafana/ui';
 import {
   HigherOrderAction,
@@ -124,7 +124,6 @@ export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
   request: null,
   series: [],
-  legacy: null,
   error: null,
 });
 
@@ -595,7 +594,7 @@ export const processQueryResponse = (
   action: ActionOf<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, legacy, error } = response;
+  const { request, state: loadingState, series, error } = response;
 
   if (error) {
     if (error.cancelled) {
@@ -623,8 +622,12 @@ export const processQueryResponse = (
   const tableResult = processor.getTableResult() || state.tableResult || new TableModel(); // don't replace results until we receive new results
   const logsResult = processor.getLogsResult();
 
-  // For Angular editors
-  state.eventBridge.emit('data-received', legacy);
+  // Send legacy data to Angular editors
+  if (state.datasourceInstance.components.QueryCtrl) {
+    const legacy = series.map(v => toLegacyResponseData(v));
+
+    state.eventBridge.emit('data-received', legacy);
+  }
 
   return {
     ...state,

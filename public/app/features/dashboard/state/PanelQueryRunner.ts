@@ -7,18 +7,12 @@ import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import kbn from 'app/core/utils/kbn';
 import templateSrv from 'app/features/templating/template_srv';
-import { postProcessPanelData, runRequest } from './runRequest';
-import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
+import { runRequest, preProcessPanelData } from './runRequest';
+import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
+
 // Types
-import {
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  DataSourceJsonData,
-  PanelData,
-  PanelDataFormat,
-} from '@grafana/ui';
-import { DataTransformerConfig, ScopedVars, TimeRange, transformDataFrame } from '@grafana/data';
+import { PanelData, DataQuery, DataQueryRequest, DataSourceApi, DataSourceJsonData } from '@grafana/ui';
+import { TimeRange, DataTransformerConfig, transformDataFrame, ScopedVars } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
@@ -56,35 +50,26 @@ export class PanelQueryRunner {
 
   /**
    * Returns an observable that subscribes to the shared multi-cast subject (that reply last result).
-   * Here the caller can also control if transformations should be applied or not
    */
-  getData(format: PanelDataFormat = PanelDataFormat.Frames, applyTransforms = true): Observable<PanelData> {
-    const ensureFormats = postProcessPanelData(format);
+  getData(transform = true): Observable<PanelData> {
+    if (transform) {
+      return this.subject.pipe(
+        map((data: PanelData) => {
+          if (this.hasTransformations()) {
+            const newSeries = transformDataFrame(this.transformations, data.series);
+            return { ...data, series: newSeries };
+          }
+          return data;
+        })
+      );
+    }
 
-    return this.subject.pipe(
-      map((data: PanelData) => {
-        const transformedData = ensureFormats(data);
-
-        if (applyTransforms && this.hasTransformations()) {
-          const newSeries = transformDataFrame(this.transformations, transformedData.series);
-          return { ...transformedData, series: newSeries };
-        }
-
-        return transformedData;
-      })
-    );
+    // Just pass it directly
+    return this.subject.pipe();
   }
 
   hasTransformations() {
     return config.featureToggles.transformations && this.transformations && this.transformations.length > 0;
-  }
-
-  /**
-   * Useful when chaining PanelQueryRunners (for shared query results feature)
-   * To avoid double post-processing & transformations
-   */
-  getDataRaw(): Observable<PanelData> {
-    return this.subject.pipe();
   }
 
   async run(options: QueryRunnerOptions) {
@@ -180,9 +165,12 @@ export class PanelQueryRunner {
       this.subscription.unsubscribe();
     }
 
+    // Makes sure everything is a proper DataFrame
+    const prepare = preProcessPanelData();
+
     this.subscription = observable.subscribe({
       next: (data: PanelData) => {
-        this.subject.next(data);
+        this.subject.next(prepare(data));
       },
     });
   }

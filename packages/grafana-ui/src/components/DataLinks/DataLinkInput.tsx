@@ -111,11 +111,13 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
       setShowingSuggestions(true);
     }
 
-    if (event.key === 'Backspace') {
+    if (event.key === 'Enter') {
+      // Preventing entering a new line
+      // As of https://github.com/ianstormtaylor/slate/issues/1345#issuecomment-340508289
+      return false;
+    } else {
       // @ts-ignore
       return;
-    } else {
-      return true;
     }
   };
 

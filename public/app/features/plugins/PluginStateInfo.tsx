@@ -6,23 +6,12 @@ interface Props {
   state?: PluginState;
 }
 
-function getPluginStateInfoText(state?: PluginState): JSX.Element | null {
+function getPluginStateInfoText(state?: PluginState): string | null {
   switch (state) {
     case PluginState.alpha:
-      return (
-        <div>
-          <h5>Alpha Plugin</h5>
-          <p>This plugin is a work in progress and updates may include breaking changes.</p>
-        </div>
-      );
-
+      return 'Alpha Plugin: This plugin is a work in progress and updates may include breaking changes';
     case PluginState.beta:
-      return (
-        <div>
-          <h5>Beta Plugin</h5>
-          <p>There could be bugs and minor breaking changes to this plugin.</p>
-        </div>
-      );
+      return 'Beta Plugin: There could be bugs and minor breaking changes to this plugin';
   }
   return null;
 }

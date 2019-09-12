@@ -8,22 +8,13 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import {
   DataQueryError,
   DataQueryRequest,
+  PanelData,
   DataQueryResponse,
   DataQueryResponseData,
   DataSourceApi,
-  PanelData,
-  PanelDataFormat,
 } from '@grafana/ui';
 
-import {
-  DataFrame,
-  dateMath,
-  guessFieldTypes,
-  isDataFrame,
-  LoadingState,
-  toDataFrame,
-  toLegacyResponseData,
-} from '@grafana/data';
+import { LoadingState, dateMath, toDataFrame, DataFrame, guessFieldTypes } from '@grafana/data';
 
 // In case of only one response we just make up a dummy key
 const DUMMY_KEY = 'A';
@@ -173,15 +164,6 @@ export function processQueryError(err: any): DataQueryError {
   return error;
 }
 
-function translateToLegacyData(data: DataQueryResponseData) {
-  return data.map((v: any) => {
-    if (isDataFrame(v)) {
-      return toLegacyResponseData(v);
-    }
-    return v;
-  });
-}
-
 /**
  * All panels will be passed tables that have our best guess at colum type set
  *
@@ -208,11 +190,11 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   return dataFrames;
 }
 
-export function postProcessPanelData(format: PanelDataFormat) {
+export function preProcessPanelData() {
   let lastResult: PanelData = null;
 
   return function mapper(data: PanelData) {
-    let { series, legacy } = data;
+    let { series } = data;
 
     //  for loading states with no data, use last result
     if (data.state === LoadingState.Loading && series.length === 0) {
@@ -223,15 +205,10 @@ export function postProcessPanelData(format: PanelDataFormat) {
       return { ...lastResult, state: LoadingState.Loading };
     }
 
-    if (format & PanelDataFormat.Legacy) {
-      legacy = translateToLegacyData(series);
-    }
+    // Makes sure the data is properly formatted
+    series = getProcessedDataFrames(series);
 
-    if (format & PanelDataFormat.Frames) {
-      series = getProcessedDataFrames(series);
-    }
-
-    lastResult = { ...data, series, legacy };
+    lastResult = { ...data, series };
     return lastResult;
   };
 }

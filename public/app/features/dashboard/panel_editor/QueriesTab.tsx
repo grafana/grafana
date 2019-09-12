@@ -19,7 +19,7 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { DataQuery, DataSourceSelectItem, PanelData, PanelDataFormat, AlphaNotice, PluginState } from '@grafana/ui';
+import { DataQuery, DataSourceSelectItem, PanelData, AlphaNotice, PluginState } from '@grafana/ui';
 import { LoadingState, DataTransformerConfig } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';
@@ -62,7 +62,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { panel } = this.props;
     const queryRunner = panel.getQueryRunner();
 
-    this.querySubscription = queryRunner.getData(PanelDataFormat.Both, false).subscribe({
+    this.querySubscription = queryRunner.getData(false).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
   }
@@ -75,26 +75,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   }
 
   onPanelDataUpdate(data: PanelData) {
-    console.log('got data', data);
-    if (!this.props.panel.isAngularPlugin()) {
-      this.notifyAngularQueryEditorsOfData(data);
-    }
-
     this.setState({ data });
-  }
-
-  notifyAngularQueryEditorsOfData(data: PanelData) {
-    const { panel } = this.props;
-
-    try {
-      if (data.state === LoadingState.Error) {
-        panel.events.emit('data-error', data.error);
-      } else if (data.state === LoadingState.Done) {
-        panel.events.emit('data-received', data.legacy);
-      }
-    } catch (err) {
-      console.log('Panel.events handler error', err);
-    }
   }
 
   findCurrentDataSource(): DataSourceSelectItem {
@@ -288,7 +269,7 @@ export class QueriesTab extends PureComponent<Props, State> {
             <PanelOptionsGroup
               title={
                 <>
-                  Transform query results
+                  Query results
                   <AlphaNotice
                     state={PluginState.alpha}
                     className={css`

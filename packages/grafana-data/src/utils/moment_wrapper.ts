@@ -1,7 +1,6 @@
 import { TimeZone } from '../types/time';
 /* tslint:disable:import-blacklist ban ban-types */
-import moment, { MomentInput, DurationInputArg1 } from 'moment';
-
+import moment, { Moment, MomentInput, DurationInputArg1 } from 'moment';
 export interface DateTimeBuiltinFormat {
   __momentBuiltinFormatBrand: any;
 }
@@ -72,6 +71,7 @@ export interface DateTime extends Object {
   utc: () => DateTime;
   utcOffset: () => number;
   hour?: () => number;
+  minute?: () => number;
 }
 
 export const setLocale = (language: string) => {
@@ -96,6 +96,10 @@ export const toDuration = (input?: DurationInput, unit?: DurationUnit): DateTime
 
 export const dateTime = (input?: DateTimeInput, formatInput?: FormatInput): DateTime => {
   return moment(input as MomentInput, formatInput) as DateTime;
+};
+
+export const dateTimeAsMoment = (input?: DateTimeInput) => {
+  return dateTime(input) as Moment;
 };
 
 export const dateTimeForTimeZone = (

@@ -21,14 +21,7 @@ import {
 } from 'app/core/utils/explore';
 // Types
 import { ThunkResult, ExploreUrlState, ExploreItemState } from 'app/types';
-import {
-  DataSourceApi,
-  DataQuery,
-  DataSourceSelectItem,
-  QueryFixAction,
-  PanelData,
-  PanelDataFormat,
-} from '@grafana/ui';
+import { DataSourceApi, DataQuery, DataSourceSelectItem, QueryFixAction, PanelData } from '@grafana/ui';
 
 import {
   RawTimeRange,
@@ -84,7 +77,7 @@ import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicke
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { runRequest, postProcessPanelData } from '../../dashboard/state/runRequest';
+import { runRequest, preProcessPanelData } from '../../dashboard/state/runRequest';
 import { identity } from 'rxjs';
 
 /**
@@ -488,7 +481,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     const newQuerySub = runRequest(datasourceInstance, transaction.request)
       .pipe(
-        map(postProcessPanelData(PanelDataFormat.Both)),
+        map(preProcessPanelData()),
         // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
         // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
         // actually can see what is happening.
