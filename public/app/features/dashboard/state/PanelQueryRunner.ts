@@ -156,9 +156,8 @@ export class PanelQueryRunner {
 
     this.subscription = observable.subscribe({
       next: (data: PanelData) => {
-        const newResult = preProcessPanelData(data, this.lastResult);
-        this.lastResult = newResult;
-        this.subject.next(newResult);
+        this.lastResult = preProcessPanelData(data, this.lastResult);
+        this.subject.next(this.lastResult);
       },
     });
   }
