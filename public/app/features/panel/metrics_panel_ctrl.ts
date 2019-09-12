@@ -148,6 +148,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         }
       }
 
+      console.log('data-received', data);
       if (this.useDataFrames) {
         this.handleDataFrames(data.series);
       } else {

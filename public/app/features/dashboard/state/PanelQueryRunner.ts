@@ -1,7 +1,7 @@
 // Libraries
 import { cloneDeep } from 'lodash';
 import { ReplaySubject, Unsubscribable, Observable, interval, merge } from 'rxjs';
-import { last, map, sample, share } from 'rxjs/operators';
+import { last, map, sample, share, tap } from 'rxjs/operators';
 
 // Services & Utils
 import { config } from 'app/core/config';
@@ -44,9 +44,11 @@ export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private transformations?: DataTransformerConfig[];
+  private preProcessPanelData: (data: PanelData) => PanelData;
 
   constructor() {
     this.subject = new ReplaySubject(1);
+    this.preProcessPanelData = preProcessPanelData();
   }
 
   /**
@@ -154,7 +156,7 @@ export class PanelQueryRunner {
           // from there. We want to wait some time from start of the request, let runRequest buffer the data in that
           // time and than pass the latest value.
           reqObservable.pipe(sample(timer))
-        )
+        ).pipe(tap((val: any) => console.log({ val })))
       );
     } catch (err) {
       console.log('PanelQueryRunner Error', err);
@@ -166,12 +168,9 @@ export class PanelQueryRunner {
       this.subscription.unsubscribe();
     }
 
-    // Makes sure everything is a proper DataFrame
-    const prepare = preProcessPanelData();
-
     this.subscription = observable.subscribe({
       next: (data: PanelData) => {
-        this.subject.next(prepare(data));
+        this.subject.next(this.preProcessPanelData(data));
       },
     });
   }

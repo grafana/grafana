@@ -1,6 +1,6 @@
 // Libraries
 import { Observable, of, timer, merge, from } from 'rxjs';
-import { flatten, map as lodashMap, isArray, isString } from 'lodash';
+import { flatten, map as lodashMap, isArray, isString, groupBy } from 'lodash';
 import { map, catchError, takeUntil, mapTo, share, finalize } from 'rxjs/operators';
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -46,7 +46,10 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   const combinedData = flatten(
     lodashMap(packets, (packet: DataQueryResponse) => {
-      return packet.data;
+      return packet.data.map(frame => ({
+        ...frame,
+        refId: frame.refId || packet.key,
+      }));
     })
   );
 
@@ -204,6 +207,18 @@ export function preProcessPanelData() {
 
     // Makes sure the data is properly formatted
     series = getProcessedDataFrames(series);
+
+    if (data.state === LoadingState.Loading) {
+      // If we get data in loading state we merge it with previous result. So fast queries will be updated quickly
+      // while slow queries will show the last result in the meantime.
+      const newSeries = groupBy(series, 'refId');
+      const lastSeries = groupBy(lastResult.series, 'refId');
+      const merged = {
+        ...lastSeries,
+        ...newSeries,
+      };
+      series = flatten(Object.values(merged));
+    }
 
     lastResult = { ...data, series };
     return lastResult;

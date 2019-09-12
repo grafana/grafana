@@ -245,13 +245,11 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.annotationsPromise.then(
       (result: { alertState: any; annotations: any }) => {
-        this.loading = false;
         this.alertState = result.alertState;
         this.annotations = result.annotations;
         this.render(this.seriesList);
       },
       () => {
-        this.loading = false;
         this.render(this.seriesList);
       }
     );

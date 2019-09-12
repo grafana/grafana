@@ -240,6 +240,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         observable = from(this.performTimeSeriesQuery(query, query.start, query.end));
         if (index === 2) {
           observable = observable.pipe(delay(2000));
+        } else {
+          observable = observable.pipe(delay(4000));
         }
       }
 
