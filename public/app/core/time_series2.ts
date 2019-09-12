@@ -77,11 +77,8 @@ export default class TimeSeries {
   id: string;
   // Represents index of original data frame in the quey response
   dataFrameIndex: number;
-  /**
-   * Name of the field the time series was created from
-   * Used in graph panel to retrieve value from the original data frame
-   */
-  fieldName: string;
+  // Represents index of field in the data frame
+  fieldIndex: number;
   label: string;
   alias: string;
   aliasEscaped: string;
@@ -122,8 +119,8 @@ export default class TimeSeries {
     this.stats = {};
     this.legend = true;
     this.unit = opts.unit;
-    this.fieldName = opts.fieldName;
     this.dataFrameIndex = opts.dataFrameIndex;
+    this.fieldIndex = opts.fieldIndex;
     this.hasMsResolution = this.isMsResolutionNeeded();
   }
 
