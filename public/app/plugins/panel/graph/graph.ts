@@ -254,7 +254,7 @@ class GraphElement {
         linksSupplier = this.panel.options.dataLinks
           ? getFieldLinksSupplier({
               display: fieldDisplay,
-              name: item.series.fieldName,
+              name: field.name,
               view: new DataFrameView(dataFrame),
               rowIndex: item.dataIndex,
               colIndex: item.series.fieldIndex,
