@@ -165,6 +165,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               options={logLabelOptions}
               onChange={this.onChangeLogLabels}
               loadData={onLoadOptions}
+              expandIcon={null}
               onPopupVisibleChange={(isVisible: boolean) => {
                 if (isVisible && onLabelsRefresh) {
                   onLabelsRefresh();
