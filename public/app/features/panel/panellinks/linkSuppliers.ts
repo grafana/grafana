@@ -18,6 +18,7 @@ interface ValueVars {
   numeric: number;
   text: string;
   time?: number;
+  calc?: string;
 }
 
 interface DataLinkScopedVars extends ScopedVars {
@@ -52,7 +53,6 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         };
 
         const field = value.colIndex !== undefined ? dataFrame.fields[value.colIndex] : undefined;
-
         if (field) {
           console.log('Full Field Info:', field);
           scopedVars['__field'] = {
@@ -65,13 +65,23 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
 
         if (value.rowIndex) {
           const { timeField } = getTimeField(dataFrame);
-
           scopedVars['__value'] = {
             value: {
               raw: field.values.get(value.rowIndex),
               numeric: value.display.numeric,
               text: value.display.text,
               time: timeField ? timeField.values.get(value.rowIndex) : undefined,
+            },
+            text: 'Value',
+          };
+        } else {
+          // calculation
+          scopedVars['__value'] = {
+            value: {
+              raw: value.display.numeric,
+              numeric: value.display.numeric,
+              text: value.display.text,
+              calc: value.name,
             },
             text: 'Value',
           };
