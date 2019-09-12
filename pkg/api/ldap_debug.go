@@ -100,7 +100,7 @@ func (server *HTTPServer) ReloadLDAPCfg() Response {
 
 	err := ldap.ReloadConfig()
 	if err != nil {
-		return Error(http.StatusInternalServerError, "Failed to reload ldap config", err)
+		return Error(http.StatusInternalServerError, "Failed to reload LDAP config", err)
 	}
 	return Success("LDAP config reloaded")
 }
@@ -143,6 +143,7 @@ func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 	return JSON(http.StatusOK, serverDTOs)
 }
 
+// PostSyncUserWithLDAP enables a single Grafana user to be synchronized against LDAP
 func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 	if !ldap.IsEnabled() {
 		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
