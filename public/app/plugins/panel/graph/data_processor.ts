@@ -20,7 +20,8 @@ export class DataProcessor {
       return list;
     }
 
-    for (const series of dataList) {
+    for (let i = 0; i < dataList.length; i++) {
+      const series = dataList[i];
       const { timeField } = getTimeField(series);
       if (!timeField) {
         continue;
@@ -43,7 +44,7 @@ export class DataProcessor {
           datapoints.push([field.values.get(r), timeField.values.get(r)]);
         }
 
-        list.push(this.toTimeSeries(field, name, datapoints, list.length, range));
+        list.push(this.toTimeSeries(field, name, i, datapoints, list.length, range));
       }
     }
 
@@ -56,10 +57,18 @@ export class DataProcessor {
       }
       return [first];
     }
+
     return list;
   }
 
-  private toTimeSeries(field: Field, alias: string, datapoints: any[][], index: number, range?: TimeRange) {
+  private toTimeSeries(
+    field: Field,
+    alias: string,
+    dataFrameIndex: number,
+    datapoints: any[][],
+    index: number,
+    range?: TimeRange
+  ) {
     const colorIndex = index % colors.length;
     const color = this.panel.aliasColors[alias] || colors[colorIndex];
 
@@ -68,6 +77,8 @@ export class DataProcessor {
       alias: alias,
       color: getColorFromHexRgbOrName(color, config.theme.type),
       unit: field.config ? field.config.unit : undefined,
+      fieldName: field.name,
+      dataFrameIndex,
     });
 
     if (datapoints && datapoints.length > 0 && range) {

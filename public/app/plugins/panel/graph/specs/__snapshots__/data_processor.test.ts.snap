@@ -9,6 +9,7 @@ Array [
       "fillColor": "#7EB26D",
     },
     "color": "#7EB26D",
+    "dataFrameIndex": 0,
     "datapoints": Array [
       Array [
         1,
@@ -23,6 +24,7 @@ Array [
         1003,
       ],
     ],
+    "fieldName": "Value",
     "hasMsResolution": false,
     "id": "Value",
     "label": "Value",
@@ -38,6 +40,7 @@ Array [
       "fillColor": "#EAB839",
     },
     "color": "#EAB839",
+    "dataFrameIndex": 1,
     "datapoints": Array [
       Array [
         0.1,
@@ -52,6 +55,7 @@ Array [
         1003,
       ],
     ],
+    "fieldName": "v1",
     "hasMsResolution": false,
     "id": "table_data v1",
     "label": "table_data v1",
@@ -67,6 +71,7 @@ Array [
       "fillColor": "#6ED0E0",
     },
     "color": "#6ED0E0",
+    "dataFrameIndex": 1,
     "datapoints": Array [
       Array [
         1.1,
@@ -81,6 +86,7 @@ Array [
         1003,
       ],
     ],
+    "fieldName": "v2",
     "hasMsResolution": false,
     "id": "table_data v2",
     "label": "table_data v2",
@@ -96,6 +102,7 @@ Array [
       "fillColor": "#EF843C",
     },
     "color": "#EF843C",
+    "dataFrameIndex": 2,
     "datapoints": Array [
       Array [
         0.1,
@@ -110,6 +117,7 @@ Array [
         1003,
       ],
     ],
+    "fieldName": "v1",
     "hasMsResolution": false,
     "id": "series v1",
     "label": "series v1",
@@ -125,6 +133,7 @@ Array [
       "fillColor": "#E24D42",
     },
     "color": "#E24D42",
+    "dataFrameIndex": 2,
     "datapoints": Array [
       Array [
         1.1,
@@ -139,6 +148,7 @@ Array [
         1003,
       ],
     ],
+    "fieldName": "v2",
     "hasMsResolution": false,
     "id": "series v2",
     "label": "series v2",
@@ -159,6 +169,7 @@ Array [
       "fillColor": "#7EB26D",
     },
     "color": "#7EB26D",
+    "dataFrameIndex": 0,
     "datapoints": Array [
       Array [
         1,
@@ -221,6 +232,7 @@ Array [
         1003,
       ],
     ],
+    "fieldName": "Value",
     "hasMsResolution": false,
     "id": "Value",
     "label": "Value",
