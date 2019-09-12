@@ -26,7 +26,7 @@ import { GraphLegendProps, Legend } from './Legend/Legend';
 import { GraphCtrl } from './module';
 import { getValueFormat, ContextMenuGroup, FieldDisplay, ContextMenuItem, getDisplayProcessor } from '@grafana/ui';
 import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
-import { toUtc, LinkModelSupplier, DataFrameView, FieldCache } from '@grafana/data';
+import { toUtc, LinkModelSupplier, DataFrameView } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
@@ -244,8 +244,7 @@ class GraphElement {
           links: this.panel.options.dataLinks || [],
         };
         const dataFrame = this.ctrl.dataList[item.series.dataFrameIndex];
-        const cache = new FieldCache(dataFrame);
-        const field = cache.getFieldByName(item.series.fieldName);
+        const field = dataFrame.fields[item.series.fieldIndex];
 
         const fieldDisplay = getDisplayProcessor({
           config: fieldConfig,
@@ -258,7 +257,7 @@ class GraphElement {
               name: item.series.fieldName,
               view: new DataFrameView(dataFrame),
               rowIndex: item.dataIndex,
-              colIndex: field.index,
+              colIndex: item.series.fieldIndex,
               field: fieldConfig,
             })
           : undefined;
