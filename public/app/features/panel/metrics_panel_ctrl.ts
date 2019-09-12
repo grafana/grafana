@@ -145,7 +145,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       } else {
         // Make the results look as if they came directly from a <6.2 datasource request
         const legacy = data.series.map(v => toLegacyResponseData(v));
-
         this.handleQueryResult({ data: legacy });
       }
     },
