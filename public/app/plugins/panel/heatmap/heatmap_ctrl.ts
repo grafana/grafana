@@ -14,9 +14,8 @@ import {
 } from './heatmap_data_converter';
 import { auto } from 'angular';
 import { LegacyResponseData } from '@grafana/ui';
-import { getProcessedDataFrames } from 'app/features/dashboard/state/PanelQueryState';
+import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 import { DataFrame, getTimeField, FieldType } from '@grafana/data';
-import { PanelQueryRunnerFormat } from 'app/features/dashboard/state/PanelQueryRunner';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
 const Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -133,14 +132,13 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.colorSchemes = colorSchemes;
 
     // Use DataFrames
-    this.dataFormat = PanelQueryRunnerFormat.frames;
+    this.useDataFrames = true;
 
     // Bind grafana panel events
     this.events.on('render', this.onRender.bind(this));
-    this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-frames-received', this.onDataFramesReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
+    this.events.on('data-snapshot-load', this.onSnapshotLoad.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 
     this.onCardColorChange = this.onCardColorChange.bind(this);
@@ -285,11 +283,11 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   // This should only be called from the snapshot callback
-  onDataReceived(dataList: LegacyResponseData[]) {
+  onSnapshotLoad(dataList: LegacyResponseData[]) {
     this.onDataFramesReceived(getProcessedDataFrames(dataList));
   }
 
-  // Directly support DataFrame skipping event callbacks
+  // Directly support DataFrame
   onDataFramesReceived(data: DataFrame[]) {
     this.series = this.framesToTimeSeries(data);
 
