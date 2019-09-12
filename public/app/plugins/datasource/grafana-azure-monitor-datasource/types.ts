@@ -28,6 +28,11 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 }
 
 export interface AzureMetricQuery {
+  queryMode: string;
+  data: { [queryMode: string]: AzureMonitorQueryData };
+}
+
+export interface AzureMonitorQueryData {
   resourceGroup: string;
   resourceName: string;
   metricDefinition: string;

@@ -51,54 +51,68 @@ export default class AzureMonitorDatasource {
 
   async query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponseData[]> {
     const queries = _.filter(options.targets, item => {
+      const { data, queryMode } = item.azureMonitor;
+      const { resourceGroup, resourceName, metricDefinition, metricName } = data[queryMode];
+
       return (
         item.hide !== true &&
-        item.azureMonitor.resourceGroup &&
-        item.azureMonitor.resourceGroup !== this.defaultDropdownValue &&
-        item.azureMonitor.resourceName &&
-        item.azureMonitor.resourceName !== this.defaultDropdownValue &&
-        item.azureMonitor.metricDefinition &&
-        item.azureMonitor.metricDefinition !== this.defaultDropdownValue &&
-        item.azureMonitor.metricName &&
-        item.azureMonitor.metricName !== this.defaultDropdownValue
+        resourceGroup &&
+        resourceGroup !== this.defaultDropdownValue &&
+        resourceName &&
+        resourceName !== this.defaultDropdownValue &&
+        metricDefinition &&
+        metricDefinition !== this.defaultDropdownValue &&
+        metricName &&
+        metricName !== this.defaultDropdownValue
       );
     }).map(target => {
-      const item = target.azureMonitor;
+      const { data, queryMode } = target.azureMonitor;
+      const {
+        resourceGroup,
+        resourceName,
+        metricDefinition,
+        timeGrainUnit,
+        timeGrain: currentTimeGrain,
+        metricName,
+        metricNamespace,
+        allowedTimeGrainsMs,
+        aggregation,
+        dimension,
+        dimensionFilter,
+        alias,
+      } = data[queryMode];
 
+      let timeGrain = currentTimeGrain;
       // fix for timeGrainUnit which is a deprecated/removed field name
-      if (item.timeGrainUnit && item.timeGrain !== 'auto') {
-        item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrain, item.timeGrainUnit);
+      if (timeGrainUnit && timeGrain !== 'auto') {
+        timeGrain = TimegrainConverter.createISO8601Duration(timeGrain, timeGrainUnit);
       }
 
-      const subscriptionId = this.templateSrv.replace(target.subscription || this.subscriptionId, options.scopedVars);
-      const resourceGroup = this.templateSrv.replace(item.resourceGroup, options.scopedVars);
-      const resourceName = this.templateSrv.replace(item.resourceName, options.scopedVars);
-      const metricNamespace = this.templateSrv.replace(item.metricNamespace, options.scopedVars);
-      const metricDefinition = this.templateSrv.replace(item.metricDefinition, options.scopedVars);
-      const timeGrain = this.templateSrv.replace((item.timeGrain || '').toString(), options.scopedVars);
-      const aggregation = this.templateSrv.replace(item.aggregation, options.scopedVars);
+      const metricNamespaceParsed = this.templateSrv.replace(metricNamespace, options.scopedVars);
 
       return {
         refId: target.refId,
         intervalMs: options.intervalMs,
         datasourceId: this.id,
-        subscription: subscriptionId,
+        subscription: this.templateSrv.replace(target.subscription || this.subscriptionId, options.scopedVars),
         queryType: 'Azure Monitor',
         type: 'timeSeriesQuery',
         raw: false,
         azureMonitor: {
-          resourceGroup: resourceGroup,
-          resourceName: resourceName,
-          metricDefinition: metricDefinition,
-          timeGrain: timeGrain,
-          allowedTimeGrainsMs: item.allowedTimeGrainsMs,
-          metricName: this.templateSrv.replace(item.metricName, options.scopedVars),
+          resourceGroup: this.templateSrv.replace(resourceGroup, options.scopedVars),
+          resourceName: this.templateSrv.replace(resourceName, options.scopedVars),
+          metricDefinition: this.templateSrv.replace(metricDefinition, options.scopedVars),
+          timeGrain: this.templateSrv.replace((timeGrain || '').toString(), options.scopedVars),
+          allowedTimeGrainsMs: allowedTimeGrainsMs,
+          metricName: this.templateSrv.replace(metricName, options.scopedVars),
           metricNamespace:
-            metricNamespace && metricNamespace !== this.defaultDropdownValue ? metricNamespace : metricDefinition,
-          aggregation: aggregation,
-          dimension: this.templateSrv.replace(item.dimension, options.scopedVars),
-          dimensionFilter: this.templateSrv.replace(item.dimensionFilter, options.scopedVars),
-          alias: item.alias,
+            metricNamespaceParsed && metricNamespaceParsed !== this.defaultDropdownValue
+              ? metricNamespaceParsed
+              : metricDefinition,
+          aggregation: this.templateSrv.replace(aggregation, options.scopedVars),
+          dimension: this.templateSrv.replace(dimension, options.scopedVars),
+          dimensionFilter: this.templateSrv.replace(dimensionFilter, options.scopedVars),
+          alias: alias,
           format: target.format,
         },
       };
