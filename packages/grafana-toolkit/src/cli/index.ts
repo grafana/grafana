@@ -156,7 +156,7 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-build')
-    .option('--backend', 'For backend task, will run Makefile', false)
+    .option('--backend', 'Run Makefile for backend task', false)
     .description('Build the plugin, leaving results in /dist and /coverage')
     .action(async cmd => {
       if (typeof cmd === 'string') {

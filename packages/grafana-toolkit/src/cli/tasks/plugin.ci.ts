@@ -60,7 +60,7 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
   if (backend) {
     const makefile = path.resolve(process.cwd(), 'Makefile');
     if (!fs.existsSync(makefile)) {
-      throw new Error('Backend plugins are build with makefiles.  Missing: ' + makefile);
+      throw new Error(`Missing: ${makefile}. A Makefile is required for backend plugins.`);
     }
 
     // Run plugin-ci task
