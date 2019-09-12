@@ -187,7 +187,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   return dataFrames;
 }
 
-export function postProcessPanelData() {
+export function preProcessPanelData() {
   let lastResult: PanelData = null;
 
   return function mapper(data: PanelData) {
