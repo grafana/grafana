@@ -439,6 +439,7 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       queryIntervals,
       range,
       scanning,
+      queryResponse,
       querySubscription,
       history,
       mode,
@@ -479,7 +480,11 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     let firstResponse = true;
 
     const newQuerySub = runRequest(datasourceInstance, transaction.request)
-      .pipe(map(preProcessPanelData()))
+      .pipe(
+        map((data: PanelData) => {
+          return preProcessPanelData(data, queryResponse);
+        })
+      )
       .subscribe((data: PanelData) => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage

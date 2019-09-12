@@ -187,25 +187,18 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   return dataFrames;
 }
 
-export function preProcessPanelData() {
-  let lastResult: PanelData = null;
+export function preProcessPanelData(data: PanelData, lastResult: PanelData) {
+  let { series } = data;
 
-  return function mapper(data: PanelData) {
-    let { series } = data;
-
-    //  for loading states with no data, use last result
-    if (data.state === LoadingState.Loading && series.length === 0) {
-      if (!lastResult) {
-        lastResult = data;
-      }
-
-      return { ...lastResult, state: LoadingState.Loading };
+  //  for loading states with no data, use last result
+  if (data.state === LoadingState.Loading && series.length === 0) {
+    if (!lastResult) {
+      lastResult = data;
     }
 
-    // Makes sure the data is properly formatted
-    series = getProcessedDataFrames(series);
+    return { ...lastResult, state: LoadingState.Loading };
+  }
 
-    lastResult = { ...data, series };
-    return lastResult;
-  };
+  // Makes sure the data is properly formatted
+  return getProcessedDataFrames(series);
 }
