@@ -22,7 +22,7 @@ Be sure to read the [getting started guide](http://docs.grafana.org/guides/getti
 ## Run from master
 
 If you want to build a package yourself, or contribute - here is a guide for how to do that. You can always find
-the latest master builds [here](https://grafana.com/grafana/download)
+the latest master builds [here](https://grafana.com/grafana/download).
 
 ### Dependencies
 
@@ -105,18 +105,18 @@ Run the image you have built using: `docker run --rm -p 3000:3000 grafana/grafan
 
 #### Building on linux/amd64 (fast)
 
-1. Build the frontend `go run build.go build-frontend`
-2. Build the docker image `make build-docker-dev`
+1. Build the frontend `go run build.go build-frontend`.
+2. Build the docker image `make build-docker-dev`.
 
-The resulting image will be tagged as `grafana/grafana:dev`
+The resulting image will be tagged as `grafana/grafana:dev`.
 
 #### Building anywhere (slower)
 
 Choose this option to build on platforms other than linux/amd64 and/or not have to setup the Grafana development environment.
 
-1. `make build-docker-full` or `docker build -t grafana/grafana:dev .`
+1. `make build-docker-full` or `docker build -t grafana/grafana:dev`.
 
-The resulting image will be tagged as `grafana/grafana:dev`
+The resulting image will be tagged as `grafana/grafana:dev`.
 
 Notice: If you are using Docker for MacOS, be sure to set the memory limit to be larger than 2 GiB (at docker -> Preferences -> Advanced), otherwise `grunt build` may fail.
 
@@ -136,16 +136,16 @@ In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = 
 
 #### Frontend
 
-Execute all frontend tests
+Execute all frontend tests:
 
 ```bash
 yarn test
 ```
 
-Writing & watching frontend tests
+Write and watch frontend tests:
 
-- Start watcher: `yarn jest`
-- Jest will run all test files that end with the name ".test.ts"
+- Start watcher: `yarn jest`.
+- Jest runs all test files that end with the name ".test.ts".
 
 #### Backend
 
@@ -162,7 +162,7 @@ Run these by setting `GRAFANA_TEST_DB` in your environment.
 - `GRAFANA_TEST_DB=postgres` to test Postgres
 
 Follow the instructions in `./devenv` to spin up test containers running the appropriate databases with `docker-compose`
-- Use `docker/blocks/mysql_tests` or `docker/blocks/postgres_tests` as appropriate
+- Use `docker/blocks/mysql_tests` or `docker/blocks/postgres_tests` as appropriate.
 
 ```bash
 # MySQL
@@ -184,19 +184,19 @@ GRAFANA_TEST_DB=postgres go test ./pkg/services/sqlstore/...
 
 #### End-to-end
 
-Execute all end-to-end tests
+Execute all end-to-end tests:
 
 ```bash
 yarn e2e-tests
 ```
 
-Execute all end-to-end tests using using a specific url
+Execute all end-to-end tests using using a specific url:
 
 ```bash
 ENV BASE_URL=http://localhost:3333 yarn e2e-tests
 ```
 
-Debugging all end-to-end tests (BROWSER=1 will start the browser and SLOWMO=1 will delay each puppeteer operation by 100ms)
+Debugging all end-to-end tests (BROWSER=1 starts the browser and SLOWMO=1 delays each puppeteer operation by 100ms):
 
 ```bash
 ENV BROWSER=1 SLOWMO=1 yarn e2e-tests
@@ -210,15 +210,13 @@ that will populate your dev environment for quicker testing and experimenting.
 ## Contribute
 
 If you have any ideas for improvement or have found a bug, do not hesitate to open an issue.
-And if you have time, clone this repo and submit a pull request to help me make Grafana
-the kickass metrics & devops dashboard we all dream about!
+And if you have time, clone this repo and submit a pull request to help me make Grafana the kickass metrics and devops dashboard we all dream about!
 
 Read the [contributing](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guide then check the [`beginner friendly`](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) label to find issues that are easy and that we would like help with.
 
 ## Plugin development
 
-Checkout the [Plugin Development Guide](http://docs.grafana.org/plugins/developing/development/) and checkout the [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) file for changes in Grafana that relate to
-plugin development.
+Checkout the [Plugin Development Guide](http://docs.grafana.org/plugins/developing/development/) and checkout the [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) file for changes in Grafana that relate to plugin development.
 
 ## License
 
