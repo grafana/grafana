@@ -13,7 +13,7 @@ interface TransformationsEditorState {
 interface TransformationsEditorProps {
   onChange: (transformations: DataTransformerConfig[]) => void;
   transformations: DataTransformerConfig[];
-  getCurrentData: (applyTransformations?: boolean) => DataFrame[];
+  dataFrames: DataFrame[];
 }
 
 export class TransformationsEditor extends React.PureComponent<TransformationsEditorProps, TransformationsEditorState> {
@@ -46,9 +46,9 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
   };
 
   renderTransformationEditors = () => {
-    const { transformations, getCurrentData } = this.props;
+    const { transformations, dataFrames } = this.props;
     const hasTransformations = transformations.length > 0;
-    const preTransformData = getCurrentData(false);
+    const preTransformData = dataFrames;
 
     if (!hasTransformations) {
       return undefined;

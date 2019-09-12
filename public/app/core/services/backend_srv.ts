@@ -157,6 +157,7 @@ export class BackendSrv implements BackendService {
     // is canceled, canceling the previous datasource request if it is still
     // in-flight.
     const requestId = options.requestId;
+
     if (requestId) {
       this.resolveCancelerIfExists(requestId);
       // create new canceler

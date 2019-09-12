@@ -6,12 +6,11 @@ import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { applyPanelTimeOverrides, getResolution } from 'app/features/dashboard/utils/panel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { toLegacyResponseData, isDataFrame, TimeRange, LoadingState, DataFrame, toDataFrameDTO } from '@grafana/data';
+import { toLegacyResponseData, TimeRange, LoadingState, DataFrame, toDataFrameDTO } from '@grafana/data';
 
 import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
-import { PanelQueryRunnerFormat } from '../dashboard/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -30,7 +29,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   skipDataOnInit: boolean;
   dataList: LegacyResponseData[];
   querySubscription?: Unsubscribable;
-  dataFormat = PanelQueryRunnerFormat.legacy;
+  useDataFrames = false;
 
   constructor($scope: any, $injector: any) {
     super($scope, $injector);
@@ -141,22 +140,12 @@ class MetricsPanelCtrl extends PanelCtrl {
         }
       }
 
-      if (this.dataFormat === PanelQueryRunnerFormat.legacy) {
-        // The result should already be processed, but just in case
-        if (!data.legacy) {
-          data.legacy = data.series.map(v => {
-            if (isDataFrame(v)) {
-              return toLegacyResponseData(v);
-            }
-            return v;
-          });
-        }
-
-        // Make the results look like they came directly from a <6.2 datasource request
-        // NOTE: any object other than 'data' is no longer supported supported
-        this.handleQueryResult({ data: data.legacy });
-      } else {
+      if (this.useDataFrames) {
         this.handleDataFrames(data.series);
+      } else {
+        // Make the results look as if they came directly from a <6.2 datasource request
+        const legacy = data.series.map(v => toLegacyResponseData(v));
+        this.handleQueryResult({ data: legacy });
       }
     },
   };
@@ -197,7 +186,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     const queryRunner = panel.getQueryRunner();
 
     if (!this.querySubscription) {
-      this.querySubscription = queryRunner.subscribe(this.panelDataObserver, this.dataFormat);
+      this.querySubscription = queryRunner.getData().subscribe(this.panelDataObserver);
     }
 
     return queryRunner.run({
