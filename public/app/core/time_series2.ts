@@ -67,10 +67,20 @@ export function getDataMinMax(data: TimeSeries[]) {
   return { datamin, datamax };
 }
 
+/**
+ * @deprecated: This class should not be used in new panels
+ *
+ * Use DataFrame and helpers instead
+ */
 export default class TimeSeries {
   datapoints: any;
   id: string;
+  // Represents index of original data frame in the quey response
   dataFrameIndex: number;
+  /**
+   * Name of the field the time series was created from
+   * Used in graph panel to retrieve value from the original data frame
+   */
   fieldName: string;
   label: string;
   alias: string;

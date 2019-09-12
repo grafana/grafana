@@ -20,7 +20,8 @@ export class DataProcessor {
       return list;
     }
 
-    for (const [index, series] of dataList.entries()) {
+    for (let i = 0; i < dataList.length; i++) {
+      const series = dataList[i];
       const { timeField } = getTimeField(series);
       if (!timeField) {
         continue;
@@ -43,7 +44,7 @@ export class DataProcessor {
           datapoints.push([field.values.get(r), timeField.values.get(r)]);
         }
 
-        list.push(this.toTimeSeries(field, name, index, datapoints, list.length, range));
+        list.push(this.toTimeSeries(field, name, i, datapoints, list.length, range));
       }
     }
 

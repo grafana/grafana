@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+
 	_ "github.com/lib/pq"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -39,13 +41,13 @@ func TestPostgres(t *testing.T) {
 	Convey("PostgreSQL", t, func() {
 		x := InitPostgresTestDB(t)
 
-		origXormEngine := tsdb.NewXormEngine
-		tsdb.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
+		origXormEngine := sqleng.NewXormEngine
+		sqleng.NewXormEngine = func(d, c string) (*xorm.Engine, error) {
 			return x, nil
 		}
 
-		origInterpolate := tsdb.Interpolate
-		tsdb.Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
+		origInterpolate := sqleng.Interpolate
+		sqleng.Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 			return sql, nil
 		}
 
@@ -60,8 +62,8 @@ func TestPostgres(t *testing.T) {
 
 		Reset(func() {
 			sess.Close()
-			tsdb.NewXormEngine = origXormEngine
-			tsdb.Interpolate = origInterpolate
+			sqleng.NewXormEngine = origXormEngine
+			sqleng.Interpolate = origInterpolate
 		})
 
 		Convey("Given a table with different native data types", func() {
@@ -230,11 +232,11 @@ func TestPostgres(t *testing.T) {
 			})
 
 			Convey("When doing a metric query using timeGroup and $__interval", func() {
-				mockInterpolate := tsdb.Interpolate
-				tsdb.Interpolate = origInterpolate
+				mockInterpolate := sqleng.Interpolate
+				sqleng.Interpolate = origInterpolate
 
 				Reset(func() {
-					tsdb.Interpolate = mockInterpolate
+					sqleng.Interpolate = mockInterpolate
 				})
 
 				Convey("Should replace $__interval", func() {
@@ -686,7 +688,7 @@ func TestPostgres(t *testing.T) {
 			})
 
 			Convey("When doing a query with timeFrom,timeTo,unixEpochFrom,unixEpochTo macros", func() {
-				tsdb.Interpolate = origInterpolate
+				sqleng.Interpolate = origInterpolate
 				query := &tsdb.TsdbQuery{
 					TimeRange: tsdb.NewFakeTimeRange("5m", "now", fromStart),
 					Queries: []*tsdb.Query{
