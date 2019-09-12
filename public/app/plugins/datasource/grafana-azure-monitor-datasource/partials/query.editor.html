@@ -24,32 +24,38 @@
       </gf-form-dropdown>
     </div>
     <div class="gf-form" ng-if="(ctrl.target.queryType === 'Azure Monitor' && ctrl.target.azureMonitor.queryMode === 'crossResource')">
-        <label class="gf-form-label query-keyword width-9">Subscriptions</label>
-        <gf-form-dropdown model="ctrl.target.subscriptions" allow-custom="false" lookup-text="true"
-          get-options="ctrl.onSubscriptionsChange()" css-class="min-width-6">
-        </gf-form-dropdown>
-      </div>
+      <label class="gf-form-label query-keyword width-9">Subscriptions</label>
+      <gf-form-dropdown model="ctrl.target.subscriptions" allow-custom="false" lookup-text="true"
+        get-options="ctrl.onSubscriptionsChange()" css-class="min-width-6">
+      </gf-form-dropdown>
+    </div>
   </div>
   <div ng-if="ctrl.target.queryType === 'Azure Monitor'">
     <div class="gf-form-inline">
-        <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
-            <label class="gf-form-label query-keyword width-9">Location</label>
-            <gf-form-dropdown model="ctrl.target.azureMonitor.data[ctrl.target.azureMonitor.queryMode].location" allow-custom="true" lookup-text="true"
-              get-options="ctrl.getLocations($query)" on-change="ctrl.onResourceGroupChange()" css-class="min-width-12">
-            </gf-form-dropdown>
-          </div>
-      <div class="gf-form">
+      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
+        <label class="gf-form-label query-keyword width-9">Location</label>
+        <gf-form-dropdown model="ctrl.target.azureMonitor.data[ctrl.target.azureMonitor.queryMode].location" allow-custom="true" lookup-text="true"
+          get-options="ctrl.getLocations($query)" on-change="ctrl.onLocationChange()" css-class="min-width-12">
+        </gf-form-dropdown>
+      </div>
+      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
+        <label class="gf-form-label query-keyword width-9">Resource Group</label>
+        <gf-form-dropdown model="ctrl.target.azureMonitor.data[ctrl.target.azureMonitor.queryMode].resourceGroup" allow-custom="true" lookup-text="true"
+          get-options="ctrl.getCrossResourceGroups($query)" on-change="ctrl.onCrossResourceGroupChange()" css-class="min-width-12">
+        </gf-form-dropdown>
+      </div>
+      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
+        <label class="gf-form-label query-keyword width-9">Resource Type</label>
+        <gf-form-dropdown model="ctrl.target.azureMonitor.data[ctrl.target.azureMonitor.queryMode].resourceType" allow-custom="true" lookup-text="true"
+          get-options="ctrl.getResourceTypes($query)" on-change="ctrl.onResourceGroupChange()" css-class="min-width-12">
+        </gf-form-dropdown>
+      </div>
+      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'singleResource'">
         <label class="gf-form-label query-keyword width-9">Resource Group</label>
         <gf-form-dropdown model="ctrl.target.azureMonitor.data[ctrl.target.azureMonitor.queryMode].resourceGroup" allow-custom="true" lookup-text="true"
           get-options="ctrl.getResourceGroups($query)" on-change="ctrl.onResourceGroupChange()" css-class="min-width-12">
         </gf-form-dropdown>
-      </div>
-      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
-          <label class="gf-form-label query-keyword width-9">Resource Type</label>
-          <gf-form-dropdown model="ctrl.target.azureMonitor.data[ctrl.target.azureMonitor.queryMode].resourceType" allow-custom="true" lookup-text="true"
-            get-options="ctrl.getResourceTypes($query)" on-change="ctrl.onResourceGroupChange()" css-class="min-width-12">
-          </gf-form-dropdown>
-      </div>
+        </div>
       <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'singleResource'">
         <label class="gf-form-label query-keyword width-9">Namespace</label>
         <gf-form-dropdown model="ctrl.target.azureMonitor.data[ctrl.target.azureMonitor.queryMode].metricDefinition" allow-custom="true" lookup-text="true"

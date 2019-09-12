@@ -317,22 +317,25 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       return;
     }
 
-    const { queryMode } = this.target.azureMonitor;
-    if (queryMode === AzureMonitorQueryCtrl.defaultQueryMode) {
-      return this.datasource
-        .getResourceGroups(
-          this.replace(this.target.subscription || this.datasource.azureMonitorDatasource.subscriptionId)
-        )
-        .catch(this.handleQueryCtrlError.bind(this));
-    } else {
-      return this.resources
-        .filter(({ location }) => location === this.target.azureMonitor.data.crossResource.location)
-        .reduce(
-          (options: Array<{ text: string; value: string }>, { group }: Resource) =>
-            options.some(o => o.value === group) ? options : [...options, { text: group, value: group }],
-          [{ text: 'All', value: 'all' }]
-        );
+    return this.datasource
+      .getResourceGroups(
+        this.replace(this.target.subscription || this.datasource.azureMonitorDatasource.subscriptionId)
+      )
+      .catch(this.handleQueryCtrlError.bind(this));
+  }
+
+  async getCrossResourceGroups() {
+    if (this.target.queryType !== 'Azure Monitor' || !this.datasource.azureMonitorDatasource.isConfigured()) {
+      return [];
     }
+
+    return this.resources
+      .filter(({ location }) => location === this.target.azureMonitor.data.crossResource.location)
+      .reduce(
+        (options: Array<{ text: string; value: string }>, { group }: Resource) =>
+          options.some(o => o.value === group) ? options : [...options, { text: group, value: group }],
+        [{ text: 'All', value: 'all' }]
+      );
   }
 
   async getResourceTypes(query: any) {
@@ -482,6 +485,23 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.data[queryMode].dimensions = [];
     this.target.azureMonitor.data[queryMode].dimension = '';
     this.refresh();
+  }
+
+  onCrossResourceGroupChange() {
+    const { queryMode } = this.target.azureMonitor;
+    this.target.azureMonitor.data[queryMode].resourceType = '';
+    this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
+  }
+
+  onResourceTypeGroupChange() {
+    this.target.azureMonitor.data.crossResource.metricName = this.defaultDropdownValue;
+  }
+
+  onLocationChange() {
+    const { queryMode } = this.target.azureMonitor;
+    this.target.azureMonitor.data[queryMode].resourceType = '';
+    this.target.azureMonitor.data[queryMode].resourceGroup = '';
+    this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
   }
 
   onMetricDefinitionChange() {
