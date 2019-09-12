@@ -122,7 +122,7 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     itemValue: css`
       font-family: ${theme.typography.fontFamily.monospace};
-      font-size: ${theme.typography.size.xs};
+      font-size: ${theme.typography.size.sm};
     `,
     itemDocs: css`
       margin-top: ${theme.spacing.xs};
