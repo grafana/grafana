@@ -44,11 +44,10 @@ export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private transformations?: DataTransformerConfig[];
-  private preProcessPanelData: (data: PanelData) => PanelData;
+  private lastResult?: PanelData;
 
   constructor() {
     this.subject = new ReplaySubject(1);
-    this.preProcessPanelData = preProcessPanelData();
   }
 
   /**
@@ -157,7 +156,9 @@ export class PanelQueryRunner {
 
     this.subscription = observable.subscribe({
       next: (data: PanelData) => {
-        this.subject.next(this.preProcessPanelData(data));
+        const newResult = preProcessPanelData(data, this.lastResult);
+        this.lastResult = newResult;
+        this.subject.next(newResult);
       },
     });
   }

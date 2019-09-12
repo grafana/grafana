@@ -618,8 +618,8 @@ export const processQueryResponse = (
 
   const latency = request.endTime ? request.endTime - request.startTime : 0;
   const processor = new ResultProcessor(state, series);
-  const graphResult = processor.getGraphResult() || state.graphResult; // don't replace results until we receive new results
-  const tableResult = processor.getTableResult() || state.tableResult || new TableModel(); // don't replace results until we receive new results
+  const graphResult = processor.getGraphResult();
+  const tableResult = processor.getTableResult();
   const logsResult = processor.getLogsResult();
 
   // Send legacy data to Angular editors
