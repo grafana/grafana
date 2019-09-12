@@ -478,18 +478,60 @@ describe('ElasticQueryBuilder', () => {
     expect(query.query.bool.filter[5].bool.must_not.regexp['key6']).toBe('value6');
   });
 
-  it('getTermsQuery should set correct sorting', () => {
+  // terms query - check ordering for both _term/_key type and doc_type
+
+  it('getTermsQuery should set correct sorting on _term', () => {
     const query = builder.getTermsQuery({});
     expect(query.aggs['1'].terms.order._term).toBe('asc');
+    expect(query.aggs['1'].terms.order._key).toBeUndefined();
+    expect(query.aggs['1'].terms.order._count).toBeUndefined();
   });
 
-  it('getTermsQuery es6.x should set correct sorting', () => {
+  it('getTermsQuery(order:desc) should set correct sorting on _term', () => {
+    const query = builder.getTermsQuery({ order: 'desc' });
+    expect(query.aggs['1'].terms.order._term).toBe('desc');
+    expect(query.aggs['1'].terms.order._key).toBeUndefined();
+    expect(query.aggs['1'].terms.order._count).toBeUndefined();
+  });
+
+  it('getTermsQuery(orderBy:doc_count) should set correct sorting on _count', () => {
+    const query = builder.getTermsQuery({ orderBy: 'doc_count' });
+    expect(query.aggs['1'].terms.order._term).toBeUndefined();
+    expect(query.aggs['1'].terms.order._key).toBeUndefined();
+    expect(query.aggs['1'].terms.order._count).toBe('desc');
+  });
+
+  it('getTermsQuery es6.x should set correct sorting on _key', () => {
     const builder6x = new ElasticQueryBuilder({
       timeField: '@timestamp',
       esVersion: 60,
     });
     const query = builder6x.getTermsQuery({});
+    expect(query.aggs['1'].terms.order._term).toBeUndefined();
     expect(query.aggs['1'].terms.order._key).toBe('asc');
+    expect(query.aggs['1'].terms.order._count).toBeUndefined();
+  });
+
+  it('getTermsQuery(order:desc) es6.x should set correct sorting on _key', () => {
+    const builder6x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 60,
+    });
+    const query = builder6x.getTermsQuery({ order: 'desc' });
+    expect(query.aggs['1'].terms.order._term).toBeUndefined();
+    expect(query.aggs['1'].terms.order._key).toBe('desc');
+    expect(query.aggs['1'].terms.order._count).toBeUndefined();
+  });
+
+  it('getTermsQuery(orderBy:doc_count) es6.x should set correct sorting on _count', () => {
+    const builder6x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 60,
+    });
+    const query = builder6x.getTermsQuery({ orderBy: 'doc_count' });
+    expect(query.aggs['1'].terms.order._term).toBeUndefined();
+    expect(query.aggs['1'].terms.order._key).toBeUndefined();
+    expect(query.aggs['1'].terms.order._count).toBe('desc');
   });
 
   it('getTermsQuery should request documents and date histogram', () => {

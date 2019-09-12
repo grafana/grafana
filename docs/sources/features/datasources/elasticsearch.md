@@ -143,7 +143,10 @@ You can use other variables inside the query. Example query definition for a var
 In the above example, we use another variable named `$source` inside the query definition. Whenever you change, via the dropdown, the current value of the ` $source` variable, it will trigger an update of the `$host` variable so it now only contains hostnames filtered by in this case the
 `@source` document property.
 
-These queries by default return results in term order (which can then be sorted alphabetically or numerically as for any variable). To produce a list of terms sorted by doc count (a top-N values list), set the Sort dropdown to **Disabled** and add an `orderBy` property of "doc_count". This also selects a descending sort; using "asc" with doc_count (a bottom-N list) can be done by setting `order: "asc"` but [is discouraged](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-order).
+These queries by default return results in term order (which can then be sorted alphabetically or numerically as for any variable).
+To produce a list of terms sorted by doc count (a top-N values list), add an `orderBy` property of "doc_count".
+This automatically selects a descending sort; using "asc" with doc_count (a bottom-N list) can be done by setting `order: "asc"` but [is discouraged](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-order) as it "increases the error on document counts".
+To keep terms in the doc count order, set the Sort dropdown to **Disabled**; you might alternatively still want to use e.g. **Alphabetical** to re-sort them.
 
 ```
 {"find": "terms", "field": "@hostname", "orderBy": "doc_count"}
