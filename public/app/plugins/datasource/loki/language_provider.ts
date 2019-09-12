@@ -17,6 +17,7 @@ import {
 import { LokiQuery } from './types';
 import { dateTime, AbsoluteTimeRange } from '@grafana/data';
 import { PromQuery } from '../prometheus/types';
+import { DataSourceApi } from '@grafana/ui';
 
 const DEFAULT_KEYS = ['job', 'namespace'];
 const EMPTY_SELECTOR = '{}';
@@ -28,7 +29,12 @@ export const LABEL_REFRESH_INTERVAL = 1000 * 30; // 30sec
 const wrapLabel = (label: string) => ({ label });
 export const rangeToParams = (range: AbsoluteTimeRange) => ({ start: range.from * NS_IN_MS, end: range.to * NS_IN_MS });
 
-type LokiHistoryItem = HistoryItem<LokiQuery>;
+export type LokiHistoryItem = HistoryItem<LokiQuery>;
+
+type TypeaheadContext = {
+  history?: LokiHistoryItem[];
+  absoluteRange?: AbsoluteTimeRange;
+};
 
 export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryItem[]): CompletionItem {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
@@ -54,7 +60,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   started: boolean;
   initialRange: AbsoluteTimeRange;
 
-  constructor(datasource: any, initialValues?: any) {
+  constructor(datasource: DataSourceApi, initialValues?: any) {
     super();
 
     this.datasource = datasource;
@@ -74,6 +80,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return this.datasource.metadataRequest(url, params);
   };
 
+  /**
+   * Initialise the language provider by fetching set of labels. Without this initialisation the provider would return
+   * just a set of hardcoded default labels on provideCompletionItems or a recent queries from history.
+   */
   start = () => {
     if (!this.startTask) {
       this.startTask = this.fetchLogLabels(this.initialRange);
@@ -81,14 +91,22 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return this.startTask;
   };
 
-  // Keep this DOM-free for testing
-  provideCompletionItems({ prefix, wrapperClasses, text, value }: TypeaheadInput, context?: any): TypeaheadOutput {
+  /**
+   * Return suggestions based on input that can be then plugged into a typeahead dropdown.
+   * Keep this DOM-free for testing
+   * @param input
+   * @param context Is optional in types but is required in case we are doing getLabelCompletionItems
+   * @param context.absoluteRange Required in case we are doing getLabelCompletionItems
+   * @param context.history Optional used only in getEmptyCompletionItems
+   */
+  provideCompletionItems(input: TypeaheadInput, context?: TypeaheadContext): TypeaheadOutput {
+    const { wrapperClasses, value } = input;
     // Local text properties
     const empty = value.document.text.length === 0;
     // Determine candidates by CSS context
     if (_.includes(wrapperClasses, 'context-labels')) {
       // Suggestions for {|} and {foo=|}
-      return this.getLabelCompletionItems.apply(this, arguments);
+      return this.getLabelCompletionItems(input, context);
     } else if (empty) {
       return this.getEmptyCompletionItems(context || {});
     }
@@ -244,6 +262,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
       this.labelKeys = {
         ...this.labelKeys,
         [EMPTY_SELECTOR]: labelKeys,
+      };
+      this.labelValues = {
+        [EMPTY_SELECTOR]: {},
       };
       this.logLabelOptions = labelKeys.map((key: string) => ({ label: key, value: key, isLeaf: false }));
     } catch (e) {
