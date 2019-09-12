@@ -3,85 +3,146 @@ package sqlstore
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
 	bus.AddHandler("sql", CreatePlaylist)
 	bus.AddHandler("sql", UpdatePlaylist)
+	bus.AddHandler("sql", UpdatePlaylistByUid)
 	bus.AddHandler("sql", DeletePlaylist)
+	bus.AddHandler("sql", DeletePlaylistByUid)
 	bus.AddHandler("sql", SearchPlaylists)
 	bus.AddHandler("sql", GetPlaylist)
-	bus.AddHandler("sql", GetPlaylistItem)
+	bus.AddHandler("sql", GetPlaylistByUid)
+	bus.AddHandler("sql", GetPlaylistItems)
+}
+
+func generateNewPlaylistUid(sess *DBSession, orgId int64) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := util.GenerateShortUID()
+		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&m.Playlist{})
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return uid, nil
+		}
+	}
+
+	return "", m.ErrPlaylistFailedGenerateUniqueUid
 }
 
 func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
-	playlist := m.Playlist{
-		Name:     cmd.Name,
-		Interval: cmd.Interval,
-		OrgId:    cmd.OrgId,
-	}
+	return inTransaction(func(sess *DBSession) error {
+		if cmd.Uid == "" {
+			uid, uidGenerationErr := generateNewPlaylistUid(sess, cmd.OrgId)
+			if uidGenerationErr != nil {
+				return uidGenerationErr
+			}
 
-	_, err := x.Insert(&playlist)
-	if err != nil {
+			cmd.Uid = uid
+		}
+
+		playlist := m.Playlist{
+			Uid:      cmd.Uid,
+			Name:     cmd.Name,
+			Interval: cmd.Interval,
+			OrgId:    cmd.OrgId,
+		}
+
+		_, err := sess.Insert(&playlist)
+		if err != nil {
+			return err
+		}
+
+		playlistItems := make([]m.PlaylistItem, 0)
+		for _, item := range cmd.Items {
+			playlistItems = append(playlistItems, m.PlaylistItem{
+				PlaylistId: playlist.Id,
+				Type:       item.Type,
+				Value:      item.Value,
+				Order:      item.Order,
+				Title:      item.Title,
+			})
+		}
+
+		_, err = sess.Insert(&playlistItems)
+
+		cmd.Result = &playlist
 		return err
-	}
-
-	playlistItems := make([]m.PlaylistItem, 0)
-	for _, item := range cmd.Items {
-		playlistItems = append(playlistItems, m.PlaylistItem{
-			PlaylistId: playlist.Id,
-			Type:       item.Type,
-			Value:      item.Value,
-			Order:      item.Order,
-			Title:      item.Title,
-		})
-	}
-
-	_, err = x.Insert(&playlistItems)
-
-	cmd.Result = &playlist
-	return err
+	})
 }
 
 func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
-	playlist := m.Playlist{
-		Id:       cmd.Id,
-		OrgId:    cmd.OrgId,
-		Name:     cmd.Name,
-		Interval: cmd.Interval,
-	}
+	return inTransaction(func(sess *DBSession) error {
+		exists, err := sess.Where("id = ? AND org_id = ?", cmd.Id, cmd.OrgId).Get(&m.Playlist{})
 
-	existingPlaylist := x.Where("id = ? AND org_id = ?", cmd.Id, cmd.OrgId).Find(m.Playlist{})
+		if err != nil {
+			return err
+		}
 
-	if existingPlaylist == nil {
-		return m.ErrPlaylistNotFound
-	}
+		if !exists {
+			return m.ErrPlaylistNotFound
+		}
 
-	cmd.Result = &m.PlaylistDTO{
-		Id:       playlist.Id,
-		OrgId:    playlist.OrgId,
-		Name:     playlist.Name,
-		Interval: playlist.Interval,
-	}
+		cmd.Result = &m.PlaylistDTO{
+			Id:       cmd.Id,
+			OrgId:    cmd.OrgId,
+			Name:     cmd.Name,
+			Interval: cmd.Interval,
+		}
 
-	_, err := x.ID(cmd.Id).Cols("name", "interval").Update(&playlist)
+		return updatePlaylistInternal(cmd.Id, cmd.OrgId, cmd.Name, cmd.Interval, cmd.Items, sess)
+	})
+}
 
+func UpdatePlaylistByUid(cmd *m.UpdatePlaylistWithUidCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		var existing m.Playlist
+		exists, err := sess.Where("uid = ? AND org_id = ?", cmd.Uid, cmd.OrgId).Get(&existing)
+
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return m.ErrPlaylistNotFound
+		}
+
+		id := existing.Id
+
+		cmd.Result = &m.PlaylistDTO{
+			Id:       id,
+			Uid:      cmd.Uid,
+			OrgId:    cmd.OrgId,
+			Name:     cmd.Name,
+			Interval: cmd.Interval,
+		}
+
+		return updatePlaylistInternal(id, cmd.OrgId, cmd.Name, cmd.Interval, cmd.Items, sess)
+	})
+}
+
+func updatePlaylistInternal(id int64, orgId int64, name string, interval string, items []m.PlaylistItemDTO, sess *DBSession) error {
+	updateRawSql := "UPDATE playlist SET name = ?, interval = ? WHERE id = ? AND org_id = ?"
+	_, err := sess.Exec(updateRawSql, name, interval, id, orgId)
 	if err != nil {
 		return err
 	}
 
-	rawSql := "DELETE FROM playlist_item WHERE playlist_id = ?"
-	_, err = x.Exec(rawSql, cmd.Id)
-
+	deleteItemsRawSql := "DELETE FROM playlist_item WHERE playlist_id = ?"
+	_, err = sess.Exec(deleteItemsRawSql, id)
 	if err != nil {
 		return err
 	}
 
 	playlistItems := make([]m.PlaylistItem, 0)
 
-	for index, item := range cmd.Items {
+	for index, item := range items {
 		playlistItems = append(playlistItems, m.PlaylistItem{
-			PlaylistId: playlist.Id,
+			PlaylistId: id,
 			Type:       item.Type,
 			Value:      item.Value,
 			Order:      index + 1,
@@ -89,7 +150,7 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 		})
 	}
 
-	_, err = x.Insert(&playlistItems)
+	_, err = sess.Insert(&playlistItems)
 
 	return err
 }
@@ -100,31 +161,78 @@ func GetPlaylist(query *m.GetPlaylistByIdQuery) error {
 	}
 
 	playlist := m.Playlist{}
-	_, err := x.ID(query.Id).Get(&playlist)
+	exists, err := x.ID(query.Id).Get(&playlist)
 
-	query.Result = &playlist
+	if exists {
+		query.Result = &playlist
+	}
+
+	return err
+}
+
+func GetPlaylistByUid(query *m.GetPlaylistByUidQuery) error {
+	if query.OrgId == 0 || query.Uid == "" {
+		return m.ErrCommandValidationFailed
+	}
+
+	playlist := m.Playlist{
+		OrgId: query.OrgId,
+		Uid:   query.Uid,
+	}
+	exists, err := x.Get(&playlist)
+
+	if exists {
+		query.Result = &playlist
+	}
 
 	return err
 }
 
 func DeletePlaylist(cmd *m.DeletePlaylistCommand) error {
-	if cmd.Id == 0 {
+	if cmd.OrgId == 0 || cmd.Id == 0 {
 		return m.ErrCommandValidationFailed
 	}
 
 	return inTransaction(func(sess *DBSession) error {
-		var rawPlaylistSql = "DELETE FROM playlist WHERE id = ? and org_id = ?"
-		_, err := sess.Exec(rawPlaylistSql, cmd.Id, cmd.OrgId)
+		return deletePlaylistInternal(cmd.Id, cmd.OrgId, sess)
+	})
+}
+
+func DeletePlaylistByUid(cmd *m.DeletePlaylistWithUidCommand) error {
+	if cmd.OrgId == 0 || cmd.Uid == "" {
+		return m.ErrCommandValidationFailed
+	}
+
+	return inTransaction(func(sess *DBSession) error {
+		var existing m.Playlist
+		exists, err := sess.Where("uid = ? AND org_id = ?", cmd.Uid, cmd.OrgId).Get(&existing)
 
 		if err != nil {
 			return err
 		}
 
-		var rawItemSql = "DELETE FROM playlist_item WHERE playlist_id = ?"
-		_, err2 := sess.Exec(rawItemSql, cmd.Id)
+		if !exists {
+			return m.ErrPlaylistNotFound
+		}
 
-		return err2
+		id := existing.Id
+
+		return deletePlaylistInternal(id, cmd.OrgId, sess)
 	})
+}
+
+func deletePlaylistInternal(id int64, orgId int64, sess *DBSession) error {
+	var rawPlaylistSql = "DELETE FROM playlist WHERE id = ? and org_id = ?"
+	_, err := sess.Exec(rawPlaylistSql, id, orgId)
+
+	if err != nil {
+		return err
+	}
+
+	var rawItemSql = "DELETE FROM playlist_item WHERE playlist_id = ?"
+	_, err = sess.Exec(rawItemSql, id)
+
+	return err
 }
 
 func SearchPlaylists(query *m.GetPlaylistsQuery) error {
@@ -143,7 +251,7 @@ func SearchPlaylists(query *m.GetPlaylistsQuery) error {
 	return err
 }
 
-func GetPlaylistItem(query *m.GetPlaylistItemsByIdQuery) error {
+func GetPlaylistItems(query *m.GetPlaylistItemsByIdQuery) error {
 	if query.PlaylistId == 0 {
 		return m.ErrCommandValidationFailed
 	}

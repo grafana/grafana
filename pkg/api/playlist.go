@@ -18,7 +18,7 @@ func ValidateOrgPlaylist(c *m.ReqContext) {
 		return
 	}
 
-	if query.Result.OrgId == 0 {
+	if query.Result == nil {
 		c.JsonApiErr(404, "Playlist not found", err)
 		return
 	}
@@ -67,14 +67,21 @@ func GetPlaylist(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 	cmd := m.GetPlaylistByIdQuery{Id: id}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	err := bus.Dispatch(&cmd)
+
+	if err != nil {
 		return Error(500, "Playlist not found", err)
+	}
+
+	if cmd.Result == nil {
+		return Error(404, "Playlist not found", err)
 	}
 
 	playlistDTOs, _ := LoadPlaylistItemDTOs(id)
 
 	dto := &m.PlaylistDTO{
 		Id:       cmd.Result.Id,
+		Uid:      cmd.Result.Uid,
 		Name:     cmd.Result.Name,
 		Interval: cmd.Result.Interval,
 		OrgId:    cmd.Result.OrgId,

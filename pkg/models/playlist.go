@@ -6,13 +6,15 @@ import (
 
 // Typed errors
 var (
-	ErrPlaylistNotFound           = errors.New("Playlist not found")
-	ErrPlaylistWithSameNameExists = errors.New("A playlist with the same name already exists")
+	ErrPlaylistNotFound                = errors.New("Playlist not found")
+	ErrPlaylistWithSameNameExists      = errors.New("A playlist with the same name already exists")
+	ErrPlaylistFailedGenerateUniqueUid = errors.New("Failed to generate unique playlist uid")
 )
 
 // Playlist model
 type Playlist struct {
 	Id       int64  `json:"id"`
+	Uid      string `json:"uid"`
 	Name     string `json:"name"`
 	Interval string `json:"interval"`
 	OrgId    int64  `json:"-"`
@@ -20,6 +22,7 @@ type Playlist struct {
 
 type PlaylistDTO struct {
 	Id       int64             `json:"id"`
+	Uid      string            `json:"uid"`
 	Name     string            `json:"name"`
 	Interval string            `json:"interval"`
 	OrgId    int64             `json:"-"`
@@ -71,7 +74,18 @@ type UpdatePlaylistCommand struct {
 	Result *PlaylistDTO
 }
 
+type UpdatePlaylistWithUidCommand struct {
+	OrgId    int64             `json:"-"`
+	Uid      string            `json:"id"`
+	Name     string            `json:"name" binding:"Required"`
+	Interval string            `json:"interval"`
+	Items    []PlaylistItemDTO `json:"items"`
+
+	Result *PlaylistDTO
+}
+
 type CreatePlaylistCommand struct {
+	Uid      string            `json:"uid"`
 	Name     string            `json:"name" binding:"Required"`
 	Interval string            `json:"interval"`
 	Items    []PlaylistItemDTO `json:"items"`
@@ -82,6 +96,11 @@ type CreatePlaylistCommand struct {
 
 type DeletePlaylistCommand struct {
 	Id    int64
+	OrgId int64
+}
+
+type DeletePlaylistWithUidCommand struct {
+	Uid   string
 	OrgId int64
 }
 
@@ -99,6 +118,13 @@ type GetPlaylistsQuery struct {
 
 type GetPlaylistByIdQuery struct {
 	Id     int64
+	Result *Playlist
+}
+
+type GetPlaylistByUidQuery struct {
+	OrgId int64
+	Uid   string
+
 	Result *Playlist
 }
 

@@ -43,4 +43,17 @@ func addPlaylistMigrations(mg *Migrator) {
 		{Name: "value", Type: DB_Text, Nullable: false},
 		{Name: "title", Type: DB_Text, Nullable: false},
 	}))
+
+	mg.AddMigration("Add column uid in playlist", NewAddColumnMigration(playlistV2, &Column{
+		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
+	}))
+
+	mg.AddMigration("Update uid column values in playlist", new(RawSqlMigration).
+		Sqlite("UPDATE playlist SET uid=printf('%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE playlist SET uid=lpad('' || id::text,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE playlist SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
+
+	mg.AddMigration("Add unique index playlist_org_id_uid", NewAddIndexMigration(playlistV2, &Index{
+		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
+	}))
 }

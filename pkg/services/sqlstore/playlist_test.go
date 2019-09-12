@@ -33,8 +33,40 @@ func TestPlaylistDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("can remove playlist", func() {
-					query := m.DeletePlaylistCommand{Id: 1}
+					query := m.DeletePlaylistCommand{Id: 1, OrgId: 1}
 					err = DeletePlaylist(&query)
+
+					So(err, ShouldBeNil)
+				})
+			})
+		})
+	})
+
+	Convey("Testing Playlist data access with Uid", t, func() {
+		InitTestDB(t)
+
+		Convey("Can create playlist", func() {
+			items := []m.PlaylistItemDTO{
+				{Title: "graphite", Value: "graphite", Type: "dashboard_by_tag"},
+				{Title: "Backend response times", Value: "3", Type: "dashboard_by_id"},
+			}
+			cmd := m.CreatePlaylistCommand{Uid: "p1", Name: "NYC office", Interval: "10m", OrgId: 1, Items: items}
+			err := CreatePlaylist(&cmd)
+			So(err, ShouldBeNil)
+
+			Convey("can update playlist", func() {
+				items := []m.PlaylistItemDTO{
+					{Title: "influxdb", Value: "influxdb", Type: "dashboard_by_tag"},
+					{Title: "Backend response times", Value: "2", Type: "dashboard_by_id"},
+				}
+				query := m.UpdatePlaylistWithUidCommand{Name: "NYC office ", OrgId: 1, Uid: "p1", Interval: "10s", Items: items}
+				err = UpdatePlaylistByUid(&query)
+
+				So(err, ShouldBeNil)
+
+				Convey("can remove playlist", func() {
+					query := m.DeletePlaylistWithUidCommand{Uid: "p1", OrgId: 1}
+					err = DeletePlaylistByUid(&query)
 
 					So(err, ShouldBeNil)
 				})
