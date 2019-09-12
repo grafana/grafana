@@ -1,0 +1,9 @@
+playlists:
+- uid: p1
+  name: $PLAYLIST_NAME
+  interval: 1m
+  items:
+  - type: dashboard_by_tag
+    value: myTag
+    order: 1
+    title: First Dashboard

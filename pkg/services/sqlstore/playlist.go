@@ -126,8 +126,7 @@ func UpdatePlaylistByUid(cmd *m.UpdatePlaylistWithUidCommand) error {
 }
 
 func updatePlaylistInternal(id int64, orgId int64, name string, interval string, items []m.PlaylistItemDTO, sess *DBSession) error {
-	updateRawSql := "UPDATE playlist SET name = ?, interval = ? WHERE id = ? AND org_id = ?"
-	_, err := sess.Exec(updateRawSql, name, interval, id, orgId)
+	_, err := sess.Cols("name", "interval").Update(&m.Playlist{Name: name, Interval: interval}, &m.Playlist{Id: id, OrgId: orgId})
 	if err != nil {
 		return err
 	}

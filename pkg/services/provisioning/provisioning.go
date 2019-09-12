@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
 	"github.com/grafana/grafana/pkg/services/provisioning/notifiers"
+	"github.com/grafana/grafana/pkg/services/provisioning/playlists"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -30,6 +31,7 @@ func init() {
 		},
 		notifiers.Provision,
 		datasources.Provision,
+		playlists.Provision,
 	))
 }
 
@@ -37,12 +39,14 @@ func NewProvisioningServiceImpl(
 	newDashboardProvisioner DashboardProvisionerFactory,
 	provisionNotifiers func(string) error,
 	provisionDatasources func(string) error,
+	provisionPlaylists func(string) error,
 ) *provisioningServiceImpl {
 	return &provisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
+		provisionPlaylists:      provisionPlaylists,
 	}
 }
 
@@ -54,6 +58,7 @@ type provisioningServiceImpl struct {
 	dashboardProvisioner    DashboardProvisioner
 	provisionNotifiers      func(string) error
 	provisionDatasources    func(string) error
+	provisionPlaylists      func(string) error
 	mutex                   sync.Mutex
 }
 
@@ -69,6 +74,11 @@ func (ps *provisioningServiceImpl) Init() error {
 	}
 
 	err = ps.ProvisionDashboards()
+	if err != nil {
+		return err
+	}
+
+	err = ps.ProvisionPlaylists()
 	if err != nil {
 		return err
 	}
@@ -110,6 +120,12 @@ func (ps *provisioningServiceImpl) ProvisionNotifications() error {
 	alertNotificationsPath := path.Join(ps.Cfg.ProvisioningPath, "notifiers")
 	err := ps.provisionNotifiers(alertNotificationsPath)
 	return errutil.Wrap("Alert notification provisioning error", err)
+}
+
+func (ps *provisioningServiceImpl) ProvisionPlaylists() error {
+	playlistsPath := path.Join(ps.Cfg.ProvisioningPath, "playlists")
+	err := ps.provisionPlaylists(playlistsPath)
+	return errutil.Wrap("Playlist provisioning error", err)
 }
 
 func (ps *provisioningServiceImpl) ProvisionDashboards() error {

@@ -1,0 +1,5 @@
+playlists:
+- uid: p1
+  name: Playlist with no item
+  interval: 1m
+  items: []

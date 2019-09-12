@@ -1,0 +1,26 @@
+delete_playlists:
+- uid: p1
+- uid: p2
+  org_id: 2
+
+playlists:
+- uid: p4
+  name: Playlist updated
+  interval: 1m
+  items:
+  - type: dashboard_by_tag
+    value: tag1
+    order: 1
+    title: First Dashboard
+- uid: p5
+  name: New playlist
+  interval: 10m
+  items:
+  - type: dashboard_by_tag
+    value: tag1
+    order: 1
+    title: First Dashboard
+  - type: dashboard_by_id
+    value: "2"
+    order: 2
+    title: Second dashboard

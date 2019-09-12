@@ -3,6 +3,7 @@ package provisioning
 type Calls struct {
 	ProvisionDatasources                []interface{}
 	ProvisionNotifications              []interface{}
+	ProvisionPlaylists                  []interface{}
 	ProvisionDashboards                 []interface{}
 	GetDashboardProvisionerResolvedPath []interface{}
 }
@@ -11,6 +12,7 @@ type ProvisioningServiceMock struct {
 	Calls                                   *Calls
 	ProvisionDatasourcesFunc                func() error
 	ProvisionNotificationsFunc              func() error
+	ProvisionPlaylistsFunc                  func() error
 	ProvisionDashboardsFunc                 func() error
 	GetDashboardProvisionerResolvedPathFunc func(name string) string
 }
@@ -33,6 +35,14 @@ func (mock *ProvisioningServiceMock) ProvisionNotifications() error {
 	mock.Calls.ProvisionNotifications = append(mock.Calls.ProvisionNotifications, nil)
 	if mock.ProvisionNotificationsFunc != nil {
 		return mock.ProvisionNotificationsFunc()
+	}
+	return nil
+}
+
+func (mock *ProvisioningServiceMock) ProvisionPlaylists() error {
+	mock.Calls.ProvisionPlaylists = append(mock.Calls.ProvisionPlaylists, nil)
+	if mock.ProvisionPlaylistsFunc != nil {
+		return mock.ProvisionPlaylistsFunc()
 	}
 	return nil
 }

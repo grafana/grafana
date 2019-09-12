@@ -1,0 +1,8 @@
+playlists:
+- name: Playlist without uid
+  interval: 1m
+  items:
+  - type: dashboard_by_tag
+    value: myTag
+    order: 1
+    title: First Dashboard

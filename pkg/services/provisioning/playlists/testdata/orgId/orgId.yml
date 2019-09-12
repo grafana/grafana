@@ -1,0 +1,44 @@
+playlists:
+- uid: noOrgDefined
+  name: No org defined
+  interval: 1m
+  items:
+  - type: dashboard_by_tag
+    value: tag1
+    order: 1
+    title: First Dashboard
+- uid: orgIdDefined
+  name: Org defined by id
+  org_id: 2
+  interval: 1m
+  items:
+  - type: dashboard_by_tag
+    value: tag1
+    order: 1
+    title: First Dashboard
+- uid: orgNameDefined
+  name: Org defined by name
+  org_name: MyOrg
+  interval: 1m
+  items:
+  - type: dashboard_by_tag
+    value: tag1
+    order: 1
+    title: First Dashboard
+- uid: orgDefinedTwice
+  name: Org defined by ID and name
+  org_id: 2
+  org_name: MyOrg
+  interval: 1m
+  items:
+  - type: dashboard_by_tag
+    value: tag1
+    order: 1
+    title: First Dashboard
+
+delete_playlists:
+- uid: toDelete
+- uid: toDeleteInOrg
+  org_id: 2
+- uid: toDeleteInOrgName
+  org_name: MyOrg

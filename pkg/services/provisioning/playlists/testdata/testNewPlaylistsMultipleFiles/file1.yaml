@@ -1,0 +1,25 @@
+playlists:
+- uid: p1
+  name: First playlist
+  interval: 1m
+  items:
+  - type: dashboard_by_id
+    value: "1"
+    order: 1
+    title: First dashboard
+  - type: dashboard_by_tag
+    value: myTag
+    order: 2
+    title: Tagged dashboard
+- uid: p2
+  name: Second playlist
+  interval: 10m
+  items:
+  - type: dashboard_by_id
+    value: "1"
+    order: 1
+    title: First dashboard
+  - type: dashboard_by_id
+    value: "2"
+    order: 2
+    title: Second dashboard

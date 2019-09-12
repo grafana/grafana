@@ -1,0 +1,13 @@
+playlists:
+- uid: px
+  name: Other playlist
+  interval: 15s
+  items:
+  - type: dashboard_by_tag
+    value: tag1
+    order: 1
+    title: Tag 1
+  - type: dashboard_by_tag
+    value: tag2
+    order: 2
+    title: Tag 2
