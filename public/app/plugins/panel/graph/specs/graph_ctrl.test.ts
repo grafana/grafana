@@ -51,7 +51,7 @@ describe('GraphCtrl', () => {
       ];
 
       ctx.ctrl.range = { from: dateTime().valueOf(), to: dateTime().valueOf() };
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onDataSnapshotLoad(data);
     });
 
     it('should set datapointsOutside', () => {
