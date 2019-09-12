@@ -187,7 +187,7 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   return dataFrames;
 }
 
-export function preProcessPanelData(data: PanelData, lastResult: PanelData) {
+export function preProcessPanelData(data: PanelData, lastResult: PanelData): PanelData {
   const { series } = data;
 
   //  for loading states with no data, use last result
@@ -199,6 +199,9 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData) {
     return { ...lastResult, state: LoadingState.Loading };
   }
 
-  // Makes sure the data is properly formatted
-  return getProcessedDataFrames(series);
+  // Make sure the data frames are properly formatted
+  return {
+    ...data,
+    series: getProcessedDataFrames(series),
+  };
 }
