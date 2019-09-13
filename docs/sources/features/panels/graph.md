@@ -222,7 +222,7 @@ Series specific variables are available under ``__series`` namespace:
 #### Field variables
 Field specific variables are available under ``__field`` namespace:
 
-``__field.name`` - series name to the URL
+``__field.name`` - field name to the URL
 
 #### Value variables
 Value specific variables are available under ``__value`` namespace:
