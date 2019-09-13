@@ -395,6 +395,13 @@ class GraphElement {
       const series = data[i];
       series.data = series.getFlotPairs(series.nullPointMode || this.panel.nullPointMode);
 
+      if (series.transform === 'constant') {
+        const start = _.isUndefined(this.ctrl.range.from) ? null : this.ctrl.range.from.valueOf();
+        const end = _.isUndefined(this.ctrl.range.to) ? null : this.ctrl.range.to.valueOf();
+        const value = series.data[0][1];
+        series.data = [[start, value], [end, value]];
+      }
+
       // if hidden remove points and disable stack
       if (this.ctrl.hiddenSeries[series.alias]) {
         series.data = [];
