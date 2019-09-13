@@ -78,7 +78,7 @@ export function syncUser(userId: number): ThunkResult<void> {
   return async dispatch => {
     try {
       await syncLdapUser(userId);
-      dispatch(loadUser(userId));
+      dispatch(loadLdapUserInfo(userId));
       dispatch(loadLdapSyncStatus());
     } catch (error) {
       dispatch(userSyncFailedAction());
@@ -92,22 +92,7 @@ export function loadLdapUserInfo(userId: number): ThunkResult<void> {
       dispatch(clearUserError());
       const user = await getUser(userId);
       dispatch(userLoadedAction(user));
-      dispatch(loadUserMapping(user.login));
-    } catch (error) {
-      const userError = {
-        title: error.data.message,
-        body: error.data.error,
-      };
-      dispatch(userMappingInfoFailedAction(userError));
-    }
-  };
-}
-
-export function loadUser(userId: number): ThunkResult<void> {
-  return async dispatch => {
-    try {
-      const user = await getUser(userId);
-      dispatch(userLoadedAction(user));
+      dispatch(loadUserSessions(userId));
       dispatch(loadUserMapping(user.login));
     } catch (error) {
       const userError = {

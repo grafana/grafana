@@ -17,11 +17,8 @@ import {
   LdapUserSyncInfo,
 } from 'app/types';
 import {
-  loadUserMapping,
   clearUserError,
   loadLdapUserInfo,
-  loadUser,
-  loadUserSessions,
   revokeSession,
   revokeAllSessions,
   loadLdapSyncStatus,
@@ -43,12 +40,9 @@ interface Props {
   ldapSyncInfo?: SyncInfo;
 
   loadLdapUserInfo: typeof loadLdapUserInfo;
-  loadUser: typeof loadUser;
-  loadUserMapping: typeof loadUserMapping;
   clearUserError: typeof clearUserError;
   loadLdapSyncStatus: typeof loadLdapSyncStatus;
   syncUser: typeof syncUser;
-  loadUserSessions: typeof loadUserSessions;
   revokeSession: typeof revokeSession;
   revokeAllSessions: typeof revokeAllSessions;
 }
@@ -164,14 +158,11 @@ const mapStateToProps = (state: StoreState) => ({
 
 const mapDispatchToProps = {
   loadLdapUserInfo,
-  loadUserMapping,
-  clearUserError,
-  loadUser,
   loadLdapSyncStatus,
   syncUser,
-  loadUserSessions,
   revokeSession,
   revokeAllSessions,
+  clearUserError,
 };
 
 export default hot(module)(
