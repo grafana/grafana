@@ -60,10 +60,10 @@ const buildLabelPath = (label: string) => {
   return label.indexOf('.') > -1 ? `["${label}"]` : `.${label}`;
 };
 
-export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+const getSeriesVars = (dataFrames: DataFrame[]) => {
   const labels = _.flatten(dataFrames.map(df => Object.keys(df.labels || {})));
 
-  const seriesVars = [
+  return [
     {
       value: `${DataLinkBuiltInVars.seriesName}`,
       label: 'Name',
@@ -77,7 +77,9 @@ export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): Variab
       origin: VariableOrigin.Series,
     })),
   ];
-
+};
+export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+  const seriesVars = getSeriesVars(dataFrames);
   const valueTimeVar = {
     value: `${DataLinkBuiltInVars.valueTime}`,
     label: 'Time',
@@ -88,14 +90,15 @@ export const getDataLinksVariableSuggestions = (dataFrames: DataFrame[]): Variab
   return [...seriesVars, ...fieldVars, ...valueVars, valueTimeVar, ...getPanelLinksVariableSuggestions()];
 };
 
-export const getCalculationValueDataLinksVariableSuggestions = (): VariableSuggestion[] => {
+export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
+  const seriesVars = getSeriesVars(dataFrames);
   const valueCalcVar = {
     value: `${DataLinkBuiltInVars.valueCalc}`,
     label: 'Calculation name',
     documentation: 'Name of the calculation the value is a result of',
     origin: VariableOrigin.Value,
   };
-  return [...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
+  return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
 };
 
 export interface LinkService {

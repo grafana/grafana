@@ -69,7 +69,7 @@ export class BarGaugePanelEditor extends PureComponent<PanelEditorProps<BarGauge
 
     const suggestions = fieldOptions.values
       ? getDataLinksVariableSuggestions(this.props.data.series)
-      : getCalculationValueDataLinksVariableSuggestions();
+      : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
     const labelWidth = 6;
 
     return (
