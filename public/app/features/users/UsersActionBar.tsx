@@ -48,7 +48,7 @@ export class UsersActionBar extends PureComponent<Props> {
             labelClassName="gf-form--has-input-icon"
             inputClassName="gf-form-input width-20"
             value={searchQuery}
-            onChange={setUsersSearchQuery}
+            onChange={query => setUsersSearchQuery({ query })}
             placeholder="Filter by name or type"
           />
           {pendingInvitesCount > 0 && (

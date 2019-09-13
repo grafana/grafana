@@ -14,11 +14,13 @@ import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
 import { NavIndex } from '@grafana/data';
 import { ApplicationState } from './application';
+import { ApiKeysState } from './apiKeys';
 
 export interface StoreState {
   navIndex: NavIndex;
   location: LocationState;
   alertRules: AlertRulesState;
+  apiKeys: ApiKeysState;
   teams: TeamsState;
   team: TeamState;
   folder: FolderState;

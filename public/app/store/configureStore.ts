@@ -16,6 +16,7 @@ import organizationReducers from 'app/features/org/state/reducers';
 import { setStore } from './store';
 import { StoreState } from 'app/types/store';
 import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
+import { updateLocationMiddleware } from '../core/middlewares/updateLocationMiddleware';
 
 const rootReducers = {
   ...sharedReducers,
@@ -39,6 +40,18 @@ export function addRootReducer(reducers: any) {
 export function configureStore() {
   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
   const rootReducer = combineReducers(rootReducers);
+  // const rootReducer = (state: StoreState, action: ActionOf<any>) => {
+  //   if (action.type === updateLocation.type) {
+  //     const { path } = action.payload as LocationUpdate;
+  //     if (path !== state.location.path) {
+  //       const { explore, dashboard, application } = state;
+  //       state = { explore, dashboard, application } as StoreState;
+  //     }
+  //   }
+  //
+  //   return appReducer(state, action);
+  // };
+
   const logger = createLogger({
     predicate: (getState: () => StoreState) => {
       return getState().application.logActions;
@@ -46,8 +59,8 @@ export function configureStore() {
   });
   const storeEnhancers =
     process.env.NODE_ENV !== 'production'
-      ? applyMiddleware(toggleLogActionsMiddleware, thunk, logger)
-      : applyMiddleware(thunk);
+      ? applyMiddleware(toggleLogActionsMiddleware, updateLocationMiddleware, thunk, logger)
+      : applyMiddleware(updateLocationMiddleware, thunk);
 
   const store = createStore(rootReducer, {}, composeEnhancers(storeEnhancers));
   setStore(store);

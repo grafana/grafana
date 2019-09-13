@@ -1,6 +1,7 @@
 import { Invitee, OrgUser, UsersState } from 'app/types';
-import { Action, ActionTypes } from './actions';
 import config from 'app/core/config';
+import { reducerFactory } from '../../../core/redux';
+import { usersLoaded, inviteesLoaded, setUsersSearchQuery } from './actions';
 
 export const initialState: UsersState = {
   invitees: [] as Invitee[],
@@ -13,20 +14,20 @@ export const initialState: UsersState = {
   hasFetched: false,
 };
 
-export const usersReducer = (state = initialState, action: Action): UsersState => {
-  switch (action.type) {
-    case ActionTypes.LoadUsers:
-      return { ...state, hasFetched: true, users: action.payload };
-
-    case ActionTypes.LoadInvitees:
-      return { ...state, hasFetched: true, invitees: action.payload };
-
-    case ActionTypes.SetUsersSearchQuery:
-      return { ...state, searchQuery: action.payload };
-  }
-
-  return state;
-};
+export const usersReducer = reducerFactory<UsersState>(initialState)
+  .addMapper({
+    filter: usersLoaded,
+    mapper: (state, action): UsersState => ({ ...state, hasFetched: true, users: action.payload.users }),
+  })
+  .addMapper({
+    filter: inviteesLoaded,
+    mapper: (state, action): UsersState => ({ ...state, hasFetched: true, invitees: action.payload.invitees }),
+  })
+  .addMapper({
+    filter: setUsersSearchQuery,
+    mapper: (state, action): UsersState => ({ ...state, hasFetched: true, searchQuery: action.payload.query }),
+  })
+  .create({ resetStateForPath: '/org/users' });
 
 export default {
   users: usersReducer,

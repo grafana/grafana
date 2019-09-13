@@ -2,58 +2,39 @@ import { ThunkAction } from 'redux-thunk';
 import { StoreState } from '../../../types';
 import { getBackendSrv } from '@grafana/runtime';
 import { Invitee, OrgUser } from 'app/types';
-
-export enum ActionTypes {
-  LoadUsers = 'LOAD_USERS',
-  LoadInvitees = 'LOAD_INVITEES',
-  SetUsersSearchQuery = 'SET_USERS_SEARCH_QUERY',
-}
+import { actionCreatorFactory, ActionOf } from '../../../core/redux';
 
 export interface LoadUsersAction {
-  type: ActionTypes.LoadUsers;
-  payload: OrgUser[];
+  users: OrgUser[];
 }
 
 export interface LoadInviteesAction {
-  type: ActionTypes.LoadInvitees;
-  payload: Invitee[];
+  invitees: Invitee[];
 }
 
 export interface SetUsersSearchQueryAction {
-  type: ActionTypes.SetUsersSearchQuery;
-  payload: string;
+  query: string;
 }
 
-const usersLoaded = (users: OrgUser[]): LoadUsersAction => ({
-  type: ActionTypes.LoadUsers,
-  payload: users,
-});
-
-const inviteesLoaded = (invitees: Invitee[]): LoadInviteesAction => ({
-  type: ActionTypes.LoadInvitees,
-  payload: invitees,
-});
-
-export const setUsersSearchQuery = (query: string): SetUsersSearchQueryAction => ({
-  type: ActionTypes.SetUsersSearchQuery,
-  payload: query,
-});
+export const usersLoaded = actionCreatorFactory<LoadUsersAction>('LOAD_USERS').create();
+export const inviteesLoaded = actionCreatorFactory<LoadInviteesAction>('LOAD_INVITEES').create();
+export const setUsersSearchQuery = actionCreatorFactory<SetUsersSearchQueryAction>('SET_USERS_SEARCH_QUERY').create();
 
 export type Action = LoadUsersAction | SetUsersSearchQueryAction | LoadInviteesAction;
 
-type ThunkResult<R> = ThunkAction<R, StoreState, undefined, Action>;
+type ThunkResult<R> = ThunkAction<R, StoreState, undefined, ActionOf<any>>;
 
 export function loadUsers(): ThunkResult<void> {
   return async dispatch => {
-    const users = await getBackendSrv().get('/api/org/users');
-    dispatch(usersLoaded(users));
+    const users: OrgUser[] = await getBackendSrv().get('/api/org/users');
+    dispatch(usersLoaded({ users }));
   };
 }
 
 export function loadInvitees(): ThunkResult<void> {
   return async dispatch => {
-    const invitees = await getBackendSrv().get('/api/org/invites');
-    dispatch(inviteesLoaded(invitees));
+    const invitees: Invitee[] = await getBackendSrv().get('/api/org/invites');
+    dispatch(inviteesLoaded({ invitees }));
   };
 }
 

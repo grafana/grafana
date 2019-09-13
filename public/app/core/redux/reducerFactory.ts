@@ -1,5 +1,6 @@
 import { ActionOf, ActionCreator } from './actionCreatorFactory';
 import { Reducer } from 'redux';
+import { locationChanged, LocationChanged } from '../actions/location';
 
 export type Mapper<State, Payload> = (state: State, action: ActionOf<Payload>) => State;
 
@@ -13,7 +14,7 @@ export interface AddMapper<State> {
 }
 
 export interface CreateReducer<State> extends AddMapper<State> {
-  create: () => Reducer<State, ActionOf<any>>;
+  create: (config?: { resetStateForPath: string }) => Reducer<State, ActionOf<any>>;
 }
 
 export const reducerFactory = <State>(initialState: State): AddMapper<State> => {
@@ -29,7 +30,18 @@ export const reducerFactory = <State>(initialState: State): AddMapper<State> => 
     return instance;
   };
 
-  const create = (): Reducer<State, ActionOf<any>> => (state: State = initialState, action: ActionOf<any>): State => {
+  const create = (config?: { resetStateForPath: string }): Reducer<State, ActionOf<any>> => (
+    state: State = initialState,
+    action: ActionOf<any>
+  ): State => {
+    if (config && action.type === locationChanged.type) {
+      const { resetStateForPath } = config;
+      const { fromPath, toPath } = action.payload as LocationChanged;
+      if (resetStateForPath && resetStateForPath === fromPath && toPath.indexOf(fromPath) === -1) {
+        return initialState;
+      }
+    }
+
     const mapper = allMappers[action.type];
 
     if (mapper) {

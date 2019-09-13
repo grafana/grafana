@@ -15,3 +15,7 @@ export const applicationReducer = reducerFactory<ApplicationState>(initialState)
     }),
   })
   .create();
+
+export default {
+  application: applicationReducer,
+};

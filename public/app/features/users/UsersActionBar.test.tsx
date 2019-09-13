@@ -1,11 +1,13 @@
 import React from 'react';
 import { shallow } from 'enzyme';
 import { UsersActionBar, Props } from './UsersActionBar';
+import { setUsersSearchQuery } from './state/actions';
+import { mockActionCreator } from '../../core/redux';
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
     searchQuery: '',
-    setUsersSearchQuery: jest.fn(),
+    setUsersSearchQuery: mockActionCreator(setUsersSearchQuery),
     onShowInvites: jest.fn(),
     pendingInvitesCount: 0,
     canInvite: false,

@@ -1,5 +1,6 @@
 import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
 import { Action, ActionTypes } from './actions';
+import { resetStateForPath } from '../../../core/redux/resetStateForPath';
 
 export const initialTeamsState: TeamsState = { teams: [], searchQuery: '', hasFetched: false };
 export const initialTeamState: TeamState = {
@@ -39,6 +40,6 @@ export const teamReducer = (state = initialTeamState, action: Action): TeamState
 };
 
 export default {
-  teams: teamsReducer,
-  team: teamReducer,
+  teams: resetStateForPath(teamsReducer, '/org/teams'),
+  team: resetStateForPath(teamReducer, '/org/teams'),
 };
