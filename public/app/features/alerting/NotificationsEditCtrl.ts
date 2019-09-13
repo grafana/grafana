@@ -100,6 +100,17 @@ export class AlertNotificationEditCtrl {
     }
   }
 
+  deleteNotification() {
+    if (this.model.id) {
+      this.backendSrv.delete(`/api/alert-notifications/${this.model.id}`).then((res: any) => {
+        this.model = res;
+        this.$location.path('alerting/notifications');
+      });
+    } else {
+      appEvents.emit('alert-error', ['Alert does not exist', '']);
+    }
+  }
+
   getNotifierTemplateId(type: string) {
     return `notifier-options-${type}`;
   }
