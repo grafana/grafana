@@ -3,95 +3,83 @@ import {
   DataSourceApi,
   DataQueryRequest,
   DataSourceInstanceSettings,
-  DataStreamObserver,
+  DataQueryResponse,
   MetricFindValue,
 } from '@grafana/ui';
 import { TableData, TimeSeries } from '@grafana/data';
 import { TestDataQuery, Scenario } from './types';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { StreamHandler } from './StreamHandler';
 import { queryMetricTree } from './metricTree';
+import { Observable, from, merge } from 'rxjs';
+import { runStream } from './runStreams';
 import templateSrv from 'app/features/templating/template_srv';
 
 type TestData = TimeSeries | TableData;
 
-export interface TestDataRegistry {
-  [key: string]: TestData[];
-}
-
 export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
-  streams = new StreamHandler();
-
-  /** @ngInject */
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
   }
 
-  query(options: DataQueryRequest<TestDataQuery>, observer: DataStreamObserver) {
-    const queries = options.targets.map(item => {
-      return {
-        ...item,
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
-        datasourceId: this.id,
-        alias: templateSrv.replace(item.alias || ''),
-      };
-    });
+  query(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    const queries: any[] = [];
+    const streams: Array<Observable<DataQueryResponse>> = [];
 
-    if (queries.length === 0) {
-      return Promise.resolve({ data: [] });
+    // Start streams and prepare queries
+    for (const target of options.targets) {
+      if (target.scenarioId === 'streaming_client') {
+        streams.push(runStream(target, options));
+      } else {
+        queries.push({
+          ...target,
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          datasourceId: this.id,
+          alias: templateSrv.replace(target.alias || ''),
+        });
+      }
     }
 
-    // Currently we do not support mixed with client only streaming
-    const resp = this.streams.process(options, observer);
-    if (resp) {
-      return Promise.resolve(resp);
+    if (queries.length) {
+      const req: Promise<DataQueryResponse> = getBackendSrv()
+        .datasourceRequest({
+          method: 'POST',
+          url: '/api/tsdb/query',
+          data: {
+            from: options.range.from.valueOf().toString(),
+            to: options.range.to.valueOf().toString(),
+            queries: queries,
+          },
+          // This sets up a cancel token
+          requestId: options.requestId,
+        })
+        .then((res: any) => this.processQueryResult(queries, res));
+
+      streams.push(from(req));
     }
 
-    return getBackendSrv()
-      .datasourceRequest({
-        method: 'POST',
-        url: '/api/tsdb/query',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: queries,
-        },
+    return merge(...streams);
+  }
 
-        // This sets up a cancel token
-        requestId: options.requestId,
-      })
-      .then((res: any) => {
-        const data: TestData[] = [];
+  processQueryResult(queries: any, res: any): DataQueryResponse {
+    const data: TestData[] = [];
 
-        // Returns data in the order it was asked for.
-        // if the response has data with different refId, it is ignored
-        for (const query of queries) {
-          const results = res.data.results[query.refId];
-          if (!results) {
-            console.warn('No Results for:', query);
-            continue;
-          }
+    for (const query of queries) {
+      const results = res.data.results[query.refId];
 
-          for (const t of results.tables || []) {
-            const table = t as TableData;
-            table.refId = query.refId;
-            table.name = query.alias;
-            data.push(table);
-          }
+      for (const t of results.tables || []) {
+        const table = t as TableData;
+        table.refId = query.refId;
+        table.name = query.alias;
+        data.push(table);
+      }
 
-          for (const series of results.series || []) {
-            data.push({
-              target: series.name,
-              datapoints: series.points,
-              refId: query.refId,
-              tags: series.tags,
-            });
-          }
-        }
+      for (const series of results.series || []) {
+        data.push({ target: series.name, datapoints: series.points, refId: query.refId, tags: series.tags });
+      }
+    }
 
-        return { data: data };
-      });
+    return { data };
   }
 
   annotationQuery(options: any) {
