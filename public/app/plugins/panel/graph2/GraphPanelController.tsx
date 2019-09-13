@@ -1,11 +1,10 @@
 import React from 'react';
 import { PanelData, GraphSeriesToggler } from '@grafana/ui';
-import { GraphSeriesXY, toUtc } from '@grafana/data';
+import { GraphSeriesXY, AbsoluteTimeRange } from '@grafana/data';
 
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 import { Options, SeriesOptions } from './types';
 import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from '@grafana/ui/src/components/Graph/GraphWithLegend';
-import { getTimeSrv } from '../../../features/dashboard/services/TimeSrv';
 
 interface GraphPanelControllerAPI {
   series: GraphSeriesXY[];
@@ -21,6 +20,7 @@ interface GraphPanelControllerProps {
   options: Options;
   data: PanelData;
   onOptionsChange: (options: Options) => void;
+  onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
 interface GraphPanelControllerState {
@@ -117,10 +117,8 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
   }
 
   onHorizontalRegionSelected(from: number, to: number) {
-    getTimeSrv().setTime({
-      from: toUtc(from),
-      to: toUtc(to),
-    });
+    const { onChangeTimeRange } = this.props;
+    onChangeTimeRange({ from, to });
   }
 
   render() {

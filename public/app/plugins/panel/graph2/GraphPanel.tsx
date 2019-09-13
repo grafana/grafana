@@ -14,6 +14,7 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   height,
   options,
   onOptionsChange,
+  onChangeTimeRange,
 }) => {
   if (!data) {
     return (
@@ -35,7 +36,12 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
   };
   const { asTable, isVisible, ...legendProps } = legendOptions;
   return (
-    <GraphPanelController data={data} options={options} onOptionsChange={onOptionsChange}>
+    <GraphPanelController
+      data={data}
+      options={options}
+      onOptionsChange={onOptionsChange}
+      onChangeTimeRange={onChangeTimeRange}
+    >
       {({ onSeriesToggle, onHorizontalRegionSelected, ...controllerApi }) => {
         return (
           <GraphWithLegend
