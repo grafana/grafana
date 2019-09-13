@@ -19,7 +19,9 @@ export const LdapUserInfo: FC<Props> = ({ className, ldapUser, showAttributeMapp
       {ldapUser.roles && ldapUser.roles.length > 0 && (
         <LdapUserGroups className={className} groups={ldapUser.roles} showAttributeMapping={showAttributeMapping} />
       )}
-      {ldapUser.teams && ldapUser.teams.length > 0 && <LdapUserTeams className={className} teams={ldapUser.teams} />}
+      {ldapUser.teams && ldapUser.teams.length > 0 && (
+        <LdapUserTeams showAttributeMapping={showAttributeMapping} className={className} teams={ldapUser.teams} />
+      )}
     </>
   );
 };
