@@ -30,13 +30,13 @@ class DatasourceSelectorCtrl {
 
   constructor($scope: any) {
     this.scope = $scope;
-    let values = $scope.values;
-    let options = $scope.options;
+    const values = $scope.values;
+    const options = $scope.options;
     this.dsOptions = {
       multi: true,
       current: { value: values, text: values.join(' + ') },
       options: _.map(options, ds => {
-        return { text: ds, value: ds, selected: _.includes(values, ds) };
+        return { text: ds.text, value: ds.value, selected: _.includes(values, ds) };
       }),
     };
     this.dashboard = {
@@ -45,7 +45,7 @@ class DatasourceSelectorCtrl {
   }
 
   onChange(updatedOptions: any) {
-    let newValues = updatedOptions.current.value;
+    const newValues = updatedOptions.current.value;
     this.scope.values = newValues;
 
     this.scope.$$postDigest(() => {
