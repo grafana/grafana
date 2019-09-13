@@ -246,7 +246,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       hasUniqueLabels = true;
     }
 
-    const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
 
@@ -256,7 +256,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     }
 
     for (let j = 0; j < series.length; j++) {
-      const ts = timeFieldIndex.values.get(j);
+      const ts = timeField.values.get(j);
       const time = dateTime(ts);
       const timeEpochMs = time.valueOf();
       const timeFromNow = time.fromNow();

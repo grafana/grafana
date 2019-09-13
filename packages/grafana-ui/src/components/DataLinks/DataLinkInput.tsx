@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useContext } from 'react';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
-import { makeValue, ThemeContext } from '../../index';
+import { makeValue, ThemeContext, DataLinkBuiltInVars } from '../../index';
 import { SelectionReference } from './SelectionReference';
 import { Portal } from '../index';
 // @ts-ignore
@@ -77,10 +77,10 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
     }
   };
 
-  useDebounce(updateUsedSuggestions, 500, [linkUrl]);
+  useDebounce(updateUsedSuggestions, 250, [linkUrl]);
 
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Backspace') {
+    if (event.key === 'Backspace' || event.key === 'Escape') {
       setShowingSuggestions(false);
       setSuggestionsIndex(0);
     }
@@ -111,7 +111,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
       setShowingSuggestions(true);
     }
 
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && showingSuggestions) {
       // Preventing entering a new line
       // As of https://github.com/ianstormtaylor/slate/issues/1345#issuecomment-340508289
       return false;
@@ -134,7 +134,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
 
     const change = linkUrl.change();
 
-    if (item.origin === VariableOrigin.BuiltIn) {
+    if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
       change.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
     } else {
       change.insertText(`var-${item.value}=$\{${item.value}}`);
@@ -167,7 +167,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
               modifiers={{
                 preventOverflow: { enabled: true, boundariesElement: 'window' },
                 arrow: { enabled: false },
-                offset: { offset: 200 }, // width of the suggestions menu
+                offset: { offset: 250 }, // width of the suggestions menu
               }}
             >
               {({ ref, style, placement }) => {

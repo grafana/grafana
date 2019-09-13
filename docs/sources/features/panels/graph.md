@@ -192,7 +192,7 @@ Panel time overrides & timeshift are described in more detail [here]({{< relref 
 
 > Only available in Grafana v6.3+.
 
-Data link in graph settings allows adding dynamic links to the visualization. Those links can link to either other dashboard or to an external URL.
+Data link allows adding dynamic links to the visualization. Those links can link to either other dashboard or to an external URL.
 
 {{< docs-imagebox img="/img/docs/data_link.png"  max-width= "800px" >}}
 
@@ -208,14 +208,40 @@ available suggestions:
 {{< docs-imagebox img="/img/docs/data_link_typeahead.png"  max-width= "800px" >}}
 
 
-Available built-in variables are:
+#### Built-in variables
 
-1. ``__all_variables`` - will add all current dashboard's variables to the URL
-2. ``__url_time_range`` - will add current dashboard's time range to the URL (i.e. ``?from=now-6h&to=now``)
-3. ``__series_name`` - will add series name as a query param in the URL (i.e. ``?series=B-series``)
-4. ``__value_time`` - will add datapoint's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
+``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
+``__from`` - current dashboard's time range from value
+``__to`` - current dashboard's time range to value
+
+#### Series variables
+Series specific variables are available under ``__series`` namespace:
+
+``__series.name`` - series name to the URL
+
+``__series.labels.<LABEL>`` - label's value to the URL. If your label contains dots use ``__series.labels["<LABEL>"]`` syntax
+
+#### Field variables
+Field specific variables are available under ``__field`` namespace:
+
+``__field.name`` - field name to the URL
+
+#### Value variables
+Value specific variables are available under ``__value`` namespace:
+
+``__value.time`` - value's timestamp (Unix ms epoch) to the URL (i.e. ``?time=1560268814105``)
+
+``__value.raw`` - raw value
+
+``__value.numeric`` - numeric representation of a value
+
+``__value.text`` - text representation of a value
+
+``__value.calc`` - calculation name if the value is result of calculation
 
 
-#### Template variables in data links
+
+#### Template variables
+
 When linking to another dashboard that uses template variables, you can use ``var-myvar=${myvar}`` syntax (where ``myvar`` is a name of template variable)
-to use current dashboard's variable value.
+to use current dashboard's variable value. If you want to add all of the current dashboard's variables to the URL use  ``__all_variables`` variable.

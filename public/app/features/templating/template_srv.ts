@@ -7,6 +7,10 @@ function luceneEscape(value: string) {
   return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
 
+interface FieldAccessorCache {
+  [key: string]: (obj: any) => any;
+}
+
 export class TemplateSrv {
   variables: any[];
 
@@ -15,6 +19,7 @@ export class TemplateSrv {
   private grafanaVariables: any = {};
   private builtIns: any = {};
   private timeRange: TimeRange = null;
+  private fieldAccessorCache: FieldAccessorCache = {};
 
   constructor() {
     this.builtIns['__interval'] = { text: '1s', value: '1s' };
@@ -224,21 +229,44 @@ export class TemplateSrv {
     return values;
   }
 
+  getFieldAccessor(fieldPath: string) {
+    const accessor = this.fieldAccessorCache[fieldPath];
+    if (accessor) {
+      return accessor;
+    }
+
+    return (this.fieldAccessorCache[fieldPath] = _.property(fieldPath));
+  }
+
+  getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars) {
+    const scopedVar = scopedVars[variableName];
+    if (!scopedVar) {
+      return null;
+    }
+
+    if (fieldPath) {
+      return this.getFieldAccessor(fieldPath)(scopedVar.value);
+    }
+
+    return scopedVar.value;
+  }
+
   replace(target: string, scopedVars?: ScopedVars, format?: string | Function): any {
     if (!target) {
       return target;
     }
 
-    let variable, systemValue, value, fmt;
     this.regex.lastIndex = 0;
 
-    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fmt3) => {
-      variable = this.index[var1 || var2 || var3];
-      fmt = fmt2 || fmt3 || format;
+    return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+      const variableName = var1 || var2 || var3;
+      const variable = this.index[variableName];
+      const fmt = fmt2 || fmt3 || format;
+
       if (scopedVars) {
-        value = scopedVars[var1 || var2 || var3];
-        if (value) {
-          return this.formatValue(value.value, fmt, variable);
+        const value = this.getVariableValue(variableName, fieldPath, scopedVars);
+        if (value !== null && value !== undefined) {
+          return this.formatValue(value, fmt, variable);
         }
       }
 
@@ -246,12 +274,12 @@ export class TemplateSrv {
         return match;
       }
 
-      systemValue = this.grafanaVariables[variable.current.value];
+      const systemValue = this.grafanaVariables[variable.current.value];
       if (systemValue) {
         return this.formatValue(systemValue, fmt, variable);
       }
 
-      value = variable.current.value;
+      let value = variable.current.value;
       if (this.isAllValue(value)) {
         value = this.getAllValue(variable);
         // skip formatting of custom all values

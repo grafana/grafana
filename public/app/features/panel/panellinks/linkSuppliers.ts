@@ -1,7 +1,31 @@
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { FieldDisplay, DataLinkBuiltInVars } from '@grafana/ui';
-import { LinkModelSupplier, getTimeField, ScopedVars } from '@grafana/data';
+import { FieldDisplay } from '@grafana/ui';
+import { LinkModelSupplier, getTimeField, Labels, ScopedVars, ScopedVar } from '@grafana/data';
 import { getLinkSrv } from './link_srv';
+
+interface SeriesVars {
+  name?: string;
+  labels?: Labels;
+  refId?: string;
+}
+
+interface FieldVars {
+  name: string;
+}
+
+interface ValueVars {
+  raw: any;
+  numeric: number;
+  text: string;
+  time?: number;
+  calc?: string;
+}
+
+interface DataLinkScopedVars extends ScopedVars {
+  __series?: ScopedVar<SeriesVars>;
+  __field?: ScopedVar<FieldVars>;
+  __value?: ScopedVar<ValueVars>;
+}
 
 /**
  * Link suppliers creates link models based on a link origin
@@ -14,29 +38,53 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
   }
   return {
     getLinks: (_scopedVars?: any) => {
-      const scopedVars: ScopedVars = {};
-      // TODO, add values to scopedVars and/or pass objects to event listeners
+      const scopedVars: DataLinkScopedVars = {};
+
       if (value.view) {
-        scopedVars[DataLinkBuiltInVars.seriesName] = {
+        const { dataFrame } = value.view;
+
+        scopedVars['__series'] = {
+          value: {
+            name: dataFrame.name,
+            labels: dataFrame.labels,
+            refId: dataFrame.refId,
+          },
           text: 'Series',
-          value: value.view.dataFrame.name,
         };
-        const field = value.column ? value.view.dataFrame.fields[value.column] : undefined;
+
+        const field = value.colIndex !== undefined ? dataFrame.fields[value.colIndex] : undefined;
         if (field) {
           console.log('Full Field Info:', field);
+          scopedVars['__field'] = {
+            value: {
+              name: field.name,
+            },
+            text: 'Field',
+          };
         }
-        if (value.row) {
-          const row = value.view.get(value.row);
-          console.log('ROW:', row);
-          const dataFrame = value.view.dataFrame;
 
+        if (value.rowIndex) {
           const { timeField } = getTimeField(dataFrame);
-          if (timeField) {
-            scopedVars[DataLinkBuiltInVars.valueTime] = {
-              text: 'Value time',
-              value: timeField.values.get(value.row),
-            };
-          }
+          scopedVars['__value'] = {
+            value: {
+              raw: field.values.get(value.rowIndex),
+              numeric: value.display.numeric,
+              text: value.display.text,
+              time: timeField ? timeField.values.get(value.rowIndex) : undefined,
+            },
+            text: 'Value',
+          };
+        } else {
+          // calculation
+          scopedVars['__value'] = {
+            value: {
+              raw: value.display.numeric,
+              numeric: value.display.numeric,
+              text: value.display.text,
+              calc: value.name,
+            },
+            text: 'Value',
+          };
         }
       } else {
         console.log('VALUE', value);
