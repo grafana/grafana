@@ -5,7 +5,6 @@ import {
   updateHistory,
   clearHistory,
   hasNonEmptyQuery,
-  instanceOfDataQueryError,
   getValueWithRefId,
   getFirstQueryErrorWithoutRefId,
   getRefIds,
@@ -198,30 +197,6 @@ describe('hasNonEmptyQuery', () => {
 
   test('should return false if no queries exist', () => {
     expect(hasNonEmptyQuery([])).toBeFalsy();
-  });
-});
-
-describe('instanceOfDataQueryError', () => {
-  describe('when called with a DataQueryError', () => {
-    it('then it should return true', () => {
-      const error: DataQueryError = {
-        message: 'A message',
-        status: '200',
-        statusText: 'Ok',
-      };
-      const result = instanceOfDataQueryError(error);
-
-      expect(result).toBe(true);
-    });
-  });
-
-  describe('when called with a non DataQueryError', () => {
-    it('then it should return false', () => {
-      const error = {};
-      const result = instanceOfDataQueryError(error);
-
-      expect(result).toBe(false);
-    });
   });
 });
 

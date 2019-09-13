@@ -101,6 +101,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
 
   // For now everything can use the standard stats
   let values = doStandardCalcs(field, ignoreNulls, nullAsZero);
+
   for (const reducer of queue) {
     if (!values.hasOwnProperty(reducer.id) && reducer.reduce) {
       values = {
@@ -109,10 +110,12 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
       };
     }
   }
+
   field.calcs = {
     ...field.calcs,
     ...values,
   };
+
   return values;
 }
 

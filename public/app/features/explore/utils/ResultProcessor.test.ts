@@ -67,20 +67,20 @@ const testContext = (options: any = {}) => {
 describe('ResultProcessor', () => {
   describe('constructed without result', () => {
     describe('when calling getGraphResult', () => {
-      it('then it should return an empty array', () => {
+      it('then it should return null', () => {
         const { resultProcessor } = testContext({ dataFrames: [] });
         const theResult = resultProcessor.getGraphResult();
 
-        expect(theResult).toEqual([]);
+        expect(theResult).toEqual(null);
       });
     });
 
     describe('when calling getTableResult', () => {
-      it('then it should return an empty TableModel', () => {
+      it('then it should return null', () => {
         const { resultProcessor } = testContext({ dataFrames: [] });
         const theResult = resultProcessor.getTableResult();
 
-        expect(theResult).toEqual(new TableModel());
+        expect(theResult).toEqual(null);
       });
     });
 
