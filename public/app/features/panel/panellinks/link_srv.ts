@@ -138,16 +138,15 @@ export class LinkSrv implements LinkService {
     const timeRangeUrl = toUrlParams(this.timeSrv.timeRangeForUrl());
 
     const info: LinkModel<T> = {
-      href: link.url,
+      href: link.url.replace(/\s|\n/g, ''),
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
       origin,
     };
-
     this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
 
     const variablesQuery = toUrlParams(params);
-    info.href = this.templateSrv.replace(link.url, {
+    info.href = this.templateSrv.replace(info.href, {
       ...scopedVars,
       [DataLinkBuiltInVars.keepTime]: {
         text: timeRangeUrl,
