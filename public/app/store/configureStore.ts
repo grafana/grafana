@@ -40,18 +40,6 @@ export function addRootReducer(reducers: any) {
 export function configureStore() {
   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
   const rootReducer = combineReducers(rootReducers);
-  // const rootReducer = (state: StoreState, action: ActionOf<any>) => {
-  //   if (action.type === updateLocation.type) {
-  //     const { path } = action.payload as LocationUpdate;
-  //     if (path !== state.location.path) {
-  //       const { explore, dashboard, application } = state;
-  //       state = { explore, dashboard, application } as StoreState;
-  //     }
-  //   }
-  //
-  //   return appReducer(state, action);
-  // };
-
   const logger = createLogger({
     predicate: (getState: () => StoreState) => {
       return getState().application.logActions;
