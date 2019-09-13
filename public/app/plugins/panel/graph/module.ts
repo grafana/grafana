@@ -12,7 +12,7 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
-import { getColorFromHexRgbOrName, LegacyResponseData, VariableSuggestion } from '@grafana/ui';
+import { getColorFromHexRgbOrName, VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -147,7 +147,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on('render', this.onRender.bind(this));
-    this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-frames-received', this.onDataFramesReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
@@ -199,7 +198,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       panel: this.panel,
       range: this.range,
     });
-    this.onDataReceived(snapshotData);
+
+    const frames = getProcessedDataFrames(snapshotData);
+    this.onDataFramesReceived(frames);
   }
 
   onDataError(err: any) {
@@ -208,12 +209,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render([]);
   }
 
-  // This should only be called from the snapshot callback
-  onDataReceived(dataList: LegacyResponseData[]) {
-    this.onDataFramesReceived(getProcessedDataFrames(dataList));
-  }
-
-  // Directly support DataFrame skipping event callbacks
   onDataFramesReceived(data: DataFrame[]) {
     this.dataList = data;
     this.seriesList = this.processor.getSeriesList({
