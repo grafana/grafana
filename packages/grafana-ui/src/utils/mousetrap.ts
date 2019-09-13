@@ -1,7 +1,7 @@
 import Mousetrap from 'mousetrap';
 
 // @ts-ignore
-import * as enableMouseTrapPaouse from 'mousetrap-pause';
+import enableMouseTrapPause from 'mousetrap-pause';
 import 'mousetrap-global-bind';
 
 let mousetrapInstance: MousetrapStatic & {
@@ -11,7 +11,7 @@ let mousetrapInstance: MousetrapStatic & {
 
 export const getMousetrap = () => {
   if (!mousetrapInstance) {
-    mousetrapInstance = enableMouseTrapPaouse(Mousetrap);
+    mousetrapInstance = enableMouseTrapPause(Mousetrap);
   }
 
   return mousetrapInstance;
