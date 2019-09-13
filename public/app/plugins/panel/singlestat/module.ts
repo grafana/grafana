@@ -120,7 +120,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     this.events.on('data-frames-received', this.onFramesReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
+    this.events.on('data-snapshot-load', this.onSnapshotLoad.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 
     this.useDataFrames = true;
@@ -154,8 +154,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.handleDataFrames([]);
   }
 
-  // This should only be called from the snapshot callback
-  onDataReceived(dataList: LegacyResponseData[]) {
+  onSnapshotLoad(dataList: LegacyResponseData[]) {
     this.onFramesReceived(getProcessedDataFrames(dataList));
   }
 
