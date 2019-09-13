@@ -277,9 +277,7 @@ function notifyAngularQueryEditorsOfData(panel: PanelModel, data: PanelData, edi
   if (data.state === LoadingState.Done) {
     const legacy = data.series.map(v => toLegacyResponseData(v));
     panel.events.emit('data-received', legacy);
-  }
-
-  if (data.state === LoadingState.Error) {
+  } else if (data.state === LoadingState.Error) {
     panel.events.emit('data-error', data.error);
   }
 
