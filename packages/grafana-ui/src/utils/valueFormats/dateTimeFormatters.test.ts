@@ -170,6 +170,10 @@ describe('duration', () => {
     const str = toDurationInHoursMinutesSeconds(-1);
     expect(str).toBe('00:00:01 ago');
   });
+  it('0 dthms', () => {
+    const str = toDurationInHoursMinutesSeconds(0);
+    expect(str).toBe('00:00:00');
+  });
 });
 
 describe('clock', () => {
