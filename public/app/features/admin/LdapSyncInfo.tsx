@@ -35,7 +35,7 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
       <>
         <h4 className={headingStyle}>
           LDAP Synchronisation
-          <button className={`btn btn-secondary pull-right`} onClick={this.handleSyncClick}>
+          <button className={`btn btn-secondary pull-right`} onClick={this.handleSyncClick} hidden={true}>
             <span className="btn-title">Bulk-sync now</span>
             {isSyncing && <i className="fa fa-spinner fa-fw fa-spin run-icon" />}
           </button>
