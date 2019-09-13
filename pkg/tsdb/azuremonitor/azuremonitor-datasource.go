@@ -60,7 +60,11 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 		if err != nil {
 			queryRes.Error = err
 		}
-		result.Results[query.RefID] = queryRes
+		if val, ok := result.Results[query.RefID]; ok {
+			val.Series = append(result.Results[query.RefID].Series, queryRes.Series...)
+		} else {
+			result.Results[query.RefID] = queryRes
+		}
 	}
 
 	return result, nil
@@ -119,7 +123,10 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		params.Add("interval", timeGrain)
 		params.Add("aggregation", fmt.Sprintf("%v", azureMonitorTarget["aggregation"]))
 		params.Add("metricnames", fmt.Sprintf("%v", azureMonitorTarget["metricName"]))
-		params.Add("metricnamespace", fmt.Sprintf("%v", azureMonitorTarget["metricNamespace"]))
+
+		if val, ok := azureMonitorTarget["metricNamespace"]; ok {
+			params.Add("metricnamespace", fmt.Sprintf("%v", val))
+		}
 
 		dimension := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimension"]))
 		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimensionFilter"]))

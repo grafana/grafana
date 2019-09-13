@@ -3,6 +3,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/ui';
 export interface AzureMonitorQuery extends DataQuery {
   format: string;
   subscription: string;
+  subscriptions: string[];
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
   //   appInsights: any;
@@ -46,6 +47,7 @@ export interface AzureMonitorQueryData {
   dimension: string;
   dimensionFilter: string;
   alias: string;
+  location: string;
 }
 
 export interface AzureLogsQuery {
