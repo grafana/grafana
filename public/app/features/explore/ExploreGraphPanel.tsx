@@ -136,7 +136,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               isStacked={isStacked}
               lineWidth={lineWidth}
               onSeriesToggle={onSeriesToggle}
-              OnHorizontalRegionSelected={this.onChangeTime}
+              onHorizontalRegionSelected={this.onChangeTime}
             />
           );
         }}

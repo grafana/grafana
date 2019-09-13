@@ -16,7 +16,7 @@ export interface GraphProps {
   height: number;
   isStacked?: boolean;
   lineWidth?: number;
-  OnHorizontalRegionSelected?: (from: number, to: number) => void;
+  onHorizontalRegionSelected?: (from: number, to: number) => void;
 }
 
 export class Graph extends PureComponent<GraphProps> {
@@ -48,9 +48,9 @@ export class Graph extends PureComponent<GraphProps> {
   }
 
   onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
-    const { OnHorizontalRegionSelected } = this.props;
-    if (OnHorizontalRegionSelected) {
-      OnHorizontalRegionSelected(ranges.xaxis.from, ranges.xaxis.to);
+    const { onHorizontalRegionSelected } = this.props;
+    if (onHorizontalRegionSelected) {
+      onHorizontalRegionSelected(ranges.xaxis.from, ranges.xaxis.to);
     }
   };
 
@@ -69,7 +69,7 @@ export class Graph extends PureComponent<GraphProps> {
       isStacked,
       lineWidth,
       timeZone,
-      OnHorizontalRegionSelected,
+      onHorizontalRegionSelected,
     } = this.props;
 
     if (!width) {
@@ -143,7 +143,7 @@ export class Graph extends PureComponent<GraphProps> {
         labelMarginX: 0,
       },
       selection: {
-        mode: OnHorizontalRegionSelected ? 'x' : null,
+        mode: onHorizontalRegionSelected ? 'x' : null,
         color: '#666',
       },
     };

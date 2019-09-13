@@ -1,10 +1,11 @@
 import React from 'react';
 import { PanelData, GraphSeriesToggler } from '@grafana/ui';
-import { GraphSeriesXY } from '@grafana/data';
+import { GraphSeriesXY, toUtc } from '@grafana/data';
 
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 import { Options, SeriesOptions } from './types';
 import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from '@grafana/ui/src/components/Graph/GraphWithLegend';
+import { getTimeSrv } from '../../../features/dashboard/services/TimeSrv';
 
 interface GraphPanelControllerAPI {
   series: GraphSeriesXY[];
@@ -12,6 +13,7 @@ interface GraphPanelControllerAPI {
   onSeriesColorChange: SeriesColorChangeHandler;
   onSeriesToggle: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
+  onHorizontalRegionSelected: (from: number, to: number) => void;
 }
 
 interface GraphPanelControllerProps {
@@ -32,6 +34,7 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     this.onSeriesColorChange = this.onSeriesColorChange.bind(this);
     this.onSeriesAxisToggle = this.onSeriesAxisToggle.bind(this);
     this.onToggleSort = this.onToggleSort.bind(this);
+    this.onHorizontalRegionSelected = this.onHorizontalRegionSelected.bind(this);
 
     this.state = {
       graphSeriesModel: getGraphSeriesModel(
@@ -113,6 +116,13 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     });
   }
 
+  onHorizontalRegionSelected(from: number, to: number) {
+    getTimeSrv().setTime({
+      from: toUtc(from),
+      to: toUtc(to),
+    });
+  }
+
   render() {
     const { children } = this.props;
     const { graphSeriesModel } = this.state;
@@ -126,6 +136,7 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
             onSeriesAxisToggle: this.onSeriesAxisToggle,
             onToggleSort: this.onToggleSort,
             onSeriesToggle: onSeriesToggle,
+            onHorizontalRegionSelected: this.onHorizontalRegionSelected,
           });
         }}
       </GraphSeriesToggler>
