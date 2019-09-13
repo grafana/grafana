@@ -3,30 +3,9 @@ import { shuffle } from 'lodash';
 import { ExploreStartPageProps, DataQuery } from '@grafana/ui';
 import LokiLanguageProvider from '../language_provider';
 
-// const CHEAT_SHEET_ITEMS = [
-//   {
-//     title: 'See your logs',
-//     label: '',
-//   },
-//   {
-//     title: 'Logs from a "job"',
-//     expression: '{job="default/prometheus"}',
-//     label: 'Returns all log lines emitted by instances of this job.',
-//   },
-//   {
-//     title: 'Combine stream selectors',
-//     expression: '{app="cassandra",namespace="prod"}',
-//     label: 'Returns all log lines from streams that have both labels.',
-//   },
-//   {
-//     title: 'Search for text',
-//     expression: '{app="cassandra"} (duration|latency)\\s*(=|is|of)\\s*[\\d\\.]+',
-//     label: 'Add a regular expression after the selector to filter for.',
-//   },
-// ];
-
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
 const PREFERRED_LABELS = ['job', 'app', 'k8s_app'];
+const EXAMPLES_LIMIT = 5;
 
 export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps, { userExamples: string[] }> {
   userLabelTimer: NodeJS.Timeout;
@@ -55,7 +34,7 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
       if (preferredLabel) {
         const values = await provider.getLabelValues(preferredLabel);
         const userExamples = shuffle(values)
-          .slice(0, 3)
+          .slice(0, EXAMPLES_LIMIT)
           .map(value => `{${preferredLabel}="${value}"}`);
         this.setState({ userExamples });
       }
@@ -64,8 +43,21 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
     }
   };
 
-  render() {
+  renderExpression(expr: string) {
     const { onClickExample } = this.props;
+
+    return (
+      <div
+        className="cheat-sheet-item__example"
+        key={expr}
+        onClick={e => onClickExample({ refId: 'A', expr } as DataQuery)}
+      >
+        <code>{expr}</code>
+      </div>
+    );
+  }
+
+  render() {
     const { userExamples } = this.state;
 
     return (
@@ -77,43 +69,25 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
           <div className="cheat-sheet-item__label">
             Alternatively, you can write a stream selector into the query field:
           </div>
-          <div className="cheat-sheet-item__expression">
-            <code>{'{job="default/prometheus"}'}</code>
-          </div>
+          {this.renderExpression('{job="default/prometheus"}')}
           {userExamples !== DEFAULT_EXAMPLES && userExamples.length > 0 ? (
             <div>
               <div className="cheat-sheet-item__label">Here are some example streams from your logs:</div>
-              {userExamples.map(example => (
-                <div
-                  className="cheat-sheet-item__example"
-                  key={example}
-                  onClick={e => onClickExample({ refId: 'A', expr: example } as DataQuery)}
-                >
-                  <code>{example}</code>
-                </div>
-              ))}
+              {userExamples.map(example => this.renderExpression(example))}
             </div>
           ) : null}
         </div>
         <div className="cheat-sheet-item">
           <div className="cheat-sheet-item__title">Combine stream selectors</div>
-          <div className="cheat-sheet-item__expression">
-            <code>{'{app="cassandra",namespace="prod"}'}</code>
-          </div>
+          {this.renderExpression('{app="cassandra",namespace="prod"}')}
           <div className="cheat-sheet-item__label">Returns all log lines from streams that have both labels.</div>
         </div>
 
         <div className="cheat-sheet-item">
           <div className="cheat-sheet-item__title">Filtering for search terms.</div>
-          <div className="cheat-sheet-item__expression">
-            <code>{'{app="cassandra"} |~ "(duration|latency)s*(=|is|of)s*[d.]+"'}</code>
-          </div>
-          <div className="cheat-sheet-item__expression">
-            <code>{'{app="cassandra"} |= "exact match"'}</code>
-          </div>
-          <div className="cheat-sheet-item__expression">
-            <code>{'{app="cassandra"} != "do not match"'}</code>
-          </div>
+          {this.renderExpression('{app="cassandra"} |~ "(duration|latency)s*(=|is|of)s*[d.]+"')}
+          {this.renderExpression('{app="cassandra"} |= "exact match"')}
+          {this.renderExpression('{app="cassandra"} != "do not match"')}
           <div className="cheat-sheet-item__label">
             <a href="https://github.com/grafana/loki/blob/master/docs/usage.md#filter-expression" target="logql">
               LogQL
