@@ -53,6 +53,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   metricsNameCache: any;
   interval: string;
   queryTimeout: string;
+  errorIfWarning: boolean;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   resultTransformer: ResultTransformer;
@@ -75,6 +76,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
+    this.errorIfWarning = instanceSettings.jsonData.errorIfWarning || false;
     this.directUrl = instanceSettings.jsonData.directUrl;
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
@@ -169,6 +171,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       refId: target.refId,
       valueWithRefId: target.valueWithRefId,
     };
+    console.log(this);
+    console.log(this.errorIfWarning);
+    if (this.errorIfWarning === true && response.data.warnings && response.data.warnings.length > 0) {
+      throw { message: '* ' + response.data.warnings.join('\n\n* ') };
+    }
     const series = this.resultTransformer.transform(response, transformerOptions);
 
     return series;

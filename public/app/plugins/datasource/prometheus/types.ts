@@ -24,6 +24,7 @@ export interface PromOptions extends DataSourceJsonData {
   timeInterval: string;
   queryTimeout: string;
   httpMethod: string;
+  errorIfWarning: boolean;
   directUrl: string;
 }
 
