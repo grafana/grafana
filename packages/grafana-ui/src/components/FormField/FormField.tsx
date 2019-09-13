@@ -30,16 +30,14 @@ export const FormField: FunctionComponent<Props> = ({
   ...inputProps
 }) => {
   return (
-    <>
-      <div className={cx('form-field', className)}>
-        <FormLabel width={labelWidth} tooltip={tooltip}>
-          {label}
-        </FormLabel>
-        {inputEl || (
-          <input type="text" className={`gf-form-input ${inputWidth ? `width-${inputWidth}` : ''}`} {...inputProps} />
-        )}
-      </div>
-    </>
+    <div className={cx('form-field', className)}>
+      <FormLabel width={labelWidth} tooltip={tooltip}>
+        {label}
+      </FormLabel>
+      {inputEl || (
+        <input type="text" className={`gf-form-input ${inputWidth ? `width-${inputWidth}` : ''}`} {...inputProps} />
+      )}
+    </div>
   );
 };
 
