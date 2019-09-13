@@ -1,4 +1,5 @@
 import { actionCreatorFactory, noPayloadActionCreatorFactory } from 'app/core/redux';
+import config from 'app/core/config';
 import { ThunkResult, SyncInfo, LdapUser, LdapConnectionInfo, LdapError, UserSession, User } from 'app/types';
 import {
   getUserInfo,
@@ -39,8 +40,11 @@ export function loadLdapState(): ThunkResult<void> {
 
 export function loadLdapSyncStatus(): ThunkResult<void> {
   return async dispatch => {
-    const syncStatus = await getLdapSyncStatus();
-    dispatch(ldapSyncStatusLoadedAction(syncStatus));
+    if (config.buildInfo.isEnterprise) {
+      // Available only in enterprise
+      const syncStatus = await getLdapSyncStatus();
+      dispatch(ldapSyncStatusLoadedAction(syncStatus));
+    }
   };
 }
 
