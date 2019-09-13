@@ -61,7 +61,6 @@ class QueryField extends React.Component<any, any> {
   menuEl: any;
   plugins: any;
   resetTimer: any;
-  // keybindingSrv: KeybindingSrv = getKeybindingSrv();
 
   constructor(props: any, context: any) {
     super(props, context);
