@@ -24,6 +24,7 @@ import {
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
+import { sortInAscendingOrder } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export const LogLevelColor = {
@@ -106,7 +107,7 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
   const bucketSize = intervalMs * 10;
   const seriesList: any[] = [];
 
-  const sortedRows = rows.sort((a, b) => (a.timeEpochMs <= b.timeEpochMs ? -1 : 1));
+  const sortedRows = rows.sort(sortInAscendingOrder);
   for (const row of sortedRows) {
     let series = seriesByLevel[row.logLevel];
 
@@ -121,7 +122,8 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
       seriesList.push(series);
     }
 
-    // align time to bucket size
+    // align time to bucket size - used Math.floor for calculation as time of the bucket
+    // must be in the past (before Date.now()) to be displayed on the graph
     const time = Math.floor(row.timeEpochMs / bucketSize) * bucketSize;
 
     // Entry for time
