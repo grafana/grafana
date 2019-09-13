@@ -3,12 +3,11 @@ import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from './useLokiLabels';
 import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
 import { AbsoluteTimeRange } from '@grafana/data';
+import { makeMockLokiDatasource } from '../mocks';
 
 describe('useLokiLabels hook', () => {
   it('should refresh labels', async () => {
-    const datasource = {
-      metadataRequest: () => ({ data: { data: [] as any[] } }),
-    };
+    const datasource = makeMockLokiDatasource({});
     const languageProvider = new LanguageProvider(datasource);
     const logLabelOptionsMock = ['Holy mock!'];
     const rangeMock: AbsoluteTimeRange = {
@@ -31,9 +30,7 @@ describe('useLokiLabels hook', () => {
   });
 
   it('should force refresh labels after a disconnect', () => {
-    const datasource = {
-      metadataRequest: () => ({ data: { data: [] as any[] } }),
-    };
+    const datasource = makeMockLokiDatasource({});
 
     const rangeMock: AbsoluteTimeRange = {
       from: 1560153109000,
@@ -52,9 +49,7 @@ describe('useLokiLabels hook', () => {
   });
 
   it('should not force refresh labels after a connect', () => {
-    const datasource = {
-      metadataRequest: () => ({ data: { data: [] as any[] } }),
-    };
+    const datasource = makeMockLokiDatasource({});
 
     const rangeMock: AbsoluteTimeRange = {
       from: 1560153109000,

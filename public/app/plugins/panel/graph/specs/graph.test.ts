@@ -88,6 +88,9 @@ describe('grafanaGraph', () => {
         from: dateTime([2015, 1, 1, 10]),
         to: dateTime([2015, 1, 1, 22]),
       },
+      annotationsSrv: {
+        getAnnotations: () => Promise.resolve({}),
+      },
     } as any;
 
     ctx.data = [];
