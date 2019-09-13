@@ -77,7 +77,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
     }
   };
 
-  useDebounce(updateUsedSuggestions, 500, [linkUrl]);
+  useDebounce(updateUsedSuggestions, 250, [linkUrl]);
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Backspace') {
