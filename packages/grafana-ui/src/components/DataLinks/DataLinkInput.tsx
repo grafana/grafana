@@ -77,7 +77,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
     }
   };
 
-  useDebounce(updateUsedSuggestions, 500, [linkUrl]);
+  useDebounce(updateUsedSuggestions, 250, [linkUrl]);
 
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Backspace') {
@@ -111,7 +111,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
       setShowingSuggestions(true);
     }
 
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && showingSuggestions) {
       // Preventing entering a new line
       // As of https://github.com/ianstormtaylor/slate/issues/1345#issuecomment-340508289
       return false;
