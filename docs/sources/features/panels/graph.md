@@ -210,7 +210,9 @@ available suggestions:
 
 #### Built-in variables
 
-``__url_time_range`` - current dashboard's time range to the URL (i.e. ``?from=now-6h&to=now``)
+``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
+``__from`` - current dashboard's time range from value
+``__to`` - current dashboard's time range to value
 
 #### Series variables
 Series specific variables are available under ``__series`` namespace:
