@@ -47,9 +47,6 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
 
   return (
     <>
-      {/* <div className="grafana-info-box"> */}
-      {/*   asd */}
-      {/* </div> */}
       {value && value.length > 0 && (
         <div
           className={css`
@@ -60,6 +57,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
             <DataLinkEditor
               key={index.toString()}
               index={index}
+              isLast={index === value.length - 1}
               value={link}
               onChange={onLinkChanged}
               onRemove={onRemove}

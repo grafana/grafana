@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1568297530414,
+  "iteration": 1568372030444,
   "links": [],
   "panels": [
     {
@@ -244,8 +244,9 @@
           "defaults": {
             "links": [
               {
+                "targetBlank": true,
                 "title": "Drill it down!",
-                "url": "http://localhost:3000/d/wfTJJL5Wz/datalinks-source?var-fieldName=${__field.name}&var-labelDatacenter=${__series.labels.datacenter}&var-labelDatacenterRegion=${__series.labels[\"datacenter.region\"]}&var-valueNumeric=${__value.numeric}&var-valueText=${__value.text}&var-valueCalc=${__value.calc}"
+                "url": "http://localhost:3000/d/wfTJJL5Wz/datalinks-source\n?var-fieldName=${__field.name}\n&var-labelDatacenter=${__series.labels.datacenter}\n&var-labelDatacenterRegion=${__series.labels[\"datacenter.region\"]}\n&var-valueNumeric=${__value.numeric}\n&var-valueText=${__value.text}\n&var-valueCalc=${__value.calc}"
               }
             ],
             "mappings": [
@@ -505,5 +506,5 @@
   "timezone": "",
   "title": "Datalinks - variables",
   "uid": "wfTJJL5Wz",
-  "version": 42
+  "version": 1
 }
