@@ -37,6 +37,9 @@ describe('GraphCtrl', () => {
     ctx.ctrl.events = {
       emit: () => {},
     };
+    ctx.ctrl.annotationsSrv = {
+      getAnnotations: () => Promise.resolve({}),
+    };
     ctx.ctrl.annotationsPromise = Promise.resolve({});
     ctx.ctrl.updateTimeRange();
   });
