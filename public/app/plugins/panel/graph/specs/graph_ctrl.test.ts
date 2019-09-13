@@ -37,6 +37,9 @@ describe('GraphCtrl', () => {
     ctx.ctrl.events = {
       emit: () => {},
     };
+    ctx.ctrl.annotationsSrv = {
+      getAnnotations: () => Promise.resolve({}),
+    };
     ctx.ctrl.annotationsPromise = Promise.resolve({});
     ctx.ctrl.updateTimeRange();
   });
@@ -51,7 +54,7 @@ describe('GraphCtrl', () => {
       ];
 
       ctx.ctrl.range = { from: dateTime().valueOf(), to: dateTime().valueOf() };
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onDataSnapshotLoad(data);
     });
 
     it('should set datapointsOutside', () => {
@@ -76,7 +79,7 @@ describe('GraphCtrl', () => {
       ];
 
       ctx.ctrl.range = range;
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onDataSnapshotLoad(data);
     });
 
     it('should set datapointsOutside', () => {
@@ -87,7 +90,7 @@ describe('GraphCtrl', () => {
   describe('datapointsCount given 2 series', () => {
     beforeEach(() => {
       const data: any = [{ target: 'test.cpu1', datapoints: [] }, { target: 'test.cpu2', datapoints: [] }];
-      ctx.ctrl.onDataReceived(data);
+      ctx.ctrl.onDataSnapshotLoad(data);
     });
 
     it('should set datapointsCount warning', () => {

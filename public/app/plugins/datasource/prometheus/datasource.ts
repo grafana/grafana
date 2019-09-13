@@ -3,9 +3,9 @@ import _ from 'lodash';
 import $ from 'jquery';
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import { dateMath, TimeRange, DateTime, AnnotationEvent, LoadingState } from '@grafana/data';
-import { Observable, from, of } from 'rxjs';
-import { single, filter, mergeMap, catchError } from 'rxjs/operators';
+import { dateMath, TimeRange, DateTime, AnnotationEvent } from '@grafana/data';
+import { Observable, from, of, merge } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
@@ -21,14 +21,14 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataQueryError,
-  DataStreamObserver,
   DataQueryResponseData,
-  DataStreamState,
+  DataQueryResponse,
 } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ExploreUrlState } from 'app/types';
+import { LoadingState } from '@grafana/data/src/types/data';
 
 export interface PromDataQueryResponse {
   data: {
@@ -174,61 +174,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return series;
   };
 
-  runObserverQueries = (
-    options: DataQueryRequest<PromQuery>,
-    observer: DataStreamObserver,
-    queries: PromQueryRequest[],
-    activeTargets: PromQuery[],
-    end: number
-  ) => {
-    for (let index = 0; index < queries.length; index++) {
-      const query = queries[index];
-      const target = activeTargets[index];
-      let observable: Observable<any> = null;
-
-      if (query.instant) {
-        observable = from(this.performInstantQuery(query, end));
-      } else {
-        observable = from(this.performTimeSeriesQuery(query, query.start, query.end));
-      }
-
-      observable
-        .pipe(
-          single(), // unsubscribes automatically after first result
-          filter((response: any) => (response.cancelled ? false : true)),
-          mergeMap((response: any) => {
-            const data = this.processResult(response, query, target, queries.length);
-            const state: DataStreamState = {
-              key: `prometheus-${target.refId}`,
-              state: LoadingState.Done,
-              request: options,
-              // TODO this is obviously wrong as data is not a DataFrame and needs to be dealt with later on
-              //  in PanelQueryState
-              data: data as any,
-              unsubscribe: () => undefined,
-            };
-
-            return [state];
-          }),
-          catchError(err => {
-            const error = this.handleErrors(err, target);
-            const state: DataStreamState = {
-              key: `prometheus-${target.refId}`,
-              request: options,
-              state: LoadingState.Error,
-              error,
-              unsubscribe: () => undefined,
-            };
-
-            return of(state);
-          })
-        )
-        .subscribe({
-          next: state => observer(state),
-        });
-    }
-  };
-
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
     const queries: PromQueryRequest[] = [];
     const activeTargets: PromQuery[] = [];
@@ -238,22 +183,35 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         continue;
       }
 
-      if (target.context === PromContext.Explore) {
-        target.format = 'time_series';
-        target.instant = false;
+      target.requestId = options.panelId + target.refId;
+
+      if (target.context !== PromContext.Explore) {
+        activeTargets.push(target);
+        queries.push(this.createQuery(target, options, start, end));
+        continue;
+      }
+
+      if (target.showingTable) {
+        // create instant target only if Table is showed in Explore
         const instantTarget: any = _.cloneDeep(target);
         instantTarget.format = 'table';
         instantTarget.instant = true;
         instantTarget.valueWithRefId = true;
         delete instantTarget.maxDataPoints;
         instantTarget.requestId += '_instant';
-        instantTarget.refId += '_instant';
+
         activeTargets.push(instantTarget);
         queries.push(this.createQuery(instantTarget, options, start, end));
       }
 
-      activeTargets.push(target);
-      queries.push(this.createQuery(target, options, start, end));
+      if (target.showingGraph) {
+        // create time series target only if Graph is showed in Explore
+        target.format = 'time_series';
+        target.instant = false;
+
+        activeTargets.push(target);
+        queries.push(this.createQuery(target, options, start, end));
+      }
     }
 
     return {
@@ -262,54 +220,44 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
   };
 
-  query(options: DataQueryRequest<PromQuery>, observer?: DataStreamObserver): Promise<{ data: any }> {
+  query(options: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     const start = this.getPrometheusTime(options.range.from, false);
     const end = this.getPrometheusTime(options.range.to, true);
-
-    options = _.clone(options);
     const { queries, activeTargets } = this.prepareTargets(options, start, end);
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
-      return this.$q.when({ data: [] }) as Promise<{ data: any }>;
+      return of({ data: [] });
     }
 
-    if (
-      observer &&
-      options.targets.filter(target => target.context === PromContext.Explore).length === options.targets.length
-    ) {
-      // using observer to make the instant query return immediately
-      this.runObserverQueries(options, observer, queries, activeTargets, end);
-      return this.$q.when({ data: [] }) as Promise<{ data: any }>;
-    }
+    const allInstant = queries.filter(query => query.instant).length === queries.length;
+    const allTimeSeries = queries.filter(query => !query.instant).length === queries.length;
+    const subQueries = queries.map((query, index) => {
+      const target = activeTargets[index];
+      let observable: Observable<any> = null;
+      const state: LoadingState =
+        allInstant || allTimeSeries ? LoadingState.Done : query.instant ? LoadingState.Loading : LoadingState.Done;
 
-    const allQueryPromise = _.map(queries, query => {
       if (query.instant) {
-        return this.performInstantQuery(query, end);
+        observable = from(this.performInstantQuery(query, end));
       } else {
-        return this.performTimeSeriesQuery(query, query.start, query.end);
+        observable = from(this.performTimeSeriesQuery(query, query.start, query.end));
       }
+
+      return observable.pipe(
+        filter((response: any) => (response.cancelled ? false : true)),
+        map((response: any) => {
+          const data = this.processResult(response, query, target, queries.length);
+          return {
+            data,
+            key: query.requestId,
+            state,
+          } as DataQueryResponse;
+        })
+      );
     });
 
-    const allPromise = this.$q.all(allQueryPromise).then((responseList: any) => {
-      let result: any[] = [];
-
-      _.each(responseList, (response, index: number) => {
-        if (response.cancelled) {
-          return;
-        }
-
-        const target = activeTargets[index];
-        const query = queries[index];
-        const series = this.processResult(response, query, target, queries.length);
-
-        result = [...result, ...series];
-      });
-
-      return { data: result };
-    });
-
-    return allPromise as Promise<{ data: any }>;
+    return merge(...subQueries);
   }
 
   createQuery(target: PromQuery, options: DataQueryRequest<PromQuery>, start: number, end: number) {
@@ -318,8 +266,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       instant: target.instant,
       step: 0,
       expr: '',
-      requestId: '',
-      refId: '',
+      requestId: target.requestId,
+      refId: target.refId,
       start: 0,
       end: 0,
     };
@@ -361,8 +309,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
-    query.requestId = options.panelId + target.refId;
-    query.refId = target.refId;
 
     // Align query interval with step to allow query caching and to ensure
     // that about-same-time query results look the same.
@@ -520,9 +466,17 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       ...options,
       interval: step,
     };
+
     // Unsetting min interval for accurate event resolution
     const minStep = '1s';
-    const query = this.createQuery({ expr, interval: minStep, refId: 'X' }, queryOptions, start, end);
+    const queryModel = {
+      expr,
+      interval: minStep,
+      refId: 'X',
+      requestId: `prom-query-${annotation.name}`,
+    };
+
+    const query = this.createQuery(queryModel, queryOptions, start, end);
 
     const self = this;
     return this.performTimeSeriesQuery(query, query.start, query.end).then((results: PromDataQueryResponse) => {

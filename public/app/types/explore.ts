@@ -1,3 +1,4 @@
+import { Unsubscribable } from 'rxjs';
 import { ComponentClass } from 'react';
 import {
   DataQuery,
@@ -21,7 +22,6 @@ import {
 
 import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
-import { PanelQueryState } from '../features/dashboard/state/PanelQueryState';
 
 export enum ExploreMode {
   Metrics = 'Metrics',
@@ -263,7 +263,7 @@ export interface ExploreItemState {
   isPaused: boolean;
   urlReplaced: boolean;
 
-  queryState: PanelQueryState;
+  querySubscription?: Unsubscribable;
 
   queryResponse: PanelData;
   originPanelId?: number;
