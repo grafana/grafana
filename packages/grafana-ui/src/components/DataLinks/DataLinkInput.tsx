@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useContext } from 'react';
+import React, { useState, useMemo, useCallback, useContext, useEffect } from 'react';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
 import { makeValue, ThemeContext, DataLinkBuiltInVars } from '../../index';
 import { SelectionReference } from './SelectionReference';
@@ -14,6 +14,7 @@ import useDebounce from 'react-use/lib/useDebounce';
 import { css, cx } from 'emotion';
 // @ts-ignore
 import PluginPrism from 'slate-prism';
+import { getMousetrap } from '../../utils/index';
 
 interface DataLinkInputProps {
   value: string;
@@ -79,8 +80,17 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
 
   useDebounce(updateUsedSuggestions, 250, [linkUrl]);
 
+  useEffect(() => {
+    if (showingSuggestions) {
+      getMousetrap().pause();
+    }
+    return () => {
+      getMousetrap().unpause();
+    };
+  }, [showingSuggestions]);
+
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Backspace') {
+    if (event.key === 'Backspace' || event.key === 'Escape') {
       setShowingSuggestions(false);
       setSuggestionsIndex(0);
     }
@@ -148,6 +158,8 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
     setSuggestionsIndex(0);
     onChange(Plain.serialize(change.value));
   };
+
+  console.log('render');
   return (
     <div
       className={cx(
