@@ -12085,7 +12085,7 @@ mousetrap-global-bind@1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/mousetrap-global-bind/-/mousetrap-global-bind-1.1.0.tgz#cd7de9222bd0646fa2e010d54c84a74c26a88edd"
 
-mousetrap-pause@^1.0.0:
+mousetrap-pause@1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/mousetrap-pause/-/mousetrap-pause-1.0.0.tgz#91c429f2f5f9ad71508fa0561bb53be3fdf9a9d0"
   integrity sha1-kcQp8vX5rXFQj6BWG7U74/35qdA=
