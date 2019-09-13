@@ -1,4 +1,3 @@
-import { groupBy } from 'lodash/groupBy';
 import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
@@ -570,17 +569,12 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       return;
     }
 
-    const {
-      resourceGroup: currentResourceGroup,
-      metricDefinition,
-      resourceName: currentResourceName,
-      metricName,
-    } = this.target.azureMonitor.data[queryMode];
+    let { resourceGroup, metricDefinition, resourceName, metricName } = this.target.azureMonitor.data[queryMode];
 
-    let resourceGroup = currentResourceGroup;
-    let resourceName = currentResourceName;
-    if (currentResourceGroup === 'all') {
-      resourceGroup = this.resources.find(({ type, name }) => type === metricDefinition && name === resourceName).group;
+    if (resourceGroup === 'all') {
+      const resource = this.resources.find(({ type }) => type === metricDefinition);
+      resourceGroup = resource.group;
+      resourceName = resource.name;
     } else {
       resourceName = this.resources.find(({ type, group }) => group === resourceGroup && type === metricDefinition)
         .name;
