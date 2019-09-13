@@ -6,22 +6,23 @@ import { appendQueryToUrl, toUrlParams } from 'app/core/utils/url';
 import { VariableSuggestion, VariableOrigin, DataLinkBuiltInVars } from '@grafana/ui';
 import { DataLink, KeyValue, deprecationWarning, LinkModel, DataFrame, ScopedVars } from '@grafana/data';
 
-export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
-  ...templateSrv.variables.map(variable => ({
-    value: variable.name as string,
-    label: variable.name,
-    origin: VariableOrigin.Template,
-  })),
-  {
-    value: `${DataLinkBuiltInVars.includeVars}`,
-    label: 'All variables',
-    documentation: 'Adds current variables',
-    origin: VariableOrigin.Template,
-  },
+const timeRangeVars = [
   {
     value: `${DataLinkBuiltInVars.keepTime}`,
-    label: 'Current time range',
+    label: 'Time range',
     documentation: 'Adds current time range',
+    origin: VariableOrigin.BuiltIn,
+  },
+  {
+    value: `${DataLinkBuiltInVars.timeRangeFrom}`,
+    label: 'Time range: from',
+    documentation: "Adds current time range's from value",
+    origin: VariableOrigin.BuiltIn,
+  },
+  {
+    value: `${DataLinkBuiltInVars.timeRangeTo}`,
+    label: 'Time range: to',
+    documentation: "Adds current time range's to value",
     origin: VariableOrigin.BuiltIn,
   },
 ];
@@ -59,6 +60,21 @@ const valueVars = [
 const buildLabelPath = (label: string) => {
   return label.indexOf('.') > -1 ? `["${label}"]` : `.${label}`;
 };
+
+export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
+  ...templateSrv.variables.map(variable => ({
+    value: variable.name as string,
+    label: variable.name,
+    origin: VariableOrigin.Template,
+  })),
+  {
+    value: `${DataLinkBuiltInVars.includeVars}`,
+    label: 'All variables',
+    documentation: 'Adds current variables',
+    origin: VariableOrigin.Template,
+  },
+  ...timeRangeVars,
+];
 
 const getSeriesVars = (dataFrames: DataFrame[]) => {
   const labels = _.flatten(dataFrames.map(df => Object.keys(df.labels || {})));
