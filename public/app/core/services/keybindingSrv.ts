@@ -5,9 +5,8 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { store } from 'app/store/store';
+import { getMousetrap } from '@grafana/ui';
 
-import Mousetrap from 'mousetrap';
-import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
 import { ILocationService, ITimeoutService } from 'angular';
 
@@ -15,6 +14,7 @@ export class KeybindingSrv {
   helpModal: boolean;
   modalOpen = false;
   timepickerOpen = false;
+  mousetrap = getMousetrap();
 
   /** @ngInject */
   constructor(
@@ -27,7 +27,7 @@ export class KeybindingSrv {
   ) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
-      Mousetrap.reset();
+      this.mousetrap.reset();
       // rebind global shortcuts
       this.setupGlobal();
     });
@@ -49,6 +49,16 @@ export class KeybindingSrv {
       this.bindGlobal('esc', this.exit);
     }
   }
+
+  pause = () => {
+    // @ts-ignore
+    this.mousetrap.pause();
+  };
+
+  resume = () => {
+    // @ts-ignore
+    this.mousetrap.unpause();
+  };
 
   openSearch() {
     appEvents.emit('show-dash-search');
@@ -108,7 +118,7 @@ export class KeybindingSrv {
   }
 
   bind(keyArg: string | string[], fn: () => void) {
-    Mousetrap.bind(
+    this.mousetrap.bind(
       keyArg,
       (evt: any) => {
         evt.preventDefault();
@@ -121,7 +131,7 @@ export class KeybindingSrv {
   }
 
   bindGlobal(keyArg: string, fn: () => void) {
-    Mousetrap.bindGlobal(
+    this.mousetrap.bindGlobal(
       keyArg,
       (evt: any) => {
         evt.preventDefault();
@@ -134,7 +144,7 @@ export class KeybindingSrv {
   }
 
   unbind(keyArg: string, keyType?: string) {
-    Mousetrap.unbind(keyArg, keyType);
+    this.mousetrap.unbind(keyArg, keyType);
   }
 
   showDashEditView() {
