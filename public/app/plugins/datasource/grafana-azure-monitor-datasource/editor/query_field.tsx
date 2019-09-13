@@ -5,7 +5,6 @@ import NewlinePlugin from 'app/features/explore/slate-plugins/newline';
 import RunnerPlugin from 'app/features/explore/slate-plugins/runner';
 
 import Typeahead from './typeahead';
-import { getKeybindingSrv, KeybindingSrv } from 'app/core/services/keybindingSrv';
 
 import { Block, Document, Text, Value } from 'slate';
 // @ts-ignore
@@ -15,6 +14,8 @@ import Plain from 'slate-plain-serializer';
 import ReactDOM from 'react-dom';
 import React from 'react';
 import _ from 'lodash';
+
+import { getMousetrap } from '@grafana/ui';
 
 function flattenSuggestions(s: any) {
   return s ? s.reduce((acc: any, g: any) => acc.concat(g.items), []) : [];
@@ -60,7 +61,7 @@ class QueryField extends React.Component<any, any> {
   menuEl: any;
   plugins: any;
   resetTimer: any;
-  keybindingSrv: KeybindingSrv = getKeybindingSrv();
+  // keybindingSrv: KeybindingSrv = getKeybindingSrv();
 
   constructor(props: any, context: any) {
     super(props, context);
@@ -232,11 +233,11 @@ class QueryField extends React.Component<any, any> {
   };
 
   removeEscapeKeyBinding() {
-    this.keybindingSrv.unbind('esc', 'keydown');
+    getMousetrap().pause();
   }
 
   restoreEscapeKeyBinding() {
-    this.keybindingSrv.setupGlobal();
+    getMousetrap().unpause();
   }
 
   onClickItem = (item: any) => {
