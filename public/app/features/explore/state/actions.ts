@@ -482,11 +482,11 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     const newQuerySub = runRequest(datasourceInstance, transaction.request)
       .pipe(
-        map((data: PanelData) => preProcessPanelData(data, queryResponse)),
         // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
         // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
         // actually can see what is happening.
-        live ? throttleTime(500) : identity
+        live ? throttleTime(500) : identity,
+        map((data: PanelData) => preProcessPanelData(data, queryResponse))
       )
       .subscribe((data: PanelData) => {
         if (!data.error && firstResponse) {
