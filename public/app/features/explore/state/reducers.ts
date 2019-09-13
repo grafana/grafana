@@ -11,7 +11,7 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState, toLegacyResponseData } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -122,7 +122,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
 
 export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
-  request: null,
+  request: {} as DataQueryRequest<DataQuery>,
   series: [],
   error: null,
 });
