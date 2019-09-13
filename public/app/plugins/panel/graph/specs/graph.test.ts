@@ -121,7 +121,7 @@ describe('grafanaGraph', () => {
     $.plot = ctrl.plot = jest.fn();
     scope.ctrl = ctrl;
 
-    link = graphDirective({} as any, {}, {} as any, {} as any).link(scope, {
+    link = graphDirective({} as any, {}, {} as any).link(scope, {
       width: () => 500,
       mouseleave: () => {},
       bind: () => {},

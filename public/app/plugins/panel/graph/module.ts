@@ -36,7 +36,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   subTabIndex: number;
   processor: DataProcessor;
   contextMenuCtrl: GraphContextMenuCtrl;
-  linkVariableSuggestions: VariableSuggestion[] = getDataLinksVariableSuggestions();
+  linkVariableSuggestions: VariableSuggestion[] = [];
 
   panelDefaults: any = {
     // datasource name, null = default datasource
@@ -216,6 +216,8 @@ class GraphCtrl extends MetricsPanelCtrl {
       range: this.range,
     });
 
+    this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
+
     this.dataWarning = null;
     const datapointsCount = this.seriesList.reduce((prev, series) => {
       return prev + series.datapoints.length;
@@ -336,6 +338,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   formatDate = (date: DateTimeInput, format?: string) => {
     return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
+  };
+
+  getDataFrameByRefId = (refId: string) => {
+    return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];
   };
 }
 

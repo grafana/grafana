@@ -48,6 +48,7 @@ func TestFoldernameReplacement(t *testing.T) {
 
 func TestExtractFiles(t *testing.T) {
 	t.Run("Should preserve file permissions for plugin backend binaries for linux and darwin", func(t *testing.T) {
+		skipWindows(t)
 		pluginDir, del := setupFakePluginsDir(t)
 		defer del()
 
@@ -95,6 +96,7 @@ func TestExtractFiles(t *testing.T) {
 	})
 
 	t.Run("Should extract symlinks if allowed", func(t *testing.T) {
+		skipWindows(t)
 		pluginDir, del := setupFakePluginsDir(t)
 		defer del()
 
@@ -119,16 +121,18 @@ func TestInstallPluginCommand(t *testing.T) {
 }
 
 func TestIsPathSafe(t *testing.T) {
+	dest := fmt.Sprintf("%stest%spath", string(os.PathSeparator), string(os.PathSeparator))
+
 	t.Run("Should be true on nested destinations", func(t *testing.T) {
-		assert.True(t, isPathSafe("dest", "/test/path"))
-		assert.True(t, isPathSafe("dest/one", "/test/path"))
-		assert.True(t, isPathSafe("../path/dest/one", "/test/path"))
+		assert.True(t, isPathSafe("dest", dest))
+		assert.True(t, isPathSafe("dest/one", dest))
+		assert.True(t, isPathSafe("../path/dest/one", dest))
 	})
 
 	t.Run("Should be false on destinations outside of path", func(t *testing.T) {
-		assert.False(t, isPathSafe("../dest", "/test/path"))
-		assert.False(t, isPathSafe("../../", "/test/path"))
-		assert.False(t, isPathSafe("../../test", "/test/path"))
+		assert.False(t, isPathSafe("../dest", dest))
+		assert.False(t, isPathSafe("../../", dest))
+		assert.False(t, isPathSafe("../../test", dest))
 	})
 
 }
@@ -187,5 +191,11 @@ func setupFakePluginsDir(t *testing.T) (string, func()) {
 	return dirname, func() {
 		err = os.RemoveAll(dirname)
 		assert.Nil(t, err)
+	}
+}
+
+func skipWindows(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Skipping test on Windows")
 	}
 }

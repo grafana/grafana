@@ -46,7 +46,7 @@ export class KeybindingSrv {
       this.bind('g p', this.goToProfile);
       this.bind('s o', this.openSearch);
       this.bind('f', this.openSearch);
-      this.bindGlobal('esc', this.exit);
+      this.bind('esc', this.exit);
     }
   }
 

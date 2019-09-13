@@ -16,7 +16,6 @@ import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
 import { EventManager } from 'app/features/annotations/all';
-import { LinkService, LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { convertToHistogramData } from './histogram';
 import { alignYLevel } from './align_yaxes';
 import config from 'app/core/config';
@@ -25,12 +24,13 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat, ContextMenuItem, ContextMenuGroup, DataLinkBuiltInVars } from '@grafana/ui';
-import { provideTheme } from 'app/core/utils/ConfigProvider';
-import { DataLink, toUtc } from '@grafana/data';
-import { GraphContextMenuCtrl, FlotDataPoint } from './GraphContextMenuCtrl';
+import { getValueFormat, ContextMenuGroup, FieldDisplay, ContextMenuItem, getDisplayProcessor } from '@grafana/ui';
+import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
+import { toUtc, LinkModelSupplier, DataFrameView } from '@grafana/data';
+import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
+import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -50,7 +50,7 @@ class GraphElement {
   timeRegionManager: TimeRegionManager;
   legendElem: HTMLElement;
 
-  constructor(private scope: any, private elem: JQuery, private timeSrv: TimeSrv, private linkSrv: LinkService) {
+  constructor(private scope: any, private elem: JQuery, private timeSrv: TimeSrv) {
     this.ctrl = scope.ctrl;
     this.contextMenu = scope.ctrl.contextMenuCtrl;
     this.dashboard = this.ctrl.dashboard;
@@ -175,53 +175,48 @@ class GraphElement {
     }
   }
 
-  getContextMenuItems = (flotPosition: { x: number; y: number }, item?: FlotDataPoint): ContextMenuGroup[] => {
-    const dataLinks: DataLink[] = this.panel.options.dataLinks || [];
+  getContextMenuItemsSupplier = (
+    flotPosition: { x: number; y: number },
+    linksSupplier?: LinkModelSupplier<FieldDisplay>
+  ): (() => ContextMenuGroup[]) => {
+    return () => {
+      // Fixed context menu items
+      const items: ContextMenuGroup[] = [
+        {
+          items: [
+            {
+              label: 'Add annotation',
+              icon: 'gicon gicon-annotation',
+              onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
+            },
+          ],
+        },
+      ];
 
-    const items: ContextMenuGroup[] = [
-      {
-        items: [
-          {
-            label: 'Add annotation',
-            icon: 'gicon gicon-annotation',
-            onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
-          },
-        ],
-      },
-    ];
+      if (!linksSupplier) {
+        return items;
+      }
 
-    return item
-      ? [
-          ...items,
-          {
-            items: [
-              ...dataLinks.map<ContextMenuItem>(link => {
-                const linkUiModel = this.linkSrv.getDataLinkUIModel(
-                  link,
-                  {
-                    ...this.panel.scopedVars,
-                    [DataLinkBuiltInVars.seriesName]: { value: item.series.alias, text: item.series.alias },
-                    [DataLinkBuiltInVars.valueTime]: { value: item.datapoint[0], text: item.datapoint[0] },
-                  },
-                  item
-                );
-                return {
-                  label: linkUiModel.title,
-                  url: linkUiModel.href,
-                  target: linkUiModel.target,
-                  icon: `fa ${linkUiModel.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
-                };
-              }),
-            ],
-          },
-        ]
-      : items;
+      const dataLinks = [
+        {
+          items: linksSupplier.getLinks(this.panel.scopedVars).map<ContextMenuItem>(link => {
+            return {
+              label: link.title,
+              url: link.href,
+              target: link.target,
+              icon: `fa ${link.target === '_self' ? 'fa-link' : 'fa-external-link'}`,
+            };
+          }),
+        },
+      ];
+
+      return [...items, ...dataLinks];
+    };
   };
 
   onPlotClick(event: JQueryEventObject, pos: any, item: any) {
     const scrollContextElement = this.elem.closest('.view') ? this.elem.closest('.view').get()[0] : null;
     const contextMenuSourceItem = item;
-    let contextMenuItems: ContextMenuItem[];
 
     if (this.panel.xaxis.mode !== 'time') {
       // Skip if panel in histogram or series mode
@@ -239,12 +234,40 @@ class GraphElement {
       return;
     } else {
       this.tooltip.clear(this.plot);
-      contextMenuItems = this.getContextMenuItems(pos, item) as ContextMenuItem[];
+      let linksSupplier: LinkModelSupplier<FieldDisplay>;
+
+      if (item) {
+        // pickup y-axis index to know which field's config to apply
+        const yAxisConfig = this.panel.yaxes[item.series.yaxis.n === 2 ? 1 : 0];
+        const fieldConfig = {
+          decimals: yAxisConfig.decimals,
+          links: this.panel.options.dataLinks || [],
+        };
+        const dataFrame = this.ctrl.dataList[item.series.dataFrameIndex];
+        const field = dataFrame.fields[item.series.fieldIndex];
+
+        const fieldDisplay = getDisplayProcessor({
+          config: fieldConfig,
+          theme: getCurrentTheme(),
+        })(field.values.get(item.dataIndex));
+
+        linksSupplier = this.panel.options.dataLinks
+          ? getFieldLinksSupplier({
+              display: fieldDisplay,
+              name: field.name,
+              view: new DataFrameView(dataFrame),
+              rowIndex: item.dataIndex,
+              colIndex: item.series.fieldIndex,
+              field: fieldConfig,
+            })
+          : undefined;
+      }
+
       this.scope.$apply(() => {
         // Setting nearest CustomScrollbar element as a scroll context for graph context menu
         this.contextMenu.setScrollContextElement(scrollContextElement);
         this.contextMenu.setSource(contextMenuSourceItem);
-        this.contextMenu.setMenuItems(contextMenuItems);
+        this.contextMenu.setMenuItemsSupplier(this.getContextMenuItemsSupplier(pos, linksSupplier) as any);
         this.contextMenu.toggleMenu(pos);
       });
     }
@@ -363,7 +386,6 @@ class GraphElement {
     this.thresholdManager.addFlotOptions(options, this.panel);
     this.timeRegionManager.addFlotOptions(options, this.panel);
     this.eventManager.addFlotEvents(this.annotations, options);
-
     this.sortedSeries = this.sortSeries(this.data, this.panel);
     this.callPlot(options, true);
   }
@@ -855,12 +877,12 @@ class GraphElement {
 }
 
 /** @ngInject */
-function graphDirective(timeSrv: TimeSrv, popoverSrv: any, contextSrv: ContextSrv, linkSrv: LinkSrv) {
+function graphDirective(timeSrv: TimeSrv, popoverSrv: any, contextSrv: ContextSrv) {
   return {
     restrict: 'A',
     template: '',
     link: (scope: any, elem: JQuery) => {
-      return new GraphElement(scope, elem, timeSrv, linkSrv);
+      return new GraphElement(scope, elem, timeSrv);
     },
   };
 }

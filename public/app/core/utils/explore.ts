@@ -464,7 +464,7 @@ export const getRefIds = (value: any): string[] => {
   return _.uniq(_.flatten(refIds));
 };
 
-const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
+export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
   if (a.timestamp < b.timestamp) {
     return -1;
   }

@@ -1,7 +1,7 @@
 package api
 
 import (
-	"encoding/json"
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -20,8 +20,12 @@ type LDAPMock struct {
 	Results []*models.ExternalUserInfo
 }
 
+type TokenServiceMock struct {
+}
+
 var userSearchResult *models.ExternalUserInfo
 var userSearchConfig ldap.ServerConfig
+var userSearchError error
 var pingResult []*multildap.ServerStatus
 var pingError error
 
@@ -39,7 +43,11 @@ func (m *LDAPMock) Users(logins []string) ([]*models.ExternalUserInfo, error) {
 }
 
 func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConfig, error) {
-	return userSearchResult, userSearchConfig, nil
+	return userSearchResult, userSearchConfig, userSearchError
+}
+
+func (ts *TokenServiceMock) RevokeAllUserTokens(ctx context.Context, userId int64) error {
+	return nil
 }
 
 //***
@@ -86,10 +94,7 @@ func TestGetUserFromLDAPApiEndpoint_UserNotFound(t *testing.T) {
 	sc := getUserFromLDAPContext(t, "/api/admin/ldap/user-that-does-not-exist")
 
 	require.Equal(t, sc.resp.Code, http.StatusNotFound)
-	responseString, err := getBody(sc.resp)
-
-	assert.Nil(t, err)
-	assert.Equal(t, "{\"message\":\"No user was found on the LDAP server(s)\"}", responseString)
+	assert.JSONEq(t, "{\"message\":\"No user was found on the LDAP server(s)\"}", sc.resp.Body.String())
 }
 
 func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
@@ -144,19 +149,13 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 
 	require.Equal(t, sc.resp.Code, http.StatusBadRequest)
 
-	jsonResponse, err := getJSONbody(sc.resp)
-	assert.Nil(t, err)
-
 	expected := `
 	{
 		"error": "Unable to find organization with ID '2'",
 		"message": "An oganization was not found - Please verify your LDAP configuration"
 	}
 	`
-	var expectedJSON interface{}
-	_ = json.Unmarshal([]byte(expected), &expectedJSON)
-
-	assert.Equal(t, expectedJSON, jsonResponse)
+	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
 func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
@@ -206,9 +205,6 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 
 	require.Equal(t, sc.resp.Code, http.StatusOK)
 
-	jsonResponse, err := getJSONbody(sc.resp)
-	assert.Nil(t, err)
-
 	expected := `
 		{
 		  "name": {
@@ -231,10 +227,8 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 			"teams": null
 		}
 	`
-	var expectedJSON interface{}
-	_ = json.Unmarshal([]byte(expected), &expectedJSON)
 
-	assert.Equal(t, expectedJSON, jsonResponse)
+	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
 func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
@@ -289,9 +283,6 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 
 	require.Equal(t, sc.resp.Code, http.StatusOK)
 
-	jsonResponse, err := getJSONbody(sc.resp)
-	assert.Nil(t, err)
-
 	expected := `
 		{
 		  "name": {
@@ -314,10 +305,8 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 			"teams": []
 		}
 	`
-	var expectedJSON interface{}
-	_ = json.Unmarshal([]byte(expected), &expectedJSON)
 
-	assert.Equal(t, expectedJSON, jsonResponse)
+	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
 //***
@@ -369,8 +358,6 @@ func TestGetLDAPStatusApiEndpoint(t *testing.T) {
 	sc := getLDAPStatusContext(t)
 
 	require.Equal(t, http.StatusOK, sc.resp.Code)
-	jsonResponse, err := getJSONbody(sc.resp)
-	assert.Nil(t, err)
 
 	expected := `
 	[
@@ -379,8 +366,201 @@ func TestGetLDAPStatusApiEndpoint(t *testing.T) {
 		{ "host": "10.0.0.5", "port": 361, "available": false, "error": "something is awfully wrong" }
 	]
 	`
-	var expectedJSON interface{}
-	_ = json.Unmarshal([]byte(expected), &expectedJSON)
+	assert.JSONEq(t, expected, sc.resp.Body.String())
+}
 
-	assert.Equal(t, expectedJSON, jsonResponse)
+//***
+// PostSyncUserWithLDAP tests
+//***
+
+func postSyncUserWithLDAPContext(t *testing.T, requestURL string) *scenarioContext {
+	t.Helper()
+
+	sc := setupScenarioContext(requestURL)
+
+	ldap := setting.LDAPEnabled
+	setting.LDAPEnabled = true
+	defer func() { setting.LDAPEnabled = ldap }()
+
+	hs := &HTTPServer{Cfg: setting.NewCfg()}
+
+	sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.context = c
+		return hs.PostSyncUserWithLDAP(c)
+	})
+
+	sc.m.Post("/api/admin/ldap/sync/:id", sc.defaultHandler)
+
+	sc.resp = httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodPost, requestURL, nil)
+	sc.req = req
+	sc.exec()
+
+	return sc
+}
+
+func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	userSearchResult = &models.ExternalUserInfo{
+		Login: "ldap-daniel",
+	}
+
+	bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+		require.Equal(t, "ldap-daniel", cmd.ExternalUser.Login)
+		return nil
+	})
+
+	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		require.Equal(t, q.Id, int64(34))
+
+		q.Result = &models.User{Login: "ldap-daniel", Id: 34}
+		return nil
+	})
+
+	bus.AddHandler("test", func(q *models.GetAuthInfoQuery) error {
+		require.Equal(t, q.UserId, int64(34))
+		require.Equal(t, q.AuthModule, models.AuthModuleLDAP)
+
+		return nil
+	})
+
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34")
+
+	assert.Equal(t, http.StatusOK, sc.resp.Code)
+
+	expected := `
+	{
+		"message": "User synced successfully"
+	}
+	`
+
+	assert.JSONEq(t, expected, sc.resp.Body.String())
+}
+
+func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		require.Equal(t, q.Id, int64(34))
+
+		return models.ErrUserNotFound
+	})
+
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34")
+
+	assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+
+	expected := `
+	{
+		"message": "User not found"
+	}
+	`
+
+	assert.JSONEq(t, expected, sc.resp.Body.String())
+}
+
+func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	userSearchError = ldap.ErrCouldNotFindUser
+
+	admin := setting.AdminUser
+	setting.AdminUser = "ldap-daniel"
+	defer func() { setting.AdminUser = admin }()
+
+	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		require.Equal(t, q.Id, int64(34))
+
+		q.Result = &models.User{Login: "ldap-daniel", Id: 34}
+		return nil
+	})
+
+	bus.AddHandler("test", func(q *models.GetAuthInfoQuery) error {
+		require.Equal(t, q.UserId, int64(34))
+		require.Equal(t, q.AuthModule, models.AuthModuleLDAP)
+
+		return nil
+	})
+
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34")
+
+	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
+
+	expected := `
+	{
+		"error": "Can't find user in LDAP",
+		"message": "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled"
+	}
+	`
+
+	assert.JSONEq(t, expected, sc.resp.Body.String())
+}
+
+func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	tokenService = &TokenServiceMock{}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	userSearchResult = nil
+
+	bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+		require.Equal(t, "ldap-daniel", cmd.ExternalUser.Login)
+		return nil
+	})
+
+	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		require.Equal(t, q.Id, int64(34))
+
+		q.Result = &models.User{Login: "ldap-daniel", Id: 34}
+		return nil
+	})
+
+	bus.AddHandler("test", func(q *models.GetExternalUserInfoByLoginQuery) error {
+		assert.Equal(t, "ldap-daniel", q.LoginOrEmail)
+		q.Result = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
+
+		return nil
+	})
+
+	bus.AddHandler("test", func(cmd *models.DisableUserCommand) error {
+		assert.Equal(t, 34, cmd.UserId)
+		return nil
+	})
+
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34")
+
+	assert.Equal(t, http.StatusOK, sc.resp.Code)
+
+	expected := `
+	{
+		"message": "User disabled without any updates in the information"
+	}
+	`
+
+	assert.JSONEq(t, expected, sc.resp.Body.String())
 }

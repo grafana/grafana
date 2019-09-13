@@ -35,6 +35,7 @@ export interface PanelProps<T = any> {
 export interface PanelEditorProps<T = any> {
   options: T;
   onOptionsChange: (options: T) => void;
+  data: PanelData;
 }
 
 export interface PanelModel<TOptions = any> {
