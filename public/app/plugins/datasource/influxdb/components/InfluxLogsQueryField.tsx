@@ -113,7 +113,12 @@ export class InfluxLogsQueryField extends React.PureComponent<Props, State> {
     return (
       <div className="gf-form-inline gf-form-inline--nowrap">
         <div className="gf-form flex-shrink-0">
-          <Cascader options={measurements} value={[measurement, field]} onChange={this.onMeasurementsChange}>
+          <Cascader
+            options={measurements}
+            value={[measurement, field]}
+            onChange={this.onMeasurementsChange}
+            expandIcon={null}
+          >
             <button className="gf-form-label gf-form-label--btn">
               {cascadeText} <i className="fa fa-caret-down" />
             </button>

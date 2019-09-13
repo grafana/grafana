@@ -1,4 +1,4 @@
-package tsdb
+package sqleng
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -20,8 +21,8 @@ func TestSqlEngine(t *testing.T) {
 		Convey("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func() {
 			from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 			to := from.Add(5 * time.Minute)
-			timeRange := NewFakeTimeRange("5m", "now", to)
-			query := &Query{DataSource: &models.DataSource{}, Model: simplejson.New()}
+			timeRange := tsdb.NewFakeTimeRange("5m", "now", to)
+			query := &tsdb.Query{DataSource: &models.DataSource{}, Model: simplejson.New()}
 
 			Convey("interpolate $__interval", func() {
 				sql, err := Interpolate(query, timeRange, "select $__interval ")

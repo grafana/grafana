@@ -1,6 +1,9 @@
 
+> **@grafana/toolkit is currently in ALPHA**. Core API is unstable and can be a subject of breaking changes!
+
 # grafana-toolkit
 grafana-toolkit is CLI that enables efficient development of Grafana extensions
+
 
 ## Rationale
 Historically, creating Grafana extension was an exercise of reverse engineering and ceremony around testing, developing and eventually building the plugin. We want to help our community to focus on the core value of their plugins rather than all the setup required to develop an extension.
@@ -8,7 +11,7 @@ Historically, creating Grafana extension was an exercise of reverse engineering 
 ## Installation
 
 You can either add grafana-toolkit to your extension's `package.json` file by running
-`yarn add @grafana/toolkit`  `npm instal @grafana/toolkit` or use one of our extension templates:
+`yarn add @grafana/toolkit` or `npm instal @grafana/toolkit`, or use one of our extension templates:
 - [React Panel](https://github.com/grafana/simple-react-panel)
 - [Angular Panel](https://github.com/grafana/simple-angular-panel)
 
@@ -92,7 +95,7 @@ Yes! grafana-toolkit supports Typescript by default.
 ### How can I test my extension?
 grafana-toolkit comes with Jest as a test runner.
 
-Internally at Grafana we use Enzyme. If you are developing React extension and you want to configure Enzyme as a testing utility, you need to configure `enzyme-adapter-react`. To do so create `[YOUR_EXTENSION]/config/jest-setup.ts` file that will provide necessary setup. Copy the following code into that file to get Enzyme working with React:
+Internally at Grafana we use Enzyme. If you are developing React extension and you want to configure Enzyme as a testing utility, you need to configure `enzyme-adapter-react`. To do so create `<YOUR_EXTENSION>/config/jest-setup.ts` file that will provide necessary setup. Copy the following code into that file to get Enzyme working with React:
 
 ```ts
 import { configure } from 'enzyme';
@@ -101,7 +104,7 @@ import Adapter from 'enzyme-adapter-react-16';
 configure({ adapter: new Adapter() });
 ```
 
-You can also setup Jest with shims of your needs by creating `jest-shim.ts` file in the same directory: `[YOUR_EXTENSION]/config/jest-shim.ts`
+You can also setup Jest with shims of your needs by creating `jest-shim.ts` file in the same directory: `<YOUR_EXTENSION>/config/jest-shim.ts`
 
 ### Can I provide custom setup for Jest?
 
