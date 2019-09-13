@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +18,9 @@ import (
 
 type LDAPMock struct {
 	Results []*models.ExternalUserInfo
+}
+
+type TokenServiceMock struct {
 }
 
 var userSearchResult *models.ExternalUserInfo
@@ -40,6 +44,10 @@ func (m *LDAPMock) Users(logins []string) ([]*models.ExternalUserInfo, error) {
 
 func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConfig, error) {
 	return userSearchResult, userSearchConfig, userSearchError
+}
+
+func (ts *TokenServiceMock) RevokeAllUserTokens(ctx context.Context, userId int64) error {
+	return nil
 }
 
 //***
@@ -501,6 +509,56 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 	{
 		"error": "Can't find user in LDAP",
 		"message": "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled"
+	}
+	`
+
+	assert.JSONEq(t, expected, sc.resp.Body.String())
+}
+
+func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
+	getLDAPConfig = func() (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	tokenService = &TokenServiceMock{}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	userSearchResult = nil
+
+	bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+		require.Equal(t, "ldap-daniel", cmd.ExternalUser.Login)
+		return nil
+	})
+
+	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+		require.Equal(t, q.Id, int64(34))
+
+		q.Result = &models.User{Login: "ldap-daniel", Id: 34}
+		return nil
+	})
+
+	bus.AddHandler("test", func(q *models.GetExternalUserInfoByLoginQuery) error {
+		assert.Equal(t, "ldap-daniel", q.LoginOrEmail)
+		q.Result = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
+
+		return nil
+	})
+
+	bus.AddHandler("test", func(cmd *models.DisableUserCommand) error {
+		assert.Equal(t, 34, cmd.UserId)
+		return nil
+	})
+
+	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34")
+
+	assert.Equal(t, http.StatusOK, sc.resp.Code)
+
+	expected := `
+	{
+		"message": "User disabled without any updates in the information"
 	}
 	`
 

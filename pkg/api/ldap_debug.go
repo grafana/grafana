@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -17,6 +18,7 @@ import (
 var (
 	getLDAPConfig = multildap.GetConfig
 	newLDAP       = multildap.New
+	tokenService  = AuthToken{}.TokenService
 
 	logger = log.New("LDAP.debug")
 
@@ -51,6 +53,22 @@ type LDAPUserDTO struct {
 	Teams          []models.TeamOrgGroupDTO `json:"teams"`
 }
 
+// LDAPServerDTO is a serializer for LDAP server statuses
+type LDAPServerDTO struct {
+	Host      string `json:"host"`
+	Port      int    `json:"port"`
+	Available bool   `json:"available"`
+	Error     string `json:"error"`
+}
+
+type AuthToken struct {
+	TokenService TokenRevoker `inject:""`
+}
+
+type TokenRevoker interface {
+	RevokeAllUserTokens(context.Context, int64) error
+}
+
 // FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
 func (user *LDAPUserDTO) FetchOrgs() error {
 	orgIds := []int64{}
@@ -82,14 +100,6 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 	}
 
 	return nil
-}
-
-// LDAPServerDTO is a serializer for LDAP server statuses
-type LDAPServerDTO struct {
-	Host      string `json:"host"`
-	Port      int    `json:"port"`
-	Available bool   `json:"available"`
-	Error     string `json:"error"`
 }
 
 // ReloadLDAPCfg reloads the LDAP configuration
@@ -190,8 +200,18 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 			}
 
 			// Since the user was not in the LDAP server. Let's disable it.
-			login.DisableExternalUser(query.Result.Login)
-			return JSON(http.StatusOK, "User disabled without any updates in the information") // should this be a success?
+			err := login.DisableExternalUser(query.Result.Login)
+
+			if err != nil {
+				return Error(http.StatusInternalServerError, "Failed to disable the user", err)
+			}
+
+			err = tokenService.RevokeAllUserTokens(context.TODO(), userId)
+			if err != nil {
+				return Error(http.StatusInternalServerError, "Failed to remove session tokens for the user", err)
+			}
+
+			return Success("User disabled without any updates in the information") // should this be a success?
 		}
 	}
 
