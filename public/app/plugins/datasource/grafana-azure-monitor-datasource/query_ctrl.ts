@@ -27,7 +27,7 @@ interface AzureMonitor {
   dimensionFilter: string;
   timeGrain: string;
   timeGrainUnit: string;
-  timeGrains: Array<{ text: string; value: string }>;
+  timeGrains: Option[];
   allowedTimeGrainsMs: number[];
   dimensions: any[];
   dimension: any;
@@ -35,6 +35,12 @@ interface AzureMonitor {
   aggOptions: string[];
   locations: string[];
   queryMode: string;
+}
+
+interface Option {
+  value: string;
+  text: string;
+  displayName?: string;
 }
 
 export class AzureMonitorQueryCtrl extends QueryCtrl {
@@ -136,11 +142,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   showLastQuery: boolean;
   lastQuery: string;
   lastQueryError?: string;
-  subscriptions: Array<{ text: string; value: string }>;
+  subscriptions: Option[];
   subscriptionValues: string[];
   resources: Resource[];
-  locations: Array<{ text: string; value: string }>;
-  resourceGroups: Array<{ text: string; value: string }>;
+  locations: Option[];
+  resourceGroups: Option[];
 
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService, private templateSrv: TemplateSrv) {
@@ -158,7 +164,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
     this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
     this.resultFormats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
-    this.resources = Array<Resource>();
+    this.resources = new Array<Resource>();
     this.subscriptionValues = [];
 
     this.init();
@@ -169,7 +175,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   async init() {
     const subscriptions = await this.getSubscriptions();
-    this.datasource.getResources(subscriptions.map(s => s.value)).then(async (resources: Array<Resource>) => {
+    this.datasource.getResources(subscriptions.map((s: Option) => s.value)).then(async (resources: Resource[]) => {
       if (!this.target.subscriptions.length) {
         this.target.subscriptions = this.subscriptions.map(s => s.value);
       }
@@ -292,7 +298,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       this.subscriptionValues = subs.map(s => ({ value: s.value, text: s.displayName }));
 
       if (!this.target.subscriptions.length) {
-        this.target.subscriptions = subs.map((s: { value: string }) => s.value);
+        this.target.subscriptions = subs.map((s: Option) => s.value);
       }
 
       if (!this.target.subscription && this.target.queryType === 'Azure Monitor') {
@@ -372,7 +378,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     return this.resources
       .filter(({ location, group }) => locations.includes(location) && resourceGroups.includes(group))
       .reduce(
-        (options: Array<{ text: string; value: string }>, { type }: Resource) =>
+        (options: Option[], { type }: Resource) =>
           options.some(o => o.value === type) ? options : [...options, { text: type, value: type }],
         []
       );
@@ -609,7 +615,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       return;
     }
 
-    let { resourceGroups, metricDefinition, metricName } = this.target.azureMonitor.data[queryMode];
+    const { resourceGroups, metricDefinition, metricName } = this.target.azureMonitor.data[queryMode];
 
     const resource = this.resources.find(
       ({ type, group }) => type === metricDefinition && resourceGroups.includes(group)
@@ -650,7 +656,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  convertTimeGrainsToMs(timeGrains: Array<{ text: string; value: string }>) {
+  convertTimeGrainsToMs(timeGrains: Option[]) {
     const allowedTimeGrainsMs: number[] = [];
     timeGrains.forEach((tg: any) => {
       if (tg.value !== 'auto') {

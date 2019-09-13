@@ -391,8 +391,8 @@ export default class AzureMonitorDatasource {
     });
   }
 
-  async getResources(subscriptionIds: string[]): Promise<Array<Resource>> {
-    const responses: Array<Resource[]> = await Promise.all(
+  async getResources(subscriptionIds: string[]): Promise<Resource[]> {
+    const responses: Resource[][] = await Promise.all(
       subscriptionIds.map(subscriptionId =>
         this.doRequest(`${this.baseUrl}/${subscriptionId}/resources?api-version=2018-02-01`).then(
           (res: AzureMonitorResourceResponse) =>
