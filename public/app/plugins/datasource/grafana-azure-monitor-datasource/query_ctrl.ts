@@ -19,6 +19,7 @@ export interface ResultFormat {
 
 interface AzureMonitor {
   resourceGroup: string;
+  resourceGroups: string[];
   resourceName: string;
   metricDefinition: string;
   metricNamespace: string;
@@ -32,7 +33,7 @@ interface AzureMonitor {
   dimension: any;
   aggregation: string;
   aggOptions: string[];
-  location: string;
+  locations: string[];
   queryMode: string;
 }
 
@@ -80,6 +81,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       queryMode: 'singleResource',
       data: {
         singleResource: {
+          resourceGroups: new Array<string>(),
           resourceGroup: this.defaultDropdownValue,
           metricDefinition: this.defaultDropdownValue,
           metricNamespace: this.defaultDropdownValue,
@@ -88,13 +90,13 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
           timeGrain: 'auto',
         },
         crossResource: {
-          resourceGroup: 'all',
+          resourceGroups: new Array<string>(),
+          locations: new Array<string>(),
           metricDefinition: this.defaultDropdownValue,
           resourceName: this.defaultDropdownValue,
           metricName: this.defaultDropdownValue,
           dimensionFilter: '*',
           timeGrain: 'auto',
-          location: '',
         },
       },
     },
@@ -137,6 +139,8 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   subscriptions: Array<{ text: string; value: string }>;
   subscriptionValues: string[];
   resources: Resource[];
+  locations: Array<{ text: string; value: string }>;
+  resourceGroups: Array<{ text: string; value: string }>;
 
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService, private templateSrv: TemplateSrv) {
@@ -156,15 +160,31 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.resultFormats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
     this.resources = Array<Resource>();
     this.subscriptionValues = [];
-    this.getSubscriptions();
 
+    this.init();
     if (this.target.queryType === 'Azure Log Analytics') {
       this.getWorkspaces();
     }
+  }
 
-    //temp
-    this.datasource.getResources(this.target.subscriptions).then((res: Array<Resource>) => {
-      this.resources = res;
+  async init() {
+    const subscriptions = await this.getSubscriptions();
+    this.datasource.getResources(subscriptions.map(s => s.value)).then(async (resources: Array<Resource>) => {
+      if (!this.target.subscriptions.length) {
+        this.target.subscriptions = this.subscriptions.map(s => s.value);
+      }
+      this.resources = resources;
+      const locations = this.getLocations();
+      if (!this.target.azureMonitor.data.crossResource.locations.length) {
+        this.target.azureMonitor.data.crossResource.locations = locations;
+      }
+      this.locations = locations.map(l => ({ text: l, value: l }));
+
+      const resourceGroups = this.getCrossResourceGroups();
+      if (!this.target.azureMonitor.data.crossResource.resourceGroups.length) {
+        this.target.azureMonitor.data.crossResource.resourceGroups = resourceGroups;
+      }
+      this.resourceGroups = resourceGroups.map(rg => ({ text: rg, value: rg }));
     });
   }
 
@@ -262,14 +282,14 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
   }
 
-  getSubscriptions() {
+  async getSubscriptions() {
     if (!this.datasource.azureMonitorDatasource.isConfigured()) {
       return;
     }
 
     return this.datasource.azureMonitorDatasource.getSubscriptions().then((subs: any) => {
       this.subscriptions = subs;
-      this.subscriptionValues = subs.map((s: { value: string }) => s.value);
+      this.subscriptionValues = subs.map(s => ({ value: s.value, text: s.displayName }));
 
       if (!this.target.subscriptions.length) {
         this.target.subscriptions = subs.map((s: { value: string }) => s.value);
@@ -310,6 +330,18 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   async onSubscriptionsChange() {
     this.resources = await this.datasource.getResources(this.target.subscriptions);
+    const { queryMode } = this.target.azureMonitor;
+    this.target.azureMonitor.data[queryMode].resourceGroup = this.defaultDropdownValue;
+    this.target.azureMonitor.data[queryMode].locations = [];
+    this.target.azureMonitor.data[queryMode].resourceGroups = [];
+    this.target.azureMonitor.data[queryMode].metricDefinition = this.defaultDropdownValue;
+    this.target.azureMonitor.data[queryMode].resourceName = this.defaultDropdownValue;
+    this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
+    this.target.azureMonitor.data[queryMode].aggregation = '';
+    this.target.azureMonitor.data[queryMode].timeGrains = [];
+    this.target.azureMonitor.data[queryMode].timeGrain = '';
+    this.target.azureMonitor.data[queryMode].dimensions = [];
+    this.target.azureMonitor.data[queryMode].dimension = '';
   }
 
   /* Azure Monitor Section */
@@ -325,26 +357,20 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryCtrlError.bind(this));
   }
 
-  async getCrossResourceGroups() {
+  getCrossResourceGroups() {
     if (this.target.queryType !== 'Azure Monitor' || !this.datasource.azureMonitorDatasource.isConfigured()) {
       return [];
     }
 
     return this.resources
-      .filter(({ location }) => location === this.target.azureMonitor.data.crossResource.location)
-      .reduce(
-        (options: Array<{ text: string; value: string }>, { group }: Resource) =>
-          options.some(o => o.value === group) ? options : [...options, { text: group, value: group }],
-        [{ text: 'All', value: 'all' }]
-      );
+      .filter(({ location }) => this.target.azureMonitor.data.crossResource.locations.includes(location))
+      .reduce((options, { group }: Resource) => (options.some(o => o === group) ? options : [...options, group]), []);
   }
 
   async getCrossResourceMetricDefinitions(query: any) {
-    const { location: selectedLocation, resourceGroup } = this.target.azureMonitor.data.crossResource;
+    const { locations, resourceGroups } = this.target.azureMonitor.data.crossResource;
     return this.resources
-      .filter(({ location, group }) =>
-        location === selectedLocation && resourceGroup === 'all' ? true : group === resourceGroup
-      )
+      .filter(({ location, group }) => locations.includes(location) && resourceGroups.includes(group))
       .reduce(
         (options: Array<{ text: string; value: string }>, { type }: Resource) =>
           options.some(o => o.value === type) ? options : [...options, { text: type, value: type }],
@@ -352,10 +378,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       );
   }
 
-  async getLocations(query: any) {
+  getLocations() {
     return this.resources.reduce(
-      (options: Array<{ text: string; value: string }>, { location }: Resource) =>
-        options.some(o => o.value === location) ? options : [...options, { text: location, value: location }],
+      (options: string[], { location }: Resource) =>
+        options.some(o => o === location) ? options : [...options, location],
       []
     );
   }
@@ -423,26 +449,24 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   async getCrossResourceMetricNames() {
-    const {
-      location: selectedLocation,
-      resourceGroup: selectedResourceGroup,
-      metricDefinition,
-    } = this.target.azureMonitor.data.crossResource;
+    const { locations, resourceGroups, metricDefinition } = this.target.azureMonitor.data.crossResource;
 
-    const resources = this.resources.filter(({ type, location, name, group }) => {
-      const filter = type === metricDefinition && location === selectedLocation;
-      return selectedResourceGroup === 'all' ? filter : group === selectedResourceGroup && filter;
-    });
+    const resources = this.resources.filter(
+      ({ type, location, name, group }) =>
+        resourceGroups.includes(group) && type === metricDefinition && locations.includes(location)
+    );
 
     const uniqueResources = _.uniqBy(resources, ({ subscriptionId, name, type, group }: Resource) =>
-      [subscriptionId, name, location, group].join()
+      [subscriptionId, name, locations, group].join()
     );
 
     const responses = await Promise.all(
       uniqueResources.map(({ subscriptionId, group, type, name }) =>
         this.datasource
           .getMetricNames(subscriptionId, group, type, name)
-          .then((metrics: any) => metrics.map((m: any) => ({ ...m, subscriptionIds: [subscriptionId] })))
+          .then((metrics: any) => metrics.map((m: any) => ({ ...m, subscriptionIds: [subscriptionId] })), [
+            { text: this.defaultDropdownValue, value: this.defaultDropdownValue },
+          ])
       )
     );
 
@@ -490,7 +514,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.refresh();
   }
 
-  onCrossResourceGroupChange() {
+  onCrossResourceGroupChange(val: any) {
     const { queryMode } = this.target.azureMonitor;
     this.target.azureMonitor.data[queryMode].metricDefinition = '';
     this.target.azureMonitor.data[queryMode].metricName = '';
@@ -498,15 +522,31 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   onCrossResourceMetricDefinitionChange() {
-    this.target.azureMonitor.data.crossResource.metricName = this.defaultDropdownValue;
+    const { queryMode } = this.target.azureMonitor;
+    this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
+    this.target.azureMonitor.data[queryMode].aggregation = '';
+    this.target.azureMonitor.data[queryMode].timeGrains = [];
+    this.target.azureMonitor.data[queryMode].timeGrain = '';
+    this.target.azureMonitor.data[queryMode].dimensions = [];
+    this.target.azureMonitor.data[queryMode].dimension = '';
     this.refresh();
   }
 
-  onLocationChange() {
+  async onLocationChange() {
     const { queryMode } = this.target.azureMonitor;
     this.target.azureMonitor.data[queryMode].metricDefinition = '';
     this.target.azureMonitor.data[queryMode].resourceGroup = '';
+    this.target.azureMonitor.data[queryMode].resourceGroups = [];
     this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
+    this.target.azureMonitor.data[queryMode].aggregation = '';
+    this.target.azureMonitor.data[queryMode].timeGrains = [];
+    this.target.azureMonitor.data[queryMode].timeGrain = '';
+    this.target.azureMonitor.data[queryMode].dimensions = [];
+    this.target.azureMonitor.data[queryMode].dimension = '';
+
+    this.resourceGroups = [];
+    this.resourceGroups = this.getCrossResourceGroups().map(rg => ({ text: rg, value: rg }));
+    this.refresh();
   }
 
   onMetricDefinitionChange() {
@@ -569,26 +609,22 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       return;
     }
 
-    let { resourceGroup, metricDefinition, resourceName, metricName } = this.target.azureMonitor.data[queryMode];
+    let { resourceGroups, metricDefinition, metricName } = this.target.azureMonitor.data[queryMode];
 
-    if (resourceGroup === 'all') {
-      const resource = this.resources.find(({ type }) => type === metricDefinition);
-      resourceGroup = resource.group;
-      resourceName = resource.name;
-    } else {
-      resourceName = this.resources.find(({ type, group }) => group === resourceGroup && type === metricDefinition)
-        .name;
-    }
+    const resource = this.resources.find(
+      ({ type, group }) => type === metricDefinition && resourceGroups.includes(group)
+    );
 
     return this.datasource
       .getMetricMetadata(
-        this.replace(this.target.subscription),
-        resourceGroup,
+        this.replace(this.target.subscriptions[0]),
+        resource.group,
         metricDefinition,
-        resourceName,
+        resource.name,
         metricName
       )
       .then(this.setMetricMetadata.bind(this))
+      .then(() => this.refresh())
       .catch(this.handleQueryCtrlError.bind(this));
   }
 

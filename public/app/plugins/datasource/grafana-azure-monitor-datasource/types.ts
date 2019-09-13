@@ -35,6 +35,7 @@ export interface AzureMetricQuery {
 
 export interface AzureMonitorQueryData {
   resourceGroup: string;
+  resourceGroups: string[];
   resourceName: string;
   metricDefinition: string;
   metricNamespace: string;
@@ -47,7 +48,7 @@ export interface AzureMonitorQueryData {
   dimension: string;
   dimensionFilter: string;
   alias: string;
-  location: string;
+  locations: string[];
 }
 
 export interface AzureLogsQuery {

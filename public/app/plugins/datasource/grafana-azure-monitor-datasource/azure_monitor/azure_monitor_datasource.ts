@@ -66,7 +66,6 @@ export default class AzureMonitorDatasource {
       dimension,
       dimensionFilter,
       alias,
-      location,
     }: AzureMonitorQueryData,
     subscriptionId?: string
   ) {
@@ -111,14 +110,11 @@ export default class AzureMonitorDatasource {
     const groupedQueries = await Promise.all(
       _.filter(options.targets, item => {
         const { data, queryMode } = item.azureMonitor;
-        const { resourceGroup, resourceName, metricDefinition, metricName } = data[queryMode];
+        const { resourceGroup, resourceGroups, metricDefinition, metricName } = data[queryMode];
 
         return (
           item.hide !== true &&
-          resourceGroup &&
-          resourceGroup !== this.defaultDropdownValue &&
-          resourceName &&
-          resourceName !== this.defaultDropdownValue &&
+          ((resourceGroup && resourceGroup !== this.defaultDropdownValue) || resourceGroups.length) &&
           metricDefinition &&
           metricDefinition !== this.defaultDropdownValue &&
           metricName &&
@@ -128,21 +124,17 @@ export default class AzureMonitorDatasource {
         const { data, queryMode } = target.azureMonitor;
 
         if (queryMode === 'crossResource') {
-          const { resourceGroup, metricDefinition, location } = data[queryMode];
+          const { resourceGroups, metricDefinition, locations } = data[queryMode];
           const resources = await this.getResources(target.subscriptions).then(resources =>
-            resources.filter(resource => {
-              let filter =
-                target.subscriptions.includes(resource.subscriptionId) &&
-                // location === resource.location &&
-                metricDefinition === resource.type;
-
-              if (resourceGroup !== 'all') {
-                return filter && resourceGroup === resource.group;
-              }
-
-              return filter;
-            })
+            resources.filter(
+              ({ type, group, subscriptionId, location }) =>
+                target.subscriptions.includes(subscriptionId) &&
+                resourceGroups.includes(group) &&
+                locations.includes(location) &&
+                metricDefinition === type
+            )
           );
+          delete data.crossResource.metricNamespace;
           return resources.map(({ type: metricDefinition, group: resourceGroup, subscriptionId, name: resourceName }) =>
             this.buildQuery(
               options,

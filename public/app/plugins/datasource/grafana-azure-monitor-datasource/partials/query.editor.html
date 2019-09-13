@@ -34,24 +34,6 @@
   </div>
   <div ng-if="ctrl.target.queryType === 'Azure Monitor'">
     <div class="gf-form-inline">
-      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
-        <label class="gf-form-label query-keyword width-9">Location</label>
-        <gf-form-dropdown model="ctrl.target.azureMonitor.data[ctrl.target.azureMonitor.queryMode].location" allow-custom="true" lookup-text="true"
-          get-options="ctrl.getLocations($query)" on-change="ctrl.onLocationChange()" css-class="min-width-12">
-        </gf-form-dropdown>
-      </div>
-      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
-        <label class="gf-form-label query-keyword width-9">Resource Group</label>
-        <gf-form-dropdown model="ctrl.target.azureMonitor.data[ctrl.target.azureMonitor.queryMode].resourceGroup" allow-custom="true" lookup-text="true"
-          get-options="ctrl.getCrossResourceGroups($query)" on-change="ctrl.onCrossResourceGroupChange()" css-class="min-width-12">
-        </gf-form-dropdown>
-      </div>
-      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
-        <label class="gf-form-label query-keyword width-9">Resource Type</label>
-        <gf-form-dropdown model="ctrl.target.azureMonitor.data.crossResource.metricDefinition" allow-custom="true" lookup-text="true"
-          get-options="ctrl.getCrossResourceMetricDefinitions($query)" on-change="ctrl.onCrossResourceMetricDefinitionChange()" css-class="min-width-12">
-        </gf-form-dropdown>
-      </div>
       <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'singleResource'">
         <label class="gf-form-label query-keyword width-9">Resource Group</label>
         <gf-form-dropdown model="ctrl.target.azureMonitor.data[ctrl.target.azureMonitor.queryMode].resourceGroup" allow-custom="true" lookup-text="true"
@@ -70,8 +52,33 @@
           get-options="ctrl.getResourceNames($query)" on-change="ctrl.onResourceNameChange()" css-class="min-width-12">
         </gf-form-dropdown>
       </div>
-      <div class="gf-form gf-form--grow">
-        <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
+        <label class="gf-form-label query-keyword width-9">Location</label>
+        <multi-select ng-if="ctrl.locations.length"
+          values="ctrl.target.azureMonitor.data.crossResource.locations"
+          options="ctrl.locations"
+          on-change="ctrl.onLocationChange()">
+        </multi-select> 
+      </div>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
+        <label class="gf-form-label query-keyword width-9">Resource Group</label>
+        <multi-select class="az-multi-picker" ng-if="ctrl.resourceGroups.length"
+          values="ctrl.target.azureMonitor.data.crossResource.resourceGroups"
+          options="ctrl.resourceGroups"
+          on-change="ctrl.onCrossResourceGroupChange()">
+        </multi-select> 
+      </div>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
+        <label class="gf-form-label query-keyword width-9">Resource Type</label>
+        <gf-form-dropdown model="ctrl.target.azureMonitor.data.crossResource.metricDefinition" allow-custom="true" lookup-text="true"
+          get-options="ctrl.getCrossResourceMetricDefinitions($query)" on-change="ctrl.onCrossResourceMetricDefinitionChange()" css-class="min-width-12">
+        </gf-form-dropdown>
       </div>
     </div>
     <div class="gf-form-inline">
