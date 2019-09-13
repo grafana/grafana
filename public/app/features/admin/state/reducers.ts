@@ -2,6 +2,7 @@ import { reducerFactory } from 'app/core/redux';
 import { LdapState, LdapUserState } from 'app/types';
 import {
   ldapConnectionInfoLoadedAction,
+  ldapFailedAction,
   userMappingInfoLoadedAction,
   userMappingInfoFailedAction,
   clearUserErrorAction,
@@ -31,7 +32,15 @@ const ldapReducer = reducerFactory(initialLdapState)
     filter: ldapConnectionInfoLoadedAction,
     mapper: (state, action) => ({
       ...state,
+      ldapError: null,
       connectionInfo: action.payload,
+    }),
+  })
+  .addMapper({
+    filter: ldapFailedAction,
+    mapper: (state, action) => ({
+      ...state,
+      ldapError: action.payload,
     }),
   })
   .addMapper({

@@ -73,7 +73,7 @@ export class LdapPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { ldapUser, userError, ldapSyncInfo, ldapConnectionInfo, navModel } = this.props;
+    const { ldapUser, userError, ldapError, ldapSyncInfo, ldapConnectionInfo, navModel } = this.props;
     const { isLoading } = this.state;
 
     const tableStyle = css`
@@ -92,6 +92,10 @@ export class LdapPage extends PureComponent<Props, State> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           <>
+            {ldapError && ldapError.title && (
+              <AlertBox title={ldapError.title} severity={AppNotificationSeverity.Error} body={ldapError.body} />
+            )}
+
             <LdapConnectionStatus
               headingStyle={headingStyle}
               tableStyle={tableStyle}
@@ -131,6 +135,7 @@ const mapStateToProps = (state: StoreState) => ({
   ldapUser: state.ldap.user,
   ldapSyncInfo: state.ldap.syncInfo,
   userError: state.ldap.userError,
+  ldapError: state.ldap.ldapError,
 });
 
 const mapDispatchToProps = {

@@ -83,6 +83,7 @@ export interface LdapState {
   syncInfo?: SyncInfo;
   connectionError?: LdapError;
   userError?: LdapError;
+  ldapError?: LdapError;
 }
 
 export interface LdapUserState {

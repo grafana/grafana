@@ -22,6 +22,7 @@ export const userMappingInfoLoadedAction = actionCreatorFactory<LdapUser>('ldap/
 export const userMappingInfoFailedAction = actionCreatorFactory<LdapError>('ldap/USER_INFO_FAILED').create();
 export const clearUserMappingInfoAction = noPayloadActionCreatorFactory('ldap/CLEAR_USER_MAPPING_INFO').create();
 export const clearUserErrorAction = noPayloadActionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
+export const ldapFailedAction = actionCreatorFactory<LdapError>('ldap/LDAP_FAILED').create();
 
 export const userLoadedAction = actionCreatorFactory<User>('USER_LOADED').create();
 export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('USER_SESSIONS_LOADED').create();
@@ -33,8 +34,16 @@ export const revokeAllUserSessionsAction = noPayloadActionCreatorFactory('REVOKE
 
 export function loadLdapState(): ThunkResult<void> {
   return async dispatch => {
-    const connectionInfo = await getLdapState();
-    dispatch(ldapConnectionInfoLoadedAction(connectionInfo));
+    try {
+      const connectionInfo = await getLdapState();
+      dispatch(ldapConnectionInfoLoadedAction(connectionInfo));
+    } catch (error) {
+      const ldapError = {
+        title: error.data.message,
+        body: error.data.error,
+      };
+      dispatch(ldapFailedAction(ldapError));
+    }
   };
 }
 
