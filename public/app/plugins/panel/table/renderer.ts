@@ -58,6 +58,18 @@ export class TableRenderer {
     if (!style.thresholds || !style.colors) {
       return null;
     }
+
+    if (style.thresholds.length >= style.colors.length) {
+      console.error(
+        // tslint:disable-next-line:max-line-length
+        `There must be max ${style.colors.length - 1} thresholds for ${style.colors.length} colors. You have ${
+          style.thresholds.length
+        } set.`
+      );
+
+      return null;
+    }
+
     for (let i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
         return getColorFromHexRgbOrName(style.colors[i], this.theme);
