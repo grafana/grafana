@@ -138,18 +138,13 @@ export class LdapUserPage extends PureComponent<Props, State> {
           {ldapUser && <LdapUserInfo className={tableStyle} ldapUser={ldapUser} />}
           {!ldapUser && user && <UserInfo className={tableStyle} user={user} />}
 
-          <h4 className={headingStyle}>Sessions</h4>
           {sessions && (
-            <div className="gf-form-group">
-              <div className="gf-form">
-                <UserSessions sessions={sessions} onSessionRevoke={this.onSessionRevoke} />
-              </div>
-              <div className="gf-form-button-row">
-                <button className="btn btn-danger" onClick={this.onAllSessionsRevoke}>
-                  Logout user from all devices
-                </button>
-              </div>
-            </div>
+            <UserSessions
+              sessions={sessions}
+              headingStyle={headingStyle}
+              onSessionRevoke={this.onSessionRevoke}
+              onAllSessionsRevoke={this.onAllSessionsRevoke}
+            />
           )}
         </Page.Contents>
       </Page>
