@@ -274,8 +274,12 @@ function notifyAngularQueryEditorsOfData(panel: PanelModel, data: PanelData, edi
 
   globalLastPanelDataCache = data;
 
-  const legacy = data.series.map(v => toLegacyResponseData(v));
-  panel.events.emit('data-received', legacy);
+  if (data.state === LoadingState.Done) {
+    const legacy = data.series.map(v => toLegacyResponseData(v));
+    panel.events.emit('data-received', legacy);
+  } else if (data.state === LoadingState.Error) {
+    panel.events.emit('data-error', data.error);
+  }
 
   // Some query controllers listen to data error events and need a digest
   // for some reason this needs to be done in next tick
