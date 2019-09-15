@@ -56,7 +56,7 @@ const testContext = (options: any = {}) => {
     queryIntervals: { intervalMs: 10 },
   } as any) as ExploreItemState;
 
-  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames);
+  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames, 60000);
 
   return {
     dataFrames: combinedOptions.dataFrames,

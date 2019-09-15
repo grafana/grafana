@@ -187,11 +187,6 @@ export interface ExploreItemState {
   logsResult?: LogsModel;
 
   /**
-   * Query intervals for graph queries to determine how many datapoints to return.
-   * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.
-   */
-  queryIntervals: QueryIntervals;
-  /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
   range: TimeRange;
@@ -330,7 +325,7 @@ export interface QueryIntervals {
 }
 
 export interface QueryOptions {
-  interval: string;
+  minInterval: string;
   maxDataPoints?: number;
   live?: boolean;
 }

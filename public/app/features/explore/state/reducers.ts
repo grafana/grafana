@@ -67,9 +67,6 @@ export const DEFAULT_RANGE = {
   to: 'now',
 };
 
-// Millies step for helper bar charts
-const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
-
 export const makeInitialUpdateState = (): ExploreUpdateState => ({
   datasource: false,
   queries: false,
@@ -93,7 +90,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   history: [],
   queries: [],
   initialized: false,
-  queryIntervals: { interval: '15s', intervalMs: DEFAULT_GRAPH_INTERVAL },
   range: {
     from: null,
     to: null,
@@ -617,7 +613,7 @@ export const processQueryResponse = (
   }
 
   const latency = request.endTime ? request.endTime - request.startTime : 0;
-  const processor = new ResultProcessor(state, series);
+  const processor = new ResultProcessor(state, series, request.intervalMs);
   const graphResult = processor.getGraphResult();
   const tableResult = processor.getTableResult();
   const logsResult = processor.getLogsResult();
