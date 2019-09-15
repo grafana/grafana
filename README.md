@@ -13,7 +13,7 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
 ## Installation
 
-Head to [docs.grafana.org](http://docs.grafana.org/installation/) for documentation or [download](https://grafana.com/get) to get the latest release.
+Head to [docs.grafana.org](http://docs.grafana.org/installation/) for documentation or [grafana.com/get](https://grafana.com/get) to download the latest release.
 
 ## Documentation & Support
 
