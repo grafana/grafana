@@ -155,7 +155,7 @@ func init() {
 		"AWS/Events":            {"RuleName"},
 		"AWS/FSx":               {},
 		"AWS/Firehose":          {"DeliveryStreamName"},
-		"AWS/GameLift":          {"FleetId", "InstanceType", "MatchmakingConfigurationName", "MatchmakingConfigurationName-RuleName", "MetricGroup", "OperatingSystem", "QueueName"},
+		"AWS/GameLift":          {"FleetId", "InstanceType", "MatchmakingConfigurationName", "MatchmakingConfigurationName-RuleName", "MetricGroups", "OperatingSystem", "QueueName"},
 		"AWS/Glue":              {"JobName", "JobRunId", "Type"},
 		"AWS/Inspector":         {},
 		"AWS/IoT":               {"ActionType", "BehaviorName", "CheckName", "JobId", "Protocol", "RuleName", "ScheduledAuditName", "SecurityProfileName"},
