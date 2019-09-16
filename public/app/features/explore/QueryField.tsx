@@ -13,11 +13,11 @@ import NewlinePlugin from './slate-plugins/newline';
 import SelectionShortcutsPlugin from './slate-plugins/selection_shortcuts';
 import IndentationPlugin from './slate-plugins/indentation';
 import ClipboardPlugin from './slate-plugins/clipboard';
-import SuggestionsPlugin from './slate-plugins/suggestions';
+import RunnerPlugin from './slate-plugins/runner';
+import SuggestionsPlugin, { SuggestionsState } from './slate-plugins/suggestions';
 
 import { makeValue, SCHEMA } from '@grafana/ui';
 
-export const TYPEAHEAD_DEBOUNCE = 100;
 export const HIGHLIGHT_WAIT = 500;
 
 export interface QueryFieldProps {
@@ -28,7 +28,7 @@ export interface QueryFieldProps {
   onRunQuery?: () => void;
   onChange?: (value: string) => void;
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
-  onWillApplySuggestion?: (suggestion: string, state: QueryFieldState) => string;
+  onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   placeholder?: string;
   portalOrigin?: string;
   syntax?: string;
@@ -72,16 +72,17 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     this.updateHighlightsTimer = _.debounce(this.updateLogsHighlights, HIGHLIGHT_WAIT);
 
-    const { onTypeahead, cleanText, portalOrigin } = props;
+    const { onTypeahead, cleanText, portalOrigin, onWillApplySuggestion } = props;
 
     // Base plugins
     this.plugins = [
+      SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion }),
       ClearPlugin(),
+      RunnerPlugin({ handler: this.executeOnChangeAndRunQueries }),
       NewlinePlugin(),
       SelectionShortcutsPlugin(),
       IndentationPlugin(),
       ClipboardPlugin(),
-      SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin }),
       ...(props.additionalPlugins || []),
     ].filter(p => p);
 
@@ -162,31 +163,6 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
       onRunQuery();
       this.setState({ lastExecutedValue: this.state.value });
     }
-  };
-
-  handleEnterKey = (event: KeyboardEvent, editor: CoreEditor, next: Function) => {
-    if (event.shiftKey) {
-      // pass through if shift is pressed
-      return next();
-    } else {
-      this.executeOnChangeAndRunQueries();
-      return next();
-    }
-  };
-
-  onKeyDown = (event: KeyboardEvent, editor: CoreEditor, next: Function) => {
-    switch (event.key) {
-      case 'Enter':
-        event.preventDefault();
-        return this.handleEnterKey(event, editor, next);
-
-      default: {
-        //console.log('default key', keyboardEvent.key, keyboardEvent.which, keyboardEvent.charCode);
-        break;
-      }
-    }
-
-    return next();
   };
 
   handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
