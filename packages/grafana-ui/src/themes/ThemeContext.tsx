@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { getTheme } from './getTheme';
 import { GrafanaThemeType, Themeable } from '../types/theme';
 
@@ -18,3 +18,7 @@ export const withTheme = <P extends Themeable>(Component: React.ComponentType<P>
 
   return WithTheme;
 };
+
+export function useTheme() {
+  return useContext(ThemeContext);
+}
