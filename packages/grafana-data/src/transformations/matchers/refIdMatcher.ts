@@ -1,6 +1,6 @@
 import { DataFrame } from '../../types/dataFrame';
-import { FrameMatcherInfo } from './matchers';
 import { FrameMatcherID } from './ids';
+import { FrameMatcherInfo } from '../../types/transformations';
 
 // General Field matcher
 const refIdMacher: FrameMatcherInfo<string> = {

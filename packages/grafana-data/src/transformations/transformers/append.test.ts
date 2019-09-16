@@ -1,6 +1,7 @@
-import { transformDataFrame, dataTransformers } from './transformers';
 import { DataTransformerID } from './ids';
-import { toDataFrame } from '../processDataFrame';
+import { toDataFrame } from '../../utils/processDataFrame';
+import { transformDataFrame } from '../transformDataFrame';
+import { transformersRegistry } from '../transformersRegistry';
 
 const seriesAB = toDataFrame({
   columns: [{ text: 'A' }, { text: 'B' }],
@@ -24,7 +25,7 @@ describe('Append Transformer', () => {
       id: DataTransformerID.append,
       options: {},
     };
-    const x = dataTransformers.get(DataTransformerID.append);
+    const x = transformersRegistry.get(DataTransformerID.append);
     expect(x.id).toBe(cfg.id);
 
     const processed = transformDataFrame([cfg], [seriesAB, seriesBC])[0];

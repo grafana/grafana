@@ -1,12 +1,12 @@
-import { DataTransformerInfo } from './transformers';
-import { DataFrame, FieldType, Field } from '../../types/dataFrame';
-import { MatcherConfig, getFieldMatcher } from '../matchers/matchers';
-import { alwaysFieldMatcher } from '../matchers/predicates';
 import { DataTransformerID } from './ids';
-import { ReducerID, fieldReducers, reduceField } from '../fieldReducer';
-import { KeyValue } from '../../types/data';
-import { guessFieldTypeForField } from '../processDataFrame';
+import { MatcherConfig, DataTransformerInfo } from '../../types/transformations';
+import { ReducerID, fieldReducers, reduceField } from '../../utils/fieldReducer';
+import { alwaysFieldMatcher } from '../matchers/predicates';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
+import { KeyValue } from '../../types/data';
+import { guessFieldTypeForField } from '../../utils/processDataFrame';
+import { getFieldMatcher } from '../matchers/matchers';
 
 export interface ReduceTransformerOptions {
   reducers: ReducerID[];

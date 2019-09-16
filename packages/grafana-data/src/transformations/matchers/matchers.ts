@@ -1,27 +1,16 @@
-import { Field, DataFrame } from '../../types/dataFrame';
-import { Registry, RegistryItemWithOptions } from '../registry';
-
-export type FieldMatcher = (field: Field) => boolean;
-export type FrameMatcher = (frame: DataFrame) => boolean;
-
-export interface FieldMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
-  get: (options: TOptions) => FieldMatcher;
-}
-
-export interface FrameMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
-  get: (options: TOptions) => FrameMatcher;
-}
-
-export interface MatcherConfig<TOptions = any> {
-  id: string;
-  options?: TOptions;
-}
-
 // Load the Buildtin matchers
 import { getFieldPredicateMatchers, getFramePredicateMatchers } from './predicates';
 import { getFieldNameMatchers, getFrameNameMatchers } from './nameMatcher';
 import { getFieldTypeMatchers } from './fieldTypeMatcher';
 import { getRefIdMatchers } from './refIdMatcher';
+import {
+  FieldMatcherInfo,
+  MatcherConfig,
+  FrameMatcherInfo,
+  FieldMatcher,
+  FrameMatcher,
+} from '../../types/transformations';
+import { Registry } from '../../utils/registry';
 
 export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
   return [

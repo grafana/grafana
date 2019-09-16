@@ -1,13 +1,13 @@
-import { DataTransformerID } from './ids';
-import { dataTransformers } from './transformers';
-import { toDataFrame } from '../processDataFrame';
-import { ReducerID } from '../fieldReducer';
-import { DataFrameView } from '../../dataframe/DataFrameView';
+import { DataTransformerID } from './transformers/ids';
+import { transformersRegistry } from './transformersRegistry';
+import { toDataFrame } from '../utils/processDataFrame';
+import { ReducerID } from '../utils/fieldReducer';
+import { DataFrameView } from '../dataframe/DataFrameView';
 
 describe('Transformers', () => {
   it('should load all transformeres', () => {
     for (const name of Object.keys(DataTransformerID)) {
-      const calc = dataTransformers.get(name);
+      const calc = transformersRegistry.get(name);
       expect(calc.id).toBe(name);
     }
   });
@@ -20,7 +20,7 @@ describe('Transformers', () => {
   });
 
   it('should use fluent API', () => {
-    const results = dataTransformers.reduce([seriesWithValues], {
+    const results = transformersRegistry.reduce([seriesWithValues], {
       reducers: [ReducerID.first],
     });
     expect(results.length).toBe(1);

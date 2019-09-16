@@ -1,7 +1,7 @@
-import { DataTransformerInfo } from './transformers';
 import { DataFrame } from '../../types/dataFrame';
 import { DataTransformerID } from './ids';
 import { MutableDataFrame } from '../../dataframe/MutableDataFrame';
+import { DataTransformerInfo } from '../../types/transformations';
 
 export interface AppendOptions {}
 

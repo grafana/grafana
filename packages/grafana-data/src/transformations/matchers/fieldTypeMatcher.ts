@@ -1,6 +1,6 @@
 import { Field, FieldType } from '../../types/dataFrame';
-import { FieldMatcherInfo } from './matchers';
 import { FieldMatcherID } from './ids';
+import { FieldMatcherInfo } from '../../types/transformations';
 
 // General Field matcher
 const fieldTypeMacher: FieldMatcherInfo<FieldType> = {

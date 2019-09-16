@@ -1,6 +1,7 @@
-import { toDataFrame, transformDataFrame } from '../index';
+import { toDataFrame } from '../../utils/index';
 import { FieldType } from '../../index';
 import { DataTransformerID } from './ids';
+import { transformDataFrame } from '../transformDataFrame';
 
 export const seriesWithNamesToMatch = toDataFrame({
   fields: [

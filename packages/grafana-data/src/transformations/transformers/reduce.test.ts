@@ -1,7 +1,7 @@
-import { transformDataFrame } from './transformers';
-import { ReducerID } from '../fieldReducer';
+import { ReducerID } from '../../utils/fieldReducer';
 import { DataTransformerID } from './ids';
-import { toDataFrame, toDataFrameDTO } from '../processDataFrame';
+import { toDataFrame, toDataFrameDTO } from '../../utils/processDataFrame';
+import { transformDataFrame } from '../transformDataFrame';
 
 const seriesWithValues = toDataFrame({
   fields: [

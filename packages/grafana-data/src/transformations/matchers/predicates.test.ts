@@ -1,7 +1,8 @@
 import { FieldType } from '../../types/dataFrame';
-import { MatcherConfig, fieldMatchers } from './matchers';
+import { fieldMatchers } from './matchers';
 import { simpleSeriesWithTypes } from './fieldTypeMatcher.test';
 import { FieldMatcherID, MatcherID } from './ids';
+import { MatcherConfig } from '../../types/transformations';
 
 const matchesNumberConfig: MatcherConfig = {
   id: FieldMatcherID.byType,

@@ -1,7 +1,7 @@
-import { DataTransformerInfo } from './transformers';
-import { FieldMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
 import { filterFieldsTransformer, FilterOptions } from './filter';
+import { DataTransformerInfo } from '../../types/transformations';
+import { FieldMatcherID } from '../matchers/ids';
 
 export interface FilterFieldsByNameTransformerOptions {
   include?: string;
