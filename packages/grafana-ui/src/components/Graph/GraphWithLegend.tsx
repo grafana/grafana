@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { css } from 'emotion';
-import { GraphSeriesValue, AbsoluteTimeRange } from '@grafana/data';
+import { GraphSeriesValue } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';
 import { LegendRenderOptions, LegendItem, LegendDisplayMode } from '../Legend/Legend';
@@ -22,7 +22,6 @@ export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
   onSeriesAxisToggle?: SeriesAxisToggleHandler;
   onSeriesToggle?: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
-  onSelectionChanged?: (range: AbsoluteTimeRange) => void;
 }
 
 const getGraphWithLegendStyles = ({ placement }: GraphWithLegendProps) => ({
@@ -70,7 +69,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     hideZero,
     isStacked,
     lineWidth,
-    onSelectionChanged,
+    onHorizontalRegionSelected,
     timeZone,
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
@@ -104,7 +103,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
           key={isLegendVisible ? 'legend-visible' : 'legend-invisible'}
           isStacked={isStacked}
           lineWidth={lineWidth}
-          onSelectionChanged={onSelectionChanged}
+          onHorizontalRegionSelected={onHorizontalRegionSelected}
         />
       </div>
 
