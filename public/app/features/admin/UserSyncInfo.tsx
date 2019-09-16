@@ -4,8 +4,6 @@ import { LdapUserSyncInfo } from 'app/types';
 
 interface Props {
   syncInfo: LdapUserSyncInfo;
-  headingStyle: string;
-  tableStyle: string;
   onSync?: () => void;
 }
 
@@ -33,7 +31,7 @@ export class UserSyncInfo extends PureComponent<Props, State> {
   };
 
   render() {
-    const { headingStyle, tableStyle, syncInfo } = this.props;
+    const { syncInfo } = this.props;
     const { isSyncing } = this.state;
     const nextSyncTime = syncInfo.nextSync ? dateTime(syncInfo.nextSync).format(syncTimeFormat) : '';
     const prevSyncSuccessful = syncInfo && syncInfo.prevSync;
@@ -41,26 +39,30 @@ export class UserSyncInfo extends PureComponent<Props, State> {
 
     return (
       <>
-        <h4 className={headingStyle}>
+        <h3 className="page-heading">
           LDAP Synchronisation
           <button className={`btn btn-secondary pull-right`} onClick={this.handleSyncClick} hidden={true}>
             <span className="btn-title">Sync user</span>
             {isSyncing && <i className="fa fa-spinner fa-fw fa-spin run-icon" />}
           </button>
-        </h4>
-        <table className={`${tableStyle} filter-table form-inline`}>
-          <tbody>
-            <tr>
-              <td>Next scheduled synchronisation</td>
-              <td colSpan={2}>{nextSyncTime}</td>
-            </tr>
-            <tr>
-              <td>Last synchronisation</td>
-              <td>{prevSyncTime}</td>
-              {prevSyncSuccessful && <td className="pull-right">Successful</td>}
-            </tr>
-          </tbody>
-        </table>
+        </h3>
+        <div className="gf-form-group">
+          <div className="gf-form">
+            <table className="filter-table form-inline">
+              <tbody>
+                <tr>
+                  <td>Next scheduled synchronisation</td>
+                  <td colSpan={2}>{nextSyncTime}</td>
+                </tr>
+                <tr>
+                  <td>Last synchronisation</td>
+                  <td>{prevSyncTime}</td>
+                  {prevSyncSuccessful && <td className="pull-right">Successful</td>}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </>
     );
   }

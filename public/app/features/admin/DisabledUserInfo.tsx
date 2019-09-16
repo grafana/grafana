@@ -5,20 +5,18 @@ import { User } from 'app/types';
 
 interface Props {
   user: User;
-  className: string;
 }
 
-export const DisabledUserInfo: FC<Props> = ({ className, user }) => {
+export const DisabledUserInfo: FC<Props> = ({ user }) => {
   return (
     <>
       <LdapUserPermissions
-        className={className}
         permissions={{
           isGrafanaAdmin: (user as any).isGrafanaAdmin,
           isDisabled: (user as any).isDisabled,
         }}
       />
-      <UserInfo className={className} user={user} />
+      <UserInfo user={user} />
     </>
   );
 };

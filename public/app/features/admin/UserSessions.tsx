@@ -3,8 +3,6 @@ import { UserSession } from 'app/types';
 
 interface Props {
   sessions: UserSession[];
-  headingStyle?: string;
-  tableStyle?: string;
 
   onSessionRevoke: (id: number) => void;
   onAllSessionsRevoke: () => void;
@@ -22,14 +20,14 @@ export class UserSessions extends PureComponent<Props> {
   };
 
   render() {
-    const { sessions, headingStyle, tableStyle } = this.props;
+    const { sessions } = this.props;
 
     return (
       <>
-        <h4 className={headingStyle}>Sessions</h4>
+        <h3 className="page-heading">Sessions</h3>
         <div className="gf-form-group">
           <div className="gf-form">
-            <table className={`${tableStyle} filter-table form-inline`}>
+            <table className="filter-table form-inline">
               <thead>
                 <tr>
                   <th>Last seen</th>
