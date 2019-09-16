@@ -34,7 +34,7 @@ type LDAPAttribute struct {
 }
 
 // RoleDTO is a serializer for mapped roles from LDAP
-type RoleDTO struct {
+type LDAPRoleDTO struct {
 	OrgId   int64           `json:"orgId"`
 	OrgName string          `json:"orgName"`
 	OrgRole models.RoleType `json:"orgRole"`
@@ -49,7 +49,7 @@ type LDAPUserDTO struct {
 	Username       *LDAPAttribute           `json:"login"`
 	IsGrafanaAdmin *bool                    `json:"isGrafanaAdmin"`
 	IsDisabled     bool                     `json:"isDisabled"`
-	OrgRoles       []RoleDTO                `json:"roles"`
+	OrgRoles       []LDAPRoleDTO            `json:"roles"`
 	Teams          []models.TeamOrgGroupDTO `json:"teams"`
 }
 
@@ -94,8 +94,6 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 
 		if orgName != "" {
 			user.OrgRoles[i].OrgName = orgName
-		} else {
-			return errOrganizationNotFound(orgDTO.OrgId)
 		}
 	}
 
@@ -272,22 +270,18 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 		IsDisabled:     user.IsDisabled,
 	}
 
-	orgRoles := []RoleDTO{}
+	orgRoles := []LDAPRoleDTO{}
 
-	for _, g := range serverConfig.Groups {
-		role := &RoleDTO{}
+	for _, ldapGroup := range user.Groups {
+		role := &LDAPRoleDTO{GroupDN: ldapGroup}
+		orgRoles = append(orgRoles, *role)
 
-		if isMatchToLDAPGroup(user, g) {
-			role.OrgId = g.OrgID
-			role.OrgRole = user.OrgRoles[g.OrgID]
-			role.GroupDN = g.GroupDN
-
-			orgRoles = append(orgRoles, *role)
-		} else {
-			role.OrgId = g.OrgID
-			role.GroupDN = g.GroupDN
-
-			orgRoles = append(orgRoles, *role)
+		for _, mapping := range serverConfig.Groups {
+			if mapping.GroupDN == ldapGroup {
+				role.OrgId = mapping.OrgId
+				role.OrgRole = mapping.OrgRole
+				orgRoles = append(orgRoles, *role)
+			}
 		}
 	}
 
@@ -315,7 +309,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 // isMatchToLDAPGroup determines if we were able to match an LDAP group to an organization+role.
 // Since we allow one role per organization. If it's set, we were able to match it.
 func isMatchToLDAPGroup(user *models.ExternalUserInfo, groupConfig *ldap.GroupToOrgRole) bool {
-	return user.OrgRoles[groupConfig.OrgID] == groupConfig.OrgRole
+	return user.OrgRoles[groupConfig.OrgId] == groupConfig.OrgRole
 }
 
 // splitName receives the full name of a user and splits it into two parts: A name and a surname.
