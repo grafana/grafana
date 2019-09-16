@@ -108,50 +108,53 @@ export default class AzureMonitorDatasource {
 
   async query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponseData[]> {
     const groupedQueries = await Promise.all(
-      _.filter(options.targets, item => {
-        const { data, queryMode } = item.azureMonitor;
-        const { resourceGroup, resourceGroups, metricDefinition, metricName } = data[queryMode];
+      options.targets
+        .filter(item => {
+          const { data, queryMode } = item.azureMonitor;
+          const { resourceGroup, resourceGroups, metricDefinition, metricName } = data[queryMode];
 
-        return (
-          item.hide !== true &&
-          ((resourceGroup && resourceGroup !== this.defaultDropdownValue) || resourceGroups.length) &&
-          metricDefinition &&
-          metricDefinition !== this.defaultDropdownValue &&
-          metricName &&
-          metricName !== this.defaultDropdownValue
-        );
-      }).map(async target => {
-        const { data, queryMode } = target.azureMonitor;
+          return (
+            item.hide !== true &&
+            ((resourceGroup && resourceGroup !== this.defaultDropdownValue) || resourceGroups.length) &&
+            metricDefinition &&
+            metricDefinition !== this.defaultDropdownValue &&
+            metricName &&
+            metricName !== this.defaultDropdownValue
+          );
+        })
+        .map(async target => {
+          const { data, queryMode } = target.azureMonitor;
 
-        if (queryMode === 'crossResource') {
-          const { resourceGroups, metricDefinition, locations } = data[queryMode];
-          const resources = await this.getResources(target.subscriptions).then(resources =>
-            resources.filter(
-              ({ type, group, subscriptionId, location }) =>
-                target.subscriptions.includes(subscriptionId) &&
-                resourceGroups.includes(group) &&
-                locations.includes(location) &&
-                metricDefinition === type
-            )
-          );
-          delete data.crossResource.metricNamespace;
-          return resources.map(({ type: metricDefinition, group: resourceGroup, subscriptionId, name: resourceName }) =>
-            this.buildQuery(
-              options,
-              target,
-              {
-                ...data[queryMode],
-                metricDefinition,
-                resourceGroup,
-                resourceName,
-              },
-              subscriptionId
-            )
-          );
-        } else {
-          return Promise.resolve(this.buildQuery(options, target, data[queryMode]));
-        }
-      })
+          if (queryMode === 'crossResource') {
+            const { resourceGroups, metricDefinition, locations } = data[queryMode];
+            const resources = await this.getResources(target.subscriptions).then(resources =>
+              resources.filter(
+                ({ type, group, subscriptionId, location }) =>
+                  target.subscriptions.includes(subscriptionId) &&
+                  resourceGroups.includes(group) &&
+                  locations.includes(location) &&
+                  metricDefinition === type
+              )
+            );
+            delete data.crossResource.metricNamespace;
+            return resources.map(
+              ({ type: metricDefinition, group: resourceGroup, subscriptionId, name: resourceName }) =>
+                this.buildQuery(
+                  options,
+                  target,
+                  {
+                    ...data[queryMode],
+                    metricDefinition,
+                    resourceGroup,
+                    resourceName,
+                  },
+                  subscriptionId
+                )
+            );
+          } else {
+            return Promise.resolve(this.buildQuery(options, target, data[queryMode]));
+          }
+        })
     );
 
     const queries = _.flatten(groupedQueries);
@@ -399,7 +402,7 @@ export default class AzureMonitorDatasource {
             res.data.value
               .map(r => ({
                 ...r,
-                group: /.*\/resourceGroups\/(.*?)\//.exec(r.id)[1], // /.*\/resourceGroups\/(.*)\//.test(r.id),
+                group: /.*\/resourceGroups\/(.*?)\//.exec(r.id)[1],
                 subscriptionId,
               }))
               .filter(({ type }) => this.supportedMetricNamespaces.includes(type))
