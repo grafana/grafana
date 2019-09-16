@@ -40,7 +40,7 @@ export class UserSyncInfo extends PureComponent<Props, State> {
     return (
       <>
         <h3 className="page-heading">
-          LDAP Synchronisation
+          LDAP
           <button className={`btn btn-secondary pull-right`} onClick={this.handleSyncClick} hidden={true}>
             <span className="btn-title">Sync user</span>
             {isSyncing && <i className="fa fa-spinner fa-fw fa-spin run-icon" />}
@@ -51,13 +51,13 @@ export class UserSyncInfo extends PureComponent<Props, State> {
             <table className="filter-table form-inline">
               <tbody>
                 <tr>
-                  <td>Next scheduled synchronisation</td>
-                  <td colSpan={2}>{nextSyncTime}</td>
-                </tr>
-                <tr>
                   <td>Last synchronisation</td>
                   <td>{prevSyncTime}</td>
                   {prevSyncSuccessful && <td className="pull-right">Successful</td>}
+                </tr>
+                <tr>
+                  <td>Next scheduled synchronisation</td>
+                  <td colSpan={2}>{nextSyncTime}</td>
                 </tr>
               </tbody>
             </table>

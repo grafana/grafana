@@ -13,8 +13,8 @@ interface Props {
 export const LdapUserInfo: FC<Props> = ({ ldapUser, showAttributeMapping }) => {
   return (
     <>
-      <LdapUserPermissions permissions={ldapUser.permissions} />
       <LdapUserMappingInfo info={ldapUser.info} showAttributeMapping={showAttributeMapping} />
+      <LdapUserPermissions permissions={ldapUser.permissions} />
       {ldapUser.roles && ldapUser.roles.length > 0 && (
         <LdapUserGroups groups={ldapUser.roles} showAttributeMapping={showAttributeMapping} />
       )}

@@ -114,9 +114,10 @@ export class LdapUserPage extends PureComponent<Props, State> {
               />
             </div>
           )}
-          {userSyncInfo && <UserSyncInfo syncInfo={userSyncInfo} onSync={this.onSyncUser} />}
+
           {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
           {!ldapUser && user && <UserInfo user={user} />}
+          {userSyncInfo && <UserSyncInfo syncInfo={userSyncInfo} onSync={this.onSyncUser} />}
 
           {sessions && (
             <UserSessions

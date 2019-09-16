@@ -55,9 +55,11 @@ export class UserSessions extends PureComponent<Props> {
             </table>
           </div>
           <div className="gf-form-button-row">
-            <button className="btn btn-danger" onClick={this.handleAllSessionsRevoke}>
-              Logout user from all devices
-            </button>
+            {sessions.length > 0 && (
+              <button className="btn btn-danger" onClick={this.handleAllSessionsRevoke}>
+                Logout user from all devices
+              </button>
+            )}
           </div>
         </div>
       </>
