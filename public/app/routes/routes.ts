@@ -6,6 +6,8 @@ import { applyRouteRegistrationHandlers } from './registry';
 import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
+import LdapPage from 'app/features/admin/ldap/LdapPage';
+import LdapUserPage from 'app/features/admin/ldap/LdapUserPage';
 import config from 'app/core/config';
 import { route, ILocationProvider } from 'angular';
 
@@ -257,6 +259,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       templateUrl: 'public/app/features/admin/partials/edit_user.html',
       controller: 'AdminEditUserCtrl',
     })
+    .when('/admin/users/ldap/edit/:id', {
+      template: '<react-container />',
+      resolve: {
+        component: () => LdapUserPage,
+      },
+    })
     .when('/admin/orgs', {
       templateUrl: 'public/app/features/admin/partials/orgs.html',
       controller: 'AdminListOrgsCtrl',
@@ -271,6 +279,12 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       resolve: {
         component: () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats'),
+      },
+    })
+    .when('/admin/ldap', {
+      template: '<react-container />',
+      resolve: {
+        component: () => LdapPage,
       },
     })
     // LOGIN / SIGNUP

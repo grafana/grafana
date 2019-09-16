@@ -129,6 +129,10 @@ func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 
 	ldap := newLDAP(ldapConfig.Servers)
 
+	if ldap == nil {
+		return Error(http.StatusInternalServerError, "Failed to find the LDAP server", nil)
+	}
+
 	statuses, err := ldap.Ping()
 
 	if err != nil {
