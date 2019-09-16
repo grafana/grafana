@@ -1,5 +1,5 @@
 import { FieldType } from '../../types/dataFrame';
-import { fieldMatchers } from './matchers';
+import { fieldMatchers } from '../matchers';
 import { simpleSeriesWithTypes } from './fieldTypeMatcher.test';
 import { FieldMatcherID, MatcherID } from './ids';
 import { MatcherConfig } from '../../types/transformations';

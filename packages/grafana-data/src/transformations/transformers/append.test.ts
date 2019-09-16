@@ -1,7 +1,7 @@
 import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { transformDataFrame } from '../transformDataFrame';
-import { transformersRegistry } from '../transformersRegistry';
+import { transformDataFrame } from '../transformers';
+import { transformersRegistry } from '../transformers';
 
 const seriesAB = toDataFrame({
   columns: [{ text: 'A' }, { text: 'B' }],

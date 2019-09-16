@@ -1,16 +1,16 @@
 // Load the Buildtin matchers
-import { getFieldPredicateMatchers, getFramePredicateMatchers } from './predicates';
-import { getFieldNameMatchers, getFrameNameMatchers } from './nameMatcher';
-import { getFieldTypeMatchers } from './fieldTypeMatcher';
-import { getRefIdMatchers } from './refIdMatcher';
+import { getFieldPredicateMatchers, getFramePredicateMatchers } from './matchers/predicates';
+import { getFieldNameMatchers, getFrameNameMatchers } from './matchers/nameMatcher';
+import { getFieldTypeMatchers } from './matchers/fieldTypeMatcher';
+import { getRefIdMatchers } from './matchers/refIdMatcher';
 import {
   FieldMatcherInfo,
   MatcherConfig,
   FrameMatcherInfo,
   FieldMatcher,
   FrameMatcher,
-} from '../../types/transformations';
-import { Registry } from '../../utils/Registry';
+} from '../types/transformations';
+import { Registry } from '../utils/Registry';
 
 export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
   return [

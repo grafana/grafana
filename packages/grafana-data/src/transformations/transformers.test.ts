@@ -1,7 +1,7 @@
 import { DataTransformerID } from './transformers/ids';
-import { transformersRegistry } from './transformersRegistry';
+import { transformersRegistry } from './transformers';
 import { toDataFrame } from '../dataframe/processDataFrame';
-import { ReducerID } from '../utils/fieldReducer';
+import { ReducerID } from './fieldReducer';
 import { DataFrameView } from '../dataframe/DataFrameView';
 
 describe('Transformers', () => {

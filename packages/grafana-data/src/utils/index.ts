@@ -1,7 +1,6 @@
 export * from './Registry';
 export * from './deprecationWarning';
 export * from './csv';
-export * from './fieldReducer';
 export * from './logs';
 export * from './labels';
 export * from './labels';

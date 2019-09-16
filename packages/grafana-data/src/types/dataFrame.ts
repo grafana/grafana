@@ -1,10 +1,10 @@
 import { Threshold } from './threshold';
 import { ValueMapping } from './valueMapping';
 import { QueryResultBase, Labels, NullValueMode } from './data';
-import { FieldCalcs } from '../utils/index';
 import { DisplayProcessor } from './displayValue';
 import { DataLink } from './dataLink';
 import { Vector } from './vector';
+import { FieldCalcs } from '../transformations/fieldReducer';
 
 export enum FieldType {
   time = 'time', // or date

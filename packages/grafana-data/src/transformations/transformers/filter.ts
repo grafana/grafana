@@ -3,7 +3,7 @@ import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { FieldMatcherID } from '../matchers/ids';
-import { getFieldMatcher, getFrameMatchers } from '../matchers/matchers';
+import { getFieldMatcher, getFrameMatchers } from '../matchers';
 
 export interface FilterOptions {
   include?: MatcherConfig;

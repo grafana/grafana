@@ -1,8 +1,8 @@
 // Libraries
 import isNumber from 'lodash/isNumber';
 
-import { NullValueMode, Field } from '../types';
-import { Registry, RegistryItem } from './Registry';
+import { NullValueMode, Field } from '../types/index';
+import { Registry, RegistryItem } from '../utils/Registry';
 
 export enum ReducerID {
   sum = 'sum',

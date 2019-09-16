@@ -1,6 +1,6 @@
 import { Field, DataFrame } from '../../types/dataFrame';
 import { MatcherID } from './ids';
-import { getFieldMatcher, fieldMatchers, getFrameMatchers, frameMatchers } from './matchers';
+import { getFieldMatcher, fieldMatchers, getFrameMatchers, frameMatchers } from '../matchers';
 import { FieldMatcherInfo, MatcherConfig, FrameMatcherInfo } from '../../types/transformations';
 
 const anyFieldMatcher: FieldMatcherInfo<MatcherConfig[]> = {

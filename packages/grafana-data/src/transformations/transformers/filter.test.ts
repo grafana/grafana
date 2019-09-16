@@ -1,8 +1,8 @@
 import { FieldType } from '../../types/dataFrame';
 import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { transformDataFrame } from '../transformDataFrame';
 import { FieldMatcherID } from '../matchers/ids';
+import { transformDataFrame } from '../transformers';
 
 export const simpleSeriesWithTypes = toDataFrame({
   fields: [
