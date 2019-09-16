@@ -540,6 +540,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         range,
         absoluteRange,
+        update: makeInitialUpdateState(),
       };
     },
   })
