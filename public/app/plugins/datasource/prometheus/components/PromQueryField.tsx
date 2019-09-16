@@ -10,13 +10,14 @@ import Prism from 'prismjs';
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 // dom also includes Element polyfills
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import QueryField, { TypeaheadInput } from 'app/features/explore/QueryField';
 import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 import { ExploreQueryFieldProps, DataSourceStatus, QueryHint, DOMUtil } from '@grafana/ui';
 import { isDataFrame, toLegacyResponseData } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';
+import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -68,7 +69,7 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
   return [...options, ...metricsOptions];
 }
 
-export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: QueryFieldState): string {
+export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
   // Modify suggestion based on context
   switch (typeaheadContext) {
     case 'context-labels': {

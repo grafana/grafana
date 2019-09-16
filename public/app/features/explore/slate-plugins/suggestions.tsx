@@ -6,11 +6,13 @@ import { Editor as CoreEditor } from 'slate';
 import { Plugin as SlatePlugin } from '@grafana/slate-react';
 import { TypeaheadOutput, CompletionItem, CompletionItemGroup } from 'app/types';
 
-import { TYPEAHEAD_DEBOUNCE, TypeaheadInput } from '../QueryField';
+import { TypeaheadInput } from '../QueryField';
 import TOKEN_MARK from '@grafana/ui/src/slate-plugins/slate-prism/TOKEN_MARK';
 import { TypeaheadWithTheme, Typeahead } from '../Typeahead';
 
 import { makeFragment } from '@grafana/ui';
+
+export const TYPEAHEAD_DEBOUNCE = 100;
 
 let typeaheadRef: Typeahead;
 
@@ -19,25 +21,9 @@ export interface SuggestionsState {
   typeaheadPrefix: string;
   typeaheadContext: string;
   typeaheadText: string;
-  typeaheadIndex: number;
 }
 
-interface QueryFieldState {
-  groupedItems: CompletionItemGroup[];
-  typeaheadContext: string | null;
-  typeaheadIndex: number;
-  typeaheadPrefix: string;
-  typeaheadText: string;
-  // value: Value;
-  // lastExecutedValue: Value;
-}
-
-let state: {
-  groupedItems: CompletionItemGroup[];
-  typeaheadPrefix: string;
-  typeaheadContext: string;
-  typeaheadText: string;
-} = {
+let state: SuggestionsState = {
   groupedItems: [],
   typeaheadPrefix: '',
   typeaheadContext: '',
@@ -53,7 +39,7 @@ export default function SuggestionsPlugin({
 }: {
   onTypeahead: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   cleanText?: (text: string) => string;
-  onWillApplySuggestion?: (suggestion: string, state: QueryFieldState) => string;
+  onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   syntax?: string;
   portalOrigin: string;
 }): SlatePlugin {
@@ -114,7 +100,7 @@ export default function SuggestionsPlugin({
             event.preventDefault();
 
             typeaheadRef.insertSuggestion();
-            return;
+            return handleTypeahead(event, editor, next, onTypeahead, cleanText);
           }
 
           break;
@@ -152,7 +138,6 @@ export default function SuggestionsPlugin({
           suggestionText = onWillApplySuggestion(suggestionText, {
             groupedItems: state.groupedItems,
             typeaheadContext,
-            typeaheadIndex: 0,
             typeaheadPrefix,
             typeaheadText,
           });
