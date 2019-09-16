@@ -26,9 +26,9 @@
     <div class="gf-form" ng-if="(ctrl.target.queryType === 'Azure Monitor' && ctrl.target.azureMonitor.queryMode === 'crossResource')">
       <label class="gf-form-label query-keyword width-9">Subscriptions</label>
       <multi-select ng-if="ctrl.subscriptionValues.length"
-        values="ctrl.target.subscriptions"
+        initial-values="ctrl.target.subscriptions"
         options="ctrl.subscriptionValues"
-        on-change="ctrl.onSubscriptionsChange()">
+        on-updated="ctrl.onSubscriptionsChange(values)">
       </multi-select> 
     </div>
   </div>
@@ -57,20 +57,20 @@
       <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
         <label class="gf-form-label query-keyword width-9">Locations</label>
         <multi-select ng-if="ctrl.locations.length"
-          values="ctrl.target.azureMonitor.data.crossResource.locations"
+          initial-values="ctrl.target.azureMonitor.data.crossResource.locations"
           options="ctrl.locations"
-          on-change="ctrl.onLocationChange()">
+          on-updated="ctrl.onLocationsChange(values)">
         </multi-select> 
       </div>
     </div>
     <div class="gf-form-inline">
       <div class="gf-form" ng-if="ctrl.target.azureMonitor.queryMode === 'crossResource'">
         <label class="gf-form-label query-keyword width-9">Resource Groups</label>
-        <multi-select class="az-multi-picker" ng-if="ctrl.resourceGroups.length"
-          values="ctrl.target.azureMonitor.data.crossResource.resourceGroups"
+        <multi-select class="az-multi-picker"
+          initial-values="ctrl.target.azureMonitor.data.crossResource.resourceGroups"
           options="ctrl.resourceGroups"
-          on-change="ctrl.onCrossResourceGroupChange()">
-        </multi-select> 
+          on-updated="ctrl.onCrossResourceGroupChange(values)">
+        </multi-select>
       </div>
     </div>
     <div class="gf-form-inline">
