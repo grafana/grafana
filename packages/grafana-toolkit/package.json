@@ -61,7 +61,7 @@
     "jest-cli": "^24.8.0",
     "jest-coverage-badges": "^1.1.2",
     "jest-junit": "^6.4.0",
-    "lodash": "4.17.14",
+    "lodash": "4.17.15",
     "md5-file": "^4.0.0",
     "mini-css-extract-plugin": "^0.7.0",
     "node-sass": "^4.12.0",

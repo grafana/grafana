@@ -21,15 +21,15 @@
     "build": "grafana-toolkit package:build --scope=runtime"
   },
   "dependencies": {
-    "systemjs": "0.20.19",
-    "systemjs-plugin-css": "0.1.37",
     "@grafana/data": "^6.4.0-alpha",
-    "@grafana/ui": "^6.4.0-alpha"
+    "@grafana/ui": "^6.4.0-alpha",
+    "systemjs": "0.20.19",
+    "systemjs-plugin-css": "0.1.37"
   },
   "devDependencies": {
     "@types/systemjs": "^0.20.6",
-    "lodash": "^4.17.10",
-    "pretty-format": "^24.5.0",
+    "lodash": "4.17.15",
+    "pretty-format": "24.9.0",
     "rollup": "1.6.0",
     "rollup-plugin-commonjs": "9.2.1",
     "rollup-plugin-node-resolve": "4.0.1",

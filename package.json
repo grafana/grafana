@@ -211,7 +211,7 @@
     "immutable": "3.8.2",
     "is-hotkey": "0.1.4",
     "jquery": "3.4.1",
-    "lodash": "4.17.14",
+    "lodash": "4.17.15",
     "marked": "0.6.2",
     "memoize-one": "5.1.1",
     "moment": "2.24.0",
