@@ -38,9 +38,11 @@ const testContext = (options: any = {}) => {
     ],
   });
 
+  const emptyTable = toDataFrame({ name: 'empty-table', refId: 'A', fields: [] });
+
   const defaultOptions = {
     mode: ExploreMode.Metrics,
-    dataFrames: [timeSeries, table],
+    dataFrames: [timeSeries, table, emptyTable],
     graphResult: [] as TimeSeries[],
     tableResult: new TableModel(),
     logsResult: { hasUniqueLabels: false, rows: [] as LogRowModel[] },
@@ -56,7 +58,7 @@ const testContext = (options: any = {}) => {
     queryIntervals: { intervalMs: 10 },
   } as any) as ExploreItemState;
 
-  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames);
+  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames, 60000);
 
   return {
     dataFrames: combinedOptions.dataFrames,
@@ -67,20 +69,20 @@ const testContext = (options: any = {}) => {
 describe('ResultProcessor', () => {
   describe('constructed without result', () => {
     describe('when calling getGraphResult', () => {
-      it('then it should return an empty array', () => {
+      it('then it should return null', () => {
         const { resultProcessor } = testContext({ dataFrames: [] });
         const theResult = resultProcessor.getGraphResult();
 
-        expect(theResult).toEqual([]);
+        expect(theResult).toEqual(null);
       });
     });
 
     describe('when calling getTableResult', () => {
-      it('then it should return an empty TableModel', () => {
+      it('then it should return null', () => {
         const { resultProcessor } = testContext({ dataFrames: [] });
         const theResult = resultProcessor.getTableResult();
 
-        expect(theResult).toEqual(new TableModel());
+        expect(theResult).toEqual(null);
       });
     });
 

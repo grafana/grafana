@@ -12,7 +12,7 @@ export interface FlotDataPoint {
 export class GraphContextMenuCtrl {
   private source?: FlotDataPoint | null;
   private scope?: any;
-  menuItems: ContextMenuItem[];
+  menuItemsSupplier?: () => ContextMenuItem[];
   scrollContextElement: HTMLElement | null;
   position: {
     x: number;
@@ -23,7 +23,6 @@ export class GraphContextMenuCtrl {
 
   constructor($scope: any) {
     this.isVisible = false;
-    this.menuItems = [];
     this.scope = $scope;
   }
 
@@ -70,11 +69,7 @@ export class GraphContextMenuCtrl {
     return this.source;
   };
 
-  setMenuItems = (items: ContextMenuItem[]) => {
-    this.menuItems = items;
-  };
-
-  getMenuItems = () => {
-    return this.menuItems;
+  setMenuItemsSupplier = (menuItemsSupplier: () => ContextMenuItem[]) => {
+    this.menuItemsSupplier = menuItemsSupplier;
   };
 }

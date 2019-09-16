@@ -52,17 +52,13 @@ describe('Stats Calculators', () => {
   it('should calculate basic stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: ['first', 'last', 'mean'],
+      reducers: ['first', 'last', 'mean', 'count'],
     });
 
-    // First
     expect(stats.first).toEqual(10);
-
-    // Last
     expect(stats.last).toEqual(20);
-
-    // Mean
     expect(stats.mean).toEqual(15);
+    expect(stats.count).toEqual(2);
   });
 
   it('should support a single stat also', () => {

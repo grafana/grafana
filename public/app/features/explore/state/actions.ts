@@ -1,4 +1,6 @@
 // Libraries
+import { map, throttleTime } from 'rxjs/operators';
+import { identity } from 'rxjs';
 // Services & Utils
 import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -63,21 +65,20 @@ import {
   loadExploreDatasources,
   changeModeAction,
   scanStopAction,
-  queryStartAction,
   setUrlReplacedAction,
   changeRangeAction,
   historyUpdatedAction,
-  queryEndedAction,
   queryStreamUpdatedAction,
+  queryStoreSubscriptionAction,
   clearOriginAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import _ from 'lodash';
 import { updateLocation } from '../../../core/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
+import { runRequest, preProcessPanelData } from '../../dashboard/state/runRequest';
 
 /**
  * Updates UI state and save it to the URL
@@ -436,12 +437,14 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       datasourceError,
       containerWidth,
       isLive: live,
-      queryState,
-      queryIntervals,
       range,
       scanning,
+      queryResponse,
+      querySubscription,
       history,
       mode,
+      showingGraph,
+      showingTable,
     } = exploreItemState;
 
     if (datasourceError) {
@@ -457,45 +460,47 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     // Some datasource's query builders allow per-query interval limits,
     // but we're using the datasource interval limit for now
-    const interval = datasourceInstance.interval;
+    const minInterval = datasourceInstance.interval;
 
-    stopQueryState(queryState, 'New request issued');
-
-    queryState.sendFrames = true;
-    queryState.sendLegacy = true;
+    stopQueryState(querySubscription);
 
     const queryOptions = {
-      interval,
+      minInterval,
       // This is used for logs streaming for buffer size.
-      // TODO: not sure if this makes sense for normal query when using both graph and table
       maxDataPoints: mode === ExploreMode.Logs ? 1000 : containerWidth,
       live,
+      showingGraph,
+      showingTable,
     };
+
     const datasourceId = datasourceInstance.meta.id;
-    const transaction = buildQueryTransaction(queries, queryOptions, range, queryIntervals, scanning);
+    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
 
-    queryState.onStreamingDataUpdated = () => {
-      const response = queryState.validateStreamsAndGetPanelData();
-      dispatch(queryStreamUpdatedAction({ exploreId, response }));
-    };
+    let firstResponse = true;
 
-    dispatch(queryStartAction({ exploreId }));
-
-    queryState
-      .execute(datasourceInstance, transaction.request)
-      .then((response: PanelData) => {
-        if (!response.error) {
+    const newQuerySub = runRequest(datasourceInstance, transaction.request)
+      .pipe(
+        // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
+        // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
+        // actually can see what is happening.
+        live ? throttleTime(500) : identity,
+        map((data: PanelData) => preProcessPanelData(data, queryResponse))
+      )
+      .subscribe((data: PanelData) => {
+        if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage
           const nextHistory = updateHistory(history, datasourceId, queries);
           dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+          dispatch(stateSave());
         }
 
-        dispatch(queryEndedAction({ exploreId, response }));
-        dispatch(stateSave());
+        firstResponse = false;
+
+        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
 
         // Keep scanning for results if this was the last scanning transaction
         if (getState().explore[exploreId].scanning) {
-          if (_.size(response.series) === 0) {
+          if (data.state === LoadingState.Done && data.series.length === 0) {
             const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
             dispatch(updateTime({ exploreId, absoluteRange: range }));
             dispatch(runQueries(exploreId));
@@ -504,15 +509,9 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
             dispatch(scanStopAction({ exploreId }));
           }
         }
-      })
-      .catch(error => {
-        dispatch(
-          queryEndedAction({
-            exploreId,
-            response: { error, legacy: [], series: [], request: transaction.request, state: LoadingState.Error },
-          })
-        );
       });
+
+    dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
   };
 }
 

@@ -13,10 +13,15 @@ describe('dataFrameHelper', () => {
   });
   const ext = new FieldCache(frame);
 
-  it('Should get the first field with a duplicate name', () => {
+  it('should get the first field with a duplicate name', () => {
     const field = ext.getFieldByName('value');
     expect(field!.name).toEqual('value');
     expect(field!.values.toJSON()).toEqual([1, 2, 3]);
+  });
+
+  it('should return index of the field', () => {
+    const field = ext.getFirstFieldOfType(FieldType.number);
+    expect(field!.index).toEqual(2);
   });
 });
 

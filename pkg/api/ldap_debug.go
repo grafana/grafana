@@ -1,20 +1,24 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
 	getLDAPConfig = multildap.GetConfig
 	newLDAP       = multildap.New
+	tokenService  = AuthToken{}.TokenService
 
 	logger = log.New("LDAP.debug")
 
@@ -47,6 +51,22 @@ type LDAPUserDTO struct {
 	IsDisabled     bool                     `json:"isDisabled"`
 	OrgRoles       []RoleDTO                `json:"roles"`
 	Teams          []models.TeamOrgGroupDTO `json:"teams"`
+}
+
+// LDAPServerDTO is a serializer for LDAP server statuses
+type LDAPServerDTO struct {
+	Host      string `json:"host"`
+	Port      int    `json:"port"`
+	Available bool   `json:"available"`
+	Error     string `json:"error"`
+}
+
+type AuthToken struct {
+	TokenService TokenRevoker `inject:""`
+}
+
+type TokenRevoker interface {
+	RevokeAllUserTokens(context.Context, int64) error
 }
 
 // FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
@@ -82,14 +102,6 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 	return nil
 }
 
-// LDAPServerDTO is a serializer for LDAP server statuses
-type LDAPServerDTO struct {
-	Host      string `json:"host"`
-	Port      int    `json:"port"`
-	Available bool   `json:"available"`
-	Error     string `json:"error"`
-}
-
 // ReloadLDAPCfg reloads the LDAP configuration
 func (server *HTTPServer) ReloadLDAPCfg() Response {
 	if !ldap.IsEnabled() {
@@ -98,7 +110,7 @@ func (server *HTTPServer) ReloadLDAPCfg() Response {
 
 	err := ldap.ReloadConfig()
 	if err != nil {
-		return Error(http.StatusInternalServerError, "Failed to reload ldap config.", err)
+		return Error(http.StatusInternalServerError, "Failed to reload LDAP config", err)
 	}
 	return Success("LDAP config reloaded")
 }
@@ -112,7 +124,7 @@ func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 	ldapConfig, err := getLDAPConfig()
 
 	if err != nil {
-		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again.", err)
+		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
 	}
 
 	ldap := newLDAP(ldapConfig.Servers)
@@ -139,6 +151,82 @@ func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 	}
 
 	return JSON(http.StatusOK, serverDTOs)
+}
+
+// PostSyncUserWithLDAP enables a single Grafana user to be synchronized against LDAP
+func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
+	if !ldap.IsEnabled() {
+		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
+	}
+
+	ldapConfig, err := getLDAPConfig()
+
+	if err != nil {
+		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
+	}
+
+	userId := c.ParamsInt64(":id")
+
+	query := models.GetUserByIdQuery{Id: userId}
+
+	if err := bus.Dispatch(&query); err != nil { // validate the userId exists
+		if err == models.ErrUserNotFound {
+			return Error(404, models.ErrUserNotFound.Error(), nil)
+		}
+
+		return Error(500, "Failed to get user", err)
+	}
+
+	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.Id, AuthModule: models.AuthModuleLDAP}
+
+	if err := bus.Dispatch(authModuleQuery); err != nil { // validate the userId comes from LDAP
+		if err == models.ErrUserNotFound {
+			return Error(404, models.ErrUserNotFound.Error(), nil)
+		}
+
+		return Error(500, "Failed to get user", err)
+	}
+
+	ldapServer := newLDAP(ldapConfig.Servers)
+	user, _, err := ldapServer.User(query.Result.Login)
+
+	if err != nil {
+		if err == ldap.ErrCouldNotFindUser { // User was not in the LDAP server - we need to take action:
+
+			if setting.AdminUser == query.Result.Login { // User is *the* Grafana Admin. We cannot disable it.
+				errMsg := fmt.Sprintf(`Refusing to sync grafana super admin "%s" - it would be disabled`, query.Result.Login)
+				logger.Error(errMsg)
+				return Error(http.StatusBadRequest, errMsg, err)
+			}
+
+			// Since the user was not in the LDAP server. Let's disable it.
+			err := login.DisableExternalUser(query.Result.Login)
+
+			if err != nil {
+				return Error(http.StatusInternalServerError, "Failed to disable the user", err)
+			}
+
+			err = tokenService.RevokeAllUserTokens(context.TODO(), userId)
+			if err != nil {
+				return Error(http.StatusInternalServerError, "Failed to remove session tokens for the user", err)
+			}
+
+			return Success("User disabled without any updates in the information") // should this be a success?
+		}
+	}
+
+	upsertCmd := &models.UpsertUserCommand{
+		ExternalUser:  user,
+		SignupAllowed: setting.LDAPAllowSignup,
+	}
+
+	err = bus.Dispatch(upsertCmd)
+
+	if err != nil {
+		return Error(http.StatusInternalServerError, "Failed to udpate the user", err)
+	}
+
+	return Success("User synced successfully")
 }
 
 // GetUserFromLDAP finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.

@@ -2,9 +2,8 @@
 import $ from 'jquery';
 import React, { PureComponent } from 'react';
 import uniqBy from 'lodash/uniqBy';
-
 // Types
-import { TimeRange, GraphSeriesXY, AbsoluteTimeRange, TimeZone, DefaultTimeZone } from '@grafana/data';
+import { TimeRange, GraphSeriesXY, TimeZone, DefaultTimeZone } from '@grafana/data';
 
 export interface GraphProps {
   series: GraphSeriesXY[];
@@ -17,7 +16,7 @@ export interface GraphProps {
   height: number;
   isStacked?: boolean;
   lineWidth?: number;
-  onSelectionChanged?: (range: AbsoluteTimeRange) => void;
+  onHorizontalRegionSelected?: (from: number, to: number) => void;
 }
 
 export class Graph extends PureComponent<GraphProps> {
@@ -49,12 +48,9 @@ export class Graph extends PureComponent<GraphProps> {
   }
 
   onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
-    const { onSelectionChanged } = this.props;
-    if (onSelectionChanged) {
-      onSelectionChanged({
-        from: ranges.xaxis.from,
-        to: ranges.xaxis.to,
-      });
+    const { onHorizontalRegionSelected } = this.props;
+    if (onHorizontalRegionSelected) {
+      onHorizontalRegionSelected(ranges.xaxis.from, ranges.xaxis.to);
     }
   };
 
@@ -63,7 +59,18 @@ export class Graph extends PureComponent<GraphProps> {
       return;
     }
 
-    const { width, series, timeRange, showLines, showBars, showPoints, isStacked, lineWidth, timeZone } = this.props;
+    const {
+      width,
+      series,
+      timeRange,
+      showLines,
+      showBars,
+      showPoints,
+      isStacked,
+      lineWidth,
+      timeZone,
+      onHorizontalRegionSelected,
+    } = this.props;
 
     if (!width) {
       return;
@@ -136,7 +143,7 @@ export class Graph extends PureComponent<GraphProps> {
         labelMarginX: 0,
       },
       selection: {
-        mode: 'x',
+        mode: onHorizontalRegionSelected ? 'x' : null,
         color: '#666',
       },
     };

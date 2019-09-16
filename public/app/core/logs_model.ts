@@ -24,6 +24,7 @@ import {
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
+import { sortInAscendingOrder } from 'app/core/utils/explore';
 import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export const LogLevelColor = {
@@ -106,7 +107,8 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
   const bucketSize = intervalMs * 10;
   const seriesList: any[] = [];
 
-  for (const row of rows) {
+  const sortedRows = rows.sort(sortInAscendingOrder);
+  for (const row of sortedRows) {
     let series = seriesByLevel[row.logLevel];
 
     if (!series) {
@@ -120,8 +122,9 @@ export function makeSeriesForLogs(rows: LogRowModel[], intervalMs: number): Grap
       seriesList.push(series);
     }
 
-    // align time to bucket size
-    const time = Math.round(row.timeEpochMs / bucketSize) * bucketSize;
+    // align time to bucket size - used Math.floor for calculation as time of the bucket
+    // must be in the past (before Date.now()) to be displayed on the graph
+    const time = Math.floor(row.timeEpochMs / bucketSize) * bucketSize;
 
     // Entry for time
     if (time === series.lastTs) {
@@ -243,7 +246,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       hasUniqueLabels = true;
     }
 
-    const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
 
@@ -253,7 +256,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     }
 
     for (let j = 0; j < series.length; j++) {
-      const ts = timeFieldIndex.values.get(j);
+      const ts = timeField.values.get(j);
       const time = dateTime(ts);
       const timeEpochMs = time.valueOf();
       const timeFromNow = time.fromNow();

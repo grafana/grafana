@@ -199,14 +199,14 @@ func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks
 	}
 	for _, zf := range r.File {
 		newFileName := RemoveGitBuildFromName(pluginName, zf.Name)
-		if !isPathSafe(newFileName, path.Join(filePath, pluginName)) {
+		if !isPathSafe(newFileName, filepath.Join(filePath, pluginName)) {
 			return xerrors.Errorf("filepath: %v tries to write outside of plugin directory: %v. This can be a security risk.", zf.Name, path.Join(filePath, pluginName))
 		}
 		newFile := path.Join(filePath, newFileName)
 
 		if zf.FileInfo().IsDir() {
 			err := os.Mkdir(newFile, 0755)
-			if permissionsError(err) {
+			if os.IsPermission(err) {
 				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}
 		} else {
@@ -232,10 +232,6 @@ func extractFiles(body []byte, pluginName string, filePath string, allowSymlinks
 	}
 
 	return nil
-}
-
-func permissionsError(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "permission denied")
 }
 
 func isSymlink(file *zip.File) bool {
@@ -269,7 +265,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 
 	dst, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
-		if permissionsError(err) {
+		if os.IsPermission(err) {
 			return xerrors.Errorf(permissionsDeniedMessage, filePath)
 		}
 		return errutil.Wrap("Failed to open file", err)

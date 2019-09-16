@@ -1,5 +1,6 @@
 // Libraries
 import _ from 'lodash';
+import { Unsubscribable } from 'rxjs';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 // Services & Utils
 import {
@@ -12,23 +13,17 @@ import {
   LogRowModel,
   LogsModel,
   LogsDedupStrategy,
+  IntervalValues,
   DefaultTimeZone,
 } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
+import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
 // Types
 import { DataQuery, DataSourceApi, DataQueryError, DataQueryRequest, PanelModel } from '@grafana/ui';
-import {
-  ExploreUrlState,
-  HistoryItem,
-  QueryTransaction,
-  QueryIntervals,
-  QueryOptions,
-  ExploreMode,
-} from 'app/types/explore';
+import { ExploreUrlState, HistoryItem, QueryTransaction, QueryOptions, ExploreMode } from 'app/types/explore';
 import { config } from '../config';
-import { PanelQueryState } from '../../features/dashboard/state/PanelQueryState';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 export const DEFAULT_RANGE = {
@@ -103,16 +98,15 @@ export function buildQueryTransaction(
   queries: DataQuery[],
   queryOptions: QueryOptions,
   range: TimeRange,
-  queryIntervals: QueryIntervals,
   scanning: boolean
 ): QueryTransaction {
-  const { interval, intervalMs } = queryIntervals;
-
   const configuredQueries = queries.map(query => ({ ...query, ...queryOptions }));
   const key = queries.reduce((combinedKey, query) => {
     combinedKey += query.key;
     return combinedKey;
   }, '');
+
+  const { interval, intervalMs } = getIntervals(range, queryOptions.minInterval, queryOptions.maxDataPoints);
 
   // Most datasource is using `panelId + query.refId` for cancellation logic.
   // Using `format` here because it relates to the view panel that the request is for.
@@ -124,8 +118,7 @@ export function buildQueryTransaction(
     dashboardId: 0,
     // TODO probably should be taken from preferences but does not seem to be used anyway.
     timezone: DefaultTimeZone,
-    // This is set to correct time later on before the query is actually run.
-    startTime: 0,
+    startTime: Date.now(),
     interval,
     intervalMs,
     // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
@@ -409,10 +402,6 @@ export const getTimeRangeFromUrl = (range: RawTimeRange, timeZone: TimeZone): Ti
   };
 };
 
-export const instanceOfDataQueryError = (value: any): value is DataQueryError => {
-  return value.message !== undefined && value.status !== undefined && value.statusText !== undefined;
-};
-
 export const getValueWithRefId = (value: any): any | null => {
   if (!value) {
     return null;
@@ -469,7 +458,7 @@ export const getRefIds = (value: any): string[] => {
   return _.uniq(_.flatten(refIds));
 };
 
-const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
+export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
   if (a.timestamp < b.timestamp) {
     return -1;
   }
@@ -518,9 +507,16 @@ export const convertToWebSocketUrl = (url: string) => {
   return `${backend}${url}`;
 };
 
-export const stopQueryState = (queryState: PanelQueryState, reason: string) => {
-  if (queryState && queryState.isStarted()) {
-    queryState.cancel(reason);
-    queryState.closeStreams(false);
+export const stopQueryState = (querySubscription: Unsubscribable) => {
+  if (querySubscription) {
+    querySubscription.unsubscribe();
   }
 };
+
+export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
+  if (!resolution) {
+    return { interval: '1s', intervalMs: 1000 };
+  }
+
+  return kbn.calculateInterval(range, resolution, lowLimit);
+}

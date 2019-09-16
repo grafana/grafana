@@ -2,14 +2,16 @@ package postgres
 
 import (
 	"database/sql"
-	"github.com/grafana/grafana/pkg/setting"
 	"net/url"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/go-xorm/core"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 func init() {
@@ -24,7 +26,7 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 
-	config := tsdb.SqlQueryEndpointConfiguration{
+	config := sqleng.SqlQueryEndpointConfiguration{
 		DriverName:        "postgres",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
@@ -37,7 +39,7 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newPostgresMacroEngine(timescaledb), logger)
+	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newPostgresMacroEngine(timescaledb), logger)
 }
 
 func generateConnectionString(datasource *models.DataSource) string {
