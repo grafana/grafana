@@ -87,7 +87,7 @@ export interface Resource {
 
 export interface AzureMonitorResourceResponse {
   data: {
-    value: Array<Resource>;
+    value: Resource[];
     status: number;
     statusText: string;
   };
