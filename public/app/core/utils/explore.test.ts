@@ -442,7 +442,7 @@ describe('sortLogsResult', () => {
     it('it should calculate interval taking minInterval into account', () => {
       const queries = [{ refId: 'A' }];
       const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
-      const range = { from: dateTime().subtract(1, '1m'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+      const range = { from: dateTime().subtract(1, 'm'), to: dateTime(), raw: { from: '1h', to: '1h' } };
       const transaction = buildQueryTransaction(queries, queryOptions, range, false);
 
       expect(transaction.request.intervalMs).toEqual(15000);
