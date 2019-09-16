@@ -334,20 +334,22 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   async onSubscriptionsChange(values: any) {
-    this.target.subscriptions = values;
-    this.resources = await this.datasource.getResources(this.target.subscriptions);
-    const { queryMode } = this.target.azureMonitor;
-    this.target.azureMonitor.data[queryMode].resourceGroup = this.defaultDropdownValue;
-    this.target.azureMonitor.data[queryMode].metricDefinition = this.defaultDropdownValue;
-    this.target.azureMonitor.data[queryMode].resourceName = this.defaultDropdownValue;
-    this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
-    this.target.azureMonitor.data[queryMode].aggregation = '';
-    this.target.azureMonitor.data[queryMode].timeGrains = [];
-    this.target.azureMonitor.data[queryMode].timeGrain = '';
-    this.target.azureMonitor.data[queryMode].dimensions = [];
-    this.target.azureMonitor.data[queryMode].dimension = '';
-    this.updateLocations();
-    this.updateCrossResourceGroups();
+    if (!_.isEqual(this.target.subscriptions.sort(), values.sort())) {
+      this.target.subscriptions = values;
+      this.resources = await this.datasource.getResources(this.target.subscriptions);
+      const { queryMode } = this.target.azureMonitor;
+      this.target.azureMonitor.data[queryMode].resourceGroup = this.defaultDropdownValue;
+      this.target.azureMonitor.data[queryMode].metricDefinition = this.defaultDropdownValue;
+      this.target.azureMonitor.data[queryMode].resourceName = this.defaultDropdownValue;
+      this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
+      this.target.azureMonitor.data[queryMode].aggregation = '';
+      this.target.azureMonitor.data[queryMode].timeGrains = [];
+      this.target.azureMonitor.data[queryMode].timeGrain = '';
+      this.target.azureMonitor.data[queryMode].dimensions = [];
+      this.target.azureMonitor.data[queryMode].dimension = '';
+      this.updateLocations();
+      this.updateCrossResourceGroups();
+    }
   }
 
   /* Azure Monitor Section */
@@ -531,11 +533,13 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   onCrossResourceGroupChange(values: string[]) {
-    this.target.azureMonitor.data.crossResource.resourceGroups = values;
-    const { queryMode } = this.target.azureMonitor;
-    this.target.azureMonitor.data[queryMode].metricDefinition = '';
-    this.target.azureMonitor.data[queryMode].metricName = '';
-    this.refresh();
+    if (!_.isEqual(this.target.azureMonitor.data.crossResource.resourceGroups.sort(), values.sort())) {
+      this.target.azureMonitor.data.crossResource.resourceGroups = values;
+      const { queryMode } = this.target.azureMonitor;
+      this.target.azureMonitor.data[queryMode].metricDefinition = '';
+      this.target.azureMonitor.data[queryMode].metricName = '';
+      this.refresh();
+    }
   }
 
   onCrossResourceMetricDefinitionChange() {
@@ -550,18 +554,20 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   async onLocationsChange(values: string[]) {
-    this.target.azureMonitor.data.crossResource.locations = values;
-    const { queryMode } = this.target.azureMonitor;
-    this.target.azureMonitor.data[queryMode].metricDefinition = '';
-    this.target.azureMonitor.data[queryMode].resourceGroup = '';
-    this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
-    this.target.azureMonitor.data[queryMode].aggregation = '';
-    this.target.azureMonitor.data[queryMode].timeGrains = [];
-    this.target.azureMonitor.data[queryMode].timeGrain = '';
-    this.target.azureMonitor.data[queryMode].dimensions = [];
-    this.target.azureMonitor.data[queryMode].dimension = '';
-    this.updateCrossResourceGroups();
-    this.refresh();
+    if (!_.isEqual(this.target.azureMonitor.data.crossResource.locations.sort(), values.sort())) {
+      this.target.azureMonitor.data.crossResource.locations = values;
+      const { queryMode } = this.target.azureMonitor;
+      this.target.azureMonitor.data[queryMode].metricDefinition = '';
+      this.target.azureMonitor.data[queryMode].resourceGroup = '';
+      this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
+      this.target.azureMonitor.data[queryMode].aggregation = '';
+      this.target.azureMonitor.data[queryMode].timeGrains = [];
+      this.target.azureMonitor.data[queryMode].timeGrain = '';
+      this.target.azureMonitor.data[queryMode].dimensions = [];
+      this.target.azureMonitor.data[queryMode].dimension = '';
+      this.updateCrossResourceGroups();
+      this.refresh();
+    }
   }
 
   onMetricDefinitionChange() {
