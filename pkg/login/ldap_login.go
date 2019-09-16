@@ -40,7 +40,7 @@ var loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
 	if err != nil {
 		if err == ldap.ErrCouldNotFindUser {
 			// Ignore the error since user might not be present anyway
-			disableExternalUser(query.Username)
+			DisableExternalUser(query.Username)
 
 			return true, ldap.ErrInvalidCredentials
 		}
@@ -61,8 +61,8 @@ var loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
 	return true, nil
 }
 
-// disableExternalUser marks external user as disabled in Grafana db
-func disableExternalUser(username string) error {
+// DisableExternalUser marks external user as disabled in Grafana db
+func DisableExternalUser(username string) error {
 	// Check if external user exist in Grafana
 	userQuery := &models.GetExternalUserInfoByLoginQuery{
 		LoginOrEmail: username,

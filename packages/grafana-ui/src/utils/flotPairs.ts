@@ -1,5 +1,5 @@
 // Types
-import { NullValueMode, GraphSeriesValue, Field } from '@grafana/data';
+import { NullValueMode, GraphSeriesValue, Field, TimeRange } from '@grafana/data';
 
 export interface FlotPairsOptions {
   xField: Field;
@@ -41,4 +41,20 @@ export function getFlotPairs({ xField, yField, nullValueMode }: FlotPairsOptions
     pairs.push([x, y]);
   }
   return pairs;
+}
+
+/**
+ * Returns a constant series based on the first value from the provide series.
+ * @param seriesData Series
+ * @param range Start and end time for the constant series
+ */
+export function getFlotPairsConstant(seriesData: GraphSeriesValue[][], range: TimeRange): GraphSeriesValue[][] {
+  if (!range.from || !range.to || !seriesData || seriesData.length === 0) {
+    return [];
+  }
+
+  const from = range.from.valueOf();
+  const to = range.to.valueOf();
+  const value = seriesData[0][1];
+  return [[from, value], [to, value]];
 }

@@ -569,8 +569,7 @@ jobs:
       - run:
           name: Publish to Grafana.com
           command: |
-            rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
-            rm dist/*latest*
+            rm dist/*latest* || true
             cd dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
 
   deploy-release:
@@ -673,6 +672,21 @@ jobs:
           name: Release next packages
           command: './scripts/circle-release-next-packages.sh'
 
+  release-packages:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run:
+          name: Boostrap lerna
+          command: 'npx lerna bootstrap'
+      - run:
+          name: npm - Prepare auth token
+          command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
+      - run:
+          name: Release packages
+          command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
+
 workflows:
   version: 2
   build-master:
@@ -755,6 +769,7 @@ workflows:
             - build-all
             - test-frontend
           filters: *filter-only-master
+
   release:
     jobs:
       - build-all:
@@ -810,6 +825,18 @@ workflows:
             - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+          filters: *filter-only-release
+      - release-packages:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+            - build-oss-msi
           filters: *filter-only-release
       - build-oss-msi:
           requires:

@@ -9,7 +9,7 @@ export const execTask = <TOptions>(task: Task<TOptions>) => async (options: TOpt
     await task.exec();
     console.groupEnd();
   } catch (e) {
-    console.log(e);
+    console.trace(e);
     process.exit(1);
   }
 };

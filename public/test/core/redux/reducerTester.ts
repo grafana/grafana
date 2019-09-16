@@ -11,7 +11,7 @@ export interface When<State> {
 }
 
 export interface Then<State> {
-  thenStateShouldEqual: (state: State) => Then<State>;
+  thenStateShouldEqual: (state: State) => When<State>;
 }
 
 interface ObjectType extends Object {
@@ -62,12 +62,12 @@ export const reducerTester = <State>(): Given<State> => {
   };
 
   const whenActionIsDispatched = (action: ActionOf<any>): Then<State> => {
-    resultingState = reducerUnderTest(initialState, action);
+    resultingState = reducerUnderTest(resultingState || initialState, action);
 
     return instance;
   };
 
-  const thenStateShouldEqual = (state: State): Then<State> => {
+  const thenStateShouldEqual = (state: State): When<State> => {
     expect(state).toEqual(resultingState);
 
     return instance;

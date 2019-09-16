@@ -69,7 +69,7 @@ module.exports = (env = {}) =>
         checkSyntacticErrors: true,
       }),
       new MiniCssExtractPlugin({
-        filename: "grafana.[name].[hash].css"
+        filename: 'grafana.[name].[hash].css'
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/error.html'),
@@ -89,7 +89,7 @@ module.exports = (env = {}) =>
       new webpack.HotModuleReplacementPlugin(),
       new webpack.DefinePlugin({
         'process.env': {
-          'NODE_ENV': JSON.stringify('development')
+          NODE_ENV: JSON.stringify('development')
         }
       }),
       // new BundleAnalyzerPlugin({

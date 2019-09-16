@@ -29,8 +29,8 @@ interface State {
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
-  deferLogsTimer: NodeJS.Timer | null = null;
-  renderAllTimer: NodeJS.Timer | null = null;
+  deferLogsTimer: number | null = null;
+  renderAllTimer: number | null = null;
 
   state: State = {
     deferLogs: true,
@@ -44,14 +44,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       const rowCount = data && data.rows ? data.rows.length : 0;
       // Render all right away if not too far over the limit
       const renderAll = rowCount <= PREVIEW_LIMIT * 2;
-      this.deferLogsTimer = setTimeout(() => this.setState({ deferLogs: false, renderAll }), rowCount);
+      this.deferLogsTimer = window.setTimeout(() => this.setState({ deferLogs: false, renderAll }), rowCount);
     }
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
     // Staged rendering
     if (prevState.deferLogs && !this.state.deferLogs && !this.state.renderAll) {
-      this.renderAllTimer = setTimeout(() => this.setState({ renderAll: true }), 2000);
+      this.renderAllTimer = window.setTimeout(() => this.setState({ renderAll: true }), 2000);
     }
   }
 

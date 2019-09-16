@@ -9,8 +9,7 @@ import memoizeOne from 'memoize-one';
 // Services & Utils
 import store from 'app/core/store';
 // Components
-import { Alert, DataQuery, ExploreStartPageProps, DataSourceApi, PanelData } from '@grafana/ui';
-import { ErrorBoundary } from './ErrorBoundary';
+import { Alert, ErrorBoundaryAlert, DataQuery, ExploreStartPageProps, DataSourceApi, PanelData } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -91,6 +90,7 @@ interface ExploreProps {
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
+  originPanelId: number;
 }
 
 /**
@@ -127,7 +127,16 @@ export class Explore extends React.PureComponent<ExploreProps> {
   }
 
   componentDidMount() {
-    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, mode, initialUI } = this.props;
+    const {
+      initialized,
+      exploreId,
+      initialDatasource,
+      initialQueries,
+      initialRange,
+      mode,
+      initialUI,
+      originPanelId,
+    } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
@@ -140,7 +149,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
         mode,
         width,
         this.exploreEvents,
-        initialUI
+        initialUI,
+        originPanelId
       );
     }
   }
@@ -275,8 +285,12 @@ export class Explore extends React.PureComponent<ExploreProps> {
 
                 return (
                   <main className="m-t-2" style={{ width }}>
-                    <ErrorBoundary>
-                      {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
+                    <ErrorBoundaryAlert>
+                      {showingStartPage && (
+                        <div className="grafana-info-box grafana-info-box--max-lg">
+                          <StartPage onClickExample={this.onClickExample} datasource={datasourceInstance} />
+                        </div>
+                      )}
                       {!showingStartPage && (
                         <>
                           {mode === ExploreMode.Metrics && (
@@ -310,7 +324,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                           )}
                         </>
                       )}
-                    </ErrorBoundary>
+                    </ErrorBoundaryAlert>
                   </main>
                 );
               }}
@@ -352,7 +366,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryResponse,
   } = item;
 
-  const { datasource, queries, range: urlRange, mode: urlMode, ui } = (urlState || {}) as ExploreUrlState;
+  const { datasource, queries, range: urlRange, mode: urlMode, ui, originPanelId } = (urlState ||
+    {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
   const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
   const initialRange = urlRange ? getTimeRangeFromUrlMemoized(urlRange, timeZone).raw : DEFAULT_RANGE;
@@ -398,6 +413,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showingTable,
     absoluteRange,
     queryResponse,
+    originPanelId,
   };
 }
 

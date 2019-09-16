@@ -11,15 +11,6 @@ const simpleGit = require('simple-git/promise')(process.cwd());
 
 interface PrecommitOptions {}
 
-const tasks = {
-  test: {
-    lint: {
-      ts: ['no-only-tests'],
-      go: ['no-focus-convey-tests'],
-    },
-  },
-};
-
 interface GitStatus {
   files: GitFile[];
 }
@@ -40,27 +31,26 @@ const precommitRunner: TaskRunner<PrecommitOptions> = async () => {
     .filter(file => nodeVersionFiles.indexOf(file.path) !== -1)
     .map(f => f.path);
 
-  const taskPaths = [];
+  const gruntTasks = [];
 
   if (affectedNodeVersionFiles.length > 0) {
     await execTask(nodeVersionCheckerTask)({});
   }
 
   if (sassFiles.length > 0) {
-    taskPaths.push('lint.sass');
+    gruntTasks.push('sasslint');
   }
 
   if (testFiles.length) {
-    taskPaths.push('test.lint.ts');
+    gruntTasks.push('no-only-tests');
   }
 
   if (goTestFiles.length) {
-    taskPaths.push('test.lint.go');
+    gruntTasks.push('no-focus-convey-tests');
   }
 
-  const gruntTasks = flatten(taskPaths.map(path => get(tasks, path)));
   if (gruntTasks.length > 0) {
-    console.log(chalk.yellow(`Precommit checks: ${taskPaths.join(', ')}`));
+    console.log(chalk.yellow(`Precommit checks: ${gruntTasks.join(', ')}`));
     const task = execa('grunt', gruntTasks);
     // @ts-ignore
     const stream = task.stdout;

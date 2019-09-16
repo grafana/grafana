@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "6.4.0-alpha.44",
+  "version": "6.4.0-pre",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -28,7 +28,6 @@
     "@types/pretty-format": "20.0.1",
     "@types/react": "16.8.16",
     "@types/sinon": "^7.0.11",
-    "awesome-typescript-loader": "^5.2.1",
     "lodash": "^4.17.10",
     "pretty-format": "^24.5.0",
     "rollup": "1.6.0",
