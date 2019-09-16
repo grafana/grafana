@@ -58,7 +58,7 @@ describe('GraphCtrl', () => {
     });
 
     it('should set datapointsOutside', () => {
-      expect(ctx.ctrl.dataWarning.title).toBe('Data points outside time range');
+      expect(ctx.ctrl.dataWarning.title).toBe('Data outside time range');
     });
   });
 
@@ -94,7 +94,7 @@ describe('GraphCtrl', () => {
     });
 
     it('should set datapointsCount warning', () => {
-      expect(ctx.ctrl.dataWarning.title).toBe('No data points');
+      expect(ctx.ctrl.dataWarning.title).toBe('No data');
     });
   });
 });

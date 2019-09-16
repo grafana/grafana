@@ -54,6 +54,27 @@ export class Graph extends PureComponent<GraphProps> {
     }
   };
 
+  getYAxes(series: GraphSeriesXY[]) {
+    if (series.length === 0) {
+      return [{ show: true, min: -1, max: 1 }];
+    }
+    return uniqBy(
+      series.map(s => {
+        const index = s.yAxis ? s.yAxis.index : 1;
+        const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : null;
+        const tickDecimals = s.yAxis && !isNaN(s.yAxis.tickDecimals as number) ? s.yAxis.tickDecimals : null;
+        return {
+          show: true,
+          index,
+          position: index === 1 ? 'left' : 'right',
+          min,
+          tickDecimals,
+        };
+      }),
+      yAxisConfig => yAxisConfig.index
+    );
+  }
+
   draw() {
     if (this.element === null) {
       return;
@@ -79,22 +100,8 @@ export class Graph extends PureComponent<GraphProps> {
     const ticks = width / 100;
     const min = timeRange.from.valueOf();
     const max = timeRange.to.valueOf();
-    const yaxes = uniqBy(
-      series.map(s => {
-        const index = s.yAxis ? s.yAxis.index : 1;
-        const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : null;
-        const tickDecimals = s.yAxis && !isNaN(s.yAxis.tickDecimals as number) ? s.yAxis.tickDecimals : null;
+    const yaxes = this.getYAxes(series);
 
-        return {
-          show: true,
-          index,
-          position: index === 1 ? 'left' : 'right',
-          min,
-          tickDecimals,
-        };
-      }),
-      yAxisConfig => yAxisConfig.index
-    );
     const flotOptions: any = {
       legend: {
         show: false,
@@ -122,6 +129,7 @@ export class Graph extends PureComponent<GraphProps> {
         shadowSize: 0,
       },
       xaxis: {
+        show: true,
         mode: 'time',
         min: min,
         max: max,
@@ -157,10 +165,12 @@ export class Graph extends PureComponent<GraphProps> {
   }
 
   render() {
-    const { height } = this.props;
+    const { height, series } = this.props;
+    const noDataToBeDisplayed = series.length === 0;
     return (
       <div className="graph-panel">
         <div className="graph-panel__chart" ref={e => (this.element = e)} style={{ height }} />
+        {noDataToBeDisplayed && <div className="datapoints-warning">No data</div>}
       </div>
     );
   }
