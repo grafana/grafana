@@ -2,7 +2,7 @@
 import isNumber from 'lodash/isNumber';
 
 import { NullValueMode, Field } from '../types';
-import { Registry, RegistryItem } from './registry';
+import { Registry, RegistryItem } from './Registry';
 
 export enum ReducerID {
   sum = 'sum',

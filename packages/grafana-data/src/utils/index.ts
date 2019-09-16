@@ -1,4 +1,4 @@
-export * from './registry';
+export * from './Registry';
 export * from './deprecationWarning';
 export * from './csv';
 export * from './fieldReducer';

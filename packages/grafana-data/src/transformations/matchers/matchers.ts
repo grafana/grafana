@@ -10,7 +10,7 @@ import {
   FieldMatcher,
   FrameMatcher,
 } from '../../types/transformations';
-import { Registry } from '../../utils/registry';
+import { Registry } from '../../utils/Registry';
 
 export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
   return [

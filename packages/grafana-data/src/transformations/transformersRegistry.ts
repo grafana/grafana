@@ -1,5 +1,5 @@
 import { DataFrame } from '../types/dataFrame';
-import { Registry } from '../utils/registry';
+import { Registry } from '../utils/Registry';
 // Initalize the Registry
 
 import { appendTransformer, AppendOptions } from './transformers/append';

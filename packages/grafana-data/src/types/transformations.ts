@@ -1,5 +1,5 @@
 import { DataFrame, Field } from './dataFrame';
-import { RegistryItemWithOptions } from '../utils/registry';
+import { RegistryItemWithOptions } from '../utils/Registry';
 
 /**
  * Immutable data transformation
