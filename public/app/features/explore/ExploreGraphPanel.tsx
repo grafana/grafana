@@ -79,9 +79,9 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
     }
   };
 
-  onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
+  onChangeTime = (from: number, to: number) => {
     const { onUpdateTimeRange } = this.props;
-    onUpdateTimeRange(absoluteRange);
+    onUpdateTimeRange({ from, to });
   };
 
   renderGraph = () => {
@@ -136,7 +136,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               isStacked={isStacked}
               lineWidth={lineWidth}
               onSeriesToggle={onSeriesToggle}
-              onSelectionChanged={this.onChangeTime}
+              onHorizontalRegionSelected={this.onChangeTime}
             />
           );
         }}

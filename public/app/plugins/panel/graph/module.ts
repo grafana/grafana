@@ -12,7 +12,7 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
-import { getColorFromHexRgbOrName, LegacyResponseData, VariableSuggestion } from '@grafana/ui';
+import { getColorFromHexRgbOrName, VariableSuggestion } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -36,7 +36,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   subTabIndex: number;
   processor: DataProcessor;
   contextMenuCtrl: GraphContextMenuCtrl;
-  linkVariableSuggestions: VariableSuggestion[] = getDataLinksVariableSuggestions();
+  linkVariableSuggestions: VariableSuggestion[] = [];
 
   panelDefaults: any = {
     // datasource name, null = default datasource
@@ -147,7 +147,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
     this.events.on('render', this.onRender.bind(this));
-    this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-frames-received', this.onDataFramesReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
@@ -199,7 +198,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       panel: this.panel,
       range: this.range,
     });
-    this.onDataReceived(snapshotData);
+
+    const frames = getProcessedDataFrames(snapshotData);
+    this.onDataFramesReceived(frames);
   }
 
   onDataError(err: any) {
@@ -208,18 +209,14 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render([]);
   }
 
-  // This should only be called from the snapshot callback
-  onDataReceived(dataList: LegacyResponseData[]) {
-    this.onDataFramesReceived(getProcessedDataFrames(dataList));
-  }
-
-  // Directly support DataFrame skipping event callbacks
   onDataFramesReceived(data: DataFrame[]) {
     this.dataList = data;
     this.seriesList = this.processor.getSeriesList({
       dataList: this.dataList,
       range: this.range,
     });
+
+    this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
 
     this.dataWarning = null;
     const datapointsCount = this.seriesList.reduce((prev, series) => {
@@ -228,14 +225,14 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     if (datapointsCount === 0) {
       this.dataWarning = {
-        title: 'No data points',
-        tip: 'No datapoints returned from data query',
+        title: 'No data',
+        tip: 'No data returned from query',
       };
     } else {
       for (const series of this.seriesList) {
         if (series.isOutsideRange) {
           this.dataWarning = {
-            title: 'Data points outside time range',
+            title: 'Data outside time range',
             tip: 'Can be caused by timezone mismatch or missing time filter in query',
           };
           break;
@@ -341,6 +338,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   formatDate = (date: DateTimeInput, format?: string) => {
     return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
+  };
+
+  getDataFrameByRefId = (refId: string) => {
+    return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];
   };
 }
 

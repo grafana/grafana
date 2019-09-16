@@ -1,5 +1,6 @@
 // Libraries
-import { map } from 'rxjs/operators';
+import { map, throttleTime } from 'rxjs/operators';
+import { identity } from 'rxjs';
 // Services & Utils
 import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -436,9 +437,9 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       datasourceError,
       containerWidth,
       isLive: live,
-      queryIntervals,
       range,
       scanning,
+      queryResponse,
       querySubscription,
       history,
       mode,
@@ -459,14 +460,13 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     // Some datasource's query builders allow per-query interval limits,
     // but we're using the datasource interval limit for now
-    const interval = datasourceInstance.interval;
+    const minInterval = datasourceInstance.interval;
 
     stopQueryState(querySubscription);
 
     const queryOptions = {
-      interval,
+      minInterval,
       // This is used for logs streaming for buffer size.
-      // TODO: not sure if this makes sense for normal query when using both graph and table
       maxDataPoints: mode === ExploreMode.Logs ? 1000 : containerWidth,
       live,
       showingGraph,
@@ -474,12 +474,18 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
     };
 
     const datasourceId = datasourceInstance.meta.id;
-    const transaction = buildQueryTransaction(queries, queryOptions, range, queryIntervals, scanning);
+    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
 
     let firstResponse = true;
 
     const newQuerySub = runRequest(datasourceInstance, transaction.request)
-      .pipe(map(preProcessPanelData()))
+      .pipe(
+        // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
+        // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
+        // actually can see what is happening.
+        live ? throttleTime(500) : identity,
+        map((data: PanelData) => preProcessPanelData(data, queryResponse))
+      )
       .subscribe((data: PanelData) => {
         if (!data.error && firstResponse) {
           // Side-effect: Saving history in localstorage

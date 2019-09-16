@@ -106,7 +106,7 @@ describe('toDataFrame', () => {
 });
 
 describe('SerisData backwards compatibility', () => {
-  it('converts TimeSeries to series and back again', () => {
+  it('can convert TimeSeries to series and back again', () => {
     const timeseries = {
       target: 'Field Name',
       datapoints: [[100, 1], [200, 2]],
@@ -118,6 +118,17 @@ describe('SerisData backwards compatibility', () => {
     const roundtrip = toLegacyResponseData(series) as TimeSeries;
     expect(isDataFrame(roundtrip)).toBeFalsy();
     expect(roundtrip.target).toBe(timeseries.target);
+  });
+
+  it('can convert empty table to DataFrame then back to legacy', () => {
+    const table = {
+      columns: [],
+      rows: [],
+    };
+
+    const series = toDataFrame(table);
+    const roundtrip = toLegacyResponseData(series) as TableData;
+    expect(roundtrip.columns.length).toBe(0);
   });
 
   it('converts TableData to series and back again', () => {
@@ -135,7 +146,17 @@ describe('SerisData backwards compatibility', () => {
     expect(roundtrip).toMatchObject(table);
   });
 
-  it('converts DataFrame to TableData to series and back again', () => {
+  it('can convert empty TableData to DataFrame', () => {
+    const table = {
+      columns: [],
+      rows: [],
+    };
+
+    const series = toDataFrame(table);
+    expect(series.fields.length).toBe(0);
+  });
+
+  it('can convert DataFrame to TableData to series and back again', () => {
     const json: DataFrameDTO = {
       refId: 'Z',
       meta: {

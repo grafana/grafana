@@ -44,6 +44,7 @@ export class PanelQueryRunner {
   private subject?: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private transformations?: DataTransformerConfig[];
+  private lastResult?: PanelData;
 
   constructor() {
     this.subject = new ReplaySubject(1);
@@ -153,12 +154,10 @@ export class PanelQueryRunner {
       this.subscription.unsubscribe();
     }
 
-    // Makes sure everything is a proper DataFrame
-    const prepare = preProcessPanelData();
-
     this.subscription = observable.subscribe({
       next: (data: PanelData) => {
-        this.subject.next(prepare(data));
+        this.lastResult = preProcessPanelData(data, this.lastResult);
+        this.subject.next(this.lastResult);
       },
     });
   }

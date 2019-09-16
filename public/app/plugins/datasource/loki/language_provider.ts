@@ -86,10 +86,22 @@ export default class LokiLanguageProvider extends LanguageProvider {
    */
   start = () => {
     if (!this.startTask) {
-      this.startTask = this.fetchLogLabels(this.initialRange);
+      this.startTask = this.fetchLogLabels(this.initialRange).then(() => {
+        this.started = true;
+        return [];
+      });
     }
     return this.startTask;
   };
+
+  getLabelKeys(): string[] {
+    return this.labelKeys[EMPTY_SELECTOR];
+  }
+
+  async getLabelValues(key: string): Promise<string[]> {
+    await this.fetchLabelValues(key, this.initialRange);
+    return this.labelValues[EMPTY_SELECTOR][key];
+  }
 
   /**
    * Return suggestions based on input that can be then plugged into a typeahead dropdown.

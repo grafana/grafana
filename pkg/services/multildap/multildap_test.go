@@ -40,11 +40,12 @@ func TestMultiLDAP(t *testing.T) {
 				So(statuses[0].Port, ShouldEqual, 361)
 				So(statuses[0].Available, ShouldBeFalse)
 				So(statuses[0].Error, ShouldEqual, expectedErr)
+				So(mock.closeCalledTimes, ShouldEqual, 0)
 
 				teardown()
 			})
-			Convey("Shoudl get the LDAP server statuses", func() {
-				setup()
+			Convey("Should get the LDAP server statuses", func() {
+				mock := setup()
 
 				multi := New([]*ldap.ServerConfig{
 					{Host: "10.0.0.1", Port: 361},
@@ -57,6 +58,7 @@ func TestMultiLDAP(t *testing.T) {
 				So(statuses[0].Port, ShouldEqual, 361)
 				So(statuses[0].Available, ShouldBeTrue)
 				So(statuses[0].Error, ShouldBeNil)
+				So(mock.closeCalledTimes, ShouldEqual, 1)
 
 				teardown()
 			})

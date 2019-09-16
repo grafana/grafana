@@ -11,7 +11,7 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState, toLegacyResponseData } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -67,9 +67,6 @@ export const DEFAULT_RANGE = {
   to: 'now',
 };
 
-// Millies step for helper bar charts
-const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
-
 export const makeInitialUpdateState = (): ExploreUpdateState => ({
   datasource: false,
   queries: false,
@@ -93,7 +90,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   history: [],
   queries: [],
   initialized: false,
-  queryIntervals: { interval: '15s', intervalMs: DEFAULT_GRAPH_INTERVAL },
   range: {
     from: null,
     to: null,
@@ -122,7 +118,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
 
 export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
-  request: null,
+  request: {} as DataQueryRequest<DataQuery>,
   series: [],
   error: null,
 });
@@ -544,6 +540,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         range,
         absoluteRange,
+        update: makeInitialUpdateState(),
       };
     },
   })
@@ -617,9 +614,9 @@ export const processQueryResponse = (
   }
 
   const latency = request.endTime ? request.endTime - request.startTime : 0;
-  const processor = new ResultProcessor(state, series);
-  const graphResult = processor.getGraphResult() || state.graphResult; // don't replace results until we receive new results
-  const tableResult = processor.getTableResult() || state.tableResult || new TableModel(); // don't replace results until we receive new results
+  const processor = new ResultProcessor(state, series, request.intervalMs);
+  const graphResult = processor.getGraphResult();
+  const tableResult = processor.getTableResult();
   const logsResult = processor.getLogsResult();
 
   // Send legacy data to Angular editors

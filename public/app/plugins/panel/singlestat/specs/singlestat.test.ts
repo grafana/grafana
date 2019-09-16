@@ -45,7 +45,7 @@ describe('SingleStatCtrl', () => {
           // @ts-ignore
           ctx.ctrl = new SingleStatCtrl($scope, $injector, {} as LinkSrv, $sanitize);
           setupFunc();
-          ctx.ctrl.onDataReceived(ctx.input);
+          ctx.ctrl.onSnapshotLoad(ctx.input);
           ctx.data = ctx.ctrl.data;
         });
       };

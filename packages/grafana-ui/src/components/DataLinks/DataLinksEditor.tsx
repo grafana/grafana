@@ -19,7 +19,7 @@ interface DataLinksEditorProps {
 
 Prism.languages['links'] = {
   builtInVariable: {
-    pattern: /(\${\w+})/,
+    pattern: /(\${\S+?})/,
   },
 };
 
@@ -57,6 +57,7 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
             <DataLinkEditor
               key={index.toString()}
               index={index}
+              isLast={index === value.length - 1}
               value={link}
               onChange={onLinkChanged}
               onRemove={onRemove}

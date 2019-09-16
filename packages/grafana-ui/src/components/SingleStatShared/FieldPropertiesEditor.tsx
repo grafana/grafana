@@ -70,9 +70,9 @@ export const FieldPropertiesEditor: React.FC<Props> = ({ value, onChange, showMi
     <div>
       Template Variables:
       <br />
-      {'$' + VAR_SERIES_NAME}
+      {'${' + VAR_SERIES_NAME + '}'}
       <br />
-      {'$' + VAR_FIELD_NAME}
+      {'${' + VAR_FIELD_NAME + '}'}
       <br />
       {'$' + VAR_CELL_PREFIX + '{N}'} / {'$' + VAR_CALC}
     </div>

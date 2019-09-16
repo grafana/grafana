@@ -32,12 +32,13 @@ function convertTableToDataFrame(table: TableData): DataFrame {
       type: FieldType.other,
     };
   });
-  // Fill in the field values
+
   for (const row of table.rows) {
     for (let i = 0; i < fields.length; i++) {
       fields[i].values.buffer.push(row[i]);
     }
   }
+
   for (const f of fields) {
     const t = guessFieldTypeForField(f);
     if (t) {
@@ -50,7 +51,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     refId: table.refId,
     meta: table.meta,
     name: table.name,
-    length: fields[0].values.length,
+    length: table.rows.length,
   };
 }
 
@@ -258,9 +259,10 @@ export const toDataFrame = (data: any): DataFrame => {
 export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData => {
   const { fields } = frame;
 
-  const length = fields[0].values.length;
+  const rowCount = frame.length;
   const rows: any[][] = [];
-  for (let i = 0; i < length; i++) {
+
+  for (let i = 0; i < rowCount; i++) {
     const row: any[] = [];
     for (let j = 0; j < fields.length; j++) {
       row.push(fields[j].values.get(i));

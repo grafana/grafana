@@ -70,8 +70,8 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
     const { fieldOptions } = options;
     const { defaults } = fieldOptions;
     const suggestions = fieldOptions.values
-      ? getDataLinksVariableSuggestions()
-      : getCalculationValueDataLinksVariableSuggestions();
+      ? getDataLinksVariableSuggestions(this.props.data.series)
+      : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
 
     return (
       <>

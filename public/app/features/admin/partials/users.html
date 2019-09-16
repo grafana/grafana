@@ -30,27 +30,27 @@
       <tbody>
         <tr ng-repeat="user in ctrl.users">
           <td class="width-4 text-center link-td">
-            <a href="admin/users/edit/{{user.id}}">
+              <a href="admin/users/{{user.authLabel === 'LDAP' ? 'ldap/' : ''}}edit/{{user.id}}">
               <img class="filter-table__avatar" ng-src="{{user.avatarUrl}}"></img>
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}">
+              <a href="admin/users/{{user.authLabel === 'LDAP' ? 'ldap/' : ''}}edit/{{user.id}}">
               {{user.login}}
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}">
+              <a href="admin/users/{{user.authLabel === 'LDAP' ? 'ldap/' : ''}}edit/{{user.id}}">
               {{user.email}}
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}">
+            <a href="admin/users/{{user.authLabel === 'LDAP' ? 'ldap/' : ''}}edit/{{user.id}}">
               {{user.lastSeenAtAge}}
             </a>
           </td>
           <td class="link-td">
-            <a href="admin/users/edit/{{user.id}}">
+              <a href="admin/users/{{user.authLabel === 'LDAP' ? 'ldap/' : ''}}edit/{{user.id}}">
               <i class="fa fa-shield" ng-show="user.isAdmin" bs-tooltip="'Grafana Admin'"></i>
             </a>
           </td>

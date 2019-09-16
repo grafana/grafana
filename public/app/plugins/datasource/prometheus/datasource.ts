@@ -3,9 +3,9 @@ import _ from 'lodash';
 import $ from 'jquery';
 // Services & Utils
 import kbn from 'app/core/utils/kbn';
-import { dateMath, TimeRange, DateTime, AnnotationEvent } from '@grafana/data';
-import { Observable, from, of, merge } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { AnnotationEvent, dateMath, DateTime, LoadingState, TimeRange } from '@grafana/data';
+import { from, merge, Observable, of } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 
 import PrometheusMetricFindQuery from './metric_find_query';
 import { ResultTransformer } from './result_transformer';
@@ -15,20 +15,19 @@ import addLabelToQuery from './add_label_to_query';
 import { getQueryHints } from './query_hints';
 import { expandRecordingRules } from './language_utils';
 // Types
-import { PromQuery, PromOptions, PromQueryRequest, PromContext } from './types';
+import { PromContext, PromOptions, PromQuery, PromQueryRequest } from './types';
 import {
+  DataQueryError,
   DataQueryRequest,
+  DataQueryResponse,
+  DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
-  DataQueryError,
-  DataQueryResponseData,
-  DataQueryResponse,
 } from '@grafana/ui';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ExploreUrlState } from 'app/types';
-import { LoadingState } from '@grafana/data/src/types/data';
 
 export interface PromDataQueryResponse {
   data: {
@@ -227,16 +226,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
-      return of({ data: [] });
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
     }
 
-    const allInstant = queries.filter(query => query.instant).length === queries.length;
-    const allTimeSeries = queries.filter(query => !query.instant).length === queries.length;
+    let runningQueriesCount = queries.length;
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
       let observable: Observable<any> = null;
-      const state: LoadingState =
-        allInstant || allTimeSeries ? LoadingState.Done : query.instant ? LoadingState.Loading : LoadingState.Done;
 
       if (query.instant) {
         observable = from(this.performInstantQuery(query, end));
@@ -245,13 +244,16 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
 
       return observable.pipe(
+        // Decrease the counter here. We assume that each request returns only single value and then completes
+        // (should hold until there is some streaming requests involved).
+        tap(() => runningQueriesCount--),
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
           const data = this.processResult(response, query, target, queries.length);
           return {
             data,
             key: query.requestId,
-            state,
+            state: runningQueriesCount === 0 ? LoadingState.Done : LoadingState.Loading,
           } as DataQueryResponse;
         })
       );

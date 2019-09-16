@@ -18,10 +18,10 @@ describe('Process simple display values', () => {
     getDisplayProcessor(),
 
     // Add a simple option that is not used (uses a different base class)
-    getDisplayProcessor({ field: { min: 0, max: 100 } }),
+    getDisplayProcessor({ config: { min: 0, max: 100 } }),
 
     // Add a simple option that is not used (uses a different base class)
-    getDisplayProcessor({ field: { unit: 'locale' } }),
+    getDisplayProcessor({ config: { unit: 'locale' } }),
   ];
 
   it('support null', () => {
@@ -102,7 +102,7 @@ describe('Format value', () => {
   it('should return if value isNaN', () => {
     const valueMappings: ValueMapping[] = [];
     const value = 'N/A';
-    const instance = getDisplayProcessor({ field: { mappings: valueMappings } });
+    const instance = getDisplayProcessor({ config: { mappings: valueMappings } });
 
     const result = instance(value);
 
@@ -113,7 +113,7 @@ describe('Format value', () => {
     const valueMappings: ValueMapping[] = [];
     const value = '6';
 
-    const instance = getDisplayProcessor({ field: { decimals: 1, mappings: valueMappings } });
+    const instance = getDisplayProcessor({ config: { decimals: 1, mappings: valueMappings } });
 
     const result = instance(value);
 
@@ -126,7 +126,7 @@ describe('Format value', () => {
       { id: 1, operator: '', text: '1-9', type: MappingType.RangeToText, from: '1', to: '9' },
     ];
     const value = '10';
-    const instance = getDisplayProcessor({ field: { decimals: 1, mappings: valueMappings } });
+    const instance = getDisplayProcessor({ config: { decimals: 1, mappings: valueMappings } });
 
     const result = instance(value);
 
@@ -135,20 +135,20 @@ describe('Format value', () => {
 
   it('should set auto decimals, 1 significant', () => {
     const value = 3.23;
-    const instance = getDisplayProcessor({ field: { decimals: null } });
+    const instance = getDisplayProcessor({ config: { decimals: null } });
     expect(instance(value).text).toEqual('3.2');
   });
 
   it('should set auto decimals, 2 significant', () => {
     const value = 0.0245;
-    const instance = getDisplayProcessor({ field: { decimals: null } });
+    const instance = getDisplayProcessor({ config: { decimals: null } });
 
     expect(instance(value).text).toEqual('0.025');
   });
 
   it('should use override decimals', () => {
     const value = 100030303;
-    const instance = getDisplayProcessor({ field: { decimals: 2, unit: 'bytes' } });
+    const instance = getDisplayProcessor({ config: { decimals: 2, unit: 'bytes' } });
     expect(instance(value).text).toEqual('95.40 MiB');
   });
 
@@ -158,7 +158,7 @@ describe('Format value', () => {
       { id: 1, operator: '', text: 'elva', type: MappingType.ValueToText, value: '11' },
     ];
     const value = '11';
-    const instance = getDisplayProcessor({ field: { decimals: 1, mappings: valueMappings } });
+    const instance = getDisplayProcessor({ config: { decimals: 1, mappings: valueMappings } });
 
     expect(instance(value).text).toEqual('1-20');
   });
@@ -169,25 +169,25 @@ describe('Format value', () => {
 
   it('with value 1000 and unit short', () => {
     const value = 1000;
-    const instance = getDisplayProcessor({ field: { decimals: null, unit: 'short' } });
+    const instance = getDisplayProcessor({ config: { decimals: null, unit: 'short' } });
     expect(instance(value).text).toEqual('1.000 K');
   });
 
   it('with value 1200 and unit short', () => {
     const value = 1200;
-    const instance = getDisplayProcessor({ field: { decimals: null, unit: 'short' } });
+    const instance = getDisplayProcessor({ config: { decimals: null, unit: 'short' } });
     expect(instance(value).text).toEqual('1.200 K');
   });
 
   it('with value 1250 and unit short', () => {
     const value = 1250;
-    const instance = getDisplayProcessor({ field: { decimals: null, unit: 'short' } });
+    const instance = getDisplayProcessor({ config: { decimals: null, unit: 'short' } });
     expect(instance(value).text).toEqual('1.250 K');
   });
 
   it('with value 10000000 and unit short', () => {
     const value = 1000000;
-    const instance = getDisplayProcessor({ field: { decimals: null, unit: 'short' } });
+    const instance = getDisplayProcessor({ config: { decimals: null, unit: 'short' } });
     expect(instance(value).text).toEqual('1.000 Mil');
   });
 });
