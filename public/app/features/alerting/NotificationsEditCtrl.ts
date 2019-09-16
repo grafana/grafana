@@ -100,6 +100,13 @@ export class AlertNotificationEditCtrl {
     }
   }
 
+  deleteNotification() {
+    this.backendSrv.delete(`/api/alert-notifications/${this.model.id}`).then((res: any) => {
+      this.model = res;
+      this.$location.path('alerting/notifications');
+    });
+  }
+
   getNotifierTemplateId(type: string) {
     return `notifier-options-${type}`;
   }
