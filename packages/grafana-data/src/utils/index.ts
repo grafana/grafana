@@ -8,13 +8,7 @@ export * from './logs';
 export * from './labels';
 export * from './labels';
 export * from './object';
-export * from './moment_wrapper';
 export * from './thresholds';
 export * from './text';
 
 export { getMappedValue } from './valueMappings';
-
-// Names are too general to export globally
-import * as dateMath from './datemath';
-import * as rangeUtil from './rangeutil';
-export { dateMath, rangeUtil };

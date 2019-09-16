@@ -17,7 +17,7 @@ import {
   FieldDTO,
   DataFrameDTO,
 } from '../types/index';
-import { isDateTime } from '../utils/moment_wrapper';
+import { isDateTime } from '../datetime/moment_wrapper';
 import { deprecationWarning } from '../utils/deprecationWarning';
 import { ArrayVector } from '../vector/ArrayVector';
 import { MutableDataFrame } from './MutableDataFrame';

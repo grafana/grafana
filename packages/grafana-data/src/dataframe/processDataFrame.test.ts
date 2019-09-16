@@ -8,7 +8,7 @@ import {
   sortDataFrame,
 } from './processDataFrame';
 import { FieldType, TimeSeries, TableData, DataFrameDTO } from '../types/index';
-import { dateTime } from '../utils/moment_wrapper';
+import { dateTime } from '../datetime/moment_wrapper';
 import { MutableDataFrame } from './MutableDataFrame';
 
 describe('toDataFrame', () => {

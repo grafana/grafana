@@ -4,7 +4,7 @@ import groupBy from 'lodash/groupBy';
 import { RawTimeRange } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTime, DateTime } from '../utils/moment_wrapper';
+import { isDateTime, DateTime } from './moment_wrapper';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
   s: { display: 'second' },

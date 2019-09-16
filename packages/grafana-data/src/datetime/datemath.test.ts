@@ -2,7 +2,7 @@ import sinon, { SinonFakeTimers } from 'sinon';
 import each from 'lodash/each';
 
 import * as dateMath from './datemath';
-import { dateTime, DurationUnit, DateTime } from '../utils/moment_wrapper';
+import { dateTime, DurationUnit, DateTime } from './moment_wrapper';
 
 describe('DateMath', () => {
   const spans: DurationUnit[] = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
