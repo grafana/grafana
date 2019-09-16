@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { UserInfo } from './UserInfo';
-import { LdapUserPermissions } from './LdapUserPermissions';
+import { LdapUserPermissions } from './ldap/LdapUserPermissions';
 import { User } from 'app/types';
 
 interface Props {

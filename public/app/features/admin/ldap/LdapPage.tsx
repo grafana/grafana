@@ -4,12 +4,12 @@ import { connect } from 'react-redux';
 import { css } from 'emotion';
 import { NavModel } from '@grafana/data';
 import { FormField } from '@grafana/ui';
-import Page from '../../core/components/Page/Page';
-import { AlertBox } from '../../core/components/AlertBox/AlertBox';
+import Page from '../../../core/components/Page/Page';
+import { AlertBox } from '../../../core/components/AlertBox/AlertBox';
 import { LdapConnectionStatus } from './LdapConnectionStatus';
 import { LdapSyncInfo } from './LdapSyncInfo';
-import config from '../../core/config';
-import { getNavModel } from '../../core/selectors/navModel';
+import config from '../../../core/config';
+import { getNavModel } from '../../../core/selectors/navModel';
 import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo } from 'app/types';
 import {
   loadLdapState,
@@ -17,7 +17,7 @@ import {
   loadUserMapping,
   clearUserError,
   clearUserMappingInfo,
-} from './state/actions';
+} from '../state/actions';
 import { LdapUserInfo } from './LdapUserInfo';
 
 interface Props {

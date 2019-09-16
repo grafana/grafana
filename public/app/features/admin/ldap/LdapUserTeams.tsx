@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { css } from 'emotion';
 import { Tooltip } from '@grafana/ui';
-import { LdapTeam } from '../../types';
+import { LdapTeam } from '../../../types';
 
 interface Props {
   teams: LdapTeam[];

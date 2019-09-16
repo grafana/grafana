@@ -3,9 +3,9 @@ import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
 import { NavModel } from '@grafana/data';
-import Page from '../../core/components/Page/Page';
-import { AlertBox } from '../../core/components/AlertBox/AlertBox';
-import { getNavModel } from '../../core/selectors/navModel';
+import Page from '../../../core/components/Page/Page';
+import { AlertBox } from '../../../core/components/AlertBox/AlertBox';
+import { getNavModel } from '../../../core/selectors/navModel';
 import {
   AppNotificationSeverity,
   LdapError,
@@ -23,12 +23,12 @@ import {
   revokeAllSessions,
   loadLdapSyncStatus,
   syncUser,
-} from './state/actions';
+} from '../state/actions';
 import { LdapUserInfo } from './LdapUserInfo';
 import { getRouteParamsId } from 'app/core/selectors/location';
-import { UserSessions } from './UserSessions';
-import { UserInfo } from './UserInfo';
-import { UserSyncInfo } from './UserSyncInfo';
+import { UserSessions } from '../UserSessions';
+import { UserInfo } from '../UserInfo';
+import { UserSyncInfo } from '../UserSyncInfo';
 
 interface Props {
   navModel: NavModel;

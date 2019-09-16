@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { AlertBox } from '../../core/components/AlertBox/AlertBox';
+import { AlertBox } from '../../../core/components/AlertBox/AlertBox';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {

@@ -6,8 +6,8 @@ import { applyRouteRegistrationHandlers } from './registry';
 import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
-import LdapPage from 'app/features/admin/LdapPage';
-import LdapUserPage from 'app/features/admin/LdapUserPage';
+import LdapPage from 'app/features/admin/ldap/LdapPage';
+import LdapUserPage from 'app/features/admin/ldap/LdapUserPage';
 import config from 'app/core/config';
 import { route, ILocationProvider } from 'angular';
 
