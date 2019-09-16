@@ -1,6 +1,6 @@
 import Datasource from './datasource';
 
-import LokiStartPage from './components/LokiStartPage';
+import LokiCheatSheet from './components/LokiCheatSheet';
 import LokiQueryField from './components/LokiQueryField';
 import LokiQueryEditor from './components/LokiQueryEditor';
 import { LokiAnnotationsQueryCtrl } from './LokiAnnotationsQueryCtrl';
@@ -14,6 +14,6 @@ export {
   LokiQueryEditor as QueryEditor,
   LokiConfigCtrl as ConfigCtrl,
   LokiQueryField as ExploreQueryField,
-  LokiStartPage as ExploreStartPage,
+  LokiCheatSheet as ExploreStartPage,
   LokiAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
