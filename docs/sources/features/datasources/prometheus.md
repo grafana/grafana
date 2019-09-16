@@ -25,16 +25,17 @@ Grafana includes built-in support for Prometheus.
 
 ## Data source options
 
-| Name              | Description                                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| _Name_            | The data source name. This is how you refer to the data source in panels & queries.                                                   |
-| _Default_         | Default data source means that it will be pre-selected for new panels.                                                                |
-| _Url_             | The http protocol, ip and port of you Prometheus server (default port is usually 9090)                                                |
-| _Access_          | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
-| _Basic Auth_      | Enable basic authentication to the Prometheus data source.                                                                            |
-| _User_            | Name of your Prometheus user                                                                                                          |
-| _Password_        | Database user's password                                                                                                              |
-| _Scrape interval_ | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s.                                     |
+| Name                    | Description                                                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| _Name_                  | The data source name. This is how you refer to the data source in panels & queries.                                                   |
+| _Default_               | Default data source means that it will be pre-selected for new panels.                                                                |
+| _Url_                   | The http protocol, ip and port of you Prometheus server (default port is usually 9090)                                                |
+| _Access_                | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
+| _Basic Auth_            | Enable basic authentication to the Prometheus data source.                                                                            |
+| _User_                  | Name of your Prometheus user                                                                                                          |
+| _Password_              | Database user's password                                                                                                              |
+| _Scrape interval_       | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s.                                     |
+| _CustomQueryParameters_ | Add Custom parameters to Prometheus query url. For example `timeout`, `partial_response`, `dedup` or `max_source_resolution`.         |
 
 ## Query editor
 

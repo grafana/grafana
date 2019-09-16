@@ -25,6 +25,7 @@ export interface PromOptions extends DataSourceJsonData {
   queryTimeout: string;
   httpMethod: string;
   directUrl: string;
+  customQueryParameters?: string;
 }
 
 export interface PromQueryRequest extends PromQuery {
