@@ -38,9 +38,11 @@ const testContext = (options: any = {}) => {
     ],
   });
 
+  const emptyTable = toDataFrame({ name: 'empty-table', refId: 'A', fields: [] });
+
   const defaultOptions = {
     mode: ExploreMode.Metrics,
-    dataFrames: [timeSeries, table],
+    dataFrames: [timeSeries, table, emptyTable],
     graphResult: [] as TimeSeries[],
     tableResult: new TableModel(),
     logsResult: { hasUniqueLabels: false, rows: [] as LogRowModel[] },

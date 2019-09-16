@@ -120,6 +120,17 @@ describe('SerisData backwards compatibility', () => {
     expect(roundtrip.target).toBe(timeseries.target);
   });
 
+  it('converts empty table to DataFrame then back to legacy', () => {
+    const table = {
+      columns: [],
+      rows: [],
+    };
+
+    const series = toDataFrame(table);
+    const roundtrip = toLegacyResponseData(series);
+    expect(roundtrip.columns.length).toBe(0);
+  });
+
   it('converts TableData to series and back again', () => {
     const table = {
       columns: [{ text: 'a', unit: 'ms' }, { text: 'b', unit: 'zz' }, { text: 'c', unit: 'yy' }],
@@ -133,6 +144,16 @@ describe('SerisData backwards compatibility', () => {
     const roundtrip = toLegacyResponseData(series) as TimeSeries;
     expect(isTableData(roundtrip)).toBeTruthy();
     expect(roundtrip).toMatchObject(table);
+  });
+
+  it('Can convert empty TableData to DataFrame', () => {
+    const table = {
+      columns: [],
+      rows: [],
+    };
+
+    const series = toDataFrame(table);
+    expect(series.fields.length).toBe(0);
   });
 
   it('converts DataFrame to TableData to series and back again', () => {

@@ -45,7 +45,7 @@ export class ResultProcessor {
     const tables = onlyTables.map(frame => {
       const { fields } = frame;
       const fieldCount = fields.length;
-      const rowCount = fields[0].values.length;
+      const rowCount = frame.length;
 
       const columns = fields.map(field => ({
         text: field.name,
