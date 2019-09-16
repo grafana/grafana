@@ -1,15 +1,16 @@
 import { Reducer } from 'redux';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import { ActionOf } from 'app/core/redux/actionCreatorFactory';
-import { ldapReducer } from './reducers';
+import { ldapReducer, ldapUserReducer } from './reducers';
 import {
   ldapConnectionInfoLoadedAction,
   ldapSyncStatusLoadedAction,
   userMappingInfoLoadedAction,
   userMappingInfoFailedAction,
   ldapFailedAction,
+  userLoadedAction,
 } from './actions';
-import { LdapState, LdapUser } from 'app/types/ldap';
+import { LdapState, LdapUserState, LdapUser, User } from 'app/types';
 
 const makeInitialLdapState = (): LdapState => ({
   connectionInfo: [],
@@ -18,6 +19,13 @@ const makeInitialLdapState = (): LdapState => ({
   ldapError: null,
   connectionError: null,
   userError: null,
+});
+
+const makeInitialLdapUserState = (): LdapUserState => ({
+  user: null,
+  ldapUser: null,
+  ldapSyncInfo: null,
+  sessions: [],
 });
 
 const getTestUserMapping = (): LdapUser => ({
@@ -33,6 +41,15 @@ const getTestUserMapping = (): LdapUser => ({
   },
   roles: [],
   teams: [],
+});
+
+const getTestUser = (): User => ({
+  id: 1,
+  email: 'user@localhost',
+  login: 'user',
+  name: 'User',
+  avatarUrl: '',
+  label: '',
 });
 
 describe('LDAP page reducer', () => {
@@ -164,6 +181,29 @@ describe('LDAP page reducer', () => {
             title: 'User not found',
             body: 'Cannot find user',
           },
+        });
+    });
+  });
+});
+
+describe('Edit LDAP user page reducer', () => {
+  describe('When user loaded', () => {
+    it('should set user and clear user error', () => {
+      const initalState = {
+        ...makeInitialLdapUserState(),
+        userError: {
+          title: 'User not found',
+          body: 'Cannot find user',
+        },
+      };
+
+      reducerTester()
+        .givenReducer(ldapUserReducer as Reducer<LdapUserState, ActionOf<any>>, initalState)
+        .whenActionIsDispatched(userLoadedAction(getTestUser()))
+        .thenStateShouldEqual({
+          ...makeInitialLdapUserState(),
+          user: getTestUser(),
+          userError: null,
         });
     });
   });

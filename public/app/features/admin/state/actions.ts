@@ -101,7 +101,6 @@ export function syncUser(userId: number): ThunkResult<void> {
 export function loadLdapUserInfo(userId: number): ThunkResult<void> {
   return async dispatch => {
     try {
-      dispatch(clearUserError());
       const user = await getUser(userId);
       dispatch(userLoadedAction(user));
       dispatch(loadUserSessions(userId));

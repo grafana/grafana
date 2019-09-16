@@ -117,6 +117,7 @@ export const ldapUserReducer = reducerFactory(initialLdapUserState)
     mapper: (state, action) => ({
       ...state,
       user: action.payload,
+      userError: null,
     }),
   })
   .addMapper({
