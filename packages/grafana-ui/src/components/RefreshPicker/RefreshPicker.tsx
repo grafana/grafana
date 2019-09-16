@@ -19,6 +19,11 @@ export interface Props {
 }
 
 export class RefreshPicker extends PureComponent<Props> {
+  // Make it exported as static properties to be easier to access. The global exports need to be accessed by direct
+  // import of this source file which won't work if this was installed as package.
+  static offOption = offOption;
+  static liveOption = liveOption;
+
   constructor(props: Props) {
     super(props);
   }

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSourceApi, Collapse } from '@grafana/ui';
+import { DataSourceApi, Collapse, RefreshPicker } from '@grafana/ui';
 
 import {
   RawTimeRange,
@@ -26,7 +26,6 @@ import {
 import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
-import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { Logs } from './Logs';
 
 interface LogsContainerProps {
@@ -65,7 +64,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
   onStopLive = () => {
     const { exploreId } = this.props;
-    this.props.stopLive({ exploreId, refreshInterval: offOption.value });
+    this.props.stopLive({ exploreId, refreshInterval: RefreshPicker.offOption.value });
   };
 
   onPause = () => {
