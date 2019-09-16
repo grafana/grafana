@@ -1,7 +1,7 @@
 import { Field, DataFrame } from '../../types/dataFrame';
 import { FieldMatcherID, FrameMatcherID } from './ids';
 import { FieldMatcherInfo, FrameMatcherInfo } from '../../types/transformations';
-import { stringToJsRegex } from '../../utils/string';
+import { stringToJsRegex } from '../../text/string';
 
 // General Field matcher
 const fieldNameMacher: FieldMatcherInfo<string> = {
