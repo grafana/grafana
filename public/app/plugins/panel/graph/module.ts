@@ -225,14 +225,14 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     if (datapointsCount === 0) {
       this.dataWarning = {
-        title: 'No data points',
-        tip: 'No datapoints returned from data query',
+        title: 'No data',
+        tip: 'No data returned from query',
       };
     } else {
       for (const series of this.seriesList) {
         if (series.isOutsideRange) {
           this.dataWarning = {
-            title: 'Data points outside time range',
+            title: 'Data outside time range',
             tip: 'Can be caused by timezone mismatch or missing time filter in query',
           };
           break;

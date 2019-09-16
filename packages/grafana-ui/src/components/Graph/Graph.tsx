@@ -170,7 +170,7 @@ export class Graph extends PureComponent<GraphProps> {
     return (
       <div className="graph-panel">
         <div className="graph-panel__chart" ref={e => (this.element = e)} style={{ height }} />
-        {noDataToBeDisplayed && <div className="datapoints-warning">No data points</div>}
+        {noDataToBeDisplayed && <div className="datapoints-warning">No data</div>}
       </div>
     );
   }
