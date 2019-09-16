@@ -14,6 +14,7 @@ import {
   Tooltip,
   ButtonSelect,
   RefreshPicker,
+  SetInterval,
 } from '@grafana/ui';
 import { RawTimeRange, TimeZone, TimeRange, SelectableValue } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
@@ -35,39 +36,8 @@ import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
 import kbn from '../../core/utils/kbn';
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
-
-enum IconSide {
-  left = 'left',
-  right = 'right',
-}
-
-const createResponsiveButton = (options: {
-  splitted: boolean;
-  title: string;
-  onClick: () => void;
-  buttonClassName?: string;
-  iconClassName?: string;
-  iconSide?: IconSide;
-  disabled?: boolean;
-}) => {
-  const defaultOptions = {
-    iconSide: IconSide.left,
-  };
-  const props = { ...options, defaultOptions };
-  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide, disabled } = props;
-
-  return (
-    <button
-      className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`}
-      onClick={onClick}
-      disabled={disabled || false}
-    >
-      {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
-      <span className="btn-title">{!splitted ? title : ''}</span>
-      {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
-    </button>
-  );
-};
+import { ResponsiveButton } from './ResponsiveButton';
+import { RunButton } from './RunButton';
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -285,30 +255,25 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
 
             {exploreId === 'left' && !splitted ? (
               <div className="explore-toolbar-content-item">
-                {createResponsiveButton({
-                  splitted,
-                  title: 'Split',
-                  onClick: split,
-                  iconClassName: 'fa fa-fw fa-columns icon-margin-right',
-                  iconSide: IconSide.left,
-                  disabled: isLive,
-                })}
+                <ResponsiveButton
+                  splitted={splitted}
+                  title="Split"
+                  onClick={split}
+                  iconClassName="fa fa-fw fa-columns icon-margin-right"
+                  disabled={isLive}
+                />
               </div>
             ) : null}
-            <div className="explore-toolbar-content-item">
-              <ExploreTimeControls
-                exploreId={exploreId}
-                hasLiveOption={hasLiveOption}
-                isLive={isLive}
-                loading={loading}
-                range={range}
-                refreshInterval={refreshInterval}
-                timeZone={timeZone}
-                onChangeTime={onChangeTime}
-                onChangeRefreshInterval={this.onChangeRefreshInterval}
-                onRunQuery={this.onRunQuery}
-              />
-            </div>
+            {!isLive && (
+              <div className="explore-toolbar-content-item">
+                <ExploreTimeControls
+                  exploreId={exploreId}
+                  range={range}
+                  timeZone={timeZone}
+                  onChangeTime={onChangeTime}
+                />
+              </div>
+            )}
 
             <div className="explore-toolbar-content-item">
               <button className="btn navbar-button" onClick={this.onClearAll}>
@@ -316,27 +281,27 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               </button>
             </div>
             <div className="explore-toolbar-content-item">
-              {createResponsiveButton({
-                splitted,
-                title: 'Run Query',
-                onClick: this.onRunQuery,
-                buttonClassName: 'navbar-button--secondary',
-                iconClassName:
-                  loading || (isLive && !isPaused)
-                    ? 'fa fa-spinner fa-fw fa-spin run-icon'
-                    : 'fa fa-level-down fa-fw run-icon',
-                iconSide: IconSide.right,
-              })}
+              <RunButton
+                refreshInterval={refreshInterval}
+                onChangeRefreshInterval={this.onChangeRefreshInterval}
+                splitted={splitted}
+                loading={loading || (isLive && !isPaused)}
+                onRun={this.onRunQuery}
+                showDropdown={!isLive}
+              />
+              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
 
-            <LiveTailButton
-              isLive={isLive}
-              isPaused={isPaused}
-              start={this.startLive}
-              pause={this.pauseLive}
-              resume={this.resumeLive}
-              stop={this.stopLive}
-            />
+            {hasLiveOption && (
+              <LiveTailButton
+                isLive={isLive}
+                isPaused={isPaused}
+                start={this.startLive}
+                pause={this.pauseLive}
+                resume={this.resumeLive}
+                stop={this.stopLive}
+              />
+            )}
           </div>
         </div>
       </div>

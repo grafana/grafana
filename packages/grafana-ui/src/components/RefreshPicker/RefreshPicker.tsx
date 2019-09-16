@@ -11,11 +11,14 @@ export const isLive = (refreshInterval: string): boolean => refreshInterval === 
 
 export interface Props {
   intervals?: string[];
-  onRefresh: () => any;
+  onRefresh?: () => any;
   onIntervalChanged: (interval: string) => void;
   value?: string;
-  tooltip: string;
+  tooltip?: string;
   hasLiveOption?: boolean;
+  // You can supply your own refresh button element. In that case onRefresh and tooltip are ignored.
+  refreshButton?: React.ReactNode;
+  buttonSelectClassName?: string;
 }
 
 export class RefreshPicker extends PureComponent<Props> {
@@ -51,7 +54,7 @@ export class RefreshPicker extends PureComponent<Props> {
   };
 
   render() {
-    const { onRefresh, intervals, tooltip, value } = this.props;
+    const { onRefresh, intervals, tooltip, value, refreshButton, buttonSelectClassName } = this.props;
     const options = this.intervalsToOptions(intervals);
     const currentValue = value || '';
     const selectedValue = options.find(item => item.value === currentValue) || offOption;
@@ -65,13 +68,20 @@ export class RefreshPicker extends PureComponent<Props> {
     return (
       <div className={cssClasses}>
         <div className="refresh-picker-buttons">
-          <Tooltip placement="top" content={tooltip}>
-            <button className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0" onClick={onRefresh}>
-              <i className="fa fa-refresh" />
-            </button>
-          </Tooltip>
+          {refreshButton ? (
+            refreshButton
+          ) : (
+            <Tooltip placement="top" content={tooltip!}>
+              <button
+                className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0"
+                onClick={onRefresh!}
+              >
+                <i className="fa fa-refresh" />
+              </button>
+            </Tooltip>
+          )}
           <ButtonSelect
-            className="navbar-button--attached btn--radius-left-0$"
+            className={classNames('navbar-button--attached', buttonSelectClassName)}
             value={selectedValue}
             label={selectedValue.label}
             options={options}
