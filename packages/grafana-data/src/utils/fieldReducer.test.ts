@@ -3,9 +3,9 @@ import difference from 'lodash/difference';
 import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
 import { Field, FieldType } from '../types/index';
-import { MutableDataFrame } from './dataFrameHelper';
-import { ArrayVector } from './vector';
 import { guessFieldTypeFromValue } from './processDataFrame';
+import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { ArrayVector } from '../vector/ArrayVector';
 
 /**
  * Run a reducer and get back the value

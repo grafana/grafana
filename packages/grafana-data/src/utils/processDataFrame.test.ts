@@ -9,7 +9,7 @@ import {
 } from './processDataFrame';
 import { FieldType, TimeSeries, TableData, DataFrameDTO } from '../types/index';
 import { dateTime } from './moment_wrapper';
-import { MutableDataFrame } from './dataFrameHelper';
+import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {

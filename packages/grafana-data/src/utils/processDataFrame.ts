@@ -18,9 +18,10 @@ import {
   DataFrameDTO,
 } from '../types/index';
 import { isDateTime } from './moment_wrapper';
-import { ArrayVector, SortedVector } from './vector';
-import { MutableDataFrame } from './dataFrameHelper';
 import { deprecationWarning } from './deprecationWarning';
+import { ArrayVector } from '../vector/ArrayVector';
+import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { SortedVector } from '../vector/SortedVector';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {

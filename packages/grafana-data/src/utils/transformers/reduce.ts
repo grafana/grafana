@@ -5,8 +5,8 @@ import { alwaysFieldMatcher } from '../matchers/predicates';
 import { DataTransformerID } from './ids';
 import { ReducerID, fieldReducers, reduceField } from '../fieldReducer';
 import { KeyValue } from '../../types/data';
-import { ArrayVector } from '../vector';
 import { guessFieldTypeForField } from '../processDataFrame';
+import { ArrayVector } from '../../vector/ArrayVector';
 
 export interface ReduceTransformerOptions {
   reducers: ReducerID[];

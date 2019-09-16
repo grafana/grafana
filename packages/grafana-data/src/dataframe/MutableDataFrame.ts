@@ -1,111 +1,12 @@
-import { Field, FieldType, DataFrame, Vector, FieldDTO, DataFrameDTO } from '../types/dataFrame';
-import { Labels, QueryResultMeta, KeyValue } from '../types/data';
-import { guessFieldTypeForField, guessFieldTypeFromValue, toDataFrameDTO } from './processDataFrame';
-import { ArrayVector, MutableVector, vectorToArray, CircularVector } from './vector';
+import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
+import { KeyValue, QueryResultMeta, Labels } from '../types/data';
+import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from '../utils/processDataFrame';
 import isArray from 'lodash/isArray';
 import isString from 'lodash/isString';
-
-interface FieldWithIndex extends Field {
-  index: number;
-}
-export class FieldCache {
-  fields: FieldWithIndex[] = [];
-
-  private fieldByName: { [key: string]: FieldWithIndex } = {};
-  private fieldByType: { [key: string]: FieldWithIndex[] } = {};
-
-  constructor(data: DataFrame) {
-    this.fields = data.fields.map((field, idx) => ({
-      ...field,
-      index: idx,
-    }));
-
-    for (let i = 0; i < data.fields.length; i++) {
-      const field = data.fields[i];
-      // Make sure it has a type
-      if (field.type === FieldType.other) {
-        const t = guessFieldTypeForField(field);
-        if (t) {
-          field.type = t;
-        }
-      }
-      if (!this.fieldByType[field.type]) {
-        this.fieldByType[field.type] = [];
-      }
-      this.fieldByType[field.type].push({
-        ...field,
-        index: i,
-      });
-
-      if (this.fieldByName[field.name]) {
-        console.warn('Duplicate field names in DataFrame: ', field.name);
-      } else {
-        this.fieldByName[field.name] = { ...field, index: i };
-      }
-    }
-  }
-
-  getFields(type?: FieldType): FieldWithIndex[] {
-    if (!type) {
-      return [...this.fields]; // All fields
-    }
-    const fields = this.fieldByType[type];
-    if (fields) {
-      return [...fields];
-    }
-    return [];
-  }
-
-  hasFieldOfType(type: FieldType): boolean {
-    const types = this.fieldByType[type];
-    return types && types.length > 0;
-  }
-
-  getFirstFieldOfType(type: FieldType): FieldWithIndex | undefined {
-    const arr = this.fieldByType[type];
-    if (arr && arr.length > 0) {
-      return arr[0];
-    }
-    return undefined;
-  }
-
-  hasFieldNamed(name: string): boolean {
-    return !!this.fieldByName[name];
-  }
-
-  /**
-   * Returns the first field with the given name.
-   */
-  getFieldByName(name: string): FieldWithIndex | undefined {
-    return this.fieldByName[name];
-  }
-}
-
-function makeFieldParser(value: any, field: Field): (value: string) => any {
-  if (!field.type) {
-    if (field.name === 'time' || field.name === 'Time') {
-      field.type = FieldType.time;
-    } else {
-      field.type = guessFieldTypeFromValue(value);
-    }
-  }
-
-  if (field.type === FieldType.number) {
-    return (value: string) => {
-      return parseFloat(value);
-    };
-  }
-
-  // Will convert anything that starts with "T" to true
-  if (field.type === FieldType.boolean) {
-    return (value: string) => {
-      return !(value[0] === 'F' || value[0] === 'f' || value[0] === '0');
-    };
-  }
-
-  // Just pass the string back
-  return (value: string) => value;
-}
+import { makeFieldParser } from '../utils/fieldParser';
+import { MutableVector, Vector } from '../types/vector';
+import { ArrayVector } from '../vector/ArrayVector';
+import { vectorToArray } from '../vector/vectorToArray';
 
 export type MutableField<T = any> = Field<T, MutableVector<T>>;
 
@@ -378,25 +279,5 @@ export class MutableDataFrame<T = any> implements DataFrame, MutableVector<T> {
    */
   toJSON() {
     return toDataFrameDTO(this);
-  }
-}
-
-interface CircularOptions {
-  append?: 'head' | 'tail';
-  capacity?: number;
-}
-
-/**
- * This dataframe can have values constantly added, and will never
- * exceed the given capacity
- */
-export class CircularDataFrame<T = any> extends MutableDataFrame<T> {
-  constructor(options: CircularOptions) {
-    super(undefined, (buffer?: any[]) => {
-      return new CircularVector({
-        ...options,
-        buffer,
-      });
-    });
   }
 }
