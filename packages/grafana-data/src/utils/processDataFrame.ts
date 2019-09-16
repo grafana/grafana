@@ -51,7 +51,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     refId: table.refId,
     meta: table.meta,
     name: table.name,
-    length: fields.length ? fields[0].values.length : 0,
+    length: table.rows.length,
   };
 }
 
