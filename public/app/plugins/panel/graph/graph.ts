@@ -24,7 +24,14 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { getValueFormat, ContextMenuGroup, FieldDisplay, ContextMenuItem, getDisplayProcessor } from '@grafana/ui';
+import {
+  getValueFormat,
+  ContextMenuGroup,
+  FieldDisplay,
+  ContextMenuItem,
+  getDisplayProcessor,
+  getFlotPairsConstant,
+} from '@grafana/ui';
 import { provideTheme, getCurrentTheme } from 'app/core/utils/ConfigProvider';
 import { toUtc, LinkModelSupplier, DataFrameView } from '@grafana/data';
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
@@ -394,6 +401,10 @@ class GraphElement {
     for (let i = 0; i < data.length; i++) {
       const series = data[i];
       series.data = series.getFlotPairs(series.nullPointMode || this.panel.nullPointMode);
+
+      if (series.transform === 'constant') {
+        series.data = getFlotPairsConstant(series.data, this.ctrl.range);
+      }
 
       // if hidden remove points and disable stack
       if (this.ctrl.hiddenSeries[series.alias]) {
