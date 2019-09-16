@@ -7,7 +7,6 @@ interface Props {
   icon?: string;
   body?: ReactNode;
   severity: AppNotificationSeverity;
-  iconOnTop?: boolean;
   onClose?: () => void;
 }
 
@@ -24,8 +23,8 @@ function getIconFromSeverity(severity: AppNotificationSeverity): string {
   }
 }
 
-export const AlertBox: FunctionComponent<Props> = ({ title, icon, body, severity, iconOnTop, onClose }) => {
-  const alertClass = classNames('alert', `alert-${severity}`, { 'alert-icon-on-top': iconOnTop });
+export const AlertBox: FunctionComponent<Props> = ({ title, icon, body, severity, onClose }) => {
+  const alertClass = classNames('alert', `alert-${severity}`);
   return (
     <div className={alertClass}>
       <div className="alert-icon">

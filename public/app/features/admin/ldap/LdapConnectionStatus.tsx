@@ -78,7 +78,5 @@ export const LdapErrorBox: FC<LdapConnectionErrorProps> = ({ ldapConnectionInfo 
     </div>
   ));
 
-  return (
-    <AlertBox title="Connection error" iconOnTop={true} severity={AppNotificationSeverity.Error} body={errorElements} />
-  );
+  return <AlertBox title="Connection error" severity={AppNotificationSeverity.Error} body={errorElements} />;
 };
