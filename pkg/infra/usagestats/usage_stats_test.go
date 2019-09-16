@@ -271,6 +271,7 @@ func TestMetrics(t *testing.T) {
 			Cfg: setting.NewCfg(),
 		}
 		uss.Cfg.MetricsEndpointEnabled = true
+		uss.Cfg.MetricsEndpointDisableTotalStats = false
 		getSystemStatsWasCalled := false
 		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{}
@@ -278,14 +279,30 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
-		Convey("should not update stats when reporting is disabled", func() {
+		Convey("should not update stats when metrics is disabled and total stats is disabled", func() {
 			uss.Cfg.MetricsEndpointEnabled = false
+			uss.Cfg.MetricsEndpointDisableTotalStats = true
 			uss.updateTotalStats()
 			So(getSystemStatsWasCalled, ShouldBeFalse)
 		})
 
-		Convey("should update stats when reporting is enabled", func() {
+		Convey("should not update stats when metrics is disabled and total stats enabled", func() {
+			uss.Cfg.MetricsEndpointEnabled = false
+			uss.Cfg.MetricsEndpointDisableTotalStats = false
+			uss.updateTotalStats()
+			So(getSystemStatsWasCalled, ShouldBeFalse)
+		})
+
+		Convey("should not update stats when metrics is enabled and total stats disabled", func() {
 			uss.Cfg.MetricsEndpointEnabled = true
+			uss.Cfg.MetricsEndpointDisableTotalStats = true
+			uss.updateTotalStats()
+			So(getSystemStatsWasCalled, ShouldBeFalse)
+		})
+
+		Convey("should update stats when metrics is enabled and total stats enabled", func() {
+			uss.Cfg.MetricsEndpointEnabled = true
+			uss.Cfg.MetricsEndpointDisableTotalStats = false
 			uss.updateTotalStats()
 			So(getSystemStatsWasCalled, ShouldBeTrue)
 		})

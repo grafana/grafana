@@ -155,7 +155,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 }
 
 func (uss *UsageStatsService) updateTotalStats() {
-	if !uss.Cfg.MetricsEndpointEnabled {
+	if !uss.Cfg.MetricsEndpointEnabled || uss.Cfg.MetricsEndpointDisableTotalStats {
 		return
 	}
 
