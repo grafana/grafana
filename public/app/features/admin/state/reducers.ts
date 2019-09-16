@@ -27,7 +27,7 @@ const initialLdapUserState: LdapUserState = {
   sessions: [],
 };
 
-const ldapReducer = reducerFactory(initialLdapState)
+export const ldapReducer = reducerFactory(initialLdapState)
   .addMapper({
     filter: ldapConnectionInfoLoadedAction,
     mapper: (state, action) => ({
@@ -55,6 +55,7 @@ const ldapReducer = reducerFactory(initialLdapState)
     mapper: (state, action) => ({
       ...state,
       user: action.payload,
+      userError: null,
     }),
   })
   .addMapper({
@@ -81,7 +82,7 @@ const ldapReducer = reducerFactory(initialLdapState)
   })
   .create();
 
-const ldapUserReducer = reducerFactory(initialLdapUserState)
+export const ldapUserReducer = reducerFactory(initialLdapUserState)
   .addMapper({
     filter: userMappingInfoLoadedAction,
     mapper: (state, action) => ({

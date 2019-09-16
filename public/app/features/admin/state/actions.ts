@@ -60,8 +60,6 @@ export function loadLdapSyncStatus(): ThunkResult<void> {
 export function loadUserMapping(username: string): ThunkResult<void> {
   return async dispatch => {
     try {
-      dispatch(clearUserMappingInfoAction());
-      dispatch(clearUserError());
       const userInfo = await getUserInfo(username);
       dispatch(userMappingInfoLoadedAction(userInfo));
     } catch (error) {
@@ -69,6 +67,7 @@ export function loadUserMapping(username: string): ThunkResult<void> {
         title: error.data.message,
         body: error.data.error,
       };
+      dispatch(clearUserMappingInfoAction());
       dispatch(userMappingInfoFailedAction(userError));
     }
   };
