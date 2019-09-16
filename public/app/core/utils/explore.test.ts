@@ -11,10 +11,11 @@ import {
   refreshIntervalToSortOrder,
   SortOrder,
   sortLogsResult,
+  buildQueryTransaction,
 } from './explore';
 import { ExploreUrlState, ExploreMode } from 'app/types/explore';
 import store from 'app/core/store';
-import { LogsDedupStrategy, LogsModel, LogLevel } from '@grafana/data';
+import { LogsDedupStrategy, LogsModel, LogLevel, dateTime } from '@grafana/data';
 import { DataQueryError } from '@grafana/ui';
 import { liveOption, offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
@@ -425,6 +426,35 @@ describe('sortLogsResult', () => {
         rows: [firstRow, sameAsFirstRow, secondRow],
         hasUniqueLabels: false,
       });
+    });
+  });
+
+  describe('when buildQueryTransaction', () => {
+    it('it should calculate interval based on time range', () => {
+      const queries = [{ refId: 'A' }];
+      const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
+      const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+
+      expect(transaction.request.intervalMs).toEqual(60000);
+    });
+
+    it('it should calculate interval taking minInterval into account', () => {
+      const queries = [{ refId: 'A' }];
+      const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };
+      const range = { from: dateTime().subtract(1, 'm'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+
+      expect(transaction.request.intervalMs).toEqual(15000);
+    });
+
+    it('it should calculate interval taking maxDataPoints into account', () => {
+      const queries = [{ refId: 'A' }];
+      const queryOptions = { maxDataPoints: 10, minInterval: '15s' };
+      const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
+      const transaction = buildQueryTransaction(queries, queryOptions, range, false);
+
+      expect(transaction.request.interval).toEqual('2h');
     });
   });
 });
