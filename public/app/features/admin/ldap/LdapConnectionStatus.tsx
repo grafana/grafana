@@ -36,6 +36,8 @@ export const LdapConnectionStatus: FC<Props> = ({ ldapConnectionInfo }) => {
                 ))}
             </tbody>
           </table>
+        </div>
+        <div className="gf-form-group">
           <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
         </div>
       </div>
