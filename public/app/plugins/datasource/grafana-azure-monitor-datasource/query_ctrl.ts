@@ -92,6 +92,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
           metricDefinition: this.defaultDropdownValue,
           metricNamespace: this.defaultDropdownValue,
           metricName: this.defaultDropdownValue,
+          resourceName: this.defaultDropdownValue,
           dimensionFilter: '*',
           timeGrain: 'auto',
         },
