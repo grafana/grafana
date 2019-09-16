@@ -5,7 +5,7 @@ import { alwaysFieldMatcher } from '../matchers/predicates';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { ArrayVector } from '../../vector/ArrayVector';
 import { KeyValue } from '../../types/data';
-import { guessFieldTypeForField } from '../../utils/processDataFrame';
+import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldMatcher } from '../matchers/matchers';
 
 export interface ReduceTransformerOptions {

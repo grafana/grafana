@@ -8,8 +8,8 @@ import {
   sortDataFrame,
 } from './processDataFrame';
 import { FieldType, TimeSeries, TableData, DataFrameDTO } from '../types/index';
-import { dateTime } from './moment_wrapper';
-import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { dateTime } from '../utils/moment_wrapper';
+import { MutableDataFrame } from './MutableDataFrame';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {

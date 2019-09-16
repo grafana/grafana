@@ -1,7 +1,6 @@
 export * from './string';
 export * from './registry';
 export * from './markdown';
-export * from './processDataFrame';
 export * from './deprecationWarning';
 export * from './csv';
 export * from './fieldReducer';

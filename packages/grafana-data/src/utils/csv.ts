@@ -5,7 +5,7 @@ import isNumber from 'lodash/isNumber';
 
 // Types
 import { DataFrame, Field, FieldType, FieldConfig } from '../types';
-import { guessFieldTypeFromValue } from './processDataFrame';
+import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 
 export enum CSVHeaderStyle {

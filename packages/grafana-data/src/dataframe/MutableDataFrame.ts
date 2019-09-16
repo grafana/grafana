@@ -1,6 +1,6 @@
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
 import { KeyValue, QueryResultMeta, Labels } from '../types/data';
-import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from '../utils/processDataFrame';
+import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
 import isArray from 'lodash/isArray';
 import isString from 'lodash/isString';
 import { makeFieldParser } from '../utils/fieldParser';

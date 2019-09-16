@@ -1,6 +1,6 @@
 import { FieldCache } from './FieldCache';
-import { toDataFrame } from '../utils';
 import { FieldType } from '../types/dataFrame';
+import { toDataFrame } from './processDataFrame';
 
 describe('FieldCache', () => {
   it('when creating a new FieldCache from fields should be able to query cache', () => {

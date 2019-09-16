@@ -1,5 +1,4 @@
-import { toDataFrame } from '../../utils/index';
-import { FieldType } from '../../index';
+import { FieldType, toDataFrame } from '../../index';
 import { DataTransformerID } from './ids';
 import { transformDataFrame } from '../transformDataFrame';
 

@@ -1,6 +1,6 @@
 import { DataTransformerID } from './transformers/ids';
 import { transformersRegistry } from './transformersRegistry';
-import { toDataFrame } from '../utils/processDataFrame';
+import { toDataFrame } from '../dataframe/processDataFrame';
 import { ReducerID } from '../utils/fieldReducer';
 import { DataFrameView } from '../dataframe/DataFrameView';
 

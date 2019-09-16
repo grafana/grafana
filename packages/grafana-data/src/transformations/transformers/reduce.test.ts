@@ -1,6 +1,6 @@
 import { ReducerID } from '../../utils/fieldReducer';
 import { DataTransformerID } from './ids';
-import { toDataFrame, toDataFrameDTO } from '../../utils/processDataFrame';
+import { toDataFrame, toDataFrameDTO } from '../../dataframe/processDataFrame';
 import { transformDataFrame } from '../transformDataFrame';
 
 const seriesWithValues = toDataFrame({

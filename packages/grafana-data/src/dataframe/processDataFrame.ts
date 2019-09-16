@@ -17,10 +17,10 @@ import {
   FieldDTO,
   DataFrameDTO,
 } from '../types/index';
-import { isDateTime } from './moment_wrapper';
-import { deprecationWarning } from './deprecationWarning';
+import { isDateTime } from '../utils/moment_wrapper';
+import { deprecationWarning } from '../utils/deprecationWarning';
 import { ArrayVector } from '../vector/ArrayVector';
-import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { MutableDataFrame } from './MutableDataFrame';
 import { SortedVector } from '../vector/SortedVector';
 
 function convertTableToDataFrame(table: TableData): DataFrame {

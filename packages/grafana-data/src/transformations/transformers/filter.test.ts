@@ -1,6 +1,6 @@
 import { FieldType } from '../../types/dataFrame';
 import { DataTransformerID } from './ids';
-import { toDataFrame } from '../../utils/processDataFrame';
+import { toDataFrame } from '../../dataframe/processDataFrame';
 import { transformDataFrame } from '../transformDataFrame';
 import { FieldMatcherID } from '../matchers/ids';
 
