@@ -79,22 +79,26 @@ export class Graph extends PureComponent<GraphProps> {
     const ticks = width / 100;
     const min = timeRange.from.valueOf();
     const max = timeRange.to.valueOf();
-    const yaxes = uniqBy(
-      series.map(s => {
-        const index = s.yAxis ? s.yAxis.index : 1;
-        const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : null;
-        const tickDecimals = s.yAxis && !isNaN(s.yAxis.tickDecimals as number) ? s.yAxis.tickDecimals : null;
 
-        return {
-          show: true,
-          index,
-          position: index === 1 ? 'left' : 'right',
-          min,
-          tickDecimals,
-        };
-      }),
-      yAxisConfig => yAxisConfig.index
-    );
+    const noDataToBeDisplayed = series.length === 0;
+    const yaxes = noDataToBeDisplayed
+      ? [{ show: true, min: -1, max: 1 }]
+      : uniqBy(
+          series.map(s => {
+            const index = s.yAxis ? s.yAxis.index : 1;
+            const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : null;
+            const tickDecimals = s.yAxis && !isNaN(s.yAxis.tickDecimals as number) ? s.yAxis.tickDecimals : null;
+
+            return {
+              show: true,
+              index,
+              position: index === 1 ? 'left' : 'right',
+              min,
+              tickDecimals,
+            };
+          }),
+          yAxisConfig => yAxisConfig.index
+        );
     const flotOptions: any = {
       legend: {
         show: false,
@@ -122,6 +126,7 @@ export class Graph extends PureComponent<GraphProps> {
         shadowSize: 0,
       },
       xaxis: {
+        show: true,
         mode: 'time',
         min: min,
         max: max,
@@ -151,16 +156,17 @@ export class Graph extends PureComponent<GraphProps> {
     try {
       $.plot(this.element, series, flotOptions);
     } catch (err) {
-      console.log('Graph rendering error', err, flotOptions, series);
       throw new Error('Error rendering panel');
     }
   }
 
   render() {
-    const { height } = this.props;
+    const { height, series } = this.props;
+    const noDataToBeDisplayed = series.length === 0;
     return (
       <div className="graph-panel">
         <div className="graph-panel__chart" ref={e => (this.element = e)} style={{ height }} />
+        {noDataToBeDisplayed && <div className="datapoints-warning flot-temp-elem">No data points</div>}
       </div>
     );
   }

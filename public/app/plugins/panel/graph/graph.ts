@@ -286,6 +286,7 @@ class GraphElement {
   }
 
   drawHook(plot: any) {
+    console.log('this ctrl', this.ctrl);
     // add left axis labels
     if (this.panel.yaxes[0].label && this.panel.yaxes[0].show) {
       $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
