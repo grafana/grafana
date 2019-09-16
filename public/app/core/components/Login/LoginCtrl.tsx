@@ -9,7 +9,9 @@ import { getBackendSrv } from '@grafana/runtime';
 import { hot } from 'react-hot-loader';
 import appEvents from 'app/core/app_events';
 
-const isOauthEnabled = () => Object.keys(config.oauth).length > 0;
+const isOauthEnabled = () => {
+  return !!config.oauth && Object.keys(config.oauth).length > 0;
+};
 
 export interface FormModel {
   user: string;
