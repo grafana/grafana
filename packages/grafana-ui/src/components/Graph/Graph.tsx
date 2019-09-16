@@ -58,7 +58,7 @@ export class Graph extends PureComponent<GraphProps> {
     if (series.length === 0) {
       return [{ show: true, min: -1, max: 1 }];
     }
-    uniqBy(
+    return uniqBy(
       series.map(s => {
         const index = s.yAxis ? s.yAxis.index : 1;
         const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : null;
