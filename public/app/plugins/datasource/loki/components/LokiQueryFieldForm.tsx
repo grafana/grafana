@@ -6,7 +6,7 @@ import Cascader from 'rc-cascader';
 import { SlatePrism } from '@grafana/ui';
 
 // Components
-import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import QueryField, { TypeaheadInput } from 'app/features/explore/QueryField';
 // Utils & Services
 // dom also includes Element polyfills
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
@@ -19,6 +19,7 @@ import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus, DOMUtil } from
 import { AbsoluteTimeRange } from '@grafana/data';
 import { Grammar } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
+import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceStatus: DataSourceStatus) {
   if (datasourceStatus === DataSourceStatus.Disconnected) {
@@ -33,7 +34,7 @@ function getChooserText(hasSyntax: boolean, hasLogLabels: boolean, datasourceSta
   return 'Log labels';
 }
 
-function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: QueryFieldState): string {
+function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
   // Modify suggestion based on context
   switch (typeaheadContext) {
     case 'context-labels': {
