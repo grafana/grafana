@@ -264,6 +264,32 @@ func TestMetrics(t *testing.T) {
 			ts.Close()
 		})
 	})
+
+	Convey("Test update total stats", t, func() {
+		uss := &UsageStatsService{
+			Bus: bus.New(),
+			Cfg: setting.NewCfg(),
+		}
+		uss.Cfg.MetricsEndpointEnabled = true
+		getSystemStatsWasCalled := false
+		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+			query.Result = &models.SystemStats{}
+			getSystemStatsWasCalled = true
+			return nil
+		})
+
+		Convey("should not update stats when reporting is disabled", func() {
+			uss.Cfg.MetricsEndpointEnabled = false
+			uss.updateTotalStats()
+			So(getSystemStatsWasCalled, ShouldBeFalse)
+		})
+
+		Convey("should update stats when reporting is enabled", func() {
+			uss.Cfg.MetricsEndpointEnabled = true
+			uss.updateTotalStats()
+			So(getSystemStatsWasCalled, ShouldBeTrue)
+		})
+	})
 }
 
 func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
