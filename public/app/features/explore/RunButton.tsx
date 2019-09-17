@@ -34,7 +34,7 @@ export function RunButton(props: Props) {
       title="Run Query"
       onClick={onRun}
       buttonClassName="navbar-button--secondary btn--radius-right-0 "
-      iconClassName={loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon'}
+      iconClassName={loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-refresh fa-fw'}
     />
   );
 
