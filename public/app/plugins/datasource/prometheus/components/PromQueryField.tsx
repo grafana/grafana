@@ -285,7 +285,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       { history }
     );
 
-    // console.log('handleTypeahead', wrapperClasses, text, prefix, nextChar, labelKey, result.context);
+    // console.log('handleTypeahead', wrapperClasses, text, prefix, labelKey, result.context);
 
     return result;
   };

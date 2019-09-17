@@ -6,15 +6,13 @@ import { Editor as CoreEditor } from 'slate';
 import { Plugin as SlatePlugin } from '@grafana/slate-react';
 import { TypeaheadOutput, CompletionItem, CompletionItemGroup } from 'app/types';
 
-import { TypeaheadInput } from '../QueryField';
+import { QueryField, TypeaheadInput } from '../QueryField';
 import TOKEN_MARK from '@grafana/ui/src/slate-plugins/slate-prism/TOKEN_MARK';
 import { TypeaheadWithTheme, Typeahead } from '../Typeahead';
 
 import { makeFragment } from '@grafana/ui';
 
 export const TYPEAHEAD_DEBOUNCE = 100;
-
-let typeaheadRef: Typeahead;
 
 export interface SuggestionsState {
   groupedItems: CompletionItemGroup[];
@@ -36,12 +34,14 @@ export default function SuggestionsPlugin({
   onWillApplySuggestion,
   syntax,
   portalOrigin,
+  component,
 }: {
   onTypeahead: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   cleanText?: (text: string) => string;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
   syntax?: string;
   portalOrigin: string;
+  component: QueryField; // Need to attach typeaheadRef here
 }): SlatePlugin {
   return {
     onBlur: (event, editor, next) => {
@@ -88,7 +88,7 @@ export default function SuggestionsPlugin({
         case 'ArrowUp':
           if (hasSuggestions) {
             event.preventDefault();
-            typeaheadRef.moveMenuIndex(event.key === 'ArrowDown' ? 1 : -1);
+            component.typeaheadRef.moveMenuIndex(event.key === 'ArrowDown' ? 1 : -1);
             return;
           }
 
@@ -99,7 +99,7 @@ export default function SuggestionsPlugin({
           if (hasSuggestions) {
             event.preventDefault();
 
-            typeaheadRef.insertSuggestion();
+            component.typeaheadRef.insertSuggestion();
             return handleTypeahead(event, editor, next, onTypeahead, cleanText);
           }
 
@@ -186,7 +186,7 @@ export default function SuggestionsPlugin({
         <>
           {children}
           <TypeaheadWithTheme
-            menuRef={(el: Typeahead) => (typeaheadRef = el)}
+            menuRef={(el: Typeahead) => (component.typeaheadRef = el)}
             origin={portalOrigin}
             prefix={state.typeaheadPrefix}
             isOpen={!!state.groupedItems.length}
