@@ -1,4 +1,6 @@
 import React, { useContext } from 'react';
+import hoistNonReactStatics from 'hoist-non-react-statics';
+
 import { getTheme } from './getTheme';
 import { GrafanaThemeType, Themeable } from '../types/theme';
 
@@ -15,7 +17,7 @@ export const withTheme = <P extends Themeable>(Component: React.ComponentType<P>
   };
 
   WithTheme.displayName = `WithTheme(${Component.displayName})`;
-
+  hoistNonReactStatics(WithTheme, Component);
   return WithTheme;
 };
 
