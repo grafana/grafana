@@ -134,12 +134,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     const { exploreId } = this.props;
     // TODO referencing this from perspective of refresh picker when there is designated button for it now is not
     //  great. Needs another refactor.
-    this.props.changeRefreshIntervalAction({ exploreId, refreshInterval: (RefreshPicker as any).offOption.value });
+    this.props.changeRefreshIntervalAction({ exploreId, refreshInterval: RefreshPicker.offOption.value });
   };
 
   startLive = () => {
     const { exploreId } = this.props;
-    this.props.changeRefreshIntervalAction({ exploreId, refreshInterval: (RefreshPicker as any).liveOption.value });
+    this.props.changeRefreshIntervalAction({ exploreId, refreshInterval: RefreshPicker.liveOption.value });
   };
 
   pauseLive = () => {

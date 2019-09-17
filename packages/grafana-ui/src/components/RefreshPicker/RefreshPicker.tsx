@@ -111,4 +111,10 @@ export class RefreshPickerBase extends PureComponent<Props> {
   }
 }
 
-export const RefreshPicker = withTheme(RefreshPickerBase);
+export const RefreshPicker = withTheme<
+  Props,
+  {
+    offOption: typeof RefreshPickerBase.offOption;
+    liveOption: typeof RefreshPickerBase.liveOption;
+  }
+>(RefreshPickerBase);

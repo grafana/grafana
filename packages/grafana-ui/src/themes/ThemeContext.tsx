@@ -10,7 +10,7 @@ type Subtract<T, K> = Omit<T, keyof K>;
 // Use Grafana Dark theme by default
 export const ThemeContext = React.createContext(getTheme(GrafanaThemeType.Dark));
 
-export const withTheme = <P extends Themeable>(Component: React.ComponentType<P>) => {
+export const withTheme = <P extends Themeable, S extends {} = {}>(Component: React.ComponentType<P>) => {
   const WithTheme: React.FunctionComponent<Subtract<P, Themeable>> = props => {
     // @ts-ignore
     return <ThemeContext.Consumer>{theme => <Component {...props} theme={theme} />}</ThemeContext.Consumer>;
@@ -18,7 +18,8 @@ export const withTheme = <P extends Themeable>(Component: React.ComponentType<P>
 
   WithTheme.displayName = `WithTheme(${Component.displayName})`;
   hoistNonReactStatics(WithTheme, Component);
-  return WithTheme;
+  type Hoisted = typeof WithTheme & S;
+  return WithTheme as Hoisted;
 };
 
 export function useTheme() {

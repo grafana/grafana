@@ -64,7 +64,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
   onStopLive = () => {
     const { exploreId } = this.props;
-    this.props.stopLive({ exploreId, refreshInterval: (RefreshPicker as any).offOption.value });
+    this.props.stopLive({ exploreId, refreshInterval: RefreshPicker.offOption.value });
   };
 
   onPause = () => {
