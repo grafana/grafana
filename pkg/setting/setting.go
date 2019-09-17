@@ -243,6 +243,7 @@ type Cfg struct {
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
+	MetricsEndpointDisableTotalStats bool
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	DisableSanitizeHtml              bool
@@ -907,6 +908,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
