@@ -6,19 +6,14 @@ import { GrafanaTheme, GrafanaThemeType, useTheme } from '@grafana/ui';
 import tinycolor from 'tinycolor2';
 import { CSSTransition } from 'react-transition-group';
 
-const orangeDark = '#FF780A';
-const orangeDarkLighter = tinycolor(orangeDark)
-  .lighten(10)
-  .toString();
-const orangeLight = '#ED5700';
-const orangeLightLighter = tinycolor(orangeLight)
-  .lighten(10)
-  .toString();
-
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
-  const orange = theme.type === GrafanaThemeType.Dark ? orangeDark : orangeLight;
-  const orangeLighter = theme.type === GrafanaThemeType.Dark ? orangeDarkLighter : orangeLightLighter;
-  const textColor = theme.type === GrafanaThemeType.Dark ? theme.colors.white : theme.colors.black;
+  const orange = theme.type === GrafanaThemeType.Dark ? '#FF780A' : '#ED5700';
+  const orangeLighter = tinycolor(orange)
+    .lighten(10)
+    .toString();
+  const pulseTextColor = tinycolor(orange)
+    .desaturate(90)
+    .toString();
 
   return {
     noRightBorderStyle: css`
@@ -49,7 +44,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       label: isPaused;
       border-color: ${orange};
       background: transparent;
-      animation: pulse 2s ease-out 0s infinite normal forwards;
+      animation: pulse 3s ease-out 0s infinite normal forwards;
       &:focus {
         border-color: ${orange};
       }
@@ -59,13 +54,19 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       }
       @keyframes pulse {
         0% {
-          color: ${textColor};
+          color: ${pulseTextColor};
+          text-shadow: 0 0 0 ${orange};
         }
         50% {
           color: ${orange};
+          text-shadow: 0 0 4px
+            ${tinycolor(orange)
+              .setAlpha(0.7)
+              .toString()};
         }
         100% {
-          color: ${textColor};
+          color: ${pulseTextColor};
+          text-shadow: 0 0 0 ${orange};
         }
       }
     `,
