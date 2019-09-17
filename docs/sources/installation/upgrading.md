@@ -135,11 +135,6 @@ If you have text panels with script tags they will no longer work due to a new s
 Read more [here](/installation/configuration/#disable-sanitize-html) about this new setting.
 
 
-## Upgrading to v6.4
-
-One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row.  If you have a large number of region annotations the database migration may take a long time to complete.  See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.
-
-
 ### Authentication and security
 
 If your using Grafana's builtin, LDAP (without Auth Proxy) or OAuth authentication all users will be required to login upon the next visit after the upgrade.
@@ -165,7 +160,6 @@ login_maximum_lifetime_days = 1
 ```
 
 The default cookie name for storing the auth token is `grafana_session`. you can configure this with `login_cookie_name` in `[auth]` settings.
-
 
 ## Upgrading to v6.2
 
@@ -199,3 +193,7 @@ The semantics of `max concurrent shard requests` changed in Elasticsearch v7.0, 
 
 If you upgrade Elasticsearch to v7.0+ you should make sure to update the datasource configuration in Grafana so that version
 is `7.0+` and `max concurrent shard requests` properly configured. 256 was the default in pre v7.0 versions. In v7.0 and above 5 is the default.
+
+## Upgrading to v6.4
+
+One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row.  If you have a large number of region annotations the database migration may take a long time to complete.  See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.

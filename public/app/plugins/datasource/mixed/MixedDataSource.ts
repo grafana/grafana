@@ -1,19 +1,10 @@
 import cloneDeep from 'lodash/cloneDeep';
 import groupBy from 'lodash/groupBy';
-import map from 'lodash/map';
-import flatten from 'lodash/flatten';
-import filter from 'lodash/filter';
+import { from, of, Observable, merge } from 'rxjs';
 
-import {
-  DataSourceApi,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataStreamObserver,
-  DataSourceInstanceSettings,
-} from '@grafana/ui';
-
+import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { mergeMap, map, filter } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
@@ -22,43 +13,68 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     super(instanceSettings);
   }
 
-  async query(request: DataQueryRequest<DataQuery>, observer: DataStreamObserver): Promise<DataQueryResponse> {
+  query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     // Remove any invalid queries
     const queries = request.targets.filter(t => {
       return t.datasource !== MIXED_DATASOURCE_NAME;
     });
 
     if (!queries.length) {
-      return Promise.resolve({ data: [] }); // nothing
+      return of({ data: [] } as DataQueryResponse); // nothing
     }
 
-    const sets = groupBy(queries, 'datasource');
+    const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource');
+    const observables: Array<Observable<DataQueryResponse>> = [];
 
-    const promises = map(sets, (targets: DataQuery[]) => {
+    for (const key in sets) {
+      const targets = sets[key];
       const dsName = targets[0].datasource;
-      return getDataSourceSrv()
-        .get(dsName)
-        .then((ds: DataSourceApi) => {
-          const opt = cloneDeep(request);
+
+      const observable = from(getDataSourceSrv().get(dsName)).pipe(
+        map((dataSourceApi: DataSourceApi) => {
+          const datasourceRequest = cloneDeep(request);
 
           // Remove any unused hidden queries
-          if (!ds.meta.hiddenQueries) {
-            targets = filter(targets, (t: DataQuery) => {
-              return !t.hide;
-            });
-            if (targets.length === 0) {
-              return { data: [] };
-            }
+          let newTargets = targets.slice();
+          if (!dataSourceApi.meta.hiddenQueries) {
+            newTargets = newTargets.filter((t: DataQuery) => !t.hide);
           }
 
-          opt.targets = targets;
-          return ds.query(opt);
-        });
-    });
+          datasourceRequest.targets = newTargets;
+          datasourceRequest.requestId = `${dsName}${datasourceRequest.requestId || ''}`;
+          return {
+            dataSourceApi,
+            datasourceRequest,
+          };
+        })
+      );
 
-    return Promise.all(promises).then(results => {
-      return { data: flatten(map(results, 'data')) };
-    });
+      const noTargets = observable.pipe(
+        filter(({ datasourceRequest }) => datasourceRequest.targets.length === 0),
+        mergeMap(() => {
+          return of({ data: [] } as DataQueryResponse);
+        })
+      );
+
+      const hasTargets = observable.pipe(
+        filter(({ datasourceRequest }) => datasourceRequest.targets.length > 0),
+        mergeMap(({ dataSourceApi, datasourceRequest }) => {
+          return from(dataSourceApi.query(datasourceRequest)).pipe(
+            map((response: DataQueryResponse) => {
+              return {
+                ...response,
+                data: response.data || [],
+                key: `${dsName}${response.key || ''}`,
+              } as DataQueryResponse;
+            })
+          );
+        })
+      );
+
+      observables.push(merge(noTargets, hasTargets));
+    }
+
+    return merge(...observables);
   }
 
   testDatasource() {

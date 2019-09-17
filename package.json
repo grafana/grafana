@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "name": "grafana",
-  "version": "6.4.0-pre",
+  "version": "6.5.0-pre",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -26,6 +26,7 @@
     "@types/enzyme-adapter-react-16": "1.0.5",
     "@types/expect-puppeteer": "3.3.1",
     "@types/file-saver": "2.0.1",
+    "@types/hoist-non-react-statics": "3.3.0",
     "@types/is-hotkey": "0.1.1",
     "@types/jest": "24.0.13",
     "@types/jquery": "1.10.35",
@@ -163,10 +164,12 @@
     "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss}\" --write",
     "precommit": "grafana-toolkit precommit",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
-    "packages:prepare": "lerna run clean && npm run test && lerna version --tag-version-prefix=\"packages@\" -m \"Packages: publish %s\" --no-push",
+    "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
     "packages:build": "lerna run clean && lerna run build",
     "packages:publish": "lerna publish from-package --contents dist",
-    "packages:publishNext": "lerna publish from-package --contents dist --dist-tag next --yes"
+    "packages:publishLatest": "lerna publish from-package --contents dist --yes",
+    "packages:publishNext": "lerna publish from-package --contents dist --dist-tag next --yes",
+    "packages:publishCanary": "lerna publish from-package --contents dist --dist-tag canary --yes"
   },
   "husky": {
     "hooks": {
@@ -206,10 +209,11 @@
     "eventemitter3": "2.0.3",
     "fast-text-encoding": "^1.0.0",
     "file-saver": "1.3.8",
+    "hoist-non-react-statics": "3.3.0",
     "immutable": "3.8.2",
     "is-hotkey": "0.1.4",
     "jquery": "3.4.1",
-    "lodash": "4.17.14",
+    "lodash": "4.17.15",
     "marked": "0.6.2",
     "memoize-one": "5.1.1",
     "moment": "2.24.0",
@@ -219,7 +223,7 @@
     "papaparse": "4.6.3",
     "prismjs": "1.16.0",
     "prop-types": "15.7.2",
-    "rc-cascader": "0.14.0",
+    "rc-cascader": "0.17.5",
     "react": "16.8.6",
     "react-dom": "16.8.6",
     "react-grid-layout": "0.16.6",

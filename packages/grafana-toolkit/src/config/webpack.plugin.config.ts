@@ -16,7 +16,7 @@ interface WebpackConfigurationOptions {
 }
 type WebpackConfigurationGetter = (options: WebpackConfigurationOptions) => webpack.Configuration;
 
-const findModuleTs = (base: string, files?: string[], result?: string[]) => {
+export const findModuleFiles = (base: string, files?: string[], result?: string[]) => {
   files = files || fs.readdirSync(base);
   result = result || [];
 
@@ -24,9 +24,10 @@ const findModuleTs = (base: string, files?: string[], result?: string[]) => {
     files.forEach(file => {
       const newbase = path.join(base, file);
       if (fs.statSync(newbase).isDirectory()) {
-        result = findModuleTs(newbase, fs.readdirSync(newbase), result);
+        result = findModuleFiles(newbase, fs.readdirSync(newbase), result);
       } else {
-        if (file.indexOf('module.ts') > -1) {
+        const filename = path.basename(file);
+        if (/^module.tsx?$/.exec(filename)) {
           // @ts-ignore
           result.push(newbase);
         }
@@ -37,7 +38,7 @@ const findModuleTs = (base: string, files?: string[], result?: string[]) => {
 };
 
 const getModuleFiles = () => {
-  return findModuleTs(path.resolve(process.cwd(), 'src'));
+  return findModuleFiles(path.resolve(process.cwd(), 'src'));
 };
 
 const getManualChunk = (id: string) => {
@@ -206,11 +207,5 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       ],
     },
     optimization,
-    // optimization: {
-    //   splitChunks: {
-    //     chunks: 'all',
-    //     name: 'shared'
-    //   }
-    // }
   };
 };

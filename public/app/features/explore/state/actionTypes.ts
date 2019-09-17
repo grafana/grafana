@@ -1,4 +1,5 @@
 // Types
+import { Unsubscribable } from 'rxjs';
 import { Emitter } from 'app/core/core';
 import { DataQuery, DataSourceSelectItem, DataSourceApi, QueryFixAction, PanelData } from '@grafana/ui';
 
@@ -126,6 +127,11 @@ export interface QueryStartPayload {
 export interface QueryEndedPayload {
   exploreId: ExploreId;
   response: PanelData;
+}
+
+export interface QueryStoreSubscriptionPayload {
+  exploreId: ExploreId;
+  querySubscription: Unsubscribable;
 }
 
 export interface HistoryUpdatedPayload {
@@ -305,6 +311,10 @@ export const queryEndedAction = actionCreatorFactory<QueryEndedPayload>('explore
 
 export const queryStreamUpdatedAction = actionCreatorFactory<QueryEndedPayload>(
   'explore/QUERY_STREAM_UPDATED'
+).create();
+
+export const queryStoreSubscriptionAction = actionCreatorFactory<QueryStoreSubscriptionPayload>(
+  'explore/QUERY_STORE_SUBSCRIPTION'
 ).create();
 
 /**

@@ -18,7 +18,7 @@ import { getColorFromHexRgbOrName } from './namedColorsPalette';
 import { GrafanaTheme, GrafanaThemeType } from '../types/index';
 
 interface DisplayProcessorOptions {
-  field?: FieldConfig;
+  config?: FieldConfig;
 
   // Context
   isUtc?: boolean;
@@ -27,7 +27,7 @@ interface DisplayProcessorOptions {
 
 export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayProcessor {
   if (options && !_.isEmpty(options)) {
-    const field = options.field ? options.field : {};
+    const field = options.config ? options.config : {};
     const formatFunc = getValueFormat(field.unit || 'none');
 
     return (value: any) => {

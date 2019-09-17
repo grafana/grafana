@@ -3,6 +3,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/ui';
 export interface AzureMonitorQuery extends DataQuery {
   format: string;
   subscription: string;
+  subscriptions: string[];
   azureMonitor: AzureMetricQuery;
   azureLogAnalytics: AzureLogsQuery;
   //   appInsights: any;
@@ -26,9 +27,9 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   // App Insights
   appInsightsAppId?: string;
 }
-
-export interface AzureMetricQuery {
+export interface AzureMonitorQueryData {
   resourceGroup: string;
+  resourceGroups: string[];
   resourceName: string;
   metricDefinition: string;
   metricNamespace: string;
@@ -41,6 +42,12 @@ export interface AzureMetricQuery {
   dimension: string;
   dimensionFilter: string;
   alias: string;
+  locations: string[];
+}
+
+export interface AzureMetricQuery extends AzureMonitorQueryData {
+  queryMode: string;
+  data: { [queryMode: string]: AzureMonitorQueryData };
 }
 
 export interface AzureLogsQuery {
@@ -65,6 +72,24 @@ export interface AzureMonitorResourceGroupsResponse {
   };
   status: number;
   statusText: string;
+}
+
+export interface Resource {
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  kind: string;
+  subscriptionId: string;
+  group: string;
+}
+
+export interface AzureMonitorResourceResponse {
+  data: {
+    value: Resource[];
+    status: number;
+    statusText: string;
+  };
 }
 
 // Azure Log Analytics types
