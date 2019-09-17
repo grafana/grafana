@@ -688,6 +688,17 @@ Default setting for alert notification timeout. Default value is `30`
 
 Default setting for max attempts to sending alert notifications. Default value is `3`
 
+## [rendering]
+
+Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
+
+### server_url
+
+URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, will enable Grafana to render panels and dashboards to PNG-images using HTTP requests to an external service.
+
+### callback_url
+
+If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, e.g. http://grafana.domain/.
 
 ## [panels]
 
