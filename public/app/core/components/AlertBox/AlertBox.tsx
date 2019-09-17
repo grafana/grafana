@@ -15,6 +15,12 @@ function getIconFromSeverity(severity: AppNotificationSeverity): string {
     case AppNotificationSeverity.Error: {
       return 'fa fa-exclamation-triangle';
     }
+    case AppNotificationSeverity.Warning: {
+      return 'fa fa-exclamation-triangle';
+    }
+    case AppNotificationSeverity.Info: {
+      return 'fa fa-info-circle';
+    }
     case AppNotificationSeverity.Success: {
       return 'fa fa-check';
     }
