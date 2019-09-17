@@ -28,10 +28,10 @@ Some of those new capabilities can already be seen in this release, like sharing
 - **Graph:** Series override to turn constant (point) into a line
 - [**Dashboard:** Share query results between panels]({{< relref "#share-query-results-between-panels" >}})
 - [**Plugins:** Alpha version of grafana-toolkit]({{< relref "#alpha-version-of-grafana-toolkit" >}})
-- [**Plugins:** Query over multiple resources in Azure Monitor]({{< relref "#query-over-multiple-resources-in-azure-monitor" >}})
+- [**Azure:** Query over multiple resources in Azure Monitor]({{< relref "#query-over-multiple-resources-in-azure-monitor" >}})
 - [**ImageRendering:** PhantomJS deprecation]({{< relref "#phantomjs-deprecation" >}})
 - [**Docker:** Alpine based docker image]({{< relref "#alpine-based-docker-image" >}})
-- [**LDAP: Debug UI**]({{< relref "#ldap-debug-ui" >}})
+- [**LDAP:** Debug UI]({{< relref "#ldap-debug-ui" >}})
 - [**Enterprise**: Reporting]({{< relref "#reporting" >}})
 - [**Enterprise**: GitLab OAuth Team Sync support]({{< relref "#gitlab-oauth-team-sync-support" >}})
 - [**Enterprise**: Teams & LDAP Improvements]({{< relref "#ldap-teams" >}})
