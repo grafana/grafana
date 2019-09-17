@@ -26,12 +26,10 @@
   },
   "dependencies": {
     "@grafana/data": "^6.4.0-alpha",
-    "@grafana/slate-react": "0.22.9-grafana",
     "@torkelo/react-select": "2.1.1",
     "@types/react-color": "2.17.0",
     "classnames": "2.2.6",
     "d3": "5.9.1",
-    "immutable": "3.8.2",
     "jquery": "3.4.1",
     "lodash": "4.17.15",
     "moment": "2.24.0",
@@ -47,7 +45,6 @@
     "react-storybook-addon-props-combinations": "1.1.0",
     "react-transition-group": "2.6.1",
     "react-virtualized": "9.21.0",
-    "slate": "0.47.8",
     "tinycolor2": "1.4.1"
   },
   "devDependencies": {
@@ -68,8 +65,6 @@
     "@types/react-custom-scrollbars": "4.0.5",
     "@types/react-test-renderer": "16.8.1",
     "@types/react-transition-group": "2.0.16",
-    "@types/slate": "0.47.1",
-    "@types/slate-react": "0.22.5",
     "@types/storybook__addon-actions": "3.4.2",
     "@types/storybook__addon-info": "4.1.1",
     "@types/storybook__addon-knobs": "4.0.4",

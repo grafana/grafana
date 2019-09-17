@@ -149,7 +149,7 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       'emotion',
       'prismjs',
       'slate-plain-serializer',
-      '@grafana/slate-react',
+      'slate-react',
       'react',
       'react-dom',
       'react-redux',
