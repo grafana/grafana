@@ -3,7 +3,6 @@ import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
 import { AbsoluteTimeRange } from '@grafana/data';
 
 import LanguageProvider from 'app/plugins/datasource/loki/language_provider';
-
 import { useLokiSyntax } from './useLokiSyntax';
 import { CascaderOption } from 'app/plugins/datasource/loki/components/LokiQueryFieldForm';
 import { makeMockLokiDatasource } from '../mocks';

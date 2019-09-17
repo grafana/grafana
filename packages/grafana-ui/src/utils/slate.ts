@@ -1,22 +1,22 @@
-import { Block, Document, Text, Value, SchemaProperties } from 'slate';
+// @ts-ignore
+import { Block, Document, Text, Value } from 'slate';
 
-export const SCHEMA: SchemaProperties = {
-  document: {
-    nodes: [
-      {
-        match: [{ type: 'paragraph' }, { type: 'code_block' }, { type: 'code_line' }],
-      },
-    ],
+const SCHEMA = {
+  blocks: {
+    paragraph: 'paragraph',
+    codeblock: 'code_block',
+    codeline: 'code_line',
   },
   inlines: {},
+  marks: {},
 };
 
-export const makeFragment = (text: string, syntax?: string): Document => {
+export const makeFragment = (text: string, syntax?: string) => {
   const lines = text.split('\n').map(line =>
     Block.create({
       type: 'code_line',
       nodes: [Text.create(line)],
-    })
+    } as any)
   );
 
   const block = Block.create({
@@ -25,17 +25,18 @@ export const makeFragment = (text: string, syntax?: string): Document => {
     },
     type: 'code_block',
     nodes: lines,
-  });
+  } as any);
 
   return Document.create({
     nodes: [block],
   });
 };
 
-export const makeValue = (text: string, syntax?: string): Value => {
+export const makeValue = (text: string, syntax?: string) => {
   const fragment = makeFragment(text, syntax);
 
   return Value.create({
     document: fragment,
-  });
+    SCHEMA,
+  } as any);
 };

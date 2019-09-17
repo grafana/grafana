@@ -31,8 +31,7 @@
     "typeRoots": ["node_modules/@types", "public/app/types"],
     "paths": {
       "app": ["app"],
-      "sass": ["sass"],
-      "@grafana/slate-react": ["../node_modules/@types/slate-react"]
+      "sass": ["sass"]
     },
     "skipLibCheck": true,
     "preserveSymlinks": true

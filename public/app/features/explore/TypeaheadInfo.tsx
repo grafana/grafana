@@ -1,26 +1,29 @@
 import React, { PureComponent } from 'react';
-import { css, cx } from 'emotion';
-
 import { Themeable, selectThemeVariant } from '@grafana/ui';
+import { css, cx } from 'emotion';
 
 import { CompletionItem } from 'app/types/explore';
 
 interface Props extends Themeable {
-  item: CompletionItem;
+  initialItem: CompletionItem;
   width: number;
   height: number;
 }
 
-export class TypeaheadInfo extends PureComponent<Props> {
+interface State {
+  item: CompletionItem;
+}
+
+export class TypeaheadInfo extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
+    this.state = { item: props.initialItem };
   }
 
   getStyles = (visible: boolean) => {
     const { width, height, theme } = this.props;
     const selection = window.getSelection();
     const node = selection.anchorNode;
-
     if (!node) {
       return {};
     }
@@ -35,7 +38,7 @@ export class TypeaheadInfo extends PureComponent<Props> {
     return {
       typeaheadItem: css`
         label: type-ahead-item;
-        z-index: 500;
+        z-index: auto;
         padding: ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.md};
         border-radius: ${theme.border.radius.md};
         border: ${selectThemeVariant(
@@ -61,8 +64,16 @@ export class TypeaheadInfo extends PureComponent<Props> {
     };
   };
 
+  refresh = (item: CompletionItem) => {
+    this.setState({ item });
+  };
+
+  hide = () => {
+    this.setState({ item: null });
+  };
+
   render() {
-    const { item } = this.props;
+    const { item } = this.state;
     const visible = item && !!item.documentation;
     const label = item ? item.label : '';
     const documentation = item && item.documentation ? item.documentation : '';

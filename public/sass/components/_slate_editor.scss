@@ -30,9 +30,9 @@
   .typeahead {
     position: absolute;
     z-index: auto;
-    top: 100px;
-    left: 160px;
-    //opacity: 0;
+    top: -10000px;
+    left: -10000px;
+    opacity: 0;
     border-radius: $border-radius;
     border: $panel-border;
     max-height: calc(66vh);
@@ -43,7 +43,7 @@
     list-style: none;
     background: $panel-bg;
     color: $text-color;
-    //transition: opacity 0.4s ease-out;
+    transition: opacity 0.4s ease-out;
     box-shadow: $typeahead-shadow;
   }
 

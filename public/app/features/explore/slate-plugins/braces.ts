@@ -1,5 +1,5 @@
-import { Plugin } from '@grafana/slate-react';
-import { Editor as CoreEditor } from 'slate';
+// @ts-ignore
+import { Change } from 'slate';
 
 const BRACES: any = {
   '[': ']',
@@ -7,37 +7,34 @@ const BRACES: any = {
   '(': ')',
 };
 
-export default function BracesPlugin(): Plugin {
+export default function BracesPlugin() {
   return {
-    onKeyDown(event: KeyboardEvent, editor: CoreEditor, next: Function) {
-      const { value } = editor;
+    onKeyDown(event: KeyboardEvent, change: Change) {
+      const { value } = change;
 
       switch (event.key) {
         case '(':
         case '{':
         case '[': {
           event.preventDefault();
-          const {
-            start: { offset: startOffset, key: startKey },
-            end: { offset: endOffset, key: endKey },
-            focus: { offset: focusOffset },
-          } = value.selection;
-          const text = value.focusText.text;
+
+          const { startOffset, startKey, endOffset, endKey, focusOffset } = value.selection;
+          const text: string = value.focusText.text;
 
           // If text is selected, wrap selected text in parens
-          if (value.selection.isExpanded) {
-            editor
+          if (value.isExpanded) {
+            change
               .insertTextByKey(startKey, startOffset, event.key)
               .insertTextByKey(endKey, endOffset + 1, BRACES[event.key])
-              .moveEndBackward(1);
+              .moveEnd(-1);
           } else if (
             focusOffset === text.length ||
             text[focusOffset] === ' ' ||
             Object.values(BRACES).includes(text[focusOffset])
           ) {
-            editor.insertText(`${event.key}${BRACES[event.key]}`).moveBackward(1);
+            change.insertText(`${event.key}${BRACES[event.key]}`).move(-1);
           } else {
-            editor.insertText(event.key);
+            change.insertText(event.key);
           }
 
           return true;
@@ -45,15 +42,15 @@ export default function BracesPlugin(): Plugin {
 
         case 'Backspace': {
           const text = value.anchorText.text;
-          const offset = value.selection.anchor.offset;
+          const offset = value.anchorOffset;
           const previousChar = text[offset - 1];
           const nextChar = text[offset];
           if (BRACES[previousChar] && BRACES[previousChar] === nextChar) {
             event.preventDefault();
             // Remove closing brace if directly following
-            editor
-              .deleteBackward(1)
-              .deleteForward(1)
+            change
+              .deleteBackward()
+              .deleteForward()
               .focus();
             return true;
           }
@@ -63,8 +60,7 @@ export default function BracesPlugin(): Plugin {
           break;
         }
       }
-
-      return next();
+      return undefined;
     },
   };
 }

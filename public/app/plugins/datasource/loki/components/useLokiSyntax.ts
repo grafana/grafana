@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+// @ts-ignore
 import Prism from 'prismjs';
 import { DataSourceStatus } from '@grafana/ui/src/types/datasource';
 import { AbsoluteTimeRange } from '@grafana/data';

@@ -1,8 +1,6 @@
-import { Grammar } from 'prismjs';
-
 /* tslint:disable max-line-length */
 
-const tokenizer: Grammar = {
+const tokenizer = {
   comment: {
     pattern: /(^|[^\n])#.*/,
     lookbehind: true,

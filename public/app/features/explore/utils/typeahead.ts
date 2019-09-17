@@ -1,13 +1,14 @@
 import { GrafanaTheme } from '@grafana/ui';
 import { default as calculateSize } from 'calculate-size';
 
-import { CompletionItemGroup, CompletionItem, CompletionItemKind } from 'app/types';
+import { CompletionItemGroup, CompletionItem } from 'app/types';
+import { GROUP_TITLE_KIND } from '../TypeaheadItem';
 
 export const flattenGroupItems = (groupedItems: CompletionItemGroup[]): CompletionItem[] => {
   return groupedItems.reduce((all, current) => {
     const titleItem: CompletionItem = {
       label: current.label,
-      kind: CompletionItemKind.GroupTitle,
+      kind: GROUP_TITLE_KIND,
     };
     return all.concat(titleItem, current.items);
   }, []);
@@ -55,7 +56,8 @@ export const calculateListWidth = (longestLabelWidth: number, theme: GrafanaThem
 export const calculateListHeight = (itemHeight: number, allItems: CompletionItem[]) => {
   const numberOfItemsToShow = Math.min(allItems.length, 10);
   const minHeight = 100;
-  const totalHeight = numberOfItemsToShow * itemHeight;
+  const itemsInView = allItems.slice(0, numberOfItemsToShow);
+  const totalHeight = itemsInView.length * itemHeight;
   const listHeight = Math.max(totalHeight, minHeight);
 
   return listHeight;
