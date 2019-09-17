@@ -19,7 +19,7 @@ The query language and capabilities of each Data Source are obviously very diffe
 
 ## Supported Data Sources
 
-The following datasources are officially supported:
+The following data sources are officially supported:
 
 * [Graphite]({{< relref "graphite.md" >}})
 * [Prometheus]({{< relref "prometheus.md" >}})
