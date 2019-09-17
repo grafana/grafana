@@ -210,6 +210,9 @@ available suggestions:
 
 #### Built-in variables
 
+> These variables changed in 6.4 so if you have an older version of Grafana please use the version picker to select
+docs for an older version of Grafana.
+
 ``__url_time_range`` - current dashboard's time range (i.e. ``?from=now-6h&to=now``)
 ``__from`` - current dashboard's time range from value
 ``__to`` - current dashboard's time range to value
@@ -238,7 +241,6 @@ Value specific variables are available under ``__value`` namespace:
 ``__value.text`` - text representation of a value
 
 ``__value.calc`` - calculation name if the value is result of calculation
-
 
 
 #### Template variables
