@@ -213,7 +213,7 @@ func processEnvChg(sess *tdsSession) {
 
 			// SQL Collation data should contain 5 bytes in length
 			if collationSize != 5 {
-				badStreamPanicf("Invalid SQL Collation size value returned from server: %s", collationSize)
+				badStreamPanicf("Invalid SQL Collation size value returned from server: %d", collationSize)
 			}
 
 			// 4 bytes, contains: LCID ColFlags Version
@@ -385,11 +385,9 @@ func processEnvChg(sess *tdsSession) {
 	}
 }
 
-type returnStatus int32
-
 // http://msdn.microsoft.com/en-us/library/dd358180.aspx
-func parseReturnStatus(r *tdsBuffer) returnStatus {
-	return returnStatus(r.int32())
+func parseReturnStatus(r *tdsBuffer) ReturnStatus {
+	return ReturnStatus(r.int32())
 }
 
 func parseOrder(r *tdsBuffer) (res orderStruct) {
@@ -640,7 +638,7 @@ func processSingleResponse(sess *tdsSession, ch chan tokenStruct, outs map[strin
 			if len(nv.Name) > 0 {
 				name := nv.Name[1:] // Remove the leading "@".
 				if ov, has := outs[name]; has {
-					err = scanIntoOut(nv.Value, ov)
+					err = scanIntoOut(name, nv.Value, ov)
 					if err != nil {
 						fmt.Println("scan error", err)
 						ch <- err
@@ -651,28 +649,6 @@ func processSingleResponse(sess *tdsSession, ch chan tokenStruct, outs map[strin
 			badStreamPanic(fmt.Errorf("unknown token type returned: %v", token))
 		}
 	}
-}
-
-func scanIntoOut(fromServer, scanInto interface{}) error {
-	switch fs := fromServer.(type) {
-	case int64:
-		switch si := scanInto.(type) {
-		case *int64:
-			*si = fs
-		default:
-			return fmt.Errorf("unsupported scan into type %[1]T for server type %[2]T", scanInto, fromServer)
-		}
-		return nil
-	case string:
-		switch si := scanInto.(type) {
-		case *string:
-			*si = fs
-		default:
-			return fmt.Errorf("unsupported scan into type %[1]T for server type %[2]T", scanInto, fromServer)
-		}
-		return nil
-	}
-	return fmt.Errorf("unsupported type from server %[1]T=%[1]v", fromServer)
 }
 
 type parseRespIter byte

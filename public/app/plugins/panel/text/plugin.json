@@ -3,7 +3,7 @@
   "name": "Text",
   "id": "text",
 
-  "dataFormats": [],
+  "skipDataQuery": true,
 
   "info": {
     "author": {

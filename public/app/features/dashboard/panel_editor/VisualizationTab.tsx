@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Utils & Services
-import { AngularComponent, getAngularLoader } from 'app/core/services/AngularLoader';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
@@ -16,15 +16,19 @@ import { FadeIn } from 'app/core/components/Animations/FadeIn';
 // Types
 import { PanelModel } from '../state';
 import { DashboardModel } from '../state';
-import { PanelPlugin } from 'app/types/plugins';
 import { VizPickerSearch } from './VizPickerSearch';
+import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
+import { PanelPlugin, PanelPluginMeta, PanelData } from '@grafana/ui';
+import { PanelCtrl } from 'app/plugins/sdk';
+import { Unsubscribable } from 'rxjs';
+import { LoadingState } from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   angularPanel?: AngularComponent;
-  onTypeChanged: (newType: PanelPlugin) => void;
+  onPluginTypeChange: (newType: PanelPluginMeta) => void;
   updateLocation: typeof updateLocation;
   urlOpenVizPicker: boolean;
 }
@@ -34,13 +38,15 @@ interface State {
   searchQuery: string;
   scrollTop: number;
   hasBeenFocused: boolean;
+  data: PanelData;
 }
 
 export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
   angularOptions: AngularComponent;
+  querySubscription: Unsubscribable;
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -48,12 +54,16 @@ export class VisualizationTab extends PureComponent<Props, State> {
       hasBeenFocused: false,
       searchQuery: '',
       scrollTop: 0,
+      data: {
+        state: LoadingState.NotStarted,
+        series: [],
+      },
     };
   }
 
   getReactPanelOptions = () => {
-    const { panel, plugin } = this.props;
-    return panel.getOptions(plugin.reactPlugin.defaults);
+    const { panel } = this.props;
+    return panel.getOptions();
   };
 
   renderPanelOptions() {
@@ -63,21 +73,29 @@ export class VisualizationTab extends PureComponent<Props, State> {
       return <div ref={element => (this.element = element)} />;
     }
 
-    if (plugin.reactPlugin) {
-      const PanelEditor = plugin.reactPlugin.editor;
-
-      if (PanelEditor) {
-        return <PanelEditor options={this.getReactPanelOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
-      }
+    if (plugin.editor) {
+      return (
+        <plugin.editor
+          data={this.state.data}
+          options={this.getReactPanelOptions()}
+          onOptionsChange={this.onPanelOptionsChanged}
+        />
+      );
     }
 
     return <p>Visualization has no options</p>;
   }
 
   componentDidMount() {
+    const { panel } = this.props;
+    const queryRunner = panel.getQueryRunner();
     if (this.shouldLoadAngularOptions()) {
       this.loadAngularOptions();
     }
+
+    this.querySubscription = queryRunner.getData().subscribe({
+      next: (data: PanelData) => this.setState({ data }),
+    });
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -107,8 +125,9 @@ export class VisualizationTab extends PureComponent<Props, State> {
       return;
     }
 
-    const panelCtrl = scope.$$childHead.ctrl;
+    const panelCtrl: PanelCtrl = scope.$$childHead.ctrl;
     panelCtrl.initEditMode();
+    panelCtrl.onPluginTypeChange = this.onPluginTypeChange;
 
     let template = '';
     for (let i = 0; i < panelCtrl.editorTabs.length; i++) {
@@ -175,11 +194,12 @@ export class VisualizationTab extends PureComponent<Props, State> {
   renderToolbar = (): JSX.Element => {
     const { plugin } = this.props;
     const { isVizPickerOpen, searchQuery } = this.state;
+    const { meta } = plugin;
 
     if (isVizPickerOpen) {
       return (
         <VizPickerSearch
-          plugin={plugin}
+          plugin={meta}
           searchQuery={searchQuery}
           onChange={this.onSearchQueryChange}
           onClose={this.onCloseVizPicker}
@@ -187,24 +207,27 @@ export class VisualizationTab extends PureComponent<Props, State> {
       );
     } else {
       return (
-        <div className="toolbar__main" onClick={this.onOpenVizPicker}>
-          <img className="toolbar__main-image" src={plugin.info.logos.small} />
-          <div className="toolbar__main-name">{plugin.name}</div>
-          <i className="fa fa-caret-down" />
-        </div>
+        <>
+          <div className="toolbar__main" onClick={this.onOpenVizPicker}>
+            <img className="toolbar__main-image" src={meta.info.logos.small} />
+            <div className="toolbar__main-name">{meta.name}</div>
+            <i className="fa fa-caret-down" />
+          </div>
+          <PluginStateinfo state={meta.state} />
+        </>
       );
     }
   };
 
-  onTypeChanged = (plugin: PanelPlugin) => {
-    if (plugin.id === this.props.plugin.id) {
+  onPluginTypeChange = (plugin: PanelPluginMeta) => {
+    if (plugin.id === this.props.plugin.meta.id) {
       this.setState({ isVizPickerOpen: false });
     } else {
-      this.props.onTypeChanged(plugin);
+      this.props.onPluginTypeChange(plugin);
     }
   };
 
-  renderHelp = () => <PluginHelp plugin={this.props.plugin} type="help" />;
+  renderHelp = () => <PluginHelp plugin={this.props.plugin.meta} type="help" />;
 
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
@@ -214,6 +237,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
   render() {
     const { plugin } = this.props;
     const { isVizPickerOpen, searchQuery, scrollTop } = this.state;
+    const { meta } = plugin;
 
     const pluginHelp: EditorToolbarView = {
       heading: 'Help',
@@ -232,8 +256,8 @@ export class VisualizationTab extends PureComponent<Props, State> {
         <>
           <FadeIn in={isVizPickerOpen} duration={200} unmountOnExit={true} onExited={this.clearQuery}>
             <VizTypePicker
-              current={plugin}
-              onTypeChanged={this.onTypeChanged}
+              current={meta}
+              onTypeChange={this.onPluginTypeChange}
               searchQuery={searchQuery}
               onClose={this.onCloseVizPicker}
             />

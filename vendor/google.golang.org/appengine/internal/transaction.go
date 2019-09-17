@@ -54,9 +54,9 @@ type transaction struct {
 
 var ErrConcurrentTransaction = errors.New("internal: concurrent transaction")
 
-func RunTransactionOnce(c netcontext.Context, f func(netcontext.Context) error, xg bool) error {
+func RunTransactionOnce(c netcontext.Context, f func(netcontext.Context) error, xg bool, readOnly bool, previousTransaction *pb.Transaction) (*pb.Transaction, error) {
 	if transactionFromContext(c) != nil {
-		return errors.New("nested transactions are not supported")
+		return nil, errors.New("nested transactions are not supported")
 	}
 
 	// Begin the transaction.
@@ -67,8 +67,16 @@ func RunTransactionOnce(c netcontext.Context, f func(netcontext.Context) error, 
 	if xg {
 		req.AllowMultipleEg = proto.Bool(true)
 	}
+	if previousTransaction != nil {
+		req.PreviousTransaction = previousTransaction
+	}
+	if readOnly {
+		req.Mode = pb.BeginTransactionRequest_READ_ONLY.Enum()
+	} else {
+		req.Mode = pb.BeginTransactionRequest_READ_WRITE.Enum()
+	}
 	if err := Call(c, "datastore_v3", "BeginTransaction", req, &t.transaction); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Call f, rolling back the transaction if f returns a non-nil error, or panics.
@@ -83,7 +91,7 @@ func RunTransactionOnce(c netcontext.Context, f func(netcontext.Context) error, 
 		Call(c, "datastore_v3", "Rollback", &t.transaction, &basepb.VoidProto{})
 	}()
 	if err := f(withTransaction(c, t)); err != nil {
-		return err
+		return &t.transaction, err
 	}
 	t.finished = true
 
@@ -97,11 +105,11 @@ func RunTransactionOnce(c netcontext.Context, f func(netcontext.Context) error, 
 		// The Python Dev AppServer raises an ApplicationError with error code 2 (which is
 		// Error.CONCURRENT_TRANSACTION) and message "Concurrency exception.".
 		if ae.Code == int32(pb.Error_BAD_REQUEST) && ae.Detail == "ApplicationError: 2 Concurrency exception." {
-			return ErrConcurrentTransaction
+			return &t.transaction, ErrConcurrentTransaction
 		}
 		if ae.Code == int32(pb.Error_CONCURRENT_TRANSACTION) {
-			return ErrConcurrentTransaction
+			return &t.transaction, ErrConcurrentTransaction
 		}
 	}
-	return err
+	return &t.transaction, err
 }

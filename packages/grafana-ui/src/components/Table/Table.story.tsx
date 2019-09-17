@@ -4,7 +4,8 @@ import { Table } from './Table';
 import { getTheme } from '../../themes';
 
 import { migratedTestTable, migratedTestStyles, simpleTable } from './examples';
-import { ScopedVars, SeriesData, GrafanaThemeType } from '../../types/index';
+import { GrafanaThemeType } from '../../types/index';
+import { DataFrame, FieldType, ArrayVector, ScopedVars } from '@grafana/data';
 import { withFullSizeStory } from '../../utils/storybook/withFullSizeStory';
 import { number, boolean } from '@storybook/addon-knobs';
 
@@ -29,21 +30,26 @@ export function columnIndexToLeter(column: number) {
   return String.fromCharCode(A + c2);
 }
 
-export function makeDummyTable(columnCount: number, rowCount: number): SeriesData {
+export function makeDummyTable(columnCount: number, rowCount: number): DataFrame {
   return {
     fields: Array.from(new Array(columnCount), (x, i) => {
+      const colId = columnIndexToLeter(i);
+      const values = new ArrayVector<string>();
+      for (let i = 0; i < rowCount; i++) {
+        values.buffer.push(colId + (i + 1));
+      }
       return {
-        name: columnIndexToLeter(i),
+        name: colId,
+        type: FieldType.string,
+        config: {},
+        values,
       };
     }),
-    rows: Array.from(new Array(rowCount), (x, rowId) => {
-      const suffix = (rowId + 1).toString();
-      return Array.from(new Array(columnCount), (x, colId) => columnIndexToLeter(colId) + suffix);
-    }),
+    length: rowCount,
   };
 }
 
-storiesOf('Alpha/Table', module)
+storiesOf('UI/Table', module)
   .add('Basic Table', () => {
     // NOTE: This example does not seem to survice rotate &
     // Changing fixed headers... but the next one does?
@@ -56,7 +62,7 @@ storiesOf('Alpha/Table', module)
 
     return withFullSizeStory(Table, {
       styles: [],
-      data: simpleTable,
+      data: { ...simpleTable },
       replaceVariables,
       showHeader,
       fixedHeader,

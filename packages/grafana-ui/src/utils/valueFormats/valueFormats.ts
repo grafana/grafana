@@ -1,6 +1,6 @@
-import { getCategories } from './categories';
+import { DecimalCount } from '@grafana/data';
 
-export type DecimalCount = number | null | undefined;
+import { getCategories } from './categories';
 
 export type ValueFormatter = (
   value: number,
@@ -57,17 +57,15 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
 
 export function toFixedScaled(
   value: number,
-  decimals?: DecimalCount,
-  scaledDecimals?: DecimalCount,
-  additionalDecimals?: DecimalCount,
+  decimals: DecimalCount,
+  scaledDecimals: DecimalCount,
+  additionalDecimals: number,
   ext?: string
 ) {
-  if (scaledDecimals) {
-    if (additionalDecimals) {
-      return toFixed(value, scaledDecimals + additionalDecimals) + ext;
-    } else {
-      return toFixed(value, scaledDecimals) + ext;
-    }
+  if (scaledDecimals === null || scaledDecimals === undefined) {
+    return toFixed(value, decimals) + ext;
+  } else {
+    return toFixed(value, scaledDecimals + additionalDecimals) + ext;
   }
 
   return toFixed(value, decimals) + ext;

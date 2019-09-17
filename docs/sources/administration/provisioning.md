@@ -30,34 +30,22 @@ Checkout the [configuration](/installation/configuration) page for more informat
 
 ### Using Environment Variables
 
-All options in the configuration file (listed below) can be overridden
-using environment variables using the syntax:
+It is possible to use environment variable interpolation in all 3 provisioning config types. Allowed syntax
+is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
+of the configs. It is not available in the dashboards definition files just the dashboard provisioning
+configuration.
+Example:
 
-```bash
-GF_<SectionName>_<KeyName>
+```yaml
+datasources:
+- name: Graphite
+  url: http://localhost:$PORT
+  user: $USER
+  secureJsonData:
+    password: $PASSWORD
 ```
 
-Where the section name is the text within the brackets. Everything
-should be upper case and `.` should be replaced by `_`. For example, given these configuration settings:
-
-```bash
-# default section
-instance_name = ${HOSTNAME}
-
-[security]
-admin_user = admin
-
-[auth.google]
-client_secret = 0ldS3cretKey
-```
-
-Overriding will be done like so:
-
-```bash
-export GF_DEFAULT_INSTANCE_NAME=my-instance
-export GF_SECURITY_ADMIN_USER=true
-export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
-```
+If you have a literal `$` in your value and want to avoid interpolation, `$$` can be used.
 
 <hr />
 
@@ -107,7 +95,7 @@ datasources:
   orgId: 1
   # <string> url
   url: http://localhost:8080
-  # <string> database password, if used
+  # <string> Deprecated, use secureJsonData.password
   password:
   # <string> database user, if used
   user:
@@ -117,7 +105,7 @@ datasources:
   basicAuth:
   # <string> basic auth username
   basicAuthUser:
-  # <string> basic auth password
+  # <string> Deprecated, use secureJsonData.basicAuthPassword
   basicAuthPassword:
   # <bool> enable/disable with credentials headers
   withCredentials:
@@ -133,6 +121,10 @@ datasources:
     tlsCACert: "..."
     tlsClientCert: "..."
     tlsClientKey: "..."
+    # <string> database password, if used
+    password:
+    # <string> basic auth password
+    basicAuthPassword:
   version: 1
   # <bool> allow users to edit datasources from the UI.
   editable: false
@@ -156,9 +148,11 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify | boolean | *All* | Controls whether a client verifies the server's certificate chain and host name. |
 | graphiteVersion | string | Graphite |  Graphite version  |
 | timeInterval | string | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL & MSSQL | Lowest interval/step value that should be used for this data source |
-| esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56/60) |
+| esVersion | number | Elasticsearch | Elasticsearch version as a number (2/5/56/60/70) |
 | timeField | string | Elasticsearch | Which field that should be used as timestamp |
 | interval | string | Elasticsearch | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
+| logMessageField | string | Elasticsearch | Which field should be used as the log message |
+| logLevelField | string | Elasticsearch | Which field should be used to indicate the priority of the log message |
 | authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
 | assumeRoleArn | string | Cloudwatch | ARN of Assume Role |
 | defaultRegion | string | Cloudwatch | AWS region |
@@ -184,10 +178,28 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | tlsCACert | string | *All* |CA cert for out going requests |
 | tlsClientCert | string | *All* |TLS Client cert for outgoing requests |
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
-| password | string | PostgreSQL | password |
-| user | string | PostgreSQL | user |
+| password | string | *All* | password |
+| basicAuthPassword | string | *All* | password for basic authentication |
 | accessKey | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey | string | Cloudwatch | Secret key for connecting to Cloudwatch |
+
+#### Custom HTTP headers for datasources
+Datasources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
+going to that datasource. The header name is configured in the `jsonData` field and the header value should be
+configured in `secureJsonData`.
+
+```yaml
+apiVersion: 1
+
+datasources:
+- name: Graphite
+  jsonData:
+    httpHeaderName1: "HeaderName"
+    httpHeaderName2: "Authorization"
+  secureJsonData:
+    httpHeaderValue1: "HeaderValue"
+    httpHeaderValue2: "Bearer XXXXXXXXX"
+```
 
 ### Dashboards
 
@@ -199,13 +211,24 @@ The dashboard provider config file looks somewhat like this:
 apiVersion: 1
 
 providers:
-- name: 'default'
+  # <string> an unique provider name
+- name: 'a unique provider name'
+  # <int> org id. will default to orgId 1 if not specified
   orgId: 1
+  # <string, required> name of the dashboard folder. Required
   folder: ''
+  # <string> folder UID. will be automatically generated if not specified
+  folderUid: ''
+  # <string, required> provider type. Required
   type: file
+  # <bool> disable dashboard deletion
   disableDeletion: false
-  updateIntervalSeconds: 10 #how often Grafana will scan for changed dashboards
+  # <bool> enable dashboard editing
+  editable: true
+  # <int> how often Grafana will scan for changed dashboards
+  updateIntervalSeconds: 10
   options:
+    # <string, required> path to dashboard files on disk. Required
     path: /var/lib/grafana/dashboards
 ```
 
@@ -273,7 +296,7 @@ notifiers:
     # or
     org_name: Main Org.
     is_default: true
-    send_reminders: true
+    send_reminder: true
     frequency: 1h
     disable_resolve_message: false
     # See `Supported Settings` section for settings supporter for each
@@ -397,7 +420,7 @@ The following sections detail the supported settings for each alert notification
 | ---- |
 | apiKey |
 | apiUrl |
-[ autoClose ]
+| autoClose |
 
 #### Alert notification `telegram`
 
@@ -421,3 +444,10 @@ The following sections detail the supported settings for each alert notification
 | url |
 | username |
 | password |
+
+#### Alert notification `googlechat`
+
+| Name |
+| ---- |
+| url |
+

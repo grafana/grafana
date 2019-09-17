@@ -1,77 +1,88 @@
 import _ from 'lodash';
-import { DataSourceApi, DataQueryOptions, TableData, TimeSeries } from '@grafana/ui';
+import {
+  DataSourceApi,
+  DataQueryRequest,
+  DataSourceInstanceSettings,
+  DataQueryResponse,
+  MetricFindValue,
+} from '@grafana/ui';
+import { TableData, TimeSeries } from '@grafana/data';
 import { TestDataQuery, Scenario } from './types';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { queryMetricTree } from './metricTree';
+import { Observable, from, merge } from 'rxjs';
+import { runStream } from './runStreams';
+import templateSrv from 'app/features/templating/template_srv';
 
 type TestData = TimeSeries | TableData;
 
-export interface TestDataRegistry {
-  [key: string]: TestData[];
-}
-
-export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
-  id: number;
-
-  /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q) {
-    this.id = instanceSettings.id;
+export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
+  constructor(instanceSettings: DataSourceInstanceSettings) {
+    super(instanceSettings);
   }
 
-  query(options: DataQueryOptions<TestDataQuery>) {
-    const queries = _.filter(options.targets, item => {
-      return item.hide !== true;
-    }).map(item => {
-      return {
-        refId: item.refId,
-        scenarioId: item.scenarioId,
-        intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints,
-        stringInput: item.stringInput,
-        points: item.points,
-        alias: item.alias,
-        datasourceId: this.id,
-      };
-    });
+  query(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    const queries: any[] = [];
+    const streams: Array<Observable<DataQueryResponse>> = [];
 
-    if (queries.length === 0) {
-      return this.$q.when({ data: [] });
+    // Start streams and prepare queries
+    for (const target of options.targets) {
+      if (target.scenarioId === 'streaming_client') {
+        streams.push(runStream(target, options));
+      } else {
+        queries.push({
+          ...target,
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          datasourceId: this.id,
+          alias: templateSrv.replace(target.alias || ''),
+        });
+      }
     }
 
-    return this.backendSrv
-      .datasourceRequest({
-        method: 'POST',
-        url: '/api/tsdb/query',
-        data: {
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries: queries,
-        },
-      })
-      .then(res => {
-        const data: TestData[] = [];
+    if (queries.length) {
+      const req: Promise<DataQueryResponse> = getBackendSrv()
+        .datasourceRequest({
+          method: 'POST',
+          url: '/api/tsdb/query',
+          data: {
+            from: options.range.from.valueOf().toString(),
+            to: options.range.to.valueOf().toString(),
+            queries: queries,
+          },
+          // This sets up a cancel token
+          requestId: options.requestId,
+        })
+        .then((res: any) => this.processQueryResult(queries, res));
 
-        // Returns data in the order it was asked for.
-        // if the response has data with different refId, it is ignored
-        for (const query of queries) {
-          const results = res.data.results[query.refId];
-          if (!results) {
-            console.warn('No Results for:', query);
-            continue;
-          }
+      streams.push(from(req));
+    }
 
-          for (const table of results.tables || []) {
-            data.push(table as TableData);
-          }
-
-          for (const series of results.series || []) {
-            data.push({ target: series.name, datapoints: series.points });
-          }
-        }
-
-        return { data: data };
-      });
+    return merge(...streams);
   }
 
-  annotationQuery(options) {
+  processQueryResult(queries: any, res: any): DataQueryResponse {
+    const data: TestData[] = [];
+
+    for (const query of queries) {
+      const results = res.data.results[query.refId];
+
+      for (const t of results.tables || []) {
+        const table = t as TableData;
+        table.refId = query.refId;
+        table.name = query.alias;
+        data.push(table);
+      }
+
+      for (const series of results.series || []) {
+        data.push({ target: series.name, datapoints: series.points, refId: query.refId, tags: series.tags });
+      }
+    }
+
+    return { data };
+  }
+
+  annotationQuery(options: any) {
     let timeWalker = options.range.from.valueOf();
     const to = options.range.to.valueOf();
     const events = [];
@@ -87,7 +98,14 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
       });
       timeWalker += step;
     }
-    return this.$q.when(events);
+    return Promise.resolve(events);
+  }
+
+  getQueryDisplayText(query: TestDataQuery) {
+    if (query.alias) {
+      return query.scenarioId + ' as ' + query.alias;
+    }
+    return query.scenarioId;
   }
 
   testDatasource() {
@@ -98,6 +116,16 @@ export class TestDataDatasource implements DataSourceApi<TestDataQuery> {
   }
 
   getScenarios(): Promise<Scenario[]> {
-    return this.backendSrv.get('/api/tsdb/testdata/scenarios');
+    return getBackendSrv().get('/api/tsdb/testdata/scenarios');
+  }
+
+  metricFindQuery(query: string) {
+    return new Promise<MetricFindValue[]>((resolve, reject) => {
+      setTimeout(() => {
+        const children = queryMetricTree(templateSrv.replace(query));
+        const items = children.map(item => ({ value: item.name, text: item.name }));
+        resolve(items);
+      }, 100);
+    });
   }
 }

@@ -10,8 +10,9 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import DataSourcesList from './DataSourcesList';
 
 // Types
-import { DataSourceSettings } from '@grafana/ui/src/types';
-import { NavModel, StoreState } from 'app/types';
+import { DataSourceSettings } from '@grafana/ui';
+import { NavModel } from '@grafana/data';
+import { StoreState } from 'app/types';
 import { LayoutMode } from 'app/core/components/LayoutSelector/LayoutSelector';
 
 // Actions
@@ -39,7 +40,7 @@ export interface Props {
 
 const emptyListModel = {
   title: 'There are no data sources defined yet',
-  buttonIcon: 'gicon gicon-add-datasources',
+  buttonIcon: 'gicon gicon-datasources',
   buttonLink: 'datasources/new',
   buttonTitle: 'Add data source',
   proTip: 'You can also define data sources through configuration files.',
@@ -78,7 +79,7 @@ export class DataSourcesListPage extends PureComponent<Props> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={!hasFetched}>
           <>
-            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA model={emptyListModel} />}
+            {hasFetched && dataSourcesCount === 0 && <EmptyListCTA {...emptyListModel} />}
             {hasFetched &&
               dataSourcesCount > 0 && [
                 <OrgActionBar

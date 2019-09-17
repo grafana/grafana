@@ -1,9 +1,11 @@
 package plugins
 
 import (
+	"io"
+	"io/ioutil"
 	"log"
 
-	glog "github.com/grafana/grafana/pkg/log"
+	glog "github.com/grafana/grafana/pkg/infra/log"
 	hclog "github.com/hashicorp/go-hclog"
 )
 
@@ -46,4 +48,11 @@ func (lw LogWrapper) ResetNamed(name string) hclog.Logger {
 
 func (lw LogWrapper) StandardLogger(ops *hclog.StandardLoggerOptions) *log.Logger {
 	return nil
+}
+
+func (lw LogWrapper) SetLevel(level hclog.Level) {}
+
+// Return a value that conforms to io.Writer, which can be passed into log.SetOutput()
+func (lw LogWrapper) StandardWriter(opts *hclog.StandardLoggerOptions) io.Writer {
+	return ioutil.Discard
 }

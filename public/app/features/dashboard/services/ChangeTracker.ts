@@ -1,6 +1,7 @@
-import angular from 'angular';
+import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
+import { ContextSrv } from 'app/core/services/context_srv';
 
 export class ChangeTracker {
   current: any;
@@ -12,14 +13,14 @@ export class ChangeTracker {
 
   /** @ngInject */
   constructor(
-    dashboard,
-    scope,
-    originalCopyDelay,
-    private $location,
-    $window,
-    private $timeout,
-    private contextSrv,
-    private $rootScope
+    dashboard: DashboardModel,
+    scope: any,
+    originalCopyDelay: any,
+    private $location: ILocationService,
+    $window: any,
+    private $timeout: any,
+    private contextSrv: ContextSrv,
+    private $rootScope: any
   ) {
     this.$location = $location;
     this.$window = $window;
@@ -44,7 +45,7 @@ export class ChangeTracker {
       return undefined;
     };
 
-    scope.$on('$locationChangeStart', (event, next) => {
+    scope.$on('$locationChangeStart', (event: any, next: any) => {
       // check if we should look for changes
       if (this.originalPath === $location.path()) {
         return true;
@@ -64,7 +65,7 @@ export class ChangeTracker {
       return false;
     });
 
-    if (originalCopyDelay) {
+    if (originalCopyDelay && !dashboard.meta.fromExplore) {
       this.$timeout(() => {
         // wait for different services to patch the dashboard (missing properties)
         this.original = dashboard.getSaveModelClone();
@@ -92,7 +93,7 @@ export class ChangeTracker {
   }
 
   // remove stuff that should not count in diff
-  cleanDashboardFromIgnoredChanges(dashData) {
+  cleanDashboardFromIgnoredChanges(dashData: any) {
     // need to new up the domain model class to get access to expand / collapse row logic
     const model = new DashboardModel(dashData);
 
@@ -141,8 +142,8 @@ export class ChangeTracker {
     const current = this.cleanDashboardFromIgnoredChanges(this.current.getSaveModelClone());
     const original = this.cleanDashboardFromIgnoredChanges(this.original);
 
-    const currentTimepicker = _.find(current.nav, { type: 'timepicker' });
-    const originalTimepicker = _.find(original.nav, { type: 'timepicker' });
+    const currentTimepicker: any = _.find(current.nav, { type: 'timepicker' });
+    const originalTimepicker: any = _.find(original.nav, { type: 'timepicker' });
 
     if (currentTimepicker && originalTimepicker) {
       currentTimepicker.now = originalTimepicker.now;

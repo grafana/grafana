@@ -5,8 +5,7 @@ import difference from 'lodash/difference';
 
 import { Select } from '../index';
 
-import { getStatsCalculators } from '../../utils/statsCalculator';
-import { SelectOptionItem } from '../Select/Select';
+import { fieldReducers, SelectableValue } from '@grafana/data';
 
 interface Props {
   placeholder?: string;
@@ -34,7 +33,7 @@ export class StatsPicker extends PureComponent<Props> {
   checkInput = () => {
     const { stats, allowMultiple, defaultStat, onChange } = this.props;
 
-    const current = getStatsCalculators(stats);
+    const current = fieldReducers.list(stats);
     if (current.length !== stats.length) {
       const found = current.map(v => v.id);
       const notFound = difference(stats, found);
@@ -54,35 +53,27 @@ export class StatsPicker extends PureComponent<Props> {
     }
   };
 
-  onSelectionChange = (item: SelectOptionItem) => {
+  onSelectionChange = (item: SelectableValue<string>) => {
     const { onChange } = this.props;
     if (isArray(item)) {
       onChange(item.map(v => v.value));
     } else {
-      onChange([item.value]);
+      onChange(item.value ? [item.value] : []);
     }
   };
 
   render() {
     const { width, stats, allowMultiple, defaultStat, placeholder } = this.props;
-    const options = getStatsCalculators().map(s => {
-      return {
-        value: s.id,
-        label: s.name,
-        description: s.description,
-      };
-    });
 
-    const value: SelectOptionItem[] = options.filter(option => stats.find(stat => option.value === stat));
-
+    const select = fieldReducers.selectOptions(stats);
     return (
       <Select
         width={width}
-        value={value}
+        value={select.current}
         isClearable={!defaultStat}
         isMulti={allowMultiple}
         isSearchable={true}
-        options={options}
+        options={select.options}
         placeholder={placeholder}
         onChange={this.onSelectionChange}
       />

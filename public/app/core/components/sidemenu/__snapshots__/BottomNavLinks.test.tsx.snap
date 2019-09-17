@@ -67,7 +67,9 @@ exports[`Render should render component 1`] = `
     >
       <span
         className="sidemenu-item-text"
-      />
+      >
+        Hello
+      </span>
     </li>
   </ul>
 </div>

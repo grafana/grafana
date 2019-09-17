@@ -16,7 +16,11 @@ export const DashNavButton: FunctionComponent<Props> = ({ icon, tooltip, classSu
   if (onClick) {
     return (
       <Tooltip content={tooltip}>
-        <button className={`btn navbar-button navbar-button--${classSuffix}`} onClick={onClick}>
+        <button
+          className={`btn navbar-button navbar-button--${classSuffix}`}
+          onClick={onClick}
+          aria-label={`${tooltip} navbar button`}
+        >
           <i className={icon} />
         </button>
       </Tooltip>

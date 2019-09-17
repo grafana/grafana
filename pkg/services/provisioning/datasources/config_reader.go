@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"gopkg.in/yaml.v2"
 )
 
@@ -62,8 +62,8 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*D
 	}
 
 	if apiVersion.ApiVersion > 0 {
-		var v1 *DatasourcesAsConfigV1
-		err = yaml.Unmarshal(yamlFile, &v1)
+		v1 := &DatasourcesAsConfigV1{log: cr.log}
+		err = yaml.Unmarshal(yamlFile, v1)
 		if err != nil {
 			return nil, err
 		}

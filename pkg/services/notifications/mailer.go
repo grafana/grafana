@@ -9,12 +9,15 @@ import (
 	"crypto/tls"
 	"fmt"
 	"html/template"
+	"io"
 	"net"
 	"strconv"
 
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	gomail "gopkg.in/mail.v2"
+
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func (ns *NotificationService) send(msg *Message) (int, error) {
@@ -23,23 +26,48 @@ func (ns *NotificationService) send(msg *Message) (int, error) {
 		return 0, err
 	}
 
+	var num int
 	for _, address := range msg.To {
 		m := gomail.NewMessage()
 		m.SetHeader("From", msg.From)
 		m.SetHeader("To", address)
 		m.SetHeader("Subject", msg.Subject)
-		for _, file := range msg.EmbededFiles {
-			m.Embed(file)
+
+		ns.setFiles(m, msg)
+
+		for _, replyTo := range msg.ReplyTo {
+			m.SetAddressHeader("Reply-To", replyTo, "")
 		}
 
 		m.SetBody("text/html", msg.Body)
 
-		if err := dialer.DialAndSend(m); err != nil {
-			return 0, err
+		e := dialer.DialAndSend(m)
+		if e != nil {
+			err = errutil.Wrapf(e, "Failed to send notification to email address: %s", address)
+			continue
 		}
+
+		num++
 	}
 
-	return len(msg.To), nil
+	return num, err
+}
+
+// setFiles attaches files in various forms
+func (ns *NotificationService) setFiles(
+	m *gomail.Message,
+	msg *Message,
+) {
+	for _, file := range msg.EmbededFiles {
+		m.Embed(file)
+	}
+
+	for _, file := range msg.AttachedFiles {
+		m.Attach(file.Name, gomail.SetCopyFunc(func(writer io.Writer) error {
+			_, err := writer.Write(file.Content)
+			return err
+		}))
+	}
 }
 
 func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
@@ -77,9 +105,9 @@ func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
 	return d, nil
 }
 
-func (ns *NotificationService) buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
+func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (*Message, error) {
 	if !ns.Cfg.Smtp.Enabled {
-		return nil, m.ErrSmtpNotEnabled
+		return nil, models.ErrSmtpNotEnabled
 	}
 
 	var buffer bytes.Buffer
@@ -121,10 +149,27 @@ func (ns *NotificationService) buildEmailMessage(cmd *m.SendEmailCommand) (*Mess
 	}
 
 	return &Message{
-		To:           cmd.To,
-		From:         fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
-		Subject:      subject,
-		Body:         buffer.String(),
-		EmbededFiles: cmd.EmbededFiles,
+		To:            cmd.To,
+		From:          fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
+		Subject:       subject,
+		Body:          buffer.String(),
+		EmbededFiles:  cmd.EmbededFiles,
+		AttachedFiles: buildAttachedFiles(cmd.AttachedFiles),
 	}, nil
+}
+
+// buildAttachedFiles build attached files
+func buildAttachedFiles(
+	attached []*models.SendEmailAttachFile,
+) []*AttachedFile {
+	result := make([]*AttachedFile, 0)
+
+	for _, file := range attached {
+		result = append(result, &AttachedFile{
+			Name:    file.Name,
+			Content: file.Content,
+		})
+	}
+
+	return result
 }

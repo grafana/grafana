@@ -1,24 +1,24 @@
 import React from 'react';
 import debounce from 'lodash/debounce';
-import { SeriesData } from '../../types/data';
-import { AutoSizer } from 'react-virtualized';
-import { CSVConfig, readCSV } from '../../utils/csv';
+import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
 
 interface Props {
   config?: CSVConfig;
   text: string;
-  onSeriesParsed: (data: SeriesData[], text: string) => void;
+  width: string | number;
+  height: string | number;
+  onSeriesParsed: (data: DataFrame[], text: string) => void;
 }
 
 interface State {
   text: string;
-  data: SeriesData[];
+  data: DataFrame[];
 }
 
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-class TableInputCSV extends React.PureComponent<Props, State> {
+export class TableInputCSV extends React.PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -29,7 +29,7 @@ class TableInputCSV extends React.PureComponent<Props, State> {
     };
   }
 
-  readCSV = debounce(() => {
+  readCSV: any = debounce(() => {
     const { config } = this.props;
     const { text } = this.state;
 
@@ -58,28 +58,30 @@ class TableInputCSV extends React.PureComponent<Props, State> {
   };
 
   render() {
+    const { width, height } = this.props;
     const { data } = this.state;
-
     return (
-      <AutoSizer>
-        {({ height, width }) => (
-          <div className="gf-table-input-csv" style={{ width, height }}>
-            <textarea placeholder="Enter CSV here..." value={this.state.text} onChange={this.onTextChange} />
-            {data && (
-              <footer>
-                {data.map((series, index) => {
-                  return (
-                    <span key={index}>
-                      Rows:{series.rows.length}, Columns:{series.fields.length} &nbsp;
-                      <i className="fa fa-check-circle" />
-                    </span>
-                  );
-                })}
-              </footer>
-            )}
-          </div>
+      <div className="gf-table-input-csv">
+        <textarea
+          style={{ width, height }}
+          placeholder="Enter CSV here..."
+          value={this.state.text}
+          onChange={this.onTextChange}
+          className="gf-form-input"
+        />
+        {data && (
+          <footer>
+            {data.map((frame, index) => {
+              return (
+                <span key={index}>
+                  Rows:{frame.length}, Columns:{frame.fields.length} &nbsp;
+                  <i className="fa fa-check-circle" />
+                </span>
+              );
+            })}
+          </footer>
         )}
-      </AutoSizer>
+      </div>
     );
   }
 }

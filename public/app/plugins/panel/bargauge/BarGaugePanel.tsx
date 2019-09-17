@@ -2,51 +2,75 @@
 import React, { PureComponent } from 'react';
 
 // Services & Utils
-import { DisplayValue, PanelProps, BarGauge, getSingleStatDisplayValues } from '@grafana/ui';
 import { config } from 'app/core/config';
+
+// Components
+import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay, DataLinksContextMenu } from '@grafana/ui';
 
 // Types
 import { BarGaugeOptions } from './types';
-import { ProcessedValuesRepeater } from '../singlestat2/ProcessedValuesRepeater';
+import { PanelProps } from '@grafana/ui';
+import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
-  renderValue = (value: DisplayValue, width: number, height: number): JSX.Element => {
+  renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     const { options } = this.props;
+    const { field, display } = value;
 
     return (
-      <BarGauge
-        value={value}
-        width={width}
-        height={height}
-        orientation={options.orientation}
-        thresholds={options.thresholds}
-        theme={config.theme}
-        displayMode={options.displayMode}
-      />
+      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+        {({ openMenu, targetClassName }) => {
+          return (
+            <BarGauge
+              value={display}
+              width={width}
+              height={height}
+              orientation={options.orientation}
+              thresholds={field.thresholds}
+              theme={config.theme}
+              itemSpacing={this.getItemSpacing()}
+              displayMode={options.displayMode}
+              minValue={field.min}
+              maxValue={field.max}
+              onClick={openMenu}
+              className={targetClassName}
+            />
+          );
+        }}
+      </DataLinksContextMenu>
     );
   };
 
-  getProcessedValues = (): DisplayValue[] => {
-    return getSingleStatDisplayValues({
-      valueMappings: this.props.options.valueMappings,
-      thresholds: this.props.options.thresholds,
-      valueOptions: this.props.options.valueOptions,
-      data: this.props.data,
+  getValues = (): FieldDisplay[] => {
+    const { data, options, replaceVariables } = this.props;
+    return getFieldDisplayValues({
+      ...options,
+      replaceVariables,
       theme: config.theme,
-      replaceVariables: this.props.replaceVariables,
+      data: data.series,
     });
   };
 
+  getItemSpacing(): number {
+    if (this.props.options.displayMode === 'lcd') {
+      return 2;
+    }
+
+    return 10;
+  }
+
   render() {
     const { height, width, options, data, renderCounter } = this.props;
+
     return (
-      <ProcessedValuesRepeater
-        getProcessedValues={this.getProcessedValues}
+      <VizRepeater
+        source={data}
+        getValues={this.getValues}
         renderValue={this.renderValue}
+        renderCounter={renderCounter}
         width={width}
         height={height}
-        source={data}
-        renderCounter={renderCounter}
+        itemSpacing={this.getItemSpacing()}
         orientation={options.orientation}
       />
     );

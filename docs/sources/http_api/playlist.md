@@ -7,6 +7,7 @@ type = "docs"
 [menu.docs]
 name = "Playlist"
 parent = "http_api"
+identifier = "http_api_playlist"
 +++
 
 # Playlist API
@@ -28,7 +29,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   Querystring Parameters:
 
   These parameters are used as querystring parameters.
-  
+
   - **query** - Limit response to playlist having a name like this value.
   - **limit** - Limit response to *X* number of playlist.
 
@@ -153,7 +154,7 @@ Content-Type: application/json
     "id": 5,
     "title":"my other dasboard"
     "order": 2,
-    
+
   }
 ]
 ```

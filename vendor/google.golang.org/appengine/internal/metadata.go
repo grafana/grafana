@@ -12,7 +12,6 @@ package internal
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 )
@@ -32,7 +31,7 @@ var (
 func mustGetMetadata(key string) []byte {
 	b, err := getMetadata(key)
 	if err != nil {
-		log.Fatalf("Metadata fetch failed: %v", err)
+		panic(fmt.Sprintf("Metadata fetch failed for '%s': %v", key, err))
 	}
 	return b
 }

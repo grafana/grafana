@@ -147,17 +147,6 @@ func TestStackdriver(t *testing.T) {
 			})
 
 			Convey("and alignmentPeriod is set in frontend", func() {
-				Convey("and alignment period is too big", func() {
-					tsdbQuery.Queries[0].IntervalMs = 1000
-					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-						"alignmentPeriod": "+360000s",
-					})
-
-					queries, err := executor.buildQueries(tsdbQuery)
-					So(err, ShouldBeNil)
-					So(queries[0].Params["aggregation.alignmentPeriod"][0], ShouldEqual, `+3600s`)
-				})
-
 				Convey("and alignment period is within accepted range", func() {
 					tsdbQuery.Queries[0].IntervalMs = 1000
 					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
@@ -236,13 +225,13 @@ func TestStackdriver(t *testing.T) {
 
 				Convey("timestamps should be in ascending order", func() {
 					So(res.Series[0].Points[0][0].Float64, ShouldEqual, 0.05)
-					So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1536670020000)
+					So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1536670020000))
 
 					So(res.Series[0].Points[1][0].Float64, ShouldEqual, 1.05)
-					So(res.Series[0].Points[1][1].Float64, ShouldEqual, 1536670080000)
+					So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1536670080000))
 
 					So(res.Series[0].Points[2][0].Float64, ShouldEqual, 1.0666666666667)
-					So(res.Series[0].Points[2][1].Float64, ShouldEqual, 1536670260000)
+					So(res.Series[0].Points[2][1].Float64, ShouldEqual, int64(1536670260000))
 				})
 			})
 
@@ -365,9 +354,9 @@ func TestStackdriver(t *testing.T) {
 				}
 
 				Convey("timestamps should be in ascending order", func() {
-					So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1536668940000)
-					So(res.Series[0].Points[1][1].Float64, ShouldEqual, 1536669000000)
-					So(res.Series[0].Points[2][1].Float64, ShouldEqual, 1536669060000)
+					So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1536668940000))
+					So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1536669000000))
+					So(res.Series[0].Points[2][1].Float64, ShouldEqual, int64(1536669060000))
 				})
 
 				Convey("bucket bounds should be correct", func() {
@@ -410,8 +399,8 @@ func TestStackdriver(t *testing.T) {
 				}
 
 				Convey("timestamps should be in ascending order", func() {
-					So(res.Series[0].Points[0][1].Float64, ShouldEqual, 1550859086000)
-					So(res.Series[0].Points[1][1].Float64, ShouldEqual, 1550859146000)
+					So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1550859086000))
+					So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1550859146000))
 				})
 
 				Convey("bucket bounds should be correct", func() {

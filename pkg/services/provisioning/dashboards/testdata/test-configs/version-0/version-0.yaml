@@ -1,6 +1,7 @@
 - name: 'general dashboards'
   org_id: 2
   folder: 'developers'
+  folderUid: 'xyz'
   editable: true
   disableDeletion: true
   updateIntervalSeconds: 15

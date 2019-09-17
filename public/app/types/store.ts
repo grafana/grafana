@@ -1,7 +1,6 @@
 import { ThunkAction, ThunkDispatch as GenericThunkDispatch } from 'redux-thunk';
 import { ActionOf } from 'app/core/redux';
 
-import { NavIndex } from './navModel';
 import { LocationState } from './location';
 import { AlertRulesState } from './alerting';
 import { TeamsState, TeamState } from './teams';
@@ -13,6 +12,9 @@ import { UsersState, UserState } from './user';
 import { OrganizationState } from './organization';
 import { AppNotificationsState } from './appNotifications';
 import { PluginsState } from './plugins';
+import { NavIndex } from '@grafana/data';
+import { ApplicationState } from './application';
+import { LdapState, LdapUserState } from './ldap';
 
 export interface StoreState {
   navIndex: NavIndex;
@@ -29,6 +31,9 @@ export interface StoreState {
   appNotifications: AppNotificationsState;
   user: UserState;
   plugins: PluginsState;
+  application: ApplicationState;
+  ldap: LdapState;
+  ldapUser: LdapUserState;
 }
 
 /*

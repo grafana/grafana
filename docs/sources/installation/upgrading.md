@@ -17,6 +17,17 @@ In order make this a reality Grafana upgrades are backward compatible and the up
 
 Upgrading is generally always safe (between many minor and one major version) and dashboards and graphs will look the same. There can be minor breaking changes in some edge cases which are usually outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
+## Update plugins
+
+After you have upgraded it is highly recommended that you update all your plugins as a new version of Grafana
+can make older plugins stop working properly.
+
+You can update all plugins using
+
+```bash
+grafana-cli plugins update-all
+```
+
 ## Database Backup
 
 Before upgrading it can be a good idea to backup your Grafana database. This will ensure that you can always rollback to your previous version. During startup, Grafana will automatically migrate the database schema (if there are changes or new tables). Sometimes this can cause issues if you later want to downgrade.
@@ -123,6 +134,7 @@ If you're using systemd and have a large amount of annotations consider temporar
 If you have text panels with script tags they will no longer work due to a new setting that per default disallow unsanitized HTML.
 Read more [here](/installation/configuration/#disable-sanitize-html) about this new setting.
 
+
 ### Authentication and security
 
 If your using Grafana's builtin, LDAP (without Auth Proxy) or OAuth authentication all users will be required to login upon the next visit after the upgrade.
@@ -148,3 +160,40 @@ login_maximum_lifetime_days = 1
 ```
 
 The default cookie name for storing the auth token is `grafana_session`. you can configure this with `login_cookie_name` in `[auth]` settings.
+
+## Upgrading to v6.2
+
+### Ensure encryption of datasource secrets
+
+Datasources store passwords and basic auth passwords in secureJsonData encrypted (AES-256 in CFB mode) by default. Existing datasource
+will keep working with unencrypted passwords. If you want to migrate to encrypted storage for your existing datasources
+you can do that by:
+
+- For datasources created through UI, you need to go to datasource config, re enter the password or basic auth
+password and save the datasource.
+- For datasources created by provisioning, you need to update your config file and use secureJsonData.password or
+secureJsonData.basicAuthPassword field. See [provisioning docs](/administration/provisioning) for example of current
+configuration.
+
+### Embedding Grafana
+
+If you're embedding Grafana in a `<frame>`, `<iframe>`, `<embed>` or `<object>` on a different website it will no longer work due to a new setting
+that per default instructs the browser to not allow Grafana to be embedded. Read more [here](/installation/configuration/#allow-embedding) about
+this new setting.
+
+### Session storage is no longer used
+
+In 6.2 we completely removed the backend session storage since we replaced the previous login session implementation with an auth token.
+If you are using Auth proxy with LDAP an shared cached is used in Grafana so you might want configure [remote_cache] instead. If not
+Grafana will fallback to using the database as an shared cache.
+
+### Upgrading Elasticsearch to v7.0+
+
+The semantics of `max concurrent shard requests` changed in Elasticsearch v7.0, see [release notes](https://www.elastic.co/guide/en/elasticsearch/reference/7.0/breaking-changes-7.0.html#semantics-changed-max-concurrent-shared-requests) for reference.
+
+If you upgrade Elasticsearch to v7.0+ you should make sure to update the datasource configuration in Grafana so that version
+is `7.0+` and `max concurrent shard requests` properly configured. 256 was the default in pre v7.0 versions. In v7.0 and above 5 is the default.
+
+## Upgrading to v6.4
+
+One of the database migrations included in this release will merge multiple rows used to represent an annotation range into a single row.  If you have a large number of region annotations the database migration may take a long time to complete.  See [Upgrading to v5.2](#upgrading-to-v5-2) for tips on how to manage this process.

@@ -14,7 +14,7 @@ const template = `
 `;
 
 /** @ngInject */
-export function queryPartEditorDirective($compile, templateSrv) {
+export function queryPartEditorDirective(templateSrv: any) {
   const paramTemplate = '<input type="text" class="hide input-mini tight-form-func-param"></input>';
 
   return {
@@ -25,7 +25,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
       handleEvent: '&',
       debounce: '@',
     },
-    link: function postLink($scope, elem) {
+    link: function postLink($scope: any, elem: any) {
       const part = $scope.part;
       const partDef = part.def;
       const $paramsContainer = elem.find('.query-part-parameters');
@@ -33,7 +33,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
 
       $scope.partActions = [];
 
-      function clickFuncParam(this: any, paramIndex) {
+      function clickFuncParam(this: any, paramIndex: number) {
         /*jshint validthis:true */
         const $link = $(this);
         const $input = $link.next();
@@ -53,7 +53,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
         }
       }
 
-      function inputBlur(this: any, paramIndex) {
+      function inputBlur(this: any, paramIndex: number) {
         /*jshint validthis:true */
         const $input = $(this);
         const $link = $input.prev();
@@ -72,7 +72,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
         $link.show();
       }
 
-      function inputKeyPress(this: any, paramIndex, e) {
+      function inputKeyPress(this: any, paramIndex: number, e: any) {
         /*jshint validthis:true */
         if (e.which === 13) {
           inputBlur.call(this, paramIndex);
@@ -84,12 +84,12 @@ export function queryPartEditorDirective($compile, templateSrv) {
         this.style.width = (3 + this.value.length) * 8 + 'px';
       }
 
-      function addTypeahead($input, param, paramIndex) {
+      function addTypeahead($input: JQuery, param: any, paramIndex: number) {
         if (!param.options && !param.dynamicLookup) {
           return;
         }
 
-        const typeaheadSource = (query, callback) => {
+        const typeaheadSource = (query: string, callback: any) => {
           if (param.options) {
             let options = param.options;
             if (param.type === 'int') {
@@ -101,7 +101,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
           }
 
           $scope.$apply(() => {
-            $scope.handleEvent({ $event: { name: 'get-param-options' } }).then(result => {
+            $scope.handleEvent({ $event: { name: 'get-param-options' } }).then((result: any) => {
               const dynamicOptions = _.map(result, op => {
                 return _.escape(op.value);
               });
@@ -116,7 +116,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
           source: typeaheadSource,
           minLength: 0,
           items: 1000,
-          updater: value => {
+          updater: (value: string) => {
             value = _.unescape(value);
             setTimeout(() => {
               inputBlur.call($input[0], paramIndex);
@@ -138,17 +138,17 @@ export function queryPartEditorDirective($compile, templateSrv) {
       }
 
       $scope.showActionsMenu = () => {
-        $scope.handleEvent({ $event: { name: 'get-part-actions' } }).then(res => {
+        $scope.handleEvent({ $event: { name: 'get-part-actions' } }).then((res: any) => {
           $scope.partActions = res;
         });
       };
 
-      $scope.triggerPartAction = action => {
+      $scope.triggerPartAction = (action: string) => {
         $scope.handleEvent({ $event: { name: 'action', action: action } });
       };
 
       function addElementsAndCompile() {
-        _.each(partDef.params, (param, index) => {
+        _.each(partDef.params, (param: any, index: number) => {
           if (param.optional && part.params.length <= index) {
             return;
           }

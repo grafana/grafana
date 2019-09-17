@@ -75,6 +75,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'TFLOP/s', id: 'tflops', fn: decimalSIPrefix('FLOP/s', 4) },
       { name: 'PFLOP/s', id: 'pflops', fn: decimalSIPrefix('FLOP/s', 5) },
       { name: 'EFLOP/s', id: 'eflops', fn: decimalSIPrefix('FLOP/s', 6) },
+      { name: 'ZFLOP/s', id: 'zflops', fn: decimalSIPrefix('FLOP/s', 7) },
+      { name: 'YFLOP/s', id: 'yflops', fn: decimalSIPrefix('FLOP/s', 8) },
     ],
   },
   {
@@ -112,6 +114,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Swiss franc (CHF)', id: 'currencyCHF', fn: currency('CHF') },
       { name: 'Polish Złoty (PLN)', id: 'currencyPLN', fn: currency('PLN') },
       { name: 'Bitcoin (฿)', id: 'currencyBTC', fn: currency('฿') },
+      { name: 'South African Rand (R)', id: 'currencyZAR', fn: currency('R') },
     ],
   },
   {
@@ -122,6 +125,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'kibibytes', id: 'kbytes', fn: binarySIPrefix('B', 1) },
       { name: 'mebibytes', id: 'mbytes', fn: binarySIPrefix('B', 2) },
       { name: 'gibibytes', id: 'gbytes', fn: binarySIPrefix('B', 3) },
+      { name: 'tebibytes', id: 'tbytes', fn: binarySIPrefix('B', 4) },
+      { name: 'pebibytes', id: 'pbytes', fn: binarySIPrefix('B', 5) },
     ],
   },
   {
@@ -132,6 +137,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'kilobytes', id: 'deckbytes', fn: decimalSIPrefix('B', 1) },
       { name: 'megabytes', id: 'decmbytes', fn: decimalSIPrefix('B', 2) },
       { name: 'gigabytes', id: 'decgbytes', fn: decimalSIPrefix('B', 3) },
+      { name: 'terabytes', id: 'dectbytes', fn: decimalSIPrefix('B', 4) },
+      { name: 'petabytes', id: 'decpbytes', fn: decimalSIPrefix('B', 5) },
     ],
   },
   {
@@ -146,6 +153,10 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'megabits/sec', id: 'Mbits', fn: decimalSIPrefix('bps', 2) },
       { name: 'gigabytes/sec', id: 'GBs', fn: decimalSIPrefix('Bs', 3) },
       { name: 'gigabits/sec', id: 'Gbits', fn: decimalSIPrefix('bps', 3) },
+      { name: 'terabytes/sec', id: 'TBs', fn: decimalSIPrefix('Bs', 4) },
+      { name: 'terabits/sec', id: 'Gbits', fn: decimalSIPrefix('bps', 4) },
+      { name: 'petabytes/sec', id: 'PBs', fn: decimalSIPrefix('Bs', 5) },
+      { name: 'petabits/sec', id: 'Pbits', fn: decimalSIPrefix('bps', 5) },
     ],
   },
   {
@@ -170,6 +181,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Watt-hour (Wh)', id: 'watth', fn: decimalSIPrefix('Wh') },
       { name: 'Kilowatt-hour (kWh)', id: 'kwatth', fn: decimalSIPrefix('Wh', 1) },
       { name: 'Kilowatt-min (kWm)', id: 'kwattm', fn: decimalSIPrefix('W/Min', 1) },
+      { name: 'Ampere-hour (Ah)', id: 'amph', fn: decimalSIPrefix('Ah') },
       { name: 'Joule (J)', id: 'joule', fn: decimalSIPrefix('J') },
       { name: 'Electron volt (eV)', id: 'ev', fn: decimalSIPrefix('eV') },
       { name: 'Ampere (A)', id: 'amp', fn: decimalSIPrefix('A') },
@@ -292,11 +304,13 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Throughput',
     formats: [
+      { name: 'counts/sec (cps)', id: 'cps', fn: simpleCountUnit('cps') },
       { name: 'ops/sec (ops)', id: 'ops', fn: simpleCountUnit('ops') },
       { name: 'requests/sec (rps)', id: 'reqps', fn: simpleCountUnit('reqps') },
       { name: 'reads/sec (rps)', id: 'rps', fn: simpleCountUnit('rps') },
       { name: 'writes/sec (wps)', id: 'wps', fn: simpleCountUnit('wps') },
       { name: 'I/O ops/sec (iops)', id: 'iops', fn: simpleCountUnit('iops') },
+      { name: 'counts/min (cpm)', id: 'cpm', fn: simpleCountUnit('cpm') },
       { name: 'ops/min (opm)', id: 'opm', fn: simpleCountUnit('opm') },
       { name: 'reads/min (rpm)', id: 'rpm', fn: simpleCountUnit('rpm') },
       { name: 'writes/min (wpm)', id: 'wpm', fn: simpleCountUnit('wpm') },

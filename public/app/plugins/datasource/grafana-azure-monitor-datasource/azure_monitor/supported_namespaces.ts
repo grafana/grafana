@@ -1,5 +1,5 @@
 export default class SupportedNamespaces {
-  supportedMetricNamespaces = {
+  supportedMetricNamespaces: any = {
     azuremonitor: [
       'Microsoft.AnalysisServices/servers',
       'Microsoft.ApiManagement/service',
@@ -55,6 +55,7 @@ export default class SupportedNamespaces {
       'Microsoft.Network/networkWatchers/connectionMonitors',
       'Microsoft.Network/frontdoors',
       'Microsoft.NotificationHubs/namespaces/notificationHubs',
+      'Microsoft.OperationalInsights/workspaces',
       'Microsoft.PowerBIDedicated/capacities',
       'Microsoft.Relay/namespaces',
       'Microsoft.Search/searchServices',
@@ -163,6 +164,7 @@ export default class SupportedNamespaces {
       'Microsoft.Network/networkWatchers/connectionMonitors',
       'Microsoft.Network/frontdoors',
       'Microsoft.NotificationHubs/namespaces/notificationHubs',
+      'Microsoft.OperationalInsights/workspaces',
       'Microsoft.PowerBIDedicated/capacities',
       'Microsoft.Relay/namespaces',
       'Microsoft.ServiceBus/namespaces',
@@ -235,7 +237,7 @@ export default class SupportedNamespaces {
 
   constructor(private cloudName: string) {}
 
-  get() {
+  get(): string[] {
     return this.supportedMetricNamespaces[this.cloudName];
   }
 }

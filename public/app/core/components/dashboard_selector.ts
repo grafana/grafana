@@ -1,4 +1,5 @@
 import coreModule from 'app/core/core_module';
+import { BackendSrv } from '../services/backend_srv';
 
 const template = `
 <select class="gf-form-input" ng-model="ctrl.model" ng-options="f.value as f.text for f in ctrl.options"></select>
@@ -9,7 +10,7 @@ export class DashboardSelectorCtrl {
   options: any;
 
   /** @ngInject */
-  constructor(private backendSrv) {}
+  constructor(private backendSrv: BackendSrv) {}
 
   $onInit() {
     this.options = [{ value: 0, text: 'Default' }];

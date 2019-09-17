@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-const keywords = 'by|without|on|ignoring|group_left|group_right';
+const keywords = 'by|without|on|ignoring|group_left|group_right|bool|or|and|unless';
 
 // Duplicate from mode-prometheus.js, which can't be used in tests due to global ace not being loaded.
 const builtInWords = [
@@ -25,13 +25,17 @@ export function addLabelToQuery(query: string, key: string, value: string, opera
   }
 
   // Add empty selectors to bare metric names
-  let previousWord;
+  let previousWord: string;
   query = query.replace(metricNameRegexp, (match, word, offset) => {
     const insideSelector = isPositionInsideChars(query, offset, '{', '}');
     // Handle "sum by (key) (metric)"
     const previousWordIsKeyWord = previousWord && keywords.split('|').indexOf(previousWord) > -1;
+
+    // check for colon as as "word boundary" symbol
+    const isColonBounded = word.endsWith(':');
+
     previousWord = word;
-    if (!insideSelector && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
+    if (!insideSelector && !isColonBounded && !previousWordIsKeyWord && builtInWords.indexOf(word) === -1) {
       return `${word}{}`;
     }
     return word;

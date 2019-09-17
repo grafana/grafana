@@ -33,7 +33,9 @@ type Options struct {
 	contribObservers    []jaeger.ContribObserver
 	observers           []jaeger.Observer
 	gen128Bit           bool
+	poolSpans           bool
 	zipkinSharedRPCSpan bool
+	maxTagValueLength   int
 	tags                []opentracing.Tag
 	injectors           map[interface{}]jaeger.Injector
 	extractors          map[interface{}]jaeger.Extractor
@@ -77,7 +79,7 @@ func Observer(observer jaeger.Observer) Option {
 	}
 }
 
-// ContribObserver can be registered with the Tracer to recieve notifications
+// ContribObserver can be registered with the Tracer to receive notifications
 // about new spans.
 func ContribObserver(observer jaeger.ContribObserver) Option {
 	return func(c *Options) {
@@ -92,12 +94,26 @@ func Gen128Bit(gen128Bit bool) Option {
 	}
 }
 
+// PoolSpans specifies whether to pool spans
+func PoolSpans(poolSpans bool) Option {
+	return func(c *Options) {
+		c.poolSpans = poolSpans
+	}
+}
+
 // ZipkinSharedRPCSpan creates an option that enables sharing span ID between client
 // and server spans a la zipkin. If false, client and server spans will be assigned
 // different IDs.
 func ZipkinSharedRPCSpan(zipkinSharedRPCSpan bool) Option {
 	return func(c *Options) {
 		c.zipkinSharedRPCSpan = zipkinSharedRPCSpan
+	}
+}
+
+// MaxTagValueLength can be provided to override the default max tag value length.
+func MaxTagValueLength(maxTagValueLength int) Option {
+	return func(c *Options) {
+		c.maxTagValueLength = maxTagValueLength
 	}
 }
 

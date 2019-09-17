@@ -1,8 +1,24 @@
 export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
 
-export function processLabels(labels, withName = false) {
-  const values = {};
-  labels.forEach(l => {
+export const processHistogramLabels = (labels: string[]) => {
+  const result = [];
+  const regexp = new RegExp('_bucket($|:)');
+  for (let index = 0; index < labels.length; index++) {
+    const label = labels[index];
+    const isHistogramValue = regexp.test(label);
+    if (isHistogramValue) {
+      if (result.indexOf(label) === -1) {
+        result.push(label);
+      }
+    }
+  }
+
+  return { values: { __name__: result } };
+};
+
+export function processLabels(labels: any, withName = false) {
+  const values: { [key: string]: string[] } = {};
+  labels.forEach((l: any) => {
     const { __name__, ...rest } = l;
     if (withName) {
       values['__name__'] = values['__name__'] || [];
@@ -62,7 +78,7 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 
   // Extract clean labels to form clean selector, incomplete labels are dropped
   const selector = query.slice(prefixOpen, suffixClose);
-  const labels = {};
+  const labels: { [key: string]: { value: string; operator: string } } = {};
   selector.replace(labelRegexp, (_, key, operator, value) => {
     labels[key] = { value, operator };
     return '';

@@ -19,7 +19,7 @@ version: 2
 jobs:
   mysql-integration-test:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.9
       - image: circleci/mysql:5.6-ram
         environment:
           MYSQL_ROOT_PASSWORD: rootpass
@@ -30,7 +30,7 @@ jobs:
     steps:
         - checkout
         - run: sudo apt update
-        - run: sudo apt install -y mysql-client
+        - run: sudo apt install -y default-mysql-client
         - run: dockerize -wait tcp://127.0.0.1:3306 -timeout 120s
         - run: cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h 127.0.0.1 -P 3306 -u root -prootpass
         - run:
@@ -39,7 +39,7 @@ jobs:
 
   postgres-integration-test:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.9
       - image: circleci/postgres:9.3-ram
         environment:
           POSTGRES_USER: grafanatest
@@ -58,7 +58,7 @@ jobs:
 
   cache-server-test:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.9
       - image: circleci/redis:4-alpine
       - image: memcached
     working_directory: /go/src/github.com/grafana/grafana
@@ -69,6 +69,62 @@ jobs:
         - run:
             name: cache server tests
             command: './scripts/circle-test-cache-servers.sh'
+
+  end-to-end-test:
+      docker:
+        - image: circleci/node:10-browsers
+        - image: grafana/grafana-dev:master-$CIRCLE_SHA1
+      steps:
+          - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
+          - checkout
+          - restore_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+          - run:
+              name: yarn install
+              command: 'yarn install --pure-lockfile --no-progress'
+              no_output_timeout: 5m
+          - save_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+              paths:
+                - node_modules
+          - run:
+              name: run end-to-end tests
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
+              no_output_timeout: 5m
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theTruth
+                destination: expected-screenshots
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theOutput
+                destination: output-screenshots
+
+  end-to-end-test-release:
+      docker:
+        - image: circleci/node:10-browsers
+        - image: grafana/grafana-dev:$CIRCLE_TAG
+      steps:
+          - run: dockerize -wait tcp://127.0.0.1:3000 -timeout 120s
+          - checkout
+          - restore_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+          - run:
+              name: yarn install
+              command: 'yarn install --pure-lockfile --no-progress'
+              no_output_timeout: 5m
+          - save_cache:
+              key: dependency-cache-{{ checksum "yarn.lock" }}
+              paths:
+                - node_modules
+          - run:
+              name: run end-to-end tests
+              command: 'env BASE_URL=http://127.0.0.1:3000 yarn e2e-tests'
+              no_output_timeout: 5m
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theTruth
+                destination: expected-screenshots
+          - store_artifacts:
+                path: public/e2e-test/screenShots/theOutput
+                destination: output-screenshots
 
   codespell:
     docker:
@@ -81,14 +137,14 @@ jobs:
       - run:
           # Important: all words have to be in lowercase, and separated by "\n".
           name: exclude known exceptions
-          command: 'echo -e "unknwon" > words_to_ignore.txt'
+          command: 'echo -e "unknwon\nreferer\nerrorstring" > words_to_ignore.txt'
       - run:
           name: check documentation spelling errors
           command: 'codespell -I ./words_to_ignore.txt docs/'
 
-  backend-lint:
+  lint-go:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.9
         environment:
           # we need CGO because of go-sqlite3
           CGO_ENABLED: 1
@@ -96,19 +152,28 @@ jobs:
     steps:
       - checkout
       - run:
-          name: backend lint
-          command: './scripts/backend-lint.sh'
+          name: Lint Go
+          command: 'make lint-go'
+
+  shellcheck:
+    machine: true
+    working_directory: ~/go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: ShellCheck
+          command: 'make shellcheck'
 
   test-frontend:
     docker:
-      - image: circleci/node:8
+      - image: circleci/node:10
     steps:
       - checkout
       - restore_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
       - run:
           name: yarn install
-          command: 'yarn install --pure-lockfile --no-progress'
+          command: 'yarn install --frozen-lockfile --no-progress'
           no_output_timeout: 15m
       - save_cache:
           key: dependency-cache-{{ checksum "yarn.lock" }}
@@ -120,7 +185,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/golang:1.11.5
+      - image: circleci/golang:1.12.9
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -130,7 +195,7 @@ jobs:
 
   build-all:
     docker:
-     - image: grafana/build-container:1.2.4
+     - image: grafana/build-container:1.2.8
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -156,7 +221,7 @@ jobs:
           name: verify signed packages
           command: |
             mkdir -p ~/.rpmdb/pubkeys
-            curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+            curl -s https://packages.grafana.com/gpg.key > ~/.rpmdb/pubkeys/grafana.key
             ./scripts/build/verify_signed_packages.sh dist/*.rpm
       - run:
           name: sha-sum packages
@@ -174,7 +239,7 @@ jobs:
 
   build:
     docker:
-     - image: grafana/build-container:1.2.4
+     - image: grafana/build-container:1.2.8
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -184,6 +249,117 @@ jobs:
       - run:
           name: build and package grafana
           command: './scripts/build/build.sh'
+      - run:
+          name: sign packages
+          command: './scripts/build/sign_packages.sh'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/*
+
+  build-fast-backend:
+    docker:
+     - image: grafana/build-container:1.2.8
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: build grafana backend
+          command: './scripts/build/build.sh --fast --backend-only'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - bin/*
+
+  build-fast-frontend:
+    docker:
+     - image: grafana/build-container:1.2.8
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - restore_cache:
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: build grafana frontend
+          command: './scripts/build/build.sh --fast --frontend-only'
+      - save_cache:
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - node_modules
+      - persist_to_workspace:
+          root: .
+          paths:
+            - public/build/*
+            - tools/phantomjs/*
+
+  build-fast-package:
+    docker:
+     - image: grafana/build-container:1.2.8
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: frontend-dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: package grafana
+          command: './scripts/build/build.sh --fast --package-only'
+      - run:
+          name: sha-sum packages
+          command: 'go run build.go sha-dist'
+      - run:
+          name: Test Grafana.com release publisher
+          command: 'cd scripts/build/release_publisher && go test .'
+      - persist_to_workspace:
+          root: /go/src/github.com/grafana/grafana
+          paths:
+            - dist/*
+
+  build-fast-save:
+    docker:
+     - image: grafana/build-container:1.2.8
+    working_directory: /go/src/github.com/grafana/grafana
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run:
+          name: debug cache
+          command: 'ls -al /go/src/github.com/grafana/grafana/node_modules'
+      - run:
+          name: prepare build tools
+          command: '/tmp/bootstrap.sh'
+      - run:
+          name: build grafana backend
+          command: './scripts/build/build.sh --fast --backend-only'
+      - run:
+          name: build grafana frontend
+          command: './scripts/build/build.sh --fast --frontend-only'
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - /go/src/github.com/grafana/grafana/node_modules
+      - run:
+          name: package grafana
+          command: './scripts/build/build.sh --fast --package-only'
       - run:
           name: sign packages
           command: './scripts/build/sign_packages.sh'
@@ -224,7 +400,7 @@ jobs:
       - run: docker info
       - run: docker run --privileged linuxkit/binfmt:v0.6
       - run: cp dist/grafana-latest.linux-*.tar.gz packaging/docker
-      - run: cd packaging/docker && ./build.sh "${CIRCLE_SHA1}"
+      - run: cd packaging/docker && ./build.sh --fast "${CIRCLE_SHA1}"
 
   grafana-docker-release:
     machine:
@@ -243,7 +419,7 @@ jobs:
 
   build-enterprise:
     docker:
-     - image: grafana/build-container:1.2.4
+     - image: grafana/build-container:1.2.8
     working_directory: /go/src/github.com/grafana/grafana
     steps:
       - checkout
@@ -275,7 +451,7 @@ jobs:
 
   build-all-enterprise:
     docker:
-    - image: grafana/build-container:1.2.4
+    - image: grafana/build-container:1.2.8
     working_directory: /go/src/github.com/grafana/grafana
     steps:
     - checkout
@@ -307,7 +483,7 @@ jobs:
         name: verify signed packages
         command: |
           mkdir -p ~/.rpmdb/pubkeys
-          curl -s https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana > ~/.rpmdb/pubkeys/grafana.key
+          curl -s https://packages.grafana.com/gpg.key > ~/.rpmdb/pubkeys/grafana.key
           ./scripts/build/verify_signed_packages.sh dist/*.rpm
     - run:
         name: sha-sum packages
@@ -333,9 +509,6 @@ jobs:
           name: sign in to gcp
           command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
       - run:
-          name: deploy to s3
-          command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/master'
-      - run:
           name: deploy to gcp
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/master'
       - run:
@@ -358,9 +531,6 @@ jobs:
       - run:
           name: sign in to gcp
           command: '/opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=/tmp/gcpkey.json'
-      - run:
-          name: deploy to s3
-          command: 'aws s3 sync ./enterprise-dist s3://$ENTERPRISE_BUCKET_NAME/release'
       - run:
           name: deploy to gcp
           command: '/opt/google-cloud-sdk/bin/gsutil cp ./enterprise-dist/* gs://$GCP_BUCKET_NAME/enterprise/release'
@@ -385,12 +555,6 @@ jobs:
       - attach_workspace:
           at: .
       - run:
-          name: deploy to s3
-          command: |
-            # Also
-            cp dist/grafana-latest.linux-x64.tar.gz dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
-            aws s3 sync ./dist s3://$BUCKET_NAME/master
-      - run:
           name: Trigger Windows build
           command: './scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master'
       - run:
@@ -405,8 +569,7 @@ jobs:
       - run:
           name: Publish to Grafana.com
           command: |
-            rm dist/grafana-master-$(echo "${CIRCLE_SHA1}" | cut -b1-7).linux-x64.tar.gz
-            rm dist/*latest*
+            rm dist/*latest* || true
             cd dist && ../scripts/build/release_publisher/release_publisher -apikey ${GRAFANA_COM_API_KEY} -version "v$(cat grafana.version)" --nightly
 
   deploy-release:
@@ -416,9 +579,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run:
-          name: deploy to s3
-          command: 'aws s3 sync ./dist s3://$BUCKET_NAME/release'
       - run:
           name: gcp credentials
           command: 'echo ${GCP_GRAFANA_UPLOAD_KEY} > /tmp/gcpkey.json'
@@ -441,14 +601,91 @@ jobs:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
 
+  build-oss-msi:
+    docker:
+      - image: grafana/wix-toolset-ci:v3
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Build OSS MSI
+          command: './scripts/build/ci-msi-build/ci-msi-build-oss.sh'
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/grafana-*.msi
+            - dist/grafana-*.msi.sha256
+
   store-build-artifacts:
     docker:
-      - image: circleci/node:8
+      - image: circleci/node:10
     steps:
       - attach_workspace:
           at: .
       - store_artifacts:
           path: ./dist
+
+  trigger-docs-update:
+    docker:
+      - image: circleci/python:3.6.8
+    steps:
+      - checkout
+      - run:
+          name: Trigger Docs update
+          command: |
+            if git diff --name-only HEAD^ | grep -q "^docs"; then
+              echo "Build URL:"
+              curl -s -u "$DOCS_CIRCLE_TOKEN:" \
+                -d build_parameters[CIRCLE_JOB]=pull-submodule-changes \
+                https://circleci.com/api/v1.1/project/github/grafana/docs.grafana.com/tree/master \
+              | jq .build_url
+            else
+              echo "-- no changes to docs files --"
+            fi
+
+  build-grafana-packages:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run:
+          name: Boostrap lerna
+          command: 'npx lerna bootstrap'
+      - run:
+          name: Build packages
+          command: yarn packages:build
+
+
+  release-next-packages:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run:
+          name: Boostrap lerna
+          command: 'npx lerna bootstrap'
+      - run:
+          name: npm - Prepare auth token
+          command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
+      - run:
+          name: Release next packages
+          command: './scripts/circle-release-next-packages.sh'
+
+  release-packages:
+    docker:
+      - image: circleci/node:10
+    steps:
+      - checkout
+      - run:
+          name: Boostrap lerna
+          command: 'npx lerna bootstrap'
+      - run:
+          name: npm - Prepare auth token
+          command: 'echo //registry.npmjs.org/:_authToken=$NPM_TOKEN >> ~/.npmrc'
+      - run:
+          name: Release packages
+          command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
 
 workflows:
   version: 2
@@ -460,7 +697,9 @@ workflows:
           filters: *filter-only-master
       - codespell:
           filters: *filter-only-master
-      - backend-lint:
+      - lint-go:
+          filters: *filter-only-master
+      - shellcheck:
           filters: *filter-only-master
       - test-frontend:
           filters: *filter-only-master
@@ -476,9 +715,11 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+            - build-oss-msi
           filters: *filter-only-master
       - grafana-docker-master:
           requires:
@@ -487,7 +728,8 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-master
@@ -497,10 +739,35 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
             - build-all-enterprise
+          filters: *filter-only-master
+      - build-oss-msi:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-master
+      - end-to-end-test:
+          requires:
+            - grafana-docker-master
+          filters: *filter-only-master
+      - trigger-docs-update:
+          requires:
+            - end-to-end-test
+          filters: *filter-only-master
+      - release-next-packages:
+          requires:
+            - build-all
+            - test-frontend
           filters: *filter-only-master
 
   release:
@@ -511,7 +778,9 @@ workflows:
           filters: *filter-only-release
       - codespell:
           filters: *filter-only-release
-      - backend-lint:
+      - lint-go:
+          filters: *filter-only-release
+      - shellcheck:
           filters: *filter-only-release
       - test-frontend:
           filters: *filter-only-release
@@ -527,9 +796,11 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+            - build-oss-msi
           filters: *filter-only-release
       - deploy-enterprise-release:
           requires:
@@ -538,7 +809,8 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
           filters: *filter-only-release
@@ -549,18 +821,59 @@ workflows:
             - test-backend
             - test-frontend
             - codespell
-            - backend-lint
+            - lint-go
+            - shellcheck
             - mysql-integration-test
             - postgres-integration-test
+          filters: *filter-only-release
+      - release-packages:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+            - build-oss-msi
+          filters: *filter-only-release
+      - build-oss-msi:
+          requires:
+            - build-all
+            - test-backend
+            - test-frontend
+            - codespell
+            - lint-go
+            - shellcheck
+            - mysql-integration-test
+            - postgres-integration-test
+          filters: *filter-only-release
+      - end-to-end-test-release:
+          requires:
+            - grafana-docker-release
           filters: *filter-only-release
 
   build-branches-and-prs:
       jobs:
-        - build:
+        - build-fast-backend:
             filters: *filter-not-release-or-master
+        - build-fast-frontend:
+            filters: *filter-not-release-or-master
+        - build-grafana-packages:
+            filters: *filter-not-release-or-master
+        - build-fast-package:
+            filters: *filter-not-release-or-master
+            requires:
+              - build-fast-backend
+              - build-fast-frontend
         - codespell:
             filters: *filter-not-release-or-master
-        - backend-lint:
+        - lint-go:
+            filters: *filter-not-release-or-master
+        - lint-go:
+            filters: *filter-not-release-or-master
+        - shellcheck:
             filters: *filter-not-release-or-master
         - test-frontend:
             filters: *filter-not-release-or-master
@@ -574,23 +887,26 @@ workflows:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
-              - build
+              - build-fast-package
               - test-backend
               - test-frontend
               - codespell
-              - backend-lint
+              - lint-go
+              - shellcheck
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
         - store-build-artifacts:
             requires:
-              - build
+              - build-fast-package
               - test-backend
               - test-frontend
               - codespell
-              - backend-lint
+              - lint-go
+              - shellcheck
               - mysql-integration-test
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
+

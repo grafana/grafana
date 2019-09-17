@@ -1,38 +1,93 @@
-export interface PluginMeta {
+import { ComponentClass } from 'react';
+import { KeyValue } from '@grafana/data';
+
+export enum PluginState {
+  alpha = 'alpha', // Only included it `enable_alpha` is true
+  beta = 'beta', // Will show a warning banner
+}
+
+export enum PluginType {
+  panel = 'panel',
+  datasource = 'datasource',
+  app = 'app',
+}
+
+export interface PluginMeta<T extends {} = KeyValue> {
   id: string;
   name: string;
+  type: PluginType;
   info: PluginMetaInfo;
-  includes: PluginInclude[];
+  includes?: PluginInclude[];
+  state?: PluginState;
+
+  // System.load & relative URLS
   module: string;
   baseUrl: string;
 
-  // Datasource-specific
-  builtIn?: boolean;
-  metrics?: boolean;
-  tables?: boolean;
-  logs?: boolean;
-  explore?: boolean;
-  annotations?: boolean;
-  mixed?: boolean;
-  hasQueryHelp?: boolean;
-  queryOptions?: PluginMetaQueryOptions;
+  // Define plugin requirements
+  dependencies?: PluginDependencies;
+
+  // Filled in by the backend
+  jsonData?: T;
+  secureJsonData?: KeyValue;
+  enabled?: boolean;
+  defaultNavUrl?: string;
+  hasUpdate?: boolean;
+  latestVersion?: string;
+  pinned?: boolean;
 }
 
-interface PluginMetaQueryOptions {
-  cacheTimeout?: boolean;
-  maxDataPoints?: boolean;
-  minInterval?: boolean;
+interface PluginDependencyInfo {
+  id: string;
+  name: string;
+  version: string;
+  type: PluginType;
+}
+
+export interface PluginDependencies {
+  grafanaVersion: string;
+  plugins: PluginDependencyInfo[];
+}
+
+export enum PluginIncludeType {
+  dashboard = 'dashboard',
+  page = 'page',
+
+  // Only valid for apps
+  panel = 'panel',
+  datasource = 'datasource',
 }
 
 export interface PluginInclude {
-  type: string;
+  type: PluginIncludeType;
   name: string;
-  path: string;
+  path?: string;
+  icon?: string;
+
+  role?: string; // "Viewer", Admin, editor???
+  addToNav?: boolean; // Show in the sidebar... only if type=page?
+
+  // Angular app pages
+  component?: string;
 }
 
 interface PluginMetaInfoLink {
   name: string;
   url: string;
+}
+
+export interface PluginBuildInfo {
+  time?: number;
+  repo?: string;
+  branch?: string;
+  hash?: string;
+  number?: number;
+  pr?: number;
+}
+
+export interface ScreenshotInfo {
+  name: string;
+  path: string;
 }
 
 export interface PluginMetaInfo {
@@ -46,22 +101,44 @@ export interface PluginMetaInfo {
     large: string;
     small: string;
   };
-  screenshots: any[];
+  build?: PluginBuildInfo;
+  screenshots: ScreenshotInfo[];
   updated: string;
   version: string;
 }
 
-export class AppPlugin {
-  components: {
-    ConfigCtrl?: any;
-  };
+export interface PluginConfigPageProps<T extends GrafanaPlugin> {
+  plugin: T;
+  query: KeyValue; // The URL query parameters
+}
 
-  pages: { [str: string]: any };
+export interface PluginConfigPage<T extends GrafanaPlugin> {
+  title: string; // Display
+  icon?: string;
+  id: string; // Unique, in URL
 
-  constructor(ConfigCtrl: any) {
-    this.components = {
-      ConfigCtrl: ConfigCtrl,
-    };
-    this.pages = {};
+  body: ComponentClass<PluginConfigPageProps<T>>;
+}
+
+export class GrafanaPlugin<T extends PluginMeta = PluginMeta> {
+  // Meta is filled in by the plugin loading system
+  meta?: T;
+
+  // This is set if the plugin system had errors loading the plugin
+  loadError?: boolean;
+
+  // Config control (app/datasource)
+  angularConfigCtrl?: any;
+
+  // Show configuration tabs on the plugin page
+  configPages?: Array<PluginConfigPage<GrafanaPlugin>>;
+
+  // Tabs on the plugin page
+  addConfigPage(tab: PluginConfigPage<GrafanaPlugin>) {
+    if (!this.configPages) {
+      this.configPages = [];
+    }
+    this.configPages.push(tab);
+    return this;
   }
 }

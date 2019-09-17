@@ -8,7 +8,8 @@ module.exports = {
   "roots": [
     "<rootDir>/public/app",
     "<rootDir>/public/test",
-    "<rootDir>/packages"
+    "<rootDir>/packages",
+    "<rootDir>/scripts",
   ],
   "testRegex": "(\\.|/)(test)\\.(jsx?|tsx?)$",
   "moduleFileExtensions": [
@@ -23,4 +24,5 @@ module.exports = {
     "./public/test/jest-setup.ts"
   ],
   "snapshotSerializers": ["enzyme-to-json/serializer"],
+  "globals": { "ts-jest": { "isolatedModules": true } },
 };

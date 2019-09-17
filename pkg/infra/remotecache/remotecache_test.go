@@ -4,10 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bmizerany/assert"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 )
 
 type CacheableStruct struct {
@@ -65,6 +64,7 @@ func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
 	assert.Equal(t, err, nil, "expected nil. got: ", err)
 
 	data, err := client.Get("key1")
+	assert.Equal(t, err, nil)
 	s, ok := data.(CacheableStruct)
 
 	assert.Equal(t, ok, true)

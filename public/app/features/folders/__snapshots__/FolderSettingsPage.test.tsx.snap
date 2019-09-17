@@ -7,11 +7,11 @@ exports[`Render should enable save button 1`] = `
   <PageContents
     isLoading={false}
   >
-    <h2
+    <h3
       className="page-sub-heading"
     >
       Folder Settings
-    </h2>
+    </h3>
     <div
       className="section gf-form-group"
     >
@@ -65,11 +65,11 @@ exports[`Render should render component 1`] = `
   <PageContents
     isLoading={false}
   >
-    <h2
+    <h3
       className="page-sub-heading"
     >
       Folder Settings
-    </h2>
+    </h3>
     <div
       className="section gf-form-group"
     >

@@ -57,7 +57,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
 
   menu.push({
     text: 'View',
-    iconClassName: 'fa fa-fw fa-eye',
+    iconClassName: 'gicon gicon-viewer',
     onClick: onViewPanel,
     shortcut: 'v',
   });
@@ -65,7 +65,7 @@ export const getPanelMenu = (dashboard: DashboardModel, panel: PanelModel) => {
   if (dashboard.meta.canEdit) {
     menu.push({
       text: 'Edit',
-      iconClassName: 'fa fa-fw fa-edit',
+      iconClassName: 'gicon gicon-editor',
       onClick: onEditPanel,
       shortcut: 'e',
     });

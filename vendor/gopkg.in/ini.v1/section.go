@@ -82,6 +82,7 @@ func (s *Section) NewKey(name, val string) (*Key, error) {
 			}
 		} else {
 			s.keys[name].value = val
+			s.keysHash[name] = val
 		}
 		return s.keys[name], nil
 	}
@@ -237,6 +238,7 @@ func (s *Section) DeleteKey(name string) {
 		if k == name {
 			s.keyList = append(s.keyList[:i], s.keyList[i+1:]...)
 			delete(s.keys, name)
+			delete(s.keysHash, name)
 			return
 		}
 	}

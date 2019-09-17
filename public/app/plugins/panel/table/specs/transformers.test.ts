@@ -1,7 +1,7 @@
 import { transformers, transformDataToTable } from '../transformers';
 
 describe('when transforming time series table', () => {
-  let table;
+  let table: any;
 
   describe('given 2 time series', () => {
     const time = new Date().getTime();
@@ -108,7 +108,6 @@ describe('when transforming time series table', () => {
         {
           type: 'foo',
           columns: [{ text: 'Time' }, { text: 'Label Key 1' }, { text: 'Value' }],
-          rows: [[time, 'Label Value 1', 42]],
         },
       ];
 

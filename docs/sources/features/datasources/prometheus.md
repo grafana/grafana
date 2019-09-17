@@ -51,9 +51,21 @@ Open a graph in edit mode by click the title > Edit (or by pressing `e` key whil
 | _Resolution_       | Controls the step option. Small steps create high-resolution graphs but can be slow over larger time ranges, lowering the resolution can speed things up. `1/2` will try to set step option to generate 1 data point for every other pixel. A value of `1/10` will try to set step option so there is a data point every 10 pixels. |
 | _Metric lookup_    | Search for metric names in this input field.                                                                                                                                                                                                                                                                                        |
 | _Format as_        | Switch between Table, Time series or Heatmap. Table format will only work in the Table panel. Heatmap format is suitable for displaying metrics having histogram type on Heatmap panel. Under the hood, it converts cumulative histogram to regular and sorts series by the bucket bound.                                           |
+| _Instant_          | Perform an "instant" query, to return only the latest value that Prometheus has scraped for the requested time series. Instant queries return results much faster than normal range queries. Use them to look up label sets.                                                                                                        |
 
 > NOTE: Grafana slightly modifies the request dates for queries to align them with the dynamically calculated step.
 > This ensures consistent display of metrics data but can result in a small gap of data at the right edge of a graph.
+
+### Instant queries
+
+The Prometheus datasource allows you to run "instant" queries, which queries only the latest value.
+You can visualize the results in a table panel to see all available labels of a timeseries.
+
+Instant query results are made up only of one datapoint per series but can be shown in the graph panel with the help of [series overrides](/features/panels/graph/#series-overrides).
+To show them in the graph as a latest value point, add a series override and select `Points > true`.
+To show a horizontal line across the whole graph, add a series override and select `Transform > constant`.
+
+> Support for constant series overrides is available from Grafana v6.4
 
 ## Templating
 
@@ -61,7 +73,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Checkout the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -69,13 +81,13 @@ types of template variables.
 Variable of the type _Query_ allows you to query Prometheus for a list of metrics, labels or label values. The Prometheus data source plugin
 provides the following functions you can use in the `Query` input field.
 
-| Name                          | Description                                                             |
-| ----------------------------- | ----------------------------------------------------------------------- |
-| _label_names()_               | Returns a list of label names.                                          |
-| _label_values(label)_         | Returns a list of label values for the `label` in every metric.         |
-| _label_values(metric, label)_ | Returns a list of label values for the `label` in the specified metric. |
-| _metrics(metric)_             | Returns a list of metrics matching the specified `metric` regex.        |
-| _query_result(query)_         | Returns a list of Prometheus query result for the `query`.              |
+| Name                             | Description                                                             |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| _label_\__names()_               | Returns a list of label names.                                          |
+| _label_\__values(label)_         | Returns a list of label values for the `label` in every metric.         |
+| _label_\__values(metric, label)_ | Returns a list of label values for the `label` in the specified metric. |
+| _metrics(metric)_                | Returns a list of metrics matching the specified `metric` regex.        |
+| _query_\__result(query)_         | Returns a list of Prometheus query result for the `query`.              |
 
 For details of _metric names_, _label names_ and _label values_ are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 

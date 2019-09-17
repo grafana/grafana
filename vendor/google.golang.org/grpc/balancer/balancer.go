@@ -36,9 +36,12 @@ var (
 	m = make(map[string]Builder)
 )
 
-// Register registers the balancer builder to the balancer map.
-// b.Name (lowercased) will be used as the name registered with
-// this builder.
+// Register registers the balancer builder to the balancer map. b.Name
+// (lowercased) will be used as the name registered with this builder.
+//
+// NOTE: this function must only be called during initialization time (i.e. in
+// an init() function), and is not thread-safe. If multiple Balancers are
+// registered with the same name, the one registered last will take effect.
 func Register(b Builder) {
 	m[strings.ToLower(b.Name())] = b
 }
@@ -126,6 +129,8 @@ type BuildOptions struct {
 	// to a remote load balancer server. The Balancer implementations
 	// can ignore this if it doesn't need to talk to remote balancer.
 	Dialer func(context.Context, string) (net.Conn, error)
+	// ChannelzParentID is the entity parent's channelz unique identification number.
+	ChannelzParentID int64
 }
 
 // Builder creates a balancer.
@@ -138,7 +143,11 @@ type Builder interface {
 }
 
 // PickOptions contains addition information for the Pick operation.
-type PickOptions struct{}
+type PickOptions struct {
+	// FullMethodName is the method name that NewClientStream() is called
+	// with. The canonical format is /service/Method.
+	FullMethodName string
+}
 
 // DoneInfo contains additional information for done.
 type DoneInfo struct {
@@ -160,7 +169,7 @@ var (
 )
 
 // Picker is used by gRPC to pick a SubConn to send an RPC.
-// Balancer is expected to generate a new picker from its snapshot everytime its
+// Balancer is expected to generate a new picker from its snapshot every time its
 // internal state has changed.
 //
 // The pickers used by gRPC can be updated by ClientConn.UpdateBalancerState().
@@ -220,4 +229,46 @@ type Balancer interface {
 	// Close closes the balancer. The balancer is not required to call
 	// ClientConn.RemoveSubConn for its existing SubConns.
 	Close()
+}
+
+// ConnectivityStateEvaluator takes the connectivity states of multiple SubConns
+// and returns one aggregated connectivity state.
+//
+// It's not thread safe.
+type ConnectivityStateEvaluator struct {
+	numReady            uint64 // Number of addrConns in ready state.
+	numConnecting       uint64 // Number of addrConns in connecting state.
+	numTransientFailure uint64 // Number of addrConns in transientFailure.
+}
+
+// RecordTransition records state change happening in subConn and based on that
+// it evaluates what aggregated state should be.
+//
+//  - If at least one SubConn in Ready, the aggregated state is Ready;
+//  - Else if at least one SubConn in Connecting, the aggregated state is Connecting;
+//  - Else the aggregated state is TransientFailure.
+//
+// Idle and Shutdown are not considered.
+func (cse *ConnectivityStateEvaluator) RecordTransition(oldState, newState connectivity.State) connectivity.State {
+	// Update counters.
+	for idx, state := range []connectivity.State{oldState, newState} {
+		updateVal := 2*uint64(idx) - 1 // -1 for oldState and +1 for new.
+		switch state {
+		case connectivity.Ready:
+			cse.numReady += updateVal
+		case connectivity.Connecting:
+			cse.numConnecting += updateVal
+		case connectivity.TransientFailure:
+			cse.numTransientFailure += updateVal
+		}
+	}
+
+	// Evaluate.
+	if cse.numReady > 0 {
+		return connectivity.Ready
+	}
+	if cse.numConnecting > 0 {
+		return connectivity.Connecting
+	}
+	return connectivity.TransientFailure
 }

@@ -1,19 +1,22 @@
 import { GraphiteDatasource } from '../datasource';
-import moment from 'moment';
 import _ from 'lodash';
+// @ts-ignore
 import $q from 'q';
-import { TemplateSrvStub } from 'test/specs/helpers';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+import { dateTime } from '@grafana/data';
 
 describe('graphiteDatasource', () => {
   const ctx: any = {
     backendSrv: {},
-    $q: $q,
-    templateSrv: new TemplateSrvStub(),
+    $q,
+    // @ts-ignore
+    templateSrv: new TemplateSrv(),
     instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
   };
 
   beforeEach(() => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
+    // @ts-ignore
     ctx.ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
   });
 
@@ -26,18 +29,18 @@ describe('graphiteDatasource', () => {
       maxDataPoints: 500,
     };
 
-    let results;
-    let requestOptions;
+    let results: any;
+    let requestOptions: any;
 
     beforeEach(async () => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: any) => {
         requestOptions = options;
         return ctx.$q.when({
           data: [{ target: 'prod1.count', datapoints: [[10, 1], [12, 1]] }],
         });
       };
 
-      await ctx.ds.query(query).then(data => {
+      await ctx.ds.query(query).then((data: any) => {
         results = data;
       });
     });
@@ -79,15 +82,15 @@ describe('graphiteDatasource', () => {
   });
 
   describe('when fetching Graphite Events as annotations', () => {
-    let results;
+    let results: any;
 
     const options = {
       annotation: {
         tags: 'tag1',
       },
       range: {
-        from: moment(1432288354),
-        to: moment(1432288401),
+        from: dateTime(1432288354),
+        to: dateTime(1432288401),
       },
       rangeRaw: { from: 'now-24h', to: 'now' },
     };
@@ -106,11 +109,11 @@ describe('graphiteDatasource', () => {
       };
 
       beforeEach(async () => {
-        ctx.backendSrv.datasourceRequest = options => {
+        ctx.backendSrv.datasourceRequest = (options: any) => {
           return ctx.$q.when(response);
         };
 
-        await ctx.ds.annotationQuery(options).then(data => {
+        await ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
         });
       });
@@ -136,11 +139,11 @@ describe('graphiteDatasource', () => {
         ],
       };
       beforeEach(() => {
-        ctx.backendSrv.datasourceRequest = options => {
+        ctx.backendSrv.datasourceRequest = (options: any) => {
           return ctx.$q.when(response);
         };
 
-        ctx.ds.annotationQuery(options).then(data => {
+        ctx.ds.annotationQuery(options).then((data: any) => {
           results = data;
         });
         // ctx.$rootScope.$apply();
@@ -215,14 +218,46 @@ describe('graphiteDatasource', () => {
       });
       expect(results.length).toBe(2);
     });
+
+    describe('when formatting targets', () => {
+      it('does not attempt to glob for one variable', () => {
+        ctx.ds.templateSrv.init([
+          {
+            type: 'query',
+            name: 'metric',
+            current: { value: ['b'] },
+          },
+        ]);
+
+        const results = ctx.ds.buildGraphiteParams({
+          targets: [{ target: 'my.$metric.*' }],
+        });
+        expect(results).toStrictEqual(['target=my.b.*', 'format=json']);
+      });
+
+      it('globs for more than one variable', () => {
+        ctx.ds.templateSrv.init([
+          {
+            type: 'query',
+            name: 'metric',
+            current: { value: ['a', 'b'] },
+          },
+        ]);
+
+        const results = ctx.ds.buildGraphiteParams({
+          targets: [{ target: 'my.[[metric]].*' }],
+        });
+        expect(results).toStrictEqual(['target=my.%7Ba%2Cb%7D.*', 'format=json']);
+      });
+    });
   });
 
   describe('querying for template variables', () => {
-    let results;
-    let requestOptions;
+    let results: any;
+    let requestOptions: any;
 
     beforeEach(() => {
-      ctx.backendSrv.datasourceRequest = options => {
+      ctx.backendSrv.datasourceRequest = (options: any) => {
         requestOptions = options;
         return ctx.$q.when({
           data: ['backend_01', 'backend_02'],
@@ -231,7 +266,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tags query', () => {
-      ctx.ds.metricFindQuery('tags()').then(data => {
+      ctx.ds.metricFindQuery('tags()').then((data: any) => {
         results = data;
       });
 
@@ -241,7 +276,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tags query with a filter expression', () => {
-      ctx.ds.metricFindQuery('tags(server=backend_01)').then(data => {
+      ctx.ds.metricFindQuery('tags(server=backend_01)').then((data: any) => {
         results = data;
       });
 
@@ -251,7 +286,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tags query for an expression with whitespace after', () => {
-      ctx.ds.metricFindQuery('tags(server=backend_01 )').then(data => {
+      ctx.ds.metricFindQuery('tags(server=backend_01 )').then((data: any) => {
         results = data;
       });
 
@@ -261,7 +296,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tag values query for one tag', () => {
-      ctx.ds.metricFindQuery('tag_values(server)').then(data => {
+      ctx.ds.metricFindQuery('tag_values(server)').then((data: any) => {
         results = data;
       });
 
@@ -272,7 +307,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tag values query for a tag and expression', () => {
-      ctx.ds.metricFindQuery('tag_values(server,server=~backend*)').then(data => {
+      ctx.ds.metricFindQuery('tag_values(server,server=~backend*)').then((data: any) => {
         results = data;
       });
 
@@ -283,7 +318,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tag values query for a tag with whitespace after', () => {
-      ctx.ds.metricFindQuery('tag_values(server )').then(data => {
+      ctx.ds.metricFindQuery('tag_values(server )').then((data: any) => {
         results = data;
       });
 
@@ -294,7 +329,7 @@ describe('graphiteDatasource', () => {
     });
 
     it('should generate tag values query for a tag and expression with whitespace after', () => {
-      ctx.ds.metricFindQuery('tag_values(server , server=~backend* )').then(data => {
+      ctx.ds.metricFindQuery('tag_values(server , server=~backend* )').then((data: any) => {
         results = data;
       });
 
@@ -303,15 +338,34 @@ describe('graphiteDatasource', () => {
       expect(requestOptions.params.expr).toEqual(['server=~backend*']);
       expect(results).not.toBe(null);
     });
+
+    it('/metrics/find should be POST', () => {
+      ctx.ds.templateSrv.init([
+        {
+          type: 'query',
+          name: 'foo',
+          current: { value: ['bar'] },
+        },
+      ]);
+      ctx.ds.metricFindQuery('[[foo]]').then((data: any) => {
+        results = data;
+      });
+      expect(requestOptions.url).toBe('/api/datasources/proxy/1/metrics/find');
+      expect(requestOptions.method).toEqual('POST');
+      expect(requestOptions.headers).toHaveProperty('Content-Type', 'application/x-www-form-urlencoded');
+      expect(requestOptions.data).toMatch(`query=bar`);
+      expect(requestOptions).toHaveProperty('params');
+    });
   });
 });
 
-function accessScenario(name, url, fn) {
+function accessScenario(name: string, url: string, fn: any) {
   describe('access scenario ' + name, () => {
     const ctx: any = {
       backendSrv: {},
-      $q: $q,
-      templateSrv: new TemplateSrvStub(),
+      $q,
+      // @ts-ignore
+      templateSrv: new TemplateSrv(),
       instanceSettings: { url: 'url', name: 'graphiteProd', jsonData: {} },
     };
 
@@ -324,6 +378,7 @@ function accessScenario(name, url, fn) {
 
       it('tracing headers should be added', () => {
         ctx.instanceSettings.url = url;
+        // @ts-ignore
         const ds = new GraphiteDatasource(ctx.instanceSettings, ctx.$q, ctx.backendSrv, ctx.templateSrv);
         ds.addTracingHeaders(httpOptions, options);
         fn(httpOptions);
@@ -332,12 +387,12 @@ function accessScenario(name, url, fn) {
   });
 }
 
-accessScenario('with proxy access', '/api/datasources/proxy/1', httpOptions => {
+accessScenario('with proxy access', '/api/datasources/proxy/1', (httpOptions: any) => {
   expect(httpOptions.headers['X-Dashboard-Id']).toBe(1);
   expect(httpOptions.headers['X-Panel-Id']).toBe(2);
 });
 
-accessScenario('with direct access', 'http://localhost:8080', httpOptions => {
+accessScenario('with direct access', 'http://localhost:8080', (httpOptions: any) => {
   expect(httpOptions.headers['X-Dashboard-Id']).toBe(undefined);
   expect(httpOptions.headers['X-Panel-Id']).toBe(undefined);
 });

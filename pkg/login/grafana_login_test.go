@@ -3,9 +3,10 @@ package login
 import (
 	"testing"
 
+	. "github.com/smartystreets/goconvey/convey"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestGrafanaLogin(t *testing.T) {
@@ -60,6 +61,23 @@ func TestGrafanaLogin(t *testing.T) {
 				So(sc.loginUserQuery.User, ShouldNotBeNil)
 				So(sc.loginUserQuery.User.Login, ShouldEqual, sc.loginUserQuery.Username)
 				So(sc.loginUserQuery.User.Password, ShouldEqual, sc.loginUserQuery.Password)
+			})
+		})
+
+		grafanaLoginScenario("When login with disabled user", func(sc *grafanaLoginScenarioContext) {
+			sc.withDisabledUser()
+			err := loginUsingGrafanaDB(sc.loginUserQuery)
+
+			Convey("it should return user is disabled error", func() {
+				So(err, ShouldEqual, ErrUserDisabled)
+			})
+
+			Convey("it should not call password validation", func() {
+				So(sc.validatePasswordCalled, ShouldBeFalse)
+			})
+
+			Convey("it should not pupulate user object", func() {
+				So(sc.loginUserQuery.User, ShouldBeNil)
 			})
 		})
 	})
@@ -136,4 +154,10 @@ func (sc *grafanaLoginScenarioContext) withInvalidPassword() {
 		Salt:     "salt",
 	})
 	mockPasswordValidation(false, sc)
+}
+
+func (sc *grafanaLoginScenarioContext) withDisabledUser() {
+	sc.getUserByLoginQueryReturns(&m.User{
+		IsDisabled: true,
+	})
 }

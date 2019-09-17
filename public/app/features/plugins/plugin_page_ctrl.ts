@@ -1,7 +1,9 @@
-import angular from 'angular';
+import angular, { IQService } from 'angular';
 import _ from 'lodash';
 
-const pluginInfoCache = {};
+import { getPluginSettings } from './PluginSettingsCache';
+import { PluginMeta } from '@grafana/ui';
+import { NavModelSrv } from 'app/core/core';
 
 export class AppPageCtrl {
   page: any;
@@ -10,25 +12,36 @@ export class AppPageCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $routeParams: any, private $rootScope, private navModelSrv) {
+  constructor(
+    private $routeParams: any,
+    private $rootScope: any,
+    private navModelSrv: NavModelSrv,
+    private $q: IQService
+  ) {
     this.pluginId = $routeParams.pluginId;
 
-    if (pluginInfoCache[this.pluginId]) {
-      this.initPage(pluginInfoCache[this.pluginId]);
-    } else {
-      this.loadPluginInfo();
-    }
+    this.$q
+      .when(getPluginSettings(this.pluginId))
+      .then(settings => {
+        this.initPage(settings);
+      })
+      .catch(err => {
+        this.$rootScope.appEvent('alert-error', ['Unknown Plugin', '']);
+        this.navModel = this.navModelSrv.getNotFoundNav();
+      });
   }
 
-  initPage(app) {
+  initPage(app: PluginMeta) {
     this.appModel = app;
     this.page = _.find(app.includes, { slug: this.$routeParams.slug });
 
-    pluginInfoCache[this.pluginId] = app;
-
     if (!this.page) {
       this.$rootScope.appEvent('alert-error', ['App Page Not Found', '']);
-
+      this.navModel = this.navModelSrv.getNotFoundNav();
+      return;
+    }
+    if (app.type !== 'app' || !app.enabled) {
+      this.$rootScope.appEvent('alert-error', ['Application Not Enabled', '']);
       this.navModel = this.navModelSrv.getNotFoundNav();
       return;
     }
@@ -44,12 +57,6 @@ export class AppPageCtrl {
         breadcrumbs: [{ title: app.name, url: pluginNav.main.url }],
       },
     };
-  }
-
-  loadPluginInfo() {
-    this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(app => {
-      this.initPage(app);
-    });
   }
 }
 

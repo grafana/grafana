@@ -11,7 +11,7 @@ var (
 	ErrNotificationFrequencyNotFound            = errors.New("Notification frequency not specified")
 	ErrAlertNotificationStateNotFound           = errors.New("alert notification state not found")
 	ErrAlertNotificationStateVersionConflict    = errors.New("alert notification state update version conflict")
-	ErrAlertNotificationStateAlreadyExist       = errors.New("alert notification state already exists.")
+	ErrAlertNotificationStateAlreadyExist       = errors.New("alert notification state already exists")
 	ErrAlertNotificationFailedGenerateUniqueUid = errors.New("Failed to generate unique alert notification uid")
 )
 

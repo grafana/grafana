@@ -9,7 +9,7 @@ describe('getQueryHints()', () => {
     expect(getQueryHints('', [{ datapoints: [] }])).toEqual(null);
   });
 
-  it('returns no hint for a monotonously decreasing series', () => {
+  it('returns no hint for a monotonically decreasing series', () => {
     const series = [{ datapoints: [[23, 1000], [22, 1001]] }];
     const hints = getQueryHints('metric', series);
     expect(hints).toEqual(null);
@@ -21,12 +21,13 @@ describe('getQueryHints()', () => {
     expect(hints).toEqual(null);
   });
 
-  it('returns a rate hint for a monotonously increasing series', () => {
+  it('returns a rate hint for a monotonically increasing series', () => {
     const series = [{ datapoints: [[23, 1000], [24, 1001]] }];
     const hints = getQueryHints('metric', series);
-    expect(hints.length).toBe(1);
-    expect(hints[0]).toMatchObject({
-      label: 'Time series is monotonously increasing.',
+
+    expect(hints!.length).toBe(1);
+    expect(hints![0]).toMatchObject({
+      label: 'Time series is monotonically increasing.',
       fix: {
         action: {
           type: 'ADD_RATE',
@@ -36,26 +37,26 @@ describe('getQueryHints()', () => {
     });
   });
 
-  it('returns no rate hint for a monotonously increasing series that already has a rate', () => {
+  it('returns no rate hint for a monotonically increasing series that already has a rate', () => {
     const series = [{ datapoints: [[23, 1000], [24, 1001]] }];
     const hints = getQueryHints('rate(metric[1m])', series);
     expect(hints).toEqual(null);
   });
 
-  it('returns a rate hint w/o action for a complex monotonously increasing series', () => {
+  it('returns a rate hint w/o action for a complex monotonically increasing series', () => {
     const series = [{ datapoints: [[23, 1000], [24, 1001]] }];
     const hints = getQueryHints('sum(metric)', series);
-    expect(hints.length).toBe(1);
-    expect(hints[0].label).toContain('rate()');
-    expect(hints[0].fix).toBeUndefined();
+    expect(hints!.length).toBe(1);
+    expect(hints![0].label).toContain('rate()');
+    expect(hints![0].fix).toBeUndefined();
   });
 
-  it('returns a rate hint for a monotonously increasing series with missing data', () => {
+  it('returns a rate hint for a monotonically increasing series with missing data', () => {
     const series = [{ datapoints: [[23, 1000], [null, 1001], [24, 1002]] }];
     const hints = getQueryHints('metric', series);
-    expect(hints.length).toBe(1);
-    expect(hints[0]).toMatchObject({
-      label: 'Time series is monotonously increasing.',
+    expect(hints!.length).toBe(1);
+    expect(hints![0]).toMatchObject({
+      label: 'Time series is monotonically increasing.',
       fix: {
         action: {
           type: 'ADD_RATE',
@@ -68,8 +69,8 @@ describe('getQueryHints()', () => {
   it('returns a histogram hint for a bucket series', () => {
     const series = [{ datapoints: [[23, 1000]] }];
     const hints = getQueryHints('metric_bucket', series);
-    expect(hints.length).toBe(1);
-    expect(hints[0]).toMatchObject({
+    expect(hints!.length).toBe(1);
+    expect(hints![0]).toMatchObject({
       label: 'Time series has buckets, you probably wanted a histogram.',
       fix: {
         action: {
@@ -86,8 +87,8 @@ describe('getQueryHints()', () => {
       datapoints: [[0, 0], [0, 0]],
     }));
     const hints = getQueryHints('metric', series);
-    expect(hints.length).toBe(1);
-    expect(hints[0]).toMatchObject({
+    expect(hints!.length).toBe(1);
+    expect(hints![0]).toMatchObject({
       type: 'ADD_SUM',
       label: 'Many time series results returned.',
       fix: {

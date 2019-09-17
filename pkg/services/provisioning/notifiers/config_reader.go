@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"gopkg.in/yaml.v2"
@@ -63,7 +63,7 @@ func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (
 		return nil, err
 	}
 
-	var cfg *notificationsAsConfig
+	var cfg *notificationsAsConfigV0
 	err = yaml.Unmarshal(yamlFile, &cfg)
 	if err != nil {
 		return nil, err

@@ -12,9 +12,8 @@ import {
 } from 'react-virtualized';
 import { Themeable } from '../../types/theme';
 
-import { sortSeriesData } from '../../utils/processSeriesData';
+import { stringToJsRegex, DataFrame, sortDataFrame, getDataFrameRow, ArrayVector, FieldType } from '@grafana/data';
 
-import { SeriesData, InterpolateFunction } from '@grafana/ui';
 import {
   TableCellBuilder,
   ColumnStyle,
@@ -22,10 +21,10 @@ import {
   TableCellBuilderOptions,
   simpleCellBuilder,
 } from './TableCellBuilder';
-import { stringToJsRegex } from '../../utils/index';
+import { InterpolateFunction } from '../../types/panel';
 
 export interface Props extends Themeable {
-  data: SeriesData;
+  data: DataFrame;
 
   minColumnWidth: number;
   showHeader: boolean;
@@ -43,7 +42,7 @@ export interface Props extends Themeable {
 interface State {
   sortBy?: number;
   sortDirection?: SortDirectionType;
-  data: SeriesData;
+  data: DataFrame;
 }
 
 interface ColumnRenderInfo {
@@ -61,6 +60,7 @@ export class Table extends Component<Props, State> {
   renderer: ColumnRenderInfo[];
   measurer: CellMeasurerCache;
   scrollToTop = false;
+  rotateWidth = 100;
 
   static defaultProps = {
     showHeader: true,
@@ -85,7 +85,7 @@ export class Table extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { data, styles, showHeader } = this.props;
+    const { data, styles, showHeader, rotate } = this.props;
     const { sortBy, sortDirection } = this.state;
     const dataChanged = data !== prevProps.data;
     const configsChanged =
@@ -105,16 +105,25 @@ export class Table extends Component<Props, State> {
       this.renderer = this.initColumns(this.props);
     }
 
+    if (dataChanged || rotate !== prevProps.rotate) {
+      const { width, minColumnWidth } = this.props;
+      this.rotateWidth = Math.max(width / data.length, minColumnWidth);
+    }
+
     // Update the data when data or sort changes
     if (dataChanged || sortBy !== prevState.sortBy || sortDirection !== prevState.sortDirection) {
       this.scrollToTop = true;
-      this.setState({ data: sortSeriesData(data, sortBy, sortDirection === 'DESC') });
+      this.setState({ data: sortDataFrame(data, sortBy, sortDirection === 'DESC') });
     }
   }
 
   /** Given the configuration, setup how each column gets rendered */
   initColumns(props: Props): ColumnRenderInfo[] {
     const { styles, data, width, minColumnWidth } = props;
+    if (!data || !data.fields || !data.fields.length || !styles) {
+      return [];
+    }
+
     const columnWidth = Math.max(width / data.fields.length, minColumnWidth);
 
     return data.fields.map((col, index) => {
@@ -137,7 +146,7 @@ export class Table extends Component<Props, State> {
       return {
         header: title,
         width: columnWidth,
-        builder: getCellBuilder(col, style, this.props),
+        builder: getCellBuilder(col.config || {}, style, this.props),
       };
     });
   }
@@ -159,7 +168,7 @@ export class Table extends Component<Props, State> {
     this.setState({ sortBy: sort, sortDirection: dir });
   };
 
-  /** Converts the grid coordinates to SeriesData coordinates */
+  /** Converts the grid coordinates to DataFrame coordinates */
   getCellRef = (rowIndex: number, columnIndex: number): DataIndex => {
     const { showHeader, rotate } = this.props;
     const rowOffset = showHeader ? -1 : 0;
@@ -176,9 +185,9 @@ export class Table extends Component<Props, State> {
     if (row < 0) {
       this.doSort(column);
     } else {
-      const values = this.state.data.rows[row];
-      const value = values[column];
-      console.log('CLICK', value, row);
+      const field = this.state.data.fields[columnIndex];
+      const value = field.values.get(rowIndex);
+      console.log('CLICK', value, field.name);
     }
   };
 
@@ -192,6 +201,9 @@ export class Table extends Component<Props, State> {
     if (!col) {
       col = {
         name: '??' + columnIndex + '???',
+        config: {},
+        values: new ArrayVector(),
+        type: FieldType.other,
       };
     }
 
@@ -217,7 +229,7 @@ export class Table extends Component<Props, State> {
     const { data } = this.state;
 
     const isHeader = row < 0;
-    const rowData = isHeader ? data.fields : data.rows[row];
+    const rowData = isHeader ? data.fields : getDataFrameRow(data, row); // TODO! improve
     const value = rowData ? rowData[column] : '';
     const builder = isHeader ? this.headerBuilder : this.getTableCellBuilder(column);
 
@@ -235,15 +247,21 @@ export class Table extends Component<Props, State> {
   };
 
   getColumnWidth = (col: Index): number => {
+    if (this.props.rotate) {
+      return this.rotateWidth; // fixed for now
+    }
     return this.renderer[col.index].width;
   };
 
   render() {
     const { showHeader, fixedHeader, fixedColumns, rotate, width, height } = this.props;
     const { data } = this.state;
+    if (!data || !data.fields || !data.fields.length) {
+      return <span>Missing Fields</span>; // nothing
+    }
 
     let columnCount = data.fields.length;
-    let rowCount = data.rows.length + (showHeader ? 1 : 0);
+    let rowCount = data.length + (showHeader ? 1 : 0);
 
     let fixedColumnCount = Math.min(fixedColumns, columnCount);
     let fixedRowCount = showHeader && fixedHeader ? 1 : 0;
@@ -265,14 +283,16 @@ export class Table extends Component<Props, State> {
       this.scrollToTop = false;
     }
 
+    // Force MultiGrid to rerender if these options change
+    // See: https://github.com/bvaughn/react-virtualized#pass-thru-props
+    const refreshKeys = {
+      ...this.state, // Includes data and sort parameters
+      d1: this.props.data,
+      s0: this.props.styles,
+    };
     return (
       <MultiGrid
-        {
-          ...this.state /** Force MultiGrid to update when data changes */
-        }
-        {
-          ...this.props /** Force MultiGrid to update when data changes */
-        }
+        {...refreshKeys}
         scrollToRow={scrollToRow}
         columnCount={columnCount}
         scrollToColumn={scrollToColumn}

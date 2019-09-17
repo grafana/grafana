@@ -1,4 +1,5 @@
 import { coreModule } from 'app/core/core';
+import { AngularPanelMenuItem } from '@grafana/ui';
 
 const template = `
 <span class="panel-title">
@@ -12,7 +13,7 @@ const template = `
   <span class="panel-time-info" ng-if="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>
 </span>`;
 
-function renderMenuItem(item, ctrl) {
+function renderMenuItem(item: AngularPanelMenuItem, ctrl: any) {
   let html = '';
   let listItemClass = '';
 
@@ -34,7 +35,7 @@ function renderMenuItem(item, ctrl) {
   }
 
   html += `><i class="${item.icon}"></i>`;
-  html += `<span class="dropdown-item-text">${item.text}</span>`;
+  html += `<span class="dropdown-item-text" aria-label="${item.text} panel menu item">${item.text}</span>`;
 
   if (item.shortcut) {
     html += `<span class="dropdown-menu-item-shortcut">${item.shortcut}</span>`;
@@ -54,10 +55,10 @@ function renderMenuItem(item, ctrl) {
   return html;
 }
 
-function createMenuTemplate(ctrl) {
+async function createMenuTemplate(ctrl: any) {
   let html = '';
 
-  for (const item of ctrl.getMenu()) {
+  for (const item of await ctrl.getMenu()) {
     html += renderMenuItem(item, ctrl);
   }
 
@@ -65,16 +66,16 @@ function createMenuTemplate(ctrl) {
 }
 
 /** @ngInject */
-function panelHeader($compile) {
+function panelHeader($compile: any) {
   return {
     restrict: 'E',
     template: template,
-    link: (scope, elem, attrs) => {
+    link: (scope: any, elem: any, attrs: any) => {
       const menuElem = elem.find('.panel-menu');
-      let menuScope;
-      let isDragged;
+      let menuScope: any;
+      let isDragged: boolean;
 
-      elem.click(evt => {
+      elem.click(async (evt: any) => {
         const targetClass = evt.target.className;
 
         // remove existing scope
@@ -83,7 +84,7 @@ function panelHeader($compile) {
         }
 
         menuScope = scope.$new();
-        const menuHtml = createMenuTemplate(scope.ctrl);
+        const menuHtml = await createMenuTemplate(scope.ctrl);
         menuElem.html(menuHtml);
         $compile(menuElem)(menuScope);
 
@@ -92,20 +93,20 @@ function panelHeader($compile) {
         }
       });
 
-      function togglePanelMenu(e) {
+      function togglePanelMenu(e: any) {
         if (!isDragged) {
           e.stopPropagation();
           elem.find('[data-toggle=dropdown]').dropdown('toggle');
         }
       }
 
-      let mouseX, mouseY;
-      elem.mousedown(e => {
+      let mouseX: number, mouseY: number;
+      elem.mousedown((e: any) => {
         mouseX = e.pageX;
         mouseY = e.pageY;
       });
 
-      elem.mouseup(e => {
+      elem.mouseup((e: any) => {
         if (mouseX === e.pageX && mouseY === e.pageY) {
           isDragged = false;
         } else {

@@ -1,155 +1,67 @@
-import ansicolor from 'vendor/ansicolor/ansicolor';
-import _ from 'lodash';
-import moment from 'moment';
-
-import { LogsMetaItem, LogsModel, LogRowModel, LogsStream, LogsStreamEntry, LogsMetaKind } from 'app/core/logs_model';
-import { hasAnsiCodes } from 'app/core/utils/text';
-import { DEFAULT_MAX_LINES } from './datasource';
-
+import { LokiLogsStream, LokiResponse } from './types';
 import {
   parseLabels,
-  SeriesData,
-  findUniqueLabels,
-  Labels,
-  findCommonLabels,
-  getLogLevel,
   FieldType,
-  formatLabels,
-  guessFieldTypeFromSeries,
-} from '@grafana/ui';
+  Labels,
+  DataFrame,
+  ArrayVector,
+  MutableDataFrame,
+  findUniqueLabels,
+} from '@grafana/data';
 
-export function processEntry(
-  entry: LogsStreamEntry,
-  labels: string,
-  parsedLabels: Labels,
-  uniqueLabels: Labels,
-  search: string
-): LogRowModel {
-  const { line } = entry;
-  const ts = entry.ts || entry.timestamp;
-  // Assumes unique-ness, needs nanosec precision for timestamp
-  const key = `EK${ts}${labels}`;
-  const time = moment(ts);
-  const timeEpochMs = time.valueOf();
-  const timeFromNow = time.fromNow();
-  const timeLocal = time.format('YYYY-MM-DD HH:mm:ss');
-  const logLevel = getLogLevel(line);
-  const hasAnsi = hasAnsiCodes(line);
-
-  return {
-    key,
-    logLevel,
-    timeFromNow,
-    timeEpochMs,
-    timeLocal,
-    uniqueLabels,
-    hasAnsi,
-    entry: hasAnsi ? ansicolor.strip(line) : line,
-    raw: line,
-    labels: parsedLabels,
-    searchWords: search ? [search] : [],
-    timestamp: ts,
-  };
-}
-
-export function mergeStreamsToLogs(streams: LogsStream[], limit = DEFAULT_MAX_LINES): LogsModel {
-  // Unique model identifier
-  const id = streams.map(stream => stream.labels).join();
-
-  // Find unique labels for each stream
-  streams = streams.map(stream => ({
-    ...stream,
-    parsedLabels: parseLabels(stream.labels),
-  }));
-  const commonLabels = findCommonLabels(streams.map(model => model.parsedLabels));
-  streams = streams.map(stream => ({
-    ...stream,
-    uniqueLabels: findUniqueLabels(stream.parsedLabels, commonLabels),
-  }));
-
-  // Merge stream entries into single list of log rows
-  const sortedRows: LogRowModel[] = _.chain(streams)
-    .reduce(
-      (acc: LogRowModel[], stream: LogsStream) => [
-        ...acc,
-        ...stream.entries.map(entry =>
-          processEntry(entry, stream.labels, stream.parsedLabels, stream.uniqueLabels, stream.search)
-        ),
-      ],
-      []
-    )
-    .sortBy('timestamp')
-    .reverse()
-    .value();
-
-  const hasUniqueLabels = sortedRows && sortedRows.some(row => Object.keys(row.uniqueLabels).length > 0);
-
-  // Meta data to display in status
-  const meta: LogsMetaItem[] = [];
-  if (_.size(commonLabels) > 0) {
-    meta.push({
-      label: 'Common labels',
-      value: commonLabels,
-      kind: LogsMetaKind.LabelsMap,
-    });
-  }
-  if (limit) {
-    meta.push({
-      label: 'Limit',
-      value: `${limit} (${sortedRows.length} returned)`,
-      kind: LogsMetaKind.String,
-    });
-  }
-
-  return {
-    id,
-    hasUniqueLabels,
-    meta,
-    rows: sortedRows,
-  };
-}
-
-export function logStreamToSeriesData(stream: LogsStream): SeriesData {
+/**
+ * Transforms LokiLogStream structure into a dataFrame. Used when doing standard queries.
+ */
+export function logStreamToDataFrame(stream: LokiLogsStream, reverse?: boolean, refId?: string): DataFrame {
   let labels: Labels = stream.parsedLabels;
   if (!labels && stream.labels) {
     labels = parseLabels(stream.labels);
   }
+  const times = new ArrayVector<string>([]);
+  const lines = new ArrayVector<string>([]);
+
+  for (const entry of stream.entries) {
+    times.add(entry.ts || entry.timestamp);
+    lines.add(entry.line);
+  }
+
+  if (reverse) {
+    times.buffer = times.buffer.reverse();
+    lines.buffer = lines.buffer.reverse();
+  }
+
   return {
+    refId,
     labels,
-    fields: [{ name: 'ts', type: FieldType.time }, { name: 'line', type: FieldType.string }],
-    rows: stream.entries.map(entry => {
-      return [entry.ts || entry.timestamp, entry.line];
-    }),
+    fields: [
+      { name: 'ts', type: FieldType.time, config: { title: 'Time' }, values: times }, // Time
+      { name: 'line', type: FieldType.string, config: {}, values: lines }, // Line
+    ],
+    length: times.length,
   };
 }
 
-export function seriesDataToLogStream(series: SeriesData): LogsStream {
-  let timeIndex = -1;
-  let lineIndex = -1;
-  for (let i = 0; i < series.fields.length; i++) {
-    const field = series.fields[i];
-    const type = field.type || guessFieldTypeFromSeries(series, i);
-    if (timeIndex < 0 && type === FieldType.time) {
-      timeIndex = i;
+/**
+ * Transform LokiResponse data and appends it to MutableDataFrame. Used for streaming where the dataFrame can be
+ * a CircularDataFrame creating a fixed size rolling buffer.
+ * TODO: Probably could be unified with the logStreamToDataFrame function.
+ */
+export function appendResponseToBufferedData(response: LokiResponse, data: MutableDataFrame) {
+  // Should we do anythign with: response.dropped_entries?
+
+  const streams: LokiLogsStream[] = response.streams;
+  if (streams && streams.length) {
+    for (const stream of streams) {
+      // Find unique labels
+      const labels = parseLabels(stream.labels);
+      const unique = findUniqueLabels(labels, data.labels);
+
+      // Add each line
+      for (const entry of stream.entries) {
+        data.values.ts.add(entry.ts || entry.timestamp);
+        data.values.line.add(entry.line);
+        data.values.labels.add(unique);
+      }
     }
-    if (lineIndex < 0 && type === FieldType.string) {
-      lineIndex = i;
-    }
   }
-  if (timeIndex < 0) {
-    throw new Error('Series does not have a time field');
-  }
-  if (lineIndex < 0) {
-    throw new Error('Series does not have a line field');
-  }
-  return {
-    labels: formatLabels(series.labels),
-    parsedLabels: series.labels,
-    entries: series.rows.map(row => {
-      return {
-        line: row[lineIndex],
-        ts: row[timeIndex],
-      };
-    }),
-  };
 }

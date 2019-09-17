@@ -51,10 +51,10 @@ func (tracerOptions) CustomHeaderKeys(headerKeys *HeadersConfig) TracerOption {
 		if headerKeys == nil {
 			return
 		}
-		textPropagator := newTextMapPropagator(headerKeys.applyDefaults(), tracer.metrics)
+		textPropagator := NewTextMapPropagator(headerKeys.ApplyDefaults(), tracer.metrics)
 		tracer.addCodec(opentracing.TextMap, textPropagator, textPropagator)
 
-		httpHeaderPropagator := newHTTPHeaderPropagator(headerKeys.applyDefaults(), tracer.metrics)
+		httpHeaderPropagator := NewHTTPHeaderPropagator(headerKeys.ApplyDefaults(), tracer.metrics)
 		tracer.addCodec(opentracing.HTTPHeaders, httpHeaderPropagator, httpHeaderPropagator)
 	}
 }
@@ -125,6 +125,12 @@ func (tracerOptions) Gen128Bit(gen128Bit bool) TracerOption {
 func (tracerOptions) HighTraceIDGenerator(highTraceIDGenerator func() uint64) TracerOption {
 	return func(tracer *Tracer) {
 		tracer.options.highTraceIDGenerator = highTraceIDGenerator
+	}
+}
+
+func (tracerOptions) MaxTagValueLength(maxTagValueLength int) TracerOption {
+	return func(tracer *Tracer) {
+		tracer.options.maxTagValueLength = maxTagValueLength
 	}
 }
 

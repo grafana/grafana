@@ -52,7 +52,7 @@ const UsersTable: FC<Props> = props => {
                 </div>
               </td>
               <td>
-                <div onClick={() => onRemoveUser(user)} className="btn btn-danger btn-mini">
+                <div onClick={() => onRemoveUser(user)} className="btn btn-danger btn-small">
                   <i className="fa fa-remove" />
                 </div>
               </td>

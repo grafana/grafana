@@ -25,12 +25,12 @@
   flex-grow: 1;
   min-width: 0;
   height: 100%;
-  padding: 30px;
+  padding: 32px;
   max-width: 1100px;
 }
 
 .dashboard-settings__aside {
-  padding: 27px 0 0 30px;
+  padding: 32px 0 0 32px;
   background: $panel-bg;
   display: flex;
   flex-direction: column;
@@ -54,6 +54,7 @@
 .dashboard-settings__header {
   font-size: $font-size-h3;
   margin-bottom: $space-xl;
+  line-height: 36px;
 }
 
 .dashboard-settings__subheader {
@@ -64,9 +65,10 @@
 }
 
 .dashboard-settings__nav-item {
-  padding: 7px 12px;
+  padding: 8px 40px 8px 8px;
   color: $text-color;
   font-size: $font-size-md;
+  line-height: 20px;
   @include left-brand-border;
 
   &.active {
@@ -76,11 +78,13 @@
 
   .gicon {
     margin-bottom: 2px;
+    margin-right: 4px;
   }
 
   .fa {
     font-size: 17px;
     width: 16px;
+    margin-right: 4px;
   }
 }
 

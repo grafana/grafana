@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
@@ -259,12 +259,6 @@ func setAggParams(params *url.Values, query *tsdb.Query, durationSeconds int) {
 		} else {
 			alignmentPeriod = "+3600s"
 		}
-	}
-
-	re := regexp.MustCompile("[0-9]+")
-	seconds, err := strconv.ParseInt(re.FindString(alignmentPeriod), 10, 64)
-	if err != nil || seconds > 3600 {
-		alignmentPeriod = "+3600s"
 	}
 
 	params.Add("aggregation.crossSeriesReducer", crossSeriesReducer)

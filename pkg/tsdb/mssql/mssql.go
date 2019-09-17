@@ -3,14 +3,17 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/grafana/grafana/pkg/setting"
+	"net/url"
 	"strconv"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/go-xorm/core"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -21,15 +24,12 @@ func init() {
 func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mssql")
 
-	cnnstr, err := generateConnectionString(datasource)
-	if err != nil {
-		return nil, err
-	}
+	cnnstr := generateConnectionString(datasource)
 	if setting.Env == setting.DEV {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 
-	config := tsdb.SqlQueryEndpointConfiguration{
+	config := sqleng.SqlQueryEndpointConfiguration{
 		DriverName:        "mssql",
 		ConnectionString:  cnnstr,
 		Datasource:        datasource,
@@ -40,32 +40,24 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		log: logger,
 	}
 
-	return tsdb.NewSqlQueryEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
+	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
 }
 
-func generateConnectionString(datasource *models.DataSource) (string, error) {
-	password := ""
-	for key, value := range datasource.SecureJsonData.Decrypt() {
-		if key == "password" {
-			password = value
-			break
-		}
-	}
-
+func generateConnectionString(datasource *models.DataSource) string {
 	server, port := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
-
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
-	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
-		server,
-		port,
-		datasource.Database,
-		datasource.User,
-		password,
-	)
-	if encrypt != "false" {
-		connStr += fmt.Sprintf("encrypt=%s;", encrypt)
+
+	query := url.Values{}
+	query.Add("database", datasource.Database)
+	query.Add("encrypt", encrypt)
+
+	u := &url.URL{
+		Scheme:   "sqlserver",
+		User:     url.UserPassword(datasource.User, datasource.DecryptedPassword()),
+		Host:     fmt.Sprintf("%s:%s", server, port),
+		RawQuery: query.Encode(),
 	}
-	return connStr, nil
+	return u.String()
 }
 
 type mssqlRowTransformer struct {
@@ -76,8 +68,9 @@ func (t *mssqlRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *cor
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 
-	for i, stype := range columnTypes {
-		t.log.Debug("type", "type", stype)
+	for i := range columnTypes {
+		// debug output on large tables causes high memory utilization/leak
+		// t.log.Debug("type", "type", stype)
 		valuePtrs[i] = &values[i]
 	}
 
