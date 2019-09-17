@@ -61,7 +61,7 @@ export class RefreshPicker extends PureComponent<Props> {
       <div className={cssClasses}>
         <div className="refresh-picker-buttons">
           <Tooltip placement="top" content={tooltip}>
-            <button className="btn btn--radius-right-0 navbar-button navbar-button--refresh" onClick={onRefresh}>
+            <button className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0" onClick={onRefresh}>
               <i className="fa fa-refresh" />
             </button>
           </Tooltip>

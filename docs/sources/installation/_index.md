@@ -12,6 +12,7 @@ weight = 1
 
 ## Installing Grafana
 
+- [Requirements](requirements)
 - [Installing on Debian / Ubuntu](debian)
 - [Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](rpm)
 - [Installing on Mac OS X](mac)

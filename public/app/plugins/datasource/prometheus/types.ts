@@ -15,6 +15,9 @@ export interface PromQuery extends DataQuery {
   intervalFactor?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
+  requestId?: string;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface PromOptions extends DataSourceJsonData {

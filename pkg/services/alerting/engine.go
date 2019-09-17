@@ -117,7 +117,7 @@ func (e *AlertEngine) processJobWithRetry(grafanaCtx context.Context, job *Job) 
 
 	// Initialize with first attemptID=1
 	attemptChan <- 1
-	job.Running = true
+	job.SetRunning(true)
 
 	for {
 		select {
@@ -141,7 +141,7 @@ func (e *AlertEngine) processJobWithRetry(grafanaCtx context.Context, job *Job) 
 }
 
 func (e *AlertEngine) endJob(err error, cancelChan chan context.CancelFunc, job *Job) error {
-	job.Running = false
+	job.SetRunning(false)
 	close(cancelChan)
 	for cancelFn := range cancelChan {
 		cancelFn()

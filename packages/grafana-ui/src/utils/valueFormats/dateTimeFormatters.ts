@@ -283,7 +283,10 @@ export function toDurationInSeconds(size: number, decimals: DecimalCount) {
   return toDuration(size, decimals, Interval.Second);
 }
 
-export function toDurationInHoursMinutesSeconds(size: number) {
+export function toDurationInHoursMinutesSeconds(size: number): string {
+  if (size < 0) {
+    return toDurationInHoursMinutesSeconds(-size) + ' ago';
+  }
   const strings = [];
   const numHours = Math.floor(size / 3600);
   const numMinutes = Math.floor((size % 3600) / 60);

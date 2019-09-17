@@ -5,11 +5,12 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 
 // Components
-import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay } from '@grafana/ui';
+import { BarGauge, VizRepeater, getFieldDisplayValues, FieldDisplay, DataLinksContextMenu } from '@grafana/ui';
 
 // Types
 import { BarGaugeOptions } from './types';
 import { PanelProps } from '@grafana/ui';
+import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
@@ -17,18 +18,26 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     const { field, display } = value;
 
     return (
-      <BarGauge
-        value={display}
-        width={width}
-        height={height}
-        orientation={options.orientation}
-        thresholds={field.thresholds}
-        theme={config.theme}
-        itemSpacing={this.getItemSpacing()}
-        displayMode={options.displayMode}
-        minValue={field.min}
-        maxValue={field.max}
-      />
+      <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
+        {({ openMenu, targetClassName }) => {
+          return (
+            <BarGauge
+              value={display}
+              width={width}
+              height={height}
+              orientation={options.orientation}
+              thresholds={field.thresholds}
+              theme={config.theme}
+              itemSpacing={this.getItemSpacing()}
+              displayMode={options.displayMode}
+              minValue={field.min}
+              maxValue={field.max}
+              onClick={openMenu}
+              className={targetClassName}
+            />
+          );
+        }}
+      </DataLinksContextMenu>
     );
   };
 

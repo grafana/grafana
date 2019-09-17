@@ -15,6 +15,7 @@ import { AnnotationEvent } from '@grafana/data';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
+import { DataSourceApi } from '@grafana/ui';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -60,10 +61,6 @@ export class AnnotationsSrv {
         });
 
         annotations = dedupAnnotations(annotations);
-        for (let i = 0; i < annotations.length; i++) {
-          const a = annotations[i];
-          a.isRegion = a.time !== a.timeEnd;
-        }
 
         // look for alert state for this panel
         const alertState: any = _.find(results[1], { panelId: options.panel.id });
@@ -130,7 +127,7 @@ export class AnnotationsSrv {
       dsPromises.push(datasourcePromise);
       promises.push(
         datasourcePromise
-          .then((datasource: any) => {
+          .then((datasource: DataSourceApi) => {
             // issue query against data source
             return datasource.annotationQuery({
               range: range,
@@ -181,7 +178,9 @@ export class AnnotationsSrv {
 
     for (const item of results) {
       item.source = annotation;
+      item.isRegion = item.timeEnd && item.time !== item.timeEnd;
     }
+
     return results;
   }
 }

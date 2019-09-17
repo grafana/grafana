@@ -8,7 +8,8 @@ import { importDataSourcePlugin } from './plugin_loader';
 import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
 
 // Types
-import { DataSourceApi, DataSourceSelectItem, ScopedVars } from '@grafana/ui';
+import { DataSourceApi, DataSourceSelectItem } from '@grafana/ui';
+import { ScopedVars } from '@grafana/data';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 
@@ -125,8 +126,10 @@ export class DatasourceSrv implements DataSourceService {
         //Make sure grafana and mixed are sorted at the bottom
         if (value.meta.id === 'grafana') {
           metricSource.sort = String.fromCharCode(253);
-        } else if (value.meta.id === 'mixed') {
+        } else if (value.meta.id === 'dashboard') {
           metricSource.sort = String.fromCharCode(254);
+        } else if (value.meta.id === 'mixed') {
+          metricSource.sort = String.fromCharCode(255);
         }
 
         metricSources.push(metricSource);

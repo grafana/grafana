@@ -1,8 +1,9 @@
+import difference from 'lodash/difference';
+
 import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 
-import _ from 'lodash';
 import { Field, FieldType } from '../types/index';
-import { DataFrameHelper } from './dataFrameHelper';
+import { MutableDataFrame } from './dataFrameHelper';
 import { ArrayVector } from './vector';
 import { guessFieldTypeFromValue } from './processDataFrame';
 
@@ -24,7 +25,7 @@ function createField<T>(name: string, values?: T[], type?: FieldType): Field<T> 
 }
 
 describe('Stats Calculators', () => {
-  const basicTable = new DataFrameHelper({
+  const basicTable = new MutableDataFrame({
     fields: [{ name: 'a', values: [10, 20] }, { name: 'b', values: [20, 30] }, { name: 'c', values: [30, 40] }],
   });
 
@@ -42,7 +43,7 @@ describe('Stats Calculators', () => {
     expect(stats.length).toBe(2);
 
     const found = stats.map(v => v.id);
-    const notFound = _.difference(names, found);
+    const notFound = difference(names, found);
     expect(notFound.length).toBe(2);
 
     expect(notFound[0]).toBe('not a stat');
@@ -51,17 +52,13 @@ describe('Stats Calculators', () => {
   it('should calculate basic stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: ['first', 'last', 'mean'],
+      reducers: ['first', 'last', 'mean', 'count'],
     });
 
-    // First
     expect(stats.first).toEqual(10);
-
-    // Last
     expect(stats.last).toEqual(20);
-
-    // Mean
     expect(stats.mean).toEqual(15);
+    expect(stats.count).toEqual(2);
   });
 
   it('should support a single stat also', () => {

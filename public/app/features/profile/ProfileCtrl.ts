@@ -1,26 +1,15 @@
-import config from 'app/core/config';
 import { coreModule, NavModelSrv } from 'app/core/core';
 import { dateTime } from '@grafana/data';
 import { UserSession } from 'app/types';
 import { BackendSrv } from 'app/core/services/backend_srv';
 
 export class ProfileCtrl {
-  user: any;
-  oldTheme: any;
-  teams: any = [];
-  orgs: any = [];
   sessions: object[] = [];
-  userForm: any;
-  showTeamsList = false;
-  showOrgsList = false;
-  readonlyLoginFields = config.disableLoginForm;
   navModel: any;
 
   /** @ngInject */
   constructor(private backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
     this.getUserSessions();
-    this.getUserTeams();
-    this.getUserOrgs();
     this.navModel = navModelSrv.getNav('profile', 'profile-settings', 0);
   }
 
@@ -68,26 +57,6 @@ export class ProfileCtrl {
           return true;
         });
       });
-  }
-
-  getUserTeams() {
-    this.backendSrv.get('/api/user/teams').then((teams: any) => {
-      this.teams = teams;
-      this.showTeamsList = this.teams.length > 0;
-    });
-  }
-
-  getUserOrgs() {
-    this.backendSrv.get('/api/user/orgs').then((orgs: any) => {
-      this.orgs = orgs;
-      this.showOrgsList = orgs.length > 1;
-    });
-  }
-
-  setUsingOrg(org: any) {
-    this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
-      window.location.href = config.appSubUrl + '/profile';
-    });
   }
 }
 

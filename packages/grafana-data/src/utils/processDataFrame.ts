@@ -19,7 +19,7 @@ import {
 } from '../types/index';
 import { isDateTime } from './moment_wrapper';
 import { ArrayVector, SortedVector } from './vector';
-import { DataFrameHelper } from './dataFrameHelper';
+import { MutableDataFrame } from './dataFrameHelper';
 import { deprecationWarning } from './deprecationWarning';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
@@ -32,12 +32,13 @@ function convertTableToDataFrame(table: TableData): DataFrame {
       type: FieldType.other,
     };
   });
-  // Fill in the field values
+
   for (const row of table.rows) {
     for (let i = 0; i < fields.length; i++) {
       fields[i].values.buffer.push(row[i]);
     }
   }
+
   for (const f of fields) {
     const t = guessFieldTypeForField(f);
     if (t) {
@@ -50,7 +51,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     refId: table.refId,
     meta: table.meta,
     name: table.name,
-    length: fields[0].values.length,
+    length: table.rows.length,
   };
 }
 
@@ -96,10 +97,11 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
 function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
   const x = new ArrayVector();
   const y = new ArrayVector();
+
   for (let i = 0; i < graphSeries.data.length; i++) {
     const row = graphSeries.data[i];
-    x.buffer.push(row[0]);
-    y.buffer.push(row[1]);
+    x.buffer.push(row[1]);
+    y.buffer.push(row[0]);
   }
 
   return {
@@ -220,7 +222,7 @@ export const toDataFrame = (data: any): DataFrame => {
   if (data.hasOwnProperty('fields')) {
     // @deprecated -- remove in 6.5
     if (data.hasOwnProperty('rows')) {
-      const v = new DataFrameHelper(data as DataFrameDTO);
+      const v = new MutableDataFrame(data as DataFrameDTO);
       const rows = data.rows as any[][];
       for (let i = 0; i < rows.length; i++) {
         v.appendRow(rows[i]);
@@ -233,18 +235,23 @@ export const toDataFrame = (data: any): DataFrame => {
     if (data.hasOwnProperty('length')) {
       return data as DataFrame;
     }
-    return new DataFrameHelper(data as DataFrameDTO);
+
+    // This will convert the array values into Vectors
+    return new MutableDataFrame(data as DataFrameDTO);
   }
+
   if (data.hasOwnProperty('datapoints')) {
     return convertTimeSeriesToDataFrame(data);
   }
+
   if (data.hasOwnProperty('data')) {
     return convertGraphSeriesToDataFrame(data);
   }
+
   if (data.hasOwnProperty('columns')) {
     return convertTableToDataFrame(data);
   }
-  // TODO, try to convert JSON/Array to table?
+
   console.warn('Can not convert', data);
   throw new Error('Unsupported data format');
 };
@@ -252,9 +259,10 @@ export const toDataFrame = (data: any): DataFrame => {
 export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData => {
   const { fields } = frame;
 
-  const length = fields[0].values.length;
+  const rowCount = frame.length;
   const rows: any[][] = [];
-  for (let i = 0; i < length; i++) {
+
+  for (let i = 0; i < rowCount; i++) {
     const row: any[] = [];
     for (let j = 0; j < fields.length; j++) {
       row.push(fields[j].values.get(i));
@@ -342,6 +350,35 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
     }),
   };
 }
+
+/**
+ * Returns a copy with all values reversed
+ */
+export function reverseDataFrame(data: DataFrame): DataFrame {
+  return {
+    ...data,
+    fields: data.fields.map(f => {
+      const copy = [...f.values.toArray()];
+      copy.reverse();
+      return {
+        ...f,
+        values: new ArrayVector(copy),
+      };
+    }),
+  };
+}
+
+export const getTimeField = (series: DataFrame): { timeField?: Field; timeIndex?: number } => {
+  for (let i = 0; i < series.fields.length; i++) {
+    if (series.fields[i].type === FieldType.time) {
+      return {
+        timeField: series.fields[i],
+        timeIndex: i,
+      };
+    }
+  }
+  return {};
+};
 
 /**
  * Wrapper to get an array from each field value

@@ -1,0 +1,8 @@
+{
+  "jest": {
+    "moduleNameMapper": {
+      "someOverride": "somePath"
+    },
+    "snapshotSerializers": "serializers"
+  }
+}

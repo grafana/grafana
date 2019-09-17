@@ -2,7 +2,7 @@ import React, { FunctionComponent } from 'react';
 import { LokiQueryFieldForm, LokiQueryFieldFormProps } from './LokiQueryFieldForm';
 import { useLokiSyntax } from './useLokiSyntax';
 
-const LokiQueryField: FunctionComponent<LokiQueryFieldFormProps> = ({
+export const LokiQueryField: FunctionComponent<LokiQueryFieldFormProps> = ({
   datasource,
   datasourceStatus,
   ...otherProps
