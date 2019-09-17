@@ -16,7 +16,7 @@ For all details please read the full [CHANGELOG.md](https://github.com/grafana/g
 
 ## Highlights
 
-Grafana 6.4 comes with a lot of new features and enhancements backed with tons of work around [Grafana's data model]({{< relref "#maturing-grafana-data-model" >}}):
+Grafana 6.4 comes with a lot of new features and enhancements backed with tons of work around [Grafana's data model]({{< relref "#improving-grafana-data-model" >}}):
 
 - New Explore features
   - [Saving panel query from Explore]({{< relref "#saving-panel-query-from-explore" >}})
@@ -24,7 +24,7 @@ Grafana 6.4 comes with a lot of new features and enhancements backed with tons o
   - [Live tailing improvements]({{< relref "#live-tailing-improvements" >}})
 - [Logs Panel - alpha]({{< relref "#logs-panel-alpha" >}})
 - [Data links improvements]({{< relref "#data-links-improvements" >}})
-- [Maturing Grafana data model]({{< relref "#maturing-grafana-data-model" >}})
+- [Improving Grafana data model]({{< relref "#improving-grafana-data-model" >}})
 - [Alpha version of grafana-toolkit]({{< relref "#alpha-version-of-grafana-toolkit" >}})
 - [PhantomJS deprecation]({{< relref "#phantomjs-deprecation" >}})
 - [Alpine based docker image]({{< relref "#alpine-based-docker-image" >}})
@@ -57,9 +57,16 @@ With grafana 6.3 we introduced new way of creating [Data Links](https://grafana.
 
 Read more about Data Links and what you can do with them in [documentation](https://grafana.com/docs/features/panels/graph/#data-link)
 
-## Maturing Grafana's data model
+## Improving Grafana's data model
 
-TODO Ryan
+Grafana 6.4 continues the work starting in 6.3 of creating a data model and query execution lifecycle that can support robust analytics and streaming.  These changes are mostly structural, and lay the foundation for powerful features in future releases.  The useful new features are in [alpha](https://grafana.com/docs/installation/configuration/#enable-alpha) mode that can be enabled with configuraiton flags.
+
+- DataFrame now has a [columnar](https://en.wikipedia.org/wiki/Column-oriented_DBMS) layout.  This will support easier frontend processing.
+- When [alpha plugins](https://grafana.com/docs/installation/configuration/#enable-alpha) are enabled, panels can reuse the query results from another panel.
+- When [transformations alpha feature](????) flag is enabled, the results of a query can be modified before passed to a visualization.
+- The DataSource query interface has been updated to better support streaming.  The result can now either return a `Promise<result>` or `Observable<result>`
+
+
 
 ## Alpha version of grafana-toolkit
 
