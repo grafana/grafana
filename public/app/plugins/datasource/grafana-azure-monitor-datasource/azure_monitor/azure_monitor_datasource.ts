@@ -106,6 +106,64 @@ export default class AzureMonitorDatasource {
     };
   }
 
+  buildSingleQuery(
+    options: DataQueryRequest<AzureMonitorQuery>,
+    target: any,
+    {
+      resourceGroup,
+      resourceName,
+      metricDefinition,
+      timeGrainUnit,
+      timeGrain,
+      metricName,
+      metricNamespace,
+      allowedTimeGrainsMs,
+      aggregation,
+      dimension,
+      dimensionFilter,
+      alias,
+    }: AzureMonitorQueryData,
+    queryMode: string
+  ) {
+    if (timeGrainUnit && timeGrain !== 'auto') {
+      timeGrain = TimegrainConverter.createISO8601Duration(timeGrain, timeGrainUnit);
+    }
+
+    const metricNamespaceParsed = this.templateSrv.replace(metricNamespace, options.scopedVars);
+
+    return {
+      refId: target.refId,
+      intervalMs: options.intervalMs,
+      datasourceId: this.id,
+      subscription: this.templateSrv.replace(target.subscription || this.subscriptionId, options.scopedVars),
+      queryType: 'Azure Monitor',
+      type: 'timeSeriesQuery',
+      raw: false,
+      azureMonitor: {
+        queryMode,
+        data: {
+          [queryMode]: {
+            resourceGroup: this.templateSrv.replace(resourceGroup, options.scopedVars),
+            resourceName: this.templateSrv.replace(resourceName, options.scopedVars),
+            metricDefinition: this.templateSrv.replace(metricDefinition, options.scopedVars),
+            timeGrain: this.templateSrv.replace((timeGrain || '').toString(), options.scopedVars),
+            allowedTimeGrainsMs: allowedTimeGrainsMs,
+            metricName: this.templateSrv.replace(metricName, options.scopedVars),
+            metricNamespace:
+              metricNamespaceParsed && metricNamespaceParsed !== this.defaultDropdownValue
+                ? metricNamespaceParsed
+                : metricDefinition,
+            aggregation: this.templateSrv.replace(aggregation, options.scopedVars),
+            dimension: this.templateSrv.replace(dimension, options.scopedVars),
+            dimensionFilter: this.templateSrv.replace(dimensionFilter, options.scopedVars),
+            alias,
+            format: target.format,
+          },
+        },
+      },
+    };
+  }
+
   async query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponseData[]> {
     const groupedQueries = await Promise.all(
       options.targets
@@ -152,7 +210,7 @@ export default class AzureMonitorDatasource {
                 )
             );
           } else {
-            return Promise.resolve(this.buildQuery(options, target, data[queryMode]));
+            return Promise.resolve(this.buildSingleQuery(options, target, data[queryMode], queryMode));
           }
         })
     );
