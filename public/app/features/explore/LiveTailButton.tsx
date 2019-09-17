@@ -28,6 +28,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
     liveButton: css`
       label: liveButton;
       transition: background-color 1s, border-color 1s, color 1s;
+      margin: 0;
     `,
     isLive: css`
       label: isLive;
@@ -111,7 +112,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
   const onClickMain = isLive ? (isPaused ? resume : pause) : start;
 
   return (
-    <div className="explore-toolbar-content-item">
+    <>
       <button
         className={classNames('btn navbar-button', styles.liveButton, {
           [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: isLive,
@@ -141,6 +142,6 @@ export function LiveTailButton(props: LiveTailButtonProps) {
           </button>
         </div>
       </CSSTransition>
-    </div>
+    </>
   );
 }
