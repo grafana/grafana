@@ -155,6 +155,10 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 }
 
 func (uss *UsageStatsService) updateTotalStats() {
+	if !uss.Cfg.MetricsEndpointEnabled || uss.Cfg.MetricsEndpointDisableTotalStats {
+		return
+	}
+
 	statsQuery := models.GetSystemStatsQuery{}
 	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
 		metricsLogger.Error("Failed to get system stats", "error", err)

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { FilterFieldsByNameTransformerOptions, DataTransformerID, dataTransformers, KeyValue } from '@grafana/data';
+import { FilterFieldsByNameTransformerOptions, DataTransformerID, transformersRegistry, KeyValue } from '@grafana/data';
 import { TransformerUIProps, TransformerUIRegistyItem } from './types';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { css, cx } from 'emotion';
@@ -157,7 +157,7 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick }) => 
 export const filterFieldsByNameTransformRegistryItem: TransformerUIRegistyItem<FilterFieldsByNameTransformerOptions> = {
   id: DataTransformerID.filterFieldsByName,
   component: FilterByNameTransformerEditor,
-  transformer: dataTransformers.get(DataTransformerID.filterFieldsByName),
+  transformer: transformersRegistry.get(DataTransformerID.filterFieldsByName),
   name: 'Filter by name',
   description: 'UI for filter by name transformation',
 };
