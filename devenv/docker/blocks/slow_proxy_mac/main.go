@@ -13,7 +13,7 @@ import (
 func main() {
 	origin := os.Getenv("ORIGIN_SERVER")
 	if origin == "" {
-		origin = "http://localhost:9090/"
+		origin = "http://host.docker.internal:9090/"
 	}
 
 	sleep := time.Minute
