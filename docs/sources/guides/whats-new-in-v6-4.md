@@ -127,7 +127,7 @@ A common request from Enterprise users have been to be able to set up reporting 
 
 This feature is currently limited to Organization Admins.
 
-{{< docs-imagebox img="/img/docs/v64/reports.png" caption="Reporting" >}}
+{{< docs-imagebox img="/img/docs/v64/reports.jpeg" max-width="500px" caption="Reporting" >}}
 
 ### GitLab OAuth Team Sync support
 
