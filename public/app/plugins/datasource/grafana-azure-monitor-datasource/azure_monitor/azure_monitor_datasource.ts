@@ -164,8 +164,8 @@ export default class AzureMonitorDatasource {
     };
   }
 
-  async query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponseData[]> {
-    const groupedQueries = await Promise.all(
+  async query(options: DataQueryRequest<any>): Promise<DataQueryResponseData[]> {
+    const groupedQueries: any[] = await Promise.all(
       options.targets
         .filter(item => {
           const { data, queryMode } = item.azureMonitor;

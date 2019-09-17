@@ -27,12 +27,6 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   // App Insights
   appInsightsAppId?: string;
 }
-
-export interface AzureMetricQuery {
-  queryMode: string;
-  data: { [queryMode: string]: AzureMonitorQueryData };
-}
-
 export interface AzureMonitorQueryData {
   resourceGroup: string;
   resourceGroups: string[];
@@ -49,6 +43,11 @@ export interface AzureMonitorQueryData {
   dimensionFilter: string;
   alias: string;
   locations: string[];
+}
+
+export interface AzureMetricQuery extends AzureMonitorQueryData {
+  queryMode: string;
+  data: { [queryMode: string]: AzureMonitorQueryData };
 }
 
 export interface AzureLogsQuery {
