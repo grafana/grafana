@@ -1,4 +1,4 @@
-# 6.4.0 (unreleased)
+# 6.4.0-beta1 (2019-09-17)
 
 ### Features / Enhancements
 * **API**: Readonly datasources should not be created via the API. [#19006](https://github.com/grafana/grafana/pull/19006), [@papagian](https://github.com/papagian)
