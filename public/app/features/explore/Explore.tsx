@@ -286,7 +286,11 @@ export class Explore extends React.PureComponent<ExploreProps> {
                 return (
                   <main className="m-t-2" style={{ width }}>
                     <ErrorBoundaryAlert>
-                      {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
+                      {showingStartPage && (
+                        <div className="grafana-info-box grafana-info-box--max-lg">
+                          <StartPage onClickExample={this.onClickExample} datasource={datasourceInstance} />
+                        </div>
+                      )}
                       {!showingStartPage && (
                         <>
                           {mode === ExploreMode.Metrics && (

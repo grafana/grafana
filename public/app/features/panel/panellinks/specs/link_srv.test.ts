@@ -105,11 +105,13 @@ describe('linkSrv', () => {
         linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?var-test=$${DataLinkBuiltInVars.seriesName}`,
+            url: `/d/1?var-test=$\{${DataLinkBuiltInVars.seriesName}}`,
           },
           {
-            [DataLinkBuiltInVars.seriesName]: {
-              value: 'A-series',
+            __series: {
+              value: {
+                name: 'A-series',
+              },
               text: 'A-series',
             },
           },
@@ -122,12 +124,12 @@ describe('linkSrv', () => {
         linkSrv.getDataLinkUIModel(
           {
             title: 'Any title',
-            url: `/d/1?time=$${DataLinkBuiltInVars.valueTime}`,
+            url: `/d/1?time=$\{${DataLinkBuiltInVars.valueTime}}`,
           },
           {
-            [DataLinkBuiltInVars.valueTime]: {
-              value: dataPointMock.datapoint[0],
-              text: dataPointMock.datapoint[0],
+            __value: {
+              value: { time: dataPointMock.datapoint[0] },
+              text: 'Value',
             },
           },
           {}

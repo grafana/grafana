@@ -2,23 +2,19 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Unsubscribable } from 'rxjs';
-
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary } from '@grafana/ui';
-
+import { ErrorBoundary, PanelData, PanelPlugin } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
-import { getProcessedDataFrames } from '../state/PanelQueryState';
+import { getProcessedDataFrames } from '../state/runRequest';
 import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
-
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { PanelData, PanelPlugin } from '@grafana/ui';
-import { LoadingState, ScopedVars } from '@grafana/data';
+import { LoadingState, ScopedVars, AbsoluteTimeRange, toUtc } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -82,6 +78,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
   componentWillUnmount() {
     this.props.panel.events.off('refresh', this.onRefresh);
+
     if (this.querySubscription) {
       this.querySubscription.unsubscribe();
       this.querySubscription = null;
@@ -94,12 +91,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     // View state has changed
     if (isInView !== prevProps.isInView) {
       if (isInView) {
-        // Subscribe will kick of a notice of the last known state
-        if (!this.querySubscription && this.wantsQueryExecution) {
-          const runner = this.props.panel.getQueryRunner();
-          this.querySubscription = runner.subscribe(this.panelDataObserver);
-        }
-
         // Check if we need a delayed refresh
         if (this.state.refreshWhenInView) {
           this.onRefresh();
@@ -170,8 +161,9 @@ export class PanelChrome extends PureComponent<Props, State> {
       const queryRunner = panel.getQueryRunner();
 
       if (!this.querySubscription) {
-        this.querySubscription = queryRunner.subscribe(this.panelDataObserver);
+        this.querySubscription = queryRunner.getData().subscribe(this.panelDataObserver);
       }
+
       queryRunner.run({
         datasource: panel.datasource,
         queries: panel.targets,
@@ -223,6 +215,13 @@ export class PanelChrome extends PureComponent<Props, State> {
     return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
 
+  onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
+    this.timeSrv.setTime({
+      from: toUtc(timeRange.from),
+      to: toUtc(timeRange.to),
+    });
+  };
+
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
@@ -259,6 +258,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}
+            onChangeTimeRange={this.onChangeTimeRange}
           />
         </div>
       </>

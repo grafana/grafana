@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { QueryCtrl } from 'app/plugins/sdk';
-import { defaultQuery } from './StreamHandler';
+import { defaultQuery } from './runStreams';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { dateTime } from '@grafana/data';
 

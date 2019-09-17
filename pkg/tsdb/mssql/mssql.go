@@ -68,8 +68,9 @@ func (t *mssqlRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *cor
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 
-	for i, stype := range columnTypes {
-		t.log.Debug("type", "type", stype)
+	for i := range columnTypes {
+		// debug output on large tables causes high memory utilization/leak
+		// t.log.Debug("type", "type", stype)
 		valuePtrs[i] = &values[i]
 	}
 

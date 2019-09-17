@@ -128,7 +128,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(19);
+      expect(model.schemaVersion).toBe(20);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -439,6 +439,71 @@ describe('DashboardModel', () => {
 
     it('should slugify dashboard name', () => {
       expect(model.panels[0].links[3].url).toBe(`/dashboard/db/my-other-dashboard`);
+    });
+  });
+
+  describe('when migrating variables', () => {
+    let model: any;
+    beforeEach(() => {
+      model = new DashboardModel({
+        panels: [
+          {
+            //graph panel
+            options: {
+              dataLinks: [
+                {
+                  url: 'http://mylink.com?series=${__series_name}',
+                },
+                {
+                  url: 'http://mylink.com?series=${__value_time}',
+                },
+              ],
+            },
+          },
+          {
+            //  panel with field options
+            options: {
+              fieldOptions: {
+                defaults: {
+                  links: [
+                    {
+                      url: 'http://mylink.com?series=${__series_name}',
+                    },
+                    {
+                      url: 'http://mylink.com?series=${__value_time}',
+                    },
+                  ],
+                  title: '$__cell_0 * $__field_name * $__series_name',
+                },
+              },
+            },
+          },
+        ],
+      });
+    });
+
+    describe('data links', () => {
+      it('should replace __series_name variable with __series.name', () => {
+        expect(model.panels[0].options.dataLinks[0].url).toBe('http://mylink.com?series=${__series.name}');
+        expect(model.panels[1].options.fieldOptions.defaults.links[0].url).toBe(
+          'http://mylink.com?series=${__series.name}'
+        );
+      });
+
+      it('should replace __value_time variable with __value.time', () => {
+        expect(model.panels[0].options.dataLinks[1].url).toBe('http://mylink.com?series=${__value.time}');
+        expect(model.panels[1].options.fieldOptions.defaults.links[1].url).toBe(
+          'http://mylink.com?series=${__value.time}'
+        );
+      });
+    });
+
+    describe('field display', () => {
+      it('should replace __series_name and __field_name variables with new syntax', () => {
+        expect(model.panels[1].options.fieldOptions.defaults.title).toBe(
+          '$__cell_0 * ${__field.name} * ${__series.name}'
+        );
+      });
     });
   });
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { ExploreStartPageProps, DataQuery } from '@grafana/ui';
 
 const CHEAT_SHEET_ITEMS = [
   {
@@ -19,15 +20,15 @@ const CHEAT_SHEET_ITEMS = [
   },
 ];
 
-export default (props: any) => (
+export default (props: ExploreStartPageProps) => (
   <div>
     <h2>PromQL Cheat Sheet</h2>
     {CHEAT_SHEET_ITEMS.map(item => (
       <div className="cheat-sheet-item" key={item.expression}>
         <div className="cheat-sheet-item__title">{item.title}</div>
         <div
-          className="cheat-sheet-item__expression"
-          onClick={e => props.onClickExample({ refId: 'A', expr: item.expression })}
+          className="cheat-sheet-item__example"
+          onClick={e => props.onClickExample({ refId: 'A', expr: item.expression } as DataQuery)}
         >
           <code>{item.expression}</code>
         </div>
