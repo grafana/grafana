@@ -11,7 +11,7 @@
       <label class="gf-form-label query-keyword width-9">Query Mode</label>
       <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
         <select class="gf-form-input service-dropdown" ng-model="ctrl.target.azureMonitor.queryMode" 
-        ng-options="f.value as f.text for f in [{value: 'singleResource', text: 'Single Resource'}, {value: 'crossResource', text: 'Cross Resource'}]"
+        ng-options="f.value as f.text for f in [{value: 'singleResource', text: 'Single Resource'}, {value: 'crossResource', text: 'Multiple Resources'}]"
           ng-change="ctrl.refresh()"></select>
       </div>
     </div>
