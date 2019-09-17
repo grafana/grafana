@@ -25,7 +25,7 @@ For general discussions on documentation, you’re welcome to join the `#docs` c
 
 ## Guidelines
 
-All Grafana documentation is written using [Markdown](https://en.wikipedia.org/wiki/Markdown), and can be found in the [docs](https://github.com/grafana/grafana/tree/master/docs) directory in the [Grafana GitHub repository](https://github.com/grafana/grafana). The [documentation website](https://docs.grafana.com.)  is generated with [hugo](https://gohugo.io) which uses [Blackfriday](https://github.com/russross/blackfriday) as its Markdown rendering engine.
+All Grafana documentation is written using [Markdown](https://en.wikipedia.org/wiki/Markdown), and can be found in the [docs](https://github.com/grafana/grafana/tree/master/docs) directory in the [Grafana GitHub repository](https://github.com/grafana/grafana). The [documentation website](https://grafana.com/docs) is generated with [hugo](https://gohugo.io) which uses [Blackfriday](https://github.com/russross/blackfriday) as its Markdown rendering engine.
 
 ### Structure
 
@@ -36,6 +36,8 @@ Each top-level section is located under the [docs/sources](https://github.com/gr
 For each section, a `_index.md` file is used to provide an overview of the topic.
 
 ### Style guide
+
+The [codespell](https://github.com/codespell-project/codespell) tool is run for every change to catch common misspellings.
 
 - "Open source" should be hyphenated when used as an adjective, e.g. _open-source software_. The open form should be preferred when used as a noun, e.g. _Grafana is open source_.
 - Use "data source" instead of "datasource" unless used as an identifier, in code or as part of URLs.
