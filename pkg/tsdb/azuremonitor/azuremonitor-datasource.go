@@ -165,23 +165,9 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 // setAutoTimeGrain tries to find the closest interval to the query's intervalMs value
 // if the metric has a limited set of possible intervals/time grains then use those
 // instead of the default list of intervals
-func (e *AzureMonitorDatasource) setAutoTimeGrain(intervalMs int64, timeGrains interface{}) (string, error) {
-	// parses array of numbers from the timeGrains json field
-	allowedTimeGrains := []int64{}
-	tgs, ok := timeGrains.([]interface{})
-	if ok {
-		for _, v := range tgs {
-			jsonNumber, ok := v.(json.Number)
-			if ok {
-				tg, err := jsonNumber.Int64()
-				if err == nil {
-					allowedTimeGrains = append(allowedTimeGrains, tg)
-				}
-			}
-		}
-	}
+func (e *AzureMonitorDatasource) setAutoTimeGrain(intervalMs int64, timeGrains []int64) (string, error) {
 
-	autoInterval := e.findClosestAllowedIntervalMS(intervalMs, allowedTimeGrains)
+	autoInterval := e.findClosestAllowedIntervalMS(intervalMs, timeGrains)
 	tg := &TimeGrain{}
 	autoTimeGrain, err := tg.createISO8601DurationFromIntervalMS(autoInterval)
 	if err != nil {
