@@ -19,7 +19,7 @@ Grafana is now using Alpine 3.10 as docker base image.
   - `POST /api/annotations` no longer supports `isRegion` property.
   - `PUT /api/annotations/:id` no longer supports `isRegion` property.
   - `PATCH /api/annotations/:id` no longer supports `isRegion` property.
-  - `DELETE /api/annotations/region/:id` have been removed.
+  - `DELETE /api/annotations/region/:id` has been removed.
 
 ## Deprecation notes
 
