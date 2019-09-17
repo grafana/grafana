@@ -21,17 +21,17 @@ Some of those new capabilities can already be seen in this release, like sharing
 
 - [**Explore:** Go back to dashboard (with query changes)]({{< relref "#go-back-to-dashboard-from-explore" >}})
 - [**Explore:** Live tailing improvements]({{< relref "#live-tailing-improvements" >}})
-- [**Loki:** Show logs as annotations in dashboard graphs]({{< relref "#loki-annotations" >}})
-- [**Loki:** Use Loki in dashboard panels]({{< relref "#loki-in-dashbaords" >}})
+- **Loki:** Show logs as annotations in dashboard graphs
+- **Loki:** Use Loki in dashboard panels
 - [**Panels:** New logs panel]({{< relref "#new-logs-panel" >}})
 - [**Panels:** Data links improvements]({{< relref "#data-links-improvements" >}})
 - **Graph:** Series override to turn constant (point) into a line
-- [**Dashboard:** Share query results between panels]({{< relref "#share-query-results" >}})
+- [**Dashboard:** Share query results between panels]({{< relref "#share-query-results-between-panels" >}})
 - [**Plugins:** Alpha version of grafana-toolkit]({{< relref "#alpha-version-of-grafana-toolkit" >}})
 - [**Plugins:** Query over multiple resources in Azure Monitor]({{< relref "#query-over-multiple-resources-in-azure-monitor" >}})
 - [**ImageRendering:** PhantomJS deprecation]({{< relref "#phantomjs-deprecation" >}})
 - [**Docker:** Alpine based docker image]({{< relref "#alpine-based-docker-image" >}})
-- [**LDAP Debug View**: Reporting]({{< relref "#ldap-debug-view" >}})
+- [**LDAP: Debug UI**]({{< relref "#ldap-debug-ui" >}})
 - [**Enterprise**: Reporting]({{< relref "#reporting" >}})
 - [**Enterprise**: GitLab OAuth Team Sync support]({{< relref "#gitlab-oauth-team-sync-support" >}})
 - [**Enterprise**: Teams & LDAP Improvements]({{< relref "#ldap-teams" >}})
@@ -109,7 +109,7 @@ Please consider migrating from PhantomJS to the [Grafana Image Renderer plugin](
 
 Grafana’s docker image is now based on Alpine 3.10 and should from now on report zero vulnerabilities when scanning the image for security vulnerabilities.
 
-## LDAP Debug View
+## LDAP Debug UI
 
 After listening to customer feedback, we have been working at improving the experience to set up authentication and synchronization with LDAP. We're happy to present the new LDAP Debug View.
 
