@@ -89,6 +89,10 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		azlog.Debug("AzureMonitor", "target", azureMonitorTarget)
 
 		queryMode := fmt.Sprintf("%v", azureMonitorTarget["queryMode"])
+		if queryMode == "crossResource" {
+			return nil, fmt.Errorf("Alerting not supported for multiple resource queries")
+		}
+
 		var azureMonitorData map[string]interface{}
 		if queryMode == "singleResource" {
 			azureMonitorData = azureMonitorTarget["data"].(map[string]interface{})[queryMode].(map[string]interface{})
