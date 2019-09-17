@@ -21,8 +21,10 @@ import {
 } from './actions';
 
 // Types
-import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO } from 'app/types';
+import { DashboardRouteInfo, StoreState, ThunkDispatch, ThunkResult, DashboardDTO, ExploreItemState } from 'app/types';
 import { DashboardModel } from './DashboardModel';
+import { resetExploreAction } from 'app/features/explore/state/actionTypes';
+import { DataQuery } from '@grafana/ui';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -171,6 +173,9 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     timeSrv.init(dashboard);
     annotationsSrv.init(dashboard);
 
+    const left = storeState.explore && storeState.explore.left;
+    dashboard.meta.fromExplore = !!(left && left.originPanelId);
+
     // template values service needs to initialize completely before
     // the rest of the dashboard can load
     try {
@@ -198,8 +203,13 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       console.log(err);
     }
 
+    if (dashboard.meta.fromExplore) {
+      updateQueriesWhenComingFromExplore(dispatch, dashboard, left);
+    }
+
     // legacy srv state
     dashboardSrv.setCurrent(dashboard);
+
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
   };
@@ -230,4 +240,29 @@ function getNewDashboardModelData(urlFolderId?: string): any {
   }
 
   return data;
+}
+
+function updateQueriesWhenComingFromExplore(
+  dispatch: ThunkDispatch,
+  dashboard: DashboardModel,
+  left: ExploreItemState
+) {
+  // When returning to the origin panel from explore, if we're doing
+  // so with changes all the explore state is reset _except_ the queries
+  // and the origin panel ID.
+  const panelArrId = dashboard.panels.findIndex(panel => panel.id === left.originPanelId);
+
+  if (panelArrId > -1) {
+    dashboard.panels[panelArrId].targets = left.queries.map((query: DataQuery & { context?: string }) => {
+      delete query.context;
+      delete query.key;
+      return query;
+    });
+  }
+
+  dashboard.startRefresh();
+
+  // Force-reset explore so that on subsequent dashboard loads we aren't
+  // taking the modified queries from explore again.
+  dispatch(resetExploreAction({ force: true }));
 }

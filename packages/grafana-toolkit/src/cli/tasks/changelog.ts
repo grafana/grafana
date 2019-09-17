@@ -1,4 +1,3 @@
-import axios from 'axios';
 // @ts-ignore
 import * as _ from 'lodash';
 import { Task, TaskRunner } from './task';

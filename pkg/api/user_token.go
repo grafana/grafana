@@ -84,6 +84,13 @@ func (server *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID
 			}
 		}
 
+		createdAt := time.Unix(token.CreatedAt, 0)
+		seenAt := time.Unix(token.SeenAt, 0)
+
+		if token.SeenAt == 0 {
+			seenAt = createdAt
+		}
+
 		result = append(result, &dtos.UserToken{
 			Id:                     token.Id,
 			IsActive:               isActive,
@@ -93,8 +100,8 @@ func (server *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID
 			OperatingSystemVersion: osVersion,
 			Browser:                client.UserAgent.Family,
 			BrowserVersion:         browserVersion,
-			CreatedAt:              time.Unix(token.CreatedAt, 0),
-			SeenAt:                 time.Unix(token.SeenAt, 0),
+			CreatedAt:              createdAt,
+			SeenAt:                 seenAt,
 		})
 	}
 

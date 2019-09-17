@@ -1,11 +1,12 @@
 import React, { PureComponent } from 'react';
 
 import MappingRow from './MappingRow';
-import { MappingType, ValueMapping } from '../../types';
+import { MappingType, ValueMapping } from '@grafana/data';
+import { Button } from '../index';
 import { PanelOptionsGroup } from '../PanelOptionsGroup/PanelOptionsGroup';
 
 export interface Props {
-  valueMappings: ValueMapping[];
+  valueMappings?: ValueMapping[];
   onChange: (valueMappings: ValueMapping[]) => void;
 }
 
@@ -18,7 +19,7 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    const mappings = props.valueMappings;
+    const mappings = props.valueMappings || [];
 
     this.state = {
       valueMappings: mappings,
@@ -30,7 +31,7 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
     return Math.max.apply(null, mappings.map(mapping => mapping.id).map(m => m)) + 1;
   }
 
-  addMapping = () =>
+  onAddMapping = () =>
     this.setState(prevState => ({
       valueMappings: [
         ...prevState.valueMappings,
@@ -81,16 +82,21 @@ export class ValueMappingsEditor extends PureComponent<Props, State> {
     const { valueMappings } = this.state;
 
     return (
-      <PanelOptionsGroup title="Add value mapping" onAdd={this.addMapping}>
-        {valueMappings.length > 0 &&
-          valueMappings.map((valueMapping, index) => (
-            <MappingRow
-              key={`${valueMapping.text}-${index}`}
-              valueMapping={valueMapping}
-              updateValueMapping={this.updateGauge}
-              removeValueMapping={() => this.onRemoveMapping(valueMapping.id)}
-            />
-          ))}
+      <PanelOptionsGroup title="Value mappings">
+        <div>
+          {valueMappings.length > 0 &&
+            valueMappings.map((valueMapping, index) => (
+              <MappingRow
+                key={`${valueMapping.text}-${index}`}
+                valueMapping={valueMapping}
+                updateValueMapping={this.updateGauge}
+                removeValueMapping={() => this.onRemoveMapping(valueMapping.id)}
+              />
+            ))}
+          <Button variant="inverse" icon="fa fa-plus" onClick={this.onAddMapping}>
+            Add mapping
+          </Button>
+        </div>
       </PanelOptionsGroup>
     );
   }

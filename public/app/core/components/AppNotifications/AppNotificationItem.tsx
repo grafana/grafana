@@ -26,7 +26,7 @@ export default class AppNotificationItem extends Component<Props> {
       <AlertBox
         severity={appNotification.severity}
         title={appNotification.title}
-        text={appNotification.text}
+        body={appNotification.text}
         icon={appNotification.icon}
         onClose={() => onClearNotification(appNotification.id)}
       />

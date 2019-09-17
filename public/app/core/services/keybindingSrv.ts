@@ -39,13 +39,15 @@ export class KeybindingSrv {
   }
 
   setupGlobal() {
-    this.bind(['?', 'h'], this.showHelpModal);
-    this.bind('g h', this.goToHome);
-    this.bind('g a', this.openAlerting);
-    this.bind('g p', this.goToProfile);
-    this.bind('s o', this.openSearch);
-    this.bind('f', this.openSearch);
-    this.bindGlobal('esc', this.exit);
+    if (!(this.$location.path() === '/login')) {
+      this.bind(['?', 'h'], this.showHelpModal);
+      this.bind('g h', this.goToHome);
+      this.bind('g a', this.openAlerting);
+      this.bind('g p', this.goToProfile);
+      this.bind('s o', this.openSearch);
+      this.bind('f', this.openSearch);
+      this.bind('esc', this.exit);
+    }
   }
 
   openSearch() {
@@ -160,11 +162,11 @@ export class KeybindingSrv {
     });
 
     this.bind('t left', () => {
-      scope.appEvent('shift-time-backward');
+      scope.appEvent('shift-time', -1);
     });
 
     this.bind('t right', () => {
-      scope.appEvent('shift-time-forward');
+      scope.appEvent('shift-time', 1);
     });
 
     // edit panel
@@ -184,7 +186,6 @@ export class KeybindingSrv {
       if (dashboard.meta.focusPanelId) {
         appEvents.emit('panel-change-view', {
           fullscreen: true,
-          edit: null,
           panelId: dashboard.meta.focusPanelId,
           toggle: true,
         });

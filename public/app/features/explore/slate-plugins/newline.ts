@@ -1,4 +1,7 @@
-function getIndent(text) {
+// @ts-ignore
+import { Change } from 'slate';
+
+function getIndent(text: any) {
   let offset = text.length - text.trimLeft().length;
   if (offset) {
     let indent = text[0];
@@ -12,7 +15,7 @@ function getIndent(text) {
 
 export default function NewlinePlugin() {
   return {
-    onKeyDown(event, change) {
+    onKeyDown(event: KeyboardEvent, change: Change) {
       const { value } = change;
       if (!value.isCollapsed) {
         return undefined;

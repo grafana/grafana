@@ -5,9 +5,10 @@ const ReplaceInFileWebpackPlugin = require('replace-in-file-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
-const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
 import * as webpack from 'webpack';
-import { hasThemeStylesheets, getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
+import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack/loaders';
 
 interface WebpackConfigurationOptions {
   watch?: boolean;
@@ -15,7 +16,7 @@ interface WebpackConfigurationOptions {
 }
 type WebpackConfigurationGetter = (options: WebpackConfigurationOptions) => webpack.Configuration;
 
-const findModuleTs = (base: string, files?: string[], result?: string[]) => {
+export const findModuleFiles = (base: string, files?: string[], result?: string[]) => {
   files = files || fs.readdirSync(base);
   result = result || [];
 
@@ -23,9 +24,10 @@ const findModuleTs = (base: string, files?: string[], result?: string[]) => {
     files.forEach(file => {
       const newbase = path.join(base, file);
       if (fs.statSync(newbase).isDirectory()) {
-        result = findModuleTs(newbase, fs.readdirSync(newbase), result);
+        result = findModuleFiles(newbase, fs.readdirSync(newbase), result);
       } else {
-        if (file.indexOf('module.ts') > -1) {
+        const filename = path.basename(file);
+        if (/^module.tsx?$/.exec(filename)) {
           // @ts-ignore
           result.push(newbase);
         }
@@ -36,12 +38,12 @@ const findModuleTs = (base: string, files?: string[], result?: string[]) => {
 };
 
 const getModuleFiles = () => {
-  return findModuleTs(path.resolve(process.cwd(), 'src'));
+  return findModuleFiles(path.resolve(process.cwd(), 'src'));
 };
 
 const getManualChunk = (id: string) => {
   if (id.endsWith('module.ts') || id.endsWith('module.tsx')) {
-    const idx = id.indexOf('/src/');
+    const idx = id.lastIndexOf(path.sep + 'src' + path.sep);
     if (idx > 0) {
       const name = id.substring(idx + 5, id.lastIndexOf('.'));
 
@@ -51,6 +53,7 @@ const getManualChunk = (id: string) => {
       };
     }
   }
+  return null;
 };
 
 const getEntries = () => {
@@ -83,8 +86,8 @@ const getCommonPlugins = (options: WebpackConfigurationOptions) => {
         { from: '../LICENSE', to: '.' },
         { from: 'img/*', to: '.' },
         { from: '**/*.json', to: '.' },
-        // { from: '**/*.svg', to: '.' },
-        // { from: '**/*.png', to: '.' },
+        { from: '**/*.svg', to: '.' },
+        { from: '**/*.png', to: '.' },
         { from: '**/*.html', to: '.' },
       ],
       { logLevel: options.watch ? 'silent' : 'warn' }
@@ -114,8 +117,9 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
   const optimization: { [key: string]: any } = {};
 
   if (options.production) {
-    plugins.push(new ngAnnotatePlugin());
     optimization.minimizer = [new TerserPlugin(), new OptimizeCssAssetsPlugin()];
+  } else if (options.watch) {
+    plugins.push(new HtmlWebpackPlugin());
   }
 
   return {
@@ -148,6 +152,8 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       'slate-react',
       'react',
       'react-dom',
+      'react-redux',
+      'redux',
       'rxjs',
       'd3',
       'angular',
@@ -177,9 +183,15 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
           loaders: [
             {
               loader: 'babel-loader',
-              options: { presets: ['@babel/preset-env'] },
+              options: {
+                presets: [['@babel/preset-env', { modules: false }]],
+                plugins: ['angularjs-annotate'],
+              },
             },
-            'ts-loader',
+            {
+              loader: 'ts-loader',
+              options: { onlyCompileBundledFiles: true },
+            },
           ],
           exclude: /(node_modules)/,
         },
@@ -195,11 +207,5 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
       ],
     },
     optimization,
-    // optimization: {
-    //   splitChunks: {
-    //     chunks: 'all',
-    //     name: 'shared'
-    //   }
-    // }
   };
 };

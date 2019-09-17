@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceJsonData } from '@grafana/ui';
 
 export enum PromContext {
   Explore = 'explore',
@@ -15,6 +15,9 @@ export interface PromQuery extends DataQuery {
   intervalFactor?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
+  requestId?: string;
+  showingGraph?: boolean;
+  showingTable?: boolean;
 }
 
 export interface PromOptions extends DataSourceJsonData {

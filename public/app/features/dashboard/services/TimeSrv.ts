@@ -4,15 +4,15 @@ import _ from 'lodash';
 // Utils
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
-import * as dateMath from '@grafana/ui/src/utils/datemath';
+import { dateMath } from '@grafana/data';
 
 // Types
-import { TimeRange, RawTimeRange, TimeZone } from '@grafana/ui';
+import { TimeRange, RawTimeRange, TimeZone } from '@grafana/data';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
-import { toUtc, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
-import { getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { toUtc, dateTime, isDateTime } from '@grafana/data';
+import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 export class TimeSrv {
   time: any;
@@ -35,6 +35,7 @@ export class TimeSrv {
     this.time = { from: '6h', to: 'now' };
 
     $rootScope.$on('zoom-out', this.zoomOut.bind(this));
+    $rootScope.$on('shift-time', this.shiftTime.bind(this));
     $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
 
     document.addEventListener('visibilitychange', () => {
@@ -92,8 +93,30 @@ export class TimeSrv {
     return null;
   }
 
+  private getTimeWindow(time: string, timeWindow: string) {
+    const valueTime = parseInt(time, 10);
+    let timeWindowMs;
+
+    if (timeWindow.match(/^\d+$/) && parseInt(timeWindow, 10)) {
+      // when time window specified in ms
+      timeWindowMs = parseInt(timeWindow, 10);
+    } else {
+      timeWindowMs = kbn.interval_to_ms(timeWindow);
+    }
+
+    return {
+      from: toUtc(valueTime - timeWindowMs / 2),
+      to: toUtc(valueTime + timeWindowMs / 2),
+    };
+  }
+
   private initTimeFromUrl() {
     const params = this.$location.search();
+
+    if (params.time && params['time.window']) {
+      this.time = this.getTimeWindow(params.time, params['time.window']);
+    }
+
     if (params.from) {
       this.time.from = this.parseUrlParam(params.from) || this.time.from;
     }
@@ -242,6 +265,16 @@ export class TimeSrv {
     const { from, to } = getZoomedTimeRange(range, factor);
 
     this.setTime({ from: toUtc(from), to: toUtc(to) });
+  }
+
+  shiftTime(e: any, direction: number) {
+    const range = this.timeRange();
+    const { from, to } = getShiftedTimeRange(direction, range);
+
+    this.setTime({
+      from: toUtc(from),
+      to: toUtc(to),
+    });
   }
 }
 

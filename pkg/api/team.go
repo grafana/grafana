@@ -24,15 +24,22 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 	}
 
 	if c.OrgRole == m.ROLE_EDITOR && hs.Cfg.EditorsCanAdmin {
-		addMemberCmd := m.AddTeamMemberCommand{
-			UserId:     c.SignedInUser.UserId,
-			OrgId:      cmd.OrgId,
-			TeamId:     cmd.Result.Id,
-			Permission: m.PERMISSION_ADMIN,
-		}
+		// if the request is authenticated using API tokens
+		// the SignedInUser is an empty struct therefore
+		// an additional check whether it is an actual user is required
+		if c.SignedInUser.IsRealUser() {
+			addMemberCmd := m.AddTeamMemberCommand{
+				UserId:     c.SignedInUser.UserId,
+				OrgId:      cmd.OrgId,
+				TeamId:     cmd.Result.Id,
+				Permission: m.PERMISSION_ADMIN,
+			}
 
-		if err := hs.Bus.Dispatch(&addMemberCmd); err != nil {
-			c.Logger.Error("Could not add creator to team.", "error", err)
+			if err := hs.Bus.Dispatch(&addMemberCmd); err != nil {
+				c.Logger.Error("Could not add creator to team.", "error", err)
+			}
+		} else {
+			c.Logger.Warn("Could not add creator to team because is not a real user.")
 		}
 	}
 

@@ -1,10 +1,10 @@
 import { Task, TaskRunner } from './task';
+import fs from 'fs';
+
 // @ts-ignore
 import execa = require('execa');
 import path = require('path');
-import fs = require('fs');
 import glob = require('glob');
-import util = require('util');
 import { Linter, Configuration, RuleFailure } from 'tslint';
 import * as prettier from 'prettier';
 
@@ -14,10 +14,12 @@ import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
 interface PluginBuildOptions {
   coverage: boolean;
 }
+interface Fixable {
+  fix?: boolean;
+}
 
 export const bundlePlugin = useSpinner<PluginBundleOptions>('Compiling...', async options => await bundleFn(options));
 
-const readFileAsync = util.promisify(fs.readFile);
 // @ts-ignore
 export const clean = useSpinner<void>('Cleaning', async () => await execa('rimraf', [`${process.cwd()}/dist`]));
 
@@ -62,7 +64,7 @@ const getStylesSources = () => {
   return glob.sync(globPattern);
 };
 
-const prettierCheckPlugin = useSpinner<void>('Prettier check', async () => {
+export const prettierCheckPlugin = useSpinner<Fixable>('Prettier check', async ({ fix }) => {
   const prettierConfig = require(path.resolve(__dirname, '../../config/prettier.plugin.config.json'));
   const sources = [...getStylesSources(), ...getTypescriptSources()];
 
@@ -74,14 +76,29 @@ const prettierCheckPlugin = useSpinner<void>('Prettier check', async () => {
           throw new Error(err.message);
         }
 
-        if (
-          !prettier.check(data.toString(), {
-            ...prettierConfig,
-            filepath: s,
-          })
-        ) {
-          console.log('TODO eslint/prettier fix? ' + s);
-          failed = false; //true;
+        const opts = {
+          ...prettierConfig,
+          filepath: s,
+        };
+        if (!prettier.check(data.toString(), opts)) {
+          if (fix) {
+            const fixed = prettier.format(data.toString(), opts);
+            if (fixed && fixed.length > 10) {
+              fs.writeFile(s, fixed, err => {
+                if (err) {
+                  console.log('Error fixing ' + s, err);
+                  failed = true;
+                } else {
+                  console.log('Fixed: ' + s);
+                }
+              });
+            } else {
+              console.log('No automatic fix for: ' + s);
+              failed = true;
+            }
+          } else {
+            failed = true;
+          }
         }
 
         resolve({
@@ -97,18 +114,19 @@ const prettierCheckPlugin = useSpinner<void>('Prettier check', async () => {
   if (failures.length) {
     console.log('\nFix Prettier issues in following files:');
     failures.forEach(f => console.log(f.path));
+    console.log('\nRun toolkit:dev to fix errors');
     throw new Error('Prettier failed');
   }
 });
 
 // @ts-ignore
-export const lintPlugin = useSpinner<void>('Linting', async () => {
+export const lintPlugin = useSpinner<Fixable>('Linting', async ({ fix }) => {
   let tsLintConfigPath = path.resolve(process.cwd(), 'tslint.json');
   if (!fs.existsSync(tsLintConfigPath)) {
     tsLintConfigPath = path.resolve(__dirname, '../../config/tslint.plugin.json');
   }
   const options = {
-    fix: true, // or fail
+    fix: fix === true,
     formatter: 'json',
   };
 
@@ -147,10 +165,9 @@ export const lintPlugin = useSpinner<void>('Linting', async () => {
 export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({ coverage }) => {
   await clean();
   await prepare();
-  await prettierCheckPlugin();
-  // @ts-ignore
-  await lintPlugin();
-  await testPlugin({ updateSnapshot: false, coverage });
+  await prettierCheckPlugin({ fix: false });
+  await lintPlugin({ fix: false });
+  await testPlugin({ updateSnapshot: false, coverage, watch: false });
   await bundlePlugin({ watch: false, production: true });
 };
 

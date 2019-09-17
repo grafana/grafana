@@ -5,7 +5,7 @@ import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TimePickerPopover } from './TimePickerPopover';
 import { UseState } from '../../utils/storybook/UseState';
-import { dateTime, DateTime } from '../../utils/moment_wrapper';
+import { dateTime, DateTime } from '@grafana/data';
 
 const TimePickerPopoverStories = storiesOf('UI/TimePicker/TimePickerPopover', module);
 

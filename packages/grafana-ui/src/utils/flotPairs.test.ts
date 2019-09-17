@@ -1,12 +1,19 @@
-import { getFlotPairs } from './flotPairs';
+import { getFlotPairs, getFlotPairsConstant } from './flotPairs';
+import { MutableDataFrame, TimeRange, dateTime } from '@grafana/data';
 
 describe('getFlotPairs', () => {
-  const series = {
-    fields: [],
-    rows: [[1, 100, 'a'], [2, 200, 'b'], [3, 300, 'c']],
-  };
+  const series = new MutableDataFrame({
+    fields: [
+      { name: 'a', values: [1, 2, 3] },
+      { name: 'b', values: [100, 200, 300] },
+      { name: 'c', values: ['a', 'b', 'c'] },
+    ],
+  });
   it('should get X and y', () => {
-    const pairs = getFlotPairs({ series, xIndex: 0, yIndex: 1 });
+    const pairs = getFlotPairs({
+      xField: series.fields[0],
+      yField: series.fields[1],
+    });
 
     expect(pairs.length).toEqual(3);
     expect(pairs[0].length).toEqual(2);
@@ -15,11 +22,39 @@ describe('getFlotPairs', () => {
   });
 
   it('should work with strings', () => {
-    const pairs = getFlotPairs({ series, xIndex: 0, yIndex: 2 });
+    const pairs = getFlotPairs({
+      xField: series.fields[0],
+      yField: series.fields[2],
+    });
 
     expect(pairs.length).toEqual(3);
     expect(pairs[0].length).toEqual(2);
     expect(pairs[0][0]).toEqual(1);
     expect(pairs[0][1]).toEqual('a');
+  });
+});
+
+describe('getFlotPairsConstant', () => {
+  const makeRange = (from: number, to: number): TimeRange => ({
+    from: dateTime(from),
+    to: dateTime(to),
+    raw: { from: `${from}`, to: `${to}` },
+  });
+
+  it('should return an empty series on empty data', () => {
+    const range: TimeRange = makeRange(0, 1);
+    const pairs = getFlotPairsConstant([], range);
+    expect(pairs).toMatchObject([]);
+  });
+
+  it('should return an empty series on missing range', () => {
+    const pairs = getFlotPairsConstant([], {} as TimeRange);
+    expect(pairs).toMatchObject([]);
+  });
+
+  it('should return an constant series for range', () => {
+    const range: TimeRange = makeRange(0, 1);
+    const pairs = getFlotPairsConstant([[2, 123], [4, 456]], range);
+    expect(pairs).toMatchObject([[0, 123], [1, 123]]);
   });
 });

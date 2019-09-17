@@ -1,19 +1,24 @@
+import { Unsubscribable } from 'rxjs';
 import { ComponentClass } from 'react';
 import {
-  RawTimeRange,
   DataQuery,
   DataSourceSelectItem,
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
+  PanelData,
+  DataQueryRequest,
+} from '@grafana/ui';
+
+import {
+  RawTimeRange,
   LogLevel,
   TimeRange,
-  DataQueryError,
   LogsModel,
   LogsDedupStrategy,
-  LoadingState,
   AbsoluteTimeRange,
-} from '@grafana/ui';
+  GraphSeriesXY,
+} from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
@@ -156,7 +161,7 @@ export interface ExploreItemState {
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
-  graphResult?: any[];
+  graphResult?: GraphSeriesXY[];
   /**
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
@@ -181,11 +186,6 @@ export interface ExploreItemState {
    */
   logsResult?: LogsModel;
 
-  /**
-   * Query intervals for graph queries to determine how many datapoints to return.
-   * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.
-   */
-  queryIntervals: QueryIntervals;
   /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
@@ -213,7 +213,7 @@ export interface ExploreItemState {
    */
   showingTable: boolean;
 
-  loadingState: LoadingState;
+  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -243,14 +243,25 @@ export interface ExploreItemState {
 
   update: ExploreUpdateState;
 
-  queryErrors: DataQueryError[];
-
   latency: number;
   supportedModes: ExploreMode[];
   mode: ExploreMode;
 
+  /**
+   * If true, the view is in live tailing mode.
+   */
   isLive: boolean;
+
+  /**
+   * If true, the live tailing view is paused.
+   */
+  isPaused: boolean;
   urlReplaced: boolean;
+
+  querySubscription?: Unsubscribable;
+
+  queryResponse: PanelData;
+  originPanelId?: number;
 }
 
 export interface ExploreUpdateState {
@@ -274,6 +285,7 @@ export interface ExploreUrlState {
   mode: ExploreMode;
   range: RawTimeRange;
   ui: ExploreUIState;
+  originPanelId?: number;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
@@ -283,7 +295,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
 
 export abstract class LanguageProvider {
   datasource: any;
-  request: (url: any) => Promise<any>;
+  request: (url: string, params?: any) => Promise<any>;
   /**
    * Returns startTask that resolves with a task list when main syntax is loaded.
    * Task list consists of secondary promises that load more detailed language features.
@@ -313,7 +325,7 @@ export interface QueryIntervals {
 }
 
 export interface QueryOptions {
-  interval: string;
+  minInterval: string;
   maxDataPoints?: number;
   live?: boolean;
 }
@@ -324,15 +336,8 @@ export interface QueryTransaction {
   error?: string | JSX.Element;
   hints?: QueryHint[];
   latency: number;
-  options: any;
+  request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
-}
-
-export interface TextMatch {
-  text: string;
-  start: number;
-  length: number;
-  end: number;
 }

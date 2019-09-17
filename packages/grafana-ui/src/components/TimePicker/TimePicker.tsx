@@ -8,13 +8,13 @@ import { TimePickerPopover } from './TimePickerPopover';
 import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper';
 
 // Utils & Services
-import { isDateTime } from '../../utils/moment_wrapper';
-import * as rangeUtil from '../../utils/rangeutil';
+import { isDateTime, DateTime } from '@grafana/data';
+import { rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT } from '../../types/time';
-import { SelectOptionItem } from '../Select/Select';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue } from '@grafana/data';
+import { dateMath } from '@grafana/data';
 
 export interface Props {
   value: TimeRange;
@@ -77,7 +77,7 @@ export class TimePicker extends PureComponent<Props, State> {
     isCustomOpen: false,
   };
 
-  mapTimeOptionsToSelectOptionItems = (selectOptions: TimeOption[]) => {
+  mapTimeOptionsToSelectableValues = (selectOptions: TimeOption[]) => {
     const options = selectOptions.map(timeOption => {
       return {
         label: timeOption.display,
@@ -93,7 +93,7 @@ export class TimePicker extends PureComponent<Props, State> {
     return options;
   };
 
-  onSelectChanged = (item: SelectOptionItem<TimeOption>) => {
+  onSelectChanged = (item: SelectableValue<TimeOption>) => {
     const { onChange, timeZone } = this.props;
 
     if (item.value && item.value.from === 'custom') {
@@ -122,15 +122,23 @@ export class TimePicker extends PureComponent<Props, State> {
   render() {
     const { selectOptions: selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom, timeZone } = this.props;
     const { isCustomOpen } = this.state;
-    const options = this.mapTimeOptionsToSelectOptionItems(selectTimeOptions);
+    const options = this.mapTimeOptionsToSelectableValues(selectTimeOptions);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
-    const rangeString = rangeUtil.describeTimeRange(value.raw);
+
+    const isUTC = timeZone === 'utc';
+
+    const adjustedTime = (time: DateTime) => (isUTC ? time.utc() : time.local()) || null;
+    const adjustedTimeRange = {
+      to: dateMath.isMathString(value.raw.to) ? value.raw.to : adjustedTime(value.to),
+      from: dateMath.isMathString(value.raw.from) ? value.raw.from : adjustedTime(value.from),
+    };
+    const rangeString = rangeUtil.describeTimeRange(adjustedTimeRange);
 
     const label = (
       <>
         {isCustomOpen && <span>Custom time range</span>}
         {!isCustomOpen && <span>{rangeString}</span>}
-        {timeZone === 'utc' && <span className="time-picker-utc">UTC</span>}
+        {isUTC && <span className="time-picker-utc">UTC</span>}
       </>
     );
     const isAbsolute = isDateTime(value.raw.to);
@@ -148,6 +156,7 @@ export class TimePicker extends PureComponent<Props, State> {
             value={currentOption}
             label={label}
             options={options}
+            maxMenuHeight={600}
             onChange={this.onSelectChanged}
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}

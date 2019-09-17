@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { SelectOptionItem } from '../Select/Select';
+import { SelectableValue } from '@grafana/data';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { ButtonSelect } from '../Select/ButtonSelect';
 
@@ -23,7 +23,7 @@ export class RefreshPicker extends PureComponent<Props> {
     super(props);
   }
 
-  intervalsToOptions = (intervals: string[] | undefined): Array<SelectOptionItem<string>> => {
+  intervalsToOptions = (intervals: string[] | undefined): Array<SelectableValue<string>> => {
     const intervalsOrDefault = intervals || defaultIntervals;
     const options = intervalsOrDefault
       .filter(str => str !== '')
@@ -37,7 +37,7 @@ export class RefreshPicker extends PureComponent<Props> {
     return options;
   };
 
-  onChangeSelect = (item: SelectOptionItem<string>) => {
+  onChangeSelect = (item: SelectableValue<string>) => {
     const { onIntervalChanged } = this.props;
     if (onIntervalChanged) {
       // @ts-ignore
@@ -61,7 +61,7 @@ export class RefreshPicker extends PureComponent<Props> {
       <div className={cssClasses}>
         <div className="refresh-picker-buttons">
           <Tooltip placement="top" content={tooltip}>
-            <button className="btn btn--radius-right-0 navbar-button navbar-button--refresh" onClick={onRefresh}>
+            <button className="btn btn--radius-right-0 navbar-button navbar-button--border-right-0" onClick={onRefresh}>
               <i className="fa fa-refresh" />
             </button>
           </Tooltip>

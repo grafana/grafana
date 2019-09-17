@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/ui/src/types';
+import { DataQuery, DataSourceJsonData } from '@grafana/ui';
 
 export interface AzureMonitorQuery extends DataQuery {
   format: string;
@@ -31,6 +31,7 @@ export interface AzureMetricQuery {
   resourceGroup: string;
   resourceName: string;
   metricDefinition: string;
+  metricNamespace: string;
   metricName: string;
   timeGrainUnit: string;
   timeGrain: string;

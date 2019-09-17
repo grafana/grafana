@@ -1,4 +1,6 @@
 import coreModule from 'app/core/core_module';
+import { DashboardSrv } from '../../services/DashboardSrv';
+import { CloneOptions } from '../../state/DashboardModel';
 
 const template = `
 <div class="modal-body">
@@ -71,8 +73,8 @@ export class SaveDashboardModalCtrl {
   saveTimerange = false;
   time: any;
   originalTime: any;
-  current = [];
-  originalCurrent = [];
+  current: any[] = [];
+  originalCurrent: any[] = [];
   max: number;
   saveForm: any;
   isSaving: boolean;
@@ -81,7 +83,7 @@ export class SaveDashboardModalCtrl {
   variableValueChange = false;
 
   /** @ngInject */
-  constructor(private dashboardSrv) {
+  constructor(private dashboardSrv: DashboardSrv) {
     this.message = '';
     this.max = 64;
     this.isSaving = false;
@@ -94,7 +96,7 @@ export class SaveDashboardModalCtrl {
       return;
     }
 
-    const options = {
+    const options: CloneOptions = {
       saveVariables: this.saveVariables,
       saveTimerange: this.saveTimerange,
       message: this.message,
@@ -104,11 +106,10 @@ export class SaveDashboardModalCtrl {
     const saveModel = dashboard.getSaveModelClone(options);
 
     this.isSaving = true;
-
     return this.dashboardSrv.save(saveModel, options).then(this.postSave.bind(this, options));
   }
 
-  postSave(options) {
+  postSave(options?: { saveVariables?: boolean; saveTimerange?: boolean }) {
     if (options.saveVariables) {
       this.dashboardSrv.getCurrent().resetOriginalVariables();
     }

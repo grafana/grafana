@@ -1,27 +1,18 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import debounce from 'lodash/debounce';
+import has from 'lodash/has';
 import { hot } from 'react-hot-loader';
 // @ts-ignore
 import { connect } from 'react-redux';
-
 // Components
 import QueryEditor from './QueryEditor';
-
 // Actions
 import { changeQuery, modifyQueries, runQueries, addQueryRow } from './state/actions';
-
 // Types
 import { StoreState } from 'app/types';
-import {
-  TimeRange,
-  DataQuery,
-  DataSourceApi,
-  QueryFixAction,
-  DataSourceStatus,
-  PanelData,
-  DataQueryError,
-} from '@grafana/ui';
+import { TimeRange, AbsoluteTimeRange } from '@grafana/data';
+import { DataQuery, DataSourceApi, QueryFixAction, DataSourceStatus, PanelData } from '@grafana/ui';
 import { HistoryItem, ExploreItemState, ExploreId, ExploreMode } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
@@ -45,11 +36,11 @@ interface QueryRowProps extends PropsFromParent {
   query: DataQuery;
   modifyQueries: typeof modifyQueries;
   range: TimeRange;
+  absoluteRange: AbsoluteTimeRange;
   removeQueryRowAction: typeof removeQueryRowAction;
   runQueries: typeof runQueries;
   queryResponse: PanelData;
   latency: number;
-  queryErrors: DataQueryError[];
   mode: ExploreMode;
 }
 
@@ -107,7 +98,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
     this.setState({ textEditModeEnabled: !this.state.textEditModeEnabled });
   };
 
-  updateLogsHighlights = _.debounce((value: DataQuery) => {
+  updateLogsHighlights = debounce((value: DataQuery) => {
     const { datasourceInstance } = this.props;
     if (datasourceInstance.getHighlighterExpression) {
       const { exploreId } = this.props;
@@ -123,14 +114,15 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       query,
       exploreEvents,
       range,
+      absoluteRange,
       datasourceStatus,
       queryResponse,
       latency,
-      queryErrors,
       mode,
     } = this.props;
     const canToggleEditorModes =
-      mode === ExploreMode.Metrics && _.has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+      mode === ExploreMode.Metrics && has(datasourceInstance, 'components.QueryCtrl.prototype.toggleEditorMode');
+    const queryErrors = queryResponse.error && queryResponse.error.refId === query.refId ? [queryResponse.error] : [];
     let QueryField;
 
     if (mode === ExploreMode.Metrics && datasourceInstance.components.ExploreMetricsQueryField) {
@@ -145,6 +137,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       <div className="query-row">
         <div className="query-row-field flex-shrink-1">
           {QueryField ? (
+            //@ts-ignore
             <QueryField
               datasource={datasourceInstance}
               datasourceStatus={datasourceStatus}
@@ -155,6 +148,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
               onChange={this.onChange}
               panelData={null}
               queryResponse={queryResponse}
+              absoluteRange={absoluteRange}
             />
           ) : (
             <QueryEditor
@@ -209,32 +203,24 @@ function mapStateToProps(state: StoreState, { exploreId, index }: QueryRowProps)
     history,
     queries,
     range,
+    absoluteRange,
     datasourceError,
-    graphResult,
-    loadingState,
     latency,
-    queryErrors,
     mode,
+    queryResponse,
   } = item;
   const query = queries[index];
   const datasourceStatus = datasourceError ? DataSourceStatus.Disconnected : DataSourceStatus.Connected;
-  const error = queryErrors.filter(queryError => queryError.refId === query.refId)[0];
-  const series = graphResult ? graphResult : []; // TODO: use DataFrame
-  const queryResponse: PanelData = {
-    series,
-    state: loadingState,
-    error,
-  };
 
   return {
     datasourceInstance,
     history,
     query,
     range,
+    absoluteRange,
     datasourceStatus,
     queryResponse,
     latency,
-    queryErrors,
     mode,
   };
 }

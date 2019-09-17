@@ -36,10 +36,10 @@ export class AbstractList<T> extends React.PureComponent<AbstractListProps<T>> {
   }
 
   render() {
-    const { items, renderItem, getItemKey } = this.props;
+    const { items, renderItem, getItemKey, className } = this.props;
     const styles = this.getListStyles();
     return (
-      <ul className={styles.list}>
+      <ul className={cx(styles.list, className)}>
         {items.map((item, i) => {
           return (
             <li className={styles.item} key={getItemKey ? getItemKey(item) : i}>

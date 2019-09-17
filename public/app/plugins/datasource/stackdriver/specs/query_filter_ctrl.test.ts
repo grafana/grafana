@@ -3,7 +3,7 @@ import { TemplateSrvStub } from 'test/specs/helpers';
 import { DefaultRemoveFilterValue, DefaultFilterValue } from '../filter_segments';
 
 describe('StackdriverQueryFilterCtrl', () => {
-  let ctrl: Partial<StackdriverFilterCtrl>;
+  let ctrl: StackdriverFilterCtrl;
   let result: any;
   let groupByChangedMock: any;
 

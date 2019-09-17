@@ -3,8 +3,6 @@ import program from 'commander';
 import { execTask } from './utils/execTask';
 import chalk from 'chalk';
 import { startTask } from './tasks/core.start';
-import { buildTask } from './tasks/grafanaui.build';
-import { releaseTask } from './tasks/grafanaui.release';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
 import { precommitTask } from './tasks/precommit';
@@ -15,7 +13,14 @@ import { pluginTestTask } from './tasks/plugin.tests';
 import { searchTestDataSetupTask } from './tasks/searchTestDataSetup';
 import { closeMilestoneTask } from './tasks/closeMilestone';
 import { pluginDevTask } from './tasks/plugin.dev';
-import { pluginCITask } from './tasks/plugin.ci';
+import {
+  ciBuildPluginTask,
+  ciBuildPluginDocsTask,
+  ciPackagePluginTask,
+  ciTestPluginTask,
+  ciPluginReportTask,
+} from './tasks/plugin.ci';
+import { buildPackageTask } from './tasks/package.build';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -23,34 +28,24 @@ export const run = (includeInternalScripts = false) => {
     program
       .command('core:start')
       .option('-h, --hot', 'Run front-end with HRM enabled')
+      .option('-T, --noTsCheck', 'Run bundler without TS type checking')
       .option('-t, --watchTheme', 'Watch for theme changes and regenerate variables.scss files')
       .description('Starts Grafana front-end in development mode with watch enabled')
       .action(async cmd => {
         await execTask(startTask)({
           watchThemes: cmd.watchTheme,
+          noTsCheck: cmd.noTsCheck,
           hot: cmd.hot,
         });
       });
 
     program
-      .command('gui:build')
-      .description('Builds @grafana/ui package to packages/grafana-ui/dist')
+      .command('package:build')
+      .option('-s, --scope <packages>', 'packages=[data|runtime|ui|toolkit]')
+      .description('Builds @grafana/* package to packages/grafana-*/dist')
       .action(async cmd => {
-        // @ts-ignore
-        await execTask(buildTask)();
-      });
-
-    program
-      .command('gui:release')
-      .description('Prepares @grafana/ui release (and publishes to npm on demand)')
-      .option('-p, --publish', 'Publish @grafana/ui to npm registry')
-      .option('-u, --usePackageJsonVersion', 'Use version specified in package.json')
-      .option('--createVersionCommit', 'Create and push version commit')
-      .action(async cmd => {
-        await execTask(releaseTask)({
-          publishToNpm: !!cmd.publish,
-          usePackageJsonVersion: !!cmd.usePackageJsonVersion,
-          createVersionCommit: !!cmd.createVersionCommit,
+        await execTask(buildPackageTask)({
+          scope: cmd.scope,
         });
       });
 
@@ -145,21 +140,65 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:test')
     .option('-u, --updateSnapshot', 'Run snapshots update')
     .option('--coverage', 'Run code coverage')
+    .option('--watch', 'Run tests in interactive watch mode')
+    .option('--testPathPattern <regex>', 'Run only tests with a path that matches the regex')
+    .option('--testNamePattern <regex>', 'Run only tests with a name that matches the regex')
     .description('Executes plugin tests')
     .action(async cmd => {
       await execTask(pluginTestTask)({
         updateSnapshot: !!cmd.updateSnapshot,
         coverage: !!cmd.coverage,
+        watch: !!cmd.watch,
+        testPathPattern: cmd.testPathPattern,
+        testNamePattern: cmd.testNamePattern,
       });
     });
 
   program
-    .command('plugin:ci')
-    .option('--dryRun', "Dry run (don't post results)")
-    .description('Run Plugin CI task')
+    .command('plugin:ci-build')
+    .option('--backend', 'Run Makefile for backend task', false)
+    .description('Build the plugin, leaving results in /dist and /coverage')
     .action(async cmd => {
-      await execTask(pluginCITask)({
-        dryRun: cmd.dryRun,
+      if (typeof cmd === 'string') {
+        console.error(`Invalid argument: ${cmd}\nSee --help for a list of available commands.`);
+        process.exit(1);
+      }
+      await execTask(ciBuildPluginTask)({
+        backend: cmd.backend,
+      });
+    });
+
+  program
+    .command('plugin:ci-docs')
+    .description('Build the HTML docs')
+    .action(async cmd => {
+      await execTask(ciBuildPluginDocsTask)({});
+    });
+
+  program
+    .command('plugin:ci-package')
+    .description('Create a zip packages for the plugin')
+    .action(async cmd => {
+      await execTask(ciPackagePluginTask)({});
+    });
+
+  program
+    .command('plugin:ci-test')
+    .option('--full', 'run all the tests (even stuff that will break)')
+    .description('end-to-end test using bundle in /artifacts')
+    .action(async cmd => {
+      await execTask(ciTestPluginTask)({
+        full: cmd.full,
+      });
+    });
+
+  program
+    .command('plugin:ci-report')
+    .description('Build a report for this whole process')
+    .option('--upload', 'upload packages also')
+    .action(async cmd => {
+      await execTask(ciPluginReportTask)({
+        upload: cmd.upload,
       });
     });
 

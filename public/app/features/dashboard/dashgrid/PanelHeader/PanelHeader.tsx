@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
-import { ScopedVars } from '@grafana/ui';
+import { ScopedVars } from '@grafana/data';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
@@ -9,7 +9,9 @@ import templateSrv from 'app/features/templating/template_srv';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { ClickOutsideWrapper, DataLink } from '@grafana/ui';
+import { ClickOutsideWrapper } from '@grafana/ui';
+import { DataLink } from '@grafana/data';
+import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 
 export interface Props {
   panel: PanelModel;
@@ -87,7 +89,7 @@ export class PanelHeader extends Component<Props, State> {
             title={panel.title}
             description={panel.description}
             scopedVars={panel.scopedVars}
-            links={panel.links}
+            links={getPanelLinksSupplier(panel)}
             error={error}
           />
           <div

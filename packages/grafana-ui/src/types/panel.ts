@@ -1,7 +1,6 @@
 import { ComponentClass, ComponentType } from 'react';
-import { LoadingState, DataFrame } from './data';
-import { TimeRange } from './time';
-import { ScopedVars, DataQueryRequest, DataQueryError, LegacyResponseData } from './datasource';
+import { LoadingState, DataFrame, TimeRange, TimeZone, ScopedVars, AbsoluteTimeRange } from '@grafana/data';
+import { DataQueryRequest, DataQueryError } from './datasource';
 import { PluginMeta, GrafanaPlugin } from './plugin';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
@@ -17,17 +16,13 @@ export interface PanelData {
   series: DataFrame[];
   request?: DataQueryRequest;
   error?: DataQueryError;
-
-  // Data format expected by Angular panels
-  legacy?: LegacyResponseData[];
 }
 
 export interface PanelProps<T = any> {
   id: number; // ID within the current dashboard
   data: PanelData;
-  // TODO: annotation?: PanelData;
-
   timeRange: TimeRange;
+  timeZone: TimeZone;
   options: T;
   onOptionsChange: (options: T) => void;
   renderCounter: number;
@@ -35,11 +30,13 @@ export interface PanelProps<T = any> {
   width: number;
   height: number;
   replaceVariables: InterpolateFunction;
+  onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
 export interface PanelEditorProps<T = any> {
   options: T;
   onOptionsChange: (options: T) => void;
+  data: PanelData;
 }
 
 export interface PanelModel<TOptions = any> {
@@ -124,33 +121,14 @@ export interface PanelMenuItem {
   subMenu?: PanelMenuItem[];
 }
 
-export enum MappingType {
-  ValueToText = 1,
-  RangeToText = 2,
-}
-
-interface BaseMap {
-  id: number;
-  operator: string;
+export interface AngularPanelMenuItem {
+  click: Function;
+  icon: string;
+  href: string;
+  divider: boolean;
   text: string;
-  type: MappingType;
-}
-
-export type ValueMapping = ValueMap | RangeMap;
-
-export interface ValueMap extends BaseMap {
-  value: string;
-}
-
-export interface RangeMap extends BaseMap {
-  from: string;
-  to: string;
-}
-
-export interface DataLink {
-  url: string;
-  title: string;
-  targetBlank?: boolean;
+  shortcut: string;
+  submenu: any[];
 }
 
 export enum VizOrientation {

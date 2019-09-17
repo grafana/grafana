@@ -1,18 +1,15 @@
 {
-  "include": ["src/**/*.ts"],
+  "extends": "../tsconfig.json",
+  "include": ["src/**/*.ts", "../../public/app/types/jquery/*.ts"],
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "module": "commonjs",
     "rootDirs": ["."],
     "outDir": "dist/src",
-    "strict": true,
-    "alwaysStrict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
+    "declaration": true,
+    "declarationDir": "dist",
     "typeRoots": ["./node_modules/@types"],
-    "skipLibCheck": true, // Temp workaround for Duplicate identifier tsc errors,
-    "removeComments": false,
     "esModuleInterop": true,
-    "lib": ["es2015", "es2017.string"]
+    "lib": ["es2015", "es2017.string", "dom"]
   }
 }

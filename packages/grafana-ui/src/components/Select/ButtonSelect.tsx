@@ -1,6 +1,7 @@
 import React, { PureComponent, ReactElement } from 'react';
-import Select, { SelectOptionItem } from './Select';
-import { PopperContent } from '../Tooltip/PopperController';
+import Select from './Select';
+import { PopoverContent } from '../Tooltip/Tooltip';
+import { SelectableValue } from '@grafana/data';
 
 interface ButtonComponentProps {
   label: ReactElement | string | undefined;
@@ -30,22 +31,23 @@ const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
 
 export interface Props<T> {
   className: string | undefined;
-  options: Array<SelectOptionItem<T>>;
-  value?: SelectOptionItem<T>;
+  options: Array<SelectableValue<T>>;
+  value?: SelectableValue<T>;
   label?: ReactElement | string;
   iconClass?: string;
   components?: any;
   maxMenuHeight?: number;
-  onChange: (item: SelectOptionItem<T>) => void;
-  tooltipContent?: PopperContent<any>;
+  onChange: (item: SelectableValue<T>) => void;
+  tooltipContent?: PopoverContent;
   isMenuOpen?: boolean;
   onOpenMenu?: () => void;
   onCloseMenu?: () => void;
   tabSelectsValue?: boolean;
+  autoFocus?: boolean;
 }
 
 export class ButtonSelect<T> extends PureComponent<Props<T>> {
-  onChange = (item: SelectOptionItem<T>) => {
+  onChange = (item: SelectableValue<T>) => {
     const { onChange } = this.props;
     onChange(item);
   };
@@ -64,14 +66,16 @@ export class ButtonSelect<T> extends PureComponent<Props<T>> {
       onOpenMenu,
       onCloseMenu,
       tabSelectsValue,
+      autoFocus = true,
     } = this.props;
     const combinedComponents = {
       ...components,
       Control: ButtonComponent({ label, className, iconClass }),
     };
+
     return (
       <Select
-        autoFocus
+        autoFocus={autoFocus}
         backspaceRemovesValue={false}
         isClearable={false}
         isSearchable={false}

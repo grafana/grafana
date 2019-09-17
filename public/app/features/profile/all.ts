@@ -1,2 +1,1 @@
 import './ProfileCtrl';
-import './PrefControlCtrl';

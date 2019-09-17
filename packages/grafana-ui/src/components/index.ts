@@ -1,7 +1,7 @@
 export { DeleteButton } from './DeleteButton/DeleteButton';
-export { Tooltip } from './Tooltip/Tooltip';
-export { PopperController } from './Tooltip/PopperController';
-export { Popper } from './Tooltip/Popper';
+export { Tooltip, PopoverContent } from './Tooltip/Tooltip';
+export { PopoverController } from './Tooltip/PopoverController';
+export { Popover } from './Tooltip/Popover';
 export { Portal } from './Portal/Portal';
 export { CustomScrollbar } from './CustomScrollbar/CustomScrollbar';
 
@@ -9,7 +9,7 @@ export * from './Button/Button';
 export { ButtonVariant } from './Button/AbstractButton';
 
 // Select
-export { Select, AsyncSelect, SelectOptionItem } from './Select/Select';
+export { Select, AsyncSelect } from './Select/Select';
 export { IndicatorsContainer } from './Select/IndicatorsContainer';
 export { NoOptionsMessage } from './Select/NoOptionsMessage';
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
@@ -35,6 +35,7 @@ export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimePicker } from './TimePicker/TimePicker';
+export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 
 // Renderless
@@ -61,6 +62,13 @@ export {
   LegendPlacement,
   LegendDisplayMode,
 } from './Legend/Legend';
+export { Alert } from './Alert/Alert';
+export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
+export { Collapse } from './Collapse/Collapse';
+export { LogLabels } from './Logs/LogLabels';
+export { LogRows } from './Logs/LogRows';
+export { getLogRowStyles } from './Logs/getLogRowStyles';
+export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { ThresholdsEditor } from './ThresholdsEditor/ThresholdsEditor';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
@@ -69,4 +77,12 @@ export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
 export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggestions';
 export { DataLinksEditor } from './DataLinks/DataLinksEditor';
+export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
+export { transformersUIRegistry } from './TransformersUI/transformers';
+export { TransformationRow } from './TransformersUI/TransformationRow';
+export { TransformationsEditor } from './TransformersUI/TransformationsEditor';
+export { JSONFormatter } from './JSONFormatter/JSONFormatter';
+export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
+export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
+export { AlphaNotice } from './AlphaNotice/AlphaNotice';

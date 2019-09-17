@@ -13,10 +13,10 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
 import { PanelModel, GridPos } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
-import { TimeRange, TimeZone } from '@grafana/ui';
+import { TimeRange, TimeZone } from '@grafana/data';
 import { UrlQueryValue } from '@grafana/runtime';
 import { KIOSK_MODE_TV, DashboardMeta } from 'app/types';
-import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { toUtc, DateTimeInput, dateTime, isDateTime } from '@grafana/data';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -341,7 +341,7 @@ export class DashboardModel {
 
     // remove panels
     _.pull(this.panels, ...panelsToRemove);
-
+    panelsToRemove.map(p => p.destroy());
     this.sortPanelsByGridPos();
     this.events.emit('repeats-processed');
   }
@@ -798,11 +798,11 @@ export class DashboardModel {
     return rowPanels;
   }
 
-  on(eventName: string, callback: Function) {
+  on(eventName: string, callback: (payload?: any) => void) {
     this.events.on(eventName, callback);
   }
 
-  off(eventName: string, callback?: Function) {
+  off(eventName: string, callback?: (payload?: any) => void) {
     this.events.off(eventName, callback);
   }
 

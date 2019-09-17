@@ -1,16 +1,22 @@
 import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
 import { css, cx } from 'emotion';
+import _ from 'lodash';
 import React, { useRef, useContext, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
 import { List } from '../index';
+import tinycolor from 'tinycolor2';
 
 export enum VariableOrigin {
-  BuiltIn = 'builtin',
+  Series = 'series',
+  Field = 'field',
+  Value = 'value',
+  BuiltIn = 'built-in',
   Template = 'template',
 }
 
 export interface VariableSuggestion {
   value: string;
+  label: string;
   documentation?: string;
   origin: VariableOrigin;
 }
@@ -71,16 +77,34 @@ const getStyles = (theme: GrafanaTheme) => {
     theme.type
   );
 
+  const separatorColor = selectThemeVariant(
+    {
+      light: tinycolor(wrapperBg.toString())
+        .darken(10)
+        .toString(),
+      dark: tinycolor(wrapperBg.toString())
+        .lighten(10)
+        .toString(),
+    },
+    theme.type
+  );
+
   return {
+    list: css`
+      border-bottom: 1px solid ${separatorColor};
+      &:last-child {
+        border: none;
+      }
+    `,
     wrapper: css`
       background: ${wrapperBg};
       z-index: 1;
-      width: 200px;
+      width: 250px;
       box-shadow: 0 5px 10px 0 ${wrapperShadow};
     `,
     item: css`
       background: none;
-      padding: 4px 8px;
+      padding: 2px 8px;
       color: ${itemColor};
       cursor: pointer;
       &:hover {
@@ -89,9 +113,6 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     label: css`
       color: ${theme.colors.textWeak};
-      font-size: ${theme.typography.size.sm};
-      line-height: ${theme.typography.lineHeight.lg};
-      padding: ${theme.spacing.sm};
     `,
     activeItem: css`
       background: ${itemBgActive};
@@ -101,11 +122,11 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
     itemValue: css`
       font-family: ${theme.typography.fontFamily.monospace};
+      font-size: ${theme.typography.size.sm};
     `,
     itemDocs: css`
       margin-top: ${theme.spacing.xs};
       color: ${itemDocsColor};
-      font-size: ${theme.typography.size.sm};
     `,
   };
 };
@@ -119,34 +140,35 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
     }
   });
 
-  const templateSuggestions = useMemo(() => {
-    return suggestions.filter(suggestion => suggestion.origin === VariableOrigin.Template);
-  }, [suggestions]);
-
-  const builtInSuggestions = useMemo(() => {
-    return suggestions.filter(suggestion => suggestion.origin === VariableOrigin.BuiltIn);
+  const groupedSuggestions = useMemo(() => {
+    return _.groupBy(suggestions, s => s.origin);
   }, [suggestions]);
 
   const styles = getStyles(theme);
   return (
     <div ref={ref} className={styles.wrapper}>
-      {templateSuggestions.length > 0 && (
-        <DataLinkSuggestionsList
-          {...otherProps}
-          suggestions={templateSuggestions}
-          label="Template variables"
-          activeIndex={otherProps.activeIndex}
-          activeIndexOffset={0}
-        />
-      )}
-      {builtInSuggestions.length > 0 && (
-        <DataLinkSuggestionsList
-          {...otherProps}
-          suggestions={builtInSuggestions}
-          label="Built-in variables"
-          activeIndexOffset={templateSuggestions.length}
-        />
-      )}
+      {Object.keys(groupedSuggestions).map((key, i) => {
+        const indexOffset =
+          i === 0
+            ? 0
+            : Object.keys(groupedSuggestions).reduce((acc, current, index) => {
+                if (index >= i) {
+                  return acc;
+                }
+                return acc + groupedSuggestions[current].length;
+              }, 0);
+
+        return (
+          <DataLinkSuggestionsList
+            {...otherProps}
+            suggestions={groupedSuggestions[key]}
+            label={`${_.capitalize(key)}`}
+            activeIndex={otherProps.activeIndex}
+            activeIndexOffset={indexOffset}
+            key={key}
+          />
+        );
+      })}
     </div>
   );
 };
@@ -165,8 +187,8 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
 
     return (
       <>
-        <div className={styles.label}>{label}</div>
         <List
+          className={styles.list}
           items={suggestions}
           renderItem={(item, index) => {
             return (
@@ -175,9 +197,11 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
                 onClick={() => {
                   onSuggestionSelect(item);
                 }}
+                title={item.documentation}
               >
-                <div className={styles.itemValue}>{item.value}</div>
-                {item.documentation && <div className={styles.itemDocs}>{item.documentation}</div>}
+                <span className={styles.itemValue}>
+                  <span className={styles.label}>{label}</span> {item.label}
+                </span>
               </div>
             );
           }}

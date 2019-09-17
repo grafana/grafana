@@ -3,7 +3,7 @@
 Grafana uses GitHub to manage contributions.
 Contributions take the form of pull requests that will be reviewed by the core team.
 
-- If you are a new contributor see: [Steps to Contribute](#steps-to-contribute)
+- If you are a new contributor see: [Steps to Contribute](#steps-to-contribute).
 
 - If you have a trivial fix or improvement, go ahead and create a pull request.
 
@@ -11,19 +11,21 @@ Contributions take the form of pull requests that will be reviewed by the core t
 
 - Sign our [CLA](http://docs.grafana.org/contribute/cla/).
 
-- Make sure to follow the code style guides
+- Make sure to follow the code style guides:
   - [Backend](https://github.com/grafana/grafana/tree/master/pkg)
   - [Frontend](https://github.com/grafana/grafana/tree/master/style_guides)
 
-## Steps to Contribute
+## Steps to contribute
 
 Should you wish to work on a GitHub issue, check first if it is not already assigned to someone. If it is free, you claim it by commenting on the issue that you want to work on it. This is to prevent duplicated efforts from contributors on the same issue.
 
 Please check the [`beginner friendly`](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) and [`help wanted`](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) labels to find issues that are good for getting started. If you have questions about one of the issues, with or without the tag, please comment on them and one of the core team or the original poster will clarify it.
 
-To setup a local development environment we recommend reading [Building Grafana from source](http://docs.grafana.org/project/building_from_source/)
+To setup a local development environment we recommend reading [Building Grafana from source](http://docs.grafana.org/project/building_from_source/).
 
-## Pull Request Checklist
+## Pull request checklist
+
+Whether you are contributing or doing code review, first read and understand https://google.github.io/eng-practices/review/reviewer/ for general engineering practices around code reviews that we also use.
 
 - Branch from the master branch and, if needed, rebase to the current master branch before submitting your pull request. If it doesn't merge cleanly with master you may be asked to rebase your changes.
 
@@ -31,14 +33,46 @@ To setup a local development environment we recommend reading [Building Grafana 
 
 - Add tests relevant to the fixed bug or new feature.
 
-- Follow [PR and commit messages guidelines](#PR-and-commit-messages-guidelines)
+### High-level checks
 
-### Pull Requests titles and message
+- [ ] The pull request adds value and the impact of the change is in line with [Backend](https://github.com/grafana/grafana/tree/master/pkg) or [Frontend](https://github.com/grafana/grafana/tree/master/style_guides).
+- [ ] The pull request works the way it says it should do.
+- [ ] The pull request closes one issue if possible and does not fix unrelated issues within the same pull request.
+- [ ] The pull request contains necessary tests.
+
+### Low-level checks
+
+- [ ] The pull request contains a title that explains it. It follows [PR and commit messages guidelines](#Pull-Requests-titles-and-message).
+- [ ] The pull request contains necessary links to issues. 
+- [ ] The pull request contains commits with messages that are small and understandable. It follows [PR and commit messages guidelines](#Pull-Requests-titles-and-message).
+- [ ] The pull request does not contain magic strings or numbers that could be replaced with an `Enum` or `const` instead.
+
+#### Bug-specific checks
+
+- [ ] The pull request contains `Closes: #Issue` or `Fixes: #Issue` in pull request description.
+- [ ] The Pull Request adds tests that replicate the fixed bug and helps avoid regressions.
+
+### Frontend-specific checks
+
+- [ ] The pull request does not increase the Angular code base.
+  > We are in the process of migrating to React so any increment of Angular code is generally discouraged.
+- [ ] The pull request does not contain uses of `any` or `{}` without comments describing why.
+- [ ] The pull request does not contain large React components that could easily be split into several smaller components.
+- [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.
+
+#### Redux specific checks (skip if your pull request does not contain Redux changes)
+
+- [ ] The pull request does not contain code that mutates state in reducers or thunks.
+- [ ] The pull request uses helpers `actionCreatorFactory` and `reducerFactory` instead of traditional `switch statement` reducers in Redux. See [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
+- [ ] The pull request uses `reducerTester` to test reducers. See [Redux framework](https://github.com/grafana/grafana/tree/master/style_guides/redux.md) for more details.
+- [ ] The pull request does not contain code that accesses the reducers state slice directly, instead, the code uses state selectors to access state.
+
+### Pull request titles and message
 
 Pull request titles should follow this format: `Area: Name of the change`.
 Titles are used to generate the changelog so they should be as descriptive as possible in one line.
 
-Good Examples
+Good examples:
 
 - `Explore: Adds Live option for supported datasources`
 - `GraphPanel: Don't sort series when legend table & sort column is not visible`
@@ -53,7 +87,7 @@ The commit message of the commits in the Pull Request can still be part of the g
 
 The Git commit title should be short, descriptive and include the Pull Request ID.
 
-Good Examples
+Good examples:
 
 - `Explore: Live supprt in datasources (#12345)`
 - `GraphPanel: Fix legend sorting issues (#12345)`

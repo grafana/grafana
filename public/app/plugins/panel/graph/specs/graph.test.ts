@@ -26,7 +26,7 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
-import { dateTime } from '@grafana/ui/src/utils/moment_wrapper';
+import { dateTime } from '@grafana/data';
 
 const ctx = {} as any;
 let ctrl: any;
@@ -88,6 +88,9 @@ describe('grafanaGraph', () => {
         from: dateTime([2015, 1, 1, 10]),
         to: dateTime([2015, 1, 1, 22]),
       },
+      annotationsSrv: {
+        getAnnotations: () => Promise.resolve({}),
+      },
     } as any;
 
     ctx.data = [];
@@ -118,7 +121,7 @@ describe('grafanaGraph', () => {
     $.plot = ctrl.plot = jest.fn();
     scope.ctrl = ctrl;
 
-    link = graphDirective({} as any, {}, {} as any, {} as any).link(scope, {
+    link = graphDirective({} as any, {}, {} as any).link(scope, {
       width: () => 500,
       mouseleave: () => {},
       bind: () => {},

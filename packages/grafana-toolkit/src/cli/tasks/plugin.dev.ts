@@ -1,6 +1,7 @@
 import { Task, TaskRunner } from './task';
 import { bundlePlugin as bundleFn, PluginBundleOptions } from './plugin/bundle';
 import { useSpinner } from '../utils/useSpinner';
+import { lintPlugin, prettierCheckPlugin } from './plugin.build';
 
 // @ts-ignore
 import execa = require('execa');
@@ -40,6 +41,10 @@ const pluginDevRunner: TaskRunner<PluginBundleOptions> = async options => {
   if (options.watch) {
     await bundleFn(options);
   } else {
+    // Always fix lint/prettier in dev mode
+    await prettierCheckPlugin({ fix: true });
+    await lintPlugin({ fix: true });
+
     const result = await bundlePlugin(options);
     return result;
   }
