@@ -4,6 +4,7 @@ import { css } from 'emotion';
 import memoizeOne from 'memoize-one';
 import { GrafanaTheme, GrafanaThemeType, useTheme } from '@grafana/ui';
 import tinycolor from 'tinycolor2';
+import { CSSTransition } from 'react-transition-group';
 
 const orangeDark = '#FF780A';
 const orangeDarkLighter = tinycolor(orangeDark)
@@ -23,6 +24,10 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
     noRightBorderStyle: css`
       label: noRightBorderStyle;
       border-right: 0;
+    `,
+    liveButton: css`
+      label: liveButton;
+      transition: background-color 1s, border-color 1s, color 1s;
     `,
     isLive: css`
       label: isLive;
@@ -63,6 +68,30 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
         }
       }
     `,
+    stopButtonEnter: css`
+      label: stopButtonEnter;
+      width: 0;
+      opacity: 0;
+      overflow: hidden;
+    `,
+    stopButtonEnterActive: css`
+      label: stopButtonEnterActive;
+      opacity: 1;
+      width: 32px;
+      transition: opacity 500ms, width 500ms;
+    `,
+    stopButtonExit: css`
+      label: stopButtonExit;
+      width: 32px;
+      opacity: 1;
+      overflow: hidden;
+    `,
+    stopButtonExitActive: css`
+      label: stopButtonExitActive;
+      opacity: 0;
+      width: 0;
+      transition: opacity 500ms, width 500ms;
+    `,
   };
 });
 
@@ -84,7 +113,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
   return (
     <div className="explore-toolbar-content-item">
       <button
-        className={classNames('btn navbar-button', {
+        className={classNames('btn navbar-button', styles.liveButton, {
           [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: isLive,
           [styles.isLive]: isLive && !isPaused,
           [styles.isPaused]: isLive && isPaused,
@@ -94,11 +123,24 @@ export function LiveTailButton(props: LiveTailButtonProps) {
         <i className={classNames('fa', isPaused || !isLive ? 'fa-play' : 'fa-pause')} />
         &nbsp; Live tailing
       </button>
-      {isLive && (
-        <button className={`btn navbar-button navbar-button--attached ${styles.isLive}`} onClick={stop}>
-          <i className={'fa fa-stop'} />
-        </button>
-      )}
+      <CSSTransition
+        mountOnEnter={true}
+        unmountOnExit={true}
+        timeout={500}
+        in={isLive}
+        classNames={{
+          enter: styles.stopButtonEnter,
+          enterActive: styles.stopButtonEnterActive,
+          exit: styles.stopButtonExit,
+          exitActive: styles.stopButtonExitActive,
+        }}
+      >
+        <div>
+          <button className={`btn navbar-button navbar-button--attached ${styles.isLive}`} onClick={stop}>
+            <i className={'fa fa-stop'} />
+          </button>
+        </div>
+      </CSSTransition>
     </div>
   );
 }
