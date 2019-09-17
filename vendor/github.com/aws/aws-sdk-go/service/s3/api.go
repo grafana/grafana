@@ -545,6 +545,10 @@ func (c *S3) DeleteBucketAnalyticsConfigurationRequest(input *DeleteBucketAnalyt
 // Deletes an analytics configuration for the bucket (specified by the analytics
 // configuration ID).
 //
+// To use this operation, you must have permissions to perform the s3:PutAnalyticsConfiguration
+// action. The bucket owner has this permission by default. The bucket owner
+// can grant this permission to others.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1071,7 +1075,7 @@ func (c *S3) DeleteBucketReplicationRequest(input *DeleteBucketReplicationInput)
 // DeleteBucketReplication API operation for Amazon Simple Storage Service.
 //
 // Deletes the replication configuration from the bucket. For information about
-// replication configuration, see Cross-Region Replication (CRR) ( https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html)
+// replication configuration, see Cross-Region Replication (CRR) (https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html)
 // in the Amazon S3 Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -3335,8 +3339,8 @@ func (c *S3) GetObjectLockConfigurationRequest(input *GetObjectLockConfiguration
 
 // GetObjectLockConfiguration API operation for Amazon Simple Storage Service.
 //
-// Gets the Object Lock configuration for a bucket. The rule specified in the
-// Object Lock configuration will be applied by default to every new object
+// Gets the object lock configuration for a bucket. The rule specified in the
+// object lock configuration will be applied by default to every new object
 // placed in the specified bucket.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -4210,7 +4214,7 @@ func (c *S3) ListMultipartUploadsWithContext(ctx aws.Context, input *ListMultipa
 //    // Example iterating over at most 3 pages of a ListMultipartUploads operation.
 //    pageNum := 0
 //    err := client.ListMultipartUploadsPages(params,
-//        func(page *ListMultipartUploadsOutput, lastPage bool) bool {
+//        func(page *s3.ListMultipartUploadsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -4340,7 +4344,7 @@ func (c *S3) ListObjectVersionsWithContext(ctx aws.Context, input *ListObjectVer
 //    // Example iterating over at most 3 pages of a ListObjectVersions operation.
 //    pageNum := 0
 //    err := client.ListObjectVersionsPages(params,
-//        func(page *ListObjectVersionsOutput, lastPage bool) bool {
+//        func(page *s3.ListObjectVersionsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -4477,7 +4481,7 @@ func (c *S3) ListObjectsWithContext(ctx aws.Context, input *ListObjectsInput, op
 //    // Example iterating over at most 3 pages of a ListObjects operation.
 //    pageNum := 0
 //    err := client.ListObjectsPages(params,
-//        func(page *ListObjectsOutput, lastPage bool) bool {
+//        func(page *s3.ListObjectsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -4615,7 +4619,7 @@ func (c *S3) ListObjectsV2WithContext(ctx aws.Context, input *ListObjectsV2Input
 //    // Example iterating over at most 3 pages of a ListObjectsV2 operation.
 //    pageNum := 0
 //    err := client.ListObjectsV2Pages(params,
-//        func(page *ListObjectsV2Output, lastPage bool) bool {
+//        func(page *s3.ListObjectsV2Output, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -4745,7 +4749,7 @@ func (c *S3) ListPartsWithContext(ctx aws.Context, input *ListPartsInput, opts .
 //    // Example iterating over at most 3 pages of a ListParts operation.
 //    pageNum := 0
 //    err := client.ListPartsPages(params,
-//        func(page *ListPartsOutput, lastPage bool) bool {
+//        func(page *s3.ListPartsOutput, lastPage bool) bool {
 //            pageNum++
 //            fmt.Println(page)
 //            return pageNum <= 3
@@ -5754,8 +5758,7 @@ func (c *S3) PutBucketPolicyRequest(input *PutBucketPolicyInput) (req *request.R
 
 // PutBucketPolicy API operation for Amazon Simple Storage Service.
 //
-// Replaces a policy on a bucket. If the bucket already has a policy, the one
-// in this request completely replaces it.
+// Applies an Amazon S3 bucket policy to an Amazon S3 bucket.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5831,7 +5834,7 @@ func (c *S3) PutBucketReplicationRequest(input *PutBucketReplicationInput) (req 
 // PutBucketReplication API operation for Amazon Simple Storage Service.
 //
 // Creates a replication configuration or replaces an existing one. For more
-// information, see Cross-Region Replication (CRR) ( https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html)
+// information, see Cross-Region Replication (CRR) (https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html)
 // in the Amazon S3 Developer Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -6439,8 +6442,8 @@ func (c *S3) PutObjectLockConfigurationRequest(input *PutObjectLockConfiguration
 
 // PutObjectLockConfiguration API operation for Amazon Simple Storage Service.
 //
-// Places an Object Lock configuration on the specified bucket. The rule specified
-// in the Object Lock configuration will be applied by default to every new
+// Places an object lock configuration on the specified bucket. The rule specified
+// in the object lock configuration will be applied by default to every new
 // object placed in the specified bucket.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -7010,13 +7013,16 @@ func (c *S3) UploadPartCopyWithContext(ctx aws.Context, input *UploadPartCopyInp
 	return out, req.Send()
 }
 
-// Specifies the days since the initiation of an Incomplete Multipart Upload
-// that Lifecycle will wait before permanently removing all parts of the upload.
+// Specifies the days since the initiation of an incomplete multipart upload
+// that Amazon S3 will wait before permanently removing all parts of the upload.
+// For more information, see Aborting Incomplete Multipart Uploads Using a Bucket
+// Lifecycle Policy (https://docs.aws.amazon.com/AmazonS3/latest/dev/mpuoverview.html#mpu-abort-incomplete-mpu-lifecycle-config)
+// in the Amazon Simple Storage Service Developer Guide.
 type AbortIncompleteMultipartUpload struct {
 	_ struct{} `type:"structure"`
 
-	// Indicates the number of days that must pass since initiation for Lifecycle
-	// to abort an Incomplete Multipart Upload.
+	// Specifies the number of days after which Amazon S3 aborts an incomplete multipart
+	// upload.
 	DaysAfterInitiation *int64 `type:"integer"`
 }
 
@@ -7037,11 +7043,15 @@ func (s *AbortIncompleteMultipartUpload) SetDaysAfterInitiation(v int64) *AbortI
 }
 
 type AbortMultipartUploadInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"AbortMultipartUploadRequest" type:"structure"`
 
+	// Name of the bucket to which the multipart upload was initiated.
+	//
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
+	// Key of the object for which the multipart upload was initiated.
+	//
 	// Key is a required field
 	Key *string `location:"uri" locationName:"Key" min:"1" type:"string" required:"true"`
 
@@ -7051,6 +7061,8 @@ type AbortMultipartUploadInput struct {
 	// at http://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html
 	RequestPayer *string `location:"header" locationName:"x-amz-request-payer" type:"string" enum:"RequestPayer"`
 
+	// Upload ID that identifies the multipart upload.
+	//
 	// UploadId is a required field
 	UploadId *string `location:"querystring" locationName:"uploadId" type:"string" required:"true"`
 }
@@ -7145,10 +7157,13 @@ func (s *AbortMultipartUploadOutput) SetRequestCharged(v string) *AbortMultipart
 	return s
 }
 
+// Configures the transfer acceleration state for an Amazon S3 bucket. For more
+// information, see Amazon S3 Transfer Acceleration (https://docs.aws.amazon.com/AmazonS3/latest/dev/transfer-acceleration.html)
+// in the Amazon Simple Storage Service Developer Guide.
 type AccelerateConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// The accelerate configuration of the bucket.
+	// Specifies the transfer acceleration status of the bucket.
 	Status *string `type:"string" enum:"BucketAccelerateStatus"`
 }
 
@@ -7168,12 +7183,14 @@ func (s *AccelerateConfiguration) SetStatus(v string) *AccelerateConfiguration {
 	return s
 }
 
+// Contains the elements that set the ACL permissions for an object per grantee.
 type AccessControlPolicy struct {
 	_ struct{} `type:"structure"`
 
 	// A list of grants.
 	Grants []*Grant `locationName:"AccessControlList" locationNameList:"Grant" type:"list"`
 
+	// Container for the bucket owner's display name and ID.
 	Owner *Owner `type:"structure"`
 }
 
@@ -7223,7 +7240,9 @@ func (s *AccessControlPolicy) SetOwner(v *Owner) *AccessControlPolicy {
 type AccessControlTranslation struct {
 	_ struct{} `type:"structure"`
 
-	// The override value for the owner of the replica object.
+	// Specifies the replica ownership. For default and valid values, see PUT bucket
+	// replication (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTreplication.html)
+	// in the Amazon Simple Storage Service API Reference.
 	//
 	// Owner is a required field
 	Owner *string `type:"string" required:"true" enum:"OwnerOverride"`
@@ -7258,10 +7277,14 @@ func (s *AccessControlTranslation) SetOwner(v string) *AccessControlTranslation 
 	return s
 }
 
+// A conjunction (logical AND) of predicates, which is used in evaluating a
+// metrics filter. The operator must have at least two predicates in any combination,
+// and an object must match all of the predicates for the filter to apply.
 type AnalyticsAndOperator struct {
 	_ struct{} `type:"structure"`
 
-	// The prefix to use when evaluating an AND predicate.
+	// The prefix to use when evaluating an AND predicate: The prefix that an object
+	// must have to be included in the metrics results.
 	Prefix *string `type:"string"`
 
 	// The list of tags to use when evaluating an AND predicate.
@@ -7310,6 +7333,11 @@ func (s *AnalyticsAndOperator) SetTags(v []*Tag) *AnalyticsAndOperator {
 	return s
 }
 
+// Specifies the configuration and any analyses for the analytics filter of
+// an Amazon S3 bucket.
+//
+// For more information, see GET Bucket analytics (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETAnalyticsConfig.html)
+// in the Amazon Simple Storage Service API Reference.
 type AnalyticsConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -7318,13 +7346,13 @@ type AnalyticsConfiguration struct {
 	// If no filter is provided, all objects will be considered in any analysis.
 	Filter *AnalyticsFilter `type:"structure"`
 
-	// The identifier used to represent an analytics configuration.
+	// The ID that identifies the analytics configuration.
 	//
 	// Id is a required field
 	Id *string `type:"string" required:"true"`
 
-	// If present, it indicates that data related to access patterns will be collected
-	// and made available to analyze the tradeoffs between different storage classes.
+	// Contains data related to access patterns to be collected and made available
+	// to analyze the tradeoffs between different storage classes.
 	//
 	// StorageClassAnalysis is a required field
 	StorageClassAnalysis *StorageClassAnalysis `type:"structure" required:"true"`
@@ -7384,6 +7412,7 @@ func (s *AnalyticsConfiguration) SetStorageClassAnalysis(v *StorageClassAnalysis
 	return s
 }
 
+// Where to publish the analytics results.
 type AnalyticsExportDestination struct {
 	_ struct{} `type:"structure"`
 
@@ -7492,7 +7521,7 @@ func (s *AnalyticsFilter) SetTag(v *Tag) *AnalyticsFilter {
 type AnalyticsS3BucketDestination struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon resource name (ARN) of the bucket to which data is exported.
+	// The Amazon Resource Name (ARN) of the bucket to which data is exported.
 	//
 	// Bucket is a required field
 	Bucket *string `type:"string" required:"true"`
@@ -7501,13 +7530,12 @@ type AnalyticsS3BucketDestination struct {
 	// the owner will not be validated prior to exporting data.
 	BucketAccountId *string `type:"string"`
 
-	// The file format used when exporting data to Amazon S3.
+	// Specifies the file format used when exporting data to Amazon S3.
 	//
 	// Format is a required field
 	Format *string `type:"string" required:"true" enum:"AnalyticsS3ExportFileFormat"`
 
-	// The prefix to use when exporting data. The exported data begins with this
-	// prefix.
+	// The prefix to use when exporting data. The prefix is prepended to all results.
 	Prefix *string `type:"string"`
 }
 
@@ -7600,9 +7628,14 @@ func (s *Bucket) SetName(v string) *Bucket {
 	return s
 }
 
+// Specifies the lifecycle configuration for objects in an Amazon S3 bucket.
+// For more information, see Object Lifecycle Management (https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html)
+// in the Amazon Simple Storage Service Developer Guide.
 type BucketLifecycleConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// A lifecycle rule for individual objects in an Amazon S3 bucket.
+	//
 	// Rules is a required field
 	Rules []*LifecycleRule `locationName:"Rule" type:"list" flattened:"true" required:"true"`
 }
@@ -7649,9 +7682,10 @@ func (s *BucketLifecycleConfiguration) SetRules(v []*LifecycleRule) *BucketLifec
 type BucketLoggingStatus struct {
 	_ struct{} `type:"structure"`
 
-	// Container for logging information. Presence of this element indicates that
-	// logging is enabled. Parameters TargetBucket and TargetPrefix are required
-	// in this case.
+	// Describes where logs are stored and the prefix that Amazon S3 assigns to
+	// all log object keys for a bucket. For more information, see PUT Bucket logging
+	// (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTlogging.html)
+	// in the Amazon Simple Storage Service API Reference.
 	LoggingEnabled *LoggingEnabled `type:"structure"`
 }
 
@@ -7686,9 +7720,15 @@ func (s *BucketLoggingStatus) SetLoggingEnabled(v *LoggingEnabled) *BucketLoggin
 	return s
 }
 
+// Describes the cross-origin access configuration for objects in an Amazon
+// S3 bucket. For more information, see Enabling Cross-Origin Resource Sharing
+// (https://docs.aws.amazon.com/AmazonS3/latest/dev/cors.html) in the Amazon
+// Simple Storage Service Developer Guide.
 type CORSConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// A set of allowed origins and methods.
+	//
 	// CORSRules is a required field
 	CORSRules []*CORSRule `locationName:"CORSRule" type:"list" flattened:"true" required:"true"`
 }
@@ -7732,14 +7772,18 @@ func (s *CORSConfiguration) SetCORSRules(v []*CORSRule) *CORSConfiguration {
 	return s
 }
 
+// Specifies a cross-origin access rule for an Amazon S3 bucket.
 type CORSRule struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies which headers are allowed in a pre-flight OPTIONS request.
+	// Headers that are specified in the Access-Control-Request-Headers header.
+	// These headers are allowed in a preflight OPTIONS request. In response to
+	// any preflight OPTIONS request, Amazon S3 returns any requested headers that
+	// are allowed.
 	AllowedHeaders []*string `locationName:"AllowedHeader" type:"list" flattened:"true"`
 
-	// Identifies HTTP methods that the domain/origin specified in the rule is allowed
-	// to execute.
+	// An HTTP method that you allow the origin to execute. Valid values are GET,
+	// PUT, HEAD, POST, and DELETE.
 	//
 	// AllowedMethods is a required field
 	AllowedMethods []*string `locationName:"AllowedMethod" type:"list" flattened:"true" required:"true"`
@@ -8040,7 +8084,7 @@ func (s *CommonPrefix) SetPrefix(v string) *CommonPrefix {
 }
 
 type CompleteMultipartUploadInput struct {
-	_ struct{} `type:"structure" payload:"MultipartUpload"`
+	_ struct{} `locationName:"CompleteMultipartUploadRequest" type:"structure" payload:"MultipartUpload"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -8290,6 +8334,7 @@ func (s *CompletedPart) SetPartNumber(v int64) *CompletedPart {
 	return s
 }
 
+// Specifies a condition that must be met for a redirect to apply.
 type Condition struct {
 	_ struct{} `type:"structure"`
 
@@ -8359,7 +8404,7 @@ func (s *ContinuationEvent) UnmarshalEvent(
 }
 
 type CopyObjectInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"CopyObjectRequest" type:"structure"`
 
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
@@ -8409,7 +8454,7 @@ type CopyObjectInput struct {
 	// Specifies the customer-provided encryption key for Amazon S3 to use to decrypt
 	// the source object. The encryption key provided in this header must be one
 	// that was used when the source object was created.
-	CopySourceSSECustomerKey *string `location:"header" locationName:"x-amz-copy-source-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	CopySourceSSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-copy-source-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
 	// Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
 	// Amazon S3 uses this header for a message integrity check to ensure the encryption
@@ -8444,10 +8489,10 @@ type CopyObjectInput struct {
 	// Specifies whether you want to apply a Legal Hold to the copied object.
 	ObjectLockLegalHoldStatus *string `location:"header" locationName:"x-amz-object-lock-legal-hold" type:"string" enum:"ObjectLockLegalHoldStatus"`
 
-	// The Object Lock mode that you want to apply to the copied object.
+	// The object lock mode that you want to apply to the copied object.
 	ObjectLockMode *string `location:"header" locationName:"x-amz-object-lock-mode" type:"string" enum:"ObjectLockMode"`
 
-	// The date and time when you want the copied object's Object Lock to expire.
+	// The date and time when you want the copied object's object lock to expire.
 	ObjectLockRetainUntilDate *time.Time `location:"header" locationName:"x-amz-object-lock-retain-until-date" type:"timestamp" timestampFormat:"iso8601"`
 
 	// Confirms that the requester knows that she or he will be charged for the
@@ -8464,12 +8509,17 @@ type CopyObjectInput struct {
 	// does not store the encryption key. The key must be appropriate for use with
 	// the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm
 	// header.
-	SSECustomerKey *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	SSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
 	// Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
 	// Amazon S3 uses this header for a message integrity check to ensure the encryption
 	// key was transmitted without error.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
+
+	// Specifies the AWS KMS Encryption Context to use for object encryption. The
+	// value of this header is a base64-encoded UTF-8 string holding JSON with the
+	// encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
 
 	// Specifies the AWS KMS key ID to use for object encryption. All GET and PUT
 	// requests for an object protected by AWS KMS will fail if not made via SSL
@@ -8735,6 +8785,12 @@ func (s *CopyObjectInput) SetSSECustomerKeyMD5(v string) *CopyObjectInput {
 	return s
 }
 
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *CopyObjectInput) SetSSEKMSEncryptionContext(v string) *CopyObjectInput {
+	s.SSEKMSEncryptionContext = &v
+	return s
+}
+
 // SetSSEKMSKeyId sets the SSEKMSKeyId field's value.
 func (s *CopyObjectInput) SetSSEKMSKeyId(v string) *CopyObjectInput {
 	s.SSEKMSKeyId = &v
@@ -8795,6 +8851,11 @@ type CopyObjectOutput struct {
 	// verification of the customer-provided encryption key.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
 
+	// If present, specifies the AWS KMS Encryption Context to use for object encryption.
+	// The value of this header is a base64-encoded UTF-8 string holding JSON with
+	// the encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
+
 	// If present, specifies the ID of the AWS Key Management Service (KMS) master
 	// encryption key that was used for the object.
 	SSEKMSKeyId *string `location:"header" locationName:"x-amz-server-side-encryption-aws-kms-key-id" type:"string" sensitive:"true"`
@@ -8850,6 +8911,12 @@ func (s *CopyObjectOutput) SetSSECustomerAlgorithm(v string) *CopyObjectOutput {
 // SetSSECustomerKeyMD5 sets the SSECustomerKeyMD5 field's value.
 func (s *CopyObjectOutput) SetSSECustomerKeyMD5(v string) *CopyObjectOutput {
 	s.SSECustomerKeyMD5 = &v
+	return s
+}
+
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *CopyObjectOutput) SetSSEKMSEncryptionContext(v string) *CopyObjectOutput {
+	s.SSEKMSEncryptionContext = &v
 	return s
 }
 
@@ -8958,7 +9025,7 @@ func (s *CreateBucketConfiguration) SetLocationConstraint(v string) *CreateBucke
 }
 
 type CreateBucketInput struct {
-	_ struct{} `type:"structure" payload:"CreateBucketConfiguration"`
+	_ struct{} `locationName:"CreateBucketRequest" type:"structure" payload:"CreateBucketConfiguration"`
 
 	// The canned ACL to apply to the bucket.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"BucketCannedACL"`
@@ -8984,7 +9051,8 @@ type CreateBucketInput struct {
 	// Allows grantee to write the ACL for the applicable bucket.
 	GrantWriteACP *string `location:"header" locationName:"x-amz-grant-write-acp" type:"string"`
 
-	// Specifies whether you want S3 Object Lock to be enabled for the new bucket.
+	// Specifies whether you want Amazon S3 object lock to be enabled for the new
+	// bucket.
 	ObjectLockEnabledForBucket *bool `location:"header" locationName:"x-amz-bucket-object-lock-enabled" type:"boolean"`
 }
 
@@ -9098,7 +9166,7 @@ func (s *CreateBucketOutput) SetLocation(v string) *CreateBucketOutput {
 }
 
 type CreateMultipartUploadInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"CreateMultipartUploadRequest" type:"structure"`
 
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
@@ -9147,10 +9215,10 @@ type CreateMultipartUploadInput struct {
 	// Specifies whether you want to apply a Legal Hold to the uploaded object.
 	ObjectLockLegalHoldStatus *string `location:"header" locationName:"x-amz-object-lock-legal-hold" type:"string" enum:"ObjectLockLegalHoldStatus"`
 
-	// Specifies the Object Lock mode that you want to apply to the uploaded object.
+	// Specifies the object lock mode that you want to apply to the uploaded object.
 	ObjectLockMode *string `location:"header" locationName:"x-amz-object-lock-mode" type:"string" enum:"ObjectLockMode"`
 
-	// Specifies the date and time when you want the Object Lock to expire.
+	// Specifies the date and time when you want the object lock to expire.
 	ObjectLockRetainUntilDate *time.Time `location:"header" locationName:"x-amz-object-lock-retain-until-date" type:"timestamp" timestampFormat:"iso8601"`
 
 	// Confirms that the requester knows that she or he will be charged for the
@@ -9167,12 +9235,17 @@ type CreateMultipartUploadInput struct {
 	// does not store the encryption key. The key must be appropriate for use with
 	// the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm
 	// header.
-	SSECustomerKey *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	SSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
 	// Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
 	// Amazon S3 uses this header for a message integrity check to ensure the encryption
 	// key was transmitted without error.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
+
+	// Specifies the AWS KMS Encryption Context to use for object encryption. The
+	// value of this header is a base64-encoded UTF-8 string holding JSON with the
+	// encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
 
 	// Specifies the AWS KMS key ID to use for object encryption. All GET and PUT
 	// requests for an object protected by AWS KMS will fail if not made via SSL
@@ -9368,6 +9441,12 @@ func (s *CreateMultipartUploadInput) SetSSECustomerKeyMD5(v string) *CreateMulti
 	return s
 }
 
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *CreateMultipartUploadInput) SetSSEKMSEncryptionContext(v string) *CreateMultipartUploadInput {
+	s.SSEKMSEncryptionContext = &v
+	return s
+}
+
 // SetSSEKMSKeyId sets the SSEKMSKeyId field's value.
 func (s *CreateMultipartUploadInput) SetSSEKMSKeyId(v string) *CreateMultipartUploadInput {
 	s.SSEKMSKeyId = &v
@@ -9427,6 +9506,11 @@ type CreateMultipartUploadOutput struct {
 	// the response will include this header to provide round trip message integrity
 	// verification of the customer-provided encryption key.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
+
+	// If present, specifies the AWS KMS Encryption Context to use for object encryption.
+	// The value of this header is a base64-encoded UTF-8 string holding JSON with
+	// the encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
 
 	// If present, specifies the ID of the AWS Key Management Service (KMS) master
 	// encryption key that was used for the object.
@@ -9499,6 +9583,12 @@ func (s *CreateMultipartUploadOutput) SetSSECustomerKeyMD5(v string) *CreateMult
 	return s
 }
 
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *CreateMultipartUploadOutput) SetSSEKMSEncryptionContext(v string) *CreateMultipartUploadOutput {
+	s.SSEKMSEncryptionContext = &v
+	return s
+}
+
 // SetSSEKMSKeyId sets the SSEKMSKeyId field's value.
 func (s *CreateMultipartUploadOutput) SetSSEKMSKeyId(v string) *CreateMultipartUploadOutput {
 	s.SSEKMSKeyId = &v
@@ -9517,7 +9607,7 @@ func (s *CreateMultipartUploadOutput) SetUploadId(v string) *CreateMultipartUplo
 	return s
 }
 
-// The container element for specifying the default Object Lock retention settings
+// The container element for specifying the default object lock retention settings
 // for new objects placed in the specified bucket.
 type DefaultRetention struct {
 	_ struct{} `type:"structure"`
@@ -9525,7 +9615,7 @@ type DefaultRetention struct {
 	// The number of days that you want to specify for the default retention period.
 	Days *int64 `type:"integer"`
 
-	// The default Object Lock retention mode you want to apply to new objects placed
+	// The default object lock retention mode you want to apply to new objects placed
 	// in the specified bucket.
 	Mode *string `type:"string" enum:"ObjectLockRetentionMode"`
 
@@ -9618,14 +9708,14 @@ func (s *Delete) SetQuiet(v bool) *Delete {
 }
 
 type DeleteBucketAnalyticsConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketAnalyticsConfigurationRequest" type:"structure"`
 
 	// The name of the bucket from which an analytics configuration is deleted.
 	//
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The identifier used to represent an analytics configuration.
+	// The ID that identifies the analytics configuration.
 	//
 	// Id is a required field
 	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
@@ -9694,7 +9784,7 @@ func (s DeleteBucketAnalyticsConfigurationOutput) GoString() string {
 }
 
 type DeleteBucketCorsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketCorsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -9754,7 +9844,7 @@ func (s DeleteBucketCorsOutput) GoString() string {
 }
 
 type DeleteBucketEncryptionInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketEncryptionRequest" type:"structure"`
 
 	// The name of the bucket containing the server-side encryption configuration
 	// to delete.
@@ -9817,7 +9907,7 @@ func (s DeleteBucketEncryptionOutput) GoString() string {
 }
 
 type DeleteBucketInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -9863,7 +9953,7 @@ func (s *DeleteBucketInput) getBucket() (v string) {
 }
 
 type DeleteBucketInventoryConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketInventoryConfigurationRequest" type:"structure"`
 
 	// The name of the bucket containing the inventory configuration to delete.
 	//
@@ -9939,7 +10029,7 @@ func (s DeleteBucketInventoryConfigurationOutput) GoString() string {
 }
 
 type DeleteBucketLifecycleInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketLifecycleRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -9999,7 +10089,7 @@ func (s DeleteBucketLifecycleOutput) GoString() string {
 }
 
 type DeleteBucketMetricsConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketMetricsConfigurationRequest" type:"structure"`
 
 	// The name of the bucket containing the metrics configuration to delete.
 	//
@@ -10089,7 +10179,7 @@ func (s DeleteBucketOutput) GoString() string {
 }
 
 type DeleteBucketPolicyInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketPolicyRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10149,7 +10239,7 @@ func (s DeleteBucketPolicyOutput) GoString() string {
 }
 
 type DeleteBucketReplicationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketReplicationRequest" type:"structure"`
 
 	// The bucket name.
 	//
@@ -10214,7 +10304,7 @@ func (s DeleteBucketReplicationOutput) GoString() string {
 }
 
 type DeleteBucketTaggingInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketTaggingRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10274,7 +10364,7 @@ func (s DeleteBucketTaggingOutput) GoString() string {
 }
 
 type DeleteBucketWebsiteInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteBucketWebsiteRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10420,12 +10510,12 @@ func (s *DeleteMarkerReplication) SetStatus(v string) *DeleteMarkerReplication {
 }
 
 type DeleteObjectInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteObjectRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// Indicates whether S3 Object Lock should bypass Governance-mode restrictions
+	// Indicates whether Amazon S3 object lock should bypass governance-mode restrictions
 	// to process this operation.
 	BypassGovernanceRetention *bool `location:"header" locationName:"x-amz-bypass-governance-retention" type:"boolean"`
 
@@ -10566,7 +10656,7 @@ func (s *DeleteObjectOutput) SetVersionId(v string) *DeleteObjectOutput {
 }
 
 type DeleteObjectTaggingInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeleteObjectTaggingRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -10659,13 +10749,13 @@ func (s *DeleteObjectTaggingOutput) SetVersionId(v string) *DeleteObjectTaggingO
 }
 
 type DeleteObjectsInput struct {
-	_ struct{} `type:"structure" payload:"Delete"`
+	_ struct{} `locationName:"DeleteObjectsRequest" type:"structure" payload:"Delete"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
 	// Specifies whether you want to delete this object even if it has a Governance-type
-	// Object Lock in place. You must have sufficient permissions to perform this
+	// object lock in place. You must have sufficient permissions to perform this
 	// operation.
 	BypassGovernanceRetention *bool `location:"header" locationName:"x-amz-bypass-governance-retention" type:"boolean"`
 
@@ -10795,7 +10885,7 @@ func (s *DeleteObjectsOutput) SetRequestCharged(v string) *DeleteObjectsOutput {
 }
 
 type DeletePublicAccessBlockInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"DeletePublicAccessBlockRequest" type:"structure"`
 
 	// The Amazon S3 bucket whose PublicAccessBlock configuration you want to delete.
 	//
@@ -10902,33 +10992,33 @@ func (s *DeletedObject) SetVersionId(v string) *DeletedObject {
 	return s
 }
 
-// A container for information about the replication destination.
+// Specifies information about where to publish analysis or configuration results
+// for an Amazon S3 bucket.
 type Destination struct {
 	_ struct{} `type:"structure"`
 
-	// A container for information about access control for replicas.
-	//
-	// Use this element only in a cross-account scenario where source and destination
-	// bucket owners are not the same to change replica ownership to the AWS account
-	// that owns the destination bucket. If you don't add this element to the replication
-	// configuration, the replicas are owned by same AWS account that owns the source
-	// object.
+	// Specify this only in a cross-account scenario (where source and destination
+	// bucket owners are not the same), and you want to change replica ownership
+	// to the AWS account that owns the destination bucket. If this is not specified
+	// in the replication configuration, the replicas are owned by same AWS account
+	// that owns the source object.
 	AccessControlTranslation *AccessControlTranslation `type:"structure"`
 
-	// The account ID of the destination bucket. Currently, Amazon S3 verifies this
-	// value only if Access Control Translation is enabled.
-	//
-	// In a cross-account scenario, if you change replica ownership to the AWS account
-	// that owns the destination bucket by adding the AccessControlTranslation element,
-	// this is the account ID of the owner of the destination bucket.
+	// Destination bucket owner account ID. In a cross-account scenario, if you
+	// direct Amazon S3 to change replica ownership to the AWS account that owns
+	// the destination bucket by specifying the AccessControlTranslation property,
+	// this is the account ID of the destination bucket owner. For more information,
+	// see Cross-Region Replication Additional Configuration: Change Replica Owner
+	// (https://docs.aws.amazon.com/AmazonS3/latest/dev/crr-change-owner.html) in
+	// the Amazon Simple Storage Service Developer Guide.
 	Account *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the bucket where you want Amazon S3 to
 	// store replicas of the object identified by the rule.
 	//
-	// If there are multiple rules in your replication configuration, all rules
-	// must specify the same bucket as the destination. A replication configuration
-	// can replicate objects to only one destination bucket.
+	// A replication configuration can replicate objects to only one destination
+	// bucket. If there are multiple rules in your replication configuration, all
+	// rules must specify the same destination bucket.
 	//
 	// Bucket is a required field
 	Bucket *string `type:"string" required:"true"`
@@ -10937,8 +11027,13 @@ type Destination struct {
 	// is specified, you must specify this element.
 	EncryptionConfiguration *EncryptionConfiguration `type:"structure"`
 
-	// The class of storage used to store the object. By default Amazon S3 uses
-	// storage class of the source object when creating a replica.
+	// The storage class to use when replicating objects, such as standard or reduced
+	// redundancy. By default, Amazon S3 uses the storage class of the source object
+	// to create the object replica.
+	//
+	// For valid values, see the StorageClass element of the PUT Bucket replication
+	// (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTreplication.html)
+	// action in the Amazon Simple Storage Service API Reference.
 	StorageClass *string `type:"string" enum:"StorageClass"`
 }
 
@@ -11068,13 +11163,13 @@ func (s *Encryption) SetKMSKeyId(v string) *Encryption {
 	return s
 }
 
-// A container for information about the encryption-based configuration for
-// replicas.
+// Specifies encryption-related information for an Amazon S3 bucket that is
+// a destination for replicated objects.
 type EncryptionConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// The ID of the AWS KMS key for the AWS Region where the destination bucket
-	// resides. Amazon S3 uses this key to encrypt the replica object.
+	// Specifies the AWS KMS Key ID (Key ARN or Alias ARN) for the destination bucket.
+	// Amazon S3 uses this key to encrypt replica objects.
 	ReplicaKmsKeyID *string `type:"string"`
 }
 
@@ -11207,18 +11302,19 @@ func (s *ErrorDocument) SetKey(v string) *ErrorDocument {
 	return s
 }
 
-// A container for a key value pair that defines the criteria for the filter
-// rule.
+// Specifies the Amazon S3 object key name to filter on and whether to filter
+// on the suffix or prefix of the key name.
 type FilterRule struct {
 	_ struct{} `type:"structure"`
 
 	// The object key name prefix or suffix identifying one or more objects to which
-	// the filtering rule applies. The maximum prefix length is 1,024 characters.
-	// Overlapping prefixes and suffixes are not supported. For more information,
-	// see Configuring Event Notifications (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+	// the filtering rule applies. The maximum length is 1,024 characters. Overlapping
+	// prefixes and suffixes are not supported. For more information, see Configuring
+	// Event Notifications (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
 	// in the Amazon Simple Storage Service Developer Guide.
 	Name *string `type:"string" enum:"FilterRuleName"`
 
+	// The value that the filter searches for in object key names.
 	Value *string `type:"string"`
 }
 
@@ -11245,7 +11341,7 @@ func (s *FilterRule) SetValue(v string) *FilterRule {
 }
 
 type GetBucketAccelerateConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketAccelerateConfigurationRequest" type:"structure"`
 
 	// Name of the bucket for which the accelerate configuration is retrieved.
 	//
@@ -11316,7 +11412,7 @@ func (s *GetBucketAccelerateConfigurationOutput) SetStatus(v string) *GetBucketA
 }
 
 type GetBucketAclInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketAclRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -11393,14 +11489,14 @@ func (s *GetBucketAclOutput) SetOwner(v *Owner) *GetBucketAclOutput {
 }
 
 type GetBucketAnalyticsConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketAnalyticsConfigurationRequest" type:"structure"`
 
 	// The name of the bucket from which an analytics configuration is retrieved.
 	//
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The identifier used to represent an analytics configuration.
+	// The ID that identifies the analytics configuration.
 	//
 	// Id is a required field
 	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
@@ -11478,7 +11574,7 @@ func (s *GetBucketAnalyticsConfigurationOutput) SetAnalyticsConfiguration(v *Ana
 }
 
 type GetBucketCorsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketCorsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -11546,7 +11642,7 @@ func (s *GetBucketCorsOutput) SetCORSRules(v []*CORSRule) *GetBucketCorsOutput {
 }
 
 type GetBucketEncryptionInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketEncryptionRequest" type:"structure"`
 
 	// The name of the bucket from which the server-side encryption configuration
 	// is retrieved.
@@ -11597,8 +11693,7 @@ func (s *GetBucketEncryptionInput) getBucket() (v string) {
 type GetBucketEncryptionOutput struct {
 	_ struct{} `type:"structure" payload:"ServerSideEncryptionConfiguration"`
 
-	// Container for server-side encryption configuration rules. Currently S3 supports
-	// one rule only.
+	// Specifies the default server-side-encryption configuration.
 	ServerSideEncryptionConfiguration *ServerSideEncryptionConfiguration `type:"structure"`
 }
 
@@ -11619,7 +11714,7 @@ func (s *GetBucketEncryptionOutput) SetServerSideEncryptionConfiguration(v *Serv
 }
 
 type GetBucketInventoryConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketInventoryConfigurationRequest" type:"structure"`
 
 	// The name of the bucket containing the inventory configuration to retrieve.
 	//
@@ -11704,7 +11799,7 @@ func (s *GetBucketInventoryConfigurationOutput) SetInventoryConfiguration(v *Inv
 }
 
 type GetBucketLifecycleConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketLifecycleConfigurationRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -11772,7 +11867,7 @@ func (s *GetBucketLifecycleConfigurationOutput) SetRules(v []*LifecycleRule) *Ge
 }
 
 type GetBucketLifecycleInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketLifecycleRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -11840,7 +11935,7 @@ func (s *GetBucketLifecycleOutput) SetRules(v []*Rule) *GetBucketLifecycleOutput
 }
 
 type GetBucketLocationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketLocationRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -11908,7 +12003,7 @@ func (s *GetBucketLocationOutput) SetLocationConstraint(v string) *GetBucketLoca
 }
 
 type GetBucketLoggingInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketLoggingRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -11956,9 +12051,10 @@ func (s *GetBucketLoggingInput) getBucket() (v string) {
 type GetBucketLoggingOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Container for logging information. Presence of this element indicates that
-	// logging is enabled. Parameters TargetBucket and TargetPrefix are required
-	// in this case.
+	// Describes where logs are stored and the prefix that Amazon S3 assigns to
+	// all log object keys for a bucket. For more information, see PUT Bucket logging
+	// (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTlogging.html)
+	// in the Amazon Simple Storage Service API Reference.
 	LoggingEnabled *LoggingEnabled `type:"structure"`
 }
 
@@ -11979,7 +12075,7 @@ func (s *GetBucketLoggingOutput) SetLoggingEnabled(v *LoggingEnabled) *GetBucket
 }
 
 type GetBucketMetricsConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketMetricsConfigurationRequest" type:"structure"`
 
 	// The name of the bucket containing the metrics configuration to retrieve.
 	//
@@ -12064,7 +12160,7 @@ func (s *GetBucketMetricsConfigurationOutput) SetMetricsConfiguration(v *Metrics
 }
 
 type GetBucketNotificationConfigurationRequest struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketNotificationConfigurationRequest" type:"structure"`
 
 	// Name of the bucket to get the notification configuration for.
 	//
@@ -12112,7 +12208,7 @@ func (s *GetBucketNotificationConfigurationRequest) getBucket() (v string) {
 }
 
 type GetBucketPolicyInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketPolicyRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12181,7 +12277,7 @@ func (s *GetBucketPolicyOutput) SetPolicy(v string) *GetBucketPolicyOutput {
 }
 
 type GetBucketPolicyStatusInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketPolicyStatusRequest" type:"structure"`
 
 	// The name of the Amazon S3 bucket whose policy status you want to retrieve.
 	//
@@ -12252,7 +12348,7 @@ func (s *GetBucketPolicyStatusOutput) SetPolicyStatus(v *PolicyStatus) *GetBucke
 }
 
 type GetBucketReplicationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketReplicationRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12322,7 +12418,7 @@ func (s *GetBucketReplicationOutput) SetReplicationConfiguration(v *ReplicationC
 }
 
 type GetBucketRequestPaymentInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketRequestPaymentRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12391,7 +12487,7 @@ func (s *GetBucketRequestPaymentOutput) SetPayer(v string) *GetBucketRequestPaym
 }
 
 type GetBucketTaggingInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketTaggingRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12460,7 +12556,7 @@ func (s *GetBucketTaggingOutput) SetTagSet(v []*Tag) *GetBucketTaggingOutput {
 }
 
 type GetBucketVersioningInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketVersioningRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12540,7 +12636,7 @@ func (s *GetBucketVersioningOutput) SetStatus(v string) *GetBucketVersioningOutp
 }
 
 type GetBucketWebsiteInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetBucketWebsiteRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12592,6 +12688,8 @@ type GetBucketWebsiteOutput struct {
 
 	IndexDocument *IndexDocument `type:"structure"`
 
+	// Specifies the redirect behavior of all requests to a website endpoint of
+	// an Amazon S3 bucket.
 	RedirectAllRequestsTo *RedirectAllRequestsTo `type:"structure"`
 
 	RoutingRules []*RoutingRule `locationNameList:"RoutingRule" type:"list"`
@@ -12632,7 +12730,7 @@ func (s *GetBucketWebsiteOutput) SetRoutingRules(v []*RoutingRule) *GetBucketWeb
 }
 
 type GetObjectAclInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectAclRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12755,7 +12853,7 @@ func (s *GetObjectAclOutput) SetRequestCharged(v string) *GetObjectAclOutput {
 }
 
 type GetObjectInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -12820,7 +12918,7 @@ type GetObjectInput struct {
 	// does not store the encryption key. The key must be appropriate for use with
 	// the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm
 	// header.
-	SSECustomerKey *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	SSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
 	// Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
 	// Amazon S3 uses this header for a message integrity check to ensure the encryption
@@ -12992,7 +13090,7 @@ func (s *GetObjectInput) SetVersionId(v string) *GetObjectInput {
 }
 
 type GetObjectLegalHoldInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectLegalHoldRequest" type:"structure"`
 
 	// The bucket containing the object whose Legal Hold status you want to retrieve.
 	//
@@ -13101,9 +13199,9 @@ func (s *GetObjectLegalHoldOutput) SetLegalHold(v *ObjectLockLegalHold) *GetObje
 }
 
 type GetObjectLockConfigurationInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectLockConfigurationRequest" type:"structure"`
 
-	// The bucket whose Object Lock configuration you want to retrieve.
+	// The bucket whose object lock configuration you want to retrieve.
 	//
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -13151,7 +13249,7 @@ func (s *GetObjectLockConfigurationInput) getBucket() (v string) {
 type GetObjectLockConfigurationOutput struct {
 	_ struct{} `type:"structure" payload:"ObjectLockConfiguration"`
 
-	// The specified bucket's Object Lock configuration.
+	// The specified bucket's object lock configuration.
 	ObjectLockConfiguration *ObjectLockConfiguration `type:"structure"`
 }
 
@@ -13235,10 +13333,10 @@ type GetObjectOutput struct {
 	// returned if you have permission to view an object's legal hold status.
 	ObjectLockLegalHoldStatus *string `location:"header" locationName:"x-amz-object-lock-legal-hold" type:"string" enum:"ObjectLockLegalHoldStatus"`
 
-	// The Object Lock mode currently in place for this object.
+	// The object lock mode currently in place for this object.
 	ObjectLockMode *string `location:"header" locationName:"x-amz-object-lock-mode" type:"string" enum:"ObjectLockMode"`
 
-	// The date and time when this object's Object Lock will expire.
+	// The date and time when this object's object lock will expire.
 	ObjectLockRetainUntilDate *time.Time `location:"header" locationName:"x-amz-object-lock-retain-until-date" type:"timestamp" timestampFormat:"iso8601"`
 
 	// The count of parts this object has.
@@ -13483,7 +13581,7 @@ func (s *GetObjectOutput) SetWebsiteRedirectLocation(v string) *GetObjectOutput 
 }
 
 type GetObjectRetentionInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectRetentionRequest" type:"structure"`
 
 	// The bucket containing the object whose retention settings you want to retrieve.
 	//
@@ -13592,7 +13690,7 @@ func (s *GetObjectRetentionOutput) SetRetention(v *ObjectLockRetention) *GetObje
 }
 
 type GetObjectTaggingInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectTaggingRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -13692,7 +13790,7 @@ func (s *GetObjectTaggingOutput) SetVersionId(v string) *GetObjectTaggingOutput 
 }
 
 type GetObjectTorrentInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetObjectTorrentRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -13797,7 +13895,7 @@ func (s *GetObjectTorrentOutput) SetRequestCharged(v string) *GetObjectTorrentOu
 }
 
 type GetPublicAccessBlockInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"GetPublicAccessBlockRequest" type:"structure"`
 
 	// The name of the Amazon S3 bucket whose PublicAccessBlock configuration you
 	// want to retrieve.
@@ -14028,7 +14126,7 @@ func (s *Grantee) SetURI(v string) *Grantee {
 }
 
 type HeadBucketInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"HeadBucketRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -14088,7 +14186,7 @@ func (s HeadBucketOutput) GoString() string {
 }
 
 type HeadObjectInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"HeadObjectRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -14136,7 +14234,7 @@ type HeadObjectInput struct {
 	// does not store the encryption key. The key must be appropriate for use with
 	// the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm
 	// header.
-	SSECustomerKey *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	SSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
 	// Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
 	// Amazon S3 uses this header for a message integrity check to ensure the encryption
@@ -14328,10 +14426,10 @@ type HeadObjectOutput struct {
 	// The Legal Hold status for the specified object.
 	ObjectLockLegalHoldStatus *string `location:"header" locationName:"x-amz-object-lock-legal-hold" type:"string" enum:"ObjectLockLegalHoldStatus"`
 
-	// The Object Lock mode currently in place for this object.
+	// The object lock mode currently in place for this object.
 	ObjectLockMode *string `location:"header" locationName:"x-amz-object-lock-mode" type:"string" enum:"ObjectLockMode"`
 
-	// The date and time when this object's Object Lock will expire.
+	// The date and time when this object's object lock expires.
 	ObjectLockRetainUntilDate *time.Time `location:"header" locationName:"x-amz-object-lock-retain-until-date" type:"timestamp" timestampFormat:"iso8601"`
 
 	// The count of parts this object has.
@@ -14680,6 +14778,9 @@ func (s *InputSerialization) SetParquet(v *ParquetInput) *InputSerialization {
 	return s
 }
 
+// Specifies the inventory configuration for an Amazon S3 bucket. For more information,
+// see GET Bucket inventory (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketGETInventoryConfig.html)
+// in the Amazon Simple Storage Service API Reference.
 type InventoryConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -14697,12 +14798,16 @@ type InventoryConfiguration struct {
 	// Id is a required field
 	Id *string `type:"string" required:"true"`
 
-	// Specifies which object version(s) to included in the inventory results.
+	// Object versions to include in the inventory list. If set to All, the list
+	// includes all the object versions, which adds the version-related fields VersionId,
+	// IsLatest, and DeleteMarker to the list. If set to Current, the list does
+	// not contain these version-related fields.
 	//
 	// IncludedObjectVersions is a required field
 	IncludedObjectVersions *string `type:"string" required:"true" enum:"InventoryIncludedObjectVersions"`
 
-	// Specifies whether the inventory is enabled or disabled.
+	// Specifies whether the inventory is enabled or disabled. If set to True, an
+	// inventory list is generated. If set to False, no inventory list is generated.
 	//
 	// IsEnabled is a required field
 	IsEnabled *bool `type:"boolean" required:"true"`
@@ -15145,11 +15250,15 @@ func (s *KeyFilter) SetFilterRules(v []*FilterRule) *KeyFilter {
 type LambdaFunctionConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// The Amazon S3 bucket event for which to invoke the AWS Lambda function. For
+	// more information, see Supported Event Types (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+	// in the Amazon Simple Storage Service Developer Guide.
+	//
 	// Events is a required field
 	Events []*string `locationName:"Event" type:"list" flattened:"true" required:"true"`
 
-	// A container for object key name filtering rules. For information about key
-	// name filtering, see Configuring Event Notifications (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+	// Specifies object key name filtering rules. For information about key name
+	// filtering, see Configuring Event Notifications (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
 	// in the Amazon Simple Storage Service Developer Guide.
 	Filter *NotificationConfigurationFilter `type:"structure"`
 
@@ -15157,8 +15266,8 @@ type LambdaFunctionConfiguration struct {
 	// If you don't provide one, Amazon S3 will assign an ID.
 	Id *string `type:"string"`
 
-	// The Amazon Resource Name (ARN) of the Lambda cloud function that Amazon S3
-	// can invoke when it detects events of the specified type.
+	// The Amazon Resource Name (ARN) of the AWS Lambda function that Amazon S3
+	// invokes when the specified event type occurs.
 	//
 	// LambdaFunctionArn is a required field
 	LambdaFunctionArn *string `locationName:"CloudFunction" type:"string" required:"true"`
@@ -15309,8 +15418,11 @@ func (s *LifecycleExpiration) SetExpiredObjectDeleteMarker(v bool) *LifecycleExp
 type LifecycleRule struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies the days since the initiation of an Incomplete Multipart Upload
-	// that Lifecycle will wait before permanently removing all parts of the upload.
+	// Specifies the days since the initiation of an incomplete multipart upload
+	// that Amazon S3 will wait before permanently removing all parts of the upload.
+	// For more information, see Aborting Incomplete Multipart Uploads Using a Bucket
+	// Lifecycle Policy (https://docs.aws.amazon.com/AmazonS3/latest/dev/mpuoverview.html#mpu-abort-incomplete-mpu-lifecycle-config)
+	// in the Amazon Simple Storage Service Developer Guide.
 	AbortIncompleteMultipartUpload *AbortIncompleteMultipartUpload `type:"structure"`
 
 	Expiration *LifecycleExpiration `type:"structure"`
@@ -15549,7 +15661,7 @@ func (s *LifecycleRuleFilter) SetTag(v *Tag) *LifecycleRuleFilter {
 }
 
 type ListBucketAnalyticsConfigurationsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListBucketAnalyticsConfigurationsRequest" type:"structure"`
 
 	// The name of the bucket from which analytics configurations are retrieved.
 	//
@@ -15661,7 +15773,7 @@ func (s *ListBucketAnalyticsConfigurationsOutput) SetNextContinuationToken(v str
 }
 
 type ListBucketInventoryConfigurationsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListBucketInventoryConfigurationsRequest" type:"structure"`
 
 	// The name of the bucket containing the inventory configurations to retrieve.
 	//
@@ -15775,7 +15887,7 @@ func (s *ListBucketInventoryConfigurationsOutput) SetNextContinuationToken(v str
 }
 
 type ListBucketMetricsConfigurationsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListBucketMetricsConfigurationsRequest" type:"structure"`
 
 	// The name of the bucket containing the metrics configurations to retrieve.
 	//
@@ -15935,7 +16047,7 @@ func (s *ListBucketsOutput) SetOwner(v *Owner) *ListBucketsOutput {
 }
 
 type ListMultipartUploadsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListMultipartUploadsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -16179,7 +16291,7 @@ func (s *ListMultipartUploadsOutput) SetUploads(v []*MultipartUpload) *ListMulti
 }
 
 type ListObjectVersionsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListObjectVersionsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -16412,7 +16524,7 @@ func (s *ListObjectVersionsOutput) SetVersions(v []*ObjectVersion) *ListObjectVe
 }
 
 type ListObjectsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListObjectsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -16624,7 +16736,7 @@ func (s *ListObjectsOutput) SetPrefix(v string) *ListObjectsOutput {
 }
 
 type ListObjectsV2Input struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListObjectsV2Request" type:"structure"`
 
 	// Name of the bucket to list.
 	//
@@ -16885,7 +16997,7 @@ func (s *ListObjectsV2Output) SetStartAfter(v string) *ListObjectsV2Output {
 }
 
 type ListPartsInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"ListPartsRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -17267,9 +17379,10 @@ func (s *Location) SetUserMetadata(v []*MetadataEntry) *Location {
 	return s
 }
 
-// Container for logging information. Presence of this element indicates that
-// logging is enabled. Parameters TargetBucket and TargetPrefix are required
-// in this case.
+// Describes where logs are stored and the prefix that Amazon S3 assigns to
+// all log object keys for a bucket. For more information, see PUT Bucket logging
+// (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTlogging.html)
+// in the Amazon Simple Storage Service API Reference.
 type LoggingEnabled struct {
 	_ struct{} `type:"structure"`
 
@@ -17285,8 +17398,9 @@ type LoggingEnabled struct {
 
 	TargetGrants []*TargetGrant `locationNameList:"Grant" type:"list"`
 
-	// This element lets you specify a prefix for the keys that the log files will
-	// be stored under.
+	// A prefix for all log object keys. If you store log files from multiple Amazon
+	// S3 buckets in a single bucket, you can use a prefix to distinguish which
+	// log files came from which bucket.
 	//
 	// TargetPrefix is a required field
 	TargetPrefix *string `type:"string" required:"true"`
@@ -17429,6 +17543,13 @@ func (s *MetricsAndOperator) SetTags(v []*Tag) *MetricsAndOperator {
 	return s
 }
 
+// Specifies a metrics configuration for the CloudWatch request metrics (specified
+// by the metrics configuration ID) from an Amazon S3 bucket. If you're updating
+// an existing metrics configuration, note that this is a full replacement of
+// the existing metrics configuration. If you don't include the elements you
+// want to keep, they are erased. For more information, see PUT Bucket metrics
+// (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTMetricConfiguration.html)
+// in the Amazon Simple Storage Service API Reference.
 type MetricsConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -17646,11 +17767,12 @@ func (s *NoncurrentVersionExpiration) SetNoncurrentDays(v int64) *NoncurrentVers
 }
 
 // Container for the transition rule that describes when noncurrent objects
-// transition to the STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING or GLACIER
-// storage class. If your bucket is versioning-enabled (or versioning is suspended),
-// you can set this action to request that Amazon S3 transition noncurrent object
-// versions to the STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING or GLACIER storage
-// class at a specific period in the object's lifetime.
+// transition to the STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, GLACIER,
+// or DEEP_ARCHIVE storage class. If your bucket is versioning-enabled (or versioning
+// is suspended), you can set this action to request that Amazon S3 transition
+// noncurrent object versions to the STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING,
+// GLACIER, or DEEP_ARCHIVE storage class at a specific period in the object's
+// lifetime.
 type NoncurrentVersionTransition struct {
 	_ struct{} `type:"structure"`
 
@@ -17692,10 +17814,16 @@ func (s *NoncurrentVersionTransition) SetStorageClass(v string) *NoncurrentVersi
 type NotificationConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// Describes the AWS Lambda functions to invoke and the events for which to
+	// invoke them.
 	LambdaFunctionConfigurations []*LambdaFunctionConfiguration `locationName:"CloudFunctionConfiguration" type:"list" flattened:"true"`
 
+	// The Amazon Simple Queue Service queues to publish messages to and the events
+	// for which to publish messages.
 	QueueConfigurations []*QueueConfiguration `locationName:"QueueConfiguration" type:"list" flattened:"true"`
 
+	// The topic to which notifications are sent and the events for which notifications
+	// are generated.
 	TopicConfigurations []*TopicConfiguration `locationName:"TopicConfiguration" type:"list" flattened:"true"`
 }
 
@@ -17805,8 +17933,8 @@ func (s *NotificationConfigurationDeprecated) SetTopicConfiguration(v *TopicConf
 	return s
 }
 
-// A container for object key name filtering rules. For information about key
-// name filtering, see Configuring Event Notifications (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+// Specifies object key name filtering rules. For information about key name
+// filtering, see Configuring Event Notifications (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
 // in the Amazon Simple Storage Service Developer Guide.
 type NotificationConfigurationFilter struct {
 	_ struct{} `type:"structure"`
@@ -17944,14 +18072,14 @@ func (s *ObjectIdentifier) SetVersionId(v string) *ObjectIdentifier {
 	return s
 }
 
-// The container element for Object Lock configuration parameters.
+// The container element for object lock configuration parameters.
 type ObjectLockConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// Indicates whether this bucket has an Object Lock configuration enabled.
+	// Indicates whether this bucket has an object lock configuration enabled.
 	ObjectLockEnabled *string `type:"string" enum:"ObjectLockEnabled"`
 
-	// The Object Lock rule in place for the specified object.
+	// The object lock rule in place for the specified object.
 	Rule *ObjectLockRule `type:"structure"`
 }
 
@@ -18008,7 +18136,7 @@ type ObjectLockRetention struct {
 	// Indicates the Retention mode for the specified object.
 	Mode *string `type:"string" enum:"ObjectLockRetentionMode"`
 
-	// The date on which this Object Lock Retention will expire.
+	// The date on which this object lock retention expires.
 	RetainUntilDate *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 }
 
@@ -18034,7 +18162,7 @@ func (s *ObjectLockRetention) SetRetainUntilDate(v time.Time) *ObjectLockRetenti
 	return s
 }
 
-// The container element for an Object Lock rule.
+// The container element for an object lock rule.
 type ObjectLockRule struct {
 	_ struct{} `type:"structure"`
 
@@ -18417,6 +18545,7 @@ func (s *ProgressEvent) UnmarshalEvent(
 	return nil
 }
 
+// Specifies the Block Public Access configuration for an Amazon S3 bucket.
 type PublicAccessBlockConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -18493,7 +18622,7 @@ func (s *PublicAccessBlockConfiguration) SetRestrictPublicBuckets(v bool) *Publi
 }
 
 type PutBucketAccelerateConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"AccelerateConfiguration"`
+	_ struct{} `locationName:"PutBucketAccelerateConfigurationRequest" type:"structure" payload:"AccelerateConfiguration"`
 
 	// Specifies the Accelerate Configuration you want to set for the bucket.
 	//
@@ -18569,11 +18698,12 @@ func (s PutBucketAccelerateConfigurationOutput) GoString() string {
 }
 
 type PutBucketAclInput struct {
-	_ struct{} `type:"structure" payload:"AccessControlPolicy"`
+	_ struct{} `locationName:"PutBucketAclRequest" type:"structure" payload:"AccessControlPolicy"`
 
 	// The canned ACL to apply to the bucket.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"BucketCannedACL"`
 
+	// Contains the elements that set the ACL permissions for an object per grantee.
 	AccessControlPolicy *AccessControlPolicy `locationName:"AccessControlPolicy" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	// Bucket is a required field
@@ -18697,7 +18827,7 @@ func (s PutBucketAclOutput) GoString() string {
 }
 
 type PutBucketAnalyticsConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"AnalyticsConfiguration"`
+	_ struct{} `locationName:"PutBucketAnalyticsConfigurationRequest" type:"structure" payload:"AnalyticsConfiguration"`
 
 	// The configuration and any analyses for the analytics filter.
 	//
@@ -18709,7 +18839,7 @@ type PutBucketAnalyticsConfigurationInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The identifier used to represent an analytics configuration.
+	// The ID that identifies the analytics configuration.
 	//
 	// Id is a required field
 	Id *string `location:"querystring" locationName:"id" type:"string" required:"true"`
@@ -18792,11 +18922,16 @@ func (s PutBucketAnalyticsConfigurationOutput) GoString() string {
 }
 
 type PutBucketCorsInput struct {
-	_ struct{} `type:"structure" payload:"CORSConfiguration"`
+	_ struct{} `locationName:"PutBucketCorsRequest" type:"structure" payload:"CORSConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
+	// Describes the cross-origin access configuration for objects in an Amazon
+	// S3 bucket. For more information, see Enabling Cross-Origin Resource Sharing
+	// (https://docs.aws.amazon.com/AmazonS3/latest/dev/cors.html) in the Amazon
+	// Simple Storage Service Developer Guide.
+	//
 	// CORSConfiguration is a required field
 	CORSConfiguration *CORSConfiguration `locationName:"CORSConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
@@ -18869,16 +19004,18 @@ func (s PutBucketCorsOutput) GoString() string {
 }
 
 type PutBucketEncryptionInput struct {
-	_ struct{} `type:"structure" payload:"ServerSideEncryptionConfiguration"`
+	_ struct{} `locationName:"PutBucketEncryptionRequest" type:"structure" payload:"ServerSideEncryptionConfiguration"`
 
-	// The name of the bucket for which the server-side encryption configuration
-	// is set.
+	// Specifies default encryption for a bucket using server-side encryption with
+	// Amazon S3-managed keys (SSE-S3) or AWS KMS-managed keys (SSE-KMS). For information
+	// about the Amazon S3 default encryption feature, see Amazon S3 Default Bucket
+	// Encryption (https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html)
+	// in the Amazon Simple Storage Service Developer Guide.
 	//
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// Container for server-side encryption configuration rules. Currently S3 supports
-	// one rule only.
+	// Specifies the default server-side-encryption configuration.
 	//
 	// ServerSideEncryptionConfiguration is a required field
 	ServerSideEncryptionConfiguration *ServerSideEncryptionConfiguration `locationName:"ServerSideEncryptionConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
@@ -18952,7 +19089,7 @@ func (s PutBucketEncryptionOutput) GoString() string {
 }
 
 type PutBucketInventoryConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"InventoryConfiguration"`
+	_ struct{} `locationName:"PutBucketInventoryConfigurationRequest" type:"structure" payload:"InventoryConfiguration"`
 
 	// The name of the bucket where the inventory configuration will be stored.
 	//
@@ -19047,11 +19184,14 @@ func (s PutBucketInventoryConfigurationOutput) GoString() string {
 }
 
 type PutBucketLifecycleConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"LifecycleConfiguration"`
+	_ struct{} `locationName:"PutBucketLifecycleConfigurationRequest" type:"structure" payload:"LifecycleConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
+	// Specifies the lifecycle configuration for objects in an Amazon S3 bucket.
+	// For more information, see Object Lifecycle Management (https://docs.aws.amazon.com/AmazonS3/latest/dev/object-lifecycle-mgmt.html)
+	// in the Amazon Simple Storage Service Developer Guide.
 	LifecycleConfiguration *BucketLifecycleConfiguration `locationName:"LifecycleConfiguration" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
 
@@ -19120,7 +19260,7 @@ func (s PutBucketLifecycleConfigurationOutput) GoString() string {
 }
 
 type PutBucketLifecycleInput struct {
-	_ struct{} `type:"structure" payload:"LifecycleConfiguration"`
+	_ struct{} `locationName:"PutBucketLifecycleRequest" type:"structure" payload:"LifecycleConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19193,7 +19333,7 @@ func (s PutBucketLifecycleOutput) GoString() string {
 }
 
 type PutBucketLoggingInput struct {
-	_ struct{} `type:"structure" payload:"BucketLoggingStatus"`
+	_ struct{} `locationName:"PutBucketLoggingRequest" type:"structure" payload:"BucketLoggingStatus"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19270,7 +19410,7 @@ func (s PutBucketLoggingOutput) GoString() string {
 }
 
 type PutBucketMetricsConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"MetricsConfiguration"`
+	_ struct{} `locationName:"PutBucketMetricsConfigurationRequest" type:"structure" payload:"MetricsConfiguration"`
 
 	// The name of the bucket for which the metrics configuration is set.
 	//
@@ -19365,7 +19505,7 @@ func (s PutBucketMetricsConfigurationOutput) GoString() string {
 }
 
 type PutBucketNotificationConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"NotificationConfiguration"`
+	_ struct{} `locationName:"PutBucketNotificationConfigurationRequest" type:"structure" payload:"NotificationConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19445,7 +19585,7 @@ func (s PutBucketNotificationConfigurationOutput) GoString() string {
 }
 
 type PutBucketNotificationInput struct {
-	_ struct{} `type:"structure" payload:"NotificationConfiguration"`
+	_ struct{} `locationName:"PutBucketNotificationRequest" type:"structure" payload:"NotificationConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19517,7 +19657,7 @@ func (s PutBucketNotificationOutput) GoString() string {
 }
 
 type PutBucketPolicyInput struct {
-	_ struct{} `type:"structure" payload:"Policy"`
+	_ struct{} `locationName:"PutBucketPolicyRequest" type:"structure" payload:"Policy"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19601,7 +19741,7 @@ func (s PutBucketPolicyOutput) GoString() string {
 }
 
 type PutBucketReplicationInput struct {
-	_ struct{} `type:"structure" payload:"ReplicationConfiguration"`
+	_ struct{} `locationName:"PutBucketReplicationRequest" type:"structure" payload:"ReplicationConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19611,6 +19751,9 @@ type PutBucketReplicationInput struct {
 	//
 	// ReplicationConfiguration is a required field
 	ReplicationConfiguration *ReplicationConfiguration `locationName:"ReplicationConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
+
+	// A token that allows Amazon S3 object lock to be enabled for an existing bucket.
+	Token *string `location:"header" locationName:"x-amz-bucket-object-lock-token" type:"string"`
 }
 
 // String returns the string representation
@@ -19666,6 +19809,12 @@ func (s *PutBucketReplicationInput) SetReplicationConfiguration(v *ReplicationCo
 	return s
 }
 
+// SetToken sets the Token field's value.
+func (s *PutBucketReplicationInput) SetToken(v string) *PutBucketReplicationInput {
+	s.Token = &v
+	return s
+}
+
 type PutBucketReplicationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -19681,7 +19830,7 @@ func (s PutBucketReplicationOutput) GoString() string {
 }
 
 type PutBucketRequestPaymentInput struct {
-	_ struct{} `type:"structure" payload:"RequestPaymentConfiguration"`
+	_ struct{} `locationName:"PutBucketRequestPaymentRequest" type:"structure" payload:"RequestPaymentConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19758,7 +19907,7 @@ func (s PutBucketRequestPaymentOutput) GoString() string {
 }
 
 type PutBucketTaggingInput struct {
-	_ struct{} `type:"structure" payload:"Tagging"`
+	_ struct{} `locationName:"PutBucketTaggingRequest" type:"structure" payload:"Tagging"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19835,7 +19984,7 @@ func (s PutBucketTaggingOutput) GoString() string {
 }
 
 type PutBucketVersioningInput struct {
-	_ struct{} `type:"structure" payload:"VersioningConfiguration"`
+	_ struct{} `locationName:"PutBucketVersioningRequest" type:"structure" payload:"VersioningConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -19844,6 +19993,10 @@ type PutBucketVersioningInput struct {
 	// and the value that is displayed on your authentication device.
 	MFA *string `location:"header" locationName:"x-amz-mfa" type:"string"`
 
+	// Describes the versioning state of an Amazon S3 bucket. For more information,
+	// see PUT Bucket versioning (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTVersioningStatus.html)
+	// in the Amazon Simple Storage Service API Reference.
+	//
 	// VersioningConfiguration is a required field
 	VersioningConfiguration *VersioningConfiguration `locationName:"VersioningConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
@@ -19917,11 +20070,13 @@ func (s PutBucketVersioningOutput) GoString() string {
 }
 
 type PutBucketWebsiteInput struct {
-	_ struct{} `type:"structure" payload:"WebsiteConfiguration"`
+	_ struct{} `locationName:"PutBucketWebsiteRequest" type:"structure" payload:"WebsiteConfiguration"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
+	// Specifies website configuration parameters for an Amazon S3 bucket.
+	//
 	// WebsiteConfiguration is a required field
 	WebsiteConfiguration *WebsiteConfiguration `locationName:"WebsiteConfiguration" type:"structure" required:"true" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 }
@@ -19994,11 +20149,12 @@ func (s PutBucketWebsiteOutput) GoString() string {
 }
 
 type PutObjectAclInput struct {
-	_ struct{} `type:"structure" payload:"AccessControlPolicy"`
+	_ struct{} `locationName:"PutObjectAclRequest" type:"structure" payload:"AccessControlPolicy"`
 
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
 
+	// Contains the elements that set the ACL permissions for an object per grantee.
 	AccessControlPolicy *AccessControlPolicy `locationName:"AccessControlPolicy" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	// Bucket is a required field
@@ -20168,7 +20324,7 @@ func (s *PutObjectAclOutput) SetRequestCharged(v string) *PutObjectAclOutput {
 }
 
 type PutObjectInput struct {
-	_ struct{} `type:"structure" payload:"Body"`
+	_ struct{} `locationName:"PutObjectRequest" type:"structure" payload:"Body"`
 
 	// The canned ACL to apply to the object.
 	ACL *string `location:"header" locationName:"x-amz-acl" type:"string" enum:"ObjectCannedACL"`
@@ -20200,7 +20356,8 @@ type PutObjectInput struct {
 	ContentLength *int64 `location:"header" locationName:"Content-Length" type:"long"`
 
 	// The base64-encoded 128-bit MD5 digest of the part data. This parameter is
-	// auto-populated when using the command from the CLI
+	// auto-populated when using the command from the CLI. This parameted is required
+	// if object lock parameters are specified.
 	ContentMD5 *string `location:"header" locationName:"Content-MD5" type:"string"`
 
 	// A standard MIME type describing the format of the object data.
@@ -20232,10 +20389,10 @@ type PutObjectInput struct {
 	// The Legal Hold status that you want to apply to the specified object.
 	ObjectLockLegalHoldStatus *string `location:"header" locationName:"x-amz-object-lock-legal-hold" type:"string" enum:"ObjectLockLegalHoldStatus"`
 
-	// The Object Lock mode that you want to apply to this object.
+	// The object lock mode that you want to apply to this object.
 	ObjectLockMode *string `location:"header" locationName:"x-amz-object-lock-mode" type:"string" enum:"ObjectLockMode"`
 
-	// The date and time when you want this object's Object Lock to expire.
+	// The date and time when you want this object's object lock to expire.
 	ObjectLockRetainUntilDate *time.Time `location:"header" locationName:"x-amz-object-lock-retain-until-date" type:"timestamp" timestampFormat:"iso8601"`
 
 	// Confirms that the requester knows that she or he will be charged for the
@@ -20252,12 +20409,17 @@ type PutObjectInput struct {
 	// does not store the encryption key. The key must be appropriate for use with
 	// the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm
 	// header.
-	SSECustomerKey *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	SSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
 	// Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
 	// Amazon S3 uses this header for a message integrity check to ensure the encryption
 	// key was transmitted without error.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
+
+	// Specifies the AWS KMS Encryption Context to use for object encryption. The
+	// value of this header is a base64-encoded UTF-8 string holding JSON with the
+	// encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
 
 	// Specifies the AWS KMS key ID to use for object encryption. All GET and PUT
 	// requests for an object protected by AWS KMS will fail if not made via SSL
@@ -20472,6 +20634,12 @@ func (s *PutObjectInput) SetSSECustomerKeyMD5(v string) *PutObjectInput {
 	return s
 }
 
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *PutObjectInput) SetSSEKMSEncryptionContext(v string) *PutObjectInput {
+	s.SSEKMSEncryptionContext = &v
+	return s
+}
+
 // SetSSEKMSKeyId sets the SSEKMSKeyId field's value.
 func (s *PutObjectInput) SetSSEKMSKeyId(v string) *PutObjectInput {
 	s.SSEKMSKeyId = &v
@@ -20503,7 +20671,7 @@ func (s *PutObjectInput) SetWebsiteRedirectLocation(v string) *PutObjectInput {
 }
 
 type PutObjectLegalHoldInput struct {
-	_ struct{} `type:"structure" payload:"LegalHold"`
+	_ struct{} `locationName:"PutObjectLegalHoldRequest" type:"structure" payload:"LegalHold"`
 
 	// The bucket containing the object that you want to place a Legal Hold on.
 	//
@@ -20623,14 +20791,14 @@ func (s *PutObjectLegalHoldOutput) SetRequestCharged(v string) *PutObjectLegalHo
 }
 
 type PutObjectLockConfigurationInput struct {
-	_ struct{} `type:"structure" payload:"ObjectLockConfiguration"`
+	_ struct{} `locationName:"PutObjectLockConfigurationRequest" type:"structure" payload:"ObjectLockConfiguration"`
 
-	// The bucket whose Object Lock configuration you want to create or replace.
+	// The bucket whose object lock configuration you want to create or replace.
 	//
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// The Object Lock configuration that you want to apply to the specified bucket.
+	// The object lock configuration that you want to apply to the specified bucket.
 	ObjectLockConfiguration *ObjectLockConfiguration `locationName:"ObjectLockConfiguration" type:"structure" xmlURI:"http://s3.amazonaws.com/doc/2006-03-01/"`
 
 	// Confirms that the requester knows that she or he will be charged for the
@@ -20639,7 +20807,7 @@ type PutObjectLockConfigurationInput struct {
 	// at http://docs.aws.amazon.com/AmazonS3/latest/dev/ObjectsinRequesterPaysBuckets.html
 	RequestPayer *string `location:"header" locationName:"x-amz-request-payer" type:"string" enum:"RequestPayer"`
 
-	// A token to allow Object Lock to be enabled for an existing bucket.
+	// A token to allow Amazon S3 object lock to be enabled for an existing bucket.
 	Token *string `location:"header" locationName:"x-amz-bucket-object-lock-token" type:"string"`
 }
 
@@ -20748,6 +20916,11 @@ type PutObjectOutput struct {
 	// verification of the customer-provided encryption key.
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
 
+	// If present, specifies the AWS KMS Encryption Context to use for object encryption.
+	// The value of this header is a base64-encoded UTF-8 string holding JSON with
+	// the encryption context key-value pairs.
+	SSEKMSEncryptionContext *string `location:"header" locationName:"x-amz-server-side-encryption-context" type:"string" sensitive:"true"`
+
 	// If present, specifies the ID of the AWS Key Management Service (KMS) master
 	// encryption key that was used for the object.
 	SSEKMSKeyId *string `location:"header" locationName:"x-amz-server-side-encryption-aws-kms-key-id" type:"string" sensitive:"true"`
@@ -20800,6 +20973,12 @@ func (s *PutObjectOutput) SetSSECustomerKeyMD5(v string) *PutObjectOutput {
 	return s
 }
 
+// SetSSEKMSEncryptionContext sets the SSEKMSEncryptionContext field's value.
+func (s *PutObjectOutput) SetSSEKMSEncryptionContext(v string) *PutObjectOutput {
+	s.SSEKMSEncryptionContext = &v
+	return s
+}
+
 // SetSSEKMSKeyId sets the SSEKMSKeyId field's value.
 func (s *PutObjectOutput) SetSSEKMSKeyId(v string) *PutObjectOutput {
 	s.SSEKMSKeyId = &v
@@ -20819,7 +20998,7 @@ func (s *PutObjectOutput) SetVersionId(v string) *PutObjectOutput {
 }
 
 type PutObjectRetentionInput struct {
-	_ struct{} `type:"structure" payload:"Retention"`
+	_ struct{} `locationName:"PutObjectRetentionRequest" type:"structure" payload:"Retention"`
 
 	// The bucket that contains the object you want to apply this Object Retention
 	// configuration to.
@@ -20950,7 +21129,7 @@ func (s *PutObjectRetentionOutput) SetRequestCharged(v string) *PutObjectRetenti
 }
 
 type PutObjectTaggingInput struct {
-	_ struct{} `type:"structure" payload:"Tagging"`
+	_ struct{} `locationName:"PutObjectTaggingRequest" type:"structure" payload:"Tagging"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -21058,7 +21237,7 @@ func (s *PutObjectTaggingOutput) SetVersionId(v string) *PutObjectTaggingOutput 
 }
 
 type PutPublicAccessBlockInput struct {
-	_ struct{} `type:"structure" payload:"PublicAccessBlockConfiguration"`
+	_ struct{} `locationName:"PutPublicAccessBlockRequest" type:"structure" payload:"PublicAccessBlockConfiguration"`
 
 	// The name of the Amazon S3 bucket whose PublicAccessBlock configuration you
 	// want to set.
@@ -21138,17 +21317,16 @@ func (s PutPublicAccessBlockOutput) GoString() string {
 	return s.String()
 }
 
-// A container for specifying the configuration for publication of messages
-// to an Amazon Simple Queue Service (Amazon SQS) queue.when Amazon S3 detects
-// specified events.
+// Specifies the configuration for publishing messages to an Amazon Simple Queue
+// Service (Amazon SQS) queue when Amazon S3 detects specified events.
 type QueueConfiguration struct {
 	_ struct{} `type:"structure"`
 
 	// Events is a required field
 	Events []*string `locationName:"Event" type:"list" flattened:"true" required:"true"`
 
-	// A container for object key name filtering rules. For information about key
-	// name filtering, see Configuring Event Notifications (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+	// Specifies object key name filtering rules. For information about key name
+	// filtering, see Configuring Event Notifications (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
 	// in the Amazon Simple Storage Service Developer Guide.
 	Filter *NotificationConfigurationFilter `type:"structure"`
 
@@ -21157,7 +21335,7 @@ type QueueConfiguration struct {
 	Id *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the Amazon SQS queue to which Amazon S3
-	// will publish a message when it detects events of the specified type.
+	// publishes a message when it detects events of the specified type.
 	//
 	// QueueArn is a required field
 	QueueArn *string `locationName:"Queue" type:"string" required:"true"`
@@ -21303,6 +21481,8 @@ func (s *RecordsEvent) UnmarshalEvent(
 	return nil
 }
 
+// Specifies how requests are redirected. In the event of an error, you can
+// specify a different error code to return.
 type Redirect struct {
 	_ struct{} `type:"structure"`
 
@@ -21313,8 +21493,8 @@ type Redirect struct {
 	// siblings is present.
 	HttpRedirectCode *string `type:"string"`
 
-	// Protocol to use (http, https) when redirecting requests. The default is the
-	// protocol that is used in the original request.
+	// Protocol to use when redirecting requests. The default is the protocol that
+	// is used in the original request.
 	Protocol *string `type:"string" enum:"Protocol"`
 
 	// The object key prefix to use in the redirect request. For example, to redirect
@@ -21326,7 +21506,7 @@ type Redirect struct {
 	ReplaceKeyPrefixWith *string `type:"string"`
 
 	// The specific object key to use in the redirect request. For example, redirect
-	// request to error.html. Not required if one of the sibling is present. Can
+	// request to error.html. Not required if one of the siblings is present. Can
 	// be present only if ReplaceKeyPrefixWith is not provided.
 	ReplaceKeyWith *string `type:"string"`
 }
@@ -21371,16 +21551,18 @@ func (s *Redirect) SetReplaceKeyWith(v string) *Redirect {
 	return s
 }
 
+// Specifies the redirect behavior of all requests to a website endpoint of
+// an Amazon S3 bucket.
 type RedirectAllRequestsTo struct {
 	_ struct{} `type:"structure"`
 
-	// Name of the host where requests will be redirected.
+	// Name of the host where requests are redirected.
 	//
 	// HostName is a required field
 	HostName *string `type:"string" required:"true"`
 
-	// Protocol to use (http, https) when redirecting requests. The default is the
-	// protocol that is used in the original request.
+	// Protocol to use when redirecting requests. The default is the protocol that
+	// is used in the original request.
 	Protocol *string `type:"string" enum:"Protocol"`
 }
 
@@ -21425,7 +21607,9 @@ type ReplicationConfiguration struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the AWS Identity and Access Management
-	// (IAM) role that Amazon S3 can assume when replicating the objects.
+	// (IAM) role that Amazon S3 assumes when replicating objects. For more information,
+	// see How to Set Up Cross-Region Replication (https://docs.aws.amazon.com/AmazonS3/latest/dev/crr-how-setup.html)
+	// in the Amazon Simple Storage Service Developer Guide.
 	//
 	// Role is a required field
 	Role *string `type:"string" required:"true"`
@@ -21485,7 +21669,7 @@ func (s *ReplicationConfiguration) SetRules(v []*ReplicationRule) *ReplicationCo
 	return s
 }
 
-// A container for information about a specific replication rule.
+// Specifies which Amazon S3 objects to replicate and where to store the replicas.
 type ReplicationRule struct {
 	_ struct{} `type:"structure"`
 
@@ -21505,7 +21689,8 @@ type ReplicationRule struct {
 	ID *string `type:"string"`
 
 	// An object keyname prefix that identifies the object or objects to which the
-	// rule applies. The maximum prefix length is 1,024 characters.
+	// rule applies. The maximum prefix length is 1,024 characters. To include all
+	// objects in a bucket, specify an empty string.
 	//
 	// Deprecated: Prefix has been deprecated
 	Prefix *string `deprecated:"true" type:"string"`
@@ -21521,7 +21706,7 @@ type ReplicationRule struct {
 	//    * Same object qualify tag based filter criteria specified in multiple
 	//    rules
 	//
-	// For more information, see Cross-Region Replication (CRR) ( https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html)
+	// For more information, see Cross-Region Replication (CRR) (https://docs.aws.amazon.com/AmazonS3/latest/dev/crr.html)
 	// in the Amazon S3 Developer Guide.
 	Priority *int64 `type:"integer"`
 
@@ -21530,12 +21715,9 @@ type ReplicationRule struct {
 	// replication of these objects. Currently, Amazon S3 supports only the filter
 	// that you can specify for objects created with server-side encryption using
 	// an AWS KMS-Managed Key (SSE-KMS).
-	//
-	// If you want Amazon S3 to replicate objects created with server-side encryption
-	// using AWS KMS-Managed Keys.
 	SourceSelectionCriteria *SourceSelectionCriteria `type:"structure"`
 
-	// If status isn't enabled, the rule is ignored.
+	// Specifies whether the rule is enabled.
 	//
 	// Status is a required field
 	Status *string `type:"string" required:"true" enum:"ReplicationRuleStatus"`
@@ -21817,7 +21999,7 @@ func (s *RequestProgress) SetEnabled(v bool) *RequestProgress {
 }
 
 type RestoreObjectInput struct {
-	_ struct{} `type:"structure" payload:"RestoreRequest"`
+	_ struct{} `locationName:"RestoreObjectRequest" type:"structure" payload:"RestoreRequest"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -22050,6 +22232,7 @@ func (s *RestoreRequest) SetType(v string) *RestoreRequest {
 	return s
 }
 
+// Specifies the redirect behavior and when a redirect is applied.
 type RoutingRule struct {
 	_ struct{} `type:"structure"`
 
@@ -22102,16 +22285,22 @@ func (s *RoutingRule) SetRedirect(v *Redirect) *RoutingRule {
 	return s
 }
 
+// Specifies lifecycle rules for an Amazon S3 bucket. For more information,
+// see PUT Bucket lifecycle (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTlifecycle.html)
+// in the Amazon Simple Storage Service API Reference.
 type Rule struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies the days since the initiation of an Incomplete Multipart Upload
-	// that Lifecycle will wait before permanently removing all parts of the upload.
+	// Specifies the days since the initiation of an incomplete multipart upload
+	// that Amazon S3 will wait before permanently removing all parts of the upload.
+	// For more information, see Aborting Incomplete Multipart Uploads Using a Bucket
+	// Lifecycle Policy (https://docs.aws.amazon.com/AmazonS3/latest/dev/mpuoverview.html#mpu-abort-incomplete-mpu-lifecycle-config)
+	// in the Amazon Simple Storage Service Developer Guide.
 	AbortIncompleteMultipartUpload *AbortIncompleteMultipartUpload `type:"structure"`
 
 	Expiration *LifecycleExpiration `type:"structure"`
 
-	// Unique identifier for the rule. The value cannot be longer than 255 characters.
+	// Unique identifier for the rule. The value can't be longer than 255 characters.
 	ID *string `type:"string"`
 
 	// Specifies when noncurrent object versions expire. Upon expiration, Amazon
@@ -22122,24 +22311,27 @@ type Rule struct {
 	NoncurrentVersionExpiration *NoncurrentVersionExpiration `type:"structure"`
 
 	// Container for the transition rule that describes when noncurrent objects
-	// transition to the STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING or GLACIER
-	// storage class. If your bucket is versioning-enabled (or versioning is suspended),
-	// you can set this action to request that Amazon S3 transition noncurrent object
-	// versions to the STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING or GLACIER storage
-	// class at a specific period in the object's lifetime.
+	// transition to the STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, GLACIER,
+	// or DEEP_ARCHIVE storage class. If your bucket is versioning-enabled (or versioning
+	// is suspended), you can set this action to request that Amazon S3 transition
+	// noncurrent object versions to the STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING,
+	// GLACIER, or DEEP_ARCHIVE storage class at a specific period in the object's
+	// lifetime.
 	NoncurrentVersionTransition *NoncurrentVersionTransition `type:"structure"`
 
-	// Prefix identifying one or more objects to which the rule applies.
+	// Object key prefix that identifies one or more objects to which this rule
+	// applies.
 	//
 	// Prefix is a required field
 	Prefix *string `type:"string" required:"true"`
 
-	// If 'Enabled', the rule is currently being applied. If 'Disabled', the rule
-	// is not currently being applied.
+	// If Enabled, the rule is currently being applied. If Disabled, the rule is
+	// not currently being applied.
 	//
 	// Status is a required field
 	Status *string `type:"string" required:"true" enum:"ExpirationStatus"`
 
+	// Specifies when an object transitions to a specified storage class.
 	Transition *Transition `type:"structure"`
 }
 
@@ -22535,15 +22727,15 @@ type SelectObjectContentInput struct {
 	// Specifies if periodic request progress information should be enabled.
 	RequestProgress *RequestProgress `type:"structure"`
 
-	// The SSE Algorithm used to encrypt the object. For more information, see
-	// Server-Side Encryption (Using Customer-Provided Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html).
+	// The SSE Algorithm used to encrypt the object. For more information, see Server-Side
+	// Encryption (Using Customer-Provided Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html).
 	SSECustomerAlgorithm *string `location:"header" locationName:"x-amz-server-side-encryption-customer-algorithm" type:"string"`
 
-	// The SSE Customer Key. For more information, see  Server-Side Encryption (Using
+	// The SSE Customer Key. For more information, see Server-Side Encryption (Using
 	// Customer-Provided Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html).
-	SSECustomerKey *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	SSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
-	// The SSE Customer Key MD5. For more information, see  Server-Side Encryption
+	// The SSE Customer Key MD5. For more information, see Server-Side Encryption
 	// (Using Customer-Provided Encryption Keys (https://docs.aws.amazon.com/AmazonS3/latest/dev/ServerSideEncryptionCustomerKeys.html).
 	SSECustomerKeyMD5 *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key-MD5" type:"string"`
 }
@@ -22790,13 +22982,15 @@ func (s *SelectParameters) SetOutputSerialization(v *OutputSerialization) *Selec
 }
 
 // Describes the default server-side encryption to apply to new objects in the
-// bucket. If Put Object request does not specify any server-side encryption,
-// this default encryption will be applied.
+// bucket. If a PUT Object request doesn't specify any server-side encryption,
+// this default encryption will be applied. For more information, see PUT Bucket
+// encryption (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTencryption.html)
+// in the Amazon Simple Storage Service API Reference.
 type ServerSideEncryptionByDefault struct {
 	_ struct{} `type:"structure"`
 
 	// KMS master key ID to use for the default encryption. This parameter is allowed
-	// if SSEAlgorithm is aws:kms.
+	// if and only if SSEAlgorithm is set to aws:kms.
 	KMSMasterKeyID *string `type:"string" sensitive:"true"`
 
 	// Server-side encryption algorithm to use for the default encryption.
@@ -22840,8 +23034,7 @@ func (s *ServerSideEncryptionByDefault) SetSSEAlgorithm(v string) *ServerSideEnc
 	return s
 }
 
-// Container for server-side encryption configuration rules. Currently S3 supports
-// one rule only.
+// Specifies the default server-side-encryption configuration.
 type ServerSideEncryptionConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -22891,13 +23084,12 @@ func (s *ServerSideEncryptionConfiguration) SetRules(v []*ServerSideEncryptionRu
 	return s
 }
 
-// Container for information about a particular server-side encryption configuration
-// rule.
+// Specifies the default server-side encryption configuration.
 type ServerSideEncryptionRule struct {
 	_ struct{} `type:"structure"`
 
-	// Describes the default server-side encryption to apply to new objects in the
-	// bucket. If Put Object request does not specify any server-side encryption,
+	// Specifies the default server-side encryption to apply to new objects in the
+	// bucket. If a PUT Object request doesn't specify any server-side encryption,
 	// this default encryption will be applied.
 	ApplyServerSideEncryptionByDefault *ServerSideEncryptionByDefault `type:"structure"`
 }
@@ -22933,13 +23125,17 @@ func (s *ServerSideEncryptionRule) SetApplyServerSideEncryptionByDefault(v *Serv
 	return s
 }
 
-// A container for filters that define which source objects should be replicated.
+// A container that describes additional filters for identifying the source
+// objects that you want to replicate. You can choose to enable or disable the
+// replication of these objects. Currently, Amazon S3 supports only the filter
+// that you can specify for objects created with server-side encryption using
+// an AWS KMS-Managed Key (SSE-KMS).
 type SourceSelectionCriteria struct {
 	_ struct{} `type:"structure"`
 
-	// A container for filter information for the selection of S3 objects encrypted
-	// with AWS KMS. If you include SourceSelectionCriteria in the replication configuration,
-	// this element is required.
+	// A container for filter information for the selection of Amazon S3 objects
+	// encrypted with AWS KMS. If you include SourceSelectionCriteria in the replication
+	// configuration, this element is required.
 	SseKmsEncryptedObjects *SseKmsEncryptedObjects `type:"structure"`
 }
 
@@ -22979,8 +23175,8 @@ func (s *SourceSelectionCriteria) SetSseKmsEncryptedObjects(v *SseKmsEncryptedOb
 type SseKmsEncryptedObjects struct {
 	_ struct{} `type:"structure"`
 
-	// If the status is not Enabled, replication for S3 objects encrypted with AWS
-	// KMS is disabled.
+	// Specifies whether Amazon S3 replicates objects created with server-side encryption
+	// using an AWS KMS-managed key.
 	//
 	// Status is a required field
 	Status *string `type:"string" required:"true" enum:"SseKmsEncryptedObjectsStatus"`
@@ -23096,11 +23292,14 @@ func (s *StatsEvent) UnmarshalEvent(
 	return nil
 }
 
+// Specifies data related to access patterns to be collected and made available
+// to analyze the tradeoffs between different storage classes for an Amazon
+// S3 bucket.
 type StorageClassAnalysis struct {
 	_ struct{} `type:"structure"`
 
-	// A container used to describe how data related to the storage class analysis
-	// should be exported.
+	// Specifies how data related to the storage class analysis for an Amazon S3
+	// bucket should be exported.
 	DataExport *StorageClassAnalysisDataExport `type:"structure"`
 }
 
@@ -23340,16 +23539,20 @@ func (s *TargetGrant) SetPermission(v string) *TargetGrant {
 }
 
 // A container for specifying the configuration for publication of messages
-// to an Amazon Simple Notification Service (Amazon SNS) topic.when Amazon S3
+// to an Amazon Simple Notification Service (Amazon SNS) topic when Amazon S3
 // detects specified events.
 type TopicConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// The Amazon S3 bucket event about which to send notifications. For more information,
+	// see Supported Event Types (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+	// in the Amazon Simple Storage Service Developer Guide.
+	//
 	// Events is a required field
 	Events []*string `locationName:"Event" type:"list" flattened:"true" required:"true"`
 
-	// A container for object key name filtering rules. For information about key
-	// name filtering, see Configuring Event Notifications (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
+	// Specifies object key name filtering rules. For information about key name
+	// filtering, see Configuring Event Notifications (https://docs.aws.amazon.com/AmazonS3/latest/dev/NotificationHowTo.html)
 	// in the Amazon Simple Storage Service Developer Guide.
 	Filter *NotificationConfigurationFilter `type:"structure"`
 
@@ -23358,7 +23561,7 @@ type TopicConfiguration struct {
 	Id *string `type:"string"`
 
 	// The Amazon Resource Name (ARN) of the Amazon SNS topic to which Amazon S3
-	// will publish a message when it detects events of the specified type.
+	// publishes a message when it detects events of the specified type.
 	//
 	// TopicArn is a required field
 	TopicArn *string `locationName:"Topic" type:"string" required:"true"`
@@ -23467,18 +23670,19 @@ func (s *TopicConfigurationDeprecated) SetTopic(v string) *TopicConfigurationDep
 	return s
 }
 
+// Specifies when an object transitions to a specified storage class.
 type Transition struct {
 	_ struct{} `type:"structure"`
 
-	// Indicates at what date the object is to be moved or deleted. Should be in
-	// GMT ISO 8601 Format.
+	// Indicates when objects are transitioned to the specified storage class. The
+	// date value must be in ISO 8601 format. The time is always midnight UTC.
 	Date *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
-	// Indicates the lifetime, in days, of the objects that are subject to the rule.
-	// The value must be a non-zero positive integer.
+	// Indicates the number of days after creation when objects are transitioned
+	// to the specified storage class. The value must be a positive integer.
 	Days *int64 `type:"integer"`
 
-	// The class of storage used to store the object.
+	// The storage class to which you want the object to transition.
 	StorageClass *string `type:"string" enum:"TransitionStorageClass"`
 }
 
@@ -23511,7 +23715,7 @@ func (s *Transition) SetStorageClass(v string) *Transition {
 }
 
 type UploadPartCopyInput struct {
-	_ struct{} `type:"structure"`
+	_ struct{} `locationName:"UploadPartCopyRequest" type:"structure"`
 
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
@@ -23548,7 +23752,7 @@ type UploadPartCopyInput struct {
 	// Specifies the customer-provided encryption key for Amazon S3 to use to decrypt
 	// the source object. The encryption key provided in this header must be one
 	// that was used when the source object was created.
-	CopySourceSSECustomerKey *string `location:"header" locationName:"x-amz-copy-source-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	CopySourceSSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-copy-source-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
 	// Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
 	// Amazon S3 uses this header for a message integrity check to ensure the encryption
@@ -23579,7 +23783,7 @@ type UploadPartCopyInput struct {
 	// the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm
 	// header. This must be the same encryption key specified in the initiate multipart
 	// upload request.
-	SSECustomerKey *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	SSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
 	// Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
 	// Amazon S3 uses this header for a message integrity check to ensure the encryption
@@ -23841,7 +24045,7 @@ func (s *UploadPartCopyOutput) SetServerSideEncryption(v string) *UploadPartCopy
 }
 
 type UploadPartInput struct {
-	_ struct{} `type:"structure" payload:"Body"`
+	_ struct{} `locationName:"UploadPartRequest" type:"structure" payload:"Body"`
 
 	// Object data.
 	Body io.ReadSeeker `type:"blob"`
@@ -23855,7 +24059,9 @@ type UploadPartInput struct {
 	// body cannot be determined automatically.
 	ContentLength *int64 `location:"header" locationName:"Content-Length" type:"long"`
 
-	// The base64-encoded 128-bit MD5 digest of the part data.
+	// The base64-encoded 128-bit MD5 digest of the part data. This parameter is
+	// auto-populated when using the command from the CLI. This parameted is required
+	// if object lock parameters are specified.
 	ContentMD5 *string `location:"header" locationName:"Content-MD5" type:"string"`
 
 	// Object key for which the multipart upload was initiated.
@@ -23884,7 +24090,7 @@ type UploadPartInput struct {
 	// the algorithm specified in the x-amz-server-side​-encryption​-customer-algorithm
 	// header. This must be the same encryption key specified in the initiate multipart
 	// upload request.
-	SSECustomerKey *string `location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
+	SSECustomerKey *string `marshal-as:"blob" location:"header" locationName:"x-amz-server-side-encryption-customer-key" type:"string" sensitive:"true"`
 
 	// Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321.
 	// Amazon S3 uses this header for a message integrity check to ensure the encryption
@@ -24090,6 +24296,9 @@ func (s *UploadPartOutput) SetServerSideEncryption(v string) *UploadPartOutput {
 	return s
 }
 
+// Describes the versioning state of an Amazon S3 bucket. For more information,
+// see PUT Bucket versioning (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTBucketPUTVersioningStatus.html)
+// in the Amazon Simple Storage Service API Reference.
 type VersioningConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -24124,15 +24333,22 @@ func (s *VersioningConfiguration) SetStatus(v string) *VersioningConfiguration {
 	return s
 }
 
+// Specifies website configuration parameters for an Amazon S3 bucket.
 type WebsiteConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// The name of the error document for the website.
 	ErrorDocument *ErrorDocument `type:"structure"`
 
+	// The name of the index document for the website.
 	IndexDocument *IndexDocument `type:"structure"`
 
+	// The redirect behavior for every request to this bucket's website endpoint.
+	//
+	// If you specify this property, you can't specify any other property.
 	RedirectAllRequestsTo *RedirectAllRequestsTo `type:"structure"`
 
+	// Rules that define when a redirect is applied and the redirect behavior.
 	RoutingRules []*RoutingRule `locationNameList:"RoutingRule" type:"list"`
 }
 
@@ -24545,6 +24761,9 @@ const (
 
 	// ObjectStorageClassIntelligentTiering is a ObjectStorageClass enum value
 	ObjectStorageClassIntelligentTiering = "INTELLIGENT_TIERING"
+
+	// ObjectStorageClassDeepArchive is a ObjectStorageClass enum value
+	ObjectStorageClassDeepArchive = "DEEP_ARCHIVE"
 )
 
 const (
@@ -24675,6 +24894,9 @@ const (
 
 	// StorageClassGlacier is a StorageClass enum value
 	StorageClassGlacier = "GLACIER"
+
+	// StorageClassDeepArchive is a StorageClass enum value
+	StorageClassDeepArchive = "DEEP_ARCHIVE"
 )
 
 const (
@@ -24713,6 +24935,9 @@ const (
 
 	// TransitionStorageClassIntelligentTiering is a TransitionStorageClass enum value
 	TransitionStorageClassIntelligentTiering = "INTELLIGENT_TIERING"
+
+	// TransitionStorageClassDeepArchive is a TransitionStorageClass enum value
+	TransitionStorageClassDeepArchive = "DEEP_ARCHIVE"
 )
 
 const (
