@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mark, Node, Decoration } from 'slate';
-import { Editor } from 'slate-react';
+import { Editor } from '@grafana/slate-react';
 import { Record } from 'immutable';
 
 import TOKEN_MARK from './TOKEN_MARK';
