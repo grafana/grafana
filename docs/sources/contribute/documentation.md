@@ -17,6 +17,13 @@ Sometimes it can be difficult to understand an issue when you're just getting st
 
 When you’ve found an issue you want to work on, you’re encouraged to comment on the issue to let other people know you intend to work on it.
 
+If you encounter any misspellings, or violations to the style guide, please let us know by submitting an issue.
+
+On every page in the documentation there are two links:
+
+- __Edit this page__ takes you directly to the file on GitHub where you can contribute a fix.
+- __Request doc changes__ prepares an issue on GitHub with relevant information already filled in.
+
 ## Community
 
 If you have questions on a specific issue, post a comment to ask for clarification, or to give feedback.
