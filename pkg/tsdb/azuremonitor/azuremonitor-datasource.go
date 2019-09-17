@@ -85,25 +85,28 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 	for _, query := range queries {
 		var target string
 
-		azureMonitorTarget := query.Model.Get("azureMonitor").MustMap()
-		azlog.Debug("AzureMonitor", "target", azureMonitorTarget)
+		var azureMonitorTarget AzureMonitorQueryModel
+		data, err := query.Model.Get("azureMonitor").MarshalJSON()
+		if err != nil {
+			return nil, fmt.Errorf("Invalid query format")
+		}
 
-		queryMode := fmt.Sprintf("%v", azureMonitorTarget["queryMode"])
-		if queryMode == "crossResource" {
+		json.Unmarshal(data, &azureMonitorTarget)
+		if azureMonitorTarget.QueryMode == "crossResource" {
 			return nil, fmt.Errorf("Alerting not supported for multiple resource queries")
 		}
 
-		var azureMonitorData map[string]interface{}
-		if queryMode == "singleResource" {
-			azureMonitorData = azureMonitorTarget["data"].(map[string]interface{})[queryMode].(map[string]interface{})
+		var azureMonitorData AzureMonitorData
+		if azureMonitorTarget.QueryMode == "singleResource" {
+			azureMonitorData = azureMonitorTarget.Data[azureMonitorTarget.QueryMode]
 		} else {
-			azureMonitorData = azureMonitorTarget
+			azureMonitorData = azureMonitorTarget.AzureMonitorData
 		}
 		urlComponents := map[string]string{}
-		urlComponents["subscription"] = fmt.Sprintf("%v", query.Model.Get("subscription").MustString())
-		urlComponents["resourceGroup"] = fmt.Sprintf("%v", azureMonitorData["resourceGroup"])
-		urlComponents["metricDefinition"] = fmt.Sprintf("%v", azureMonitorData["metricDefinition"])
-		urlComponents["resourceName"] = fmt.Sprintf("%v", azureMonitorData["resourceName"])
+		urlComponents["subscription"] = query.Model.Get("subscription").MustString()
+		urlComponents["resourceGroup"] = azureMonitorData.ResourceGroup
+		urlComponents["metricDefinition"] = azureMonitorData.MetricDefinition
+		urlComponents["resourceName"] = azureMonitorData.ResourceName
 
 		ub := urlBuilder{
 			DefaultSubscription: query.DataSource.JsonData.Get("subscriptionId").MustString(),
@@ -114,13 +117,8 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		}
 		azureURL := ub.Build()
 
-		alias := ""
-		if val, ok := azureMonitorData["alias"]; ok {
-			alias = fmt.Sprintf("%v", val)
-		}
-
-		timeGrain := fmt.Sprintf("%v", azureMonitorData["timeGrain"])
-		timeGrains := azureMonitorData["allowedTimeGrainsMs"]
+		timeGrain := azureMonitorData.TimeGrain
+		timeGrains := azureMonitorData.AllowedTimeGrainsMs
 		if timeGrain == "auto" {
 			timeGrain, err = e.setAutoTimeGrain(query.IntervalMs, timeGrains)
 			if err != nil {
@@ -132,16 +130,16 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		params.Add("api-version", "2018-01-01")
 		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
 		params.Add("interval", timeGrain)
-		params.Add("aggregation", fmt.Sprintf("%v", azureMonitorData["aggregation"]))
-		params.Add("metricnames", fmt.Sprintf("%v", azureMonitorData["metricName"]))
+		params.Add("aggregation", azureMonitorData.Aggregation)
+		params.Add("metricnames", azureMonitorData.MetricName)
 
-		if val, ok := azureMonitorData["metricNamespace"]; ok {
-			params.Add("metricnamespace", fmt.Sprintf("%v", val))
+		if azureMonitorData.MetricNamespace != "" {
+			params.Add("metricnamespace", azureMonitorData.MetricNamespace)
 		}
 
-		dimension := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorData["dimension"]))
-		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorData["dimensionFilter"]))
-		if azureMonitorData["dimension"] != nil && azureMonitorData["dimensionFilter"] != nil && len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
+		dimension := strings.TrimSpace(azureMonitorData.Dimension)
+		dimensionFilter := strings.TrimSpace(azureMonitorData.DimensionFilter)
+		if len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
 			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		}
 
@@ -157,7 +155,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 			Target:        target,
 			Params:        params,
 			RefID:         query.RefId,
-			Alias:         alias,
+			Alias:         azureMonitorData.Alias,
 		})
 	}
 

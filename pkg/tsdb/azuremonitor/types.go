@@ -75,3 +75,25 @@ type AzureLogAnalyticsResponse struct {
 		Rows [][]interface{} `json:"rows"`
 	} `json:"tables"`
 }
+
+type AzureMonitorData struct {
+	ResourceGroup       string `json:"resourceGroup"`
+	ResourceName        string `json:"resourceName"`
+	MetricDefinition    string `json:"metricDefinition"`
+	TimeGrain           string `json:"timeGrain"`
+	AllowedTimeGrainsMs string `json:"allowedTimeGrainsMs"`
+	MetricName          string `json:"metricName"`
+	MetricNamespace     string `json:"metricNamespace"`
+	Aggregation         string `json:"aggregation"`
+	Dimension           string `json:"dimension"`
+	DimensionFilter     string `json:"dimensionFilter"`
+	Alias               string `json:"alias"`
+	Format              string `json:"format"`
+}
+
+type AzureMonitorQueryModel struct {
+	QueryMode string                      `json:"queryMode"`
+	Janbanan  string                      `json:"janbanan"`
+	Data      map[string]AzureMonitorData `json:"data"`
+	AzureMonitorData
+}
