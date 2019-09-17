@@ -2,9 +2,10 @@ import React from 'react';
 import classNames from 'classnames';
 import { css } from 'emotion';
 import memoizeOne from 'memoize-one';
-import { GrafanaTheme, GrafanaThemeType, useTheme } from '@grafana/ui';
 import tinycolor from 'tinycolor2';
 import { CSSTransition } from 'react-transition-group';
+
+import { GrafanaTheme, GrafanaThemeType, useTheme } from '@grafana/ui';
 
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
   const orange = theme.type === GrafanaThemeType.Dark ? '#FF780A' : '#ED5700';
