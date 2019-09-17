@@ -10,8 +10,8 @@ export const LoadingChunkPlaceHolder: FunctionComponent = () => (
 
 function getAlertPageStyle() {
   return css`
-    width: 500px;
-    margin: 64px auto;
+    width: 508px;
+    margin: 128px auto;
   `;
 }
 
@@ -30,11 +30,15 @@ export const SafeDynamicImport = (importStatement: Promise<any>) => ({ ...props 
 
         return (
           <div className={getAlertPageStyle()}>
-            <h2>Grafana has been updated. Please refresh your browser.</h2>
+            <h2>Failed to find application file</h2>
             <br />
-            <Button size={'lg'} variant={'secondary'} icon="fa fa-repeat" onClick={() => window.location.reload()}>
-              Refresh
-            </Button>
+            <h2 className="page-heading">Grafana has likely been updated. Please try reloading the page.</h2>
+            <br />
+            <div className="gf-form-group">
+              <Button size={'md'} variant={'secondary'} icon="fa fa-repeat" onClick={() => window.location.reload()}>
+                Reload
+              </Button>
+            </div>
             <details style={{ whiteSpace: 'pre-wrap' }}>
               {error && error.toString()}
               <br />
