@@ -5,17 +5,10 @@ import {
   LogsMetaKind,
   LogsDedupStrategy,
   LogLevel,
-  DataFrameHelper,
+  MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
-import {
-  dedupLogRows,
-  calculateFieldStats,
-  calculateLogsLabelStats,
-  getParser,
-  LogsParsers,
-  dataFrameToLogsModel,
-} from '../logs_model';
+import { dedupLogRows, dataFrameToLogsModel } from '../logs_model';
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -152,193 +145,6 @@ describe('dedupLogRows()', () => {
   });
 });
 
-describe('calculateFieldStats()', () => {
-  test('should return no stats for empty rows', () => {
-    expect(calculateFieldStats([], /foo=(.*)/)).toEqual([]);
-  });
-
-  test('should return no stats if extractor does not match', () => {
-    const rows = [
-      {
-        entry: 'foo=bar',
-      },
-    ];
-
-    expect(calculateFieldStats(rows as any, /baz=(.*)/)).toEqual([]);
-  });
-
-  test('should return stats for found field', () => {
-    const rows = [
-      {
-        entry: 'foo="42 + 1"',
-      },
-      {
-        entry: 'foo=503 baz=foo',
-      },
-      {
-        entry: 'foo="42 + 1"',
-      },
-      {
-        entry: 't=2018-12-05T07:44:59+0000 foo=503',
-      },
-    ];
-
-    expect(calculateFieldStats(rows as any, /foo=("[^"]*"|\S+)/)).toMatchObject([
-      {
-        value: '"42 + 1"',
-        count: 2,
-      },
-      {
-        value: '503',
-        count: 2,
-      },
-    ]);
-  });
-});
-
-describe('calculateLogsLabelStats()', () => {
-  test('should return no stats for empty rows', () => {
-    expect(calculateLogsLabelStats([], '')).toEqual([]);
-  });
-
-  test('should return no stats of label is not found', () => {
-    const rows = [
-      {
-        entry: 'foo 1',
-        labels: {
-          foo: 'bar',
-        },
-      },
-    ];
-
-    expect(calculateLogsLabelStats(rows as any, 'baz')).toEqual([]);
-  });
-
-  test('should return stats for found labels', () => {
-    const rows = [
-      {
-        entry: 'foo 1',
-        labels: {
-          foo: 'bar',
-        },
-      },
-      {
-        entry: 'foo 0',
-        labels: {
-          foo: 'xxx',
-        },
-      },
-      {
-        entry: 'foo 2',
-        labels: {
-          foo: 'bar',
-        },
-      },
-    ];
-
-    expect(calculateLogsLabelStats(rows as any, 'foo')).toMatchObject([
-      {
-        value: 'bar',
-        count: 2,
-      },
-      {
-        value: 'xxx',
-        count: 1,
-      },
-    ]);
-  });
-});
-
-describe('getParser()', () => {
-  test('should return no parser on empty line', () => {
-    expect(getParser('')).toBeUndefined();
-  });
-
-  test('should return no parser on unknown line pattern', () => {
-    expect(getParser('To Be or not to be')).toBeUndefined();
-  });
-
-  test('should return logfmt parser on key value patterns', () => {
-    expect(getParser('foo=bar baz="41 + 1')).toEqual(LogsParsers.logfmt);
-  });
-
-  test('should return JSON parser on JSON log lines', () => {
-    // TODO implement other JSON value types than string
-    expect(getParser('{"foo": "bar", "baz": "41 + 1"}')).toEqual(LogsParsers.JSON);
-  });
-});
-
-describe('LogsParsers', () => {
-  describe('logfmt', () => {
-    const parser = LogsParsers.logfmt;
-
-    test('should detect format', () => {
-      expect(parser.test('foo')).toBeFalsy();
-      expect(parser.test('foo=bar')).toBeTruthy();
-    });
-
-    test('should return parsed fields', () => {
-      expect(parser.getFields('foo=bar baz="42 + 1"')).toEqual(['foo=bar', 'baz="42 + 1"']);
-    });
-
-    test('should return label for field', () => {
-      expect(parser.getLabelFromField('foo=bar')).toBe('foo');
-    });
-
-    test('should return value for field', () => {
-      expect(parser.getValueFromField('foo=bar')).toBe('bar');
-    });
-
-    test('should build a valid value matcher', () => {
-      const matcher = parser.buildMatcher('foo');
-      const match = 'foo=bar'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match[1]).toBe('bar');
-    });
-  });
-
-  describe('JSON', () => {
-    const parser = LogsParsers.JSON;
-
-    test('should detect format', () => {
-      expect(parser.test('foo')).toBeFalsy();
-      expect(parser.test('{"foo":"bar"}')).toBeTruthy();
-    });
-
-    test('should return parsed fields', () => {
-      expect(parser.getFields('{ "foo" : "bar", "baz" : 42 }')).toEqual(['"foo" : "bar"', '"baz" : 42']);
-    });
-
-    test('should return parsed fields for nested quotes', () => {
-      expect(parser.getFields(`{"foo":"bar: '[value=\\"42\\"]'"}`)).toEqual([`"foo":"bar: '[value=\\"42\\"]'"`]);
-    });
-
-    test('should return label for field', () => {
-      expect(parser.getLabelFromField('"foo" : "bar"')).toBe('foo');
-    });
-
-    test('should return value for field', () => {
-      expect(parser.getValueFromField('"foo" : "bar"')).toBe('"bar"');
-      expect(parser.getValueFromField('"foo" : 42')).toBe('42');
-      expect(parser.getValueFromField('"foo" : 42.1')).toBe('42.1');
-    });
-
-    test('should build a valid value matcher for strings', () => {
-      const matcher = parser.buildMatcher('foo');
-      const match = '{"foo":"bar"}'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match[1]).toBe('bar');
-    });
-
-    test('should build a valid value matcher for integers', () => {
-      const matcher = parser.buildMatcher('foo');
-      const match = '{"foo":42.1}'.match(matcher);
-      expect(match).toBeDefined();
-      expect(match[1]).toBe('42.1');
-    });
-  });
-});
-
 const emptyLogsModel: any = {
   hasUniqueLabels: false,
   rows: [],
@@ -362,7 +168,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given series without a time field should return empty logs model', () => {
     const series: DataFrame[] = [
-      new DataFrameHelper({
+      new MutableDataFrame({
         fields: [
           {
             name: 'message',
@@ -377,7 +183,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given series without a string field should return empty logs model', () => {
     const series: DataFrame[] = [
-      new DataFrameHelper({
+      new MutableDataFrame({
         fields: [
           {
             name: 'time',
@@ -392,7 +198,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series should return expected logs model', () => {
     const series: DataFrame[] = [
-      new DataFrameHelper({
+      new MutableDataFrame({
         labels: {
           filename: '/var/log/grafana/grafana.log',
           job: 'grafana',
@@ -453,7 +259,7 @@ describe('dataFrameToLogsModel', () => {
 
   it('given one series without labels should return expected logs model', () => {
     const series: DataFrame[] = [
-      new DataFrameHelper({
+      new MutableDataFrame({
         fields: [
           {
             name: 'time',
@@ -485,7 +291,7 @@ describe('dataFrameToLogsModel', () => {
     ]);
   });
 
-  it('given multiple series should return expected logs model', () => {
+  it('given multiple series with unique times should return expected logs model', () => {
     const series: DataFrame[] = [
       toDataFrame({
         labels: {
@@ -532,16 +338,16 @@ describe('dataFrameToLogsModel', () => {
     expect(logsModel.rows).toHaveLength(3);
     expect(logsModel.rows).toMatchObject([
       {
-        entry: 'WARN boooo',
-        labels: { foo: 'bar', baz: '1' },
-        logLevel: LogLevel.debug,
-        uniqueLabels: { baz: '1' },
-      },
-      {
         entry: 'INFO 1',
         labels: { foo: 'bar', baz: '2' },
         logLevel: LogLevel.error,
         uniqueLabels: { baz: '2' },
+      },
+      {
+        entry: 'WARN boooo',
+        labels: { foo: 'bar', baz: '1' },
+        logLevel: LogLevel.debug,
+        uniqueLabels: { baz: '1' },
       },
       {
         entry: 'INFO 2',
@@ -560,5 +366,97 @@ describe('dataFrameToLogsModel', () => {
       },
       kind: LogsMetaKind.LabelsMap,
     });
+  });
+  //
+  it('given multiple series with equal times should return expected logs model', () => {
+    const series: DataFrame[] = [
+      toDataFrame({
+        labels: {
+          foo: 'bar',
+          baz: '1',
+          level: 'dbug',
+        },
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:00Z'],
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+            values: ['WARN boooo 1'],
+          },
+        ],
+      }),
+      toDataFrame({
+        labels: {
+          foo: 'bar',
+          baz: '2',
+          level: 'dbug',
+        },
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z'],
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+            values: ['WARN boooo 2'],
+          },
+        ],
+      }),
+      toDataFrame({
+        name: 'logs',
+        labels: {
+          foo: 'bar',
+          baz: '2',
+          level: 'err',
+        },
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:00Z', '1970-01-01T00:00:01Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['INFO 1', 'INFO 2'],
+          },
+        ],
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 0);
+    expect(logsModel.hasUniqueLabels).toBeTruthy();
+    expect(logsModel.rows).toHaveLength(4);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'WARN boooo 1',
+        labels: { foo: 'bar', baz: '1' },
+        logLevel: LogLevel.debug,
+        uniqueLabels: { baz: '1' },
+      },
+      {
+        entry: 'INFO 1',
+        labels: { foo: 'bar', baz: '2' },
+        logLevel: LogLevel.error,
+        uniqueLabels: { baz: '2' },
+      },
+      {
+        entry: 'WARN boooo 2',
+        labels: { foo: 'bar', baz: '2' },
+        logLevel: LogLevel.debug,
+        uniqueLabels: { baz: '2' },
+      },
+      {
+        entry: 'INFO 2',
+        labels: { foo: 'bar', baz: '2' },
+        logLevel: LogLevel.error,
+        uniqueLabels: { baz: '2' },
+      },
+    ]);
   });
 });

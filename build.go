@@ -528,6 +528,9 @@ func ldflags() string {
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", getGitSha()))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp()))
 	b.WriteString(fmt.Sprintf(" -X main.buildBranch=%s", getGitBranch()))
+	if v := os.Getenv("LDFLAGS"); v != "" {
+		b.WriteString(fmt.Sprintf(" -extldflags=%s", v))
+	}
 	return b.String()
 }
 
@@ -592,6 +595,11 @@ func getGitSha() string {
 }
 
 func buildStamp() int64 {
+	// use SOURCE_DATE_EPOCH if set.
+	if s, _ := strconv.ParseInt(os.Getenv("SOURCE_DATE_EPOCH"), 10, 64); s > 0 {
+		return s
+	}
+
 	bs, err := runError("git", "show", "-s", "--format=%ct")
 	if err != nil {
 		return time.Now().Unix()

@@ -162,10 +162,15 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export function importPluginModule(path: string): Promise<any> {
+export async function importPluginModule(path: string): Promise<any> {
   const builtIn = builtInPlugins[path];
   if (builtIn) {
-    return Promise.resolve(builtIn);
+    // for handling dynamic imports
+    if (typeof builtIn === 'function') {
+      return await builtIn();
+    } else {
+      return Promise.resolve(builtIn);
+    }
   }
   return grafanaRuntime.SystemJS.import(path);
 }
@@ -199,7 +204,7 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   });
 }
 
-import { getPanelPluginNotFound } from '../dashboard/dashgrid/PanelPluginNotFound';
+import { getPanelPluginNotFound, getPanelPluginLoadError } from '../dashboard/dashgrid/PanelPluginError';
 
 interface PanelCache {
   [key: string]: PanelPlugin;
@@ -233,7 +238,7 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
     })
     .catch(err => {
       // TODO, maybe a different error plugin
-      console.log('Error loading panel plugin', err);
-      return getPanelPluginNotFound(id);
+      console.warn('Error loading panel plugin: ' + id, err);
+      return getPanelPluginLoadError(meta, err);
     });
 }

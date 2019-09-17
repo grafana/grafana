@@ -44,6 +44,10 @@ export class DataFrameView<T = any> implements Vector<T> {
     this.obj = obj;
   }
 
+  get dataFrame() {
+    return this.data;
+  }
+
   get length() {
     return this.data.length;
   }
@@ -63,5 +67,11 @@ export class DataFrameView<T = any> implements Vector<T> {
 
   toJSON(): T[] {
     return this.toArray();
+  }
+
+  forEachRow(iterator: (row: T) => void) {
+    for (let i = 0; i < this.data.length; i++) {
+      iterator(this.get(i));
+    }
   }
 }

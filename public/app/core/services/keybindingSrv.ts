@@ -46,7 +46,7 @@ export class KeybindingSrv {
       this.bind('g p', this.goToProfile);
       this.bind('s o', this.openSearch);
       this.bind('f', this.openSearch);
-      this.bindGlobal('esc', this.exit);
+      this.bind('esc', this.exit);
     }
   }
 
@@ -186,7 +186,6 @@ export class KeybindingSrv {
       if (dashboard.meta.focusPanelId) {
         appEvents.emit('panel-change-view', {
           fullscreen: true,
-          edit: null,
           panelId: dashboard.meta.focusPanelId,
           toggle: true,
         });

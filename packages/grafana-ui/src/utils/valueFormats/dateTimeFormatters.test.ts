@@ -7,6 +7,7 @@ import {
   toDuration,
   toDurationInMilliseconds,
   toDurationInSeconds,
+  toDurationInHoursMinutesSeconds,
 } from './dateTimeFormatters';
 import { toUtc, dateTime } from '@grafana/data';
 
@@ -160,6 +161,18 @@ describe('duration', () => {
   it('floating point error', () => {
     const str = toDuration(36993906007, 8, Interval.Millisecond);
     expect(str).toBe('1 year, 2 months, 0 weeks, 3 days, 4 hours, 5 minutes, 6 seconds, 7 milliseconds');
+  });
+  it('1 dthms', () => {
+    const str = toDurationInHoursMinutesSeconds(1);
+    expect(str).toBe('00:00:01');
+  });
+  it('-1 dthms', () => {
+    const str = toDurationInHoursMinutesSeconds(-1);
+    expect(str).toBe('00:00:01 ago');
+  });
+  it('0 dthms', () => {
+    const str = toDurationInHoursMinutesSeconds(0);
+    expect(str).toBe('00:00:00');
   });
 });
 

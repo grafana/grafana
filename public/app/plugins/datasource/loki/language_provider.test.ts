@@ -1,16 +1,16 @@
 // @ts-ignore
 import Plain from 'slate-plain-serializer';
 
-import LanguageProvider, { LABEL_REFRESH_INTERVAL, rangeToParams } from './language_provider';
+import LanguageProvider, { LABEL_REFRESH_INTERVAL, LokiHistoryItem, rangeToParams } from './language_provider';
 import { AbsoluteTimeRange } from '@grafana/data';
 import { advanceTo, clear, advanceBy } from 'jest-date-mock';
 import { beforeEach } from 'test/lib/common';
-import { DataQueryResponseData } from '@grafana/ui';
+import { DataSourceApi } from '@grafana/ui';
+import { TypeaheadInput } from '../../../types';
+import { makeMockLokiDatasource } from './mocks';
 
 describe('Language completion provider', () => {
-  const datasource = {
-    metadataRequest: () => ({ data: { data: [] as DataQueryResponseData[] } }),
-  };
+  const datasource = makeMockLokiDatasource({});
 
   const rangeMock: AbsoluteTimeRange = {
     from: 1560153109000,
@@ -30,9 +30,10 @@ describe('Language completion provider', () => {
     it('returns default suggestions with history on empty context when history was provided', () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
-      const history = [
+      const history: LokiHistoryItem[] = [
         {
           query: { refId: '1', expr: '{app="foo"}' },
+          ts: 1,
         },
       ];
       const result = instance.provideCompletionItems(
@@ -55,25 +56,14 @@ describe('Language completion provider', () => {
 
     it('returns no suggestions within regexp', () => {
       const instance = new LanguageProvider(datasource);
-      const value = Plain.deserialize('{} ()');
-      const range = value.selection.merge({
-        anchorOffset: 4,
-      });
-      const valueWithSelection = value.change().select(range).value;
-      const history = [
+      const input = createTypeaheadInput('{} ()', '', undefined, 4, []);
+      const history: LokiHistoryItem[] = [
         {
           query: { refId: '1', expr: '{app="foo"}' },
+          ts: 1,
         },
       ];
-      const result = instance.provideCompletionItems(
-        {
-          text: '',
-          prefix: '',
-          value: valueWithSelection,
-          wrapperClasses: [],
-        },
-        { history }
-      );
+      const result = instance.provideCompletionItems(input, { history });
       expect(result.context).toBeUndefined();
       expect(result.refresher).toBeUndefined();
       expect(result.suggestions.length).toEqual(0);
@@ -83,22 +73,34 @@ describe('Language completion provider', () => {
   describe('label suggestions', () => {
     it('returns default label suggestions on label context', () => {
       const instance = new LanguageProvider(datasource);
-      const value = Plain.deserialize('{}');
-      const range = value.selection.merge({
-        anchorOffset: 1,
-      });
-      const valueWithSelection = value.change().select(range).value;
-      const result = instance.provideCompletionItems(
-        {
-          text: '',
-          prefix: '',
-          wrapperClasses: ['context-labels'],
-          value: valueWithSelection,
-        },
-        { absoluteRange: rangeMock }
-      );
+      const input = createTypeaheadInput('{}', '');
+      const result = instance.provideCompletionItems(input, { absoluteRange: rangeMock });
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([{ items: [{ label: 'job' }, { label: 'namespace' }], label: 'Labels' }]);
+    });
+
+    it('returns label suggestions from Loki', async () => {
+      const datasource = makeMockLokiDatasource({ label1: [], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const input = createTypeaheadInput('{}', '');
+      const result = provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      expect(result.context).toBe('context-labels');
+      expect(result.suggestions).toEqual([{ items: [{ label: 'label1' }, { label: 'label2' }], label: 'Labels' }]);
+    });
+
+    it('returns label values suggestions from Loki', async () => {
+      const datasource = makeMockLokiDatasource({ label1: ['label1_val1', 'label1_val2'], label2: [] });
+      const provider = await getLanguageProvider(datasource);
+      const input = createTypeaheadInput('{label1=}', '=', 'label1');
+      let result = provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      // The values for label are loaded adhoc and there is a promise returned that we have to wait for
+      expect(result.refresher).toBeDefined();
+      await result.refresher;
+      result = provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      expect(result.context).toBe('context-label-values');
+      expect(result.suggestions).toEqual([
+        { items: [{ label: 'label1_val1' }, { label: 'label1_val2' }], label: 'Label values for "label1"' },
+      ]);
     });
   });
 });
@@ -110,17 +112,8 @@ describe('Request URL', () => {
       to: 1560163909000,
     };
 
-    const datasourceWithLabels = {
-      metadataRequest: (url: string) => {
-        if (url.slice(0, 15) === '/api/prom/label') {
-          return { data: { data: ['other'] } };
-        } else {
-          return { data: { data: [] } };
-        }
-      },
-    };
-
-    const datasourceSpy = jest.spyOn(datasourceWithLabels, 'metadataRequest');
+    const datasourceWithLabels = makeMockLokiDatasource({ other: [] });
+    const datasourceSpy = jest.spyOn(datasourceWithLabels as any, 'metadataRequest');
 
     const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
     await instance.refreshLogLabels(rangeMock, true);
@@ -130,9 +123,7 @@ describe('Request URL', () => {
 });
 
 describe('Query imports', () => {
-  const datasource = {
-    metadataRequest: () => ({ data: { data: [] as DataQueryResponseData[] } }),
-  };
+  const datasource = makeMockLokiDatasource({});
 
   const rangeMock: AbsoluteTimeRange = {
     from: 1560153109000,
@@ -153,36 +144,21 @@ describe('Query imports', () => {
     });
 
     it('returns empty query from selector query if label is not available', async () => {
-      const datasourceWithLabels = {
-        metadataRequest: (url: string) =>
-          url.slice(0, 15) === '/api/prom/label'
-            ? { data: { data: ['other'] } }
-            : { data: { data: [] as DataQueryResponseData[] } },
-      };
+      const datasourceWithLabels = makeMockLokiDatasource({ other: [] });
       const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
       const result = await instance.importPrometheusQuery('{foo="bar"}');
       expect(result).toEqual('{}');
     });
 
     it('returns selector query from selector query with common labels', async () => {
-      const datasourceWithLabels = {
-        metadataRequest: (url: string) =>
-          url.slice(0, 15) === '/api/prom/label'
-            ? { data: { data: ['foo'] } }
-            : { data: { data: [] as DataQueryResponseData[] } },
-      };
+      const datasourceWithLabels = makeMockLokiDatasource({ foo: [] });
       const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
       const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
       expect(result).toEqual('{foo="bar"}');
     });
 
     it('returns selector query from selector query with all labels if logging label list is empty', async () => {
-      const datasourceWithLabels = {
-        metadataRequest: (url: string) =>
-          url.slice(0, 15) === '/api/prom/label'
-            ? { data: { data: [] as DataQueryResponseData[] } }
-            : { data: { data: [] as DataQueryResponseData[] } },
-      };
+      const datasourceWithLabels = makeMockLokiDatasource({});
       const instance = new LanguageProvider(datasourceWithLabels, { initialRange: rangeMock });
       const result = await instance.importPrometheusQuery('metric{foo="bar",baz="42"}');
       expect(result).toEqual('{baz="42",foo="bar"}');
@@ -191,9 +167,7 @@ describe('Query imports', () => {
 });
 
 describe('Labels refresh', () => {
-  const datasource = {
-    metadataRequest: () => ({ data: { data: [] as DataQueryResponseData[] } }),
-  };
+  const datasource = makeMockLokiDatasource({});
   const instance = new LanguageProvider(datasource);
 
   const rangeMock: AbsoluteTimeRange = {
@@ -226,3 +200,39 @@ describe('Labels refresh', () => {
     expect(instance.fetchLogLabels).toBeCalled();
   });
 });
+
+async function getLanguageProvider(datasource: DataSourceApi) {
+  const instance = new LanguageProvider(datasource);
+  instance.initialRange = {
+    from: Date.now() - 10000,
+    to: Date.now(),
+  };
+  await instance.start();
+  return instance;
+}
+
+/**
+ * @param value Value of the full input
+ * @param text Last piece of text (not sure but in case of {label=} this would be just '=')
+ * @param labelKey Label by which to search for values. Cutting corners a bit here as this should be inferred from value
+ */
+function createTypeaheadInput(
+  value: string,
+  text: string,
+  labelKey?: string,
+  anchorOffset?: number,
+  wrapperClasses?: string[]
+): TypeaheadInput {
+  const deserialized = Plain.deserialize(value);
+  const range = deserialized.selection.merge({
+    anchorOffset: anchorOffset || 1,
+  });
+  const valueWithSelection = deserialized.change().select(range).value;
+  return {
+    text,
+    prefix: '',
+    wrapperClasses: wrapperClasses || ['context-labels'],
+    value: valueWithSelection,
+    labelKey,
+  };
+}

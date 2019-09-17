@@ -1,3 +1,4 @@
+import { Unsubscribable } from 'rxjs';
 import { ComponentClass } from 'react';
 import {
   DataQuery,
@@ -5,7 +6,8 @@ import {
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
-  DataQueryError,
+  PanelData,
+  DataQueryRequest,
 } from '@grafana/ui';
 
 import {
@@ -14,7 +16,6 @@ import {
   TimeRange,
   LogsModel,
   LogsDedupStrategy,
-  LoadingState,
   AbsoluteTimeRange,
   GraphSeriesXY,
 } from '@grafana/data';
@@ -186,11 +187,6 @@ export interface ExploreItemState {
   logsResult?: LogsModel;
 
   /**
-   * Query intervals for graph queries to determine how many datapoints to return.
-   * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.
-   */
-  queryIntervals: QueryIntervals;
-  /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
   range: TimeRange;
@@ -217,7 +213,7 @@ export interface ExploreItemState {
    */
   showingTable: boolean;
 
-  loadingState: LoadingState;
+  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -247,14 +243,25 @@ export interface ExploreItemState {
 
   update: ExploreUpdateState;
 
-  queryErrors: DataQueryError[];
-
   latency: number;
   supportedModes: ExploreMode[];
   mode: ExploreMode;
 
+  /**
+   * If true, the view is in live tailing mode.
+   */
   isLive: boolean;
+
+  /**
+   * If true, the live tailing view is paused.
+   */
+  isPaused: boolean;
   urlReplaced: boolean;
+
+  querySubscription?: Unsubscribable;
+
+  queryResponse: PanelData;
+  originPanelId?: number;
 }
 
 export interface ExploreUpdateState {
@@ -278,6 +285,7 @@ export interface ExploreUrlState {
   mode: ExploreMode;
   range: RawTimeRange;
   ui: ExploreUIState;
+  originPanelId?: number;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
@@ -317,7 +325,7 @@ export interface QueryIntervals {
 }
 
 export interface QueryOptions {
-  interval: string;
+  minInterval: string;
   maxDataPoints?: number;
   live?: boolean;
 }
@@ -328,15 +336,8 @@ export interface QueryTransaction {
   error?: string | JSX.Element;
   hints?: QueryHint[];
   latency: number;
-  options: any;
+  request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
-}
-
-export interface TextMatch {
-  text: string;
-  start: number;
-  length: number;
-  end: number;
 }

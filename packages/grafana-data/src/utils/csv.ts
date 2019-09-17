@@ -6,7 +6,7 @@ import isNumber from 'lodash/isNumber';
 // Types
 import { DataFrame, Field, FieldType, FieldConfig } from '../types';
 import { guessFieldTypeFromValue } from './processDataFrame';
-import { DataFrameHelper } from './dataFrameHelper';
+import { MutableDataFrame } from './dataFrameHelper';
 
 export enum CSVHeaderStyle {
   full,
@@ -55,8 +55,8 @@ export class CSVReader {
   callback?: CSVParseCallbacks;
 
   state: ParseState;
-  data: DataFrameHelper[];
-  current: DataFrameHelper;
+  data: MutableDataFrame[];
+  current: MutableDataFrame;
 
   constructor(options?: CSVOptions) {
     if (!options) {
@@ -65,7 +65,7 @@ export class CSVReader {
     this.config = options.config || {};
     this.callback = options.callback;
 
-    this.current = new DataFrameHelper({ fields: [] });
+    this.current = new MutableDataFrame({ fields: [] });
     this.state = ParseState.Starting;
     this.data = [];
   }
@@ -97,7 +97,7 @@ export class CSVReader {
             if (isName || headerKeys.hasOwnProperty(k)) {
               // Starting a new table after reading rows
               if (this.state === ParseState.ReadingRows) {
-                this.current = new DataFrameHelper({ fields: [] });
+                this.current = new MutableDataFrame({ fields: [] });
                 this.data.push(this.current);
               }
 
@@ -171,8 +171,8 @@ export class CSVReader {
     }
   };
 
-  readCSV(text: string): DataFrameHelper[] {
-    this.current = new DataFrameHelper({ fields: [] });
+  readCSV(text: string): MutableDataFrame[] {
+    this.current = new MutableDataFrame({ fields: [] });
     this.data = [this.current];
 
     const papacfg = {

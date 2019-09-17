@@ -28,11 +28,13 @@ export const run = (includeInternalScripts = false) => {
     program
       .command('core:start')
       .option('-h, --hot', 'Run front-end with HRM enabled')
+      .option('-T, --noTsCheck', 'Run bundler without TS type checking')
       .option('-t, --watchTheme', 'Watch for theme changes and regenerate variables.scss files')
       .description('Starts Grafana front-end in development mode with watch enabled')
       .action(async cmd => {
         await execTask(startTask)({
           watchThemes: cmd.watchTheme,
+          noTsCheck: cmd.noTsCheck,
           hot: cmd.hot,
         });
       });
@@ -154,9 +156,13 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-build')
-    .option('--backend <backend>', 'For backend task, which backend to run')
-    .description('Build the plugin, leaving artifacts in /dist')
+    .option('--backend', 'Run Makefile for backend task', false)
+    .description('Build the plugin, leaving results in /dist and /coverage')
     .action(async cmd => {
+      if (typeof cmd === 'string') {
+        console.error(`Invalid argument: ${cmd}\nSee --help for a list of available commands.`);
+        process.exit(1);
+      }
       await execTask(ciBuildPluginTask)({
         backend: cmd.backend,
       });

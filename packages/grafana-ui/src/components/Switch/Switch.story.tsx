@@ -8,13 +8,14 @@ import { text } from '@storybook/addon-knobs';
 const getKnobs = () => {
   return {
     label: text('Label Text', 'Label'),
+    tooltip: text('Tooltip', null),
   };
 };
 
 const SwitchWrapper = () => {
-  const { label } = getKnobs();
+  const { label, tooltip } = getKnobs();
   const [checked, setChecked] = useState(false);
-  return <Switch label={label} checked={checked} onChange={() => setChecked(!checked)} />;
+  return <Switch label={label} checked={checked} onChange={() => setChecked(!checked)} tooltip={tooltip} />;
 };
 
 const story = storiesOf('UI/Switch', module);

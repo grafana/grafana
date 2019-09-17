@@ -1,11 +1,10 @@
 import React from 'react';
-import { PanelData } from '@grafana/ui';
-import { GraphSeriesXY } from '@grafana/data';
+import { PanelData, GraphSeriesToggler } from '@grafana/ui';
+import { GraphSeriesXY, AbsoluteTimeRange } from '@grafana/data';
 
 import { getGraphSeriesModel } from './getGraphSeriesModel';
 import { Options, SeriesOptions } from './types';
 import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from '@grafana/ui/src/components/Graph/GraphWithLegend';
-import { GraphSeriesToggler } from './GraphSeriesToggler';
 
 interface GraphPanelControllerAPI {
   series: GraphSeriesXY[];
@@ -13,6 +12,7 @@ interface GraphPanelControllerAPI {
   onSeriesColorChange: SeriesColorChangeHandler;
   onSeriesToggle: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
+  onHorizontalRegionSelected: (from: number, to: number) => void;
 }
 
 interface GraphPanelControllerProps {
@@ -20,6 +20,7 @@ interface GraphPanelControllerProps {
   options: Options;
   data: PanelData;
   onOptionsChange: (options: Options) => void;
+  onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
 interface GraphPanelControllerState {
@@ -33,10 +34,11 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     this.onSeriesColorChange = this.onSeriesColorChange.bind(this);
     this.onSeriesAxisToggle = this.onSeriesAxisToggle.bind(this);
     this.onToggleSort = this.onToggleSort.bind(this);
+    this.onHorizontalRegionSelected = this.onHorizontalRegionSelected.bind(this);
 
     this.state = {
       graphSeriesModel: getGraphSeriesModel(
-        props.data,
+        props.data.series,
         props.options.series,
         props.options.graph,
         props.options.legend
@@ -48,7 +50,7 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     return {
       ...state,
       graphSeriesModel: getGraphSeriesModel(
-        props.data,
+        props.data.series,
         props.options.series,
         props.options.graph,
         props.options.legend
@@ -114,6 +116,11 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
     });
   }
 
+  onHorizontalRegionSelected(from: number, to: number) {
+    const { onChangeTimeRange } = this.props;
+    onChangeTimeRange({ from, to });
+  }
+
   render() {
     const { children } = this.props;
     const { graphSeriesModel } = this.state;
@@ -127,6 +134,7 @@ export class GraphPanelController extends React.Component<GraphPanelControllerPr
             onSeriesAxisToggle: this.onSeriesAxisToggle,
             onToggleSort: this.onToggleSort,
             onSeriesToggle: onSeriesToggle,
+            onHorizontalRegionSelected: this.onHorizontalRegionSelected,
           });
         }}
       </GraphSeriesToggler>

@@ -32,7 +32,7 @@ Object {
       "values": Array [
         null,
         4,
-        NaN,
+        undefined,
         NaN,
       ],
     },
