@@ -1,9 +1,33 @@
 # 6.4.0 (unreleased)
 
-### Breaking changes
+## Breaking changes
 
-* **Annotations**: There are some breaking changes in the annotations HTTP API for region annotations. Region
-    annotations are now represented using a single event instead of two seperate events. Check HTTP docs for more details.
+### Annotations
+
+There are some breaking changes in the annotations HTTP API for region annotations. Region annotations are now represented
+using a single event instead of two seperate events. Check breaking changes in HTTP API [below](#http-api) and [HTTP API documentation](https://grafana.com/docs/http_api/annotations/) for more details.
+
+### Docker
+
+Grafana is now using Alpine 3.10 as docker base image.
+
+### HTTP API
+  - `GET /api/alert-notifications` now requires at least editor access. New `/api/alert-notifications/lookup` returns less information than `/api/alert-notifications` and can be access by any authenticated user.
+  - `GET /api/alert-notifiers` now requires at least editor access
+  - `GET /api/org/users` now requires org admin role. New `/api/org/users/lookup` returns less information than `/api/org/users` and can be access by users that are org admins, admin in any folder or admin of any team.
+  - `GET /api/annotations` no longer returns `regionId` property.
+  - `POST /api/annotations` no longer supports `isRegion` property.
+  - `PUT /api/annotations/:id` no longer supports `isRegion` property.
+  - `PATCH /api/annotations/:id` no longer supports `isRegion` property.
+  - `DELETE /api/annotations/region/:id` has been removed.
+
+## Deprecation notes
+
+### PhantomJS
+
+[PhantomJS](https://phantomjs.org/), which is used for rendering images of dashboards and panels, is deprecated and will be removed in a future Grafana release. A deprecation warning will from now on be logged when Grafana starts up if PhantomJS is in use.
+
+Please consider migrating from PhantomJS to the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
 # 6.3.5 (2019-09-02)
 
