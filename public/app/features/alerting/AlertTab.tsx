@@ -155,7 +155,7 @@ export class AlertTab extends PureComponent<Props> {
           {alert && hasTransformations && (
             <AlertBox
               severity={AppNotificationSeverity.Error}
-              title="Alerts will not work with transformations configured"
+              title="Transformations are not supported in alert queries"
             />
           )}
 
