@@ -1,5 +1,5 @@
 import { reducerFactory } from 'app/core/redux';
-import { LdapState, LdapUserState } from 'app/types';
+import { LdapState, LdapUserState, UserAdminState } from 'app/types';
 import {
   ldapConnectionInfoLoadedAction,
   ldapFailedAction,
@@ -10,6 +10,8 @@ import {
   userSessionsLoadedAction,
   ldapSyncStatusLoadedAction,
   clearUserMappingInfoAction,
+  userProfileLoadedAction,
+  userOrgsLoadedAction,
 } from './actions';
 
 const initialLdapState: LdapState = {
@@ -25,6 +27,12 @@ const initialLdapUserState: LdapUserState = {
   ldapUser: null,
   ldapSyncInfo: null,
   sessions: [],
+};
+
+const initialUserAdminState: UserAdminState = {
+  user: null,
+  sessions: [],
+  orgs: [],
 };
 
 export const ldapReducer = reducerFactory(initialLdapState)
@@ -129,7 +137,25 @@ export const ldapUserReducer = reducerFactory(initialLdapUserState)
   })
   .create();
 
+export const userAdminReducer = reducerFactory(initialUserAdminState)
+  .addMapper({
+    filter: userProfileLoadedAction,
+    mapper: (state, action) => ({
+      ...state,
+      user: action.payload,
+    }),
+  })
+  .addMapper({
+    filter: userOrgsLoadedAction,
+    mapper: (state, action) => ({
+      ...state,
+      orgs: action.payload,
+    }),
+  })
+  .create();
+
 export default {
   ldap: ldapReducer,
   ldapUser: ldapUserReducer,
+  userAdmin: userAdminReducer,
 };
