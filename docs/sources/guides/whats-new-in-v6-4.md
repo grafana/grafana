@@ -7,7 +7,7 @@ type = "docs"
 name = "Version 6.4"
 identifier = "v6.4"
 parent = "whatsnew"
-weight = -14
+weight = -15
 +++
 
 # What's New in Grafana v6.4
@@ -19,12 +19,13 @@ For all details please read the full [CHANGELOG.md](https://github.com/grafana/g
 Grafana 6.4 comes with a lot of new features and enhancements backed with tons of work around [Grafana's data model]({{< relref "#improving-grafana-data-model" >}}):
 
 - New Explore features
-  - [Saving panel query from Explore]({{< relref "#saving-panel-query-from-explore" >}})
-  - [Annotations using Loki]({{< relref "#annotations-using-loki" >}})
+  - [Navigate back to dashboard (with query changes)]({{< relref "#back-to-dashboard" >}})
+- Loki
+  - [Show logs as annotations in dasboard graphs]({{< relref "#loki-annotations" >}})
   - [Live tailing improvements]({{< relref "#live-tailing-improvements" >}})
 - [Logs Panel - alpha]({{< relref "#logs-panel-alpha" >}})
 - [Data links improvements]({{< relref "#data-links-improvements" >}})
-- [Improving Grafana data model]({{< relref "#improving-grafana-data-model" >}})
+- [Share query results]({{< relref "#share-query-results" >}})
 - [Alpha version of grafana-toolkit]({{< relref "#alpha-version-of-grafana-toolkit" >}})
 - [PhantomJS deprecation]({{< relref "#phantomjs-deprecation" >}})
 - [Alpine based docker image]({{< relref "#alpine-based-docker-image" >}})
@@ -33,17 +34,17 @@ Grafana 6.4 comes with a lot of new features and enhancements backed with tons o
   - [GitLab OAuth Team Sync support]({{< relref "#gitlab-oauth-team-sync-support" >}})
   - [Teams support in LDAP Debug View]({{< relref "#teams-support-in-ldap-debug-view" >}})
 
-## New Explore features
-
-### Saving panel query from Explore
+### Loki annotations
 
 TODO
 
-### Logs Panel Alpha
+### Explore live tailing improvements
 
 TODO
 
-### Annotations using Loki
+### Go back to dashboard from Explore
+
+### New Logs Panel
 
 TODO
 
@@ -55,9 +56,13 @@ TODO
 
 With grafana 6.3 we introduced new way of creating [Data Links](https://grafana.com/blog/2019/08/27/new-in-grafana-6.3-easy-to-use-data-links/). Grafana 6.4 expands Data Links availability to Gauge, Bar Gauge and SingleStat(alpha) panels and adds new variables allowing retrieval of i.e. series labels/tags.
 
+But in 6.4 you can now use Data Links in the Gauge & Bar Gauge panel. With Data Links you can define dynamic links
+to other dashboards and systems. The link can reference template variables and query results like series name,
+column name, value and time.
+
 Read more about Data Links and what you can do with them in [documentation](https://grafana.com/docs/features/panels/graph/#data-link)
 
-## Improving Grafana's data model
+## Share query results
 
 Grafana 6.4 continues the work starting in 6.3 of creating a data model and query execution lifecycle that can support robust analytics and streaming.  These changes are mostly structural, and lay the foundation for powerful features in future releases.  The useful new features are in [alpha](https://grafana.com/docs/installation/configuration/#enable-alpha) mode that can be enabled with configuraiton flags.
 
@@ -65,8 +70,6 @@ Grafana 6.4 continues the work starting in 6.3 of creating a data model and quer
 - When [alpha plugins](https://grafana.com/docs/installation/configuration/#enable-alpha) are enabled, panels can reuse the query results from another panel.
 - When [transformations alpha feature](????) flag is enabled, the results of a query can be modified before passed to a visualization.
 - The DataSource query interface has been updated to better support streaming.  The result can now either return a `Promise<result>` or `Observable<result>`
-
-
 
 ## Alpha version of grafana-toolkit
 
@@ -82,14 +85,11 @@ TODO
 
 ## Grafana Enterprise
 
-Substantial refactoring and improvements to the external auth systems has gone in to this release making the  features
-listed below possible as well as laying a foundation for future enhancements.
-
 ### Reporting
 
 TODO
 
-### GitLab OAuth Support
+### GitLab OAuth Team Sync support
 
 TODO
 
