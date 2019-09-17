@@ -15,6 +15,8 @@ import 'app/features/alerting/AlertTabCtrl';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
+import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
+import { AppNotificationSeverity } from 'app/types';
 
 interface Props {
   angularPanel?: AngularComponent;
@@ -127,7 +129,16 @@ export class AlertTab extends PureComponent<Props> {
   };
 
   render() {
-    const { alert } = this.props.panel;
+    const { alert, transformations } = this.props.panel;
+    const hasTransformations = transformations && transformations.length;
+
+    if (!alert && hasTransformations) {
+      return (
+        <EditorTabBody heading="Alert">
+          <AlertBox severity={AppNotificationSeverity.Warning} title="Transformations are not supported in alert queries" />
+        </EditorTabBody>
+      );
+    }
 
     const toolbarItems = alert ? [this.stateHistory(), this.testRule(), this.deleteAlert()] : [];
 
@@ -141,6 +152,13 @@ export class AlertTab extends PureComponent<Props> {
     return (
       <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
         <>
+          {alert && hasTransformations && (
+            <AlertBox
+              severity={AppNotificationSeverity.Error}
+              title="Transformations are not supported in alert queries"
+            />
+          )}
+
           <div ref={element => (this.element = element)} />
           {!alert && <EmptyListCTA {...model} />}
         </>
