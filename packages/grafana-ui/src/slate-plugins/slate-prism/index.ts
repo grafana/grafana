@@ -19,10 +19,14 @@ export function SlatePrism(optsParam: OptionsFormat = {}): Plugin {
     },
 
     renderDecoration: (props, editor, next) =>
-      opts.renderDecoration({
-        children: props.children,
-        decoration: props.decoration,
-      }, editor as any, next),
+      opts.renderDecoration(
+        {
+          children: props.children,
+          decoration: props.decoration,
+        },
+        editor as any,
+        next
+      ),
   };
 }
 
