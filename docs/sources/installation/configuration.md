@@ -702,6 +702,11 @@ is false. This settings was introduced in Grafana v6.0.
 
 Set to true if you want to test alpha plugins that are not yet ready for general usage.
 
+## [feature_toggles]
+### enable
+
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+
 <hr />
 
 # Removed options
