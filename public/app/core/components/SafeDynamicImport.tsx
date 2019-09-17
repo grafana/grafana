@@ -30,7 +30,7 @@ export const SafeDynamicImport = (importStatement: Promise<any>) => ({ ...props 
 
         return (
           <div className={getAlertPageStyle()}>
-            <h2>Failed to find application file</h2>
+            <h2>Unable to find application file</h2>
             <br />
             <h2 className="page-heading">Grafana has likely been updated. Please try reloading the page.</h2>
             <br />
