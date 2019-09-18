@@ -2,12 +2,9 @@
 import _ from 'lodash';
 import React, { PureComponent, ReactNode } from 'react';
 
-// Components
-import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
-
 // Types
 import { AppNotificationSeverity } from 'app/types';
-import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/ui';
+import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta, Alert } from '@grafana/ui';
 
 interface Props {
   title: string;
@@ -29,7 +26,7 @@ class PanelPluginError extends PureComponent<Props> {
 
     return (
       <div style={style}>
-        <AlertBox severity={AppNotificationSeverity.Error} {...this.props} />
+        <Alert severity={AppNotificationSeverity.Error} {...this.props} />
       </div>
     );
   }
