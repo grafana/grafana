@@ -13,7 +13,6 @@ import Plain from 'slate-plain-serializer';
 import ReactDOM from 'react-dom';
 import React from 'react';
 import _ from 'lodash';
-import { CompletionItem } from 'app/types';
 
 function flattenSuggestions(s: any) {
   return s ? s.reduce((acc: any, g: any) => acc.concat(g.items), []) : [];
@@ -152,12 +151,17 @@ class QueryField extends React.Component<any, any> {
         if (this.menuEl) {
           // Dont blur input
           keyboardEvent.preventDefault();
-          if (!suggestions || suggestions.length === 0) {
+          if (!suggestions || !suggestions.length) {
             return next();
           }
 
-          this.applyTypeahead();
-          return true;
+          // Get the currently selected suggestion
+          const flattenedSuggestions = flattenSuggestions(suggestions);
+          const selected = Math.abs(typeaheadIndex);
+          const selectedIndex = selected % flattenedSuggestions.length || 0;
+          const suggestion = flattenedSuggestions[selectedIndex];
+
+          return this.applyTypeahead(editor, suggestion);
         }
         break;
       }
@@ -192,17 +196,23 @@ class QueryField extends React.Component<any, any> {
     return change;
   };
 
-  applyTypeahead = (editor?: CoreEditor, suggestion?: CompletionItem): { value: Value } => {
+  applyTypeahead = (
+    editor?: CoreEditor,
+    suggestion?: { text: any; type: string; deleteBackwards: any }
+  ): { value: Value } => {
     return { value: new Value() };
   };
 
-  resetTypeahead = () => {
-    this.setState({
-      suggestions: [],
-      typeaheadIndex: 0,
-      typeaheadPrefix: '',
-      typeaheadContext: null,
-    });
+  resetTypeahead = (callback?: () => void) => {
+    this.setState(
+      {
+        suggestions: [],
+        typeaheadIndex: 0,
+        typeaheadPrefix: '',
+        typeaheadContext: null,
+      },
+      callback
+    );
   };
 
   handleBlur = () => {

@@ -4,10 +4,9 @@ import Plain from 'slate-plain-serializer';
 import QueryField from './query_field';
 import debounce from 'lodash/debounce';
 import { DOMUtil } from '@grafana/ui';
-import { Editor as SlateEditor } from 'slate';
+import { Editor as CoreEditor } from 'slate';
 
 import { KEYWORDS, functionTokens, operatorTokens, grafanaMacros } from './kusto/kusto';
-import { CompletionItem } from 'app/types';
 // import '../sass/editor.base.scss';
 
 const TYPEAHEAD_DELAY = 100;
@@ -197,15 +196,15 @@ export default class KustoQueryField extends QueryField {
     }
   };
 
-  applyTypeahead = (editor: SlateEditor, suggestion: CompletionItem): SlateEditor => {
+  applyTypeahead = (editor: CoreEditor, suggestion: { text: any; type: string; deleteBackwards: any }): CoreEditor => {
     const { typeaheadPrefix, typeaheadContext, typeaheadText } = this.state;
-    let suggestionText = suggestion.label;
+    let suggestionText = suggestion.text || suggestion;
     const move = 0;
 
     // Modify suggestion based on context
 
     const nextChar = DOMUtil.getNextCharacter();
-    if (suggestion.kind === 'function') {
+    if (suggestion.type === 'function') {
       if (!nextChar || nextChar !== '(') {
         suggestionText += '(';
       }
@@ -219,8 +218,6 @@ export default class KustoQueryField extends QueryField {
       }
     }
 
-    this.resetTypeahead();
-
     // Remove the current, incomplete text and replace it with the selected suggestion
     const backward = suggestion.deleteBackwards || typeaheadPrefix.length;
     const text = cleanText(typeaheadText);
@@ -229,12 +226,16 @@ export default class KustoQueryField extends QueryField {
     const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
     const forward = midWord ? suffixLength + offset : 0;
 
-    return editor
-      .deleteBackward(backward)
-      .deleteForward(forward)
-      .insertText(suggestionText)
-      .moveForward(move)
-      .focus();
+    this.resetTypeahead(() =>
+      editor
+        .deleteBackward(backward)
+        .deleteForward(forward)
+        .insertText(suggestionText)
+        .moveForward(move)
+        .focus()
+    );
+
+    return editor;
   };
 
   // private _getFieldsSuggestions(): SuggestionGroup[] {
