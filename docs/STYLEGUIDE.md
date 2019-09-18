@@ -24,8 +24,28 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 * Task topic headings start with a verb.
 * Concept and reference topic headings should be nouns or gerunds.
 
-### Word usage
+### Images
 
-* "data source" is two words, not one.
+* Preferred format
+* Maximum and minimum size
+* Preferred DPI
+* How to add callouts
+* Style (borders and so on)
+
+### Capitalization
+
 * Grafana, Loki, and Prometheus are always capitalized unless part of a code block.
 * `amtool` is never capitalized.
+
+### Word usage
+Grafana products has some words, abbreviations, and slang particular to this discourse commmunity.
+
+#### data source
+Two words, not one
+
+**Exceptions:**
+* When "datasource" is used as an identifier
+* When "datasource" is part of a URL
+
+#### panel
+Used synonymously with _visualization_. Visualization is the preferred term.
