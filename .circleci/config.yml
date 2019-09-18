@@ -705,6 +705,7 @@ jobs:
 
             wget https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
             tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
+            sudo mv trivy /usr/local/bin
       - run:
           name: Scan the local image with trivy
           command: trivy --exit-code 0 --quiet --auto-refresh --clear-cache grafana/grafana:master
