@@ -9,6 +9,7 @@ interface Props {
 export const LdapUserMappingInfo: FC<Props> = ({ info, showAttributeMapping }) => {
   return (
     <div className="gf-form-group">
+      <h2>Mapping Result</h2>
       <div className="gf-form">
         <table className="filter-table form-inline">
           <thead>
