@@ -21,6 +21,7 @@ import {
   ciPluginReportTask,
 } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
+import { pluginCreateTask } from './tasks/plugin.create';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -116,6 +117,13 @@ export const run = (includeInternalScripts = false) => {
         });
       });
   }
+
+  program
+    .command('plugin:create [name]')
+    .description('Creates plugin from template')
+    .action(async cmd => {
+      await execTask(pluginCreateTask)({ name: cmd });
+    });
 
   program
     .command('plugin:build')
