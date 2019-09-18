@@ -90,6 +90,10 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 	}
 
 	for i, orgDTO := range user.OrgRoles {
+		if orgDTO.OrgId < 1 {
+			continue
+		}
+
 		orgName := orgNamesById[orgDTO.OrgId]
 
 		if orgName != "" {

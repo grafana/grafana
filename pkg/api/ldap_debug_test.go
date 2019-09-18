@@ -165,6 +165,7 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
+		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org", "another-group-not-matched"},
 		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN},
 		IsGrafanaAdmin: &isAdmin,
 	}
@@ -204,7 +205,7 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 
 	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe")
 
-	require.Equal(t, sc.resp.Code, http.StatusOK)
+	assert.Equal(t, sc.resp.Code, http.StatusOK)
 
 	expected := `
 		{
@@ -223,7 +224,8 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 			"isGrafanaAdmin": true,
 			"isDisabled": false,
 			"roles": [
-				{ "orgId": 1, "orgRole": "Admin", "orgName": "Main Org.", "groupDN": "cn=admins,ou=groups,dc=grafana,dc=org" }
+				{ "orgId": 1, "orgRole": "Admin", "orgName": "Main Org.", "groupDN": "cn=admins,ou=groups,dc=grafana,dc=org" },
+				{ "orgId": 0, "orgRole": "", "orgName": "", "groupDN": "another-group-not-matched" }
 			],
 			"teams": null
 		}
