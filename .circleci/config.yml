@@ -687,6 +687,34 @@ jobs:
           name: Release packages
           command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
 
+  scan-docker-master:
+    docker:
+      - image: docker:18.09-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - restore_cache:
+          key: vulnerability-db
+      - run:
+          name: Install trivy
+          command: |
+            apk add --update curl
+            VERSION=$(
+                curl --silent "https://api.github.com/repos/knqyf263/trivy/releases/latest" | \
+                grep '"tag_name":' | \
+                sed -E 's/.*"v([^"]+)".*/\1/'
+            )
+            wget https://github.com/knqyf263/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
+            tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
+            mv trivy /usr/local/bin
+      - run:
+          name: Scan the local image with trivy
+          command: trivy --exit-code 0 --quiet --auto-refresh --clear-cache grafana/grafana:master
+      - save_cache:
+          key: vulnerability-db
+          paths:
+            - $HOME/.cache/trivy
+
 workflows:
   version: 2
   build-master:
@@ -884,6 +912,8 @@ workflows:
         - postgres-integration-test:
             filters: *filter-not-release-or-master
         - cache-server-test:
+            filters: *filter-not-release-or-master
+        - scan-docker-master:
             filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
