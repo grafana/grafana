@@ -9,10 +9,8 @@
   }
 
   .navbar-page-btn {
-    transform: translate3d(-36px, 0, 0);
-
     i {
-      opacity: 0;
+      display: none;
     }
 
     i.navbar-page-btn__folder-icon {
@@ -49,8 +47,15 @@
     box-shadow: none;
 
     .sidemenu__top,
-    .sidemenu__bottom {
+    .sidemenu__bottom,
+    .sidemenu__logo_small_breakpoint {
       display: none;
+    }
+
+    .sidemenu__logo {
+      @include media-breakpoint-down(sm) {
+        display: block;
+      }
     }
   }
 
