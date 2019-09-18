@@ -48,4 +48,4 @@ Two words, not one
 * When "datasource" is part of a URL
 
 #### panel
-Used synonymously with _visualization_. Visualization is the preferred term.
+A panel consists of a set of queries along with a visualization.
