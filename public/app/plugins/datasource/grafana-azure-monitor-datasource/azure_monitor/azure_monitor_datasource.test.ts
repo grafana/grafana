@@ -88,6 +88,7 @@ describe('AzureMonitorDatasource', () => {
           apiVersion: '2018-01-01',
           refId: 'A',
           queryType: 'Azure Monitor',
+          subscriptions: new Array<string>(),
           azureMonitor: {
             resourceGroup: 'testRG',
             resourceName: 'testRN',
