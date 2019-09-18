@@ -912,8 +912,6 @@ workflows:
             filters: *filter-not-release-or-master
         - cache-server-test:
             filters: *filter-not-release-or-master
-        - scan-docker-master:
-            filters: *filter-not-release-or-master
         - grafana-docker-pr:
             requires:
               - build-fast-package
@@ -938,4 +936,10 @@ workflows:
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
-
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters: *filter-only-master
+    jobs:
+      - scan-docker-master
