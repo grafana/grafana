@@ -260,6 +260,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	user, serverConfig, err := ldap.User(username)
 
 	if user == nil {
+		logger.Error(err.Error())
 		return Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", nil)
 	}
 
@@ -325,12 +326,6 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	u.Teams = cmd.Result
 
 	return JSON(200, u)
-}
-
-// isMatchToLDAPGroup determines if we were able to match an LDAP group to an organization+role.
-// Since we allow one role per organization. If it's set, we were able to match it.
-func isMatchToLDAPGroup(user *models.ExternalUserInfo, groupConfig *ldap.GroupToOrgRole) bool {
-	return user.OrgRoles[groupConfig.OrgId] == groupConfig.OrgRole
 }
 
 // splitName receives the full name of a user and splits it into two parts: A name and a surname.
