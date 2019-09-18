@@ -14,6 +14,10 @@
     i {
       opacity: 0;
     }
+
+    i.navbar-page-btn__folder-icon {
+      opacity: inherit;
+    }
   }
 
   .navbar-button--zoom {
@@ -23,6 +27,17 @@
 
 .view-mode--playlist {
   @extend .view-mode--inactive;
+}
+
+// https://github.com/grafana/grafana/issues/18114
+.view-mode--tv.panel-in-fullscreen {
+  .navbar {
+    padding-left: $navbar-padding;
+  }
+
+  .navbar-page-btn {
+    transform: none;
+  }
 }
 
 .view-mode--tv {
