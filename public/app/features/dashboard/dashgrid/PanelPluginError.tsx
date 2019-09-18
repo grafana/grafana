@@ -3,8 +3,7 @@ import _ from 'lodash';
 import React, { PureComponent, ReactNode } from 'react';
 
 // Types
-import { AppNotificationSeverity } from 'app/types';
-import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta, Alert } from '@grafana/ui';
+import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta, Alert, AlertVariant } from '@grafana/ui';
 
 interface Props {
   title: string;
@@ -26,7 +25,7 @@ class PanelPluginError extends PureComponent<Props> {
 
     return (
       <div style={style}>
-        <Alert severity={AppNotificationSeverity.Error} {...this.props} />
+        <Alert severity={AlertVariant.Error} {...this.props} />
       </div>
     );
   }

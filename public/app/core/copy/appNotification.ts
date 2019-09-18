@@ -1,10 +1,11 @@
-import { AppNotification, AppNotificationSeverity, AppNotificationTimeout } from 'app/types';
+import { AppNotification, AppNotificationTimeout } from 'app/types';
+import { AlertVariant } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
 
 const defaultSuccessNotification = {
   title: '',
   text: '',
-  severity: AppNotificationSeverity.Success,
+  severity: AlertVariant.Success,
   icon: 'fa fa-check',
   timeout: AppNotificationTimeout.Success,
 };
@@ -12,7 +13,7 @@ const defaultSuccessNotification = {
 const defaultWarningNotification = {
   title: '',
   text: '',
-  severity: AppNotificationSeverity.Warning,
+  severity: AlertVariant.Warning,
   icon: 'fa fa-exclamation',
   timeout: AppNotificationTimeout.Warning,
 };
@@ -20,7 +21,7 @@ const defaultWarningNotification = {
 const defaultErrorNotification = {
   title: '',
   text: '',
-  severity: AppNotificationSeverity.Error,
+  severity: AlertVariant.Error,
   icon: 'fa fa-exclamation-triangle',
   timeout: AppNotificationTimeout.Error,
 };

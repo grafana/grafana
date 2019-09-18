@@ -10,13 +10,12 @@ import { EditorTabBody, EditorToolbarView } from '../dashboard/panel_editor/Edit
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
-import { Alert } from '@grafana/ui';
+import { Alert, AlertVariant } from '@grafana/ui';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
-import { AppNotificationSeverity } from 'app/types';
 
 interface Props {
   angularPanel?: AngularComponent;
@@ -135,10 +134,7 @@ export class AlertTab extends PureComponent<Props> {
     if (!alert && hasTransformations) {
       return (
         <EditorTabBody heading="Alert">
-          <Alert
-            severity={AppNotificationSeverity.Warning}
-            title="Transformations are not supported in alert queries"
-          />
+          <Alert severity={AlertVariant.Warning} title="Transformations are not supported in alert queries" />
         </EditorTabBody>
       );
     }
@@ -156,10 +152,7 @@ export class AlertTab extends PureComponent<Props> {
       <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
         <>
           {alert && hasTransformations && (
-            <Alert
-              severity={AppNotificationSeverity.Error}
-              title="Transformations are not supported in alert queries"
-            />
+            <Alert severity={AlertVariant.Error} title="Transformations are not supported in alert queries" />
           )}
 
           <div ref={element => (this.element = element)} />

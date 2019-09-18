@@ -1,6 +1,7 @@
 import { appNotificationsReducer } from './appNotification';
 import { ActionTypes } from '../actions/appNotification';
-import { AppNotificationSeverity, AppNotificationTimeout } from 'app/types/';
+import { AppNotificationTimeout } from 'app/types/';
+import { AlertVariant } from '@grafana/ui';
 
 describe('clear alert', () => {
   it('should filter alert', () => {
@@ -11,7 +12,7 @@ describe('clear alert', () => {
       appNotifications: [
         {
           id: id1,
-          severity: AppNotificationSeverity.Success,
+          severity: AlertVariant.Success,
           icon: 'success',
           title: 'test',
           text: 'test alert',
@@ -19,7 +20,7 @@ describe('clear alert', () => {
         },
         {
           id: id2,
-          severity: AppNotificationSeverity.Warning,
+          severity: AlertVariant.Warning,
           icon: 'warning',
           title: 'test2',
           text: 'test alert fail 2',
@@ -37,7 +38,7 @@ describe('clear alert', () => {
       appNotifications: [
         {
           id: id1,
-          severity: AppNotificationSeverity.Success,
+          severity: AlertVariant.Success,
           icon: 'success',
           title: 'test',
           text: 'test alert',

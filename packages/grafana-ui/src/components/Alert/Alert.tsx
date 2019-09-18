@@ -1,30 +1,35 @@
 import React, { FC, ReactNode } from 'react';
 import classNames from 'classnames';
-import { AppNotificationSeverity } from 'app/types';
 
-interface Props {
+export enum AlertVariant {
+  Success = 'success',
+  Warning = 'warning',
+  Error = 'error',
+  Info = 'info',
+}
+
+interface AlertProps {
   title: string;
   button?: {
     text?: string;
     onClick: (event: React.MouseEvent) => void;
   };
-  severity?: AppNotificationSeverity;
+  severity?: AlertVariant;
   children?: ReactNode;
-  icon?: string;
 }
 
-function getIconFromSeverity(severity: AppNotificationSeverity = AppNotificationSeverity.Error): string {
+function getIconFromSeverity(severity: AlertVariant): string {
   switch (severity) {
-    case AppNotificationSeverity.Error: {
+    case AlertVariant.Error: {
       return 'fa fa-exclamation-triangle';
     }
-    case AppNotificationSeverity.Warning: {
+    case AlertVariant.Warning: {
       return 'fa fa-exclamation-triangle';
     }
-    case AppNotificationSeverity.Info: {
+    case AlertVariant.Info: {
       return 'fa fa-info-circle';
     }
-    case AppNotificationSeverity.Success: {
+    case AlertVariant.Success: {
       return 'fa fa-check';
     }
     default:
@@ -32,14 +37,13 @@ function getIconFromSeverity(severity: AppNotificationSeverity = AppNotification
   }
 }
 
-export const Alert: FC<Props> = props => {
-  const { title, button, children, severity, icon } = props;
+export const Alert: FC<AlertProps> = ({ title, button, children, severity = AlertVariant.Info }) => {
   const alertClass = classNames('alert', `alert-${severity}`);
   return (
     <div className="alert-container">
       <div className={alertClass}>
         <div className="alert-icon">
-          <i className={icon || getIconFromSeverity(severity)} />
+          <i className={getIconFromSeverity(severity)} />
         </div>
         <div className="alert-body">
           <div className="alert-title">{title}</div>

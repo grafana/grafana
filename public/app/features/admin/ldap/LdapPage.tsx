@@ -2,14 +2,14 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { FormField, Alert } from '@grafana/ui';
+import { FormField, Alert, AlertVariant } from '@grafana/ui';
 import { getNavModel } from 'app/core/selectors/navModel';
 import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
 import { LdapConnectionStatus } from './LdapConnectionStatus';
 import { LdapSyncInfo } from './LdapSyncInfo';
 import { LdapUserInfo } from './LdapUserInfo';
-import { AppNotificationSeverity, LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo } from 'app/types';
+import { LdapError, LdapUser, StoreState, SyncInfo, LdapConnectionInfo } from 'app/types';
 import {
   loadLdapState,
   loadLdapSyncStatus,
@@ -80,7 +80,7 @@ export class LdapPage extends PureComponent<Props, State> {
           <>
             {ldapError && ldapError.title && (
               <div className="gf-form-group">
-                <Alert title={ldapError.title} severity={AppNotificationSeverity.Error} children={ldapError.body} />
+                <Alert title={ldapError.title} severity={AlertVariant.Error} children={ldapError.body} />
               </div>
             )}
 
@@ -101,7 +101,7 @@ export class LdapPage extends PureComponent<Props, State> {
               <div className="gf-form-group">
                 <Alert
                   title={userError.title}
-                  severity={AppNotificationSeverity.Error}
+                  severity={AlertVariant.Error}
                   children={userError.body}
                   button={{ text: 'Remove', onClick: this.onClearUserError }}
                 />
