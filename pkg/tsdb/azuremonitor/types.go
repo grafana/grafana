@@ -77,18 +77,20 @@ type AzureLogAnalyticsResponse struct {
 }
 
 type AzureMonitorData struct {
-	ResourceGroup       string  `json:"resourceGroup"`
-	ResourceName        string  `json:"resourceName"`
-	MetricDefinition    string  `json:"metricDefinition"`
-	TimeGrain           string  `json:"timeGrain"`
-	AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
-	MetricName          string  `json:"metricName"`
-	MetricNamespace     string  `json:"metricNamespace"`
-	Aggregation         string  `json:"aggregation"`
-	Dimension           string  `json:"dimension"`
-	DimensionFilter     string  `json:"dimensionFilter"`
-	Alias               string  `json:"alias"`
-	Format              string  `json:"format"`
+	ResourceGroup       string   `json:"resourceGroup"`
+	ResourceGroups      []string `json:"resourceGroups"`
+	Locations           []string `json:"locations"`
+	ResourceName        string   `json:"resourceName"`
+	MetricDefinition    string   `json:"metricDefinition"`
+	TimeGrain           string   `json:"timeGrain"`
+	AllowedTimeGrainsMs []int64  `json:"allowedTimeGrainsMs"`
+	MetricName          string   `json:"metricName"`
+	MetricNamespace     string   `json:"metricNamespace"`
+	Aggregation         string   `json:"aggregation"`
+	Dimension           string   `json:"dimension"`
+	DimensionFilter     string   `json:"dimensionFilter"`
+	Alias               string   `json:"alias"`
+	Format              string   `json:"format"`
 }
 
 type AzureMonitorQueryModel struct {
@@ -96,4 +98,14 @@ type AzureMonitorQueryModel struct {
 	Janbanan  string                      `json:"janbanan"`
 	Data      map[string]AzureMonitorData `json:"data"`
 	AzureMonitorData
+}
+
+type ResourcesResponse struct {
+	Value []struct {
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		Type     string `json:"type"`
+		Kind     string `json:"kind,omitempty"`
+		Location string `json:"location"`
+	} `json:"value"`
 }

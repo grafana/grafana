@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 	"time"
 
@@ -44,7 +45,7 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 		Results: map[string]*tsdb.QueryResult{},
 	}
 
-	queries, err := e.buildQueries(originalQueries, timeRange)
+	queries, err := e.buildQueries(ctx, originalQueries, timeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,6 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 		if err != nil {
 			return nil, err
 		}
-		// azlog.Debug("AzureMonitor", "Response", resp)
 
 		err = e.parseResponse(queryRes, resp, query)
 		if err != nil {
@@ -67,10 +67,17 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 		}
 	}
 
+	// Sort times series in evert query by name
+	for _, query := range queries {
+		sort.Slice(result.Results[query.RefID].Series, func(i, j int) bool {
+			return result.Results[query.RefID].Series[i].Name < result.Results[query.RefID].Series[j].Name
+		})
+	}
+
 	return result, nil
 }
 
-func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *tsdb.TimeRange) ([]*AzureMonitorQuery, error) {
+func (e *AzureMonitorDatasource) buildQueries(ctx context.Context, queries []*tsdb.Query, timeRange *tsdb.TimeRange) ([]*AzureMonitorQuery, error) {
 	azureMonitorQueries := []*AzureMonitorQuery{}
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
@@ -83,83 +90,161 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 	}
 
 	for _, query := range queries {
-		var target string
-
 		var azureMonitorTarget AzureMonitorQueryModel
 		data, err := query.Model.Get("azureMonitor").MarshalJSON()
 		if err != nil {
 			return nil, fmt.Errorf("Invalid query format")
 		}
-
 		json.Unmarshal(data, &azureMonitorTarget)
-		if azureMonitorTarget.QueryMode == "crossResource" {
-			return nil, fmt.Errorf("Alerting not supported for multiple resource queries")
-		}
 
 		var azureMonitorData AzureMonitorData
-		if azureMonitorTarget.QueryMode == "singleResource" {
-			azureMonitorData = azureMonitorTarget.Data[azureMonitorTarget.QueryMode]
-		} else {
+
+		if azureMonitorTarget.QueryMode == "" {
+			azureMonitorTarget.QueryMode = "singleResource"
 			azureMonitorData = azureMonitorTarget.AzureMonitorData
+		} else {
+			azureMonitorData = azureMonitorTarget.Data[azureMonitorTarget.QueryMode]
 		}
-		urlComponents := map[string]string{}
-		urlComponents["subscription"] = query.Model.Get("subscription").MustString()
-		urlComponents["resourceGroup"] = azureMonitorData.ResourceGroup
-		urlComponents["metricDefinition"] = azureMonitorData.MetricDefinition
-		urlComponents["resourceName"] = azureMonitorData.ResourceName
 
-		ub := urlBuilder{
-			DefaultSubscription: query.DataSource.JsonData.Get("subscriptionId").MustString(),
-			Subscription:        urlComponents["subscription"],
-			ResourceGroup:       urlComponents["resourceGroup"],
-			MetricDefinition:    urlComponents["metricDefinition"],
-			ResourceName:        urlComponents["resourceName"],
-		}
-		azureURL := ub.Build()
-
-		timeGrain := azureMonitorData.TimeGrain
-		timeGrains := azureMonitorData.AllowedTimeGrainsMs
-		if timeGrain == "auto" {
-			timeGrain, err = e.setAutoTimeGrain(query.IntervalMs, timeGrains)
+		if azureMonitorTarget.QueryMode == "singleResource" {
+			azQuery, err := e.buildSingleQuery(query, &azureMonitorData, startTime, endTime, query.Model.Get("subscription").MustString())
 			if err != nil {
 				return nil, err
 			}
+			azureMonitorQueries = append(azureMonitorQueries, &azQuery)
+		} else if azureMonitorTarget.QueryMode == "crossResource" {
+			azQueries, err := e.buildMultipleResourcesQueries(ctx, query, &azureMonitorData, startTime, endTime)
+			if err != nil {
+				return nil, err
+			}
+			azureMonitorQueries = append(azureMonitorQueries, azQueries...)
 		}
 
-		params := url.Values{}
-		params.Add("api-version", "2018-01-01")
-		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
-		params.Add("interval", timeGrain)
-		params.Add("aggregation", azureMonitorData.Aggregation)
-		params.Add("metricnames", azureMonitorData.MetricName)
-
-		if azureMonitorData.MetricNamespace != "" {
-			params.Add("metricnamespace", azureMonitorData.MetricNamespace)
-		}
-
-		dimension := strings.TrimSpace(azureMonitorData.Dimension)
-		dimensionFilter := strings.TrimSpace(azureMonitorData.DimensionFilter)
-		if len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
-			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
-		}
-
-		target = params.Encode()
-
-		if setting.Env == setting.DEV {
-			azlog.Debug("Azuremonitor request", "params", params)
-		}
-
-		azureMonitorQueries = append(azureMonitorQueries, &AzureMonitorQuery{
-			URL:           azureURL,
-			UrlComponents: urlComponents,
-			Target:        target,
-			Params:        params,
-			RefID:         query.RefId,
-			Alias:         azureMonitorData.Alias,
-		})
 	}
 
 	return azureMonitorQueries, nil
+}
+
+func (e *AzureMonitorDatasource) buildSingleQuery(query *tsdb.Query, azureMonitorData *AzureMonitorData, startTime time.Time, endTime time.Time, subscriptionID string) (AzureMonitorQuery, error) {
+	var target string
+
+	urlComponents := map[string]string{}
+	urlComponents["subscription"] = subscriptionID
+	urlComponents["resourceGroup"] = azureMonitorData.ResourceGroup
+	urlComponents["metricDefinition"] = azureMonitorData.MetricDefinition
+	urlComponents["resourceName"] = azureMonitorData.ResourceName
+
+	ub := urlBuilder{
+		DefaultSubscription: query.DataSource.JsonData.Get("subscriptionId").MustString(),
+		Subscription:        urlComponents["subscription"],
+		ResourceGroup:       urlComponents["resourceGroup"],
+		MetricDefinition:    urlComponents["metricDefinition"],
+		ResourceName:        urlComponents["resourceName"],
+	}
+	azureURL := ub.Build()
+
+	timeGrain := azureMonitorData.TimeGrain
+	timeGrains := azureMonitorData.AllowedTimeGrainsMs
+	var err error
+	if timeGrain == "auto" {
+		timeGrain, err = e.setAutoTimeGrain(query.IntervalMs, timeGrains)
+		if err != nil {
+			return AzureMonitorQuery{}, err
+		}
+	}
+
+	params := url.Values{}
+	params.Add("api-version", "2018-01-01")
+	params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
+	params.Add("interval", timeGrain)
+	params.Add("aggregation", azureMonitorData.Aggregation)
+	params.Add("metricnames", azureMonitorData.MetricName)
+
+	if azureMonitorData.MetricNamespace != "" {
+		params.Add("metricnamespace", azureMonitorData.MetricNamespace)
+	}
+
+	dimension := strings.TrimSpace(azureMonitorData.Dimension)
+	dimensionFilter := strings.TrimSpace(azureMonitorData.DimensionFilter)
+	if len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
+		params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+	}
+
+	target = params.Encode()
+
+	if setting.Env == setting.DEV {
+		azlog.Debug("Azuremonitor request", "params", params)
+	}
+
+	return AzureMonitorQuery{
+		URL:           azureURL,
+		UrlComponents: urlComponents,
+		Target:        target,
+		Params:        params,
+		RefID:         query.RefId,
+		Alias:         azureMonitorData.Alias,
+	}, nil
+}
+
+func (e *AzureMonitorDatasource) buildMultipleResourcesQueries(ctx context.Context, query *tsdb.Query, azureMonitorData *AzureMonitorData, startTime time.Time, endTime time.Time) ([]*AzureMonitorQuery, error) {
+	azureMonitorQueries := []*AzureMonitorQuery{}
+	subscriptions := query.Model.Get("subscriptions").MustArray()
+
+	resources, err := e.getResources(ctx, azureMonitorData, subscriptions)
+	if err != nil {
+		return azureMonitorQueries, err
+	}
+
+	for _, resource := range resources {
+		data := azureMonitorData
+		data.ResourceGroup = resource.ParseGroup()
+		data.MetricDefinition = resource.Type
+		data.ResourceName = resource.Name
+
+		azQuery, err := e.buildSingleQuery(query, data, startTime, endTime, resource.SubscriptionID)
+		if err != nil {
+			return nil, err
+		}
+		azureMonitorQueries = append(azureMonitorQueries, &azQuery)
+	}
+
+	return azureMonitorQueries, nil
+}
+
+func (e *AzureMonitorDatasource) getResources(ctx context.Context, azureMonitorData *AzureMonitorData, subscriptions []interface{}) ([]resource, error) {
+	resourcesMap := map[string]resource{}
+
+	for _, subscriptionID := range subscriptions {
+		resourcesResponse, err := e.executeResourcesQuery(ctx, fmt.Sprintf("%v", subscriptionID))
+		if err != nil {
+			return []resource{}, err
+		}
+
+		for _, resourceResponse := range resourcesResponse.Value {
+			resource := resource{
+				ID:             resourceResponse.ID,
+				Name:           resourceResponse.Name,
+				Type:           resourceResponse.Type,
+				Location:       resourceResponse.Location,
+				SubscriptionID: fmt.Sprintf("%v", subscriptionID),
+			}
+
+			match := contains(azureMonitorData.ResourceGroups, resource.ParseGroup()) &&
+				contains(azureMonitorData.Locations, resource.Location) &&
+				azureMonitorData.MetricDefinition == resource.Type
+
+			if _, ok := resourcesMap[resource.GetKey()]; !ok && match {
+				resourcesMap[resource.GetKey()] = resource
+			}
+		}
+	}
+
+	resources := []resource{}
+	for _, resource := range resourcesMap {
+		resources = append(resources, resource)
+	}
+
+	return resources, nil
 }
 
 // setAutoTimeGrain tries to find the closest interval to the query's intervalMs value
@@ -220,6 +305,29 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 	return queryResult, data, nil
 }
 
+func (e *AzureMonitorDatasource) executeResourcesQuery(ctx context.Context, subscriptionID string) (ResourcesResponse, error) {
+	req, err := e.createRequest(ctx, e.dsInfo)
+	if err != nil {
+		return ResourcesResponse{}, err
+	}
+
+	params := url.Values{}
+	params.Add("api-version", "2018-01-01")
+	req.URL.Path = path.Join(req.URL.Path, subscriptionID, "resources")
+	req.URL.RawQuery = params.Encode()
+
+	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	if err != nil {
+		return ResourcesResponse{}, err
+	}
+	data, err := e.unmarshalResourcesResponse(res)
+	if err != nil {
+		return ResourcesResponse{}, err
+	}
+
+	return data, nil
+}
+
 func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
@@ -251,7 +359,6 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, dsInfo)
-
 	return req, nil
 }
 
@@ -272,6 +379,28 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 	if err != nil {
 		azlog.Error("Failed to unmarshal AzureMonitor response", "error", err, "status", res.Status, "body", string(body))
 		return AzureMonitorResponse{}, err
+	}
+
+	return data, nil
+}
+
+func (e *AzureMonitorDatasource) unmarshalResourcesResponse(res *http.Response) (ResourcesResponse, error) {
+	body, err := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		return ResourcesResponse{}, err
+	}
+
+	if res.StatusCode/100 != 2 {
+		azlog.Error("Request failed", "status", res.Status, "body", string(body))
+		return ResourcesResponse{}, fmt.Errorf(string(body))
+	}
+
+	var data ResourcesResponse
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		azlog.Error("Failed to unmarshal AzureMonitor Resource response", "error", err, "status", res.Status, "body", string(body))
+		return ResourcesResponse{}, err
 	}
 
 	return data, nil
@@ -375,7 +504,7 @@ func formatLegendKey(alias string, resourceName string, metricName string, metad
 			return []byte(namespace)
 		}
 
-		if metaPartName == "resourcename" {
+		if metaPartName == "resourcen	ame" {
 			return []byte(resourceName)
 		}
 
@@ -395,4 +524,13 @@ func formatLegendKey(alias string, resourceName string, metricName string, metad
 	})
 
 	return string(result)
+}
+
+func contains(a []string, x string) bool {
+	for _, n := range a {
+		if x == n {
+			return true
+		}
+	}
+	return false
 }
