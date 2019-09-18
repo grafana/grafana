@@ -60,14 +60,12 @@ export class TableRenderer {
     }
 
     if (style.thresholds.length >= style.colors.length) {
-      console.error(
+      throw new Error(
         // tslint:disable-next-line:max-line-length
         `There must be max ${style.colors.length - 1} thresholds for ${style.colors.length} colors. You have ${
           style.thresholds.length
         } set.`
       );
-
-      return null;
     }
 
     for (let i = style.thresholds.length; i > 0; i--) {
