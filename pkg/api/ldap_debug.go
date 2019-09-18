@@ -260,8 +260,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	user, serverConfig, err := ldap.User(username)
 
 	if user == nil {
-		logger.Error(err.Error())
-		return Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", nil)
+		return Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
 
 	logger.Debug("user found", "user", user)
