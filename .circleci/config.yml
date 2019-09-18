@@ -689,7 +689,7 @@ jobs:
 
   scan-docker-master:
     docker:
-      - image: docker:18.09-git
+      - image: circleci/buildpack-deps:stretch
     steps:
       - checkout
       - setup_remote_docker
@@ -698,13 +698,13 @@ jobs:
       - run:
           name: Install trivy
           command: |
-            apk add --update curl
             VERSION=$(
-                curl --silent "https://api.github.com/repos/knqyf263/trivy/releases/latest" | \
+                curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | \
                 grep '"tag_name":' | \
                 sed -E 's/.*"v([^"]+)".*/\1/'
             )
-            wget https://github.com/knqyf263/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
+
+            wget https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
             tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
             mv trivy /usr/local/bin
       - run:
