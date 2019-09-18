@@ -67,7 +67,7 @@ This topic lists words and abbreviations that commonly used in the Grafana docum
 <dd> </dd>
 
 <dt>panel</dt> 
-<dd> </dd>
+<dd>A panel consists of a set of queries along with a visualization.</dd>
 
 <dt>plugin</dt> 
 <dd> </dd>
