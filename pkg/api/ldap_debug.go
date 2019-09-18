@@ -260,8 +260,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	user, serverConfig, err := ldap.User(username)
 
 	if user == nil {
-		logger.Error(err.Error())
-		return Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", nil)
+		return Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
 
 	logger.Debug("user found", "user", user)
@@ -289,20 +288,19 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 		}
 	}
 
-	// Then, if we have a mismatch between the number of groups we matched and the number of
-	// groups this user belongs to in LDAP - we should let the administrator know what we
-	// got from LDAP
-	for _, group := range user.Groups {
+	// Then, we find what we did not match by inspecting the list of groups returned from
+	// LDAP against what we have already matched above.
+	for _, userGroup := range user.Groups {
 		var matches int
 
 		for _, orgRole := range orgRoles {
-			if orgRole.GroupDN == group { // we already matched it
+			if orgRole.GroupDN == userGroup { // we already matched it
 				matches++
 			}
 		}
 
 		if matches < 1 {
-			r := &LDAPRoleDTO{GroupDN: group}
+			r := &LDAPRoleDTO{GroupDN: userGroup}
 			orgRoles = append(orgRoles, *r)
 		}
 	}
