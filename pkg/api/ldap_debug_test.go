@@ -94,7 +94,7 @@ func TestGetUserFromLDAPApiEndpoint_UserNotFound(t *testing.T) {
 	sc := getUserFromLDAPContext(t, "/api/admin/ldap/user-that-does-not-exist")
 
 	require.Equal(t, sc.resp.Code, http.StatusNotFound)
-	assert.JSONEq(t, "{\"message\":\"No user was found on the LDAP server(s)\"}", sc.resp.Body.String())
+	assert.JSONEq(t, "{\"message\":\"No user was found in the LDAP server(s) with that username\"}", sc.resp.Body.String())
 }
 
 func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
@@ -103,6 +103,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
+		Groups:         []string{"cn=admins,ou=groups,dc=grafana,dc=org"},
 		OrgRoles:       map[int64]models.RoleType{1: models.ROLE_ADMIN, 2: models.ROLE_VIEWER},
 		IsGrafanaAdmin: &isAdmin,
 	}
@@ -117,12 +118,12 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgID:   1,
+				OrgId:   1,
 				OrgRole: models.ROLE_ADMIN,
 			},
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana2,dc=org",
-				OrgID:   2,
+				OrgId:   2,
 				OrgRole: models.ROLE_VIEWER,
 			},
 		},
@@ -178,7 +179,7 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgID:   1,
+				OrgId:   1,
 				OrgRole: models.ROLE_ADMIN,
 			},
 		},
@@ -251,7 +252,7 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 		Groups: []*ldap.GroupToOrgRole{
 			{
 				GroupDN: "cn=admins,ou=groups,dc=grafana,dc=org",
-				OrgID:   1,
+				OrgId:   1,
 				OrgRole: models.ROLE_ADMIN,
 			},
 		},

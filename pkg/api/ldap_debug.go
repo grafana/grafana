@@ -94,6 +94,8 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 
 		if orgName != "" {
 			user.OrgRoles[i].OrgName = orgName
+		} else {
+			return errOrganizationNotFound(orgDTO.OrgId)
 		}
 	}
 
@@ -254,7 +256,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	user, serverConfig, err := ldap.User(username)
 
 	if user == nil {
-		return Error(http.StatusNotFound, "No user was found on the LDAP server(s)", err)
+		return Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", nil)
 	}
 
 	logger.Debug("user found", "user", user)
@@ -272,16 +274,31 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 
 	orgRoles := []LDAPRoleDTO{}
 
-	for _, ldapGroup := range user.Groups {
-		role := &LDAPRoleDTO{GroupDN: ldapGroup}
-		orgRoles = append(orgRoles, *role)
+	// First, let's find the groupDN that we did match by inspecting the assigned user OrgRoles.
+	for _, group := range serverConfig.Groups {
+		orgRole, ok := user.OrgRoles[group.OrgId]
 
-		for _, mapping := range serverConfig.Groups {
-			if mapping.GroupDN == ldapGroup {
-				role.OrgId = mapping.OrgId
-				role.OrgRole = mapping.OrgRole
-				orgRoles = append(orgRoles, *role)
+		if ok && orgRole == group.OrgRole {
+			r := &LDAPRoleDTO{GroupDN: group.GroupDN, OrgId: group.OrgId, OrgRole: group.OrgRole}
+			orgRoles = append(orgRoles, *r)
+		}
+	}
+
+	// Then, if we have a mismatch between the number of groups we matched and the number of
+	// groups this user belongs to in LDAP - we should let the administrator know what we
+	// got from LDAP
+	for _, group := range user.Groups {
+		var matches int
+
+		for _, orgRole := range orgRoles {
+			if orgRole.GroupDN == group { // we already matched it
+				matches++
 			}
+		}
+
+		if matches < 1 {
+			r := &LDAPRoleDTO{GroupDN: group}
+			orgRoles = append(orgRoles, *r)
 		}
 	}
 
