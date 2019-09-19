@@ -37,7 +37,7 @@ function getIconFromSeverity(severity: AlertVariant): string {
   }
 }
 
-export const Alert: FC<AlertProps> = ({ title, button, children, severity = AlertVariant.Info }) => {
+export const Alert: FC<AlertProps> = ({ title, button, children, severity = AlertVariant.Error }) => {
   const alertClass = classNames('alert', `alert-${severity}`);
   return (
     <div className="alert-container">
