@@ -29,7 +29,7 @@ export interface ResetExploreAction {
 
 export interface SyncTimesAction {
   type: ActionTypes.SyncTimes;
-  payload: {};
+  payload: { syncedTimes: boolean };
 }
 /**  Lower order actions
  *
@@ -170,7 +170,9 @@ export interface SplitOpenPayload {
   itemState: ExploreItemState;
 }
 
-export interface SyncTimesPayload {}
+export interface SyncTimesPayload {
+  syncedTimes: boolean;
+}
 
 export interface ToggleTablePayload {
   exploreId: ExploreId;

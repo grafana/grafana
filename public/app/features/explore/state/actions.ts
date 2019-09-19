@@ -679,8 +679,9 @@ export function splitOpen(): ThunkResult<void> {
   Initialize syn times
 */
 export function syncTimes(): ThunkResult<void> {
-  return dispatch => {
-    dispatch(syncTimesAction({}));
+  return (dispatch, getState) => {
+    const currentState = getState().explore.syncedTimes;
+    dispatch(syncTimesAction({ syncedTimes: !currentState }));
     dispatch(stateSave());
   };
 }

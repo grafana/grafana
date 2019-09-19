@@ -729,7 +729,7 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
       return { ...state, split: true, right: { ...action.payload.itemState } };
     }
     case ActionTypes.SyncTimes: {
-      return { ...state, syncedTimes: true };
+      return { ...state, syncedTimes: action.payload.syncedTimes };
     }
 
     case ActionTypes.ResetExplore: {
