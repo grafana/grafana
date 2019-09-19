@@ -14,7 +14,7 @@ type resource struct {
 }
 
 func (r *resource) GetKey() string {
-	return fmt.Sprintf("%s-%s-%s-%s", r.SubscriptionID, r.ParseGroup, r.Type, r.Location)
+	return fmt.Sprintf("%s-%s-%s-%s", r.SubscriptionID, r.ParseGroup(), r.Type, r.Location)
 }
 
 func (r *resource) ParseGroup() string {

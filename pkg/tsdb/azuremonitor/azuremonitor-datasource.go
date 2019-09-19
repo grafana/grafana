@@ -420,7 +420,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, data 
 			metadataName = series.Metadatavalues[0].Name.LocalizedValue
 			metadataValue = series.Metadatavalues[0].Value
 		}
-		metricName := formatLegendKey(query.Alias, query.UrlComponents["resourceName"], data.Value[0].Name.LocalizedValue, metadataName, metadataValue, data.Namespace, data.Value[0].ID)
+		metricName := formatLegendKey(query.Alias, query.UrlComponents["resourceName"], data.Value[0].Name.LocalizedValue, metadataName, metadataValue, data.Namespace, data.Value[0].ID, data.Resourceregion, query.UrlComponents["metricDefinition"], query.UrlComponents["subscription"])
 
 		for _, point := range series.Data {
 			var value float64
@@ -479,7 +479,7 @@ func (e *AzureMonitorDatasource) findClosestAllowedIntervalMS(intervalMs int64, 
 
 // formatLegendKey builds the legend key or timeseries name
 // Alias patterns like {{resourcename}} are replaced with the appropriate data values.
-func formatLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string) string {
+func formatLegendKey(alias string, resourceName string, metricName string, metadataName string, metadataValue string, namespace string, seriesID string, location string, resourceType string, subscription string) string {
 	if alias == "" {
 		if len(metadataName) > 0 {
 			return fmt.Sprintf("%s{%s=%s}.%s", resourceName, metadataName, metadataValue, metricName)
@@ -495,7 +495,6 @@ func formatLegendKey(alias string, resourceName string, metricName string, metad
 		metaPartName := strings.Replace(string(in), "{{", "", 1)
 		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
 		metaPartName = strings.ToLower(strings.TrimSpace(metaPartName))
-
 		if metaPartName == "resourcegroup" {
 			return []byte(resourceGroup)
 		}
@@ -504,7 +503,7 @@ func formatLegendKey(alias string, resourceName string, metricName string, metad
 			return []byte(namespace)
 		}
 
-		if metaPartName == "resourcen	ame" {
+		if metaPartName == "resourcename" {
 			return []byte(resourceName)
 		}
 
@@ -518,6 +517,18 @@ func formatLegendKey(alias string, resourceName string, metricName string, metad
 
 		if metaPartName == "dimensionvalue" {
 			return []byte(metadataValue)
+		}
+
+		if metaPartName == "location" {
+			return []byte(location)
+		}
+
+		if metaPartName == "resourcetype" {
+			return []byte(resourceType)
+		}
+
+		if metaPartName == "subscription" {
+			return []byte(subscription)
 		}
 
 		return in
