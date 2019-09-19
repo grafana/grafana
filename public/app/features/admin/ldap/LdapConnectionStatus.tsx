@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
-import { Alert, AlertVariant } from '@grafana/ui';
-import { LdapConnectionInfo, LdapServerInfo } from 'app/types';
+import { Alert } from '@grafana/ui';
+import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
   ldapConnectionInfo: LdapConnectionInfo;
@@ -78,5 +78,5 @@ export const LdapErrorBox: FC<LdapConnectionErrorProps> = ({ ldapConnectionInfo 
     </div>
   ));
 
-  return <Alert title="Connection error" severity={AlertVariant.Error} children={errorElements} />;
+  return <Alert title="Connection error" severity={AppNotificationSeverity.Error} children={errorElements} />;
 };

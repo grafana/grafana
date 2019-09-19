@@ -6,10 +6,9 @@ import find from 'lodash/find';
 
 // Types
 import { UrlQueryMap } from '@grafana/runtime';
-import { StoreState } from 'app/types';
+import { StoreState, AppNotificationSeverity } from 'app/types';
 import {
   Alert,
-  AlertVariant,
   PluginType,
   GrafanaPlugin,
   PluginInclude,
@@ -142,7 +141,7 @@ class PluginPage extends PureComponent<Props, State> {
     const { plugin, nav } = this.state;
 
     if (!plugin) {
-      return <Alert severity={AlertVariant.Error} title="Plugin Not Found" />;
+      return <Alert severity={AppNotificationSeverity.Error} title="Plugin Not Found" />;
     }
 
     const active = nav.main.children.find(tab => tab.active);
@@ -302,7 +301,7 @@ class PluginPage extends PureComponent<Props, State> {
               <div className="sidebar-content">
                 {plugin.loadError && (
                   <Alert
-                    severity={AlertVariant.Error}
+                    severity={AppNotificationSeverity.Error}
                     title="Error Loading Plugin"
                     children={
                       <>

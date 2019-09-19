@@ -23,9 +23,14 @@ import { updateLocation } from 'app/core/actions';
 import { notifyApp } from 'app/core/actions';
 
 // Types
-import { StoreState, DashboardInitPhase, DashboardRouteInfo, DashboardInitError } from 'app/types';
+import {
+  StoreState,
+  DashboardInitPhase,
+  DashboardRouteInfo,
+  DashboardInitError,
+  AppNotificationSeverity,
+} from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { AlertVariant } from '@grafana/ui';
 export interface Props {
   urlUid?: string;
   urlSlug?: string;
@@ -236,7 +241,7 @@ export class DashboardPage extends PureComponent<Props, State> {
     return (
       <div className="dashboard-loading">
         <Alert
-          severity={AlertVariant.Error}
+          severity={AppNotificationSeverity.Error}
           title={initError.message}
           children={getMessageFromError(initError.error)}
         />

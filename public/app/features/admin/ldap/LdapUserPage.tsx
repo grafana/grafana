@@ -2,10 +2,19 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { Alert, AlertVariant } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { LdapError, LdapUser, StoreState, User, UserSession, SyncInfo, LdapUserSyncInfo } from 'app/types';
+import {
+  AppNotificationSeverity,
+  LdapError,
+  LdapUser,
+  StoreState,
+  User,
+  UserSession,
+  SyncInfo,
+  LdapUserSyncInfo,
+} from 'app/types';
 import {
   clearUserError,
   loadLdapUserInfo,
@@ -99,9 +108,10 @@ export class LdapUserPage extends PureComponent<Props, State> {
             <div className="gf-form-group">
               <Alert
                 title={userError.title}
-                severity={AlertVariant.Error}
+                severity={AppNotificationSeverity.Error}
                 children={userError.body}
-                button={{ onClick: this.onClearUserError, text: 'Remove' }}
+                onRemove
+                onButtonClick={this.onClearUserError}
               />
             </div>
           )}

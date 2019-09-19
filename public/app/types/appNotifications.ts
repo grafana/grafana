@@ -1,11 +1,17 @@
-import { AlertVariant } from '@grafana/ui';
 export interface AppNotification {
   id: number;
-  severity: AlertVariant;
+  severity: AppNotificationSeverity;
   icon: string;
   title: string;
   text: string;
   timeout: AppNotificationTimeout;
+}
+
+export enum AppNotificationSeverity {
+  Success = 'success',
+  Warning = 'warning',
+  Error = 'error',
+  Info = 'info',
 }
 
 export enum AppNotificationTimeout {
