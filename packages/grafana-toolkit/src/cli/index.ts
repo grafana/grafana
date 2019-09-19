@@ -122,14 +122,14 @@ export const run = (includeInternalScripts = false) => {
     .command('plugin:create [name]')
     .description('Creates plugin from template')
     .action(async cmd => {
-      await execTask(pluginCreateTask)({ name: cmd });
+      await execTask(pluginCreateTask)({ name: cmd, silent: true });
     });
 
   program
     .command('plugin:build')
     .description('Prepares plugin dist package')
     .action(async cmd => {
-      await execTask(pluginBuildTask)({ coverage: false });
+      await execTask(pluginBuildTask)({ coverage: false, silent: true });
     });
 
   program
@@ -141,6 +141,7 @@ export const run = (includeInternalScripts = false) => {
       await execTask(pluginDevTask)({
         watch: !!cmd.watch,
         yarnlink: !!cmd.yarnlink,
+        silent: true,
       });
     });
 
@@ -159,6 +160,7 @@ export const run = (includeInternalScripts = false) => {
         watch: !!cmd.watch,
         testPathPattern: cmd.testPathPattern,
         testNamePattern: cmd.testNamePattern,
+        silent: true,
       });
     });
 
