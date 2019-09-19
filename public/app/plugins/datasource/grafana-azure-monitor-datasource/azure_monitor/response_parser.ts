@@ -108,8 +108,8 @@ export default class ResponseParser {
     return dimensions;
   }
 
-  static parseSubscriptions(result: any): Array<{ text: string; value: string }> {
-    const list: Array<{ text: string; value: string }> = [];
+  static parseSubscriptions(result: any): Array<{ text: string; value: string; displayName: string }> {
+    const list: Array<{ text: string; value: string; displayName: string }> = [];
 
     if (!result) {
       return list;
@@ -122,6 +122,7 @@ export default class ResponseParser {
         list.push({
           text: `${_.get(result.data.value[i], textFieldName)} - ${_.get(result.data.value[i], valueFieldName)}`,
           value: _.get(result.data.value[i], valueFieldName),
+          displayName: _.get(result.data.value[i], textFieldName),
         });
       }
     }

@@ -183,6 +183,8 @@ If the author does not respond to the requested information within the timespan 
 
 When you feel you have all the information needed you're ready to [categorizing the issue](#3-categorizing-an-issue).
 
+If you receive a notification with additional information provided but you are not anymore on issue triage and you feel you do not have time to handle it, you should delegate it to the current person on issue triage.
+
 ## 3. Categorizing an issue
 
 An issue can have multiple of the following labels. Typically, a properly categorized issue should at least have:

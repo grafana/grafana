@@ -135,7 +135,10 @@ export class AlertTab extends PureComponent<Props> {
     if (!alert && hasTransformations) {
       return (
         <EditorTabBody heading="Alert">
-          <AlertBox severity={AppNotificationSeverity.Warning} title="Transformations are not supported in alert queries" />
+          <AlertBox
+            severity={AppNotificationSeverity.Warning}
+            title="Transformations are not supported in alert queries"
+          />
         </EditorTabBody>
       );
     }

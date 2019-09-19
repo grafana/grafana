@@ -190,7 +190,9 @@ Webhook | `webhook` | yes, external only | yes
 
 # Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
+Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure image rendering [here](/administration/image_rendering/).
+
+Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader](/installation/configuration/#external-image-storage) in your grafana-server ini config file.
 
 Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.

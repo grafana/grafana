@@ -89,12 +89,12 @@ export class LdapPage extends PureComponent<Props, State> {
 
             {config.buildInfo.isEnterprise && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
 
-            <h3 className="page-heading">User mapping</h3>
+            <h3 className="page-heading">Test user mapping</h3>
             <div className="gf-form-group">
               <form onSubmit={this.search} className="gf-form-inline">
-                <FormField label="User name" labelWidth={8} inputWidth={30} type="text" id="username" name="username" />
+                <FormField label="Username" labelWidth={8} inputWidth={30} type="text" id="username" name="username" />
                 <button type="submit" className="btn btn-primary">
-                  Test LDAP mapping
+                  Run
                 </button>
               </form>
             </div>
