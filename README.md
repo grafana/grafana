@@ -202,7 +202,7 @@ Debugging all end-to-end tests (BROWSER=1 starts the browser and SLOWMO=1 delays
 ENV BROWSER=1 SLOWMO=1 yarn e2e-tests
 ```
 
-### Data Source and dashboard provisioning
+### Data source and dashboard provisioning
 
 [Here](https://github.com/grafana/grafana/tree/master/devenv) you can find helpful scripts and docker-compose setup
 that will populate your dev environment for quicker testing and experimenting.

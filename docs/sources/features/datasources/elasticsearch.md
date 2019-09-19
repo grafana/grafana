@@ -51,7 +51,7 @@ http.cors.allow-origin: "*"
 
 ### Index settings
 
-![Elasticsearch data source Details](/img/docs/elasticsearch/elasticsearch_ds_details.png)
+![Elasticsearch data source details](/img/docs/elasticsearch/elasticsearch_ds_details.png)
 
 Here you can specify a default for the `time field` and specify the name of your Elasticsearch index. You can use
 a time pattern for the index name or a wildcard.
@@ -196,7 +196,7 @@ Note that the fields used for log message and level is based on an [optional dat
 
 Optionally enter a lucene query into the query field to filter the log messages. For example, using a default Filebeat setup you should be able to use `fields.level:error` to only show error log messages.
 
-## Configure the Data Source with Provisioning
+## Configure the data source with provisioning
 
 It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 

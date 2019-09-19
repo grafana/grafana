@@ -222,7 +222,7 @@ Example Result: `monitoring.googleapis.com/uptime_check/http_status has this val
 | `{{metric.label.xxx}}`   | returns the metric label value   | `{{metric.label.instance_name}}` | `grafana-1-prod`                                  |
 | `{{resource.label.xxx}}` | returns the resource label value | `{{resource.label.zone}}`        | `us-east1-b`                                      |
 
-## Configure the Data Source with Provisioning
+## Configure the data source with provisioning
 
 It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 

@@ -363,7 +363,7 @@ tags | Optional field name to use for event tags as a comma separated string.
 Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule
 conditions.
 
-## Configure the Data Source with Provisioning
+## Configure the data source with provisioning
 
 It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 

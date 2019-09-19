@@ -34,9 +34,9 @@ in that organization. Learn more about [Organization Roles]({{< relref "permissi
 
 Dashboard and folder permissions allows you to remove the default role based permissions for Editors and Viewers and assign permissions to specific **Users** and **Teams**. Learn more about [Dashboard & Folder Permissions]({{< relref "permissions/dashboard_folder_permissions.md" >}}).
 
-## Data Source Permissions
+## Data source permissions
 
 Per default, a data source in an organization can be queried by any user in that organization. For example a user with `Viewer` role can still
 issue any possible query to a data source, not just those queries that exist on dashboards he/she has access to.
 
-Data source permissions allows you to change the default permissions for data sources and restrict query permissions to specific **Users** and **Teams**. Read more about [Data Source Permissions]({{< relref "permissions/datasource_permissions.md" >}}).
+Data source permissions allows you to change the default permissions for data sources and restrict query permissions to specific **Users** and **Teams**. Read more about [data source permissions]({{< relref "permissions/datasource_permissions.md" >}}).

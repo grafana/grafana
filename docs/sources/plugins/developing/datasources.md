@@ -38,7 +38,7 @@ There are two data source specific settings for the plugin.json
 
 These settings indicates what kind of data the plugin can deliver. At least one of them have to be true
 
-## Data Source
+## Data source
 
 The javascript object that communicates with the database and transforms data to times series.
 

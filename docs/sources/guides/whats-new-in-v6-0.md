@@ -21,7 +21,7 @@ The main highlights are:
 - [Gauge Panel]({{< relref "#gauge-panel" >}}) - A new standalone panel for gauges.
 - [New Panel Editor UX]({{< relref "#new-panel-editor" >}}) improves panel editing
     and enables easy switching between different visualizations.
-- [Google Stackdriver Data source]({{< relref "#google-stackdriver-datasource" >}}) is out of beta and is officially released.
+- [Google Stackdriver data source]({{< relref "#google-stackdriver-datasource" >}}) is out of beta and is officially released.
 - [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core data source
 - [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
 - [Named Colors]({{< relref "#named-colors" >}}) in our new improved color picker.

@@ -147,7 +147,7 @@ Type | Description
 ------- | --------
 *Query* | This variable type allows you to write a data source query that usually returns a list of metric names, tag values or keys. For example, a query that returns a list of server names, sensor ids or data centers.
 *Interval* | This variable can represent time spans. Instead of hard-coding a group by time or date histogram interval, use a variable of this type.
-*Data Source* | This type allows you to quickly change the data source for an entire Dashboard. Useful if you have multiple instances of a data source in for example different environments.
+*Data source* | This type allows you to quickly change the data source for an entire Dashboard. Useful if you have multiple instances of a data source in for example different environments.
 *Custom* | Define the variable options manually using a comma separated list.
 *Constant* | Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export, constant variables will be made into an import option.
 *Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB & Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.

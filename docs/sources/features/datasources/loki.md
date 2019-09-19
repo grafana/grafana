@@ -117,7 +117,7 @@ Template variables are not yet supported by Loki.
 
 Annotations are not yet supported by Loki.
 
-## Configure the Data Source with Provisioning
+## Configure the data source with provisioning
 
 You can set up the data source via config files with Grafana's provisioning system.
 You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)

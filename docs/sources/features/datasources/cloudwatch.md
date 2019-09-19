@@ -251,7 +251,7 @@ it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each q
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
 
-## Configure the Data Source with Provisioning
+## Configure the data source with provisioning
 
 It's now possible to configure datas ources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
@@ -261,7 +261,7 @@ Using a credentials file
 ```yaml
 apiVersion: 1
 
-data sources:
+datasources:
   - name: Cloudwatch
     type: cloudwatch
     jsonData:
@@ -274,7 +274,7 @@ Using `accessKey` and `secretKey`
 ```yaml
 apiVersion: 1
 
-data sources:
+datasources:
   - name: Cloudwatch
     type: cloudwatch
     jsonData:

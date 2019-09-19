@@ -7,7 +7,7 @@ parent = "developing"
 weight = 3
 +++
 
-# Authentication for Data Source Plugins
+# Authentication for data source plugins
 
 Grafana has a proxy feature that proxies all data requests through the Grafana backend. This is very useful when your data source plugin calls an external/thirdy-party API. The Grafana proxy adds CORS headers and can authenticate against the external API. This means that a data source plugin that proxies all requests via Grafana can enable token authentication and the token will be renewed automatically for the user when it expires.
 

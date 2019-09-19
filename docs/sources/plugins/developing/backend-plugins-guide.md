@@ -22,7 +22,7 @@ The backend plugin feature is implemented with the [HashiCorp plugin system](htt
 - Plugins are easy to develop: just write a Go application and `go build` (or use any other language which supports gRPC).
 - Plugins can be relatively secure: The plugin only has access to the interfaces and args given to it, not to the entire memory space of the process.
 
-## Data Source Plugin Interface
+## Data source plugin interface
 
 The plugin interface is very simple and described as a Go interface type in [Grafana](https://github.com/grafana/grafana/blob/6724aaeff9a332dc73b4ee0f8abe0621f7253142/pkg/tsdb/query_endpoint.go#L10-L12) and as a general [RPC service](https://github.com/grafana/grafana-plugin-model/blob/84176c64269d8060f99e750ee8aba6f062753336/datasource.proto#L96-L98) in the corresponding `.proto` (protocol buffer file):
 
@@ -111,7 +111,7 @@ type JsonDatasource struct {
 }
 ```
 
-The only requirement for the plugin type is that it should extend `plugin.NetRPCUnsupportedPlugin`. You can include more fields into your struct if you want to add some data-source-specific features, like logging, cache etc:
+The only requirement for the plugin type is that it should extend `plugin.NetRPCUnsupportedPlugin`. You can include more fields into your struct if you want to add some data source-specific features, like logging, cache etc:
 
 ```go
 type JsonDatasource struct {
