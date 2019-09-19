@@ -197,7 +197,7 @@ func init() {
 		"AWS/TrustedAdvisor":    {},
 		"AWS/VPN":               {"TunnelIpAddress", "VpnId"},
 		"AWS/WorkSpaces":        {"DirectoryId", "WorkspaceId"},
-		"ContainerInsights":     {"ClusterName", "Namespace", "InstanceId", "PodName", "Service"},
+		"ContainerInsights":     {"ClusterName", "NodeName", "Namespace", "InstanceId", "PodName", "Service"},
 		"Rekognition":           {},
 		"WAF":                   {"Region", "Rule", "RuleGroup", "WebACL"},
 	}
