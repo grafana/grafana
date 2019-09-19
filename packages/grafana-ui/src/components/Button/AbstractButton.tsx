@@ -19,7 +19,9 @@ export interface CommonButtonProps {
   className?: string;
 }
 
-export interface LinkButtonProps extends CommonButtonProps, AnchorHTMLAttributes<HTMLAnchorElement> {}
+export interface LinkButtonProps extends CommonButtonProps, AnchorHTMLAttributes<HTMLAnchorElement> {
+  disabled?: boolean;
+}
 export interface ButtonProps extends CommonButtonProps, ButtonHTMLAttributes<HTMLButtonElement> {}
 
 interface AbstractButtonProps extends CommonButtonProps, Themeable {
