@@ -37,7 +37,8 @@ import * as grafanaUI from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
 
 // rxjs
-import { Observable, Subject } from 'rxjs';
+import * as rxjs from 'rxjs';
+import * as rxjsOperators from 'rxjs/operators';
 
 // add cache busting
 const bust = `?_cache=${Date.now()}`;
@@ -81,12 +82,8 @@ exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
 exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
-exposeToPlugin('rxjs/Subject', Subject);
-exposeToPlugin('rxjs/Observable', Observable);
-exposeToPlugin('rxjs', {
-  Subject: Subject,
-  Observable: Observable,
-});
+exposeToPlugin('rxjs', rxjs);
+exposeToPlugin('rxjs/operators', rxjsOperators);
 
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
