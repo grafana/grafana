@@ -83,6 +83,15 @@ Grafana is now using Alpine 3.10 as docker base image.
 
 Please consider migrating from PhantomJS to the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
+# 6.3.6 (2019-09-23)
+
+### Features / Enhancements
+* **Metrics**: Adds setting for turning off total stats metrics. [#19142](https://github.com/grafana/grafana/pull/19142), [@marefr](https://github.com/marefr)
+
+### Bug Fixes
+* **Database**: Rewrite system statistics query to perform better. [#19178](https://github.com/grafana/grafana/pull/19178), [@papagian](https://github.com/papagian)
+* **Explore**: Fixes error when switching from prometheus to loki data sources. [#18599](https://github.com/grafana/grafana/pull/18599), [@kaydelaney](https://github.com/kaydelaney)
+
 # 6.3.5 (2019-09-02)
 
 ### Upgrades
