@@ -8,7 +8,6 @@ import { TimeRange, TimeOption, TimeZone, RawTimeRange, dateTimeForTimeZone } fr
 // State
 
 // Components
-import { TimePickerWithRightButton } from '@grafana/ui/src/components/TimePicker/TimePickerWithRightButton';
 
 // Utils & Services
 import { defaultSelectOptions, TimePicker } from '@grafana/ui/src/components/TimePicker/TimePicker';
@@ -67,13 +66,17 @@ export class ExploreTimeControls extends Component<Props> {
     });
   };
 
+  testFunction = () => {
+    console.log('clicked');
+  };
+
   render() {
     const { range, timeZone, splitted } = this.props;
 
     return (
       <>
         {splitted && (
-          <TimePickerWithRightButton
+          <TimePicker
             value={range}
             onChange={this.onChangeTimePicker}
             timeZone={timeZone}
@@ -81,6 +84,7 @@ export class ExploreTimeControls extends Component<Props> {
             onMoveForward={this.onMoveForward}
             onZoom={this.onZoom}
             selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
+            rightButton={{ icon: 'fa fa-link', onClick: this.testFunction, active: true }}
           />
         )}
         {!splitted && (

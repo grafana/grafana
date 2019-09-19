@@ -20,6 +20,7 @@ export interface Props {
   value: TimeRange;
   selectOptions: TimeOption[];
   timeZone?: TimeZone;
+  rightButton?: { icon: string; onClick: () => void; active: boolean };
   onChange: (timeRange: TimeRange) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
@@ -120,7 +121,15 @@ export class TimePicker extends PureComponent<Props, State> {
   };
 
   render() {
-    const { selectOptions: selectTimeOptions, value, onMoveBackward, onMoveForward, onZoom, timeZone } = this.props;
+    const {
+      selectOptions: selectTimeOptions,
+      value,
+      onMoveBackward,
+      onMoveForward,
+      onZoom,
+      timeZone,
+      rightButton,
+    } = this.props;
     const { isCustomOpen } = this.state;
     const options = this.mapTimeOptionsToSelectableValues(selectTimeOptions);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
@@ -152,7 +161,13 @@ export class TimePicker extends PureComponent<Props, State> {
             </button>
           )}
           <ButtonSelect
-            className="time-picker-button-select"
+            className={`time-picker-button-select ${
+              rightButton
+                ? rightButton.active
+                  ? 'btn--radius-right-0 active-time-picker time-picker--border-right-0'
+                  : 'btn--radius-right-0'
+                : null
+            }`}
             value={currentOption}
             label={label}
             options={options}
@@ -161,6 +176,16 @@ export class TimePicker extends PureComponent<Props, State> {
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
+          {rightButton && (
+            <button
+              className={`btn navbar-button navbar-button--attached ${
+                rightButton.active ? 'active-time-picker' : null
+              }`}
+              onClick={() => rightButton.onClick()}
+            >
+              <i className={rightButton.icon} />
+            </button>
+          )}
           {isAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
               <i className="fa fa-chevron-right" />
