@@ -5,7 +5,7 @@ export class MultiSelectDropdownCtrl {
   dropdownVisible: boolean;
   highlightIndex: number;
   linkText: string;
-  options: Array<{ selected: boolean; text: string; value: string }>;
+  options: Array<{ selected: boolean; text: string; value: string; variable: boolean }>;
   selectedValues: Array<{ text: string; value: string }>;
   initialValues: string[];
   onUpdated: any;
@@ -28,14 +28,14 @@ export class MultiSelectDropdownCtrl {
   }
 
   clearSelections() {
-    this.selectedValues = _.filter(this.options, { selected: true });
+    this.selectedValues = this.options.filter(({ selected }) => selected);
 
     if (this.selectedValues.length > 1) {
-      _.each(this.options, option => {
+      this.options.forEach(option => {
         option.selected = false;
       });
     } else {
-      _.each(this.options, option => {
+      this.options.forEach(option => {
         option.selected = true;
       });
     }
@@ -52,7 +52,7 @@ export class MultiSelectDropdownCtrl {
   }
 
   selectionsChanged() {
-    this.selectedValues = _.filter(this.options, { selected: true });
+    this.selectedValues = this.options.filter(({ selected }) => selected);
     if (!this.selectedValues.length && this.options.length) {
       this.selectedValues = this.options.slice(0, 1);
     }
@@ -61,7 +61,7 @@ export class MultiSelectDropdownCtrl {
   }
 
   onClickOutside() {
-    this.selectedValues = _.filter(this.options, { selected: true });
+    this.selectedValues = this.options.filter(({ selected }) => selected);
     if (this.selectedValues.length === 0) {
       this.options[0].selected = true;
       this.selectionsChanged();
@@ -78,18 +78,19 @@ export class MultiSelectDropdownCtrl {
       ...o,
       selected: this.initialValues.includes(o.value),
     }));
-    this.selectedValues = _.filter(this.options, { selected: true });
+
+    this.selectedValues = this.options.filter(({ selected }) => selected);
     this.updateLinkText();
   }
 
   updateSelection() {
-    this.selectedValues = _.filter(this.options, { selected: true });
+    this.selectedValues = this.options.filter(({ selected }) => selected);
     if (!this.selectedValues.length && this.options.length) {
       this.options = this.options.map(o => ({
         ...o,
-        selected: true,
+        selected: !o.variable,
       }));
-      this.selectedValues = _.filter(this.options, { selected: true });
+      this.selectedValues = this.options.filter(({ selected }) => selected);
       this.selectionsChanged();
     }
     this.updateLinkText();

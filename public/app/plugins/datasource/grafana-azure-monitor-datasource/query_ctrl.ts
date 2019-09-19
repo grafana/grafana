@@ -296,7 +296,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     return this.datasource.azureMonitorDatasource.getSubscriptions().then((subs: any) => {
       this.subscriptions = subs;
-      this.subscriptionValues = subs.map((s: Option) => ({ value: s.value, text: s.displayName }));
+      this.subscriptionValues = [
+        ...subs.map((s: Option) => ({ value: s.value, text: s.displayName })),
+        ...this.templateVariables.map(v => ({ text: v, value: v, variable: true })),
+      ];
 
       if (!this.target.subscriptions.length) {
         this.target.subscriptions = subs.map((s: Option) => s.value);
@@ -374,23 +377,27 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       return [];
     }
 
+    const parsedSubscriptionIds = this.target.subscriptions.map(rg => this.templateSrv.replace(rg));
+    const parsedLocations = this.target.azureMonitor.data.crossResource.locations.map(rg =>
+      this.templateSrv.replace(rg)
+    );
+
     return this.resources
       .filter(({ location, subscriptionId }) => {
         if (this.target.azureMonitor.data.crossResource.locations.length) {
-          return (
-            this.target.azureMonitor.data.crossResource.locations.includes(location) &&
-            this.target.subscriptions.includes(subscriptionId)
-          );
+          return parsedLocations.includes(location) && parsedSubscriptionIds.includes(subscriptionId);
         }
-        return this.target.subscriptions.includes(subscriptionId);
+        return parsedSubscriptionIds.includes(subscriptionId);
       })
       .reduce((options, { group }: Resource) => (options.some(o => o === group) ? options : [...options, group]), []);
   }
 
   async getCrossResourceMetricDefinitions(query: any) {
     const { locations, resourceGroups } = this.target.azureMonitor.data.crossResource;
+    const parsedResourceGroups = resourceGroups.map(rg => this.templateSrv.replace(rg));
+    const parsedLocations = locations.map(rg => this.templateSrv.replace(rg));
     return this.resources
-      .filter(({ location, group }) => locations.includes(location) && resourceGroups.includes(group))
+      .filter(({ location, group }) => parsedLocations.includes(location) && parsedResourceGroups.includes(group))
       .reduce(
         (options: Option[], { type }: Resource) =>
           options.some(o => o.value === type) ? options : [...options, { text: type, value: type }],
@@ -399,8 +406,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   getLocations() {
+    const parsedSubscriptions = this.target.subscriptions.map(s => this.templateSrv.replace(s));
     return this.resources
-      .filter(({ subscriptionId }) => this.target.subscriptions.includes(subscriptionId))
+      .filter(({ subscriptionId }) => parsedSubscriptions.includes(subscriptionId))
       .reduce(
         (options: string[], { location }: Resource) =>
           options.some(o => o === location) ? options : [...options, location],
@@ -472,10 +480,12 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   async getCrossResourceMetricNames() {
     const { locations, resourceGroups, metricDefinition } = this.target.azureMonitor.data.crossResource;
+    const parsedResourceGroups = resourceGroups.map(rg => this.templateSrv.replace(rg));
+    const parsedLocations = locations.map(rg => this.templateSrv.replace(rg));
 
     const resources = this.resources.filter(
       ({ type, location, name, group }) =>
-        resourceGroups.includes(group) && type === metricDefinition && locations.includes(location)
+        parsedResourceGroups.includes(group) && type === metricDefinition && parsedLocations.includes(location)
     );
 
     const uniqueResources = _.uniqBy(resources, ({ subscriptionId, name, type, group }: Resource) =>
@@ -652,9 +662,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
 
     const { resourceGroups, metricDefinition, metricName } = this.target.azureMonitor.data[queryMode];
+    const parsedResourceGroups = resourceGroups.map(rg => this.templateSrv.replace(rg));
 
     const resource = this.resources.find(
-      ({ type, group }) => type === metricDefinition && resourceGroups.includes(group)
+      ({ type, group }) => type === metricDefinition && parsedResourceGroups.includes(group)
     );
 
     return this.datasource
@@ -835,7 +846,10 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     if (!this.target.azureMonitor.data[queryMode].locations.length) {
       this.target.azureMonitor.data[queryMode].locations = locations;
     }
-    this.locations = locations.map(l => ({ text: l, value: l }));
+    this.locations = [
+      ...this.getLocations().map(v => ({ text: v, value: v })),
+      ...this.templateVariables.map(v => ({ text: v, value: v, variable: true })),
+    ];
   }
 
   updateCrossResourceGroups() {
@@ -844,6 +858,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     if (!this.target.azureMonitor.data[queryMode].resourceGroups.length) {
       this.target.azureMonitor.data[queryMode].resourceGroups = resourceGroups;
     }
-    this.resourceGroups = resourceGroups.map(rg => ({ text: rg, value: rg }));
+    this.resourceGroups = [
+      ...this.getCrossResourceGroups().map(v => ({ text: v, value: v })),
+      ...this.templateVariables.map(v => ({ text: v, value: v, variable: true })),
+    ];
   }
 }
