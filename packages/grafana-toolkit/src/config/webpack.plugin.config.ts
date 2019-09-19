@@ -117,7 +117,12 @@ export const getWebpackConfig: WebpackConfigurationGetter = options => {
   const optimization: { [key: string]: any } = {};
 
   if (options.production) {
-    optimization.minimizer = [new TerserPlugin(), new OptimizeCssAssetsPlugin()];
+    const terserPlugin = new TerserPlugin({
+      terserOptions: {
+        mangle: false
+      }
+    });
+    optimization.minimizer = [terserPlugin, new OptimizeCssAssetsPlugin()];
   } else if (options.watch) {
     plugins.push(new HtmlWebpackPlugin());
   }
