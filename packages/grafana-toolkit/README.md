@@ -15,6 +15,7 @@ Setup new plugin with `grafana-toolkit plugin:create` command:
 ```sh
 npx grafana-toolkit plugin:create my-grafana-plugin
 cd my-grafana-plugin
+yarn install
 yarn dev
 ```
 
