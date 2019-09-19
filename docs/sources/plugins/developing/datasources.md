@@ -75,7 +75,7 @@ Request object passed to datasource.query function:
 There are two different kinds of results for data sources;
 time series and table. Time series is the most common format and is supported by all data sources and panels. Table format is only supported by the InfluxDB data source and table panel. But we might see more of this in the future.
 
-Time series response from data source.query.
+Time series response from datasource.query.
 An array of:
 
 ```json
