@@ -1,14 +1,15 @@
+import commandExists from 'command-exists';
 import { readFileSync, promises as fs } from 'fs';
-import path = require('path');
-const simpleGit = require('simple-git/promise')(process.cwd());
+import inquirer, { prompt } from 'inquirer';
+import kebabCase from 'lodash/kebabCase';
+import path from 'path';
+import gitPromise from 'simple-git/promise';
 
 import { Task, TaskRunner } from './task';
-import commandExists = require('command-exists');
-import { prompt } from 'inquirer';
 import { useSpinner } from '../utils/useSpinner';
 import { rmdir } from '../utils/rmdir';
-import inquirer = require('inquirer');
-import kebabCase from 'lodash/kebabCase';
+
+const simpleGit = gitPromise(process.cwd());
 
 interface PluginCreateOptions {
   name?: string;
@@ -24,9 +25,7 @@ interface PluginDetails {
 }
 
 const getGitUsername = async () => await simpleGit.raw(['config', '--global', 'user.name']);
-const getPluginIdFromName = (name: string) => {
-  return kebabCase(name);
-};
+const getPluginIdFromName = (name: string) => kebabCase(name);
 
 const verifyGitExists = async () => {
   return new Promise((resolve, reject) => {
@@ -47,8 +46,8 @@ const RepositoriesPaths = {
   'datasource-plugin': 'git@github.com:grafana/simple-datasource.git',
 };
 
-const promptPluginType = async () => {
-  return prompt<{ type: PluginType }>([
+const promptPluginType = async () =>
+  prompt<{ type: PluginType }>([
     {
       type: 'list',
       message: 'Select plugin type',
@@ -60,7 +59,6 @@ const promptPluginType = async () => {
       ],
     },
   ]);
-};
 
 const promptPluginDetails = async (name?: string) => {
   const username = (await getGitUsername()).trim();
@@ -74,9 +72,7 @@ const promptPluginDetails = async (name?: string) => {
     {
       type: 'input',
       name: 'org',
-      message: answers => {
-        return `Organization (used as part og plugin ID <org>-${getPluginIdFromName((answers as any).name)}):`;
-      },
+      message: answers => `Organization (used as part of plugin ID <org>-${getPluginIdFromName(answers.name)}):`,
     },
     {
       type: 'input',
@@ -97,10 +93,8 @@ const promptPluginDetails = async (name?: string) => {
     {
       type: 'input',
       name: 'author',
-      when: answers => {
-        // Prompt for manual author entry if no git user.name specifed
-        return !(answers as any).author || username === '';
-      },
+      // Prompt for manual author entry if no git user.name specifed
+      when: answers => !answers.author || username === '',
       message: `Author:`,
     },
     {
@@ -162,9 +156,7 @@ const prepareJsonFiles = useSpinner<{ pluginDetails: PluginDetails; pluginPath: 
   }
 );
 
-export const removeGitFiles = useSpinner('Cleaning', async pluginPath => {
-  rmdir(`${path.resolve(pluginPath, '.git')}`);
-});
+export const removeGitFiles = useSpinner('Cleaning', async pluginPath => rmdir(`${path.resolve(pluginPath, '.git')}`));
 
 const pluginCreateRunner: TaskRunner<PluginCreateOptions> = async ({ name }) => {
   const destPath = path.resolve(process.cwd(), name || '');
@@ -177,9 +169,9 @@ const pluginCreateRunner: TaskRunner<PluginCreateOptions> = async ({ name }) => 
   await fetchTemplate({ type, dest: destPath });
   // 4. Prompt plugin details
   const pluginDetails = await promptPluginDetails(name);
-  // 4. Update json files (package.json, src/plugin.json)
+  // 5. Update json files (package.json, src/plugin.json)
   await prepareJsonFiles({ pluginDetails, pluginPath: destPath });
-  // 5. Remove cloned repository .git dir
+  // 6. Remove cloned repository .git dir
   await removeGitFiles(destPath);
 };
 
