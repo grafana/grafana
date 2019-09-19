@@ -34,5 +34,5 @@ func updateDashboardAlerts(ctx context.Context, cmd *models.UpdateDashboardAlert
 
 	saveAlerts.Alerts = alerts
 
-	return bus.Dispatch(&saveAlerts)
+	return bus.DispatchCtx(ctx, &saveAlerts)
 }

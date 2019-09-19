@@ -1,6 +1,8 @@
 package teamguardian
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -20,7 +22,7 @@ func CanAdmin(bus bus.Bus, orgId int64, teamId int64, user *m.SignedInUser) erro
 		UserId: user.UserId,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
 		return err
 	}
 

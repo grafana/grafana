@@ -45,7 +45,7 @@ func TestUserAuth(t *testing.T) {
 			login := "loginuser0"
 
 			query := &m.GetUserByAuthInfoQuery{Login: login}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldBeNil)
 			So(query.Result.Login, ShouldEqual, login)
@@ -54,7 +54,7 @@ func TestUserAuth(t *testing.T) {
 			id := query.Result.Id
 
 			query = &m.GetUserByAuthInfoQuery{UserId: id}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldBeNil)
 			So(query.Result.Id, ShouldEqual, id)
@@ -63,7 +63,7 @@ func TestUserAuth(t *testing.T) {
 			email := "user1@test.com"
 
 			query = &m.GetUserByAuthInfoQuery{Email: email}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldBeNil)
 			So(query.Result.Email, ShouldEqual, email)
@@ -72,7 +72,7 @@ func TestUserAuth(t *testing.T) {
 			email = "nonexistent@test.com"
 
 			query = &m.GetUserByAuthInfoQuery{Email: email}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldEqual, m.ErrUserNotFound)
 			So(query.Result, ShouldBeNil)
@@ -81,7 +81,7 @@ func TestUserAuth(t *testing.T) {
 		Convey("Can set & locate by AuthModule and AuthId", func() {
 			// get nonexistent user_auth entry
 			query := &m.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldEqual, m.ErrUserNotFound)
 			So(query.Result, ShouldBeNil)
@@ -90,14 +90,14 @@ func TestUserAuth(t *testing.T) {
 			login := "loginuser0"
 
 			query.Login = login
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldBeNil)
 			So(query.Result.Login, ShouldEqual, login)
 
 			// get via user_auth
 			query = &m.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldBeNil)
 			So(query.Result.Login, ShouldEqual, login)
@@ -106,14 +106,14 @@ func TestUserAuth(t *testing.T) {
 			id := query.Result.Id
 
 			query.UserId = id + 1
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldBeNil)
 			So(query.Result.Login, ShouldEqual, "loginuser1")
 
 			// get via user_auth
 			query = &m.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldBeNil)
 			So(query.Result.Login, ShouldEqual, "loginuser1")
@@ -124,7 +124,7 @@ func TestUserAuth(t *testing.T) {
 
 			// get via user_auth for deleted user
 			query = &m.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test"}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldEqual, m.ErrUserNotFound)
 			So(query.Result, ShouldBeNil)
@@ -143,7 +143,7 @@ func TestUserAuth(t *testing.T) {
 
 			// Calling GetUserByAuthInfoQuery on an existing user will populate an entry in the user_auth table
 			query := &m.GetUserByAuthInfoQuery{Login: login, AuthModule: "test", AuthId: "test"}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 
 			So(err, ShouldBeNil)
 			So(query.Result.Login, ShouldEqual, login)
@@ -154,7 +154,7 @@ func TestUserAuth(t *testing.T) {
 				AuthModule: query.AuthModule,
 				OAuthToken: token,
 			}
-			err = UpdateAuthInfo(cmd)
+			err = UpdateAuthInfo(context.Background(), cmd)
 
 			So(err, ShouldBeNil)
 
@@ -162,7 +162,7 @@ func TestUserAuth(t *testing.T) {
 				UserId: query.Result.Id,
 			}
 
-			err = GetAuthInfo(getAuthQuery)
+			err = GetAuthInfo(context.Background(), getAuthQuery)
 
 			So(err, ShouldBeNil)
 			So(getAuthQuery.Result.OAuthAccessToken, ShouldEqual, token.AccessToken)
@@ -179,7 +179,7 @@ func TestUserAuth(t *testing.T) {
 			// Make the first log-in during the past
 			getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
 			query := &m.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 			getTime = time.Now
 
 			So(err, ShouldBeNil)
@@ -189,7 +189,7 @@ func TestUserAuth(t *testing.T) {
 			// Have this module's last log-in be more recent
 			getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
 			query = &m.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
-			err = GetUserByAuthInfo(query)
+			err = GetUserByAuthInfo(context.Background(), query)
 			getTime = time.Now
 
 			So(err, ShouldBeNil)
@@ -200,14 +200,14 @@ func TestUserAuth(t *testing.T) {
 				UserId: query.Result.Id,
 			}
 
-			err = GetAuthInfo(getAuthQuery)
+			err = GetAuthInfo(context.Background(), getAuthQuery)
 
 			So(err, ShouldBeNil)
 			So(getAuthQuery.Result.AuthModule, ShouldEqual, "test2")
 
 			// "log in" again with the first auth module
 			updateAuthCmd := &m.UpdateAuthInfoCommand{UserId: query.Result.Id, AuthModule: "test1", AuthId: "test1"}
-			err = UpdateAuthInfo(updateAuthCmd)
+			err = UpdateAuthInfo(context.Background(), updateAuthCmd)
 
 			So(err, ShouldBeNil)
 
@@ -216,7 +216,7 @@ func TestUserAuth(t *testing.T) {
 				UserId: query.Result.Id,
 			}
 
-			err = GetAuthInfo(getAuthQuery)
+			err = GetAuthInfo(context.Background(), getAuthQuery)
 
 			So(err, ShouldBeNil)
 			So(getAuthQuery.Result.AuthModule, ShouldEqual, "test1")

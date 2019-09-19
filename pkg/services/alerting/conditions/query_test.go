@@ -189,6 +189,7 @@ func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 		ctx := &queryConditionTestContext{}
 		ctx.result = &alerting.EvalContext{
 			Rule: &alerting.Rule{},
+			Ctx:  context.Background(),
 		}
 
 		fn(ctx)

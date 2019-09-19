@@ -84,7 +84,7 @@ func UpdateDashboardPermissions(c *m.ReqContext, apiCmd dtos.UpdateDashboardAclC
 		return Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		if err == m.ErrDashboardAclInfoMissing || err == m.ErrDashboardPermissionDashboardEmpty {
 			return Error(409, err.Error(), err)
 		}

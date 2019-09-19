@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -47,7 +48,7 @@ func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*d
 
 		if notification.OrgId == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := bus.Dispatch(getOrg); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), getOrg); err != nil {
 				return err
 			}
 			notification.OrgId = getOrg.Result.Id
@@ -57,13 +58,13 @@ func (dc *NotificationProvisioner) deleteNotifications(notificationToDelete []*d
 
 		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.Uid, OrgId: notification.OrgId}
 
-		if err := bus.Dispatch(getNotification); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), getNotification); err != nil {
 			return err
 		}
 
 		if getNotification.Result != nil {
 			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
-			if err := bus.Dispatch(cmd); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), cmd); err != nil {
 				return err
 			}
 		}
@@ -77,7 +78,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 
 		if notification.OrgId == 0 && notification.OrgName != "" {
 			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := bus.Dispatch(getOrg); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), getOrg); err != nil {
 				return err
 			}
 			notification.OrgId = getOrg.Result.Id
@@ -86,7 +87,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 		}
 
 		cmd := &models.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgId, Uid: notification.Uid}
-		err := bus.Dispatch(cmd)
+		err := bus.DispatchCtx(context.TODO(), cmd)
 		if err != nil {
 			return err
 		}
@@ -105,7 +106,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := bus.Dispatch(insertCmd); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), insertCmd); err != nil {
 				return err
 			}
 		} else {
@@ -122,7 +123,7 @@ func (dc *NotificationProvisioner) mergeNotifications(notificationToMerge []*not
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := bus.Dispatch(updateCmd); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), updateCmd); err != nil {
 				return err
 			}
 		}

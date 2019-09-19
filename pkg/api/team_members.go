@@ -13,7 +13,7 @@ import (
 func GetTeamMembers(c *m.ReqContext) Response {
 	query := m.GetTeamMembersQuery{OrgId: c.OrgId, TeamId: c.ParamsInt64(":teamId")}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "Failed to get Team Members", err)
 	}
 
@@ -39,7 +39,7 @@ func (hs *HTTPServer) AddTeamMember(c *m.ReqContext, cmd m.AddTeamMemberCommand)
 		return Error(403, "Not allowed to add team member", err)
 	}
 
-	if err := hs.Bus.Dispatch(&cmd); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		if err == m.ErrTeamNotFound {
 			return Error(404, "Team not found", nil)
 		}
@@ -73,7 +73,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *m.ReqContext, cmd m.UpdateTeamMemberCo
 	cmd.UserId = c.ParamsInt64(":userId")
 	cmd.OrgId = orgId
 
-	if err := hs.Bus.Dispatch(&cmd); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		if err == m.ErrTeamMemberNotFound {
 			return Error(404, "Team member not found.", nil)
 		}
@@ -97,7 +97,7 @@ func (hs *HTTPServer) RemoveTeamMember(c *m.ReqContext) Response {
 		protectLastAdmin = true
 	}
 
-	if err := hs.Bus.Dispatch(&m.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Ctx(), &m.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
 		if err == m.ErrTeamNotFound {
 			return Error(404, "Team not found", nil)
 		}

@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -37,7 +38,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
-	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
+	if err := uss.Bus.DispatchCtx(context.TODO(), &statsQuery); err != nil {
 		metricsLogger.Error("Failed to get system stats", "error", err)
 		return
 	}
@@ -70,7 +71,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
 
 	dsStats := models.GetDataSourceStatsQuery{}
-	if err := uss.Bus.Dispatch(&dsStats); err != nil {
+	if err := uss.Bus.DispatchCtx(context.TODO(), &dsStats); err != nil {
 		metricsLogger.Error("Failed to get datasource stats", "error", err)
 		return
 	}
@@ -91,7 +92,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.packaging."+setting.Packaging+".count"] = 1
 
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
-	if err := uss.Bus.Dispatch(&dsAccessStats); err != nil {
+	if err := uss.Bus.DispatchCtx(context.TODO(), &dsAccessStats); err != nil {
 		metricsLogger.Error("Failed to get datasource access stats", "error", err)
 		return
 	}
@@ -120,7 +121,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	}
 
 	anStats := models.GetAlertNotifierUsageStatsQuery{}
-	if err := uss.Bus.Dispatch(&anStats); err != nil {
+	if err := uss.Bus.DispatchCtx(context.TODO(), &anStats); err != nil {
 		metricsLogger.Error("Failed to get alert notification stats", "error", err)
 		return
 	}
@@ -160,7 +161,7 @@ func (uss *UsageStatsService) updateTotalStats() {
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
-	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
+	if err := uss.Bus.DispatchCtx(context.TODO(), &statsQuery); err != nil {
 		metricsLogger.Error("Failed to get system stats", "error", err)
 		return
 	}

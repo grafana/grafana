@@ -327,7 +327,7 @@ func checkWhiteList(c *m.ReqContext, host string) bool {
 
 func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
 	authInfoQuery := &m.GetAuthInfoQuery{UserId: c.UserId}
-	if err := bus.Dispatch(authInfoQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), authInfoQuery); err != nil {
 		logger.Error("Error feching oauth information for user", "error", err)
 		return
 	}
@@ -359,7 +359,7 @@ func addOAuthPassThruAuth(c *m.ReqContext, req *http.Request) {
 			AuthId:     authInfoQuery.Result.AuthId,
 			OAuthToken: token,
 		}
-		if err := bus.Dispatch(updateAuthCommand); err != nil {
+		if err := bus.DispatchCtx(c.Ctx(), updateAuthCommand); err != nil {
 			logger.Error("Failed to update access token during token refresh", "error", err)
 			return
 		}

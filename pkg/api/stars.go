@@ -16,7 +16,7 @@ func StarDashboard(c *m.ReqContext) Response {
 		return Error(400, "Missing dashboard id", nil)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to star dashboard", err)
 	}
 
@@ -31,7 +31,7 @@ func UnstarDashboard(c *m.ReqContext) Response {
 		return Error(400, "Missing dashboard id", nil)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to unstar dashboard", err)
 	}
 

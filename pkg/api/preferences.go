@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -12,7 +14,7 @@ func SetHomeDashboard(c *m.ReqContext, cmd m.SavePreferencesCommand) Response {
 	cmd.UserId = c.UserId
 	cmd.OrgId = c.OrgId
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to set home dashboard", err)
 	}
 
@@ -27,7 +29,7 @@ func GetUserPreferences(c *m.ReqContext) Response {
 func getPreferencesFor(orgID, userID, teamID int64) Response {
 	prefsQuery := m.GetPreferencesQuery{UserId: userID, OrgId: orgID, TeamId: teamID}
 
-	if err := bus.Dispatch(&prefsQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &prefsQuery); err != nil {
 		return Error(500, "Failed to get preferences", err)
 	}
 
@@ -55,7 +57,7 @@ func updatePreferencesFor(orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsC
 		HomeDashboardId: dtoCmd.HomeDashboardID,
 	}
 
-	if err := bus.Dispatch(&saveCmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &saveCmd); err != nil {
 		return Error(500, "Failed to save preferences", err)
 	}
 

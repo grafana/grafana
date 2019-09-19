@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -25,7 +27,7 @@ func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
 	}
 
 	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	if err := bus.Dispatch(&existing); err == nil {
+	if err := bus.DispatchCtx(c.Ctx(), &existing); err == nil {
 		return Error(422, "User with same email address already exists", nil)
 	}
 
@@ -37,11 +39,11 @@ func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
 	cmd.Code = util.GetRandomString(20)
 	cmd.RemoteAddr = c.Req.RemoteAddr
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to create signup", err)
 	}
 
-	bus.Publish(c.Context, &events.SignUpStarted{
+	bus.Publish(c.Ctx(), &events.SignUpStarted{
 		Email: form.Email,
 		Code:  cmd.Code,
 	})
@@ -74,18 +76,18 @@ func (hs *HTTPServer) SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Re
 
 	// check if user exists
 	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	if err := bus.Dispatch(&existing); err == nil {
+	if err := bus.DispatchCtx(c.Ctx(), &existing); err == nil {
 		return Error(401, "User with same email address already exists", nil)
 	}
 
 	// dispatch create command
-	if err := bus.Dispatch(&createUserCmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &createUserCmd); err != nil {
 		return Error(500, "Failed to create user", err)
 	}
 
 	// publish signup event
 	user := &createUserCmd.Result
-	bus.Publish(c.Context, &events.SignUpCompleted{
+	bus.Publish(c.Ctx(), &events.SignUpCompleted{
 		Email: user.Email,
 		Name:  user.NameOrFallback(),
 	})
@@ -97,7 +99,7 @@ func (hs *HTTPServer) SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Re
 
 	// check for pending invites
 	invitesQuery := m.GetTempUsersQuery{Email: form.Email, Status: m.TmpUserInvitePending}
-	if err := bus.Dispatch(&invitesQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &invitesQuery); err != nil {
 		return Error(500, "Failed to query database for invites", err)
 	}
 
@@ -118,7 +120,7 @@ func (hs *HTTPServer) SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Re
 func verifyUserSignUpEmail(email string, code string) (bool, Response) {
 	query := m.GetTempUserByCodeQuery{Code: code}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		if err == m.ErrTempUserNotFound {
 			return false, Error(404, "Invalid email verification code", nil)
 		}

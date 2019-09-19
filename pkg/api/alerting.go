@@ -16,7 +16,7 @@ func ValidateOrgAlert(c *models.ReqContext) {
 	id := c.ParamsInt64(":alertId")
 	query := models.GetAlertByIdQuery{Id: id}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		c.JsonApiErr(404, "Alert not found", nil)
 		return
 	}
@@ -39,7 +39,7 @@ func GetAlertStatesForDashboard(c *models.ReqContext) Response {
 		DashboardId: c.QueryInt64("dashboardId"),
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "Failed to fetch alert states", err)
 	}
 
@@ -82,7 +82,7 @@ func GetAlerts(c *models.ReqContext) Response {
 			Permission:   models.PERMISSION_VIEW,
 		}
 
-		err := bus.Dispatch(&searchQuery)
+		err := bus.DispatchCtx(c.Ctx(), &searchQuery)
 		if err != nil {
 			return Error(500, "List alerts failed", err)
 		}
@@ -113,7 +113,7 @@ func GetAlerts(c *models.ReqContext) Response {
 		query.State = states
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "List alerts failed", err)
 	}
 
@@ -137,7 +137,7 @@ func AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) Response {
 		User:      c.SignedInUser,
 	}
 
-	if err := bus.Dispatch(&backendCmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &backendCmd); err != nil {
 		if validationErr, ok := err.(alerting.ValidationError); ok {
 			return Error(422, validationErr.Error(), nil)
 		}
@@ -175,7 +175,7 @@ func GetAlert(c *models.ReqContext) Response {
 	id := c.ParamsInt64(":alertId")
 	query := models.GetAlertByIdQuery{Id: id}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "List alerts failed", err)
 	}
 
@@ -219,7 +219,7 @@ func GetAlertNotifications(c *models.ReqContext) Response {
 func getAlertNotificationsInternal(c *models.ReqContext) ([]*models.AlertNotification, error) {
 	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), query); err != nil {
 		return nil, err
 	}
 
@@ -236,7 +236,7 @@ func GetAlertNotificationByID(c *models.ReqContext) Response {
 		return Error(404, "Alert notification not found", nil)
 	}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), query); err != nil {
 		return Error(500, "Failed to get alert notifications", err)
 	}
 
@@ -257,7 +257,7 @@ func GetAlertNotificationByUID(c *models.ReqContext) Response {
 		return Error(404, "Alert notification not found", nil)
 	}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), query); err != nil {
 		return Error(500, "Failed to get alert notifications", err)
 	}
 
@@ -271,7 +271,7 @@ func GetAlertNotificationByUID(c *models.ReqContext) Response {
 func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotificationCommand) Response {
 	cmd.OrgId = c.OrgId
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to create alert notification", err)
 	}
 
@@ -281,7 +281,7 @@ func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotific
 func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotificationCommand) Response {
 	cmd.OrgId = c.OrgId
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to update alert notification", err)
 	}
 
@@ -296,7 +296,7 @@ func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNo
 	cmd.OrgId = c.OrgId
 	cmd.Uid = c.Params("uid")
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to update alert notification", err)
 	}
 
@@ -313,7 +313,7 @@ func DeleteAlertNotification(c *models.ReqContext) Response {
 		Id:    c.ParamsInt64("notificationId"),
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to delete alert notification", err)
 	}
 
@@ -326,7 +326,7 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) Response {
 		Uid:   c.Params("uid"),
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to delete alert notification", err)
 	}
 
@@ -341,7 +341,7 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Re
 		Settings: dto.Settings,
 	}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), cmd); err != nil {
 		if err == models.ErrSmtpNotEnabled {
 			return Error(412, err.Error(), err)
 		}
@@ -357,7 +357,7 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 
 	query := models.GetAlertByIdQuery{Id: alertID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "Get Alert failed", err)
 	}
 
@@ -376,7 +376,7 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 		Paused:   dto.Paused,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "", err)
 	}
 
@@ -402,7 +402,7 @@ func PauseAllAlerts(c *models.ReqContext, dto dtos.PauseAllAlertsCommand) Respon
 		Paused: dto.Paused,
 	}
 
-	if err := bus.Dispatch(&updateCmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &updateCmd); err != nil {
 		return Error(500, "Failed to pause alerts", err)
 	}
 

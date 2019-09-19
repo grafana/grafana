@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -33,7 +34,7 @@ func isDashboardStarredByUser(c *m.ReqContext, dashID int64) (bool, error) {
 	}
 
 	query := m.IsStarredByUserQuery{UserId: c.UserId, DashboardId: dashID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return false, err
 	}
 
@@ -100,7 +101,7 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 	// lookup folder title
 	if dash.FolderId > 0 {
 		query := m.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
-		if err := bus.Dispatch(&query); err != nil {
+		if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 			return Error(500, "Dashboard folder could not be read", err)
 		}
 		meta.FolderTitle = query.Result.Title
@@ -139,7 +140,7 @@ func (hs *HTTPServer) GetDashboard(c *m.ReqContext) Response {
 
 func getUserLogin(userID int64) string {
 	query := m.GetUserByIdQuery{Id: userID}
-	err := bus.Dispatch(&query)
+	err := bus.DispatchCtx(context.TODO(), &query)
 	if err != nil {
 		return anonString
 	}
@@ -155,7 +156,7 @@ func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*m.Dash
 		query = m.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgID}
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return nil, Error(404, "Dashboard not found", err)
 	}
 
@@ -165,7 +166,7 @@ func getDashboardHelper(orgID int64, slug string, id int64, uid string) (*m.Dash
 func DeleteDashboardBySlug(c *m.ReqContext) Response {
 	query := m.GetDashboardsBySlugQuery{OrgId: c.OrgId, Slug: c.Params(":slug")}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "Failed to retrieve dashboards by slug", err)
 	}
 
@@ -295,13 +296,13 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 
 func GetHomeDashboard(c *m.ReqContext) Response {
 	prefsQuery := m.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
-	if err := bus.Dispatch(&prefsQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &prefsQuery); err != nil {
 		return Error(500, "Failed to get preferences", err)
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
 		slugQuery := m.GetDashboardRefByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
-		err := bus.Dispatch(&slugQuery)
+		err := bus.DispatchCtx(c.Ctx(), &slugQuery)
 		if err == nil {
 			url := m.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
@@ -368,7 +369,7 @@ func GetDashboardVersions(c *m.ReqContext) Response {
 		Start:       c.QueryInt("start"),
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(404, fmt.Sprintf("No versions found for dashboardId %d", dashID), err)
 	}
 
@@ -406,7 +407,7 @@ func GetDashboardVersion(c *m.ReqContext) Response {
 		Version:     c.ParamsInt(":id"),
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dashID), err)
 	}
 
@@ -488,7 +489,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.Resto
 	}
 
 	versionQuery := m.GetDashboardVersionQuery{DashboardId: dash.Id, Version: apiCmd.Version, OrgId: c.OrgId}
-	if err := bus.Dispatch(&versionQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &versionQuery); err != nil {
 		return Error(404, "Dashboard version not found", nil)
 	}
 
@@ -509,7 +510,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *m.ReqContext, apiCmd dtos.Resto
 
 func GetDashboardTags(c *m.ReqContext) {
 	query := m.GetDashboardTagsQuery{OrgId: c.OrgId}
-	err := bus.Dispatch(&query)
+	err := bus.DispatchCtx(c.Ctx(), &query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get tags from database", err)
 		return

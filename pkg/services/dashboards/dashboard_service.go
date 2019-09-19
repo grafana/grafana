@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -60,7 +61,7 @@ type dashboardServiceImpl struct {
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
 	cmd := &models.GetProvisionedDashboardDataQuery{Name: name}
-	err := bus.Dispatch(cmd)
+	err := bus.DispatchCtx(context.TODO(), cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +71,7 @@ func (dr *dashboardServiceImpl) GetProvisionedDashboardData(name string) ([]*mod
 
 func (dr *dashboardServiceImpl) GetProvisionedDashboardDataByDashboardId(dashboardId int64) (*models.DashboardProvisioning, error) {
 	cmd := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: dashboardId}
-	err := bus.Dispatch(cmd)
+	err := bus.DispatchCtx(context.TODO(), cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 			User:      dto.User,
 		}
 
-		if err := bus.Dispatch(&validateAlertsCmd); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), &validateAlertsCmd); err != nil {
 			return nil, err
 		}
 	}
@@ -121,7 +122,7 @@ func (dr *dashboardServiceImpl) buildSaveDashboardCommand(dto *SaveDashboardDTO,
 		Overwrite: dto.Overwrite,
 	}
 
-	if err := bus.Dispatch(&validateBeforeSaveCmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &validateBeforeSaveCmd); err != nil {
 		return nil, err
 	}
 
@@ -179,7 +180,7 @@ func (dr *dashboardServiceImpl) updateAlerting(cmd *models.SaveDashboardCommand,
 		User:      dto.User,
 	}
 
-	return bus.Dispatch(&alertCmd)
+	return bus.DispatchCtx(context.TODO(), &alertCmd)
 }
 
 func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
@@ -200,7 +201,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 	}
 
 	// dashboard
-	err = bus.Dispatch(saveCmd)
+	err = bus.DispatchCtx(context.TODO(), saveCmd)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +225,7 @@ func (dr *dashboardServiceImpl) SaveFolderForProvisionedDashboards(dto *SaveDash
 		return nil, err
 	}
 
-	err = bus.Dispatch(cmd)
+	err = bus.DispatchCtx(context.TODO(), cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +244,7 @@ func (dr *dashboardServiceImpl) SaveDashboard(dto *SaveDashboardDTO) (*models.Da
 		return nil, err
 	}
 
-	err = bus.Dispatch(cmd)
+	err = bus.DispatchCtx(context.TODO(), cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +280,7 @@ func (dr *dashboardServiceImpl) deleteDashboard(dashboardId int64, orgId int64, 
 		}
 	}
 	cmd := &models.DeleteDashboardCommand{OrgId: orgId, Id: dashboardId}
-	return bus.Dispatch(cmd)
+	return bus.DispatchCtx(context.TODO(), cmd)
 }
 
 func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.Dashboard, error) {
@@ -288,7 +289,7 @@ func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.
 		return nil, err
 	}
 
-	err = bus.Dispatch(cmd)
+	err = bus.DispatchCtx(context.TODO(), cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +301,7 @@ func (dr *dashboardServiceImpl) ImportDashboard(dto *SaveDashboardDTO) (*models.
 // and provisioned dashboards are left behind but not deleted.
 func (dr *dashboardServiceImpl) UnprovisionDashboard(dashboardId int64) error {
 	cmd := &models.UnprovisionDashboardCommand{Id: dashboardId}
-	return bus.Dispatch(cmd)
+	return bus.DispatchCtx(context.TODO(), cmd)
 }
 
 type FakeDashboardService struct {

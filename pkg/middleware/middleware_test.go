@@ -498,7 +498,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(sc *scenarioContext) {
-				bus.AddHandlerCtx("Do not have ctx context.Context, the user", func(query *models.GetSignedInUserQuery) error {
+				bus.AddHandlerCtx("Do not have ctx context.Context, the user", func(ctx context.Context, query *models.GetSignedInUserQuery) error {
 					return errors.New("Do not add user")
 				})
 

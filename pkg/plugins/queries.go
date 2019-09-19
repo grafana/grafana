@@ -1,6 +1,8 @@
 package plugins
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -8,7 +10,7 @@ import (
 func GetPluginSettings(orgId int64) (map[string]*m.PluginSettingInfoDTO, error) {
 	query := m.GetPluginSettingsQuery{OrgId: orgId}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return nil, err
 	}
 

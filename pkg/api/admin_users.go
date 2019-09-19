@@ -29,7 +29,7 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) {
 		return
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		c.JsonApiErr(500, "failed to create user", err)
 		return
 	}
@@ -56,7 +56,7 @@ func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPass
 
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &userQuery); err != nil {
 		c.JsonApiErr(500, "Could not read user from database", err)
 		return
 	}
@@ -68,7 +68,7 @@ func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPass
 		NewPassword: passwordHashed,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		c.JsonApiErr(500, "Failed to update user password", err)
 		return
 	}
@@ -85,7 +85,7 @@ func AdminUpdateUserPermissions(c *models.ReqContext, form dtos.AdminUpdateUserP
 		IsGrafanaAdmin: form.IsGrafanaAdmin,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		if err == models.ErrLastGrafanaAdmin {
 			c.JsonApiErr(400, models.ErrLastGrafanaAdmin.Error(), nil)
 			return
@@ -103,7 +103,7 @@ func AdminDeleteUser(c *models.ReqContext) {
 
 	cmd := models.DeleteUserCommand{UserId: userID}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		c.JsonApiErr(500, "Failed to delete user", err)
 		return
 	}
@@ -117,12 +117,12 @@ func (server *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); err != models.ErrUserNotFound {
+	if err := bus.DispatchCtx(c.Ctx(), authInfoQuery); err != models.ErrUserNotFound {
 		return Error(500, "Could not disable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
-	if err := bus.Dispatch(&disableCmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &disableCmd); err != nil {
 		return Error(500, "Failed to disable user", err)
 	}
 
@@ -140,12 +140,12 @@ func AdminEnableUser(c *models.ReqContext) Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); err != models.ErrUserNotFound {
+	if err := bus.DispatchCtx(c.Ctx(), authInfoQuery); err != models.ErrUserNotFound {
 		return Error(500, "Could not enable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
-	if err := bus.Dispatch(&disableCmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &disableCmd); err != nil {
 		return Error(500, "Failed to enable user", err)
 	}
 

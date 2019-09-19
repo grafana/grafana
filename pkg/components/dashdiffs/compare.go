@@ -1,6 +1,7 @@
 package dashdiffs
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 
@@ -64,7 +65,7 @@ func CalculateDiff(options *Options) (*Result, error) {
 		OrgId:       options.OrgId,
 	}
 
-	if err := bus.Dispatch(&baseVersionQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &baseVersionQuery); err != nil {
 		return nil, err
 	}
 
@@ -74,7 +75,7 @@ func CalculateDiff(options *Options) (*Result, error) {
 		OrgId:       options.OrgId,
 	}
 
-	if err := bus.Dispatch(&newVersionQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &newVersionQuery); err != nil {
 		return nil, err
 	}
 

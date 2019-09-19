@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -38,7 +39,7 @@ func (dc *DatasourceProvisioner) apply(cfg *DatasourcesAsConfig) error {
 
 	for _, ds := range cfg.Datasources {
 		cmd := &models.GetDataSourceByNameQuery{OrgId: ds.OrgId, Name: ds.Name}
-		err := bus.Dispatch(cmd)
+		err := bus.DispatchCtx(context.TODO(), cmd)
 		if err != nil && err != models.ErrDataSourceNotFound {
 			return err
 		}
@@ -46,13 +47,13 @@ func (dc *DatasourceProvisioner) apply(cfg *DatasourcesAsConfig) error {
 		if err == models.ErrDataSourceNotFound {
 			dc.log.Info("inserting datasource from configuration ", "name", ds.Name)
 			insertCmd := createInsertCommand(ds)
-			if err := bus.Dispatch(insertCmd); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), insertCmd); err != nil {
 				return err
 			}
 		} else {
 			dc.log.Debug("updating datasource from configuration", "name", ds.Name)
 			updateCmd := createUpdateCommand(ds, cmd.Result.Id)
-			if err := bus.Dispatch(updateCmd); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), updateCmd); err != nil {
 				return err
 			}
 		}
@@ -79,7 +80,7 @@ func (dc *DatasourceProvisioner) applyChanges(configPath string) error {
 func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*DeleteDatasourceConfig) error {
 	for _, ds := range dsToDelete {
 		cmd := &models.DeleteDataSourceByNameCommand{OrgId: ds.OrgId, Name: ds.Name}
-		if err := bus.Dispatch(cmd); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), cmd); err != nil {
 			return err
 		}
 

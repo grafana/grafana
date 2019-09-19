@@ -214,7 +214,7 @@ func getOrCreateFolderId(cfg *DashboardsAsConfig, service dashboards.DashboardPr
 	}
 
 	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(cfg.Folder), OrgId: cfg.OrgId}
-	err := bus.Dispatch(cmd)
+	err := bus.DispatchCtx(context.TODO(), cmd)
 
 	if err != nil && err != models.ErrDashboardNotFound {
 		return 0, err

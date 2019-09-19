@@ -56,7 +56,7 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 			EvalData: annotationData,
 		}
 
-		if err := bus.Dispatch(cmd); err != nil {
+		if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 			if err == models.ErrCannotChangeStateOnPausedAlert {
 				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err

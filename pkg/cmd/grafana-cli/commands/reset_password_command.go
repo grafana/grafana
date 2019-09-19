@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/fatih/color"
@@ -24,7 +25,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) erro
 
 	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &userQuery); err != nil {
 		return fmt.Errorf("Could not read user from database. Error: %v", err)
 	}
 
@@ -35,7 +36,7 @@ func resetPasswordCommand(c utils.CommandLine, sqlStore *sqlstore.SqlStore) erro
 		NewPassword: passwordHashed,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
 		return fmt.Errorf("Failed to update user password")
 	}
 

@@ -116,7 +116,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 							query := models.GetDashboardQuery{OrgId: otherOrgId, Uid: savedDashInFolder.Uid}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Id, ShouldNotEqual, savedDashInFolder.Id)
 							So(query.Result.Id, ShouldEqual, res.Id)
@@ -392,7 +392,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Convey("It should create a new dashboard", func() {
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Id, ShouldEqual, res.Id)
 							So(query.Result.FolderId, ShouldEqual, 0)
@@ -418,7 +418,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.FolderId, ShouldEqual, savedFolder.Id)
 						})
@@ -444,7 +444,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.FolderId, ShouldEqual, 0)
 							So(query.Result.IsFolder, ShouldBeTrue)
@@ -468,7 +468,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 							So(len(res.Uid), ShouldBeGreaterThan, 0)
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Id, ShouldEqual, res.Id)
 							So(query.Result.Uid, ShouldEqual, res.Uid)
@@ -491,7 +491,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Convey("It should create a new dashboard", func() {
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Id, ShouldEqual, res.Id)
 						})
@@ -552,7 +552,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Convey("It should update dashboard", func() {
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: savedDashInGeneralFolder.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Title, ShouldEqual, "Updated title")
 							So(query.Result.FolderId, ShouldEqual, savedFolder.Id)
@@ -597,7 +597,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Convey("It should update dashboard", func() {
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: savedDashInFolder.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Title, ShouldEqual, "Updated title")
 							So(query.Result.FolderId, ShouldEqual, 0)
@@ -683,7 +683,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Convey("It should update dashboard", func() {
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: savedDashInGeneralFolder.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Title, ShouldEqual, "Updated title")
 							So(query.Result.FolderId, ShouldEqual, savedFolder.Id)
@@ -708,7 +708,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 						Convey("It should update dashboard", func() {
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: savedDashInFolder.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Title, ShouldEqual, "Updated title")
 							So(query.Result.FolderId, ShouldEqual, 0)
@@ -736,7 +736,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: savedDashInFolder.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Uid, ShouldEqual, "new-uid")
 							So(query.Result.Version, ShouldBeGreaterThan, savedDashInFolder.Version)
@@ -782,7 +782,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Id, ShouldEqual, res.Id)
 							So(query.Result.Uid, ShouldEqual, res.Uid)
@@ -809,7 +809,7 @@ func TestIntegratedDashboardService(t *testing.T) {
 
 							query := models.GetDashboardQuery{OrgId: cmd.OrgId, Id: res.Id}
 
-							err := bus.Dispatch(&query)
+							err := bus.DispatchCtx(context.Background(), &query)
 							So(err, ShouldBeNil)
 							So(query.Result.Id, ShouldEqual, res.Id)
 							So(query.Result.Uid, ShouldEqual, res.Uid)

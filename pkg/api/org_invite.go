@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -15,7 +16,7 @@ import (
 func GetPendingOrgInvites(c *m.ReqContext) Response {
 	query := m.GetTempUsersQuery{OrgId: c.OrgId, Status: m.TmpUserInvitePending}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "Failed to get invites from db", err)
 	}
 
@@ -33,7 +34,7 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 
 	// first try get existing user
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &userQuery); err != nil {
 		if err != m.ErrUserNotFound {
 			return Error(500, "Failed to query db for existing user check", err)
 		}
@@ -55,7 +56,7 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 	cmd.Role = inviteDto.Role
 	cmd.RemoteAddr = c.Req.RemoteAddr
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to save invite to database", err)
 	}
 
@@ -73,7 +74,7 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 			},
 		}
 
-		if err := bus.Dispatch(&emailCmd); err != nil {
+		if err := bus.DispatchCtx(c.Ctx(), &emailCmd); err != nil {
 			if err == m.ErrSmtpNotEnabled {
 				return Error(412, err.Error(), err)
 			}
@@ -81,7 +82,7 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 		}
 
 		emailSentCmd := m.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
-		if err := bus.Dispatch(&emailSentCmd); err != nil {
+		if err := bus.DispatchCtx(c.Ctx(), &emailSentCmd); err != nil {
 			return Error(500, "Failed to update invite with email sent info", err)
 		}
 
@@ -94,7 +95,7 @@ func AddOrgInvite(c *m.ReqContext, inviteDto dtos.AddInviteForm) Response {
 func inviteExistingUserToOrg(c *m.ReqContext, user *m.User, inviteDto *dtos.AddInviteForm) Response {
 	// user exists, add org role
 	createOrgUserCmd := m.AddOrgUserCommand{OrgId: c.OrgId, UserId: user.Id, Role: inviteDto.Role}
-	if err := bus.Dispatch(&createOrgUserCmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &createOrgUserCmd); err != nil {
 		if err == m.ErrOrgUserAlreadyAdded {
 			return Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 		}
@@ -112,7 +113,7 @@ func inviteExistingUserToOrg(c *m.ReqContext, user *m.User, inviteDto *dtos.AddI
 			},
 		}
 
-		if err := bus.Dispatch(&emailCmd); err != nil {
+		if err := bus.DispatchCtx(c.Ctx(), &emailCmd); err != nil {
 			return Error(500, "Failed to send email invited_to_org", err)
 		}
 	}
@@ -131,7 +132,7 @@ func RevokeInvite(c *m.ReqContext) Response {
 func GetInviteInfoByCode(c *m.ReqContext) Response {
 	query := m.GetTempUserByCodeQuery{Code: c.Params(":code")}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		if err == m.ErrTempUserNotFound {
 			return Error(404, "Invite not found", nil)
 		}
@@ -151,7 +152,7 @@ func GetInviteInfoByCode(c *m.ReqContext) Response {
 func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.CompleteInviteForm) Response {
 	query := m.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		if err == m.ErrTempUserNotFound {
 			return Error(404, "Invite not found", nil)
 		}
@@ -171,13 +172,13 @@ func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.Comple
 		SkipOrgSetup: true,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "failed to create user", err)
 	}
 
 	user := &cmd.Result
 
-	bus.Publish(c.Context, &events.SignUpCompleted{
+	bus.Publish(c.Ctx(), &events.SignUpCompleted{
 		Name:  user.NameOrFallback(),
 		Email: user.Email,
 	})
@@ -197,7 +198,7 @@ func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.Comple
 func updateTempUserStatus(code string, status m.TempUserStatus) (bool, Response) {
 	// update temp user status
 	updateTmpUserCmd := m.UpdateTempUserStatusCommand{Code: code, Status: status}
-	if err := bus.Dispatch(&updateTmpUserCmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &updateTmpUserCmd); err != nil {
 		return false, Error(500, "Failed to update invite status", err)
 	}
 
@@ -207,7 +208,7 @@ func updateTempUserStatus(code string, status m.TempUserStatus) (bool, Response)
 func applyUserInvite(user *m.User, invite *m.TempUserDTO, setActive bool) (bool, Response) {
 	// add to org
 	addOrgUserCmd := m.AddOrgUserCommand{OrgId: invite.OrgId, UserId: user.Id, Role: invite.Role}
-	if err := bus.Dispatch(&addOrgUserCmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &addOrgUserCmd); err != nil {
 		if err != m.ErrOrgUserAlreadyAdded {
 			return false, Error(500, "Error while trying to create org user", err)
 		}
@@ -220,7 +221,7 @@ func applyUserInvite(user *m.User, invite *m.TempUserDTO, setActive bool) (bool,
 
 	if setActive {
 		// set org to active
-		if err := bus.Dispatch(&m.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.Id}); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), &m.SetUsingOrgCommand{OrgId: invite.OrgId, UserId: user.Id}); err != nil {
 			return false, Error(500, "Failed to set org as active", err)
 		}
 	}

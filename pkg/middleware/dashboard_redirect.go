@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 func getDashboardURLBySlug(orgID int64, slug string) (string, error) {
 	query := m.GetDashboardQuery{Slug: slug, OrgId: orgID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return "", m.ErrDashboardNotFound
 	}
 

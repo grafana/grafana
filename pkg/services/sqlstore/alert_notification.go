@@ -55,7 +55,7 @@ func DeleteAlertNotificationWithUid(ctx context.Context, cmd *m.DeleteAlertNotif
 			Id:    existingNotification.Result.Id,
 			OrgId: existingNotification.Result.OrgId,
 		}
-		if err := bus.Dispatch(deleteCommand); err != nil {
+		if err := bus.DispatchCtx(ctx, deleteCommand); err != nil {
 			return err
 		}
 	}
@@ -379,7 +379,7 @@ func UpdateAlertNotificationWithUid(ctx context.Context, cmd *m.UpdateAlertNotif
 		OrgId: cmd.OrgId,
 	}
 
-	if err := bus.Dispatch(updateNotification); err != nil {
+	if err := bus.DispatchCtx(ctx, updateNotification); err != nil {
 		return err
 	}
 

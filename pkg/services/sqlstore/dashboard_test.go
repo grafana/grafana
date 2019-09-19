@@ -46,7 +46,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboard(&query)
+				err := GetDashboard(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
@@ -62,7 +62,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboard(&query)
+				err := GetDashboard(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
@@ -78,7 +78,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err := GetDashboard(&query)
+				err := GetDashboard(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
@@ -91,7 +91,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			Convey("Should be able to delete dashboard", func() {
 				dash := insertTestDashboard("delete me", 1, 0, false, "delete this")
 
-				err := DeleteDashboard(&m.DeleteDashboardCommand{
+				err := DeleteDashboard(context.Background(), &m.DeleteDashboardCommand{
 					Id:    dash.Id,
 					OrgId: 1,
 				})
@@ -116,7 +116,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 				}
 
-				err := SaveDashboard(&cmd)
+				err := SaveDashboard(context.Background(), &cmd)
 				So(err, ShouldBeNil)
 
 				generateNewUid = util.GenerateShortUID
@@ -132,7 +132,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					UserId: 100,
 				}
 
-				err := SaveDashboard(&cmd)
+				err := SaveDashboard(context.Background(), &cmd)
 				So(err, ShouldBeNil)
 				So(cmd.Result.CreatedBy, ShouldEqual, 100)
 				So(cmd.Result.Created.IsZero(), ShouldBeFalse)
@@ -153,7 +153,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					UserId:    100,
 				}
 
-				err := SaveDashboard(&cmd)
+				err := SaveDashboard(context.Background(), &cmd)
 				So(err, ShouldBeNil)
 				So(cmd.Result.FolderId, ShouldEqual, 2)
 
@@ -169,7 +169,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					UserId:    100,
 				}
 
-				err = SaveDashboard(&cmd)
+				err = SaveDashboard(context.Background(), &cmd)
 				So(err, ShouldBeNil)
 
 				query := m.GetDashboardQuery{
@@ -177,7 +177,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId: 1,
 				}
 
-				err = GetDashboard(&query)
+				err = GetDashboard(context.Background(), &query)
 				So(err, ShouldBeNil)
 				So(query.Result.FolderId, ShouldEqual, 0)
 				So(query.Result.CreatedBy, ShouldEqual, savedDash.CreatedBy)
@@ -188,7 +188,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Should be able to delete a dashboard folder and its children", func() {
 				deleteCmd := &m.DeleteDashboardCommand{Id: savedFolder.Id}
-				err := DeleteDashboard(deleteCmd)
+				err := DeleteDashboard(context.Background(), deleteCmd)
 				So(err, ShouldBeNil)
 
 				query := search.FindPersistedDashboardsQuery{
@@ -197,7 +197,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &m.SignedInUser{},
 				}
 
-				err = SearchDashboards(&query)
+				err = SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 0)
@@ -214,7 +214,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 				}
 
-				err := SaveDashboard(&cmd)
+				err := SaveDashboard(context.Background(), &cmd)
 				So(err, ShouldEqual, m.ErrDashboardNotFound)
 			})
 
@@ -229,14 +229,14 @@ func TestDashboardDataAccess(t *testing.T) {
 					}),
 				}
 
-				err := SaveDashboard(&cmd)
+				err := SaveDashboard(context.Background(), &cmd)
 				So(err, ShouldBeNil)
 			})
 
 			Convey("Should be able to get dashboard tags", func() {
 				query := m.GetDashboardTagsQuery{OrgId: 1}
 
-				err := GetDashboardTags(&query)
+				err := GetDashboardTags(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 2)
@@ -249,7 +249,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
 				}
 
-				err := SearchDashboards(&query)
+				err := SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
@@ -266,7 +266,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
 				}
 
-				err := SearchDashboards(&query)
+				err := SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
@@ -281,7 +281,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
 				}
 
-				err := SearchDashboards(&query)
+				err := SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
@@ -296,7 +296,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
 				}
 
-				err := SearchDashboards(&query)
+				err := SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 3)
@@ -310,7 +310,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
 				}
 
-				err := SearchDashboards(&query)
+				err := SearchDashboards(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 2)
@@ -330,7 +330,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						SignedInUser: &m.SignedInUser{OrgId: 1, OrgRole: m.ROLE_EDITOR},
 					}
 
-					err := SearchDashboards(&query)
+					err := SearchDashboards(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -345,12 +345,12 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
 				starredDash := insertTestDashboard("starred dash", 1, 0, false)
-				StarDashboard(&m.StarDashboardCommand{
+				StarDashboard(context.Background(), &m.StarDashboardCommand{
 					DashboardId: starredDash.Id,
 					UserId:      10,
 				})
 
-				StarDashboard(&m.StarDashboardCommand{
+				StarDashboard(context.Background(), &m.StarDashboardCommand{
 					DashboardId: savedDash.Id,
 					UserId:      1,
 				})
@@ -360,7 +360,7 @@ func TestDashboardDataAccess(t *testing.T) {
 						SignedInUser: &m.SignedInUser{UserId: 10, OrgId: 1, OrgRole: m.ROLE_EDITOR},
 						IsStarred:    true,
 					}
-					err := SearchDashboards(&query)
+					err := SearchDashboards(context.Background(), &query)
 
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
@@ -382,7 +382,7 @@ func TestDashboardDataAccess(t *testing.T) {
 					OrgId:    1,
 				}
 
-				err := GetDashboardsByPluginId(&query)
+				err := GetDashboardsByPluginId(context.Background(), &query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 2)
 			})
@@ -402,7 +402,7 @@ func insertTestDashboard(title string, orgId int64, folderId int64, isFolder boo
 		}),
 	}
 
-	err := SaveDashboard(&cmd)
+	err := SaveDashboard(context.Background(), &cmd)
 	So(err, ShouldBeNil)
 
 	cmd.Result.Data.Set("id", cmd.Result.Id)
@@ -423,7 +423,7 @@ func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isF
 		PluginId: pluginId,
 	}
 
-	err := SaveDashboard(&cmd)
+	err := SaveDashboard(context.Background(), &cmd)
 	So(err, ShouldBeNil)
 
 	return cmd.Result
@@ -439,7 +439,7 @@ func createUser(name string, role string, isAdmin bool) m.User {
 	So(err, ShouldBeNil)
 
 	q1 := m.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
-	GetUserOrgList(&q1)
+	GetUserOrgList(context.Background(), &q1)
 	So(q1.Result[0].Role, ShouldEqual, role)
 
 	return currentUserCmd.Result
@@ -453,7 +453,7 @@ func moveDashboard(orgId int64, dashboard *simplejson.Json, newFolderId int64) *
 		Overwrite: true,
 	}
 
-	err := SaveDashboard(&cmd)
+	err := SaveDashboard(context.Background(), &cmd)
 	So(err, ShouldBeNil)
 
 	return cmd.Result

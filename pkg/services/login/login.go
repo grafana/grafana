@@ -40,7 +40,7 @@ func (ls *LoginService) UpsertUser(ctx context.Context, cmd *models.UpsertUserCo
 		Login:      extUser.Login,
 	}
 
-	err := bus.Dispatch(userQuery)
+	err := bus.DispatchCtx(ctx, userQuery)
 	if err != models.ErrUserNotFound && err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (ls *LoginService) UpsertUser(ctx context.Context, cmd *models.UpsertUserCo
 				AuthId:     extUser.AuthId,
 				OAuthToken: extUser.OAuthToken,
 			}
-			if err := ls.Bus.Dispatch(cmd2); err != nil {
+			if err := ls.Bus.DispatchCtx(ctx, cmd2); err != nil {
 				return err
 			}
 		}
@@ -95,7 +95,7 @@ func (ls *LoginService) UpsertUser(ctx context.Context, cmd *models.UpsertUserCo
 
 		if extUser.AuthModule == models.AuthModuleLDAP && userQuery.Result.IsDisabled {
 			// Re-enable user when it found in LDAP
-			if err := ls.Bus.Dispatch(&models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
+			if err := ls.Bus.DispatchCtx(ctx, &models.DisableUserCommand{UserId: cmd.Result.Id, IsDisabled: false}); err != nil {
 				return err
 			}
 		}
@@ -109,12 +109,12 @@ func (ls *LoginService) UpsertUser(ctx context.Context, cmd *models.UpsertUserCo
 
 	// Sync isGrafanaAdmin permission
 	if extUser.IsGrafanaAdmin != nil && *extUser.IsGrafanaAdmin != cmd.Result.IsAdmin {
-		if err := ls.Bus.Dispatch(&models.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
+		if err := ls.Bus.DispatchCtx(ctx, &models.UpdateUserPermissionsCommand{UserId: cmd.Result.Id, IsGrafanaAdmin: *extUser.IsGrafanaAdmin}); err != nil {
 			return err
 		}
 	}
 
-	err = ls.Bus.Dispatch(&models.SyncTeamsCommand{
+	err = ls.Bus.DispatchCtx(ctx, &models.SyncTeamsCommand{
 		User:         cmd.Result,
 		ExternalUser: extUser,
 	})
@@ -134,7 +134,7 @@ func createUser(extUser *models.ExternalUserInfo) (*models.User, error) {
 		SkipOrgSetup: len(extUser.OrgRoles) > 0,
 	}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), cmd); err != nil {
 		return nil, err
 	}
 
@@ -171,7 +171,7 @@ func updateUser(user *models.User, extUser *models.ExternalUserInfo) error {
 	}
 
 	logger.Debug("Syncing user info", "id", user.Id, "update", updateCmd)
-	return bus.Dispatch(updateCmd)
+	return bus.DispatchCtx(context.TODO(), updateCmd)
 }
 
 func updateUserAuth(user *models.User, extUser *models.ExternalUserInfo) error {
@@ -183,7 +183,7 @@ func updateUserAuth(user *models.User, extUser *models.ExternalUserInfo) error {
 	}
 
 	logger.Debug("Updating user_auth info", "user_id", user.Id)
-	return bus.Dispatch(updateCmd)
+	return bus.DispatchCtx(context.TODO(), updateCmd)
 }
 
 func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
@@ -193,7 +193,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	}
 
 	orgsQuery := &models.GetUserOrgListQuery{UserId: user.Id}
-	if err := bus.Dispatch(orgsQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), orgsQuery); err != nil {
 		return err
 	}
 
@@ -209,7 +209,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 		} else if extUser.OrgRoles[org.OrgId] != org.Role {
 			// update role
 			cmd := &models.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: extUser.OrgRoles[org.OrgId]}
-			if err := bus.Dispatch(cmd); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), cmd); err != nil {
 				return err
 			}
 		}
@@ -223,7 +223,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 
 		// add role
 		cmd := &models.AddOrgUserCommand{UserId: user.Id, Role: orgRole, OrgId: orgId}
-		err := bus.Dispatch(cmd)
+		err := bus.DispatchCtx(context.TODO(), cmd)
 		if err != nil && err != models.ErrOrgNotFound {
 			return err
 		}
@@ -232,7 +232,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	// delete any removed org roles
 	for _, orgId := range deleteOrgIds {
 		cmd := &models.RemoveOrgUserCommand{OrgId: orgId, UserId: user.Id}
-		if err := bus.Dispatch(cmd); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), cmd); err != nil {
 			return err
 		}
 	}
@@ -244,7 +244,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 			break
 		}
 
-		return bus.Dispatch(&models.SetUsingOrgCommand{
+		return bus.DispatchCtx(context.TODO(), &models.SetUsingOrgCommand{
 			UserId: user.Id,
 			OrgId:  user.OrgId,
 		})

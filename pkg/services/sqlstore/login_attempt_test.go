@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -20,7 +21,7 @@ func TestLoginAttempts(t *testing.T) {
 		user := "user"
 		beginningOfTime := mockTime(time.Date(2017, 10, 22, 8, 0, 0, 0, time.Local))
 
-		err := CreateLoginAttempt(&m.CreateLoginAttemptCommand{
+		err := CreateLoginAttempt(context.Background(), &m.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
@@ -28,7 +29,7 @@ func TestLoginAttempts(t *testing.T) {
 
 		timePlusOneMinute := mockTime(beginningOfTime.Add(time.Minute * 1))
 
-		err = CreateLoginAttempt(&m.CreateLoginAttemptCommand{
+		err = CreateLoginAttempt(context.Background(), &m.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
@@ -36,7 +37,7 @@ func TestLoginAttempts(t *testing.T) {
 
 		timePlusTwoMinutes := mockTime(beginningOfTime.Add(time.Minute * 2))
 
-		err = CreateLoginAttempt(&m.CreateLoginAttemptCommand{
+		err = CreateLoginAttempt(context.Background(), &m.CreateLoginAttemptCommand{
 			Username:  user,
 			IpAddress: "192.168.0.1",
 		})
@@ -47,7 +48,7 @@ func TestLoginAttempts(t *testing.T) {
 				Username: user,
 				Since:    timePlusTwoMinutes.Add(time.Second * 1),
 			}
-			err := GetUserLoginAttemptCount(&query)
+			err := GetUserLoginAttemptCount(context.Background(), &query)
 			So(err, ShouldBeNil)
 			So(query.Result, ShouldEqual, 0)
 		})
@@ -57,7 +58,7 @@ func TestLoginAttempts(t *testing.T) {
 				Username: user,
 				Since:    beginningOfTime,
 			}
-			err := GetUserLoginAttemptCount(&query)
+			err := GetUserLoginAttemptCount(context.Background(), &query)
 			So(err, ShouldBeNil)
 			So(query.Result, ShouldEqual, 3)
 		})
@@ -67,7 +68,7 @@ func TestLoginAttempts(t *testing.T) {
 				Username: user,
 				Since:    timePlusOneMinute,
 			}
-			err := GetUserLoginAttemptCount(&query)
+			err := GetUserLoginAttemptCount(context.Background(), &query)
 			So(err, ShouldBeNil)
 			So(query.Result, ShouldEqual, 2)
 		})
@@ -77,7 +78,7 @@ func TestLoginAttempts(t *testing.T) {
 				Username: user,
 				Since:    timePlusTwoMinutes,
 			}
-			err := GetUserLoginAttemptCount(&query)
+			err := GetUserLoginAttemptCount(context.Background(), &query)
 			So(err, ShouldBeNil)
 			So(query.Result, ShouldEqual, 1)
 		})
@@ -86,7 +87,7 @@ func TestLoginAttempts(t *testing.T) {
 			cmd := m.DeleteOldLoginAttemptsCommand{
 				OlderThan: beginningOfTime,
 			}
-			err := DeleteOldLoginAttempts(&cmd)
+			err := DeleteOldLoginAttempts(context.Background(), &cmd)
 
 			So(err, ShouldBeNil)
 			So(cmd.DeletedRows, ShouldEqual, 0)
@@ -96,7 +97,7 @@ func TestLoginAttempts(t *testing.T) {
 			cmd := m.DeleteOldLoginAttemptsCommand{
 				OlderThan: timePlusOneMinute,
 			}
-			err := DeleteOldLoginAttempts(&cmd)
+			err := DeleteOldLoginAttempts(context.Background(), &cmd)
 
 			So(err, ShouldBeNil)
 			So(cmd.DeletedRows, ShouldEqual, 1)
@@ -106,7 +107,7 @@ func TestLoginAttempts(t *testing.T) {
 			cmd := m.DeleteOldLoginAttemptsCommand{
 				OlderThan: timePlusTwoMinutes,
 			}
-			err := DeleteOldLoginAttempts(&cmd)
+			err := DeleteOldLoginAttempts(context.Background(), &cmd)
 
 			So(err, ShouldBeNil)
 			So(cmd.DeletedRows, ShouldEqual, 2)
@@ -116,7 +117,7 @@ func TestLoginAttempts(t *testing.T) {
 			cmd := m.DeleteOldLoginAttemptsCommand{
 				OlderThan: timePlusTwoMinutes.Add(time.Second * 1),
 			}
-			err := DeleteOldLoginAttempts(&cmd)
+			err := DeleteOldLoginAttempts(context.Background(), &cmd)
 
 			So(err, ShouldBeNil)
 			So(cmd.DeletedRows, ShouldEqual, 3)

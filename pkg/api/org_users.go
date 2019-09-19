@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -24,7 +26,7 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) Response {
 	}
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
-	err := bus.Dispatch(&userQuery)
+	err := bus.DispatchCtx(context.TODO(), &userQuery)
 	if err != nil {
 		return Error(404, "User not found", nil)
 	}
@@ -33,7 +35,7 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) Response {
 
 	cmd.UserId = userToAdd.Id
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
 		if err == models.ErrOrgUserAlreadyAdded {
 			return Error(409, "User is already member of this organization", nil)
 		}
@@ -88,7 +90,7 @@ func isOrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) (bool, error) {
 	}
 
 	hasAdminPermissionInFoldersQuery := models.HasAdminPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(&hasAdminPermissionInFoldersQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &hasAdminPermissionInFoldersQuery); err != nil {
 		return false, err
 	}
 
@@ -97,7 +99,7 @@ func isOrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) (bool, error) {
 	}
 
 	isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(&isAdminOfTeamsQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &isAdminOfTeamsQuery); err != nil {
 		return false, err
 	}
 
@@ -121,7 +123,7 @@ func getOrgUsersHelper(orgID int64, query string, limit int) ([]*models.OrgUserD
 		Limit: limit,
 	}
 
-	if err := bus.Dispatch(&q); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &q); err != nil {
 		return nil, err
 	}
 
@@ -151,7 +153,7 @@ func updateOrgUserHelper(cmd models.UpdateOrgUserCommand) Response {
 		return Error(400, "Invalid role specified", nil)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
 		if err == models.ErrLastOrgAdmin {
 			return Error(400, "Cannot change role so that there is no organization admin left", nil)
 		}
@@ -179,7 +181,7 @@ func RemoveOrgUser(c *models.ReqContext) Response {
 }
 
 func removeOrgUserHelper(cmd *models.RemoveOrgUserCommand) Response {
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), cmd); err != nil {
 		if err == models.ErrLastOrgAdmin {
 			return Error(400, "Cannot remove last organization admin", nil)
 		}

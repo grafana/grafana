@@ -56,7 +56,7 @@ func Search(c *m.ReqContext) Response {
 		Permission:   permission,
 	}
 
-	err := bus.Dispatch(&searchQuery)
+	err := bus.DispatchCtx(c.Ctx(), &searchQuery)
 	if err != nil {
 		return Error(500, "Search failed", err)
 	}

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -21,7 +23,7 @@ func GetUserByID(c *m.ReqContext) Response {
 func getUserUserProfile(userID int64) Response {
 	query := m.GetUserProfileQuery{UserId: userID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		if err == m.ErrUserNotFound {
 			return Error(404, m.ErrUserNotFound.Error(), nil)
 		}
@@ -30,7 +32,7 @@ func getUserUserProfile(userID int64) Response {
 
 	getAuthQuery := m.GetAuthInfoQuery{UserId: userID}
 	query.Result.AuthLabels = []string{}
-	if err := bus.Dispatch(&getAuthQuery); err == nil {
+	if err := bus.DispatchCtx(context.TODO(), &getAuthQuery); err == nil {
 		authLabel := GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
 		query.Result.AuthLabels = append(query.Result.AuthLabels, authLabel)
 		query.Result.IsExternal = true
@@ -42,7 +44,7 @@ func getUserUserProfile(userID int64) Response {
 // GET /api/users/lookup
 func GetUserByLoginOrEmail(c *m.ReqContext) Response {
 	query := m.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		if err == m.ErrUserNotFound {
 			return Error(404, m.ErrUserNotFound.Error(), nil)
 		}
@@ -92,7 +94,7 @@ func UpdateUserActiveOrg(c *m.ReqContext) Response {
 
 	cmd := m.SetUsingOrgCommand{UserId: userID, OrgId: orgID}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to change active organization", err)
 	}
 
@@ -107,7 +109,7 @@ func handleUpdateUser(cmd m.UpdateUserCommand) Response {
 		}
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
 		return Error(500, "Failed to update user", err)
 	}
 
@@ -132,7 +134,7 @@ func GetUserTeams(c *m.ReqContext) Response {
 func getUserTeamList(orgID int64, userID int64) Response {
 	query := m.GetTeamsByUserQuery{OrgId: orgID, UserId: userID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return Error(500, "Failed to get user teams", err)
 	}
 
@@ -150,7 +152,7 @@ func GetUserOrgList(c *m.ReqContext) Response {
 func getUserOrgList(userID int64) Response {
 	query := m.GetUserOrgListQuery{UserId: userID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return Error(500, "Failed to get user organizations", err)
 	}
 
@@ -160,7 +162,7 @@ func getUserOrgList(userID int64) Response {
 func validateUsingOrg(userID int64, orgID int64) bool {
 	query := m.GetUserOrgListQuery{UserId: userID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return false
 	}
 
@@ -185,7 +187,7 @@ func UserSetUsingOrg(c *m.ReqContext) Response {
 
 	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to change active organization", err)
 	}
 
@@ -202,7 +204,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *m.ReqContext) {
 
 	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgID}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		hs.NotFoundHandler(c)
 	}
 
@@ -216,7 +218,7 @@ func ChangeUserPassword(c *m.ReqContext, cmd m.ChangeUserPasswordCommand) Respon
 
 	userQuery := m.GetUserByIdQuery{Id: c.UserId}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &userQuery); err != nil {
 		return Error(500, "Could not read user from database", err)
 	}
 
@@ -233,7 +235,7 @@ func ChangeUserPassword(c *m.ReqContext, cmd m.ChangeUserPasswordCommand) Respon
 	cmd.UserId = c.UserId
 	cmd.NewPassword = util.EncodePassword(cmd.NewPassword, userQuery.Result.Salt)
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to change user password", err)
 	}
 
@@ -274,7 +276,7 @@ func searchUser(c *m.ReqContext) (*m.SearchUsersQuery, error) {
 	searchQuery := c.Query("query")
 
 	query := &m.SearchUsersQuery{Query: searchQuery, Page: page, Limit: perPage}
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), query); err != nil {
 		return nil, err
 	}
 
@@ -305,7 +307,7 @@ func SetHelpFlag(c *m.ReqContext) Response {
 		HelpFlags1: *bitmask,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to update help flag", err)
 	}
 
@@ -318,7 +320,7 @@ func ClearHelpFlags(c *m.ReqContext) Response {
 		HelpFlags1: m.HelpFlags1(0),
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to update help flag", err)
 	}
 

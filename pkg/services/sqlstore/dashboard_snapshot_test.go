@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -25,12 +26,12 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 				UserId: 1000,
 				OrgId:  1,
 			}
-			err := CreateDashboardSnapshot(&cmd)
+			err := CreateDashboardSnapshot(context.Background(), &cmd)
 			So(err, ShouldBeNil)
 
 			Convey("Should be able to get snapshot by key", func() {
 				query := m.GetDashboardSnapshotQuery{Key: "hej"}
-				err = GetDashboardSnapshot(&query)
+				err = GetDashboardSnapshot(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result, ShouldNotBeNil)
@@ -43,7 +44,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 						OrgId:        1,
 						SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_ADMIN},
 					}
-					err := SearchDashboardSnapshots(&query)
+					err := SearchDashboardSnapshots(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(query.Result, ShouldNotBeNil)
@@ -57,7 +58,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 						OrgId:        1,
 						SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_EDITOR, UserId: 1000},
 					}
-					err := SearchDashboardSnapshots(&query)
+					err := SearchDashboardSnapshots(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(query.Result, ShouldNotBeNil)
@@ -71,7 +72,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 						OrgId:        1,
 						SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_EDITOR, UserId: 2},
 					}
-					err := SearchDashboardSnapshots(&query)
+					err := SearchDashboardSnapshots(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(query.Result, ShouldNotBeNil)
@@ -89,7 +90,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 					UserId: 0,
 					OrgId:  1,
 				}
-				err := CreateDashboardSnapshot(&cmd)
+				err := CreateDashboardSnapshot(context.Background(), &cmd)
 				So(err, ShouldBeNil)
 
 				Convey("Should not return any snapshots", func() {
@@ -97,7 +98,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 						OrgId:        1,
 						SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_EDITOR, IsAnonymous: true, UserId: 0},
 					}
-					err := SearchDashboardSnapshots(&query)
+					err := SearchDashboardSnapshots(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(query.Result, ShouldNotBeNil)
@@ -118,27 +119,27 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 		createTestSnapshot(sqlstore, "key2", -1200)
 		createTestSnapshot(sqlstore, "key3", -1200)
 
-		err := DeleteExpiredSnapshots(&m.DeleteExpiredSnapshotsCommand{})
+		err := DeleteExpiredSnapshots(context.Background(), &m.DeleteExpiredSnapshotsCommand{})
 		So(err, ShouldBeNil)
 
 		query := m.GetDashboardSnapshotsQuery{
 			OrgId:        1,
 			SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_ADMIN},
 		}
-		err = SearchDashboardSnapshots(&query)
+		err = SearchDashboardSnapshots(context.Background(), &query)
 		So(err, ShouldBeNil)
 
 		So(len(query.Result), ShouldEqual, 1)
 		So(query.Result[0].Key, ShouldEqual, notExpiredsnapshot.Key)
 
-		err = DeleteExpiredSnapshots(&m.DeleteExpiredSnapshotsCommand{})
+		err = DeleteExpiredSnapshots(context.Background(), &m.DeleteExpiredSnapshotsCommand{})
 		So(err, ShouldBeNil)
 
 		query = m.GetDashboardSnapshotsQuery{
 			OrgId:        1,
 			SignedInUser: &m.SignedInUser{OrgRole: m.ROLE_ADMIN},
 		}
-		SearchDashboardSnapshots(&query)
+		SearchDashboardSnapshots(context.Background(), &query)
 
 		So(len(query.Result), ShouldEqual, 1)
 		So(query.Result[0].Key, ShouldEqual, notExpiredsnapshot.Key)
@@ -156,7 +157,7 @@ func createTestSnapshot(sqlstore *SqlStore, key string, expires int64) *m.Dashbo
 		OrgId:   1,
 		Expires: expires,
 	}
-	err := CreateDashboardSnapshot(&cmd)
+	err := CreateDashboardSnapshot(context.Background(), &cmd)
 	So(err, ShouldBeNil)
 
 	// Set expiry date manually - to be able to create expired snapshots

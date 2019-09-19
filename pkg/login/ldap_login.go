@@ -1,6 +1,8 @@
 package login
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -52,7 +54,7 @@ var loginUsingLDAP = func(query *models.LoginUserQuery) (bool, error) {
 		ExternalUser:  externalUser,
 		SignupAllowed: setting.LDAPAllowSignup,
 	}
-	err = bus.Dispatch(upsert)
+	err = bus.DispatchCtx(context.TODO(), upsert)
 	if err != nil {
 		return true, err
 	}
@@ -68,7 +70,7 @@ func DisableExternalUser(username string) error {
 		LoginOrEmail: username,
 	}
 
-	if err := bus.Dispatch(userQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), userQuery); err != nil {
 		return err
 	}
 
@@ -87,7 +89,7 @@ func DisableExternalUser(username string) error {
 			IsDisabled: true,
 		}
 
-		if err := bus.Dispatch(disableUserCmd); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), disableUserCmd); err != nil {
 			logger.Debug(
 				"Error disabling external user",
 				"user",

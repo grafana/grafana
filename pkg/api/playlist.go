@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -11,7 +12,7 @@ import (
 func ValidateOrgPlaylist(c *m.ReqContext) {
 	id := c.ParamsInt64(":id")
 	query := m.GetPlaylistByIdQuery{Id: id}
-	err := bus.Dispatch(&query)
+	err := bus.DispatchCtx(c.Ctx(), &query)
 
 	if err != nil {
 		c.JsonApiErr(404, "Playlist not found", err)
@@ -55,7 +56,7 @@ func SearchPlaylists(c *m.ReqContext) Response {
 		OrgId: c.OrgId,
 	}
 
-	err := bus.Dispatch(&searchQuery)
+	err := bus.DispatchCtx(c.Ctx(), &searchQuery)
 	if err != nil {
 		return Error(500, "Search failed", err)
 	}
@@ -67,7 +68,7 @@ func GetPlaylist(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 	cmd := m.GetPlaylistByIdQuery{Id: id}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Playlist not found", err)
 	}
 
@@ -109,7 +110,7 @@ func LoadPlaylistItemDTOs(id int64) ([]m.PlaylistItemDTO, error) {
 
 func LoadPlaylistItems(id int64) ([]m.PlaylistItem, error) {
 	itemQuery := m.GetPlaylistItemsByIdQuery{PlaylistId: id}
-	if err := bus.Dispatch(&itemQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &itemQuery); err != nil {
 		return nil, err
 	}
 
@@ -143,7 +144,7 @@ func DeletePlaylist(c *m.ReqContext) Response {
 	id := c.ParamsInt64(":id")
 
 	cmd := m.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to delete playlist", err)
 	}
 
@@ -153,7 +154,7 @@ func DeletePlaylist(c *m.ReqContext) Response {
 func CreatePlaylist(c *m.ReqContext, cmd m.CreatePlaylistCommand) Response {
 	cmd.OrgId = c.OrgId
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to create playlist", err)
 	}
 
@@ -164,7 +165,7 @@ func UpdatePlaylist(c *m.ReqContext, cmd m.UpdatePlaylistCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to save playlist", err)
 	}
 

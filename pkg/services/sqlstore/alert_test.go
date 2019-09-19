@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -51,7 +52,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			UserId:      1,
 		}
 
-		err := SaveAlerts(&cmd)
+		err := SaveAlerts(context.Background(), &cmd)
 
 		Convey("Can create one alert", func() {
 			So(err, ShouldBeNil)
@@ -64,7 +65,7 @@ func TestAlertingDataAccess(t *testing.T) {
 					State:   m.AlertStateOK,
 				}
 
-				err = SetAlertState(cmd)
+				err = SetAlertState(context.Background(), cmd)
 				So(err, ShouldBeNil)
 			})
 
@@ -80,7 +81,7 @@ func TestAlertingDataAccess(t *testing.T) {
 						State:   m.AlertStateOK,
 					}
 
-					err = SetAlertState(cmd)
+					err = SetAlertState(context.Background(), cmd)
 					So(err, ShouldNotBeNil)
 				})
 
@@ -101,7 +102,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		Convey("Can read properties", func() {
 			alertQuery := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
-			err2 := HandleAlertsQuery(&alertQuery)
+			err2 := HandleAlertsQuery(context.Background(), &alertQuery)
 
 			alert := alertQuery.Result[0]
 			So(err2, ShouldBeNil)
@@ -122,7 +123,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		Convey("Viewer cannot read alerts", func() {
 			viewerUser := &m.SignedInUser{OrgRole: m.ROLE_VIEWER, OrgId: 1}
 			alertQuery := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
-			err2 := HandleAlertsQuery(&alertQuery)
+			err2 := HandleAlertsQuery(context.Background(), &alertQuery)
 
 			So(err2, ShouldBeNil)
 			So(alertQuery.Result, ShouldHaveLength, 1)
@@ -139,7 +140,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				Alerts:      modifiedItems,
 			}
 
-			err := SaveAlerts(&modifiedCmd)
+			err := SaveAlerts(context.Background(), &modifiedCmd)
 
 			Convey("Can save alerts with same dashboard and panel id", func() {
 				So(err, ShouldBeNil)
@@ -147,7 +148,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			Convey("Alerts should be updated", func() {
 				query := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
-				err2 := HandleAlertsQuery(&query)
+				err2 := HandleAlertsQuery(context.Background(), &query)
 
 				So(err2, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 1)
@@ -159,7 +160,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 
 			Convey("Updates without changes should be ignored", func() {
-				err3 := SaveAlerts(&modifiedCmd)
+				err3 := SaveAlerts(context.Background(), &modifiedCmd)
 				So(err3, ShouldBeNil)
 			})
 		})
@@ -190,13 +191,13 @@ func TestAlertingDataAccess(t *testing.T) {
 			}
 
 			cmd.Alerts = multipleItems
-			err = SaveAlerts(&cmd)
+			err = SaveAlerts(context.Background(), &cmd)
 
 			Convey("Should save 3 dashboards", func() {
 				So(err, ShouldBeNil)
 
 				queryForDashboard := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
-				err2 := HandleAlertsQuery(&queryForDashboard)
+				err2 := HandleAlertsQuery(context.Background(), &queryForDashboard)
 
 				So(err2, ShouldBeNil)
 				So(len(queryForDashboard.Result), ShouldEqual, 3)
@@ -206,11 +207,11 @@ func TestAlertingDataAccess(t *testing.T) {
 				missingOneAlert := multipleItems[:2]
 
 				cmd.Alerts = missingOneAlert
-				err = SaveAlerts(&cmd)
+				err = SaveAlerts(context.Background(), &cmd)
 
 				Convey("should delete the missing alert", func() {
 					query := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
-					err2 := HandleAlertsQuery(&query)
+					err2 := HandleAlertsQuery(context.Background(), &query)
 					So(err2, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
 				})
@@ -234,9 +235,9 @@ func TestAlertingDataAccess(t *testing.T) {
 				UserId:      1,
 			}
 
-			SaveAlerts(&cmd)
+			SaveAlerts(context.Background(), &cmd)
 
-			err = DeleteDashboard(&m.DeleteDashboardCommand{
+			err = DeleteDashboard(context.Background(), &m.DeleteDashboardCommand{
 				OrgId: 1,
 				Id:    testDash.Id,
 			})
@@ -245,7 +246,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			Convey("Alerts should be removed", func() {
 				query := m.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &m.SignedInUser{OrgRole: m.ROLE_ADMIN}}
-				err2 := HandleAlertsQuery(&query)
+				err2 := HandleAlertsQuery(context.Background(), &query)
 
 				So(testDash.Id, ShouldEqual, 1)
 				So(err2, ShouldBeNil)
@@ -296,7 +297,7 @@ func pauseAlert(orgId int64, alertId int64, pauseState bool) (int64, error) {
 		AlertIds: []int64{alertId},
 		Paused:   pauseState,
 	}
-	err := PauseAlert(cmd)
+	err := PauseAlert(context.Background(), cmd)
 	So(err, ShouldBeNil)
 	return cmd.ResultCount, err
 }
@@ -320,7 +321,7 @@ func insertTestAlert(title string, message string, orgId int64, dashId int64, se
 		UserId:      1,
 	}
 
-	err := SaveAlerts(&cmd)
+	err := SaveAlerts(context.Background(), &cmd)
 	return cmd.Alerts[0], err
 }
 
@@ -328,7 +329,7 @@ func getAlertById(id int64) (*m.Alert, error) {
 	q := &m.GetAlertByIdQuery{
 		Id: id,
 	}
-	err := GetAlertById(q)
+	err := GetAlertById(context.Background(), q)
 	So(err, ShouldBeNil)
 	return q.Result, err
 }
@@ -337,7 +338,7 @@ func pauseAllAlerts(pauseState bool) error {
 	cmd := &m.PauseAllAlertCommand{
 		Paused: pauseState,
 	}
-	err := PauseAllAlerts(cmd)
+	err := PauseAllAlerts(context.Background(), cmd)
 	So(err, ShouldBeNil)
 	return err
 }

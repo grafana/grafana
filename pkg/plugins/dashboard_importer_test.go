@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -28,7 +29,7 @@ func TestDashboardImport(t *testing.T) {
 			},
 		}
 
-		err := ImportDashboard(&cmd)
+		err := ImportDashboard(context.Background(), &cmd)
 		So(err, ShouldBeNil)
 
 		Convey("should install dashboard", func() {

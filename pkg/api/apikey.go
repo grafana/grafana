@@ -1,17 +1,18 @@
 package api
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
-	"time"
 )
 
 func GetAPIKeys(c *models.ReqContext) Response {
 	query := models.GetApiKeysQuery{OrgId: c.OrgId}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "Failed to list api keys", err)
 	}
 
@@ -38,7 +39,7 @@ func DeleteAPIKey(c *models.ReqContext) Response {
 
 	cmd := &models.DeleteApiKeyCommand{Id: id, OrgId: c.OrgId}
 
-	err := bus.Dispatch(cmd)
+	err := bus.DispatchCtx(c.Ctx(), cmd)
 	if err != nil {
 		return Error(500, "Failed to delete API key", err)
 	}
@@ -64,7 +65,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	newKeyInfo := apikeygen.New(cmd.OrgId, cmd.Name)
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		if err == models.ErrInvalidApiKeyExpiration {
 			return Error(400, err.Error(), nil)
 		}

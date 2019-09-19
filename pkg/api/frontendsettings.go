@@ -19,7 +19,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 
 	if c.OrgId != 0 {
 		query := m.GetDataSourcesQuery{OrgId: c.OrgId}
-		err := bus.Dispatch(&query)
+		err := bus.DispatchCtx(c.Ctx(), &query)
 
 		if err != nil {
 			return nil, err
@@ -30,7 +30,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 			Datasources: query.Result,
 		}
 
-		if err := bus.Dispatch(&dsFilterQuery); err != nil {
+		if err := bus.DispatchCtx(c.Ctx(), &dsFilterQuery); err != nil {
 			if err != bus.ErrHandlerNotFound {
 				return nil, err
 			}

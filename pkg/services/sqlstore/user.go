@@ -284,7 +284,7 @@ func UpdateUserLastSeenAt(ctx context.Context, cmd *models.UpdateUserLastSeenAtC
 
 func SetUsingOrg(ctx context.Context, cmd *models.SetUsingOrgCommand) error {
 	getOrgsForUserCmd := &models.GetUserOrgListQuery{UserId: cmd.UserId}
-	GetUserOrgList(getOrgsForUserCmd)
+	GetUserOrgList(ctx, getOrgsForUserCmd)
 
 	valid := false
 	for _, other := range getOrgsForUserCmd.Result {
@@ -414,7 +414,7 @@ func GetSignedInUser(query *models.GetSignedInUserQuery) error {
 	}
 
 	getTeamsByUserQuery := &models.GetTeamsByUserQuery{OrgId: user.OrgId, UserId: user.UserId}
-	err = GetTeamsByUser(getTeamsByUserQuery)
+	err = GetTeamsByUser(context.TODO(), getTeamsByUserQuery)
 	if err != nil {
 		return err
 	}

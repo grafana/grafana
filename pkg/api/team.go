@@ -16,7 +16,7 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 		return Error(403, "Not allowed to create team.", nil)
 	}
 
-	if err := hs.Bus.Dispatch(&cmd); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		if err == m.ErrTeamNameTaken {
 			return Error(409, "Team name taken", err)
 		}
@@ -35,7 +35,7 @@ func (hs *HTTPServer) CreateTeam(c *m.ReqContext, cmd m.CreateTeamCommand) Respo
 				Permission: m.PERMISSION_ADMIN,
 			}
 
-			if err := hs.Bus.Dispatch(&addMemberCmd); err != nil {
+			if err := hs.Bus.DispatchCtx(c.Ctx(), &addMemberCmd); err != nil {
 				c.Logger.Error("Could not add creator to team.", "error", err)
 			}
 		} else {
@@ -58,7 +58,7 @@ func (hs *HTTPServer) UpdateTeam(c *m.ReqContext, cmd m.UpdateTeamCommand) Respo
 		return Error(403, "Not allowed to update team", err)
 	}
 
-	if err := hs.Bus.Dispatch(&cmd); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		if err == m.ErrTeamNameTaken {
 			return Error(400, "Team name taken", err)
 		}
@@ -78,7 +78,7 @@ func (hs *HTTPServer) DeleteTeamByID(c *m.ReqContext) Response {
 		return Error(403, "Not allowed to delete team", err)
 	}
 
-	if err := hs.Bus.Dispatch(&m.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
+	if err := hs.Bus.DispatchCtx(c.Ctx(), &m.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
 		if err == m.ErrTeamNotFound {
 			return Error(404, "Failed to delete Team. ID not found", nil)
 		}
@@ -112,7 +112,7 @@ func (hs *HTTPServer) SearchTeams(c *m.ReqContext) Response {
 		Limit:        perPage,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "Failed to search Teams", err)
 	}
 
@@ -130,7 +130,7 @@ func (hs *HTTPServer) SearchTeams(c *m.ReqContext) Response {
 func GetTeamByID(c *m.ReqContext) Response {
 	query := m.GetTeamByIdQuery{OrgId: c.OrgId, Id: c.ParamsInt64(":teamId")}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		if err == m.ErrTeamNotFound {
 			return Error(404, "Team not found", err)
 		}

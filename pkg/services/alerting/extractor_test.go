@@ -202,10 +202,10 @@ func TestAlertRuleExtraction(t *testing.T) {
 		Convey("Alert notifications are in DB", func() {
 			sqlstore.InitTestDB(t)
 			firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
-			err = sqlstore.CreateAlertNotificationCommand(&firstNotification)
+			err = sqlstore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 			So(err, ShouldBeNil)
 			secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
-			err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
+			err = sqlstore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 			So(err, ShouldBeNil)
 
 			Convey("Parse and validate dashboard containing influxdb alert", func() {

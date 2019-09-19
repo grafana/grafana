@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -159,7 +160,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
 	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), query); err != nil {
 		return nil, err
 	}
 

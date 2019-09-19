@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 
@@ -36,7 +37,7 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 
 	// load current dashboards
 	query := m.GetDashboardsByPluginIdQuery{OrgId: orgId, PluginId: pluginId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return nil, err
 	}
 

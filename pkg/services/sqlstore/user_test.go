@@ -28,7 +28,7 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Loading a user", func() {
 				query := models.GetUserByIdQuery{Id: cmd.Result.Id}
-				err := GetUserById(&query)
+				err := GetUserById(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Email, ShouldEqual, "usertest@test.com")
@@ -52,7 +52,7 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Loading a user", func() {
 				query := models.GetUserByIdQuery{Id: cmd.Result.Id}
-				err := GetUserById(&query)
+				err := GetUserById(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Email, ShouldEqual, "usertest@test.com")
@@ -75,7 +75,7 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Can return the first page of users and a total count", func() {
 				query := models.SearchUsersQuery{Query: "", Page: 1, Limit: 3}
-				err := SearchUsers(&query)
+				err := SearchUsers(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 3)
@@ -84,7 +84,7 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Can return the second page of users and a total count", func() {
 				query := models.SearchUsersQuery{Query: "", Page: 2, Limit: 3}
-				err := SearchUsers(&query)
+				err := SearchUsers(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 2)
@@ -93,28 +93,28 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Can return list of users matching query on user name", func() {
 				query := models.SearchUsersQuery{Query: "use", Page: 1, Limit: 3}
-				err := SearchUsers(&query)
+				err := SearchUsers(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 3)
 				So(query.Result.TotalCount, ShouldEqual, 5)
 
 				query = models.SearchUsersQuery{Query: "ser1", Page: 1, Limit: 3}
-				err = SearchUsers(&query)
+				err = SearchUsers(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 1)
 				So(query.Result.TotalCount, ShouldEqual, 1)
 
 				query = models.SearchUsersQuery{Query: "USER1", Page: 1, Limit: 3}
-				err = SearchUsers(&query)
+				err = SearchUsers(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 1)
 				So(query.Result.TotalCount, ShouldEqual, 1)
 
 				query = models.SearchUsersQuery{Query: "idontexist", Page: 1, Limit: 3}
-				err = SearchUsers(&query)
+				err = SearchUsers(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 0)
@@ -123,7 +123,7 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Can return list of users matching query on email", func() {
 				query := models.SearchUsersQuery{Query: "ser1@test.com", Page: 1, Limit: 3}
-				err := SearchUsers(&query)
+				err := SearchUsers(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 1)
@@ -132,7 +132,7 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Can return list of users matching query on login name", func() {
 				query := models.SearchUsersQuery{Query: "loginuser1", Page: 1, Limit: 3}
-				err := SearchUsers(&query)
+				err := SearchUsers(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result.Users), ShouldEqual, 1)
@@ -154,11 +154,11 @@ func TestUserDataAccess(t *testing.T) {
 						AuthModule: authModule,
 						AuthId:     "gorilla",
 					}
-					err := SetAuthInfo(cmd2)
+					err := SetAuthInfo(context.Background(), cmd2)
 					So(err, ShouldBeNil)
 				}
 				query := models.SearchUsersQuery{AuthModule: "ldap"}
-				err := SearchUsers(&query)
+				err := SearchUsers(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Users, ShouldHaveLength, 3)
@@ -196,7 +196,7 @@ func TestUserDataAccess(t *testing.T) {
 
 				isDisabled := false
 				query := models.SearchUsersQuery{IsDisabled: &isDisabled}
-				err := SearchUsers(&query)
+				err := SearchUsers(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(query.Result.Users, ShouldHaveLength, 2)
@@ -227,17 +227,17 @@ func TestUserDataAccess(t *testing.T) {
 			})
 
 			Convey("when a user is an org member and has been assigned permissions", func() {
-				err := AddOrgUser(&models.AddOrgUserCommand{LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER, OrgId: users[0].OrgId, UserId: users[1].Id})
+				err := AddOrgUser(context.Background(), &models.AddOrgUserCommand{LoginOrEmail: users[1].Login, Role: models.ROLE_VIEWER, OrgId: users[0].OrgId, UserId: users[1].Id})
 				So(err, ShouldBeNil)
 
 				testHelperUpdateDashboardAcl(1, models.DashboardAcl{DashboardId: 1, OrgId: users[0].OrgId, UserId: users[1].Id, Permission: models.PERMISSION_EDIT})
 				So(err, ShouldBeNil)
 
-				err = SavePreferences(&models.SavePreferencesCommand{UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark"})
+				err = SavePreferences(context.Background(), &models.SavePreferencesCommand{UserId: users[1].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark"})
 				So(err, ShouldBeNil)
 
 				Convey("when the user is deleted", func() {
-					err = DeleteUser(&models.DeleteUserCommand{UserId: users[1].Id})
+					err = DeleteUser(context.Background(), &models.DeleteUserCommand{UserId: users[1].Id})
 					So(err, ShouldBeNil)
 
 					Convey("Should delete connected org users and permissions", func() {
@@ -248,13 +248,13 @@ func TestUserDataAccess(t *testing.T) {
 						So(len(query.Result), ShouldEqual, 1)
 
 						permQuery := &models.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: users[0].OrgId}
-						err = GetDashboardAclInfoList(permQuery)
+						err = GetDashboardAclInfoList(context.Background(), permQuery)
 						So(err, ShouldBeNil)
 
 						So(len(permQuery.Result), ShouldEqual, 0)
 
 						prefsQuery := &models.GetPreferencesQuery{OrgId: users[0].OrgId, UserId: users[1].Id}
-						err = GetPreferences(prefsQuery)
+						err = GetPreferences(context.Background(), prefsQuery)
 						So(err, ShouldBeNil)
 
 						So(prefsQuery.Result.OrgId, ShouldEqual, 0)
@@ -266,14 +266,14 @@ func TestUserDataAccess(t *testing.T) {
 					ss.CacheService.Flush()
 
 					query := &models.GetSignedInUserQuery{OrgId: users[1].OrgId, UserId: users[1].Id}
-					err := ss.GetSignedInUserWithCache(query)
+					err := ss.GetSignedInUserWithCache(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldNotBeNil)
 					So(query.OrgId, ShouldEqual, users[1].OrgId)
-					err = SetUsingOrg(&models.SetUsingOrgCommand{UserId: users[1].Id, OrgId: users[0].OrgId})
+					err = SetUsingOrg(context.Background(), &models.SetUsingOrgCommand{UserId: users[1].Id, OrgId: users[0].OrgId})
 					So(err, ShouldBeNil)
 					query = &models.GetSignedInUserQuery{OrgId: 0, UserId: users[1].Id}
-					err = ss.GetSignedInUserWithCache(query)
+					err = ss.GetSignedInUserWithCache(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldNotBeNil)
 					So(query.Result.OrgId, ShouldEqual, users[0].OrgId)
@@ -291,12 +291,12 @@ func TestUserDataAccess(t *testing.T) {
 						IsDisabled: true,
 					}
 
-					err := BatchDisableUsers(&disableCmd)
+					err := BatchDisableUsers(context.Background(), &disableCmd)
 					So(err, ShouldBeNil)
 
 					isDisabled := true
 					query := &models.SearchUsersQuery{IsDisabled: &isDisabled}
-					err = SearchUsers(query)
+					err = SearchUsers(context.Background(), query)
 
 					So(err, ShouldBeNil)
 					So(query.Result.TotalCount, ShouldEqual, 5)
@@ -318,12 +318,12 @@ func TestUserDataAccess(t *testing.T) {
 						IsDisabled: false,
 					}
 
-					err := BatchDisableUsers(&disableCmd)
+					err := BatchDisableUsers(context.Background(), &disableCmd)
 					So(err, ShouldBeNil)
 
 					isDisabled := false
 					query := &models.SearchUsersQuery{IsDisabled: &isDisabled}
-					err = SearchUsers(query)
+					err = SearchUsers(context.Background(), query)
 
 					So(err, ShouldBeNil)
 					So(query.Result.TotalCount, ShouldEqual, 5)
@@ -349,11 +349,11 @@ func TestUserDataAccess(t *testing.T) {
 						IsDisabled: true,
 					}
 
-					err := BatchDisableUsers(&disableCmd)
+					err := BatchDisableUsers(context.Background(), &disableCmd)
 					So(err, ShouldBeNil)
 
 					query := models.SearchUsersQuery{}
-					err = SearchUsers(&query)
+					err = SearchUsers(context.Background(), &query)
 
 					So(err, ShouldBeNil)
 					So(query.Result.TotalCount, ShouldEqual, 5)
@@ -395,7 +395,7 @@ func TestUserDataAccess(t *testing.T) {
 				// Make the first log-in during the past
 				getTime = func() time.Time { return time.Now().AddDate(0, 0, -2) }
 				query := &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test1", AuthId: "test1"}
-				err := GetUserByAuthInfo(query)
+				err := GetUserByAuthInfo(context.Background(), query)
 				getTime = time.Now
 
 				So(err, ShouldBeNil)
@@ -405,7 +405,7 @@ func TestUserDataAccess(t *testing.T) {
 				// Have this module's last log-in be more recent
 				getTime = func() time.Time { return time.Now().AddDate(0, 0, -1) }
 				query = &models.GetUserByAuthInfoQuery{Login: login, AuthModule: "test2", AuthId: "test2"}
-				err = GetUserByAuthInfo(query)
+				err = GetUserByAuthInfo(context.Background(), query)
 				getTime = time.Now
 
 				So(err, ShouldBeNil)
@@ -413,7 +413,7 @@ func TestUserDataAccess(t *testing.T) {
 
 				Convey("Should return the only most recently used auth_module", func() {
 					searchUserQuery := &models.SearchUsersQuery{}
-					err = SearchUsers(searchUserQuery)
+					err = SearchUsers(context.Background(), searchUserQuery)
 
 					So(err, ShouldBeNil)
 					So(searchUserQuery.Result.Users, ShouldHaveLength, 5)
@@ -426,11 +426,11 @@ func TestUserDataAccess(t *testing.T) {
 
 					// "log in" again with the first auth module
 					updateAuthCmd := &models.UpdateAuthInfoCommand{UserId: query.Result.Id, AuthModule: "test1", AuthId: "test1"}
-					err = UpdateAuthInfo(updateAuthCmd)
+					err = UpdateAuthInfo(context.Background(), updateAuthCmd)
 					So(err, ShouldBeNil)
 
 					searchUserQuery = &models.SearchUsersQuery{}
-					err = SearchUsers(searchUserQuery)
+					err = SearchUsers(context.Background(), searchUserQuery)
 
 					So(err, ShouldBeNil)
 					for _, user := range searchUserQuery.Result.Users {
@@ -456,12 +456,12 @@ func TestUserDataAccess(t *testing.T) {
 
 			Convey("Cannot make themselves a non-admin", func() {
 				updateUserPermsCmd := models.UpdateUserPermissionsCommand{IsGrafanaAdmin: false, UserId: 1}
-				updatePermsError := UpdateUserPermissions(&updateUserPermsCmd)
+				updatePermsError := UpdateUserPermissions(context.Background(), &updateUserPermsCmd)
 
 				So(updatePermsError, ShouldEqual, models.ErrLastGrafanaAdmin)
 
 				query := models.GetUserByIdQuery{Id: createUserCmd.Result.Id}
-				getUserError := GetUserById(&query)
+				getUserError := GetUserById(context.Background(), &query)
 
 				So(getUserError, ShouldBeNil)
 

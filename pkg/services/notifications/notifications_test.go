@@ -1,6 +1,7 @@
 package notifications
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -26,7 +27,7 @@ func TestNotifications(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("When sending reset email password", func() {
-			err := ns.sendResetPasswordEmail(&m.SendResetPasswordEmailCommand{User: &m.User{Email: "asd@asd.com"}})
+			err := ns.sendResetPasswordEmail(context.Background(), &m.SendResetPasswordEmailCommand{User: &m.User{Email: "asd@asd.com"}})
 			So(err, ShouldBeNil)
 
 			sentMsg := <-ns.mailQueue

@@ -112,7 +112,7 @@ func CreateDashboardSnapshot(c *m.ReqContext, cmd m.CreateDashboardSnapshotComma
 		metrics.MApiDashboardSnapshotCreate.Inc()
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		c.JsonApiErr(500, "Failed to create snaphost", err)
 		return
 	}
@@ -130,7 +130,7 @@ func GetDashboardSnapshot(c *m.ReqContext) {
 	key := c.Params(":key")
 	query := &m.GetDashboardSnapshotQuery{Key: key}
 
-	err := bus.Dispatch(query)
+	err := bus.DispatchCtx(c.Ctx(), query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get dashboard snapshot", err)
 		return
@@ -193,7 +193,7 @@ func DeleteDashboardSnapshotByDeleteKey(c *m.ReqContext) Response {
 
 	query := &m.GetDashboardSnapshotQuery{DeleteKey: key}
 
-	err := bus.Dispatch(query)
+	err := bus.DispatchCtx(c.Ctx(), query)
 	if err != nil {
 		return Error(500, "Failed to get dashboard snapshot", err)
 	}
@@ -207,7 +207,7 @@ func DeleteDashboardSnapshotByDeleteKey(c *m.ReqContext) Response {
 
 	cmd := &m.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), cmd); err != nil {
 		return Error(500, "Failed to delete dashboard snapshot", err)
 	}
 
@@ -220,7 +220,7 @@ func DeleteDashboardSnapshot(c *m.ReqContext) Response {
 
 	query := &m.GetDashboardSnapshotQuery{Key: key}
 
-	err := bus.Dispatch(query)
+	err := bus.DispatchCtx(c.Ctx(), query)
 	if err != nil {
 		return Error(500, "Failed to get dashboard snapshot", err)
 	}
@@ -250,7 +250,7 @@ func DeleteDashboardSnapshot(c *m.ReqContext) Response {
 
 	cmd := &m.DeleteDashboardSnapshotCommand{DeleteKey: query.Result.DeleteKey}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), cmd); err != nil {
 		return Error(500, "Failed to delete dashboard snapshot", err)
 	}
 
@@ -273,7 +273,7 @@ func SearchDashboardSnapshots(c *m.ReqContext) Response {
 		SignedInUser: c.SignedInUser,
 	}
 
-	err := bus.Dispatch(&searchQuery)
+	err := bus.DispatchCtx(c.Ctx(), &searchQuery)
 	if err != nil {
 		return Error(500, "Search failed", err)
 	}

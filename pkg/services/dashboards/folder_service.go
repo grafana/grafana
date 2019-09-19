@@ -1,6 +1,8 @@
 package dashboards
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -36,7 +38,7 @@ func (dr *dashboardServiceImpl) GetFolders(limit int64) ([]*models.Folder, error
 		Permission:   models.PERMISSION_VIEW,
 	}
 
-	if err := bus.Dispatch(&searchQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &searchQuery); err != nil {
 		return nil, err
 	}
 
@@ -105,7 +107,7 @@ func (dr *dashboardServiceImpl) CreateFolder(cmd *models.CreateFolderCommand) er
 		return toFolderError(err)
 	}
 
-	err = bus.Dispatch(saveDashboardCmd)
+	err = bus.DispatchCtx(context.TODO(), saveDashboardCmd)
 	if err != nil {
 		return toFolderError(err)
 	}
@@ -142,7 +144,7 @@ func (dr *dashboardServiceImpl) UpdateFolder(existingUid string, cmd *models.Upd
 		return toFolderError(err)
 	}
 
-	err = bus.Dispatch(saveDashboardCmd)
+	err = bus.DispatchCtx(context.TODO(), saveDashboardCmd)
 	if err != nil {
 		return toFolderError(err)
 	}
@@ -174,7 +176,7 @@ func (dr *dashboardServiceImpl) DeleteFolder(uid string) (*models.Folder, error)
 	}
 
 	deleteCmd := models.DeleteDashboardCommand{OrgId: dr.orgId, Id: dashFolder.Id}
-	if err := bus.Dispatch(&deleteCmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &deleteCmd); err != nil {
 		return nil, toFolderError(err)
 	}
 
@@ -182,7 +184,7 @@ func (dr *dashboardServiceImpl) DeleteFolder(uid string) (*models.Folder, error)
 }
 
 func getFolder(query models.GetDashboardQuery) (*models.Dashboard, error) {
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return nil, toFolderError(err)
 	}
 

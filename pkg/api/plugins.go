@@ -107,7 +107,7 @@ func GetPluginSettingByID(c *m.ReqContext) Response {
 	}
 
 	query := m.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		if err != m.ErrPluginSettingNotFound {
 			return Error(500, "Failed to get login settings", nil)
 		}
@@ -130,7 +130,7 @@ func UpdatePluginSetting(c *m.ReqContext, cmd m.UpdatePluginSettingCmd) Response
 		return Error(404, "Plugin not installed.", nil)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to update plugin setting", err)
 	}
 
@@ -191,7 +191,7 @@ func ImportDashboard(c *m.ReqContext, apiCmd dtos.ImportDashboardCommand) Respon
 		Dashboard: apiCmd.Dashboard,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to import dashboard", err)
 	}
 

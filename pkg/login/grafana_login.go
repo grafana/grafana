@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"crypto/subtle"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -20,7 +21,7 @@ var validatePassword = func(providedPassword string, userPassword string, userSa
 var loginUsingGrafanaDB = func(query *m.LoginUserQuery) error {
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: query.Username}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &userQuery); err != nil {
 		return err
 	}
 

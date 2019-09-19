@@ -24,7 +24,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	}
 
 	prefsQuery := m.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
-	if err := bus.Dispatch(&prefsQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &prefsQuery); err != nil {
 		return nil, err
 	}
 	prefs := prefsQuery.Result
@@ -49,7 +49,7 @@ func (hs *HTTPServer) setIndexViewData(c *m.ReqContext) (*dtos.IndexViewData, er
 	}
 
 	hasEditPermissionInFoldersQuery := m.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	if err := bus.Dispatch(&hasEditPermissionInFoldersQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &hasEditPermissionInFoldersQuery); err != nil {
 		return nil, err
 	}
 

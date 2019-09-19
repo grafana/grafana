@@ -78,7 +78,7 @@ func GetContextHandler(
 		// update last seen every 5min
 		if ctx.ShouldUpdateLastSeenAt() {
 			ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
-			if err := bus.Dispatch(&models.UpdateUserLastSeenAtCommand{UserId: ctx.UserId}); err != nil {
+			if err := bus.DispatchCtx(ctx.Ctx(), &models.UpdateUserLastSeenAtCommand{UserId: ctx.UserId}); err != nil {
 				ctx.Logger.Error("Failed to update last_seen_at", "error", err)
 			}
 		}
@@ -91,7 +91,7 @@ func initContextWithAnonymousUser(ctx *models.ReqContext) bool {
 	}
 
 	orgQuery := models.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
-	if err := bus.Dispatch(&orgQuery); err != nil {
+	if err := bus.DispatchCtx(ctx.Ctx(), &orgQuery); err != nil {
 		log.Error(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
 		return false
 	}
@@ -120,7 +120,7 @@ func initContextWithApiKey(ctx *models.ReqContext) bool {
 
 	// fetch key
 	keyQuery := models.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
-	if err := bus.Dispatch(&keyQuery); err != nil {
+	if err := bus.DispatchCtx(ctx.Ctx(), &keyQuery); err != nil {
 		ctx.JsonApiErr(401, errStringInvalidAPIKey, err)
 		return true
 	}
@@ -167,7 +167,7 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		Username: username,
 		Password: password,
 	}
-	if err := bus.Dispatch(&authQuery); err != nil {
+	if err := bus.DispatchCtx(ctx.Ctx(), &authQuery); err != nil {
 		ctx.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
@@ -180,7 +180,7 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 	user := authQuery.User
 
 	query := models.GetSignedInUserQuery{UserId: user.Id, OrgId: orgId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx.Ctx(), &query); err != nil {
 		ctx.Logger.Error(
 			"Failed at user signed in",
 			"id", user.Id,
@@ -213,7 +213,7 @@ func initContextWithToken(authTokenService models.UserTokenService, ctx *models.
 	}
 
 	query := models.GetSignedInUserQuery{UserId: token.UserId, OrgId: orgID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(ctx.Ctx(), &query); err != nil {
 		ctx.Logger.Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return false
 	}

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"sort"
 	"strconv"
 
@@ -16,7 +17,7 @@ func populateDashboardsByID(dashboardByIDs []int64, dashboardIDOrder map[int64]i
 
 	if len(dashboardByIDs) > 0 {
 		dashboardQuery := m.GetDashboardsQuery{DashboardIds: dashboardByIDs}
-		if err := bus.Dispatch(&dashboardQuery); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), &dashboardQuery); err != nil {
 			return result, err
 		}
 
@@ -48,7 +49,7 @@ func populateDashboardsByTag(orgID int64, signedInUser *m.SignedInUser, dashboar
 			OrgId:        orgID,
 		}
 
-		if err := bus.Dispatch(&searchQuery); err == nil {
+		if err := bus.DispatchCtx(context.TODO(), &searchQuery); err == nil {
 			for _, item := range searchQuery.Result {
 				result = append(result, dtos.PlaylistDashboard{
 					Id:    item.Id,

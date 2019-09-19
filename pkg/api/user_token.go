@@ -24,7 +24,7 @@ func (server *HTTPServer) RevokeUserAuthToken(c *models.ReqContext, cmd models.R
 func (server *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) Response {
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, &userQuery); err != nil {
 		if err == models.ErrUserNotFound {
 			return Error(404, "User not found", err)
 		}
@@ -44,7 +44,7 @@ func (server *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, 
 func (server *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int64) Response {
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &userQuery); err != nil {
 		if err == models.ErrUserNotFound {
 			return Error(404, "User not found", err)
 		}
@@ -111,7 +111,7 @@ func (server *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID
 func (server *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID int64, cmd models.RevokeAuthTokenCmd) Response {
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &userQuery); err != nil {
 		if err == models.ErrUserNotFound {
 			return Error(404, "User not found", err)
 		}

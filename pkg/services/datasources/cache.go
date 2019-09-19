@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -44,7 +45,7 @@ func (dc *CacheServiceImpl) GetDatasource(datasourceID int64, user *m.SignedInUs
 	}
 
 	query := m.GetDataSourceByIdQuery{Id: datasourceID, OrgId: user.OrgId}
-	if err := dc.Bus.Dispatch(&query); err != nil {
+	if err := dc.Bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return nil, err
 	}
 

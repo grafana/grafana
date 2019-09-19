@@ -12,7 +12,7 @@ func GetOrgQuotas(c *m.ReqContext) Response {
 	}
 	query := m.GetOrgQuotasQuery{OrgId: c.ParamsInt64(":orgId")}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "Failed to get org quotas", err)
 	}
 
@@ -30,7 +30,7 @@ func UpdateOrgQuota(c *m.ReqContext, cmd m.UpdateOrgQuotaCmd) Response {
 		return Error(404, "Invalid quota target", nil)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to update org quotas", err)
 	}
 	return Success("Organization quota updated")
@@ -42,7 +42,7 @@ func GetUserQuotas(c *m.ReqContext) Response {
 	}
 	query := m.GetUserQuotasQuery{UserId: c.ParamsInt64(":id")}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "Failed to get org quotas", err)
 	}
 
@@ -60,7 +60,7 @@ func UpdateUserQuota(c *m.ReqContext, cmd m.UpdateUserQuotaCmd) Response {
 		return Error(404, "Invalid quota target", nil)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to update org quotas", err)
 	}
 	return Success("Organization quota updated")

@@ -1,9 +1,11 @@
 package dashboards
 
 import (
+	"context"
+	"time"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"time"
 )
 
 func MakeUserAdmin(bus bus.Bus, orgId int64, userId int64, dashboardId int64, setViewAndEditPermissions bool) error {
@@ -47,7 +49,7 @@ func MakeUserAdmin(bus bus.Bus, orgId int64, userId int64, dashboardId int64, se
 		Items:       items,
 	}
 
-	if err := bus.Dispatch(aclCmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), aclCmd); err != nil {
 		return err
 	}
 

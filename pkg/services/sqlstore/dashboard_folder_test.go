@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -28,7 +29,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgId:        1,
 						DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
-					err := SearchDashboards(query)
+					err := SearchDashboards(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
 					So(query.Result[0].Id, ShouldEqual, folder.Id)
@@ -45,7 +46,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						OrgId:        1, DashboardIds: []int64{folder.Id, dashInRoot.Id},
 					}
-					err := SearchDashboards(query)
+					err := SearchDashboards(context.Background(), query)
 
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
@@ -61,7 +62,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id},
 						}
-						err := SearchDashboards(query)
+						err := SearchDashboards(context.Background(), query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 2)
 						So(query.Result[0].Id, ShouldEqual, folder.Id)
@@ -80,7 +81,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id},
 						}
-						err := SearchDashboards(query)
+						err := SearchDashboards(context.Background(), query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 2)
 						So(query.Result[0].Id, ShouldEqual, folder.Id)
@@ -96,7 +97,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 				Convey("should not return folder or child", func() {
 					query := &search.FindPersistedDashboardsQuery{SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
-					err := SearchDashboards(query)
+					err := SearchDashboards(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
 					So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)
@@ -107,7 +108,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 					Convey("should be able to search for child dashboard but not folder", func() {
 						query := &search.FindPersistedDashboardsQuery{SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
-						err := SearchDashboards(query)
+						err := SearchDashboards(context.Background(), query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 2)
 						So(query.Result[0].Id, ShouldEqual, childDash.Id)
@@ -126,7 +127,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder.Id, dashInRoot.Id, childDash.Id},
 						}
-						err := SearchDashboards(query)
+						err := SearchDashboards(context.Background(), query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 3)
 						So(query.Result[0].Id, ShouldEqual, folder.Id)
@@ -150,7 +151,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 			Convey("and one folder is expanded, the other collapsed", func() {
 				Convey("should return dashboards in root and expanded folder", func() {
 					query := &search.FindPersistedDashboardsQuery{FolderIds: []int64{rootFolderId, folder1.Id}, SignedInUser: &models.SignedInUser{UserId: currentUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER}, OrgId: 1}
-					err := SearchDashboards(query)
+					err := SearchDashboards(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 4)
 					So(query.Result[0].Id, ShouldEqual, folder1.Id)
@@ -173,7 +174,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder1.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
-						err := SearchDashboards(query)
+						err := SearchDashboards(context.Background(), query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 1)
 						So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)
@@ -188,7 +189,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
-						err := SearchDashboards(query)
+						err := SearchDashboards(context.Background(), query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 4)
 						So(query.Result[0].Id, ShouldEqual, folder2.Id)
@@ -208,7 +209,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 							OrgId:        1,
 							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
 						}
-						err := SearchDashboards(query)
+						err := SearchDashboards(context.Background(), query)
 						So(err, ShouldBeNil)
 						So(len(query.Result), ShouldEqual, 4)
 						So(query.Result[0].Id, ShouldEqual, folder2.Id)
@@ -238,7 +239,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						Type:         "dash-folder",
 					}
 
-					err := SearchDashboards(&query)
+					err := SearchDashboards(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -254,7 +255,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgRole:      models.ROLE_ADMIN,
 					}
 
-					err := GetDashboardPermissionsForUser(&query)
+					err := GetDashboardPermissionsForUser(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -268,7 +269,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
-					err := HasEditPermissionInFolders(query)
+					err := HasEditPermissionInFolders(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldBeTrue)
 				})
@@ -277,7 +278,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_ADMIN},
 					}
-					err := HasAdminPermissionInFolders(query)
+					err := HasAdminPermissionInFolders(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldBeTrue)
 				})
@@ -291,7 +292,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				}
 
 				Convey("Should have write access to all dashboard folders with default ACL", func() {
-					err := SearchDashboards(&query)
+					err := SearchDashboards(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -307,7 +308,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgRole:      models.ROLE_EDITOR,
 					}
 
-					err := GetDashboardPermissionsForUser(&query)
+					err := GetDashboardPermissionsForUser(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -320,7 +321,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				Convey("Should have write access to one dashboard folder if default role changed to view for one folder", func() {
 					testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: editorUser.Id, Permission: models.PERMISSION_VIEW})
 
-					err := SearchDashboards(&query)
+					err := SearchDashboards(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
@@ -331,7 +332,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: editorUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
-					err := HasEditPermissionInFolders(query)
+					err := HasEditPermissionInFolders(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldBeTrue)
 				})
@@ -340,7 +341,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_EDITOR},
 					}
-					err := HasAdminPermissionInFolders(query)
+					err := HasAdminPermissionInFolders(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldBeFalse)
 				})
@@ -354,7 +355,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				}
 
 				Convey("Should have no write access to any dashboard folders with default ACL", func() {
-					err := SearchDashboards(&query)
+					err := SearchDashboards(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 0)
@@ -368,7 +369,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						OrgRole:      models.ROLE_VIEWER,
 					}
 
-					err := GetDashboardPermissionsForUser(&query)
+					err := GetDashboardPermissionsForUser(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -381,7 +382,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				Convey("Should be able to get one dashboard folder if default role changed to edit for one folder", func() {
 					testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: models.PERMISSION_EDIT})
 
-					err := SearchDashboards(&query)
+					err := SearchDashboards(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
@@ -392,7 +393,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasEditPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
-					err := HasEditPermissionInFolders(query)
+					err := HasEditPermissionInFolders(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldBeFalse)
 				})
@@ -401,7 +402,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 					query := &models.HasAdminPermissionInFoldersQuery{
 						SignedInUser: &models.SignedInUser{UserId: adminUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 					}
-					err := HasAdminPermissionInFolders(query)
+					err := HasAdminPermissionInFolders(context.Background(), query)
 					So(err, ShouldBeNil)
 					So(query.Result, ShouldBeFalse)
 				})
@@ -413,7 +414,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						query := &models.HasEditPermissionInFoldersQuery{
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
-						err := HasEditPermissionInFolders(query)
+						err := HasEditPermissionInFolders(context.Background(), query)
 						So(err, ShouldBeNil)
 						So(query.Result, ShouldBeTrue)
 					})
@@ -426,7 +427,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 						query := &models.HasEditPermissionInFoldersQuery{
 							SignedInUser: &models.SignedInUser{UserId: viewerUser.Id, OrgId: 1, OrgRole: models.ROLE_VIEWER},
 						}
-						err := HasEditPermissionInFolders(query)
+						err := HasEditPermissionInFolders(context.Background(), query)
 						So(err, ShouldBeNil)
 						So(query.Result, ShouldBeTrue)
 					})

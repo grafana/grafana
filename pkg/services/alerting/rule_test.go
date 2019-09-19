@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -61,10 +62,10 @@ func TestAlertRuleModel(t *testing.T) {
 
 		Convey("can construct alert rule model", func() {
 			firstNotification := models.CreateAlertNotificationCommand{OrgId: 1, Name: "1"}
-			err := sqlstore.CreateAlertNotificationCommand(&firstNotification)
+			err := sqlstore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 			So(err, ShouldBeNil)
 			secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
-			err = sqlstore.CreateAlertNotificationCommand(&secondNotification)
+			err = sqlstore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 			So(err, ShouldBeNil)
 
 			Convey("with notification id and uid", func() {

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -20,7 +21,7 @@ func updateTestDashboard(dashboard *m.Dashboard, data map[string]interface{}) {
 		Dashboard: simplejson.NewFromAny(data),
 	}
 
-	err := SaveDashboard(&saveCmd)
+	err := SaveDashboard(context.Background(), &saveCmd)
 	So(err, ShouldBeNil)
 }
 
@@ -37,7 +38,7 @@ func TestGetDashboardVersion(t *testing.T) {
 				OrgId:       1,
 			}
 
-			err := GetDashboardVersion(&query)
+			err := GetDashboardVersion(context.Background(), &query)
 			So(err, ShouldBeNil)
 			So(savedDash.Id, ShouldEqual, query.DashboardId)
 			So(savedDash.Version, ShouldEqual, query.Version)
@@ -47,7 +48,7 @@ func TestGetDashboardVersion(t *testing.T) {
 				Uid:   savedDash.Uid,
 			}
 
-			err = GetDashboard(&dashCmd)
+			err = GetDashboard(context.Background(), &dashCmd)
 			So(err, ShouldBeNil)
 			eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
 			So(eq, ShouldEqual, true)
@@ -60,7 +61,7 @@ func TestGetDashboardVersion(t *testing.T) {
 				OrgId:       1,
 			}
 
-			err := GetDashboardVersion(&query)
+			err := GetDashboardVersion(context.Background(), &query)
 			So(err, ShouldNotBeNil)
 			So(err, ShouldEqual, m.ErrDashboardVersionNotFound)
 		})
@@ -75,7 +76,7 @@ func TestGetDashboardVersions(t *testing.T) {
 		Convey("Get all versions for a given Dashboard ID", func() {
 			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
 
-			err := GetDashboardVersions(&query)
+			err := GetDashboardVersions(context.Background(), &query)
 			So(err, ShouldBeNil)
 			So(len(query.Result), ShouldEqual, 1)
 		})
@@ -83,7 +84,7 @@ func TestGetDashboardVersions(t *testing.T) {
 		Convey("Attempt to get the versions for a non-existent Dashboard ID", func() {
 			query := m.GetDashboardVersionsQuery{DashboardId: int64(999), OrgId: 1}
 
-			err := GetDashboardVersions(&query)
+			err := GetDashboardVersions(context.Background(), &query)
 			So(err, ShouldNotBeNil)
 			So(err, ShouldEqual, m.ErrNoVersionsForDashboardId)
 			So(len(query.Result), ShouldEqual, 0)
@@ -95,7 +96,7 @@ func TestGetDashboardVersions(t *testing.T) {
 			})
 
 			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
-			err := GetDashboardVersions(&query)
+			err := GetDashboardVersions(context.Background(), &query)
 
 			So(err, ShouldBeNil)
 			So(len(query.Result), ShouldEqual, 2)
@@ -118,11 +119,11 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		}
 
 		Convey("Clean up old dashboard versions", func() {
-			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
+			err := DeleteExpiredVersions(context.Background(), &m.DeleteExpiredVersionsCommand{})
 			So(err, ShouldBeNil)
 
 			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
-			GetDashboardVersions(&query)
+			GetDashboardVersions(context.Background(), &query)
 
 			So(len(query.Result), ShouldEqual, versionsToKeep)
 			// Ensure latest versions were kept
@@ -133,11 +134,11 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		Convey("Don't delete anything if there're no expired versions", func() {
 			setting.DashboardVersionsToKeep = versionsToWrite
 
-			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
+			err := DeleteExpiredVersions(context.Background(), &m.DeleteExpiredVersionsCommand{})
 			So(err, ShouldBeNil)
 
 			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWrite}
-			GetDashboardVersions(&query)
+			GetDashboardVersions(context.Background(), &query)
 
 			So(len(query.Result), ShouldEqual, versionsToWrite)
 		})
@@ -150,11 +151,11 @@ func TestDeleteExpiredVersions(t *testing.T) {
 				})
 			}
 
-			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
+			err := DeleteExpiredVersions(context.Background(), &m.DeleteExpiredVersionsCommand{})
 			So(err, ShouldBeNil)
 
 			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1, Limit: versionsToWriteBigNumber}
-			GetDashboardVersions(&query)
+			GetDashboardVersions(context.Background(), &query)
 
 			// Ensure we have at least versionsToKeep versions
 			So(len(query.Result), ShouldBeGreaterThanOrEqualTo, versionsToKeep)

@@ -187,7 +187,7 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 		return nil
 	}
 
-	err := ns.sendEmailCommandHandler(&m.SendEmailCommand{
+	err := ns.sendEmailCommandHandler(ctx, &m.SendEmailCommand{
 		To:       []string{evt.Email},
 		Template: tmplSignUpStarted,
 		Data: map[string]interface{}{
@@ -202,7 +202,7 @@ func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *ev
 	}
 
 	emailSentCmd := m.UpdateTempUserWithEmailSentCommand{Code: evt.Code}
-	return bus.Dispatch(&emailSentCmd)
+	return bus.DispatchCtx(ctx, &emailSentCmd)
 }
 
 func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *events.SignUpCompleted) error {
@@ -210,7 +210,7 @@ func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *
 		return nil
 	}
 
-	return ns.sendEmailCommandHandler(&m.SendEmailCommand{
+	return ns.sendEmailCommandHandler(ctx, &m.SendEmailCommand{
 		To:       []string{evt.Email},
 		Template: tmplWelcomeOnSignUp,
 		Data: map[string]interface{}{

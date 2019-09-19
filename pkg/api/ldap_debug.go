@@ -80,7 +80,7 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 	q := &models.SearchOrgsQuery{}
 	q.Ids = orgIds
 
-	if err := bus.Dispatch(q); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), q); err != nil {
 		return err
 	}
 
@@ -177,7 +177,7 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 
 	query := models.GetUserByIdQuery{Id: userId}
 
-	if err := bus.Dispatch(&query); err != nil { // validate the userId exists
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil { // validate the userId exists
 		if err == models.ErrUserNotFound {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -187,7 +187,7 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 
 	authModuleQuery := &models.GetAuthInfoQuery{UserId: query.Result.Id, AuthModule: models.AuthModuleLDAP}
 
-	if err := bus.Dispatch(authModuleQuery); err != nil { // validate the userId comes from LDAP
+	if err := bus.DispatchCtx(c.Ctx(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if err == models.ErrUserNotFound {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
@@ -228,7 +228,7 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 		SignupAllowed: setting.LDAPAllowSignup,
 	}
 
-	err = bus.Dispatch(upsertCmd)
+	err = bus.DispatchCtx(c.Ctx(), upsertCmd)
 
 	if err != nil {
 		return Error(http.StatusInternalServerError, "Failed to udpate the user", err)
@@ -315,7 +315,7 @@ func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	}
 
 	cmd := &models.GetTeamsForLDAPGroupCommand{Groups: user.Groups}
-	err = bus.Dispatch(cmd)
+	err = bus.DispatchCtx(c.Ctx(), cmd)
 
 	if err != bus.ErrHandlerNotFound && err != nil {
 		return Error(http.StatusBadRequest, "Unable to find the teams for this user", err)

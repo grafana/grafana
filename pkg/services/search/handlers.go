@@ -36,7 +36,7 @@ func (s *SearchService) searchHandler(ctx context.Context, query *Query) error {
 		Permission:   query.Permission,
 	}
 
-	if err := bus.Dispatch(&dashQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, &dashQuery); err != nil {
 		return err
 	}
 
@@ -62,7 +62,7 @@ func (s *SearchService) searchHandler(ctx context.Context, query *Query) error {
 
 func setIsStarredFlagOnSearchResults(userId int64, hits []*Hit) error {
 	query := m.GetUserStarsQuery{UserId: userId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return err
 	}
 

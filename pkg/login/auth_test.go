@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -21,7 +22,7 @@ func TestAuthenticateUser(t *testing.T) {
 				Username: "user",
 				Password: "",
 			}
-			err := AuthenticateUser(&loginQuery)
+			err := AuthenticateUser(context.TODO(), &loginQuery)
 
 			Convey("login should fail", func() {
 				So(sc.grafanaLoginWasCalled, ShouldBeFalse)
@@ -36,7 +37,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLDAP(true, nil, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(context.TODO(), sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, ErrTooManyLoginAttempts)
@@ -53,7 +54,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLDAP(true, ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(context.TODO(), sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, nil)
@@ -71,7 +72,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLDAP(true, ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(context.TODO(), sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, customErr)
@@ -88,7 +89,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLDAP(false, nil, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(context.TODO(), sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, ErrInvalidCredentials)
@@ -105,7 +106,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLDAP(true, ldap.ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(context.TODO(), sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, ErrInvalidCredentials)
@@ -122,7 +123,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLDAP(true, nil, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(context.TODO(), sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldBeNil)
@@ -140,7 +141,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLDAP(true, customErr, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(context.TODO(), sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, customErr)
@@ -157,7 +158,7 @@ func TestAuthenticateUser(t *testing.T) {
 			mockLoginUsingLDAP(true, ldap.ErrInvalidCredentials, sc)
 			mockSaveInvalidLoginAttempt(sc)
 
-			err := AuthenticateUser(sc.loginUserQuery)
+			err := AuthenticateUser(context.TODO(), sc.loginUserQuery)
 
 			Convey("it should result in", func() {
 				So(err, ShouldEqual, ErrInvalidCredentials)

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -23,7 +24,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			}),
 		}
 
-		err := SaveDashboard(folderCmd)
+		err := SaveDashboard(context.Background(), folderCmd)
 		So(err, ShouldBeNil)
 
 		saveDashboardCmd := &models.SaveDashboardCommand{
@@ -48,7 +49,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				},
 			}
 
-			err := SaveProvisionedDashboard(cmd)
+			err := SaveProvisionedDashboard(context.Background(), cmd)
 			So(err, ShouldBeNil)
 			So(cmd.Result, ShouldNotBeNil)
 			So(cmd.Result.Id, ShouldNotEqual, 0)
@@ -56,7 +57,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 
 			Convey("Can query for provisioned dashboards", func() {
 				query := &models.GetProvisionedDashboardDataQuery{Name: "default"}
-				err := GetProvisionedDashboardDataQuery(query)
+				err := GetProvisionedDashboardDataQuery(context.Background(), query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
@@ -67,7 +68,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			Convey("Can query for one provisioned dashboard", func() {
 				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: cmd.Result.Id}
 
-				err := GetProvisionedDataByDashboardId(query)
+				err := GetProvisionedDataByDashboardId(context.Background(), query)
 				So(err, ShouldBeNil)
 
 				So(query.Result, ShouldNotBeNil)
@@ -76,7 +77,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			Convey("Can query for none provisioned dashboard", func() {
 				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: 3000}
 
-				err := GetProvisionedDataByDashboardId(query)
+				err := GetProvisionedDataByDashboardId(context.Background(), query)
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldBeNil)
 			})
@@ -87,11 +88,11 @@ func TestDashboardProvisioningTest(t *testing.T) {
 					OrgId: 1,
 				}
 
-				So(DeleteDashboard(deleteCmd), ShouldBeNil)
+				So(DeleteDashboard(context.Background(), deleteCmd), ShouldBeNil)
 
 				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: cmd.Result.Id}
 
-				err = GetProvisionedDataByDashboardId(query)
+				err = GetProvisionedDataByDashboardId(context.Background(), query)
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldBeNil)
 			})
@@ -101,11 +102,11 @@ func TestDashboardProvisioningTest(t *testing.T) {
 					Id: dashId,
 				}
 
-				So(UnprovisionDashboard(unprovisionCmd), ShouldBeNil)
+				So(UnprovisionDashboard(context.Background(), unprovisionCmd), ShouldBeNil)
 
 				query := &models.GetProvisionedDashboardDataByIdQuery{DashboardId: dashId}
 
-				err = GetProvisionedDataByDashboardId(query)
+				err = GetProvisionedDataByDashboardId(context.Background(), query)
 				So(err, ShouldBeNil)
 				So(query.Result, ShouldBeNil)
 			})

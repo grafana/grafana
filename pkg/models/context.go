@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -35,6 +36,10 @@ func (ctx *ReqContext) Handle(status int, title string, err error) {
 	ctx.Data["Theme"] = "dark"
 
 	ctx.HTML(status, setting.ERR_TEMPLATE_NAME)
+}
+
+func (ctx *ReqContext) Ctx() context.Context {
+	return ctx.Req.Context()
 }
 
 func (ctx *ReqContext) JsonOK(message string) {

@@ -110,7 +110,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 		OrgId: context.Rule.OrgID,
 	}
 
-	if err := bus.Dispatch(getDsInfo); err != nil {
+	if err := bus.DispatchCtx(context.Ctx, getDsInfo); err != nil {
 		return nil, fmt.Errorf("Could not find datasource %v", err)
 	}
 

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -45,7 +46,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 			UserId: 1,
 		}
 
-		err := CreateOrg(&userCmd)
+		err := CreateOrg(context.Background(), &userCmd)
 		So(err, ShouldBeNil)
 		orgId = userCmd.Result.Id
 
@@ -55,40 +56,40 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				Target: "org_user",
 				Limit:  10,
 			}
-			err := UpdateOrgQuota(&orgCmd)
+			err := UpdateOrgQuota(context.Background(), &orgCmd)
 			So(err, ShouldBeNil)
 
 			Convey("Should be able to get saved quota by org id and target", func() {
 				query := m.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: "org_user", Default: 1}
-				err = GetOrgQuotaByTarget(&query)
+				err = GetOrgQuotaByTarget(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Limit, ShouldEqual, 10)
 			})
 			Convey("Should be able to get default quota by org id and target", func() {
 				query := m.GetOrgQuotaByTargetQuery{OrgId: 123, Target: "org_user", Default: 11}
-				err = GetOrgQuotaByTarget(&query)
+				err = GetOrgQuotaByTarget(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Limit, ShouldEqual, 11)
 			})
 			Convey("Should be able to get used org quota when rows exist", func() {
 				query := m.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: "org_user", Default: 11}
-				err = GetOrgQuotaByTarget(&query)
+				err = GetOrgQuotaByTarget(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Used, ShouldEqual, 1)
 			})
 			Convey("Should be able to get used org quota when no rows exist", func() {
 				query := m.GetOrgQuotaByTargetQuery{OrgId: 2, Target: "org_user", Default: 11}
-				err = GetOrgQuotaByTarget(&query)
+				err = GetOrgQuotaByTarget(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Used, ShouldEqual, 0)
 			})
 			Convey("Should be able to quota list for org", func() {
 				query := m.GetOrgQuotasQuery{OrgId: orgId}
-				err = GetOrgQuotas(&query)
+				err = GetOrgQuotas(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 4)
@@ -111,40 +112,40 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				Target: "org_user",
 				Limit:  10,
 			}
-			err := UpdateUserQuota(&userQuotaCmd)
+			err := UpdateUserQuota(context.Background(), &userQuotaCmd)
 			So(err, ShouldBeNil)
 
 			Convey("Should be able to get saved quota by user id and target", func() {
 				query := m.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 1}
-				err = GetUserQuotaByTarget(&query)
+				err = GetUserQuotaByTarget(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Limit, ShouldEqual, 10)
 			})
 			Convey("Should be able to get default quota by user id and target", func() {
 				query := m.GetUserQuotaByTargetQuery{UserId: 9, Target: "org_user", Default: 11}
-				err = GetUserQuotaByTarget(&query)
+				err = GetUserQuotaByTarget(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Limit, ShouldEqual, 11)
 			})
 			Convey("Should be able to get used user quota when rows exist", func() {
 				query := m.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 11}
-				err = GetUserQuotaByTarget(&query)
+				err = GetUserQuotaByTarget(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Used, ShouldEqual, 1)
 			})
 			Convey("Should be able to get used user quota when no rows exist", func() {
 				query := m.GetUserQuotaByTargetQuery{UserId: 2, Target: "org_user", Default: 11}
-				err = GetUserQuotaByTarget(&query)
+				err = GetUserQuotaByTarget(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Used, ShouldEqual, 0)
 			})
 			Convey("Should be able to quota list for user", func() {
 				query := m.GetUserQuotasQuery{UserId: userId}
-				err = GetUserQuotas(&query)
+				err = GetUserQuotas(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 1)
@@ -155,7 +156,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 
 		Convey("Should be able to global user quota", func() {
 			query := m.GetGlobalQuotaByTargetQuery{Target: "user", Default: 5}
-			err = GetGlobalQuotaByTarget(&query)
+			err = GetGlobalQuotaByTarget(context.Background(), &query)
 			So(err, ShouldBeNil)
 
 			So(query.Result.Limit, ShouldEqual, 5)
@@ -163,7 +164,7 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 		})
 		Convey("Should be able to global org quota", func() {
 			query := m.GetGlobalQuotaByTargetQuery{Target: "org", Default: 5}
-			err = GetGlobalQuotaByTarget(&query)
+			err = GetGlobalQuotaByTarget(context.Background(), &query)
 			So(err, ShouldBeNil)
 
 			So(query.Result.Limit, ShouldEqual, 5)
@@ -177,11 +178,11 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				Target: "org_user",
 				Limit:  5,
 			}
-			err := UpdateOrgQuota(&orgCmd)
+			err := UpdateOrgQuota(context.Background(), &orgCmd)
 			So(err, ShouldBeNil)
 
 			query := m.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: "org_user", Default: 1}
-			err = GetOrgQuotaByTarget(&query)
+			err = GetOrgQuotaByTarget(context.Background(), &query)
 			So(err, ShouldBeNil)
 			So(query.Result.Limit, ShouldEqual, 5)
 
@@ -193,11 +194,11 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				Target: "org_user",
 				Limit:  10,
 			}
-			err = UpdateOrgQuota(&orgCmd)
+			err = UpdateOrgQuota(context.Background(), &orgCmd)
 			So(err, ShouldBeNil)
 
 			query = m.GetOrgQuotaByTargetQuery{OrgId: orgId, Target: "org_user", Default: 1}
-			err = GetOrgQuotaByTarget(&query)
+			err = GetOrgQuotaByTarget(context.Background(), &query)
 			So(err, ShouldBeNil)
 			So(query.Result.Limit, ShouldEqual, 10)
 		})
@@ -209,11 +210,11 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				Target: "org_user",
 				Limit:  5,
 			}
-			err := UpdateUserQuota(&userQuotaCmd)
+			err := UpdateUserQuota(context.Background(), &userQuotaCmd)
 			So(err, ShouldBeNil)
 
 			query := m.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 1}
-			err = GetUserQuotaByTarget(&query)
+			err = GetUserQuotaByTarget(context.Background(), &query)
 			So(err, ShouldBeNil)
 			So(query.Result.Limit, ShouldEqual, 5)
 
@@ -225,11 +226,11 @@ func TestQuotaCommandsAndQueries(t *testing.T) {
 				Target: "org_user",
 				Limit:  10,
 			}
-			err = UpdateUserQuota(&userQuotaCmd)
+			err = UpdateUserQuota(context.Background(), &userQuotaCmd)
 			So(err, ShouldBeNil)
 
 			query = m.GetUserQuotaByTargetQuery{UserId: userId, Target: "org_user", Default: 1}
-			err = GetUserQuotaByTarget(&query)
+			err = GetUserQuotaByTarget(context.Background(), &query)
 			So(err, ShouldBeNil)
 			So(query.Result.Limit, ShouldEqual, 10)
 		})

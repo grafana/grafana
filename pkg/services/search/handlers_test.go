@@ -37,7 +37,7 @@ func TestSearch(t *testing.T) {
 		})
 
 		Convey("That is empty", func() {
-			err := ss.searchHandler(&query)
+			err := ss.searchHandler(context.Background(), &query)
 			So(err, ShouldBeNil)
 
 			Convey("should return sorted results", func() {

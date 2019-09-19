@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -19,7 +20,7 @@ func TestPlaylistDataAccess(t *testing.T) {
 				{Title: "Backend response times", Value: "3", Type: "dashboard_by_id"},
 			}
 			cmd := m.CreatePlaylistCommand{Name: "NYC office", Interval: "10m", OrgId: 1, Items: items}
-			err := CreatePlaylist(&cmd)
+			err := CreatePlaylist(context.Background(), &cmd)
 			So(err, ShouldBeNil)
 
 			Convey("can update playlist", func() {
@@ -28,13 +29,13 @@ func TestPlaylistDataAccess(t *testing.T) {
 					{Title: "Backend response times", Value: "2", Type: "dashboard_by_id"},
 				}
 				query := m.UpdatePlaylistCommand{Name: "NYC office ", OrgId: 1, Id: 1, Interval: "10s", Items: items}
-				err = UpdatePlaylist(&query)
+				err = UpdatePlaylist(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 
 				Convey("can remove playlist", func() {
 					query := m.DeletePlaylistCommand{Id: 1}
-					err = DeletePlaylist(&query)
+					err = DeletePlaylist(context.Background(), &query)
 
 					So(err, ShouldBeNil)
 				})

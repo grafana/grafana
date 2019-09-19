@@ -1,6 +1,7 @@
 package pluginproxy
 
 import (
+	"context"
 	"encoding/json"
 	"net"
 	"net/http"
@@ -26,7 +27,7 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appID string) (http.
 
 	query := m.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return nil, err
 	}
 
@@ -41,7 +42,7 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appID string) (http.
 
 func updateURL(route *plugins.AppPluginRoute, orgId int64, appID string) (string, error) {
 	query := m.GetPluginSettingByIdQuery{OrgId: orgId, PluginId: appID}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return "", err
 	}
 

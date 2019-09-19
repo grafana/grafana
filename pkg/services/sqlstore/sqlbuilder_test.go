@@ -219,7 +219,7 @@ func createDummyTeam() (*models.Team, error) {
 		Name:  "test",
 		Email: "test@example.com",
 	}
-	err := CreateTeam(cmd)
+	err := CreateTeam(context.Background(), cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +247,7 @@ func createDummyDashboard(dashboardProps DashboardProps) (*models.Dashboard, err
 		saveDashboardCmd.OrgId = 1
 	}
 
-	err := SaveDashboard(saveDashboardCmd)
+	err := SaveDashboard(context.Background(), saveDashboardCmd)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +290,7 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 				OrgId:  1,
 				TeamId: team.Id,
 			}
-			err = AddTeamMember(addTeamMemberCmd)
+			err = AddTeamMember(context.Background(), addTeamMemberCmd)
 			if err != nil {
 				return 0, err
 			}
@@ -307,7 +307,7 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 		DashboardId: dashboardId,
 		Items:       []*models.DashboardAcl{acl},
 	}
-	err = UpdateDashboardAcl(updateAclCmd)
+	err = UpdateDashboardAcl(context.Background(), updateAclCmd)
 	if user != nil {
 		return user.Id, err
 	}

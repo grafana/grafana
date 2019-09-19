@@ -1,6 +1,7 @@
 package authproxy
 
 import (
+	"context"
 	"encoding/base32"
 	"fmt"
 	"net"
@@ -229,7 +230,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 		SignupAllowed: auth.LDAPAllowSignup,
 		ExternalUser:  extUser,
 	}
-	err = bus.Dispatch(upsert)
+	err = bus.DispatchCtx(context.TODO(), upsert)
 	if err != nil {
 		return 0, newError(err.Error(), nil)
 	}
@@ -274,7 +275,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		ExternalUser:  extUser,
 	}
 
-	err := bus.Dispatch(upsert)
+	err := bus.DispatchCtx(context.TODO(), upsert)
 	if err != nil {
 		return 0, err
 	}
@@ -304,7 +305,7 @@ func (auth *AuthProxy) GetSignedUser(userID int64) (*models.SignedInUser, *Error
 		UserId: userID,
 	}
 
-	if err := bus.Dispatch(query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), query); err != nil {
 		return nil, newError(err.Error(), nil)
 	}
 

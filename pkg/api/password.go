@@ -18,13 +18,13 @@ func SendResetPasswordEmail(c *m.ReqContext, form dtos.SendResetPasswordEmailFor
 
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: form.UserOrEmail}
 
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &userQuery); err != nil {
 		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
 		return Error(200, "Email sent", err)
 	}
 
 	emailCmd := m.SendResetPasswordEmailCommand{User: userQuery.Result}
-	if err := bus.Dispatch(&emailCmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &emailCmd); err != nil {
 		return Error(500, "Failed to send email", err)
 	}
 
@@ -34,7 +34,7 @@ func SendResetPasswordEmail(c *m.ReqContext, form dtos.SendResetPasswordEmailFor
 func ResetPassword(c *m.ReqContext, form dtos.ResetUserPasswordForm) Response {
 	query := m.ValidateResetPasswordCodeQuery{Code: form.Code}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		if err == m.ErrInvalidEmailCode {
 			return Error(400, "Invalid or expired reset password code", nil)
 		}
@@ -49,7 +49,7 @@ func ResetPassword(c *m.ReqContext, form dtos.ResetUserPasswordForm) Response {
 	cmd.UserId = query.Result.Id
 	cmd.NewPassword = util.EncodePassword(form.NewPassword, query.Result.Salt)
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		return Error(500, "Failed to change user password", err)
 	}
 

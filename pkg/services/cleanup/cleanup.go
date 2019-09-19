@@ -91,7 +91,7 @@ func (srv *CleanUpService) shouldCleanupTempFile(filemtime time.Time, now time.T
 
 func (srv *CleanUpService) deleteExpiredSnapshots() {
 	cmd := m.DeleteExpiredSnapshotsCommand{}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
 		srv.log.Error("Failed to delete expired snapshots", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired snapshots", "rows affected", cmd.DeletedRows)
@@ -100,7 +100,7 @@ func (srv *CleanUpService) deleteExpiredSnapshots() {
 
 func (srv *CleanUpService) deleteExpiredDashboardVersions() {
 	cmd := m.DeleteExpiredVersionsCommand{}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
 		srv.log.Error("Failed to delete expired dashboard versions", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted old/expired dashboard versions", "rows affected", cmd.DeletedRows)
@@ -115,7 +115,7 @@ func (srv *CleanUpService) deleteOldLoginAttempts() {
 	cmd := m.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
 		srv.log.Error("Problem deleting expired login attempts", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted expired login attempts", "rows affected", cmd.DeletedRows)

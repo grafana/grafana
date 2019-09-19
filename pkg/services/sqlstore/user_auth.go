@@ -33,7 +33,7 @@ func GetUserByAuthInfo(ctx context.Context, query *models.GetUserByAuthInfoQuery
 		authQuery.AuthModule = query.AuthModule
 		authQuery.AuthId = query.AuthId
 
-		err = GetAuthInfo(authQuery)
+		err = GetAuthInfo(ctx, authQuery)
 		if err != models.ErrUserNotFound {
 			if err != nil {
 				return err
@@ -41,7 +41,7 @@ func GetUserByAuthInfo(ctx context.Context, query *models.GetUserByAuthInfoQuery
 
 			// if user id was specified and doesn't match the user_auth entry, remove it
 			if query.UserId != 0 && query.UserId != authQuery.Result.UserId {
-				err = DeleteAuthInfo(&models.DeleteAuthInfoCommand{
+				err = DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
 					UserAuth: authQuery.Result,
 				})
 				if err != nil {
@@ -57,7 +57,7 @@ func GetUserByAuthInfo(ctx context.Context, query *models.GetUserByAuthInfoQuery
 
 				if !has {
 					// if the user has been deleted then remove the entry
-					err = DeleteAuthInfo(&models.DeleteAuthInfoCommand{
+					err = DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
 						UserAuth: authQuery.Result,
 					})
 					if err != nil {
@@ -108,7 +108,7 @@ func GetUserByAuthInfo(ctx context.Context, query *models.GetUserByAuthInfoQuery
 			AuthModule: query.AuthModule,
 			AuthId:     query.AuthId,
 		}
-		if err := SetAuthInfo(cmd2); err != nil {
+		if err := SetAuthInfo(ctx, cmd2); err != nil {
 			return err
 		}
 	}
@@ -119,13 +119,13 @@ func GetUserByAuthInfo(ctx context.Context, query *models.GetUserByAuthInfoQuery
 
 func GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
-	err := bus.Dispatch(&userQuery)
+	err := bus.DispatchCtx(ctx, &userQuery)
 	if err != nil {
 		return err
 	}
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userQuery.Result.Id}
-	if err := bus.Dispatch(authInfoQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, authInfoQuery); err != nil {
 		return err
 	}
 

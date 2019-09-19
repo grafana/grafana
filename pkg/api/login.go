@@ -109,7 +109,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		IpAddress:  c.Req.RemoteAddr,
 	}
 
-	if err := bus.Dispatch(authQuery); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), authQuery); err != nil {
 		e401 := Error(401, "Invalid username or password", err)
 		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
 			return e401

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -13,7 +14,7 @@ import (
 func GetDataSources(c *m.ReqContext) Response {
 	query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		return Error(500, "Failed to query datasources", err)
 	}
 
@@ -55,7 +56,7 @@ func GetDataSourceById(c *m.ReqContext) Response {
 		OrgId: c.OrgId,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		if err == m.ErrDataSourceNotFound {
 			return Error(404, "Data source not found", nil)
 		}
@@ -86,7 +87,7 @@ func DeleteDataSourceById(c *m.ReqContext) Response {
 
 	cmd := &m.DeleteDataSourceByIdCommand{Id: id, OrgId: c.OrgId}
 
-	err = bus.Dispatch(cmd)
+	err = bus.DispatchCtx(c.Ctx(), cmd)
 	if err != nil {
 		return Error(500, "Failed to delete datasource", err)
 	}
@@ -102,7 +103,7 @@ func DeleteDataSourceByName(c *m.ReqContext) Response {
 	}
 
 	getCmd := &m.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
-	if err := bus.Dispatch(getCmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), getCmd); err != nil {
 		if err == m.ErrDataSourceNotFound {
 			return Error(404, "Data source not found", nil)
 		}
@@ -114,7 +115,7 @@ func DeleteDataSourceByName(c *m.ReqContext) Response {
 	}
 
 	cmd := &m.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
-	err := bus.Dispatch(cmd)
+	err := bus.DispatchCtx(c.Ctx(), cmd)
 	if err != nil {
 		return Error(500, "Failed to delete datasource", err)
 	}
@@ -125,7 +126,7 @@ func DeleteDataSourceByName(c *m.ReqContext) Response {
 func AddDataSource(c *m.ReqContext, cmd m.AddDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &cmd); err != nil {
 		if err == m.ErrDataSourceNameExists {
 			return Error(409, err.Error(), err)
 		}
@@ -151,7 +152,7 @@ func UpdateDataSource(c *m.ReqContext, cmd m.UpdateDataSourceCommand) Response {
 		return Error(500, "Failed to update datasource", err)
 	}
 
-	err = bus.Dispatch(&cmd)
+	err = bus.DispatchCtx(c.Ctx(), &cmd)
 	if err != nil {
 		if err == m.ErrDataSourceUpdatingOldVersion {
 			return Error(500, "Failed to update datasource. Reload new version and try again", err)
@@ -164,7 +165,7 @@ func UpdateDataSource(c *m.ReqContext, cmd m.UpdateDataSourceCommand) Response {
 		OrgId: c.OrgId,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		if err == m.ErrDataSourceNotFound {
 			return Error(404, "Data source not found", nil)
 		}
@@ -212,7 +213,7 @@ func getRawDataSourceById(id int64, orgID int64) (*m.DataSource, error) {
 		OrgId: orgID,
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return nil, err
 	}
 
@@ -223,7 +224,7 @@ func getRawDataSourceById(id int64, orgID int64) (*m.DataSource, error) {
 func GetDataSourceByName(c *m.ReqContext) Response {
 	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		if err == m.ErrDataSourceNotFound {
 			return Error(404, "Data source not found", nil)
 		}
@@ -238,7 +239,7 @@ func GetDataSourceByName(c *m.ReqContext) Response {
 func GetDataSourceIdByName(c *m.ReqContext) Response {
 	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 		if err == m.ErrDataSourceNotFound {
 			return Error(404, "Data source not found", nil)
 		}

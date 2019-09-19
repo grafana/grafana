@@ -185,7 +185,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *m.ReqContext) {
 		SignupAllowed: connect.IsSignupAllowed(),
 	}
 
-	err = bus.Dispatch(cmd)
+	err = bus.DispatchCtx(ctx.Ctx(), cmd)
 	if err != nil {
 		hs.redirectWithError(ctx, err)
 		return

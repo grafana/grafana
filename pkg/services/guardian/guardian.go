@@ -1,6 +1,7 @@
 package guardian
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -193,7 +194,7 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 	}
 
 	query := m.GetDashboardAclInfoListQuery{DashboardId: g.dashId, OrgId: g.orgId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		return nil, err
 	}
 
@@ -207,7 +208,7 @@ func (g *dashboardGuardianImpl) getTeams() ([]*m.TeamDTO, error) {
 	}
 
 	query := m.GetTeamsByUserQuery{OrgId: g.orgId, UserId: g.user.UserId}
-	err := bus.Dispatch(&query)
+	err := bus.DispatchCtx(context.TODO(), &query)
 
 	g.teams = query.Result
 	return query.Result, err

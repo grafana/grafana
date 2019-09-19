@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -17,7 +18,7 @@ func TestDataAccess(t *testing.T) {
 	Convey("Testing DB", t, func() {
 		InitTestDB(t)
 		Convey("Can add datasource", func() {
-			err := AddDataSource(&models.AddDataSourceCommand{
+			err := AddDataSource(context.Background(), &models.AddDataSourceCommand{
 				OrgId:    10,
 				Name:     "laban",
 				Type:     models.DS_INFLUXDB,
@@ -30,7 +31,7 @@ func TestDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
-			err = GetDataSources(&query)
+			err = GetDataSources(context.Background(), &query)
 			So(err, ShouldBeNil)
 
 			So(len(query.Result), ShouldEqual, 1)
@@ -43,7 +44,7 @@ func TestDataAccess(t *testing.T) {
 		})
 
 		Convey("Given a datasource", func() {
-			err := AddDataSource(&models.AddDataSourceCommand{
+			err := AddDataSource(context.Background(), &models.AddDataSourceCommand{
 				OrgId:  10,
 				Name:   "nisse",
 				Type:   models.DS_GRAPHITE,
@@ -53,7 +54,7 @@ func TestDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			query := models.GetDataSourcesQuery{OrgId: 10}
-			err = GetDataSources(&query)
+			err = GetDataSources(context.Background(), &query)
 			So(err, ShouldBeNil)
 
 			ds := query.Result[0]
@@ -70,13 +71,13 @@ func TestDataAccess(t *testing.T) {
 				}
 
 				Convey("with same version as source", func() {
-					err := UpdateDataSource(cmd)
+					err := UpdateDataSource(context.Background(), cmd)
 					So(err, ShouldBeNil)
 				})
 
 				Convey("when someone else updated between read and update", func() {
 					query := models.GetDataSourcesQuery{OrgId: 10}
-					err = GetDataSources(&query)
+					err = GetDataSources(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					ds := query.Result[0]
@@ -100,10 +101,10 @@ func TestDataAccess(t *testing.T) {
 						Version: ds.Version,
 					}
 
-					err := UpdateDataSource(updateFromOtherUser)
+					err := UpdateDataSource(context.Background(), updateFromOtherUser)
 					So(err, ShouldBeNil)
 
-					err = UpdateDataSource(intendedUpdate)
+					err = UpdateDataSource(context.Background(), intendedUpdate)
 					So(err, ShouldNotBeNil)
 				})
 
@@ -118,7 +119,7 @@ func TestDataAccess(t *testing.T) {
 					}
 
 					Convey("should not raise errors", func() {
-						err := UpdateDataSource(cmd)
+						err := UpdateDataSource(context.Background(), cmd)
 						So(err, ShouldBeNil)
 					})
 				})
@@ -135,33 +136,33 @@ func TestDataAccess(t *testing.T) {
 					}
 
 					Convey("should not raise errors", func() {
-						err := UpdateDataSource(cmd)
+						err := UpdateDataSource(context.Background(), cmd)
 						So(err, ShouldBeNil)
 					})
 				})
 			})
 
 			Convey("Can delete datasource by id", func() {
-				err := DeleteDataSourceById(&models.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: ds.OrgId})
+				err := DeleteDataSourceById(context.Background(), &models.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: ds.OrgId})
 				So(err, ShouldBeNil)
 
-				GetDataSources(&query)
+				GetDataSources(context.Background(), &query)
 				So(len(query.Result), ShouldEqual, 0)
 			})
 
 			Convey("Can delete datasource by name", func() {
-				err := DeleteDataSourceByName(&models.DeleteDataSourceByNameCommand{Name: ds.Name, OrgId: ds.OrgId})
+				err := DeleteDataSourceByName(context.Background(), &models.DeleteDataSourceByNameCommand{Name: ds.Name, OrgId: ds.OrgId})
 				So(err, ShouldBeNil)
 
-				GetDataSources(&query)
+				GetDataSources(context.Background(), &query)
 				So(len(query.Result), ShouldEqual, 0)
 			})
 
 			Convey("Can not delete datasource with wrong orgId", func() {
-				err := DeleteDataSourceById(&models.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: 123123})
+				err := DeleteDataSourceById(context.Background(), &models.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: 123123})
 				So(err, ShouldBeNil)
 
-				GetDataSources(&query)
+				GetDataSources(context.Background(), &query)
 				So(len(query.Result), ShouldEqual, 1)
 			})
 		})

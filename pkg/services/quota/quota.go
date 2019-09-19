@@ -55,7 +55,7 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 				continue
 			}
 			query := m.GetGlobalQuotaByTargetQuery{Target: scope.Target}
-			if err := bus.Dispatch(&query); err != nil {
+			if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Used >= scope.DefaultLimit {
@@ -66,7 +66,7 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 				continue
 			}
 			query := m.GetOrgQuotaByTargetQuery{OrgId: c.OrgId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
+			if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {
@@ -84,7 +84,7 @@ func (qs *QuotaService) QuotaReached(c *m.ReqContext, target string) (bool, erro
 				continue
 			}
 			query := m.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
+			if err := bus.DispatchCtx(c.Ctx(), &query); err != nil {
 				return true, err
 			}
 			if query.Result.Limit < 0 {

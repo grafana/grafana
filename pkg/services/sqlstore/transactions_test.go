@@ -18,7 +18,7 @@ func TestTransaction(t *testing.T) {
 	Convey("InTransaction asdf asdf", t, func() {
 		cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
 
-		err := AddApiKey(cmd)
+		err := AddApiKey(context.Background(), cmd)
 		So(err, ShouldBeNil)
 
 		deleteApiKeyCmd := &models.DeleteApiKeyCommand{Id: cmd.Result.Id, OrgId: 1}
@@ -31,7 +31,7 @@ func TestTransaction(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
-			err = GetApiKeyById(query)
+			err = GetApiKeyById(context.Background(), query)
 			So(err, ShouldEqual, models.ErrInvalidApiKey)
 		})
 
@@ -48,7 +48,7 @@ func TestTransaction(t *testing.T) {
 			So(err, ShouldEqual, ErrProvokedError)
 
 			query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
-			err = GetApiKeyById(query)
+			err = GetApiKeyById(context.Background(), query)
 			So(err, ShouldBeNil)
 			So(query.Result.Id, ShouldEqual, cmd.Result.Id)
 		})

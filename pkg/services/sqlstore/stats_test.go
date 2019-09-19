@@ -14,7 +14,7 @@ func TestStatsDataAccess(t *testing.T) {
 
 		Convey("Get system stats should not results in error", func() {
 			query := models.GetSystemStatsQuery{}
-			err := GetSystemStats(&query)
+			err := GetSystemStats(context.Background(), &query)
 			So(err, ShouldBeNil)
 		})
 
@@ -26,13 +26,13 @@ func TestStatsDataAccess(t *testing.T) {
 
 		Convey("Get datasource stats should not results in error", func() {
 			query := models.GetDataSourceStatsQuery{}
-			err := GetDataSourceStats(&query)
+			err := GetDataSourceStats(context.Background(), &query)
 			So(err, ShouldBeNil)
 		})
 
 		Convey("Get datasource access stats should not results in error", func() {
 			query := models.GetDataSourceAccessStatsQuery{}
-			err := GetDataSourceAccessStats(&query)
+			err := GetDataSourceAccessStats(context.Background(), &query)
 			So(err, ShouldBeNil)
 		})
 
@@ -44,7 +44,7 @@ func TestStatsDataAccess(t *testing.T) {
 
 		Convey("Get admin stats should not result in error", func() {
 			query := models.GetAdminStatsQuery{}
-			err := GetAdminStats(&query)
+			err := GetAdminStats(context.Background(), &query)
 			So(err, ShouldBeNil)
 		})
 	})

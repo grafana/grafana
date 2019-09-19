@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -121,7 +122,7 @@ func TestNotificationAsConfig(t *testing.T) {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
 				notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: 1}
-				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+				err = sqlstore.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldNotBeNil)
 				So(len(notificationsQuery.Result), ShouldEqual, 2)
@@ -134,11 +135,11 @@ func TestNotificationAsConfig(t *testing.T) {
 					Uid:   "notifier1",
 					Type:  "slack",
 				}
-				err := sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
+				err := sqlstore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 				So(err, ShouldBeNil)
 				So(existingNotificationCmd.Result, ShouldNotBeNil)
 				notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: 1}
-				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+				err = sqlstore.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldNotBeNil)
 				So(len(notificationsQuery.Result), ShouldEqual, 1)
@@ -149,7 +150,7 @@ func TestNotificationAsConfig(t *testing.T) {
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
-					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+					err = sqlstore.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 					So(err, ShouldBeNil)
 					So(notificationsQuery.Result, ShouldNotBeNil)
 					So(len(notificationsQuery.Result), ShouldEqual, 2)
@@ -172,7 +173,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				Convey("should both be inserted", func() {
 					So(err, ShouldBeNil)
 					notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: 1}
-					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+					err = sqlstore.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 					So(err, ShouldBeNil)
 					So(notificationsQuery.Result, ShouldNotBeNil)
 					So(len(notificationsQuery.Result), ShouldEqual, 2)
@@ -191,7 +192,7 @@ func TestNotificationAsConfig(t *testing.T) {
 					Uid:   "notifier0",
 					Type:  "slack",
 				}
-				err := sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
+				err := sqlstore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 				So(err, ShouldBeNil)
 				existingNotificationCmd = m.CreateAlertNotificationCommand{
 					Name:  "channel3",
@@ -199,11 +200,11 @@ func TestNotificationAsConfig(t *testing.T) {
 					Uid:   "notifier3",
 					Type:  "slack",
 				}
-				err = sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
+				err = sqlstore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 				So(err, ShouldBeNil)
 
 				notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: 1}
-				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+				err = sqlstore.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldNotBeNil)
 				So(len(notificationsQuery.Result), ShouldEqual, 2)
@@ -215,7 +216,7 @@ func TestNotificationAsConfig(t *testing.T) {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
 					notificationsQuery = m.GetAllAlertNotificationsQuery{OrgId: 1}
-					err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+					err = sqlstore.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 					So(err, ShouldBeNil)
 					So(notificationsQuery.Result, ShouldNotBeNil)
 					So(len(notificationsQuery.Result), ShouldEqual, 4)
@@ -225,11 +226,11 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		Convey("Can read correct properties with orgName instead of orgId", func() {
 			existingOrg1 := m.CreateOrgCommand{Name: "Main Org. 1"}
-			err := sqlstore.CreateOrg(&existingOrg1)
+			err := sqlstore.CreateOrg(context.Background(), &existingOrg1)
 			So(err, ShouldBeNil)
 			So(existingOrg1.Result, ShouldNotBeNil)
 			existingOrg2 := m.CreateOrgCommand{Name: "Main Org. 2"}
-			err = sqlstore.CreateOrg(&existingOrg2)
+			err = sqlstore.CreateOrg(context.Background(), &existingOrg2)
 			So(err, ShouldBeNil)
 			So(existingOrg2.Result, ShouldNotBeNil)
 
@@ -239,7 +240,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				Uid:   "notifier2",
 				Type:  "slack",
 			}
-			err = sqlstore.CreateAlertNotificationCommand(&existingNotificationCmd)
+			err = sqlstore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 			So(err, ShouldBeNil)
 
 			dc := newNotificationProvisioner(logger)
@@ -249,7 +250,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			}
 
 			notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: existingOrg2.Result.Id}
-			err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+			err = sqlstore.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 			So(err, ShouldBeNil)
 			So(notificationsQuery.Result, ShouldNotBeNil)
 			So(len(notificationsQuery.Result), ShouldEqual, 1)
@@ -280,7 +281,7 @@ func TestNotificationAsConfig(t *testing.T) {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
 				notificationsQuery := m.GetAllAlertNotificationsQuery{OrgId: 1}
-				err = sqlstore.GetAllAlertNotifications(&notificationsQuery)
+				err = sqlstore.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 				So(err, ShouldBeNil)
 				So(notificationsQuery.Result, ShouldBeEmpty)
 			})

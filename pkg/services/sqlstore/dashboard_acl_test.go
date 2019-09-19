@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -29,7 +30,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading folder acl should include default acl", func() {
 					query := m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
 
-					err := GetDashboardAclInfoList(&query)
+					err := GetDashboardAclInfoList(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -45,7 +46,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading dashboard acl should include acl for parent folder", func() {
 					query := m.GetDashboardAclInfoListQuery{DashboardId: childDash.Id, OrgId: 1}
 
-					err := GetDashboardAclInfoList(&query)
+					err := GetDashboardAclInfoList(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 2)
@@ -60,7 +61,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			})
 
 			Convey("Given dashboard folder with removed default permissions", func() {
-				err := UpdateDashboardAcl(&m.UpdateDashboardAclCommand{
+				err := UpdateDashboardAcl(context.Background(), &m.UpdateDashboardAclCommand{
 					DashboardId: savedFolder.Id,
 					Items:       []*m.DashboardAcl{},
 				})
@@ -69,7 +70,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading dashboard acl should return no acl items", func() {
 					query := m.GetDashboardAclInfoListQuery{DashboardId: childDash.Id, OrgId: 1}
 
-					err := GetDashboardAclInfoList(&query)
+					err := GetDashboardAclInfoList(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 0)
@@ -88,7 +89,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading dashboard acl should include acl for parent folder", func() {
 					query := m.GetDashboardAclInfoListQuery{DashboardId: childDash.Id, OrgId: 1}
 
-					err := GetDashboardAclInfoList(&query)
+					err := GetDashboardAclInfoList(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
@@ -107,7 +108,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					Convey("When reading dashboard acl should include acl for parent folder and child", func() {
 						query := m.GetDashboardAclInfoListQuery{OrgId: 1, DashboardId: childDash.Id}
 
-						err := GetDashboardAclInfoList(&query)
+						err := GetDashboardAclInfoList(context.Background(), &query)
 						So(err, ShouldBeNil)
 
 						So(len(query.Result), ShouldEqual, 2)
@@ -131,7 +132,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading dashboard acl should include default acl for parent folder and the child acl", func() {
 					query := m.GetDashboardAclInfoListQuery{OrgId: 1, DashboardId: childDash.Id}
 
-					err := GetDashboardAclInfoList(&query)
+					err := GetDashboardAclInfoList(context.Background(), &query)
 					So(err, ShouldBeNil)
 
 					defaultPermissionsId := -1
@@ -157,7 +158,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
-				err = GetDashboardAclInfoList(q1)
+				err = GetDashboardAclInfoList(context.Background(), q1)
 				So(err, ShouldBeNil)
 
 				So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
@@ -172,7 +173,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
-					err = GetDashboardAclInfoList(q3)
+					err = GetDashboardAclInfoList(context.Background(), q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 0)
 				})
@@ -180,7 +181,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 			Convey("Given a team", func() {
 				group1 := m.CreateTeamCommand{Name: "group1 name", OrgId: 1}
-				err := CreateTeam(&group1)
+				err := CreateTeam(context.Background(), &group1)
 				So(err, ShouldBeNil)
 
 				Convey("Should be able to add a user permission for a team", func() {
@@ -193,7 +194,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
-					err = GetDashboardAclInfoList(q1)
+					err = GetDashboardAclInfoList(context.Background(), q1)
 					So(err, ShouldBeNil)
 					So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
 					So(q1.Result[0].Permission, ShouldEqual, m.PERMISSION_EDIT)
@@ -210,7 +211,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
-					err = GetDashboardAclInfoList(q3)
+					err = GetDashboardAclInfoList(context.Background(), q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
@@ -226,7 +227,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			Convey("When reading dashboard acl should return default permissions", func() {
 				query := m.GetDashboardAclInfoListQuery{DashboardId: rootFolderId, OrgId: 1}
 
-				err := GetDashboardAclInfoList(&query)
+				err := GetDashboardAclInfoList(context.Background(), &query)
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 2)

@@ -22,14 +22,14 @@ func TestAccountDataAccess(t *testing.T) {
 
 			for i := 1; i < 4; i++ {
 				cmd = &m.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
-				err = CreateOrg(cmd)
+				err = CreateOrg(context.Background(), cmd)
 				So(err, ShouldBeNil)
 
 				ids = append(ids, cmd.Result.Id)
 			}
 
 			query := &m.SearchOrgsQuery{Ids: ids}
-			err = SearchOrgs(query)
+			err = SearchOrgs(context.Background(), query)
 
 			So(err, ShouldBeNil)
 			So(len(query.Result), ShouldEqual, 3)
@@ -51,8 +51,8 @@ func TestAccountDataAccess(t *testing.T) {
 
 				q1 := m.GetUserOrgListQuery{UserId: ac1cmd.Result.Id}
 				q2 := m.GetUserOrgListQuery{UserId: ac2cmd.Result.Id}
-				GetUserOrgList(&q1)
-				GetUserOrgList(&q2)
+				GetUserOrgList(context.Background(), &q1)
+				GetUserOrgList(context.Background(), &q2)
 
 				So(q1.Result[0].OrgId, ShouldEqual, q2.Result[0].OrgId)
 				So(q1.Result[0].Role, ShouldEqual, "Viewer")
@@ -74,7 +74,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			Convey("Should be able to read user info projection", func() {
 				query := m.GetUserProfileQuery{UserId: ac1.Id}
-				err = GetUserProfile(&query)
+				err = GetUserProfile(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Email, ShouldEqual, "ac1@test.com")
@@ -83,7 +83,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 			Convey("Can search users", func() {
 				query := m.SearchUsersQuery{Query: ""}
-				err := SearchUsers(&query)
+				err := SearchUsers(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Users[0].Email, ShouldEqual, "ac1@test.com")
@@ -97,18 +97,18 @@ func TestAccountDataAccess(t *testing.T) {
 					Role:   m.ROLE_VIEWER,
 				}
 
-				err := AddOrgUser(&cmd)
+				err := AddOrgUser(context.Background(), &cmd)
 				Convey("Should have been saved without error", func() {
 					So(err, ShouldBeNil)
 				})
 
 				Convey("Can update org user role", func() {
 					updateCmd := m.UpdateOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id, Role: m.ROLE_ADMIN}
-					err = UpdateOrgUser(&updateCmd)
+					err = UpdateOrgUser(context.Background(), &updateCmd)
 					So(err, ShouldBeNil)
 
 					orgUsersQuery := m.GetOrgUsersQuery{OrgId: ac1.OrgId}
-					err = GetOrgUsers(&orgUsersQuery)
+					err = GetOrgUsers(context.Background(), &orgUsersQuery)
 					So(err, ShouldBeNil)
 
 					So(orgUsersQuery.Result[1].Role, ShouldEqual, m.ROLE_ADMIN)
@@ -131,7 +131,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				Convey("Can get user organizations", func() {
 					query := m.GetUserOrgListQuery{UserId: ac2.Id}
-					err := GetUserOrgList(&query)
+					err := GetUserOrgList(context.Background(), &query)
 
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
@@ -139,7 +139,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				Convey("Can get organization users", func() {
 					query := m.GetOrgUsersQuery{OrgId: ac1.OrgId}
-					err := GetOrgUsers(&query)
+					err := GetOrgUsers(context.Background(), &query)
 
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
@@ -151,7 +151,7 @@ func TestAccountDataAccess(t *testing.T) {
 						OrgId: ac1.OrgId,
 						Query: "ac1",
 					}
-					err := GetOrgUsers(&query)
+					err := GetOrgUsers(context.Background(), &query)
 
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
@@ -164,7 +164,7 @@ func TestAccountDataAccess(t *testing.T) {
 						Query: "ac",
 						Limit: 1,
 					}
-					err := GetOrgUsers(&query)
+					err := GetOrgUsers(context.Background(), &query)
 
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 1)
@@ -173,7 +173,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 				Convey("Can set using org", func() {
 					cmd := m.SetUsingOrgCommand{UserId: ac2.Id, OrgId: ac1.OrgId}
-					err := SetUsingOrg(&cmd)
+					err := SetUsingOrg(context.Background(), &cmd)
 					So(err, ShouldBeNil)
 
 					Convey("SignedInUserQuery with a different org", func() {
@@ -191,7 +191,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 					Convey("Should set last org as current when removing user from current", func() {
 						remCmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id}
-						err := RemoveOrgUser(&remCmd)
+						err := RemoveOrgUser(context.Background(), &remCmd)
 						So(err, ShouldBeNil)
 
 						query := m.GetSignedInUserQuery{UserId: ac2.Id}
@@ -204,12 +204,12 @@ func TestAccountDataAccess(t *testing.T) {
 
 				Convey("Removing user from org should delete user completely if in no other org", func() {
 					// make sure ac2 has no org
-					err := DeleteOrg(&m.DeleteOrgCommand{Id: ac2.OrgId})
+					err := DeleteOrg(context.Background(), &m.DeleteOrgCommand{Id: ac2.OrgId})
 					So(err, ShouldBeNil)
 
 					// remove ac2 user from ac1 org
 					remCmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac2.Id, ShouldDeleteOrphanedUser: true}
-					err = RemoveOrgUser(&remCmd)
+					err = RemoveOrgUser(context.Background(), &remCmd)
 					So(err, ShouldBeNil)
 					So(remCmd.UserWasDeleted, ShouldBeTrue)
 
@@ -219,13 +219,13 @@ func TestAccountDataAccess(t *testing.T) {
 
 				Convey("Cannot delete last admin org user", func() {
 					cmd := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac1.Id}
-					err := RemoveOrgUser(&cmd)
+					err := RemoveOrgUser(context.Background(), &cmd)
 					So(err, ShouldEqual, m.ErrLastOrgAdmin)
 				})
 
 				Convey("Cannot update role so no one is admin user", func() {
 					cmd := m.UpdateOrgUserCommand{OrgId: ac1.OrgId, UserId: ac1.Id, Role: m.ROLE_VIEWER}
-					err := UpdateOrgUser(&cmd)
+					err := UpdateOrgUser(context.Background(), &cmd)
 					So(err, ShouldEqual, m.ErrLastOrgAdmin)
 				})
 
@@ -241,11 +241,11 @@ func TestAccountDataAccess(t *testing.T) {
 						Role:   m.ROLE_VIEWER,
 					}
 
-					err = AddOrgUser(&orgUserCmd)
+					err = AddOrgUser(context.Background(), &orgUserCmd)
 					So(err, ShouldBeNil)
 
 					query := m.GetOrgUsersQuery{OrgId: ac1.OrgId}
-					err = GetOrgUsers(&query)
+					err = GetOrgUsers(context.Background(), &query)
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 3)
 
@@ -260,12 +260,12 @@ func TestAccountDataAccess(t *testing.T) {
 
 					Convey("When org user is deleted", func() {
 						cmdRemove := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac3.Id}
-						err := RemoveOrgUser(&cmdRemove)
+						err := RemoveOrgUser(context.Background(), &cmdRemove)
 						So(err, ShouldBeNil)
 
 						Convey("Should remove dependent permissions for deleted org user", func() {
 							permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: ac1.OrgId}
-							err = GetDashboardAclInfoList(permQuery)
+							err = GetDashboardAclInfoList(context.Background(), permQuery)
 							So(err, ShouldBeNil)
 
 							So(len(permQuery.Result), ShouldEqual, 0)
@@ -273,7 +273,7 @@ func TestAccountDataAccess(t *testing.T) {
 
 						Convey("Should not remove dashboard permissions for same user in another org", func() {
 							permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 2, OrgId: ac3.OrgId}
-							err = GetDashboardAclInfoList(permQuery)
+							err = GetDashboardAclInfoList(context.Background(), permQuery)
 							So(err, ShouldBeNil)
 
 							So(len(permQuery.Result), ShouldEqual, 1)
@@ -295,5 +295,5 @@ func testHelperUpdateDashboardAcl(dashboardId int64, items ...m.DashboardAcl) er
 		item.Updated = time.Now()
 		cmd.Items = append(cmd.Items, &item)
 	}
-	return UpdateDashboardAcl(&cmd)
+	return UpdateDashboardAcl(context.Background(), &cmd)
 }

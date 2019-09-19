@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -21,12 +22,12 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 				Email:  "e@as.co",
 				Status: m.TmpUserInvitePending,
 			}
-			err := CreateTempUser(&cmd)
+			err := CreateTempUser(context.Background(), &cmd)
 			So(err, ShouldBeNil)
 
 			Convey("Should be able to get temp users by org id", func() {
 				query := m.GetTempUsersQuery{OrgId: 2256, Status: m.TmpUserInvitePending}
-				err = GetTempUsersQuery(&query)
+				err = GetTempUsersQuery(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 1)
@@ -34,7 +35,7 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 
 			Convey("Should be able to get temp users by email", func() {
 				query := m.GetTempUsersQuery{Email: "e@as.co", Status: m.TmpUserInvitePending}
-				err = GetTempUsersQuery(&query)
+				err = GetTempUsersQuery(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 1)
@@ -42,7 +43,7 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 
 			Convey("Should be able to get temp users by code", func() {
 				query := m.GetTempUserByCodeQuery{Code: "asd"}
-				err = GetTempUserByCode(&query)
+				err = GetTempUserByCode(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result.Name, ShouldEqual, "hello")
@@ -50,17 +51,17 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 
 			Convey("Should be able update status", func() {
 				cmd2 := m.UpdateTempUserStatusCommand{Code: "asd", Status: m.TmpUserRevoked}
-				err := UpdateTempUserStatus(&cmd2)
+				err := UpdateTempUserStatus(context.Background(), &cmd2)
 				So(err, ShouldBeNil)
 			})
 
 			Convey("Should be able update email sent and email sent on", func() {
 				cmd3 := m.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
-				err := UpdateTempUserWithEmailSent(&cmd3)
+				err := UpdateTempUserWithEmailSent(context.Background(), &cmd3)
 				So(err, ShouldBeNil)
 
 				query := m.GetTempUsersQuery{OrgId: 2256, Status: m.TmpUserInvitePending}
-				err = GetTempUsersQuery(&query)
+				err = GetTempUsersQuery(context.Background(), &query)
 
 				So(err, ShouldBeNil)
 				So(query.Result[0].EmailSent, ShouldBeTrue)

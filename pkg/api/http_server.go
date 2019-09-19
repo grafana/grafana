@@ -330,7 +330,7 @@ func (hs *HTTPServer) healthHandler(ctx *macaron.Context) {
 	data.Set("version", setting.BuildVersion)
 	data.Set("commit", setting.BuildCommit)
 
-	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
+	if err := bus.DispatchCtx(ctx.Req.Context(), &models.GetDBHealthQuery{}); err != nil {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		ctx.Resp.WriteHeader(503)

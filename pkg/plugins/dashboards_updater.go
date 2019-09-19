@@ -16,7 +16,7 @@ func (pm *PluginManager) updateAppDashboards() {
 
 	query := m.GetPluginSettingsQuery{OrgId: 0}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		plog.Error("Failed to get all plugin settings", "error", err)
 		return
 	}
@@ -50,7 +50,7 @@ func autoUpdateAppDashboard(pluginDashInfo *PluginDashboardInfoDTO, orgId int64)
 		Path:      pluginDashInfo.Path,
 	}
 
-	return bus.Dispatch(&updateCmd)
+	return bus.DispatchCtx(context.TODO(), &updateCmd)
 }
 
 func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
@@ -71,7 +71,7 @@ func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
 			plog.Info("Deleting plugin dashboard", "pluginId", pluginDef.Id, "dashboard", dash.Slug)
 
 			deleteCmd := m.DeleteDashboardCommand{OrgId: orgId, Id: dash.DashboardId}
-			if err := bus.Dispatch(&deleteCmd); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), &deleteCmd); err != nil {
 				plog.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
 				return
 			}
@@ -90,7 +90,7 @@ func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
 
 	// update version in plugin_setting table to mark that we have processed the update
 	query := m.GetPluginSettingByIdQuery{PluginId: pluginDef.Id, OrgId: orgId}
-	if err := bus.Dispatch(&query); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 		plog.Error("Failed to read plugin setting by id", "error", err)
 		return
 	}
@@ -102,7 +102,7 @@ func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
 		PluginVersion: pluginDef.Info.Version,
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.DispatchCtx(context.TODO(), &cmd); err != nil {
 		plog.Error("Failed to update plugin setting version", "error", err)
 	}
 }
@@ -115,7 +115,7 @@ func handlePluginStateChanged(ctx context.Context, event *m.PluginStateChangedEv
 	} else {
 		query := m.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
 
-		if err := bus.Dispatch(&query); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), &query); err != nil {
 			return err
 		}
 		for _, dash := range query.Result {
@@ -123,7 +123,7 @@ func handlePluginStateChanged(ctx context.Context, event *m.PluginStateChangedEv
 
 			plog.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
 
-			if err := bus.Dispatch(&deleteCmd); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), &deleteCmd); err != nil {
 				return err
 			}
 		}

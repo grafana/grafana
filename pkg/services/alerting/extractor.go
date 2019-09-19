@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -32,7 +33,7 @@ func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.Sig
 func (e *DashAlertExtractor) lookupDatasourceID(dsName string) (*models.DataSource, error) {
 	if dsName == "" {
 		query := &models.GetDataSourcesQuery{OrgId: e.OrgID}
-		if err := bus.Dispatch(query); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), query); err != nil {
 			return nil, err
 		}
 
@@ -43,7 +44,7 @@ func (e *DashAlertExtractor) lookupDatasourceID(dsName string) (*models.DataSour
 		}
 	} else {
 		query := &models.GetDataSourceByNameQuery{Name: dsName, OrgId: e.OrgID}
-		if err := bus.Dispatch(query); err != nil {
+		if err := bus.DispatchCtx(context.TODO(), query); err != nil {
 			return nil, err
 		}
 
@@ -166,7 +167,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 				Datasources: []*models.DataSource{datasource},
 			}
 
-			if err := bus.Dispatch(&dsFilterQuery); err != nil {
+			if err := bus.DispatchCtx(context.TODO(), &dsFilterQuery); err != nil {
 				if err != bus.ErrHandlerNotFound {
 					return nil, err
 				}
