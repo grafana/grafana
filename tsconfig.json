@@ -31,7 +31,8 @@
     "typeRoots": ["node_modules/@types", "public/app/types"],
     "paths": {
       "app": ["app"],
-      "sass": ["sass"]
+      "sass": ["sass"],
+      "@grafana/*": ["../packages/grafana-*"]
     },
     "skipLibCheck": true,
     "preserveSymlinks": true
