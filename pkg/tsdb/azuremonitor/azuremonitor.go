@@ -62,9 +62,16 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 		}
 	}
 
+	var resources ResourcesLoader = &resources{
+		httpClient: e.httpClient,
+		dsInfo:     e.dsInfo,
+		ctx:        ctx,
+	}
+
 	azDatasource := &AzureMonitorDatasource{
 		httpClient: e.httpClient,
 		dsInfo:     e.dsInfo,
+		resources:  resources,
 	}
 
 	result, err = azDatasource.executeTimeSeriesQuery(ctx, azureMonitorQueries, tsdbQuery.TimeRange)

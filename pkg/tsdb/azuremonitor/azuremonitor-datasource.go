@@ -29,6 +29,7 @@ import (
 type AzureMonitorDatasource struct {
 	httpClient *http.Client
 	dsInfo     *models.DataSource
+	resources  ResourcesLoader
 }
 
 var (
@@ -45,7 +46,7 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 		Results: map[string]*tsdb.QueryResult{},
 	}
 
-	queries, err := e.buildQueries(ctx, originalQueries, timeRange)
+	queries, err := e.buildQueries(originalQueries, timeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +78,7 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 	return result, nil
 }
 
-func (e *AzureMonitorDatasource) buildQueries(ctx context.Context, queries []*tsdb.Query, timeRange *tsdb.TimeRange) ([]*AzureMonitorQuery, error) {
+func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *tsdb.TimeRange) ([]*AzureMonitorQuery, error) {
 	azureMonitorQueries := []*AzureMonitorQuery{}
 	startTime, err := timeRange.ParseFrom()
 	if err != nil {
@@ -113,7 +114,7 @@ func (e *AzureMonitorDatasource) buildQueries(ctx context.Context, queries []*ts
 			}
 			azureMonitorQueries = append(azureMonitorQueries, &azQuery)
 		} else if azureMonitorTarget.QueryMode == "crossResource" {
-			azQueries, err := e.buildMultipleResourcesQueries(ctx, query, &azureMonitorData, startTime, endTime)
+			azQueries, err := e.buildMultipleResourcesQueries(query, &azureMonitorData, startTime, endTime)
 			if err != nil {
 				return nil, err
 			}
@@ -186,11 +187,11 @@ func (e *AzureMonitorDatasource) buildSingleQuery(query *tsdb.Query, azureMonito
 	}, nil
 }
 
-func (e *AzureMonitorDatasource) buildMultipleResourcesQueries(ctx context.Context, query *tsdb.Query, azureMonitorData *AzureMonitorData, startTime time.Time, endTime time.Time) ([]*AzureMonitorQuery, error) {
+func (e *AzureMonitorDatasource) buildMultipleResourcesQueries(query *tsdb.Query, azureMonitorData *AzureMonitorData, startTime time.Time, endTime time.Time) ([]*AzureMonitorQuery, error) {
 	azureMonitorQueries := []*AzureMonitorQuery{}
 	subscriptions := query.Model.Get("subscriptions").MustArray()
 
-	resources, err := e.getResources(ctx, azureMonitorData, subscriptions)
+	resources, err := e.resources.Get(azureMonitorData, subscriptions, e.createRequest)
 	if err != nil {
 		return azureMonitorQueries, err
 	}
@@ -209,42 +210,6 @@ func (e *AzureMonitorDatasource) buildMultipleResourcesQueries(ctx context.Conte
 	}
 
 	return azureMonitorQueries, nil
-}
-
-func (e *AzureMonitorDatasource) getResources(ctx context.Context, azureMonitorData *AzureMonitorData, subscriptions []interface{}) ([]resource, error) {
-	resourcesMap := map[string]resource{}
-
-	for _, subscriptionID := range subscriptions {
-		resourcesResponse, err := e.executeResourcesQuery(ctx, fmt.Sprintf("%v", subscriptionID))
-		if err != nil {
-			return []resource{}, err
-		}
-
-		for _, resourceResponse := range resourcesResponse.Value {
-			resource := resource{
-				ID:             resourceResponse.ID,
-				Name:           resourceResponse.Name,
-				Type:           resourceResponse.Type,
-				Location:       resourceResponse.Location,
-				SubscriptionID: fmt.Sprintf("%v", subscriptionID),
-			}
-
-			match := contains(azureMonitorData.ResourceGroups, resource.ParseGroup()) &&
-				contains(azureMonitorData.Locations, resource.Location) &&
-				azureMonitorData.MetricDefinition == resource.Type
-
-			if _, ok := resourcesMap[resource.GetKey()]; !ok && match {
-				resourcesMap[resource.GetKey()] = resource
-			}
-		}
-	}
-
-	resources := []resource{}
-	for _, resource := range resourcesMap {
-		resources = append(resources, resource)
-	}
-
-	return resources, nil
 }
 
 // setAutoTimeGrain tries to find the closest interval to the query's intervalMs value
@@ -305,29 +270,6 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 	return queryResult, data, nil
 }
 
-func (e *AzureMonitorDatasource) executeResourcesQuery(ctx context.Context, subscriptionID string) (ResourcesResponse, error) {
-	req, err := e.createRequest(ctx, e.dsInfo)
-	if err != nil {
-		return ResourcesResponse{}, err
-	}
-
-	params := url.Values{}
-	params.Add("api-version", "2018-01-01")
-	req.URL.Path = path.Join(req.URL.Path, subscriptionID, "resources")
-	req.URL.RawQuery = params.Encode()
-
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
-	if err != nil {
-		return ResourcesResponse{}, err
-	}
-	data, err := e.unmarshalResourcesResponse(res)
-	if err != nil {
-		return ResourcesResponse{}, err
-	}
-
-	return data, nil
-}
-
 func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
@@ -379,28 +321,6 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 	if err != nil {
 		azlog.Error("Failed to unmarshal AzureMonitor response", "error", err, "status", res.Status, "body", string(body))
 		return AzureMonitorResponse{}, err
-	}
-
-	return data, nil
-}
-
-func (e *AzureMonitorDatasource) unmarshalResourcesResponse(res *http.Response) (ResourcesResponse, error) {
-	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
-	if err != nil {
-		return ResourcesResponse{}, err
-	}
-
-	if res.StatusCode/100 != 2 {
-		azlog.Error("Request failed", "status", res.Status, "body", string(body))
-		return ResourcesResponse{}, fmt.Errorf(string(body))
-	}
-
-	var data ResourcesResponse
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		azlog.Error("Failed to unmarshal AzureMonitor Resource response", "error", err, "status", res.Status, "body", string(body))
-		return ResourcesResponse{}, err
 	}
 
 	return data, nil

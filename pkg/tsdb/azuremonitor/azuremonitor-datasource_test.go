@@ -1,9 +1,11 @@
 package azuremonitor
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"testing"
 	"time"
@@ -19,7 +21,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 	Convey("AzureMonitorDatasource", t, func() {
 		datasource := &AzureMonitorDatasource{}
 
-		Convey("Parse queries from frontend and build AzureMonitor API queries", func() {
+		Convey("Parse single resource queries from frontend and build AzureMonitor API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := &tsdb.TsdbQuery{
 				TimeRange: &tsdb.TimeRange{
@@ -57,7 +59,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				},
 			}
 			Convey("and is a normal query", func() {
-				queries, err := datasource.buildQueries(nil, tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(len(queries), ShouldEqual, 1)
@@ -89,7 +91,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				})
 				tsdbQuery.Queries[0].IntervalMs = 400000
 
-				queries, err := datasource.buildQueries(nil, tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT15M")
@@ -112,7 +114,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				})
 				tsdbQuery.Queries[0].IntervalMs = 400000
 
-				queries, err := datasource.buildQueries(nil, tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT5M")
@@ -135,7 +137,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 					},
 				})
 
-				queries, err := datasource.buildQueries(nil, tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
@@ -159,11 +161,68 @@ func TestAzureMonitorDatasource(t *testing.T) {
 					},
 				})
 
-				queries, err := datasource.buildQueries(nil, tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
 
+			})
+		})
+
+		Convey("Parse multi resources queries from frontend and build AzureMonitor API queries", func() {
+			var resourceLoader ResourcesLoader = &fakeResourcesLoader{}
+			ds := &AzureMonitorDatasource{resources: resourceLoader}
+			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
+			tsdbQuery := &tsdb.TsdbQuery{
+				TimeRange: &tsdb.TimeRange{
+					From: fmt.Sprintf("%v", fromStart.Unix()*1000),
+					To:   fmt.Sprintf("%v", fromStart.Add(34*time.Minute).Unix()*1000),
+				},
+				Queries: []*tsdb.Query{
+					{
+						DataSource: &models.DataSource{
+							JsonData: simplejson.NewFromAny(map[string]interface{}{
+								"subscriptionId": "default-subscription",
+							}),
+						},
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"azureMonitor": map[string]interface{}{
+								"queryMode": "crossResource",
+								"data": map[string]interface{}{
+									"crossResource": map[string]interface{}{
+										"timeGrain":        "PT1M",
+										"aggregation":      "Average",
+										"resourceGroups":   []string{"grafanastaging", "grafanastaging2"},
+										"resourceName":     "grafana",
+										"metricDefinition": "Microsoft.Compute/virtualMachines",
+										"metricNamespace":  "Microsoft.Compute-virtualMachines",
+										"metricName":       "Percentage CPU",
+										"alias":            "testalias",
+										"queryType":        "Azure Monitor",
+									},
+								},
+							},
+						}),
+						RefId: "A",
+					},
+				},
+			}
+
+			Convey("and is a normal query", func() {
+				queries, err := ds.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				So(err, ShouldBeNil)
+
+				So(len(queries), ShouldEqual, 3)
+				So(queries[0].RefID, ShouldEqual, "A")
+				So(queries[0].URL, ShouldEqual, "someSubscriptionId1/resourceGroups/someResourceGroup1/providers/someResourceType1/someResourceName1/providers/microsoft.insights/metrics")
+				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+				So(len(queries[0].Params), ShouldEqual, 6)
+				So(queries[0].Params["timespan"][0], ShouldEqual, "2018-03-15T13:00:00Z/2018-03-15T13:34:00Z")
+				So(queries[0].Params["api-version"][0], ShouldEqual, "2018-01-01")
+				So(queries[0].Params["aggregation"][0], ShouldEqual, "Average")
+				So(queries[0].Params["metricnames"][0], ShouldEqual, "Percentage CPU")
+				So(queries[0].Params["interval"][0], ShouldEqual, "PT1M")
+				So(queries[0].Alias, ShouldEqual, "testalias")
 			})
 		})
 
@@ -318,9 +377,10 @@ func TestAzureMonitorDatasource(t *testing.T) {
 
 				res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
 				query := &AzureMonitorQuery{
-					Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
+					Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}} {{subscription}}",
 					UrlComponents: map[string]string{
 						"resourceName": "grafana",
+						"subscription": "12345678-aaaa-bbbb-cccc-123456789abc",
 					},
 					Params: url.Values{
 						"aggregation": {"Total"},
@@ -329,7 +389,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				err = datasource.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
 
-				So(res.Series[0].Name, ShouldEqual, "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU")
+				So(res.Series[0].Name, ShouldEqual, "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU 12345678-aaaa-bbbb-cccc-123456789abc")
 			})
 
 			Convey("when data has dimension filters and alias patterns", func() {
@@ -389,4 +449,30 @@ func loadTestFile(path string) (AzureMonitorResponse, error) {
 	}
 	err = json.Unmarshal(jsonBody, &data)
 	return data, err
+}
+
+type fakeResourcesLoader struct {
+}
+
+func (_ *fakeResourcesLoader) Get(azureMonitorData *AzureMonitorData, subscriptions []interface{}, createRequest func(context.Context, *models.DataSource) (*http.Request, error)) ([]resource, error) {
+
+	return []resource{{
+		ID:             "/subscriptions/someSubscriptionId1/resourceGroups/someResourceGroup1/providers/adassd",
+		Name:           "someResourceName1",
+		Type:           "someResourceType1",
+		Location:       "someResourceLocation1",
+		SubscriptionID: "someSubscriptionId1",
+	}, {
+		ID:             "/subscriptions/someSubscriptionId2/resourceGroups/someResourceGroup2/providers/adassd",
+		Name:           "someResourceName2",
+		Type:           "someResourceType2",
+		Location:       "someResourceLocation2",
+		SubscriptionID: "someSubscriptionId2",
+	}, {
+		ID:             "/subscriptions/someSubscriptionId1/resourceGroups/someResourceGroup3/providers/adassd",
+		Name:           "someResourceName2",
+		Type:           "someResourceType2",
+		Location:       "someResourceLocation3",
+		SubscriptionID: "someSubscriptionId1",
+	}}, nil
 }

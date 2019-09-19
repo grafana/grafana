@@ -1,8 +1,12 @@
 package azuremonitor
 
 import (
+	"context"
+	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
 // AzureMonitorQuery is the query for all the services as they have similar queries
@@ -76,6 +80,14 @@ type AzureLogAnalyticsResponse struct {
 	} `json:"tables"`
 }
 
+// AzureMonitorQueryModel is the JSON data received from frontend
+type AzureMonitorQueryModel struct {
+	QueryMode string                      `json:"queryMode"`
+	Data      map[string]AzureMonitorData `json:"data"`
+	AzureMonitorData
+}
+
+// AzureMonitorData is a part of JSON containing query data
 type AzureMonitorData struct {
 	ResourceGroup       string   `json:"resourceGroup"`
 	ResourceGroups      []string `json:"resourceGroups"`
@@ -93,13 +105,7 @@ type AzureMonitorData struct {
 	Format              string   `json:"format"`
 }
 
-type AzureMonitorQueryModel struct {
-	QueryMode string                      `json:"queryMode"`
-	Janbanan  string                      `json:"janbanan"`
-	Data      map[string]AzureMonitorData `json:"data"`
-	AzureMonitorData
-}
-
+// ResourcesResponse is the json response object from the Azure Monitor resources api.
 type ResourcesResponse struct {
 	Value []struct {
 		ID       string `json:"id"`
@@ -108,4 +114,9 @@ type ResourcesResponse struct {
 		Kind     string `json:"kind,omitempty"`
 		Location string `json:"location"`
 	} `json:"value"`
+}
+
+// ResourcesLoader is the interface for Resources loading. Makes resource loading testable
+type ResourcesLoader interface {
+	Get(azureMonitorData *AzureMonitorData, subscriptions []interface{}, createRequest func(context.Context, *models.DataSource) (*http.Request, error)) ([]resource, error)
 }
