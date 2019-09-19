@@ -12,9 +12,9 @@ weight = 4
 
 # Data Source Permissions
 
-> The Data Source Permissions API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
+> Data source permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
 
-The Data Source Permissions API allows you to restrict access for users to query a data source. For each data source there is
+Data source permissions allows you to restrict access for users to query a data source. For each data source there is
 a permission page that makes it possible to enable permissions and restrict query permissions to specific
 **Users** and **Teams**.
 

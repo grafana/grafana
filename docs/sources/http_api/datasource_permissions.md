@@ -9,7 +9,7 @@ name = "Datasource Permissions"
 parent = "http_api"
 +++
 
-# Data Source Permissions API
+# Data Source Permissions
 
 > The Data Source Permissions API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
 
