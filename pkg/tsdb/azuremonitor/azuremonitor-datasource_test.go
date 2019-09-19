@@ -57,7 +57,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				},
 			}
 			Convey("and is a normal query", func() {
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(nil, tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(len(queries), ShouldEqual, 1)
@@ -89,7 +89,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				})
 				tsdbQuery.Queries[0].IntervalMs = 400000
 
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(nil, tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT15M")
@@ -112,7 +112,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				})
 				tsdbQuery.Queries[0].IntervalMs = 400000
 
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(nil, tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT5M")
@@ -135,7 +135,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 					},
 				})
 
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(nil, tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
@@ -159,7 +159,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 					},
 				})
 
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				queries, err := datasource.buildQueries(nil, tsdbQuery.Queries, tsdbQuery.TimeRange)
 				So(err, ShouldBeNil)
 
 				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
