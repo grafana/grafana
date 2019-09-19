@@ -8,16 +8,17 @@ import { TimeRange, TimeOption, TimeZone, RawTimeRange, dateTimeForTimeZone } fr
 // State
 
 // Components
-import { TimePicker } from '@grafana/ui';
+import { TimePickerWithRightButton } from '@grafana/ui/src/components/TimePicker/TimePickerWithRightButton';
 
 // Utils & Services
-import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
+import { defaultSelectOptions, TimePicker } from '@grafana/ui/src/components/TimePicker/TimePicker';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 
 export interface Props {
   exploreId: ExploreId;
   range: TimeRange;
   timeZone: TimeZone;
+  splitted: boolean;
   onChangeTime: (range: RawTimeRange) => void;
 }
 
@@ -67,18 +68,33 @@ export class ExploreTimeControls extends Component<Props> {
   };
 
   render() {
-    const { range, timeZone } = this.props;
+    const { range, timeZone, splitted } = this.props;
 
     return (
-      <TimePicker
-        value={range}
-        onChange={this.onChangeTimePicker}
-        timeZone={timeZone}
-        onMoveBackward={this.onMoveBack}
-        onMoveForward={this.onMoveForward}
-        onZoom={this.onZoom}
-        selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
-      />
+      <>
+        {splitted && (
+          <TimePickerWithRightButton
+            value={range}
+            onChange={this.onChangeTimePicker}
+            timeZone={timeZone}
+            onMoveBackward={this.onMoveBack}
+            onMoveForward={this.onMoveForward}
+            onZoom={this.onZoom}
+            selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
+          />
+        )}
+        {!splitted && (
+          <TimePicker
+            value={range}
+            onChange={this.onChangeTimePicker}
+            timeZone={timeZone}
+            onMoveBackward={this.onMoveBack}
+            onMoveForward={this.onMoveForward}
+            onZoom={this.onZoom}
+            selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
+          />
+        )}
+      </>
     );
   }
 }

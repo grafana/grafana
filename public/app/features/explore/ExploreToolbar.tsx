@@ -271,6 +271,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                   range={range}
                   timeZone={timeZone}
                   onChangeTime={onChangeTime}
+                  splitted={splitted}
                 />
               </div>
             )}
