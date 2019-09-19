@@ -13,6 +13,7 @@ import { actionCreatorFactory, ActionOf } from 'app/core/redux/actionCreatorFact
 export enum ActionTypes {
   SplitOpen = 'explore/SPLIT_OPEN',
   ResetExplore = 'explore/RESET_EXPLORE',
+  SyncTimes = 'explore/SYNC_TIMES',
 }
 export interface SplitOpenAction {
   type: ActionTypes.SplitOpen;
@@ -26,6 +27,10 @@ export interface ResetExploreAction {
   payload: {};
 }
 
+export interface SyncTimesAction {
+  type: ActionTypes.SyncTimes;
+  payload: {};
+}
 /**  Lower order actions
  *
  */
@@ -164,6 +169,8 @@ export interface SplitCloseActionPayload {
 export interface SplitOpenPayload {
   itemState: ExploreItemState;
 }
+
+export interface SyncTimesPayload {}
 
 export interface ToggleTablePayload {
   exploreId: ExploreId;
@@ -352,6 +359,7 @@ export const splitCloseAction = actionCreatorFactory<SplitCloseActionPayload>('e
  */
 export const splitOpenAction = actionCreatorFactory<SplitOpenPayload>('explore/SPLIT_OPEN').create();
 
+export const syncTimesAction = actionCreatorFactory<SyncTimesPayload>('explore/SYNC_TIMES').create();
 /**
  * Update state of Explores UI elements (panels visiblity and deduplication  strategy)
  */

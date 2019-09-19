@@ -71,6 +71,7 @@ import {
   queryStreamUpdatedAction,
   queryStoreSubscriptionAction,
   clearOriginAction,
+  syncTimesAction,
 } from './actionTypes';
 import { ActionOf, ActionCreator } from 'app/core/redux/actionCreatorFactory';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -674,6 +675,15 @@ export function splitOpen(): ThunkResult<void> {
   };
 }
 
+/**
+  Initialize syn times
+*/
+export function syncTimes(): ThunkResult<void> {
+  return dispatch => {
+    dispatch(syncTimesAction({}));
+    dispatch(stateSave());
+  };
+}
 /**
  * Creates action to collapse graph/logs/table panel. When panel is collapsed,
  * queries won't be run

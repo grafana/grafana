@@ -25,6 +25,7 @@ import {
   splitClose,
   runQueries,
   splitOpen,
+  syncTimes,
   changeRefreshInterval,
   changeMode,
   clearOrigin,
@@ -52,6 +53,7 @@ interface StateProps {
   timeZone: TimeZone;
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
+  syncedTimes: boolean;
   refreshInterval: string;
   supportedModeOptions: Array<SelectableValue<ExploreMode>>;
   selectedModeOption: SelectableValue<ExploreMode>;
@@ -68,6 +70,7 @@ interface DispatchProps {
   runQueries: typeof runQueries;
   closeSplit: typeof splitClose;
   split: typeof splitOpen;
+  syncTimes: typeof syncTimes;
   changeRefreshInterval: typeof changeRefreshInterval;
   changeMode: typeof changeMode;
   clearOrigin: typeof clearOrigin;
@@ -163,9 +166,11 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       timeZone,
       selectedDatasource,
       splitted,
+      syncedTimes,
       refreshInterval,
       onChangeTime,
       split,
+      syncTimes,
       supportedModeOptions,
       selectedModeOption,
       hasLiveOption,
@@ -272,6 +277,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                   timeZone={timeZone}
                   onChangeTime={onChangeTime}
                   splitted={splitted}
+                  syncedTimes={syncedTimes}
+                  onClick={syncTimes}
                 />
               </div>
             )}
@@ -347,6 +354,7 @@ const getModeOptionsMemoized = memoizeOne(
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
   const splitted = state.explore.split;
+  const syncedTimes = state.explore.syncedTimes;
   const exploreItem: ExploreItemState = state.explore[exploreId];
   const {
     datasourceInstance,
@@ -386,6 +394,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     isPaused,
     originPanelId,
     queries,
+    syncedTimes,
   };
 };
 
@@ -397,6 +406,7 @@ const mapDispatchToProps: DispatchProps = {
   runQueries,
   closeSplit: splitClose,
   split: splitOpen,
+  syncTimes,
   changeMode: changeMode,
   clearOrigin,
   changeRefreshIntervalAction,

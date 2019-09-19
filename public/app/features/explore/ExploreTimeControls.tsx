@@ -18,6 +18,8 @@ export interface Props {
   range: TimeRange;
   timeZone: TimeZone;
   splitted: boolean;
+  syncedTimes: boolean;
+  onClick: () => void;
   onChangeTime: (range: RawTimeRange) => void;
 }
 
@@ -71,7 +73,7 @@ export class ExploreTimeControls extends Component<Props> {
   };
 
   render() {
-    const { range, timeZone, splitted } = this.props;
+    const { range, timeZone, splitted, syncedTimes, onClick } = this.props;
 
     return (
       <>
@@ -84,7 +86,7 @@ export class ExploreTimeControls extends Component<Props> {
             onMoveForward={this.onMoveForward}
             onZoom={this.onZoom}
             selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
-            rightButton={{ icon: 'fa fa-link', onClick: this.testFunction, active: true }}
+            rightButton={{ icon: 'fa fa-link', onClick, active: syncedTimes }}
           />
         )}
         {!splitted && (

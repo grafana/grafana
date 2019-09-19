@@ -112,6 +112,10 @@ export interface ExploreState {
    */
   split: boolean;
   /**
+   * True if in split view, time interval ale synced.
+   */
+  syncedTimes: boolean;
+  /**
    * Explore state of the left split (left is default in non-split view).
    */
   left: ExploreItemState;
