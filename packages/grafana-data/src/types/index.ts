@@ -10,3 +10,5 @@ export * from './utils';
 export * from './valueMapping';
 export * from './displayValue';
 export * from './graph';
+export * from './ScopedVars';
+export * from './transformations';

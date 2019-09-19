@@ -2,7 +2,7 @@ import { countBy, chain, map, escapeRegExp } from 'lodash';
 
 import { LogLevel, LogRowModel, LogLabelStatsModel, LogsParser } from '../types/logs';
 import { DataFrame, FieldType } from '../types/index';
-import { ArrayVector } from './vector';
+import { ArrayVector } from '../vector/ArrayVector';
 
 const LOGFMT_REGEXP = /(?:^|\s)(\w+)=("[^"]*"|\S+)/;
 

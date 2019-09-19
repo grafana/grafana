@@ -1,5 +1,5 @@
-import { getFlotPairs } from './flotPairs';
-import { MutableDataFrame } from '@grafana/data';
+import { getFlotPairs, getFlotPairsConstant } from './flotPairs';
+import { MutableDataFrame, TimeRange, dateTime } from '@grafana/data';
 
 describe('getFlotPairs', () => {
   const series = new MutableDataFrame({
@@ -31,5 +31,30 @@ describe('getFlotPairs', () => {
     expect(pairs[0].length).toEqual(2);
     expect(pairs[0][0]).toEqual(1);
     expect(pairs[0][1]).toEqual('a');
+  });
+});
+
+describe('getFlotPairsConstant', () => {
+  const makeRange = (from: number, to: number): TimeRange => ({
+    from: dateTime(from),
+    to: dateTime(to),
+    raw: { from: `${from}`, to: `${to}` },
+  });
+
+  it('should return an empty series on empty data', () => {
+    const range: TimeRange = makeRange(0, 1);
+    const pairs = getFlotPairsConstant([], range);
+    expect(pairs).toMatchObject([]);
+  });
+
+  it('should return an empty series on missing range', () => {
+    const pairs = getFlotPairsConstant([], {} as TimeRange);
+    expect(pairs).toMatchObject([]);
+  });
+
+  it('should return an constant series for range', () => {
+    const range: TimeRange = makeRange(0, 1);
+    const pairs = getFlotPairsConstant([[2, 123], [4, 456]], range);
+    expect(pairs).toMatchObject([[0, 123], [1, 123]]);
   });
 });

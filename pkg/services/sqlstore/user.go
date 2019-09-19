@@ -331,6 +331,7 @@ func GetUserProfile(query *models.GetUserProfileQuery) error {
 		IsGrafanaAdmin: user.IsAdmin,
 		IsDisabled:     user.IsDisabled,
 		OrgId:          user.OrgId,
+		UpdatedAt:      user.Updated,
 	}
 
 	return err

@@ -8,11 +8,10 @@ import {
   sortLogsResult,
   stopQueryState,
   refreshIntervalToSortOrder,
-  instanceOfDataQueryError,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { LoadingState } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData } from '@grafana/ui';
+import { LoadingState, toLegacyResponseData } from '@grafana/data';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -29,9 +28,6 @@ import {
   queryStartAction,
   changeRangeAction,
   clearOriginAction,
-} from './actionTypes';
-
-import {
   addQueryRowAction,
   changeQueryAction,
   changeSizeAction,
@@ -53,26 +49,23 @@ import {
   toggleLogLevelAction,
   changeLoadingStateAction,
   resetExploreAction,
-  queryEndedAction,
   queryStreamUpdatedAction,
   QueryEndedPayload,
+  queryStoreSubscriptionAction,
   setPausedStateAction,
+  toggleGraphAction,
 } from './actionTypes';
 import { reducerFactory, ActionOf } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
-import { PanelQueryState, toDataQueryError } from '../../dashboard/state/PanelQueryState';
 import { ResultProcessor } from '../utils/ResultProcessor';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
 };
-
-// Millies step for helper bar charts
-const DEFAULT_GRAPH_INTERVAL = 15 * 1000;
 
 export const makeInitialUpdateState = (): ExploreUpdateState => ({
   datasource: false,
@@ -97,7 +90,6 @@ export const makeExploreItemState = (): ExploreItemState => ({
   history: [],
   queries: [],
   initialized: false,
-  queryIntervals: { interval: '15s', intervalMs: DEFAULT_GRAPH_INTERVAL },
   range: {
     from: null,
     to: null,
@@ -121,15 +113,13 @@ export const makeExploreItemState = (): ExploreItemState => ({
   isLive: false,
   isPaused: false,
   urlReplaced: false,
-  queryState: new PanelQueryState(),
   queryResponse: createEmptyQueryResponse(),
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
-  request: null,
+  request: {} as DataQueryRequest<DataQuery>,
   series: [],
-  legacy: null,
   error: null,
 });
 
@@ -203,8 +193,9 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
       const live = isLive(refreshInterval);
       const sortOrder = refreshIntervalToSortOrder(refreshInterval);
       const logsResult = sortLogsResult(state.logsResult, sortOrder);
+
       if (isLive(state.refreshInterval) && !live) {
-        stopQueryState(state.queryState, 'Live streaming stopped');
+        stopQueryState(state.querySubscription);
       }
 
       return {
@@ -225,7 +216,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: clearQueriesAction,
     mapper: (state): ExploreItemState => {
       const queries = ensureQueries();
-      stopQueryState(state.queryState, 'Queries cleared');
+      stopQueryState(state.querySubscription);
       return {
         ...state,
         queries: queries.slice(),
@@ -284,7 +275,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
 
       // Custom components
       const StartPage = datasourceInstance.components.ExploreStartPage;
-      stopQueryState(state.queryState, 'Datasource changed');
+      stopQueryState(state.querySubscription);
 
       return {
         ...state,
@@ -441,14 +432,25 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
+    filter: toggleGraphAction,
+    mapper: (state): ExploreItemState => {
+      const showingGraph = !state.showingGraph;
+      if (showingGraph) {
+        return { ...state, showingGraph };
+      }
+
+      return { ...state, showingGraph, graphResult: null };
+    },
+  })
+  .addMapper({
     filter: toggleTableAction,
     mapper: (state): ExploreItemState => {
       const showingTable = !state.showingTable;
       if (showingTable) {
-        return { ...state };
+        return { ...state, showingTable };
       }
 
-      return { ...state, tableResult: new TableModel() };
+      return { ...state, showingTable, tableResult: new TableModel() };
     },
   })
   .addMapper({
@@ -538,6 +540,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
         ...state,
         range,
         absoluteRange,
+        update: makeInitialUpdateState(),
       };
     },
   })
@@ -566,10 +569,13 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     },
   })
   .addMapper({
-    //queryStreamUpdatedAction
-    filter: queryEndedAction,
+    filter: queryStoreSubscriptionAction,
     mapper: (state, action): ExploreItemState => {
-      return processQueryResponse(state, action);
+      const { querySubscription } = action.payload;
+      return {
+        ...state,
+        querySubscription,
+      };
     },
   })
   .addMapper({
@@ -585,7 +591,7 @@ export const processQueryResponse = (
   action: ActionOf<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, legacy, error } = response;
+  const { request, state: loadingState, series, error } = response;
 
   if (error) {
     if (error.cancelled) {
@@ -594,12 +600,6 @@ export const processQueryResponse = (
 
     // For Angular editors
     state.eventBridge.emit('data-error', error);
-
-    console.error(error); // To help finding problems with query syntax
-
-    if (!instanceOfDataQueryError(error)) {
-      response.error = toDataQueryError(error);
-    }
 
     return {
       ...state,
@@ -613,19 +613,26 @@ export const processQueryResponse = (
     };
   }
 
-  const latency = request.endTime - request.startTime;
-  const processor = new ResultProcessor(state, series);
+  const latency = request.endTime ? request.endTime - request.startTime : 0;
+  const processor = new ResultProcessor(state, series, request.intervalMs);
+  const graphResult = processor.getGraphResult();
+  const tableResult = processor.getTableResult();
+  const logsResult = processor.getLogsResult();
 
-  // For Angular editors
-  state.eventBridge.emit('data-received', legacy);
+  // Send legacy data to Angular editors
+  if (state.datasourceInstance.components.QueryCtrl) {
+    const legacy = series.map(v => toLegacyResponseData(v));
+
+    state.eventBridge.emit('data-received', legacy);
+  }
 
   return {
     ...state,
     latency,
     queryResponse: response,
-    graphResult: processor.getGraphResult(),
-    tableResult: processor.getTableResult(),
-    logsResult: processor.getLogsResult(),
+    graphResult,
+    tableResult,
+    logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showingStartPage: false,
     update: makeInitialUpdateState(),
@@ -757,8 +764,8 @@ export const exploreReducer = (state = initialExploreState, action: HigherOrderA
     case resetExploreAction.type: {
       const leftState = state[ExploreId.left];
       const rightState = state[ExploreId.right];
-      stopQueryState(leftState.queryState, 'Navigated away from Explore');
-      stopQueryState(rightState.queryState, 'Navigated away from Explore');
+      stopQueryState(leftState.querySubscription);
+      stopQueryState(rightState.querySubscription);
 
       return {
         ...state,

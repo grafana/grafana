@@ -25,16 +25,17 @@ Grafana includes built-in support for Prometheus.
 
 ## Data source options
 
-| Name              | Description                                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| _Name_            | The data source name. This is how you refer to the data source in panels & queries.                                                   |
-| _Default_         | Default data source means that it will be pre-selected for new panels.                                                                |
-| _Url_             | The http protocol, ip and port of you Prometheus server (default port is usually 9090)                                                |
-| _Access_          | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
-| _Basic Auth_      | Enable basic authentication to the Prometheus data source.                                                                            |
-| _User_            | Name of your Prometheus user                                                                                                          |
-| _Password_        | Database user's password                                                                                                              |
-| _Scrape interval_ | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s.                                     |
+| Name                    | Description                                                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| _Name_                  | The data source name. This is how you refer to the data source in panels & queries.                                                   |
+| _Default_               | Default data source means that it will be pre-selected for new panels.                                                                |
+| _Url_                   | The http protocol, ip and port of you Prometheus server (default port is usually 9090)                                                |
+| _Access_                | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
+| _Basic Auth_            | Enable basic authentication to the Prometheus data source.                                                                            |
+| _User_                  | Name of your Prometheus user                                                                                                          |
+| _Password_              | Database user's password                                                                                                              |
+| _Scrape interval_       | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s.                                     |
+| _CustomQueryParameters_ | Add Custom parameters to Prometheus query url. For example `timeout`, `partial_response`, `dedup` or `max_source_resolution`.         |
 
 ## Query editor
 
@@ -51,9 +52,21 @@ Open a graph in edit mode by click the title > Edit (or by pressing `e` key whil
 | _Resolution_       | Controls the step option. Small steps create high-resolution graphs but can be slow over larger time ranges, lowering the resolution can speed things up. `1/2` will try to set step option to generate 1 data point for every other pixel. A value of `1/10` will try to set step option so there is a data point every 10 pixels. |
 | _Metric lookup_    | Search for metric names in this input field.                                                                                                                                                                                                                                                                                        |
 | _Format as_        | Switch between Table, Time series or Heatmap. Table format will only work in the Table panel. Heatmap format is suitable for displaying metrics having histogram type on Heatmap panel. Under the hood, it converts cumulative histogram to regular and sorts series by the bucket bound.                                           |
+| _Instant_          | Perform an "instant" query, to return only the latest value that Prometheus has scraped for the requested time series. Instant queries return results much faster than normal range queries. Use them to look up label sets.                                                                                                        |
 
 > NOTE: Grafana slightly modifies the request dates for queries to align them with the dynamically calculated step.
 > This ensures consistent display of metrics data but can result in a small gap of data at the right edge of a graph.
+
+### Instant queries
+
+The Prometheus datasource allows you to run "instant" queries, which queries only the latest value.
+You can visualize the results in a table panel to see all available labels of a timeseries.
+
+Instant query results are made up only of one datapoint per series but can be shown in the graph panel with the help of [series overrides](/features/panels/graph/#series-overrides).
+To show them in the graph as a latest value point, add a series override and select `Points > true`.
+To show a horizontal line across the whole graph, add a series override and select `Transform > constant`.
+
+> Support for constant series overrides is available from Grafana v6.4
 
 ## Templating
 

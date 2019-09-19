@@ -1,3 +1,4 @@
+import { Unsubscribable } from 'rxjs';
 import { ComponentClass } from 'react';
 import {
   DataQuery,
@@ -21,7 +22,6 @@ import {
 
 import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
-import { PanelQueryState } from '../features/dashboard/state/PanelQueryState';
 
 export enum ExploreMode {
   Metrics = 'Metrics',
@@ -187,11 +187,6 @@ export interface ExploreItemState {
   logsResult?: LogsModel;
 
   /**
-   * Query intervals for graph queries to determine how many datapoints to return.
-   * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.
-   */
-  queryIntervals: QueryIntervals;
-  /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
   range: TimeRange;
@@ -263,7 +258,7 @@ export interface ExploreItemState {
   isPaused: boolean;
   urlReplaced: boolean;
 
-  queryState: PanelQueryState;
+  querySubscription?: Unsubscribable;
 
   queryResponse: PanelData;
   originPanelId?: number;
@@ -330,7 +325,7 @@ export interface QueryIntervals {
 }
 
 export interface QueryOptions {
-  interval: string;
+  minInterval: string;
   maxDataPoints?: number;
   live?: boolean;
 }

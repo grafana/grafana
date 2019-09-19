@@ -1,4 +1,5 @@
 import React, { FunctionComponent, ReactNode } from 'react';
+import classNames from 'classnames';
 import { AppNotificationSeverity } from 'app/types';
 
 interface Props {
@@ -14,6 +15,12 @@ function getIconFromSeverity(severity: AppNotificationSeverity): string {
     case AppNotificationSeverity.Error: {
       return 'fa fa-exclamation-triangle';
     }
+    case AppNotificationSeverity.Warning: {
+      return 'fa fa-exclamation-triangle';
+    }
+    case AppNotificationSeverity.Info: {
+      return 'fa fa-info-circle';
+    }
     case AppNotificationSeverity.Success: {
       return 'fa fa-check';
     }
@@ -23,8 +30,9 @@ function getIconFromSeverity(severity: AppNotificationSeverity): string {
 }
 
 export const AlertBox: FunctionComponent<Props> = ({ title, icon, body, severity, onClose }) => {
+  const alertClass = classNames('alert', `alert-${severity}`);
   return (
-    <div className={`alert alert-${severity}`}>
+    <div className={alertClass}>
       <div className="alert-icon">
         <i className={icon || getIconFromSeverity(severity)} />
       </div>

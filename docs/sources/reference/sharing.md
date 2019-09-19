@@ -39,12 +39,12 @@ Click a panel title to open the panel menu, then click share in the panel menu t
 
 ### Direct Link Rendered Image
 
-You also get a link to service side rendered PNG of the panel. Useful if you want to share an image of the panel. Please note that for OSX and Windows, you will need to ensure that a `phantomjs` binary is available under `tools/phantomjs/phantomjs`. For Linux, a `phantomjs` binary is included - however, you should ensure that any requisite libraries (e.g. libfontconfig1) are available.
+You also get a link to render a PNG image of the panel. Useful if you want to share an image of the panel. Read more about the requirements and how to configure image rendering [here](/administration/image_rendering/).
 
 Example of a link to a server-side rendered PNG:
 
 ```bash
-http://play.grafana.org/render/dashboard-solo/db/grafana-play-home?orgId=1&panelId=4&from=1499272191563&to=1499279391563&width=1000&height=500&tz=UTC%2B02%3A00&timeout=5000
+https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=1568719680173&to=1568726880174&panelId=4&fullscreen
 ```
 
 #### Query String Parameters For Server-Side Rendered Images

@@ -1,7 +1,15 @@
 // Libraries
 import _ from 'lodash';
 // Services & Utils
-import { dateMath, DataFrame, LogRowModel, LoadingState, DateTime } from '@grafana/data';
+import {
+  dateMath,
+  DataFrame,
+  LogRowModel,
+  DateTime,
+  AnnotationEvent,
+  DataFrameView,
+  LoadingState,
+} from '@grafana/data';
 import { addLabelToSelector } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import LanguageProvider from './language_provider';
 import { logStreamToDataFrame } from './result_transformer';
@@ -13,8 +21,8 @@ import {
   DataSourceInstanceSettings,
   DataQueryError,
   DataQueryRequest,
-  DataStreamObserver,
   DataQueryResponse,
+  AnnotationQueryRequest,
 } from '@grafana/ui';
 
 import { LokiQuery, LokiOptions, LokiLogsStream, LokiResponse } from './types';
@@ -22,6 +30,8 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { safeStringifyValue, convertToWebSocketUrl } from 'app/core/utils/explore';
 import { LiveTarget, LiveStreams } from './live_streams';
+import { Observable, from, merge } from 'rxjs';
+import { map, filter } from 'rxjs/operators';
 
 export const DEFAULT_MAX_LINES = 1000;
 
@@ -158,79 +168,51 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return series;
   };
 
-  runLiveQueries = (options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) => {
-    const liveTargets = options.targets
-      .filter(target => target.expr && !target.hide && target.live)
-      .map(target => this.prepareLiveTarget(target, options));
-
-    for (const liveTarget of liveTargets) {
-      // Reuse an existing stream if one is already running
-      const stream = this.streams.getStream(liveTarget);
-      const subscription = stream.subscribe({
-        next: (data: DataFrame[]) => {
-          observer({
-            key: `loki-${liveTarget.refId}`,
-            request: options,
-            state: LoadingState.Streaming,
-            data,
-            unsubscribe: () => {
-              subscription.unsubscribe();
-            },
-          });
-        },
-        error: (err: any) => {
-          observer({
-            key: `loki-${liveTarget.refId}`,
-            request: options,
-            state: LoadingState.Error,
-            error: this.processError(err, liveTarget),
-            unsubscribe: () => {
-              subscription.unsubscribe();
-            },
-          });
-        },
-      });
-    }
+  runLiveQuery = (options: DataQueryRequest<LokiQuery>, target: LokiQuery): Observable<DataQueryResponse> => {
+    const liveTarget = this.prepareLiveTarget(target, options);
+    const stream = this.streams.getStream(liveTarget);
+    return stream.pipe(
+      map(data => {
+        return {
+          data,
+          key: `loki-${liveTarget.refId}`,
+          state: LoadingState.Streaming,
+        };
+      })
+    );
   };
 
-  runQueries = async (options: DataQueryRequest<LokiQuery>) => {
-    const queryTargets = options.targets
-      .filter(target => target.expr && !target.hide && !target.live)
-      .map(target => this.prepareQueryTarget(target, options));
-
-    if (queryTargets.length === 0) {
-      return Promise.resolve({ data: [] });
-    }
-
-    const queries = queryTargets.map(target =>
-      this._request('/api/prom/query', target).catch((err: any) => {
+  runQuery = (options: DataQueryRequest<LokiQuery>, target: LokiQuery): Observable<DataQueryResponse> => {
+    const query = this.prepareQueryTarget(target, options);
+    return from(
+      this._request('/api/prom/query', query).catch((err: any) => {
         if (err.cancelled) {
           return err;
         }
 
-        const error: DataQueryError = this.processError(err, target);
+        const error: DataQueryError = this.processError(err, query);
         throw error;
       })
+    ).pipe(
+      filter((response: any) => (response.cancelled ? false : true)),
+      map((response: any) => {
+        const data = this.processResult(response.data, query);
+        return { data, key: query.refId };
+      })
     );
-
-    return Promise.all(queries).then((results: any[]) => {
-      let series: DataFrame[] = [];
-
-      for (let i = 0; i < results.length; i++) {
-        const result = results[i];
-        if (result.data) {
-          series = series.concat(this.processResult(result.data, queryTargets[i]));
-        }
-      }
-
-      return { data: series };
-    });
   };
 
-  async query(options: DataQueryRequest<LokiQuery>, observer?: DataStreamObserver) {
-    this.runLiveQueries(options, observer);
+  query(options: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+    const subQueries = options.targets
+      .filter(target => target.expr && !target.hide)
+      .map(target => {
+        if (target.live) {
+          return this.runLiveQuery(options, target);
+        }
+        return this.runQuery(options, target);
+      });
 
-    return this.runQueries(options);
+    return merge(...subQueries);
   }
 
   async importQueries(queries: LokiQuery[], originMeta: PluginMeta): Promise<LokiQuery[]> {
@@ -368,6 +350,54 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         return { status: 'error', message: message };
       });
   }
+
+  async annotationQuery(options: AnnotationQueryRequest<LokiQuery>): Promise<AnnotationEvent[]> {
+    if (!options.annotation.expr) {
+      return [];
+    }
+
+    const request = queryRequestFromAnnotationOptions(options);
+    const { data } = await this.runQuery(request, request.targets[0]).toPromise();
+    const annotations: AnnotationEvent[] = [];
+
+    for (const frame of data) {
+      const tags = Object.values(frame.labels) as string[];
+      const view = new DataFrameView<{ ts: string; line: string }>(frame);
+
+      view.forEachRow(row => {
+        annotations.push({
+          time: new Date(row.ts).valueOf(),
+          text: row.line,
+          tags,
+        });
+      });
+    }
+
+    return annotations;
+  }
+}
+
+function queryRequestFromAnnotationOptions(options: AnnotationQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> {
+  const refId = `annotation-${options.annotation.name}`;
+  const target: LokiQuery = { refId, expr: options.annotation.expr };
+
+  return {
+    requestId: refId,
+    range: options.range,
+    targets: [target],
+    dashboardId: options.dashboard.id,
+    scopedVars: null,
+    startTime: Date.now(),
+
+    // This should mean the default defined on datasource is used.
+    maxDataPoints: 0,
+
+    // Dummy values, are required in type but not used here.
+    timezone: 'utc',
+    panelId: 0,
+    interval: '',
+    intervalMs: 0,
+  };
 }
 
 export default LokiDatasource;
