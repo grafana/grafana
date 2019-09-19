@@ -10,6 +10,7 @@ import { DashboardSrv } from '../dashboard/services/DashboardSrv';
 import DatasourceSrv from '../plugins/datasource_srv';
 import { DataQuery } from '@grafana/ui/src/types/datasource';
 import { PanelModel } from 'app/features/dashboard/state';
+import { getDefaultCondition } from './getAlertingValidationMessage';
 
 export class AlertTabCtrl {
   panel: PanelModel;
@@ -179,7 +180,7 @@ export class AlertTabCtrl {
 
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
-      alert.conditions.push(this.buildDefaultCondition());
+      alert.conditions.push(getDefaultCondition());
     }
 
     alert.noDataState = alert.noDataState || config.alertingNoDataOrNullValues;
@@ -239,16 +240,6 @@ export class AlertTabCtrl {
         break;
       }
     }
-  }
-
-  buildDefaultCondition() {
-    return {
-      type: 'query',
-      query: { params: ['A', '5m', 'now'] },
-      reducer: { type: 'avg', params: [] as any[] },
-      evaluator: { type: 'gt', params: [null] as any[] },
-      operator: { type: 'and' },
-    };
   }
 
   validateModel() {
@@ -348,7 +339,7 @@ export class AlertTabCtrl {
   }
 
   addCondition(type: string) {
-    const condition = this.buildDefaultCondition();
+    const condition = getDefaultCondition();
     // add to persited model
     this.alert.conditions.push(condition);
     // add to view model

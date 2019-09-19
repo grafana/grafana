@@ -1,22 +1,20 @@
 // Libraries
 import React, { PureComponent } from 'react';
-
 // Services & Utils
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
-
 // Components
 import { EditorTabBody, EditorToolbarView } from '../dashboard/panel_editor/EditorTabBody';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
-
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 import { AppNotificationSeverity } from 'app/types';
+import { getAlertingValidationMessage } from './getAlertingValidationMessage';
 
 interface Props {
   angularPanel?: AngularComponent;
@@ -24,10 +22,18 @@ interface Props {
   panel: PanelModel;
 }
 
-export class AlertTab extends PureComponent<Props> {
+interface State {
+  validatonMessage: string;
+}
+
+export class AlertTab extends PureComponent<Props, State> {
   element: any;
   component: AngularComponent;
   panelCtrl: any;
+
+  state: State = {
+    validatonMessage: '',
+  };
 
   componentDidMount() {
     if (this.shouldLoadAlertTab()) {
@@ -51,8 +57,8 @@ export class AlertTab extends PureComponent<Props> {
     }
   }
 
-  loadAlertTab() {
-    const { angularPanel } = this.props;
+  async loadAlertTab() {
+    const { angularPanel, panel } = this.props;
 
     const scope = angularPanel.getScope();
 
@@ -71,6 +77,17 @@ export class AlertTab extends PureComponent<Props> {
     const scopeProps = { ctrl: this.panelCtrl };
 
     this.component = loader.load(this.element, scopeProps, template);
+
+    const validatonMessage = await getAlertingValidationMessage(
+      panel.transformations,
+      panel.targets,
+      getDataSourceSrv(),
+      panel.datasource
+    );
+
+    if (validatonMessage) {
+      this.setState({ validatonMessage });
+    }
   }
 
   stateHistory = (): EditorToolbarView => {
@@ -130,15 +147,13 @@ export class AlertTab extends PureComponent<Props> {
 
   render() {
     const { alert, transformations } = this.props.panel;
+    const { validatonMessage } = this.state;
     const hasTransformations = transformations && transformations.length;
 
-    if (!alert && hasTransformations) {
+    if (!alert && validatonMessage) {
       return (
         <EditorTabBody heading="Alert">
-          <AlertBox
-            severity={AppNotificationSeverity.Warning}
-            title="Transformations are not supported in alert queries"
-          />
+          <AlertBox severity={AppNotificationSeverity.Warning} title={validatonMessage} />
         </EditorTabBody>
       );
     }
@@ -163,7 +178,7 @@ export class AlertTab extends PureComponent<Props> {
           )}
 
           <div ref={element => (this.element = element)} />
-          {!alert && <EmptyListCTA {...model} />}
+          {!alert && !validatonMessage && <EmptyListCTA {...model} />}
         </>
       </EditorTabBody>
     );
