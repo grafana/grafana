@@ -56,18 +56,12 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       @keyframes pulse {
         0% {
           color: ${pulseTextColor};
-          text-shadow: 0 0 0 ${orange};
         }
         50% {
           color: ${orange};
-          text-shadow: 0 0 4px
-            ${tinycolor(orange)
-              .setAlpha(0.7)
-              .toString()};
         }
         100% {
           color: ${pulseTextColor};
-          text-shadow: 0 0 0 ${orange};
         }
       }
     `,
