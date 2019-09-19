@@ -8,16 +8,19 @@ grafana-toolkit is CLI that enables efficient development of Grafana extensions
 ## Rationale
 Historically, creating Grafana extension was an exercise of reverse engineering and ceremony around testing, developing and eventually building the plugin. We want to help our community to focus on the core value of their plugins rather than all the setup required to develop an extension.
 
-## Installation
+## Getting started
 
-You can either add grafana-toolkit to your extension's `package.json` file by running
-`yarn add @grafana/toolkit` or `npm instal @grafana/toolkit`, or use one of our extension templates:
-- [React Panel](https://github.com/grafana/simple-react-panel)
-- [Angular Panel](https://github.com/grafana/simple-angular-panel)
+Setup new extension with `grafana-toolkit plugin:create` command:
+
+```sh
+npx grafana-toolkit plugin:create my-grafana-plugin
+cd my-grafana-plugin
+yarn dev
+```
 
 ### Updating your extension to use grafana-toolkit
-In order to start using grafana-toolkit in your extension you need to follow the steps below:
-1. Add `@grafana/toolkit` package to your project
+In order to start using grafana-toolkit in your existing extension you need to follow the steps below:
+1. Add `@grafana/toolkit` package to your project by running `yarn add @grafana/toolkit` or `npm install @grafana/toolkit`
 2. Create `tsconfig.json` file in the root dir of your extension and paste the code below:
 ```json
 {
@@ -50,12 +53,20 @@ module.exports = {
 
 ## Usage
 With grafana-toolkit we put in your hands a CLI that addresses common tasks performed when working on Grafana extension:
-- `grafana-toolkit plugin:test`
+- `grafana-toolkit plugin:create`
 - `grafana-toolkit plugin:dev`
+- `grafana-toolkit plugin:test`
 - `grafana-toolkit plugin:build`
 
 
-### Developing extensions
+### Creating extension
+`grafana-toolkit plugin:create plugin-name`
+
+Creates new Grafana plugin from template.
+
+If `plugin-name` is provided, the template will be downloaded to `./plugin-name` directory. Otherwise, it will be downloaded to current directory.
+
+### Developing extension
 `grafana-toolkit plugin:dev`
 
 Creates development build that's easy to play with and debug using common browser tooling
@@ -63,7 +74,7 @@ Creates development build that's easy to play with and debug using common browse
 Available options:
 - `-w`, `--watch` - run development task in a watch mode
 
-### Testing extensions
+### Testing extension
 `grafana-toolkit plugin:test`
 
 Runs Jest against your codebase
@@ -76,13 +87,15 @@ Available options:
 - `--testPathPattern=<regex>` - runs test with paths that match provided regex (https://jestjs.io/docs/en/cli#testpathpattern-regex)
 
 
-### Building extensions
+### Building extension
 `grafana-toolkit plugin:build`
 
 Creates production ready build of your extension
 
 ## FAQ
 
+### Which version should I use?
+Please refer to [Grafana packages versioning guide](https://github.com/grafana/grafana/blob/master/packages/README.md#versioning)
 ### What tools does grafana-toolkit use?
 grafana-toolkit comes with Typescript, TSLint, Prettier, Jest, CSS and SASS support.
 
