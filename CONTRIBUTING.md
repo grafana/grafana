@@ -74,7 +74,7 @@ Titles are used to generate the changelog so they should be as descriptive as po
 
 Good examples:
 
-- `Explore: Adds Live option for supported datasources`
+- `Explore: Adds Live option for supported data sources`
 - `GraphPanel: Don't sort series when legend table & sort column is not visible`
 - `Build: Support publishing MSI to grafana.com`
 
@@ -89,7 +89,7 @@ The Git commit title should be short, descriptive and include the Pull Request I
 
 Good examples:
 
-- `Explore: Live supprt in datasources (#12345)`
+- `Explore: Live supprt in data sources (#12345)`
 - `GraphPanel: Fix legend sorting issues (#12345)`
 - `Build: Support publishing MSI to grafana.com (#12345)`
 

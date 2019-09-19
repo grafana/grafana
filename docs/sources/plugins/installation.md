@@ -8,10 +8,10 @@ weight = 1
 
 # Grafana Plugins
 
-From Grafana 3.0+ not only are datasource plugins supported but also panel plugins and apps.
+From Grafana 3.0+ not only are data source plugins supported but also panel plugins and apps.
 Having panels as plugins make it easy to create and add any kind of panel, to show your data
 or improve your favorite dashboards. Apps is something new in Grafana that enables
-bundling of datasources, panels, dashboards and Grafana pages into a cohesive experience.
+bundling of data sources, panels, dashboards and Grafana pages into a cohesive experience.
 
 Grafana already have a strong community of contributors and plugin developers.
 By making it easier to develop and install plugins we hope that the community

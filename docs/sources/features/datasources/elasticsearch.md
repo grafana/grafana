@@ -51,7 +51,7 @@ http.cors.allow-origin: "*"
 
 ### Index settings
 
-![Elasticsearch Datasource Details](/img/docs/elasticsearch/elasticsearch_ds_details.png)
+![Elasticsearch data source details](/img/docs/elasticsearch/elasticsearch_ds_details.png)
 
 Here you can specify a default for the `time field` and specify the name of your Elasticsearch index. You can use
 a time pattern for the index name or a wildcard.
@@ -199,17 +199,17 @@ Finally, press the `Enter` key or the `Run Query` button to display your logs.
 
 Once the result is returned, the log panel shows a list of log rows and a bar chart where the x-axis shows the time and the y-axis shows the frequency/count.
 
-Note that the fields used for log message and level is based on an [optional datasource configuration](#logs-beta).
+Note that the fields used for log message and level is based on an [optional data source configuration](#logs-beta).
 
 ### Filter Log Messages
 
 Optionally enter a lucene query into the query field to filter the log messages. For example, using a default Filebeat setup you should be able to use `fields.level:error` to only show error log messages.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure data sources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this data source.
 
 ```yaml
 apiVersion: 1

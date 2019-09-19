@@ -39,9 +39,9 @@ Supported auth providers:
 * [GitHub OAuth]({{< relref "auth/github.md#team-sync-enterprise-only" >}})
 * [Auth Proxy]({{< relref "auth/auth-proxy.md#team-sync-enterprise-only">}})
 
-### Datasource Permissions
+### Data source permissions
 
-Datasource permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
+Data source permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
 
 
 ### Premium Plugins

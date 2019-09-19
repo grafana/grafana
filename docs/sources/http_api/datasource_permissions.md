@@ -9,11 +9,11 @@ name = "Datasource Permissions"
 parent = "http_api"
 +++
 
-# Datasource Permissions API
+# Data Source Permissions
 
-> Datasource Permissions is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
+> The Data Source Permissions API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
 
-This API can be used to enable, disable, list, add and remove permissions for a datasource.
+This API can be used to enable, disable, list, add and remove permissions for a data source.
 
 Permissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.
 
@@ -21,11 +21,11 @@ The permission levels for the permission field:
 
 - 1 = Query
 
-## Enable permissions for a datasource
+## Enable permissions for a data source
 
 `POST /api/datasources/:id/enable-permissions`
 
-Enables permissions for the datasource with the given `id`. No one except Org Admins will be able to query the datasource until permissions have been added which permit certain users or teams to query the datasource.
+Enables permissions for the data source with the given `id`. No one except Org Admins will be able to query the data source until permissions have been added which permit certain users or teams to query the data source.
 
 **Example request**:
 
@@ -56,11 +56,11 @@ Status Codes:
 - **403** - Access denied
 - **404** - Datasource not found
 
-## Disable permissions for a datasource
+## Disable permissions for a data source
 
 `POST /api/datasources/:id/disable-permissions`
 
-Disables permissions for the datasource with the given `id`. All existing permissions will be removed and anyone will be able to query the datasource.
+Disables permissions for the data source with the given `id`. All existing permissions will be removed and anyone will be able to query the data source.
 
 **Example request**:
 
@@ -91,11 +91,11 @@ Status Codes:
 - **403** - Access denied
 - **404** - Datasource not found
 
-## Get permissions for a datasource
+## Get permissions for a data source
 
 `GET /api/datasources/:id/permissions`
 
-Gets all existing permissions for the datasource with the given `id`.
+Gets all existing permissions for the data source with the given `id`.
 
 **Example request**:
 
@@ -152,11 +152,11 @@ Status Codes:
 - **403** - Access denied
 - **404** - Datasource not found
 
-## Add permission for a datasource
+## Add permission for a data source
 
 `POST /api/datasources/:id/permissions`
 
-Adds a user permission for the datasource with the given `id`.
+Adds a user permission for the data source with the given `id`.
 
 **Example request**:
 
@@ -182,7 +182,7 @@ Content-Length: 35
 {"message":"Datasource permission added"}
 ```
 
-Adds a team permission for the datasource with the given `id`.
+Adds a team permission for the data source with the given `id`.
 
 **Example request**:
 
@@ -216,11 +216,11 @@ Status Codes:
 - **403** - Access denied
 - **404** - Datasource not found
 
-## Remove permission for a datasource
+## Remove permission for a data source
 
 `DELETE /api/datasources/:id/permissions/:permissionId`
 
-Removes the permission with the given `permissionId` for the datasource with the given `id`.
+Removes the permission with the given `permissionId` for the data source with the given `id`.
 
 **Example request**:
 

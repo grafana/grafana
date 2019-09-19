@@ -100,7 +100,7 @@ These are then referenced in the dashboard panels like this:
 
 These inputs and their usage in data source properties are automatically added during export in Grafana 3.1.
 If you run an older version of Grafana and want to share a dashboard on Grafana.com you need to manually
-add the inputs and templatize the datasource properties like above.
+add the inputs and templatize the data source properties like above.
 
 If you want to import a dashboard from Grafana.com into an older version of Grafana then you can either import
 it as usual and then update the data source option in the metrics tab so that the panel is using the correct

@@ -22,7 +22,7 @@ Grafana ships with built in support for CloudWatch. You just have to add it as a
 3. Click the `+ Add data source` button in the top header.
 4. Select `Cloudwatch` from the *Type* dropdown.
 
-> NOTE: If at any moment you have issues with getting this datasource to work and Grafana is giving you undescriptive errors then don't
+> NOTE: If at any moment you have issues with getting this data source to work and Grafana is giving you undescriptive errors then don't
 forget to check your log file (try looking in /var/log/grafana/grafana.log).
 
 Name | Description
@@ -136,11 +136,11 @@ types of template variables.
 
 ### Query variable
 
-CloudWatch Datasource Plugin provides the following queries you can specify in the `Query` field in the Variable
+CloudWatch data source plugin provides the following queries you can specify in the `Query` field in the Variable
 edit view. They allow you to fill a variable's options list with things like `region`, `namespaces`, `metric names`
 and `dimension keys/values`.
 
-In place of `region` you can specify `default` to use the default region configured in the datasource for the query,
+In place of `region` you can specify `default` to use the default region configured in the data source for the query,
 e.g. `metrics(AWS/DynamoDB, default)` or `dimension_values(default, ..., ..., ...)`.
 
 Read more about the available dimensions in the [CloudWatch  Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
@@ -251,11 +251,11 @@ it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each q
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-It's now possible to configure datasources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+It's now possible to configure datas ources using config files with Grafana's provisioning system. You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
-Here are some provisioning examples for this datasource.
+Here are some provisioning examples for this data source.
 
 Using a credentials file
 ```yaml

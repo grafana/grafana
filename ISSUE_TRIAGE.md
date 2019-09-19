@@ -190,7 +190,7 @@ If you receive a notification with additional information provided but you are n
 An issue can have multiple of the following labels. Typically, a properly categorized issue should at least have:
 
 - One label identifying its type (`type/*`).
-- One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or datasource (`datasource/*`), if applicable.
+- One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or data source (`datasource/*`), if applicable.
 
 Label | Description
 ------- | --------
@@ -203,7 +203,7 @@ Label | Description
 `type/works-as-intended` | A reported bug works as intended/by design.
 `type/build-packaging` | Build or packaging problem or enhancement.
 `area/*` | Subject is related to a functional area of interest or component.
-`datasource/*` | Subject is related to a core datasource plugin.
+`datasource/*` | Subject is related to a core data source plugin.
 
 ### Duplicate issue?
 
@@ -349,7 +349,7 @@ In many cases the issue author or community as a whole is more suitable to contr
 
 When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending of the perceived severity and/or number of [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments), the investigation will either be delegated to another maintainer for further investigation or either put on hold until someone else (maintainer or contributor) picks it up and eventually start investigating it.
 
-Investigating issues can be a very time consuming task, especially for the maintainers given the huge number of combinations of plugins, datasources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services etc that are being used with Grafana. There are a certain amount of combinations that are more common than others and these are in general easier for maintainers to investigate.
+Investigating issues can be a very time consuming task, especially for the maintainers given the huge number of combinations of plugins, data sources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services etc that are being used with Grafana. There are a certain amount of combinations that are more common than others and these are in general easier for maintainers to investigate.
 
 For some other combinations there may not be possible at all for a maintainer to setup a proper test environment for being able to investigate. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
 
