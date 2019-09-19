@@ -55,7 +55,7 @@ type AttributeMap struct {
 // config "group_mappings" setting
 type GroupToOrgRole struct {
 	GroupDN string `toml:"group_dn"`
-	OrgID   int64  `toml:"org_id"`
+	OrgId   int64  `toml:"org_id"`
 
 	// This pointer specifies if setting was set (for backwards compatibility)
 	IsGrafanaAdmin *bool `toml:"grafana_admin"`
@@ -139,8 +139,8 @@ func readConfig(configFile string) (*Config, error) {
 		}
 
 		for _, groupMap := range server.Groups {
-			if groupMap.OrgID == 0 {
-				groupMap.OrgID = 1
+			if groupMap.OrgId == 0 {
+				groupMap.OrgId = 1
 			}
 		}
 	}

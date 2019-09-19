@@ -3,11 +3,10 @@ package ldap
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-	"gopkg.in/ldap.v3"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/ldap.v3"
 )
 
 func TestLDAPPrivateMethods(t *testing.T) {
@@ -124,7 +123,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 				Config: &ServerConfig{
 					Groups: []*GroupToOrgRole{
 						{
-							OrgID: 1,
+							OrgId: 1,
 						},
 					},
 				},
@@ -162,7 +161,7 @@ func TestLDAPPrivateMethods(t *testing.T) {
 				Config: &ServerConfig{
 					Groups: []*GroupToOrgRole{
 						{
-							OrgID: 1,
+							OrgId: 1,
 						},
 					},
 				},
