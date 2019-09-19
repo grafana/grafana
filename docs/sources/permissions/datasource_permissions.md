@@ -10,7 +10,7 @@ parent = "permissions"
 weight = 4
 +++
 
-# Data Source Permissions API
+# Data Source Permissions
 
 > The Data Source Permissions API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "enterprise" >}}).
 
