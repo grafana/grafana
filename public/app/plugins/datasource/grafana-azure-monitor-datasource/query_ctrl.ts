@@ -91,6 +91,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       data: {
         singleResource: {
           resourceGroups: new Array<string>(),
+          locations: new Array<string>(),
           resourceGroup: this.defaultDropdownValue,
           metricDefinition: this.defaultDropdownValue,
           metricNamespace: this.defaultDropdownValue,
@@ -190,14 +191,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       this.updateLocations();
       this.updateCrossResourceGroups();
     });
-  }
-
-  updateLocations() {
-    this.locations = this.getLocations().map(l => ({ text: l, value: l }));
-  }
-
-  updateCrossResourceGroups() {
-    this.resourceGroups = this.getCrossResourceGroups().map(rg => ({ text: rg, value: rg }));
   }
 
   onDataReceived(dataList: DataFrame[]) {
@@ -554,6 +547,12 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     }
   }
 
+  onQueryModeChange() {
+    this.updateLocations();
+    this.updateCrossResourceGroups();
+    this.refresh();
+  }
+
   onCrossResourceMetricDefinitionChange() {
     const { queryMode } = this.target.azureMonitor;
     this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
@@ -828,5 +827,23 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   toggleEditorMode() {
     this.target.appInsights.rawQuery = !this.target.appInsights.rawQuery;
+  }
+
+  updateLocations() {
+    const { queryMode } = this.target.azureMonitor;
+    const locations = this.getLocations();
+    if (!this.target.azureMonitor.data[queryMode].locations.length) {
+      this.target.azureMonitor.data[queryMode].locations = locations;
+    }
+    this.locations = locations.map(l => ({ text: l, value: l }));
+  }
+
+  updateCrossResourceGroups() {
+    const { queryMode } = this.target.azureMonitor;
+    const resourceGroups = this.getCrossResourceGroups();
+    if (!this.target.azureMonitor.data[queryMode].resourceGroups.length) {
+      this.target.azureMonitor.data[queryMode].resourceGroups = resourceGroups;
+    }
+    this.resourceGroups = resourceGroups.map(rg => ({ text: rg, value: rg }));
   }
 }

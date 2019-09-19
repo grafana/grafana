@@ -79,12 +79,6 @@ export class MultiSelectDropdownCtrl {
       selected: this.initialValues.includes(o.value),
     }));
     this.selectedValues = _.filter(this.options, { selected: true });
-    if (!this.selectedValues.length) {
-      this.options = this.options.map(o => ({
-        ...o,
-        selected: true,
-      }));
-    }
     this.updateLinkText();
   }
 
