@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -20,7 +21,7 @@ func TestDataSourcesProxy(t *testing.T) {
 		loggedInUserScenario("When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
 
 			// Stubs the database query
-			bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourcesQuery) error {
 				So(query.OrgId, ShouldEqual, TestOrgID)
 				query.Result = []*models.DataSource{
 					{Name: "mmm"},

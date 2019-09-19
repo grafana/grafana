@@ -9,10 +9,10 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetSystemStats)
-	bus.AddHandler("sql", GetDataSourceStats)
-	bus.AddHandler("sql", GetDataSourceAccessStats)
-	bus.AddHandler("sql", GetAdminStats)
+	bus.AddHandlerCtx("sql", GetSystemStats)
+	bus.AddHandlerCtx("sql", GetDataSourceStats)
+	bus.AddHandlerCtx("sql", GetDataSourceAccessStats)
+	bus.AddHandlerCtx("sql", GetAdminStats)
 	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
 	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
 }
@@ -26,21 +26,21 @@ func GetAlertNotifiersUsageStats(ctx context.Context, query *m.GetAlertNotifierU
 	return err
 }
 
-func GetDataSourceStats(query *m.GetDataSourceStatsQuery) error {
+func GetDataSourceStats(ctx context.Context, query *m.GetDataSourceStatsQuery) error {
 	var rawSql = `SELECT COUNT(*) as count, type FROM data_source GROUP BY type`
 	query.Result = make([]*m.DataSourceStats, 0)
 	err := x.SQL(rawSql).Find(&query.Result)
 	return err
 }
 
-func GetDataSourceAccessStats(query *m.GetDataSourceAccessStatsQuery) error {
+func GetDataSourceAccessStats(ctx context.Context, query *m.GetDataSourceAccessStatsQuery) error {
 	var rawSql = `SELECT COUNT(*) as count, type, access FROM data_source GROUP BY type, access`
 	query.Result = make([]*m.DataSourceAccessStats, 0)
 	err := x.SQL(rawSql).Find(&query.Result)
 	return err
 }
 
-func GetSystemStats(query *m.GetSystemStatsQuery) error {
+func GetSystemStats(ctx context.Context, query *m.GetSystemStatsQuery) error {
 	sb := &SqlBuilder{}
 	sb.Write("SELECT ")
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + `) AS users,`)
@@ -106,7 +106,7 @@ func roleCounterSQL(role, alias string) string {
 		) as active_` + alias
 }
 
-func GetAdminStats(query *m.GetAdminStatsQuery) error {
+func GetAdminStats(ctx context.Context, query *m.GetAdminStatsQuery) error {
 	activeEndDate := time.Now().Add(-activeUserTimeLimit)
 
 	var rawSql = `SELECT

@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -29,11 +30,11 @@ func TestDatasourceAsConfig(t *testing.T) {
 	Convey("Testing datasource as configuration", t, func() {
 		fakeRepo = &fakeRepository{}
 		bus.ClearBusHandlers()
-		bus.AddHandler("test", mockDelete)
-		bus.AddHandler("test", mockInsert)
-		bus.AddHandler("test", mockUpdate)
-		bus.AddHandler("test", mockGet)
-		bus.AddHandler("test", mockGetAll)
+		bus.AddHandlerCtx("test", mockDelete)
+		bus.AddHandlerCtx("test", mockInsert)
+		bus.AddHandlerCtx("test", mockUpdate)
+		bus.AddHandlerCtx("test", mockGet)
+		bus.AddHandlerCtx("test", mockGetAll)
 
 		Convey("One configured datasource", func() {
 			Convey("no datasource in database", func() {
@@ -237,27 +238,27 @@ type fakeRepository struct {
 	loadAll []*models.DataSource
 }
 
-func mockDelete(cmd *models.DeleteDataSourceByNameCommand) error {
+func mockDelete(ctx context.Context, cmd *models.DeleteDataSourceByNameCommand) error {
 	fakeRepo.deleted = append(fakeRepo.deleted, cmd)
 	return nil
 }
 
-func mockUpdate(cmd *models.UpdateDataSourceCommand) error {
+func mockUpdate(ctx context.Context, cmd *models.UpdateDataSourceCommand) error {
 	fakeRepo.updated = append(fakeRepo.updated, cmd)
 	return nil
 }
 
-func mockInsert(cmd *models.AddDataSourceCommand) error {
+func mockInsert(ctx context.Context, cmd *models.AddDataSourceCommand) error {
 	fakeRepo.inserted = append(fakeRepo.inserted, cmd)
 	return nil
 }
 
-func mockGetAll(cmd *models.GetAllDataSourcesQuery) error {
+func mockGetAll(ctx context.Context, cmd *models.GetAllDataSourcesQuery) error {
 	cmd.Result = fakeRepo.loadAll
 	return nil
 }
 
-func mockGet(cmd *models.GetDataSourceByNameQuery) error {
+func mockGet(ctx context.Context, cmd *models.GetDataSourceByNameQuery) error {
 	for _, v := range fakeRepo.loadAll {
 		if cmd.Name == v.Name && cmd.OrgId == v.OrgId {
 			cmd.Result = v

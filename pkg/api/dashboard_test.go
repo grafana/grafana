@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -30,7 +31,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		fakeDash.FolderId = 1
 		fakeDash.HasAcl = false
 
-		bus.AddHandler("test", func(query *m.GetDashboardsBySlugQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardsBySlugQuery) error {
 			dashboards := []*m.Dashboard{fakeDash}
 			query.Result = dashboards
 			return nil
@@ -38,13 +39,13 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 		var getDashboardQueries []*m.GetDashboardQuery
 
-		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 			query.Result = fakeDash
 			getDashboardQueries = append(getDashboardQueries, query)
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetProvisionedDashboardDataByIdQuery) error {
 			query.Result = nil
 			return nil
 		})
@@ -57,12 +58,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			{Role: &editorRole, Permission: m.PERMISSION_EDIT},
 		}
 
-		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetTeamsByUserQuery) error {
 			query.Result = []*m.TeamDTO{}
 			return nil
 		})
@@ -199,12 +200,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		fakeDash.HasAcl = true
 		setting.ViewersCanEdit = false
 
-		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetProvisionedDashboardDataByIdQuery) error {
 			query.Result = nil
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetDashboardsBySlugQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardsBySlugQuery) error {
 			dashboards := []*m.Dashboard{fakeDash}
 			query.Result = dashboards
 			return nil
@@ -218,20 +219,20 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			},
 		}
 
-		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
 		var getDashboardQueries []*m.GetDashboardQuery
 
-		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 			query.Result = fakeDash
 			getDashboardQueries = append(getDashboardQueries, query)
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetTeamsByUserQuery) error {
 			query.Result = []*m.TeamDTO{}
 			return nil
 		})
@@ -371,7 +372,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_EDIT},
 			}
 
-			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
 				return nil
 			})
@@ -441,7 +442,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_VIEW},
 			}
 
-			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
 				return nil
 			})
@@ -500,7 +501,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_ADMIN},
 			}
 
-			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
 				return nil
 			})
@@ -569,7 +570,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_VIEW},
 			}
 
-			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
 				return nil
 			})
@@ -641,12 +642,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		dashTwo.FolderId = 3
 		dashTwo.HasAcl = false
 
-		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetProvisionedDashboardDataByIdQuery) error {
 			query.Result = nil
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetDashboardsBySlugQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardsBySlugQuery) error {
 			dashboards := []*m.Dashboard{dashOne, dashTwo}
 			query.Result = dashboards
 			return nil
@@ -766,17 +767,17 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 	Convey("Given two dashboards being compared", t, func() {
 		mockResult := []*m.DashboardAclInfoDTO{}
-		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 			query.Result = mockResult
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetProvisionedDashboardDataByIdQuery) error {
 			query.Result = nil
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardVersionQuery) error {
 			query.Result = &m.DashboardVersion{
 				Data: simplejson.NewFromAny(map[string]interface{}{
 					"title": "Dash" + string(query.DashboardId),
@@ -822,12 +823,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		fakeDash.FolderId = 1
 		fakeDash.HasAcl = false
 
-		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 			query.Result = fakeDash
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardVersionQuery) error {
 			query.Result = &m.DashboardVersion{
 				DashboardId: 2,
 				Version:     1,
@@ -865,12 +866,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		fakeDash.Id = 2
 		fakeDash.HasAcl = false
 
-		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 			query.Result = fakeDash
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardVersionQuery) error {
 			query.Result = &m.DashboardVersion{
 				DashboardId: 2,
 				Version:     1,
@@ -905,21 +906,21 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 	Convey("Given provisioned dashboard", t, func() {
 
-		bus.AddHandler("test", func(query *m.GetDashboardsBySlugQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardsBySlugQuery) error {
 			query.Result = []*m.Dashboard{{}}
 			return nil
 		})
-		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 			query.Result = &m.Dashboard{Id: 1, Data: &simplejson.Json{}}
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetProvisionedDashboardDataByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetProvisionedDashboardDataByIdQuery) error {
 			query.Result = &m.DashboardProvisioning{ExternalId: "/tmp/grafana/dashboards/test/dashboard1.json"}
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 			query.Result = []*m.DashboardAclInfoDTO{
 				{OrgId: TestOrgID, DashboardId: 1, UserId: TestUserID, Permission: m.PERMISSION_EDIT},
 			}
@@ -992,7 +993,7 @@ func CallGetDashboard(sc *scenarioContext, hs *HTTPServer) {
 }
 
 func CallGetDashboardVersion(sc *scenarioContext) {
-	bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardVersionQuery) error {
 		query.Result = &m.DashboardVersion{}
 		return nil
 	})
@@ -1002,7 +1003,7 @@ func CallGetDashboardVersion(sc *scenarioContext) {
 }
 
 func CallGetDashboardVersions(sc *scenarioContext) {
-	bus.AddHandler("test", func(query *m.GetDashboardVersionsQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardVersionsQuery) error {
 		query.Result = []*m.DashboardVersionDTO{}
 		return nil
 	})
@@ -1012,7 +1013,7 @@ func CallGetDashboardVersions(sc *scenarioContext) {
 }
 
 func CallDeleteDashboardBySlug(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *m.DeleteDashboardCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.DeleteDashboardCommand) error {
 		return nil
 	})
 
@@ -1021,7 +1022,7 @@ func CallDeleteDashboardBySlug(sc *scenarioContext) {
 }
 
 func CallDeleteDashboardByUID(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *m.DeleteDashboardCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.DeleteDashboardCommand) error {
 		return nil
 	})
 

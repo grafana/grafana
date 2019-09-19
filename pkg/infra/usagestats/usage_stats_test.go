@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"runtime"
 	"sync"
@@ -28,7 +29,7 @@ func TestMetrics(t *testing.T) {
 		}
 
 		var getSystemStatsQuery *models.GetSystemStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 
 			query.Result = &models.SystemStats{
 				Dashboards:            1,
@@ -52,7 +53,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getDataSourceStatsQuery *models.GetDataSourceStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetDataSourceStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
 			query.Result = []*models.DataSourceStats{
 				{
 					Type:  models.DS_ES,
@@ -76,7 +77,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getDataSourceAccessStatsQuery *models.GetDataSourceAccessStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetDataSourceAccessStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
 			query.Result = []*models.DataSourceAccessStats{
 				{
 					Type:   models.DS_ES,
@@ -124,7 +125,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		var getAlertNotifierUsageStatsQuery *models.GetAlertNotifierUsageStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetAlertNotifierUsageStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
 			query.Result = []*models.NotifierUsageStats{
 				{
 					Type:  "slack",
@@ -273,7 +274,7 @@ func TestMetrics(t *testing.T) {
 		uss.Cfg.MetricsEndpointEnabled = true
 		uss.Cfg.MetricsEndpointDisableTotalStats = false
 		getSystemStatsWasCalled := false
-		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+		uss.Bus.AddHandlerCtx(func(ctx context.Context, query *models.GetSystemStatsQuery) error {
 			query.Result = &models.SystemStats{}
 			getSystemStatsWasCalled = true
 			return nil

@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -14,7 +15,7 @@ func TestSearch(t *testing.T) {
 		query := Query{Limit: 2000, SignedInUser: &m.SignedInUser{IsGrafanaAdmin: true}}
 		ss := &SearchService{}
 
-		bus.AddHandler("test", func(query *FindPersistedDashboardsQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *FindPersistedDashboardsQuery) error {
 			query.Result = HitList{
 				&Hit{Id: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
 				&Hit{Id: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
@@ -25,12 +26,12 @@ func TestSearch(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetUserStarsQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetUserStarsQuery) error {
 			query.Result = map[int64]bool{10: true, 12: true}
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetSignedInUserQuery) error {
 			query.Result = &m.SignedInUser{IsGrafanaAdmin: true}
 			return nil
 		})

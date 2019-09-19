@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -16,7 +17,7 @@ func TestAlertingApiEndpoint(t *testing.T) {
 
 		singleAlert := &models.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
 
-		bus.AddHandler("test", func(query *models.GetAlertByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetAlertByIdQuery) error {
 			query.Result = singleAlert
 			return nil
 		})
@@ -25,12 +26,12 @@ func TestAlertingApiEndpoint(t *testing.T) {
 		editorRole := models.ROLE_EDITOR
 
 		aclMockResp := []*models.DashboardAclInfoDTO{}
-		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetTeamsByUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetTeamsByUserQuery) error {
 			query.Result = []*models.TeamDTO{}
 			return nil
 		})
@@ -68,13 +69,13 @@ func TestAlertingApiEndpoint(t *testing.T) {
 
 		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1", "/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			var searchQuery *search.Query
-			bus.AddHandler("test", func(query *search.Query) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *search.Query) error {
 				searchQuery = query
 				return nil
 			})
 
 			var getAlertsQuery *models.GetAlertsQuery
-			bus.AddHandler("test", func(query *models.GetAlertsQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetAlertsQuery) error {
 				getAlertsQuery = query
 				return nil
 			})
@@ -88,7 +89,7 @@ func TestAlertingApiEndpoint(t *testing.T) {
 
 		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery", "/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			var searchQuery *search.Query
-			bus.AddHandler("test", func(query *search.Query) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *search.Query) error {
 				searchQuery = query
 				query.Result = search.HitList{
 					&search.Hit{Id: 1},
@@ -98,7 +99,7 @@ func TestAlertingApiEndpoint(t *testing.T) {
 			})
 
 			var getAlertsQuery *models.GetAlertsQuery
-			bus.AddHandler("test", func(query *models.GetAlertsQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetAlertsQuery) error {
 				getAlertsQuery = query
 				return nil
 			})
@@ -129,7 +130,7 @@ func TestAlertingApiEndpoint(t *testing.T) {
 }
 
 func CallPauseAlert(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *models.PauseAlertCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.PauseAlertCommand) error {
 		return nil
 	})
 

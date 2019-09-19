@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -8,14 +9,14 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", CreateTempUser)
-	bus.AddHandler("sql", GetTempUsersQuery)
-	bus.AddHandler("sql", UpdateTempUserStatus)
-	bus.AddHandler("sql", GetTempUserByCode)
-	bus.AddHandler("sql", UpdateTempUserWithEmailSent)
+	bus.AddHandlerCtx("sql", CreateTempUser)
+	bus.AddHandlerCtx("sql", GetTempUsersQuery)
+	bus.AddHandlerCtx("sql", UpdateTempUserStatus)
+	bus.AddHandlerCtx("sql", GetTempUserByCode)
+	bus.AddHandlerCtx("sql", UpdateTempUserWithEmailSent)
 }
 
-func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
+func UpdateTempUserStatus(ctx context.Context, cmd *m.UpdateTempUserStatusCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "UPDATE temp_user SET status=? WHERE code=?"
 		_, err := sess.Exec(rawSql, string(cmd.Status), cmd.Code)
@@ -23,7 +24,7 @@ func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
 	})
 }
 
-func CreateTempUser(cmd *m.CreateTempUserCommand) error {
+func CreateTempUser(ctx context.Context, cmd *m.CreateTempUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 
 		// create user
@@ -50,7 +51,7 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 	})
 }
 
-func UpdateTempUserWithEmailSent(cmd *m.UpdateTempUserWithEmailSentCommand) error {
+func UpdateTempUserWithEmailSent(ctx context.Context, cmd *m.UpdateTempUserWithEmailSentCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		user := &m.TempUser{
 			EmailSent:   true,
@@ -63,7 +64,7 @@ func UpdateTempUserWithEmailSent(cmd *m.UpdateTempUserWithEmailSentCommand) erro
 	})
 }
 
-func GetTempUsersQuery(query *m.GetTempUsersQuery) error {
+func GetTempUsersQuery(ctx context.Context, query *m.GetTempUsersQuery) error {
 	rawSql := `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
@@ -101,7 +102,7 @@ func GetTempUsersQuery(query *m.GetTempUsersQuery) error {
 	return err
 }
 
-func GetTempUserByCode(query *m.GetTempUserByCodeQuery) error {
+func GetTempUserByCode(ctx context.Context, query *m.GetTempUserByCodeQuery) error {
 	var rawSql = `SELECT
 	                tu.id             as id,
 	                tu.org_id         as org_id,

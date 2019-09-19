@@ -41,9 +41,9 @@ func (ns *NotificationService) Init() error {
 	ns.mailQueue = make(chan *Message, 10)
 	ns.webhookQueue = make(chan *Webhook, 10)
 
-	ns.Bus.AddHandler(ns.sendResetPasswordEmail)
-	ns.Bus.AddHandler(ns.validateResetPasswordCode)
-	ns.Bus.AddHandler(ns.sendEmailCommandHandler)
+	ns.Bus.AddHandlerCtx(ns.sendResetPasswordEmail)
+	ns.Bus.AddHandlerCtx(ns.validateResetPasswordCode)
+	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandler)
 
 	ns.Bus.AddHandlerCtx(ns.sendEmailCommandHandlerSync)
 	ns.Bus.AddHandlerCtx(ns.SendWebhookSync)
@@ -135,7 +135,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 	return err
 }
 
-func (ns *NotificationService) sendEmailCommandHandler(cmd *m.SendEmailCommand) error {
+func (ns *NotificationService) sendEmailCommandHandler(ctx context.Context, cmd *m.SendEmailCommand) error {
 	message, err := ns.buildEmailMessage(cmd)
 
 	if err != nil {
@@ -146,8 +146,8 @@ func (ns *NotificationService) sendEmailCommandHandler(cmd *m.SendEmailCommand) 
 	return nil
 }
 
-func (ns *NotificationService) sendResetPasswordEmail(cmd *m.SendResetPasswordEmailCommand) error {
-	return ns.sendEmailCommandHandler(&m.SendEmailCommand{
+func (ns *NotificationService) sendResetPasswordEmail(ctx context.Context, cmd *m.SendResetPasswordEmailCommand) error {
+	return ns.sendEmailCommandHandler(ctx, &m.SendEmailCommand{
 		To:       []string{cmd.User.Email},
 		Template: tmplResetPassword,
 		Data: map[string]interface{}{
@@ -157,14 +157,14 @@ func (ns *NotificationService) sendResetPasswordEmail(cmd *m.SendResetPasswordEm
 	})
 }
 
-func (ns *NotificationService) validateResetPasswordCode(query *m.ValidateResetPasswordCodeQuery) error {
+func (ns *NotificationService) validateResetPasswordCode(ctx context.Context, query *m.ValidateResetPasswordCodeQuery) error {
 	login := getLoginForEmailCode(query.Code)
 	if login == "" {
 		return m.ErrInvalidEmailCode
 	}
 
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: login}
-	if err := bus.Dispatch(&userQuery); err != nil {
+	if err := bus.DispatchCtx(ctx, &userQuery); err != nil {
 		return err
 	}
 
@@ -176,7 +176,7 @@ func (ns *NotificationService) validateResetPasswordCode(query *m.ValidateResetP
 	return nil
 }
 
-func (ns *NotificationService) signUpStartedHandler(evt *events.SignUpStarted) error {
+func (ns *NotificationService) signUpStartedHandler(ctx context.Context, evt *events.SignUpStarted) error {
 	if !setting.VerifyEmailEnabled {
 		return nil
 	}
@@ -205,7 +205,7 @@ func (ns *NotificationService) signUpStartedHandler(evt *events.SignUpStarted) e
 	return bus.Dispatch(&emailSentCmd)
 }
 
-func (ns *NotificationService) signUpCompletedHandler(evt *events.SignUpCompleted) error {
+func (ns *NotificationService) signUpCompletedHandler(ctx context.Context, evt *events.SignUpCompleted) error {
 	if evt.Email == "" || !ns.Cfg.Smtp.SendWelcomeEmailOnSignUp {
 		return nil
 	}

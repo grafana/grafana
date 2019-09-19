@@ -177,7 +177,7 @@ func (hs *HTTPServer) CompleteInvite(c *m.ReqContext, completeInvite dtos.Comple
 
 	user := &cmd.Result
 
-	bus.Publish(&events.SignUpCompleted{
+	bus.Publish(c.Context, &events.SignUpCompleted{
 		Name:  user.NameOrFallback(),
 		Email: user.Email,
 	})

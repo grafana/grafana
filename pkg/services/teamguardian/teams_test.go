@@ -1,10 +1,12 @@
 package teamguardian
 
 import (
+	"context"
+	"testing"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
-	"testing"
 )
 
 func TestUpdateTeam(t *testing.T) {
@@ -28,7 +30,7 @@ func TestUpdateTeam(t *testing.T) {
 
 		Convey("Given an editor and a team he isn't a member of", func() {
 			Convey("Should not be able to update the team", func() {
-				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetTeamMembersQuery) error {
 					cmd.Result = []*m.TeamMemberDTO{}
 					return nil
 				})
@@ -40,7 +42,7 @@ func TestUpdateTeam(t *testing.T) {
 
 		Convey("Given an editor and a team he is an admin in", func() {
 			Convey("Should be able to update the team", func() {
-				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetTeamMembersQuery) error {
 					cmd.Result = []*m.TeamMemberDTO{{
 						OrgId:      testTeam.OrgId,
 						TeamId:     testTeam.Id,
@@ -62,7 +64,7 @@ func TestUpdateTeam(t *testing.T) {
 			}
 
 			Convey("Shouldn't be able to update the team", func() {
-				bus.AddHandler("test", func(cmd *m.GetTeamMembersQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetTeamMembersQuery) error {
 					cmd.Result = []*m.TeamMemberDTO{{
 						OrgId:      testTeamOtherOrg.OrgId,
 						TeamId:     testTeamOtherOrg.Id,

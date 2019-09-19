@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -9,11 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
 	macaron "gopkg.in/macaron.v1"
-	"net/http"
 )
 
 type testLogger struct {
@@ -45,7 +47,7 @@ func TestTeamApiEndpoint(t *testing.T) {
 			loggedInUserScenario("When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 				var sentLimit int
 				var sendPage int
-				bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
 					query.Result = mockResult
 
 					sentLimit = query.Limit
@@ -72,7 +74,7 @@ func TestTeamApiEndpoint(t *testing.T) {
 			loggedInUserScenario("When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 				var sentLimit int
 				var sendPage int
-				bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchTeamsQuery) error {
 					query.Result = mockResult
 
 					sentLimit = query.Limit
@@ -102,14 +104,14 @@ func TestTeamApiEndpoint(t *testing.T) {
 		teamName := "team foo"
 
 		createTeamCalled := 0
-		bus.AddHandler("test", func(cmd *models.CreateTeamCommand) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.CreateTeamCommand) error {
 			createTeamCalled += 1
 			cmd.Result = models.Team{Name: teamName, Id: 42}
 			return nil
 		})
 
 		addTeamMemberCalled := 0
-		bus.AddHandler("test", func(cmd *models.AddTeamMemberCommand) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.AddTeamMemberCommand) error {
 			addTeamMemberCalled += 1
 			return nil
 		})

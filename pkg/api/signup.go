@@ -41,7 +41,7 @@ func SignUp(c *m.ReqContext, form dtos.SignUpForm) Response {
 		return Error(500, "Failed to create signup", err)
 	}
 
-	bus.Publish(&events.SignUpStarted{
+	bus.Publish(c.Context, &events.SignUpStarted{
 		Email: form.Email,
 		Code:  cmd.Code,
 	})
@@ -85,7 +85,7 @@ func (hs *HTTPServer) SignUpStep2(c *m.ReqContext, form dtos.SignUpStep2Form) Re
 
 	// publish signup event
 	user := &createUserCmd.Result
-	bus.Publish(&events.SignUpCompleted{
+	bus.Publish(c.Context, &events.SignUpCompleted{
 		Email: user.Email,
 		Name:  user.NameOrFallback(),
 	})

@@ -44,7 +44,7 @@ func TestMiddlewareQuota(t *testing.T) {
 		QuotaFn := Quota(qs)
 
 		middlewareScenario(t, "with user not logged in", func(sc *scenarioContext) {
-			bus.AddHandler("globalQuota", func(query *m.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("globalQuota", func(ctx context.Context, query *m.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &m.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -83,7 +83,7 @@ func TestMiddlewareQuota(t *testing.T) {
 
 		middlewareScenario(t, "with user logged in", func(sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
-			bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetSignedInUserQuery) error {
 				query.Result = &m.SignedInUser{OrgId: 2, UserId: 12}
 				return nil
 			})
@@ -95,7 +95,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				}, nil
 			}
 
-			bus.AddHandler("globalQuota", func(query *m.GetGlobalQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("globalQuota", func(ctx context.Context, query *m.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &m.GlobalQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -104,7 +104,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("userQuota", func(query *m.GetUserQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("userQuota", func(ctx context.Context, query *m.GetUserQuotaByTargetQuery) error {
 				query.Result = &m.UserQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,
@@ -113,7 +113,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				return nil
 			})
 
-			bus.AddHandler("orgQuota", func(query *m.GetOrgQuotaByTargetQuery) error {
+			bus.AddHandlerCtx("orgQuota", func(ctx context.Context, query *m.GetOrgQuotaByTargetQuery) error {
 				query.Result = &m.OrgQuotaDTO{
 					Target: query.Target,
 					Limit:  query.Default,

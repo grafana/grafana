@@ -15,7 +15,7 @@ import (
 func TestUserTokenApiEndpoint(t *testing.T) {
 	Convey("When current user attempts to revoke an auth token for a non-existing user", t, func() {
 		userId := int64(0)
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			userId = cmd.Id
 			return m.ErrUserNotFound
 		})
@@ -31,7 +31,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 
 	Convey("When current user gets auth tokens for a non-existing user", t, func() {
 		userId := int64(0)
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			userId = cmd.Id
 			return m.ErrUserNotFound
 		})
@@ -44,7 +44,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 	})
 
 	Convey("When logout an existing user from all devices", t, func() {
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			cmd.Result = &m.User{Id: 200}
 			return nil
 		})
@@ -56,7 +56,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 	})
 
 	Convey("When logout a non-existing user from all devices", t, func() {
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			return m.ErrUserNotFound
 		})
 
@@ -67,7 +67,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 	})
 
 	Convey("When revoke an auth token for a user", t, func() {
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			cmd.Result = &m.User{Id: 200}
 			return nil
 		})
@@ -85,7 +85,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 	})
 
 	Convey("When revoke the active auth token used by himself", t, func() {
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			cmd.Result = &m.User{Id: TestUserID}
 			return nil
 		})
@@ -103,7 +103,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 	})
 
 	Convey("When gets auth tokens for a user", t, func() {
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			cmd.Result = &m.User{Id: TestUserID}
 			return nil
 		})

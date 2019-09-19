@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -9,16 +10,16 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetOrgById)
-	bus.AddHandler("sql", CreateOrg)
-	bus.AddHandler("sql", UpdateOrg)
-	bus.AddHandler("sql", UpdateOrgAddress)
-	bus.AddHandler("sql", GetOrgByName)
-	bus.AddHandler("sql", SearchOrgs)
-	bus.AddHandler("sql", DeleteOrg)
+	bus.AddHandlerCtx("sql", GetOrgById)
+	bus.AddHandlerCtx("sql", CreateOrg)
+	bus.AddHandlerCtx("sql", UpdateOrg)
+	bus.AddHandlerCtx("sql", UpdateOrgAddress)
+	bus.AddHandlerCtx("sql", GetOrgByName)
+	bus.AddHandlerCtx("sql", SearchOrgs)
+	bus.AddHandlerCtx("sql", DeleteOrg)
 }
 
-func SearchOrgs(query *m.SearchOrgsQuery) error {
+func SearchOrgs(ctx context.Context, query *m.SearchOrgsQuery) error {
 	query.Result = make([]*m.OrgDTO, 0)
 	sess := x.Table("org")
 	if query.Query != "" {
@@ -38,7 +39,7 @@ func SearchOrgs(query *m.SearchOrgsQuery) error {
 	return err
 }
 
-func GetOrgById(query *m.GetOrgByIdQuery) error {
+func GetOrgById(ctx context.Context, query *m.GetOrgByIdQuery) error {
 	var org m.Org
 	exists, err := x.Id(query.Id).Get(&org)
 	if err != nil {
@@ -53,7 +54,7 @@ func GetOrgById(query *m.GetOrgByIdQuery) error {
 	return nil
 }
 
-func GetOrgByName(query *m.GetOrgByNameQuery) error {
+func GetOrgByName(ctx context.Context, query *m.GetOrgByNameQuery) error {
 	var org m.Org
 	exists, err := x.Where("name=?", query.Name).Get(&org)
 	if err != nil {
@@ -84,7 +85,7 @@ func isOrgNameTaken(name string, existingId int64, sess *DBSession) (bool, error
 	return false, nil
 }
 
-func CreateOrg(cmd *m.CreateOrgCommand) error {
+func CreateOrg(ctx context.Context, cmd *m.CreateOrgCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, 0, sess); err != nil {
@@ -124,7 +125,7 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 	})
 }
 
-func UpdateOrg(cmd *m.UpdateOrgCommand) error {
+func UpdateOrg(ctx context.Context, cmd *m.UpdateOrgCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
@@ -158,7 +159,7 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 	})
 }
 
-func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
+func UpdateOrgAddress(ctx context.Context, cmd *m.UpdateOrgAddressCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		org := m.Org{
 			Address1: cmd.Address1,
@@ -185,7 +186,7 @@ func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 	})
 }
 
-func DeleteOrg(cmd *m.DeleteOrgCommand) error {
+func DeleteOrg(ctx context.Context, cmd *m.DeleteOrgCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
 			return err

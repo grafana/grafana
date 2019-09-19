@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -40,10 +41,10 @@ func (e DashboardInputMissingError) Error() string {
 }
 
 func init() {
-	bus.AddHandler("plugins", ImportDashboard)
+	bus.AddHandlerCtx("plugins", ImportDashboard)
 }
 
-func ImportDashboard(cmd *ImportDashboardCommand) error {
+func ImportDashboard(ctx context.Context, cmd *ImportDashboardCommand) error {
 	var dashboard *m.Dashboard
 	var err error
 

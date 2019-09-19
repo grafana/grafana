@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -213,7 +214,7 @@ func callGetFolderPermissions(sc *scenarioContext) {
 }
 
 func callUpdateFolderPermissions(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *m.UpdateDashboardAclCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.UpdateDashboardAclCommand) error {
 		return nil
 	})
 

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -11,12 +12,12 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetPreferences)
-	bus.AddHandler("sql", GetPreferencesWithDefaults)
-	bus.AddHandler("sql", SavePreferences)
+	bus.AddHandlerCtx("sql", GetPreferences)
+	bus.AddHandlerCtx("sql", GetPreferencesWithDefaults)
+	bus.AddHandlerCtx("sql", SavePreferences)
 }
 
-func GetPreferencesWithDefaults(query *m.GetPreferencesWithDefaultsQuery) error {
+func GetPreferencesWithDefaults(ctx context.Context, query *m.GetPreferencesWithDefaultsQuery) error {
 	params := make([]interface{}, 0)
 	filter := ""
 	if len(query.User.Teams) > 0 {
@@ -61,7 +62,7 @@ func GetPreferencesWithDefaults(query *m.GetPreferencesWithDefaultsQuery) error 
 	return nil
 }
 
-func GetPreferences(query *m.GetPreferencesQuery) error {
+func GetPreferences(ctx context.Context, query *m.GetPreferencesQuery) error {
 	var prefs m.Preferences
 	exists, err := x.Where("org_id=? AND user_id=? AND team_id=?", query.OrgId, query.UserId, query.TeamId).Get(&prefs)
 
@@ -78,7 +79,7 @@ func GetPreferences(query *m.GetPreferencesQuery) error {
 	return nil
 }
 
-func SavePreferences(cmd *m.SavePreferencesCommand) error {
+func SavePreferences(ctx context.Context, cmd *m.SavePreferencesCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 
 		var prefs m.Preferences

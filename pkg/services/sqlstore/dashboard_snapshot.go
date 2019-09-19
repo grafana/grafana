@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -9,17 +10,17 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", CreateDashboardSnapshot)
-	bus.AddHandler("sql", GetDashboardSnapshot)
-	bus.AddHandler("sql", DeleteDashboardSnapshot)
-	bus.AddHandler("sql", SearchDashboardSnapshots)
-	bus.AddHandler("sql", DeleteExpiredSnapshots)
+	bus.AddHandlerCtx("sql", CreateDashboardSnapshot)
+	bus.AddHandlerCtx("sql", GetDashboardSnapshot)
+	bus.AddHandlerCtx("sql", DeleteDashboardSnapshot)
+	bus.AddHandlerCtx("sql", SearchDashboardSnapshots)
+	bus.AddHandlerCtx("sql", DeleteExpiredSnapshots)
 }
 
 // DeleteExpiredSnapshots removes snapshots with old expiry dates.
 // SnapShotRemoveExpired is deprecated and should be removed in the future.
 // Snapshot expiry is decided by the user when they share the snapshot.
-func DeleteExpiredSnapshots(cmd *m.DeleteExpiredSnapshotsCommand) error {
+func DeleteExpiredSnapshots(ctx context.Context, cmd *m.DeleteExpiredSnapshotsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if !setting.SnapShotRemoveExpired {
 			sqlog.Warn("[Deprecated] The snapshot_remove_expired setting is outdated. Please remove from your config.")
@@ -37,7 +38,7 @@ func DeleteExpiredSnapshots(cmd *m.DeleteExpiredSnapshotsCommand) error {
 	})
 }
 
-func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
+func CreateDashboardSnapshot(ctx context.Context, cmd *m.CreateDashboardSnapshotCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 
 		// never
@@ -68,7 +69,7 @@ func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
 	})
 }
 
-func DeleteDashboardSnapshot(cmd *m.DeleteDashboardSnapshotCommand) error {
+func DeleteDashboardSnapshot(ctx context.Context, cmd *m.DeleteDashboardSnapshotCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
 		_, err := sess.Exec(rawSql, cmd.DeleteKey)
@@ -76,7 +77,7 @@ func DeleteDashboardSnapshot(cmd *m.DeleteDashboardSnapshotCommand) error {
 	})
 }
 
-func GetDashboardSnapshot(query *m.GetDashboardSnapshotQuery) error {
+func GetDashboardSnapshot(ctx context.Context, query *m.GetDashboardSnapshotQuery) error {
 	snapshot := m.DashboardSnapshot{Key: query.Key, DeleteKey: query.DeleteKey}
 	has, err := x.Get(&snapshot)
 
@@ -92,7 +93,7 @@ func GetDashboardSnapshot(query *m.GetDashboardSnapshotQuery) error {
 
 // SearchDashboardSnapshots returns a list of all snapshots for admins
 // for other roles, it returns snapshots created by the user
-func SearchDashboardSnapshots(query *m.GetDashboardSnapshotsQuery) error {
+func SearchDashboardSnapshots(ctx context.Context, query *m.GetDashboardSnapshotsQuery) error {
 	var snapshots = make(m.DashboardSnapshotsList, 0)
 
 	sess := x.Limit(query.Limit)

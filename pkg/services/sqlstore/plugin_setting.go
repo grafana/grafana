@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -10,13 +11,13 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetPluginSettings)
-	bus.AddHandler("sql", GetPluginSettingById)
-	bus.AddHandler("sql", UpdatePluginSetting)
-	bus.AddHandler("sql", UpdatePluginSettingVersion)
+	bus.AddHandlerCtx("sql", GetPluginSettings)
+	bus.AddHandlerCtx("sql", GetPluginSettingById)
+	bus.AddHandlerCtx("sql", UpdatePluginSetting)
+	bus.AddHandlerCtx("sql", UpdatePluginSettingVersion)
 }
 
-func GetPluginSettings(query *m.GetPluginSettingsQuery) error {
+func GetPluginSettings(ctx context.Context, query *m.GetPluginSettingsQuery) error {
 	sql := `SELECT org_id, plugin_id, enabled, pinned, plugin_version
 					FROM plugin_setting `
 	params := make([]interface{}, 0)
@@ -31,7 +32,7 @@ func GetPluginSettings(query *m.GetPluginSettingsQuery) error {
 	return sess.Find(&query.Result)
 }
 
-func GetPluginSettingById(query *m.GetPluginSettingByIdQuery) error {
+func GetPluginSettingById(ctx context.Context, query *m.GetPluginSettingByIdQuery) error {
 	pluginSetting := m.PluginSetting{OrgId: query.OrgId, PluginId: query.PluginId}
 	has, err := x.Get(&pluginSetting)
 	if err != nil {
@@ -43,7 +44,7 @@ func GetPluginSettingById(query *m.GetPluginSettingByIdQuery) error {
 	return nil
 }
 
-func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
+func UpdatePluginSetting(ctx context.Context, cmd *m.UpdatePluginSettingCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 		var pluginSetting m.PluginSetting
 
@@ -105,7 +106,7 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 	})
 }
 
-func UpdatePluginSettingVersion(cmd *m.UpdatePluginSettingVersionCmd) error {
+func UpdatePluginSettingVersion(ctx context.Context, cmd *m.UpdatePluginSettingVersionCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 
 		_, err := sess.Exec("UPDATE plugin_setting SET plugin_version=? WHERE org_id=? AND plugin_id=?", cmd.PluginVersion, cmd.OrgId, cmd.PluginId)

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -29,25 +30,25 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 			External:  true,
 		}
 
-		bus.AddHandler("test", func(query *m.GetDashboardSnapshotQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardSnapshotQuery) error {
 			query.Result = mockSnapshotResult
 			return nil
 		})
 
-		bus.AddHandler("test", func(cmd *m.DeleteDashboardSnapshotCommand) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.DeleteDashboardSnapshotCommand) error {
 			return nil
 		})
 
 		viewerRole := m.ROLE_VIEWER
 		editorRole := m.ROLE_EDITOR
 		aclMockResp := []*m.DashboardAclInfoDTO{}
-		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
 		teamResp := []*m.TeamDTO{}
-		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetTeamsByUserQuery) error {
 			query.Result = teamResp
 			return nil
 		})

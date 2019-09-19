@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -10,20 +11,20 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetOrgQuotaByTarget)
-	bus.AddHandler("sql", GetOrgQuotas)
-	bus.AddHandler("sql", UpdateOrgQuota)
-	bus.AddHandler("sql", GetUserQuotaByTarget)
-	bus.AddHandler("sql", GetUserQuotas)
-	bus.AddHandler("sql", UpdateUserQuota)
-	bus.AddHandler("sql", GetGlobalQuotaByTarget)
+	bus.AddHandlerCtx("sql", GetOrgQuotaByTarget)
+	bus.AddHandlerCtx("sql", GetOrgQuotas)
+	bus.AddHandlerCtx("sql", UpdateOrgQuota)
+	bus.AddHandlerCtx("sql", GetUserQuotaByTarget)
+	bus.AddHandlerCtx("sql", GetUserQuotas)
+	bus.AddHandlerCtx("sql", UpdateUserQuota)
+	bus.AddHandlerCtx("sql", GetGlobalQuotaByTarget)
 }
 
 type targetCount struct {
 	Count int64
 }
 
-func GetOrgQuotaByTarget(query *m.GetOrgQuotaByTargetQuery) error {
+func GetOrgQuotaByTarget(ctx context.Context, query *m.GetOrgQuotaByTargetQuery) error {
 	quota := m.Quota{
 		Target: query.Target,
 		OrgId:  query.OrgId,
@@ -52,7 +53,7 @@ func GetOrgQuotaByTarget(query *m.GetOrgQuotaByTargetQuery) error {
 	return nil
 }
 
-func GetOrgQuotas(query *m.GetOrgQuotasQuery) error {
+func GetOrgQuotas(ctx context.Context, query *m.GetOrgQuotasQuery) error {
 	quotas := make([]*m.Quota, 0)
 	sess := x.Table("quota")
 	if err := sess.Where("org_id=? AND user_id=0", query.OrgId).Find(&quotas); err != nil {
@@ -95,7 +96,7 @@ func GetOrgQuotas(query *m.GetOrgQuotasQuery) error {
 	return nil
 }
 
-func UpdateOrgQuota(cmd *m.UpdateOrgQuotaCmd) error {
+func UpdateOrgQuota(ctx context.Context, cmd *m.UpdateOrgQuotaCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 		//Check if quota is already defined in the DB
 		quota := m.Quota{
@@ -125,7 +126,7 @@ func UpdateOrgQuota(cmd *m.UpdateOrgQuotaCmd) error {
 	})
 }
 
-func GetUserQuotaByTarget(query *m.GetUserQuotaByTargetQuery) error {
+func GetUserQuotaByTarget(ctx context.Context, query *m.GetUserQuotaByTargetQuery) error {
 	quota := m.Quota{
 		Target: query.Target,
 		UserId: query.UserId,
@@ -154,7 +155,7 @@ func GetUserQuotaByTarget(query *m.GetUserQuotaByTargetQuery) error {
 	return nil
 }
 
-func GetUserQuotas(query *m.GetUserQuotasQuery) error {
+func GetUserQuotas(ctx context.Context, query *m.GetUserQuotasQuery) error {
 	quotas := make([]*m.Quota, 0)
 	sess := x.Table("quota")
 	if err := sess.Where("user_id=? AND org_id=0", query.UserId).Find(&quotas); err != nil {
@@ -197,7 +198,7 @@ func GetUserQuotas(query *m.GetUserQuotasQuery) error {
 	return nil
 }
 
-func UpdateUserQuota(cmd *m.UpdateUserQuotaCmd) error {
+func UpdateUserQuota(ctx context.Context, cmd *m.UpdateUserQuotaCmd) error {
 	return inTransaction(func(sess *DBSession) error {
 		//Check if quota is already defined in the DB
 		quota := m.Quota{
@@ -227,7 +228,7 @@ func UpdateUserQuota(cmd *m.UpdateUserQuotaCmd) error {
 	})
 }
 
-func GetGlobalQuotaByTarget(query *m.GetGlobalQuotaByTargetQuery) error {
+func GetGlobalQuotaByTarget(ctx context.Context, query *m.GetGlobalQuotaByTargetQuery) error {
 	//get quota used.
 	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s", dialect.Quote(query.Target))
 	resp := make([]*targetCount, 0)

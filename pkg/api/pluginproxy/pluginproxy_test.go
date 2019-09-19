@@ -1,6 +1,7 @@
 package pluginproxy
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -23,7 +24,7 @@ func TestPluginProxy(t *testing.T) {
 
 		setting.SecretKey = "password"
 
-		bus.AddHandler("test", func(query *m.GetPluginSettingByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetPluginSettingByIdQuery) error {
 			key, err := util.Encrypt([]byte("123"), "password")
 			if err != nil {
 				return err
@@ -99,7 +100,7 @@ func TestPluginProxy(t *testing.T) {
 			Method: "GET",
 		}
 
-		bus.AddHandler("test", func(query *m.GetPluginSettingByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetPluginSettingByIdQuery) error {
 			query.Result = &m.PluginSetting{
 				JsonData: map[string]interface{}{
 					"dynamicUrl": "https://dynamic.grafana.com",

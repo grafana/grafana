@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -45,7 +46,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 				defer bus.ClearBusHandlers()
 				createLoginAttemptCmd := &m.CreateLoginAttemptCommand{}
 
-				bus.AddHandler("test", func(cmd *m.CreateLoginAttemptCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.CreateLoginAttemptCommand) error {
 					createLoginAttemptCmd = cmd
 					return nil
 				})
@@ -98,7 +99,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 				defer bus.ClearBusHandlers()
 				createLoginAttemptCmd := (*m.CreateLoginAttemptCommand)(nil)
 
-				bus.AddHandler("test", func(cmd *m.CreateLoginAttemptCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.CreateLoginAttemptCommand) error {
 					createLoginAttemptCmd = cmd
 					return nil
 				})
@@ -118,7 +119,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 }
 
 func withLoginAttempts(loginAttempts int64) {
-	bus.AddHandler("test", func(query *m.GetUserLoginAttemptCountQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetUserLoginAttemptCountQuery) error {
 		query.Result = loginAttempts
 		return nil
 	})

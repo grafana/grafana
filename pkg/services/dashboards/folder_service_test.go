@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -22,16 +23,16 @@ func TestFolderService(t *testing.T) {
 			origNewGuardian := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{})
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = models.NewDashboardFolder("Folder")
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardAlertsCommand) error {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardBeforeSaveCommand) error {
 				cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 				return models.ErrDashboardUpdateAccessDenied
 			})
@@ -83,36 +84,36 @@ func TestFolderService(t *testing.T) {
 			dash := models.NewDashboardFolder("Folder")
 			dash.Id = 1
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = dash
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardAlertsCommand) error {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardBeforeSaveCommand) error {
 				cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpdateDashboardAlertsCommand) error {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.SaveDashboardCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SaveDashboardCommand) error {
 				cmd.Result = dash
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 				return nil
 			})
 
 			provisioningValidated := false
 
-			bus.AddHandler("test", func(query *models.GetProvisionedDashboardDataByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetProvisionedDashboardDataByIdQuery) error {
 				provisioningValidated = true
 				query.Result = nil
 				return nil
@@ -153,7 +154,7 @@ func TestFolderService(t *testing.T) {
 			dashFolder.Id = 1
 			dashFolder.Uid = "uid-abc"
 
-			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDashboardQuery) error {
 				query.Result = dashFolder
 				return nil
 			})

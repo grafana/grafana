@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -20,11 +21,11 @@ var (
 )
 
 func Init() {
-	bus.AddHandler("auth", AuthenticateUser)
+	bus.AddHandlerCtx("auth", AuthenticateUser)
 }
 
 // AuthenticateUser authenticates the user via username & password
-func AuthenticateUser(query *models.LoginUserQuery) error {
+func AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
 	if err := validateLoginAttempts(query.Username); err != nil {
 		return err
 	}

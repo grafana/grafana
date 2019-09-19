@@ -1,13 +1,15 @@
 package dashboards
 
 import (
-	"github.com/grafana/grafana/pkg/util"
+	"context"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -82,7 +84,7 @@ func TestDashboardFileReader(t *testing.T) {
 		origNewDashboardProvisioningService := dashboards.NewProvisioningService
 		fakeService = mockDashboardProvisioningService()
 
-		bus.AddHandler("test", mockGetDashboardQuery)
+		bus.AddHandlerCtx("test", mockGetDashboardQuery)
 		logger := log.New("test.logger")
 
 		Convey("Reading dashboards from disk", func() {
@@ -439,7 +441,7 @@ func (s *fakeDashboardProvisioningService) GetProvisionedDashboardDataByDashboar
 	return nil, nil
 }
 
-func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
+func mockGetDashboardQuery(ctx context.Context, cmd *models.GetDashboardQuery) error {
 	for _, d := range fakeService.getDashboard {
 		if d.Slug == cmd.Slug {
 			cmd.Result = d

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -19,15 +20,15 @@ func TestIntegratedDashboardService(t *testing.T) {
 		var testOrgId int64 = 1
 
 		Convey("Given saved folders and dashboards in organization A", func() {
-			bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardAlertsCommand) error {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpdateDashboardAlertsCommand) error {
 				return nil
 			})
 
-			bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 				cmd.Result = nil
 				return nil
 			})

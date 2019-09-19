@@ -1,6 +1,7 @@
 package search
 
 import (
+	"context"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -17,11 +18,11 @@ type SearchService struct {
 }
 
 func (s *SearchService) Init() error {
-	s.Bus.AddHandler(s.searchHandler)
+	s.Bus.AddHandlerCtx(s.searchHandler)
 	return nil
 }
 
-func (s *SearchService) searchHandler(query *Query) error {
+func (s *SearchService) searchHandler(ctx context.Context, query *Query) error {
 	dashQuery := FindPersistedDashboardsQuery{
 		Title:        query.Title,
 		SignedInUser: query.SignedInUser,

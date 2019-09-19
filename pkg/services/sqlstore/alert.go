@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -14,17 +15,17 @@ import (
 var timeNow = time.Now
 
 func init() {
-	bus.AddHandler("sql", SaveAlerts)
-	bus.AddHandler("sql", HandleAlertsQuery)
-	bus.AddHandler("sql", GetAlertById)
-	bus.AddHandler("sql", GetAllAlertQueryHandler)
-	bus.AddHandler("sql", SetAlertState)
-	bus.AddHandler("sql", GetAlertStatesForDashboard)
-	bus.AddHandler("sql", PauseAlert)
-	bus.AddHandler("sql", PauseAllAlerts)
+	bus.AddHandlerCtx("sql", SaveAlerts)
+	bus.AddHandlerCtx("sql", HandleAlertsQuery)
+	bus.AddHandlerCtx("sql", GetAlertById)
+	bus.AddHandlerCtx("sql", GetAllAlertQueryHandler)
+	bus.AddHandlerCtx("sql", SetAlertState)
+	bus.AddHandlerCtx("sql", GetAlertStatesForDashboard)
+	bus.AddHandlerCtx("sql", PauseAlert)
+	bus.AddHandlerCtx("sql", PauseAllAlerts)
 }
 
-func GetAlertById(query *m.GetAlertByIdQuery) error {
+func GetAlertById(ctx context.Context, query *m.GetAlertByIdQuery) error {
 	alert := m.Alert{}
 	has, err := x.ID(query.Id).Get(&alert)
 	if !has {
@@ -38,7 +39,7 @@ func GetAlertById(query *m.GetAlertByIdQuery) error {
 	return nil
 }
 
-func GetAllAlertQueryHandler(query *m.GetAllAlertsQuery) error {
+func GetAllAlertQueryHandler(ctx context.Context, query *m.GetAllAlertsQuery) error {
 	var alerts []*m.Alert
 	err := x.SQL("select * from alert").Find(&alerts)
 	if err != nil {
@@ -71,7 +72,7 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 	return nil
 }
 
-func HandleAlertsQuery(query *m.GetAlertsQuery) error {
+func HandleAlertsQuery(ctx context.Context, query *m.GetAlertsQuery) error {
 	builder := SqlBuilder{}
 
 	builder.Write(`SELECT
@@ -160,7 +161,7 @@ func deleteAlertDefinition(dashboardId int64, sess *DBSession) error {
 	return nil
 }
 
-func SaveAlerts(cmd *m.SaveAlertsCommand) error {
+func SaveAlerts(ctx context.Context, cmd *m.SaveAlertsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
 		if err != nil {
@@ -269,7 +270,7 @@ func GetAlertsByDashboardId2(dashboardId int64, sess *DBSession) ([]*m.Alert, er
 	return alerts, nil
 }
 
-func SetAlertState(cmd *m.SetAlertStateCommand) error {
+func SetAlertState(ctx context.Context, cmd *m.SetAlertStateCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		alert := m.Alert{}
 
@@ -308,7 +309,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 	})
 }
 
-func PauseAlert(cmd *m.PauseAlertCommand) error {
+func PauseAlert(ctx context.Context, cmd *m.PauseAlertCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if len(cmd.AlertIds) == 0 {
 			return fmt.Errorf("command contains no alertids")
@@ -342,7 +343,7 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 	})
 }
 
-func PauseAllAlerts(cmd *m.PauseAllAlertCommand) error {
+func PauseAllAlerts(ctx context.Context, cmd *m.PauseAllAlertCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var newState string
 		if cmd.Paused {
@@ -360,7 +361,7 @@ func PauseAllAlerts(cmd *m.PauseAllAlertCommand) error {
 	})
 }
 
-func GetAlertStatesForDashboard(query *m.GetAlertStatesForDashboardQuery) error {
+func GetAlertStatesForDashboard(ctx context.Context, query *m.GetAlertStatesForDashboardQuery) error {
 	var rawSql = `SELECT
 	                id,
 	                dashboard_id,

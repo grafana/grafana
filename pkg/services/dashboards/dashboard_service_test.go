@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -46,16 +47,16 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			Convey("When saving a dashboard should validate uid", func() {
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardAlertsCommand) error {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardBeforeSaveCommand) error {
 					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					cmd.Result = nil
 					return nil
 				})
@@ -85,17 +86,17 @@ func TestDashboardService(t *testing.T) {
 
 			Convey("Should return validation error if dashboard is provisioned", func() {
 				provisioningValidated := false
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					provisioningValidated = true
 					cmd.Result = &models.DashboardProvisioning{}
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardAlertsCommand) error {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardBeforeSaveCommand) error {
 					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 					return nil
 				})
@@ -109,12 +110,12 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			Convey("Should return validation error if alert data is invalid", func() {
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					cmd.Result = nil
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardAlertsCommand) error {
 					return xerrors.New("Alert validation error")
 				})
 
@@ -129,26 +130,26 @@ func TestDashboardService(t *testing.T) {
 
 			Convey("Should not return validation error if dashboard is provisioned", func() {
 				provisioningValidated := false
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					provisioningValidated = true
 					cmd.Result = &models.DashboardProvisioning{}
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardAlertsCommand) error {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardBeforeSaveCommand) error {
 					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SaveProvisionedDashboardCommand) error {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpdateDashboardAlertsCommand) error {
 					return nil
 				})
 
@@ -166,26 +167,26 @@ func TestDashboardService(t *testing.T) {
 
 			Convey("Should return validation error if dashboard is provisioned", func() {
 				provisioningValidated := false
-				bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 					provisioningValidated = true
 					cmd.Result = &models.DashboardProvisioning{}
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardAlertsCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardAlertsCommand) error {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.ValidateDashboardBeforeSaveCommand) error {
 					cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.SaveProvisionedDashboardCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.SaveProvisionedDashboardCommand) error {
 					return nil
 				})
 
-				bus.AddHandler("test", func(cmd *models.UpdateDashboardAlertsCommand) error {
+				bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpdateDashboardAlertsCommand) error {
 					return nil
 				})
 
@@ -241,7 +242,7 @@ type Result struct {
 }
 
 func setupDeleteHandlers(provisioned bool) *Result {
-	bus.AddHandler("test", func(cmd *models.GetProvisionedDashboardDataByIdQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetProvisionedDashboardDataByIdQuery) error {
 		if provisioned {
 			cmd.Result = &models.DashboardProvisioning{}
 		} else {
@@ -251,7 +252,7 @@ func setupDeleteHandlers(provisioned bool) *Result {
 	})
 
 	result := &Result{}
-	bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
 		So(cmd.Id, ShouldEqual, 1)
 		So(cmd.OrgId, ShouldEqual, 1)
 		result.deleteWasCalled = true

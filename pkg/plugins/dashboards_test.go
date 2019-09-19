@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -23,7 +24,7 @@ func TestPluginDashboards(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
-		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 			if query.Slug == "nginx-connections" {
 				dash := m.NewDashboard("Nginx Connections")
 				dash.Data.Set("revision", "1.1")
@@ -34,7 +35,7 @@ func TestPluginDashboards(t *testing.T) {
 			return m.ErrDashboardNotFound
 		})
 
-		bus.AddHandler("test", func(query *m.GetDashboardsByPluginIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardsByPluginIdQuery) error {
 			var data = simplejson.New()
 			data.Set("title", "Nginx Connections")
 			data.Set("revision", 22)

@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -9,13 +10,13 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetDashboardVersion)
-	bus.AddHandler("sql", GetDashboardVersions)
-	bus.AddHandler("sql", DeleteExpiredVersions)
+	bus.AddHandlerCtx("sql", GetDashboardVersion)
+	bus.AddHandlerCtx("sql", GetDashboardVersions)
+	bus.AddHandlerCtx("sql", DeleteExpiredVersions)
 }
 
 // GetDashboardVersion gets the dashboard version for the given dashboard ID and version number.
-func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
+func GetDashboardVersion(ctx context.Context, query *m.GetDashboardVersionQuery) error {
 	version := m.DashboardVersion{}
 	has, err := x.Where("dashboard_version.dashboard_id=? AND dashboard_version.version=? AND dashboard.org_id=?", query.DashboardId, query.Version, query.OrgId).
 		Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
@@ -35,7 +36,7 @@ func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
 }
 
 // GetDashboardVersions gets all dashboard versions for the given dashboard ID.
-func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
+func GetDashboardVersions(ctx context.Context, query *m.GetDashboardVersionsQuery) error {
 	if query.Limit == 0 {
 		query.Limit = 1000
 	}
@@ -69,7 +70,7 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 
 const MAX_VERSIONS_TO_DELETE = 100
 
-func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
+func DeleteExpiredVersions(ctx context.Context, cmd *m.DeleteExpiredVersionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		versionsToKeep := setting.DashboardVersionsToKeep
 		if versionsToKeep < 1 {

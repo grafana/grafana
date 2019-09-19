@@ -1,6 +1,8 @@
 package login
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,12 +24,12 @@ type LoginService struct {
 }
 
 func (ls *LoginService) Init() error {
-	ls.Bus.AddHandler(ls.UpsertUser)
+	ls.Bus.AddHandlerCtx(ls.UpsertUser)
 
 	return nil
 }
 
-func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
+func (ls *LoginService) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
 	userQuery := &models.GetUserByAuthInfoQuery{

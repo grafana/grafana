@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -11,13 +12,13 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", AddOrgUser)
-	bus.AddHandler("sql", RemoveOrgUser)
-	bus.AddHandler("sql", GetOrgUsers)
-	bus.AddHandler("sql", UpdateOrgUser)
+	bus.AddHandlerCtx("sql", AddOrgUser)
+	bus.AddHandlerCtx("sql", RemoveOrgUser)
+	bus.AddHandlerCtx("sql", GetOrgUsers)
+	bus.AddHandlerCtx("sql", UpdateOrgUser)
 }
 
-func AddOrgUser(cmd *m.AddOrgUserCommand) error {
+func AddOrgUser(ctx context.Context, cmd *m.AddOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// check if user exists
 		var user m.User
@@ -71,7 +72,7 @@ func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 	})
 }
 
-func UpdateOrgUser(cmd *m.UpdateOrgUserCommand) error {
+func UpdateOrgUser(ctx context.Context, cmd *m.UpdateOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var orgUser m.OrgUser
 		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgId, cmd.UserId).Get(&orgUser)
@@ -94,7 +95,7 @@ func UpdateOrgUser(cmd *m.UpdateOrgUserCommand) error {
 	})
 }
 
-func GetOrgUsers(query *m.GetOrgUsersQuery) error {
+func GetOrgUsers(ctx context.Context, query *m.GetOrgUsersQuery) error {
 	query.Result = make([]*m.OrgUserDTO, 0)
 
 	sess := x.Table("org_user")
@@ -134,7 +135,7 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 	return nil
 }
 
-func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
+func RemoveOrgUser(ctx context.Context, cmd *m.RemoveOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// check if user exists
 		var user m.User

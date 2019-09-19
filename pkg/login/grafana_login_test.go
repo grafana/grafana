@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -124,7 +125,7 @@ func mockPasswordValidation(valid bool, sc *grafanaLoginScenarioContext) {
 }
 
 func (sc *grafanaLoginScenarioContext) getUserByLoginQueryReturns(user *m.User) {
-	bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetUserByLoginQuery) error {
 		if user == nil {
 			return m.ErrUserNotFound
 		}

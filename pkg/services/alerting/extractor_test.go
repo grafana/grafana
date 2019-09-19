@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -26,12 +27,12 @@ func TestAlertRuleExtraction(t *testing.T) {
 		influxDBDs := &models.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB"}
 		prom := &models.DataSource{Id: 17, OrgId: 1, Name: "Prometheus"}
 
-		bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourcesQuery) error {
 			query.Result = []*models.DataSource{defaultDs, graphite2Ds}
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetDataSourceByNameQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *models.GetDataSourceByNameQuery) error {
 			if query.Name == defaultDs.Name {
 				query.Result = defaultDs
 			}

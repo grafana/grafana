@@ -21,10 +21,10 @@ type AlertTestCommand struct {
 }
 
 func init() {
-	bus.AddHandler("alerting", handleAlertTestCommand)
+	bus.AddHandlerCtx("alerting", handleAlertTestCommand)
 }
 
-func handleAlertTestCommand(cmd *AlertTestCommand) error {
+func handleAlertTestCommand(ctx context.Context, cmd *AlertTestCommand) error {
 
 	dash := models.NewDashboardFromJson(cmd.Dashboard)
 

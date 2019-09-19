@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -22,7 +23,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 		fakeDash.HasAcl = false
 		fakeDash.Uid = util.GenerateShortUID()
 
-		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 			query.Result = fakeDash
 			return nil
 		})

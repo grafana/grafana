@@ -9,14 +9,14 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetApiKeys)
-	bus.AddHandler("sql", GetApiKeyById)
-	bus.AddHandler("sql", GetApiKeyByName)
+	bus.AddHandlerCtx("sql", GetApiKeys)
+	bus.AddHandlerCtx("sql", GetApiKeyById)
+	bus.AddHandlerCtx("sql", GetApiKeyByName)
 	bus.AddHandlerCtx("sql", DeleteApiKeyCtx)
-	bus.AddHandler("sql", AddApiKey)
+	bus.AddHandlerCtx("sql", AddApiKey)
 }
 
-func GetApiKeys(query *models.GetApiKeysQuery) error {
+func GetApiKeys(ctx context.Context, query *models.GetApiKeysQuery) error {
 	sess := x.Limit(100, 0).Where("org_id=? and ( expires IS NULL or expires >= ?)",
 		query.OrgId, timeNow().Unix()).Asc("name")
 	if query.IncludeInvalid {
@@ -35,7 +35,7 @@ func DeleteApiKeyCtx(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
 	})
 }
 
-func AddApiKey(cmd *models.AddApiKeyCommand) error {
+func AddApiKey(ctx context.Context, cmd *models.AddApiKeyCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
@@ -69,7 +69,7 @@ func AddApiKey(cmd *models.AddApiKeyCommand) error {
 	})
 }
 
-func GetApiKeyById(query *models.GetApiKeyByIdQuery) error {
+func GetApiKeyById(ctx context.Context, query *models.GetApiKeyByIdQuery) error {
 	var apikey models.ApiKey
 	has, err := x.Id(query.ApiKeyId).Get(&apikey)
 
@@ -83,7 +83,7 @@ func GetApiKeyById(query *models.GetApiKeyByIdQuery) error {
 	return nil
 }
 
-func GetApiKeyByName(query *models.GetApiKeyByNameQuery) error {
+func GetApiKeyByName(ctx context.Context, query *models.GetApiKeyByNameQuery) error {
 	var apikey models.ApiKey
 	has, err := x.Where("org_id=? AND name=?", query.OrgId, query.KeyName).Get(&apikey)
 

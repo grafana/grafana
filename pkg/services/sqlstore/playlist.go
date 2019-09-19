@@ -1,20 +1,22 @@
 package sqlstore
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
-	bus.AddHandler("sql", CreatePlaylist)
-	bus.AddHandler("sql", UpdatePlaylist)
-	bus.AddHandler("sql", DeletePlaylist)
-	bus.AddHandler("sql", SearchPlaylists)
-	bus.AddHandler("sql", GetPlaylist)
-	bus.AddHandler("sql", GetPlaylistItem)
+	bus.AddHandlerCtx("sql", CreatePlaylist)
+	bus.AddHandlerCtx("sql", UpdatePlaylist)
+	bus.AddHandlerCtx("sql", DeletePlaylist)
+	bus.AddHandlerCtx("sql", SearchPlaylists)
+	bus.AddHandlerCtx("sql", GetPlaylist)
+	bus.AddHandlerCtx("sql", GetPlaylistItem)
 }
 
-func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
+func CreatePlaylist(ctx context.Context, cmd *m.CreatePlaylistCommand) error {
 	playlist := m.Playlist{
 		Name:     cmd.Name,
 		Interval: cmd.Interval,
@@ -43,7 +45,7 @@ func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
 	return err
 }
 
-func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
+func UpdatePlaylist(ctx context.Context, cmd *m.UpdatePlaylistCommand) error {
 	playlist := m.Playlist{
 		Id:       cmd.Id,
 		OrgId:    cmd.OrgId,
@@ -94,7 +96,7 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 	return err
 }
 
-func GetPlaylist(query *m.GetPlaylistByIdQuery) error {
+func GetPlaylist(ctx context.Context, query *m.GetPlaylistByIdQuery) error {
 	if query.Id == 0 {
 		return m.ErrCommandValidationFailed
 	}
@@ -107,7 +109,7 @@ func GetPlaylist(query *m.GetPlaylistByIdQuery) error {
 	return err
 }
 
-func DeletePlaylist(cmd *m.DeletePlaylistCommand) error {
+func DeletePlaylist(ctx context.Context, cmd *m.DeletePlaylistCommand) error {
 	if cmd.Id == 0 {
 		return m.ErrCommandValidationFailed
 	}
@@ -127,7 +129,7 @@ func DeletePlaylist(cmd *m.DeletePlaylistCommand) error {
 	})
 }
 
-func SearchPlaylists(query *m.GetPlaylistsQuery) error {
+func SearchPlaylists(ctx context.Context, query *m.GetPlaylistsQuery) error {
 	var playlists = make(m.Playlists, 0)
 
 	sess := x.Limit(query.Limit)
@@ -143,7 +145,7 @@ func SearchPlaylists(query *m.GetPlaylistsQuery) error {
 	return err
 }
 
-func GetPlaylistItem(query *m.GetPlaylistItemsByIdQuery) error {
+func GetPlaylistItem(ctx context.Context, query *m.GetPlaylistItemsByIdQuery) error {
 	if query.PlaylistId == 0 {
 		return m.ErrCommandValidationFailed
 	}

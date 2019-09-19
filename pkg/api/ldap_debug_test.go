@@ -133,7 +133,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 		{Id: 1, Name: "Main Org."},
 	}
 
-	bus.AddHandler("test", func(query *models.SearchOrgsQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchOrgsQuery) error {
 		query.Result = mockOrgSearchResult
 		return nil
 	})
@@ -190,7 +190,7 @@ func TestGetUserFromLDAPApiEndpoint(t *testing.T) {
 		{Id: 1, Name: "Main Org."},
 	}
 
-	bus.AddHandler("test", func(query *models.SearchOrgsQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchOrgsQuery) error {
 		query.Result = mockOrgSearchResult
 		return nil
 	})
@@ -264,12 +264,12 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 		{Id: 1, Name: "Main Org."},
 	}
 
-	bus.AddHandler("test", func(query *models.SearchOrgsQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *models.SearchOrgsQuery) error {
 		query.Result = mockOrgSearchResult
 		return nil
 	})
 
-	bus.AddHandler("test", func(cmd *models.GetTeamsForLDAPGroupCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.GetTeamsForLDAPGroupCommand) error {
 		cmd.Result = []models.TeamOrgGroupDTO{}
 		return nil
 	})
@@ -415,19 +415,19 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 		Login: "ldap-daniel",
 	}
 
-	bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 		require.Equal(t, "ldap-daniel", cmd.ExternalUser.Login)
 		return nil
 	})
 
-	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
 		require.Equal(t, q.Id, int64(34))
 
 		q.Result = &models.User{Login: "ldap-daniel", Id: 34}
 		return nil
 	})
 
-	bus.AddHandler("test", func(q *models.GetAuthInfoQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetAuthInfoQuery) error {
 		require.Equal(t, q.UserId, int64(34))
 		require.Equal(t, q.AuthModule, models.AuthModuleLDAP)
 
@@ -456,7 +456,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 		return &LDAPMock{}
 	}
 
-	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
 		require.Equal(t, q.Id, int64(34))
 
 		return models.ErrUserNotFound
@@ -490,14 +490,14 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 	setting.AdminUser = "ldap-daniel"
 	defer func() { setting.AdminUser = admin }()
 
-	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
 		require.Equal(t, q.Id, int64(34))
 
 		q.Result = &models.User{Login: "ldap-daniel", Id: 34}
 		return nil
 	})
 
-	bus.AddHandler("test", func(q *models.GetAuthInfoQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetAuthInfoQuery) error {
 		require.Equal(t, q.UserId, int64(34))
 		require.Equal(t, q.AuthModule, models.AuthModuleLDAP)
 
@@ -531,26 +531,26 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 
 	userSearchResult = nil
 
-	bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.UpsertUserCommand) error {
 		require.Equal(t, "ldap-daniel", cmd.ExternalUser.Login)
 		return nil
 	})
 
-	bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetUserByIdQuery) error {
 		require.Equal(t, q.Id, int64(34))
 
 		q.Result = &models.User{Login: "ldap-daniel", Id: 34}
 		return nil
 	})
 
-	bus.AddHandler("test", func(q *models.GetExternalUserInfoByLoginQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, q *models.GetExternalUserInfoByLoginQuery) error {
 		assert.Equal(t, "ldap-daniel", q.LoginOrEmail)
 		q.Result = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
 
 		return nil
 	})
 
-	bus.AddHandler("test", func(cmd *models.DisableUserCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *models.DisableUserCommand) error {
 		assert.Equal(t, 34, cmd.UserId)
 		return nil
 	})

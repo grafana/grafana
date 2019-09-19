@@ -2,6 +2,7 @@ package guardian
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -72,7 +73,7 @@ func apiKeyScenario(desc string, t *testing.T, role m.RoleType, fn scenarioFunc)
 func permissionScenario(desc string, dashboardID int64, sc *scenarioContext, permissions []*m.DashboardAclInfoDTO, fn scenarioFunc) {
 	bus.ClearBusHandlers()
 
-	bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 		if query.OrgId != sc.givenUser.OrgId {
 			sc.reportFailure("Invalid organization id for GetDashboardAclInfoListQuery", sc.givenUser.OrgId, query.OrgId)
 		}
@@ -92,7 +93,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext, per
 		}
 	}
 
-	bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetTeamsByUserQuery) error {
 		if query.OrgId != sc.givenUser.OrgId {
 			sc.reportFailure("Invalid organization id for GetTeamsByUserQuery", sc.givenUser.OrgId, query.OrgId)
 		}

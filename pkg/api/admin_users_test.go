@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -20,7 +21,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 			IsGrafanaAdmin: false,
 		}
 
-		bus.AddHandler("test", func(cmd *m.UpdateUserPermissionsCommand) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.UpdateUserPermissionsCommand) error {
 			return m.ErrLastGrafanaAdmin
 		})
 
@@ -31,7 +32,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 	})
 
 	Convey("When a server admin attempts to logout himself from all devices", t, func() {
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			cmd.Result = &m.User{Id: TestUserID}
 			return nil
 		})
@@ -44,7 +45,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 	Convey("When a server admin attempts to logout a non-existing user from all devices", t, func() {
 		userId := int64(0)
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			userId = cmd.Id
 			return m.ErrUserNotFound
 		})
@@ -58,7 +59,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 	Convey("When a server admin attempts to revoke an auth token for a non-existing user", t, func() {
 		userId := int64(0)
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			userId = cmd.Id
 			return m.ErrUserNotFound
 		})
@@ -74,7 +75,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 	Convey("When a server admin gets auth tokens for a non-existing user", t, func() {
 		userId := int64(0)
-		bus.AddHandler("test", func(cmd *m.GetUserByIdQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetUserByIdQuery) error {
 			userId = cmd.Id
 			return m.ErrUserNotFound
 		})
@@ -88,7 +89,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 	Convey("When a server admin attempts to disable/enable external user", t, func() {
 		userId := int64(0)
-		bus.AddHandler("test", func(cmd *m.GetAuthInfoQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.GetAuthInfoQuery) error {
 			userId = cmd.UserId
 			return nil
 		})

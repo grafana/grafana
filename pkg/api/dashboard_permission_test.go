@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -15,7 +16,7 @@ import (
 func TestDashboardPermissionApiEndpoint(t *testing.T) {
 	Convey("Dashboard permissions test", t, func() {
 		Convey("Given dashboard not exists", func() {
-			bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 				return m.ErrDashboardNotFound
 			})
 
@@ -41,7 +42,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
 
 			getDashboardQueryResult := m.NewDashboard("Dash")
-			bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 				query.Result = getDashboardQueryResult
 				return nil
 			})
@@ -82,7 +83,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			})
 
 			getDashboardQueryResult := m.NewDashboard("Dash")
-			bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 				query.Result = getDashboardQueryResult
 				return nil
 			})
@@ -122,7 +123,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			})
 
 			getDashboardQueryResult := m.NewDashboard("Dash")
-			bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 				query.Result = getDashboardQueryResult
 				return nil
 			})
@@ -152,7 +153,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			)
 
 			getDashboardQueryResult := m.NewDashboard("Dash")
-			bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardQuery) error {
 				query.Result = getDashboardQueryResult
 				return nil
 			})
@@ -181,7 +182,7 @@ func callGetDashboardPermissions(sc *scenarioContext) {
 }
 
 func callUpdateDashboardPermissions(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *m.UpdateDashboardAclCommand) error {
+	bus.AddHandlerCtx("test", func(ctx context.Context, cmd *m.UpdateDashboardAclCommand) error {
 		return nil
 	})
 

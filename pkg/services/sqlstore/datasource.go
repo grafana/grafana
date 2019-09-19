@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -14,17 +15,17 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", GetDataSources)
-	bus.AddHandler("sql", GetAllDataSources)
-	bus.AddHandler("sql", AddDataSource)
-	bus.AddHandler("sql", DeleteDataSourceById)
-	bus.AddHandler("sql", DeleteDataSourceByName)
-	bus.AddHandler("sql", UpdateDataSource)
-	bus.AddHandler("sql", GetDataSourceById)
-	bus.AddHandler("sql", GetDataSourceByName)
+	bus.AddHandlerCtx("sql", GetDataSources)
+	bus.AddHandlerCtx("sql", GetAllDataSources)
+	bus.AddHandlerCtx("sql", AddDataSource)
+	bus.AddHandlerCtx("sql", DeleteDataSourceById)
+	bus.AddHandlerCtx("sql", DeleteDataSourceByName)
+	bus.AddHandlerCtx("sql", UpdateDataSource)
+	bus.AddHandlerCtx("sql", GetDataSourceById)
+	bus.AddHandlerCtx("sql", GetDataSourceByName)
 }
 
-func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
+func GetDataSourceById(ctx context.Context, query *m.GetDataSourceByIdQuery) error {
 	metrics.MDBDataSourceQueryByID.Inc()
 
 	datasource := m.DataSource{OrgId: query.OrgId, Id: query.Id}
@@ -42,7 +43,7 @@ func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
 	return err
 }
 
-func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
+func GetDataSourceByName(ctx context.Context, query *m.GetDataSourceByNameQuery) error {
 	datasource := m.DataSource{OrgId: query.OrgId, Name: query.Name}
 	has, err := x.Get(&datasource)
 
@@ -54,21 +55,21 @@ func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
 	return err
 }
 
-func GetDataSources(query *m.GetDataSourcesQuery) error {
+func GetDataSources(ctx context.Context, query *m.GetDataSourcesQuery) error {
 	sess := x.Limit(5000, 0).Where("org_id=?", query.OrgId).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
 	return sess.Find(&query.Result)
 }
 
-func GetAllDataSources(query *m.GetAllDataSourcesQuery) error {
+func GetAllDataSources(ctx context.Context, query *m.GetAllDataSourcesQuery) error {
 	sess := x.Limit(5000, 0).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
 	return sess.Find(&query.Result)
 }
 
-func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
+func DeleteDataSourceById(ctx context.Context, cmd *m.DeleteDataSourceByIdCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM data_source WHERE id=? and org_id=?"
 		result, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
@@ -78,7 +79,7 @@ func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
 	})
 }
 
-func DeleteDataSourceByName(cmd *m.DeleteDataSourceByNameCommand) error {
+func DeleteDataSourceByName(ctx context.Context, cmd *m.DeleteDataSourceByNameCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM data_source WHERE name=? and org_id=?"
 		result, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
@@ -88,7 +89,7 @@ func DeleteDataSourceByName(cmd *m.DeleteDataSourceByNameCommand) error {
 	})
 }
 
-func AddDataSource(cmd *m.AddDataSourceCommand) error {
+func AddDataSource(ctx context.Context, cmd *m.AddDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		existing := m.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
@@ -146,7 +147,7 @@ func updateIsDefaultFlag(ds *m.DataSource, sess *DBSession) error {
 	return nil
 }
 
-func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
+func UpdateDataSource(ctx context.Context, cmd *m.UpdateDataSourceCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()

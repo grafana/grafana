@@ -1,6 +1,8 @@
 package plugins
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -105,7 +107,7 @@ func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
 	}
 }
 
-func handlePluginStateChanged(event *m.PluginStateChangedEvent) error {
+func handlePluginStateChanged(ctx context.Context, event *m.PluginStateChangedEvent) error {
 	plog.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
 
 	if event.Enabled {

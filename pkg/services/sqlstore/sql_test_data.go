@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"math/rand"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", InsertSqlTestData)
+	bus.AddHandlerCtx("sql", InsertSqlTestData)
 }
 
 func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, sess *DBSession) error {
@@ -44,7 +45,7 @@ func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, s
 	return nil
 }
 
-func InsertSqlTestData(cmd *m.InsertSqlTestDataCommand) error {
+func InsertSqlTestData(ctx context.Context, cmd *m.InsertSqlTestDataCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var err error
 

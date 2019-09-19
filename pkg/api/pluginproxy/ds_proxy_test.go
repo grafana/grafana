@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -396,7 +397,7 @@ func TestDSRouteRule(t *testing.T) {
 				},
 			}
 
-			bus.AddHandler("test", func(query *m.GetAuthInfoQuery) error {
+			bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetAuthInfoQuery) error {
 				query.Result = &m.UserAuth{
 					Id:                1,
 					UserId:            1,

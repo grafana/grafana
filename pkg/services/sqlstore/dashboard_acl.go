@@ -1,16 +1,18 @@
 package sqlstore
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
-	bus.AddHandler("sql", UpdateDashboardAcl)
-	bus.AddHandler("sql", GetDashboardAclInfoList)
+	bus.AddHandlerCtx("sql", UpdateDashboardAcl)
+	bus.AddHandlerCtx("sql", GetDashboardAclInfoList)
 }
 
-func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
+func UpdateDashboardAcl(ctx context.Context, cmd *m.UpdateDashboardAclCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		// delete existing items
 		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", cmd.DashboardId)
@@ -45,7 +47,7 @@ func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
 // 1) Permissions for the dashboard
 // 2) permissions for its parent folder
 // 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
-func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
+func GetDashboardAclInfoList(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 	var err error
 
 	falseStr := dialect.BooleanStr(false)

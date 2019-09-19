@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"context"
 	"encoding/base64"
 	"time"
 
@@ -13,15 +14,15 @@ import (
 var getTime = time.Now
 
 func init() {
-	bus.AddHandler("sql", GetUserByAuthInfo)
-	bus.AddHandler("sql", GetExternalUserInfoByLogin)
-	bus.AddHandler("sql", GetAuthInfo)
-	bus.AddHandler("sql", SetAuthInfo)
-	bus.AddHandler("sql", UpdateAuthInfo)
-	bus.AddHandler("sql", DeleteAuthInfo)
+	bus.AddHandlerCtx("sql", GetUserByAuthInfo)
+	bus.AddHandlerCtx("sql", GetExternalUserInfoByLogin)
+	bus.AddHandlerCtx("sql", GetAuthInfo)
+	bus.AddHandlerCtx("sql", SetAuthInfo)
+	bus.AddHandlerCtx("sql", UpdateAuthInfo)
+	bus.AddHandlerCtx("sql", DeleteAuthInfo)
 }
 
-func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
+func GetUserByAuthInfo(ctx context.Context, query *models.GetUserByAuthInfoQuery) error {
 	user := &models.User{}
 	has := false
 	var err error
@@ -116,7 +117,7 @@ func GetUserByAuthInfo(query *models.GetUserByAuthInfoQuery) error {
 	return nil
 }
 
-func GetExternalUserInfoByLogin(query *models.GetExternalUserInfoByLoginQuery) error {
+func GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
 	err := bus.Dispatch(&userQuery)
 	if err != nil {
@@ -140,7 +141,7 @@ func GetExternalUserInfoByLogin(query *models.GetExternalUserInfoByLoginQuery) e
 	return nil
 }
 
-func GetAuthInfo(query *models.GetAuthInfoQuery) error {
+func GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
 	userAuth := &models.UserAuth{
 		UserId:     query.UserId,
 		AuthModule: query.AuthModule,
@@ -174,7 +175,7 @@ func GetAuthInfo(query *models.GetAuthInfoQuery) error {
 	return nil
 }
 
-func SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
+func SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		authUser := &models.UserAuth{
 			UserId:     cmd.UserId,
@@ -208,7 +209,7 @@ func SetAuthInfo(cmd *models.SetAuthInfoCommand) error {
 	})
 }
 
-func UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error {
+func UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		authUser := &models.UserAuth{
 			UserId:     cmd.UserId,
@@ -247,7 +248,7 @@ func UpdateAuthInfo(cmd *models.UpdateAuthInfoCommand) error {
 	})
 }
 
-func DeleteAuthInfo(cmd *models.DeleteAuthInfoCommand) error {
+func DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		_, err := sess.Delete(cmd.UserAuth)
 		return err

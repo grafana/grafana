@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -120,12 +121,12 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 			{Role: &editorRole, Permission: m.PERMISSION_EDIT},
 		}
 
-		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
+		bus.AddHandlerCtx("test", func(ctx context.Context, query *m.GetTeamsByUserQuery) error {
 			query.Result = []*m.TeamDTO{}
 			return nil
 		})
