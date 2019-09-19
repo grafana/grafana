@@ -17,7 +17,7 @@ const getStyles = memoizeOne(() => {
     logsEnterActive: css`
       label: logsEnterActive;
       opacity: 1;
-      transition: opacity ${transitionDuration}ms;
+      transition: opacity ${transitionDuration}ms ease-out 100ms;
     `,
     logsExit: css`
       label: logsExit;
@@ -29,7 +29,7 @@ const getStyles = memoizeOne(() => {
     logsExitActive: css`
       label: logsExitActive;
       opacity: 0;
-      transition: opacity ${transitionDuration}ms;
+      transition: opacity ${transitionDuration}ms ease-out 100ms;
     `,
   };
 });
@@ -51,7 +51,7 @@ export function LogsCrossFadeTransition(props: Props) {
       in={visible}
       mountOnEnter={true}
       unmountOnExit={true}
-      timeout={transitionDuration}
+      timeout={transitionDuration + 100}
       classNames={{
         enter: styles.logsEnter,
         enterActive: styles.logsEnterActive,

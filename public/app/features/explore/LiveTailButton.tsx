@@ -75,7 +75,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       label: stopButtonEnterActive;
       opacity: 1;
       width: 32px;
-      transition: opacity 500ms, width 500ms;
+      transition: opacity 500ms ease-in 50ms, width 500ms ease-in 50ms;
     `,
     stopButtonExit: css`
       label: stopButtonExit;
@@ -87,7 +87,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       label: stopButtonExitActive;
       opacity: 0;
       width: 0;
-      transition: opacity 500ms, width 500ms;
+      transition: opacity 500ms ease-in 50ms, width 500ms ease-in 50ms;
     `,
   };
 });
