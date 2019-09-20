@@ -1,8 +1,15 @@
 import { Task } from '../tasks/task';
 import chalk from 'chalk';
 
-export const execTask = <TOptions>(task: Task<TOptions>) => async (options: TOptions) => {
-  console.log(chalk.yellow(`Running ${chalk.bold(task.name)} task`));
+interface TaskBasicOptions {
+  // Don't print task details when running
+  silent?: boolean;
+}
+
+export const execTask = <TOptions>(task: Task<TOptions>) => async (options: TOptions & TaskBasicOptions) => {
+  if (!options.silent) {
+    console.log(chalk.yellow(`Running ${chalk.bold(task.name)} task`));
+  }
   task.setOptions(options);
   try {
     console.group();
