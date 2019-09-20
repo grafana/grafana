@@ -3,9 +3,13 @@ package multildap
 import (
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 )
+
+// logger to log
+var logger = log.New("ldap")
 
 // GetConfig gets LDAP config
 var GetConfig = ldap.GetConfig
@@ -119,12 +123,18 @@ func (multiples *MultiLDAP) Login(query *models.LoginUserQuery) (
 			return user, nil
 		}
 
-		// Continue if we couldn't find the user
-		if err == ErrCouldNotFindUser {
-			continue
-		}
-
 		if err != nil {
+
+			if isSilentError(err) {
+				logger.Debug(
+					"unable to login with LDAP - skipping server",
+					"host", config.Host,
+					"port", config.Port,
+					"error", err,
+				)
+				continue
+			}
+
 			return nil, err
 		}
 	}
@@ -203,4 +213,18 @@ func (multiples *MultiLDAP) Users(logins []string) (
 	}
 
 	return result, nil
+}
+
+// isSilentError evaluates an error and tells whenever we should fail the LDAP request
+// immediately or if we should continue into other LDAP servers
+func isSilentError(err error) bool {
+	continueErrs := []error{ErrInvalidCredentials, ErrCouldNotFindUser}
+
+	for _, cerr := range continueErrs {
+		if err == cerr {
+			return true
+		}
+	}
+
+	return false
 }
