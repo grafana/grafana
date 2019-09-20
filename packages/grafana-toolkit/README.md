@@ -154,7 +154,7 @@ import { loadPluginCss } from '@grafana/runtime';
 
 loadPluginCss({
   dark: 'plugins/<YOUR-PLUGIN-NAME>/styles/dark.css',
-  light: 'plugins/<YOUR-PLUGIN-NAME>/styles/light.css',
+  light: 'plugins/<YOUR-PLUGIN-ID>/styles/light.css',
 });
 ```
 
