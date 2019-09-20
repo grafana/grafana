@@ -220,11 +220,11 @@ export class GraphiteDatasource {
     // exists for the specified range
     if (roundUp) {
       if (date.get('s')) {
-        date.add(1, 's');
+        date.add(1, 'm');
       }
     } else if (roundUp === false) {
       if (date.get('s')) {
-        date.subtract(1, 's');
+        date.subtract(1, 'm');
       }
     }
 
