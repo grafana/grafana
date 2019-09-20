@@ -152,9 +152,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 
   componentDidUpdate(prevProps: PromQueryFieldProps) {
-    const { queryResponse } = this.props;
+    const { data } = this.props;
 
-    if (queryResponse && prevProps.queryResponse && prevProps.queryResponse.series !== queryResponse.series) {
+    if (data && prevProps.data && prevProps.data.series !== data.series) {
       this.refreshHint();
     }
 
@@ -175,16 +175,14 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 
   refreshHint = () => {
-    const { datasource, query, queryResponse } = this.props;
+    const { datasource, query, data } = this.props;
 
-    if (!queryResponse || queryResponse.series.length === 0) {
+    if (!data || data.series.length === 0) {
       this.setState({ hint: null });
       return;
     }
 
-    const result = isDataFrame(queryResponse.series[0])
-      ? queryResponse.series.map(toLegacyResponseData)
-      : queryResponse.series;
+    const result = isDataFrame(data.series[0]) ? data.series.map(toLegacyResponseData) : data.series;
     const hints = datasource.getQueryHints(query, result);
     const hint = hints && hints.length > 0 ? hints[0] : null;
     this.setState({ hint });
@@ -297,12 +295,12 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   };
 
   render() {
-    const { queryResponse, query, datasourceStatus } = this.props;
+    const { data, query, datasourceStatus } = this.props;
     const { metricsOptions, syntaxLoaded, hint } = this.state;
     const cleanText = this.languageProvider ? this.languageProvider.cleanText : undefined;
     const chooserText = getChooserText(syntaxLoaded, datasourceStatus);
     const buttonDisabled = !syntaxLoaded || datasourceStatus === DataSourceStatus.Disconnected;
-    const showError = queryResponse && queryResponse.error && queryResponse.error.refId === query.refId;
+    const showError = data && data.error && data.error.refId === query.refId;
 
     return (
       <>
@@ -329,7 +327,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
             />
           </div>
         </div>
-        {showError ? <div className="prom-query-field-info text-error">{queryResponse.error.message}</div> : null}
+        {showError ? <div className="prom-query-field-info text-error">{data.error.message}</div> : null}
         {hint ? (
           <div className="prom-query-field-info text-warning">
             {hint.label}{' '}

@@ -282,7 +282,7 @@ export interface QueryEditorProps<
   /*
    * Contains query response filtered by refId and possible query error
    */
-  queryResponse?: PanelData;
+  data?: PanelData;
 }
 
 export enum DataSourceStatus {
