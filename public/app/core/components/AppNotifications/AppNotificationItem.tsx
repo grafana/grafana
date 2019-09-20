@@ -27,8 +27,7 @@ export default class AppNotificationItem extends Component<Props> {
         severity={appNotification.severity}
         title={appNotification.title}
         children={appNotification.text}
-        onRemove={true}
-        onButtonClick={() => onClearNotification(appNotification.id)}
+        onRemove={() => onClearNotification(appNotification.id)}
       />
     );
   }

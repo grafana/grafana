@@ -7,7 +7,7 @@ interface AlertProps {
   title: string;
   buttonText?: string;
   onButtonClick?: (event: React.MouseEvent) => void;
-  onRemove?: boolean;
+  onRemove?: (event: React.MouseEvent) => void;
   severity?: AlertVariant;
   children?: ReactNode;
 }
@@ -45,12 +45,11 @@ export const Alert: FC<AlertProps> = ({ title, buttonText, onButtonClick, onRemo
         </div>
         {/* If onRemove is specified , giving preference to onRemove */}
         {onRemove && (
-          <button type="button" className="alert-close" onClick={onButtonClick}>
+          <button type="button" className="alert-close" onClick={onRemove}>
             <i className="fa fa fa-remove" />
           </button>
         )}
-        {/* If onRemove is not specified and buttonText is specified, showing Button Text */}
-        {!onRemove && buttonText && (
+        {onButtonClick && (
           <button type="button" className="btn btn-outline-danger" onClick={onButtonClick}>
             {buttonText}
           </button>

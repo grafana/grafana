@@ -110,8 +110,7 @@ export class LdapUserPage extends PureComponent<Props, State> {
                 title={userError.title}
                 severity={AppNotificationSeverity.Error}
                 children={userError.body}
-                onRemove
-                onButtonClick={this.onClearUserError}
+                onRemove={this.onClearUserError}
               />
             </div>
           )}
