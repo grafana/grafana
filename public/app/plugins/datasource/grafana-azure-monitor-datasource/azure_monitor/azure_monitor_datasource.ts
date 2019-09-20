@@ -79,7 +79,7 @@ export default class AzureMonitorDatasource {
       intervalMs: options.intervalMs,
       datasourceId: this.id,
       subscription: this.templateSrv.replace(target.subscription || this.subscriptionId, options.scopedVars),
-      subscriptions: target.subscriptions.map((s: string) => this.templateSrv.replace(s, options.scopedVars)),
+      subscriptions: (target.subscriptions || []).map((s: string) => this.templateSrv.replace(s, options.scopedVars)),
       queryType: 'Azure Monitor',
       type: 'timeSeriesQuery',
       raw: false,

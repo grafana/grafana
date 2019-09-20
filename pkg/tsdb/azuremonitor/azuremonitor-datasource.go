@@ -37,6 +37,11 @@ var (
 	defaultAllowedIntervalsMS = []int64{60000, 300000, 900000, 1800000, 3600000, 21600000, 43200000, 86400000}
 )
 
+const (
+	singleResource = "singleResource"
+	crossResource  = "crossResource"
+)
+
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
@@ -101,19 +106,19 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		var azureMonitorData AzureMonitorData
 
 		if azureMonitorTarget.QueryMode == "" {
-			azureMonitorTarget.QueryMode = "singleResource"
+			azureMonitorTarget.QueryMode = singleResource
 			azureMonitorData = azureMonitorTarget.AzureMonitorData
 		} else {
 			azureMonitorData = azureMonitorTarget.Data[azureMonitorTarget.QueryMode]
 		}
 
-		if azureMonitorTarget.QueryMode == "singleResource" {
-			azQuery, err := e.buildSingleQuery(query, &azureMonitorData, startTime, endTime, query.Model.Get("subscription").MustString(), "singleResource")
+		if azureMonitorTarget.QueryMode == singleResource {
+			azQuery, err := e.buildSingleQuery(query, &azureMonitorData, startTime, endTime, query.Model.Get("subscription").MustString(), azureMonitorTarget.QueryMode)
 			if err != nil {
 				return nil, err
 			}
 			azureMonitorQueries = append(azureMonitorQueries, &azQuery)
-		} else if azureMonitorTarget.QueryMode == "crossResource" {
+		} else if azureMonitorTarget.QueryMode == crossResource {
 			azQueries, err := e.buildMultipleResourcesQueries(query, &azureMonitorData, startTime, endTime)
 			if err != nil {
 				return nil, err
@@ -161,7 +166,7 @@ func (e *AzureMonitorDatasource) buildSingleQuery(query *tsdb.Query, azureMonito
 	params.Add("aggregation", azureMonitorData.Aggregation)
 	params.Add("metricnames", azureMonitorData.MetricName)
 
-	if queryMode == "singleResource" && azureMonitorData.MetricNamespace != "" {
+	if queryMode == singleResource && azureMonitorData.MetricNamespace != "" {
 		params.Add("metricnamespace", azureMonitorData.MetricNamespace)
 	}
 
