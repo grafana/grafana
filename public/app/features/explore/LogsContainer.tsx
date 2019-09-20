@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { DataSourceApi, Collapse } from '@grafana/ui';
+import { DataSourceApi, Collapse, RefreshPicker } from '@grafana/ui';
 
 import {
   RawTimeRange,
@@ -26,8 +26,8 @@ import {
 import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
-import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { Logs } from './Logs';
+import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
@@ -65,7 +65,8 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
 
   onStopLive = () => {
     const { exploreId } = this.props;
-    this.props.stopLive({ exploreId, refreshInterval: offOption.value });
+    this.onPause();
+    this.props.stopLive({ exploreId, refreshInterval: RefreshPicker.offOption.value });
   };
 
   onPause = () => {
@@ -117,43 +118,44 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       isLive,
     } = this.props;
 
-    if (isLive) {
-      return (
-        <Collapse label="Logs" loading={false} isOpen>
-          <LiveLogsWithTheme
-            logsResult={logsResult}
-            timeZone={timeZone}
-            stopLive={this.onStopLive}
-            isPaused={this.props.isPaused}
-            onPause={this.onPause}
-            onResume={this.onResume}
-          />
-        </Collapse>
-      );
-    }
-
     return (
-      <Collapse label="Logs" loading={loading} isOpen>
-        <Logs
-          dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
-          data={logsResult}
-          dedupedData={dedupedResult}
-          highlighterExpressions={logsHighlighterExpressions}
-          loading={loading}
-          onChangeTime={this.onChangeTime}
-          onClickLabel={onClickLabel}
-          onStartScanning={onStartScanning}
-          onStopScanning={onStopScanning}
-          onDedupStrategyChange={this.handleDedupStrategyChange}
-          onToggleLogLevel={this.handleToggleLogLevel}
-          absoluteRange={absoluteRange}
-          timeZone={timeZone}
-          scanning={scanning}
-          scanRange={range.raw}
-          width={width}
-          getRowContext={this.getLogRowContext}
-        />
-      </Collapse>
+      <>
+        <LogsCrossFadeTransition visible={isLive}>
+          <Collapse label="Logs" loading={false} isOpen>
+            <LiveLogsWithTheme
+              logsResult={logsResult}
+              timeZone={timeZone}
+              stopLive={this.onStopLive}
+              isPaused={this.props.isPaused}
+              onPause={this.onPause}
+              onResume={this.onResume}
+            />
+          </Collapse>
+        </LogsCrossFadeTransition>
+        <LogsCrossFadeTransition visible={!isLive}>
+          <Collapse label="Logs" loading={loading} isOpen>
+            <Logs
+              dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
+              data={logsResult}
+              dedupedData={dedupedResult}
+              highlighterExpressions={logsHighlighterExpressions}
+              loading={loading}
+              onChangeTime={this.onChangeTime}
+              onClickLabel={onClickLabel}
+              onStartScanning={onStartScanning}
+              onStopScanning={onStopScanning}
+              onDedupStrategyChange={this.handleDedupStrategyChange}
+              onToggleLogLevel={this.handleToggleLogLevel}
+              absoluteRange={absoluteRange}
+              timeZone={timeZone}
+              scanning={scanning}
+              scanRange={range.raw}
+              width={width}
+              getRowContext={this.getLogRowContext}
+            />
+          </Collapse>
+        </LogsCrossFadeTransition>
+      </>
     );
   }
 }

@@ -18,7 +18,7 @@ weight = 6
 > Viewing Loki data in dashboard panels is not supported yet, but is being worked on.
 
 Grafana ships with built-in support for Loki, Grafana's log aggregation system.
-Just add it as a datasource and you are ready to query your log data in [Explore](/features/explore).
+Just add it as a data source and you are ready to query your log data in [Explore](/features/explore).
 
 ## Adding the data source to Grafana
 
@@ -31,8 +31,8 @@ Just add it as a datasource and you are ready to query your log data in [Explore
 
 | Name            | Description                                                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| _Name_          | The datasource name. This is how you refer to the datasource in panels, queries, and Explore.                                                 |
-| _Default_       | Default datasource means that it will be pre-selected for new panels.                                                                         |
+| _Name_          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                                 |
+| _Default_       | Default data source means that it will be pre-selected for new panels.                                                                         |
 | _URL_           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
 | _Maximum lines_ | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
 
@@ -117,10 +117,10 @@ Template variables are not yet supported by Loki.
 
 Annotations are not yet supported by Loki.
 
-## Configure the Datasource with Provisioning
+## Configure the data source with provisioning
 
-You can set up the datasource via config files with Grafana's provisioning system.
-You can read more about how it works and all the settings you can set for datasources on the [provisioning docs page](/administration/provisioning/#datasources)
+You can set up the data source via config files with Grafana's provisioning system.
+You can read more about how it works and all the settings you can set for data sources on the [provisioning docs page](/administration/provisioning/#datasources)
 
 Here is an example:
 

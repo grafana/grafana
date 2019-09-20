@@ -13,11 +13,11 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
 ## Installation
 
-Head to [docs.grafana.org](http://docs.grafana.org/installation/) for documentation or [download](https://grafana.com/get) to get the latest release.
+Head to [docs.grafana.org](http://docs.grafana.org/installation/) for documentation or [grafana.com/get](https://grafana.com/get) to download the latest release.
 
 ## Documentation & Support
 
-Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
+Be sure to read the [Getting Started](http://docs.grafana.org/guides/gettingstarted/) guide and the other feature guides.
 
 ## Run from master
 
@@ -202,7 +202,7 @@ Debugging all end-to-end tests (BROWSER=1 starts the browser and SLOWMO=1 delays
 ENV BROWSER=1 SLOWMO=1 yarn e2e-tests
 ```
 
-### Datasource and dashboard provisioning
+### Data source and dashboard provisioning
 
 [Here](https://github.com/grafana/grafana/tree/master/devenv) you can find helpful scripts and docker-compose setup
 that will populate your dev environment for quicker testing and experimenting.

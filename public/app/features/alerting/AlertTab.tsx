@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
-import { Button } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
 
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -12,7 +12,6 @@ import { EditorTabBody, EditorToolbarView } from '../dashboard/panel_editor/Edit
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
-import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
@@ -199,7 +198,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
       <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
         <>
           {alert && hasTransformations && (
-            <AlertBox
+            <Alert
               severity={AppNotificationSeverity.Error}
               title="Transformations are not supported in alert queries"
             />

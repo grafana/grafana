@@ -88,7 +88,13 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	pn.log.Info("Notifying Pagerduty", "event_type", eventType)
 
 	payloadJSON := simplejson.New()
-	payloadJSON.Set("summary", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
+
+	summary := evalContext.Rule.Name + " - " + evalContext.Rule.Message
+	if len(summary) > 1024 {
+		summary = summary[0:1024]
+	}
+	payloadJSON.Set("summary", summary)
+
 	if hostname, err := os.Hostname(); err == nil {
 		payloadJSON.Set("source", hostname)
 	}

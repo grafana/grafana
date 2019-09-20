@@ -38,6 +38,7 @@ export function loadLdapState(): ThunkResult<void> {
       const connectionInfo = await getLdapState();
       dispatch(ldapConnectionInfoLoadedAction(connectionInfo));
     } catch (error) {
+      error.isHandled = true;
       const ldapError = {
         title: error.data.message,
         body: error.data.error,
@@ -63,6 +64,7 @@ export function loadUserMapping(username: string): ThunkResult<void> {
       const userInfo = await getUserInfo(username);
       dispatch(userMappingInfoLoadedAction(userInfo));
     } catch (error) {
+      error.isHandled = true;
       const userError = {
         title: error.data.message,
         body: error.data.error,
@@ -106,6 +108,7 @@ export function loadLdapUserInfo(userId: number): ThunkResult<void> {
       dispatch(loadUserSessions(userId));
       dispatch(loadUserMapping(user.login));
     } catch (error) {
+      error.isHandled = true;
       const userError = {
         title: error.data.message,
         body: error.data.error,
