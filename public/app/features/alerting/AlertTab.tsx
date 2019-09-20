@@ -25,7 +25,7 @@ interface Props {
   angularPanel?: AngularComponent;
   dashboard: DashboardModel;
   panel: PanelModel;
-  changePanelEditorTab?: typeof changePanelEditorTab;
+  changePanelEditorTab: typeof changePanelEditorTab;
 }
 
 interface State {
@@ -153,10 +153,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
 
   switchToQueryTab = () => {
     const { changePanelEditorTab } = this.props;
-
-    if (changePanelEditorTab) {
-      changePanelEditorTab(getPanelEditorTab(PanelEditorTabIds.Queries));
-    }
+    changePanelEditorTab(getPanelEditorTab(PanelEditorTabIds.Queries));
   };
 
   renderValidationMessage = () => {

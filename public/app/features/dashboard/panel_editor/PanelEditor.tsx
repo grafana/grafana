@@ -21,11 +21,11 @@ interface PanelEditorProps {
   plugin: PanelPlugin;
   angularPanel?: AngularComponent;
   onPluginTypeChange: (newType: PanelPluginMeta) => void;
-  activeTab?: PanelEditorTabIds;
-  tabs?: PanelEditorTab[];
-  refreshPanelEditor?: typeof refreshPanelEditor;
-  panelEditorCleanUp?: typeof panelEditorCleanUp;
-  changePanelEditorTab?: typeof changePanelEditorTab;
+  activeTab: PanelEditorTabIds;
+  tabs: PanelEditorTab[];
+  refreshPanelEditor: typeof refreshPanelEditor;
+  panelEditorCleanUp: typeof panelEditorCleanUp;
+  changePanelEditorTab: typeof changePanelEditorTab;
 }
 
 class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
@@ -39,17 +39,11 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
 
   componentWillUnmount(): void {
     const { panelEditorCleanUp } = this.props;
-    if (panelEditorCleanUp) {
-      panelEditorCleanUp();
-    }
+    panelEditorCleanUp();
   }
 
   refreshFromState = (meta?: PanelPluginMeta) => {
     const { refreshPanelEditor, plugin } = this.props;
-    if (!refreshPanelEditor) {
-      return;
-    }
-
     meta = meta || plugin.meta;
 
     refreshPanelEditor({
@@ -61,11 +55,9 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
 
   onChangeTab = (tab: PanelEditorTab) => {
     const { changePanelEditorTab } = this.props;
-    if (changePanelEditorTab) {
-      // Angular Query Components can potentially refresh the PanelModel
-      // onBlur so this makes sure we change tab after that
-      setTimeout(() => changePanelEditorTab(tab), 10);
-    }
+    // Angular Query Components can potentially refresh the PanelModel
+    // onBlur so this makes sure we change tab after that
+    setTimeout(() => changePanelEditorTab(tab), 10);
   };
 
   onPluginTypeChange = (newType: PanelPluginMeta) => {
