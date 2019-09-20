@@ -13,20 +13,27 @@ import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
 import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
-import { AppNotificationSeverity } from 'app/types';
+import { AppNotificationSeverity, StoreState } from 'app/types';
 import { getAlertingValidationMessage } from './getAlertingValidationMessage';
+import { Button } from '@grafana/ui';
+import { css } from 'emotion';
+import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
+import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
+import { hot } from 'react-hot-loader';
+import { connect } from 'react-redux';
 
 interface Props {
   angularPanel?: AngularComponent;
   dashboard: DashboardModel;
   panel: PanelModel;
+  changePanelEditorTab?: typeof changePanelEditorTab;
 }
 
 interface State {
   validatonMessage: string;
 }
 
-export class AlertTab extends PureComponent<Props, State> {
+class UnConnectedAlertTab extends PureComponent<Props, State> {
   element: any;
   component: AngularComponent;
   panelCtrl: any;
@@ -145,17 +152,42 @@ export class AlertTab extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
+  switchToQueryTab = () => {
+    const { changePanelEditorTab } = this.props;
+
+    if (changePanelEditorTab) {
+      changePanelEditorTab(getPanelEditorTab(PanelEditorTabIds.Queries));
+    }
+  };
+
+  renderValidationMessage = () => {
+    const { validatonMessage } = this.state;
+
+    return (
+      <div
+        className={css`
+          width: 508px;
+          margin: 128px auto;
+        `}
+      >
+        <h2>{validatonMessage}</h2>
+        <br />
+        <div className="gf-form-group">
+          <Button size={'md'} variant={'secondary'} icon="fa fa-arrow-left" onClick={this.switchToQueryTab}>
+            Go back to Queries
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   render() {
     const { alert, transformations } = this.props.panel;
     const { validatonMessage } = this.state;
     const hasTransformations = transformations && transformations.length;
 
     if (!alert && validatonMessage) {
-      return (
-        <EditorTabBody heading="Alert">
-          <AlertBox severity={AppNotificationSeverity.Warning} title={validatonMessage} />
-        </EditorTabBody>
-      );
+      return this.renderValidationMessage();
     }
 
     const toolbarItems = alert ? [this.stateHistory(), this.testRule(), this.deleteAlert()] : [];
@@ -184,3 +216,14 @@ export class AlertTab extends PureComponent<Props, State> {
     );
   }
 }
+
+export const mapStateToProps = (state: StoreState) => ({});
+
+const mapDispatchToProps = { changePanelEditorTab };
+
+export const AlertTab = hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(UnConnectedAlertTab)
+);
