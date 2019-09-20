@@ -153,7 +153,7 @@ In order for Grafana to pickup up you theme stylesheets you need to use `loadPlu
 import { loadPluginCss } from '@grafana/runtime';
 
 loadPluginCss({
-  dark: 'plugins/<YOUR-PLUGIN-NAME>/styles/dark.css',
+  dark: 'plugins/<YOUR-PLUGIN-ID>/styles/dark.css',
   light: 'plugins/<YOUR-PLUGIN-ID>/styles/light.css',
 });
 ```
