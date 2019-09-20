@@ -24,9 +24,9 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 
 ### File naming conventions
 
-Files that are displayed in the help system should have names that are all lowercase, no spaces. Use hyphens instead of spaces. Example: glossary.md
-
-Files that are internal references only should be all uppercase except the file extension. Example: CONTRIBUTING.md
+- Files that are displayed in the help system should have names that are all lowercase, no spaces. Use hyphens instead of spaces. Example: glossary.md
+- Documentation file names should match the title.
+- Internal reference file names should be all uppercase except the file extension. Example: CONTRIBUTING.md
 
 ### Headings
 
