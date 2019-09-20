@@ -2,23 +2,27 @@
 > **@grafana/toolkit is currently in ALPHA**. Core API is unstable and can be a subject of breaking changes!
 
 # grafana-toolkit
-grafana-toolkit is CLI that enables efficient development of Grafana extensions
+grafana-toolkit is CLI that enables efficient development of Grafana plugins
 
 
 ## Rationale
-Historically, creating Grafana extension was an exercise of reverse engineering and ceremony around testing, developing and eventually building the plugin. We want to help our community to focus on the core value of their plugins rather than all the setup required to develop an extension.
+Historically, creating Grafana plugin was an exercise of reverse engineering and ceremony around testing, developing and eventually building the plugin. We want to help our community to focus on the core value of their plugins rather than all the setup required to develop them.
 
-## Installation
+## Getting started
 
-You can either add grafana-toolkit to your extension's `package.json` file by running
-`yarn add @grafana/toolkit` or `npm instal @grafana/toolkit`, or use one of our extension templates:
-- [React Panel](https://github.com/grafana/simple-react-panel)
-- [Angular Panel](https://github.com/grafana/simple-angular-panel)
+Setup new plugin with `grafana-toolkit plugin:create` command:
 
-### Updating your extension to use grafana-toolkit
-In order to start using grafana-toolkit in your extension you need to follow the steps below:
-1. Add `@grafana/toolkit` package to your project
-2. Create `tsconfig.json` file in the root dir of your extension and paste the code below:
+```sh
+npx grafana-toolkit plugin:create my-grafana-plugin
+cd my-grafana-plugin
+yarn install
+yarn dev
+```
+
+### Updating your plugin to use grafana-toolkit
+In order to start using grafana-toolkit in your existing plugin you need to follow the steps below:
+1. Add `@grafana/toolkit` package to your project by running `yarn add @grafana/toolkit` or `npm install @grafana/toolkit`
+2. Create `tsconfig.json` file in the root dir of your plugin and paste the code below:
 ```json
 {
   "extends": "./node_modules/@grafana/toolkit/src/config/tsconfig.plugin.json",
@@ -31,7 +35,7 @@ In order to start using grafana-toolkit in your extension you need to follow the
 }
 ```
 
-3. Create `.prettierrc.js` file in the root dir of your extension and paste the code below:
+3. Create `.prettierrc.js` file in the root dir of your plugin and paste the code below:
 ```js
 module.exports = {
   ...require("./node_modules/@grafana/toolkit/src/config/prettier.plugin.config.json"),
@@ -49,13 +53,21 @@ module.exports = {
 ```
 
 ## Usage
-With grafana-toolkit we put in your hands a CLI that addresses common tasks performed when working on Grafana extension:
-- `grafana-toolkit plugin:test`
+With grafana-toolkit we put in your hands a CLI that addresses common tasks performed when working on Grafana plugin:
+- `grafana-toolkit plugin:create`
 - `grafana-toolkit plugin:dev`
+- `grafana-toolkit plugin:test`
 - `grafana-toolkit plugin:build`
 
 
-### Developing extensions
+### Creating plugin
+`grafana-toolkit plugin:create plugin-name`
+
+Creates new Grafana plugin from template.
+
+If `plugin-name` is provided, the template will be downloaded to `./plugin-name` directory. Otherwise, it will be downloaded to current directory.
+
+### Developing plugin
 `grafana-toolkit plugin:dev`
 
 Creates development build that's easy to play with and debug using common browser tooling
@@ -63,7 +75,7 @@ Creates development build that's easy to play with and debug using common browse
 Available options:
 - `-w`, `--watch` - run development task in a watch mode
 
-### Testing extensions
+### Testing plugin
 `grafana-toolkit plugin:test`
 
 Runs Jest against your codebase
@@ -76,26 +88,29 @@ Available options:
 - `--testPathPattern=<regex>` - runs test with paths that match provided regex (https://jestjs.io/docs/en/cli#testpathpattern-regex)
 
 
-### Building extensions
+### Building plugin
 `grafana-toolkit plugin:build`
 
-Creates production ready build of your extension
+Creates production ready build of your plugin
 
 ## FAQ
 
+### Which version should I use?
+Please refer to [Grafana packages versioning guide](https://github.com/grafana/grafana/blob/master/packages/README.md#versioning)
 ### What tools does grafana-toolkit use?
 grafana-toolkit comes with Typescript, TSLint, Prettier, Jest, CSS and SASS support.
 
-### How to start using grafana-toolkit in my extension?
-See [Updating your extension to use grafana-toolkit](#updating-your-extension-to-use-grafana-toolkit)
-### Can I use Typescript to develop Grafana extensions?
+### How to start using grafana-toolkit in my plugin?
+See [Updating your plugin to use grafana-toolkit](#updating-your-plugin-to-use-grafana-toolkit)
+
+### Can I use Typescript to develop Grafana plugins?
 Yes! grafana-toolkit supports Typescript by default.
 
 
-### How can I test my extension?
+### How can I test my plugin?
 grafana-toolkit comes with Jest as a test runner.
 
-Internally at Grafana we use Enzyme. If you are developing React extension and you want to configure Enzyme as a testing utility, you need to configure `enzyme-adapter-react`. To do so create `<YOUR_EXTENSION>/config/jest-setup.ts` file that will provide necessary setup. Copy the following code into that file to get Enzyme working with React:
+Internally at Grafana we use Enzyme. If you are developing React plugin and you want to configure Enzyme as a testing utility, you need to configure `enzyme-adapter-react`. To do so create `<YOUR_PLUGIN_DIR>/config/jest-setup.ts` file that will provide necessary setup. Copy the following code into that file to get Enzyme working with React:
 
 ```ts
 import { configure } from 'enzyme';
@@ -104,7 +119,7 @@ import Adapter from 'enzyme-adapter-react-16';
 configure({ adapter: new Adapter() });
 ```
 
-You can also setup Jest with shims of your needs by creating `jest-shim.ts` file in the same directory: `<YOUR_EXTENSION>/config/jest-shim.ts`
+You can also setup Jest with shims of your needs by creating `jest-shim.ts` file in the same directory: `<YOUR_PLUGIN_DIR_>/config/jest-shim.ts`
 
 ### Can I provide custom setup for Jest?
 
@@ -114,7 +129,7 @@ Currently we support following Jest config properties:
 - [`snapshotSerializers`](https://jest-bot.github.io/jest/docs/configuration.html#snapshotserializers-array-string)
 - [`moduleNameMapper`](https://jestjs.io/docs/en/configuration#modulenamemapper-object-string-string)
 
-### How can I style my extension?
+### How can I style my plugin?
 We support pure CSS, SASS and CSS-in-JS approach (via [Emotion](https://emotion.sh/)).
 
 #### Single CSS or SASS file
@@ -132,18 +147,18 @@ The styles will be injected via `style` tag during runtime.
 
 If you want to provide different stylesheets for dark/light theme, create `dark.[css|scss]` and `light.[css|scss]` files in `src/styles` directory of your plugin. grafana-toolkit will generate theme specific stylesheets that will end up in `dist/styles` directory.
 
-In order for Grafana to pickup up you theme stylesheets you need to use `loadPluginCss` from `@grafana/runtime` package. Typically you would do that in the entrypoint of your extension:
+In order for Grafana to pickup up you theme stylesheets you need to use `loadPluginCss` from `@grafana/runtime` package. Typically you would do that in the entrypoint of your plugin:
 
 ```ts
 import { loadPluginCss } from '@grafana/runtime';
 
 loadPluginCss({
-  dark: 'plugins/<YOUR-EXTENSION-NAME>/styles/dark.css',
-  light: 'plugins/<YOUR-EXTENSION-NAME>/styles/light.css',
+  dark: 'plugins/<YOUR-PLUGIN-ID>/styles/dark.css',
+  light: 'plugins/<YOUR-PLUGIN-ID>/styles/light.css',
 });
 ```
 
-You need to add `@grafana/runtime` to your extension dependencies by running `yarn add @grafana/runtime` or `npm instal @grafana/runtime`
+You need to add `@grafana/runtime` to your plugin dependencies by running `yarn add @grafana/runtime` or `npm instal @grafana/runtime`
 
 > Note that in this case static files (png, svg, json, html) are all copied to dist directory when the plugin is bundled. Relative paths to those files does not change!
 
@@ -194,7 +209,7 @@ grafana-toolkit comes with [default config for TSLint](https://github.com/grafan
 
 
 ### How is Prettier integrated into  grafana-toolkit workflow?
-When building extension with [`grafana-toolkit plugin:build`](#building-extensions) task, grafana-toolkit performs Prettier check. If the check detects any Prettier issues, the build will not pass. To avoid such situation we suggest developing plugin with [`grafana-toolkit plugin:dev --watch`](#developing-extensions) task running. This task tries to fix Prettier issues automatically.
+When building plugin with [`grafana-toolkit plugin:build`](#building-plugin) task, grafana-toolkit performs Prettier check. If the check detects any Prettier issues, the build will not pass. To avoid such situation we suggest developing plugin with [`grafana-toolkit plugin:dev --watch`](#developing-plugin) task running. This task tries to fix Prettier issues automatically.
 
 ### My editor does not respect Prettier config, what should I do?
 In order for your editor to pickup our Prettier config you need to create `.prettierrc.js` file in the root directory of your plugin with following content:
