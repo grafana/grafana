@@ -206,7 +206,7 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
           state: live ? LoadingState.Streaming : LoadingState.NotStarted,
         },
         isLive: live,
-        isPaused: false,
+        isPaused: live ? false : state.isPaused,
         loading: live,
         logsResult,
       };
