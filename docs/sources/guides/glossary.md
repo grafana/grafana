@@ -53,4 +53,4 @@ This topic lists words and abbreviations that commonly used in the Grafana docum
     <td style = "vertical-align: top;">Visualization</td>
     <td>A graphical representation of query results.</td>
   </tr>
-</table
+</table>
