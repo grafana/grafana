@@ -109,7 +109,7 @@ class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
 }
 
 export const mapStateToProps = (state: StoreState) => ({
-  activeTab: state.panelEditor.activeTab || PanelEditorTabIds.Queries,
+  activeTab: state.location.query.tab || PanelEditorTabIds.Queries,
   tabs: state.panelEditor.tabs,
 });
 

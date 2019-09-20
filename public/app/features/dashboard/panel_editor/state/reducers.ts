@@ -1,5 +1,5 @@
 import { reducerFactory } from '../../../../core/redux';
-import { panelEditorCleanUp, panelEditorInitCompleted, panelEditorChangeTab } from './actions';
+import { panelEditorCleanUp, panelEditorInitCompleted } from './actions';
 
 export interface PanelEditorTab {
   id: string;
@@ -52,21 +52,5 @@ export const panelEditorReducer = reducerFactory<PanelEditorState>(initialState)
   .addMapper({
     filter: panelEditorCleanUp,
     mapper: (): PanelEditorState => initialState,
-  })
-  .addMapper({
-    filter: panelEditorChangeTab,
-    mapper: (state, action): PanelEditorState => {
-      const activeTabId: PanelEditorTabIds = action.payload.activeTab.id as PanelEditorTabIds;
-      const found = state.tabs.filter(tab => tab.id === activeTabId)[0];
-
-      if (!found) {
-        return state;
-      }
-
-      return {
-        ...state,
-        activeTab: action.payload.activeTab.id as PanelEditorTabIds,
-      };
-    },
   })
   .create();

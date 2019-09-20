@@ -179,7 +179,7 @@ class UnConnectedAlertTab extends PureComponent<Props, State> {
   render() {
     const { alert, transformations } = this.props.panel;
     const { validatonMessage } = this.state;
-    const hasTransformations = transformations && transformations.length;
+    const hasTransformations = transformations && transformations.length > 0;
 
     if (!alert && validatonMessage) {
       return this.renderValidationMessage();

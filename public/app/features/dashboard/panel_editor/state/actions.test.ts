@@ -1,6 +1,6 @@
 import { thunkTester } from '../../../../../test/core/thunk/thunkTester';
 import { initialState, getPanelEditorTab, PanelEditorTabIds } from './reducers';
-import { refreshPanelEditor, panelEditorInitCompleted, changePanelEditorTab, panelEditorChangeTab } from './actions';
+import { refreshPanelEditor, panelEditorInitCompleted, changePanelEditorTab } from './actions';
 import { updateLocation } from '../../../../core/actions';
 
 describe('refreshPanelEditor', () => {
@@ -118,10 +118,9 @@ describe('changePanelEditorTab', () => {
         .givenThunk(changePanelEditorTab)
         .whenThunkIsDispatched(activeTab);
 
-      expect(dispatchedActions.length).toBe(2);
+      expect(dispatchedActions.length).toBe(1);
       expect(dispatchedActions).toEqual([
         updateLocation({ query: { tab: activeTab.id, openVizPicker: null }, partial: true }),
-        panelEditorChangeTab({ activeTab }), //
       ]);
     });
   });

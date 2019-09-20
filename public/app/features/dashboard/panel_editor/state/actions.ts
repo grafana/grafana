@@ -56,6 +56,5 @@ export const refreshPanelEditor = (props: {
 export const changePanelEditorTab = (activeTab: PanelEditorTab): ThunkResult<void> => {
   return async dispatch => {
     dispatch(updateLocation({ query: { tab: activeTab.id, openVizPicker: null }, partial: true }));
-    dispatch(panelEditorChangeTab({ activeTab }));
   };
 };
