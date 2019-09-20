@@ -12,11 +12,11 @@ import { useLokiSyntax } from './useLokiSyntax';
 type Props = QueryEditorProps<LokiDatasource, LokiQuery>;
 
 export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
-  const { query, panelData, datasource, onChange, onRunQuery } = props;
+  const { query, queryResponse, datasource, onChange, onRunQuery } = props;
 
   let absolute: AbsoluteTimeRange;
-  if (panelData && panelData.request) {
-    const { range } = panelData.request;
+  if (queryResponse && queryResponse.request) {
+    const { range } = queryResponse.request;
     absolute = {
       from: range.from.valueOf(),
       to: range.to.valueOf(),
@@ -44,7 +44,7 @@ export const LokiQueryEditor = memo(function LokiQueryEditor(props: Props) {
         onChange={onChange}
         onRunQuery={onRunQuery}
         history={[]}
-        panelData={panelData}
+        queryResponse={queryResponse}
         onLoadOptions={setActiveOption}
         onLabelsRefresh={refreshLabels}
         syntaxLoaded={isSyntaxReady}
