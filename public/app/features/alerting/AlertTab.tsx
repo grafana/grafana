@@ -10,12 +10,12 @@ import { EditorTabBody, EditorToolbarView } from '../dashboard/panel_editor/Edit
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
+import { Alert } from '@grafana/ui';
 
 // Types
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
-import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 import { AppNotificationSeverity } from 'app/types';
 
 interface Props {
@@ -135,7 +135,7 @@ export class AlertTab extends PureComponent<Props> {
     if (!alert && hasTransformations) {
       return (
         <EditorTabBody heading="Alert">
-          <AlertBox
+          <Alert
             severity={AppNotificationSeverity.Warning}
             title="Transformations are not supported in alert queries"
           />
@@ -156,7 +156,7 @@ export class AlertTab extends PureComponent<Props> {
       <EditorTabBody heading="Alert" toolbarItems={toolbarItems}>
         <>
           {alert && hasTransformations && (
-            <AlertBox
+            <Alert
               severity={AppNotificationSeverity.Error}
               title="Transformations are not supported in alert queries"
             />

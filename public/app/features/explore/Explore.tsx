@@ -280,7 +280,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
           <div className="explore-container">
             <Alert
               title={`Error connecting to datasource: ${datasourceError}`}
-              button={{ text: 'Reconnect', onClick: this.onReconnect }}
+              buttonText={'Reconnect'}
+              onButtonClick={this.onReconnect}
             />
           </div>
         </FadeIn>

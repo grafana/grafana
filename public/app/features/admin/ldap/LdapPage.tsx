@@ -2,11 +2,10 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
-import { FormField } from '@grafana/ui';
+import { FormField, Alert } from '@grafana/ui';
 import { getNavModel } from 'app/core/selectors/navModel';
 import config from 'app/core/config';
 import Page from 'app/core/components/Page/Page';
-import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 import { LdapConnectionStatus } from './LdapConnectionStatus';
 import { LdapSyncInfo } from './LdapSyncInfo';
 import { LdapUserInfo } from './LdapUserInfo';
@@ -81,7 +80,7 @@ export class LdapPage extends PureComponent<Props, State> {
           <>
             {ldapError && ldapError.title && (
               <div className="gf-form-group">
-                <AlertBox title={ldapError.title} severity={AppNotificationSeverity.Error} body={ldapError.body} />
+                <Alert title={ldapError.title} severity={AppNotificationSeverity.Error} children={ldapError.body} />
               </div>
             )}
 
@@ -100,11 +99,11 @@ export class LdapPage extends PureComponent<Props, State> {
             </div>
             {userError && userError.title && (
               <div className="gf-form-group">
-                <AlertBox
+                <Alert
                   title={userError.title}
                   severity={AppNotificationSeverity.Error}
-                  body={userError.body}
-                  onClose={this.onClearUserError}
+                  children={userError.body}
+                  onRemove={this.onClearUserError}
                 />
               </div>
             )}

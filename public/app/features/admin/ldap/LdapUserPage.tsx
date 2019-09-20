@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { NavModel } from '@grafana/data';
+import { Alert } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
-import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 import { getNavModel } from 'app/core/selectors/navModel';
 import {
   AppNotificationSeverity,
@@ -106,11 +106,11 @@ export class LdapUserPage extends PureComponent<Props, State> {
           </div>
           {userError && userError.title && (
             <div className="gf-form-group">
-              <AlertBox
+              <Alert
                 title={userError.title}
                 severity={AppNotificationSeverity.Error}
-                body={userError.body}
-                onClose={this.onClearUserError}
+                children={userError.body}
+                onRemove={this.onClearUserError}
               />
             </div>
           )}
