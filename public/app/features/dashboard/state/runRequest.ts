@@ -1,7 +1,7 @@
 // Libraries
 import { Observable, of, timer, merge, from } from 'rxjs';
 import { flatten, map as lodashMap, isArray, isString } from 'lodash';
-import { map, catchError, takeUntil, mapTo, share, finalize } from 'rxjs/operators';
+import { map, catchError, takeUntil, mapTo, share, finalize, take } from 'rxjs/operators';
 // Utils & Services
 import { getBackendSrv } from 'app/core/services/backend_srv';
 // Types
@@ -120,7 +120,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
   return merge(
     timer(200).pipe(
       mapTo(state.panelData),
-      takeUntil(dataObservable)
+      takeUntil(dataObservable.pipe(take(1)))
     ),
     dataObservable
   );
