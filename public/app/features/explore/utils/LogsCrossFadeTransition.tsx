@@ -4,6 +4,10 @@ import { css } from 'emotion';
 import { CSSTransition } from 'react-transition-group';
 
 const transitionDuration = 500;
+// We add a bit of delay to the transition as another perf optimisation. As at the start we need to render
+// quite a bit of new rows, if we start transition at the same time there can be frame rate drop. This gives time
+// for react to first render them and then do the animation.
+const transitionDelay = 100;
 
 const getStyles = memoizeOne(() => {
   return {
@@ -17,7 +21,7 @@ const getStyles = memoizeOne(() => {
     logsEnterActive: css`
       label: logsEnterActive;
       opacity: 1;
-      transition: opacity ${transitionDuration}ms ease-out 100ms;
+      transition: opacity ${transitionDuration}ms ease-out ${transitionDelay}ms;
     `,
     logsExit: css`
       label: logsExit;
@@ -29,7 +33,7 @@ const getStyles = memoizeOne(() => {
     logsExitActive: css`
       label: logsExitActive;
       opacity: 0;
-      transition: opacity ${transitionDuration}ms ease-out 100ms;
+      transition: opacity ${transitionDuration}ms ease-out ${transitionDelay}ms;
     `,
   };
 });
@@ -51,7 +55,7 @@ export function LogsCrossFadeTransition(props: Props) {
       in={visible}
       mountOnEnter={true}
       unmountOnExit={true}
-      timeout={transitionDuration + 100}
+      timeout={transitionDuration + transitionDelay}
       classNames={{
         enter: styles.logsEnter,
         enterActive: styles.logsEnterActive,
