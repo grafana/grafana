@@ -28,9 +28,19 @@ export const ResponsiveButton = (props: Props) => {
       onClick={onClick}
       disabled={disabled || false}
     >
-      {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
+      {iconClassName && iconSide === IconSide.left ? (
+        <>
+          <i className={`${iconClassName}`} />
+          &nbsp;
+        </>
+      ) : null}
       <span className="btn-title">{!splitted ? title : ''}</span>
-      {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
+      {iconClassName && iconSide === IconSide.right ? (
+        <>
+          &nbsp;
+          <i className={`${iconClassName}`} />
+        </>
+      ) : null}
     </button>
   );
 };

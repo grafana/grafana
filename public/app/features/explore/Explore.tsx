@@ -1,6 +1,7 @@
 // Libraries
 import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
+import { css } from 'emotion';
 // @ts-ignore
 import { connect } from 'react-redux';
 import { AutoSizer } from 'react-virtualized';
@@ -51,6 +52,16 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
+
+const getStyles = memoizeOne(() => {
+  return {
+    logsMain: css`
+      label: logsMain;
+      // Is needed for some transition animations to work.
+      position: relative;
+    `,
+  };
+});
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -257,6 +268,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       queryResponse,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
+    const styles = getStyles();
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -284,7 +296,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
                 }
 
                 return (
-                  <main className="m-t-2" style={{ width }}>
+                  <main className={`m-t-2 ${styles.logsMain}`} style={{ width }}>
                     <ErrorBoundaryAlert>
                       {showingStartPage && (
                         <div className="grafana-info-box grafana-info-box--max-lg">
