@@ -108,7 +108,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		}
 
 		if azureMonitorTarget.QueryMode == "singleResource" {
-			azQuery, err := e.buildSingleQuery(query, &azureMonitorData, startTime, endTime, query.Model.Get("subscription").MustString())
+			azQuery, err := e.buildSingleQuery(query, &azureMonitorData, startTime, endTime, query.Model.Get("subscription").MustString(), "singleResource")
 			if err != nil {
 				return nil, err
 			}
@@ -126,7 +126,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 	return azureMonitorQueries, nil
 }
 
-func (e *AzureMonitorDatasource) buildSingleQuery(query *tsdb.Query, azureMonitorData *AzureMonitorData, startTime time.Time, endTime time.Time, subscriptionID string) (AzureMonitorQuery, error) {
+func (e *AzureMonitorDatasource) buildSingleQuery(query *tsdb.Query, azureMonitorData *AzureMonitorData, startTime time.Time, endTime time.Time, subscriptionID string, queryMode string) (AzureMonitorQuery, error) {
 	var target string
 
 	urlComponents := map[string]string{}
@@ -161,7 +161,7 @@ func (e *AzureMonitorDatasource) buildSingleQuery(query *tsdb.Query, azureMonito
 	params.Add("aggregation", azureMonitorData.Aggregation)
 	params.Add("metricnames", azureMonitorData.MetricName)
 
-	if azureMonitorData.MetricNamespace != "" {
+	if queryMode == "singleResource" && azureMonitorData.MetricNamespace != "" {
 		params.Add("metricnamespace", azureMonitorData.MetricNamespace)
 	}
 
@@ -202,7 +202,7 @@ func (e *AzureMonitorDatasource) buildMultipleResourcesQueries(query *tsdb.Query
 		data.MetricDefinition = resource.Type
 		data.ResourceName = resource.Name
 
-		azQuery, err := e.buildSingleQuery(query, data, startTime, endTime, resource.SubscriptionID)
+		azQuery, err := e.buildSingleQuery(query, data, startTime, endTime, resource.SubscriptionID, "crossResource")
 		if err != nil {
 			return nil, err
 		}
