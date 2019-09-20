@@ -189,14 +189,14 @@ describe('sorted DataFrame', () => {
   it('Should sort numbers', () => {
     const sorted = sortDataFrame(frame, 0, true);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values.toJSON()).toEqual([3, 2, 1]);
-    expect(sorted.fields[1].values.toJSON()).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
+    expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
   });
 
   it('Should sort strings', () => {
     const sorted = sortDataFrame(frame, 1, true);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values.toJSON()).toEqual([3, 2, 1]);
-    expect(sorted.fields[1].values.toJSON()).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
+    expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
   });
 });
