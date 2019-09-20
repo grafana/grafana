@@ -14,8 +14,6 @@ import {
 import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { SingleStatOptions, SparklineOptions } from './types';
-import { ColoringEditor } from './ColoringEditor';
-import { FontSizeEditor } from './FontSizeEditor';
 import { SparklineEditor } from './SparklineEditor';
 import {
   getDataLinksVariableSuggestions,
@@ -84,8 +82,6 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
             <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
           </PanelOptionsGroup>
 
-          <FontSizeEditor options={options} onChange={this.props.onOptionsChange} />
-          <ColoringEditor options={options} onChange={this.props.onOptionsChange} />
           <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
 
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />

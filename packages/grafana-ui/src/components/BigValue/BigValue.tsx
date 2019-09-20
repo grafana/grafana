@@ -11,22 +11,16 @@ import { getColorFromHexRgbOrName } from '../../utils';
 import { Themeable } from '../../types';
 
 export interface BigValueSparkline {
-  data: any[][]; // [[number,number]]
+  data: any[][];
   minX: number;
   maxX: number;
-  full: boolean; // full height
-  fillColor: string;
-  lineColor: string;
 }
 
 export interface Props extends Themeable {
   height: number;
   width: number;
   value: DisplayValue;
-  prefix?: DisplayValue;
-  suffix?: DisplayValue;
   sparkline?: BigValueSparkline;
-  backgroundColor?: string;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
 }
@@ -49,7 +43,7 @@ export class BigValue extends PureComponent<Props> {
     const { sparkline, theme } = this.props;
 
     if (sparkline && this.canvasElement) {
-      const { data, minX, maxX, fillColor, lineColor } = sparkline;
+      const { data, minX, maxX } = sparkline;
 
       const options = {
         legend: { show: false },
@@ -59,7 +53,7 @@ export class BigValue extends PureComponent<Props> {
             fill: 1,
             zero: false,
             lineWidth: 1,
-            fillColor: getColorFromHexRgbOrName(fillColor, theme.type),
+            fillColor: getColorFromHexRgbOrName('red', theme.type),
           },
         },
         yaxes: { show: false },
@@ -73,7 +67,7 @@ export class BigValue extends PureComponent<Props> {
 
       const plotSeries = {
         data,
-        color: getColorFromHexRgbOrName(lineColor, theme.type),
+        color: getColorFromHexRgbOrName('green', theme.type),
       };
 
       try {
@@ -110,18 +104,13 @@ export class BigValue extends PureComponent<Props> {
     plotCss.bottom = '0px';
     plotCss.left = '0px';
     plotCss.width = width + 'px';
+    plotCss.height = Math.floor(height * 0.25) + 'px';
 
-    if (sparkline.full) {
-      const dynamicHeightMargin = height <= 100 ? 5 : Math.round(height / 100) * 15 + 5;
-      plotCss.height = height - dynamicHeightMargin + 'px';
-    } else {
-      plotCss.height = Math.floor(height * 0.25) + 'px';
-    }
     return <div style={plotCss} ref={element => (this.canvasElement = element)} />;
   }
 
   render() {
-    const { height, width, value, prefix, suffix, sparkline, backgroundColor, onClick, className } = this.props;
+    const { height, width, value, sparkline, onClick, className } = this.props;
 
     return (
       <div
@@ -132,7 +121,7 @@ export class BigValue extends PureComponent<Props> {
           }),
           className
         )}
-        style={{ width, height, backgroundColor }}
+        style={{ width, height }}
         onClick={onClick}
       >
         {value.title && (
@@ -162,9 +151,7 @@ export class BigValue extends PureComponent<Props> {
             fontWeight: 500, // TODO: $font-weight-semi-bold
           })}
         >
-          {this.renderText(prefix, '0px 2px 0px 0px')}
           {this.renderText(value)}
-          {this.renderText(suffix)}
         </span>
 
         {sparkline && this.renderSparkline(sparkline)}
