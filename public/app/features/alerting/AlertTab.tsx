@@ -1,26 +1,25 @@
-// Libraries
 import React, { PureComponent } from 'react';
-// Services & Utils
+import { hot } from 'react-hot-loader';
+import { connect } from 'react-redux';
+import { css } from 'emotion';
+import { Button } from '@grafana/ui';
+
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
-// Components
+import { getAlertingValidationMessage } from './getAlertingValidationMessage';
+
 import { EditorTabBody, EditorToolbarView } from '../dashboard/panel_editor/EditorTabBody';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import StateHistory from './StateHistory';
 import 'app/features/alerting/AlertTabCtrl';
-// Types
+import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
+
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
-import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 import { AppNotificationSeverity, StoreState } from 'app/types';
-import { getAlertingValidationMessage } from './getAlertingValidationMessage';
-import { Button } from '@grafana/ui';
-import { css } from 'emotion';
 import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
 import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
 
 interface Props {
   angularPanel?: AngularComponent;

@@ -1,18 +1,17 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
+import { hot } from 'react-hot-loader';
+import { connect } from 'react-redux';
+import { Tooltip, PanelPlugin, PanelPluginMeta } from '@grafana/ui';
+import { AngularComponent, config } from '@grafana/runtime';
 
 import { QueriesTab } from './QueriesTab';
 import VisualizationTab from './VisualizationTab';
 import { GeneralTab } from './GeneralTab';
 import { AlertTab } from '../../alerting/AlertTab';
-import { AngularComponent, config } from '@grafana/runtime';
-
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { Tooltip, PanelPlugin, PanelPluginMeta } from '@grafana/ui';
 import { StoreState } from '../../../types';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
 import { PanelEditorTabIds, PanelEditorTab } from './state/reducers';
 import { refreshPanelEditor, changePanelEditorTab, panelEditorCleanUp } from './state/actions';
 
