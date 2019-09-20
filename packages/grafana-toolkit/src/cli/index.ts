@@ -91,7 +91,7 @@ export const run = (includeInternalScripts = false) => {
       .description('Prepares grafana/toolkit dist package')
       .action(async cmd => {
         // @ts-ignore
-        await execTask(toolkitBuildTask)();
+        await execTask(toolkitBuildTask)({});
       });
 
     program
