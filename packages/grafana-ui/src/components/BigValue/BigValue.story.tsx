@@ -1,14 +1,14 @@
 import { storiesOf } from '@storybook/react';
-import { number, text } from '@storybook/addon-knobs';
+import { text } from '@storybook/addon-knobs';
 import { BigValue } from './BigValue';
+import { BigValue2 } from './BigValue2';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
 const getKnobs = () => {
   return {
-    value: text('value', 'Hello'),
-    valueFontSize: number('valueFontSize', 120),
-    prefix: text('prefix', ''),
+    value: text('value', '$5022'),
+    title: text('title', 'Total Earnings'),
   };
 };
 
@@ -16,22 +16,30 @@ const BigValueStories = storiesOf('UI/BigValue', module);
 
 BigValueStories.addDecorator(withCenteredStory);
 
-BigValueStories.add('Singlestat viz', () => {
-  const { value, prefix, valueFontSize } = getKnobs();
+BigValueStories.add('Classic singlestat', () => {
+  const { value, title } = getKnobs();
 
   return renderComponentWithTheme(BigValue, {
     width: 300,
     height: 250,
     value: {
       text: value,
-      numeric: NaN,
-      fontSize: valueFontSize + '%',
+      numeric: 5022,
+      title,
     },
-    prefix: prefix
-      ? {
-          text: prefix,
-          numeric: NaN,
-        }
-      : null,
+  });
+});
+
+BigValueStories.add('New singlestat', () => {
+  const { value, title } = getKnobs();
+
+  return renderComponentWithTheme(BigValue2, {
+    width: 300,
+    height: 250,
+    value: {
+      text: value,
+      numeric: 5022,
+      title,
+    },
   });
 });
