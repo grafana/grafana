@@ -20,8 +20,11 @@ import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSupplie
 export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
     let sparkline: BigValueSparkline;
+
     if (value.sparkline) {
       const { timeRange, options } = this.props;
+
+      console.log(timeRange.to.valueOf());
 
       sparkline = {
         ...options.sparkline,

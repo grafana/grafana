@@ -52,11 +52,6 @@ export class BigValue2 extends PureComponent<Props> {
       return null;
     }
 
-    // const chartStyles: CSSProperties = {
-    //   width: `${width - 20}px`,
-    //   height: `${height / 2}px`,
-    // };
-
     const data = sparkline.data.map(values => {
       return { time: values[0], value: values[1] };
     });
@@ -70,10 +65,15 @@ export class BigValue2 extends PureComponent<Props> {
     };
 
     const chartWidth = width - PANEL_PADDING * 2;
-    const chartHeight = height - height / 2;
+    const chartHeight = height / 2.5;
+    const scales = {
+      time: {
+        type: 'time',
+      },
+    };
 
     return (
-      <Chart height={chartHeight} width={chartWidth} data={data} animate={false} padding={[0, 0, 0, 0]}>
+      <Chart height={chartHeight} width={chartWidth} data={data} animate={false} padding={[0, 0, 0, 0]} scale={scales}>
         <Geom type="line" position="time*value" size={2} color="white" style={lineStyle} shape="smooth" />
       </Chart>
     );
@@ -94,7 +94,8 @@ export function getTitleStyles(props: Props) {
   const valueFontSize = getValueFontSize(width, height);
 
   const titleStyles: CSSProperties = {
-    fontSize: `${valueFontSize * 0.6}px`,
+    fontSize: `${valueFontSize * 0.5}px`,
+    textShadow: '#333 1px 1px 5px',
     color: '#EEE',
   };
 
@@ -108,6 +109,7 @@ export function getValueStyles(props: Props) {
   const valueStyles: CSSProperties = {
     fontSize: `${valueFontSize}px`,
     color: 'white',
+    textShadow: '#333 1px 1px 5px',
     lineHeight: 1,
   };
 
