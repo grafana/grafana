@@ -1,6 +1,7 @@
 // Library
 import React, { PureComponent, CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
+import { Chart, Geom } from 'bizcharts';
 import { DisplayValue } from '@grafana/data';
 
 // Utils
@@ -24,9 +25,11 @@ export interface Props extends Themeable {
   className?: string;
 }
 
+const PANEL_PADDING = 16;
+
 export class BigValue2 extends PureComponent<Props> {
   render() {
-    const { height, width, value, onClick, className, theme } = this.props;
+    const { height, width, value, onClick, className, theme, sparkline } = this.props;
 
     const baseColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
     const panelStyles = getPanelStyles(width, height, baseColor);
@@ -37,7 +40,42 @@ export class BigValue2 extends PureComponent<Props> {
       <div className={className} style={panelStyles} onClick={onClick}>
         <div style={valueStyles}>{value.text}</div>
         {value.title && <div style={titleStyles}>{value.title}</div>}
+        {sparkline && this.renderChartElement()}
       </div>
+    );
+  }
+
+  renderChartElement() {
+    const { height, width, sparkline } = this.props;
+
+    if (!sparkline) {
+      return null;
+    }
+
+    // const chartStyles: CSSProperties = {
+    //   width: `${width - 20}px`,
+    //   height: `${height / 2}px`,
+    // };
+
+    const data = sparkline.data.map(values => {
+      return { time: values[0], value: values[1] };
+    });
+
+    const lineStyle: any = {
+      stroke: '#EEE',
+      lineWidth: 2,
+      shadowBlur: 7,
+      shadowColor: '#333',
+      shadowOffsetY: 7,
+    };
+
+    const chartWidth = width - PANEL_PADDING * 2;
+    const chartHeight = height - height / 2;
+
+    return (
+      <Chart height={chartHeight} width={chartWidth} data={data} animate={false} padding={[0, 0, 0, 0]}>
+        <Geom type="line" position="time*value" size={2} color="white" style={lineStyle} shape="smooth" />
+      </Chart>
     );
   }
 }

@@ -28,6 +28,7 @@
     "@grafana/data": "^6.4.0-alpha",
     "@torkelo/react-select": "2.1.1",
     "@types/react-color": "2.17.0",
+    "bizcharts": "^3.5.5",
     "classnames": "2.2.6",
     "d3": "5.9.1",
     "jquery": "3.4.1",
