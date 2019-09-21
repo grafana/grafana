@@ -133,9 +133,9 @@ export function calculateLayout(width: number, height: number): LayoutResult {
     height - valueFontSize * LINE_HEIGHT - titleFontSize * LINE_HEIGHT - PANEL_PADDING * 2 - CHART_TOP_MARGIN;
   let chartWidth = width - PANEL_PADDING * 2;
 
-  if (width / height > 1.8) {
+  if (width / height > 2.2) {
     type = LayoutType.ChartRight;
-    chartHeight = height / 2;
+    chartHeight = height - PANEL_PADDING * 2;
     chartWidth = width;
   }
 
