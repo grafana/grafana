@@ -35,14 +35,14 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   packets[packet.key || 'A'] = packet;
 
   // Update the time range
-  // const timeRange = request.range;
-  // if (isString(timeRange.raw.from)) {
-  //   timeRange = {
-  //     from: dateMath.parse(timeRange.raw.from, false),
-  //     to: dateMath.parse(timeRange.raw.to, true),
-  //     raw: timeRange.raw,
-  //   };
-  // }
+  let timeRange = request.range;
+  if (isString(timeRange.raw.from)) {
+    timeRange = {
+      from: dateMath.parse(timeRange.raw.from, false),
+      to: dateMath.parse(timeRange.raw.to, true),
+      raw: timeRange.raw,
+    };
+  }
 
   const combinedData = flatten(
     lodashMap(packets, (packet: DataQueryResponse) => {
@@ -55,7 +55,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     series: combinedData,
     request: {
       ...request,
-      // range: timeRange,
+      range: timeRange,
     },
   };
 
