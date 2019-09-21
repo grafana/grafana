@@ -42,18 +42,21 @@ export class BigValue2 extends PureComponent<Props> {
   }
 }
 
-export function getFontScale(length: number): number {
-  if (length > 12) {
-    return (length * 5) / 110;
-  }
-  return (length * 5) / 101;
+const MIN_VALUE_FONT_SIZE = 15;
+const MAX_VALUE_FONT_SIZE = 40;
+
+export function getValueFontSize(width: number, height: number): number {
+  const byWidth = width * 0.2;
+
+  return Math.min(Math.max(byWidth, MIN_VALUE_FONT_SIZE), MAX_VALUE_FONT_SIZE);
 }
 
 export function getTitleStyles(props: Props) {
-  // const { height, width, value } = this.props;
+  const { height, width } = props;
+  const valueFontSize = getValueFontSize(width, height);
 
   const titleStyles: CSSProperties = {
-    fontSize: '22px',
+    fontSize: `${valueFontSize * 0.6}px`,
     color: '#EEE',
   };
 
@@ -61,11 +64,13 @@ export function getTitleStyles(props: Props) {
 }
 
 export function getValueStyles(props: Props) {
-  // const { height, width, value } = this.props;
+  const { height, width } = props;
+  const valueFontSize = getValueFontSize(width, height);
 
   const valueStyles: CSSProperties = {
-    fontSize: '40px',
+    fontSize: `${valueFontSize}px`,
     color: 'white',
+    lineHeight: 1,
   };
 
   return valueStyles;
@@ -73,11 +78,11 @@ export function getValueStyles(props: Props) {
 
 export function getPanelStyles(width: number, height: number, baseColor: string) {
   const bgColor2 = tinycolor(baseColor)
-    .darken(10)
+    .darken(15)
     .spin(10)
     .toRgbString();
   const bgColor3 = tinycolor(baseColor)
-    .lighten(10)
+    .lighten(0)
     .spin(-10)
     .toRgbString();
 
@@ -85,7 +90,8 @@ export function getPanelStyles(width: number, height: number, baseColor: string)
     width: `${width}px`,
     height: `${height}px`,
     padding: '16px',
-    background: `linear-gradient(90deg, ${bgColor2}, ${bgColor3})`,
+    borderRadius: '3px',
+    background: `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`,
   };
 
   return panelStyles;
