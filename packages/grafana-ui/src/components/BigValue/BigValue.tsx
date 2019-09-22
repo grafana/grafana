@@ -164,6 +164,10 @@ export function getTitleStyles(layout: LayoutResult) {
     color: '#EEE',
   };
 
+  if (layout.theme.isLight) {
+    styles.color = 'white';
+  }
+
   return styles;
 }
 
@@ -226,15 +230,17 @@ export function getPanelStyles(layout: LayoutResult) {
     display: 'flex',
   };
 
+  const themeFactor = layout.theme.isDark ? 1 : -0.7;
+
   switch (layout.displayMode) {
     case SingleStatDisplayMode.Vibrant:
     case SingleStatDisplayMode.Vibrant2:
       const bgColor2 = tinycolor(layout.valueColor)
-        .darken(15)
+        .darken(15 * themeFactor)
         .spin(8)
         .toRgbString();
       const bgColor3 = tinycolor(layout.valueColor)
-        .darken(5)
+        .darken(5 * themeFactor)
         .spin(-8)
         .toRgbString();
       panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
