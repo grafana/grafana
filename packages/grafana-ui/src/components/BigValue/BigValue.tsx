@@ -102,7 +102,7 @@ export function calculateLayout(props: Props): LayoutResult {
     const chartWidth = width / 2;
     let type = !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
 
-    if (height < 100 || !sparkline) {
+    if (height < 80 || !sparkline) {
       type = LayoutType.WideNoChart;
     }
 
@@ -126,7 +126,7 @@ export function calculateLayout(props: Props): LayoutResult {
   const valueHeight = valueFontSize * LINE_HEIGHT;
   const titleHeight = titleFontSize * LINE_HEIGHT;
 
-  const chartHeight = height - valueHeight - titleHeight - PANEL_PADDING * 2 - CHART_TOP_MARGIN;
+  let chartHeight = height - valueHeight - titleHeight - PANEL_PADDING * 2 - CHART_TOP_MARGIN;
   let chartWidth = width - PANEL_PADDING * 2;
   let type = LayoutType.Stacked;
 
@@ -139,6 +139,7 @@ export function calculateLayout(props: Props): LayoutResult {
     case SingleStatDisplayMode.Classic:
     case SingleStatDisplayMode.Classic2:
       chartWidth = width;
+      chartHeight += PANEL_PADDING;
       break;
   }
 
