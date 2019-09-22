@@ -57,8 +57,9 @@ export class BigValue extends PureComponent<Props> {
 const MIN_VALUE_FONT_SIZE = 20;
 const MAX_VALUE_FONT_SIZE = 50;
 const MIN_TITLE_FONT_SIZE = 14;
-const TITLE_VALUE_RATIO = 0.5;
-const VALUE_HEIGHT_RATIO = 0.2;
+const TITLE_VALUE_RATIO = 0.45;
+const VALUE_HEIGHT_RATIO = 0.25;
+const VALUE_HEIGHT_RATIO_WIDE = 0.3;
 const LINE_HEIGHT = 1.2;
 const PANEL_PADDING = 16;
 const CHART_TOP_MARGIN = 8;
@@ -90,7 +91,10 @@ export function calculateLayout(props: Props): LayoutResult {
 
   // handle wide layouts
   if (useWideLayout) {
-    const valueFontSize = Math.min(Math.max(height * VALUE_HEIGHT_RATIO, MIN_VALUE_FONT_SIZE), MAX_VALUE_FONT_SIZE);
+    const valueFontSize = Math.min(
+      Math.max(height * VALUE_HEIGHT_RATIO_WIDE, MIN_VALUE_FONT_SIZE),
+      MAX_VALUE_FONT_SIZE
+    );
     const titleFontSize = Math.max(valueFontSize * TITLE_VALUE_RATIO, MIN_TITLE_FONT_SIZE);
 
     const chartHeight = height - PANEL_PADDING * 2;
