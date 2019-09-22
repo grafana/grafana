@@ -94,7 +94,7 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
               />
             </div>
             <div className="form-field">
-              <FormLabel width={8}>Color mode</FormLabel>
+              <FormLabel width={8}>Color by</FormLabel>
               <Select
                 width={12}
                 options={colorModes}

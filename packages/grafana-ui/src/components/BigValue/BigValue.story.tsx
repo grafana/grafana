@@ -1,6 +1,6 @@
 import { storiesOf } from '@storybook/react';
 import { text } from '@storybook/addon-knobs';
-import { BigValue, SingleStatDisplayMode } from './BigValue2';
+import { BigValue, SingleStatDisplayMode } from './BigValue';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -19,13 +19,19 @@ BigValueStories.add('Mode: Classic', () => {
   const { value, title } = getKnobs();
 
   return renderComponentWithTheme(BigValue, {
-    width: 300,
-    height: 250,
+    width: 400,
+    height: 300,
     displayMode: SingleStatDisplayMode.Classic,
     value: {
       text: value,
       numeric: 5022,
+      color: 'red',
       title,
+    },
+    sparkline: {
+      minX: 0,
+      maxX: 5,
+      data: [[0, 10], [1, 20], [2, 15], [3, 25], [4, 5], [5, 10]],
     },
   });
 });
