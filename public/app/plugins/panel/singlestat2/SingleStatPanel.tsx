@@ -11,7 +11,7 @@ import {
   getFieldDisplayValues,
   VizRepeater,
   FieldDisplay,
-  BigValue2,
+  BigValue,
   DataLinksContextMenu,
 } from '@grafana/ui';
 import { BigValueSparkline } from '@grafana/ui/src/components/BigValue/BigValue';
@@ -19,11 +19,10 @@ import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSupplie
 
 export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>> {
   renderValue = (value: FieldDisplay, width: number, height: number): JSX.Element => {
-    let sparkline: BigValueSparkline;
+    const { timeRange, options } = this.props;
+    let sparkline: BigValueSparkline | undefined;
 
     if (value.sparkline) {
-      const { timeRange, options } = this.props;
-
       sparkline = {
         ...options.sparkline,
         data: value.sparkline,
@@ -36,7 +35,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
       <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
         {({ openMenu, targetClassName }) => {
           return (
-            <BigValue2
+            <BigValue
               value={value.display}
               sparkline={sparkline}
               displayMode={options.displayMode}

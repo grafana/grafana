@@ -1,6 +1,6 @@
 import { storiesOf } from '@storybook/react';
 import { text } from '@storybook/addon-knobs';
-import { BigValue2, SingleStatDisplayMode } from './BigValue2';
+import { BigValue, SingleStatDisplayMode } from './BigValue2';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -18,7 +18,7 @@ BigValueStories.addDecorator(withCenteredStory);
 BigValueStories.add('Mode: Classic', () => {
   const { value, title } = getKnobs();
 
-  return renderComponentWithTheme(BigValue2, {
+  return renderComponentWithTheme(BigValue, {
     width: 300,
     height: 250,
     displayMode: SingleStatDisplayMode.Classic,
@@ -33,10 +33,10 @@ BigValueStories.add('Mode: Classic', () => {
 BigValueStories.add('Mode: Colored Tiles Stacked', () => {
   const { value, title } = getKnobs();
 
-  return renderComponentWithTheme(BigValue2, {
+  return renderComponentWithTheme(BigValue, {
     width: 400,
     height: 250,
-    displayMode: SingleStatDisplayMode.Classic,
+    displayMode: SingleStatDisplayMode.ColoredBackground,
     value: {
       text: value,
       numeric: 5022,
@@ -53,10 +53,10 @@ BigValueStories.add('Mode: Colored Tiles Stacked', () => {
 BigValueStories.add('Mode: Colored Tiles Wide', () => {
   const { value, title } = getKnobs();
 
-  return renderComponentWithTheme(BigValue2, {
+  return renderComponentWithTheme(BigValue, {
     width: 500,
     height: 120,
-    displayMode: SingleStatDisplayMode.Classic,
+    displayMode: SingleStatDisplayMode.ColoredBackground,
     value: {
       text: value,
       numeric: 5022,
@@ -73,7 +73,7 @@ BigValueStories.add('Mode: Colored Tiles Wide', () => {
 BigValueStories.add('Mode: Colored Area Graph', () => {
   const { value, title } = getKnobs();
 
-  return renderComponentWithTheme(BigValue2, {
+  return renderComponentWithTheme(BigValue, {
     width: 500,
     height: 400,
     displayMode: SingleStatDisplayMode.ColoredAreaGraph,

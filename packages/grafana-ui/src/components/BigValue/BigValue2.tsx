@@ -8,7 +8,7 @@ import { DisplayValue } from '@grafana/data';
 import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
-import { Themeable } from '../../types';
+import { Themeable, GrafanaTheme } from '../../types';
 
 export interface BigValueSparkline {
   data: any[][];
@@ -18,7 +18,7 @@ export interface BigValueSparkline {
 
 export enum SingleStatDisplayMode {
   Classic,
-  ColoredTiles,
+  ColoredBackground,
   ColoredAreaGraph,
 }
 
@@ -32,13 +32,12 @@ export interface Props extends Themeable {
   displayMode: SingleStatDisplayMode;
 }
 
-export class BigValue2 extends PureComponent<Props> {
+export class BigValue extends PureComponent<Props> {
   render() {
-    const { height, width, value, onClick, className, theme, sparkline } = this.props;
+    const { value, onClick, className, sparkline } = this.props;
 
-    const baseColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
-    const layout = calculateLayout(width, height, !!sparkline);
-    const panelStyles = getPanelStyles(layout, baseColor);
+    const layout = calculateLayout(this.props);
+    const panelStyles = getPanelStyles(layout);
     const valueAndTitleContainerStyles = getValueAndTitleContainerStyles(layout);
     const valueStyles = getValueStyles(layout);
     const titleStyles = getTitleStyles(layout);
@@ -49,75 +48,17 @@ export class BigValue2 extends PureComponent<Props> {
           {value.title && <div style={titleStyles}>{value.title}</div>}
           <div style={valueStyles}>{value.text}</div>
         </div>
-        {sparkline && this.renderChartElement(layout)}
+        {renderGraph(layout, sparkline)}
       </div>
-    );
-  }
-
-  renderChartElement(layout: LayoutResult) {
-    const { sparkline } = this.props;
-
-    if (!sparkline) {
-      return null;
-    }
-
-    const data = sparkline.data.map(values => {
-      return { time: values[0], value: values[1] };
-    });
-
-    const lineStyle: any = {
-      stroke: '#CCC',
-      lineWidth: 2,
-      shadowBlur: 15,
-      shadowColor: '#444',
-      shadowOffsetY: 7,
-    };
-
-    const scales = {
-      time: {
-        type: 'time',
-      },
-    };
-
-    const chartStyles: CSSProperties = {
-      marginTop: `${CHART_TOP_MARGIN}`,
-    };
-
-    switch (layout.type) {
-      case LayoutType.Wide:
-        chartStyles.width = `${layout.chartWidth}px`;
-        chartStyles.height = `${layout.chartHeight}px`;
-        break;
-      case LayoutType.Stacked:
-        chartStyles.position = 'relative';
-        chartStyles.top = '8px';
-        break;
-      case LayoutType.WideNoChart:
-      case LayoutType.StackedNoChart:
-        return null;
-    }
-
-    return (
-      <Chart
-        height={layout.chartHeight}
-        width={layout.chartWidth}
-        data={data}
-        animate={false}
-        padding={[4, 0, 4, 0]}
-        scale={scales}
-        style={chartStyles}
-      >
-        <Geom type="line" position="time*value" size={2} color="white" style={lineStyle} shape="smooth" />
-      </Chart>
     );
   }
 }
 
 const MIN_VALUE_FONT_SIZE = 20;
-const MAX_VALUE_FONT_SIZE = 40;
+const MAX_VALUE_FONT_SIZE = 50;
 const MIN_TITLE_FONT_SIZE = 14;
 const TITLE_VALUE_RATIO = 0.5;
-const VALUE_HEIGHT_RATIO = 0.3;
+const VALUE_HEIGHT_RATIO = 0.2;
 const LINE_HEIGHT = 1.2;
 const PANEL_PADDING = 16;
 const CHART_TOP_MARGIN = 8;
@@ -130,6 +71,9 @@ interface LayoutResult {
   type: LayoutType;
   width: number;
   height: number;
+  displayMode: SingleStatDisplayMode;
+  theme: GrafanaTheme;
+  valueColor: string;
 }
 
 enum LayoutType {
@@ -139,8 +83,10 @@ enum LayoutType {
   WideNoChart,
 }
 
-export function calculateLayout(width: number, height: number, hasSparkLine: boolean): LayoutResult {
+export function calculateLayout(props: Props): LayoutResult {
+  const { width, height, sparkline, displayMode, theme, value } = props;
   const useWideLayout = width / height > 2.2;
+  const valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
 
   // handle wide layouts
   if (useWideLayout) {
@@ -149,7 +95,7 @@ export function calculateLayout(width: number, height: number, hasSparkLine: boo
 
     const chartHeight = height - PANEL_PADDING * 2;
     const chartWidth = width / 2;
-    const type = hasSparkLine ? LayoutType.Wide : LayoutType.WideNoChart;
+    const type = !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
 
     return {
       valueFontSize,
@@ -159,32 +105,42 @@ export function calculateLayout(width: number, height: number, hasSparkLine: boo
       type,
       width,
       height,
-    };
-  } else {
-    // handle stacked layouts
-    const valueFontSize = Math.min(Math.max(height * VALUE_HEIGHT_RATIO, MIN_VALUE_FONT_SIZE), MAX_VALUE_FONT_SIZE);
-    const titleFontSize = Math.max(valueFontSize * TITLE_VALUE_RATIO, MIN_TITLE_FONT_SIZE);
-    const valueHeight = valueFontSize * LINE_HEIGHT;
-    const titleHeight = titleFontSize * LINE_HEIGHT;
-
-    const chartHeight = height - valueHeight - titleHeight - PANEL_PADDING * 2 - CHART_TOP_MARGIN;
-    const chartWidth = width - PANEL_PADDING * 2;
-    let type = LayoutType.Stacked;
-
-    if (height < 100 || !hasSparkLine) {
-      type = LayoutType.StackedNoChart;
-    }
-
-    return {
-      valueFontSize,
-      titleFontSize,
-      chartHeight,
-      chartWidth,
-      type,
-      width,
-      height,
+      displayMode,
+      theme,
+      valueColor,
     };
   }
+
+  // handle stacked layouts
+  const valueFontSize = Math.min(Math.max(height * VALUE_HEIGHT_RATIO, MIN_VALUE_FONT_SIZE), MAX_VALUE_FONT_SIZE);
+  const titleFontSize = Math.max(valueFontSize * TITLE_VALUE_RATIO, MIN_TITLE_FONT_SIZE);
+  const valueHeight = valueFontSize * LINE_HEIGHT;
+  const titleHeight = titleFontSize * LINE_HEIGHT;
+
+  const chartHeight = height - valueHeight - titleHeight - PANEL_PADDING * 2 - CHART_TOP_MARGIN;
+  let chartWidth = width - PANEL_PADDING * 2;
+  let type = LayoutType.Stacked;
+
+  if (height < 100 || !sparkline) {
+    type = LayoutType.StackedNoChart;
+  }
+
+  if (displayMode === SingleStatDisplayMode.ColoredAreaGraph) {
+    chartWidth = width;
+  }
+
+  return {
+    valueFontSize,
+    titleFontSize,
+    chartHeight,
+    chartWidth,
+    type,
+    width,
+    height,
+    displayMode,
+    theme,
+    valueColor,
+  };
 }
 
 export function getTitleStyles(layout: LayoutResult) {
@@ -204,6 +160,12 @@ export function getValueStyles(layout: LayoutResult) {
     textShadow: '#333 1px 1px 5px',
     lineHeight: LINE_HEIGHT,
   };
+
+  switch (layout.displayMode) {
+    case SingleStatDisplayMode.Classic:
+    case SingleStatDisplayMode.ColoredAreaGraph:
+      styles.color = layout.valueColor;
+  }
 
   return styles;
 }
@@ -240,25 +202,33 @@ export function getValueAndTitleContainerStyles(layout: LayoutResult): CSSProper
   }
 }
 
-export function getPanelStyles(layout: LayoutResult, baseColor: string) {
-  const bgColor2 = tinycolor(baseColor)
-    .darken(15)
-    .spin(8)
-    .toRgbString();
-  const bgColor3 = tinycolor(baseColor)
-    .darken(5)
-    .spin(-8)
-    .toRgbString();
-
+export function getPanelStyles(layout: LayoutResult) {
   const panelStyles: CSSProperties = {
     width: `${layout.width}px`,
     height: `${layout.height}px`,
     padding: `${PANEL_PADDING}px`,
     borderRadius: '3px',
-    background: `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`,
     position: 'relative',
     display: 'flex',
   };
+
+  switch (layout.displayMode) {
+    case SingleStatDisplayMode.ColoredBackground:
+      const bgColor2 = tinycolor(layout.valueColor)
+        .darken(15)
+        .spin(8)
+        .toRgbString();
+      const bgColor3 = tinycolor(layout.valueColor)
+        .darken(5)
+        .spin(-8)
+        .toRgbString();
+
+      panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
+      break;
+    case SingleStatDisplayMode.ColoredAreaGraph:
+      panelStyles.background = `${layout.theme.colors.dark4}`;
+      break;
+  }
 
   switch (layout.type) {
     case LayoutType.Stacked:
@@ -278,4 +248,96 @@ export function getPanelStyles(layout: LayoutResult, baseColor: string) {
   }
 
   return panelStyles;
+}
+
+function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
+  if (!sparkline) {
+    return null;
+  }
+
+  const data = sparkline.data.map(values => {
+    return { time: values[0], value: values[1], name: 'A' };
+  });
+
+  const scales = {
+    time: {
+      type: 'time',
+    },
+  };
+
+  const chartStyles: CSSProperties = {
+    marginTop: `${CHART_TOP_MARGIN}`,
+  };
+
+  switch (layout.type) {
+    case LayoutType.Wide:
+      chartStyles.width = `${layout.chartWidth}px`;
+      chartStyles.height = `${layout.chartHeight}px`;
+      break;
+    case LayoutType.Stacked:
+      chartStyles.position = 'relative';
+      chartStyles.top = '8px';
+      break;
+    case LayoutType.WideNoChart:
+    case LayoutType.StackedNoChart:
+      return null;
+  }
+
+  switch (layout.displayMode) {
+    case SingleStatDisplayMode.ColoredAreaGraph:
+      chartStyles.position = 'absolute';
+      chartStyles.bottom = 0;
+      chartStyles.right = 0;
+      chartStyles.left = 0;
+      chartStyles.right = 0;
+      chartStyles.top = 'unset';
+      break;
+  }
+
+  return (
+    <Chart
+      height={layout.chartHeight}
+      width={layout.chartWidth}
+      data={data}
+      animate={false}
+      padding={[4, 0, 4, 0]}
+      scale={scales}
+      style={chartStyles}
+    >
+      {layout.displayMode === SingleStatDisplayMode.ColoredAreaGraph && renderAreaGeom(layout)}
+      {layout.displayMode !== SingleStatDisplayMode.ColoredAreaGraph && renderLineGeom()}
+    </Chart>
+  );
+}
+
+function renderLineGeom() {
+  const lineStyle: any = {
+    stroke: '#CCC',
+    lineWidth: 2,
+    shadowBlur: 15,
+    shadowColor: '#444',
+    shadowOffsetY: 7,
+  };
+
+  return <Geom type="line" position="time*value" size={2} color="white" style={lineStyle} shape="smooth" />;
+}
+
+function renderAreaGeom(layout: LayoutResult) {
+  const lineStyle: any = {
+    opacity: 1,
+    fillOpacity: 1,
+  };
+
+  const color1 = tinycolor(layout.valueColor)
+    .darken(0)
+    .spin(20)
+    .toRgbString();
+  const color2 = tinycolor(layout.valueColor)
+    .lighten(0)
+    .spin(-20)
+    .toRgbString();
+
+  const colorGradient = `l (0) 0:${color1} 1:${color2}`;
+
+  return <Geom type="area" position="time*value" size={0} color={colorGradient} style={lineStyle} shape="smooth" />;
 }

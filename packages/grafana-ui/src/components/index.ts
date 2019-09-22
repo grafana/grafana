@@ -45,8 +45,7 @@ export { Table } from './Table/Table';
 export { TableInputCSV } from './Table/TableInputCSV';
 
 // Visualizations
-export { BigValue } from './BigValue/BigValue';
-export { BigValue2 } from './BigValue/BigValue2';
+export { BigValue, SingleStatDisplayMode } from './BigValue/BigValue2';
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';

@@ -1,4 +1,4 @@
-import { VizOrientation, SingleStatBaseOptions, FieldDisplayOptions } from '@grafana/ui';
+import { VizOrientation, SingleStatBaseOptions, FieldDisplayOptions, SingleStatDisplayMode } from '@grafana/ui';
 import { ReducerID } from '@grafana/data';
 import { SelectableValue } from '@grafana/data';
 
@@ -10,18 +10,13 @@ export interface SparklineOptions {
 export interface SingleStatOptions extends SingleStatBaseOptions {
   sparkline: SparklineOptions;
   colorMode: ColorMode;
-  displayMode: DisplayMode;
+  displayMode: SingleStatDisplayMode;
 }
 
-export enum DisplayMode {
-  Classic,
-  ColoredTiles,
-  ColoredAreaGraph,
-}
-
-export const displayModes: Array<SelectableValue<DisplayMode>> = [
-  { value: DisplayMode.Classic, label: 'Classic' },
-  { value: DisplayMode.ColoredTiles, label: 'Colored Tiles' },
+export const displayModes: Array<SelectableValue<SingleStatDisplayMode>> = [
+  { value: SingleStatDisplayMode.Classic, label: 'Classic' },
+  { value: SingleStatDisplayMode.ColoredBackground, label: 'Colored background' },
+  { value: SingleStatDisplayMode.ColoredAreaGraph, label: 'Colored graph' },
 ];
 
 export enum ColorMode {
@@ -54,7 +49,7 @@ export const defaults: SingleStatOptions = {
     show: true,
   },
   colorMode: ColorMode.Thresholds,
-  displayMode: DisplayMode.ColoredTiles,
+  displayMode: SingleStatDisplayMode.ColoredBackground,
   fieldOptions: standardFieldDisplayOptions,
   orientation: VizOrientation.Auto,
 };
