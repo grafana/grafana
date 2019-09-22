@@ -348,9 +348,9 @@ function renderVibrant2Geom(layout: LayoutResult) {
   const lineStyle: any = {
     stroke: '#CCC',
     lineWidth: 2,
-    shadowBlur: 8,
-    shadowColor: '#333',
-    shadowOffsetY: -8,
+    shadowBlur: 15,
+    shadowColor: '#444',
+    shadowOffsetY: -5,
   };
 
   return (
