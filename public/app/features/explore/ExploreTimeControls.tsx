@@ -8,9 +8,10 @@ import { TimeRange, TimeOption, TimeZone, RawTimeRange, dateTimeForTimeZone } fr
 // State
 
 // Components
+import { TimePicker } from '@grafana/ui';
 
 // Utils & Services
-import { defaultSelectOptions, TimePicker } from '@grafana/ui/src/components/TimePicker/TimePicker';
+import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 
 export interface Props {
@@ -68,12 +69,9 @@ export class ExploreTimeControls extends Component<Props> {
     });
   };
 
-  testFunction = () => {
-    console.log('clicked');
-  };
-
   render() {
     const { range, timeZone, splitted, syncedTimes, onClick } = this.props;
+    const syncButton = { icon: 'fa fa-link', onClick, active: syncedTimes };
 
     return (
       <>
@@ -86,7 +84,7 @@ export class ExploreTimeControls extends Component<Props> {
             onMoveForward={this.onMoveForward}
             onZoom={this.onZoom}
             selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
-            rightButton={{ icon: 'fa fa-link', onClick, active: syncedTimes }}
+            rightButton={syncButton}
           />
         )}
         {!splitted && (

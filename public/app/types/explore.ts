@@ -112,7 +112,7 @@ export interface ExploreState {
    */
   split: boolean;
   /**
-   * True if in split view, time interval ale synced.
+   * True if time interval for panels are synced. Only possible with split mode.
    */
   syncedTimes: boolean;
   /**

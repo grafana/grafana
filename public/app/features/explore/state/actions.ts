@@ -686,7 +686,8 @@ export function splitOpen(): ThunkResult<void> {
 }
 
 /**
- * Initialize syn times
+ * Syncs time interval, if they are not synced on both panels in a split mode.
+ * Unsyncs time interval, if they are synced on both panels in a split mode.
  */
 export function syncTimes(): ThunkResult<void> {
   return (dispatch, getState) => {

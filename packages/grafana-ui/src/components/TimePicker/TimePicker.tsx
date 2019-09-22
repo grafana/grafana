@@ -16,11 +16,17 @@ import { rawToTimeRange } from './time';
 import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue } from '@grafana/data';
 import { dateMath } from '@grafana/data';
 
+interface RightButton {
+  icon: string;
+  active: boolean;
+  onClick: () => void;
+}
+
 export interface Props {
   value: TimeRange;
   selectOptions: TimeOption[];
   timeZone?: TimeZone;
-  rightButton?: { icon: string; onClick: () => void; active: boolean };
+  rightButton?: RightButton;
   onChange: (timeRange: TimeRange) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
