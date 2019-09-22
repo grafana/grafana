@@ -30,7 +30,7 @@ export class BigValue2 extends PureComponent<Props> {
     const { height, width, value, onClick, className, theme, sparkline } = this.props;
 
     const baseColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
-    const layout = calculateLayout(width, height);
+    const layout = calculateLayout(width, height, !!sparkline);
     const panelStyles = getPanelStyles(layout, baseColor);
     const valueAndTitleContainerStyles = getValueAndTitleContainerStyles(layout);
     const valueStyles = getValueStyles(layout);
@@ -61,8 +61,8 @@ export class BigValue2 extends PureComponent<Props> {
     const lineStyle: any = {
       stroke: '#CCC',
       lineWidth: 2,
-      shadowBlur: 7,
-      shadowColor: '#333',
+      shadowBlur: 15,
+      shadowColor: '#444',
       shadowOffsetY: 7,
     };
 
@@ -76,12 +76,18 @@ export class BigValue2 extends PureComponent<Props> {
       marginTop: `${CHART_TOP_MARGIN}`,
     };
 
-    if (layout.type === LayoutType.ChartRight) {
-      chartStyles.position = 'absolute';
-      chartStyles.bottom = 0;
-      chartStyles.left = 0;
-      chartStyles.width = `${layout.chartHeight}px`;
-      chartStyles.height = `${layout.chartHeight}px`;
+    switch (layout.type) {
+      case LayoutType.Wide:
+        chartStyles.width = `${layout.chartWidth}px`;
+        chartStyles.height = `${layout.chartHeight}px`;
+        break;
+      case LayoutType.Stacked:
+        chartStyles.position = 'relative';
+        chartStyles.top = '8px';
+        break;
+      case LayoutType.WideNoChart:
+      case LayoutType.StackedNoChart:
+        return null;
     }
 
     return (
@@ -90,7 +96,7 @@ export class BigValue2 extends PureComponent<Props> {
         width={layout.chartWidth}
         data={data}
         animate={false}
-        padding={[0, 0, 0, 0]}
+        padding={[4, 0, 4, 0]}
         scale={scales}
         style={chartStyles}
       >
@@ -120,34 +126,58 @@ interface LayoutResult {
 }
 
 enum LayoutType {
-  ChartBelow,
-  ChartRight,
+  Stacked,
+  StackedNoChart,
+  Wide,
+  WideNoChart,
 }
 
-export function calculateLayout(width: number, height: number): LayoutResult {
-  let type = LayoutType.ChartBelow;
+export function calculateLayout(width: number, height: number, hasSparkLine: boolean): LayoutResult {
+  const useWideLayout = width / height > 2.2;
 
-  const valueFontSize = Math.min(Math.max(height * VALUE_HEIGHT_RATIO, MIN_VALUE_FONT_SIZE), MAX_VALUE_FONT_SIZE);
-  const titleFontSize = Math.max(valueFontSize * TITLE_VALUE_RATIO, MIN_TITLE_FONT_SIZE);
-  let chartHeight =
-    height - valueFontSize * LINE_HEIGHT - titleFontSize * LINE_HEIGHT - PANEL_PADDING * 2 - CHART_TOP_MARGIN;
-  let chartWidth = width - PANEL_PADDING * 2;
+  // handle wide layouts
+  if (useWideLayout) {
+    const valueFontSize = Math.min(Math.max(height * VALUE_HEIGHT_RATIO, MIN_VALUE_FONT_SIZE), MAX_VALUE_FONT_SIZE);
+    const titleFontSize = Math.max(valueFontSize * TITLE_VALUE_RATIO, MIN_TITLE_FONT_SIZE);
 
-  if (width / height > 2.2) {
-    type = LayoutType.ChartRight;
-    chartHeight = height - PANEL_PADDING * 2;
-    chartWidth = width;
+    const chartHeight = height - PANEL_PADDING * 2;
+    const chartWidth = width / 2;
+    const type = hasSparkLine ? LayoutType.Wide : LayoutType.WideNoChart;
+
+    return {
+      valueFontSize,
+      titleFontSize,
+      chartHeight,
+      chartWidth,
+      type,
+      width,
+      height,
+    };
+  } else {
+    // handle stacked layouts
+    const valueFontSize = Math.min(Math.max(height * VALUE_HEIGHT_RATIO, MIN_VALUE_FONT_SIZE), MAX_VALUE_FONT_SIZE);
+    const titleFontSize = Math.max(valueFontSize * TITLE_VALUE_RATIO, MIN_TITLE_FONT_SIZE);
+    const valueHeight = valueFontSize * LINE_HEIGHT;
+    const titleHeight = titleFontSize * LINE_HEIGHT;
+
+    const chartHeight = height - valueHeight - titleHeight - PANEL_PADDING * 2 - CHART_TOP_MARGIN;
+    const chartWidth = width - PANEL_PADDING * 2;
+    let type = LayoutType.Stacked;
+
+    if (height < 100 || !hasSparkLine) {
+      type = LayoutType.StackedNoChart;
+    }
+
+    return {
+      valueFontSize,
+      titleFontSize,
+      chartHeight,
+      chartWidth,
+      type,
+      width,
+      height,
+    };
   }
-
-  return {
-    valueFontSize,
-    titleFontSize,
-    chartHeight,
-    chartWidth,
-    type,
-    width,
-    height,
-  };
 }
 
 export function getTitleStyles(layout: LayoutResult) {
@@ -171,21 +201,36 @@ export function getValueStyles(layout: LayoutResult) {
   return styles;
 }
 
-export function getValueAndTitleContainerStyles(layout: LayoutResult) {
-  const styles: CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    flexGrow: 1,
-    justifyContent: 'center',
-  };
-
-  if (layout.type === LayoutType.ChartRight) {
-    styles.flexDirection = 'row';
-    styles.justifyContent = 'space-between';
-    styles.alignItems = 'center';
+export function getValueAndTitleContainerStyles(layout: LayoutResult): CSSProperties {
+  switch (layout.type) {
+    case LayoutType.Wide:
+      return {
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+      };
+    case LayoutType.WideNoChart:
+      return {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexGrow: 1,
+      };
+    case LayoutType.StackedNoChart:
+      return {
+        display: 'flex',
+        flexDirection: 'column',
+        flexGrow: 1,
+      };
+    case LayoutType.Stacked:
+    default:
+      return {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+      };
   }
-
-  return styles;
 }
 
 export function getPanelStyles(layout: LayoutResult, baseColor: string) {
@@ -205,11 +250,24 @@ export function getPanelStyles(layout: LayoutResult, baseColor: string) {
     borderRadius: '3px',
     background: `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`,
     position: 'relative',
+    display: 'flex',
   };
 
-  if (layout.type === LayoutType.ChartRight) {
-    panelStyles.display = 'flex';
-    panelStyles.alignItems = 'center';
+  switch (layout.type) {
+    case LayoutType.Stacked:
+      panelStyles.flexDirection = 'column';
+      break;
+    case LayoutType.StackedNoChart:
+      panelStyles.alignItems = 'center';
+      break;
+    case LayoutType.Wide:
+      panelStyles.flexDirection = 'row';
+      panelStyles.alignItems = 'center';
+      panelStyles.justifyContent = 'space-between';
+      break;
+    case LayoutType.WideNoChart:
+      panelStyles.alignItems = 'center';
+      break;
   }
 
   return panelStyles;
