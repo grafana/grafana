@@ -87,7 +87,7 @@ enum LayoutType {
 
 export function calculateLayout(props: Props): LayoutResult {
   const { width, height, sparkline, displayMode, theme, value } = props;
-  const useWideLayout = width / height > 2.2;
+  const useWideLayout = width / height > 2.8;
   const valueColor = getColorFromHexRgbOrName(value.color || 'green', theme.type);
 
   // handle wide layouts
@@ -100,7 +100,11 @@ export function calculateLayout(props: Props): LayoutResult {
 
     const chartHeight = height - PANEL_PADDING * 2;
     const chartWidth = width / 2;
-    const type = !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
+    let type = !!sparkline ? LayoutType.Wide : LayoutType.WideNoChart;
+
+    if (height < 100 || !sparkline) {
+      type = LayoutType.WideNoChart;
+    }
 
     return {
       valueFontSize,
