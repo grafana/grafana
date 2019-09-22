@@ -15,8 +15,9 @@ export interface SingleStatOptions extends SingleStatBaseOptions {
 
 export const displayModes: Array<SelectableValue<SingleStatDisplayMode>> = [
   { value: SingleStatDisplayMode.Classic, label: 'Classic' },
-  { value: SingleStatDisplayMode.ColoredBackground, label: 'Colored background' },
-  { value: SingleStatDisplayMode.ColoredAreaGraph, label: 'Colored graph' },
+  { value: SingleStatDisplayMode.Classic2, label: 'Classic 2' },
+  { value: SingleStatDisplayMode.Vibrant, label: 'Vibrant' },
+  { value: SingleStatDisplayMode.Vibrant2, label: 'Vibrant 2' },
 ];
 
 export enum ColorMode {
@@ -49,7 +50,7 @@ export const defaults: SingleStatOptions = {
     show: true,
   },
   colorMode: ColorMode.Thresholds,
-  displayMode: SingleStatDisplayMode.ColoredBackground,
+  displayMode: SingleStatDisplayMode.Vibrant,
   fieldOptions: standardFieldDisplayOptions,
   orientation: VizOrientation.Auto,
 };

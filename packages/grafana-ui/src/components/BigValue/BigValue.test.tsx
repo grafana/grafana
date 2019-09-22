@@ -11,7 +11,7 @@ const setup = (propOverrides?: object) => {
   const props: Props = {
     height: 300,
     width: 300,
-    displayMode: SingleStatDisplayMode.ColoredBackground,
+    displayMode: SingleStatDisplayMode.Classic,
     value: {
       text: '25',
       numeric: 25,

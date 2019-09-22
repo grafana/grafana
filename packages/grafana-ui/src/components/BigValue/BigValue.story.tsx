@@ -15,83 +15,37 @@ const BigValueStories = storiesOf('UI/BigValue', module);
 
 BigValueStories.addDecorator(withCenteredStory);
 
-BigValueStories.add('Mode: Classic', () => {
-  const { value, title } = getKnobs();
+interface StoryOptions {
+  mode: SingleStatDisplayMode;
+  width?: number;
+  height?: number;
+  noSparkline?: boolean;
+}
 
-  return renderComponentWithTheme(BigValue, {
-    width: 400,
-    height: 300,
-    displayMode: SingleStatDisplayMode.Classic,
-    value: {
-      text: value,
-      numeric: 5022,
-      color: 'red',
-      title,
-    },
-    sparkline: {
-      minX: 0,
-      maxX: 5,
-      data: [[0, 10], [1, 20], [2, 15], [3, 25], [4, 5], [5, 10]],
-    },
+function addStoryForMode(options: StoryOptions) {
+  BigValueStories.add(`Mode: ${SingleStatDisplayMode[options.mode]}`, () => {
+    const { value, title } = getKnobs();
+
+    return renderComponentWithTheme(BigValue, {
+      width: options.width || 400,
+      height: options.height || 300,
+      displayMode: options.mode,
+      value: {
+        text: value,
+        numeric: 5022,
+        color: 'red',
+        title,
+      },
+      sparkline: {
+        minX: 0,
+        maxX: 5,
+        data: [[0, 10], [1, 20], [2, 15], [3, 25], [4, 5], [5, 10]],
+      },
+    });
   });
-});
+}
 
-BigValueStories.add('Mode: Colored Tiles Stacked', () => {
-  const { value, title } = getKnobs();
-
-  return renderComponentWithTheme(BigValue, {
-    width: 400,
-    height: 250,
-    displayMode: SingleStatDisplayMode.ColoredBackground,
-    value: {
-      text: value,
-      numeric: 5022,
-      title,
-    },
-    sparkline: {
-      minX: 0,
-      maxX: 5,
-      data: [[0, 10], [1, 20], [2, 15], [3, 25], [4, 5], [5, 10]],
-    },
-  });
-});
-
-BigValueStories.add('Mode: Colored Tiles Wide', () => {
-  const { value, title } = getKnobs();
-
-  return renderComponentWithTheme(BigValue, {
-    width: 500,
-    height: 120,
-    displayMode: SingleStatDisplayMode.ColoredBackground,
-    value: {
-      text: value,
-      numeric: 5022,
-      title,
-    },
-    sparkline: {
-      minX: 0,
-      maxX: 5,
-      data: [[0, 10], [1, 20], [2, 15], [3, 25], [4, 5], [5, 10]],
-    },
-  });
-});
-
-BigValueStories.add('Mode: Colored Area Graph', () => {
-  const { value, title } = getKnobs();
-
-  return renderComponentWithTheme(BigValue, {
-    width: 500,
-    height: 400,
-    displayMode: SingleStatDisplayMode.ColoredAreaGraph,
-    value: {
-      text: value,
-      numeric: 5022,
-      title,
-    },
-    sparkline: {
-      minX: 0,
-      maxX: 5,
-      data: [[0, 10], [1, 20], [2, 15], [3, 25], [4, 5], [5, 10]],
-    },
-  });
-});
+addStoryForMode({ mode: SingleStatDisplayMode.Classic });
+addStoryForMode({ mode: SingleStatDisplayMode.Classic2 });
+addStoryForMode({ mode: SingleStatDisplayMode.Vibrant });
+addStoryForMode({ mode: SingleStatDisplayMode.Vibrant2 });

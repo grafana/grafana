@@ -18,8 +18,9 @@ export interface BigValueSparkline {
 
 export enum SingleStatDisplayMode {
   Classic,
-  ColoredBackground,
-  ColoredAreaGraph,
+  Classic2,
+  Vibrant,
+  Vibrant2,
 }
 
 export interface Props extends Themeable {
@@ -130,8 +131,9 @@ export function calculateLayout(props: Props): LayoutResult {
   }
 
   switch (displayMode) {
+    case SingleStatDisplayMode.Vibrant2:
     case SingleStatDisplayMode.Classic:
-    case SingleStatDisplayMode.ColoredAreaGraph:
+    case SingleStatDisplayMode.Classic2:
       chartWidth = width;
       break;
   }
@@ -170,7 +172,7 @@ export function getValueStyles(layout: LayoutResult) {
 
   switch (layout.displayMode) {
     case SingleStatDisplayMode.Classic:
-    case SingleStatDisplayMode.ColoredAreaGraph:
+    case SingleStatDisplayMode.Classic2:
       styles.color = layout.valueColor;
   }
 
@@ -220,7 +222,8 @@ export function getPanelStyles(layout: LayoutResult) {
   };
 
   switch (layout.displayMode) {
-    case SingleStatDisplayMode.ColoredBackground:
+    case SingleStatDisplayMode.Vibrant:
+    case SingleStatDisplayMode.Vibrant2:
       const bgColor2 = tinycolor(layout.valueColor)
         .darken(15)
         .spin(8)
@@ -232,7 +235,7 @@ export function getPanelStyles(layout: LayoutResult) {
       panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
       break;
     case SingleStatDisplayMode.Classic:
-    case SingleStatDisplayMode.ColoredAreaGraph:
+    case SingleStatDisplayMode.Classic2:
       panelStyles.background = `${layout.theme.colors.dark4}`;
       break;
   }
@@ -303,10 +306,13 @@ function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
   }
 
   switch (layout.displayMode) {
+    case SingleStatDisplayMode.Vibrant2:
+      geomRender = renderVibrant2Geom;
+      break;
     case SingleStatDisplayMode.Classic:
       geomRender = renderClassicAreaGeom;
       break;
-    case SingleStatDisplayMode.ColoredAreaGraph:
+    case SingleStatDisplayMode.Classic2:
       geomRender = renderAreaGeom;
       break;
   }
@@ -317,7 +323,7 @@ function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
       width={layout.chartWidth}
       data={data}
       animate={false}
-      padding={[4, 0, 4, 0]}
+      padding={[4, 0, 0, 0]}
       scale={scales}
       style={chartStyles}
     >
@@ -336,6 +342,23 @@ function renderLineGeom(layout: LayoutResult) {
   };
 
   return <Geom type="line" position="time*value" size={2} color="white" style={lineStyle} shape="smooth" />;
+}
+
+function renderVibrant2Geom(layout: LayoutResult) {
+  const lineStyle: any = {
+    stroke: '#CCC',
+    lineWidth: 2,
+    shadowBlur: 8,
+    shadowColor: '#333',
+    shadowOffsetY: -8,
+  };
+
+  return (
+    <>
+      <Geom type="area" position="time*value" size={0} color="rgba(255,255,255,0.4)" style={lineStyle} shape="smooth" />
+      <Geom type="line" position="time*value" size={1} color="white" style={lineStyle} shape="smooth" />
+    </>
+  );
 }
 
 function renderClassicAreaGeom(layout: LayoutResult) {
