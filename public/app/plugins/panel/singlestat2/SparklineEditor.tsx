@@ -2,14 +2,12 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { Switch, PanelOptionsGroup } from '@grafana/ui';
+import { Switch } from '@grafana/ui';
 
 // Types
 import { SparklineOptions } from './types';
 
-const labelWidth = 6;
-
-export interface Props {
+interface Props {
   options: SparklineOptions;
   onChange: (options: SparklineOptions) => void;
 }
@@ -20,10 +18,6 @@ export class SparklineEditor extends PureComponent<Props> {
   render() {
     const { show } = this.props.options;
 
-    return (
-      <PanelOptionsGroup title="Sparkline">
-        <Switch label="Show" labelClass={`width-${labelWidth}`} checked={show} onChange={this.onToggleShow} />
-      </PanelOptionsGroup>
-    );
+    return <Switch label="Graph" labelClass="width-8" checked={show} onChange={this.onToggleShow} />;
   }
 }

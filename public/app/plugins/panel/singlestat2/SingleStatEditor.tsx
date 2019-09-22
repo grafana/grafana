@@ -75,14 +75,13 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
       <>
         <PanelOptionsGrid>
           <PanelOptionsGroup title="Display">
-            <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} />
+            <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={8} />
+            <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
           </PanelOptionsGroup>
 
           <PanelOptionsGroup title="Field (default)">
             <FieldPropertiesEditor showMinMax={true} onChange={this.onDefaultsChange} value={defaults} />
           </PanelOptionsGroup>
-
-          <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
 
           <ThresholdsEditor onChange={this.onThresholdsChanged} thresholds={defaults.thresholds} />
         </PanelOptionsGrid>
