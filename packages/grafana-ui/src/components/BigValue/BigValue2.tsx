@@ -16,6 +16,12 @@ export interface BigValueSparkline {
   maxX: number;
 }
 
+export enum SingleStatDisplayMode {
+  Classic,
+  ColoredTiles,
+  ColoredAreaGraph,
+}
+
 export interface Props extends Themeable {
   height: number;
   width: number;
@@ -23,6 +29,7 @@ export interface Props extends Themeable {
   sparkline?: BigValueSparkline;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
+  displayMode: SingleStatDisplayMode;
 }
 
 export class BigValue2 extends PureComponent<Props> {

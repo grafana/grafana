@@ -1,7 +1,6 @@
 import { storiesOf } from '@storybook/react';
 import { text } from '@storybook/addon-knobs';
-import { BigValue } from './BigValue';
-import { BigValue2 } from './BigValue2';
+import { BigValue2, SingleStatDisplayMode } from './BigValue2';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
@@ -16,12 +15,13 @@ const BigValueStories = storiesOf('UI/BigValue', module);
 
 BigValueStories.addDecorator(withCenteredStory);
 
-BigValueStories.add('Classic singlestat', () => {
+BigValueStories.add('Mode: Classic', () => {
   const { value, title } = getKnobs();
 
-  return renderComponentWithTheme(BigValue, {
+  return renderComponentWithTheme(BigValue2, {
     width: 300,
     height: 250,
+    displayMode: SingleStatDisplayMode.Classic,
     value: {
       text: value,
       numeric: 5022,
@@ -30,12 +30,13 @@ BigValueStories.add('Classic singlestat', () => {
   });
 });
 
-BigValueStories.add('New Singlestat', () => {
+BigValueStories.add('Mode: Colored Tiles Stacked', () => {
   const { value, title } = getKnobs();
 
   return renderComponentWithTheme(BigValue2, {
     width: 400,
     height: 250,
+    displayMode: SingleStatDisplayMode.Classic,
     value: {
       text: value,
       numeric: 5022,
@@ -49,12 +50,33 @@ BigValueStories.add('New Singlestat', () => {
   });
 });
 
-BigValueStories.add('New Singlestat wide', () => {
+BigValueStories.add('Mode: Colored Tiles Wide', () => {
   const { value, title } = getKnobs();
 
   return renderComponentWithTheme(BigValue2, {
     width: 500,
-    height: 200,
+    height: 120,
+    displayMode: SingleStatDisplayMode.Classic,
+    value: {
+      text: value,
+      numeric: 5022,
+      title,
+    },
+    sparkline: {
+      minX: 0,
+      maxX: 5,
+      data: [[0, 10], [1, 20], [2, 15], [3, 25], [4, 5], [5, 10]],
+    },
+  });
+});
+
+BigValueStories.add('Mode: Colored Area Graph', () => {
+  const { value, title } = getKnobs();
+
+  return renderComponentWithTheme(BigValue2, {
+    width: 500,
+    height: 400,
+    displayMode: SingleStatDisplayMode.ColoredAreaGraph,
     value: {
       text: value,
       numeric: 5022,

@@ -24,8 +24,6 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
     if (value.sparkline) {
       const { timeRange, options } = this.props;
 
-      console.log(timeRange.to.valueOf());
-
       sparkline = {
         ...options.sparkline,
         data: value.sparkline,
@@ -41,6 +39,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
             <BigValue2
               value={value.display}
               sparkline={sparkline}
+              displayMode={options.displayMode}
               width={width}
               height={height}
               theme={config.theme}
@@ -55,6 +54,7 @@ export class SingleStatPanel extends PureComponent<PanelProps<SingleStatOptions>
 
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables } = this.props;
+
     return getFieldDisplayValues({
       ...options,
       replaceVariables,

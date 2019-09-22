@@ -83,7 +83,6 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
         <PanelOptionsGrid>
           <PanelOptionsGroup title="Display">
             <FieldDisplayEditor onChange={this.onDisplayOptionsChanged} value={fieldOptions} labelWidth={8} />
-            <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
             <div className="form-field">
               <FormLabel width={8}>Display mode</FormLabel>
               <Select
@@ -104,6 +103,7 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
                 value={colorModes.find(item => item.value === options.colorMode)}
               />
             </div>
+            <SparklineEditor options={options.sparkline} onChange={this.onSparklineChanged} />
           </PanelOptionsGroup>
 
           <PanelOptionsGroup title="Field (default)">
