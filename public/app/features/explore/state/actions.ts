@@ -183,11 +183,21 @@ export const updateTimeRange = (options: {
   exploreId: ExploreId;
   rawRange?: RawTimeRange;
   absoluteRange?: AbsoluteTimeRange;
+  syncedTimes?: boolean;
 }): ThunkResult<void> => {
-  return dispatch => {
-    dispatch(updateTime({ ...options }));
-    dispatch(runQueries(options.exploreId));
-  };
+  if (options.syncedTimes) {
+    return dispatch => {
+      dispatch(updateTime({ ...options, exploreId: ExploreId.left }));
+      dispatch(runQueries(ExploreId.left));
+      dispatch(updateTime({ ...options, exploreId: ExploreId.right }));
+      dispatch(runQueries(ExploreId.right));
+    };
+  } else {
+    return dispatch => {
+      dispatch(updateTime({ ...options }));
+      dispatch(runQueries(options.exploreId));
+    };
+  }
 };
 
 /**

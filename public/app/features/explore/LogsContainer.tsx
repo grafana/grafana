@@ -50,6 +50,7 @@ interface LogsContainerProps {
   stopLive: typeof changeRefreshIntervalAction;
   updateTimeRange: typeof updateTimeRange;
   range: TimeRange;
+  syncedTimes: boolean;
   absoluteRange: AbsoluteTimeRange;
   setPausedStateAction: typeof setPausedStateAction;
   isPaused: boolean;
@@ -57,9 +58,9 @@ interface LogsContainerProps {
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
-    const { exploreId, updateTimeRange } = this.props;
+    const { exploreId, updateTimeRange, syncedTimes } = this.props;
 
-    updateTimeRange({ exploreId, absoluteRange });
+    updateTimeRange({ exploreId, absoluteRange, syncedTimes });
   };
 
   onStopLive = () => {
