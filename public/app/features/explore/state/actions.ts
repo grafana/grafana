@@ -691,8 +691,8 @@ export function splitOpen(): ThunkResult<void> {
  */
 export function syncTimes(): ThunkResult<void> {
   return (dispatch, getState) => {
-    const currentState = getState().explore.syncedTimes;
-    dispatch(syncTimesAction({ syncedTimes: !currentState }));
+    const isTimeSynced = getState().explore.syncedTimes;
+    dispatch(syncTimesAction({ syncedTimes: !isTimeSynced }));
     dispatch(stateSave());
   };
 }

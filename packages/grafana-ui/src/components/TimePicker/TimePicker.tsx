@@ -15,11 +15,11 @@ import { isDateTime, DateTime } from '@grafana/data';
 import { rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
 import { withTheme } from '../../themes/ThemeContext';
-import { GrafanaTheme, GrafanaThemeType } from '../../types/theme';
 
 // Types
 import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue } from '@grafana/data';
 import { dateMath } from '@grafana/data';
+import { GrafanaTheme, GrafanaThemeType } from '../../types/theme';
 import { Themeable } from '../../types';
 
 const orangeLight = '#ED5700';
@@ -168,7 +168,6 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
     } = this.props;
 
     const styles = getStyles(theme);
-
     const { isCustomOpen } = this.state;
     const options = this.mapTimeOptionsToSelectableValues(selectTimeOptions);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
