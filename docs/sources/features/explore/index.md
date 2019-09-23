@@ -115,3 +115,16 @@ after switching to the Logs data source, the query changes to:
 `{job="grafana"}`
 
 This will return a chunk of logs in the selected time range that can be grepped/text searched.
+
+
+#### Live tailing
+
+With Loki you can use the Live tailing feature to see realtime logs as they are pushed to Loki.
+To switch to Live tail view, click the Live button in the Explore toolbar.
+
+While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting
+background so you can keep track of what is new. You can also pause the Live tailing and explore the logs by either clicking the Pause button or just
+scrolling up the window with logs. To resume click the Resume button or click Stop button to
+exit Live tailing and go back to standard Explore view. 
+
+{{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
