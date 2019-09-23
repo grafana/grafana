@@ -84,6 +84,12 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 		return nil, err
 	}
 
+	if len(results) == 0 {
+		return &datasource.DatasourceResponse{
+			Results: []*datasource.QueryResult{},
+		}, nil
+	}
+
 	var respResults []*datasource.QueryResult
 
 	for _, res := range results {
