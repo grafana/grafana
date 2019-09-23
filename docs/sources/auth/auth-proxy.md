@@ -13,7 +13,7 @@ weight = 2
 
 # Auth Proxy Authentication
 
-You can configure Grafana to let a http reverse proxy handling authentication. Popular web servers have a very
+You can configure Grafana to let a HTTP reverse proxy handling authentication. Popular web servers have a very
 extensive list of pluggable authentication modules, and any of them can be used with the AuthProxy feature.
 Below we detail the configuration options for auth proxy.
 
