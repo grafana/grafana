@@ -21,6 +21,8 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 * Write in present tense.
   - Not: The panel will open.
   - Use: The panel opens. Grafana opens the panel.
+* Do not use an ampersand (&) as an abbreviation for "and." 
+  - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
 
 ### File naming conventions
 
