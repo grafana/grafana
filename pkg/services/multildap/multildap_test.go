@@ -152,7 +152,7 @@ func TestMultiLDAP(t *testing.T) {
 				teardown()
 			})
 
-			Convey("Should still call a second error for invalid credentials error", func() {
+			Convey("Should still try to auth with the second server after receiving an invalid credentials error from the first", func() {
 				mock := setup()
 
 				mock.loginErrReturn = ErrInvalidCredentials
