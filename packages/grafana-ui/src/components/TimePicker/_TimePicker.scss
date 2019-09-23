@@ -7,17 +7,6 @@
   }
 }
 
-.active-time-picker {
-  border-color: $orange;
-  color: $orange;
-  &:focus {
-    color: $orange;
-  }
-  &:hover {
-    color: $orange;
-  }
-}
-
 .time-picker-utc {
   color: $orange;
   font-size: 75%;
@@ -85,9 +74,6 @@
 
 .time-picker-input {
   max-width: 170px;
-}
-.time-picker--border-right-0 {
-  border-right: 0;
 }
 
 .react-calendar__navigation__label {

@@ -1,5 +1,8 @@
 // Libraries
 import React, { PureComponent, createRef } from 'react';
+import { css } from 'emotion';
+import memoizeOne from 'memoize-one';
+import classNames from 'classnames';
 
 // Components
 import { ButtonSelect } from '../Select/ButtonSelect';
@@ -11,22 +14,49 @@ import { ClickOutsideWrapper } from '../ClickOutsideWrapper/ClickOutsideWrapper'
 import { isDateTime, DateTime } from '@grafana/data';
 import { rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
+import { withTheme } from '../../themes/ThemeContext';
+import { GrafanaTheme, GrafanaThemeType } from '../../types/theme';
 
 // Types
 import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue } from '@grafana/data';
 import { dateMath } from '@grafana/data';
+import { Themeable } from '../../types';
 
-interface RightButton {
+const orangeLight = '#ED5700';
+const orangeDark = '#FF780A';
+
+const getStyles = memoizeOne((theme: GrafanaTheme) => {
+  const orange = theme.type === GrafanaThemeType.Dark ? orangeDark : orangeLight;
+  return {
+    timePickerActive: css`
+      label: timePickerActive;
+      border-color: ${orange};
+      color: ${orange};
+      &:focus {
+        color: ${orange};
+      }
+      &:hover {
+        color: ${orange};
+      }
+    `,
+    noRightBorderStyle: css`
+      label: noRightBorderStyle;
+      border-right: 0;
+    `,
+  };
+});
+
+interface SyncButton {
   icon: string;
   active: boolean;
   onClick: () => void;
 }
 
-export interface Props {
+export interface Props extends Themeable {
   value: TimeRange;
   selectOptions: TimeOption[];
   timeZone?: TimeZone;
-  rightButton?: RightButton;
+  syncButton?: SyncButton;
   onChange: (timeRange: TimeRange) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
@@ -77,7 +107,7 @@ const defaultZoomOutTooltip = () => {
 export interface State {
   isCustomOpen: boolean;
 }
-export class TimePicker extends PureComponent<Props, State> {
+class UnThemedTimePicker extends PureComponent<Props, State> {
   pickerTriggerRef = createRef<HTMLDivElement>();
 
   state: State = {
@@ -134,8 +164,12 @@ export class TimePicker extends PureComponent<Props, State> {
       onMoveForward,
       onZoom,
       timeZone,
-      rightButton,
+      syncButton,
+      theme,
     } = this.props;
+
+    const styles = getStyles(theme);
+
     const { isCustomOpen } = this.state;
     const options = this.mapTimeOptionsToSelectableValues(selectTimeOptions);
     const currentOption = options.find(item => isTimeOptionEqualToTimeRange(item.value, value));
@@ -167,13 +201,10 @@ export class TimePicker extends PureComponent<Props, State> {
             </button>
           )}
           <ButtonSelect
-            className={`time-picker-button-select ${
-              rightButton
-                ? rightButton.active
-                  ? 'btn--radius-right-0 active-time-picker time-picker--border-right-0'
-                  : 'btn--radius-right-0'
-                : null
-            }`}
+            className={classNames('time-picker-button-select', {
+              [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: syncButton,
+              [`${styles.timePickerActive}`]: syncButton.active,
+            })}
             value={currentOption}
             label={label}
             options={options}
@@ -182,14 +213,14 @@ export class TimePicker extends PureComponent<Props, State> {
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
-          {rightButton && (
+          {syncButton && (
             <button
-              className={`btn navbar-button navbar-button--attached ${
-                rightButton.active ? 'active-time-picker' : null
-              }`}
-              onClick={() => rightButton.onClick()}
+              className={classNames('btn navbar-button navbar-button--attached', {
+                [`${styles.timePickerActive}`]: syncButton.active,
+              })}
+              onClick={() => syncButton.onClick()}
             >
-              <i className={rightButton.icon} />
+              <i className={syncButton.icon} />
             </button>
           )}
           {isAbsolute && (
@@ -226,3 +257,5 @@ const TimePickerTooltipContent = ({ timeRange }: { timeRange: TimeRange }) => (
 function isTimeOptionEqualToTimeRange(option: TimeOption, range: TimeRange): boolean {
   return range.raw.from === option.from && range.raw.to === option.to;
 }
+
+export const TimePicker = withTheme(UnThemedTimePicker);

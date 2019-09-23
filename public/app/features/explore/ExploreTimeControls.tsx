@@ -84,7 +84,7 @@ export class ExploreTimeControls extends Component<Props> {
             onMoveForward={this.onMoveForward}
             onZoom={this.onZoom}
             selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
-            rightButton={syncButton}
+            syncButton={syncButton}
           />
         )}
         {!splitted && (
