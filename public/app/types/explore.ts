@@ -23,9 +23,16 @@ import {
 import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
 
+import { Value } from 'slate';
+
+import { Editor } from '@grafana/slate-react';
 export enum ExploreMode {
   Metrics = 'Metrics',
   Logs = 'Logs',
+}
+
+export enum CompletionItemKind {
+  GroupTitle = 'GroupTitle',
 }
 
 export interface CompletionItem {
@@ -35,40 +42,48 @@ export interface CompletionItem {
    * this completion.
    */
   label: string;
+
   /**
-   * The kind of this completion item. Based on the kind
-   * an icon is chosen by the editor.
+   * The kind of this completion item. An icon is chosen
+   * by the editor based on the kind.
    */
-  kind?: string;
+  kind?: CompletionItemKind | string;
+
   /**
    * A human-readable string with additional information
    * about this item, like type or symbol information.
    */
   detail?: string;
+
   /**
    * A human-readable string, can be Markdown, that represents a doc-comment.
    */
   documentation?: string;
+
   /**
    * A string that should be used when comparing this item
    * with other items. When `falsy` the `label` is used.
    */
   sortText?: string;
+
   /**
    * A string that should be used when filtering a set of
    * completion items. When `falsy` the `label` is used.
    */
   filterText?: string;
+
   /**
    * A string or snippet that should be inserted in a document when selecting
    * this completion. When `falsy` the `label` is used.
    */
   insertText?: string;
+
   /**
    * Delete number of characters before the caret position,
    * by default the letters from the beginning of the word.
    */
   deleteBackwards?: number;
+
   /**
    * Number of steps to move after the insertion, can be negative.
    */
@@ -80,18 +95,22 @@ export interface CompletionItemGroup {
    * Label that will be displayed for all entries of this group.
    */
   label: string;
+
   /**
    * List of suggestions of this group.
    */
   items: CompletionItem[];
+
   /**
    * If true, match only by prefix (and not mid-word).
    */
   prefixMatch?: boolean;
+
   /**
    * If true, do not filter items in this group based on the search.
    */
   skipFilter?: boolean;
+
   /**
    * If true, do not sort items.
    */
@@ -294,7 +313,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
 }
 
 export abstract class LanguageProvider {
-  datasource: any;
+  datasource: DataSourceApi;
   request: (url: string, params?: any) => Promise<any>;
   /**
    * Returns startTask that resolves with a task list when main syntax is loaded.
@@ -309,13 +328,12 @@ export interface TypeaheadInput {
   prefix: string;
   wrapperClasses: string[];
   labelKey?: string;
-  //Should be Value from slate
-  value?: any;
+  value?: Value;
+  editor?: Editor;
 }
 
 export interface TypeaheadOutput {
   context?: string;
-  refresher?: Promise<{}>;
   suggestions: CompletionItemGroup[];
 }
 

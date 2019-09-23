@@ -10,7 +10,7 @@ import jquery from 'jquery';
 import prismjs from 'prismjs';
 import slate from 'slate';
 // @ts-ignore
-import slateReact from 'slate-react';
+import slateReact from '@grafana/slate-react';
 // @ts-ignore
 import slatePlain from 'slate-plain-serializer';
 import react from 'react';
@@ -88,7 +88,7 @@ exposeToPlugin('rxjs/operators', rxjsOperators);
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
-exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('@grafana/slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);
