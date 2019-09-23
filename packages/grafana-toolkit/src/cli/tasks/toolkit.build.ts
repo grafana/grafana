@@ -60,6 +60,7 @@ const copyFiles = () => {
     'src/config/tsconfig.plugin.json',
     'src/config/tsconfig.plugin.local.json',
     'src/config/tslint.plugin.json',
+    'src/config/styles.mock.js',
 
     // plugin test file
     'src/plugins/e2e/commonPluginTests.ts',
@@ -104,7 +105,9 @@ const copySassFiles = () => {
   })();
 };
 
-const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
+interface ToolkitBuildOptions {}
+
+const toolkitBuildTaskRunner: TaskRunner<ToolkitBuildOptions> = async () => {
   cwd = path.resolve(__dirname, '../../../');
   distDir = `${cwd}/dist`;
   const pkg = require(`${cwd}/package.json`);
@@ -134,4 +137,4 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   });
 };
 
-export const toolkitBuildTask = new Task<void>('@grafana/toolkit build', toolkitBuildTaskRunner);
+export const toolkitBuildTask = new Task<ToolkitBuildOptions>('@grafana/toolkit build', toolkitBuildTaskRunner);

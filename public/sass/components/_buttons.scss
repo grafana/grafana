@@ -49,6 +49,7 @@
     cursor: $cursor-disabled;
     opacity: 0.65;
     @include box-shadow(none);
+    pointer-events: none;
   }
 
   &--radius-left-0 {

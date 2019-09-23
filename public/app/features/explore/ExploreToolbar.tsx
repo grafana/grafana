@@ -1,10 +1,22 @@
+import omitBy from 'lodash/omitBy';
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import memoizeOne from 'memoize-one';
+import classNames from 'classnames';
+import { css } from 'emotion';
 
-import { ExploreId, ExploreMode } from 'app/types/explore';
-import { DataSourceSelectItem, ToggleButtonGroup, ToggleButton } from '@grafana/ui';
+import { ExploreId, ExploreItemState, ExploreMode } from 'app/types/explore';
+import {
+  DataSourceSelectItem,
+  ToggleButtonGroup,
+  ToggleButton,
+  DataQuery,
+  Tooltip,
+  ButtonSelect,
+  RefreshPicker,
+  SetInterval,
+} from '@grafana/ui';
 import { RawTimeRange, TimeZone, TimeRange, SelectableValue } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
@@ -16,42 +28,25 @@ import {
   splitOpen,
   changeRefreshInterval,
   changeMode,
+  clearOrigin,
 } from './state/actions';
+import { changeRefreshIntervalAction, setPausedStateAction } from './state/actionTypes';
+import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
+import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
+import kbn from '../../core/utils/kbn';
 import { ExploreTimeControls } from './ExploreTimeControls';
+import { LiveTailButton } from './LiveTailButton';
+import { ResponsiveButton } from './ResponsiveButton';
+import { RunButton } from './RunButton';
 
-enum IconSide {
-  left = 'left',
-  right = 'right',
-}
-
-const createResponsiveButton = (options: {
-  splitted: boolean;
-  title: string;
-  onClick: () => void;
-  buttonClassName?: string;
-  iconClassName?: string;
-  iconSide?: IconSide;
-  disabled?: boolean;
-}) => {
-  const defaultOptions = {
-    iconSide: IconSide.left,
+const getStyles = memoizeOne(() => {
+  return {
+    liveTailButtons: css`
+      margin-left: 10px;
+    `,
   };
-  const props = { ...options, defaultOptions };
-  const { title, onClick, buttonClassName, iconClassName, splitted, iconSide, disabled } = props;
-
-  return (
-    <button
-      className={`btn navbar-button ${buttonClassName ? buttonClassName : ''}`}
-      onClick={onClick}
-      disabled={disabled || false}
-    >
-      {iconClassName && iconSide === IconSide.left ? <i className={`${iconClassName}`} /> : null}
-      <span className="btn-title">{!splitted ? title : ''}</span>
-      {iconClassName && iconSide === IconSide.right ? <i className={`${iconClassName}`} /> : null}
-    </button>
-  );
-};
+});
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -71,6 +66,9 @@ interface StateProps {
   selectedModeOption: SelectableValue<ExploreMode>;
   hasLiveOption: boolean;
   isLive: boolean;
+  isPaused: boolean;
+  originPanelId: number;
+  queries: DataQuery[];
 }
 
 interface DispatchProps {
@@ -81,6 +79,10 @@ interface DispatchProps {
   split: typeof splitOpen;
   changeRefreshInterval: typeof changeRefreshInterval;
   changeMode: typeof changeMode;
+  clearOrigin: typeof clearOrigin;
+  updateLocation: typeof updateLocation;
+  changeRefreshIntervalAction: typeof changeRefreshIntervalAction;
+  setPausedStateAction: typeof setPausedStateAction;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -112,6 +114,54 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     changeMode(exploreId, mode);
   };
 
+  returnToPanel = async ({ withChanges = false } = {}) => {
+    const { originPanelId } = this.props;
+
+    const dashboardSrv = getDashboardSrv();
+    const dash = dashboardSrv.getCurrent();
+    const titleSlug = kbn.slugifyForUrl(dash.title);
+
+    if (!withChanges) {
+      this.props.clearOrigin();
+    }
+
+    const dashViewOptions = {
+      fullscreen: withChanges || dash.meta.fullscreen,
+      edit: withChanges || dash.meta.isEditing,
+    };
+
+    this.props.updateLocation({
+      path: `/d/${dash.uid}/:${titleSlug}`,
+      query: {
+        ...omitBy(dashViewOptions, v => !v),
+        panelId: originPanelId,
+      },
+    });
+  };
+
+  stopLive = () => {
+    const { exploreId } = this.props;
+    this.pauseLive();
+    // TODO referencing this from perspective of refresh picker when there is designated button for it now is not
+    //  great. Needs another refactor.
+    this.props.changeRefreshIntervalAction({ exploreId, refreshInterval: RefreshPicker.offOption.value });
+  };
+
+  startLive = () => {
+    const { exploreId } = this.props;
+    this.props.changeRefreshIntervalAction({ exploreId, refreshInterval: RefreshPicker.liveOption.value });
+  };
+
+  pauseLive = () => {
+    const { exploreId } = this.props;
+    this.props.setPausedStateAction({ exploreId, isPaused: true });
+  };
+
+  resumeLive = () => {
+    const { exploreId } = this.props;
+    this.props.setPausedStateAction({ exploreId, isPaused: false });
+  };
+
   render() {
     const {
       datasourceMissing,
@@ -130,7 +180,16 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       selectedModeOption,
       hasLiveOption,
       isLive,
+      isPaused,
+      originPanelId,
     } = this.props;
+
+    const styles = getStyles();
+    const originDashboardIsEditable = Number.isInteger(originPanelId);
+    const panelReturnClasses = classNames('btn', 'navbar-button', {
+      'btn--radius-right-0': originDashboardIsEditable,
+      'navbar-button navbar-button--border-right-0': originDashboardIsEditable,
+    });
 
     return (
       <div className={splitted ? 'explore-toolbar splitted' : 'explore-toolbar'}>
@@ -187,32 +246,45 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               </div>
             ) : null}
 
+            {Number.isInteger(originPanelId) && !splitted && (
+              <div className="explore-toolbar-content-item">
+                <Tooltip content={'Return to panel'} placement="bottom">
+                  <button className={panelReturnClasses} onClick={() => this.returnToPanel()}>
+                    <i className="fa fa-arrow-left" />
+                  </button>
+                </Tooltip>
+                {originDashboardIsEditable && (
+                  <ButtonSelect
+                    className="navbar-button--attached btn--radius-left-0$"
+                    options={[{ label: 'Return to panel with changes', value: '' }]}
+                    onChange={() => this.returnToPanel({ withChanges: true })}
+                    maxMenuHeight={380}
+                  />
+                )}
+              </div>
+            )}
+
             {exploreId === 'left' && !splitted ? (
               <div className="explore-toolbar-content-item">
-                {createResponsiveButton({
-                  splitted,
-                  title: 'Split',
-                  onClick: split,
-                  iconClassName: 'fa fa-fw fa-columns icon-margin-right',
-                  iconSide: IconSide.left,
-                  disabled: isLive,
-                })}
+                <ResponsiveButton
+                  splitted={splitted}
+                  title="Split"
+                  onClick={split}
+                  iconClassName="fa fa-fw fa-columns icon-margin-right"
+                  disabled={isLive}
+                />
               </div>
             ) : null}
-            <div className="explore-toolbar-content-item">
-              <ExploreTimeControls
-                exploreId={exploreId}
-                hasLiveOption={hasLiveOption}
-                isLive={isLive}
-                loading={loading}
-                range={range}
-                refreshInterval={refreshInterval}
-                timeZone={timeZone}
-                onChangeTime={onChangeTime}
-                onChangeRefreshInterval={this.onChangeRefreshInterval}
-                onRunQuery={this.onRunQuery}
-              />
-            </div>
+            {!isLive && (
+              <div className="explore-toolbar-content-item">
+                <ExploreTimeControls
+                  exploreId={exploreId}
+                  range={range}
+                  timeZone={timeZone}
+                  onChangeTime={onChangeTime}
+                />
+              </div>
+            )}
 
             <div className="explore-toolbar-content-item">
               <button className="btn navbar-button" onClick={this.onClearAll}>
@@ -220,16 +292,29 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
               </button>
             </div>
             <div className="explore-toolbar-content-item">
-              {createResponsiveButton({
-                splitted,
-                title: 'Run Query',
-                onClick: this.onRunQuery,
-                buttonClassName: 'navbar-button--secondary',
-                iconClassName:
-                  loading && !isLive ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-level-down fa-fw run-icon',
-                iconSide: IconSide.right,
-              })}
+              <RunButton
+                refreshInterval={refreshInterval}
+                onChangeRefreshInterval={this.onChangeRefreshInterval}
+                splitted={splitted}
+                loading={loading || (isLive && !isPaused)}
+                onRun={this.onRunQuery}
+                showDropdown={!isLive}
+              />
+              {refreshInterval && <SetInterval func={this.onRunQuery} interval={refreshInterval} loading={loading} />}
             </div>
+
+            {hasLiveOption && (
+              <div className={`explore-toolbar-content-item ${styles.liveTailButtons}`}>
+                <LiveTailButton
+                  isLive={isLive}
+                  isPaused={isPaused}
+                  start={this.startLive}
+                  pause={this.pauseLive}
+                  resume={this.resumeLive}
+                  stop={this.stopLive}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -274,7 +359,7 @@ const getModeOptionsMemoized = memoizeOne(
 
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
   const splitted = state.explore.split;
-  const exploreItem = state.explore[exploreId];
+  const exploreItem: ExploreItemState = state.explore[exploreId];
   const {
     datasourceInstance,
     datasourceMissing,
@@ -285,6 +370,9 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     supportedModes,
     mode,
     isLive,
+    isPaused,
+    originPanelId,
+    queries,
   } = exploreItem;
   const selectedDatasource = datasourceInstance
     ? exploreDatasources.find(datasource => datasource.name === datasourceInstance.name)
@@ -307,17 +395,24 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     selectedModeOption,
     hasLiveOption,
     isLive,
+    isPaused,
+    originPanelId,
+    queries,
   };
 };
 
 const mapDispatchToProps: DispatchProps = {
   changeDatasource,
+  updateLocation,
   changeRefreshInterval,
   clearAll: clearQueries,
   runQueries,
   closeSplit: splitClose,
   split: splitOpen,
   changeMode: changeMode,
+  clearOrigin,
+  changeRefreshIntervalAction,
+  setPausedStateAction,
 };
 
 export const ExploreToolbar = hot(module)(

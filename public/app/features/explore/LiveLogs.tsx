@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
-import { Themeable, withTheme, GrafanaTheme, selectThemeVariant, getLogRowStyles } from '@grafana/ui';
+import tinycolor from 'tinycolor2';
+import { last } from 'lodash';
 
+import { Themeable, withTheme, GrafanaTheme, getLogRowStyles } from '@grafana/ui';
 import { LogsModel, LogRowModel, TimeZone } from '@grafana/data';
 
 import ElapsedTime from './ElapsedTime';
@@ -9,6 +11,8 @@ import ElapsedTime from './ElapsedTime';
 const getStyles = (theme: GrafanaTheme) => ({
   logsRowsLive: css`
     label: logs-rows-live;
+    font-family: ${theme.typography.fontFamily.monospace};
+    font-size: ${theme.typography.size.sm};
     display: flex;
     flex-flow: column nowrap;
     height: 65vh;
@@ -20,15 +24,27 @@ const getStyles = (theme: GrafanaTheme) => ({
   logsRowFresh: css`
     label: logs-row-fresh;
     color: ${theme.colors.text};
-    background-color: ${selectThemeVariant({ light: theme.colors.gray6, dark: theme.colors.gray1 }, theme.type)};
+    background-color: ${tinycolor(theme.colors.blueLight)
+      .setAlpha(0.25)
+      .toString()};
+    animation: fade 1s ease-out 1s 1 normal forwards;
+    @keyframes fade {
+      from {
+        background-color: ${tinycolor(theme.colors.blueLight)
+          .setAlpha(0.25)
+          .toString()};
+      }
+      to {
+        background-color: transparent;
+      }
+    }
   `,
   logsRowOld: css`
     label: logs-row-old;
-    opacity: 0.8;
   `,
   logsRowsIndicator: css`
     font-size: ${theme.typography.size.md};
-    padding: ${theme.spacing.sm} 0;
+    padding-top: ${theme.spacing.sm};
     display: flex;
     align-items: center;
   `,
@@ -48,6 +64,7 @@ export interface Props extends Themeable {
 
 interface State {
   logsResultToRender?: LogsModel;
+  lastTimestamp: number;
 }
 
 class LiveLogs extends PureComponent<Props, State> {
@@ -59,6 +76,7 @@ class LiveLogs extends PureComponent<Props, State> {
     super(props);
     this.state = {
       logsResultToRender: props.logsResult,
+      lastTimestamp: 0,
     };
   }
 
@@ -81,13 +99,17 @@ class LiveLogs extends PureComponent<Props, State> {
     }
   }
 
-  static getDerivedStateFromProps(nextProps: Props) {
+  static getDerivedStateFromProps(nextProps: Props, state: State) {
     if (!nextProps.isPaused) {
       return {
         // We update what we show only if not paused. We keep any background subscriptions running and keep updating
         // our state, but we do not show the updates, this allows us start again showing correct result after resuming
         // without creating a gap in the log results.
         logsResultToRender: nextProps.logsResult,
+        lastTimestamp:
+          state.logsResultToRender && last(state.logsResultToRender.rows)
+            ? last(state.logsResultToRender.rows).timeEpochMs
+            : 0,
       };
     } else {
       return null;
@@ -119,6 +141,15 @@ class LiveLogs extends PureComponent<Props, State> {
     return rowsToRender;
   };
 
+  /**
+   * Check if row is fresh so we can apply special styling. This is bit naive and does not take into account rows
+   * which arrive out of order. Because loki datasource sends full data instead of deltas we need to compare the
+   * data and this is easier than doing some intersection of some uuid of each row (which we do not have now anyway)
+   */
+  isFresh = (row: LogRowModel): boolean => {
+    return row.timeEpochMs > this.state.lastTimestamp;
+  };
+
   render() {
     const { theme, timeZone, onPause, onResume, isPaused } = this.props;
     const styles = getStyles(theme);
@@ -126,16 +157,16 @@ class LiveLogs extends PureComponent<Props, State> {
     const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
     return (
-      <>
+      <div>
         <div
           onScroll={isPaused ? undefined : this.onScroll}
           className={cx(['logs-rows', styles.logsRowsLive])}
           ref={this.scrollContainerRef}
         >
-          {this.rowsToRender().map((row: any, index) => {
+          {this.rowsToRender().map((row: LogRowModel, index) => {
             return (
               <div
-                className={row.fresh ? cx([logsRow, styles.logsRowFresh]) : cx([logsRow, styles.logsRowOld])}
+                className={cx(logsRow, this.isFresh(row) ? styles.logsRowFresh : styles.logsRowOld)}
                 key={`${row.timeEpochMs}-${index}`}
               >
                 {showUtc && (
@@ -171,7 +202,7 @@ class LiveLogs extends PureComponent<Props, State> {
           </button>
           <button onClick={this.props.stopLive} className={cx('btn btn-inverse', styles.button)}>
             <i className={'fa fa-stop'} />
-            &nbsp; Stop
+            &nbsp; Exit live mode
           </button>
           {isPaused || (
             <span>
@@ -179,7 +210,7 @@ class LiveLogs extends PureComponent<Props, State> {
             </span>
           )}
         </div>
-      </>
+      </div>
     );
   }
 }

@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
-import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
 
 export interface Props {
   panelId: number;

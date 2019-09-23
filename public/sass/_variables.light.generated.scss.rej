@@ -1,0 +1,6 @@
+diff a/public/sass/_variables.light.generated.scss b/public/sass/_variables.light.generated.scss	(rejected hunks)
+@@ -86,2 +86,2 @@ $text-shadow-faint: none;
+-$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
+-$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
++$brand-gradient-horizontal: linear-gradient(to right, #F05A28 30%, #FBCA0A 99%);
++$brand-gradient-vertical: linear-gradient(#F05A28 30%, #FBCA0A 99%);

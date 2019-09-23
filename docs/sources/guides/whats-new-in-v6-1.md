@@ -20,7 +20,7 @@ weight = -12
 
 The ad hoc filter feature allows you to create new key/value filters on the fly with autocomplete for both key and values. The filter condition is then automatically applied to all queries on the dashboard. This makes it easier to explore your data in a dashboard without changing queries and without having to add new template variables.
 
-Other timeseries databases with label-based query languages have had this feature for a while. Recently Prometheus added support for fetching label names from their API and thanks to [Mitsuhiro Tanda](https://github.com/mtanda) implementing it in Grafana, the Prometheus datasource finally supports ad hoc filtering.
+Other timeseries databases with label-based query languages have had this feature for a while. Recently Prometheus added support for fetching label names from their API and thanks to [Mitsuhiro Tanda](https://github.com/mtanda) implementing it in Grafana, the Prometheus data source finally supports ad hoc filtering.
 
 Support for fetching a list of label names was released in Prometheus v2.6.0 so that is a requirement for this feature to work in Grafana.
 
@@ -49,7 +49,7 @@ This release contains a lot of small features and fixes:
 
 - A new keyboard shortcut `d l` toggles all Graph legends in a dashboard.
 - A small bug fix for Elasticsearch - template variables in the alias field now work properly.
-- Some new capabilities have been added for datasource plugins that will be of interest to plugin authors:
+- Some new capabilities have been added for data source plugins that will be of interest to plugin authors:
   - a new oauth pass-through option.
   - it is now possible to add user details to requests sent to the dataproxy.
 - Heatmap and Explore fixes.

@@ -21,8 +21,8 @@ The main highlights are:
 - [Gauge Panel]({{< relref "#gauge-panel" >}}) - A new standalone panel for gauges.
 - [New Panel Editor UX]({{< relref "#new-panel-editor" >}}) improves panel editing
     and enables easy switching between different visualizations.
-- [Google Stackdriver Datasource]({{< relref "#google-stackdriver-datasource" >}}) is out of beta and is officially released.
-- [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core datasource
+- [Google Stackdriver data source]({{< relref "#google-stackdriver-datasource" >}}) is out of beta and is officially released.
+- [Azure Monitor]({{< relref "#azure-monitor-datasource" >}}) plugin is ported from being an external plugin to being a core data source
 - [React Plugin]({{< relref "#react-panels-query-editors" >}}) support enables an easier way to build plugins.
 - [Named Colors]({{< relref "#named-colors" >}}) in our new improved color picker.
 - [Removal of user session storage]({{< relref "#easier-to-deploy-improved-security" >}}) makes Grafana easier to deploy and improves security.
@@ -33,10 +33,10 @@ The main highlights are:
 
 Grafana's dashboard UI is all about building dashboards for visualization. **Explore** strips away all the dashboard and panel options so that you can focus on the query and metric exploration. Iterate until you have a working query and then think about building a dashboard. You can also jump from a dashboard panel into **Explore** and from there do some ad-hoc query exporation with the panel queries as a starting point.
 
-For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. **Explore** allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging datasource, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side.
+For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. **Explore** allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging data source, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side.
 
 **Explore** is a new paradigm for Grafana. It creates a new interactive debugging workflow that integrates two pillars
-of observability—metrics and logs. Explore works with every datasource but for Prometheus we have customized the
+of observability—metrics and logs. Explore works with every data source but for Prometheus we have customized the
 query editor and the experience to provide the best possible exploration UX.
 
 ### Explore and Prometheus
@@ -48,7 +48,7 @@ enabled jumping between metrics query and logs query with preserved label filter
 
 ### Explore splits
 
-Explore supports splitting the view so you can compare different queries, different datasources and metrics & logs side by side!
+Explore supports splitting the view so you can compare different queries, different data sources and metrics & logs side by side!
 
 {{< docs-imagebox img="/img/docs/v60/explore_split.png" max-width="800px" caption="Screenshot of the new Explore option in the panel menu" >}}
 
@@ -112,17 +112,17 @@ will be shared soon.
 {{< docs-imagebox img="/img/docs/v60/react_panels.png" max-width="600px" caption="React Panel" >}}
 <br />
 
-## Google Stackdriver Datasource
+## Google Stackdriver data source
 
 Built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) is officially released in Grafana 6.0. Beta support was added in Grafana 5.3 and we have added lots of improvements since then.
 
 To get started read the guide: [Using Google Stackdriver in Grafana](/features/datasources/stackdriver/).
 
-## Azure Monitor Datasource
+## Azure Monitor data source
 
-One of the goals of the Grafana v6.0 release is to add support for the three major clouds. Amazon CloudWatch has been a core datasource for years and Google Stackdriver is also now supported. We developed an external plugin for Azure Monitor last year and for this release the [plugin](https://grafana.com/plugins/grafana-azure-monitor-datasource) is being moved into Grafana to be one of the built-in datasources. For users of the external plugin, Grafana will automatically start using the built-in version. As a core datasource, the Azure Monitor datasource is able to get alerting support, in the 6.0 release alerting is supported for the Azure Monitor service, with the rest to follow.
+One of the goals of the Grafana v6.0 release is to add support for the three major clouds. Amazon CloudWatch has been a core data source for years and Google Stackdriver is also now supported. We developed an external plugin for Azure Monitor last year and for this release the [plugin](https://grafana.com/plugins/grafana-azure-monitor-datasource) is being moved into Grafana to be one of the built-in data sources. For users of the external plugin, Grafana will automatically start using the built-in version. As a core data source, the Azure Monitor data source is able to get alerting support, in the 6.0 release alerting is supported for the Azure Monitor service, with the rest to follow.
 
-The Azure Monitor datasource integrates four Azure services with Grafana - Azure Monitor, Azure Log Analytics, Azure Application Insights and Azure Application Insights Analytics.
+The Azure Monitor data source integrates four Azure services with Grafana - Azure Monitor, Azure Log Analytics, Azure Application Insights and Azure Application Insights Analytics.
 
 Please read [Using Azure Monitor in Grafana documentation](/features/datasources/azuremonitor/) for more detailed information on how to get started and use it.
 
@@ -163,7 +163,7 @@ Named colors also enables Grafana to adapt colors to the current theme.
 
 ## Other features
 
-- The ElasticSearch datasource now supports [bucket script pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html). This gives the ability to do per-bucket computations like the difference or ratio between two metrics.
+- The ElasticSearch data source now supports [bucket script pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline-bucket-script-aggregation.html). This gives the ability to do per-bucket computations like the difference or ratio between two metrics.
 - Support for Google Hangouts Chat alert notifications
 - New built in template variables for the current time range in `$__from` and `$__to`
 

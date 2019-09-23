@@ -1,6 +1,6 @@
 This folder contains useful scripts and configuration for...
 
-* Configuring dev datasources in Grafana
+* Configuring dev data sources in Grafana
 * Configuring dev & test scenarios dashboards.
 * Creating docker-compose file with DBs and fake data.
 
@@ -11,7 +11,7 @@ This folder contains useful scripts and configuration for...
 ./setup.sh
 ```
 
-After restarting grafana server there should now be a number of datasources named `gdev-<type>` provisioned as well as
+After restarting grafana server there should now be a number of data sources named `gdev-<type>` provisioned as well as
 a dashboard folder named `gdev dashboards`. This folder contains dashboard & panel features tests dashboards. 
 
 #### Dev dashboards

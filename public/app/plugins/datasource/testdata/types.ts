@@ -18,7 +18,6 @@ export interface StreamingQuery {
   speed: number;
   spread: number;
   noise: number; // wiggle around the signal for min/max
-  bands?: number; // number of bands around the middle van
-  buffer?: number;
+  bands?: number; // number of bands around the middle band
   url?: string; // the Fetch URL
 }

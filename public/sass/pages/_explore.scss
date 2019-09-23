@@ -6,10 +6,6 @@
   margin-left: 0.25em;
 }
 
-.run-icon {
-  transform: rotate(90deg);
-}
-
 .datasource-picker {
   .ds-picker {
     min-width: 200px;
@@ -320,14 +316,18 @@
   z-index: inherit;
 }
 
-// React-component cascade fix: show "loading" even though item can expand
-
+// React-component cascade fix: show "loading" when loading children
 .rc-cascader-menu-item-loading:after {
   position: absolute;
   right: 12px;
   content: 'loading';
   color: #767980;
   font-style: italic;
+}
+
+// React-component cascade fix: vertical alignment issue with Safari
+.rc-cascader-menu {
+  vertical-align: top;
 }
 
 // TODO Experimental
@@ -341,17 +341,13 @@
   font-size: $font-size-h3;
 }
 
-.cheat-sheet-item__expression {
+.cheat-sheet-item__example {
   margin: $space-xs 0;
   cursor: pointer;
 }
 
 .query-type-toggle {
   margin-left: 5px;
-
-  .toggle-button-group {
-    padding-top: 2px;
-  }
 
   .btn.active {
     background-color: $input-bg;

@@ -35,6 +35,7 @@ export { StatsPicker } from './StatsPicker/StatsPicker';
 export { Input, InputStatus } from './Input/Input';
 export { RefreshPicker } from './RefreshPicker/RefreshPicker';
 export { TimePicker } from './TimePicker/TimePicker';
+export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { List } from './List/List';
 
 // Renderless
@@ -61,7 +62,7 @@ export {
   LegendPlacement,
   LegendDisplayMode,
 } from './Legend/Legend';
-export { Alert } from './Alert/Alert';
+export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
 export { Collapse } from './Collapse/Collapse';
 export { LogLabels } from './Logs/LogLabels';
@@ -78,3 +79,10 @@ export { VariableSuggestion, VariableOrigin } from './DataLinks/DataLinkSuggesti
 export { DataLinksEditor } from './DataLinks/DataLinksEditor';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './Legend/SeriesIcon';
+export { transformersUIRegistry } from './TransformersUI/transformers';
+export { TransformationRow } from './TransformersUI/TransformationRow';
+export { TransformationsEditor } from './TransformersUI/TransformationsEditor';
+export { JSONFormatter } from './JSONFormatter/JSONFormatter';
+export { JsonExplorer } from './JSONFormatter/json_explorer/json_explorer';
+export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary';
+export { AlphaNotice } from './AlphaNotice/AlphaNotice';

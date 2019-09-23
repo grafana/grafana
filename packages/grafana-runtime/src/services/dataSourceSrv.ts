@@ -1,4 +1,5 @@
-import { ScopedVars, DataSourceApi } from '@grafana/ui';
+import { ScopedVars } from '@grafana/data';
+import { DataSourceApi } from '@grafana/ui';
 
 export interface DataSourceSrv {
   get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi>;

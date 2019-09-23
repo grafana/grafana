@@ -8,12 +8,11 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Emitter } from 'app/core/utils/emitter';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ErrorBoundaryAlert } from 'app/core/components/ErrorBoundary/ErrorBoundary';
 
 // Types
 import { PanelModel } from '../state/PanelModel';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
-import { TimeRange, LoadingState } from '@grafana/data';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, ErrorBoundaryAlert } from '@grafana/ui';
+import { TimeRange, LoadingState, toLegacyResponseData } from '@grafana/data';
 import { DashboardModel } from '../state/DashboardModel';
 
 interface Props {
@@ -90,7 +89,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     const { loadedDataSourceValue } = this.state;
-    const { data, query } = this.props;
+    const { data, query, panel } = this.props;
 
     if (data !== prevProps.data) {
       this.setState({ queryResponse: filterPanelDataToQuery(data, query.refId) });
@@ -100,9 +99,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       }
 
       if (this.angularQueryEditor) {
-        // Some query controllers listen to data error events and need a digest
-        // for some reason this needs to be done in next tick
-        setTimeout(this.angularQueryEditor.digest);
+        notifyAngularQueryEditorsOfData(panel, data, this.angularQueryEditor);
       }
     }
 
@@ -259,11 +256,34 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           </div>
         </div>
         <div className={bodyClasses}>
-          <ErrorBoundaryAlert title="Data source query editor failed">{this.renderPluginEditor()}</ErrorBoundaryAlert>
+          <ErrorBoundaryAlert>{this.renderPluginEditor()}</ErrorBoundaryAlert>
         </div>
       </div>
     );
   }
+}
+
+// To avoid sending duplicate events for each row we have this global cached object here
+// So we can check if we already emitted this legacy data event
+let globalLastPanelDataCache: PanelData = null;
+
+function notifyAngularQueryEditorsOfData(panel: PanelModel, data: PanelData, editor: AngularComponent) {
+  if (data === globalLastPanelDataCache) {
+    return;
+  }
+
+  globalLastPanelDataCache = data;
+
+  if (data.state === LoadingState.Done) {
+    const legacy = data.series.map(v => toLegacyResponseData(v));
+    panel.events.emit('data-received', legacy);
+  } else if (data.state === LoadingState.Error) {
+    panel.events.emit('data-error', data.error);
+  }
+
+  // Some query controllers listen to data error events and need a digest
+  // for some reason this needs to be done in next tick
+  setTimeout(editor.digest);
 }
 
 export interface AngularQueryComponentScope {

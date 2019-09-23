@@ -19,13 +19,13 @@ One of the major new features of Grafana 6.0 is the new query-focused Explore wo
 
 Grafana's dashboard UI is all about building dashboards for visualization. Explore strips away all the dashboard and panel options so that you can focus on the query. Iterate until you have a working query and then think about building a dashboard.
 
-For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. Explore allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging datasource, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
+For infrastructure monitoring and incident response, you no longer need to switch to other tools to debug what went wrong. Explore allows you to dig deeper into your metrics and logs to find the cause. Grafana's new logging data source, [Loki](https://github.com/grafana/loki) is tightly integrated into Explore and allows you to correlate metrics and logs by viewing them side-by-side. This creates a new debugging workflow where you can:
 
 1. Receive an alert
 2. Drill down and examine metrics
 3. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
 
-If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the datasource supports both graph and table data).
+If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the data source supports both graph and table data).
 
 ## How to Start Exploring
 
@@ -37,13 +37,13 @@ If you want to start with an existing query in a panel then choose the Explore o
 
 {{< docs-imagebox img="/img/docs/v60/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-Choose your datasource in the dropdown in the top left. Prometheus has a custom Explore implementation, the other datasources (for now) use their standard query editor.
+Choose your data source in the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources (for now) use their standard query editor.
 
 The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
 ## Split and Compare
 
-The Split feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another datasource for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
+The Split feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
 {{< docs-imagebox img="/img/docs/v60/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
@@ -110,7 +110,7 @@ If you switch from a Prometheus query to a logs query (you can do a split first 
 
 `grafana_alerting_active_alerts{job="grafana"}`
 
-after switching to the Logs datasource, the query changes to:
+after switching to the Logs data source, the query changes to:
 
 `{job="grafana"}`
 

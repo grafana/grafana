@@ -18,8 +18,10 @@ import { PanelModel } from '../state';
 import { DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
-import { PanelPlugin, PanelPluginMeta } from '@grafana/ui';
+import { PanelPlugin, PanelPluginMeta, PanelData } from '@grafana/ui';
 import { PanelCtrl } from 'app/plugins/sdk';
+import { Unsubscribable } from 'rxjs';
+import { LoadingState } from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
@@ -36,11 +38,13 @@ interface State {
   searchQuery: string;
   scrollTop: number;
   hasBeenFocused: boolean;
+  data: PanelData;
 }
 
 export class VisualizationTab extends PureComponent<Props, State> {
   element: HTMLElement;
   angularOptions: AngularComponent;
+  querySubscription: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
@@ -50,6 +54,10 @@ export class VisualizationTab extends PureComponent<Props, State> {
       hasBeenFocused: false,
       searchQuery: '',
       scrollTop: 0,
+      data: {
+        state: LoadingState.NotStarted,
+        series: [],
+      },
     };
   }
 
@@ -66,16 +74,28 @@ export class VisualizationTab extends PureComponent<Props, State> {
     }
 
     if (plugin.editor) {
-      return <plugin.editor options={this.getReactPanelOptions()} onOptionsChange={this.onPanelOptionsChanged} />;
+      return (
+        <plugin.editor
+          data={this.state.data}
+          options={this.getReactPanelOptions()}
+          onOptionsChange={this.onPanelOptionsChanged}
+        />
+      );
     }
 
     return <p>Visualization has no options</p>;
   }
 
   componentDidMount() {
+    const { panel } = this.props;
+    const queryRunner = panel.getQueryRunner();
     if (this.shouldLoadAngularOptions()) {
       this.loadAngularOptions();
     }
+
+    this.querySubscription = queryRunner.getData().subscribe({
+      next: (data: PanelData) => this.setState({ data }),
+    });
   }
 
   componentDidUpdate(prevProps: Props) {

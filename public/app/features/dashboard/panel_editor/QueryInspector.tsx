@@ -1,8 +1,7 @@
 import React, { PureComponent } from 'react';
-import { JSONFormatter } from 'app/core/components/JSONFormatter/JSONFormatter';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
 
 interface DsQuery {
   isLoading: boolean;

@@ -21,6 +21,7 @@ import {
   ciPluginReportTask,
 } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
+import { pluginCreateTask } from './tasks/plugin.create';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -89,8 +90,7 @@ export const run = (includeInternalScripts = false) => {
       .command('toolkit:build')
       .description('Prepares grafana/toolkit dist package')
       .action(async cmd => {
-        // @ts-ignore
-        await execTask(toolkitBuildTask)();
+        await execTask(toolkitBuildTask)({});
       });
 
     program
@@ -118,10 +118,17 @@ export const run = (includeInternalScripts = false) => {
   }
 
   program
+    .command('plugin:create [name]')
+    .description('Creates plugin from template')
+    .action(async cmd => {
+      await execTask(pluginCreateTask)({ name: cmd, silent: true });
+    });
+
+  program
     .command('plugin:build')
     .description('Prepares plugin dist package')
     .action(async cmd => {
-      await execTask(pluginBuildTask)({ coverage: false });
+      await execTask(pluginBuildTask)({ coverage: false, silent: true });
     });
 
   program
@@ -133,6 +140,7 @@ export const run = (includeInternalScripts = false) => {
       await execTask(pluginDevTask)({
         watch: !!cmd.watch,
         yarnlink: !!cmd.yarnlink,
+        silent: true,
       });
     });
 
@@ -151,14 +159,19 @@ export const run = (includeInternalScripts = false) => {
         watch: !!cmd.watch,
         testPathPattern: cmd.testPathPattern,
         testNamePattern: cmd.testNamePattern,
+        silent: true,
       });
     });
 
   program
     .command('plugin:ci-build')
-    .option('--backend <backend>', 'For backend task, which backend to run')
-    .description('Build the plugin, leaving artifacts in /dist')
+    .option('--backend', 'Run Makefile for backend task', false)
+    .description('Build the plugin, leaving results in /dist and /coverage')
     .action(async cmd => {
+      if (typeof cmd === 'string') {
+        console.error(`Invalid argument: ${cmd}\nSee --help for a list of available commands.`);
+        process.exit(1);
+      }
       await execTask(ciBuildPluginTask)({
         backend: cmd.backend,
       });
