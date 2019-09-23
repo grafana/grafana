@@ -279,8 +279,10 @@ export interface QueryEditorProps<
   query: TQuery;
   onRunQuery: () => void;
   onChange: (value: TQuery) => void;
-  panelData: PanelData; // The current panel data
-  queryResponse?: PanelData; // data filtered to only this query.  Includes the error.
+  /*
+   * Contains query response filtered by refId and possible query error
+   */
+  data?: PanelData;
 }
 
 export enum DataSourceStatus {

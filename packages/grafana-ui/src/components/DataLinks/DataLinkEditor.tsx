@@ -11,7 +11,7 @@ interface DataLinkEditorProps {
   isLast: boolean;
   value: DataLink;
   suggestions: VariableSuggestion[];
-  onChange: (index: number, link: DataLink) => void;
+  onChange: (index: number, link: DataLink, callback?: () => void) => void;
   onRemove: (link: DataLink) => void;
 }
 
@@ -20,8 +20,8 @@ export const DataLinkEditor: React.FC<DataLinkEditorProps> = React.memo(
     const theme = useContext(ThemeContext);
     const [title, setTitle] = useState(value.title);
 
-    const onUrlChange = (url: string) => {
-      onChange(index, { ...value, url });
+    const onUrlChange = (url: string, callback?: () => void) => {
+      onChange(index, { ...value, url }, callback);
     };
     const onTitleChange = (event: ChangeEvent<HTMLInputElement>) => {
       setTitle(event.target.value);

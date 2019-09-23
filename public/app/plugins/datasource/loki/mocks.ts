@@ -1,6 +1,6 @@
-import { DataSourceApi } from '@grafana/ui';
+import LokiDatasource from './datasource';
 
-export function makeMockLokiDatasource(labelsAndValues: { [label: string]: string[] }): DataSourceApi {
+export function makeMockLokiDatasource(labelsAndValues: { [label: string]: string[] }): LokiDatasource {
   const labels = Object.keys(labelsAndValues);
   return {
     metadataRequest: (url: string) => {

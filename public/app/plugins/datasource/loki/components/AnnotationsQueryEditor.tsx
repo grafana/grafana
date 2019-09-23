@@ -42,7 +42,7 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
         onChange={(query: LokiQuery) => onChange(query.expr)}
         onRunQuery={() => {}}
         history={[]}
-        panelData={null}
+        data={null}
         onLoadOptions={setActiveOption}
         onLabelsRefresh={refreshLabels}
         syntaxLoaded={isSyntaxReady}

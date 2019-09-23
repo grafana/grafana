@@ -1,6 +1,6 @@
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
-import sourceMaps from 'rollup-plugin-sourcemaps';
+// import sourceMaps from 'rollup-plugin-sourcemaps';
 import { terser } from 'rollup-plugin-terser';
 
 const pkg = require('./package.json');
@@ -47,19 +47,20 @@ const buildCjsPackage = ({ env }) => {
           ],
           '../../node_modules/react-color/lib/components/common': ['Saturation', 'Hue', 'Alpha'],
           '../../node_modules/immutable/dist/immutable.js': [
+            'Record',
             'Set',
             'Map',
             'List',
             'OrderedSet',
             'is',
             'Stack',
-            'Record',
           ],
+          'node_modules/immutable/dist/immutable.js': ['Record', 'Set', 'Map', 'List', 'OrderedSet', 'is', 'Stack'],
           '../../node_modules/esrever/esrever.js': ['reverse'],
         },
       }),
       resolve(),
-      sourceMaps(),
+      // sourceMaps(),
       env === 'production' && terser(),
     ],
   };

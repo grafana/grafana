@@ -62,6 +62,7 @@ export const run = (includeInternalScripts = false) => {
 
         await execTask(changelogTask)({
           milestone: cmd.milestone,
+          silent: true,
         });
       });
 
