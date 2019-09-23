@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/datasource"
 	plugin "github.com/hashicorp/go-plugin"
 )
@@ -28,15 +29,6 @@ type Point struct {
 	Value     float64
 }
 
-type DataFrame struct {
-	Name   string
-	Tags   map[string]string
-	Points []Point
-}
-
-type Field struct {
-}
-
 type Query struct {
 	RefID         string
 	MaxDataPoints int64
@@ -48,7 +40,7 @@ type QueryResult struct {
 	Error      string
 	RefID      string
 	MetaJSON   string
-	DataFrames []DataFrame
+	DataFrames []*dataframe.DataFrame
 }
 
 type DatasourceHandler interface {
@@ -95,21 +87,19 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Que
 	var respResults []*datasource.QueryResult
 
 	for _, res := range results {
-		tss := []*datasource.TimeSeries{}
+		var tss []*datasource.TimeSeries
+		var tbs []*datasource.Table
 
 		for _, df := range res.DataFrames {
-			pts := []*datasource.Point{}
-			for _, p := range df.Points {
-				pts = append(pts, &datasource.Point{
-					Timestamp: p.Timestamp.UnixNano() / int64(time.Millisecond),
-					Value:     p.Value,
-				})
+			timeIdx := indexOfFieldType(df, dataframe.FieldTypeTime)
+
+			// If one of the fields is of type time, return a time series,
+			// otherwise return a table.
+			if timeIdx >= 0 {
+				tss = append(tss, asTimeSeries(df))
+			} else {
+				tbs = append(tbs, asTable(df))
 			}
-			tss = append(tss, &datasource.TimeSeries{
-				Name:   df.Name,
-				Tags:   df.Tags,
-				Points: pts,
-			})
 		}
 
 		respResults = append(respResults, &datasource.QueryResult{
@@ -117,10 +107,83 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Que
 			RefId:    res.RefID,
 			MetaJson: res.MetaJSON,
 			Series:   tss,
+			Tables:   tbs,
 		})
 	}
 
 	return &datasource.QueryResponse{
 		Results: respResults,
 	}, nil
+}
+
+func asTimeSeries(df *dataframe.DataFrame) *datasource.TimeSeries {
+	timeIdx := indexOfFieldType(df, dataframe.FieldTypeTime)
+	timeVec := df.Fields[timeIdx].Vector
+
+	valueIdx := indexOfFieldType(df, dataframe.FieldTypeNumber)
+	valueVec := df.Fields[valueIdx].Vector
+
+	pts := []*datasource.Point{}
+	for i := 0; i < timeVec.Len(); i++ {
+		t := timeVec.At(i).Time()
+		v := valueVec.At(i).Float()
+
+		pts = append(pts, &datasource.Point{
+			Timestamp: int64(t.UnixNano()) / int64(time.Millisecond),
+			Value:     v,
+		})
+	}
+
+	return &datasource.TimeSeries{
+		Name:   df.Name,
+		Tags:   df.Labels,
+		Points: pts,
+	}
+}
+
+func asTable(df *dataframe.DataFrame) *datasource.Table {
+	rows := make([]*datasource.TableRow, len(df.Fields))
+
+	ncols := len(df.Fields)
+	nrows := df.Fields[0].Len()
+
+	for i := 0; i < nrows; i++ {
+		rowvals := make([]*datasource.RowValue, ncols)
+		for j, f := range df.Fields {
+			switch f.Type {
+			case dataframe.FieldTypeNumber:
+				rowvals[j] = &datasource.RowValue{
+					Kind:        datasource.RowValue_TYPE_DOUBLE,
+					DoubleValue: f.Vector.At(i).Float(),
+				}
+			case dataframe.FieldTypeString:
+				rowvals[j] = &datasource.RowValue{
+					Kind:        datasource.RowValue_TYPE_STRING,
+					StringValue: f.Vector.At(i).String(),
+				}
+			}
+		}
+		rows = append(rows, &datasource.TableRow{
+			Values: rowvals,
+		})
+	}
+
+	var cols []*datasource.TableColumn
+	for _, f := range df.Fields {
+		cols = append(cols, &datasource.TableColumn{Name: f.Name})
+	}
+
+	return &datasource.Table{
+		Columns: cols,
+		Rows:    rows,
+	}
+}
+
+func indexOfFieldType(df *dataframe.DataFrame, t dataframe.FieldType) int {
+	for idx, f := range df.Fields {
+		if f.Type == t {
+			return idx
+		}
+	}
+	return -1
 }
