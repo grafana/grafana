@@ -2,20 +2,22 @@ import _ from 'lodash';
 import React from 'react';
 // @ts-ignore
 import Cascader from 'rc-cascader';
-// @ts-ignore
-import PluginPrism from 'slate-prism';
-// @ts-ignore
+
+import { SlatePrism } from '@grafana/ui';
+
 import Prism from 'prismjs';
 
 import { TypeaheadOutput, HistoryItem } from 'app/types/explore';
 // dom also includes Element polyfills
 import BracesPlugin from 'app/features/explore/slate-plugins/braces';
-import QueryField, { TypeaheadInput, QueryFieldState } from 'app/features/explore/QueryField';
+import QueryField, { TypeaheadInput } from 'app/features/explore/QueryField';
 import { PromQuery, PromContext, PromOptions } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 import { ExploreQueryFieldProps, DataSourceStatus, QueryHint, DOMUtil } from '@grafana/ui';
 import { isDataFrame, toLegacyResponseData } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
+import PromQlLanguageProvider from '../language_provider';
+import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';
 
 const HISTOGRAM_GROUP = '__histograms__';
 const METRIC_MARK = 'metric';
@@ -67,7 +69,7 @@ export function groupMetricsByPrefix(metrics: string[], delimiter = '_'): Cascad
   return [...options, ...metricsOptions];
 }
 
-export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: QueryFieldState): string {
+export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
   // Modify suggestion based on context
   switch (typeaheadContext) {
     case 'context-labels': {
@@ -102,7 +104,7 @@ interface CascaderOption {
 }
 
 interface PromQueryFieldProps extends ExploreQueryFieldProps<PrometheusDatasource, PromQuery, PromOptions> {
-  history: HistoryItem[];
+  history: Array<HistoryItem<PromQuery>>;
 }
 
 interface PromQueryFieldState {
@@ -113,7 +115,7 @@ interface PromQueryFieldState {
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   plugins: any[];
-  languageProvider: any;
+  languageProvider: PromQlLanguageProvider;
   languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps, context: React.Context<any>) {
@@ -125,7 +127,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     this.plugins = [
       BracesPlugin(),
-      PluginPrism({
+      SlatePrism({
         onlyIn: (node: any) => node.type === 'code_block',
         getSyntax: (node: any) => 'promql',
       }),
@@ -252,7 +254,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       return;
     }
 
-    Prism.languages[PRISM_SYNTAX] = this.languageProvider.getSyntax();
+    Prism.languages[PRISM_SYNTAX] = this.languageProvider.syntax;
     Prism.languages[PRISM_SYNTAX][METRIC_MARK] = {
       alias: 'variable',
       pattern: new RegExp(`(?:^|\\s)(${metrics.join('|')})(?:$|\\s)`),
@@ -272,26 +274,20 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     this.setState({ metricsOptions, syntaxLoaded: true });
   };
 
-  onTypeahead = (typeahead: TypeaheadInput): TypeaheadOutput => {
+  onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
     if (!this.languageProvider) {
       return { suggestions: [] };
     }
 
     const { history } = this.props;
-    const { prefix, text, value, wrapperNode } = typeahead;
+    const { prefix, text, value, wrapperClasses, labelKey } = typeahead;
 
-    // Get DOM-dependent context
-    const wrapperClasses = Array.from(wrapperNode.classList);
-    const labelKeyNode = DOMUtil.getPreviousCousin(wrapperNode, '.attr-name');
-    const labelKey = labelKeyNode && labelKeyNode.textContent;
-    const nextChar = DOMUtil.getNextCharacter();
-
-    const result = this.languageProvider.provideCompletionItems(
+    const result = await this.languageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey },
       { history }
     );
 
-    console.log('handleTypeahead', wrapperClasses, text, prefix, nextChar, labelKey, result.context);
+    // console.log('handleTypeahead', wrapperClasses, text, prefix, labelKey, result.context);
 
     return result;
   };

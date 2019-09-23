@@ -12,7 +12,7 @@ import { VariableSuggestion } from './DataLinkSuggestions';
 
 interface DataLinksEditorProps {
   value: DataLink[];
-  onChange: (links: DataLink[]) => void;
+  onChange: (links: DataLink[], callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   maxLinks?: number;
 }
@@ -30,14 +30,15 @@ export const DataLinksEditor: FC<DataLinksEditorProps> = React.memo(({ value, on
     onChange(value ? [...value, { url: '', title: '' }] : [{ url: '', title: '' }]);
   };
 
-  const onLinkChanged = (linkIndex: number, newLink: DataLink) => {
+  const onLinkChanged = (linkIndex: number, newLink: DataLink, callback?: () => void) => {
     onChange(
       value.map((item, listIndex) => {
         if (linkIndex === listIndex) {
           return newLink;
         }
         return item;
-      })
+      }),
+      callback
     );
   };
 

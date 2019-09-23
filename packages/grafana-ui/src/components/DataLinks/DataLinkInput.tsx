@@ -1,46 +1,45 @@
-import React, { useState, useMemo, useCallback, useContext } from 'react';
+import React, { useState, useMemo, useCallback, useContext, useRef, RefObject } from 'react';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
-import { makeValue, ThemeContext, DataLinkBuiltInVars } from '../../index';
+import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
 import { Portal } from '../index';
-// @ts-ignore
-import { Editor } from 'slate-react';
-// @ts-ignore
-import { Value, Change, Document } from 'slate';
-// @ts-ignore
+
+import { Editor } from '@grafana/slate-react';
+import { Value, Editor as CoreEditor } from 'slate';
 import Plain from 'slate-plain-serializer';
 import { Popper as ReactPopper } from 'react-popper';
 import useDebounce from 'react-use/lib/useDebounce';
 import { css, cx } from 'emotion';
-// @ts-ignore
-import PluginPrism from 'slate-prism';
+
+import { SlatePrism } from '../../slate-plugins';
+import { SCHEMA } from '../../utils/slate';
+
+const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
 interface DataLinkInputProps {
   value: string;
-  onChange: (url: string) => void;
+  onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
 }
 
 const plugins = [
-  PluginPrism({
+  SlatePrism({
     onlyIn: (node: any) => node.type === 'code_block',
     getSyntax: () => 'links',
   }),
 ];
 
 export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, suggestions }) => {
+  const editorRef = useRef<Editor>() as RefObject<Editor>;
   const theme = useContext(ThemeContext);
   const [showingSuggestions, setShowingSuggestions] = useState(false);
+
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
   const [usedSuggestions, setUsedSuggestions] = useState(
-    suggestions.filter(suggestion => {
-      return value.indexOf(suggestion.value) > -1;
-    })
+    suggestions.filter(suggestion => value.includes(suggestion.value))
   );
-  // Using any here as TS has problem pickung up `change` method existance on Value
-  // According to code and documentation `change` is an instance method on Value in slate 0.33.8 that we use
-  // https://github.com/ianstormtaylor/slate/blob/slate%400.33.8/docs/reference/slate/value.md#change
-  const [linkUrl, setLinkUrl] = useState<any>(makeValue(value));
+
+  const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
 
   const getStyles = useCallback(() => {
     return {
@@ -56,12 +55,13 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
   }, [theme]);
 
   const currentSuggestions = useMemo(
-    () =>
-      suggestions.filter(suggestion => {
-        return usedSuggestions.map(s => s.value).indexOf(suggestion.value) === -1;
-      }),
+    () => suggestions.filter(suggestion => !usedSuggestions.map(s => s.value).includes(suggestion.value)),
     [usedSuggestions, suggestions]
   );
+
+  // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
+  const stateRef = useRef({ showingSuggestions, currentSuggestions, suggestionsIndex, linkUrl, onChange });
+  stateRef.current = { showingSuggestions, currentSuggestions, suggestionsIndex, linkUrl, onChange };
 
   // SelectionReference is used to position the variables suggestion relatively to current DOM selection
   const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions]);
@@ -69,9 +69,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
   // Keep track of variables that has been used already
   const updateUsedSuggestions = () => {
     const currentLink = Plain.serialize(linkUrl);
-    const next = usedSuggestions.filter(suggestion => {
-      return currentLink.indexOf(suggestion.value) > -1;
-    });
+    const next = usedSuggestions.filter(suggestion => currentLink.includes(suggestion.value));
     if (next.length !== usedSuggestions.length) {
       setUsedSuggestions(next);
     }
@@ -79,75 +77,64 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
 
   useDebounce(updateUsedSuggestions, 250, [linkUrl]);
 
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Backspace' || event.key === 'Escape') {
-      setShowingSuggestions(false);
-      setSuggestionsIndex(0);
-    }
-
-    if (event.key === 'Enter') {
-      if (showingSuggestions) {
-        onVariableSelect(currentSuggestions[suggestionsIndex]);
+  const onKeyDown = React.useCallback((event: KeyboardEvent, next: () => any) => {
+    if (!stateRef.current.showingSuggestions) {
+      if (event.key === '?' || event.key === '&' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
+        return setShowingSuggestions(true);
       }
+      return next();
     }
 
-    if (showingSuggestions) {
-      if (event.key === 'ArrowDown') {
+    switch (event.key) {
+      case 'Backspace':
+      case 'Escape':
+        setShowingSuggestions(false);
+        return setSuggestionsIndex(0);
+
+      case 'Enter':
         event.preventDefault();
-        setSuggestionsIndex(index => {
-          return (index + 1) % currentSuggestions.length;
-        });
-      }
-      if (event.key === 'ArrowUp') {
+        return onVariableSelect(stateRef.current.currentSuggestions[stateRef.current.suggestionsIndex]);
+
+      case 'ArrowDown':
+      case 'ArrowUp':
         event.preventDefault();
-        setSuggestionsIndex(index => {
-          const nextIndex = index - 1 < 0 ? currentSuggestions.length - 1 : (index - 1) % currentSuggestions.length;
-          return nextIndex;
-        });
-      }
-    }
+        const direction = event.key === 'ArrowDown' ? 1 : -1;
+        return setSuggestionsIndex(index => modulo(index + direction, stateRef.current.currentSuggestions.length));
 
-    if (event.key === '?' || event.key === '&' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
-      setShowingSuggestions(true);
+      default:
+        return next();
     }
+  }, []);
 
-    if (event.key === 'Enter' && showingSuggestions) {
-      // Preventing entering a new line
-      // As of https://github.com/ianstormtaylor/slate/issues/1345#issuecomment-340508289
-      return false;
-    } else {
-      // @ts-ignore
-      return;
-    }
-  };
-
-  const onUrlChange = ({ value }: Change) => {
+  const onUrlChange = React.useCallback(({ value }: { value: Value }) => {
     setLinkUrl(value);
-  };
+  }, []);
 
-  const onUrlBlur = () => {
-    onChange(Plain.serialize(linkUrl));
-  };
+  const onUrlBlur = React.useCallback((event: Event, editor: CoreEditor, next: () => any) => {
+    // Callback needed for blur to work correctly
+    stateRef.current.onChange(Plain.serialize(stateRef.current.linkUrl), () => {
+      editorRef.current!.blur();
+    });
+  }, []);
 
-  const onVariableSelect = (item: VariableSuggestion) => {
+  const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
     const includeDollarSign = Plain.serialize(linkUrl).slice(-1) !== '$';
 
-    const change = linkUrl.change();
-
     if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
-      change.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
+      editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
     } else {
-      change.insertText(`var-${item.value}=$\{${item.value}}`);
+      editor.insertText(`var-${item.value}=$\{${item.value}}`);
     }
 
-    setLinkUrl(change.value);
+    setLinkUrl(editor.value);
     setShowingSuggestions(false);
     setUsedSuggestions((previous: VariableSuggestion[]) => {
       return [...previous, item];
     });
     setSuggestionsIndex(0);
-    onChange(Plain.serialize(change.value));
+    onChange(Plain.serialize(editor.value));
   };
+
   return (
     <div
       className={cx(
@@ -186,11 +173,13 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
           </Portal>
         )}
         <Editor
+          schema={SCHEMA}
+          ref={editorRef}
           placeholder="http://your-grafana.com/d/000000010/annotations"
-          value={linkUrl}
+          value={stateRef.current.linkUrl}
           onChange={onUrlChange}
           onBlur={onUrlBlur}
-          onKeyDown={onKeyDown}
+          onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
           plugins={plugins}
           className={getStyles().editor}
         />
