@@ -35,10 +35,11 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
       background-image: none;
       background-color: transparent;
       color: ${orange};
-      &:focus,:hover {
+      &:focus,
+      :hover {
         color: ${orange};
         background-image: none;
-        background-color: transparent};
+        background-color: transparent;
       }
     `,
     noRightBorderStyle: css`
