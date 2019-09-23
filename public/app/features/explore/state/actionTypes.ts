@@ -420,4 +420,5 @@ export type HigherOrderAction =
   | ActionOf<SplitCloseActionPayload>
   | SplitOpenAction
   | ResetExploreAction
+  | SyncTimesAction
   | ActionOf<any>;

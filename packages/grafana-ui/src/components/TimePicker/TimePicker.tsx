@@ -21,6 +21,7 @@ import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue } from '@
 import { dateMath } from '@grafana/data';
 import { GrafanaTheme, GrafanaThemeType } from '../../types/theme';
 import { Themeable } from '../../types';
+import { ExploreId } from 'app/types';
 
 const orangeLight = '#ED5700';
 const orangeDark = '#FF780A';
@@ -31,12 +32,13 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
     timePickerSynced: css`
       label: timePickerSynced;
       border-color: ${orange};
+      background-image: none;
+      background-color: transparent;
       color: ${orange};
-      &:focus {
+      &:focus,:hover {
         color: ${orange};
-      }
-      &:hover {
-        color: ${orange};
+        background-image: none;
+        background-color: transparent};
       }
     `,
     noRightBorderStyle: css`
@@ -48,7 +50,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
 
 interface SyncButton {
   synced: boolean;
-  onClick: () => void;
+  onClick: (exploreId: ExploreId) => void;
 }
 
 export interface Props extends Themeable {
@@ -56,6 +58,7 @@ export interface Props extends Themeable {
   selectOptions: TimeOption[];
   timeZone?: TimeZone;
   syncButton?: SyncButton;
+  exploreId?: ExploreId;
   onChange: (timeRange: TimeRange) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
@@ -164,6 +167,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
       onZoom,
       timeZone,
       syncButton,
+      exploreId,
       theme,
     } = this.props;
 
@@ -216,7 +220,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
               className={classNames('btn navbar-button navbar-button--attached', {
                 [`${styles.timePickerSynced}`]: syncButton.synced,
               })}
-              onClick={() => syncButton.onClick()}
+              onClick={() => syncButton.onClick(exploreId)}
             >
               <i className="fa fa-link" />
             </button>

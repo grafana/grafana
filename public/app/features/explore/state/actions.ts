@@ -186,6 +186,7 @@ export const updateTimeRange = (options: {
   syncedTimes?: boolean;
 }): ThunkResult<void> => {
   if (options.syncedTimes) {
+    console.log(options);
     return dispatch => {
       dispatch(updateTime({ ...options, exploreId: ExploreId.left }));
       dispatch(runQueries(ExploreId.left));
@@ -689,13 +690,23 @@ export function splitOpen(): ThunkResult<void> {
  * Syncs time interval, if they are not synced on both panels in a split mode.
  * Unsyncs time interval, if they are synced on both panels in a split mode.
  */
-export function syncTimes(): ThunkResult<void> {
+export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
+    if (exploreId === 'left') {
+      const leftState = getState().explore.left;
+      dispatch(updateTime({ exploreId: ExploreId.right, rawRange: leftState.range.raw }));
+      dispatch(runQueries(ExploreId.right));
+    } else {
+      const rightState = getState().explore.right;
+      dispatch(updateTime({ exploreId: ExploreId.left, rawRange: rightState.range.raw }));
+      dispatch(runQueries(ExploreId.left));
+    }
     const isTimeSynced = getState().explore.syncedTimes;
     dispatch(syncTimesAction({ syncedTimes: !isTimeSynced }));
     dispatch(stateSave());
   };
 }
+
 /**
  * Creates action to collapse graph/logs/table panel. When panel is collapsed,
  * queries won't be run
