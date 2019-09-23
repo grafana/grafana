@@ -2,7 +2,7 @@
   <label class="gf-form-label query-keyword width-9">Dimensions</label>
   <div
     class="gf-form"
-    ng-repeat="dimensionFilter in vm.target.azureMonitor.data[vm.target.azureMonitor.queryMode].dimensionFilters"
+    ng-repeat="dimensionFilter in vm.target.azureMonitor.data[vm.target.azureMonitor.queryMode].dimensionFilters track by $index"
   >
     <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
       <select
