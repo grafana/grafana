@@ -88,7 +88,6 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
     switch (event.key) {
       case 'Backspace':
       case 'Escape':
-        event.preventDefault();
         setShowingSuggestions(false);
         return setSuggestionsIndex(0);
 

@@ -100,14 +100,14 @@ export default function SuggestionsPlugin({
             event.preventDefault();
 
             component.typeaheadRef.insertSuggestion();
-            return handleTypeahead(event, editor, next, onTypeahead, cleanText);
+            return handleTypeahead(event, editor, onTypeahead, cleanText);
           }
 
           break;
         }
 
         default: {
-          handleTypeahead(event, editor, next, onTypeahead, cleanText);
+          handleTypeahead(event, editor, onTypeahead, cleanText);
           break;
         }
       }
@@ -204,12 +204,11 @@ const handleTypeahead = debounce(
   async (
     event: Event,
     editor: CoreEditor,
-    next: () => {},
     onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>,
     cleanText?: (text: string) => string
   ) => {
     if (!onTypeahead) {
-      return next();
+      return null;
     }
 
     const { value } = editor;
@@ -307,7 +306,7 @@ const handleTypeahead = debounce(
     };
 
     // Bogus edit to force re-render
-    return editor.insertText('');
+    return editor.blur().focus();
   },
   TYPEAHEAD_DEBOUNCE
 );

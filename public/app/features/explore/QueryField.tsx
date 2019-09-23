@@ -79,10 +79,10 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     // Base plugins
     this.plugins = [
+      NewlinePlugin(),
       SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion, component: this }),
       ClearPlugin(),
       RunnerPlugin({ handler: this.executeOnChangeAndRunQueries }),
-      NewlinePlugin(),
       SelectionShortcutsPlugin(),
       IndentationPlugin(),
       ClipboardPlugin(),

@@ -1,4 +1,4 @@
-import React, { createRef, CSSProperties } from 'react';
+import React, { createRef } from 'react';
 import ReactDOM from 'react-dom';
 import _ from 'lodash';
 import { FixedSizeList } from 'react-window';
@@ -44,6 +44,16 @@ export class Typeahead extends React.PureComponent<Props, State> {
 
   componentDidMount = () => {
     this.props.menuRef(this);
+
+    document.addEventListener('selectionchange', this.handleSelectionChange);
+  };
+
+  componentWillUnmount = () => {
+    document.removeEventListener('selectionchange', this.handleSelectionChange);
+  };
+
+  handleSelectionChange = () => {
+    this.forceUpdate();
   };
 
   componentDidUpdate = (prevProps: Readonly<Props>, prevState: Readonly<State>) => {
@@ -98,10 +108,10 @@ export class Typeahead extends React.PureComponent<Props, State> {
     this.props.onSelectSuggestion(this.state.allItems[this.state.typeaheadIndex]);
   };
 
-  get menuPosition(): CSSProperties {
+  get menuPosition(): string {
     // Exit for unit tests
     if (!window.getSelection) {
-      return {};
+      return '';
     }
 
     const selection = window.getSelection();
@@ -114,13 +124,12 @@ export class Typeahead extends React.PureComponent<Props, State> {
       const scrollX = window.scrollX;
       const scrollY = window.scrollY;
 
-      return {
-        top: `${rect.top + scrollY + rect.height + 4}px`,
-        left: `${rect.left + scrollX - 2}px`,
-      };
+      return `position: absolute; display: flex; top: ${rect.top + scrollY + rect.height + 6}px; left: ${rect.left +
+        scrollX -
+        2}px`;
     }
 
-    return {};
+    return '';
   }
 
   render() {
@@ -130,8 +139,8 @@ export class Typeahead extends React.PureComponent<Props, State> {
     const showDocumentation = hoveredItem || typeaheadIndex;
 
     return (
-      <Portal origin={origin} isOpen={isOpen}>
-        <ul className="typeahead" style={this.menuPosition}>
+      <Portal origin={origin} isOpen={isOpen} style={this.menuPosition}>
+        <ul className="typeahead">
           <FixedSizeList
             ref={this.listRef}
             itemCount={allItems.length}
@@ -184,6 +193,7 @@ interface PortalProps {
   index?: number;
   isOpen: boolean;
   origin: string;
+  style: string;
 }
 
 class Portal extends React.PureComponent<PortalProps, {}> {
@@ -191,8 +201,9 @@ class Portal extends React.PureComponent<PortalProps, {}> {
 
   constructor(props: PortalProps) {
     super(props);
-    const { index = 0, origin = 'query' } = props;
+    const { index = 0, origin = 'query', style } = props;
     this.node = document.createElement('div');
+    this.node.setAttribute('style', style);
     this.node.classList.add(`slate-typeahead`, `slate-typeahead-${origin}-${index}`);
     document.body.appendChild(this.node);
   }
@@ -203,6 +214,7 @@ class Portal extends React.PureComponent<PortalProps, {}> {
 
   render() {
     if (this.props.isOpen) {
+      this.node.setAttribute('style', this.props.style);
       return ReactDOM.createPortal(this.props.children, this.node);
     }
 
