@@ -123,6 +123,7 @@
     "redux-mock-store": "1.5.3",
     "regexp-replace-loader": "1.0.1",
     "rimraf": "2.6.3",
+    "rxjs-spy": "^7.5.1",
     "sass-lint": "1.12.1",
     "sass-loader": "7.1.0",
     "sinon": "1.17.6",
