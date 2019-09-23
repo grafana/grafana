@@ -20,7 +20,7 @@ type DatasourceInfo struct {
 	Name     string
 	Type     string
 	URL      string
-	JsonData json.RawMessage
+	JSONData json.RawMessage
 }
 
 type Point struct {
@@ -41,13 +41,13 @@ type Query struct {
 	RefID         string
 	MaxDataPoints int64
 	Interval      time.Duration
-	ModelJson     json.RawMessage
+	ModelJSON     json.RawMessage
 }
 
 type QueryResult struct {
 	Error      string
 	RefID      string
-	MetaJson   string
+	MetaJSON   string
 	DataFrames []DataFrame
 }
 
@@ -74,7 +74,7 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Que
 		Name:     req.Datasource.Name,
 		Type:     req.Datasource.Type,
 		URL:      req.Datasource.Url,
-		JsonData: json.RawMessage(req.Datasource.JsonData),
+		JSONData: json.RawMessage(req.Datasource.JsonData),
 	}
 
 	var queries []Query
@@ -83,7 +83,7 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Que
 			RefID:         q.RefId,
 			MaxDataPoints: q.MaxDataPoints,
 			Interval:      time.Duration(q.IntervalMs) * time.Millisecond,
-			ModelJson:     []byte(q.ModelJson),
+			ModelJSON:     []byte(q.ModelJson),
 		})
 	}
 
@@ -115,7 +115,7 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Que
 		respResults = append(respResults, &datasource.QueryResult{
 			Error:    res.Error,
 			RefId:    res.RefID,
-			MetaJson: res.MetaJson,
+			MetaJson: res.MetaJSON,
 			Series:   tss,
 		})
 	}
