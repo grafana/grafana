@@ -12,12 +12,6 @@ export const panelEditorInitCompleted = actionCreatorFactory<PanelEditorInitComp
   'PANEL_EDITOR_INIT_COMPLETED'
 ).create();
 
-export interface PanelEditorChangeTab {
-  activeTab: PanelEditorTab;
-}
-
-export const panelEditorChangeTab = actionCreatorFactory<PanelEditorChangeTab>('PANEL_EDITOR_CHANGE_TAB').create();
-
 export const panelEditorCleanUp = noPayloadActionCreatorFactory('PANEL_EDITOR_CLEAN_UP').create();
 
 export const refreshPanelEditor = (props: {
