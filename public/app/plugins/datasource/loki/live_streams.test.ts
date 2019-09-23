@@ -37,10 +37,9 @@ describe('Live Stream Tests', () => {
     const labels: Labels = { job: 'varlogs' };
     const target = makeTarget('fake', labels);
     const stream = new LiveStreams().getStream(target);
-    expect.assertions(5);
+    expect.assertions(4);
 
     const tests = [
-      (val: DataFrame[]) => expect(val).toEqual([]),
       (val: DataFrame[]) => {
         expect(val[0].length).toEqual(7);
         expect(val[0].labels).toEqual(labels);
