@@ -1,10 +1,8 @@
 // Libraries
 import _ from 'lodash';
-
 // Utils
 import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
-
 // Types
 import { DataQuery, DataQueryResponseData, PanelPlugin } from '@grafana/ui';
 import { DataLink, DataTransformerConfig, ScopedVars } from '@grafana/data';
