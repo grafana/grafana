@@ -1,4 +1,3 @@
-import $ from 'jquery';
 import _ from 'lodash';
 
 import coreModule from 'app/core/core_module';
@@ -56,7 +55,7 @@ export class KeybindingSrv {
     const activeElement = anyDoc.activeElement;
 
     // typehead needs to handle it
-    const typeaheads = $('.slate-typeahead--open');
+    const typeaheads = document.querySelectorAll('.slate-typeahead--open');
     if (typeaheads.length > 0) {
       return;
     }
