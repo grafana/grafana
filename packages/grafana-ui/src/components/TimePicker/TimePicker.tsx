@@ -28,8 +28,8 @@ const orangeDark = '#FF780A';
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
   const orange = theme.type === GrafanaThemeType.Dark ? orangeDark : orangeLight;
   return {
-    timePickerActive: css`
-      label: timePickerActive;
+    timePickerSynced: css`
+      label: timePickerSynced;
       border-color: ${orange};
       color: ${orange};
       &:focus {
@@ -47,8 +47,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
 });
 
 interface SyncButton {
-  icon: string;
-  active: boolean;
+  synced: boolean;
   onClick: () => void;
 }
 
@@ -203,7 +202,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
           <ButtonSelect
             className={classNames('time-picker-button-select', {
               [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: syncButton,
-              [`${styles.timePickerActive}`]: syncButton.active,
+              [`${styles.timePickerSynced}`]: syncButton ? syncButton.synced : null,
             })}
             value={currentOption}
             label={label}
@@ -216,11 +215,11 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
           {syncButton && (
             <button
               className={classNames('btn navbar-button navbar-button--attached', {
-                [`${styles.timePickerActive}`]: syncButton.active,
+                [`${styles.timePickerSynced}`]: syncButton.synced,
               })}
               onClick={() => syncButton.onClick()}
             >
-              <i className={syncButton.icon} />
+              <i className="fa fa-link" />
             </button>
           )}
           {isAbsolute && (

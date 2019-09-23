@@ -71,34 +71,18 @@ export class ExploreTimeControls extends Component<Props> {
 
   render() {
     const { range, timeZone, splitted, syncedTimes, onClick } = this.props;
-    const syncButton = { icon: 'fa fa-link', onClick, active: syncedTimes };
+    const syncButton = { onClick, synced: syncedTimes };
+    const timePickerCommonProps = {
+      value: range,
+      onChange: this.onChangeTimePicker,
+      timeZone,
+      onMoveBackward: this.onMoveBack,
+      onMoveForward: this.onMoveForward,
+      onZoom: this.onZoom,
+      selectOptions: this.setActiveTimeOption(defaultSelectOptions, range.raw),
+    };
+    const timePickerProps = splitted ? { syncButton } : null;
 
-    return (
-      <>
-        {splitted && (
-          <TimePicker
-            value={range}
-            onChange={this.onChangeTimePicker}
-            timeZone={timeZone}
-            onMoveBackward={this.onMoveBack}
-            onMoveForward={this.onMoveForward}
-            onZoom={this.onZoom}
-            selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
-            syncButton={syncButton}
-          />
-        )}
-        {!splitted && (
-          <TimePicker
-            value={range}
-            onChange={this.onChangeTimePicker}
-            timeZone={timeZone}
-            onMoveBackward={this.onMoveBack}
-            onMoveForward={this.onMoveForward}
-            onZoom={this.onZoom}
-            selectOptions={this.setActiveTimeOption(defaultSelectOptions, range.raw)}
-          />
-        )}
-      </>
-    );
+    return <TimePicker {...timePickerCommonProps} {...timePickerProps} />;
   }
 }
