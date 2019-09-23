@@ -111,6 +111,10 @@ $select-input-bg-disabled: $input-bg-disabled;
   }
 }
 
+.gf-form-select-box__placeholder {
+  color: $input-color-placeholder;
+}
+
 .gf-form-select-box__control--is-focused .gf-form-select-box__placeholder {
   display: none;
 }
