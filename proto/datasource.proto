@@ -3,7 +3,7 @@ option go_package = "datasource";
 
 package models;
 
-message QueryRequest {
+message DatasourceRequest {
   TimeRange timeRange = 1;
   DatasourceInfo datasource = 2;
   repeated Query queries = 3;
@@ -23,7 +23,7 @@ message TimeRange {
   int64 toEpochMs = 4;
 }
 
-message QueryResponse {
+message DatasourceResponse {
   repeated QueryResult results = 1;
 }
 
@@ -93,6 +93,6 @@ message Point {
   double value = 2;
 }
 
-service DatasourceService {
-    rpc Query(QueryRequest) returns (QueryResponse);
+service DatasourcePlugin {
+    rpc Query(DatasourceRequest) returns (DatasourceResponse);
 }

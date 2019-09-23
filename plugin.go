@@ -16,10 +16,10 @@ type datasourcePlugin struct {
 }
 
 func (p *datasourcePlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Server) error {
-	datasource.RegisterDatasourceServiceServer(s, &grpcServer{Impl: p.Impl})
+	datasource.RegisterDatasourcePluginServer(s, &grpcServer{Impl: p.Impl})
 	return nil
 }
 
 func (p *datasourcePlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
-	return &grpcClient{client: datasource.NewDatasourceServiceClient(c)}, nil
+	return &grpcClient{client: datasource.NewDatasourcePluginClient(c)}, nil
 }

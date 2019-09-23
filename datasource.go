@@ -54,7 +54,7 @@ type datasourcePluginWrapper struct {
 	handler DatasourceHandler
 }
 
-func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.QueryRequest) (*datasource.QueryResponse, error) {
+func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.DatasourceRequest) (*datasource.DatasourceResponse, error) {
 	tr := TimeRange{
 		From: time.Unix(0, req.TimeRange.FromEpochMs*int64(time.Millisecond)),
 		To:   time.Unix(0, req.TimeRange.FromEpochMs*int64(time.Millisecond)),
@@ -111,7 +111,7 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Que
 		})
 	}
 
-	return &datasource.QueryResponse{
+	return &datasource.DatasourceResponse{
 		Results: respResults,
 	}, nil
 }
