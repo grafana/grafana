@@ -106,6 +106,10 @@ const defaultZoomOutTooltip = () => {
   );
 };
 
+const syncTimesTooltip = () => {
+  return <>Sync all views to this time range</>;
+};
+
 export interface State {
   isCustomOpen: boolean;
 }
@@ -216,15 +220,18 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
           {syncButton && (
-            <button
-              className={classNames('btn navbar-button navbar-button--attached', {
-                [`${styles.timePickerSynced}`]: syncButton.synced,
-              })}
-              onClick={() => syncButton.onClick(exploreId)}
-            >
-              <i className="fa fa-link" />
-            </button>
+            <Tooltip content={syncTimesTooltip} placement="bottom">
+              <button
+                className={classNames('btn navbar-button navbar-button--attached', {
+                  [`${styles.timePickerSynced}`]: syncButton.synced,
+                })}
+                onClick={() => syncButton.onClick(exploreId)}
+              >
+                <i className="fa fa-link" />
+              </button>
+            </Tooltip>
           )}
+
           {isAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
               <i className="fa fa-chevron-right" />
