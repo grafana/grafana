@@ -64,7 +64,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
   stateRef.current = { showingSuggestions, currentSuggestions, suggestionsIndex, linkUrl, onChange };
 
   // SelectionReference is used to position the variables suggestion relatively to current DOM selection
-  const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions]);
+  const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions, linkUrl]);
 
   // Keep track of variables that has been used already
   const updateUsedSuggestions = () => {
@@ -79,7 +79,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
 
   const onKeyDown = React.useCallback((event: KeyboardEvent, next: () => any) => {
     if (!stateRef.current.showingSuggestions) {
-      if (event.key === '?' || event.key === '&' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
+      if (event.key === '=' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
         return setShowingSuggestions(true);
       }
       return next();
@@ -100,7 +100,6 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
         event.preventDefault();
         const direction = event.key === 'ArrowDown' ? 1 : -1;
         return setSuggestionsIndex(index => modulo(index + direction, stateRef.current.currentSuggestions.length));
-
       default:
         return next();
     }
@@ -118,8 +117,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
   }, []);
 
   const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
-    const includeDollarSign = Plain.serialize(linkUrl).slice(-1) !== '$';
-
+    const includeDollarSign = Plain.serialize(editor.value).slice(-1) !== '$';
     if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
       editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
     } else {
@@ -150,7 +148,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
           <Portal>
             <ReactPopper
               referenceElement={selectionRef}
-              placement="auto-end"
+              placement="top-end"
               modifiers={{
                 preventOverflow: { enabled: true, boundariesElement: 'window' },
                 arrow: { enabled: false },
