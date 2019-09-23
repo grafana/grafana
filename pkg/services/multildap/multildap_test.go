@@ -152,6 +152,25 @@ func TestMultiLDAP(t *testing.T) {
 				teardown()
 			})
 
+			Convey("Should still try to auth with the second server after receiving an invalid credentials error from the first", func() {
+				mock := setup()
+
+				mock.loginErrReturn = ErrInvalidCredentials
+
+				multi := New([]*ldap.ServerConfig{
+					{}, {},
+				})
+				_, err := multi.Login(&models.LoginUserQuery{})
+
+				So(mock.dialCalledTimes, ShouldEqual, 2)
+				So(mock.loginCalledTimes, ShouldEqual, 2)
+				So(mock.closeCalledTimes, ShouldEqual, 2)
+
+				So(err, ShouldEqual, ErrInvalidCredentials)
+
+				teardown()
+			})
+
 			Convey("Should return unknown error", func() {
 				mock := setup()
 
