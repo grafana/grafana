@@ -21,6 +21,8 @@ func newVector(t FieldType, n int) Vector {
 		return make(floatVector, n)
 	case FieldTypeTime:
 		return make(timeVector, n)
+	case FieldTypeString:
+		return make(stringVector, n)
 	default:
 		return nil
 	}

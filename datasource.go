@@ -112,13 +112,15 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 			}
 		}
 
-		respResults = append(respResults, &datasource.QueryResult{
+		queryResult := &datasource.QueryResult{
 			Error:    res.Error,
 			RefId:    res.RefID,
 			MetaJson: res.MetaJSON,
 			Series:   tss,
 			Tables:   tbs,
-		})
+		}
+
+		respResults = append(respResults, queryResult)
 	}
 
 	return &datasource.DatasourceResponse{
@@ -152,10 +154,10 @@ func asTimeSeries(df *dataframe.DataFrame) *datasource.TimeSeries {
 }
 
 func asTable(df *dataframe.DataFrame) *datasource.Table {
-	rows := make([]*datasource.TableRow, len(df.Fields))
 
 	ncols := len(df.Fields)
 	nrows := df.Fields[0].Len()
+	rows := make([]*datasource.TableRow, nrows)
 
 	for i := 0; i < nrows; i++ {
 		rowvals := make([]*datasource.RowValue, ncols)
@@ -173,9 +175,10 @@ func asTable(df *dataframe.DataFrame) *datasource.Table {
 				}
 			}
 		}
-		rows = append(rows, &datasource.TableRow{
+
+		rows[i] = &datasource.TableRow{
 			Values: rowvals,
-		})
+		}
 	}
 
 	var cols []*datasource.TableColumn

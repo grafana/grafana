@@ -38,6 +38,11 @@ func NewField(name string, fieldType FieldType, values interface{}) *Field {
 		for i := 0; i < len(v); i++ {
 			vec.At(i).Set(v[i])
 		}
+	case []string:
+		vec = newVector(fieldType, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.At(i).Set(v[i])
+		}
 	}
 
 	return &Field{
