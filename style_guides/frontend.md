@@ -4,19 +4,17 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
 
 ## Table of Contents
 
-1. [Basic Rules](#basic-rules)
-1. [File & Component Organization](#Organization)
-1. [Naming](#naming)
-1. [Declaration](#declaration)
-1. [Props](#props)
-1. [Refs](#refs)
-1. [Methods](#methods)
-1. [Ordering](#ordering)
-1. [State mangement](#State-mangement)
+- [Frontend Style Guide](#frontend-style-guide)
+  - [Table of Contents](#table-of-contents)
+  - [Basic rules](#basic-rules)
+  - [Organization](#organization)
+  - [Props](#props)
+  - [State mangement](#state-mangement)
 
 ## Basic rules
 
-- Try to keep files small and focused and break large components up into sub components.
+- Try to keep files small and focused.
+- Break large components up into sub-components.
 
 ## Organization
 
@@ -31,7 +29,7 @@ Generally we follow the Airbnb [React Style Guide](https://github.com/airbnb/jav
 
 ## Props
 
-- Name callback props & handlers with a "on" prefix.
+- Name callback props and handlers with an "on" prefix.
 
 ```tsx
 // good

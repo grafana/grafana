@@ -22,7 +22,7 @@ Big thumbs up!
 - **Hipchat**: Adds support for sending alert notifications to hipchat [#6451](https://github.com/grafana/grafana/issues/6451), thx [@jregovic](https://github.com/jregovic)
 - **Telegram**: Added Telegram alert notifier [#7098](https://github.com/grafana/grafana/pull/7098), thx [@leonoff](https://github.com/leonoff)
 - **LINE**: Add LINE as alerting notification channel [#7301](https://github.com/grafana/grafana/pull/7301), thx [@huydx](https://github.com/huydx)
-- **Templating**: Make $__interval and $__interval_ms global built in variables that can be used in by any datasource (in panel queries), closes [#7190](https://github.com/grafana/grafana/issues/7190), closes [#6582](https://github.com/grafana/grafana/issues/6582)
+- **Templating**: Make $__interval and $__interval_ms global built in variables that can be used in by any data source (in panel queries), closes [#7190](https://github.com/grafana/grafana/issues/7190), closes [#6582](https://github.com/grafana/grafana/issues/6582)
 - **Alerting**: Adds deduping of alert notifications [#7632](https://github.com/grafana/grafana/pull/7632)
 - **Alerting**: Better information about why an alert triggered [#7035](https://github.com/grafana/grafana/issues/7035)
 - **Orgs**: Sharing dashboards using Grafana share feature will now redirect to correct org. [#6948](https://github.com/grafana/grafana/issues/6948)
@@ -40,7 +40,7 @@ This release adds **five** new alert notifications channels, all of them contrib
 
 ### Templating
 
-We added two new global built in variables in grafana. `$__interval` and `$__interval_ms` are now reserved template names in grafana and can be used by any datasource.
+We added two new global built in variables in grafana. `$__interval` and `$__interval_ms` are now reserved template names in grafana and can be used by any data source.
 We might add more global built in variables in the future and if we do we will prefix them with `$__`. So please avoid using that in your template variables.
 
 ### Dedupe alert notifications when running multiple servers

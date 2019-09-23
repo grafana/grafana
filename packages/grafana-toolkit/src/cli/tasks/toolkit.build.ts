@@ -105,7 +105,9 @@ const copySassFiles = () => {
   })();
 };
 
-const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
+interface ToolkitBuildOptions {}
+
+const toolkitBuildTaskRunner: TaskRunner<ToolkitBuildOptions> = async () => {
   cwd = path.resolve(__dirname, '../../../');
   distDir = `${cwd}/dist`;
   const pkg = require(`${cwd}/package.json`);
@@ -135,4 +137,4 @@ const toolkitBuildTaskRunner: TaskRunner<void> = async () => {
   });
 };
 
-export const toolkitBuildTask = new Task<void>('@grafana/toolkit build', toolkitBuildTaskRunner);
+export const toolkitBuildTask = new Task<ToolkitBuildOptions>('@grafana/toolkit build', toolkitBuildTaskRunner);

@@ -43,7 +43,7 @@ Try the new Elasticsearch query editor on the [play.grafana.org](http://play.gra
 
 <img src="/img/docs/whatsnew_2_5/cloudwatch.png" alt="Cloudwatch editor">
 
-Grafana 2.5 ships with a new CloudWatch datasource that will allow you to query and visualize CloudWatch
+Grafana 2.5 ships with a new CloudWatch data source that will allow you to query and visualize CloudWatch
 metrics directly from Grafana.
 
 - Rich editor with auto completion for metric names, namespaces and dimensions
@@ -54,7 +54,7 @@ metrics directly from Grafana.
 
 <img src="/img/docs/whatsnew_2_5/prometheus_editor.png" alt="Prometheus editor">
 
-Grafana 2.5 ships with a new Prometheus datasource that will allow you to query and visualize data
+Grafana 2.5 ships with a new Prometheus data source that will allow you to query and visualize data
 stored in Prometheus.
 
 

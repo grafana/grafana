@@ -2,6 +2,7 @@ import React from 'react';
 import { RefreshPicker } from '@grafana/ui';
 import memoizeOne from 'memoize-one';
 import { css } from 'emotion';
+import classNames from 'classnames';
 
 import { ResponsiveButton } from './ResponsiveButton';
 
@@ -33,7 +34,7 @@ export function RunButton(props: Props) {
       splitted={splitted}
       title="Run Query"
       onClick={onRun}
-      buttonClassName="navbar-button--secondary btn--radius-right-0 "
+      buttonClassName={classNames('navbar-button--secondary', { 'btn--radius-right-0': showDropdown })}
       iconClassName={loading ? 'fa fa-spinner fa-fw fa-spin run-icon' : 'fa fa-refresh fa-fw'}
     />
   );

@@ -38,7 +38,7 @@ Repeat a panel for each value of a variable.  Repeating panels are described in 
 
 ## Metrics
 
-The metrics tab defines what series data and sources to render.  Each datasource provides different
+The metrics tab defines what series data and sources to render.  Each data source provides different
 options.
 
 ## Axes

@@ -1,13 +1,14 @@
-// @ts-ignore
 import Plain from 'slate-plain-serializer';
+import { Editor as SlateEditor } from 'slate';
 
 import LanguageProvider, { LABEL_REFRESH_INTERVAL, LokiHistoryItem, rangeToParams } from './language_provider';
 import { AbsoluteTimeRange } from '@grafana/data';
 import { advanceTo, clear, advanceBy } from 'jest-date-mock';
 import { beforeEach } from 'test/lib/common';
-import { DataSourceApi } from '@grafana/ui';
+
 import { TypeaheadInput } from '../../../types';
 import { makeMockLokiDatasource } from './mocks';
+import LokiDatasource from './datasource';
 
 describe('Language completion provider', () => {
   const datasource = makeMockLokiDatasource({});
@@ -18,16 +19,16 @@ describe('Language completion provider', () => {
   };
 
   describe('empty query suggestions', () => {
-    it('returns no suggestions on empty context', () => {
+    it('returns no suggestions on empty context', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
-      const result = instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
+      const result = await instance.provideCompletionItems({ text: '', prefix: '', value, wrapperClasses: [] });
       expect(result.context).toBeUndefined();
-      expect(result.refresher).toBeUndefined();
+
       expect(result.suggestions.length).toEqual(0);
     });
 
-    it('returns default suggestions with history on empty context when history was provided', () => {
+    it('returns default suggestions with history on empty context when history was provided', async () => {
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('');
       const history: LokiHistoryItem[] = [
@@ -36,12 +37,12 @@ describe('Language completion provider', () => {
           ts: 1,
         },
       ];
-      const result = instance.provideCompletionItems(
+      const result = await instance.provideCompletionItems(
         { text: '', prefix: '', value, wrapperClasses: [] },
         { history, absoluteRange: rangeMock }
       );
       expect(result.context).toBeUndefined();
-      expect(result.refresher).toBeUndefined();
+
       expect(result.suggestions).toMatchObject([
         {
           label: 'History',
@@ -54,7 +55,7 @@ describe('Language completion provider', () => {
       ]);
     });
 
-    it('returns no suggestions within regexp', () => {
+    it('returns no suggestions within regexp', async () => {
       const instance = new LanguageProvider(datasource);
       const input = createTypeaheadInput('{} ()', '', undefined, 4, []);
       const history: LokiHistoryItem[] = [
@@ -63,18 +64,28 @@ describe('Language completion provider', () => {
           ts: 1,
         },
       ];
-      const result = instance.provideCompletionItems(input, { history });
+      const result = await instance.provideCompletionItems(input, { history });
       expect(result.context).toBeUndefined();
-      expect(result.refresher).toBeUndefined();
+
       expect(result.suggestions.length).toEqual(0);
     });
   });
 
   describe('label suggestions', () => {
-    it('returns default label suggestions on label context', () => {
+    it('returns default label suggestions on label context', async () => {
       const instance = new LanguageProvider(datasource);
-      const input = createTypeaheadInput('{}', '');
-      const result = instance.provideCompletionItems(input, { absoluteRange: rangeMock });
+      const value = Plain.deserialize('{}');
+      const ed = new SlateEditor({ value });
+      const valueWithSelection = ed.moveForward(1).value;
+      const result = await instance.provideCompletionItems(
+        {
+          text: '',
+          prefix: '',
+          wrapperClasses: ['context-labels'],
+          value: valueWithSelection,
+        },
+        { absoluteRange: rangeMock }
+      );
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([{ items: [{ label: 'job' }, { label: 'namespace' }], label: 'Labels' }]);
     });
@@ -83,7 +94,7 @@ describe('Language completion provider', () => {
       const datasource = makeMockLokiDatasource({ label1: [], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{}', '');
-      const result = provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      const result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
       expect(result.context).toBe('context-labels');
       expect(result.suggestions).toEqual([{ items: [{ label: 'label1' }, { label: 'label2' }], label: 'Labels' }]);
     });
@@ -92,11 +103,9 @@ describe('Language completion provider', () => {
       const datasource = makeMockLokiDatasource({ label1: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
       const input = createTypeaheadInput('{label1=}', '=', 'label1');
-      let result = provider.provideCompletionItems(input, { absoluteRange: rangeMock });
-      // The values for label are loaded adhoc and there is a promise returned that we have to wait for
-      expect(result.refresher).toBeDefined();
-      await result.refresher;
-      result = provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+      let result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
+
+      result = await provider.provideCompletionItems(input, { absoluteRange: rangeMock });
       expect(result.context).toBe('context-label-values');
       expect(result.suggestions).toEqual([
         { items: [{ label: 'label1_val1' }, { label: 'label1_val2' }], label: 'Label values for "label1"' },
@@ -201,7 +210,7 @@ describe('Labels refresh', () => {
   });
 });
 
-async function getLanguageProvider(datasource: DataSourceApi) {
+async function getLanguageProvider(datasource: LokiDatasource) {
   const instance = new LanguageProvider(datasource);
   instance.initialRange = {
     from: Date.now() - 10000,
@@ -224,10 +233,8 @@ function createTypeaheadInput(
   wrapperClasses?: string[]
 ): TypeaheadInput {
   const deserialized = Plain.deserialize(value);
-  const range = deserialized.selection.merge({
-    anchorOffset: anchorOffset || 1,
-  });
-  const valueWithSelection = deserialized.change().select(range).value;
+  const range = deserialized.selection.setAnchor(deserialized.selection.anchor.setOffset(anchorOffset || 1));
+  const valueWithSelection = deserialized.setSelection(range);
   return {
     text,
     prefix: '',
