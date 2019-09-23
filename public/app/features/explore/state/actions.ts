@@ -186,7 +186,6 @@ export const updateTimeRange = (options: {
   syncedTimes?: boolean;
 }): ThunkResult<void> => {
   if (options.syncedTimes) {
-    console.log(options);
     return dispatch => {
       dispatch(updateTime({ ...options, exploreId: ExploreId.left }));
       dispatch(runQueries(ExploreId.left));

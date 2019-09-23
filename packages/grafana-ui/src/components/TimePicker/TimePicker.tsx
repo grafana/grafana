@@ -17,11 +17,9 @@ import { rawToTimeRange } from './time';
 import { withTheme } from '../../themes/ThemeContext';
 
 // Types
-import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue } from '@grafana/data';
-import { dateMath } from '@grafana/data';
+import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath } from '@grafana/data';
 import { GrafanaTheme, GrafanaThemeType } from '../../types/theme';
 import { Themeable } from '../../types';
-import { ExploreId } from 'app/types';
 
 const orangeLight = '#ED5700';
 const orangeDark = '#FF780A';
@@ -51,7 +49,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
 
 interface SyncButton {
   synced: boolean;
-  onClick: (exploreId: ExploreId) => void;
+  onClick: () => void;
 }
 
 export interface Props extends Themeable {
@@ -59,7 +57,6 @@ export interface Props extends Themeable {
   selectOptions: TimeOption[];
   timeZone?: TimeZone;
   syncButton?: SyncButton;
-  exploreId?: ExploreId;
   onChange: (timeRange: TimeRange) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
@@ -172,7 +169,6 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
       onZoom,
       timeZone,
       syncButton,
-      exploreId,
       theme,
     } = this.props;
 
@@ -220,13 +216,13 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
-          {syncButton && exploreId && (
+          {syncButton && (
             <Tooltip content={syncTimesTooltip} placement="bottom">
               <button
                 className={classNames('btn navbar-button navbar-button--attached', {
                   [`${styles.timePickerSynced}`]: syncButton.synced,
                 })}
-                onClick={() => syncButton.onClick(exploreId)}
+                onClick={() => syncButton.onClick()}
               >
                 <i className="fa fa-link" />
               </button>

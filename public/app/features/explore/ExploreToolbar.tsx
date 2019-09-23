@@ -289,7 +289,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                   onChangeTime={onChangeTime}
                   splitted={splitted}
                   syncedTimes={syncedTimes}
-                  onClick={syncTimes}
+                  onChangeTimeSync={syncTimes}
                 />
               </div>
             )}

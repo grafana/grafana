@@ -20,7 +20,7 @@ export interface Props {
   timeZone: TimeZone;
   splitted: boolean;
   syncedTimes: boolean;
-  onClick: (exploreId: ExploreId) => void;
+  onChangeTimeSync: (exploreId: ExploreId) => void;
   onChangeTime: (range: RawTimeRange) => void;
 }
 
@@ -69,9 +69,14 @@ export class ExploreTimeControls extends Component<Props> {
     });
   };
 
+  changeTimeSync = () => {
+    const { onChangeTimeSync, exploreId } = this.props;
+    onChangeTimeSync(exploreId);
+  };
+
   render() {
-    const { range, timeZone, splitted, syncedTimes, onClick, exploreId } = this.props;
-    const syncButton = { onClick, synced: syncedTimes, exploreId };
+    const { range, timeZone, splitted, syncedTimes } = this.props;
+    const syncButton = { onClick: this.changeTimeSync, synced: syncedTimes };
     const timePickerCommonProps = {
       value: range,
       onChange: this.onChangeTimePicker,
@@ -80,7 +85,6 @@ export class ExploreTimeControls extends Component<Props> {
       onMoveForward: this.onMoveForward,
       onZoom: this.onZoom,
       selectOptions: this.setActiveTimeOption(defaultSelectOptions, range.raw),
-      exploreId: exploreId,
     };
     const timePickerProps = splitted ? { syncButton } : null;
 
