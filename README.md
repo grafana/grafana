@@ -4,7 +4,7 @@ Develop Grafana backend plugins with this Go SDK.
 
 ## Usage
 
-```
+```go
 package main
 
 import (
