@@ -220,7 +220,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
-          {syncButton && (
+          {syncButton && exploreId && (
             <Tooltip content={syncTimesTooltip} placement="bottom">
               <button
                 className={classNames('btn navbar-button navbar-button--attached', {
