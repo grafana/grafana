@@ -42,6 +42,8 @@ func main() {
 
 ## Developing
 
+Generate Go code for Protobuf definitions:
+
 ```
-go get -u github.com/golang/protobuf/protoc-gen-go
+make build-proto
 ```
