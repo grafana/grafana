@@ -11,6 +11,7 @@ import { migrateTargetSchema } from './migrations';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
 import './multi-select.directive';
+import './dimensions-filter.directive';
 
 export interface ResultFormat {
   text: string;
@@ -35,6 +36,7 @@ interface AzureMonitor {
   aggOptions: string[];
   locations: string[];
   queryMode: string;
+  dimensionFilters: Array<{ dimension: string; filter: string }>;
 }
 
 interface Option {
@@ -48,6 +50,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   static defaultQueryMode = 'singleResource';
 
   defaultDropdownValue = 'select';
+  defaultDimensionFilter = { dimension: '', filter: '*' };
 
   target: {
     refId: string;
@@ -93,6 +96,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
           metricNamespace: this.defaultDropdownValue,
           metricName: this.defaultDropdownValue,
           resourceName: this.defaultDropdownValue,
+          dimensionFilters: [this.defaultDimensionFilter],
           dimensionFilter: '*',
           timeGrain: 'auto',
         },
@@ -103,6 +107,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
           resourceName: this.defaultDropdownValue,
           metricName: this.defaultDropdownValue,
           dimensionFilter: '*',
+          dimensionFilters: [this.defaultDimensionFilter],
           timeGrain: 'auto',
         },
       },
@@ -148,6 +153,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   resources: Resource[];
   locations: Option[];
   resourceGroups: Option[];
+  dimensionFilters: Array<{ dimension: string; dimensionFilter: string }>;
 
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService, private templateSrv: TemplateSrv) {
@@ -332,6 +338,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       this.target.azureMonitor.data[queryMode].timeGrains = [];
       this.target.azureMonitor.data[queryMode].timeGrain = '';
       this.target.azureMonitor.data[queryMode].dimensions = [];
+      this.target.azureMonitor.data[queryMode].dimensionFilters = [this.defaultDimensionFilter];
       this.target.azureMonitor.data[queryMode].dimension = '';
     }
   }
@@ -349,6 +356,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       this.target.azureMonitor.data[queryMode].timeGrains = [];
       this.target.azureMonitor.data[queryMode].timeGrain = '';
       this.target.azureMonitor.data[queryMode].dimensions = [];
+      this.target.azureMonitor.data[queryMode].dimensionFilters = [this.defaultDimensionFilter];
       this.target.azureMonitor.data[queryMode].dimension = '';
       this.updateLocations();
       this.updateCrossResourceGroups();
@@ -531,6 +539,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.data[queryMode].timeGrains = [];
     this.target.azureMonitor.data[queryMode].timeGrain = '';
     this.target.azureMonitor.data[queryMode].dimensions = [];
+    this.target.azureMonitor.data[queryMode].dimensionFilters = [this.defaultDimensionFilter];
     this.target.azureMonitor.data[queryMode].dimension = '';
     this.refresh();
   }
@@ -552,6 +561,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.data[queryMode].timeGrains = [];
     this.target.azureMonitor.data[queryMode].timeGrain = '';
     this.target.azureMonitor.data[queryMode].dimensions = [];
+    this.target.azureMonitor.data[queryMode].dimensionFilters = [this.defaultDimensionFilter];
     this.target.azureMonitor.data[queryMode].dimension = '';
     this.refresh();
   }
@@ -567,6 +577,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       this.target.azureMonitor.data[queryMode].timeGrains = [];
       this.target.azureMonitor.data[queryMode].timeGrain = '';
       this.target.azureMonitor.data[queryMode].dimensions = [];
+      this.target.azureMonitor.data[queryMode].dimensionFilters = [this.defaultDimensionFilter];
       this.target.azureMonitor.data[queryMode].dimension = '';
       this.updateCrossResourceGroups();
       this.refresh();
@@ -581,6 +592,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.data[queryMode].timeGrains = [];
     this.target.azureMonitor.data[queryMode].timeGrain = '';
     this.target.azureMonitor.data[queryMode].dimensions = [];
+    this.target.azureMonitor.data[queryMode].dimensionFilters = [this.defaultDimensionFilter];
     this.target.azureMonitor.data[queryMode].dimension = '';
     if (queryMode === 'singleResource') {
       this.target.azureMonitor.data.singleResource.metricNamespace = this.defaultDropdownValue;
@@ -595,6 +607,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     this.target.azureMonitor.data[queryMode].timeGrains = [];
     this.target.azureMonitor.data[queryMode].timeGrain = '';
     this.target.azureMonitor.data[queryMode].dimensions = [];
+    this.target.azureMonitor.data[queryMode].dimensionFilters = [this.defaultDimensionFilter];
     this.target.azureMonitor.data[queryMode].dimension = '';
     this.refresh();
   }
@@ -603,6 +616,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     const { queryMode } = this.target.azureMonitor;
     this.target.azureMonitor.data[queryMode].metricName = this.defaultDropdownValue;
     this.target.azureMonitor.data[queryMode].dimensions = [];
+    this.target.azureMonitor.data[queryMode].dimensionFilters = [this.defaultDimensionFilter];
     this.target.azureMonitor.data[queryMode].dimension = '';
   }
 
@@ -621,6 +635,9 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     this.target.azureMonitor.data[queryMode].dimensions = metadata.dimensions;
     if (metadata.dimensions.length > 0) {
+      this.target.azureMonitor.data[queryMode].dimensionFilters = [
+        { ...this.defaultDimensionFilter, dimension: metadata.dimensions[0].value },
+      ];
       this.target.azureMonitor.data[queryMode].dimension = metadata.dimensions[0].value;
     }
     return this.refresh();

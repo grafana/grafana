@@ -1,0 +1,41 @@
+<div class="gf-form-inline">
+  <label class="gf-form-label query-keyword width-9">Dimensions</label>
+  <div
+    class="gf-form"
+    ng-repeat="dimensionFilter in vm.target.azureMonitor.data[vm.target.azureMonitor.queryMode].dimensionFilters"
+  >
+    <div class="gf-form-select-wrapper gf-form-select-wrapper--caret-indent">
+      <select
+        class="gf-form-input"
+        ng-model="dimensionFilter.dimension"
+        ng-options="f.value as f.text for f in vm.target.azureMonitor.data[vm.target.azureMonitor.queryMode].dimensions"
+        ng-change="vm.refresh()"
+      ></select>
+    </div>
+    <div class="gf-form">
+      <div class="gf-form-label width-3" ng-style="{'position': 'relative'}">
+        <label class="query-segment-operator">eq</label
+        ><span
+          ng-click="vm.onRemove($index)"
+          ng-style="{ 'position':'absolute','right':'2px','top':'2px'}"
+          class="pointer fa fa-remove"
+        ></span>
+      </div>
+      <input
+        type="text"
+        class="gf-form-input width-12"
+        ng-model="dimensionFilter.filter"
+        spellcheck="false"
+        placeholder="auto"
+        ng-blur="vm.refresh()"
+      />
+    </div>
+    <label ng-if="vm.shouldDisplayCondition($index)" class="gf-form-label query-keyword">AND</label>
+  </div>
+  <div class="gf-form" ng-if="vm.shouldDisplayAddButton()" ng-click="vm.onAdd()">
+    <a class="gf-form-label query-part"><i class="fa fa-plus "></i></a>
+  </div>
+  <div class="gf-form gf-form--grow">
+    <div class="gf-form-label gf-form-label--grow"></div>
+  </div>
+</div>

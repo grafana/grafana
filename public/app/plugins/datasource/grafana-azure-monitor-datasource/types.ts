@@ -41,6 +41,7 @@ export interface AzureMonitorQueryData {
   aggregation: string;
   dimension: string;
   dimensionFilter: string;
+  dimensionFilters: Array<{ filter: string; dimension: string }>;
   alias: string;
   locations: string[];
 }

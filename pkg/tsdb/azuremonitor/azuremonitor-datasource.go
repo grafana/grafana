@@ -108,6 +108,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		if azureMonitorTarget.QueryMode == "" {
 			azureMonitorTarget.QueryMode = singleResource
 			azureMonitorData = azureMonitorTarget.AzureMonitorData
+			azureMonitorData.DimensionFilters = []DimensionFilter{{Filter: azureMonitorData.DimensionFilter, Dimension: azureMonitorData.Dimension}}
 		} else {
 			azureMonitorData = azureMonitorTarget.Data[azureMonitorTarget.QueryMode]
 		}
@@ -170,10 +171,14 @@ func (e *AzureMonitorDatasource) buildSingleQuery(query *tsdb.Query, azureMonito
 		params.Add("metricnamespace", azureMonitorData.MetricNamespace)
 	}
 
-	dimension := strings.TrimSpace(azureMonitorData.Dimension)
-	dimensionFilter := strings.TrimSpace(azureMonitorData.DimensionFilter)
-	if len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
-		params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
+	validDimensionFilters := ""
+	for _, dimensionFilter := range azureMonitorData.DimensionFilters {
+		if dimensionFilter.Filter != "" && dimensionFilter.Dimension != "" && dimensionFilter.Dimension != "None" {
+			validDimensionFilters += fmt.Sprintf("%s eq '%s' and ", dimensionFilter.Dimension, dimensionFilter.Filter)
+		}
+	}
+	if len(validDimensionFilters) > 0 {
+		params.Add("$filter", validDimensionFilters)
 	}
 
 	target = params.Encode()

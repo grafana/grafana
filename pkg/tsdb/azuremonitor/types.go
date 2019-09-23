@@ -87,22 +87,29 @@ type AzureMonitorQueryModel struct {
 	AzureMonitorData
 }
 
+// AzureMonitorData contains filter data
+type DimensionFilter struct {
+	Dimension string `json:"dimension"`
+	Filter    string `json:"filter"`
+}
+
 // AzureMonitorData is a part of JSON containing query data
 type AzureMonitorData struct {
-	ResourceGroup       string   `json:"resourceGroup"`
-	ResourceGroups      []string `json:"resourceGroups"`
-	Locations           []string `json:"locations"`
-	ResourceName        string   `json:"resourceName"`
-	MetricDefinition    string   `json:"metricDefinition"`
-	TimeGrain           string   `json:"timeGrain"`
-	AllowedTimeGrainsMs []int64  `json:"allowedTimeGrainsMs"`
-	MetricName          string   `json:"metricName"`
-	MetricNamespace     string   `json:"metricNamespace"`
-	Aggregation         string   `json:"aggregation"`
-	Dimension           string   `json:"dimension"`
-	DimensionFilter     string   `json:"dimensionFilter"`
-	Alias               string   `json:"alias"`
-	Format              string   `json:"format"`
+	ResourceGroup       string            `json:"resourceGroup"`
+	ResourceGroups      []string          `json:"resourceGroups"`
+	Locations           []string          `json:"locations"`
+	ResourceName        string            `json:"resourceName"`
+	MetricDefinition    string            `json:"metricDefinition"`
+	TimeGrain           string            `json:"timeGrain"`
+	AllowedTimeGrainsMs []int64           `json:"allowedTimeGrainsMs"`
+	MetricName          string            `json:"metricName"`
+	MetricNamespace     string            `json:"metricNamespace"`
+	Aggregation         string            `json:"aggregation"`
+	Dimension           string            `json:"dimension"`       //Deprecated - for backward compatability only. Use DimensionFilters instead
+	DimensionFilter     string            `json:"dimensionFilter"` //Deprecated - for backward compatability only. Use DimensionFilters instead
+	DimensionFilters    []DimensionFilter `json:"dimensionFilters"`
+	Alias               string            `json:"alias"`
+	Format              string            `json:"format"`
 }
 
 // ResourcesResponse is the json response object from the Azure Monitor resources api.

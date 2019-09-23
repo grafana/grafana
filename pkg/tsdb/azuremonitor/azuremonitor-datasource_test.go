@@ -120,52 +120,53 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT5M")
 			})
 
-			Convey("and has a dimension filter", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"azureMonitor": map[string]interface{}{
-						"timeGrain":        "PT1M",
-						"aggregation":      "Average",
-						"resourceGroup":    "grafanastaging",
-						"resourceName":     "grafana",
-						"metricDefinition": "Microsoft.Compute/virtualMachines",
-						"metricNamespace":  "Microsoft.Compute-virtualMachines",
-						"metricName":       "Percentage CPU",
-						"alias":            "testalias",
-						"queryType":        "Azure Monitor",
-						"dimension":        "blob",
-						"dimensionFilter":  "*",
-					},
+			Convey("and testing dimension filter for testing backward compatibility", func() {
+				Convey("and dimension filter is set", func() {
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"azureMonitor": map[string]interface{}{
+							"timeGrain":        "PT1M",
+							"aggregation":      "Average",
+							"resourceGroup":    "grafanastaging",
+							"resourceName":     "grafana",
+							"metricDefinition": "Microsoft.Compute/virtualMachines",
+							"metricNamespace":  "Microsoft.Compute-virtualMachines",
+							"metricName":       "Percentage CPU",
+							"alias":            "testalias",
+							"queryType":        "Azure Monitor",
+							"dimension":        "blob",
+							"dimensionFilter":  "*",
+						},
+					})
+
+					queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+					So(err, ShouldBeNil)
+
+					So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27+and+&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+
 				})
 
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
-				So(err, ShouldBeNil)
+				Convey("and has a dimension filter set to None", func() {
+					tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
+						"azureMonitor": map[string]interface{}{
+							"timeGrain":        "PT1M",
+							"aggregation":      "Average",
+							"resourceGroup":    "grafanastaging",
+							"resourceName":     "grafana",
+							"metricDefinition": "Microsoft.Compute/virtualMachines",
+							"metricNamespace":  "Microsoft.Compute-virtualMachines",
+							"metricName":       "Percentage CPU",
+							"alias":            "testalias",
+							"queryType":        "Azure Monitor",
+							"dimension":        "None",
+							"dimensionFilter":  "*",
+						},
+					})
 
-				So(queries[0].Target, ShouldEqual, "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+					queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+					So(err, ShouldBeNil)
 
-			})
-
-			Convey("and has a dimension filter set to None", func() {
-				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
-					"azureMonitor": map[string]interface{}{
-						"timeGrain":        "PT1M",
-						"aggregation":      "Average",
-						"resourceGroup":    "grafanastaging",
-						"resourceName":     "grafana",
-						"metricDefinition": "Microsoft.Compute/virtualMachines",
-						"metricNamespace":  "Microsoft.Compute-virtualMachines",
-						"metricName":       "Percentage CPU",
-						"alias":            "testalias",
-						"queryType":        "Azure Monitor",
-						"dimension":        "None",
-						"dimensionFilter":  "*",
-					},
+					So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
 				})
-
-				queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
-				So(err, ShouldBeNil)
-
-				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
-
 			})
 		})
 
@@ -199,6 +200,7 @@ func TestAzureMonitorDatasource(t *testing.T) {
 										"metricName":       "Percentage CPU",
 										"alias":            "testalias",
 										"queryType":        "Azure Monitor",
+										"dimensionFilters": []DimensionFilter{{Dimension: "dimension", Filter: "*"}, {Dimension: "None", Filter: "*"}, {Dimension: "Test", Filter: ""}, {Dimension: "", Filter: "*"}},
 									},
 								},
 							},
@@ -215,14 +217,21 @@ func TestAzureMonitorDatasource(t *testing.T) {
 				So(len(queries), ShouldEqual, 3)
 				So(queries[0].RefID, ShouldEqual, "A")
 				So(queries[0].URL, ShouldEqual, "someSubscriptionId1/resourceGroups/someResourceGroup1/providers/someResourceType1/someResourceName1/providers/microsoft.insights/metrics")
-				So(queries[0].Target, ShouldEqual, "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
-				So(len(queries[0].Params), ShouldEqual, 5)
+				So(queries[0].Target, ShouldEqual, "%24filter=dimension+eq+%27%2A%27+and+&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
+				So(len(queries[0].Params), ShouldEqual, 6)
 				So(queries[0].Params["timespan"][0], ShouldEqual, "2018-03-15T13:00:00Z/2018-03-15T13:34:00Z")
 				So(queries[0].Params["api-version"][0], ShouldEqual, "2018-01-01")
 				So(queries[0].Params["aggregation"][0], ShouldEqual, "Average")
 				So(queries[0].Params["metricnames"][0], ShouldEqual, "Percentage CPU")
 				So(queries[0].Params["interval"][0], ShouldEqual, "PT1M")
 				So(queries[0].Alias, ShouldEqual, "testalias")
+			})
+
+			Convey("and testing dimension filter with multiple filters", func() {
+				queries, err := ds.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
+				So(err, ShouldBeNil)
+
+				So(queries[0].Target, ShouldEqual, "%24filter=dimension+eq+%27%2A%27+and+&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z")
 			})
 		})
 

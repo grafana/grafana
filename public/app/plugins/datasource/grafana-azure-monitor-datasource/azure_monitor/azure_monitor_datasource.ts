@@ -62,8 +62,7 @@ export default class AzureMonitorDatasource {
       metricNamespace,
       allowedTimeGrainsMs,
       aggregation,
-      dimension,
-      dimensionFilter,
+      dimensionFilters,
       alias,
     }: AzureMonitorQueryData = data[queryMode];
     let { timeGrain } = data[queryMode];
@@ -100,8 +99,10 @@ export default class AzureMonitorDatasource {
                 ? metricNamespaceParsed
                 : metricDefinition,
             aggregation: this.templateSrv.replace(aggregation, options.scopedVars),
-            dimension: this.templateSrv.replace(dimension, options.scopedVars),
-            dimensionFilter: this.templateSrv.replace(dimensionFilter, options.scopedVars),
+            dimensionFilters: dimensionFilters.map(({ filter, dimension }) => ({
+              filter: this.templateSrv.replace(filter, options.scopedVars),
+              dimension: this.templateSrv.replace(dimension, options.scopedVars),
+            })),
             alias,
             format: target.format,
           },
