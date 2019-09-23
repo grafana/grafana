@@ -8,6 +8,9 @@ import memoizeOne from 'memoize-one';
 import { GrafanaTheme } from '../../types';
 import { withTheme } from '../../themes';
 
+import { config } from 'app/core/config';
+import kbn from 'app/core/utils/kbn';
+
 export const offOption = { label: 'Off', value: '' };
 export const liveOption = { label: 'Live', value: 'LIVE' };
 export const defaultIntervals = ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'];
@@ -51,6 +54,7 @@ export class RefreshPickerBase extends PureComponent<Props> {
     const intervalsOrDefault = intervals || defaultIntervals;
     const options = intervalsOrDefault
       .filter(str => str !== '')
+      .filter(interval => kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshRate))
       .map(interval => ({ label: interval, value: interval }));
 
     if (this.props.hasLiveOption) {

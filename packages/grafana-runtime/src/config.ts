@@ -16,6 +16,7 @@ interface FeatureToggles {
 export class GrafanaBootConfig {
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  minRefreshRate = '';
   appSubUrl = '';
   windowTitlePrefix = '';
   buildInfo: BuildInfo = {} as BuildInfo;
@@ -53,6 +54,7 @@ export class GrafanaBootConfig {
 
     const defaults = {
       datasources: {},
+      minRefreshRate: '5s',
       windowTitlePrefix: 'Grafana - ',
       panels: {},
       newPanelTitle: 'Panel Title',

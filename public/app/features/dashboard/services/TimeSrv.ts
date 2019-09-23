@@ -14,6 +14,8 @@ import { DashboardModel } from '../state/DashboardModel';
 import { toUtc, dateTime, isDateTime } from '@grafana/data';
 import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePicker';
 
+import { config } from 'app/core/config';
+
 export class TimeSrv {
   time: any;
   refreshTimer: any;
@@ -130,7 +132,11 @@ export class TimeSrv {
     }
     // but if refresh explicitly set then use that
     if (params.refresh) {
-      this.refresh = params.refresh || this.refresh;
+      if (kbn.interval_to_ms(params.refresh) < kbn.interval_to_ms(config.minRefreshRate)) {
+        this.refresh = config.minRefreshRate;
+      } else {
+        this.refresh = params.refresh || this.refresh;
+      }
     }
   }
 
@@ -157,12 +163,24 @@ export class TimeSrv {
     return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
+  private isPermittedInterval(interval: string) {
+    return kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshRate);
+  }
+
+  private getValidInterval(interval: string) {
+    if (!this.isPermittedInterval(interval)) {
+      return config.minRefreshRate;
+    }
+    return interval;
+  }
+
   setAutoRefresh(interval: any) {
     this.dashboard.refresh = interval;
     this.cancelNextRefresh();
 
     if (interval) {
-      const intervalMs = kbn.interval_to_ms(interval);
+      const validInterval = this.getValidInterval(interval);
+      const intervalMs = kbn.interval_to_ms(validInterval);
 
       this.refreshTimer = this.timer.register(
         this.$timeout(() => {
@@ -176,7 +194,7 @@ export class TimeSrv {
     this.$timeout(() => {
       const params = this.$location.search();
       if (interval) {
-        params.refresh = interval;
+        params.refresh = this.getValidInterval(interval);
         this.$location.search(params);
       } else if (params.refresh) {
         delete params.refresh;
