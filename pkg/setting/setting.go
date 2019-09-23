@@ -112,6 +112,7 @@ var (
 
 	// Dashboard history
 	DashboardVersionsToKeep int
+	DashboardMinRefreshRate string
 
 	// User settings
 	AllowUserSignUp         bool
@@ -743,6 +744,10 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
 	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
+	DashboardMinRefreshRate, err = valueAsString(dashboards, "min_refresh_rate", "")
+	if err != nil {
+		return err
+	}
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)

@@ -168,6 +168,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *m.ReqContext) (map[string]interf
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":          defaultDatasource,
 		"datasources":                datasources,
+		"minRefreshRate":             setting.DashboardMinRefreshRate,
 		"panels":                     panels,
 		"appSubUrl":                  setting.AppSubUrl,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
