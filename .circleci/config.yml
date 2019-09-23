@@ -687,6 +687,33 @@ jobs:
           name: Release packages
           command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
 
+  scan-docker-master:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    steps:
+      - setup_remote_docker
+      - restore_cache:
+          key: vulnerability-db
+      - run:
+          name: Install trivy
+          command: |
+            VERSION=$(
+                curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | \
+                grep '"tag_name":' | \
+                sed -E 's/.*"v([^"]+)".*/\1/'
+            )
+
+            wget https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
+            tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
+            sudo mv trivy /usr/local/bin
+      - run:
+          name: Scan the latest grafana master image with trivy
+          command: trivy --exit-code 1 --quiet --auto-refresh --clear-cache grafana/grafana:master
+      - save_cache:
+          key: vulnerability-db
+          paths:
+            - $HOME/.cache/trivy
+
 workflows:
   version: 2
   build-master:
@@ -909,4 +936,10 @@ workflows:
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
-
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters: *filter-only-master
+    jobs:
+      - scan-docker-master
