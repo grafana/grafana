@@ -55,6 +55,13 @@ export class KeybindingSrv {
     const anyDoc = document as any;
     const activeElement = anyDoc.activeElement;
 
+    // typehead needs to handle it
+    const typeaheads = $('.slate-typeahead--open');
+    if (typeaheads.length > 0) {
+      return;
+    }
+
+    // second check if we are in an input we can blur
     if (activeElement && activeElement.blur) {
       if (
         activeElement.nodeName === 'INPUT' ||
@@ -66,6 +73,7 @@ export class KeybindingSrv {
       }
     }
 
+    // ok no focused input or editor that should block this, let exist!
     this.exit();
   }
 
@@ -90,11 +98,6 @@ export class KeybindingSrv {
   }
 
   exit() {
-    const popups = $('.popover.in, .slate-typeahead');
-    if (popups.length > 0) {
-      return;
-    }
-
     appEvents.emit('hide-modal');
 
     if (this.modalOpen) {
