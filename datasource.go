@@ -97,6 +97,10 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 		var tbs []*datasource.Table
 
 		for _, df := range res.DataFrames {
+			if len(df.Fields) == 0 {
+				continue
+			}
+
 			timeIdx := indexOfFieldType(df, dataframe.FieldTypeTime)
 
 			// If one of the fields is of type time, return a time series,
