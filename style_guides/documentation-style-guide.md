@@ -21,6 +21,8 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 * Write in present tense.
   - Not: The panel will open.
   - Use: The panel opens. Grafana opens the panel.
+* Do not use an ampersand (&) as an abbreviation for "and." 
+  - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
 
 ### File naming conventions
 
@@ -36,6 +38,9 @@ For all items not covered in this guide, refer to the [Microsoft Style Guide](ht
 * Task topic headings start with a verb.
   - Write a query. Create a dashboard.
 * Concept and reference topic headings should be nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
+* Avoid following one heading with another heading.
+* Avoid skipping heading levels. For example, an h1 should be followed by an h2 rather than an h3.
+* Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2 is a good order. Do no go h1, h2, h3, h2, h3, h2.
 
 ### Images
 
