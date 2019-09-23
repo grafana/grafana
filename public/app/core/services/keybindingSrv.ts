@@ -47,7 +47,26 @@ export class KeybindingSrv {
       this.bind('s o', this.openSearch);
       this.bind('f', this.openSearch);
       this.bind('esc', this.exit);
+      this.bindGlobal('esc', this.globalEsc);
     }
+  }
+
+  globalEsc() {
+    const anyDoc = document as any;
+    const activeElement = anyDoc.activeElement;
+
+    if (activeElement && activeElement.blur) {
+      if (
+        activeElement.nodeName === 'INPUT' ||
+        activeElement.nodeName === 'TEXTAREA' ||
+        activeElement.hasAttribute('data-slate-editor')
+      ) {
+        anyDoc.activeElement.blur();
+        return;
+      }
+    }
+
+    this.exit();
   }
 
   openSearch() {
