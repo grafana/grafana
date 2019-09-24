@@ -37,7 +37,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
-import { LiveTailControls } from './useLiveTail';
+import { LiveTailControls } from './useLiveTailControls';
 
 const getStyles = memoizeOne(() => {
   return {

@@ -24,7 +24,7 @@ import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
-import { LiveTailControls } from './useLiveTail';
+import { LiveTailControls } from './useLiveTailControls';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
