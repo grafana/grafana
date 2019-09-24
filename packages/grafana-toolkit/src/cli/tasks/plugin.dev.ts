@@ -15,10 +15,12 @@ const yarnlink = useSpinner<void>('Linking local toolkit', async () => {
   try {
     // Make sure we are not using package.json defined toolkit
     await execa('yarn', ['remove', '@grafana/toolkit']);
+    await execa('yarn', ['remove', '@grafana/e2e']);
   } catch (e) {
     console.log('\n', e.message, '\n');
   }
   await execa('yarn', ['link', '@grafana/toolkit']);
+  await execa('yarn', ['link', '@grafana/e2e']);
 
   // Add all the same dependencies as toolkit
   const args: string[] = ['add'];
