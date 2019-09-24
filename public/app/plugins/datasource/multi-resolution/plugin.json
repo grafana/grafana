@@ -1,7 +1,7 @@
 {
   "type": "datasource",
   "name": "-- Multi Resolution --",
-  "id": "multi",
+  "id": "multi-resolution",
 
   "builtIn": true,
   "metrics": true,

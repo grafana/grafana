@@ -6,7 +6,7 @@ import _ from 'lodash';
 import { PanelModel } from '../state/PanelModel';
 import { DataQuery, PanelData, DataSourceSelectItem } from '@grafana/ui';
 import { DashboardModel } from '../state/DashboardModel';
-import { QueryEditorRow, filterPanelDataToQuery } from './QueryEditorRow';
+import { QueryEditorRow } from './QueryEditorRow';
 import { addQuery } from 'app/core/utils/query';
 
 interface Props {
