@@ -183,6 +183,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Kilowatt-hour (kWh)', id: 'kwatth', fn: decimalSIPrefix('Wh', 1) },
       { name: 'Kilowatt-min (kWm)', id: 'kwattm', fn: decimalSIPrefix('W/Min', 1) },
       { name: 'Ampere-hour (Ah)', id: 'amph', fn: decimalSIPrefix('Ah') },
+      { name: 'Kiloampere-hour (kAh)', id: 'kamph', fn: decimalSIPrefix('Ah', 1) },
+      { name: 'Milliampere-hour (mAh)', id: 'mamph', fn: decimalSIPrefix('Ah', -1) },
       { name: 'Joule (J)', id: 'joule', fn: decimalSIPrefix('J') },
       { name: 'Electron volt (eV)', id: 'ev', fn: decimalSIPrefix('eV') },
       { name: 'Ampere (A)', id: 'amp', fn: decimalSIPrefix('A') },
