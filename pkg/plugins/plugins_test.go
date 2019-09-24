@@ -42,4 +42,18 @@ func TestPluginScans(t *testing.T) {
 		So(Apps["test-app"].Info.Screenshots[1].Path, ShouldEqual, "public/plugins/test-app/img/screenshot2.png")
 	})
 
+	Convey("When checking if renderer is backend only plugin", t, func() {
+		pluginScanner := &PluginScanner{}
+		result := pluginScanner.IsBackendOnlyPlugin("renderer")
+
+		So(result, ShouldEqual, true)
+	})
+
+	Convey("When checking if app is backend only plugin", t, func() {
+		pluginScanner := &PluginScanner{}
+		result := pluginScanner.IsBackendOnlyPlugin("app")
+
+		So(result, ShouldEqual, false)
+	})
+
 }
