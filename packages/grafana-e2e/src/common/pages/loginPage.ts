@@ -1,9 +1,9 @@
 import { TestPage } from '../pageInfo';
 import {
-  Selector,
-  InputPageObject,
   InputPageObjectType,
   ClickablePageObjectType,
+  InputPageObject,
+  Selector,
   ClickablePageObject,
 } from '../pageObjects';
 

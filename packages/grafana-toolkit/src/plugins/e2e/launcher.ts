@@ -1,9 +1,10 @@
+import fs from 'fs';
 import * as jestCLI from 'jest-cli';
 import { TestResultsInfo } from '../types';
-import fs from 'fs';
+import { GRAFANA_E2E_INSTALL_SCRIPT_PATH } from "@grafana/e2e";
 
 export async function runEndToEndTests(outputDirectory: string, results: TestResultsInfo): Promise<void> {
-  const setupPath = 'node_modules/@grafana/toolkit/src/e2e/install';
+  const setupPath = GRAFANA_E2E_INSTALL_SCRIPT_PATH;
   let ext = '.js';
   if (!fs.existsSync(setupPath + ext)) {
     ext = '.ts'; // When running yarn link
@@ -17,11 +18,12 @@ export async function runEndToEndTests(outputDirectory: string, results: TestRes
     setupFiles: [],
     setupFilesAfterEnv: [
       'expect-puppeteer', // Setup Puppeteer
-      '<rootDir>/' + setupPath + ext, // Loads Chromimum
+      `${setupPath}${ext}`, // Loads Chromimum
     ],
     globals: { 'ts-jest': { isolatedModules: true } },
     testMatch: [
-      '<rootDir>/e2e-temp/**/*.test.ts', // Copied from node_modules
+      // Apparently all tests needs to be under rootDir
+      '<rootDir>/e2e/.tmp/**/*.test.ts',
       '<rootDir>/e2e/test/**/*.test.ts',
     ],
     reporters: [

@@ -1,6 +1,6 @@
 export type TaskRunner<T> = (options: T) => Promise<any>;
 
-export class Task<TOptions> {
+export class Task<TOptions = any> {
   options: TOptions = {} as any;
 
   constructor(public name: string, public runner: TaskRunner<TOptions>) {}

@@ -1,10 +1,8 @@
-import { Browser, Page } from 'puppeteer-core';
-
-import { e2eScenario, takeScreenShot, plugins, pages } from '@grafana/toolkit';
-
 // ****************************************************************
 // NOTE, This file is copied to plugins at runtime, it is not run locally
 // ****************************************************************
+
+import { e2eScenario, pages, takeScreenShot, plugins, Browser, Page } from '@grafana/e2e';
 
 const sleep = (milliseconds: number) => {
   return new Promise(resolve => setTimeout(resolve, milliseconds));

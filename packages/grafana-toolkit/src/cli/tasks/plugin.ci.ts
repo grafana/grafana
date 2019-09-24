@@ -32,8 +32,7 @@ import {
   DevSummary,
 } from '../../plugins/types';
 import { runEndToEndTests } from '../../plugins/e2e/launcher';
-import { getEndToEndSettings } from '../../plugins/index';
-
+import { plugins } from '@grafana/e2e';
 export interface PluginCIOptions {
   backend?: boolean;
   full?: boolean;
@@ -80,11 +79,11 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
   writeJobStats(start, workDir);
 };
 
-export const ciBuildPluginTask = new Task<PluginCIOptions>('Build Plugin', buildPluginRunner);
+export const ciBuildPluginTask = new Task('Build Plugin', buildPluginRunner);
 
 /**
- * 2. Build Docs
- *
+//  * 2. Build Docs
+//  *
  *  Take /docs/* and format it into /ci/docs/HTML site
  *
  */
@@ -246,11 +245,11 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
     },
   };
 
-  const settings = getEndToEndSettings();
+  const settings = plugins.getEndToEndSettings();
   await execa('rimraf', [settings.outputFolder]);
   fs.mkdirSync(settings.outputFolder);
 
-  const tempDir = path.resolve(process.cwd(), 'e2e-temp');
+  const tempDir = path.resolve(process.cwd(), 'e2e/.tmp');
   await execa('rimraf', [tempDir]);
   fs.mkdirSync(tempDir);
 
@@ -273,12 +272,13 @@ const testPluginRunner: TaskRunner<PluginCIOptions> = async ({ full }) => {
       }
     }
 
-    if (!fs.existsSync('e2e-temp')) {
+    if (!fs.existsSync('./e2e/.tmp')) {
       fs.mkdirSync(tempDir);
     }
 
     await execa('cp', [
-      'node_modules/@grafana/toolkit/src/plugins/e2e/commonPluginTests.ts',
+      // Apparently, tests needs to be under Jest's rootDir, hence temporary copy
+      'node_modules/@grafana/toolkit/src/plugins/e2e/suites/common.test.ts',
       path.resolve(tempDir, 'common.test.ts'),
     ]);
 

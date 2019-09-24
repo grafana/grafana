@@ -1,12 +1,14 @@
-import { PluginMeta } from '@grafana/ui';
+// Not sure yet if e2e should import from g/ui
+// import { PluginMeta } from '@grafana/ui';
 
 import path from 'path';
 import fs from 'fs';
-
-import { constants } from '../../e2e/constants';
+import { constants } from '../common/constants';
 
 export interface Settings {
-  plugin: PluginMeta;
+  plugin: any;
+  // ads of comment on to
+  // plugin: PluginMeta;
   outputFolder: string;
 }
 
@@ -32,7 +34,7 @@ export function getEndToEndSettings() {
   constants.screenShotsOutputDir = outputFolder;
 
   return (env = {
-    plugin: require(f) as PluginMeta,
+    plugin: require(f) as any,
     outputFolder,
   });
 }
