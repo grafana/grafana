@@ -232,11 +232,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 }
 
 func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
-	if pluginType == "renderer" {
-		return true
-	}
-
-	return false
+	return pluginType == "renderer"
 }
 
 func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
