@@ -16,6 +16,7 @@ export interface PanelData {
   series: DataFrame[];
   request?: DataQueryRequest;
   error?: DataQueryError;
+  newTimeRange?: TimeRange;
 }
 
 export interface PanelProps<T = any> {
