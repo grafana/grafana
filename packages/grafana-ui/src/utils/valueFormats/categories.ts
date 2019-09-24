@@ -115,6 +115,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Polish Złoty (PLN)', id: 'currencyPLN', fn: currency('PLN') },
       { name: 'Bitcoin (฿)', id: 'currencyBTC', fn: currency('฿') },
       { name: 'South African Rand (R)', id: 'currencyZAR', fn: currency('R') },
+      { name: 'Indian Rupee (₹)', id: 'currencyINR', fn: currency('₹') },
     ],
   },
   {
