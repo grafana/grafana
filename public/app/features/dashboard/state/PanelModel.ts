@@ -69,7 +69,6 @@ const mustKeepProps: { [str: string]: boolean } = {
 
 const defaults: any = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
-  datasource: null,
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},
   transparent: false,
@@ -125,6 +124,10 @@ export class PanelModel {
 
   constructor(model: any) {
     this.events = new Emitter();
+
+    // should not be part of defaults as defaults are removed in save model and
+    // this should not be removed in save model as exporter needs to templatize it
+    this.datasource = null;
 
     // copy properties from persisted model
     for (const property in model) {
