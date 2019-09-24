@@ -1,4 +1,3 @@
-import $ from 'jquery';
 import _ from 'lodash';
 
 import coreModule from 'app/core/core_module';
@@ -47,7 +46,34 @@ export class KeybindingSrv {
       this.bind('s o', this.openSearch);
       this.bind('f', this.openSearch);
       this.bind('esc', this.exit);
+      this.bindGlobal('esc', this.globalEsc);
     }
+  }
+
+  globalEsc() {
+    const anyDoc = document as any;
+    const activeElement = anyDoc.activeElement;
+
+    // typehead needs to handle it
+    const typeaheads = document.querySelectorAll('.slate-typeahead--open');
+    if (typeaheads.length > 0) {
+      return;
+    }
+
+    // second check if we are in an input we can blur
+    if (activeElement && activeElement.blur) {
+      if (
+        activeElement.nodeName === 'INPUT' ||
+        activeElement.nodeName === 'TEXTAREA' ||
+        activeElement.hasAttribute('data-slate-editor')
+      ) {
+        anyDoc.activeElement.blur();
+        return;
+      }
+    }
+
+    // ok no focused input or editor that should block this, let exist!
+    this.exit();
   }
 
   openSearch() {
@@ -71,11 +97,6 @@ export class KeybindingSrv {
   }
 
   exit() {
-    const popups = $('.popover.in, .slate-typeahead');
-    if (popups.length > 0) {
-      return;
-    }
-
     appEvents.emit('hide-modal');
 
     if (this.modalOpen) {

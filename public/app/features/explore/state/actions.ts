@@ -466,8 +466,9 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     const queryOptions = {
       minInterval,
-      // This is used for logs streaming for buffer size.
-      maxDataPoints: mode === ExploreMode.Logs ? 1000 : containerWidth,
+      // This is used for logs streaming for buffer size, with undefined it falls back to datasource config if it
+      // supports that.
+      maxDataPoints: mode === ExploreMode.Logs ? undefined : containerWidth,
       live,
       showingGraph,
       showingTable,

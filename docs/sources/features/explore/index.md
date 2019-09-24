@@ -115,3 +115,19 @@ after switching to the Logs data source, the query changes to:
 `{job="grafana"}`
 
 This will return a chunk of logs in the selected time range that can be grepped/text searched.
+
+## Navigating between Explore and a dashboard
+
+To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
+after navigating to Explore from the panel's dropdown.
+
+{{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
+
+After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
+
+{{< docs-imagebox img="/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
+
+Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
+the arrow next to the button to reveal a "Return to panel with changes" menu item.
+
+{{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
