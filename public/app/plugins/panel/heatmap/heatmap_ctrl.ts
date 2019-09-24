@@ -15,7 +15,8 @@ import {
 import { auto } from 'angular';
 import { LegacyResponseData } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { DataFrame, getTimeField, FieldType } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
+import { DataProcessor } from '../graph/data_processor';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
 const Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -121,6 +122,8 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   decimals: number;
   scaledDecimals: number;
 
+  processor: DataProcessor; // Shared with graph panel
+
   /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
@@ -133,6 +136,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
     // Use DataFrames
     this.useDataFrames = true;
+    this.processor = new DataProcessor({
+      xaxis: { mode: 'custom' },
+      aliasColors: {},
+    });
 
     // Bind grafana panel events
     this.events.on('render', this.onRender.bind(this));
@@ -289,7 +296,10 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
   // Directly support DataFrame
   onDataFramesReceived(data: DataFrame[]) {
-    this.series = this.framesToTimeSeries(data);
+    this.series = this.processor.getSeriesList({ dataList: data, range: this.range }).map(ts => {
+      ts.flotpairs = ts.getFlotPairs(this.panel.nullPointMode);
+      return ts;
+    });
 
     this.dataWarning = null;
     const datapointsCount = _.reduce(
@@ -328,52 +338,6 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   onCardColorChange(newColor: any) {
     this.panel.color.cardColor = newColor;
     this.render();
-  }
-
-  framesToTimeSeries(dataFrames: DataFrame[]): TimeSeries[] {
-    const allSeries: TimeSeries[] = [];
-    for (const frame of dataFrames) {
-      const { timeField } = getTimeField(frame);
-      if (!timeField) {
-        continue;
-      }
-
-      const seriesName = frame.name ? frame.name : frame.refId;
-      for (const field of frame.fields) {
-        if (field.type !== FieldType.number) {
-          continue;
-        }
-
-        let name = field.config && field.config.title ? field.config.title : field.name;
-
-        if (seriesName && name !== seriesName) {
-          name = seriesName + ' ' + name;
-        }
-
-        const datapoints: any[] = [];
-        for (let r = 0; r < frame.length; r++) {
-          datapoints.push([field.values.get(r), timeField.values.get(r)]);
-        }
-
-        const series = new TimeSeries({
-          datapoints,
-          alias: name,
-        });
-
-        series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
-
-        if (datapoints && datapoints.length > 0) {
-          const last = datapoints[datapoints.length - 1][1];
-          const from = this.range.from;
-          if (last - from.valueOf() < -10000) {
-            series.isOutsideRange = true;
-          }
-        }
-
-        allSeries.push(series);
-      }
-    }
-    return allSeries;
   }
 
   parseSeries(series: TimeSeries[]) {
