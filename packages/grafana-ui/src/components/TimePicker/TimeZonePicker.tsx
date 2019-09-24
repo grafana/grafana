@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { getTimezones, SelectableValue } from '@grafana/data';
+import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
 import { Select } from '..';
 
 interface Props {
@@ -10,21 +10,31 @@ interface Props {
 }
 
 export const TimeZonePicker: FC<Props> = ({ onChange, value, width }) => {
-  const timeZones = getTimezones();
-  const optionGroups = timeZones.map(timezone => {
-    return timezone.split('/');
-  });
-  const options = timeZones.map(timezone => {
-    return { value: timezone.toLowerCase(), label: timezone };
+  const timeZoneGroups = getTimeZoneGroups();
+
+  const groupOptions = timeZoneGroups.map(group => {
+    const options = group.options.map(timeZone => {
+      return {
+        label: timeZone,
+        value: timeZone.toLowerCase(),
+      };
+    });
+
+    return {
+      label: group.label,
+      options,
+    };
   });
 
-  console.log(options);
+  const selectedValue = groupOptions.map(group => {
+    return group.options.find(option => option.value === value);
+  });
 
-  const selectedValue = options.filter(option => option.value === value);
+  console.log(selectedValue);
 
   return (
     <Select
-      options={options}
+      options={groupOptions}
       value={selectedValue}
       onChange={(newValue: SelectableValue) => onChange(newValue.value)}
       width={width}
