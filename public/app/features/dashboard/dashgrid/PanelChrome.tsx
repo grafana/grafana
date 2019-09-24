@@ -241,6 +241,8 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     const PanelComponent = plugin.panel;
     const innerPanelHeight = calculateInnerPanelHeight(panel, height);
+    const requestRange = data.request && data.request.range ? data.request.range : this.timeSrv.timeRange();
+    const timeRange = data.timeRange || requestRange;
 
     return (
       <>
@@ -249,7 +251,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           <PanelComponent
             id={panel.id}
             data={data}
-            timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
+            timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
             options={panel.getOptions()}
             transparent={panel.transparent}

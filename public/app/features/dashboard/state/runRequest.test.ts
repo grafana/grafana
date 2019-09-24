@@ -197,10 +197,10 @@ describe('runRequest', () => {
       ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
     });
 
-    it('should add newTimeRange property and the request range should not be mutated', () => {
-      expect(ctx.results[0].newTimeRange.to.valueOf()).toBeDefined();
-      expect(ctx.results[0].newTimeRange.to.valueOf()).not.toBe(ctx.toStartTime.valueOf());
-      expect(ctx.results[0].newTimeRange.to.valueOf()).not.toBe(ctx.results[0].request.range.to.valueOf());
+    it('should add timeRange property and the request range should not be mutated', () => {
+      expect(ctx.results[0].timeRange.to.valueOf()).toBeDefined();
+      expect(ctx.results[0].timeRange.to.valueOf()).not.toBe(ctx.toStartTime.valueOf());
+      expect(ctx.results[0].timeRange.to.valueOf()).not.toBe(ctx.results[0].request.range.to.valueOf());
 
       expectThatRangeHasNotMutated(ctx);
     });
@@ -220,8 +220,8 @@ describe('runRequest', () => {
       ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
     });
 
-    it('should not add newTimeRange property and the request range should not be mutated', () => {
-      expect(ctx.results[0].newTimeRange).not.toBeDefined();
+    it('should not add timeRange property and the request range should not be mutated', () => {
+      expect(ctx.results[0].timeRange).not.toBeDefined();
 
       expectThatRangeHasNotMutated(ctx);
     });

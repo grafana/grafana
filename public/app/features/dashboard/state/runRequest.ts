@@ -35,7 +35,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   // Update the time range
   const range = request.range;
-  const newTimeRange = isString(range.raw.from)
+  const timeRange = isString(range.raw.from)
     ? {
         from: dateMath.parse(range.raw.from, false),
         to: dateMath.parse(range.raw.to, true),
@@ -53,7 +53,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     state: packet.state || LoadingState.Done,
     series: combinedData,
     request,
-    newTimeRange,
+    timeRange,
   };
 
   return { packets, panelData };
