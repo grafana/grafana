@@ -215,14 +215,14 @@ jobs:
           name: build and package grafana
           command: './scripts/build/build-all.sh'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: sign packages
-          command: './scripts/build/sign_packages.sh'
+          command: './scripts/build/sign_packages.sh dist/*.rpm'
       - run:
           name: verify signed packages
-          command: |
-            mkdir -p ~/.rpmdb/pubkeys
-            curl -s https://packages.grafana.com/gpg.key > ~/.rpmdb/pubkeys/grafana.key
-            ./scripts/build/verify_signed_packages.sh dist/*.rpm
+          command: './scripts/build/verify_signed_packages.sh dist/*.rpm'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -250,8 +250,11 @@ jobs:
           name: build and package grafana
           command: './scripts/build/build.sh'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: sign packages
-          command: './scripts/build/sign_packages.sh'
+          command: './scripts/build/sign_packages.sh dist/*.rpm'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -361,8 +364,11 @@ jobs:
           name: package grafana
           command: './scripts/build/build.sh --fast --package-only'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: sign packages
-          command: './scripts/build/sign_packages.sh'
+          command: './scripts/build/sign_packages.sh dist/*.rpm'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -436,8 +442,11 @@ jobs:
           name: build and package enterprise
           command: './scripts/build/build.sh -enterprise'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: sign packages
-          command: './scripts/build/sign_packages.sh'
+          command: './scripts/build/sign_packages.sh dist/*.rpm'
       - run:
           name: sha-sum packages
           command: 'go run build.go sha-dist'
@@ -477,14 +486,14 @@ jobs:
         name: build and package grafana
         command: './scripts/build/build-all.sh -enterprise'
     - run:
+        name: Prepare GPG private key
+        command: './scripts/build/prepare_signing_key.sh'
+    - run:
         name: sign packages
-        command: './scripts/build/sign_packages.sh'
+        command: './scripts/build/sign_packages.sh dist/*.rpm'
     - run:
         name: verify signed packages
-        command: |
-          mkdir -p ~/.rpmdb/pubkeys
-          curl -s https://packages.grafana.com/gpg.key > ~/.rpmdb/pubkeys/grafana.key
-          ./scripts/build/verify_signed_packages.sh dist/*.rpm
+        command: './scripts/build/verify_signed_packages.sh dist/*.rpm'
     - run:
         name: sha-sum packages
         command: 'go run build.go sha-dist'
@@ -538,14 +547,23 @@ jobs:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh --enterprise'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: Load GPG private key
-          command: './scripts/build/load-signing-key.sh'
+          command: './scripts/build/update_repo/load-signing-key.sh'
       - run:
           name: Update Debian repository
           command: './scripts/build/update_repo/update-deb.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "enterprise-dist"'
       - run:
+          name: Publish Debian repository
+          command: './scripts/build/update_repo/publish-deb.sh "enterprise"'
+      - run:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "enterprise" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "enterprise-dist"'
+      - run:
+          name: Publish RPM repository
+          command: './scripts/build/update_repo/publish-rpm.sh "enterprise" "$CIRCLE_TAG"'
 
 
   deploy-master:
@@ -592,14 +610,23 @@ jobs:
           name: Deploy to Grafana.com
           command: './scripts/build/publish.sh'
       - run:
+          name: Prepare GPG private key
+          command: './scripts/build/prepare_signing_key.sh'
+      - run:
           name: Load GPG private key
-          command: './scripts/build/load-signing-key.sh'
+          command: './scripts/build/update_repo/load-signing-key.sh'
       - run:
           name: Update Debian repository
           command: './scripts/build/update_repo/update-deb.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
       - run:
+          name: Publish Debian repository
+          command: './scripts/build/update_repo/publish-deb.sh "oss"'
+      - run:
           name: Update RPM repository
           command: './scripts/build/update_repo/update-rpm.sh "oss" "$GPG_KEY_PASSWORD" "$CIRCLE_TAG" "dist"'
+      - run:
+          name: Publish RPM repository
+          command: './scripts/build/update_repo/publish-rpm.sh "oss" "$CIRCLE_TAG"'
 
   build-oss-msi:
     docker:
@@ -686,6 +713,33 @@ jobs:
       - run:
           name: Release packages
           command: ./scripts/build/release-packages.sh "${CIRCLE_TAG}"
+
+  scan-docker-master:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    steps:
+      - setup_remote_docker
+      - restore_cache:
+          key: vulnerability-db
+      - run:
+          name: Install trivy
+          command: |
+            VERSION=$(
+                curl --silent "https://api.github.com/repos/aquasecurity/trivy/releases/latest" | \
+                grep '"tag_name":' | \
+                sed -E 's/.*"v([^"]+)".*/\1/'
+            )
+
+            wget https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz
+            tar zxvf trivy_${VERSION}_Linux-64bit.tar.gz
+            sudo mv trivy /usr/local/bin
+      - run:
+          name: Scan the latest grafana master image with trivy
+          command: trivy --exit-code 1 --quiet --auto-refresh --clear-cache grafana/grafana:master
+      - save_cache:
+          key: vulnerability-db
+          paths:
+            - $HOME/.cache/trivy
 
 workflows:
   version: 2
@@ -909,4 +963,10 @@ workflows:
               - postgres-integration-test
               - cache-server-test
             filters: *filter-not-release-or-master
-
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters: *filter-only-master
+    jobs:
+      - scan-docker-master

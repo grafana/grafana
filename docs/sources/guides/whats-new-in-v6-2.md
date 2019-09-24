@@ -14,14 +14,14 @@ weight = -13
 
 For all details please read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
-If you use a password for your datasources please read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2).
+If you use a password for your data sources please read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2).
 
 Checkout the [demo dashboard](https://play.grafana.org/d/ZvPm55mWk/new-features-in-v6-2?orgId=1) of some the new features in v6.2.
 
 ## Improved security
 
-Datasources now store passwords and basic auth passwords in `secureJsonData` encrypted by default. Existing datasource with unencrypted passwords will keep working.
-Read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2) on how to migrate existing datasources to use encrypted storage.
+Data sources now store passwords and basic auth passwords in `secureJsonData` encrypted by default. Existing data source with unencrypted passwords will keep working.
+Read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2) on how to migrate existing data sources to use encrypted storage.
 
 To mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking), embedding Grafana is no longer allowed per default.
 Read the [upgrade notes](/installation/upgrading/#upgrading-to-v6-2) for further details of how this may affect you.
@@ -79,9 +79,9 @@ to use the full panel height in case there is no panel title.
 
 This release contains a lot of small features and fixes:
 
-- Explore - Adds user time zone support, reconnect for failing datasources and a fix that prevents killing Prometheus instances when Histogram metrics are loaded.
+- Explore - Adds user time zone support, reconnect for failing data sources and a fix that prevents killing Prometheus instances when Histogram metrics are loaded.
 - Alerting - Adds support for configuring timeout durations and retries, see [configuration](/installation/configuration/#evaluation-timeout-seconds) for more information.
-- Azure Monitor - Adds support for multiple subscriptions per datasource.
+- Azure Monitor - Adds support for multiple subscriptions per data source.
 - Elasticsearch - A small bug fix to properly display percentiles metrics in table panel.
 - InfluxDB - Support for POST HTTP verb.
 - CloudWatch - Important fix for default alias disappearing in v6.1.

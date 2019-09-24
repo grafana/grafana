@@ -60,9 +60,9 @@ Data format | Description
 
 ### Bucket bound
 
-When Data format is *Time series buckets* datasource returns series with names representing bucket bound. But depending
-on datasource, a bound may be *upper* or *lower*. This option allows to adjust a bound type. If *Auto* is set, a bound
-option will be chosen based on panels' datasource type.
+When Data format is *Time series buckets* data source returns series with names representing bucket bound. But depending
+on data source, a bound may be *upper* or *lower*. This option allows to adjust a bound type. If *Auto* is set, a bound
+option will be chosen based on panels' data source type.
 
 ### Bucket Size
 
@@ -77,9 +77,9 @@ If you have a data that is already organized into buckets you can use the `Time 
 requires that your metric query return regular time series and that each time series has a numeric name that represent
 the upper or lower bound of the interval.
 
-There are a number of datasources supporting histogram over time like Elasticsearch (by using a Histogram bucket
+There are a number of data sources supporting histogram over time like Elasticsearch (by using a Histogram bucket
 aggregation) or Prometheus (with [histogram](https://prometheus.io/docs/concepts/metric_types/#histogram) metric type
-and *Format as* option set to Heatmap). But generally, any datasource could be used if it meets the requirements:
+and *Format as* option set to Heatmap). But generally, any data source could be used if it meets the requirements:
 returns series with names representing bucket bound or returns series sorted by the bound in ascending order.
 
 With Elasticsearch you control the size of the buckets using the Histogram interval (Y-Axis) and the Date Histogram interval (X-axis).

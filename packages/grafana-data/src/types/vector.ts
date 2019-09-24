@@ -10,11 +10,6 @@ export interface Vector<T = any> {
    * Get the resutls as an array.
    */
   toArray(): T[];
-
-  /**
-   * Return the values as a simple array for json serialization
-   */
-  toJSON(): any; // same results as toArray()
 }
 
 /**
