@@ -1,4 +1,4 @@
-import { TestPage } from '@grafana/toolkit';
+import { TestPage } from '@grafana/e2e';
 
 export interface DataSourcesPage {}
 

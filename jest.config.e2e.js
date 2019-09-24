@@ -11,5 +11,5 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: [],
   globals: { 'ts-jest': { isolatedModules: true } },
-  setupFilesAfterEnv: ['expect-puppeteer', '<rootDir>/packages/grafana-toolkit/src/e2e/install.ts'],
+  setupFilesAfterEnv: ['expect-puppeteer', '<rootDir>/packages/grafana-e2e/src/common/install.ts'],
 };

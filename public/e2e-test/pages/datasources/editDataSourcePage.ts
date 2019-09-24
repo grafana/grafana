@@ -5,7 +5,7 @@ import {
   ClickablePageObject,
   PageObject,
   Selector,
-} from '@grafana/toolkit';
+} from '@grafana/e2e';
 
 export interface EditDataSourcePage {
   saveAndTest: ClickablePageObjectType;
