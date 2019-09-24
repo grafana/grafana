@@ -7,7 +7,6 @@ import { ButtonSelect } from '../Select/ButtonSelect';
 import memoizeOne from 'memoize-one';
 import { GrafanaTheme } from '../../types';
 import { withTheme } from '../../themes';
-
 import { config } from 'app/core/config';
 import kbn from 'app/core/utils/kbn';
 
@@ -52,11 +51,15 @@ export class RefreshPickerBase extends PureComponent<Props> {
 
   intervalsToOptions = (intervals: string[] | undefined): Array<SelectableValue<string>> => {
     const intervalsOrDefault = intervals || defaultIntervals;
-    const options = intervalsOrDefault
+    const validIntervals = intervalsOrDefault
       .filter(str => str !== '')
-      .filter(interval => kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshRate))
-      .map(interval => ({ label: interval, value: interval }));
+      .filter(interval => kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshRate));
 
+    if (validIntervals.indexOf(config.minRefreshRate) === -1) {
+      validIntervals.unshift(config.minRefreshRate);
+    }
+
+    const options = validIntervals.map(interval => ({ label: interval, value: interval }));
     if (this.props.hasLiveOption) {
       options.unshift(liveOption);
     }

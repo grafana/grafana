@@ -132,7 +132,7 @@ export class TimeSrv {
     }
     // but if refresh explicitly set then use that
     if (params.refresh) {
-      if (kbn.interval_to_ms(params.refresh) < kbn.interval_to_ms(config.minRefreshRate)) {
+      if (!this.contextSrv.isAllowedInterval(params.refresh)) {
         this.refresh = config.minRefreshRate;
       } else {
         this.refresh = params.refresh || this.refresh;
@@ -163,23 +163,12 @@ export class TimeSrv {
     return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
-  private isPermittedInterval(interval: string) {
-    return kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshRate);
-  }
-
-  private getValidInterval(interval: string) {
-    if (!this.isPermittedInterval(interval)) {
-      return config.minRefreshRate;
-    }
-    return interval;
-  }
-
   setAutoRefresh(interval: any) {
     this.dashboard.refresh = interval;
     this.cancelNextRefresh();
 
     if (interval) {
-      const validInterval = this.getValidInterval(interval);
+      const validInterval = this.contextSrv.getValidInterval(interval);
       const intervalMs = kbn.interval_to_ms(validInterval);
 
       this.refreshTimer = this.timer.register(
@@ -194,7 +183,7 @@ export class TimeSrv {
     this.$timeout(() => {
       const params = this.$location.search();
       if (interval) {
-        params.refresh = this.getValidInterval(interval);
+        params.refresh = this.contextSrv.getValidInterval(interval);
         this.$location.search(params);
       } else if (params.refresh) {
         delete params.refresh;
