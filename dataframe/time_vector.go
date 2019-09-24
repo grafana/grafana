@@ -22,6 +22,10 @@ func (e *timeElement) Set(value interface{}) {
 	}
 }
 
+func (e *timeElement) Bool() bool {
+	return !e.val.IsZero()
+}
+
 func (e *timeElement) Float() float64 {
 	return float64(e.val.UnixNano()) / 1000.0
 }

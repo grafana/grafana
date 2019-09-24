@@ -24,6 +24,11 @@ func (e *stringElement) Set(value interface{}) {
 	}
 }
 
+func (e *stringElement) Bool() bool {
+	v, _ := strconv.ParseBool(e.val)
+	return v
+}
+
 func (e *stringElement) Float() float64 {
 	v, _ := strconv.ParseFloat(e.val, 64)
 	return v

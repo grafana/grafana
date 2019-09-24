@@ -23,6 +23,10 @@ func (e *floatElement) Set(value interface{}) {
 	}
 }
 
+func (e *floatElement) Bool() bool {
+	return e.val > 0
+}
+
 func (e *floatElement) Float() float64 {
 	return e.val
 }

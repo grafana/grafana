@@ -43,6 +43,11 @@ func NewField(name string, fieldType FieldType, values interface{}) *Field {
 		for i := 0; i < len(v); i++ {
 			vec.At(i).Set(v[i])
 		}
+	case []bool:
+		vec = newVector(fieldType, len(v))
+		for i := 0; i < len(v); i++ {
+			vec.At(i).Set(v[i])
+		}
 	}
 
 	return &Field{
@@ -73,5 +78,8 @@ func New(name string, labels Labels, fields ...*Field) *DataFrame {
 }
 
 func (f *DataFrame) Rows() int {
-	return f.Fields[0].Len()
+	if len(f.Fields) > 0 {
+		return f.Fields[0].Len()
+	}
+	return 0
 }

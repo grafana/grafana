@@ -3,6 +3,7 @@ package grafana
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/dataframe"
@@ -101,14 +102,13 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 				continue
 			}
 
-			timeIdx := indexOfFieldType(df, dataframe.FieldTypeTime)
-
-			// If one of the fields is of type time, return a time series,
-			// otherwise return a table.
-			if timeIdx >= 0 {
-				tss = append(tss, asTimeSeries(df))
-			} else {
+			// Attempt to convert data frame to time series.
+			// Otherwise convert it to a table.
+			ts, err := asTimeSeries(df)
+			if err != nil {
 				tbs = append(tbs, asTable(df))
+			} else {
+				tss = append(tss, ts)
 			}
 		}
 
@@ -128,14 +128,23 @@ func (p *datasourcePluginWrapper) Query(ctx context.Context, req *datasource.Dat
 	}, nil
 }
 
-func asTimeSeries(df *dataframe.DataFrame) *datasource.TimeSeries {
+// asTimeSeries converts the data frame into a protobuf time series.
+//
+// It will use the first time field found as the timestamp, and the first
+// number field as the value.
+func asTimeSeries(df *dataframe.DataFrame) (*datasource.TimeSeries, error) {
 	timeIdx := indexOfFieldType(df, dataframe.FieldTypeTime)
 	timeVec := df.Fields[timeIdx].Vector
 
 	valueIdx := indexOfFieldType(df, dataframe.FieldTypeNumber)
 	valueVec := df.Fields[valueIdx].Vector
 
+	if timeIdx < 0 || valueIdx < 0 {
+		return nil, errors.New("invalid time series")
+	}
+
 	pts := []*datasource.Point{}
+
 	for i := 0; i < timeVec.Len(); i++ {
 		t := timeVec.At(i).Time()
 		v := valueVec.At(i).Float()
@@ -150,19 +159,27 @@ func asTimeSeries(df *dataframe.DataFrame) *datasource.TimeSeries {
 		Name:   df.Name,
 		Tags:   df.Labels,
 		Points: pts,
-	}
+	}, nil
 }
 
+// asTable converts the data frame into a protobuf table.
 func asTable(df *dataframe.DataFrame) *datasource.Table {
+	if len(df.Fields) == 0 {
+		return &datasource.Table{}
+	}
 
-	ncols := len(df.Fields)
-	nrows := df.Fields[0].Len()
-	rows := make([]*datasource.TableRow, nrows)
+	rows := make([]*datasource.TableRow, df.Fields[0].Len())
 
-	for i := 0; i < nrows; i++ {
-		rowvals := make([]*datasource.RowValue, ncols)
+	for i := 0; i < len(rows); i++ {
+		rowvals := make([]*datasource.RowValue, len(df.Fields))
+
 		for j, f := range df.Fields {
 			switch f.Type {
+			case dataframe.FieldTypeTime:
+				rowvals[j] = &datasource.RowValue{
+					Kind:        datasource.RowValue_TYPE_DOUBLE,
+					DoubleValue: f.Vector.At(i).Float(),
+				}
 			case dataframe.FieldTypeNumber:
 				rowvals[j] = &datasource.RowValue{
 					Kind:        datasource.RowValue_TYPE_DOUBLE,
@@ -172,6 +189,11 @@ func asTable(df *dataframe.DataFrame) *datasource.Table {
 				rowvals[j] = &datasource.RowValue{
 					Kind:        datasource.RowValue_TYPE_STRING,
 					StringValue: f.Vector.At(i).String(),
+				}
+			case dataframe.FieldTypeBoolean:
+				rowvals[j] = &datasource.RowValue{
+					Kind:      datasource.RowValue_TYPE_BOOL,
+					BoolValue: f.Vector.At(i).Bool(),
 				}
 			}
 		}
