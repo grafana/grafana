@@ -9,7 +9,7 @@ import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
 import { PanelOptionsGroup, TransformationsEditor } from '@grafana/ui';
-import { QueryEditorRow } from './QueryEditorRow';
+import { QueryEditorRows } from './QueryEditorRows';
 
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -24,6 +24,8 @@ import { LoadingState, DataTransformerConfig } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
+import { isMultiResolutionQuery } from 'app/plugins/datasource/multi-resolution/MultiDataSource';
+import { addQuery } from 'app/core/utils/query';
 
 interface Props {
   panel: PanelModel;
@@ -124,9 +126,12 @@ export class QueriesTab extends PureComponent<Props, State> {
     return <PluginHelp plugin={this.state.currentDS.meta} type="query_help" />;
   };
 
-  onAddQuery = (query?: Partial<DataQuery>) => {
-    this.props.panel.addQuery(query);
-    this.setState({ scrollTop: this.state.scrollTop + 100000 });
+  /**
+   * Sets the queries for the panel
+   */
+  onUpdateQueries = (queries: DataQuery[]) => {
+    this.props.panel.targets = queries;
+    this.forceUpdate();
   };
 
   onAddQueryClick = () => {
@@ -134,28 +139,8 @@ export class QueriesTab extends PureComponent<Props, State> {
       this.setState({ isAddingMixed: true });
       return;
     }
-
-    this.onAddQuery();
-  };
-
-  onRemoveQuery = (query: DataQuery) => {
-    const { panel } = this.props;
-
-    const index = _.indexOf(panel.targets, query);
-    panel.targets.splice(index, 1);
-    panel.refresh();
-
-    this.forceUpdate();
-  };
-
-  onMoveQuery = (query: DataQuery, direction: number) => {
-    const { panel } = this.props;
-
-    const index = _.indexOf(panel.targets, query);
-    // @ts-ignore
-    _.move(panel.targets, index, index + direction);
-
-    this.forceUpdate();
+    this.onUpdateQueries(addQuery(this.props.panel.targets));
+    this.onScollBottom();
   };
 
   renderToolbar = () => {
@@ -190,17 +175,12 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   onAddMixedQuery = (datasource: any) => {
-    this.onAddQuery({ datasource: datasource.name });
+    this.onUpdateQueries(addQuery(this.props.panel.targets, { datasource: datasource.name }));
     this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
   };
 
   onMixedPickerBlur = () => {
     this.setState({ isAddingMixed: false });
-  };
-
-  onQueryChange = (query: DataQuery, index: number) => {
-    this.props.panel.changeQuery(query, index);
-    this.forceUpdate();
   };
 
   onTransformersChange = (transformers: DataTransformerConfig[]) => {
@@ -211,6 +191,10 @@ export class QueriesTab extends PureComponent<Props, State> {
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
     const target = event.target as HTMLElement;
     this.setState({ scrollTop: target.scrollTop });
+  };
+
+  onScollBottom = () => {
+    this.setState({ scrollTop: this.state.scrollTop + 10000 });
   };
 
   render() {
@@ -229,6 +213,8 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     const enableTransformations = config.featureToggles.transformations;
 
+    // const xxx = isMultiResolutionQuery(currentDS.name);
+
     return (
       <EditorTabBody
         heading="Query"
@@ -239,26 +225,18 @@ export class QueriesTab extends PureComponent<Props, State> {
       >
         <>
           {isSharedDashboardQuery(currentDS.name) ? (
-            <DashboardQueryEditor panel={panel} panelData={data} onChange={query => this.onQueryChange(query, 0)} />
+            <DashboardQueryEditor panel={panel} panelData={data} onChange={query => this.onUpdateQueries([query])} />
           ) : (
             <>
-              <div className="query-editor-rows">
-                {panel.targets.map((query, index) => (
-                  <QueryEditorRow
-                    dataSourceValue={query.datasource || panel.datasource}
-                    key={query.refId}
-                    panel={panel}
-                    dashboard={dashboard}
-                    data={data}
-                    query={query}
-                    onChange={query => this.onQueryChange(query, index)}
-                    onRemoveQuery={this.onRemoveQuery}
-                    onAddQuery={this.onAddQuery}
-                    onMoveQuery={this.onMoveQuery}
-                    inMixedMode={currentDS.meta.mixed}
-                  />
-                ))}
-              </div>
+              <QueryEditorRows
+                queries={panel.targets}
+                datasource={currentDS}
+                onChangeQueries={this.onUpdateQueries}
+                onScrollBottom={this.onScollBottom}
+                panel={panel}
+                dashboard={dashboard}
+                data={data}
+              />
               <PanelOptionsGroup>
                 <QueryOptions panel={panel} datasource={currentDS} />
               </PanelOptionsGroup>

@@ -1,0 +1,13 @@
+{
+  "type": "datasource",
+  "name": "-- Multi Resolution --",
+  "id": "multi",
+
+  "builtIn": true,
+  "metrics": true,
+  "hiddenQueries": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
+}
