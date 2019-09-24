@@ -14,7 +14,6 @@ import {
   DataQuery,
   Tooltip,
   ButtonSelect,
-  RefreshPicker,
   SetInterval,
 } from '@grafana/ui';
 import { RawTimeRange, TimeZone, TimeRange, SelectableValue } from '@grafana/data';
@@ -30,7 +29,6 @@ import {
   changeMode,
   clearOrigin,
 } from './state/actions';
-import { changeRefreshIntervalAction, setPausedStateAction } from './state/actionTypes';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
 import { getDashboardSrv } from '../dashboard/services/DashboardSrv';
@@ -39,6 +37,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
+import { LiveTailControls } from './useLiveTailControls';
 
 const getStyles = memoizeOne(() => {
   return {
@@ -81,8 +80,6 @@ interface DispatchProps {
   changeMode: typeof changeMode;
   clearOrigin: typeof clearOrigin;
   updateLocation: typeof updateLocation;
-  changeRefreshIntervalAction: typeof changeRefreshIntervalAction;
-  setPausedStateAction: typeof setPausedStateAction;
 }
 
 type Props = StateProps & DispatchProps & OwnProps;
@@ -137,29 +134,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
         panelId: originPanelId,
       },
     });
-  };
-
-  stopLive = () => {
-    const { exploreId } = this.props;
-    this.pauseLive();
-    // TODO referencing this from perspective of refresh picker when there is designated button for it now is not
-    //  great. Needs another refactor.
-    this.props.changeRefreshIntervalAction({ exploreId, refreshInterval: RefreshPicker.offOption.value });
-  };
-
-  startLive = () => {
-    const { exploreId } = this.props;
-    this.props.changeRefreshIntervalAction({ exploreId, refreshInterval: RefreshPicker.liveOption.value });
-  };
-
-  pauseLive = () => {
-    const { exploreId } = this.props;
-    this.props.setPausedStateAction({ exploreId, isPaused: true });
-  };
-
-  resumeLive = () => {
-    const { exploreId } = this.props;
-    this.props.setPausedStateAction({ exploreId, isPaused: false });
   };
 
   render() {
@@ -305,14 +279,18 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
 
             {hasLiveOption && (
               <div className={`explore-toolbar-content-item ${styles.liveTailButtons}`}>
-                <LiveTailButton
-                  isLive={isLive}
-                  isPaused={isPaused}
-                  start={this.startLive}
-                  pause={this.pauseLive}
-                  resume={this.resumeLive}
-                  stop={this.stopLive}
-                />
+                <LiveTailControls exploreId={exploreId}>
+                  {controls => (
+                    <LiveTailButton
+                      isLive={isLive}
+                      isPaused={isPaused}
+                      start={controls.start}
+                      pause={controls.pause}
+                      resume={controls.resume}
+                      stop={controls.stop}
+                    />
+                  )}
+                </LiveTailControls>
               </div>
             )}
           </div>
@@ -411,8 +389,6 @@ const mapDispatchToProps: DispatchProps = {
   split: splitOpen,
   changeMode: changeMode,
   clearOrigin,
-  changeRefreshIntervalAction,
-  setPausedStateAction,
 };
 
 export const ExploreToolbar = hot(module)(
