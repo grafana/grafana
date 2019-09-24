@@ -2,10 +2,13 @@ package mysql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/VividCortex/mysqlerr"
 
 	"github.com/grafana/grafana/pkg/setting"
 
@@ -59,18 +62,18 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
 	}
 
-	rowTransformer := mysqlRowTransformer{
+	rowTransformer := mysqlQueryResultTransformer{
 		log: logger,
 	}
 
-	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newMysqlMacroEngine(), logger)
+	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newMysqlMacroEngine(logger), logger)
 }
 
-type mysqlRowTransformer struct {
+type mysqlQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *mysqlRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *mysqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 
 	for i := range values {
@@ -128,3 +131,16 @@ func (t *mysqlRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *cor
 
 	return values, nil
 }
+
+func (t *mysqlQueryResultTransformer) TransformQueryError(err error) error {
+	if driverErr, ok := err.(*mysql.MySQLError); ok {
+		if driverErr.Number != mysqlerr.ER_PARSE_ERROR && driverErr.Number != mysqlerr.ER_BAD_FIELD_ERROR && driverErr.Number != mysqlerr.ER_NO_SUCH_TABLE {
+			t.log.Error("query error", "err", err)
+			return errQueryFailed
+		}
+	}
+
+	return err
+}
+
+var errQueryFailed = errors.New("Query failed. Please inspect Grafana server log for details")
