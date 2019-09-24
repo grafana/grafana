@@ -1,9 +1,20 @@
+### Note for external contributors
+
+At the moment we are working on migrating the docs to a new static website. Until that is finished the
+`grafana/website` repo is unfortunately private and so docs site cannot be run without access.
+
+We still encourage PRs to make the docs better. Markdown content is still editable in this repo and we
+will make sure the changed content works well on the current docs site. In case you need to supply images
+you can include that in the PR and we will move them to the `grafana/website` repo.
+
 # Building The Docs
 
 To build the docs locally, you need to have docker installed.  The
 docs are built using [Hugo](http://gohugo.io/) - a static site generator.
 
 **Prepare the Docker Image**:
+
+> Due to migration to new static site, the docker image needs to be prepared from `old-docs` branch.
 
 Git clone `grafana/website` repo. Run these commands in the root of that repo. **Note** that you may require ``sudo``
 when running ``make docs-build`` depending on how your system's docker
