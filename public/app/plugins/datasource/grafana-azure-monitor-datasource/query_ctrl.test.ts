@@ -36,11 +36,11 @@ describe('AzureMonitorQueryCtrl', () => {
     });
 
     it('should set query parts to select', () => {
-      expect(queryCtrl.target.azureMonitor.data.singleResource.resourceGroup).toBe('select');
-      expect(queryCtrl.target.azureMonitor.data.singleResource.metricDefinition).toBe('select');
-      expect(queryCtrl.target.azureMonitor.data.singleResource.resourceName).toBe('select');
-      expect(queryCtrl.target.azureMonitor.data.singleResource.metricNamespace).toBe('select');
-      expect(queryCtrl.target.azureMonitor.data.singleResource.metricName).toBe('select');
+      expect(queryCtrl.target.azureMonitor.resourceGroup).toBe('select');
+      expect(queryCtrl.target.azureMonitor.metricDefinition).toBe('select');
+      expect(queryCtrl.target.azureMonitor.resourceName).toBe('select');
+      expect(queryCtrl.target.azureMonitor.metricNamespace).toBe('select');
+      expect(queryCtrl.target.azureMonitor.metricName).toBe('select');
       expect(queryCtrl.target.appInsights.groupBy).toBe('none');
     });
   });
@@ -76,7 +76,7 @@ describe('AzureMonitorQueryCtrl', () => {
 
         beforeEach(() => {
           queryCtrl.target.subscription = 'sub1';
-          queryCtrl.target.azureMonitor.data.singleResource.resourceGroup = 'test';
+          queryCtrl.target.azureMonitor.resourceGroup = 'test';
           queryCtrl.datasource.getMetricDefinitions = function(subscriptionId: any, query: any) {
             expect(subscriptionId).toBe('sub1');
             expect(query).toBe('test');
@@ -94,7 +94,7 @@ describe('AzureMonitorQueryCtrl', () => {
 
       describe('and resource group has no value', () => {
         beforeEach(() => {
-          queryCtrl.target.azureMonitor.data.singleResource.resourceGroup = 'select';
+          queryCtrl.target.azureMonitor.resourceGroup = 'select';
         });
 
         it('should return without making a call to datasource', () => {
@@ -109,8 +109,8 @@ describe('AzureMonitorQueryCtrl', () => {
 
         beforeEach(() => {
           queryCtrl.target.subscription = 'sub1';
-          queryCtrl.target.azureMonitor.data.singleResource.resourceGroup = 'test';
-          queryCtrl.target.azureMonitor.data.singleResource.metricDefinition = 'Microsoft.Compute/virtualMachines';
+          queryCtrl.target.azureMonitor.resourceGroup = 'test';
+          queryCtrl.target.azureMonitor.metricDefinition = 'Microsoft.Compute/virtualMachines';
           queryCtrl.datasource.getResourceNames = function(
             subscriptionId: any,
             resourceGroup: any,
@@ -133,8 +133,8 @@ describe('AzureMonitorQueryCtrl', () => {
 
       describe('and resourceGroup and metricDefinition do not have values', () => {
         beforeEach(() => {
-          queryCtrl.target.azureMonitor.data.singleResource.resourceGroup = 'select';
-          queryCtrl.target.azureMonitor.data.singleResource.metricDefinition = 'select';
+          queryCtrl.target.azureMonitor.resourceGroup = 'select';
+          queryCtrl.target.azureMonitor.metricDefinition = 'select';
         });
 
         it('should return without making a call to datasource', () => {
@@ -149,10 +149,10 @@ describe('AzureMonitorQueryCtrl', () => {
 
         beforeEach(() => {
           queryCtrl.target.subscription = 'sub1';
-          queryCtrl.target.azureMonitor.data.singleResource.resourceGroup = 'test';
-          queryCtrl.target.azureMonitor.data.singleResource.metricDefinition = 'Microsoft.Compute/virtualMachines';
-          queryCtrl.target.azureMonitor.data.singleResource.resourceName = 'test';
-          queryCtrl.target.azureMonitor.data.singleResource.metricNamespace = 'test';
+          queryCtrl.target.azureMonitor.resourceGroup = 'test';
+          queryCtrl.target.azureMonitor.metricDefinition = 'Microsoft.Compute/virtualMachines';
+          queryCtrl.target.azureMonitor.resourceName = 'test';
+          queryCtrl.target.azureMonitor.metricNamespace = 'test';
           queryCtrl.datasource.getMetricNames = function(
             subscriptionId: any,
             resourceGroup: any,
@@ -179,10 +179,10 @@ describe('AzureMonitorQueryCtrl', () => {
 
       describe('and resourceGroup, metricDefinition, resourceName and metricNamespace do not have values', () => {
         beforeEach(() => {
-          queryCtrl.target.azureMonitor.data.singleResource.resourceGroup = 'select';
-          queryCtrl.target.azureMonitor.data.singleResource.metricDefinition = 'select';
-          queryCtrl.target.azureMonitor.data.singleResource.resourceName = 'select';
-          queryCtrl.target.azureMonitor.data.singleResource.metricNamespace = 'select';
+          queryCtrl.target.azureMonitor.resourceGroup = 'select';
+          queryCtrl.target.azureMonitor.metricDefinition = 'select';
+          queryCtrl.target.azureMonitor.resourceName = 'select';
+          queryCtrl.target.azureMonitor.metricNamespace = 'select';
         });
 
         it('should return without making a call to datasource', () => {
@@ -201,18 +201,18 @@ describe('AzureMonitorQueryCtrl', () => {
 
       beforeEach(() => {
         queryCtrl.target.subscription = 'sub1';
-        queryCtrl.target.azureMonitor.data.singleResource.resourceGroup = 'test';
-        queryCtrl.target.azureMonitor.data.singleResource.metricDefinition = 'Microsoft.Compute/virtualMachines';
-        queryCtrl.target.azureMonitor.data.singleResource.resourceName = 'test';
-        queryCtrl.target.azureMonitor.data.singleResource.metricNamespace = 'test';
-        queryCtrl.target.azureMonitor.data.singleResource.metricName = 'Percentage CPU';
+        queryCtrl.target.azureMonitor.resourceGroup = 'test';
+        queryCtrl.target.azureMonitor.metricDefinition = 'Microsoft.Compute/virtualMachines';
+        queryCtrl.target.azureMonitor.resourceName = 'test';
+        queryCtrl.target.azureMonitor.metricNamespace = 'test';
+        queryCtrl.target.azureMonitor.metricName = 'Percentage CPU';
         queryCtrl.datasource.getMetricMetadata = function(
           subscription: any,
           resourceGroup: any,
           metricDefinition: any,
           resourceName: any,
-          metricName: any,
-          metricNamespace: any
+          metricNamespace: any,
+          metricName: any
         ) {
           expect(subscription).toBe('sub1');
           expect(resourceGroup).toBe('test');
@@ -226,9 +226,9 @@ describe('AzureMonitorQueryCtrl', () => {
 
       it('should set the options and default selected value for the Aggregations dropdown', () => {
         queryCtrl.onMetricNameChange().then(() => {
-          expect(queryCtrl.target.azureMonitor.data.singleResource.aggregation).toBe('Average');
-          expect(queryCtrl.target.azureMonitor.data.singleResource.aggOptions).toBe(['Average', 'Total']);
-          expect(queryCtrl.target.azureMonitor.data.singleResource.timeGrains).toBe(['PT1M', 'P1D']);
+          expect(queryCtrl.target.azureMonitor.aggregation).toBe('Average');
+          expect(queryCtrl.target.azureMonitor.aggOptions).toBe(['Average', 'Total']);
+          expect(queryCtrl.target.azureMonitor.timeGrains).toBe(['PT1M', 'P1D']);
         });
       });
     });
