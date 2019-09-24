@@ -49,7 +49,7 @@ type Props = {
 };
 
 /**
- * If you can't use the hook you can use this as a child prop pattern.
+ * If you can't use the hook you can use this as a render prop pattern.
  */
 export function LiveTailControls(props: Props) {
   const controls = useLiveTailControls(props.exploreId);
