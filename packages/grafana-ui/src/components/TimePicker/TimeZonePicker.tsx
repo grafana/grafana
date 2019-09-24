@@ -30,8 +30,6 @@ export const TimeZonePicker: FC<Props> = ({ onChange, value, width }) => {
     return group.options.find(option => option.value === value);
   });
 
-  console.log(selectedValue);
-
   return (
     <Select
       options={groupOptions}
