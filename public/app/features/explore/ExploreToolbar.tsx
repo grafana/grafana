@@ -16,7 +16,7 @@ import {
   ButtonSelect,
   SetInterval,
 } from '@grafana/ui';
-import { RawTimeRange, TimeZone, TimeRange, SelectableValue } from '@grafana/data';
+import { RawTimeRange, TimeZone, TimeRange } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import {
@@ -61,8 +61,8 @@ interface StateProps {
   selectedDatasource: DataSourceSelectItem;
   splitted: boolean;
   refreshInterval: string;
-  supportedModeOptions: Array<SelectableValue<ExploreMode>>;
-  selectedModeOption: SelectableValue<ExploreMode>;
+  supportedModes: ExploreMode[];
+  selectedMode: ExploreMode;
   hasLiveOption: boolean;
   isLive: boolean;
   isPaused: boolean;
@@ -150,8 +150,8 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       refreshInterval,
       onChangeTime,
       split,
-      supportedModeOptions,
-      selectedModeOption,
+      supportedModes,
+      selectedMode,
       hasLiveOption,
       isLive,
       isPaused,
@@ -195,14 +195,14 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                     current={selectedDatasource}
                   />
                 </div>
-                {supportedModeOptions.length > 1 ? (
+                {supportedModes.length > 1 ? (
                   <div className="query-type-toggle">
                     <ToggleButtonGroup label="" transparent={true}>
                       <ToggleButton
                         key={ExploreMode.Metrics}
                         value={ExploreMode.Metrics}
                         onChange={this.onModeChange}
-                        selected={selectedModeOption.value === ExploreMode.Metrics}
+                        selected={selectedMode === ExploreMode.Metrics}
                       >
                         {'Metrics'}
                       </ToggleButton>
@@ -210,7 +210,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                         key={ExploreMode.Logs}
                         value={ExploreMode.Logs}
                         onChange={this.onModeChange}
-                        selected={selectedModeOption.value === ExploreMode.Logs}
+                        selected={selectedMode === ExploreMode.Logs}
                       >
                         {'Logs'}
                       </ToggleButton>
@@ -300,41 +300,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
   }
 }
 
-const getModeOptionsMemoized = memoizeOne(
-  (
-    supportedModes: ExploreMode[],
-    mode: ExploreMode
-  ): [Array<SelectableValue<ExploreMode>>, SelectableValue<ExploreMode>] => {
-    const supportedModeOptions: Array<SelectableValue<ExploreMode>> = [];
-    let selectedModeOption = null;
-    for (const supportedMode of supportedModes) {
-      switch (supportedMode) {
-        case ExploreMode.Metrics:
-          const option1 = {
-            value: ExploreMode.Metrics,
-            label: ExploreMode.Metrics,
-          };
-          supportedModeOptions.push(option1);
-          if (mode === ExploreMode.Metrics) {
-            selectedModeOption = option1;
-          }
-          break;
-        case ExploreMode.Logs:
-          const option2 = {
-            value: ExploreMode.Logs,
-            label: ExploreMode.Logs,
-          };
-          supportedModeOptions.push(option2);
-          if (mode === ExploreMode.Logs) {
-            selectedModeOption = option2;
-          }
-          break;
-      }
-    }
-    return [supportedModeOptions, selectedModeOption];
-  }
-);
-
 const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps => {
   const splitted = state.explore.split;
   const exploreItem: ExploreItemState = state.explore[exploreId];
@@ -358,8 +323,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
   const hasLiveOption =
     datasourceInstance && datasourceInstance.meta && datasourceInstance.meta.streaming ? true : false;
 
-  const [supportedModeOptions, selectedModeOption] = getModeOptionsMemoized(supportedModes, mode);
-
   return {
     datasourceMissing,
     exploreDatasources,
@@ -369,8 +332,8 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     selectedDatasource,
     splitted,
     refreshInterval,
-    supportedModeOptions,
-    selectedModeOption,
+    supportedModes,
+    selectedMode: supportedModes.includes(mode) ? mode : supportedModes[0],
     hasLiveOption,
     isLive,
     isPaused,
