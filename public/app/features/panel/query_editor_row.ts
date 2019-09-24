@@ -24,6 +24,22 @@ export class QueryRowCtrl {
       this.panelCtrl.getCollapsedText = this.queryCtrl.getCollapsedText.bind(this.queryCtrl);
     }
   }
+
+  $onChanges(): void {
+    if (this.hasTextEditMode && this.queryCtrl.toggleEditorMode) {
+      // expose this function to react parent component
+      this.panelCtrl.toggleEditorMode = this.queryCtrl.toggleEditorMode.bind(this.queryCtrl);
+    } else {
+      delete this.panelCtrl.toggleEditorMode;
+    }
+
+    if (this.queryCtrl.getCollapsedText) {
+      // expose this function to react parent component
+      this.panelCtrl.getCollapsedText = this.queryCtrl.getCollapsedText.bind(this.queryCtrl);
+    } else {
+      delete this.panelCtrl.getCollapsedText;
+    }
+  }
 }
 
 /** @ngInject */

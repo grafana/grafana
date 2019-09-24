@@ -41,7 +41,7 @@ describe('AzureMonitorQueryCtrl', () => {
       expect(queryCtrl.target.azureMonitor.resourceName).toBe('select');
       expect(queryCtrl.target.azureMonitor.metricNamespace).toBe('select');
       expect(queryCtrl.target.azureMonitor.metricName).toBe('select');
-      expect(queryCtrl.target.appInsights.groupBy).toBe('none');
+      expect(queryCtrl.target.appInsights.dimension).toBe('none');
     });
   });
 
@@ -255,7 +255,7 @@ describe('AzureMonitorQueryCtrl', () => {
 
     describe('when getOptions for the GroupBy segments dropdown is called', () => {
       beforeEach(() => {
-        queryCtrl.target.appInsights.groupByOptions = ['opt1', 'opt2'];
+        queryCtrl.target.appInsights.dimensions = ['opt1', 'opt2'];
       });
 
       it('should return a list of GroupBy segments', () => {
@@ -287,8 +287,8 @@ describe('AzureMonitorQueryCtrl', () => {
           expect(queryCtrl.target.appInsights.aggregation).toBe('avg');
           expect(queryCtrl.target.appInsights.aggOptions).toContain('avg');
           expect(queryCtrl.target.appInsights.aggOptions).toContain('sum');
-          expect(queryCtrl.target.appInsights.groupByOptions).toContain('client/os');
-          expect(queryCtrl.target.appInsights.groupByOptions).toContain('client/city');
+          expect(queryCtrl.target.appInsights.dimensions).toContain('client/os');
+          expect(queryCtrl.target.appInsights.dimensions).toContain('client/city');
         });
       });
     });
