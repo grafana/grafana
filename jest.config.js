@@ -12,6 +12,8 @@ module.exports = {
     "<rootDir>/scripts",
   ],
   "testRegex": "(\\.|/)(test)\\.(jsx?|tsx?)$",
+  // ignoring common plugin suites used in toolkit
+  "testPathIgnorePatterns": ["packages/grafana-toolkit/src/plugins/e2e/suites"],
   "moduleFileExtensions": [
     "ts",
     "tsx",

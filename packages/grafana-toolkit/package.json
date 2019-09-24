@@ -92,6 +92,7 @@
   },
   "devDependencies": {
     "@types/glob": "^7.1.1",
-    "@types/prettier": "^1.16.4"
+    "@types/prettier": "^1.16.4",
+    "@types/expect-puppeteer": "3.3.1"
   }
 }

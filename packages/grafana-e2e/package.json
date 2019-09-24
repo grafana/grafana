@@ -42,7 +42,7 @@
     "sinon": "1.17.6",
     "typescript": "3.5.3"
   },
-  "types": "index.d.ts",
+  "types": "src/index.ts",
   "_moduleAliases": {
     "puppeteer": "node_modules/puppeteer-core"
   }
