@@ -97,7 +97,6 @@ const buildTaskRunner: TaskRunner<PackageBuildOptions> = async ({ scope }) => {
 
   const scopes = scope.split(',').map(s => {
     return async () => {
-      debugger;
       cwd = path.resolve(__dirname, `../../../../grafana-${s}`);
       // Lerna executes this in package's dir context, but for testing purposes I want to be able to run from root:
       // grafana-toolkit package:build --scope=<package>

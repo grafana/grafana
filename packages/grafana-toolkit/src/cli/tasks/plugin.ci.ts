@@ -82,10 +82,9 @@ const buildPluginRunner: TaskRunner<PluginCIOptions> = async ({ backend }) => {
 export const ciBuildPluginTask = new Task('Build Plugin', buildPluginRunner);
 
 /**
-//  * 2. Build Docs
-//  *
- *  Take /docs/* and format it into /ci/docs/HTML site
+ * 2. Build Docs
  *
+ *  Take /docs/* and format it into /ci/docs/HTML site
  */
 const buildPluginDocsRunner: TaskRunner<PluginCIOptions> = async () => {
   const docsSrc = path.resolve(process.cwd(), 'docs');
