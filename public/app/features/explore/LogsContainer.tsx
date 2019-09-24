@@ -59,9 +59,8 @@ interface LogsContainerProps {
 
 export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
-    const { exploreId, updateTimeRange, syncedTimes } = this.props;
-
-    updateTimeRange({ exploreId, absoluteRange, syncedTimes });
+    const { exploreId, updateTimeRange } = this.props;
+    updateTimeRange({ exploreId, absoluteRange });
   };
 
   onStopLive = () => {

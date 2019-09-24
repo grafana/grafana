@@ -15,17 +15,18 @@ import { isDateTime, DateTime } from '@grafana/data';
 import { rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
 import { withTheme } from '../../themes/ThemeContext';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 // Types
 import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath } from '@grafana/data';
-import { GrafanaTheme, GrafanaThemeType } from '../../types/theme';
+import { GrafanaTheme } from '../../types/theme';
 import { Themeable } from '../../types';
 
 const orangeLight = '#ED5700';
 const orangeDark = '#FF780A';
 
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
-  const orange = theme.type === GrafanaThemeType.Dark ? orangeDark : orangeLight;
+  const orange = selectThemeVariant({ light: orangeLight, dark: orangeDark }, theme.type);
   return {
     timePickerSynced: css`
       label: timePickerSynced;
@@ -206,7 +207,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
           <ButtonSelect
             className={classNames('time-picker-button-select', {
               [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: syncButton,
-              [`${styles.timePickerSynced}`]: syncButton ? syncButton.synced : null,
+              [styles.timePickerSynced]: syncButton ? syncButton.synced : null,
             })}
             value={currentOption}
             label={label}
@@ -220,7 +221,7 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             <Tooltip content={syncTimesTooltip} placement="bottom">
               <button
                 className={classNames('btn navbar-button navbar-button--attached', {
-                  [`${styles.timePickerSynced}`]: syncButton.synced,
+                  [styles.timePickerSynced]: syncButton.synced,
                 })}
                 onClick={() => syncButton.onClick()}
               >

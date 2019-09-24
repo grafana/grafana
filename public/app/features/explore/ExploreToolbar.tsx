@@ -117,6 +117,11 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
     changeMode(exploreId, mode);
   };
 
+  onChangeTimeSync = () => {
+    const { syncTimes, exploreId } = this.props;
+    syncTimes(exploreId);
+  };
+
   returnToPanel = async ({ withChanges = false } = {}) => {
     const { originPanelId } = this.props;
 
@@ -180,7 +185,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       refreshInterval,
       onChangeTime,
       split,
-      syncTimes,
       supportedModeOptions,
       selectedModeOption,
       hasLiveOption,
@@ -289,7 +293,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
                   onChangeTime={onChangeTime}
                   splitted={splitted}
                   syncedTimes={syncedTimes}
-                  onChangeTimeSync={syncTimes}
+                  onChangeTimeSync={this.onChangeTimeSync}
                 />
               </div>
             )}

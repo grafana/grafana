@@ -180,9 +180,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   onChangeTime = (rawRange: RawTimeRange) => {
-    const { updateTimeRange, exploreId, syncedTimes } = this.props;
-
-    updateTimeRange({ exploreId, rawRange, syncedTimes });
+    const { updateTimeRange, exploreId } = this.props;
+    updateTimeRange({ exploreId, rawRange });
   };
 
   // Use this in help pages to set page to a single query
@@ -221,8 +220,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
   };
 
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
-    const { updateTimeRange, exploreId, syncedTimes } = this.props;
-    updateTimeRange({ exploreId, absoluteRange, syncedTimes });
+    const { exploreId, updateTimeRange } = this.props;
+    updateTimeRange({ exploreId, absoluteRange });
   };
 
   refreshExplore = () => {

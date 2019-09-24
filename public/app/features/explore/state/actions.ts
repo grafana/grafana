@@ -183,23 +183,20 @@ export const updateTimeRange = (options: {
   exploreId: ExploreId;
   rawRange?: RawTimeRange;
   absoluteRange?: AbsoluteTimeRange;
-  syncedTimes?: boolean;
 }): ThunkResult<void> => {
-  if (options.syncedTimes) {
-    return dispatch => {
+  return (dispatch, getState) => {
+    const { syncedTimes } = getState().explore;
+    if (syncedTimes) {
       dispatch(updateTime({ ...options, exploreId: ExploreId.left }));
       dispatch(runQueries(ExploreId.left));
       dispatch(updateTime({ ...options, exploreId: ExploreId.right }));
       dispatch(runQueries(ExploreId.right));
-    };
-  } else {
-    return dispatch => {
+    } else {
       dispatch(updateTime({ ...options }));
       dispatch(runQueries(options.exploreId));
-    };
-  }
+    }
+  };
 };
-
 /**
  * Change the refresh interval of Explore. Called from the Refresh picker.
  */
@@ -691,14 +688,12 @@ export function splitOpen(): ThunkResult<void> {
  */
 export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
-    if (exploreId === 'left') {
+    if (exploreId === ExploreId.left) {
       const leftState = getState().explore.left;
-      dispatch(updateTime({ exploreId: ExploreId.right, rawRange: leftState.range.raw }));
-      dispatch(runQueries(ExploreId.right));
+      dispatch(updateTimeRange({ exploreId: ExploreId.right, rawRange: leftState.range.raw }));
     } else {
       const rightState = getState().explore.right;
-      dispatch(updateTime({ exploreId: ExploreId.left, rawRange: rightState.range.raw }));
-      dispatch(runQueries(ExploreId.left));
+      dispatch(updateTimeRange({ exploreId: ExploreId.left, rawRange: rightState.range.raw }));
     }
     const isTimeSynced = getState().explore.syncedTimes;
     dispatch(syncTimesAction({ syncedTimes: !isTimeSynced }));
