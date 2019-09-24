@@ -1,7 +1,7 @@
 import fs from 'fs';
 import * as jestCLI from 'jest-cli';
 import { TestResultsInfo } from '../types';
-import { GRAFANA_E2E_INSTALL_SCRIPT_PATH } from "@grafana/e2e";
+import { GRAFANA_E2E_INSTALL_SCRIPT_PATH } from '@grafana/e2e';
 
 export async function runEndToEndTests(outputDirectory: string, results: TestResultsInfo): Promise<void> {
   const setupPath = GRAFANA_E2E_INSTALL_SCRIPT_PATH;
