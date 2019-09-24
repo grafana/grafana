@@ -1,4 +1,4 @@
-# Triaging of issues
+# Triaging issues
 
 The main goal of issue triage is to categorize all incoming Grafana issues and make sure each issue has all basic information needed for anyone else to understand and be able to start working on it.
 
@@ -12,7 +12,7 @@ Triage helps ensure issues resolve quickly by:
 * Streamlining the development process by preventing duplicate discussions.
 * If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
 
-** Simplified flowchart diagram of the issue triage process:
+** Simplified flowchart diagram of the issue triage process
 <!-- https://textik.com/#610afa78553def29 -->
 ```
                         +--------------------------+
