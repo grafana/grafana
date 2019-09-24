@@ -17,7 +17,11 @@ export function isMultiResolutionQuery(datasource: string | DataSourceApi): bool
     return true;
   }
   const ds = datasource as DataSourceApi;
-  return ds.meta && ds.meta.name === MULTI_DATASOURCE_NAME;
+  if (ds.meta) {
+    // only true if it actually is DataSourceApi
+    return ds.meta.name === MULTI_DATASOURCE_NAME;
+  }
+  return false;
 }
 
 export class MultiDatasource extends DataSourceApi<DataQuery> {

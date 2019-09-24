@@ -197,9 +197,35 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: this.state.scrollTop + 10000 });
   };
 
-  render() {
+  renderQueryBody = () => {
     const { panel, dashboard } = this.props;
-    const { currentDS, scrollTop, data } = this.state;
+    const { currentDS, data } = this.state;
+
+    if (isSharedDashboardQuery(currentDS.name)) {
+      return <DashboardQueryEditor panel={panel} panelData={data} onChange={query => this.onUpdateQueries([query])} />;
+    } else if (isMultiResolutionQuery(currentDS.name)) {
+      return <div>TODO!</div>;
+    }
+    return (
+      <>
+        <QueryEditorRows
+          queries={panel.targets}
+          datasource={currentDS}
+          onChangeQueries={this.onUpdateQueries}
+          onScrollBottom={this.onScollBottom}
+          panel={panel}
+          dashboard={dashboard}
+          data={data}
+        />
+        <PanelOptionsGroup>
+          <QueryOptions panel={panel} datasource={currentDS} />
+        </PanelOptionsGroup>
+      </>
+    );
+  };
+
+  render() {
+    const { scrollTop, data } = this.state;
     const queryInspector: EditorToolbarView = {
       title: 'Query Inspector',
       render: this.renderQueryInspector,
@@ -213,8 +239,6 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     const enableTransformations = config.featureToggles.transformations;
 
-    // const xxx = isMultiResolutionQuery(currentDS.name);
-
     return (
       <EditorTabBody
         heading="Query"
@@ -224,24 +248,7 @@ export class QueriesTab extends PureComponent<Props, State> {
         scrollTop={scrollTop}
       >
         <>
-          {isSharedDashboardQuery(currentDS.name) ? (
-            <DashboardQueryEditor panel={panel} panelData={data} onChange={query => this.onUpdateQueries([query])} />
-          ) : (
-            <>
-              <QueryEditorRows
-                queries={panel.targets}
-                datasource={currentDS}
-                onChangeQueries={this.onUpdateQueries}
-                onScrollBottom={this.onScollBottom}
-                panel={panel}
-                dashboard={dashboard}
-                data={data}
-              />
-              <PanelOptionsGroup>
-                <QueryOptions panel={panel} datasource={currentDS} />
-              </PanelOptionsGroup>
-            </>
-          )}
+          {this.renderQueryBody()}
 
           {enableTransformations && (
             <PanelOptionsGroup

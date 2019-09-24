@@ -80,7 +80,7 @@ export class QueryEditorRows extends PureComponent<Props> {
             key={query.refId}
             panel={props.panel}
             dashboard={props.dashboard}
-            data={filterPanelDataToQuery(props.data, query.refId)} // filtered to panel
+            data={props.data}
             query={query}
             onChange={query => this.onChangeQuery(query, index)}
             onRemoveQuery={this.onRemoveQuery}
