@@ -3,7 +3,7 @@ import { TestRuleResult, Props } from './TestRuleResult';
 import { DashboardModel } from '../dashboard/state';
 import { shallow } from 'enzyme';
 
-jest.mock('../../core/services/backend_srv', () => ({
+jest.mock('@grafana/runtime/src/services/backendSrv', () => ({
   getBackendSrv: () => ({
     post: jest.fn(),
   }),

@@ -4,7 +4,7 @@ import { LoadingPlaceholder, JSONFormatter } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { getBackendSrv, BackendSrv } from '../../core/services/backend_srv';
+import { getBackendSrv, BackendSrv } from '@grafana/runtime';
 
 export interface Props {
   panelId: number;
