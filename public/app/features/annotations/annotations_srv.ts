@@ -16,6 +16,7 @@ import DatasourceSrv from '../plugins/datasource_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TimeSrv } from '../dashboard/services/TimeSrv';
 import { DataSourceApi } from '@grafana/ui';
+import { TemplateSrv } from '../templating/template_srv';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -28,7 +29,8 @@ export class AnnotationsSrv {
     private $q: IQService,
     private datasourceSrv: DatasourceSrv,
     private backendSrv: BackendSrv,
-    private timeSrv: TimeSrv
+    private timeSrv: TimeSrv,
+    private templateSrv: TemplateSrv
   ) {}
 
   init(dashboard: DashboardModel) {
@@ -51,13 +53,12 @@ export class AnnotationsSrv {
         // combine the annotations and flatten results
         let annotations: AnnotationEvent[] = _.flattenDeep(results[0]);
 
-        // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
-          // if event has panel id and query is of type dashboard then panel and requesting panel id must match
-          if (item.panelId && item.source.type === 'dashboard') {
-            return item.panelId === options.panel.id;
-          }
-          return true;
+          return (
+            this.matchPanelId(item, options.panel.id) &&
+            (!options.panel.annotation ||
+              this.matchPanelAnnotationTags(item, options.panel.annotation.tags, options.panel.annotation.matchAny))
+          );
         });
 
         annotations = dedupAnnotations(annotations);
@@ -78,6 +79,20 @@ export class AnnotationsSrv {
         this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', err.message || err]);
         return [];
       });
+  }
+
+  /** if event has panel id and query is of type dashboard then panel and requesting panel id must match */
+  private matchPanelId(annotation: AnnotationEvent, panelId: number) {
+    return !annotation.panelId || annotation.source.type !== 'dashboard' || annotation.panelId === panelId;
+  }
+
+  private matchPanelAnnotationTags(annotation: AnnotationEvent, filterTags: string[], matchAny: boolean) {
+    if (!_.isArray(filterTags) || filterTags.length === 0) {
+      return true;
+    }
+    const tagRegexps = filterTags.map(t => new RegExp('^' + this.templateSrv.replace(t, {}, 'regex') + '$'));
+    const match = (regexp: RegExp) => annotation.tags && annotation.tags.some(t => regexp.test(t));
+    return matchAny ? tagRegexps.some(match) : tagRegexps.every(match);
   }
 
   getAlertStates(options: any) {
