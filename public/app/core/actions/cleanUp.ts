@@ -7,4 +7,4 @@ export interface CleanUp<T extends object> {
   stateSelector: StateSelector<T>;
 }
 
-export const cleanUpAction = actionCreatorFactory<CleanUp<any>>('CORE_CLEAN_UP_STATE').create();
+export const cleanUpAction = actionCreatorFactory<CleanUp<{}>>('CORE_CLEAN_UP_STATE').create();

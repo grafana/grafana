@@ -61,7 +61,7 @@ const recursiveCleanState = (state: any, stateSlice: any): boolean => {
 export function configureStore() {
   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
   const appReducer = combineReducers(rootReducers);
-  const rootReducer = (state: any, action: ActionOf<any>): StoreState => {
+  const rootReducer = (state: StoreState, action: ActionOf<any>): StoreState => {
     if (action.type !== cleanUpAction.type) {
       return appReducer(state, action);
     }
