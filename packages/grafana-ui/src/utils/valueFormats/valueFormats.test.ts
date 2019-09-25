@@ -1,6 +1,14 @@
 import { toFixed, getValueFormat } from './valueFormats';
 
 describe('valueFormats', () => {
+  describe('toFixed with edge cases', () => {
+    it('should handle non number input gracefully', () => {
+      expect(toFixed(NaN)).toBe('NaN');
+      expect(toFixed(Number.NEGATIVE_INFINITY)).toBe('-Inf');
+      expect(toFixed(Number.POSITIVE_INFINITY)).toBe('Inf');
+    });
+  });
+
   describe('toFixed and negative decimals', () => {
     it('should treat as zero decimals', () => {
       const str = toFixed(186.123, -2);
