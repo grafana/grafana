@@ -7,6 +7,8 @@ import PostgresQuery from './postgres_query';
 import sqlPart from './sql_part';
 import { auto, IQService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
+import { showConfirmModal } from '@grafana/data';
+import { dataReceived, dataError } from '@grafana/ui';
 
 export interface QueryMeta {
   sql: string;
@@ -99,8 +101,8 @@ export class PostgresQueryCtrl extends QueryCtrl {
     this.whereAdd = this.uiSegmentSrv.newPlusButton();
     this.groupAdd = this.uiSegmentSrv.newPlusButton();
 
-    this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
-    this.panelCtrl.events.on('data-error', this.onDataError.bind(this), $scope);
+    this.panelCtrl.events.on(dataReceived, this.onDataReceived.bind(this), $scope);
+    this.panelCtrl.events.on(dataError, this.onDataError.bind(this), $scope);
   }
 
   updateRawSqlAndRefresh() {
@@ -189,7 +191,7 @@ export class PostgresQueryCtrl extends QueryCtrl {
 
   toggleEditorMode() {
     if (this.target.rawQuery) {
-      appEvents.emit('confirm-modal', {
+      appEvents.emit(showConfirmModal, {
         title: 'Warning',
         text2: 'Switching to query builder may overwrite your raw SQL.',
         icon: 'fa-exclamation',

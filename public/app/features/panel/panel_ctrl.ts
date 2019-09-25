@@ -1,6 +1,13 @@
 import _ from 'lodash';
 import { sanitize, escapeHtml } from 'app/core/utils/text';
-import { renderMarkdown } from '@grafana/data';
+import {
+  renderMarkdown,
+  componentDidMount,
+  editModeInitialized,
+  initPanelActions,
+  panelChangeView,
+  AppEvent,
+} from '@grafana/data';
 
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
@@ -14,12 +21,14 @@ import {
   sharePanel as sharePanelUtil,
   calculateInnerPanelHeight,
 } from 'app/features/dashboard/utils/panel';
-
+import TimeSeries from 'app/core/time_series2';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { auto } from 'angular';
 import { TemplateSrv } from '../templating/template_srv';
 import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
+import TableModel from 'app/core/table_model';
+import { rendered } from 'app/types';
 
 export class PanelCtrl {
   panel: any;
@@ -41,6 +50,7 @@ export class PanelCtrl {
   timing: any;
   maxPanelsPerRowOptions: number[];
 
+  /** @ngInject */
   constructor($scope: any, $injector: auto.IInjectorService) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
@@ -56,11 +66,11 @@ export class PanelCtrl {
       this.pluginName = plugin.name;
     }
 
-    $scope.$on('component-did-mount', () => this.panelDidMount());
+    $scope.$on(componentDidMount.name, () => this.panelDidMount());
   }
 
   panelDidMount() {
-    this.events.emit('component-did-mount');
+    this.events.emit(componentDidMount);
     this.dashboard.panelInitialized(this.panel);
   }
 
@@ -72,12 +82,12 @@ export class PanelCtrl {
     this.panel.refresh();
   }
 
-  publishAppEvent(evtName: string, evt: any) {
-    this.$scope.$root.appEvent(evtName, evt);
+  publishAppEvent<T>(event: AppEvent<T>, payload?: T) {
+    this.$scope.$root.appEvent(event, payload);
   }
 
   changeView(fullscreen: boolean, edit: boolean) {
-    this.publishAppEvent('panel-change-view', {
+    this.publishAppEvent(panelChangeView, {
       fullscreen,
       edit,
       panelId: this.panel.id,
@@ -99,7 +109,7 @@ export class PanelCtrl {
   initEditMode() {
     if (!this.editModeInitiated) {
       this.editModeInitiated = true;
-      this.events.emit('init-edit-mode', null);
+      this.events.emit(editModeInitialized);
       this.maxPanelsPerRowOptions = getFactors(GRID_COLUMN_COUNT);
     }
   }
@@ -193,7 +203,7 @@ export class PanelCtrl {
       click: 'ctrl.editPanelJson(); dismiss();',
     });
 
-    this.events.emit('init-panel-actions', menu);
+    this.events.emit(initPanelActions, menu);
     return menu;
   }
 
@@ -211,8 +221,8 @@ export class PanelCtrl {
     this.height = calculateInnerPanelHeight(this.panel, containerHeight);
   }
 
-  render(payload?: any) {
-    this.events.emit('render', payload);
+  render(payload?: TableModel | TimeSeries[]) {
+    this.events.emit(rendered, payload);
   }
 
   duplicate() {

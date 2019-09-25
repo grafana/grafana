@@ -5,7 +5,7 @@ import { AlertRule } from '../../types';
 import appEvents from '../../core/app_events';
 import { mockActionCreator } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions';
-import { NavModel } from '@grafana/data';
+import { NavModel, showModal } from '@grafana/data';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
@@ -139,7 +139,7 @@ describe('Functions', () => {
 
       instance.onOpenHowTo();
 
-      expect(appEvents.emit).toHaveBeenCalledWith('show-modal', {
+      expect(appEvents.emit).toHaveBeenCalledWith(showModal, {
         src: 'public/app/features/alerting/partials/alert_howto.html',
         modalClass: 'confirm-modal',
         model: {},

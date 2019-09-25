@@ -2,6 +2,8 @@ import angular, { ILocationService } from 'angular';
 import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { ContextSrv } from 'app/core/services/context_srv';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { showModal, saveDashboard } from '@grafana/data';
 
 export class ChangeTracker {
   current: any;
@@ -20,7 +22,7 @@ export class ChangeTracker {
     $window: any,
     private $timeout: any,
     private contextSrv: ContextSrv,
-    private $rootScope: any
+    private $rootScope: GrafanaRootScope
   ) {
     this.$location = $location;
     this.$window = $window;
@@ -161,7 +163,7 @@ export class ChangeTracker {
   }
 
   open_modal() {
-    this.$rootScope.appEvent('show-modal', {
+    this.$rootScope.appEvent(showModal, {
       templateHtml: '<unsaved-changes-modal dismiss="dismiss()"></unsaved-changes-modal>',
       modalClass: 'modal--narrow confirm-modal',
     });
@@ -176,7 +178,7 @@ export class ChangeTracker {
       });
     });
 
-    this.$rootScope.appEvent('save-dashboard');
+    this.$rootScope.appEvent(saveDashboard);
   }
 
   gotoNext() {

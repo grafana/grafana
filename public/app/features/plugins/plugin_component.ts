@@ -7,12 +7,13 @@ import coreModule from 'app/core/core_module';
 import { DataSourceApi } from '@grafana/ui';
 import { importPanelPlugin, importDataSourcePlugin, importAppPlugin } from './plugin_loader';
 import DatasourceSrv from './datasource_srv';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 /** @ngInject */
 function pluginDirectiveLoader(
   $compile: any,
   datasourceSrv: DatasourceSrv,
-  $rootScope: any,
+  $rootScope: GrafanaRootScope,
   $q: IQService,
   $http: any,
   $templateCache: any,

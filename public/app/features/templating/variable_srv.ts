@@ -11,7 +11,7 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 // Types
-import { TimeRange } from '@grafana/data';
+import { TimeRange, timeRangeUpdated, templateVariableValueUpdated } from '@grafana/data';
 
 export class VariableSrv {
   dashboard: DashboardModel;
@@ -28,8 +28,8 @@ export class VariableSrv {
 
   init(dashboard: DashboardModel) {
     this.dashboard = dashboard;
-    this.dashboard.events.on('time-range-updated', this.onTimeRangeUpdated.bind(this));
-    this.dashboard.events.on('template-variable-value-updated', this.updateUrlParamsWithCurrentVariables.bind(this));
+    this.dashboard.events.on(timeRangeUpdated, this.onTimeRangeUpdated.bind(this));
+    this.dashboard.events.on(templateVariableValueUpdated, this.updateUrlParamsWithCurrentVariables.bind(this));
 
     // create working class models representing variables
     this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));

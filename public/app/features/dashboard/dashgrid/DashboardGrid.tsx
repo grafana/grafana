@@ -10,6 +10,8 @@ import sizeMe from 'react-sizeme';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
 import { DashboardModel, PanelModel } from '../state';
+import { repeatsProcessed, rowCollapsed, rowExpanded } from '@grafana/data';
+import { panelAdded, panelRemoved, viewModeChanged } from '../state/PanelModel';
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
@@ -93,22 +95,22 @@ export class DashboardGrid extends PureComponent<Props> {
 
   componentDidMount() {
     const { dashboard } = this.props;
-    dashboard.on('panel-added', this.triggerForceUpdate);
-    dashboard.on('panel-removed', this.triggerForceUpdate);
-    dashboard.on('repeats-processed', this.triggerForceUpdate);
-    dashboard.on('view-mode-changed', this.onViewModeChanged);
-    dashboard.on('row-collapsed', this.triggerForceUpdate);
-    dashboard.on('row-expanded', this.triggerForceUpdate);
+    dashboard.on(panelAdded, this.triggerForceUpdate);
+    dashboard.on(panelRemoved, this.triggerForceUpdate);
+    dashboard.on(repeatsProcessed, this.triggerForceUpdate);
+    dashboard.on(viewModeChanged, this.onViewModeChanged);
+    dashboard.on(rowCollapsed, this.triggerForceUpdate);
+    dashboard.on(rowExpanded, this.triggerForceUpdate);
   }
 
   componentWillUnmount() {
     const { dashboard } = this.props;
-    dashboard.off('panel-added', this.triggerForceUpdate);
-    dashboard.off('panel-removed', this.triggerForceUpdate);
-    dashboard.off('repeats-processed', this.triggerForceUpdate);
-    dashboard.off('view-mode-changed', this.onViewModeChanged);
-    dashboard.off('row-collapsed', this.triggerForceUpdate);
-    dashboard.off('row-expanded', this.triggerForceUpdate);
+    dashboard.off(panelAdded, this.triggerForceUpdate);
+    dashboard.off(panelRemoved, this.triggerForceUpdate);
+    dashboard.off(repeatsProcessed, this.triggerForceUpdate);
+    dashboard.off(viewModeChanged, this.onViewModeChanged);
+    dashboard.off(rowCollapsed, this.triggerForceUpdate);
+    dashboard.off(rowExpanded, this.triggerForceUpdate);
   }
 
   buildLayout() {

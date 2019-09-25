@@ -4,6 +4,7 @@ import AppNotificationItem from './AppNotificationItem';
 import { notifyApp, clearAppNotification } from 'app/core/actions';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { AppNotification, StoreState } from 'app/types';
+import { AlertPayload, alertWarning, alertSuccess, alertError } from '@grafana/data';
 import {
   createErrorNotification,
   createSuccessNotification,
@@ -20,9 +21,9 @@ export class AppNotificationList extends PureComponent<Props> {
   componentDidMount() {
     const { notifyApp } = this.props;
 
-    appEvents.on('alert-warning', (options: string[]) => notifyApp(createWarningNotification(options[0], options[1])));
-    appEvents.on('alert-success', (options: string[]) => notifyApp(createSuccessNotification(options[0], options[1])));
-    appEvents.on('alert-error', (options: string[]) => notifyApp(createErrorNotification(options[0], options[1])));
+    appEvents.on(alertWarning, (payload: AlertPayload) => notifyApp(createWarningNotification(payload[0], payload[1])));
+    appEvents.on(alertSuccess, (payload: AlertPayload) => notifyApp(createSuccessNotification(payload[0], payload[1])));
+    appEvents.on(alertError, (payload: AlertPayload) => notifyApp(createErrorNotification(payload[0], payload[1])));
   }
 
   onClearAppNotification = (id: number) => {

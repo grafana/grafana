@@ -1,19 +1,10 @@
 import _ from 'lodash';
+import { auto } from 'angular';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
 import 'app/features/panel/panellinks/link_srv';
-import {
-  convertOldAngulrValueMapping,
-  getColorFromHexRgbOrName,
-  getDisplayProcessor,
-  getFlotPairs,
-  LegacyResponseData,
-} from '@grafana/ui';
 
-import kbn from 'app/core/utils/kbn';
-import config from 'app/core/config';
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import {
   DataFrame,
   DisplayValue,
@@ -25,8 +16,24 @@ import {
   LinkModel,
   reduceField,
   ReducerID,
+  dataFramesReceived,
+  editModeInitialized,
 } from '@grafana/data';
-import { auto } from 'angular';
+
+import {
+  LegacyResponseData,
+  getFlotPairs,
+  getDisplayProcessor,
+  convertOldAngulrValueMapping,
+  getColorFromHexRgbOrName,
+  dataError,
+  dataSnapshotLoad,
+} from '@grafana/ui';
+
+import { rendered } from 'app/types';
+import kbn from 'app/core/utils/kbn';
+import config from 'app/core/config';
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
 
@@ -118,10 +125,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on('data-frames-received', this.onFramesReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onSnapshotLoad.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on(dataFramesReceived, this.onFramesReceived.bind(this));
+    this.events.on(dataError, this.onDataError.bind(this));
+    this.events.on(dataSnapshotLoad, this.onSnapshotLoad.bind(this));
+    this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
 
     this.useDataFrames = true;
 
@@ -658,7 +665,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     hookupDrilldownLinkTooltip();
 
-    this.events.on('render', () => {
+    this.events.on(rendered, () => {
       render();
       ctrl.renderingCompleted();
     });

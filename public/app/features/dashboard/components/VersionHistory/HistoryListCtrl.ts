@@ -4,7 +4,16 @@ import angular, { ILocationService, IQService } from 'angular';
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
 import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
-import { dateTime, toUtc, DateTimeInput } from '@grafana/data';
+import {
+  dateTime,
+  toUtc,
+  DateTimeInput,
+  hideDashEditor,
+  showConfirmModal,
+  alertSuccess,
+  dashboardSaved,
+} from '@grafana/data';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class HistoryListCtrl {
   appending: boolean;
@@ -25,7 +34,7 @@ export class HistoryListCtrl {
   /** @ngInject */
   constructor(
     private $route: any,
-    private $rootScope: any,
+    private $rootScope: GrafanaRootScope,
     private $location: ILocationService,
     private $q: IQService,
     private historySrv: HistorySrv,
@@ -40,7 +49,7 @@ export class HistoryListCtrl {
     this.start = 0;
     this.canCompare = false;
 
-    this.$rootScope.onAppEvent('dashboard-saved', this.onDashboardSaved.bind(this), $scope);
+    this.$rootScope.onAppEvent(dashboardSaved, this.onDashboardSaved.bind(this), $scope);
     this.resetFromSource();
   }
 
@@ -56,7 +65,7 @@ export class HistoryListCtrl {
   }
 
   dismiss() {
-    this.$rootScope.appEvent('hide-dash-editor');
+    this.$rootScope.appEvent(hideDashEditor);
   }
 
   addToLog() {
@@ -172,7 +181,7 @@ export class HistoryListCtrl {
   }
 
   restore(version: number) {
-    this.$rootScope.appEvent('confirm-modal', {
+    this.$rootScope.appEvent(showConfirmModal, {
       title: 'Restore version',
       text: '',
       text2: `Are you sure you want to restore the dashboard to version ${version}? All unsaved changes will be lost.`,
@@ -189,7 +198,7 @@ export class HistoryListCtrl {
       .then((response: any) => {
         this.$location.url(locationUtil.stripBaseFromUrl(response.url)).replace();
         this.$route.reload();
-        this.$rootScope.appEvent('alert-success', ['Dashboard restored', 'Restored from version ' + version]);
+        this.$rootScope.appEvent(alertSuccess, ['Dashboard restored', 'Restored from version ' + version]);
       })
       .catch(() => {
         this.mode = 'list';

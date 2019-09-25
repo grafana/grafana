@@ -3,6 +3,7 @@ import { PanelCtrl } from '../../../features/panel/panel_ctrl';
 import { auto } from 'angular';
 import { BackendSrv } from '@grafana/runtime';
 import { ContextSrv } from '../../../core/services/context_srv';
+import { editModeInitialized, showModal } from '@grafana/data';
 
 class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -22,7 +23,7 @@ class PluginListCtrl extends PanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
 
     this.isAdmin = contextSrv.hasRole('Admin');
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
     this.pluginList = [];
     this.viewModel = [
       { header: 'Installed Apps', list: [], type: 'app' },
@@ -51,7 +52,7 @@ class PluginListCtrl extends PanelCtrl {
     const modalScope = this.$scope.$new(true);
     modalScope.plugin = plugin;
 
-    this.publishAppEvent('show-modal', {
+    this.publishAppEvent(showModal, {
       src: 'public/app/features/plugins/partials/update_instructions.html',
       scope: modalScope,
     });

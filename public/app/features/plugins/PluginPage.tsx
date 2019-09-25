@@ -18,7 +18,7 @@ import {
   PluginType,
   Tooltip,
 } from '@grafana/ui';
-import { NavModel, NavModelItem } from '@grafana/data';
+import { NavModel, NavModelItem, showModal } from '@grafana/data';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
@@ -173,7 +173,7 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   showUpdateInfo = () => {
-    appEvents.emit('show-modal', {
+    appEvents.emit(showModal, {
       src: 'public/app/features/plugins/partials/update_instructions.html',
       model: this.state.plugin.meta,
     });

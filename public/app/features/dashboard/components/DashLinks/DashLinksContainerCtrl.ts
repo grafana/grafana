@@ -4,6 +4,8 @@ import { iconMap } from './DashLinksEditorCtrl';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
+import { clientRefreshed, dashLinksUpdated } from '@grafana/data';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export type DashboardLink = { tags: any; target: string; keepTime: any; includeVars: any };
 
@@ -84,7 +86,7 @@ function dashLink($compile: any, $sanitize: any, linkSrv: LinkSrv) {
       }
 
       update();
-      dashboard.events.on('refresh', update, scope);
+      dashboard.events.on(clientRefreshed, update, scope);
     },
   };
 }
@@ -93,7 +95,7 @@ export class DashLinksContainerCtrl {
   /** @ngInject */
   constructor(
     $scope: any,
-    $rootScope: any,
+    $rootScope: GrafanaRootScope,
     $q: IQService,
     backendSrv: BackendSrv,
     dashboardSrv: DashboardSrv,
@@ -184,7 +186,7 @@ export class DashLinksContainerCtrl {
     };
 
     updateDashLinks();
-    $rootScope.onAppEvent('dash-links-updated', updateDashLinks, $scope);
+    $rootScope.onAppEvent(dashLinksUpdated, updateDashLinks, $scope);
   }
 }
 

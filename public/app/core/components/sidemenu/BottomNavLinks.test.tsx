@@ -2,6 +2,7 @@ import React from 'react';
 import { shallow } from 'enzyme';
 import BottomNavLinks from './BottomNavLinks';
 import appEvents from '../../app_events';
+import { showModal } from '@grafana/data';
 
 jest.mock('../../app_events', () => ({
   emit: jest.fn(),
@@ -93,7 +94,7 @@ describe('Functions', () => {
       const instance = wrapper.instance() as BottomNavLinks;
       instance.itemClicked(mockEvent as any, child);
 
-      expect(appEvents.emit).toHaveBeenCalledWith('show-modal', { templateHtml: '<help-modal></help-modal>' });
+      expect(appEvents.emit).toHaveBeenCalledWith(showModal, { templateHtml: '<help-modal></help-modal>' });
     });
   });
 });

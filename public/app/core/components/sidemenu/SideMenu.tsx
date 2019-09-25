@@ -3,12 +3,13 @@ import appEvents from '../../app_events';
 import TopSection from './TopSection';
 import BottomSection from './BottomSection';
 import config from 'app/core/config';
+import { toggleSidemenuMobile } from '@grafana/data';
 
 const homeUrl = config.appSubUrl || '/';
 
 export class SideMenu extends PureComponent {
   toggleSideMenuSmallBreakpoint = () => {
-    appEvents.emit('toggle-sidemenu-mobile');
+    appEvents.emit(toggleSidemenuMobile);
   };
 
   render() {

@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { renderMarkdown } from '@grafana/data';
+import { renderMarkdown, showConfirmModal } from '@grafana/data';
 import Page from 'app/core/components/Page/Page';
 import UsersActionBar from './UsersActionBar';
 import UsersTable from './UsersTable';
@@ -66,7 +66,7 @@ export class UsersListPage extends PureComponent<Props, State> {
   };
 
   onRemoveUser = (user: OrgUser) => {
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(showConfirmModal, {
       title: 'Delete',
       text: 'Are you sure you want to delete user ' + user.login + '?',
       yesText: 'Delete',
