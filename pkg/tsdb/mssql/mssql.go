@@ -38,11 +38,11 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 	}
 
-	rowTransformer := mssqlRowTransformer{
+	queryResultTransformer := mssqlQueryResultTransformer{
 		log: logger,
 	}
 
-	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
+	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 }
 
 func generateConnectionString(datasource *models.DataSource) (string, error) {
@@ -62,11 +62,11 @@ func generateConnectionString(datasource *models.DataSource) (string, error) {
 	return connStr, nil
 }
 
-type mssqlRowTransformer struct {
+type mssqlQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *mssqlRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 
@@ -99,4 +99,8 @@ func (t *mssqlRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *cor
 	}
 
 	return values, nil
+}
+
+func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
+	return err
 }

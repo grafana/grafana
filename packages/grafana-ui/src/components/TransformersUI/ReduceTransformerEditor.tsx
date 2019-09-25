@@ -11,7 +11,7 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
 }) => {
   return (
     <StatsPicker
-      width={12}
+      width={25}
       placeholder="Choose Stat"
       allowMultiple
       stats={options.reducers || []}

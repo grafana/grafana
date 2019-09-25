@@ -10,7 +10,7 @@ import {
   refreshIntervalToSortOrder,
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
-import { LoadingState, toLegacyResponseData } from '@grafana/data';
+import { LoadingState, toLegacyResponseData, DefaultTimeRange } from '@grafana/data';
 import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
 import {
   HigherOrderAction,
@@ -121,6 +121,7 @@ export const createEmptyQueryResponse = (): PanelData => ({
   request: {} as DataQueryRequest<DataQuery>,
   series: [],
   error: null,
+  timeRange: DefaultTimeRange,
 });
 
 /**

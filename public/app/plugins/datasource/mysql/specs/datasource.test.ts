@@ -2,13 +2,12 @@ import { MysqlDatasource } from '../datasource';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 import { toUtc, dateTime } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('MySQLDatasource', () => {
   const instanceSettings = { name: 'mysql' };
   const backendSrv = {};
-  const templateSrv: any = {
-    replace: jest.fn(text => text),
-  };
+  const templateSrv: TemplateSrv = new TemplateSrv();
 
   const raw = {
     from: toUtc('2018-04-25 10:00'),
@@ -238,6 +237,55 @@ describe('MySQLDatasource', () => {
         ctx.variable.includeAll = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
+    });
+  });
+
+  describe('targetContainsTemplate', () => {
+    it('given query that contains template variable it should return true', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$summarize') as time_sec,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count' AND
+      hostname IN($host)
+    GROUP BY 1, 3
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+        rawQuery: true,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeTruthy();
+    });
+
+    it('given query that only contains global template variable it should return false', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$__interval') as time_sec,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count'
+    GROUP BY 1, 3
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+        rawQuery: true,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });
 });

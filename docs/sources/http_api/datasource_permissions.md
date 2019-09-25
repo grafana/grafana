@@ -1,6 +1,6 @@
 +++
 title = "Datasource Permissions HTTP API "
-description = "Grafana Datasource Permissions HTTP API"
+description = "Data Source Permissions API"
 keywords = ["grafana", "http", "documentation", "api", "datasource", "permission", "permissions", "acl", "enterprise"]
 aliases = ["/http_api/datasourcepermissions/"]
 type = "docs"
@@ -27,7 +27,7 @@ The permission levels for the permission field:
 
 Enables permissions for the data source with the given `id`. No one except Org Admins will be able to query the data source until permissions have been added which permit certain users or teams to query the data source.
 
-**Example request**:
+**Example request:**
 
 ```http
 POST /api/datasources/1/enable-permissions
@@ -38,7 +38,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {}
 ```
 
-**Example response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -48,7 +48,7 @@ Content-Length: 35
 {"message":"Datasource permissions enabled"}
 ```
 
-Status Codes:
+Status codes:
 
 - **200** - Ok
 - **400** - Permissions cannot be enabled, see response body for details
@@ -62,7 +62,7 @@ Status Codes:
 
 Disables permissions for the data source with the given `id`. All existing permissions will be removed and anyone will be able to query the data source.
 
-**Example request**:
+**Example request:**
 
 ```http
 POST /api/datasources/1/disable-permissions
@@ -73,7 +73,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 {}
 ```
 
-**Example response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -83,7 +83,7 @@ Content-Length: 35
 {"message":"Datasource permissions disabled"}
 ```
 
-Status Codes:
+Status codes:
 
 - **200** - Ok
 - **400** - Permissions cannot be disabled, see response body for details
@@ -97,7 +97,7 @@ Status Codes:
 
 Gets all existing permissions for the data source with the given `id`.
 
-**Example request**:
+**Example request:**
 
 ```http
 GET /api/datasources/1/permissions HTTP/1.1
@@ -106,7 +106,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example Response**
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -145,7 +145,7 @@ Content-Length: 551
 }
 ```
 
-Status Codes:
+Status codes:
 
 - **200** - Ok
 - **401** - Unauthorized
@@ -158,7 +158,7 @@ Status Codes:
 
 Adds a user permission for the data source with the given `id`.
 
-**Example request**:
+**Example request:**
 
 ```http
 POST /api/datasources/1/permissions
@@ -172,7 +172,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-**Example response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -184,7 +184,7 @@ Content-Length: 35
 
 Adds a team permission for the data source with the given `id`.
 
-**Example request**:
+**Example request:**
 
 ```http
 POST /api/datasources/1/permissions
@@ -198,7 +198,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-**Example response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -208,7 +208,7 @@ Content-Length: 35
 {"message":"Datasource permission added"}
 ```
 
-Status Codes:
+Status codes:
 
 - **200** - Ok
 - **400** - Permission cannot be added, see response body for details
@@ -222,7 +222,7 @@ Status Codes:
 
 Removes the permission with the given `permissionId` for the data source with the given `id`.
 
-**Example request**:
+**Example request:**
 
 ```http
 DELETE /api/datasources/1/permissions/2
@@ -231,7 +231,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example response**:
+**Example response:**
 
 ```http
 HTTP/1.1 200 OK
@@ -241,7 +241,7 @@ Content-Length: 35
 {"message":"Datasource permission removed"}
 ```
 
-Status Codes:
+Status codes:
 
 - **200** - Ok
 - **401** - Unauthorized

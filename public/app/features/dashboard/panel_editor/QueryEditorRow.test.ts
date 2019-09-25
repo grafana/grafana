@@ -1,4 +1,4 @@
-import { LoadingState, toDataFrame } from '@grafana/data';
+import { LoadingState, toDataFrame, dateTime } from '@grafana/data';
 import { PanelData, DataQueryRequest } from '@grafana/ui';
 import { filterPanelDataToQuery } from './QueryEditorRow';
 
@@ -28,6 +28,7 @@ describe('filterPanelDataToQuery', () => {
       makePretendRequest('sub2'),
       makePretendRequest('sub3'),
     ]),
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
   };
 
   it('should not have an error unless the refId matches', () => {

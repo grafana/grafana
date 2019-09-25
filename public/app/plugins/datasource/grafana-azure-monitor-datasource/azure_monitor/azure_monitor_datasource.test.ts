@@ -918,8 +918,8 @@ describe('AzureMonitorDatasource', () => {
           'nodeapp',
           'microsoft.insights/components',
           'resource1',
-          'UsedCapacity',
-          'default'
+          'default',
+          'UsedCapacity'
         )
         .then((results: any) => {
           expect(results.primaryAggType).toEqual('Total');
@@ -992,8 +992,8 @@ describe('AzureMonitorDatasource', () => {
           'nodeapp',
           'microsoft.insights/components',
           'resource1',
-          'Transactions',
-          'default'
+          'default',
+          'Transactions'
         )
         .then((results: any) => {
           expect(results.dimensions.length).toEqual(4);
@@ -1011,8 +1011,8 @@ describe('AzureMonitorDatasource', () => {
           'nodeapp',
           'microsoft.insights/components',
           'resource1',
-          'FreeCapacity',
-          'default'
+          'default',
+          'FreeCapacity'
         )
         .then((results: any) => {
           expect(results.dimensions.length).toEqual(0);
