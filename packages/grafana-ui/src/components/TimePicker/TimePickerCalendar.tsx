@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import Calendar from 'react-calendar/dist/entry.nostyle';
-import { TimeFragment, TimeZone, TIME_FORMAT } from '@grafana/data';
+import { TimeFragment, TimeZone, TIME_FORMAT, isDateTime } from '@grafana/data';
 import { DateTime, dateTime, toUtc } from '@grafana/data';
 import { stringToDateTimeType } from './time';
 
@@ -37,8 +37,13 @@ export class TimePickerCalendar extends PureComponent<Props> {
   };
 
   render() {
-    const { value, roundup, timeZone } = this.props;
-    let date = stringToDateTimeType(value, roundup, timeZone);
+    const { value, roundup } = this.props;
+    let formatValue = value;
+    if (isDateTime(value)) {
+      formatValue = value.format(TIME_FORMAT);
+    }
+
+    let date = stringToDateTimeType(formatValue, roundup);
 
     if (!date.isValid()) {
       date = dateTime();
