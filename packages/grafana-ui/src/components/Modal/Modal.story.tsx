@@ -3,7 +3,7 @@ import { storiesOf } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Modal } from './Modal';
 
-const RefreshSelectStories = storiesOf('UI/Modal', module);
+const ModalStories = storiesOf('UI/Modal', module);
 
 RefreshSelectStories.addDecorator(withCenteredStory);
 
