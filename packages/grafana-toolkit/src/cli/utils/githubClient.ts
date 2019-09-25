@@ -1,6 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
 const baseURL = 'https://api.github.com/repos/grafana/grafana';
+const enterpriseURL = 'https://api.github.com/repos/grafana/grafana-enterprise';
 
 // Encapsulates the creation of a client for the Github API
 //
@@ -13,12 +14,12 @@ const baseURL = 'https://api.github.com/repos/grafana/grafana';
 class GithubClient {
   client: AxiosInstance;
 
-  constructor(required = false) {
+  constructor(enterprise = false, required = false) {
     const username = process.env.GITHUB_USERNAME;
     const token = process.env.GITHUB_ACCESS_TOKEN;
 
     const clientConfig: AxiosRequestConfig = {
-      baseURL: baseURL,
+      baseURL: enterprise ? enterpriseURL : baseURL,
       timeout: 10000,
     };
 
