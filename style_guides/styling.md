@@ -11,7 +11,7 @@
 For styling components use Emotion's `css` function
 
 ```tsx
-import { css }  from 'emotion
+import { css }  from 'emotion';
 
 
 const ComponentA = () => {
@@ -28,7 +28,7 @@ const ComponentA = () => {
 In more complex cases, especially when you need to style multiple DOM elements in one component or when your styles that depend on properties and/or state, you should create a helper function that returns an object with desired stylesheet. Let's say you need to style a component that has different background depending on the theme:
 
 ```tsx
-import { css, cx }  from 'emotion
+import { css, cx }  from 'emotion';
 import { GrafanaTheme, useTheme, selectThemeVariant } from '@grafana/ui';
 
 const getStyles = (theme: GrafanaTheme) => {
@@ -62,7 +62,7 @@ For more information about themes at Grafana please see [themes guide](./themes.
 For class composition use Emotion's `cx` function
 
 ```tsx
-import { css, cx }  from 'emotion
+import { css, cx }  from 'emotion';
 
 
 interface Props {
