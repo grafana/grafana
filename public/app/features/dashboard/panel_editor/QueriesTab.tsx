@@ -30,10 +30,11 @@ import { LoadingState, DataTransformerConfig, DefaultTimeRange, SelectableValue 
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
-import { isMultiResolutionQuery } from 'app/plugins/datasource/multi-resolution/MultiDataSource';
+import { isMultiResolutionQuery } from 'app/plugins/datasource/multi/MultiDataSource';
 import { addQuery } from 'app/core/utils/query';
-import { MultiQueryEditor, getMultiResolutionQuery } from 'app/plugins/datasource/multi-resolution/MultiQueryEditor';
-import { ResolutionSelection } from 'app/plugins/datasource/multi-resolution/types';
+import { MultiQueryEditor } from 'app/plugins/datasource/multi/MultiQueryEditor';
+import { getMultiResolutionQuery } from 'app/plugins/datasource/multi/MultiDataSource';
+import { ResolutionSelection } from 'app/plugins/datasource/multi/types';
 
 interface Props {
   panel: PanelModel;
@@ -94,21 +95,36 @@ export class QueriesTab extends PureComponent<Props, State> {
     return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
   }
 
-  onChangeDataSource = (datasource: any) => {
+  onChangeDataSource = (datasource: DataSourceSelectItem) => {
     const { panel } = this.props;
     const { currentDS } = this.state;
 
-    // switching to mixed
+    // switching to mixed|multi
     if (datasource.meta.mixed) {
+      // Add the datasource to everything
       panel.targets.forEach(target => {
         target.datasource = panel.datasource;
         if (!target.datasource) {
           target.datasource = config.defaultDatasource;
         }
       });
+
+      // Move the queries under the first value
+      if (isMultiResolutionQuery(datasource.name)) {
+        const q = getMultiResolutionQuery([]);
+        q.resolutions[0].targets = panel.targets;
+        panel.targets = [q];
+      }
     } else if (currentDS) {
-      // if switching from mixed
+      // if switching from mixed|multi
       if (currentDS.meta.mixed) {
+        // Use targets from the first resolution
+        if (isMultiResolutionQuery(currentDS.name)) {
+          const q = getMultiResolutionQuery(panel.targets);
+          panel.targets = q.resolutions[0].targets;
+        }
+
+        // Remove the datasource description
         for (const target of panel.targets) {
           delete target.datasource;
         }
@@ -181,16 +197,34 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderMultiPicker = () => {
+    const { panel } = this.props;
     const s0 = { value: ResolutionSelection.interval, label: 'Interval', description: 'Select queries by interval' };
     const s1 = { value: ResolutionSelection.range, label: 'Range', description: 'Select queries based on range' };
 
-    const q = getMultiResolutionQuery(this.props.panel.targets);
-    const v = q.select === s0.value ? s0 : s1;
+    const q = getMultiResolutionQuery(panel.targets);
+    const isInterval = q.select === s0.value;
+
+    let time = '';
+    const last = panel.getQueryRunner().lastRequest;
+    if (last) {
+      if (isInterval) {
+        time = last.interval;
+      } else if (last.range) {
+        const ms = last.range.to.valueOf() - last.range.from.valueOf();
+        time = ms / 1000.0 + 's';
+      }
+    }
 
     return (
-      <div>
-        <Select options={[s0, s1]} value={v} onChange={this.onSelectResolutionType} />
-      </div>
+      <>
+        <div className="gf-form-inline">
+          <Select options={[s0, s1]} value={isInterval ? s0 : s1} onChange={this.onSelectResolutionType} />
+        </div>
+        <div className="gf-form-inline">
+          &nbsp;&nbsp;
+          {time}
+        </div>
+      </>
     );
   };
 

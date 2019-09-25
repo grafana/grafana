@@ -1,13 +1,13 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import defaults from 'lodash/defaults';
 
 // Types
-import { PanelData, Button, DataQuery } from '@grafana/ui';
+import { PanelData, Button } from '@grafana/ui';
 import { MultiResolutionQuery, ResolutionSelection, QueriesForResolution } from './types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { SelectableValue } from '@grafana/data';
 import { MultiQueryRow } from './MultiQueryRow';
+import { getMultiResolutionQuery } from './MultiDataSource';
 
 interface Props {
   panel: PanelModel;
@@ -18,26 +18,6 @@ interface Props {
 }
 
 type State = {};
-
-export function getMultiResolutionQuery(queries: DataQuery[]): MultiResolutionQuery {
-  const q: MultiResolutionQuery = defaults(queries ? queries[0] : {}, {
-    refId: 'X', // Not really used
-    select: ResolutionSelection.range,
-    resolutions: [],
-  }) as MultiResolutionQuery;
-
-  // Make sure it has something
-  if (!(q.resolutions && q.resolutions.length)) {
-    q.resolutions = [
-      {
-        ms: Number.NEGATIVE_INFINITY,
-        targets: [{ refId: 'A' }],
-      },
-    ];
-  }
-
-  return q;
-}
 
 export class MultiQueryEditor extends PureComponent<Props, State> {
   constructor(props: Props) {

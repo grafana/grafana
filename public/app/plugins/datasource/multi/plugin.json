@@ -1,7 +1,7 @@
 {
   "type": "datasource",
-  "name": "-- Multi Resolution --",
-  "id": "multi-resolution",
+  "name": "-- From Time --",
+  "id": "multi",
 
   "builtIn": true,
   "metrics": true,

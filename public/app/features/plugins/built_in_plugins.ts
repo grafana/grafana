@@ -16,7 +16,7 @@ const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const multiPlugin = async () =>
-  await import(/* webpackChunkName: "multiPlugin" */ 'app/plugins/datasource/multi-resolution/module');
+  await import(/* webpackChunkName: "multiPlugin" */ 'app/plugins/datasource/multi/module');
 const mysqlPlugin = async () =>
   await import(/* webpackChunkName: "mysqlPlugin" */ 'app/plugins/datasource/mysql/module');
 const postgresPlugin = async () =>
@@ -65,7 +65,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/influxdb/module': influxdbPlugin,
   'app/plugins/datasource/loki/module': lokiPlugin,
   'app/plugins/datasource/mixed/module': mixedPlugin,
-  'app/plugins/datasource/multi-resolution/module': multiPlugin,
+  'app/plugins/datasource/multi/module': multiPlugin,
   'app/plugins/datasource/mysql/module': mysqlPlugin,
   'app/plugins/datasource/postgres/module': postgresPlugin,
   'app/plugins/datasource/mssql/module': mssqlPlugin,
