@@ -18,7 +18,7 @@ interface ObjectType extends Object {
   [key: string]: any;
 }
 
-const deepFreeze = <T>(obj: T): T => {
+export const deepFreeze = <T>(obj: T): T => {
   Object.freeze(obj);
 
   const isNotException = (object: any, propertyName: any) =>
