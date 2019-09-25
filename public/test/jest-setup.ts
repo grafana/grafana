@@ -41,8 +41,4 @@ const localStorageMock = (() => {
 
 global.localStorage = localStorageMock;
 
-HTMLCanvasElement.prototype.getContext = () => {
-  return jest.fn();
-};
-
-// Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+HTMLCanvasElement.prototype.getContext = jest.fn() as any;
