@@ -27,13 +27,16 @@ func init() {
         <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty Integration Key"></input>
       </div>
       <div class="gf-form">
-	    <span class="gf-form-label width-10">Severity</span>
+        <span class="gf-form-label width-10">Severity</span>
         <div class="gf-form-select-wrapper width-14">
-          <select class="gf-form-input"
-		     ng-model="ctrl.model.settings.severity"
-			 ng-options="t for t in ['critical', 'error', 'warning', 'info']">
+          <select
+            class="gf-form-input"
+            ng-model="ctrl.model.settings.severity"
+            ng-options="s for s in ['critical', 'error', 'warning', 'info']">
           </select>
         </div>
+      </div>
+      <div class="gf-form">
         <gf-form-switch
            class="gf-form"
            label="Auto resolve incidents"
