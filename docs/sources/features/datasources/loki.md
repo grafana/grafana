@@ -38,9 +38,7 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 ## Querying Logs
 
-Querying and displaying log data from Loki is available via [Explore](/features/explore) and with
-[Table panel](/features/panels/table_panel/) in dashboards.
-Select the Loki data source, and then enter a log query to display your logs.
+Querying and displaying log data from Loki is available via [Explore](/features/explore), and with [Table panel](/features/panels/table_panel/) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
 
 ### Log Queries
 
@@ -91,23 +89,24 @@ Example queries:
 * `{name="kafka"} |~ tsdb-ops.*io:2003`
 * `{instance=~"kafka-[23]",name="kafka"} != kafka.server:type=ReplicaManager`
 
-Filter operators can be chained and will sequentially filter down the expression - resulting log lines will satisfy every filter. Eg:
+Filter operators can be chained and will sequentially filter down the expression. The resulting log lines will satisfy every filter.
+
+**Example**
 
 `{job="mysql"} |= "error" != "timeout"`
 
 The following filter types are currently supported:
 
 * `|=` line contains string.
-* `!=` line does not contain string.
+* `!=` line doesn't contain string.
 * `|~` line matches regular expression.
 * `!~` line does not match regular expression.
 
-> Note: For more details about LogQL, Loki's query language, see it's [documentation](https://github.com/grafana/loki/blob/master/docs/querying.md)
+> Note: For more details about LogQL, Loki's query language, refer to the [documentation](https://github.com/grafana/loki/blob/master/docs/querying.md)
 
-## Live Tailing
+## Live tailing
 
-Loki supports Live tailing which displays logs in real time. This feature is supported in [Explore](/features/explore/#loki-specific-features)
-and in dashboards with a Live toggle in the query editor.
+Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore](/features/explore/#loki-specific-features) and in dashboards with a Live toggle in the query editor.
 
 Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly.
 
@@ -124,14 +123,13 @@ log message you're interested in.
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
+Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
 
 Checkout the [Templating](/reference/templating) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Annotations
 
-You can use any non metric Loki query as a source of annotations. Log content will be used annotation text so
-there is no need for additional mapping.
+You can use any non-metric Loki query as a source for annotations. Log content will be used as annotation text, so there is no need for additional mapping.
 
 > Note: Annotations for Loki are only available in Grafana v6.4+
 
