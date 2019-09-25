@@ -1,7 +1,7 @@
 // Libraries
 import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
-// @ts-ignore
+import { css } from 'emotion';
 import { connect } from 'react-redux';
 import { AutoSizer } from 'react-virtualized';
 import memoizeOne from 'memoize-one';
@@ -51,6 +51,16 @@ import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
 import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
+
+const getStyles = memoizeOne(() => {
+  return {
+    logsMain: css`
+      label: logsMain;
+      // Is needed for some transition animations to work.
+      position: relative;
+    `,
+  };
+});
 
 interface ExploreProps {
   StartPage?: ComponentClass<ExploreStartPageProps>;
@@ -257,6 +267,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
       queryResponse,
     } = this.props;
     const exploreClass = split ? 'explore explore-split' : 'explore';
+    const styles = getStyles();
 
     return (
       <div className={exploreClass} ref={this.getRef}>
@@ -268,7 +279,8 @@ export class Explore extends React.PureComponent<ExploreProps> {
           <div className="explore-container">
             <Alert
               title={`Error connecting to datasource: ${datasourceError}`}
-              button={{ text: 'Reconnect', onClick: this.onReconnect }}
+              buttonText={'Reconnect'}
+              onButtonClick={this.onReconnect}
             />
           </div>
         </FadeIn>
@@ -284,9 +296,13 @@ export class Explore extends React.PureComponent<ExploreProps> {
                 }
 
                 return (
-                  <main className="m-t-2" style={{ width }}>
+                  <main className={`m-t-2 ${styles.logsMain}`} style={{ width }}>
                     <ErrorBoundaryAlert>
-                      {showingStartPage && <StartPage onClickExample={this.onClickExample} />}
+                      {showingStartPage && (
+                        <div className="grafana-info-box grafana-info-box--max-lg">
+                          <StartPage onClickExample={this.onClickExample} datasource={datasourceInstance} />
+                        </div>
+                      )}
                       {!showingStartPage && (
                         <>
                           {mode === ExploreMode.Metrics && (
@@ -335,7 +351,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
 const ensureQueriesMemoized = memoizeOne(ensureQueries);
 const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
-function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
+function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
   const explore = state.explore;
   const { split } = explore;
   const item: ExploreItemState = explore[exploreId];
@@ -413,7 +429,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   };
 }
 
-const mapDispatchToProps = {
+const mapDispatchToProps: Partial<ExploreProps> = {
   changeSize,
   initializeExplore,
   modifyQueries,
@@ -427,6 +443,7 @@ const mapDispatchToProps = {
 };
 
 export default hot(module)(
+  // @ts-ignore
   connect(
     mapStateToProps,
     mapDispatchToProps

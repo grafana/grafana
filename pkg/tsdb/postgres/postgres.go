@@ -33,13 +33,13 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
 	}
 
-	rowTransformer := postgresRowTransformer{
+	queryResultTransformer := postgresQueryResultTransformer{
 		log: logger,
 	}
 
 	timescaledb := datasource.JsonData.Get("timescaledb").MustBool(false)
 
-	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newPostgresMacroEngine(timescaledb), logger)
+	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newPostgresMacroEngine(timescaledb), logger)
 }
 
 func generateConnectionString(datasource *models.DataSource) string {
@@ -54,11 +54,11 @@ func generateConnectionString(datasource *models.DataSource) string {
 	return u.String()
 }
 
-type postgresRowTransformer struct {
+type postgresQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *postgresRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 
@@ -92,4 +92,8 @@ func (t *postgresRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *
 	}
 
 	return values, nil
+}
+
+func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {
+	return err
 }

@@ -4,10 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/ldap.v3"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestPublicAPI(t *testing.T) {
@@ -22,6 +21,34 @@ func TestPublicAPI(t *testing.T) {
 		})
 	})
 
+	Convey("Close()", t, func() {
+		Convey("Should close the connection", func() {
+			connection := &MockConnection{}
+
+			server := &Server{
+				Config: &ServerConfig{
+					Attr:          AttributeMap{},
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: connection,
+			}
+
+			So(server.Close, ShouldNotPanic)
+			So(connection.CloseCalled, ShouldBeTrue)
+		})
+
+		Convey("Should panic if no connection is established", func() {
+			server := &Server{
+				Config: &ServerConfig{
+					Attr:          AttributeMap{},
+					SearchBaseDNs: []string{"BaseDNHere"},
+				},
+				Connection: nil,
+			}
+
+			So(server.Close, ShouldPanic)
+		})
+	})
 	Convey("Users()", t, func() {
 		Convey("Finds one user", func() {
 			MockConnection := &MockConnection{}

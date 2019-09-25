@@ -2,11 +2,9 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { actionCreatorFactory, noPayloadActionCreatorFactory } from 'app/core/redux';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
-
 // Actions
 import { loadPluginDashboards } from '../../plugins/state/actions';
 import { notifyApp } from 'app/core/actions';
-
 // Types
 import {
   ThunkResult,

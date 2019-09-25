@@ -138,7 +138,7 @@ class LiveLogs extends PureComponent<Props, State> {
     const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
     return (
-      <>
+      <div>
         <div
           onScroll={isPaused ? undefined : this.onScroll}
           className={cx(['logs-rows', styles.logsRowsLive])}
@@ -188,7 +188,7 @@ class LiveLogs extends PureComponent<Props, State> {
             </span>
           )}
         </div>
-      </>
+      </div>
     );
   }
 }

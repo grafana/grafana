@@ -247,7 +247,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       hasUniqueLabels = true;
     }
 
-    const timeFieldIndex = fieldCache.getFirstFieldOfType(FieldType.time);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
     const labelsField = fieldCache.getFieldByName('labels');
@@ -261,7 +261,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
       // labelsField can be undefined because there is a slight difference between how live stream and normal
       // dataFrame looks like. See Loki datasource.runLiveQueries.
       const rowLabelsString = labelsField ? labelsToString(labelsField.values.get(j)) : '';
-      const ts = timeFieldIndex.values.get(j);
+      const ts = timeField.values.get(j);
       const time = dateTime(ts);
       const timeEpochMs = time.valueOf();
       const timeFromNow = time.fromNow();

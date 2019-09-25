@@ -2,11 +2,9 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Unsubscribable } from 'rxjs';
-
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { ErrorBoundary } from '@grafana/ui';
-
+import { ErrorBoundary, PanelData, PanelPlugin } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
@@ -14,11 +12,9 @@ import { profiler } from 'app/core/profiler';
 import { getProcessedDataFrames } from '../state/runRequest';
 import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
-
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { PanelData, PanelPlugin } from '@grafana/ui';
-import { LoadingState, ScopedVars } from '@grafana/data';
+import { LoadingState, ScopedVars, AbsoluteTimeRange, toUtc, toDataFrameDTO } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -133,7 +129,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (data.state === LoadingState.Done) {
         // If we are doing a snapshot save data in panel model
         if (this.props.dashboard.snapshot) {
-          this.props.panel.snapshotData = data.series;
+          this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
         }
         if (isFirstLoad) {
           isFirstLoad = false;
@@ -219,6 +215,13 @@ export class PanelChrome extends PureComponent<Props, State> {
     return !(this.props.plugin.meta.skipDataQuery || this.hasPanelSnapshot);
   }
 
+  onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
+    this.timeSrv.setTime({
+      from: toUtc(timeRange.from),
+      to: toUtc(timeRange.to),
+    });
+  };
+
   renderPanel(width: number, height: number): JSX.Element {
     const { panel, plugin } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
@@ -255,6 +258,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             renderCounter={renderCounter}
             replaceVariables={this.replaceVariables}
             onOptionsChange={this.onOptionsChange}
+            onChangeTimeRange={this.onChangeTimeRange}
           />
         </div>
       </>

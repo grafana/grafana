@@ -19,6 +19,10 @@ function getPluginStateInfoText(state?: PluginState): string | null {
 const PluginStateinfo: FC<Props> = props => {
   const text = getPluginStateInfoText(props.state);
 
+  if (!text) {
+    return null;
+  }
+
   return (
     <AlphaNotice
       state={props.state}

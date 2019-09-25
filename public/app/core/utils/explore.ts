@@ -13,21 +13,16 @@ import {
   LogRowModel,
   LogsModel,
   LogsDedupStrategy,
+  IntervalValues,
   DefaultTimeZone,
 } from '@grafana/data';
 import { renderUrl } from 'app/core/utils/url';
 import store from 'app/core/store';
+import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
 // Types
 import { DataQuery, DataSourceApi, DataQueryError, DataQueryRequest, PanelModel } from '@grafana/ui';
-import {
-  ExploreUrlState,
-  HistoryItem,
-  QueryTransaction,
-  QueryIntervals,
-  QueryOptions,
-  ExploreMode,
-} from 'app/types/explore';
+import { ExploreUrlState, HistoryItem, QueryTransaction, QueryOptions, ExploreMode } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -103,16 +98,15 @@ export function buildQueryTransaction(
   queries: DataQuery[],
   queryOptions: QueryOptions,
   range: TimeRange,
-  queryIntervals: QueryIntervals,
   scanning: boolean
 ): QueryTransaction {
-  const { interval, intervalMs } = queryIntervals;
-
   const configuredQueries = queries.map(query => ({ ...query, ...queryOptions }));
   const key = queries.reduce((combinedKey, query) => {
     combinedKey += query.key;
     return combinedKey;
   }, '');
+
+  const { interval, intervalMs } = getIntervals(range, queryOptions.minInterval, queryOptions.maxDataPoints);
 
   // Most datasource is using `panelId + query.refId` for cancellation logic.
   // Using `format` here because it relates to the view panel that the request is for.
@@ -518,3 +512,11 @@ export const stopQueryState = (querySubscription: Unsubscribable) => {
     querySubscription.unsubscribe();
   }
 };
+
+export function getIntervals(range: TimeRange, lowLimit: string, resolution: number): IntervalValues {
+  if (!resolution) {
+    return { interval: '1s', intervalMs: 1000 };
+  }
+
+  return kbn.calculateInterval(range, resolution, lowLimit);
+}

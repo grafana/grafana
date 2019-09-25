@@ -437,7 +437,6 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
       datasourceError,
       containerWidth,
       isLive: live,
-      queryIntervals,
       range,
       scanning,
       queryResponse,
@@ -461,22 +460,22 @@ export function runQueries(exploreId: ExploreId): ThunkResult<void> {
 
     // Some datasource's query builders allow per-query interval limits,
     // but we're using the datasource interval limit for now
-    const interval = datasourceInstance.interval;
+    const minInterval = datasourceInstance.interval;
 
     stopQueryState(querySubscription);
 
     const queryOptions = {
-      interval,
-      // This is used for logs streaming for buffer size.
-      // TODO: not sure if this makes sense for normal query when using both graph and table
-      maxDataPoints: mode === ExploreMode.Logs ? 1000 : containerWidth,
+      minInterval,
+      // This is used for logs streaming for buffer size, with undefined it falls back to datasource config if it
+      // supports that.
+      maxDataPoints: mode === ExploreMode.Logs ? undefined : containerWidth,
       live,
       showingGraph,
       showingTable,
     };
 
     const datasourceId = datasourceInstance.meta.id;
-    const transaction = buildQueryTransaction(queries, queryOptions, range, queryIntervals, scanning);
+    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning);
 
     let firstResponse = true;
 

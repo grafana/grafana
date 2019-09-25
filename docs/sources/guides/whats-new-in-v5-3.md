@@ -14,7 +14,7 @@ weight = -9
 
 Grafana v5.3 brings new features, many enhancements and bug fixes. This article will detail the major new features and enhancements.
 
-- [Google Stackdriver]({{< relref "#google-stackdriver" >}}) as a core datasource!
+- [Google Stackdriver]({{< relref "#google-stackdriver" >}}) as a core data source!
 - [TV mode]({{< relref "#tv-and-kiosk-mode" >}}) is improved and more accessible
 - [Alerting]({{< relref "#notification-reminders" >}}) with notification reminders
 - [Postgres]({{< relref "#postgres-query-builder" >}}) gets a new query builder!
@@ -28,7 +28,7 @@ Grafana v5.3 brings new features, many enhancements and bug fixes. This article 
 
 Grafana v5.3 ships with built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) and enables you to visualize your Stackdriver metrics in Grafana.
 
-Getting started with the plugin is easy. Simply create a GCE Service account that has access to the Stackdriver API scope, download the Service Account key file from Google and upload it on the Stackdriver datasource config page in Grafana and you should have a secure server-to-server authentication setup. Like other core plugins, Stackdriver has built-in support for alerting. It also comes with support for heatmaps and basic variables.
+Getting started with the plugin is easy. Simply create a GCE Service account that has access to the Stackdriver API scope, download the Service Account key file from Google and upload it on the Stackdriver data source config page in Grafana and you should have a secure server-to-server authentication setup. Like other core plugins, Stackdriver has built-in support for alerting. It also comes with support for heatmaps and basic variables.
 
 If you're already accustomed to the Stackdriver Metrics Explorer UI, you'll notice that there are a lot of similarities to the query editor in Grafana. It is possible to add filters using wildcards and regular expressions. You can do Group By, Primary Aggregation and Alignment.
 
@@ -36,7 +36,7 @@ Alias By allows you to format the legend the way you want, and it's a feature th
 
 The Grafana Stackdriver plugin comes with support for automatic unit detection. Grafana will try to map the Stackdriver unit type to a corresponding unit type in Grafana, and if successful the panel Y-axes will be updated accordingly to display the correct unit of measure. This is the first core plugin to provide support for unit detection, and it is our intention to provide support for this in other core plugins in the near future.
 
-The datasource is still in the `beta` phase, meaning it's currently in active development and is still missing one important feature - templating queries.
+The data source is still in the `beta` phase, meaning it's currently in active development and is still missing one important feature - templating queries.
 Please try it out, but be aware of that it might be subject to changes and possible bugs. We would love to hear your feedback.
 
 Please read [Using Google Stackdriver in Grafana](/features/datasources/stackdriver/) for more detailed information on how to get started and use it.
@@ -65,7 +65,7 @@ Learn how to enable and configure reminders [here](/alerting/notifications/#send
 
 ## Postgres Query Builder
 
-Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other datasources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. Learn more about it in the [documentation](/features/datasources/postgres/#query-editor).
+Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. Learn more about it in the [documentation](/features/datasources/postgres/#query-editor).
 
 {{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
 

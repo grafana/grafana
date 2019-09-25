@@ -8,17 +8,17 @@ parent = "developing"
 weight = 5
 +++
 
-# Datasources
+# Data Sources
 
-Datasource plugins enables people to develop plugins for any database that
+Data source plugins enables people to develop plugins for any database that
 communicates over http. Its up to the plugin to transform the data into
 time series data so that any grafana panel can then show it.
 
-## Datasource development
+## Data source development
 
 > Our goal is not to have a very extensive documentation but rather have actual
-> code that people can look at. An example implementation of a datasource can be
-> found in this [example datasource repo](https://github.com/grafana/simple-json-datasource)
+> code that people can look at. An example implementation of a data source can be
+> found in this [example data source repo](https://github.com/grafana/simple-json-datasource)
 
 To interact with the rest of grafana the plugins module file can export 5 different components.
 
@@ -29,7 +29,7 @@ To interact with the rest of grafana the plugins module file can export 5 differ
 
 ## Plugin json
 
-There are two datasource specific settings for the plugin.json
+There are two data source specific settings for the plugin.json
 
 ```javascript
 "metrics": true,
@@ -38,15 +38,15 @@ There are two datasource specific settings for the plugin.json
 
 These settings indicates what kind of data the plugin can deliver. At least one of them have to be true
 
-## Datasource
+## Data source
 
 The javascript object that communicates with the database and transforms data to times series.
 
-The Datasource should contain the following functions:
+The Data source should contain the following functions:
 
 ```javascript
 query(options) //used by panels to get data
-testDatasource() //used by datasource configuration page to make sure the connection is working
+testDatasource() //used by data source configuration page to make sure the connection is working
 annotationQuery(options) // used by dashboards to get annotations
 metricFindQuery(options) // used by query editor to get metric suggestions.
 ```
@@ -72,8 +72,8 @@ Request object passed to datasource.query function:
 }
 ```
 
-There are two different kinds of results for datasources;
-time series and table. Time series is the most common format and is supported by all datasources and panels. Table format is only supported by the InfluxDB datasource and table panel. But we might see more of this in the future.
+There are two different kinds of results for data sources;
+time series and table. Time series is the most common format and is supported by all data sources and panels. Table format is only supported by the InfluxDB data source and table panel. But we might see more of this in the future.
 
 Time series response from datasource.query.
 An array of:
@@ -178,12 +178,12 @@ Requires a static template or templateUrl variable which will be rendered as the
 
 ## ConfigCtrl
 
-A JavaScript class that will be instantiated and treated as an Angular controller when a user tries to edit or create a new datasource of this type.
+A JavaScript class that will be instantiated and treated as an Angular controller when a user tries to edit or create a new data source of this type.
 
 Requires a static template or templateUrl variable which will be rendered as the view for this controller.
 
 ## AnnotationsQueryCtrl
 
-A JavaScript class that will be instantiated and treated as an Angular controller when the user choose this type of datasource in the templating menu in the dashboard.
+A JavaScript class that will be instantiated and treated as an Angular controller when the user choose this type of data source in the templating menu in the dashboard.
 
 Requires a static template or templateUrl variable which will be rendered as the view for this controller. The fields that are bound to this controller are then sent to the Database objects annotationQuery function.

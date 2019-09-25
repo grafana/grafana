@@ -1,19 +1,19 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
+import { hot } from 'react-hot-loader';
+import { connect } from 'react-redux';
+import { Tooltip, PanelPlugin, PanelPluginMeta } from '@grafana/ui';
+import { AngularComponent, config } from '@grafana/runtime';
 
 import { QueriesTab } from './QueriesTab';
 import VisualizationTab from './VisualizationTab';
 import { GeneralTab } from './GeneralTab';
 import { AlertTab } from '../../alerting/AlertTab';
-
-import config from 'app/core/config';
-import { store } from 'app/store/store';
-import { updateLocation } from 'app/core/actions';
-import { AngularComponent } from '@grafana/runtime';
-
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { Tooltip, PanelPlugin, PanelPluginMeta } from '@grafana/ui';
+import { StoreState } from '../../../types';
+import { PanelEditorTabIds, PanelEditorTab } from './state/reducers';
+import { refreshPanelEditor, changePanelEditorTab, panelEditorCleanUp } from './state/actions';
 
 interface PanelEditorProps {
   panel: PanelModel;
@@ -21,56 +21,54 @@ interface PanelEditorProps {
   plugin: PanelPlugin;
   angularPanel?: AngularComponent;
   onPluginTypeChange: (newType: PanelPluginMeta) => void;
+  activeTab: PanelEditorTabIds;
+  tabs: PanelEditorTab[];
+  refreshPanelEditor: typeof refreshPanelEditor;
+  panelEditorCleanUp: typeof panelEditorCleanUp;
+  changePanelEditorTab: typeof changePanelEditorTab;
 }
 
-interface PanelEditorTab {
-  id: string;
-  text: string;
-}
-
-enum PanelEditorTabIds {
-  Queries = 'queries',
-  Visualization = 'visualization',
-  Advanced = 'advanced',
-  Alert = 'alert',
-}
-
-interface PanelEditorTab {
-  id: string;
-  text: string;
-}
-
-const panelEditorTabTexts = {
-  [PanelEditorTabIds.Queries]: 'Queries',
-  [PanelEditorTabIds.Visualization]: 'Visualization',
-  [PanelEditorTabIds.Advanced]: 'General',
-  [PanelEditorTabIds.Alert]: 'Alert',
-};
-
-const getPanelEditorTab = (tabId: PanelEditorTabIds): PanelEditorTab => {
-  return {
-    id: tabId,
-    text: panelEditorTabTexts[tabId],
-  };
-};
-
-export class PanelEditor extends PureComponent<PanelEditorProps> {
+class UnConnectedPanelEditor extends PureComponent<PanelEditorProps> {
   constructor(props: PanelEditorProps) {
     super(props);
   }
 
+  componentDidMount(): void {
+    this.refreshFromState();
+  }
+
+  componentWillUnmount(): void {
+    const { panelEditorCleanUp } = this.props;
+    panelEditorCleanUp();
+  }
+
+  refreshFromState = (meta?: PanelPluginMeta) => {
+    const { refreshPanelEditor, plugin } = this.props;
+    meta = meta || plugin.meta;
+
+    refreshPanelEditor({
+      hasQueriesTab: !meta.skipDataQuery,
+      usesGraphPlugin: meta.id === 'graph',
+      alertingEnabled: config.alertingEnabled,
+    });
+  };
+
   onChangeTab = (tab: PanelEditorTab) => {
-    store.dispatch(
-      updateLocation({
-        query: { tab: tab.id, openVizPicker: null },
-        partial: true,
-      })
-    );
-    this.forceUpdate();
+    const { changePanelEditorTab } = this.props;
+    // Angular Query Components can potentially refresh the PanelModel
+    // onBlur so this makes sure we change tab after that
+    setTimeout(() => changePanelEditorTab(tab), 10);
+  };
+
+  onPluginTypeChange = (newType: PanelPluginMeta) => {
+    const { onPluginTypeChange } = this.props;
+    onPluginTypeChange(newType);
+
+    this.refreshFromState(newType);
   };
 
   renderCurrentTab(activeTab: string) {
-    const { panel, dashboard, onPluginTypeChange, plugin, angularPanel } = this.props;
+    const { panel, dashboard, plugin, angularPanel } = this.props;
 
     switch (activeTab) {
       case 'advanced':
@@ -85,7 +83,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
             panel={panel}
             dashboard={dashboard}
             plugin={plugin}
-            onPluginTypeChange={onPluginTypeChange}
+            onPluginTypeChange={this.onPluginTypeChange}
             angularPanel={angularPanel}
           />
         );
@@ -95,28 +93,7 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
   }
 
   render() {
-    const { plugin } = this.props;
-    let activeTab: PanelEditorTabIds = store.getState().location.query.tab || PanelEditorTabIds.Queries;
-
-    const tabs: PanelEditorTab[] = [
-      getPanelEditorTab(PanelEditorTabIds.Queries),
-      getPanelEditorTab(PanelEditorTabIds.Visualization),
-      getPanelEditorTab(PanelEditorTabIds.Advanced),
-    ];
-
-    // handle panels that do not have queries tab
-    if (plugin.meta.skipDataQuery) {
-      // remove queries tab
-      tabs.shift();
-      // switch tab
-      if (activeTab === PanelEditorTabIds.Queries) {
-        activeTab = PanelEditorTabIds.Visualization;
-      }
-    }
-
-    if (config.alertingEnabled && plugin.meta.id === 'graph') {
-      tabs.push(getPanelEditorTab(PanelEditorTabIds.Alert));
-    }
+    const { activeTab, tabs } = this.props;
 
     return (
       <div className="panel-editor-container__editor">
@@ -130,6 +107,20 @@ export class PanelEditor extends PureComponent<PanelEditorProps> {
     );
   }
 }
+
+export const mapStateToProps = (state: StoreState) => ({
+  activeTab: state.location.query.tab || PanelEditorTabIds.Queries,
+  tabs: state.panelEditor.tabs,
+});
+
+const mapDispatchToProps = { refreshPanelEditor, panelEditorCleanUp, changePanelEditorTab };
+
+export const PanelEditor = hot(module)(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps
+  )(UnConnectedPanelEditor)
+);
 
 interface TabItemParams {
   tab: PanelEditorTab;

@@ -36,7 +36,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   subTabIndex: number;
   processor: DataProcessor;
   contextMenuCtrl: GraphContextMenuCtrl;
-  linkVariableSuggestions: VariableSuggestion[] = getDataLinksVariableSuggestions();
+  linkVariableSuggestions: VariableSuggestion[] = [];
 
   panelDefaults: any = {
     // datasource name, null = default datasource
@@ -216,6 +216,8 @@ class GraphCtrl extends MetricsPanelCtrl {
       range: this.range,
     });
 
+    this.linkVariableSuggestions = getDataLinksVariableSuggestions(data);
+
     this.dataWarning = null;
     const datapointsCount = this.seriesList.reduce((prev, series) => {
       return prev + series.datapoints.length;
@@ -223,14 +225,14 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     if (datapointsCount === 0) {
       this.dataWarning = {
-        title: 'No data points',
-        tip: 'No datapoints returned from data query',
+        title: 'No data',
+        tip: 'No data returned from query',
       };
     } else {
       for (const series of this.seriesList) {
         if (series.isOutsideRange) {
           this.dataWarning = {
-            title: 'Data points outside time range',
+            title: 'Data outside time range',
             tip: 'Can be caused by timezone mismatch or missing time filter in query',
           };
           break;
@@ -336,6 +338,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   formatDate = (date: DateTimeInput, format?: string) => {
     return this.dashboard.formatDate.apply(this.dashboard, [date, format]);
+  };
+
+  getDataFrameByRefId = (refId: string) => {
+    return this.dataList.filter(dataFrame => dataFrame.refId === refId)[0];
   };
 }
 

@@ -18,16 +18,13 @@ import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
 import { changeDedupStrategy, updateTimeRange } from './state/actions';
-import {
-  toggleLogLevelAction,
-  changeRefreshIntervalAction,
-  setPausedStateAction,
-} from 'app/features/explore/state/actionTypes';
+import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
 import { deduplicatedLogsSelector, exploreItemUIStateSelector } from 'app/features/explore/state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
-import { offOption } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { Logs } from './Logs';
+import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
+import { LiveTailControls } from './useLiveTailControls';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
@@ -48,11 +45,9 @@ interface LogsContainerProps {
   dedupStrategy: LogsDedupStrategy;
   width: number;
   isLive: boolean;
-  stopLive: typeof changeRefreshIntervalAction;
   updateTimeRange: typeof updateTimeRange;
   range: TimeRange;
   absoluteRange: AbsoluteTimeRange;
-  setPausedStateAction: typeof setPausedStateAction;
   isPaused: boolean;
 }
 
@@ -61,21 +56,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     const { exploreId, updateTimeRange } = this.props;
 
     updateTimeRange({ exploreId, absoluteRange });
-  };
-
-  onStopLive = () => {
-    const { exploreId } = this.props;
-    this.props.stopLive({ exploreId, refreshInterval: offOption.value });
-  };
-
-  onPause = () => {
-    const { exploreId } = this.props;
-    this.props.setPausedStateAction({ exploreId, isPaused: true });
-  };
-
-  onResume = () => {
-    const { exploreId } = this.props;
-    this.props.setPausedStateAction({ exploreId, isPaused: false });
   };
 
   handleDedupStrategyChange = (dedupStrategy: LogsDedupStrategy) => {
@@ -115,45 +95,51 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       range,
       width,
       isLive,
+      exploreId,
     } = this.props;
 
-    if (isLive) {
-      return (
-        <Collapse label="Logs" loading={false} isOpen>
-          <LiveLogsWithTheme
-            logsResult={logsResult}
-            timeZone={timeZone}
-            stopLive={this.onStopLive}
-            isPaused={this.props.isPaused}
-            onPause={this.onPause}
-            onResume={this.onResume}
-          />
-        </Collapse>
-      );
-    }
-
     return (
-      <Collapse label="Logs" loading={loading} isOpen>
-        <Logs
-          dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
-          data={logsResult}
-          dedupedData={dedupedResult}
-          highlighterExpressions={logsHighlighterExpressions}
-          loading={loading}
-          onChangeTime={this.onChangeTime}
-          onClickLabel={onClickLabel}
-          onStartScanning={onStartScanning}
-          onStopScanning={onStopScanning}
-          onDedupStrategyChange={this.handleDedupStrategyChange}
-          onToggleLogLevel={this.handleToggleLogLevel}
-          absoluteRange={absoluteRange}
-          timeZone={timeZone}
-          scanning={scanning}
-          scanRange={range.raw}
-          width={width}
-          getRowContext={this.getLogRowContext}
-        />
-      </Collapse>
+      <>
+        <LogsCrossFadeTransition visible={isLive}>
+          <Collapse label="Logs" loading={false} isOpen>
+            <LiveTailControls exploreId={exploreId}>
+              {controls => (
+                <LiveLogsWithTheme
+                  logsResult={logsResult}
+                  timeZone={timeZone}
+                  stopLive={controls.stop}
+                  isPaused={this.props.isPaused}
+                  onPause={controls.pause}
+                  onResume={controls.resume}
+                />
+              )}
+            </LiveTailControls>
+          </Collapse>
+        </LogsCrossFadeTransition>
+        <LogsCrossFadeTransition visible={!isLive}>
+          <Collapse label="Logs" loading={loading} isOpen>
+            <Logs
+              dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
+              data={logsResult}
+              dedupedData={dedupedResult}
+              highlighterExpressions={logsHighlighterExpressions}
+              loading={loading}
+              onChangeTime={this.onChangeTime}
+              onClickLabel={onClickLabel}
+              onStartScanning={onStartScanning}
+              onStopScanning={onStopScanning}
+              onDedupStrategyChange={this.handleDedupStrategyChange}
+              onToggleLogLevel={this.handleToggleLogLevel}
+              absoluteRange={absoluteRange}
+              timeZone={timeZone}
+              scanning={scanning}
+              scanRange={range.raw}
+              width={width}
+              getRowContext={this.getLogRowContext}
+            />
+          </Collapse>
+        </LogsCrossFadeTransition>
+      </>
     );
   }
 }
@@ -196,9 +182,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
 const mapDispatchToProps = {
   changeDedupStrategy,
   toggleLogLevelAction,
-  stopLive: changeRefreshIntervalAction,
   updateTimeRange,
-  setPausedStateAction,
 };
 
 export default hot(module)(
