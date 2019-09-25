@@ -14,8 +14,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { LoadingState, ScopedVars, AbsoluteTimeRange, DefaultTimeRange, toUtc, toDataFrameDTO } from '@grafana/data';
-import { PanelEvents } from '@grafana/ui';
+import { LoadingState, ScopedVars, AbsoluteTimeRange, toUtc, toDataFrameDTO } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -127,24 +126,19 @@ export class PanelChrome extends PureComponent<Props, State> {
           if (this.state.data.state === LoadingState.Loading) {
             return;
           }
-          break;
-        case LoadingState.Error:
-          const { error } = data;
-          if (error) {
-            if (errorMessage !== error.message) {
-              errorMessage = error.message;
-            }
-          }
-          break;
-        case LoadingState.Done:
-          // If we are doing a snapshot save data in panel model
-          if (this.props.dashboard.snapshot) {
-            this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
-          }
-          if (isFirstLoad) {
-            isFirstLoad = false;
-          }
-          break;
+        }
+      } else {
+        errorMessage = null;
+      }
+
+      if (data.state === LoadingState.Done) {
+        // If we are doing a snapshot save data in panel model
+        if (this.props.dashboard.snapshot) {
+          this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
+        }
+        if (isFirstLoad) {
+          isFirstLoad = false;
+        }
       }
 
       this.setState({ isFirstLoad, errorMessage, data });

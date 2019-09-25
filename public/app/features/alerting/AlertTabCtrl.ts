@@ -11,7 +11,6 @@ import DatasourceSrv from '../plugins/datasource_srv';
 import { DataQuery } from '@grafana/ui/src/types/datasource';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getDefaultCondition } from './getAlertingValidationMessage';
-import { CoreEvents } from 'app/types';
 
 export class AlertTabCtrl {
   panel: PanelModel;

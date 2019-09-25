@@ -6,19 +6,13 @@ import { Editor as CoreEditor } from 'slate';
 import { Plugin as SlatePlugin } from '@grafana/slate-react';
 import { TypeaheadOutput, CompletionItem, CompletionItemGroup } from 'app/types';
 
-import { TypeaheadInput } from '../QueryField';
+import { QueryField, TypeaheadInput } from '../QueryField';
 import TOKEN_MARK from '@grafana/ui/src/slate-plugins/slate-prism/TOKEN_MARK';
 import { TypeaheadWithTheme, Typeahead } from '../Typeahead';
 
 import { makeFragment } from '@grafana/ui';
 
 export const TYPEAHEAD_DEBOUNCE = 100;
-
-// Commands added to the editor by this plugin.
-interface SuggestionsPluginCommands {
-  selectSuggestion: (suggestion: CompletionItem) => CoreEditor;
-  applyTypeahead: (suggestion: CompletionItem) => CoreEditor;
-}
 
 export interface SuggestionsState {
   groupedItems: CompletionItemGroup[];
@@ -27,33 +21,28 @@ export interface SuggestionsState {
   typeaheadText: string;
 }
 
+let state: SuggestionsState = {
+  groupedItems: [],
+  typeaheadPrefix: '',
+  typeaheadContext: '',
+  typeaheadText: '',
+};
+
 export default function SuggestionsPlugin({
   onTypeahead,
   cleanText,
   onWillApplySuggestion,
+  syntax,
   portalOrigin,
+  component,
 }: {
   onTypeahead: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>;
   cleanText?: (text: string) => string;
   onWillApplySuggestion?: (suggestion: string, state: SuggestionsState) => string;
+  syntax?: string;
   portalOrigin: string;
+  component: QueryField; // Need to attach typeaheadRef here
 }): SlatePlugin {
-  let typeaheadRef: Typeahead;
-  let state: SuggestionsState = {
-    groupedItems: [],
-    typeaheadPrefix: '',
-    typeaheadContext: '',
-    typeaheadText: '',
-  };
-  const handleTypeaheadDebounced = debounce(handleTypeahead, TYPEAHEAD_DEBOUNCE);
-
-  const setState = (update: Partial<SuggestionsState>) => {
-    state = {
-      ...state,
-      ...update,
-    };
-  };
-
   return {
     onBlur: (event, editor, next) => {
       state = {
@@ -99,7 +88,7 @@ export default function SuggestionsPlugin({
         case 'ArrowUp':
           if (hasSuggestions) {
             event.preventDefault();
-            typeaheadRef.moveMenuIndex(event.key === 'ArrowDown' ? 1 : -1);
+            component.typeaheadRef.moveMenuIndex(event.key === 'ArrowDown' ? 1 : -1);
             return;
           }
 
@@ -109,14 +98,16 @@ export default function SuggestionsPlugin({
         case 'Tab': {
           if (hasSuggestions) {
             event.preventDefault();
-            return typeaheadRef.insertSuggestion();
+
+            component.typeaheadRef.insertSuggestion();
+            return handleTypeahead(event, editor, onTypeahead, cleanText);
           }
 
           break;
         }
 
         default: {
-          handleTypeaheadDebounced(editor, setState, onTypeahead, cleanText);
+          handleTypeahead(event, editor, onTypeahead, cleanText);
           break;
         }
       }
@@ -132,9 +123,7 @@ export default function SuggestionsPlugin({
         }
 
         // @ts-ignore
-        const ed = editor.applyTypeahead(suggestion);
-        handleTypeaheadDebounced(editor, setState, onTypeahead, cleanText);
-        return ed;
+        return editor.applyTypeahead(suggestion);
       },
 
       applyTypeahead: (editor: CoreEditor, suggestion: CompletionItem): CoreEditor => {
@@ -197,12 +186,13 @@ export default function SuggestionsPlugin({
         <>
           {children}
           <TypeaheadWithTheme
-            menuRef={(el: Typeahead) => (typeaheadRef = el)}
+            menuRef={(el: Typeahead) => (component.typeaheadRef = el)}
             origin={portalOrigin}
             prefix={state.typeaheadPrefix}
             isOpen={!!state.groupedItems.length}
             groupedItems={state.groupedItems}
-            onSelectSuggestion={(editor as CoreEditor & SuggestionsPluginCommands).selectSuggestion}
+            //@ts-ignore
+            onSelectSuggestion={editor.selectSuggestion}
           />
         </>
       );
@@ -210,111 +200,113 @@ export default function SuggestionsPlugin({
   };
 }
 
-const handleTypeahead = async (
-  editor: CoreEditor,
-  onStateChange: (state: Partial<SuggestionsState>) => void,
-  onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>,
-  cleanText?: (text: string) => string
-): Promise<void> => {
-  if (!onTypeahead) {
-    return null;
-  }
+const handleTypeahead = debounce(
+  async (
+    event: Event,
+    editor: CoreEditor,
+    onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>,
+    cleanText?: (text: string) => string
+  ) => {
+    if (!onTypeahead) {
+      return null;
+    }
 
-  const { value } = editor;
-  const { selection } = value;
+    const { value } = editor;
+    const { selection } = value;
 
-  // Get decorations associated with the current line
-  const parentBlock = value.document.getClosestBlock(value.focusBlock.key);
-  const myOffset = value.selection.start.offset - 1;
-  const decorations = parentBlock.getDecorations(editor as any);
+    // Get decorations associated with the current line
+    const parentBlock = value.document.getClosestBlock(value.focusBlock.key);
+    const myOffset = value.selection.start.offset - 1;
+    const decorations = parentBlock.getDecorations(editor as any);
 
-  const filteredDecorations = decorations
-    .filter(
-      decoration =>
-        decoration.start.offset <= myOffset && decoration.end.offset > myOffset && decoration.type === TOKEN_MARK
-    )
-    .toArray();
+    const filteredDecorations = decorations
+      .filter(
+        decoration =>
+          decoration.start.offset <= myOffset && decoration.end.offset > myOffset && decoration.type === TOKEN_MARK
+      )
+      .toArray();
 
-  // Find the first label key to the left of the cursor
-  const labelKeyDec = decorations
-    .filter(decoration => {
-      return (
-        decoration.end.offset <= myOffset &&
-        decoration.type === TOKEN_MARK &&
-        decoration.data.get('className').includes('label-key')
-      );
-    })
-    .last();
+    const labelKeyDec = decorations
+      .filter(
+        decoration =>
+          decoration.end.offset === myOffset &&
+          decoration.type === TOKEN_MARK &&
+          decoration.data.get('className').includes('label-key')
+      )
+      .first();
 
-  const labelKey = labelKeyDec && value.focusText.text.slice(labelKeyDec.start.offset, labelKeyDec.end.offset);
+    const labelKey = labelKeyDec && value.focusText.text.slice(labelKeyDec.start.offset, labelKeyDec.end.offset);
 
-  const wrapperClasses = filteredDecorations
-    .map(decoration => decoration.data.get('className'))
-    .join(' ')
-    .split(' ')
-    .filter(className => className.length);
+    const wrapperClasses = filteredDecorations
+      .map(decoration => decoration.data.get('className'))
+      .join(' ')
+      .split(' ')
+      .filter(className => className.length);
 
-  let text = value.focusText.text;
-  let prefix = text.slice(0, selection.focus.offset);
+    let text = value.focusText.text;
+    let prefix = text.slice(0, selection.focus.offset);
 
-  if (filteredDecorations.length) {
-    text = value.focusText.text.slice(filteredDecorations[0].start.offset, filteredDecorations[0].end.offset);
-    prefix = value.focusText.text.slice(filteredDecorations[0].start.offset, selection.focus.offset);
-  }
+    if (filteredDecorations.length) {
+      text = value.focusText.text.slice(filteredDecorations[0].start.offset, filteredDecorations[0].end.offset);
+      prefix = value.focusText.text.slice(filteredDecorations[0].start.offset, selection.focus.offset);
+    }
 
-  // Label values could have valid characters erased if `cleanText()` is
-  // blindly applied, which would undesirably interfere with suggestions
-  const labelValueMatch = prefix.match(/(?:!?=~?"?|")(.*)/);
-  if (labelValueMatch) {
-    prefix = labelValueMatch[1];
-  } else if (cleanText) {
-    prefix = cleanText(prefix);
-  }
+    // Label values could have valid characters erased if `cleanText()` is
+    // blindly applied, which would undesirably interfere with suggestions
+    const labelValueMatch = prefix.match(/(?:!?=~?"?|")(.*)/);
+    if (labelValueMatch) {
+      prefix = labelValueMatch[1];
+    } else if (cleanText) {
+      prefix = cleanText(prefix);
+    }
 
-  const { suggestions, context } = await onTypeahead({
-    prefix,
-    text,
-    value,
-    wrapperClasses,
-    labelKey,
-  });
+    const { suggestions, context } = await onTypeahead({
+      prefix,
+      text,
+      value,
+      wrapperClasses,
+      labelKey,
+    });
 
-  const filteredSuggestions = suggestions
-    .map(group => {
-      if (!group.items) {
-        return group;
-      }
-
-      if (prefix) {
-        // Filter groups based on prefix
-        if (!group.skipFilter) {
-          group.items = group.items.filter(c => (c.filterText || c.label).length >= prefix.length);
-          if (group.prefixMatch) {
-            group.items = group.items.filter(c => (c.filterText || c.label).startsWith(prefix));
-          } else {
-            group.items = group.items.filter(c => (c.filterText || c.label).includes(prefix));
-          }
+    const filteredSuggestions = suggestions
+      .map(group => {
+        if (!group.items) {
+          return group;
         }
 
-        // Filter out the already typed value (prefix) unless it inserts custom text
-        group.items = group.items.filter(c => c.insertText || (c.filterText || c.label) !== prefix);
-      }
+        if (prefix) {
+          // Filter groups based on prefix
+          if (!group.skipFilter) {
+            group.items = group.items.filter(c => (c.filterText || c.label).length >= prefix.length);
+            if (group.prefixMatch) {
+              group.items = group.items.filter(c => (c.filterText || c.label).startsWith(prefix));
+            } else {
+              group.items = group.items.filter(c => (c.filterText || c.label).includes(prefix));
+            }
+          }
 
-      if (!group.skipSort) {
-        group.items = sortBy(group.items, (item: CompletionItem) => item.sortText || item.label);
-      }
+          // Filter out the already typed value (prefix) unless it inserts custom text
+          group.items = group.items.filter(c => c.insertText || (c.filterText || c.label) !== prefix);
+        }
 
-      return group;
-    })
-    .filter(group => group.items && group.items.length); // Filter out empty groups
+        if (!group.skipSort) {
+          group.items = sortBy(group.items, (item: CompletionItem) => item.sortText || item.label);
+        }
 
-  onStateChange({
-    groupedItems: filteredSuggestions,
-    typeaheadPrefix: prefix,
-    typeaheadContext: context,
-    typeaheadText: text,
-  });
+        return group;
+      })
+      .filter(group => group.items && group.items.length); // Filter out empty groups
 
-  // Bogus edit to force re-render
-  editor.blur().focus();
-};
+    state = {
+      ...state,
+      groupedItems: filteredSuggestions,
+      typeaheadPrefix: prefix,
+      typeaheadContext: context,
+      typeaheadText: text,
+    };
+
+    // Bogus edit to force re-render
+    return editor.blur().focus();
+  },
+  TYPEAHEAD_DEBOUNCE
+);

@@ -2,6 +2,7 @@
 import React, { ComponentType } from 'react';
 import { hot } from 'react-hot-loader';
 import { css } from 'emotion';
+// @ts-ignore
 import { connect } from 'react-redux';
 import { AutoSizer } from 'react-virtualized';
 import memoizeOne from 'memoize-one';

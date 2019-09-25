@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "name": "grafana",
-  "version": "6.4.0-beta1",
+  "version": "6.4.0-beta2",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -195,7 +195,7 @@
     "printWidth": 120
   },
   "dependencies": {
-    "@babel/polyfill": "7.6.0",
+    "@babel/polyfill": "7.2.5",
     "@grafana/slate-react": "0.22.9-grafana",
     "@torkelo/react-select": "2.4.1",
     "angular": "1.6.9",

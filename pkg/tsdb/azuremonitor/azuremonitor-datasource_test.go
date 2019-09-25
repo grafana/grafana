@@ -43,7 +43,6 @@ func TestAzureMonitorDatasource(t *testing.T) {
 								"metricDefinition": "Microsoft.Compute/virtualMachines",
 								"metricNamespace":  "Microsoft.Compute-virtualMachines",
 								"metricName":       "Percentage CPU",
-								"top":              "10",
 								"alias":            "testalias",
 								"queryType":        "Azure Monitor",
 							},

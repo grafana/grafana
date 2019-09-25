@@ -41,7 +41,7 @@ describe('AzureMonitorQueryCtrl', () => {
       expect(queryCtrl.target.azureMonitor.resourceName).toBe('select');
       expect(queryCtrl.target.azureMonitor.metricNamespace).toBe('select');
       expect(queryCtrl.target.azureMonitor.metricName).toBe('select');
-      expect(queryCtrl.target.appInsights.dimension).toBe('none');
+      expect(queryCtrl.target.appInsights.groupBy).toBe('none');
     });
   });
 
@@ -227,12 +227,8 @@ describe('AzureMonitorQueryCtrl', () => {
       it('should set the options and default selected value for the Aggregations dropdown', () => {
         queryCtrl.onMetricNameChange().then(() => {
           expect(queryCtrl.target.azureMonitor.aggregation).toBe('Average');
-          expect(queryCtrl.target.azureMonitor.aggOptions).toEqual(['Average', 'Total']);
-          expect(queryCtrl.target.azureMonitor.timeGrains).toEqual([
-            { text: 'auto', value: 'auto' },
-            { text: 'PT1M', value: 'PT1M' },
-            { text: 'P1D', value: 'P1D' },
-          ]);
+          expect(queryCtrl.target.azureMonitor.aggOptions).toBe(['Average', 'Total']);
+          expect(queryCtrl.target.azureMonitor.timeGrains).toBe(['PT1M', 'P1D']);
         });
       });
     });

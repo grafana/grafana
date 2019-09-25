@@ -1,7 +1,31 @@
 import tinycolor from 'tinycolor2';
-import { css } from 'emotion';
-import { selectThemeVariant, stylesFactory } from '../../themes';
-import { StyleDeps } from './types';
+import { css, cx } from 'emotion';
+import { Themeable, GrafanaTheme } from '../../types';
+import { selectThemeVariant } from '../../themes/selectThemeVariant';
+
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent';
+
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+export interface CommonButtonProps {
+  size?: ButtonSize;
+  variant?: ButtonVariant;
+  /**
+   * icon prop is a temporary solution. It accepts lefacy icon class names for the icon to be rendered.
+   * TODO: migrate to a component when we are going to migrate icons to @grafana/ui
+   */
+  icon?: string;
+  className?: string;
+}
+
+export interface LinkButtonProps extends CommonButtonProps, AnchorHTMLAttributes<HTMLAnchorElement> {
+  disabled?: boolean;
+}
+export interface ButtonProps extends CommonButtonProps, ButtonHTMLAttributes<HTMLButtonElement> {}
+
+interface AbstractButtonProps extends CommonButtonProps, Themeable {
+  renderAs: React.ComponentType<CommonButtonProps> | string;
+}
 
 const buttonVariantStyles = (
   from: string,

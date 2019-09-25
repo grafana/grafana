@@ -115,6 +115,14 @@ export class MysqlQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
+  updateRawSqlAndRefresh() {
+    if (!this.target.rawQuery) {
+      this.target.rawSql = this.queryModel.buildQuery();
+    }
+
+    this.panelCtrl.refresh();
+  }
+
   updateProjection() {
     this.selectParts = _.map(this.target.select, (parts: any) => {
       return _.map(parts, sqlPart.create).filter(n => n);

@@ -16,7 +16,6 @@ import { NavIndex } from '@grafana/data';
 import { ApplicationState } from './application';
 import { LdapState, LdapUserState } from './ldap';
 import { PanelEditorState } from '../features/dashboard/panel_editor/state/reducers';
-import { ApiKeysState } from './apiKeys';
 
 export interface StoreState {
   navIndex: NavIndex;

@@ -101,7 +101,7 @@ export class KeybindingSrv {
   }
 
   exit() {
-    appEvents.emit(CoreEvents.hideModal);
+    appEvents.emit('hide-modal');
 
     if (this.modalOpen) {
       this.modalOpen = false;

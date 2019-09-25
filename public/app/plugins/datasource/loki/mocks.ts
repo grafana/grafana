@@ -1,7 +1,4 @@
 import LokiDatasource from './datasource';
-import { DataSourceSettings } from '@grafana/ui';
-import { LokiOptions } from './types';
-import { createDatasourceSettings } from '../../../features/datasources/mocks';
 
 export function makeMockLokiDatasource(labelsAndValues: { [label: string]: string[] }): LokiDatasource {
   const labels = Object.keys(labelsAndValues);

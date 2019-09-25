@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import { css } from 'emotion';
-import { Alert, Button } from '@grafana/ui';
+import { Button } from '@grafana/ui';
 
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -16,10 +16,10 @@ import 'app/features/alerting/AlertTabCtrl';
 import { DashboardModel } from '../dashboard/state/DashboardModel';
 import { PanelModel } from '../dashboard/state/PanelModel';
 import { TestRuleResult } from './TestRuleResult';
+import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
 import { AppNotificationSeverity, StoreState } from 'app/types';
 import { PanelEditorTabIds, getPanelEditorTab } from '../dashboard/panel_editor/state/reducers';
 import { changePanelEditorTab } from '../dashboard/panel_editor/state/actions';
-import { CoreEvents } from 'app/types';
 
 interface Props {
   angularPanel?: AngularComponent;

@@ -4,15 +4,15 @@ import { css } from 'emotion';
 import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 import { CSSTransition } from 'react-transition-group';
-import { ResponsiveButton } from './ResponsiveButton';
 
-import { GrafanaTheme, useTheme, Tooltip } from '@grafana/ui';
+import { GrafanaTheme, GrafanaThemeType, useTheme } from '@grafana/ui';
 
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
-  const orangeLighter = tinycolor(theme.colors.orangeDark)
+  const orange = theme.type === GrafanaThemeType.Dark ? '#FF780A' : '#ED5700';
+  const orangeLighter = tinycolor(orange)
     .lighten(10)
     .toString();
-  const pulseTextColor = tinycolor(theme.colors.orangeDark)
+  const pulseTextColor = tinycolor(orange)
     .desaturate(90)
     .toString();
 
@@ -114,19 +114,17 @@ export function LiveTailButton(props: LiveTailButtonProps) {
 
   return (
     <>
-      <Tooltip content={defaultLiveTooltip} placement="bottom">
-        <ResponsiveButton
-          splitted={splitted}
-          buttonClassName={classNames('btn navbar-button', styles.liveButton, {
-            [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: isLive,
-            [styles.isLive]: isLive && !isPaused,
-            [styles.isPaused]: isLive && isPaused,
-          })}
-          iconClassName={classNames('fa', isPaused || !isLive ? 'fa-play' : 'fa-pause')}
-          onClick={onClickMain}
-          title={'\xa0Live'}
-        />
-      </Tooltip>
+      <button
+        className={classNames('btn navbar-button', styles.liveButton, {
+          [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: isLive,
+          [styles.isLive]: isLive && !isPaused,
+          [styles.isPaused]: isLive && isPaused,
+        })}
+        onClick={onClickMain}
+      >
+        <i className={classNames('fa', isPaused || !isLive ? 'fa-play' : 'fa-pause')} />
+        &nbsp; Live tailing
+      </button>
       <CSSTransition
         mountOnEnter={true}
         unmountOnExit={true}

@@ -47,15 +47,12 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 }
 
 func generateConnectionString(datasource *models.DataSource) (string, error) {
-	addr, err := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
-	if err != nil {
-		return "", errutil.Wrapf(err, "Invalid data source URL '%s'", datasource.Url)
-	}
+	server, port := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
 
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
 	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
-		addr.Host,
-		addr.Port,
+		server,
+		port,
 		datasource.Database,
 		datasource.User,
 		datasource.DecryptedPassword(),

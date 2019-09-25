@@ -1,21 +1,11 @@
 import { toFixed, getValueFormat, scaledUnits } from './valueFormats';
 
 describe('valueFormats', () => {
-  describe('format edge cases', () => {
-    const negInf = Number.NEGATIVE_INFINITY.toLocaleString();
-    const posInf = Number.POSITIVE_INFINITY.toLocaleString();
-
-    it('toFixed should handle non number input gracefully', () => {
+  describe('toFixed with edge cases', () => {
+    it('should handle non number input gracefully', () => {
       expect(toFixed(NaN)).toBe('NaN');
-      expect(toFixed(Number.NEGATIVE_INFINITY)).toBe(negInf);
-      expect(toFixed(Number.POSITIVE_INFINITY)).toBe(posInf);
-    });
-
-    it('scaledUnits should handle non number input gracefully', () => {
-      const disp = scaledUnits(5, ['a', 'b', 'c']);
-      expect(disp(NaN)).toBe('NaN');
-      expect(disp(Number.NEGATIVE_INFINITY)).toBe(negInf);
-      expect(disp(Number.POSITIVE_INFINITY)).toBe(posInf);
+      expect(toFixed(Number.NEGATIVE_INFINITY)).toBe('-Inf');
+      expect(toFixed(Number.POSITIVE_INFINITY)).toBe('Inf');
     });
   });
 

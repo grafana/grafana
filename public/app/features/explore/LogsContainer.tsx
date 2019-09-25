@@ -24,7 +24,6 @@ import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
-import { LiveTailControls } from './useLiveTailControls';
 
 interface LogsContainerProps {
   datasourceInstance: DataSourceApi | null;
@@ -56,6 +55,22 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
+  };
+
+  onStopLive = () => {
+    const { exploreId } = this.props;
+    this.onPause();
+    this.props.stopLive({ exploreId, refreshInterval: RefreshPicker.offOption.value });
+  };
+
+  onPause = () => {
+    const { exploreId } = this.props;
+    this.props.setPausedStateAction({ exploreId, isPaused: true });
+  };
+
+  onResume = () => {
+    const { exploreId } = this.props;
+    this.props.setPausedStateAction({ exploreId, isPaused: false });
   };
 
   handleDedupStrategyChange = (dedupStrategy: LogsDedupStrategy) => {
@@ -102,18 +117,14 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
       <>
         <LogsCrossFadeTransition visible={isLive}>
           <Collapse label="Logs" loading={false} isOpen>
-            <LiveTailControls exploreId={exploreId}>
-              {controls => (
-                <LiveLogsWithTheme
-                  logsResult={logsResult}
-                  timeZone={timeZone}
-                  stopLive={controls.stop}
-                  isPaused={this.props.isPaused}
-                  onPause={controls.pause}
-                  onResume={controls.resume}
-                />
-              )}
-            </LiveTailControls>
+            <LiveLogsWithTheme
+              logsResult={logsResult}
+              timeZone={timeZone}
+              stopLive={this.onStopLive}
+              isPaused={this.props.isPaused}
+              onPause={this.onPause}
+              onResume={this.onResume}
+            />
           </Collapse>
         </LogsCrossFadeTransition>
         <LogsCrossFadeTransition visible={!isLive}>

@@ -15,7 +15,12 @@ import IndentationPlugin from './slate-plugins/indentation';
 import ClipboardPlugin from './slate-plugins/clipboard';
 import RunnerPlugin from './slate-plugins/runner';
 import SuggestionsPlugin, { SuggestionsState } from './slate-plugins/suggestions';
+
+import { Typeahead } from './Typeahead';
+
 import { makeValue, SCHEMA } from '@grafana/ui';
+
+export const HIGHLIGHT_WAIT = 500;
 
 export interface QueryFieldProps {
   additionalPlugins?: Plugin[];
@@ -41,6 +46,7 @@ export interface QueryFieldState {
   typeaheadPrefix: string;
   typeaheadText: string;
   value: Value;
+  lastExecutedValue: Value;
 }
 
 export interface TypeaheadInput {
@@ -59,12 +65,13 @@ export interface TypeaheadInput {
  * Implement props.onTypeahead to use suggestions, see PromQueryField.tsx as an example.
  */
 export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldState> {
+  menuEl: HTMLElement | null;
   plugins: Plugin[];
   resetTimer: NodeJS.Timer;
   mounted: boolean;
-  runOnChangeDebounced: Function;
+  updateHighlightsTimer: Function;
   editor: Editor;
-  lastExecutedValue: Value | null = null;
+  typeaheadRef: Typeahead;
 
   constructor(props: QueryFieldProps, context: Context<any>) {
     super(props, context);
@@ -73,12 +80,14 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
 
     const { onTypeahead, cleanText, portalOrigin, onWillApplySuggestion } = props;
 
+    const { onTypeahead, cleanText, portalOrigin, onWillApplySuggestion } = props;
+
     // Base plugins
     this.plugins = [
       NewlinePlugin(),
-      SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion }),
+      SuggestionsPlugin({ onTypeahead, cleanText, portalOrigin, onWillApplySuggestion, component: this }),
       ClearPlugin(),
-      RunnerPlugin({ handler: this.runOnChangeAndRunQuery }),
+      RunnerPlugin({ handler: this.executeOnChangeAndRunQueries }),
       SelectionShortcutsPlugin(),
       IndentationPlugin(),
       ClipboardPlugin(),
@@ -104,7 +113,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
   }
 
   componentDidUpdate(prevProps: QueryFieldProps, prevState: QueryFieldState) {
-    const { query, syntax } = this.props;
+    const { initialQuery, syntax } = this.props;
     const { value } = this.state;
 
     // Handle two way binging between local state and outside prop.
@@ -125,10 +134,7 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   }
 
-  /**
-   * Update local state, propagate change upstream and optionally run the query afterwards.
-   */
-  onChange = (value: Value, runQuery?: boolean) => {
+  onChange = (value: Value, invokeParentOnValueChanged?: boolean) => {
     const documentChanged = value.document !== this.state.value.document;
     const prevValue = this.state.value;
 
@@ -166,23 +172,17 @@ export class QueryField extends React.PureComponent<QueryFieldProps, QueryFieldS
     }
   };
 
-  runOnChangeAndRunQuery = () => {
-    // onRunQuery executes query from Redux in Explore so it needs to be updated sync in case we want to run
-    // the query.
-    this.runOnChange();
-    this.runOnRunQuery();
-  };
-
-  /**
-   * We need to handle blur events here mainly because of dashboard panels which expect to have query executed on blur.
-   */
   handleBlur = (event: Event, editor: CoreEditor, next: Function) => {
-    const previousValue = this.lastExecutedValue ? Plain.serialize(this.lastExecutedValue) : null;
+    const { lastExecutedValue } = this.state;
+    const previousValue = lastExecutedValue ? Plain.serialize(this.state.lastExecutedValue) : null;
     const currentValue = Plain.serialize(editor.value);
 
     if (previousValue !== currentValue) {
-      this.runOnChangeAndRunQuery();
+      this.executeOnChangeAndRunQueries();
     }
+
+    editor.blur();
+
     return next();
   };
 

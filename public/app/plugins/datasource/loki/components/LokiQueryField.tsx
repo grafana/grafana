@@ -6,6 +6,7 @@ import LokiLanguageProvider from '../language_provider';
 export const LokiQueryField: FunctionComponent<LokiQueryFieldFormProps> = ({ datasource, ...otherProps }) => {
   const { isSyntaxReady, setActiveOption, refreshLabels, ...syntaxProps } = useLokiSyntax(
     datasource.languageProvider as LokiLanguageProvider,
+    datasourceStatus,
     otherProps.absoluteRange
   );
 

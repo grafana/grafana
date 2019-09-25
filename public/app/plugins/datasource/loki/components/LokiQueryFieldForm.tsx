@@ -15,12 +15,11 @@ import { Plugin, Node } from 'slate';
 // Types
 import { LokiQuery } from '../types';
 import { TypeaheadOutput } from 'app/types/explore';
-import { ExploreQueryFieldProps, DOMUtil } from '@grafana/ui';
+import { DataSourceApi, ExploreQueryFieldProps, DataSourceStatus, DOMUtil } from '@grafana/ui';
 import { AbsoluteTimeRange } from '@grafana/data';
 import { Grammar } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
 import { SuggestionsState } from 'app/features/explore/slate-plugins/suggestions';
-import LokiDatasource from '../datasource';
 
 function getChooserText(hasSyntax: boolean, hasLogLabels: boolean) {
   if (!hasSyntax) {
@@ -66,7 +65,7 @@ export interface CascaderOption {
   disabled?: boolean;
 }
 
-export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery> {
+export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<DataSourceApi<LokiQuery>, LokiQuery> {
   history: LokiHistoryItem[];
   syntax: Grammar;
   logLabelOptions: any[];
@@ -141,7 +140,16 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
   };
 
   render() {
-    const { data, query, syntaxLoaded, logLabelOptions, onLoadOptions, onLabelsRefresh, datasource } = this.props;
+    const {
+      queryResponse,
+      query,
+      syntaxLoaded,
+      logLabelOptions,
+      onLoadOptions,
+      onLabelsRefresh,
+      datasource,
+      datasourceStatus,
+    } = this.props;
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;

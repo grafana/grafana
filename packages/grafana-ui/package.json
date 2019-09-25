@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/ui",
-  "version": "6.4.0-beta.1",
+  "version": "6.4.0-beta.2",
   "description": "Grafana Components Library",
   "keywords": [
     "grafana",
@@ -25,7 +25,8 @@
     "build": "grafana-toolkit package:build --scope=ui"
   },
   "dependencies": {
-    "@grafana/data": "6.4.0-beta.1",
+    "@grafana/data": "6.4.0-beta.2",
+    "@grafana/slate-react": "0.22.9-grafana",
     "@torkelo/react-select": "2.1.1",
     "@types/react-color": "2.17.0",
     "@types/slate": "0.47.1",
@@ -72,8 +73,12 @@
     "@types/react-custom-scrollbars": "4.0.5",
     "@types/react-test-renderer": "16.8.1",
     "@types/react-transition-group": "2.0.16",
-    "@types/storybook__addon-info": "4.1.2",
-    "@types/storybook__react": "4.0.2",
+    "@types/slate": "0.47.1",
+    "@types/slate-react": "0.22.5",
+    "@types/storybook__addon-actions": "3.4.2",
+    "@types/storybook__addon-info": "4.1.1",
+    "@types/storybook__addon-knobs": "4.0.4",
+    "@types/storybook__react": "4.0.1",
     "@types/tinycolor2": "1.4.1",
     "common-tags": "^1.8.0",
     "pretty-format": "24.9.0",
