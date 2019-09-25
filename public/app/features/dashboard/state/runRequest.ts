@@ -34,14 +34,14 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   packets[packet.key || 'A'] = packet;
 
   // Update the time range
-  const range = request.range;
+  const range = { ...request.range };
   const timeRange = isString(range.raw.from)
     ? {
         from: dateMath.parse(range.raw.from, false),
         to: dateMath.parse(range.raw.to, true),
         raw: range.raw,
       }
-    : undefined;
+    : range;
 
   const combinedData = flatten(
     lodashMap(packets, (packet: DataQueryResponse) => {
@@ -73,6 +73,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
       state: LoadingState.Loading,
       series: [],
       request: request,
+      timeRange: request.range,
     },
     packets: {},
   };

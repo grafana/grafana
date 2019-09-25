@@ -121,6 +121,7 @@ export const createEmptyQueryResponse = (): PanelData => ({
   request: {} as DataQueryRequest<DataQuery>,
   series: [],
   error: null,
+  timeRange: null,
 });
 
 /**

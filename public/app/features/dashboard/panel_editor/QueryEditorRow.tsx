@@ -2,13 +2,11 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import _ from 'lodash';
-
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Emitter } from 'app/core/utils/emitter';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, ErrorBoundaryAlert } from '@grafana/ui';
@@ -320,10 +318,13 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     state = LoadingState.Error;
   }
 
+  const timeRange = data.timeRange;
+
   return {
     state,
     series,
     request,
     error,
+    timeRange,
   };
 }

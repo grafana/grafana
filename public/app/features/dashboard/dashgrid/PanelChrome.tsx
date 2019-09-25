@@ -52,6 +52,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       data: {
         state: LoadingState.NotStarted,
         series: [],
+        timeRange: null,
       },
     };
   }
@@ -66,6 +67,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     if (this.hasPanelSnapshot) {
       this.setState({
         data: {
+          ...this.state.data,
           state: LoadingState.Done,
           series: getProcessedDataFrames(panel.snapshotData),
         },
@@ -241,8 +243,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     const PanelComponent = plugin.panel;
     const innerPanelHeight = calculateInnerPanelHeight(panel, height);
-    const requestRange = data.request && data.request.range ? data.request.range : this.timeSrv.timeRange();
-    const timeRange = data.timeRange || requestRange;
+    const timeRange = data.timeRange || this.timeSrv.timeRange();
 
     return (
       <>
