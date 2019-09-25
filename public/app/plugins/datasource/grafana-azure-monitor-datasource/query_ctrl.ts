@@ -638,7 +638,6 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     } else {
       this.target.appInsights.timeGrainCount = '';
       this.target.appInsights.timeGrainUnit = '';
-      this.target.appInsights.timeGrain = '';
     }
   }
 
