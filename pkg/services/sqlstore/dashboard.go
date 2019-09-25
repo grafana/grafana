@@ -621,33 +621,29 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *models.ValidateD
 	return nil
 }
 
-func parseRefreshDuration(refresh string) (*time.Duration, error) {
+var unitstoHoursRatio = map[byte]int{
+	'd': 24,
+	'w': 24 * 7,
+	'y': 24 * 7 * 52,
+}
+
+func parseRefreshDuration(refresh string) (time.Duration, error) {
 	rg, err := regexp.Compile(`^[0-9]+(d|w|y)$`)
 	if err != nil {
-		return nil, err
-	}
-
-	unitstoHoursRatio := map[byte]int{
-		'd': 24,
-		'w': 24 * 7,
-		'y': 24 * 7 * 52,
+		return time.Duration(0), err
 	}
 
 	if rg.MatchString(refresh) {
 		unit := refresh[len(refresh)-1]
 		value, err := strconv.Atoi(refresh[:len(refresh)-1])
 		if err != nil {
-			return nil, err
+			return time.Duration(0), err
 		}
 		unitstoHours := unitstoHoursRatio[unit]
 		refresh = fmt.Sprintf("%dh", value*unitstoHours)
 	}
 
-	d, err := time.ParseDuration(refresh)
-	if err != nil {
-		return nil, err
-	}
-	return &d, nil
+	return time.ParseDuration(refresh)
 }
 
 func validateDashboardRefreshRates(cmd *models.ValidateDashboardBeforeSaveCommand) error {
@@ -665,7 +661,7 @@ func validateDashboardRefreshRates(cmd *models.ValidateDashboardBeforeSaveComman
 		return err
 	}
 
-	if *d < *minRefreshRate {
+	if d < minRefreshRate {
 		return models.ErrDashboardRefreshRateTooShort
 	}
 
