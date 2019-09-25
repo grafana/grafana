@@ -31,6 +31,7 @@ var (
 	ErrDashboardInvalidUid                       = errors.New("uid contains illegal characters")
 	ErrDashboardUidToLong                        = errors.New("uid to long. max 40 characters")
 	ErrDashboardCannotSaveProvisionedDashboard   = errors.New("Cannot save provisioned dashboard")
+	ErrDashboardRefreshRateTooShort              = errors.New("Dashboard refresh rate is too short")
 	ErrDashboardCannotDeleteProvisionedDashboard = errors.New("provisioned dashboard cannot be deleted")
 	RootFolderName                               = "General"
 )

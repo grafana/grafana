@@ -1,6 +1,10 @@
 package sqlstore
 
 import (
+	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -617,9 +621,92 @@ func getExistingDashboardByTitleAndFolder(sess *DBSession, cmd *models.ValidateD
 	return nil
 }
 
+func parseRefreshDuration(refresh string) (*time.Duration, error) {
+	rg, err := regexp.Compile(`^[0-9]+(d|w|y)$`)
+	if err != nil {
+		return nil, err
+	}
+
+	unitstoHoursRatio := map[byte]int{
+		'd': 24,
+		'w': 24 * 7,
+		'y': 24 * 7 * 52,
+	}
+
+	if rg.MatchString(refresh) {
+		unit := refresh[len(refresh)-1]
+		value, err := strconv.Atoi(refresh[:len(refresh)-1])
+		if err != nil {
+			return nil, err
+		}
+		unitstoHours := unitstoHoursRatio[unit]
+		refresh = fmt.Sprintf("%dh", value*unitstoHours)
+	}
+
+	d, err := time.ParseDuration(refresh)
+	if err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
+func toSliceOfString(arr []interface{}) []string {
+	slice := make([]string, 0)
+	for _, n := range arr {
+		str := n.(string)
+		slice = append(slice, str)
+	}
+	return slice
+}
+
+func validateDashboardRefreshRates(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+	refresh, err := cmd.Dashboard.Data.Get("refresh").String()
+	if err != nil {
+		return err
+	}
+
+	//refreshIntervals, err := cmd.Dashboard.Data.Get("timepicker").Get("refresh_intervals").Array()
+	//if err != nil {
+	//	return err
+	//}
+
+	minRefreshRate, err := parseRefreshDuration(setting.DashboardMinRefreshRate)
+	if err != nil {
+		return err
+	}
+	//intervals := toSliceOfString(refreshIntervals)
+	d, err := parseRefreshDuration(refresh)
+	if err != nil {
+		return err
+	}
+
+	if *d < *minRefreshRate {
+		return models.ErrDashboardRefreshRateTooShort
+	}
+
+	//for _, interval := range intervals {
+	//	duration, err := parseRefreshDuration(interval)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	if *duration < *minRefreshRate {
+	//		return models.ErrDashboardCannotSaveProvisionedDashboard
+	//	}
+	//}
+
+	return nil
+}
+
 func ValidateDashboardBeforeSave(cmd *models.ValidateDashboardBeforeSaveCommand) (err error) {
 	cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
+
 	return inTransaction(func(sess *DBSession) error {
+		if setting.DashboardMinRefreshRate != "" {
+			if err = validateDashboardRefreshRates(cmd); err != nil {
+				return err
+			}
+		}
+
 		if err = getExistingDashboardByIdOrUidForUpdate(sess, cmd); err != nil {
 			return err
 		}

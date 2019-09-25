@@ -241,6 +241,7 @@ func (hs *HTTPServer) PostDashboard(c *m.ReqContext, cmd m.SaveDashboardCommand)
 		err == m.ErrFolderNotFound ||
 		err == m.ErrDashboardFolderCannotHaveParent ||
 		err == m.ErrDashboardFolderNameExists ||
+		err == m.ErrDashboardRefreshRateTooShort ||
 		err == m.ErrDashboardCannotSaveProvisionedDashboard {
 		return Error(400, err.Error(), nil)
 	}
