@@ -55,6 +55,9 @@ export class ContextSrv {
 
   // checks whether the passed interval is longer than the configured minimum refresh rate
   isAllowedInterval(interval: string) {
+    if (!config.minRefreshRate) {
+      return true;
+    }
     return kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshRate);
   }
 

@@ -51,13 +51,7 @@ export class RefreshPickerBase extends PureComponent<Props> {
 
   intervalsToOptions = (intervals: string[] | undefined): Array<SelectableValue<string>> => {
     const intervalsOrDefault = intervals || defaultIntervals;
-    const validIntervals = intervalsOrDefault
-      .filter(str => str !== '')
-      .filter(interval => kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshRate));
-
-    if (validIntervals.indexOf(config.minRefreshRate) === -1) {
-      validIntervals.unshift(config.minRefreshRate);
-    }
+    const validIntervals = this.getValidIntervals(intervalsOrDefault);
 
     const options = validIntervals.map(interval => ({ label: interval, value: interval }));
     if (this.props.hasLiveOption) {
@@ -66,6 +60,21 @@ export class RefreshPickerBase extends PureComponent<Props> {
 
     options.unshift(offOption);
     return options;
+  };
+
+  getValidIntervals = (intervals: string[]): string[] => {
+    if (!config.minRefreshRate) {
+      return intervals;
+    }
+
+    const validIntervals = intervals
+      .filter(str => str !== '')
+      .filter(interval => kbn.interval_to_ms(interval) >= kbn.interval_to_ms(config.minRefreshRate));
+
+    if (validIntervals.indexOf(config.minRefreshRate) === -1) {
+      validIntervals.unshift(config.minRefreshRate);
+    }
+    return validIntervals;
   };
 
   onChangeSelect = (item: SelectableValue<string>) => {

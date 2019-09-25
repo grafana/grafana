@@ -54,7 +54,6 @@ export class GrafanaBootConfig {
 
     const defaults = {
       datasources: {},
-      minRefreshRate: '5s',
       windowTitlePrefix: 'Grafana - ',
       panels: {},
       newPanelTitle: 'Panel Title',
