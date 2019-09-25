@@ -6,7 +6,7 @@ interface CherryPickOptions {
 }
 
 const cherryPickRunner: TaskRunner<CherryPickOptions> = async ({ enterprise }) => {
-  const githubClient = new GithubClient(enterprise);
+  const githubClient = new GithubClient({ enterprise });
   const client = githubClient.client;
 
   const res = await client.get('/issues', {

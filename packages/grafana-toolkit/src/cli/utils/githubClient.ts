@@ -10,11 +10,15 @@ const enterpriseURL = 'https://api.github.com/repos/grafana/grafana-enterprise';
 // 2. If the the credentials are available as part of the environment, even if
 // they're not required - the library will use them. This allows us to overcome
 // any API rate limiting imposed without authentication.
+interface GithubClientProps {
+  required?: boolean;
+  enterprise?: boolean;
+}
 
 class GithubClient {
   client: AxiosInstance;
 
-  constructor(enterprise = false, required = false) {
+  constructor({ required = false, enterprise = false }: GithubClientProps = {}) {
     const username = process.env.GITHUB_USERNAME;
     const token = process.env.GITHUB_ACCESS_TOKEN;
 
