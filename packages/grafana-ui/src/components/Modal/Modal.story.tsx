@@ -7,7 +7,7 @@ const ModalStories = storiesOf('UI/Modal', module);
 
 ModalStories.addDecorator(withCenteredStory);
 
-RefreshSelectStories.add('default', () => {
+ModalStories.add('default', () => {
   return (
     <Modal title="My modal" icon="fa-share-square-o">
       Id incididunt do pariatur qui labore. Sint culpa irure cillum et ullamco proident. Deserunt ipsum velit dolore est
