@@ -33,6 +33,12 @@ export function toFixed(value: number, decimals?: DecimalCount): string {
   if (value === null) {
     return '';
   }
+  if (value === Number.NEGATIVE_INFINITY) {
+    return '-Inf';
+  }
+  if (value === Number.POSITIVE_INFINITY) {
+    return 'Inf';
+  }
 
   const factor = decimals ? Math.pow(10, Math.max(0, decimals)) : 1;
   const formatted = String(Math.round(value * factor) / factor);

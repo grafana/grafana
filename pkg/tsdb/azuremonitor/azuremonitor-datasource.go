@@ -60,11 +60,7 @@ func (e *AzureMonitorDatasource) executeTimeSeriesQuery(ctx context.Context, ori
 		if err != nil {
 			queryRes.Error = err
 		}
-		if val, ok := result.Results[query.RefID]; ok {
-			val.Series = append(result.Results[query.RefID].Series, queryRes.Series...)
-		} else {
-			result.Results[query.RefID] = queryRes
-		}
+		result.Results[query.RefID] = queryRes
 	}
 
 	return result, nil
@@ -88,22 +84,11 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		azureMonitorTarget := query.Model.Get("azureMonitor").MustMap()
 		azlog.Debug("AzureMonitor", "target", azureMonitorTarget)
 
-		queryMode := fmt.Sprintf("%v", azureMonitorTarget["queryMode"])
-		if queryMode == "crossResource" {
-			return nil, fmt.Errorf("Alerting not supported for multiple resource queries")
-		}
-
-		var azureMonitorData map[string]interface{}
-		if queryMode == "singleResource" {
-			azureMonitorData = azureMonitorTarget["data"].(map[string]interface{})[queryMode].(map[string]interface{})
-		} else {
-			azureMonitorData = azureMonitorTarget
-		}
 		urlComponents := map[string]string{}
 		urlComponents["subscription"] = fmt.Sprintf("%v", query.Model.Get("subscription").MustString())
-		urlComponents["resourceGroup"] = fmt.Sprintf("%v", azureMonitorData["resourceGroup"])
-		urlComponents["metricDefinition"] = fmt.Sprintf("%v", azureMonitorData["metricDefinition"])
-		urlComponents["resourceName"] = fmt.Sprintf("%v", azureMonitorData["resourceName"])
+		urlComponents["resourceGroup"] = fmt.Sprintf("%v", azureMonitorTarget["resourceGroup"])
+		urlComponents["metricDefinition"] = fmt.Sprintf("%v", azureMonitorTarget["metricDefinition"])
+		urlComponents["resourceName"] = fmt.Sprintf("%v", azureMonitorTarget["resourceName"])
 
 		ub := urlBuilder{
 			DefaultSubscription: query.DataSource.JsonData.Get("subscriptionId").MustString(),
@@ -115,12 +100,12 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		azureURL := ub.Build()
 
 		alias := ""
-		if val, ok := azureMonitorData["alias"]; ok {
+		if val, ok := azureMonitorTarget["alias"]; ok {
 			alias = fmt.Sprintf("%v", val)
 		}
 
-		timeGrain := fmt.Sprintf("%v", azureMonitorData["timeGrain"])
-		timeGrains := azureMonitorData["allowedTimeGrainsMs"]
+		timeGrain := fmt.Sprintf("%v", azureMonitorTarget["timeGrain"])
+		timeGrains := azureMonitorTarget["allowedTimeGrainsMs"]
 		if timeGrain == "auto" {
 			timeGrain, err = e.setAutoTimeGrain(query.IntervalMs, timeGrains)
 			if err != nil {
@@ -132,16 +117,13 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		params.Add("api-version", "2018-01-01")
 		params.Add("timespan", fmt.Sprintf("%v/%v", startTime.UTC().Format(time.RFC3339), endTime.UTC().Format(time.RFC3339)))
 		params.Add("interval", timeGrain)
-		params.Add("aggregation", fmt.Sprintf("%v", azureMonitorData["aggregation"]))
-		params.Add("metricnames", fmt.Sprintf("%v", azureMonitorData["metricName"]))
+		params.Add("aggregation", fmt.Sprintf("%v", azureMonitorTarget["aggregation"]))
+		params.Add("metricnames", fmt.Sprintf("%v", azureMonitorTarget["metricName"]))
+		params.Add("metricnamespace", fmt.Sprintf("%v", azureMonitorTarget["metricNamespace"]))
 
-		if val, ok := azureMonitorData["metricNamespace"]; ok {
-			params.Add("metricnamespace", fmt.Sprintf("%v", val))
-		}
-
-		dimension := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorData["dimension"]))
-		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorData["dimensionFilter"]))
-		if azureMonitorData["dimension"] != nil && azureMonitorData["dimensionFilter"] != nil && len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
+		dimension := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimension"]))
+		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimensionFilter"]))
+		if azureMonitorTarget["dimension"] != nil && azureMonitorTarget["dimensionFilter"] != nil && len(dimension) > 0 && len(dimensionFilter) > 0 && dimension != "None" {
 			params.Add("$filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		}
 

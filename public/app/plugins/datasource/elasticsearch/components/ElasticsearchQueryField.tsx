@@ -1,9 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
-// @ts-ignore
-import PluginPrism from 'slate-prism';
-// @ts-ignore
-import Prism from 'prismjs';
+
+import { SlatePrism } from '@grafana/ui';
 
 // dom also includes Element polyfills
 import QueryField from 'app/features/explore/QueryField';
@@ -24,7 +22,7 @@ class ElasticsearchQueryField extends React.PureComponent<Props, State> {
     super(props, context);
 
     this.plugins = [
-      PluginPrism({
+      SlatePrism({
         onlyIn: (node: any) => node.type === 'code_block',
         getSyntax: (node: any) => 'lucene',
       }),

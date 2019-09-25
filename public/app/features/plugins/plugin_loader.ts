@@ -10,7 +10,7 @@ import jquery from 'jquery';
 import prismjs from 'prismjs';
 import slate from 'slate';
 // @ts-ignore
-import slateReact from 'slate-react';
+import slateReact from '@grafana/slate-react';
 // @ts-ignore
 import slatePlain from 'slate-plain-serializer';
 import react from 'react';
@@ -37,7 +37,8 @@ import * as grafanaUI from '@grafana/ui';
 import * as grafanaRuntime from '@grafana/runtime';
 
 // rxjs
-import { Observable, Subject } from 'rxjs';
+import * as rxjs from 'rxjs';
+import * as rxjsOperators from 'rxjs/operators';
 
 // add cache busting
 const bust = `?_cache=${Date.now()}`;
@@ -81,17 +82,13 @@ exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
 exposeToPlugin('angular', angular);
 exposeToPlugin('d3', d3);
-exposeToPlugin('rxjs/Subject', Subject);
-exposeToPlugin('rxjs/Observable', Observable);
-exposeToPlugin('rxjs', {
-  Subject: Subject,
-  Observable: Observable,
-});
+exposeToPlugin('rxjs', rxjs);
+exposeToPlugin('rxjs/operators', rxjsOperators);
 
 // Experimental modules
 exposeToPlugin('prismjs', prismjs);
 exposeToPlugin('slate', slate);
-exposeToPlugin('slate-react', slateReact);
+exposeToPlugin('@grafana/slate-react', slateReact);
 exposeToPlugin('slate-plain-serializer', slatePlain);
 exposeToPlugin('react', react);
 exposeToPlugin('react-dom', reactDom);

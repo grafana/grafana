@@ -47,18 +47,14 @@ export const syncLdapUser = async (userId: number) => {
 };
 
 export const getUserInfo = async (username: string): Promise<LdapUser> => {
-  try {
-    const response = await getBackendSrv().get(`/api/admin/ldap/${username}`);
-    const { name, surname, email, login, isGrafanaAdmin, isDisabled, roles, teams } = response;
-    return {
-      info: { name, surname, email, login },
-      permissions: { isGrafanaAdmin, isDisabled },
-      roles,
-      teams,
-    };
-  } catch (error) {
-    throw error;
-  }
+  const response = await getBackendSrv().get(`/api/admin/ldap/${username}`);
+  const { name, surname, email, login, isGrafanaAdmin, isDisabled, roles, teams } = response;
+  return {
+    info: { name, surname, email, login },
+    permissions: { isGrafanaAdmin, isDisabled },
+    roles,
+    teams,
+  };
 };
 
 export const getUser = async (id: number): Promise<User> => {

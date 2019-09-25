@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import memoizeOne from 'memoize-one';
 import classNames from 'classnames';
+import { css } from 'emotion';
 
 import { ExploreId, ExploreItemState, ExploreMode } from 'app/types/explore';
 import {
@@ -38,6 +39,14 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
+
+const getStyles = memoizeOne(() => {
+  return {
+    liveTailButtons: css`
+      margin-left: 10px;
+    `,
+  };
+});
 
 interface OwnProps {
   exploreId: ExploreId;
@@ -132,6 +141,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
 
   stopLive = () => {
     const { exploreId } = this.props;
+    this.pauseLive();
     // TODO referencing this from perspective of refresh picker when there is designated button for it now is not
     //  great. Needs another refactor.
     this.props.changeRefreshIntervalAction({ exploreId, refreshInterval: RefreshPicker.offOption.value });
@@ -174,6 +184,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
       originPanelId,
     } = this.props;
 
+    const styles = getStyles();
     const originDashboardIsEditable = Number.isInteger(originPanelId);
     const panelReturnClasses = classNames('btn', 'navbar-button', {
       'btn--radius-right-0': originDashboardIsEditable,
@@ -293,14 +304,16 @@ export class UnConnectedExploreToolbar extends PureComponent<Props, {}> {
             </div>
 
             {hasLiveOption && (
-              <LiveTailButton
-                isLive={isLive}
-                isPaused={isPaused}
-                start={this.startLive}
-                pause={this.pauseLive}
-                resume={this.resumeLive}
-                stop={this.stopLive}
-              />
+              <div className={`explore-toolbar-content-item ${styles.liveTailButtons}`}>
+                <LiveTailButton
+                  isLive={isLive}
+                  isPaused={isPaused}
+                  start={this.startLive}
+                  pause={this.pauseLive}
+                  resume={this.resumeLive}
+                  stop={this.stopLive}
+                />
+              </div>
             )}
           </div>
         </div>
