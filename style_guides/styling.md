@@ -11,7 +11,7 @@
 For styling components use Emotion's `css` function
 
 ```tsx
-import { css }  from 'emotion
+import { css }  from 'emotion';
 
 
 const ComponentA = () => {
