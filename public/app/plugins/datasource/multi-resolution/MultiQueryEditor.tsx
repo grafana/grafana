@@ -3,11 +3,10 @@ import React, { PureComponent } from 'react';
 import defaults from 'lodash/defaults';
 
 // Types
-import { PanelData, Button, Select, DataQuery } from '@grafana/ui';
+import { PanelData, Button, DataQuery } from '@grafana/ui';
 import { MultiResolutionQuery, ResolutionSelection, QueriesForResolution } from './types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { SelectableValue } from '@grafana/data';
-import { QueryEditorRows } from 'app/features/dashboard/panel_editor/QueryEditorRows';
 import { MultiQueryRow } from './MultiQueryRow';
 
 interface Props {
@@ -20,10 +19,25 @@ interface Props {
 
 type State = {};
 
-const resolutionTypes: Array<SelectableValue<ResolutionSelection>> = [
-  { value: ResolutionSelection.interval, label: 'Interval', description: 'Select queries by interval' },
-  { value: ResolutionSelection.range, label: 'Range', description: 'Select queries based on range' },
-];
+export function getMultiResolutionQuery(queries: DataQuery[]): MultiResolutionQuery {
+  const q: MultiResolutionQuery = defaults(queries ? queries[0] : {}, {
+    refId: 'X', // Not really used
+    select: ResolutionSelection.range,
+    resolutions: [],
+  }) as MultiResolutionQuery;
+
+  // Make sure it has something
+  if (!(q.resolutions && q.resolutions.length)) {
+    q.resolutions = [
+      {
+        ms: Number.NEGATIVE_INFINITY,
+        targets: [{ refId: 'A' }],
+      },
+    ];
+  }
+
+  return q;
+}
 
 export class MultiQueryEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -33,10 +47,7 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
 
   getQuery(): MultiResolutionQuery {
     const { panel } = this.props;
-    return defaults(panel.targets[0] as MultiResolutionQuery, {
-      select: ResolutionSelection.range,
-      resolutions: [],
-    });
+    return getMultiResolutionQuery(panel.targets);
   }
 
   async componentDidMount() {
@@ -68,7 +79,6 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
         resolution: '10m',
         ms: 10000,
         targets: [],
-        datasource: null,
       },
     ];
 
@@ -81,20 +91,10 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
   render() {
     const props = this.props;
     const query = this.getQuery();
-    const isInterval = query.select === ResolutionSelection.interval;
+    // const isInterval = query.select === ResolutionSelection.interval;
 
     return (
       <div>
-        <div className="gf-form">
-          <div className="gf-form-inline">Select</div>
-          <div className="gf-form-inline">
-            <Select
-              options={resolutionTypes}
-              value={isInterval ? resolutionTypes[0] : resolutionTypes[1]}
-              onChange={this.onSelectResolutionType}
-            />
-          </div>
-        </div>
         <div>
           {query.resolutions.map((value, index) => {
             return (

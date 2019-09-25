@@ -1,5 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
+import defaults from 'lodash/defaults';
 
 // Types
 import { PanelData, DataQuery } from '@grafana/ui';
@@ -35,8 +36,13 @@ export class MultiQueryRow extends PureComponent<Props, State> {
   };
 
   render() {
-    const { value, data, dashboard, panel, onScrollBottom } = this.props;
-    const isCollapsed = false;
+    const { data, dashboard, panel, onScrollBottom } = this.props;
+    const isCollapsed = true;
+    const value: QueriesForResolution = defaults(this.props.value, {
+      targets: [{ refId: 'A' }],
+    } as QueriesForResolution);
+
+    console.log('MULTI', value);
 
     return (
       <div className="query-editor-row">
@@ -47,7 +53,7 @@ export class MultiQueryRow extends PureComponent<Props, State> {
             <span>&nbsp;</span>
           </div>
           <div>
-            <input type="text" className="gf-form query-editor-row__ref-id" value="XXX" />
+            <input type="text" className="gf-form query-editor-row__ref-id" defaultValue="XXX" />
           </div>
           <div
             className="query-editor-row__collapsed-text"

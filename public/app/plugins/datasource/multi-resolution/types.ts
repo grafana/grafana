@@ -8,8 +8,7 @@ export enum ResolutionSelection {
 export interface QueriesForResolution {
   resolution?: string;
   ms: number; // Will be -Infinity when resolution is not set
-  targets: DataQuery[];
-  datasource?: string; // Datasource to apply by default
+  targets: DataQuery[]; // Always mixed
 }
 
 export interface MultiResolutionQuery extends DataQuery {

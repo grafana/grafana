@@ -15,8 +15,8 @@ import {
   PanelData,
   AlphaNotice,
   PluginState,
+  Select,
 } from '@grafana/ui';
-import { QueryEditorRow } from './QueryEditorRow';
 import { QueryEditorRows } from './QueryEditorRows';
 
 // Services
@@ -26,13 +26,14 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { LoadingState, DataTransformerConfig, DefaultTimeRange } from '@grafana/data';
+import { LoadingState, DataTransformerConfig, DefaultTimeRange, SelectableValue } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
 import { isMultiResolutionQuery } from 'app/plugins/datasource/multi-resolution/MultiDataSource';
 import { addQuery } from 'app/core/utils/query';
-import { MultiQueryEditor } from 'app/plugins/datasource/multi-resolution/MultiQueryEditor';
+import { MultiQueryEditor, getMultiResolutionQuery } from 'app/plugins/datasource/multi-resolution/MultiQueryEditor';
+import { ResolutionSelection } from 'app/plugins/datasource/multi-resolution/types';
 
 interface Props {
   panel: PanelModel;
@@ -153,11 +154,15 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   renderToolbar = () => {
     const { currentDS, isAddingMixed } = this.state;
+
+    const isMultiResolution = isMultiResolutionQuery(currentDS.name);
     const showAddButton = !(isAddingMixed || isSharedDashboardQuery(currentDS.name));
 
     return (
       <>
         <DataSourcePicker datasources={this.datasources} onChange={this.onChangeDataSource} current={currentDS} />
+        {isMultiResolution && this.renderMultiPicker()}
+
         <div className="flex-grow-1" />
         {showAddButton && (
           <button className="btn navbar-button" onClick={this.onAddQueryClick}>
@@ -166,6 +171,26 @@ export class QueriesTab extends PureComponent<Props, State> {
         )}
         {isAddingMixed && this.renderMixedPicker()}
       </>
+    );
+  };
+
+  onSelectResolutionType = (item: SelectableValue<ResolutionSelection>) => {
+    const query = getMultiResolutionQuery(this.props.panel.targets);
+    query.select = item.value!;
+    this.onUpdateQueries([query]);
+  };
+
+  renderMultiPicker = () => {
+    const s0 = { value: ResolutionSelection.interval, label: 'Interval', description: 'Select queries by interval' };
+    const s1 = { value: ResolutionSelection.range, label: 'Range', description: 'Select queries based on range' };
+
+    const q = getMultiResolutionQuery(this.props.panel.targets);
+    const v = q.select === s0.value ? s0 : s1;
+
+    return (
+      <div>
+        <Select options={[s0, s1]} value={v} onChange={this.onSelectResolutionType} />
+      </div>
     );
   };
 
@@ -183,7 +208,14 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   onAddMixedQuery = (datasource: any) => {
-    this.onUpdateQueries(addQuery(this.props.panel.targets, { datasource: datasource.name }));
+    const { targets } = this.props.panel;
+    if (isMultiResolutionQuery(this.state.currentDS.name)) {
+      const q = getMultiResolutionQuery(targets);
+      console.log('TODO add query to', q);
+      this.onUpdateQueries([q]);
+    } else {
+      this.onUpdateQueries(addQuery(targets, { datasource: datasource.name }));
+    }
     this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
   };
 
