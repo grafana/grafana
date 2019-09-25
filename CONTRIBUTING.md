@@ -42,7 +42,7 @@ Whether you are contributing or doing code review, first read and understand htt
 ### Low-level checks
 
 - [ ] The pull request contains a title that explains it. It follows [PR and commit messages guidelines](#Pull-Requests-titles-and-message).
-- [ ] The pull request contains necessary links to issues. 
+- [ ] The pull request contains necessary links to issues.
 - [ ] The pull request contains commits with messages that are small and understandable. It follows [PR and commit messages guidelines](#Pull-Requests-titles-and-message).
 - [ ] The pull request does not contain magic strings or numbers that could be replaced with an `Enum` or `const` instead.
 
@@ -58,6 +58,8 @@ Whether you are contributing or doing code review, first read and understand htt
 - [ ] The pull request does not contain uses of `any` or `{}` without comments describing why.
 - [ ] The pull request does not contain large React components that could easily be split into several smaller components.
 - [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.
+- [ ] The pull request follows our [styling with Emotion convention](./style_guides/styling.md)
+  > We still use a lot of SASS, but any new CSS work should be using or migrating existing code to Emotion
 
 #### Redux specific checks (skip if your pull request does not contain Redux changes)
 
