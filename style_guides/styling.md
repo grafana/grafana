@@ -62,7 +62,7 @@ For more information about themes at Grafana please see [themes guide](./themes.
 For class composition use Emotion's `cx` function
 
 ```tsx
-import { css, cx }  from 'emotion
+import { css, cx }  from 'emotion';
 
 
 interface Props {
