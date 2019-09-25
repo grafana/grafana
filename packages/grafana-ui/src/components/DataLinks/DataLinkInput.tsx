@@ -33,12 +33,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
   const [showingSuggestions, setShowingSuggestions] = useState(false);
-
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
-  const [usedSuggestions, setUsedSuggestions] = useState(
-    suggestions.filter(suggestion => value.includes(suggestion.value))
-  );
-
   const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
 
   const getStyles = useCallback(() => {
@@ -54,28 +49,12 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
     };
   }, [theme]);
 
-  const currentSuggestions = useMemo(
-    () => suggestions.filter(suggestion => !usedSuggestions.map(s => s.value).includes(suggestion.value)),
-    [usedSuggestions, suggestions]
-  );
-
   // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
-  const stateRef = useRef({ showingSuggestions, currentSuggestions, suggestionsIndex, linkUrl, onChange });
-  stateRef.current = { showingSuggestions, currentSuggestions, suggestionsIndex, linkUrl, onChange };
+  const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
+  stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
 
   // SelectionReference is used to position the variables suggestion relatively to current DOM selection
   const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions, linkUrl]);
-
-  // Keep track of variables that has been used already
-  const updateUsedSuggestions = () => {
-    const currentLink = Plain.serialize(linkUrl);
-    const next = usedSuggestions.filter(suggestion => currentLink.includes(suggestion.value));
-    if (next.length !== usedSuggestions.length) {
-      setUsedSuggestions(next);
-    }
-  };
-
-  useDebounce(updateUsedSuggestions, 250, [linkUrl]);
 
   const onKeyDown = React.useCallback((event: KeyboardEvent, next: () => any) => {
     if (!stateRef.current.showingSuggestions) {
@@ -93,13 +72,13 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
 
       case 'Enter':
         event.preventDefault();
-        return onVariableSelect(stateRef.current.currentSuggestions[stateRef.current.suggestionsIndex]);
+        return onVariableSelect(stateRef.current.suggestions[stateRef.current.suggestionsIndex]);
 
       case 'ArrowDown':
       case 'ArrowUp':
         event.preventDefault();
         const direction = event.key === 'ArrowDown' ? 1 : -1;
-        return setSuggestionsIndex(index => modulo(index + direction, stateRef.current.currentSuggestions.length));
+        return setSuggestionsIndex(index => modulo(index + direction, stateRef.current.suggestions.length));
       default:
         return next();
     }
