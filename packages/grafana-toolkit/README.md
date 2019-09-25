@@ -222,11 +222,16 @@ module.exports = {
 
 ## Contributing to grafana-toolkit
 
+### Development
 Typically plugins should be developed using the `@grafana/toolkit` installed from npm.  However, when working on the toolkit, you may want to use the local version. To do that follow the steps below:
 
 1. Clone [Grafana repository](https://github.com/grafana/grafana)
 2. Navigate to the directory you have cloned Grafana repo to and run `yarn install --pure-lockfile`
 3. Navigate to `<GRAFANA_DIR>/packages/grafana-toolkit` and run `yarn link`
-2. Navigate to your plugin directory and run `npx grafana-toolkit plugin:dev --yarnlink`. This will add all dependencies required by grafana-toolkit to your project as well as link your local grafana-toolkit version to be used by the plugin.
+2. Navigate to the directory where your plugin code is and run `npx grafana-toolkit plugin:dev --yarnlink`. This will add all dependencies required by grafana-toolkit to your project as well as link your local grafana-toolkit version to be used by the plugin.
 
 
+### Debugging
+To debug grafana-toolkit you can use standard [NodeJS debugging methods](https://nodejs.org/de/docs/guides/debugging-getting-started/#enable-inspector) (`node --inspect`, `node --inspect-brk`). To run grafana-toolkit in a debugging session use the following command in the toolkit's directory:
+
+`node --inspect-brk ./bin/grafana-toolkit.js [task]`

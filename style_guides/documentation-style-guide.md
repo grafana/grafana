@@ -1,4 +1,4 @@
-# Documention style guide
+# Documentation style guide
 
 This style guide applies to all documentation created for Grafana products.
 
