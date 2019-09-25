@@ -24,7 +24,7 @@ import config from 'app/core/config';
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { LoadingState, DataTransformerConfig } from '@grafana/data';
+import { LoadingState, DataTransformerConfig, DefaultTimeRange } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
@@ -59,7 +59,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     data: {
       state: LoadingState.NotStarted,
       series: [],
-      timeRange: null,
+      timeRange: DefaultTimeRange,
     },
   };
 

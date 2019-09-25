@@ -17,7 +17,7 @@ import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { PanelPlugin, PanelPluginMeta, PanelData } from '@grafana/ui';
 import { PanelCtrl } from 'app/plugins/sdk';
 import { Unsubscribable } from 'rxjs';
-import { LoadingState } from '@grafana/data';
+import { LoadingState, DefaultTimeRange } from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
@@ -53,7 +53,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
       data: {
         state: LoadingState.NotStarted,
         series: [],
-        timeRange: null,
+        timeRange: DefaultTimeRange,
       },
     };
   }
