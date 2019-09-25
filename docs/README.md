@@ -4,7 +4,7 @@ We are currently working on migrating the docs to a new static website. The `gra
 
 The Markdown content however, is still public in this repository. We still encourage pull requests to make the docs better, and we will make sure the changed content works well on the current docs site. Include any images in your pull request, and we will move them to the `grafana/website` repository.
 
-# Building The Docs
+# Building the docs
 
 To build the docs locally, you need to have docker installed. The docs are built using [Hugo](http://gohugo.io/) - a static site generator.
 
