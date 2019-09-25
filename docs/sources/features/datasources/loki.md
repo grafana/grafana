@@ -85,9 +85,9 @@ After writing the Log Stream Selector, you can filter the results further by wri
 
 Example queries:
 
-* `{job="mysql"} |= error`
-* `{name="kafka"} |~ tsdb-ops.*io:2003`
-* `{instance=~"kafka-[23]",name="kafka"} != kafka.server:type=ReplicaManager`
+* `{job="mysql"} |= "error"`
+* `{name="kafka"} |~ "tsdb-ops.*io:2003"`
+* `{instance=~"kafka-[23]",name="kafka"} != "kafka.server:type=ReplicaManager"`
 
 Filter operators can be chained and will sequentially filter down the expression. The resulting log lines will satisfy every filter.
 
