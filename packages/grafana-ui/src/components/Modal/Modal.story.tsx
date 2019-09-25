@@ -5,7 +5,7 @@ import { Modal } from './Modal';
 
 const ModalStories = storiesOf('UI/Modal', module);
 
-RefreshSelectStories.addDecorator(withCenteredStory);
+ModalStories.addDecorator(withCenteredStory);
 
 RefreshSelectStories.add('default', () => {
   return (
