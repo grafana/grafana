@@ -32,6 +32,12 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
       showThresholdMarkers: !this.props.options.showThresholdMarkers,
     });
 
+  onToggleSign = () =>
+    this.props.onOptionsChange({
+      ...this.props.options,
+      showSign: !this.props.options.showSign,
+    });
+
   onThresholdsChanged = (thresholds: Threshold[]) => {
     const current = this.props.options.fieldOptions.defaults;
     this.onDefaultsChange({
@@ -70,7 +76,7 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
 
   render() {
     const { options } = this.props;
-    const { fieldOptions, showThresholdLabels, showThresholdMarkers } = options;
+    const { fieldOptions, showThresholdLabels, showThresholdMarkers, showSign } = options;
     const { defaults } = fieldOptions;
 
     const suggestions = fieldOptions.values
@@ -97,6 +103,12 @@ export class GaugePanelEditor extends PureComponent<PanelEditorProps<GaugeOption
               labelClass={`width-${this.labelWidth}`}
               checked={showThresholdMarkers}
               onChange={this.onToggleThresholdMarkers}
+            />
+            <Switch
+              label="Sign"
+              labelClass={`width-${this.labelWidth}`}
+              checked={showSign}
+              onChange={this.onToggleSign}
             />
           </PanelOptionsGroup>
 

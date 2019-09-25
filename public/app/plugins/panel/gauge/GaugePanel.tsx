@@ -17,6 +17,10 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
     const { options } = this.props;
     const { field, display } = value;
 
+    if (options.showSign && display.numeric > 0 && display.text[0] !== '+') {
+      display.text = '+' + display.text;
+    }
+
     return (
       <DataLinksContextMenu links={getFieldLinksSupplier(value)}>
         {({ openMenu, targetClassName }) => {

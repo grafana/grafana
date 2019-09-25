@@ -5,6 +5,7 @@ import { standardFieldDisplayOptions } from '../singlestat2/types';
 export interface GaugeOptions extends SingleStatBaseOptions {
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
+  showSign: boolean;
 }
 
 export const standardGaugeFieldOptions: FieldDisplayOptions = {
@@ -14,6 +15,7 @@ export const standardGaugeFieldOptions: FieldDisplayOptions = {
 export const defaults: GaugeOptions = {
   showThresholdMarkers: true,
   showThresholdLabels: false,
+  showSign: true,
   fieldOptions: standardGaugeFieldOptions,
   orientation: VizOrientation.Auto,
 };
