@@ -17,6 +17,8 @@ import ldapReducers from 'app/features/admin/state/reducers';
 import { setStore } from './store';
 import { StoreState } from 'app/types/store';
 import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
+import { ActionOf } from '../core/redux';
+import { cleanUpAction, CleanUp } from '../core/actions/cleanUp';
 
 const rootReducers = {
   ...sharedReducers,
@@ -38,9 +40,39 @@ export function addRootReducer(reducers: any) {
   Object.assign(rootReducers, ...reducers);
 }
 
+const recursiveCleanState = (state: any, stateSlice: any): boolean => {
+  for (const stateKey in state) {
+    if (state[stateKey] === stateSlice) {
+      state[stateKey] = undefined;
+      return true;
+    }
+
+    if (typeof state[stateKey] === 'object') {
+      const cleaned = recursiveCleanState(state[stateKey], stateSlice);
+      if (cleaned) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
 export function configureStore() {
   const composeEnhancers = (window as any).__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-  const rootReducer = combineReducers(rootReducers);
+  const appReducer = combineReducers(rootReducers);
+  const rootReducer = (state: any, action: ActionOf<any>): StoreState => {
+    if (action.type !== cleanUpAction.type) {
+      return appReducer(state, action);
+    }
+
+    const { stateSelector } = action.payload as CleanUp<any>;
+    const stateSlice = stateSelector(state);
+    recursiveCleanState(state, stateSlice);
+
+    return appReducer(state, action);
+  };
+
   const logger = createLogger({
     predicate: (getState: () => StoreState) => {
       return getState().application.logActions;

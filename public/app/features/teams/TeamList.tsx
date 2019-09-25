@@ -1,5 +1,4 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
 import { hot } from 'react-hot-loader';
 import Page from 'app/core/components/Page/Page';
 import { DeleteButton } from '@grafana/ui';
@@ -12,6 +11,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
+import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 
 export interface Props {
   navModel: NavModel;
@@ -170,9 +170,4 @@ const mapDispatchToProps = {
   setSearchQuery,
 };
 
-export default hot(module)(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  )(TeamList)
-);
+export default hot(module)(connectWithCleanUp(mapStateToProps, mapDispatchToProps, state => state.team)(TeamList));
