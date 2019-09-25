@@ -232,6 +232,6 @@ Typically plugins should be developed using the `@grafana/toolkit` installed fro
 
 
 ### Debugging
-To debug grafana-toolkit you can use standard [NodeJS debugging methods](https://nodejs.org/de/docs/guides/debugging-getting-started/#enable-inspector) (`node --inspect`, `node --inspect-brk`). To run grafana-toolkit in a debugging session use the following command in toolkit's directory:
+To debug grafana-toolkit you can use standard [NodeJS debugging methods](https://nodejs.org/de/docs/guides/debugging-getting-started/#enable-inspector) (`node --inspect`, `node --inspect-brk`). To run grafana-toolkit in a debugging session use the following command in the toolkit's directory:
 
 `node --inspect-brk ./bin/grafana-toolkit.js [task]`
