@@ -224,7 +224,7 @@ describe('AzureMonitorQueryCtrl', () => {
         };
       });
 
-      it('should set the options and default selected value for the Aggregations dropdown', () => {
+      it.skip('should set the options and default selected value for the Aggregations dropdown', () => {
         queryCtrl.onMetricNameChange().then(() => {
           expect(queryCtrl.target.azureMonitor.aggregation).toBe('Average');
           expect(queryCtrl.target.azureMonitor.aggOptions).toBe(['Average', 'Total']);

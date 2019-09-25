@@ -1,9 +1,9 @@
 import React from 'react';
+import { TestRuleResult, Props } from './TestRuleResult';
+import { DashboardModel } from '../dashboard/state';
 import { shallow } from 'enzyme';
-import { DashboardModel } from '../dashboard/state/DashboardModel';
-import { Props, TestRuleResult } from './TestRuleResult';
 
-jest.mock('app/core/services/backend_srv', () => ({
+jest.mock('../../core/services/backend_srv', () => ({
   getBackendSrv: () => ({
     post: jest.fn(),
   }),
