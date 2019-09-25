@@ -27,6 +27,13 @@ func init() {
         <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty Integration Key"></input>
       </div>
       <div class="gf-form">
+	    <span class="gf-form-label width-10">Severity</span>
+        <div class="gf-form-select-wrapper width-14">
+          <select class="gf-form-input"
+		     ng-model="ctrl.model.settings.severity"
+			 ng-options="t for t in ['critical', 'error', 'warning', 'info']">
+          </select>
+        </div>
         <gf-form-switch
            class="gf-form"
            label="Auto resolve incidents"
@@ -45,6 +52,7 @@ var (
 
 // NewPagerdutyNotifier is the constructor for the PagerDuty notifier
 func NewPagerdutyNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
+	severity := model.Settings.Get("severity").MustString("critical")
 	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
 	key := model.Settings.Get("integrationKey").MustString()
 	if key == "" {
@@ -54,6 +62,7 @@ func NewPagerdutyNotifier(model *models.AlertNotification) (alerting.Notifier, e
 	return &PagerdutyNotifier{
 		NotifierBase: NewNotifierBase(model),
 		Key:          key,
+		Severity:     severity,
 		AutoResolve:  autoResolve,
 		log:          log.New("alerting.notifier.pagerduty"),
 	}, nil
@@ -64,6 +73,7 @@ func NewPagerdutyNotifier(model *models.AlertNotification) (alerting.Notifier, e
 type PagerdutyNotifier struct {
 	NotifierBase
 	Key         string
+	Severity    string
 	AutoResolve bool
 	log         log.Logger
 }
@@ -98,7 +108,7 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if hostname, err := os.Hostname(); err == nil {
 		payloadJSON.Set("source", hostname)
 	}
-	payloadJSON.Set("severity", "critical")
+	payloadJSON.Set("severity", pn.Severity)
 	payloadJSON.Set("timestamp", time.Now())
 	payloadJSON.Set("component", "Grafana")
 	payloadJSON.Set("custom_details", customData)
