@@ -2,6 +2,7 @@ import { DataFrame, LoadingState, dateTime } from '@grafana/data';
 import { PanelData, DataSourceApi, DataQueryRequest, DataQueryResponse } from '@grafana/ui';
 import { Subscriber, Observable, Subscription } from 'rxjs';
 import { runRequest } from './runRequest';
+import { deepFreeze } from '../../../../test/core/redux/reducerTester';
 
 jest.mock('app/core/services/backend_srv');
 
@@ -186,18 +187,55 @@ describe('runRequest', () => {
 
   runRequestScenario('If time range is relative', ctx => {
     ctx.setup(async () => {
+      // any changes to ctx.request.range will throw and state would become LoadingState.Error
+      deepFreeze(ctx.request.range);
       ctx.start();
+
       // wait a bit
       await sleep(20);
 
       ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
     });
 
-    it('should update returned request range', () => {
-      expect(ctx.results[0].request.range.to.valueOf()).not.toBe(ctx.fromStartTime);
+    it('should add the correct timeRange property and the request range should not be mutated', () => {
+      expect(ctx.results[0].timeRange.to.valueOf()).toBeDefined();
+      expect(ctx.results[0].timeRange.to.valueOf()).not.toBe(ctx.toStartTime.valueOf());
+      expect(ctx.results[0].timeRange.to.valueOf()).not.toBe(ctx.results[0].request.range.to.valueOf());
+
+      expectThatRangeHasNotMutated(ctx);
+    });
+  });
+
+  runRequestScenario('If time range is not relative', ctx => {
+    ctx.setup(async () => {
+      ctx.request.range.raw.from = ctx.fromStartTime;
+      ctx.request.range.raw.to = ctx.toStartTime;
+      // any changes to ctx.request.range will throw and state would become LoadingState.Error
+      deepFreeze(ctx.request.range);
+      ctx.start();
+
+      // wait a bit
+      await sleep(20);
+
+      ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
+    });
+
+    it('should add the correct timeRange property and the request range should not be mutated', () => {
+      expect(ctx.results[0].timeRange).toBeDefined();
+      expect(ctx.results[0].timeRange.to.valueOf()).toBe(ctx.toStartTime.valueOf());
+      expect(ctx.results[0].timeRange.to.valueOf()).toBe(ctx.results[0].request.range.to.valueOf());
+
+      expectThatRangeHasNotMutated(ctx);
     });
   });
 });
+
+const expectThatRangeHasNotMutated = (ctx: ScenarioCtx) => {
+  // Make sure that the range for request is not changed and that deepfreeze hasn't thrown
+  expect(ctx.results[0].request.range.to.valueOf()).toBe(ctx.toStartTime.valueOf());
+  expect(ctx.results[0].error).not.toBeDefined();
+  expect(ctx.results[0].state).toBe(LoadingState.Done);
+};
 
 async function sleep(ms: number) {
   return new Promise(resolve => {
