@@ -650,31 +650,16 @@ func parseRefreshDuration(refresh string) (*time.Duration, error) {
 	return &d, nil
 }
 
-func toSliceOfString(arr []interface{}) []string {
-	slice := make([]string, 0)
-	for _, n := range arr {
-		str := n.(string)
-		slice = append(slice, str)
-	}
-	return slice
-}
-
 func validateDashboardRefreshRates(cmd *models.ValidateDashboardBeforeSaveCommand) error {
 	refresh, err := cmd.Dashboard.Data.Get("refresh").String()
 	if err != nil {
 		return err
 	}
 
-	//refreshIntervals, err := cmd.Dashboard.Data.Get("timepicker").Get("refresh_intervals").Array()
-	//if err != nil {
-	//	return err
-	//}
-
 	minRefreshRate, err := parseRefreshDuration(setting.DashboardMinRefreshRate)
 	if err != nil {
 		return err
 	}
-	//intervals := toSliceOfString(refreshIntervals)
 	d, err := parseRefreshDuration(refresh)
 	if err != nil {
 		return err
@@ -683,16 +668,6 @@ func validateDashboardRefreshRates(cmd *models.ValidateDashboardBeforeSaveComman
 	if *d < *minRefreshRate {
 		return models.ErrDashboardRefreshRateTooShort
 	}
-
-	//for _, interval := range intervals {
-	//	duration, err := parseRefreshDuration(interval)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	if *duration < *minRefreshRate {
-	//		return models.ErrDashboardCannotSaveProvisionedDashboard
-	//	}
-	//}
 
 	return nil
 }
