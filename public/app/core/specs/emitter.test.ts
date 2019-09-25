@@ -1,7 +1,7 @@
 import { Emitter } from '../utils/emitter';
-import { noPayloadEventFactory } from '@grafana/data';
+import { eventFactory } from '@grafana/data';
 
-const testEvent = noPayloadEventFactory('test');
+const testEvent = eventFactory('test');
 
 describe('Emitter', () => {
   describe('given 2 subscribers', () => {
