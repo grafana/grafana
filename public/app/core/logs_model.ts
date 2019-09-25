@@ -240,7 +240,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
 
   for (let i = 0; i < logSeries.length; i++) {
     const series = logSeries[i];
-    const seriesLabelsString = labelsToString(series.labels);
     const fieldCache = new FieldCache(series);
     const uniqueLabels = findUniqueLabels(series.labels, commonLabels);
     if (Object.keys(uniqueLabels).length > 0) {
@@ -250,7 +249,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
-    const labelsField = fieldCache.getFieldByName('labels');
+    const idField = getIdField(fieldCache);
 
     let seriesLogLevel: LogLevel | undefined = undefined;
     if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
@@ -258,9 +257,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     }
 
     for (let j = 0; j < series.length; j++) {
-      // labelsField can be undefined because there is a slight difference between how live stream and normal
-      // dataFrame looks like. See Loki datasource.runLiveQueries.
-      const rowLabelsString = labelsField ? labelsToString(labelsField.values.get(j)) : '';
       const ts = timeField.values.get(j);
       const time = dateTime(ts);
       const timeEpochMs = time.valueOf();
@@ -296,7 +292,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
         raw: message,
         labels: series.labels,
         timestamp: ts,
-        uid: `${ts}_${seriesLabelsString}_${rowLabelsString}`,
+        uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
   }
@@ -328,11 +324,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
   };
 }
 
-/**
- * Return a stable string from the labels so they can be used for unique id.
- */
-function labelsToString(labels: Labels) {
-  const keys = Object.keys(labels);
-  keys.sort();
-  return keys.map(key => `${key}=${labels[key]}`).join(',');
+function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
+  const idFieldNames = ['id'];
+  for (const fieldName of idFieldNames) {
+    const idField = fieldCache.getFieldByName(fieldName);
+    if (idField) {
+      return idField;
+    }
+  }
+  return undefined;
 }
