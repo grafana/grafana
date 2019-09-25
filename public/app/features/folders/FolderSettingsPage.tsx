@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import { NavModel } from '@grafana/data';
+import { NavModel, showConfirmModal } from '@grafana/data';
 import { Input } from '@grafana/ui';
 import Page from 'app/core/components/Page/Page';
 import appEvents from 'app/core/app_events';
@@ -52,7 +52,7 @@ export class FolderSettingsPage extends PureComponent<Props, State> {
     evt.stopPropagation();
     evt.preventDefault();
 
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(showConfirmModal, {
       title: 'Delete',
       text: `Do you want to delete this folder and all its dashboards?`,
       icon: 'fa-trash',

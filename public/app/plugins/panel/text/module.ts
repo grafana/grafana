@@ -5,7 +5,8 @@ import { sanitize, escapeHtml } from 'app/core/utils/text';
 import config from 'app/core/config';
 import { auto, ISCEService } from 'angular';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { renderMarkdown } from '@grafana/data';
+import { renderMarkdown, editModeInitialized, clientRefreshed } from '@grafana/data';
+import { rendered } from 'app/types';
 
 const defaultContent = `
 # Title
@@ -38,9 +39,9 @@ export class TextPanelCtrl extends PanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
 
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('refresh', this.onRefresh.bind(this));
-    this.events.on('render', this.onRender.bind(this));
+    this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(clientRefreshed, this.onRefresh.bind(this));
+    this.events.on(rendered, this.onRender.bind(this));
 
     const renderWhenChanged = (scope: any) => {
       const { panel } = scope.ctrl;

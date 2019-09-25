@@ -6,6 +6,8 @@ import angular, { ILocationService } from 'angular';
 import config from 'app/core/config';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
+import { showConfirmModal, alertSuccess, dashScroll, dashboardSaved, routeUpdated } from '@grafana/data';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -24,7 +26,7 @@ export class SettingsCtrl {
     private $scope: any,
     private $route: any,
     private $location: ILocationService,
-    private $rootScope: any,
+    private $rootScope: GrafanaRootScope,
     private backendSrv: BackendSrv,
     private dashboardSrv: DashboardSrv
   ) {
@@ -35,7 +37,7 @@ export class SettingsCtrl {
     this.$scope.$on('$destroy', () => {
       this.dashboard.updateSubmenuVisibility();
       setTimeout(() => {
-        this.$rootScope.appEvent('dash-scroll', { restore: true });
+        this.$rootScope.appEvent(dashScroll, { restore: true });
         this.dashboard.startRefresh();
       });
     });
@@ -47,9 +49,9 @@ export class SettingsCtrl {
     this.buildSectionList();
     this.onRouteUpdated();
 
-    this.$rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
-    this.$rootScope.appEvent('dash-scroll', { animate: false, pos: 0 });
-    this.$rootScope.onAppEvent('dashboard-saved', this.onPostSave.bind(this), $scope);
+    this.$rootScope.onAppEvent(routeUpdated, this.onRouteUpdated.bind(this), $scope);
+    this.$rootScope.appEvent(dashScroll, { animate: false, pos: 0 });
+    this.$rootScope.onAppEvent(dashboardSaved, this.onPostSave.bind(this), $scope);
   }
 
   buildSectionList() {
@@ -185,7 +187,7 @@ export class SettingsCtrl {
     let text2 = this.dashboard.title;
 
     if (this.dashboard.meta.provisioned) {
-      appEvents.emit('confirm-modal', {
+      appEvents.emit(showConfirmModal, {
         title: 'Cannot delete provisioned dashboard',
         text: `
           This dashboard is managed by Grafanas provisioning and cannot be deleted. Remove the dashboard from the
@@ -213,7 +215,7 @@ export class SettingsCtrl {
       text2 = `This dashboard contains ${alerts} alerts. Deleting this dashboard will also delete those alerts`;
     }
 
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(showConfirmModal, {
       title: 'Delete',
       text: 'Do you want to delete this dashboard?',
       text2: text2,
@@ -229,7 +231,7 @@ export class SettingsCtrl {
 
   deleteDashboardConfirmed() {
     this.backendSrv.deleteDashboard(this.dashboard.uid, false).then(() => {
-      appEvents.emit('alert-success', ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
+      appEvents.emit(alertSuccess, ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
       this.$location.url('/');
     });
   }

@@ -4,6 +4,9 @@ import $ from 'jquery';
 import Drop from 'tether-drop';
 // @ts-ignore
 import baron from 'baron';
+import { componentDidMount, panelSizeChanged } from '@grafana/data';
+import { viewModeChanged } from '../dashboard/state/PanelModel';
+import { rendered } from 'app/types';
 
 const module = angular.module('grafana.directives');
 
@@ -73,7 +76,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       }
 
       // update scrollbar after mounting
-      ctrl.events.on('component-did-mount', () => {
+      ctrl.events.on(componentDidMount, () => {
         if (ctrl.__proto__.constructor.scrollable) {
           const scrollRootClass = 'baron baron__root baron__clipper panel-content--scrollable';
           const scrollerClass = 'baron__scroller';
@@ -102,7 +105,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }
       });
 
-      ctrl.events.on('panel-size-changed', () => {
+      ctrl.events.on(panelSizeChanged, () => {
         ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);
         $timeout(() => {
           resizeScrollableContent();
@@ -110,7 +113,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         });
       });
 
-      ctrl.events.on('view-mode-changed', () => {
+      ctrl.events.on(viewModeChanged, () => {
         // first wait one pass for dashboard fullscreen view mode to take effect (classses being applied)
         setTimeout(() => {
           // then recalc style
@@ -123,7 +126,7 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }, 10);
       });
 
-      ctrl.events.on('render', () => {
+      ctrl.events.on(rendered, () => {
         // set initial height
         if (!ctrl.height) {
           ctrl.calculatePanelHeight(panelContainer[0].offsetHeight);

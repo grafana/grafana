@@ -4,6 +4,7 @@ import { PanelModel } from '../../state/PanelModel';
 import { DashboardModel } from '../../state/DashboardModel';
 import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
+import { showConfirmModal, showModal, templateVariableValueUpdated } from '@grafana/data';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -18,11 +19,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       collapsed: this.props.panel.collapsed,
     };
 
-    this.props.dashboard.on('template-variable-value-updated', this.onVariableUpdated);
+    this.props.dashboard.on(templateVariableValueUpdated, this.onVariableUpdated);
   }
 
   componentWillUnmount() {
-    this.props.dashboard.off('template-variable-value-updated', this.onVariableUpdated);
+    this.props.dashboard.off(templateVariableValueUpdated, this.onVariableUpdated);
   }
 
   onVariableUpdated = () => {
@@ -43,7 +44,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
   };
 
   onOpenSettings = () => {
-    appEvents.emit('show-modal', {
+    appEvents.emit(showModal, {
       templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
       modalClass: 'modal--narrow',
       model: {
@@ -54,7 +55,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
   };
 
   onDelete = () => {
-    appEvents.emit('confirm-modal', {
+    appEvents.emit(showConfirmModal, {
       title: 'Delete Row',
       text: 'Are you sure you want to remove this row and all its panels?',
       altActionText: 'Delete row only',

@@ -8,6 +8,7 @@ import { DashboardSearchHit } from 'app/types/search';
 import { ContextSrv } from './context_srv';
 import { FolderInfo, DashboardDTO } from 'app/types';
 import { BackendSrv as BackendService, getBackendSrv as getBackendService, BackendSrvRequest } from '@grafana/runtime';
+import { alertWarning, alertSuccess, dsRequestResponse, dsRequestError, alertError } from '@grafana/data';
 
 export class BackendSrv implements BackendService {
   private inFlightRequests: { [key: string]: Array<angular.IDeferred<any>> } = {};
@@ -60,14 +61,8 @@ export class BackendSrv implements BackendService {
     }
 
     if (err.status === 422) {
-      appEvents.emit('alert-warning', ['Validation failed', data.message]);
+      appEvents.emit(alertWarning, ['Validation failed', data.message]);
       throw data;
-    }
-
-    let severity = 'error';
-
-    if (err.status < 500) {
-      severity = 'warning';
     }
 
     if (data.message) {
@@ -78,7 +73,7 @@ export class BackendSrv implements BackendService {
         message = 'Error';
       }
 
-      appEvents.emit('alert-' + severity, [message, description]);
+      appEvents.emit(err.status < 500 ? alertWarning : alertError, [message, description]);
     }
 
     throw data;
@@ -105,7 +100,7 @@ export class BackendSrv implements BackendService {
         if (options.method !== 'GET') {
           if (results && results.data.message) {
             if (options.showSuccessAlert !== false) {
-              appEvents.emit('alert-success', [results.data.message]);
+              appEvents.emit(alertSuccess, [results.data.message]);
             }
           }
         }
@@ -192,7 +187,7 @@ export class BackendSrv implements BackendService {
     return this.$http(options)
       .then((response: any) => {
         if (!options.silent) {
-          appEvents.emit('ds-request-response', response);
+          appEvents.emit(dsRequestResponse, response);
         }
         return response;
       })
@@ -232,7 +227,7 @@ export class BackendSrv implements BackendService {
           err.data.message = err.data.error;
         }
         if (!options.silent) {
-          appEvents.emit('ds-request-error', err);
+          appEvents.emit(dsRequestError, err);
         }
         throw err;
       })

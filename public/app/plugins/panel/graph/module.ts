@@ -11,14 +11,25 @@ import { DataProcessor } from './data_processor';
 import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import { DataFrame, DataLink, DateTimeInput } from '@grafana/data';
-import { getColorFromHexRgbOrName, VariableSuggestion } from '@grafana/ui';
+import { getColorFromHexRgbOrName, VariableSuggestion, dataError, dataSnapshotLoad } from '@grafana/ui';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
+import {
+  DataFrame,
+  DataLink,
+  DateTimeInput,
+  initPanelActions,
+  dataFramesReceived,
+  zoomOut,
+  editModeInitialized,
+  showModal,
+} from '@grafana/data';
+
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
+import { rendered } from 'app/types';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -146,12 +157,12 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.processor = new DataProcessor(this.panel);
     this.contextMenuCtrl = new GraphContextMenuCtrl($scope);
 
-    this.events.on('render', this.onRender.bind(this));
-    this.events.on('data-frames-received', this.onDataFramesReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+    this.events.on(rendered, this.onRender.bind(this));
+    this.events.on(dataFramesReceived, this.onDataFramesReceived.bind(this));
+    this.events.on(dataError, this.onDataError.bind(this));
+    this.events.on(dataSnapshotLoad, this.onDataSnapshotLoad.bind(this));
+    this.events.on(editModeInitialized, this.onInitEditMode.bind(this));
+    this.events.on(initPanelActions, this.onInitPanelActions.bind(this));
 
     this.onDataLinksChange = this.onDataLinksChange.bind(this);
   }
@@ -189,7 +200,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   zoomOut(evt: any) {
-    this.publishAppEvent('zoom-out', 2);
+    this.publishAppEvent(zoomOut, 2);
   }
 
   onDataSnapshotLoad(snapshotData: any) {
@@ -325,7 +336,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   exportCsv() {
     const scope = this.$scope.$new(true);
     scope.seriesList = this.seriesList;
-    this.publishAppEvent('show-modal', {
+    this.publishAppEvent(showModal, {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
       scope,
       modalClass: 'modal--narrow',

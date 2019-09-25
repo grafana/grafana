@@ -17,6 +17,7 @@ import { updateLocation } from 'app/core/actions';
 // Types
 import { DashboardModel } from '../../state';
 import { StoreState } from 'app/types';
+import { toggleKioskMode, showDashSearch, showModal } from '@grafana/data';
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -43,11 +44,11 @@ export class DashNav extends PureComponent<Props> {
   }
 
   onDahboardNameClick = () => {
-    appEvents.emit('show-dash-search');
+    appEvents.emit(showDashSearch);
   };
 
   onFolderNameClick = () => {
-    appEvents.emit('show-dash-search', {
+    appEvents.emit(showDashSearch, {
       query: 'folder:current',
     });
   };
@@ -67,7 +68,7 @@ export class DashNav extends PureComponent<Props> {
   };
 
   onToggleTVMode = () => {
-    appEvents.emit('toggle-kiosk-mode');
+    appEvents.emit(toggleKioskMode);
   };
 
   onSave = () => {
@@ -112,7 +113,7 @@ export class DashNav extends PureComponent<Props> {
     modalScope.tabIndex = 0;
     modalScope.dashboard = this.props.dashboard;
 
-    appEvents.emit('show-modal', {
+    appEvents.emit(showModal, {
       src: 'public/app/features/dashboard/components/ShareModal/template.html',
       scope: modalScope,
     });

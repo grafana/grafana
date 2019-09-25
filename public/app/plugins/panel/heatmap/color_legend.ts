@@ -6,6 +6,7 @@ import { tickStep } from 'app/core/utils/ticks';
 import { getColorScale, getOpacityScale } from './color_scale';
 import coreModule from 'app/core/core_module';
 import { GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/ui';
+import { rendered } from 'app/types';
 
 const LEGEND_HEIGHT_PX = 6;
 const LEGEND_WIDTH_PX = 100;
@@ -27,7 +28,7 @@ coreModule.directive('colorLegend', () => {
 
       render();
 
-      ctrl.events.on('render', () => {
+      ctrl.events.on(rendered, () => {
         render();
       });
 
@@ -62,7 +63,7 @@ coreModule.directive('heatmapLegend', () => {
       const panel = scope.ctrl.panel;
 
       render();
-      ctrl.events.on('render', () => {
+      ctrl.events.on(rendered, () => {
         render();
       });
 

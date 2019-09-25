@@ -14,6 +14,7 @@ import { StackdriverQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
 import { TimeSeries, SelectableValue } from '@grafana/data';
+import { dataReceived, dataError } from '@grafana/ui';
 
 export interface Props {
   onQueryChange: (target: StackdriverQuery) => void;
@@ -56,8 +57,8 @@ export class QueryEditor extends React.Component<Props, State> {
 
   componentDidMount() {
     const { events, target, templateSrv } = this.props;
-    events.on('data-received', this.onDataReceived.bind(this));
-    events.on('data-error', this.onDataError.bind(this));
+    events.on(dataReceived, this.onDataReceived.bind(this));
+    events.on(dataError, this.onDataError.bind(this));
     const { perSeriesAligner, alignOptions } = getAlignmentPickerData(target, templateSrv);
     this.setState({
       ...this.props.target,
@@ -67,8 +68,8 @@ export class QueryEditor extends React.Component<Props, State> {
   }
 
   componentWillUnmount() {
-    this.props.events.off('data-received', this.onDataReceived);
-    this.props.events.off('data-error', this.onDataError);
+    this.props.events.off(dataReceived, this.onDataReceived);
+    this.props.events.off(dataError, this.onDataError);
   }
 
   onDataReceived(dataList: TimeSeries[]) {

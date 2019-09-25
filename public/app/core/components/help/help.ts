@@ -1,5 +1,6 @@
 import coreModule from '../../core_module';
 import appEvents from 'app/core/app_events';
+import { hideModal } from '@grafana/data';
 
 export class HelpCtrl {
   tabIndex: any;
@@ -50,7 +51,7 @@ export class HelpCtrl {
   }
 
   dismiss() {
-    appEvents.emit('hide-modal');
+    appEvents.emit(hideModal);
   }
 }
 

@@ -8,16 +8,17 @@ import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { DataSourceInstanceSettings } from '@grafana/ui';
 import { ElasticsearchOptions } from '../types';
+import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 
 describe('ElasticDatasource', function(this: any) {
   const backendSrv: any = {
     datasourceRequest: jest.fn(),
   };
 
-  const $rootScope: any = {
+  const $rootScope: GrafanaRootScope = {
     $on: jest.fn(),
     appEvent: jest.fn(),
-  };
+  } as any;
 
   const templateSrv: any = {
     replace: jest.fn(text => {

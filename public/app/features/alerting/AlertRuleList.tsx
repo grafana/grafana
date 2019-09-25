@@ -10,7 +10,7 @@ import { StoreState, AlertRule } from 'app/types';
 import { getAlertRulesAsync, setSearchQuery, togglePauseAlertRule } from './state/actions';
 import { getAlertRuleItems, getSearchQuery } from './state/selectors';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { NavModel } from '@grafana/data';
+import { NavModel, showModal } from '@grafana/data';
 
 export interface Props {
   navModel: NavModel;
@@ -64,7 +64,7 @@ export class AlertRuleList extends PureComponent<Props, any> {
   };
 
   onOpenHowTo = () => {
-    appEvents.emit('show-modal', {
+    appEvents.emit(showModal, {
       src: 'public/app/features/alerting/partials/alert_howto.html',
       modalClass: 'confirm-modal',
       model: {},
