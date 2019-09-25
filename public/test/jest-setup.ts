@@ -41,3 +41,11 @@ const localStorageMock = (() => {
 
 global.localStorage = localStorageMock;
 // Object.defineProperty(window, 'localStorage', { value: localStorageMock });
+
+const throwUnhandledRejections = () => {
+  process.on('unhandledRejection', err => {
+    throw err;
+  });
+};
+
+throwUnhandledRejections();
