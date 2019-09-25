@@ -34,8 +34,7 @@
       "sass": ["sass"],
       "@grafana/slate-react": ["../node_modules/@types/slate-react"]
     },
-    "skipLibCheck": true,
-    "preserveSymlinks": false
+    "skipLibCheck": true
   },
   "include": [
     "public/app/**/*.ts",
