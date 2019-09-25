@@ -26,6 +26,7 @@ import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
 import { isMultiResolutionQuery } from 'app/plugins/datasource/multi-resolution/MultiDataSource';
 import { addQuery } from 'app/core/utils/query';
+import { MultiQueryEditor } from 'app/plugins/datasource/multi-resolution/MultiQueryEditor';
 
 interface Props {
   panel: PanelModel;
@@ -140,7 +141,7 @@ export class QueriesTab extends PureComponent<Props, State> {
       return;
     }
     this.onUpdateQueries(addQuery(this.props.panel.targets));
-    this.onScollBottom();
+    this.onScrollBottom();
   };
 
   renderToolbar = () => {
@@ -193,7 +194,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ scrollTop: target.scrollTop });
   };
 
-  onScollBottom = () => {
+  onScrollBottom = () => {
     this.setState({ scrollTop: this.state.scrollTop + 10000 });
   };
 
@@ -203,20 +204,29 @@ export class QueriesTab extends PureComponent<Props, State> {
 
     if (isSharedDashboardQuery(currentDS.name)) {
       return <DashboardQueryEditor panel={panel} panelData={data} onChange={query => this.onUpdateQueries([query])} />;
-    } else if (isMultiResolutionQuery(currentDS.name)) {
-      return <div>TODO!</div>;
     }
+
     return (
       <>
-        <QueryEditorRows
-          queries={panel.targets}
-          datasource={currentDS}
-          onChangeQueries={this.onUpdateQueries}
-          onScrollBottom={this.onScollBottom}
-          panel={panel}
-          dashboard={dashboard}
-          data={data}
-        />
+        {isMultiResolutionQuery(currentDS.name) ? (
+          <MultiQueryEditor
+            panel={panel}
+            data={data}
+            onChange={query => this.onUpdateQueries([query])}
+            dashboard={dashboard}
+            onScrollBottom={this.onScrollBottom}
+          />
+        ) : (
+          <QueryEditorRows
+            queries={panel.targets}
+            datasource={currentDS}
+            onChangeQueries={this.onUpdateQueries}
+            onScrollBottom={this.onScrollBottom}
+            panel={panel}
+            dashboard={dashboard}
+            data={data}
+          />
+        )}
         <PanelOptionsGroup>
           <QueryOptions panel={panel} datasource={currentDS} />
         </PanelOptionsGroup>
