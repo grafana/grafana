@@ -94,11 +94,13 @@ export interface AppEvent<T> {
   payload?: T;
 }
 
-export function eventFactory<T>(name: string): AppEvent<T> {
-  return { name };
-}
+const typeList: Set<string> = new Set();
+export function eventFactory<T = undefined>(name: string): AppEvent<T> {
+  if (typeList.has(name)) {
+    throw new Error(`There is already an event defined with type '${name}'`);
+  }
 
-export function noPayloadEventFactory(name: string): AppEvent<undefined> {
+  typeList.add(name);
   return { name };
 }
 
@@ -107,58 +109,58 @@ export const alertSuccess = eventFactory<AlertPayload>('alert-success');
 export const alertError = eventFactory<AlertPayload>('alert-error');
 
 export const showDashSearch = eventFactory<ShowDashSearchPayload>('show-dash-search');
-export const hideDashSearch = noPayloadEventFactory('hide-dash-search');
-export const hideDashEditor = noPayloadEventFactory('hide-dash-editor');
+export const hideDashSearch = eventFactory('hide-dash-search');
+export const hideDashEditor = eventFactory('hide-dash-editor');
 export const dashScroll = eventFactory<DashScrollPayload>('dash-scroll');
-export const dashLinksUpdated = noPayloadEventFactory('dash-links-updated');
+export const dashLinksUpdated = eventFactory('dash-links-updated');
 export const saveDashboard = eventFactory<SaveDashboardPayload>('save-dashboard');
 export const dashboardSaved = eventFactory<DashboardModel>('dashboard-saved');
-export const searchQuery = noPayloadEventFactory('search-query');
+export const searchQuery = eventFactory('search-query');
 
 export const locationChange = eventFactory<LocationChangePayload>('location-change');
 
-export const timepickerOpen = noPayloadEventFactory('timepickerOpen');
-export const timepickerClosed = noPayloadEventFactory('timepickerClosed');
+export const timepickerOpen = eventFactory('timepickerOpen');
+export const timepickerClosed = eventFactory('timepickerClosed');
 
 export const showModal = eventFactory<ShowModalPayload>('show-modal');
 export const showConfirmModal = eventFactory<ShowConfirmModalPayload>('confirm-modal');
-export const hideModal = noPayloadEventFactory('hide-modal');
+export const hideModal = eventFactory('hide-modal');
 
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
 export const dsRequestError = eventFactory<DataSourceResponsePayload>('ds-request-error');
 
 export const graphHover = eventFactory<GraphHoverPayload>('graph-hover');
-export const graphHoverClear = noPayloadEventFactory('graph-hover-clear');
+export const graphHoverClear = eventFactory('graph-hover-clear');
 
-export const toggleSidemenuMobile = noPayloadEventFactory('toggle-sidemenu-mobile');
-export const toggleSidemenuHidden = noPayloadEventFactory('toggle-sidemenu-hidden');
+export const toggleSidemenuMobile = eventFactory('toggle-sidemenu-mobile');
+export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');
 
-export const playlistStarted = noPayloadEventFactory('playlist-started');
-export const playlistStopped = noPayloadEventFactory('playlist-stopped');
+export const playlistStarted = eventFactory('playlist-started');
+export const playlistStopped = eventFactory('playlist-stopped');
 
 export const toggleKioskMode = eventFactory<ToggleKioskModePayload>('toggle-kiosk-mode');
-export const toggleViewMode = noPayloadEventFactory('toggle-view-mode');
+export const toggleViewMode = eventFactory('toggle-view-mode');
 
 export const timeRangeUpdated = eventFactory<TimeRange>('time-range-updated');
 
-export const repeatsProcessed = noPayloadEventFactory('repeats-processed');
-export const rowExpanded = noPayloadEventFactory('row-expanded');
-export const rowCollapsed = noPayloadEventFactory('row-collapsed');
-export const templateVariableValueUpdated = noPayloadEventFactory('template-variable-value-updated');
+export const repeatsProcessed = eventFactory('repeats-processed');
+export const rowExpanded = eventFactory('row-expanded');
+export const rowCollapsed = eventFactory('row-collapsed');
+export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
 
-export const panelSizeChanged = noPayloadEventFactory('panel-size-changed');
-export const panelInitialized = noPayloadEventFactory('panel-initialized');
-export const panelTeardown = noPayloadEventFactory('panel-teardown');
+export const panelSizeChanged = eventFactory('panel-size-changed');
+export const panelInitialized = eventFactory('panel-initialized');
+export const panelTeardown = eventFactory('panel-teardown');
 export const panelChangeView = eventFactory<PanelChangeViewPayload>('panel-change-view');
 export const removePanel = eventFactory<RemovePanelPayload>('remove-panel');
 export const initPanelActions = eventFactory<MenuElement[]>('init-panel-actions');
 
-export const editModeInitialized = noPayloadEventFactory('init-edit-mode');
-export const clientRefreshed = noPayloadEventFactory('refresh');
+export const editModeInitialized = eventFactory('init-edit-mode');
+export const clientRefreshed = eventFactory('refresh');
 
 export const dataFramesReceived = eventFactory<DataFrame[]>('data-frames-received');
 
-export const componentDidMount = noPayloadEventFactory('component-did-mount');
+export const componentDidMount = eventFactory('component-did-mount');
 
 export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
 
@@ -166,12 +168,12 @@ export const thresholdChanged = eventFactory<ThresholdChangedPayload>('threshold
 
 export const zoomOut = eventFactory<number>('zoom-out');
 
-export const elasticQueryUpdated = noPayloadEventFactory('elastic-query-updated');
+export const elasticQueryUpdated = eventFactory('elastic-query-updated');
 
 export const layoutModeChanged = eventFactory<string>('layout-mode-changed');
 
-export const jsonDiffReady = noPayloadEventFactory('json-diff-ready');
+export const jsonDiffReady = eventFactory('json-diff-ready');
 
-export const closeTimepicker = noPayloadEventFactory('closeTimepicker');
+export const closeTimepicker = eventFactory('closeTimepicker');
 
-export const routeUpdated = noPayloadEventFactory('$routeUpdate');
+export const routeUpdated = eventFactory('$routeUpdate');
