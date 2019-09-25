@@ -11,7 +11,7 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState, toLegacyResponseData, DefaultTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker, PanelEvents } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,

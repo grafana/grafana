@@ -16,7 +16,7 @@ import {
   AlphaNotice,
   PluginState,
 } from '@grafana/ui';
-import { QueryEditorRows } from './QueryEditorRows';
+import { QueryEditorRow } from './QueryEditorRow';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';

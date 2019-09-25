@@ -17,7 +17,6 @@ import {
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { getZoomedTimeRange, getShiftedTimeRange } from 'app/core/utils/timePicker';
 
 export class TimeSrv {

@@ -14,7 +14,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { LoadingState, ScopedVars, AbsoluteTimeRange, toUtc, toDataFrameDTO } from '@grafana/data';
+import { LoadingState, ScopedVars, AbsoluteTimeRange, toUtc, toDataFrameDTO, DefaultTimeRange } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 

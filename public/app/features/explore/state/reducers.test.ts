@@ -40,7 +40,7 @@ describe('Explore item reducer', () => {
         .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
         .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
-          ...makeExploreItemState(),
+          ...initalState,
           scanning: true,
         });
     });
@@ -55,7 +55,7 @@ describe('Explore item reducer', () => {
         .givenReducer(itemReducer as Reducer<ExploreItemState, ActionOf<any>>, initalState)
         .whenActionIsDispatched(scanStopAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
-          ...makeExploreItemState(),
+          ...initalState,
           scanning: false,
           scanRange: undefined,
         });
