@@ -29,10 +29,13 @@ follow Grafana’s best practices and change the default administrator password.
 
 Before you create your first dashboard you need to add your data source.
 
-First move your cursor to the cog on the side menu which will show you the configuration menu. If the side menu is not visible click the Grafana icon in the upper left corner. The first item on the configuration menu is data sources, click on that and you'll be taken to the data sources page where you can add and edit data sources. You can also simply click the cog.
-
-
-Click Add data source and you will come to the settings page of your new data source.
+1. Move your curso to the cog on the side menu which will show you the configuration menu.
+1. If the side menu is not visible, click the Grafana icon in the upper left corner.
+1. Click on **Configuration** > **Data Sources** in the side menu, and you'll be taken to the data sources page where you can add and edit data sources. You can also click the cog.
+1. Click **Add data source**, and you will come to the settings page of your new data source.
+1. In the **Name** box, enter a name for this data source.
+1. In the **Type** box, select the type of data source. See Supported data sources for more information and how to configure your data source.
+1. Click **Save & Test**.
 
 {{< docs-imagebox img="/img/docs/v52/add-datasource.png" max-width="700px" class="docs-image--no-shadow">}}
 
