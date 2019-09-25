@@ -2,7 +2,6 @@
 import React, { ComponentClass } from 'react';
 import { hot } from 'react-hot-loader';
 import { css } from 'emotion';
-// @ts-ignore
 import { connect } from 'react-redux';
 import { AutoSizer } from 'react-virtualized';
 import memoizeOne from 'memoize-one';
@@ -352,7 +351,7 @@ export class Explore extends React.PureComponent<ExploreProps> {
 const ensureQueriesMemoized = memoizeOne(ensureQueries);
 const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
-function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
+function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
   const explore = state.explore;
   const { split } = explore;
   const item: ExploreItemState = explore[exploreId];
@@ -430,7 +429,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   };
 }
 
-const mapDispatchToProps = {
+const mapDispatchToProps: Partial<ExploreProps> = {
   changeSize,
   initializeExplore,
   modifyQueries,
@@ -444,6 +443,7 @@ const mapDispatchToProps = {
 };
 
 export default hot(module)(
+  // @ts-ignore
   connect(
     mapStateToProps,
     mapDispatchToProps
