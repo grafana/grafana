@@ -116,7 +116,6 @@ after switching to the Logs data source, the query changes to:
 
 This will return a chunk of logs in the selected time range that can be grepped/text searched.
 
-
 #### Live tailing
 
 With Loki you can use the Live tailing feature to see realtime logs as they are pushed to Loki.
@@ -128,3 +127,19 @@ scrolling up the window with logs. To resume click the Resume button or click St
 exit Live tailing and go back to standard Explore view. 
 
 {{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
+
+## Navigating between Explore and a dashboard
+
+To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
+after navigating to Explore from the panel's dropdown.
+
+{{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
+
+After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
+
+{{< docs-imagebox img="/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
+
+Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
+the arrow next to the button to reveal a "Return to panel with changes" menu item.
+
+{{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}

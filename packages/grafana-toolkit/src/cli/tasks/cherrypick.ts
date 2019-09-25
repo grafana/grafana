@@ -10,7 +10,10 @@ const cherryPickRunner: TaskRunner<CherryPickOptions> = async () => {
   const res = await client.get('/issues', {
     params: {
       state: 'closed',
+      per_page: 100,
       labels: 'cherry-pick needed',
+      sort: 'closed',
+      direction: 'asc',
     },
   });
 

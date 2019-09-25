@@ -1,17 +1,19 @@
-Triaging of issues
-------------------
+# Triaging issues
 
-Grafana being a popular open source project there are a lot of incoming issues. The main goal of issue triage is to categorize all incoming issues and make sure it has all basic information needed for anyone else to understand and/or being able to start working with it.
+The main goal of issue triage is to categorize all incoming Grafana issues and make sure each issue has all basic information needed for anyone else to understand and be able to start working on it.
 
-The core maintainers of the Grafana project is responsible for categorizing all incoming issues and delegate any critical and/or important issue to other maintainers. Currently there's one maintainer each week responsible. Besides that part, triage provides an important way to contribute to an open source project. Triage helps ensure issues resolve quickly by:
+The core maintainers of the Grafana project are responsible for categorizing all incoming issues and delegating any critical or important issue to other maintainers. Currently one maintainer each week is responsible. Besides that part, triage provides an important way to contribute to an open source project. 
 
-* Describing the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
+Triage helps ensure issues resolve quickly by:
+
+* Ensuring the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
 * Giving a contributor the information they need before they commit to resolving an issue.
 * Lowering the issue count by preventing duplicate issues.
 * Streamlining the development process by preventing duplicate discussions.
 * If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
 
-**Simplified flowchart diagram of the issue triage process:**
+## Simplified flowchart diagram of the issue triage process
+
 <!-- https://textik.com/#610afa78553def29 -->
 ```
                         +--------------------------+
@@ -55,13 +57,13 @@ The core maintainers of the Grafana project is responsible for categorizing all 
 
 ## How you can help
 
-There are multiple ways that you can help with the Grafana project, especially without writing a single line of code. Everyone in the Grafana community will be greatly thankful you for helping out with any of the below tasks.
+There are multiple ways that you can help with the Grafana project, especially without writing a single line of code. Everyone in the Grafana community will be thankful to you for helping out with any of the below tasks.
 
 ### Answer/ask questions
 
 The [community site](https://community.grafana.com/) is the main channel to be used for asking and answering questions related to the Grafana project. This may be the first place a new or existing Grafana user look/ask for help after they found that the [documentation](https://grafana.com/docs) wasn't answering their questions. It's very important to help new and existing users so that these new users can find proper answers and eventually help out other users and by that keep growing the Grafana community.
 
-Please signup to the Grafana [community site](https://community.grafana.com/) and start help other Grafana users by answering their questions and/or ask for help.
+Please sign up to the Grafana [community site](https://community.grafana.com/) and start help other Grafana users by answering their questions and/or ask for help.
 
 ### Report documentation enhancements
 

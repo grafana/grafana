@@ -165,4 +165,9 @@ export class MssqlDatasource {
         }
       });
   }
+
+  targetContainsTemplate(target: any) {
+    const rawSql = target.rawSql.replace('$__', '');
+    return this.templateSrv.variableExists(rawSql);
+  }
 }

@@ -31,9 +31,12 @@ type SqlMacroEngine interface {
 	Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error)
 }
 
-// SqlTableRowTransformer transforms a query result row to RowValues with proper types.
-type SqlTableRowTransformer interface {
-	Transform(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error)
+// SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
+type SqlQueryResultTransformer interface {
+	// TransformQueryResult transforms a query result row to RowValues with proper types.
+	TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error)
+	// TransformQueryError transforms a query error.
+	TransformQueryError(err error) error
 }
 
 type engineCacheType struct {
@@ -54,12 +57,12 @@ var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engi
 }
 
 type sqlQueryEndpoint struct {
-	macroEngine       SqlMacroEngine
-	rowTransformer    SqlTableRowTransformer
-	engine            *xorm.Engine
-	timeColumnNames   []string
-	metricColumnTypes []string
-	log               log.Logger
+	macroEngine            SqlMacroEngine
+	queryResultTransformer SqlQueryResultTransformer
+	engine                 *xorm.Engine
+	timeColumnNames        []string
+	metricColumnTypes      []string
+	log                    log.Logger
 }
 
 type SqlQueryEndpointConfiguration struct {
@@ -70,12 +73,12 @@ type SqlQueryEndpointConfiguration struct {
 	MetricColumnTypes []string
 }
 
-var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, rowTransformer SqlTableRowTransformer, macroEngine SqlMacroEngine, log log.Logger) (tsdb.TsdbQueryEndpoint, error) {
+var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResultTransformer SqlQueryResultTransformer, macroEngine SqlMacroEngine, log log.Logger) (tsdb.TsdbQueryEndpoint, error) {
 	queryEndpoint := sqlQueryEndpoint{
-		rowTransformer:  rowTransformer,
-		macroEngine:     macroEngine,
-		timeColumnNames: []string{"time"},
-		log:             log,
+		queryResultTransformer: queryResultTransformer,
+		macroEngine:            macroEngine,
+		timeColumnNames:        []string{"time"},
+		log:                    log,
 	}
 
 	if len(config.TimeColumnNames) > 0 {
@@ -160,7 +163,7 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 
 			rows, err := db.Query(rawSQL)
 			if err != nil {
-				queryResult.Error = err
+				queryResult.Error = e.queryResultTransformer.TransformQueryError(err)
 				return
 			}
 
@@ -242,7 +245,7 @@ func (e *sqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, 
 			return fmt.Errorf("query row limit exceeded, limit %d", rowLimit)
 		}
 
-		values, err := e.rowTransformer.Transform(columnTypes, rows)
+		values, err := e.queryResultTransformer.TransformQueryResult(columnTypes, rows)
 		if err != nil {
 			return err
 		}
@@ -340,7 +343,7 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.R
 			return fmt.Errorf("query row limit exceeded, limit %d", rowLimit)
 		}
 
-		values, err := e.rowTransformer.Transform(columnTypes, rows)
+		values, err := e.queryResultTransformer.TransformQueryResult(columnTypes, rows)
 		if err != nil {
 			return err
 		}

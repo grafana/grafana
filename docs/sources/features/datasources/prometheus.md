@@ -29,7 +29,7 @@ Grafana includes built-in support for Prometheus.
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | _Name_                  | The data source name. This is how you refer to the data source in panels & queries.                                                   |
 | _Default_               | Default data source means that it will be pre-selected for new panels.                                                                |
-| _Url_                   | The http protocol, ip and port of you Prometheus server (default port is usually 9090)                                                |
+| _Url_                   | The HTTP protocol, ip and port of you Prometheus server (default port is usually 9090)                                                |
 | _Access_                | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
 | _Basic Auth_            | Enable basic authentication to the Prometheus data source.                                                                            |
 | _User_                  | Name of your Prometheus user                                                                                                          |

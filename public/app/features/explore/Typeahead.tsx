@@ -215,7 +215,10 @@ class Portal extends React.PureComponent<PortalProps, {}> {
   render() {
     if (this.props.isOpen) {
       this.node.setAttribute('style', this.props.style);
+      this.node.classList.add(`slate-typeahead--open`);
       return ReactDOM.createPortal(this.props.children, this.node);
+    } else {
+      this.node.classList.remove(`slate-typeahead--open`);
     }
 
     return null;
