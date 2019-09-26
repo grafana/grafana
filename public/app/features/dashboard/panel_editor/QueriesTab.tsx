@@ -247,11 +247,12 @@ export class QueriesTab extends PureComponent<Props, State> {
   onAddMixedQuery = (datasource: any) => {
     const { panel } = this.props;
     const { targets } = panel;
+    // Add the query to the currently selected resolution
     if (isMultiResolutionQuery(this.state.currentDS.name)) {
       const q = getMultiResolutionQuery(targets);
-      const res = getQueriesForResolution(q, panel.getQueryRunner());
-      console.log('TODO add query to', q);
-
+      const index = getQueriesForResolution(q, panel.getQueryRunner().lastRequest).index;
+      const res = q.resolutions[index];
+      res.targets = addQuery(res.targets, { datasource: datasource.name });
       this.onUpdateQueries([q]);
     } else {
       this.onUpdateQueries(addQuery(targets, { datasource: datasource.name }));

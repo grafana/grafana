@@ -1,6 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
+import classNames from 'classnames';
 
 // Types
 import { PanelData, DataSourceSelectItem } from '@grafana/ui';
@@ -8,7 +9,7 @@ import { MultiResolutionQuery, ResolutionSelection, QueriesForResolution } from 
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { SelectableValue } from '@grafana/data';
 import { MultiQueryRow } from './MultiQueryRow';
-import { getMultiResolutionQuery } from './MultiDataSource';
+import { getMultiResolutionQuery, getQueriesForResolution } from './MultiDataSource';
 
 interface Props {
   panel: PanelModel;
@@ -127,22 +128,24 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
 
   render() {
     const props = this.props;
-    const query = this.getQuery();
-    // const isInterval = query.select === ResolutionSelection.interval;
+    const { panel } = this.props;
+    const query = getMultiResolutionQuery(panel.targets);
+    const current = getQueriesForResolution(query, panel.getQueryRunner().lastRequest).index;
 
     return (
       <div>
         <div>
-          {query.resolutions.map((value, index) => {
+          {query.resolutions.map((value, idx) => {
             const onDelete =
               query.resolutions.length > 1
                 ? () => {
-                    this.onDelete(index);
+                    this.onDelete(idx);
                   }
                 : undefined;
             return (
               <MultiQueryRow
-                key={index}
+                key={idx}
+                current={idx === current}
                 panel={props.panel}
                 dashboard={props.dashboard}
                 data={props.data}

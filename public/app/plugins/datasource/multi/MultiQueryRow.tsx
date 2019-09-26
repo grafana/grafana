@@ -8,6 +8,7 @@ import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { QueryEditorRows } from 'app/features/dashboard/panel_editor/QueryEditorRows';
 import kbn from 'app/core/utils/kbn';
 import { css } from 'emotion';
+import classNames from 'classnames';
 
 interface Props {
   panel: PanelModel;
@@ -19,6 +20,7 @@ interface Props {
   onChange: (value: QueriesForResolution) => void;
   onDelete?: (value: QueriesForResolution) => void;
   mixed: DataSourceSelectItem;
+  current: boolean;
 }
 
 type State = {
@@ -108,16 +110,21 @@ export class MultiQueryRow extends PureComponent<Props, State> {
   };
 
   render() {
-    const { value, data, dashboard, panel, onScrollBottom, onDelete, mixed } = this.props;
+    const { value, data, dashboard, panel, onScrollBottom, onDelete, mixed, current } = this.props;
     const { txt, isCollapsed } = this.state;
     const xxx = css({
       fontSize: 16,
       fontWeight: 500,
       padding: '4px',
     });
+    const yyy = current
+      ? css({
+          borderTop: '5px solid #33b5e5',
+        })
+      : '';
     return (
       <div className="query-editor-row">
-        <div className="query-editor-row__header">
+        <div className={classNames('query-editor-row__header', yyy)}>
           <div onClick={this.toggleCollapse}>
             {isCollapsed && <i className="fa fa-caret-right" />}
             {!isCollapsed && <i className="fa fa-caret-down" />}
