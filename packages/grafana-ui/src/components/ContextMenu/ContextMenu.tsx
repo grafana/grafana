@@ -1,7 +1,7 @@
 import React, { useContext, useRef } from 'react';
 import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
-import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
+import { GrafanaTheme, selectThemeVariant, ThemeContext, stylesFactory } from '../../index';
 import { Portal, List } from '../index';
 import { LinkTarget } from '@grafana/data';
 
@@ -26,7 +26,7 @@ export interface ContextMenuProps {
   renderHeader?: () => JSX.Element;
 }
 
-const getContextMenuStyles = (theme: GrafanaTheme) => {
+const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
   const linkColor = selectThemeVariant(
     {
       light: theme.colors.dark2,
@@ -146,7 +146,7 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       top: 4px;
     `,
   };
-};
+});
 
 export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, items, renderHeader }) => {
   const theme = useContext(ThemeContext);
