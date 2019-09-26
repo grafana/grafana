@@ -30,7 +30,7 @@ import { LoadingState, DataTransformerConfig, DefaultTimeRange, SelectableValue 
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
-import { isMultiResolutionQuery } from 'app/plugins/datasource/multi/MultiDataSource';
+import { isMultiResolutionQuery, getQueriesForResolution } from 'app/plugins/datasource/multi/MultiDataSource';
 import { addQuery } from 'app/core/utils/query';
 import { MultiQueryEditor } from 'app/plugins/datasource/multi/MultiQueryEditor';
 import { getMultiResolutionQuery } from 'app/plugins/datasource/multi/MultiDataSource';
@@ -245,10 +245,13 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   onAddMixedQuery = (datasource: any) => {
-    const { targets } = this.props.panel;
+    const { panel } = this.props;
+    const { targets } = panel;
     if (isMultiResolutionQuery(this.state.currentDS.name)) {
       const q = getMultiResolutionQuery(targets);
+      const res = getQueriesForResolution(q, panel.getQueryRunner());
       console.log('TODO add query to', q);
+
       this.onUpdateQueries([q]);
     } else {
       this.onUpdateQueries(addQuery(targets, { datasource: datasource.name }));

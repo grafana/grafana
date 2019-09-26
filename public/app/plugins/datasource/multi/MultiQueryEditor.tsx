@@ -56,7 +56,7 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
   onChange = (value: QueriesForResolution) => {
     const query = this.getQuery();
     let found = false;
-    query.resolutions = query.resolutions.map(v => {
+    const res = query.resolutions.map(v => {
       if (v === value) {
         found = true;
       } else if (value.ms === v.ms) {
@@ -66,9 +66,28 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
       return v;
     });
     if (found) {
-      this.props.onChange(query);
+      // const res = q.resolutions.map(r => {
+      //   // if (r.ms <= 0) {
+      //   //   try {
+      //   //     const ms = kbn.interval_to_ms(r.txt);
+      //   //     if (ms) {
+      //   //       r.ms = ms;
+      //   //     }
+      //   //   } catch {}
+      //   // }
+      //   return r;
+      // });
+      res.sort((a, b) => {
+        return a.ms - b.ms;
+      });
+      res[0].ms = Number.NEGATIVE_INFINITY;
+      res[0].txt = '';
+      this.props.onChange({
+        ...query,
+        resolutions: res,
+      });
     } else {
-      console.log('NOT FOUND', value);
+      console.log('NOT FOUND', value, 'vs');
     }
   };
 
@@ -90,14 +109,16 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
     }
 
     if (index < 0 || index >= query.resolutions.length - 1) {
-      add.ms = value.ms + 10000;
+      add.ms = Math.max(value.ms, 1) + 10000;
       this.props.onChange({
         ...query,
         resolutions: [...query.resolutions, add],
       });
     } else {
       const next = query.resolutions[index + 1];
-      add.ms = add.ms + (next.ms - add.ms) / 2;
+      const cMs = Math.max(value.ms, 1);
+      const nMs = Math.max(next.ms, 1);
+      add.ms = cMs + (nMs - cMs) / 2;
       query.resolutions.splice(index, 0, add);
       this.props.onChange(query);
     }

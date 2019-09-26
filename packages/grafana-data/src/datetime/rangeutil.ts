@@ -1,7 +1,7 @@
 import each from 'lodash/each';
 import groupBy from 'lodash/groupBy';
 
-import { RawTimeRange } from '../types/time';
+import { RawTimeRange, TimeRange } from '../types/time';
 
 import * as dateMath from './datemath';
 import { isDateTime, DateTime } from './moment_wrapper';
@@ -167,4 +167,8 @@ export const isValidTimeSpan = (value: string) => {
 
   const info = describeTextRange(value);
   return info.invalid !== true;
+};
+
+export const rangeToIntervalMS = (range: TimeRange): number => {
+  return range.to.valueOf() - range.from.valueOf();
 };

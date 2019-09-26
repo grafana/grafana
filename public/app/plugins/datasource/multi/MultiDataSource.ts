@@ -1,10 +1,10 @@
-import { of, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/ui';
 import { MixedDatasource } from '../mixed/module';
-import { MultiResolutionQuery, ResolutionSelection } from './types';
+import { MultiResolutionQuery, ResolutionSelection, QueriesForResolution } from './types';
 import defaults from 'lodash/defaults';
-import kbn from 'app/core/utils/kbn';
+import { rangeToIntervalMS } from '@grafana/data/src/datetime/rangeutil';
 
 export const MULTI_DATASOURCE_NAME = '-- From Time --';
 
@@ -41,25 +41,41 @@ export function getMultiResolutionQuery(queries: DataQuery[]): MultiResolutionQu
       },
     ];
   } else {
-    const res = q.resolutions.map(r => {
-      // if (r.ms <= 0) {
-      //   try {
-      //     const ms = kbn.interval_to_ms(r.txt);
-      //     if (ms) {
-      //       r.ms = ms;
-      //     }
-      //   } catch {}
-      // }
-      return r;
-    });
-    res.sort((a, b) => {
-      return a.ms - b.ms;
-    });
-    res[0].ms = Number.NEGATIVE_INFINITY;
-    res[0].txt = '';
-    q.resolutions = res;
+    q.resolutions[0].ms = Number.NEGATIVE_INFINITY;
+    q.resolutions[0].txt = '';
   }
   return q;
+}
+
+export function getQueriesForResolution(
+  q: MultiResolutionQuery,
+  request?: DataQueryRequest
+): { query: QueriesForResolution; index: number } {
+  if (!q || !q.resolutions || !q.resolutions.length) {
+    return {
+      query: {
+        ms: Number.NEGATIVE_INFINITY,
+        targets: [], // nothing
+      },
+      index: -1,
+    };
+  }
+  let index = 0;
+  let query = q.resolutions[0];
+  const len = q.resolutions.length;
+  if (len > 0 && request) {
+    // Find the appropriate query range
+    const cmp = q.select === ResolutionSelection.interval ? request.intervalMs : rangeToIntervalMS(request.range);
+
+    for (let i = 1; i < len; i++) {
+      if (q.resolutions[i].ms > cmp) {
+        break;
+      }
+      query = q.resolutions[i];
+      index = i;
+    }
+  }
+  return { query, index };
 }
 
 export class MultiDatasource extends DataSourceApi<DataQuery> {
@@ -72,17 +88,11 @@ export class MultiDatasource extends DataSourceApi<DataQuery> {
 
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     const q = getMultiResolutionQuery(request.targets);
-
-    if (q.resolutions) {
-      const res = q.resolutions[0];
-      return this.mixed.query({
-        ...request,
-        targets: res.targets,
-      });
-    }
-
-    // Empty data
-    return of({ data: [] } as DataQueryResponse);
+    const res = getQueriesForResolution(q, request).query;
+    return this.mixed.query({
+      ...request,
+      targets: res.targets,
+    });
   }
 
   testDatasource() {
