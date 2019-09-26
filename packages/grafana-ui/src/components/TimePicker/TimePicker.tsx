@@ -15,28 +15,23 @@ import { isDateTime, DateTime } from '@grafana/data';
 import { rangeUtil } from '@grafana/data';
 import { rawToTimeRange } from './time';
 import { withTheme } from '../../themes/ThemeContext';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 // Types
 import { TimeRange, TimeOption, TimeZone, TIME_FORMAT, SelectableValue, dateMath } from '@grafana/data';
 import { GrafanaTheme } from '../../types/theme';
 import { Themeable } from '../../types';
 
-const orangeLight = '#ED5700';
-const orangeDark = '#FF780A';
-
 const getStyles = memoizeOne((theme: GrafanaTheme) => {
-  const orange = selectThemeVariant({ light: orangeLight, dark: orangeDark }, theme.type);
   return {
     timePickerSynced: css`
       label: timePickerSynced;
-      border-color: ${orange};
+      border-color: ${theme.colors.orangeDark};
       background-image: none;
       background-color: transparent;
-      color: ${orange};
+      color: ${theme.colors.orangeDark};
       &:focus,
       :hover {
-        color: ${orange};
+        color: ${theme.colors.orangeDark};
         background-image: none;
         background-color: transparent;
       }
@@ -48,16 +43,12 @@ const getStyles = memoizeOne((theme: GrafanaTheme) => {
   };
 });
 
-interface SyncButton {
-  synced: boolean;
-  onClick: () => void;
-}
-
 export interface Props extends Themeable {
   value: TimeRange;
   selectOptions: TimeOption[];
   timeZone?: TimeZone;
-  syncButton?: SyncButton;
+  timeSyncButton?: JSX.Element;
+  isSynced?: boolean;
   onChange: (timeRange: TimeRange) => void;
   onMoveBackward: () => void;
   onMoveForward: () => void;
@@ -103,10 +94,6 @@ const defaultZoomOutTooltip = () => {
       Time range zoom out <br /> CTRL+Z
     </>
   );
-};
-
-const syncTimesTooltip = () => {
-  return <>Sync all views to this time range</>;
 };
 
 export interface State {
@@ -169,7 +156,8 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
       onMoveForward,
       onZoom,
       timeZone,
-      syncButton,
+      timeSyncButton,
+      isSynced,
       theme,
     } = this.props;
 
@@ -206,8 +194,8 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
           )}
           <ButtonSelect
             className={classNames('time-picker-button-select', {
-              [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: syncButton,
-              [styles.timePickerSynced]: syncButton ? syncButton.synced : null,
+              [`btn--radius-right-0 ${styles.noRightBorderStyle}`]: timeSyncButton,
+              [styles.timePickerSynced]: timeSyncButton ? isSynced : null,
             })}
             value={currentOption}
             label={label}
@@ -217,18 +205,8 @@ class UnThemedTimePicker extends PureComponent<Props, State> {
             iconClass={'fa fa-clock-o fa-fw'}
             tooltipContent={<TimePickerTooltipContent timeRange={value} />}
           />
-          {syncButton && (
-            <Tooltip content={syncTimesTooltip} placement="bottom">
-              <button
-                className={classNames('btn navbar-button navbar-button--attached', {
-                  [styles.timePickerSynced]: syncButton.synced,
-                })}
-                onClick={() => syncButton.onClick()}
-              >
-                <i className="fa fa-link" />
-              </button>
-            </Tooltip>
-          )}
+
+          {timeSyncButton}
 
           {isAbsolute && (
             <button className="btn navbar-button navbar-button--tight" onClick={onMoveForward}>
