@@ -32,6 +32,7 @@ export class ContextSrv {
   isEditor: any;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
+  minRefreshRate: string;
 
   constructor() {
     if (!config.bootData) {
@@ -43,6 +44,7 @@ export class ContextSrv {
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
+    this.minRefreshRate = config.minRefreshRate;
   }
 
   hasRole(role: string) {

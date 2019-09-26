@@ -66,6 +66,19 @@ export class TimeSrv {
     }
   }
 
+  getValidIntervals(intervals: string[]): string[] {
+    if (!this.contextSrv.minRefreshRate) {
+      return intervals;
+    }
+
+    const validIntervals = intervals.filter(str => str !== '').filter(this.contextSrv.isAllowedInterval);
+
+    if (validIntervals.indexOf(this.contextSrv.minRefreshRate) === -1) {
+      validIntervals.unshift(this.contextSrv.minRefreshRate);
+    }
+    return validIntervals;
+  }
+
   private parseTime() {
     // when absolute time is saved in json it is turned to a string
     if (_.isString(this.time.from) && this.time.from.indexOf('Z') >= 0) {

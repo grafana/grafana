@@ -16,6 +16,7 @@ import { TimePicker, RefreshPicker } from '@grafana/ui';
 // Utils & Services
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
+import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 
 export interface Props {
   $injector: any;
@@ -85,7 +86,8 @@ export class DashNavTimeControls extends Component<Props> {
 
   render() {
     const { dashboard } = this.props;
-    const intervals = dashboard.timepicker.refresh_intervals;
+    const { refresh_intervals } = dashboard.timepicker;
+    const intervals = this.timeSrv.getValidIntervals(refresh_intervals || defaultIntervals);
     const timePickerValue = this.timeSrv.timeRange();
     const timeZone = dashboard.getTimezone();
 
