@@ -65,7 +65,22 @@ func (m *kqlMacroEngine) evaluateMacro(name string, args []string) (string, erro
 	case "__to":
 		return fmt.Sprintf("datetime('%s')", m.timeRange.GetToAsTimeUTC().Format(time.RFC3339)), nil
 	case "__interval":
-		return fmt.Sprintf("%dms", m.query.IntervalMs), nil
+		var interval time.Duration
+		if m.query.IntervalMs == 0 {
+			to := m.timeRange.MustGetTo().UnixNano()
+			from := m.timeRange.MustGetFrom().UnixNano()
+			// default to "100 datapoints" if nothing in the query is more specific
+			defaultInterval := time.Duration((to - from) / 60)
+			var err error
+			interval, err = tsdb.GetIntervalFrom(m.query.DataSource, m.query.Model, defaultInterval)
+			if err != nil {
+				azlog.Warn("Unable to get interval from query", "datasource", m.query.DataSource, "model", m.query.Model)
+				interval = defaultInterval
+			}
+		} else {
+			interval = time.Millisecond * time.Duration(m.query.IntervalMs)
+		}
+		return fmt.Sprintf("%dms", int(interval / time.Millisecond)), nil
 	case "__contains":
 		if len(args) < 2 || args[0] == "" || args[1] == "" {
 			return "", fmt.Errorf("macro %v needs colName and variableSet", name)
