@@ -2,7 +2,7 @@ name: Build Grafana Storybook (test action)
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, labeled]
 
 jobs:
   build:
@@ -14,6 +14,6 @@ jobs:
       with:
         node-version: 10.x
     - run: npm install -g yarn
-    - run: yarn add -W @actions/core @actions/github
+    - run: yarn install --pure-lockfile
     # - run: yarn storybook:build
     - uses: ./.github/actions/deploy-storybook
