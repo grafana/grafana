@@ -21,6 +21,7 @@ import {
   NullValueMode,
   toDataFrame,
   FieldCache,
+  FieldWithIndex,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
