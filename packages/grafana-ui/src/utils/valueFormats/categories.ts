@@ -38,6 +38,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'hexadecimal', id: 'hex', fn: toHex },
       { name: 'scientific notation', id: 'sci', fn: sci },
       { name: 'locale format', id: 'locale', fn: locale },
+      { name: 'Pixels', id: 'pixel', fn: toFixedUnit('px') },
     ],
   },
   {
