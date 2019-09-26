@@ -1,7 +1,8 @@
 import React, { useContext, useRef } from 'react';
 import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
-import { GrafanaTheme, selectThemeVariant, ThemeContext, stylesFactory } from '../../index';
+import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { Portal, List } from '../index';
 import { LinkTarget } from '@grafana/data';
 
