@@ -61,7 +61,7 @@ func (x RowValue_Kind) String() string {
 	return proto.EnumName(RowValue_Kind_name, int32(x))
 }
 func (RowValue_Kind) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{8, 0}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{8, 0}
 }
 
 type DatasourceRequest struct {
@@ -77,7 +77,7 @@ func (m *DatasourceRequest) Reset()         { *m = DatasourceRequest{} }
 func (m *DatasourceRequest) String() string { return proto.CompactTextString(m) }
 func (*DatasourceRequest) ProtoMessage()    {}
 func (*DatasourceRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{0}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{0}
 }
 func (m *DatasourceRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DatasourceRequest.Unmarshal(m, b)
@@ -132,7 +132,7 @@ func (m *Query) Reset()         { *m = Query{} }
 func (m *Query) String() string { return proto.CompactTextString(m) }
 func (*Query) ProtoMessage()    {}
 func (*Query) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{1}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{1}
 }
 func (m *Query) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Query.Unmarshal(m, b)
@@ -194,7 +194,7 @@ func (m *TimeRange) Reset()         { *m = TimeRange{} }
 func (m *TimeRange) String() string { return proto.CompactTextString(m) }
 func (*TimeRange) ProtoMessage()    {}
 func (*TimeRange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{2}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{2}
 }
 func (m *TimeRange) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TimeRange.Unmarshal(m, b)
@@ -253,7 +253,7 @@ func (m *DatasourceResponse) Reset()         { *m = DatasourceResponse{} }
 func (m *DatasourceResponse) String() string { return proto.CompactTextString(m) }
 func (*DatasourceResponse) ProtoMessage()    {}
 func (*DatasourceResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{3}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{3}
 }
 func (m *DatasourceResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DatasourceResponse.Unmarshal(m, b)
@@ -295,7 +295,7 @@ func (m *QueryResult) Reset()         { *m = QueryResult{} }
 func (m *QueryResult) String() string { return proto.CompactTextString(m) }
 func (*QueryResult) ProtoMessage()    {}
 func (*QueryResult) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{4}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{4}
 }
 func (m *QueryResult) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QueryResult.Unmarshal(m, b)
@@ -362,7 +362,7 @@ func (m *Table) Reset()         { *m = Table{} }
 func (m *Table) String() string { return proto.CompactTextString(m) }
 func (*Table) ProtoMessage()    {}
 func (*Table) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{5}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{5}
 }
 func (m *Table) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Table.Unmarshal(m, b)
@@ -407,7 +407,7 @@ func (m *TableColumn) Reset()         { *m = TableColumn{} }
 func (m *TableColumn) String() string { return proto.CompactTextString(m) }
 func (*TableColumn) ProtoMessage()    {}
 func (*TableColumn) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{6}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{6}
 }
 func (m *TableColumn) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TableColumn.Unmarshal(m, b)
@@ -445,7 +445,7 @@ func (m *TableRow) Reset()         { *m = TableRow{} }
 func (m *TableRow) String() string { return proto.CompactTextString(m) }
 func (*TableRow) ProtoMessage()    {}
 func (*TableRow) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{7}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{7}
 }
 func (m *TableRow) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TableRow.Unmarshal(m, b)
@@ -488,7 +488,7 @@ func (m *RowValue) Reset()         { *m = RowValue{} }
 func (m *RowValue) String() string { return proto.CompactTextString(m) }
 func (*RowValue) ProtoMessage()    {}
 func (*RowValue) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{8}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{8}
 }
 func (m *RowValue) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RowValue.Unmarshal(m, b)
@@ -567,7 +567,7 @@ func (m *DatasourceInfo) Reset()         { *m = DatasourceInfo{} }
 func (m *DatasourceInfo) String() string { return proto.CompactTextString(m) }
 func (*DatasourceInfo) ProtoMessage()    {}
 func (*DatasourceInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{9}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{9}
 }
 func (m *DatasourceInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DatasourceInfo.Unmarshal(m, b)
@@ -649,7 +649,7 @@ func (m *TimeSeries) Reset()         { *m = TimeSeries{} }
 func (m *TimeSeries) String() string { return proto.CompactTextString(m) }
 func (*TimeSeries) ProtoMessage()    {}
 func (*TimeSeries) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{10}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{10}
 }
 func (m *TimeSeries) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TimeSeries.Unmarshal(m, b)
@@ -702,7 +702,7 @@ func (m *Point) Reset()         { *m = Point{} }
 func (m *Point) String() string { return proto.CompactTextString(m) }
 func (*Point) ProtoMessage()    {}
 func (*Point) Descriptor() ([]byte, []int) {
-	return fileDescriptor_datasource_1e8c5a099546b349, []int{11}
+	return fileDescriptor_datasource_09b4ea28a76e017e, []int{11}
 }
 func (m *Point) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Point.Unmarshal(m, b)
@@ -827,9 +827,9 @@ var _DatasourcePlugin_serviceDesc = grpc.ServiceDesc{
 	Metadata: "datasource.proto",
 }
 
-func init() { proto.RegisterFile("datasource.proto", fileDescriptor_datasource_1e8c5a099546b349) }
+func init() { proto.RegisterFile("datasource.proto", fileDescriptor_datasource_09b4ea28a76e017e) }
 
-var fileDescriptor_datasource_1e8c5a099546b349 = []byte{
+var fileDescriptor_datasource_09b4ea28a76e017e = []byte{
 	// 841 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x55, 0xdb, 0x8e, 0x23, 0x35,
 	0x10, 0xa5, 0x2f, 0xc9, 0xa4, 0x2b, 0x3b, 0xa1, 0xd7, 0xdc, 0x42, 0x34, 0x42, 0xa1, 0xb5, 0x88,

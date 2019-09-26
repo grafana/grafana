@@ -43,7 +43,7 @@ func (m *RenderRequest) Reset()         { *m = RenderRequest{} }
 func (m *RenderRequest) String() string { return proto.CompactTextString(m) }
 func (*RenderRequest) ProtoMessage()    {}
 func (*RenderRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_renderer_1ebd8e2bd96661e9, []int{0}
+	return fileDescriptor_renderer_e28a7c8dd05fc171, []int{0}
 }
 func (m *RenderRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RenderRequest.Unmarshal(m, b)
@@ -144,7 +144,7 @@ func (m *RenderResponse) Reset()         { *m = RenderResponse{} }
 func (m *RenderResponse) String() string { return proto.CompactTextString(m) }
 func (*RenderResponse) ProtoMessage()    {}
 func (*RenderResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_renderer_1ebd8e2bd96661e9, []int{1}
+	return fileDescriptor_renderer_e28a7c8dd05fc171, []int{1}
 }
 func (m *RenderResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RenderResponse.Unmarshal(m, b)
@@ -249,9 +249,9 @@ var _Renderer_serviceDesc = grpc.ServiceDesc{
 	Metadata: "renderer.proto",
 }
 
-func init() { proto.RegisterFile("renderer.proto", fileDescriptor_renderer_1ebd8e2bd96661e9) }
+func init() { proto.RegisterFile("renderer.proto", fileDescriptor_renderer_e28a7c8dd05fc171) }
 
-var fileDescriptor_renderer_1ebd8e2bd96661e9 = []byte{
+var fileDescriptor_renderer_e28a7c8dd05fc171 = []byte{
 	// 265 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x91, 0xb1, 0x4e, 0xc3, 0x30,
 	0x10, 0x86, 0x95, 0x96, 0xa4, 0xce, 0x49, 0x54, 0xc8, 0x82, 0xea, 0x54, 0x31, 0x44, 0x1d, 0x50,
