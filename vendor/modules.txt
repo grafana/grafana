@@ -112,7 +112,7 @@ github.com/gopherjs/gopherjs/js
 github.com/gorilla/websocket
 # github.com/gosimple/slug v1.4.2
 github.com/gosimple/slug
-# github.com/grafana/grafana-plugin-model v0.0.0-20190926112253-8e2f8d59986a
+# github.com/grafana/grafana-plugin-model v0.0.0-20190926114209-a529a61f7c5b
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
 # github.com/hashicorp/go-hclog v0.8.0

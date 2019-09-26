@@ -24,16 +24,16 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type RenderRequest struct {
-	Url                  string   `protobuf:"bytes,1,opt,name=url" json:"url,omitempty"`
-	Width                int32    `protobuf:"varint,2,opt,name=width" json:"width,omitempty"`
-	Height               int32    `protobuf:"varint,3,opt,name=height" json:"height,omitempty"`
-	Timeout              int32    `protobuf:"varint,4,opt,name=timeout" json:"timeout,omitempty"`
-	Timezone             string   `protobuf:"bytes,5,opt,name=timezone" json:"timezone,omitempty"`
-	Encoding             string   `protobuf:"bytes,6,opt,name=encoding" json:"encoding,omitempty"`
-	FilePath             string   `protobuf:"bytes,7,opt,name=filePath" json:"filePath,omitempty"`
-	RenderKey            string   `protobuf:"bytes,8,opt,name=renderKey" json:"renderKey,omitempty"`
-	Domain               string   `protobuf:"bytes,9,opt,name=domain" json:"domain,omitempty"`
-	Debug                bool     `protobuf:"varint,10,opt,name=debug" json:"debug,omitempty"`
+	Url                  string   `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Width                int32    `protobuf:"varint,2,opt,name=width,proto3" json:"width,omitempty"`
+	Height               int32    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
+	Timeout              int32    `protobuf:"varint,4,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	Timezone             string   `protobuf:"bytes,5,opt,name=timezone,proto3" json:"timezone,omitempty"`
+	Encoding             string   `protobuf:"bytes,6,opt,name=encoding,proto3" json:"encoding,omitempty"`
+	FilePath             string   `protobuf:"bytes,7,opt,name=filePath,proto3" json:"filePath,omitempty"`
+	RenderKey            string   `protobuf:"bytes,8,opt,name=renderKey,proto3" json:"renderKey,omitempty"`
+	Domain               string   `protobuf:"bytes,9,opt,name=domain,proto3" json:"domain,omitempty"`
+	Debug                bool     `protobuf:"varint,10,opt,name=debug,proto3" json:"debug,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -134,7 +134,7 @@ func (m *RenderRequest) GetDebug() bool {
 }
 
 type RenderResponse struct {
-	Error                string   `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
+	Error                string   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -208,8 +208,7 @@ func (c *rendererClient) Render(ctx context.Context, in *RenderRequest, opts ...
 	return out, nil
 }
 
-// Server API for Renderer service
-
+// RendererServer is the server API for Renderer service.
 type RendererServer interface {
 	Render(context.Context, *RenderRequest) (*RenderResponse, error)
 }

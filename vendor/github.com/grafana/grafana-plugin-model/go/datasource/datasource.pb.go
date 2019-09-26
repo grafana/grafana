@@ -65,9 +65,9 @@ func (RowValue_Kind) EnumDescriptor() ([]byte, []int) {
 }
 
 type DatasourceRequest struct {
-	TimeRange            *TimeRange      `protobuf:"bytes,1,opt,name=timeRange" json:"timeRange,omitempty"`
-	Datasource           *DatasourceInfo `protobuf:"bytes,2,opt,name=datasource" json:"datasource,omitempty"`
-	Queries              []*Query        `protobuf:"bytes,3,rep,name=queries" json:"queries,omitempty"`
+	TimeRange            *TimeRange      `protobuf:"bytes,1,opt,name=timeRange,proto3" json:"timeRange,omitempty"`
+	Datasource           *DatasourceInfo `protobuf:"bytes,2,opt,name=datasource,proto3" json:"datasource,omitempty"`
+	Queries              []*Query        `protobuf:"bytes,3,rep,name=queries,proto3" json:"queries,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
 	XXX_unrecognized     []byte          `json:"-"`
 	XXX_sizecache        int32           `json:"-"`
@@ -119,10 +119,10 @@ func (m *DatasourceRequest) GetQueries() []*Query {
 }
 
 type Query struct {
-	RefId                string   `protobuf:"bytes,1,opt,name=refId" json:"refId,omitempty"`
-	MaxDataPoints        int64    `protobuf:"varint,2,opt,name=maxDataPoints" json:"maxDataPoints,omitempty"`
-	IntervalMs           int64    `protobuf:"varint,3,opt,name=intervalMs" json:"intervalMs,omitempty"`
-	ModelJson            string   `protobuf:"bytes,4,opt,name=modelJson" json:"modelJson,omitempty"`
+	RefId                string   `protobuf:"bytes,1,opt,name=refId,proto3" json:"refId,omitempty"`
+	MaxDataPoints        int64    `protobuf:"varint,2,opt,name=maxDataPoints,proto3" json:"maxDataPoints,omitempty"`
+	IntervalMs           int64    `protobuf:"varint,3,opt,name=intervalMs,proto3" json:"intervalMs,omitempty"`
+	ModelJson            string   `protobuf:"bytes,4,opt,name=modelJson,proto3" json:"modelJson,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -181,10 +181,10 @@ func (m *Query) GetModelJson() string {
 }
 
 type TimeRange struct {
-	FromRaw              string   `protobuf:"bytes,1,opt,name=fromRaw" json:"fromRaw,omitempty"`
-	ToRaw                string   `protobuf:"bytes,2,opt,name=toRaw" json:"toRaw,omitempty"`
-	FromEpochMs          int64    `protobuf:"varint,3,opt,name=fromEpochMs" json:"fromEpochMs,omitempty"`
-	ToEpochMs            int64    `protobuf:"varint,4,opt,name=toEpochMs" json:"toEpochMs,omitempty"`
+	FromRaw              string   `protobuf:"bytes,1,opt,name=fromRaw,proto3" json:"fromRaw,omitempty"`
+	ToRaw                string   `protobuf:"bytes,2,opt,name=toRaw,proto3" json:"toRaw,omitempty"`
+	FromEpochMs          int64    `protobuf:"varint,3,opt,name=fromEpochMs,proto3" json:"fromEpochMs,omitempty"`
+	ToEpochMs            int64    `protobuf:"varint,4,opt,name=toEpochMs,proto3" json:"toEpochMs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -243,7 +243,7 @@ func (m *TimeRange) GetToEpochMs() int64 {
 }
 
 type DatasourceResponse struct {
-	Results              []*QueryResult `protobuf:"bytes,1,rep,name=results" json:"results,omitempty"`
+	Results              []*QueryResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -281,11 +281,11 @@ func (m *DatasourceResponse) GetResults() []*QueryResult {
 }
 
 type QueryResult struct {
-	Error                string        `protobuf:"bytes,1,opt,name=error" json:"error,omitempty"`
-	RefId                string        `protobuf:"bytes,2,opt,name=refId" json:"refId,omitempty"`
-	MetaJson             string        `protobuf:"bytes,3,opt,name=metaJson" json:"metaJson,omitempty"`
-	Series               []*TimeSeries `protobuf:"bytes,4,rep,name=series" json:"series,omitempty"`
-	Tables               []*Table      `protobuf:"bytes,5,rep,name=tables" json:"tables,omitempty"`
+	Error                string        `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
+	RefId                string        `protobuf:"bytes,2,opt,name=refId,proto3" json:"refId,omitempty"`
+	MetaJson             string        `protobuf:"bytes,3,opt,name=metaJson,proto3" json:"metaJson,omitempty"`
+	Series               []*TimeSeries `protobuf:"bytes,4,rep,name=series,proto3" json:"series,omitempty"`
+	Tables               []*Table      `protobuf:"bytes,5,rep,name=tables,proto3" json:"tables,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
 	XXX_unrecognized     []byte        `json:"-"`
 	XXX_sizecache        int32         `json:"-"`
@@ -351,8 +351,8 @@ func (m *QueryResult) GetTables() []*Table {
 }
 
 type Table struct {
-	Columns              []*TableColumn `protobuf:"bytes,1,rep,name=columns" json:"columns,omitempty"`
-	Rows                 []*TableRow    `protobuf:"bytes,2,rep,name=rows" json:"rows,omitempty"`
+	Columns              []*TableColumn `protobuf:"bytes,1,rep,name=columns,proto3" json:"columns,omitempty"`
+	Rows                 []*TableRow    `protobuf:"bytes,2,rep,name=rows,proto3" json:"rows,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -397,7 +397,7 @@ func (m *Table) GetRows() []*TableRow {
 }
 
 type TableColumn struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -435,7 +435,7 @@ func (m *TableColumn) GetName() string {
 }
 
 type TableRow struct {
-	Values               []*RowValue `protobuf:"bytes,1,rep,name=values" json:"values,omitempty"`
+	Values               []*RowValue `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
 	XXX_unrecognized     []byte      `json:"-"`
 	XXX_sizecache        int32       `json:"-"`
@@ -473,11 +473,11 @@ func (m *TableRow) GetValues() []*RowValue {
 }
 
 type RowValue struct {
-	Kind                 RowValue_Kind `protobuf:"varint,1,opt,name=kind,enum=models.RowValue_Kind" json:"kind,omitempty"`
-	DoubleValue          float64       `protobuf:"fixed64,2,opt,name=doubleValue" json:"doubleValue,omitempty"`
-	Int64Value           int64         `protobuf:"varint,3,opt,name=int64Value" json:"int64Value,omitempty"`
-	BoolValue            bool          `protobuf:"varint,4,opt,name=boolValue" json:"boolValue,omitempty"`
-	StringValue          string        `protobuf:"bytes,5,opt,name=stringValue" json:"stringValue,omitempty"`
+	Kind                 RowValue_Kind `protobuf:"varint,1,opt,name=kind,proto3,enum=models.RowValue_Kind" json:"kind,omitempty"`
+	DoubleValue          float64       `protobuf:"fixed64,2,opt,name=doubleValue,proto3" json:"doubleValue,omitempty"`
+	Int64Value           int64         `protobuf:"varint,3,opt,name=int64Value,proto3" json:"int64Value,omitempty"`
+	BoolValue            bool          `protobuf:"varint,4,opt,name=boolValue,proto3" json:"boolValue,omitempty"`
+	StringValue          string        `protobuf:"bytes,5,opt,name=stringValue,proto3" json:"stringValue,omitempty"`
 	BytesValue           []byte        `protobuf:"bytes,6,opt,name=bytesValue,proto3" json:"bytesValue,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
 	XXX_unrecognized     []byte        `json:"-"`
@@ -551,13 +551,13 @@ func (m *RowValue) GetBytesValue() []byte {
 }
 
 type DatasourceInfo struct {
-	Id                      int64             `protobuf:"varint,1,opt,name=id" json:"id,omitempty"`
-	OrgId                   int64             `protobuf:"varint,2,opt,name=orgId" json:"orgId,omitempty"`
-	Name                    string            `protobuf:"bytes,3,opt,name=name" json:"name,omitempty"`
-	Type                    string            `protobuf:"bytes,4,opt,name=type" json:"type,omitempty"`
-	Url                     string            `protobuf:"bytes,5,opt,name=url" json:"url,omitempty"`
-	JsonData                string            `protobuf:"bytes,6,opt,name=jsonData" json:"jsonData,omitempty"`
-	DecryptedSecureJsonData map[string]string `protobuf:"bytes,7,rep,name=decryptedSecureJsonData" json:"decryptedSecureJsonData,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Id                      int64             `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	OrgId                   int64             `protobuf:"varint,2,opt,name=orgId,proto3" json:"orgId,omitempty"`
+	Name                    string            `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Type                    string            `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
+	Url                     string            `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	JsonData                string            `protobuf:"bytes,6,opt,name=jsonData,proto3" json:"jsonData,omitempty"`
+	DecryptedSecureJsonData map[string]string `protobuf:"bytes,7,rep,name=decryptedSecureJsonData,proto3" json:"decryptedSecureJsonData,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral    struct{}          `json:"-"`
 	XXX_unrecognized        []byte            `json:"-"`
 	XXX_sizecache           int32             `json:"-"`
@@ -637,9 +637,9 @@ func (m *DatasourceInfo) GetDecryptedSecureJsonData() map[string]string {
 }
 
 type TimeSeries struct {
-	Name                 string            `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Tags                 map[string]string `protobuf:"bytes,2,rep,name=tags" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Points               []*Point          `protobuf:"bytes,3,rep,name=points" json:"points,omitempty"`
+	Name                 string            `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Tags                 map[string]string `protobuf:"bytes,2,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Points               []*Point          `protobuf:"bytes,3,rep,name=points,proto3" json:"points,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
 	XXX_sizecache        int32             `json:"-"`
@@ -691,8 +691,8 @@ func (m *TimeSeries) GetPoints() []*Point {
 }
 
 type Point struct {
-	Timestamp            int64    `protobuf:"varint,1,opt,name=timestamp" json:"timestamp,omitempty"`
-	Value                float64  `protobuf:"fixed64,2,opt,name=value" json:"value,omitempty"`
+	Timestamp            int64    `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Value                float64  `protobuf:"fixed64,2,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -786,8 +786,7 @@ func (c *datasourcePluginClient) Query(ctx context.Context, in *DatasourceReques
 	return out, nil
 }
 
-// Server API for DatasourcePlugin service
-
+// DatasourcePluginServer is the server API for DatasourcePlugin service.
 type DatasourcePluginServer interface {
 	Query(context.Context, *DatasourceRequest) (*DatasourceResponse, error)
 }
