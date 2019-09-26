@@ -650,9 +650,11 @@ func validateDashboardRefreshRates(cmd *models.ValidateDashboardBeforeSaveComman
 	if setting.DashboardMinRefreshRate != "" {
 		return nil
 	}
-	refresh, err := cmd.Dashboard.Data.Get("refresh").String()
-	if err != nil {
-		return err
+
+	refresh := cmd.Dashboard.Data.Get("refresh").MustString("")
+	if refresh == "" {
+		// since no refresh is set it is a valid refresh rate
+		return nil
 	}
 
 	minRefreshRate, err := parseRefreshDuration(setting.DashboardMinRefreshRate)
