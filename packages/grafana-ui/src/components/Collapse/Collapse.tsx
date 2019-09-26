@@ -3,9 +3,10 @@ import { css, cx } from 'emotion';
 
 import { GrafanaTheme } from '../../types/theme';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
-import { ThemeContext } from '../../themes/index';
+import { ThemeContext } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes/stylesFactory';
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   collapse: css`
     label: collapse;
     margin-top: ${theme.spacing.sm};
@@ -79,7 +80,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     font-size: ${theme.typography.heading.h6};
     box-shadow: ${selectThemeVariant({ light: 'none', dark: '1px 1px 4px rgb(45, 45, 45)' }, theme.type)};
   `,
-});
+}));
 
 interface Props {
   isOpen: boolean;
