@@ -32,7 +32,7 @@ require (
 	github.com/google/go-cmp v0.2.0 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/gosimple/slug v1.4.2
-	github.com/grafana/grafana-plugin-model v0.0.0-20190926114209-a529a61f7c5b
+	github.com/grafana/grafana-plugin-model v0.0.0-20190926122741-ae7c433922aa
 	github.com/hashicorp/go-hclog v0.8.0
 	github.com/hashicorp/go-plugin v1.0.1
 	github.com/hashicorp/go-version v1.1.0
