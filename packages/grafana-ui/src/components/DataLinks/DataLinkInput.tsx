@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useContext, useRef, RefObject } from 'react';
+import React, { useState, useMemo, useContext, useRef, RefObject } from 'react';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
 import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
