@@ -6,7 +6,7 @@ import { KeyValue } from '@grafana/data';
  * @param stylesCreator function accepting dependencies based on which styles are created
  */
 export function stylesFactory<TDeps, TResult extends KeyValue<string>>(
-  stylesCreator: (deps: TDeps) => TResult
-): (deps: TDeps) => TResult {
+  stylesCreator: (deps?: TDeps) => TResult
+): (deps?: TDeps) => TResult {
   return memoizeOne(stylesCreator);
 }
