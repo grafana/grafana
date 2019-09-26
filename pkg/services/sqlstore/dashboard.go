@@ -647,6 +647,9 @@ func parseRefreshDuration(refresh string) (time.Duration, error) {
 }
 
 func validateDashboardRefreshRates(cmd *models.ValidateDashboardBeforeSaveCommand) error {
+	if setting.DashboardMinRefreshRate != "" {
+		return nil
+	}
 	refresh, err := cmd.Dashboard.Data.Get("refresh").String()
 	if err != nil {
 		return err
@@ -672,10 +675,8 @@ func ValidateDashboardBeforeSave(cmd *models.ValidateDashboardBeforeSaveCommand)
 	cmd.Result = &models.ValidateDashboardBeforeSaveResult{}
 
 	return inTransaction(func(sess *DBSession) error {
-		if setting.DashboardMinRefreshRate != "" {
-			if err = validateDashboardRefreshRates(cmd); err != nil {
-				return err
-			}
+		if err = validateDashboardRefreshRates(cmd); err != nil {
+			return err
 		}
 
 		if err = getExistingDashboardByIdOrUidForUpdate(sess, cmd); err != nil {
