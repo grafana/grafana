@@ -2,6 +2,7 @@
 # yarn lockfile v1
 
 
+<<<<<<< HEAD
 "@antv/adjust@~0.1.0":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@antv/adjust/-/adjust-0.1.1.tgz#e263ab0e1a1941a648842fc086cf65a7e3b75e98"
@@ -84,6 +85,28 @@
   version "7.5.5"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.5.5.tgz#bc0782f6d69f7b7d49531219699b988f669a8f9d"
   integrity sha512-27d4lZoomVyo51VegxI20xZPuSHusqbQag/ztrBC7wegWoQ1nLREPVSKSW8byhTlzTKyNE4ifaTA6lCp7JjpFw==
+||||||| merged common ancestors
+"@babel/code-frame@7.0.0", "@babel/code-frame@^7.0.0":
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.0.0.tgz#06e2ab19bdb535385559aabb5ba59729482800f8"
+=======
+"@actions/core@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@actions/core/-/core-1.1.1.tgz#e08f3dbfe04721bb3d040f8fca2d6d7e1817b2e1"
+  integrity sha512-O5G6EmlzTVsng7VSpNtszIoQq6kOgMGNTFB/hmwKNNA4V71JyxImCIrL27vVHCt2Cb3ImkaCr6o27C2MV9Ylwg==
+
+"@actions/github@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@actions/github/-/github-1.1.0.tgz#06f34e6b0cf07eb2b3641de3e680dbfae6bcd400"
+  integrity sha512-cHf6PyoNMdei13jEdGPhKprIMFmjVVW/dnM5/9QmQDJ1ZTaGVyezUSCUIC/ySNLRvDUpeFwPYMdThSEJldSbUw==
+  dependencies:
+    "@octokit/graphql" "^2.0.1"
+    "@octokit/rest" "^16.15.0"
+
+"@babel/code-frame@7.0.0", "@babel/code-frame@^7.0.0":
+  version "7.0.0"
+  resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.0.0.tgz#06e2ab19bdb535385559aabb5ba59729482800f8"
+>>>>>>> Test local actions
   dependencies:
     "@babel/highlight" "^7.0.0"
 
@@ -3909,10 +3932,30 @@
     is-plain-object "^3.0.0"
     universal-user-agent "^4.0.0"
 
+<<<<<<< HEAD
 "@octokit/plugin-enterprise-rest@^3.6.1":
   version "3.6.2"
   resolved "https://registry.yarnpkg.com/@octokit/plugin-enterprise-rest/-/plugin-enterprise-rest-3.6.2.tgz#74de25bef21e0182b4fa03a8678cd00a4e67e561"
   integrity sha512-3wF5eueS5OHQYuAEudkpN+xVeUsg8vYEMMenEzLphUZ7PRZ8OJtDcsreL3ad9zxXmBbaFWzLmFcdob5CLyZftA==
+||||||| merged common ancestors
+"@octokit/plugin-enterprise-rest@^2.1.1":
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/@octokit/plugin-enterprise-rest/-/plugin-enterprise-rest-2.2.2.tgz#c0e22067a043e19f96ff9c7832e2a3019f9be75c"
+  integrity sha512-CTZr64jZYhGWNTDGlSJ2mvIlFsm9OEO3LqWn9I/gmoHI4jRBp4kpHoFYNemG4oA75zUAcmbuWblb7jjP877YZw==
+=======
+"@octokit/graphql@^2.0.1":
+  version "2.1.3"
+  resolved "https://registry.yarnpkg.com/@octokit/graphql/-/graphql-2.1.3.tgz#60c058a0ed5fa242eca6f938908d95fd1a2f4b92"
+  integrity sha512-XoXJqL2ondwdnMIW3wtqJWEwcBfKk37jO/rYkoxNPEVeLBDGsGO1TCWggrAlq3keGt/O+C/7VepXnukUxwt5vA==
+  dependencies:
+    "@octokit/request" "^5.0.0"
+    universal-user-agent "^2.0.3"
+
+"@octokit/plugin-enterprise-rest@^2.1.1":
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/@octokit/plugin-enterprise-rest/-/plugin-enterprise-rest-2.2.2.tgz#c0e22067a043e19f96ff9c7832e2a3019f9be75c"
+  integrity sha512-CTZr64jZYhGWNTDGlSJ2mvIlFsm9OEO3LqWn9I/gmoHI4jRBp4kpHoFYNemG4oA75zUAcmbuWblb7jjP877YZw==
+>>>>>>> Test local actions
 
 "@octokit/request-error@^1.0.1", "@octokit/request-error@^1.0.2":
   version "1.0.4"
@@ -3935,10 +3978,40 @@
     once "^1.4.0"
     universal-user-agent "^4.0.0"
 
+<<<<<<< HEAD
 "@octokit/rest@^16.28.4":
   version "16.33.1"
   resolved "https://registry.yarnpkg.com/@octokit/rest/-/rest-16.33.1.tgz#19229f5fd28d8e071644d37c249775ee40add433"
   integrity sha512-lOQ+fJZwkeJ/1PRTdnY1uNja01aKOMioRhQfZtei64gZMXIX3EAfF4koMQMvoLFwsnVBu3ifj1JW1WAAKdXcnA==
+||||||| merged common ancestors
+"@octokit/rest@^16.16.0":
+  version "16.28.3"
+  resolved "https://registry.yarnpkg.com/@octokit/rest/-/rest-16.28.3.tgz#bf0fe6b3c50b0cc7838cfd4bf19701f763efbf9f"
+  integrity sha512-hzM2VvVn9o0+sS08y2pp33UF5tKy0XdR2z+/AFD583TjhHlX/9Lmdv3SmRiz0UC6rNqNXe1X7BiZ/QNUwVm27Q==
+=======
+"@octokit/rest@^16.15.0":
+  version "16.30.1"
+  resolved "https://registry.yarnpkg.com/@octokit/rest/-/rest-16.30.1.tgz#03e6dfb93e9a9cd2b3bacb95c49a8c7923f42ad0"
+  integrity sha512-1n2QzTbbaBXNLpx7WHlcsSMdJvxSdKmerXQm+bMYlKDbQM19uq446ZpGs7Ynq5SsdLj1usIfgJ9gJf4LtcWkDw==
+  dependencies:
+    "@octokit/request" "^5.0.0"
+    "@octokit/request-error" "^1.0.2"
+    atob-lite "^2.0.0"
+    before-after-hook "^2.0.0"
+    btoa-lite "^1.0.0"
+    deprecation "^2.0.0"
+    lodash.get "^4.4.2"
+    lodash.set "^4.3.2"
+    lodash.uniq "^4.5.0"
+    octokit-pagination-methods "^1.1.0"
+    once "^1.4.0"
+    universal-user-agent "^4.0.0"
+
+"@octokit/rest@^16.16.0":
+  version "16.28.3"
+  resolved "https://registry.yarnpkg.com/@octokit/rest/-/rest-16.28.3.tgz#bf0fe6b3c50b0cc7838cfd4bf19701f763efbf9f"
+  integrity sha512-hzM2VvVn9o0+sS08y2pp33UF5tKy0XdR2z+/AFD583TjhHlX/9Lmdv3SmRiz0UC6rNqNXe1X7BiZ/QNUwVm27Q==
+>>>>>>> Test local actions
   dependencies:
     "@octokit/request" "^5.2.0"
     "@octokit/request-error" "^1.0.2"
@@ -18277,7 +18350,13 @@ os-locale@^3.0.0, os-locale@^3.1.0:
     lcid "^2.0.0"
     mem "^4.0.0"
 
+<<<<<<< HEAD
 os-name@^3.1.0:
+||||||| merged common ancestors
+os-name@^3.0.0:
+=======
+os-name@^3.0.0, os-name@^3.1.0:
+>>>>>>> Test local actions
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/os-name/-/os-name-3.1.0.tgz#dec19d966296e1cd62d701a5a66ee1ddeae70801"
   integrity sha512-h8L+8aNjNcMpo/mAIBPn5PXCM16iyPGjHNWo6U1YO8sJTMHtEtyczI6QJnLoplswm6goopQkqc7OAnjhWcugVg==
@@ -24765,6 +24844,25 @@ universal-deep-strict-equal@^1.2.1:
     array-filter "^1.0.0"
     indexof "0.0.1"
     object-keys "^1.0.0"
+
+<<<<<<< HEAD
+universal-user-agent@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/universal-user-agent/-/universal-user-agent-4.0.0.tgz#27da2ec87e32769619f68a14996465ea1cb9df16"
+  integrity sha512-eM8knLpev67iBDizr/YtqkJsF3GK8gzDc6st/WKzrTuPtcsOKW/0IdL4cnMBsU69pOx0otavLWBDGTwg+dB0aA==
+||||||| merged common ancestors
+universal-user-agent@^2.0.0, universal-user-agent@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/universal-user-agent/-/universal-user-agent-2.1.0.tgz#5abfbcc036a1ba490cb941f8fd68c46d3669e8e4"
+  integrity sha512-8itiX7G05Tu3mGDTdNY2fB4KJ8MgZLS54RdG6PkkfwMAavrXu1mV/lls/GABx9O3Rw4PnTtasxrvbMQoBYY92Q==
+=======
+universal-user-agent@^2.0.0, universal-user-agent@^2.0.3, universal-user-agent@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/universal-user-agent/-/universal-user-agent-2.1.0.tgz#5abfbcc036a1ba490cb941f8fd68c46d3669e8e4"
+  integrity sha512-8itiX7G05Tu3mGDTdNY2fB4KJ8MgZLS54RdG6PkkfwMAavrXu1mV/lls/GABx9O3Rw4PnTtasxrvbMQoBYY92Q==
+>>>>>>> Test local actions
+  dependencies:
+    os-name "^3.1.0"
 
 universal-user-agent@^4.0.0:
   version "4.0.0"

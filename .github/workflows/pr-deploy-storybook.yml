@@ -14,5 +14,6 @@ jobs:
       with:
         node-version: 10.x
     - run: npm install -g yarn
-    - run: yarn install
-    - run: yarn storybook:build
+    # - run: yarn install
+    # - run: yarn storybook:build
+    - uses: ./actions/deploy-storybook
