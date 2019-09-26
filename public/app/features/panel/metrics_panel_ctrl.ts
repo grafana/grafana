@@ -11,7 +11,6 @@ import { toLegacyResponseData, TimeRange, LoadingState, DataFrame, toDataFrameDT
 import { LegacyResponseData, DataSourceApi, PanelData, DataQueryResponse } from '@grafana/ui';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
-import { config } from '@grafana/runtime';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -247,9 +246,7 @@ class MetricsPanelCtrl extends PanelCtrl {
         text: 'Explore',
         icon: 'gicon gicon-explore',
         shortcut: 'x',
-        href:
-          config.appSubUrl +
-          (await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv)),
+        href: await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv),
       });
     }
     return items;
