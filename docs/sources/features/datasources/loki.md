@@ -15,7 +15,7 @@ weight = 6
 > BETA: Querying Loki data requires Grafana's Explore section.
 > Grafana v6.x comes with Explore enabled by default.
 > In Grafana v5.3.x and v5.4.x. you need to enable Explore manually.
-> Viewing Loki data in dashboard panels is not supported yet, but is being worked on.
+> Viewing Loki data in dashboard panels is supported in Grafana v6.4+.
 
 Grafana ships with built-in support for Loki, Grafana's log aggregation system.
 Just add it as a data source and you are ready to query your log data in [Explore](/features/explore).
@@ -27,7 +27,7 @@ Just add it as a data source and you are ready to query your log data in [Explor
 3. Click the `Add data source` button at the top.
 4. Select `Loki` from the list of data sources.
 
-> NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+> Note: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
 | Name            | Description                                                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -38,10 +38,7 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 ## Querying Logs
 
-Querying and displaying log data from Loki is available via [Explore](/features/explore).
-Select the Loki data source, and then enter a log query to display your logs.
-
-> Viewing Loki data in dashboard panels is not supported yet, but is being worked on.
+Querying and displaying log data from Loki is available via [Explore](/features/explore), and with [Table panel](/features/panels/table_panel/) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
 
 ### Log Queries
 
@@ -88,13 +85,28 @@ After writing the Log Stream Selector, you can filter the results further by wri
 
 Example queries:
 
-* `{job="mysql"} error`
-* `{name="kafka"} tsdb-ops.*io:2003`
-* `{instance=~"kafka-[23]",name="kafka"} kafka.server:type=ReplicaManager`
+* `{job="mysql"} |= "error"`
+* `{name="kafka"} |~ "tsdb-ops.*io:2003"`
+* `{instance=~"kafka-[23]",name="kafka"} != "kafka.server:type=ReplicaManager"`
 
-## Live Tailing
+Filter operators can be chained and will sequentially filter down the expression. The resulting log lines will satisfy every filter.
 
-To view your logs live as they are added, choose `Live` from the refresh dropdown, and you should see your logs be displayed in real time.
+**Example**
+
+`{job="mysql"} |= "error" != "timeout"`
+
+The following filter types are currently supported:
+
+* `|=` line contains string.
+* `!=` line doesn't contain string.
+* `|~` line matches regular expression.
+* `!~` line does not match regular expression.
+
+> Note: For more details about LogQL, Loki's query language, refer to the [documentation](https://github.com/grafana/loki/blob/master/docs/querying.md)
+
+## Live tailing
+
+Loki supports Live tailing which displays logs in real-time. This feature is supported in [Explore](/features/explore/#loki-specific-features) and in dashboards with a Live toggle in the query editor.
 
 Note that Live Tailing relies on two Websocket connections: one between the browser and the Grafana server, and another between the Grafana server and the Loki server. If you run any reverse proxies, please configure them accordingly.
 
@@ -111,11 +123,15 @@ log message you're interested in.
 
 ## Templating
 
-Template variables are not yet supported by Loki.
+Instead of hard-coding things like server, application and sensor name in your metric queries, you can use variables in their place. Variables are shown as drop-down select boxes at the top of the dashboard. These drop-down boxes make it easy to change the data being displayed in your dashboard.
+
+Checkout the [Templating](/reference/templating) documentation for an introduction to the templating feature and the different types of template variables.
 
 ## Annotations
 
-Annotations are not yet supported by Loki.
+You can use any non-metric Loki query as a source for annotations. Log content will be used as annotation text, so there is no need for additional mapping.
+
+> Note: Annotations for Loki are only available in Grafana v6.4+
 
 ## Configure the data source with provisioning
 

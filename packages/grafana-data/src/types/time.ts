@@ -41,3 +41,9 @@ export interface TimeOptions {
 export type TimeFragment = string | DateTime;
 
 export const TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
+
+export const DefaultTimeRange: TimeRange = {
+  from: {} as DateTime,
+  to: {} as DateTime,
+  raw: { from: '6h', to: 'now' },
+};

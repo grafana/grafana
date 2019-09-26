@@ -77,7 +77,10 @@ export const getPanelLinksVariableSuggestions = (): VariableSuggestion[] => [
 ];
 
 const getSeriesVars = (dataFrames: DataFrame[]) => {
-  const labels = _.flatten(dataFrames.map(df => Object.keys(df.labels || {})));
+  const labels = _.chain(dataFrames.map(df => Object.keys(df.labels || {})))
+    .flatten()
+    .uniq()
+    .value();
 
   return [
     {
