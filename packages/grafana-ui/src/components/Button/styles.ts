@@ -2,6 +2,7 @@ import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
 import { Themeable, GrafanaTheme } from '../../types';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import { stylesFactory } from '../../themes/stylesFactory';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent';
 
@@ -48,7 +49,13 @@ const buttonVariantStyles = (
   }
 `;
 
-export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
+interface StyleDeps {
+  theme: GrafanaTheme;
+  size: ButtonSize;
+  variant: ButtonVariant;
+  withIcon: boolean;
+}
+const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
   const borderRadius = theme.border.radius.sm;
   let padding,
     background,
@@ -162,3 +169,49 @@ export const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }
     `,
   };
 });
+
+export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
+  renderAs,
+  theme,
+  size = 'md',
+  variant = 'primary',
+  className,
+  icon,
+  children,
+  ...otherProps
+}) => {
+  const buttonStyles = getButtonStyles({ theme, size, variant, withIcon: !!icon });
+  const nonHtmlProps = {
+    theme,
+    size,
+    variant,
+  };
+
+  const finalClassName = cx(buttonStyles.button, className);
+  const finalChildren = icon ? (
+    <span className={buttonStyles.iconWrap}>
+      <i className={cx([icon, buttonStyles.icon])} />
+      <span>{children}</span>
+    </span>
+  ) : (
+    children
+  );
+
+  const finalProps =
+    typeof renderAs === 'string'
+      ? {
+          ...otherProps,
+          className: finalClassName,
+          children: finalChildren,
+        }
+      : {
+          ...otherProps,
+          ...nonHtmlProps,
+          className: finalClassName,
+          children: finalChildren,
+        };
+
+  return React.createElement(renderAs, finalProps);
+};
+
+AbstractButton.displayName = 'AbstractButton';

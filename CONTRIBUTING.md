@@ -41,7 +41,10 @@ Read more about the ways you can [Triage issues](/contribute/triage-issues.md).
 
 ### Answering questions
 
-If you have a question and you can't find the answer in the [documentation](https://grafana.com/docs/), the next step is to ask it on the [community site](https://community.grafana.com/).
+- [ ] The pull request contains a title that explains it. It follows [PR and commit messages guidelines](#Pull-Requests-titles-and-message).
+- [ ] The pull request contains necessary links to issues.
+- [ ] The pull request contains commits with messages that are small and understandable. It follows [PR and commit messages guidelines](#Pull-Requests-titles-and-message).
+- [ ] The pull request does not contain magic strings or numbers that could be replaced with an `Enum` or `const` instead.
 
 It's important to us to help these users, and we'd love your help. Sign up to our [community site](https://community.grafana.com/), and start helping other Grafana users by answering their questions.
 
@@ -49,8 +52,13 @@ It's important to us to help these users, and we'd love your help. Sign up to ou
 
 Unsure where to begin contributing to Grafana? Start by browsing issues labeled `beginner friendly` or `help wanted`.
 
-- [Beginner-friendly](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22) issues are generally straightforward to complete.
-- [Help wanted](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) issues are problems we would like the community to help us with regardless of complexity.
+- [ ] The pull request does not increase the Angular code base.
+  > We are in the process of migrating to React so any increment of Angular code is generally discouraged.
+- [ ] The pull request does not contain uses of `any` or `{}` without comments describing why.
+- [ ] The pull request does not contain large React components that could easily be split into several smaller components.
+- [ ] The pull request does not contain back end calls directly from components, use actions and Redux instead.
+- [ ] The pull request follows our [styling with Emotion convention](./style_guides/styling.md)
+  > We still use a lot of SASS, but any new CSS work should be using or migrating existing code to Emotion
 
 If you're looking to make a code change, see how to set up your environment for [local development](contribute/developer-guide.md).
 

@@ -8,7 +8,8 @@ import { DisplayValue } from '@grafana/data';
 import { getColorFromHexRgbOrName } from '../../utils';
 
 // Types
-import { Themeable, GrafanaTheme } from '../../types';
+import { Themeable } from '../../types';
+import { stylesFactory } from '../../themes/stylesFactory';
 
 export interface BigValueSparkline {
   data: any[][];
@@ -33,6 +34,36 @@ export interface Props extends Themeable {
   displayMode: SingleStatDisplayMode;
 }
 
+const getStyles = stylesFactory(() => {
+  return {
+    wrapper: css`
+      position: 'relative';
+      display: 'table';
+    `,
+    title: css`
+      line-height: 1;
+      text-align: 'center';
+      z-index: 1;
+      display: 'block';
+      width: '100%';
+      position: 'absolute';
+    `,
+    value: css`
+      line-height: 1;
+      text-align: 'center';
+      z-index: 1;
+      display: 'table-cell';
+      vertical-align: 'middle';
+      position: 'relative';
+      font-size: '3em';
+      font-weight: 500;
+    `,
+  };
+});
+
+/*
+ * This visualization is still in POC state, needed more tests & better structure
+ */
 export class BigValue extends PureComponent<Props> {
   render() {
     const { value, onClick, className, sparkline } = this.props;
@@ -307,25 +338,22 @@ function renderGraph(layout: LayoutResult, sparkline?: BigValueSparkline) {
       return null;
   }
 
-  if (layout.chartWidth === layout.width) {
-    chartStyles.position = 'absolute';
-    chartStyles.bottom = 0;
-    chartStyles.right = 0;
-    chartStyles.left = 0;
-    chartStyles.right = 0;
-    chartStyles.top = 'unset';
-  }
+  render() {
+    const { height, width, value, prefix, suffix, sparkline, backgroundColor, onClick, className } = this.props;
+    const styles = getStyles();
+    return (
+      <div className={cx(styles.wrapper, className)} style={{ width, height, backgroundColor }} onClick={onClick}>
+        {value.title && <div className={styles.title}>{value.title}</div>}
 
-  switch (layout.displayMode) {
-    case SingleStatDisplayMode.Vibrant2:
-      geomRender = renderVibrant2Geom;
-      break;
-    case SingleStatDisplayMode.Classic:
-      geomRender = renderClassicAreaGeom;
-      break;
-    case SingleStatDisplayMode.Classic2:
-      geomRender = renderAreaGeom;
-      break;
+        <span className={styles.value}>
+          {this.renderText(prefix, '0px 2px 0px 0px')}
+          {this.renderText(value)}
+          {this.renderText(suffix)}
+        </span>
+
+        {sparkline && this.renderSparkline(sparkline)}
+      </div>
+    );
   }
 
   return (
