@@ -86,6 +86,10 @@ export class LdapUserPage extends PureComponent<Props, State> {
     revokeAllSessions(userId);
   };
 
+  isUserError = (): boolean => {
+    return !!(this.props.userError && this.props.userError.title);
+  };
+
   render() {
     const { user, ldapUser, userError, navModel, sessions, ldapSyncInfo } = this.props;
     const { isLoading } = this.state;
@@ -102,7 +106,7 @@ export class LdapUserPage extends PureComponent<Props, State> {
       <Page navModel={navModel}>
         <Page.Contents isLoading={isLoading}>
           <div className="grafana-info-box">
-            This user is synced via LDAP – all changes must be done in LDAP or mappings.
+            This user is synced via LDAP – All changes must be done in LDAP or mappings.
           </div>
           {userError && userError.title && (
             <div className="gf-form-group">
@@ -115,9 +119,12 @@ export class LdapUserPage extends PureComponent<Props, State> {
             </div>
           )}
 
+          {userSyncInfo && (
+            <UserSyncInfo syncInfo={userSyncInfo} onSync={this.onSyncUser} disableSync={this.isUserError()} />
+          )}
+
           {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
           {!ldapUser && user && <UserInfo user={user} />}
-          {userSyncInfo && <UserSyncInfo syncInfo={userSyncInfo} onSync={this.onSyncUser} />}
 
           {sessions && (
             <UserSessions
