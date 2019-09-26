@@ -6,7 +6,7 @@ export enum ResolutionSelection {
 }
 
 export interface QueriesForResolution {
-  resolution?: string;
+  txt?: string;
   ms: number; // Will be -Infinity when resolution is not set
   targets: DataQuery[]; // Always mixed
 }

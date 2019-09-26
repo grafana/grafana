@@ -291,7 +291,7 @@ export class QueriesTab extends PureComponent<Props, State> {
             onChange={query => this.onUpdateQueries([query])}
             dashboard={dashboard}
             onScrollBottom={this.onScrollBottom}
-            midex={this.mixedDataSourceItem}
+            mixed={this.mixedDataSourceItem}
           />
         ) : (
           <QueryEditorRows

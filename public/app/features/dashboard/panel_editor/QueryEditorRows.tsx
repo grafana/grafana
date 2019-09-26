@@ -35,11 +35,13 @@ export class QueryEditorRows extends PureComponent<Props> {
 
   onRemoveQuery = (query: DataQuery) => {
     const { queries, onChangeQueries, panel } = this.props;
-    onChangeQueries(
-      queries.filter(q => {
-        return q !== query;
-      })
-    );
+    const removed = queries.filter(q => {
+      return q !== query;
+    });
+    onChangeQueries(removed);
+
+    console.log('REMMMM', removed, queries);
+
     panel.refresh();
   };
 

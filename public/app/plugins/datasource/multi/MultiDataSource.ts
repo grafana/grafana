@@ -4,6 +4,7 @@ import { DataSourceApi, DataQuery, DataQueryRequest, DataQueryResponse, DataSour
 import { MixedDatasource } from '../mixed/module';
 import { MultiResolutionQuery, ResolutionSelection } from './types';
 import defaults from 'lodash/defaults';
+import kbn from 'app/core/utils/kbn';
 
 export const MULTI_DATASOURCE_NAME = '-- From Time --';
 
@@ -34,12 +35,30 @@ export function getMultiResolutionQuery(queries: DataQuery[]): MultiResolutionQu
   if (!(q.resolutions && q.resolutions.length)) {
     q.resolutions = [
       {
+        txt: '',
         ms: Number.NEGATIVE_INFINITY,
         targets: [{ refId: 'A' }],
       },
     ];
+  } else {
+    const res = q.resolutions.map(r => {
+      // if (r.ms <= 0) {
+      //   try {
+      //     const ms = kbn.interval_to_ms(r.txt);
+      //     if (ms) {
+      //       r.ms = ms;
+      //     }
+      //   } catch {}
+      // }
+      return r;
+    });
+    res.sort((a, b) => {
+      return a.ms - b.ms;
+    });
+    res[0].ms = Number.NEGATIVE_INFINITY;
+    res[0].txt = '';
+    q.resolutions = res;
   }
-
   return q;
 }
 

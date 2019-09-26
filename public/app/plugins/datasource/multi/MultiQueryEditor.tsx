@@ -1,8 +1,9 @@
 // Libraries
 import React, { PureComponent } from 'react';
+import cloneDeep from 'lodash/cloneDeep';
 
 // Types
-import { PanelData, Button, DataSourceSelectItem } from '@grafana/ui';
+import { PanelData, DataSourceSelectItem } from '@grafana/ui';
 import { MultiResolutionQuery, ResolutionSelection, QueriesForResolution } from './types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { SelectableValue } from '@grafana/data';
@@ -52,21 +53,55 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
     });
   };
 
-  addResolution = () => {
+  onChange = (value: QueriesForResolution) => {
     const query = this.getQuery();
-    const resolutions = [
-      ...query.resolutions,
-      {
-        resolution: '10m',
-        ms: 10000,
-        targets: [],
-      },
-    ];
-
-    this.props.onChange({
-      ...query,
-      resolutions,
+    let found = false;
+    query.resolutions = query.resolutions.map(v => {
+      if (v === value) {
+        found = true;
+      } else if (value.ms === v.ms) {
+        found = true;
+        return value;
+      }
+      return v;
     });
+    if (found) {
+      this.props.onChange(query);
+    } else {
+      console.log('NOT FOUND', value);
+    }
+  };
+
+  onDelete = (index: number) => {
+    const query = this.getQuery();
+    query.resolutions.splice(index, 1); // remove one
+    this.props.onChange(query);
+  };
+
+  onDuplicate = (value: QueriesForResolution) => {
+    const query = this.getQuery();
+    const add = cloneDeep(value);
+    let index = -1;
+    for (let i = 0; i < query.resolutions.length; i++) {
+      if (value.ms === query.resolutions[i].ms) {
+        index = i;
+        break;
+      }
+    }
+
+    if (index < 0 || index >= query.resolutions.length - 1) {
+      add.ms = value.ms + 10000;
+      this.props.onChange({
+        ...query,
+        resolutions: [...query.resolutions, add],
+      });
+    } else {
+      const next = query.resolutions[index + 1];
+      add.ms = add.ms + (next.ms - add.ms) / 2;
+      query.resolutions.splice(index, 0, add);
+      this.props.onChange(query);
+    }
+    console.log('DUPLICATE', add);
   };
 
   render() {
@@ -78,32 +113,28 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
       <div>
         <div>
           {query.resolutions.map((value, index) => {
+            const onDelete =
+              query.resolutions.length > 1
+                ? () => {
+                    this.onDelete(index);
+                  }
+                : undefined;
             return (
               <MultiQueryRow
                 key={index}
                 panel={props.panel}
                 dashboard={props.dashboard}
                 data={props.data}
+                mixed={props.mixed}
                 value={value}
                 onScrollBottom={props.onScrollBottom}
-                onChange={(value: QueriesForResolution) => {
-                  console.log('XXX', value);
-                }}
-                onDelete={
-                  query.resolutions.length > 1
-                    ? (value: QueriesForResolution) => {
-                        console.log('DELETE', value);
-                      }
-                    : undefined
-                }
+                onChange={this.onChange}
+                onDuplicate={this.onDuplicate}
+                onDelete={onDelete}
               />
             );
           })}
         </div>
-        <Button variant={'inverse'} onClick={this.addResolution}>
-          Add Interval
-        </Button>
-        <br />
         <br />
       </div>
     );
