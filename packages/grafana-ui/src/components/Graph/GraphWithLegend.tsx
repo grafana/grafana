@@ -8,6 +8,7 @@ import { Graph, GraphProps } from './Graph';
 import { LegendRenderOptions, LegendItem, LegendDisplayMode } from '../Legend/Legend';
 import { GraphLegend } from './GraphLegend';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { stylesFactory } from '../../themes';
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
 export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
@@ -24,7 +25,7 @@ export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
   onToggleSort: (sortBy: string) => void;
 }
 
-const getGraphWithLegendStyles = ({ placement }: GraphWithLegendProps) => ({
+const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendProps) => ({
   wrapper: css`
     display: flex;
     flex-direction: ${placement === 'under' ? 'column' : 'row'};
@@ -38,7 +39,7 @@ const getGraphWithLegendStyles = ({ placement }: GraphWithLegendProps) => ({
     padding: 10px 0;
     max-height: ${placement === 'under' ? '35%' : 'none'};
   `,
-});
+}));
 
 const shouldHideLegendItem = (data: GraphSeriesValue[][], hideEmpty = false, hideZero = false) => {
   const isZeroOnlySeries = data.reduce((acc, current) => acc + (current[1] || 0), 0) === 0;
