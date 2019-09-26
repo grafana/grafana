@@ -52,10 +52,10 @@ const getStyles = (theme: GrafanaTheme) => ({
 });
 
 interface Props {
-  title: string;
-  icon?: string;
+  title: string | JSX.Element;
   onDismiss?: () => void;
   onClickBackdrop?: () => void;
+  visible?: boolean;
 }
 
 export class Modal extends React.PureComponent<Props> {
@@ -73,18 +73,18 @@ export class Modal extends React.PureComponent<Props> {
   };
 
   render() {
-    const { title, icon } = this.props;
+    const { title, visible = false } = this.props;
     const styles = getStyles(this.context);
+
+    if (!visible) {
+      return null;
+    }
 
     return (
       <Portal>
         <div className={cx(styles.modal)}>
           <div className={cx(styles.modalHeader)}>
-            <h2 className={cx(styles.modalHeaderTitle)}>
-              {icon && <i className={`fa ${icon}`} />}
-              <span className="p-l-1">{title}</span>
-            </h2>
-
+            {typeof title === 'string' ? <h2 className={cx(styles.modalHeaderTitle)}>{title}</h2> : <>{title}</>}
             <a className={cx(styles.modalHeaderClose)} onClick={this.handleDismiss}>
               <i className="fa fa-remove" />
             </a>
