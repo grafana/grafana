@@ -23,7 +23,7 @@ export const connectWithCleanUp = <
     const dispatch = useDispatch();
     useEffect(() => {
       return () => dispatch(cleanUpAction({ stateSelector }));
-    });
+    }, []);
     // @ts-ignore
     return <ConnectedComponent {...props} />;
   };
