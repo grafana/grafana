@@ -1,7 +1,6 @@
 // Libraries
 import _ from 'lodash';
 import { Unsubscribable } from 'rxjs';
-import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 // Services & Utils
 import {
   dateMath,
@@ -21,7 +20,7 @@ import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { getNextRefIdChar } from './query';
 // Types
-import { DataQuery, DataSourceApi, DataQueryError, DataQueryRequest, PanelModel } from '@grafana/ui';
+import { DataQuery, DataSourceApi, DataQueryError, DataQueryRequest, PanelModel, RefreshPicker } from '@grafana/ui';
 import { ExploreUrlState, HistoryItem, QueryTransaction, QueryOptions, ExploreMode } from 'app/types/explore';
 import { config } from '../config';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -488,7 +487,7 @@ export enum SortOrder {
 }
 
 export const refreshIntervalToSortOrder = (refreshInterval: string) =>
-  isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
+  RefreshPicker.isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
 
 export const sortLogsResult = (logsResult: LogsModel, sortOrder: SortOrder): LogsModel => {
   const rows = logsResult ? logsResult.rows : [];

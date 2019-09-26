@@ -4,7 +4,7 @@ import { tap, switchMap } from 'rxjs/operators';
 import _ from 'lodash';
 
 import { stringToMs, SelectableValue } from '@grafana/data';
-import { isLive } from '../RefreshPicker/RefreshPicker';
+import { RefreshPicker } from '../RefreshPicker/RefreshPicker';
 
 export function getIntervalFromString(strInterval: string): SelectableValue<number> {
   return {
@@ -39,7 +39,7 @@ export class SetInterval extends PureComponent<Props> {
         switchMap(props => {
           // If the query is live, empty value is emited. `of` creates single value,
           // which is merged to propsSubject stream
-          if (isLive(props.interval)) {
+          if (RefreshPicker.isLive(props.interval)) {
             return of({});
           }
 
@@ -61,7 +61,10 @@ export class SetInterval extends PureComponent<Props> {
   }
 
   componentDidUpdate(prevProps: Props) {
-    if ((isLive(prevProps.interval) && isLive(this.props.interval)) || _.isEqual(prevProps, this.props)) {
+    if (
+      (RefreshPicker.isLive(prevProps.interval) && RefreshPicker.isLive(this.props.interval)) ||
+      _.isEqual(prevProps, this.props)
+    ) {
       return;
     }
     // if props changed, a new value is emited from propsSubject
