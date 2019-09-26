@@ -6,8 +6,9 @@ import angular, { ILocationService } from 'angular';
 import config from 'app/core/config';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
-import { showConfirmModal, alertSuccess, dashScroll, dashboardSaved, routeUpdated } from '@grafana/data';
+import { showConfirmModal, alertSuccess, dashScroll, routeUpdated } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { dashboardSaved } from 'app/types';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;

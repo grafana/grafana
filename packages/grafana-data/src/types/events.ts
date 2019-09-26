@@ -1,6 +1,5 @@
 import { IHttpResponse } from 'angular';
 import { TimeRange } from './time';
-import { DashboardModel } from 'app/features/dashboard/state';
 import { DataFrame } from './dataFrame';
 
 export type AlertPayload = [string, string?];
@@ -114,7 +113,7 @@ export const hideDashEditor = eventFactory('hide-dash-editor');
 export const dashScroll = eventFactory<DashScrollPayload>('dash-scroll');
 export const dashLinksUpdated = eventFactory('dash-links-updated');
 export const saveDashboard = eventFactory<SaveDashboardPayload>('save-dashboard');
-export const dashboardSaved = eventFactory<DashboardModel>('dashboard-saved');
+
 export const searchQuery = eventFactory('search-query');
 
 export const locationChange = eventFactory<LocationChangePayload>('location-change');

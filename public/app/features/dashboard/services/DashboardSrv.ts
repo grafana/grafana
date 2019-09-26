@@ -3,14 +3,13 @@ import { appEvents } from 'app/core/app_events';
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../state/DashboardModel';
 import { removePanel } from '../utils/panel';
-import { DashboardMeta } from 'app/types';
+import { DashboardMeta, dashboardSaved } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import {
   saveDashboard,
   panelChangeView,
   removePanel as removePanelEvent,
-  dashboardSaved,
   alertSuccess,
   showModal,
   showConfirmModal,

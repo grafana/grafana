@@ -4,16 +4,9 @@ import angular, { ILocationService, IQService } from 'angular';
 import locationUtil from 'app/core/utils/location_util';
 import { DashboardModel } from '../../state/DashboardModel';
 import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './HistorySrv';
-import {
-  dateTime,
-  toUtc,
-  DateTimeInput,
-  hideDashEditor,
-  showConfirmModal,
-  alertSuccess,
-  dashboardSaved,
-} from '@grafana/data';
+import { dateTime, toUtc, DateTimeInput, hideDashEditor, showConfirmModal, alertSuccess } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { dashboardSaved } from 'app/types';
 
 export class HistoryListCtrl {
   appending: boolean;
