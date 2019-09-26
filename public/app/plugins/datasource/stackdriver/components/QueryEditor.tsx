@@ -15,6 +15,8 @@ import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
 import { TimeSeries, SelectableValue } from '@grafana/data';
 
+import { GroupBy } from '@grafana/ui';
+
 export interface Props {
   onQueryChange: (target: StackdriverQuery) => void;
   onExecuteQuery: () => void;
@@ -159,6 +161,20 @@ export class QueryEditor extends React.Component<Props, State> {
         >
           {metric => (
             <>
+              <GroupBy
+                options={{
+                  group1: ['grupp1', 'test3', 'hej', 'grupp2', 'hallå', 'test3'],
+                  group2: ['grupp5', 'test6', 'hej3', 'grupp8', 'hallå2', 'test5'],
+                }}
+                values={['grupp2', 'test2', 'test3', 'grupp8']}
+                onChange={values => console.log('Group by changed', values)}
+              />
+              <GroupBy
+                options={['grupp1', 'test3', 'hej', 'grupp2', 'hallå', 'fest3']}
+                values={['grupp2', 'test2', 'test3']}
+                onChange={values => console.log('Group by changed', values)}
+              />
+              {console.log({ groupBys })}
               <Filter
                 filtersChanged={value => this.onPropertyChange('filters', value)}
                 groupBysChanged={value => this.onPropertyChange('groupBys', value)}

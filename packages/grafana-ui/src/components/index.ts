@@ -89,3 +89,6 @@ export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary
 export { AlphaNotice } from './AlphaNotice/AlphaNotice';
 export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
+
+// Segment
+export { GroupBy, SegmentAdd, Segment, SegmentSelect } from './Segment/';
