@@ -53,6 +53,7 @@ interface State {
 
 export class QueriesTab extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
+  mixedDataSourceItem: DataSourceSelectItem;
   backendSrv = getBackendSrv();
   querySubscription: Unsubscribable;
 
@@ -92,6 +93,8 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   findCurrentDataSource(): DataSourceSelectItem {
     const { panel } = this.props;
+    // TODO in one loop?
+    this.mixedDataSourceItem = this.datasources.find(datasource => datasource.meta.id === 'mixed');
     return this.datasources.find(datasource => datasource.value === panel.datasource) || this.datasources[0];
   }
 
@@ -288,6 +291,7 @@ export class QueriesTab extends PureComponent<Props, State> {
             onChange={query => this.onUpdateQueries([query])}
             dashboard={dashboard}
             onScrollBottom={this.onScrollBottom}
+            midex={this.mixedDataSourceItem}
           />
         ) : (
           <QueryEditorRows

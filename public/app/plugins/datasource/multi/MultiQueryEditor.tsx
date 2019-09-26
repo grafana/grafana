@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelData, Button } from '@grafana/ui';
+import { PanelData, Button, DataSourceSelectItem } from '@grafana/ui';
 import { MultiResolutionQuery, ResolutionSelection, QueriesForResolution } from './types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { SelectableValue } from '@grafana/data';
@@ -15,6 +15,7 @@ interface Props {
   data: PanelData;
   onScrollBottom: () => void;
   onChange: (query: MultiResolutionQuery) => void;
+  mixed: DataSourceSelectItem;
 }
 
 type State = {};
@@ -88,6 +89,13 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
                 onChange={(value: QueriesForResolution) => {
                   console.log('XXX', value);
                 }}
+                onDelete={
+                  query.resolutions.length > 1
+                    ? (value: QueriesForResolution) => {
+                        console.log('DELETE', value);
+                      }
+                    : undefined
+                }
               />
             );
           })}

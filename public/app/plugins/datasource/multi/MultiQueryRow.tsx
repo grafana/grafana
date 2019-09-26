@@ -1,9 +1,8 @@
 // Libraries
 import React, { PureComponent } from 'react';
-import defaults from 'lodash/defaults';
 
 // Types
-import { PanelData, DataQuery } from '@grafana/ui';
+import { PanelData, DataQuery, DataSourceSelectItem } from '@grafana/ui';
 import { QueriesForResolution } from './types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { QueryEditorRows } from 'app/features/dashboard/panel_editor/QueryEditorRows';
@@ -15,6 +14,8 @@ interface Props {
   value: QueriesForResolution;
   onScrollBottom: () => void;
   onChange: (value: QueriesForResolution) => void;
+  onDelete?: (value: QueriesForResolution) => void;
+  mixed: DataSourceSelectItem;
 }
 
 type State = {
@@ -35,15 +36,21 @@ export class MultiQueryRow extends PureComponent<Props, State> {
     });
   };
 
+  onRemove = () => {
+    this.props.onDelete!(this.props.value);
+  };
+
+  onChangeQueries = (targets: DataQuery[]) => {
+    const { value, onChange } = this.props;
+    onChange({
+      ...value,
+      targets,
+    });
+  };
+
   render() {
-    const { data, dashboard, panel, onScrollBottom } = this.props;
-    const isCollapsed = true;
-    const value: QueriesForResolution = defaults(this.props.value, {
-      targets: [{ refId: 'A' }],
-    } as QueriesForResolution);
-
-    console.log('MULTI', value);
-
+    const { value, data, dashboard, panel, onScrollBottom, onDelete, mixed } = this.props;
+    const { isCollapsed } = this.state;
     return (
       <div className="query-editor-row">
         <div className="query-editor-row__header">
@@ -55,34 +62,23 @@ export class MultiQueryRow extends PureComponent<Props, State> {
           <div>
             <input type="text" className="gf-form query-editor-row__ref-id" defaultValue="XXX" />
           </div>
-          <div
-            className="query-editor-row__collapsed-text"
-            onClick={() => {
-              console.log('toggle');
-            }}
-          >
+          <div className="query-editor-row__collapsed-text" onClick={this.toggleCollapse}>
             {isCollapsed && <div>XXXXX</div>}
           </div>
           <div className="query-editor-row__actions">
-            <button
-              className="query-editor-row__action"
-              onClick={() => {
-                console.log('remove');
-              }}
-              title="Remove"
-            >
-              <i className="fa fa-fw fa-trash" />
-            </button>
+            {onDelete && (
+              <button className="query-editor-row__action" onClick={this.onRemove} title="Remove">
+                <i className="fa fa-fw fa-trash" />
+              </button>
+            )}
           </div>
         </div>
         {!isCollapsed && (
           <div className="query-editor-row__body gf-form-query">
             <QueryEditorRows
               queries={value.targets}
-              datasource={null}
-              onChangeQueries={(queries: DataQuery[]) => {
-                console.log('CHANGE', queries);
-              }}
+              datasource={mixed}
+              onChangeQueries={this.onChangeQueries}
               onScrollBottom={onScrollBottom}
               panel={panel}
               dashboard={dashboard}
