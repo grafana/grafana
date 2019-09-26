@@ -13,7 +13,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10.x
-    # - run: npm install -g yarn
-    # - run: yarn install
+    - run: npm install -g yarn
+    - run: yarn install @actions/core @actions/github
     # - run: yarn storybook:build
     - uses: ./.github/actions/deploy-storybook
