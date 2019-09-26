@@ -49,6 +49,8 @@ export function logStreamToDataFrame(stream: LokiLogsStream, reverse?: boolean, 
  * Transform LokiResponse data and appends it to MutableDataFrame. Used for streaming where the dataFrame can be
  * a CircularDataFrame creating a fixed size rolling buffer.
  * TODO: Probably could be unified with the logStreamToDataFrame function.
+ * @param response
+ * @param data Needs to have ts, line, labels, id as fields
  */
 export function appendResponseToBufferedData(response: LokiResponse, data: MutableDataFrame) {
   // Should we do anything with: response.dropped_entries?
@@ -58,7 +60,7 @@ export function appendResponseToBufferedData(response: LokiResponse, data: Mutab
     for (const stream of streams) {
       // Find unique labels
       const labels = parseLabels(stream.labels);
-      const unique = findUniqueLabels(labels, data.labels);
+      const unique = findUniqueLabels(labels, data.labels || {});
 
       // Add each line
       for (const entry of stream.entries) {
