@@ -8,6 +8,7 @@ export { getFlotPairs, getFlotPairsConstant } from './flotPairs';
 export * from './slate';
 export * from './dataLinks';
 export { default as ansicolor } from './ansicolor';
+export { useDelayedSwitch } from './useDelayedSwitch';
 
 // Export with a namespace
 import * as DOMUtil from './dom'; // includes Element.closest polyfil

@@ -9,7 +9,16 @@ import memoizeOne from 'memoize-one';
 // Services & Utils
 import store from 'app/core/store';
 // Components
-import { Alert, ErrorBoundaryAlert, DataQuery, ExploreStartPageProps, DataSourceApi, PanelData } from '@grafana/ui';
+import {
+  Alert,
+  ErrorBoundaryAlert,
+  DataQuery,
+  ExploreStartPageProps,
+  DataSourceApi,
+  PanelData,
+  ShowDelay,
+  Spinner,
+} from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -272,7 +281,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
     return (
       <div className={exploreClass} ref={this.getRef}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
-        {datasourceLoading ? <div className="explore-container">Loading datasource...</div> : null}
         {datasourceMissing ? this.renderEmptyState() : null}
 
         <FadeIn duration={datasourceError ? 150 : 5} in={datasourceError ? true : false}>
