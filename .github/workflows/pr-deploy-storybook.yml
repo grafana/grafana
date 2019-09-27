@@ -18,6 +18,13 @@ jobs:
     - name: Verify if storybook should be deployed
       uses: ./.github/actions/verify-deploy-storybook
       id: deployVerify
-    - name: Build Storybook
-      if: steps.deployVerify.outputs.shouldDeploy == 'true'
-      run: yarn storybook:build
+    - run: cat ${GITHUB_WORKSPACE}
+    - run: cat ${GITHUB_WORKSPACE}/grafana/grafana
+    # - name: Build Storybook
+    #   if: steps.deployVerify.outputs.shouldDeploy == 'true'
+    #   run: yarn storybook:build
+    # - name: Deploy Storybook
+    #   if: steps.deployVerify.outputs.shouldDeploy == 'true'
+    #   env: # Or as an environment variable
+    #     NOW_TOKEN: ${{ secrets.NOW_SH }}
+    #   run: now ${GITHUB_WORKSPACE}/grafana/grafana --token=${NOW_TOKEN} -n grafana-storybook
