@@ -100,6 +100,26 @@ export function SegmentExampleUsage() {
           options={options}
         />
       </div>
+
+      <div className="gf-form-inline">
+        <div className="gf-form">
+          <span className="gf-form-label width-18 query-keyword">Example with grouped options</span>
+        </div>
+
+        <Segment
+          currentOption={selectedOption}
+          options={{
+            group1: options,
+            group2: options,
+          }}
+          onChange={setSelectedOption}
+        />
+        <Segment
+          Component={AddButton}
+          onChange={item => console.log(`New value added ${item.value}`)}
+          options={options}
+        />
+      </div>
     </>
   );
 }
