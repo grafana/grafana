@@ -13,7 +13,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10.x
-    - run: npm install -g yarn now
+    - run: npm install -g yarn
     - run: yarn install --pure-lockfile
     - name: Verify if storybook should be deployed
       uses: ./.github/actions/verify-deploy-storybook
