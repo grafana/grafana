@@ -10,21 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - run: ls ${GITHUB_WORKSPACE}
-    # - run: cat ${GITHUB_WORKSPACE}/grafana/grafana
-    # - uses: actions/setup-node@v1
-    #   with:
-    #     node-version: 10.x
-    # - run: npm install -g yarn
-    # - run: yarn install --pure-lockfile
-    # - name: Verify if storybook should be deployed
-    #   uses: ./.github/actions/verify-deploy-storybook
-    #   id: deployVerify
-    # - name: Build Storybook
-    #   if: steps.deployVerify.outputs.shouldDeploy == 'true'
-    #   run: yarn storybook:build
-    # - name: Deploy Storybook
-    #   if: steps.deployVerify.outputs.shouldDeploy == 'true'
-    #   env: # Or as an environment variable
-    #     NOW_TOKEN: ${{ secrets.NOW_SH }}
-    #   run: now ${GITHUB_WORKSPACE}/grafana/grafana --token=${NOW_TOKEN} -n grafana-storybook
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.x
+    - run: npm install -g yarn
+    - run: yarn install --pure-lockfile
+    - name: Verify if storybook should be deployed
+      uses: ./.github/actions/verify-deploy-storybook
+      id: deployVerify
+    - name: Build Storybook
+      if: steps.deployVerify.outputs.shouldDeploy == 'true'
+      run: yarn storybook:build
+    - name: Deploy Storybook
+      if: steps.deployVerify.outputs.shouldDeploy == 'true'
+      env:
+        NOW_TOKEN: ${{ secrets.NOW_SH }}
+      run: now ${GITHUB_WORKSPACE}/packages/grafana-ui/dist/storybook --token=${NOW_TOKEN} -n grafana-storybook
