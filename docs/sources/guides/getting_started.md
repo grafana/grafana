@@ -80,7 +80,7 @@ Dashboards are at the core of what Grafana is all about. Dashboards are composed
 5. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
 
 
-## Adding & Editing Graphs and Panels
+## Adding and editing graphs and panels
 
 ![](/img/docs/v45/metrics_tab.png)
 
