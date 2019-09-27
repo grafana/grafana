@@ -10,16 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 10.x
-    - run: npm install -g yarn
-    - run: yarn install --pure-lockfile
-    - name: Verify if storybook should be deployed
-      uses: ./.github/actions/verify-deploy-storybook
-      id: deployVerify
-    - run: cat ${GITHUB_WORKSPACE}
-    - run: cat ${GITHUB_WORKSPACE}/grafana/grafana
+    - run: ls ${GITHUB_WORKSPACE}
+    # - run: cat ${GITHUB_WORKSPACE}/grafana/grafana
+    # - uses: actions/setup-node@v1
+    #   with:
+    #     node-version: 10.x
+    # - run: npm install -g yarn
+    # - run: yarn install --pure-lockfile
+    # - name: Verify if storybook should be deployed
+    #   uses: ./.github/actions/verify-deploy-storybook
+    #   id: deployVerify
     # - name: Build Storybook
     #   if: steps.deployVerify.outputs.shouldDeploy == 'true'
     #   run: yarn storybook:build
