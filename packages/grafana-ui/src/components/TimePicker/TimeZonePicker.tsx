@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { getTimeZoneGroups, SelectableValue } from '@grafana/data';
-import { Select } from '../Select/Select';
+import { Select } from '..';
 
 interface Props {
   value: string;
