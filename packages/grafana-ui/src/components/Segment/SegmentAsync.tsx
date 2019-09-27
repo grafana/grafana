@@ -1,13 +1,10 @@
-import React, { useState, ReactElement } from 'react';
+import React, { useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { SegmentSelect } from './SegmentSelect';
-import { OptionType, useExpandableLabel } from '.';
+import { OptionType, useExpandableLabel, SegmentProps } from '.';
 
-export interface SegmentAsyncProps<T> {
-  onChange: (item: SelectableValue<T>) => void;
+export interface SegmentAsyncProps<T> extends SegmentProps<T> {
   loadOptions: () => Promise<Array<SelectableValue<T>>>;
-  currentOption?: SelectableValue<T>;
-  Component?: ReactElement;
 }
 
 export function SegmentAsync<T>({

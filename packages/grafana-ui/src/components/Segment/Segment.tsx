@@ -1,12 +1,8 @@
-import React, { ReactElement } from 'react';
-import { SelectableValue } from '@grafana/data';
-import { OptionType, SegmentSelect, useExpandableLabel } from './';
+import React from 'react';
+import { OptionType, SegmentSelect, useExpandableLabel, SegmentProps } from './';
 
-export interface Props<T> {
-  onChange: (item: SelectableValue<T>) => void;
+export interface SegmentSyncProps<T> extends SegmentProps<T> {
   options: OptionType<T> | undefined;
-  currentOption?: SelectableValue<T>;
-  Component?: ReactElement;
 }
 
 export function Segment<T>({
@@ -14,7 +10,7 @@ export function Segment<T>({
   currentOption: { label } = { label: '' },
   onChange,
   Component,
-}: React.PropsWithChildren<Props<T>>) {
+}: React.PropsWithChildren<SegmentSyncProps<T>>) {
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
 
   if (!expanded) {
