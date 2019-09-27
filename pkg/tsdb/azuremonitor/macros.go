@@ -80,7 +80,7 @@ func (m *kqlMacroEngine) evaluateMacro(name string, args []string) (string, erro
 		} else {
 			interval = time.Millisecond * time.Duration(m.query.IntervalMs)
 		}
-		return fmt.Sprintf("%dms", int(interval / time.Millisecond)), nil
+		return fmt.Sprintf("%dms", int(interval/time.Millisecond)), nil
 	case "__contains":
 		if len(args) < 2 || args[0] == "" || args[1] == "" {
 			return "", fmt.Errorf("macro %v needs colName and variableSet", name)

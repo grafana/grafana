@@ -158,7 +158,7 @@ describe('AppInsightsDatasource', () => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
-          expect(options.data.queries[0].appInsights.rawQuery).toEqual(queryString);
+          expect(options.data.queries[0].appInsights.rawQueryString).toEqual(queryString);
           expect(options.data.queries[0].appInsights.timeColumn).toEqual('timestamp');
           expect(options.data.queries[0].appInsights.valueColumn).toEqual('max');
           expect(options.data.queries[0].appInsights.segmentColumn).toBeUndefined();
@@ -201,7 +201,7 @@ describe('AppInsightsDatasource', () => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
-          expect(options.data.queries[0].appInsights.rawQuery).toEqual(queryString);
+          expect(options.data.queries[0].appInsights.rawQueryString).toEqual(queryString);
           expect(options.data.queries[0].appInsights.timeColumn).toEqual('timestamp');
           expect(options.data.queries[0].appInsights.valueColumn).toEqual('max');
           expect(options.data.queries[0].appInsights.segmentColumn).toEqual('partition');
@@ -264,7 +264,7 @@ describe('AppInsightsDatasource', () => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries.length).toBe(1);
           expect(options.data.queries[0].refId).toBe('A');
-          expect(options.data.queries[0].appInsights.rawQuery).toBeUndefined();
+          expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
           return ctx.$q.when({ data: response, status: 200 });
         };
@@ -303,7 +303,7 @@ describe('AppInsightsDatasource', () => {
         ctx.backendSrv.datasourceRequest = (options: any) => {
           expect(options.url).toContain('/api/tsdb/query');
           expect(options.data.queries[0].refId).toBe('A');
-          expect(options.data.queries[0].appInsights.rawQuery).toBeUndefined();
+          expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
           expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
           expect(options.data.queries[0].appInsights.timeGrain).toBe('PT30M');
           return ctx.$q.when({ data: response, status: 200 });
@@ -351,7 +351,7 @@ describe('AppInsightsDatasource', () => {
 
           ctx.backendSrv.datasourceRequest = (options: any) => {
             expect(options.url).toContain('/api/tsdb/query');
-            expect(options.data.queries[0].appInsights.rawQuery).toBeUndefined();
+            expect(options.data.queries[0].appInsights.rawQueryString).toBeUndefined();
             expect(options.data.queries[0].appInsights.metricName).toBe('exceptions/server');
             expect(options.data.queries[0].appInsights.dimension).toBe('client/city');
             return ctx.$q.when({ data: response, status: 200 });

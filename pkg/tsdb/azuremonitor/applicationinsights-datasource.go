@@ -146,10 +146,11 @@ func (e *ApplicationInsightsDatasource) buildQueries(queries []*tsdb.Query, time
 			dimension := strings.TrimSpace(fmt.Sprintf("%v", applicationInsightsTarget["dimension"]))
 			if applicationInsightsTarget["dimension"] != nil && len(dimension) > 0 && !strings.EqualFold(dimension, "none") {
 				params.Add("segment", dimension)
-				dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", applicationInsightsTarget["dimensionFilter"]))
-				if applicationInsightsTarget["dimensionFilter"] != nil && len(dimensionFilter) > 0 {
-					params.Add("filter", fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
-				}
+			}
+
+			dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", applicationInsightsTarget["dimensionFilter"]))
+			if applicationInsightsTarget["dimensionFilter"] != nil && len(dimensionFilter) > 0 {
+				params.Add("filter", fmt.Sprintf("%v", dimensionFilter))
 			}
 
 			applicationInsightsQueries = append(applicationInsightsQueries, &ApplicationInsightsQuery{
@@ -272,7 +273,7 @@ func (e *ApplicationInsightsDatasource) parseTimeSeriesFromQuery(body []byte, qu
 	}
 
 	type Metadata struct {
-		Columns []string `json:"columns"'`
+		Columns []string `json:"columns"`
 	}
 
 	meta := Metadata{}
@@ -337,12 +338,13 @@ func (e *ApplicationInsightsDatasource) parseTimeSeriesFromQuery(body []byte, qu
 					return nil, simplejson.NewFromAny(meta), err
 				}
 
-				if value, err := getFloat(r[valueIndex]); err != nil {
+				var value float64
+				if value, err = getFloat(r[valueIndex]); err != nil {
 					return nil, simplejson.NewFromAny(meta), err
-				} else {
-					points := getPoints(r)
-					*points = append(*points, tsdb.NewTimePoint(null.FloatFrom(value), float64(timeValue.Unix()*1000)))
 				}
+
+				points := getPoints(r)
+				*points = append(*points, tsdb.NewTimePoint(null.FloatFrom(value), float64(timeValue.Unix()*1000)))
 			}
 
 			return slice, simplejson.NewFromAny(meta), nil
@@ -417,6 +419,7 @@ func processSegment(slice *tsdb.TimeSeriesSlice, segment map[string]interface{},
 	var segmentName string
 	var segmentValue string
 	var childSegments []interface{}
+	hasChildren := false
 	var value float64
 	var valueName string
 	var ok bool
@@ -438,6 +441,7 @@ func processSegment(slice *tsdb.TimeSeriesSlice, segment map[string]interface{},
 			if !ok {
 				return errors.New("invalid format segments")
 			}
+			hasChildren = true
 		default:
 			mapping, hasValues := v.(map[string]interface{})
 			if hasValues {
@@ -456,7 +460,7 @@ func processSegment(slice *tsdb.TimeSeriesSlice, segment map[string]interface{},
 		}
 	}
 
-	if childSegments != nil {
+	if hasChildren {
 		for _, s := range childSegments {
 			segmentMap, ok := s.(map[string]interface{})
 			if !ok {
@@ -554,7 +558,7 @@ func getFloat(in interface{}) (float64, error) {
 		return out, nil
 	}
 
-	return 0, errors.New(fmt.Sprintf("cannot convert '%v' to float32", in))
+	return 0, fmt.Errorf("cannot convert '%v' to float32", in)
 }
 
 // formatApplicationInsightsLegendKey builds the legend key or timeseries name
@@ -564,7 +568,7 @@ func formatApplicationInsightsLegendKey(alias string, metricName string, dimensi
 		if len(dimensionName) > 0 {
 			return fmt.Sprintf("{%s=%s}.%s", dimensionName, dimensionValue, metricName)
 		}
-		return fmt.Sprintf("%s", metricName)
+		return metricName
 	}
 
 	result := legendKeyFormat.ReplaceAllFunc([]byte(alias), func(in []byte) []byte {
@@ -572,15 +576,12 @@ func formatApplicationInsightsLegendKey(alias string, metricName string, dimensi
 		metaPartName = strings.Replace(metaPartName, "}}", "", 1)
 		metaPartName = strings.ToLower(strings.TrimSpace(metaPartName))
 
-		if metaPartName == "metric" {
+		switch metaPartName {
+		case "metric":
 			return []byte(metricName)
-		}
-
-		if metaPartName == "dimensionname" {
+		case "dimensionname", "groupbyname":
 			return []byte(dimensionName)
-		}
-
-		if metaPartName == "dimensionvalue" {
+		case "dimensionvalue", "groupbyvalue":
 			return []byte(dimensionValue)
 		}
 

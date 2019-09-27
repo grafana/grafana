@@ -40,7 +40,7 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 								"queryType":   "Application Insights",
 							},
 						}),
-						RefId: "A",
+						RefId:      "A",
 						IntervalMs: 1234,
 					},
 				},
@@ -109,7 +109,7 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 						"alias":           "testalias",
 						"queryType":       "Application Insights",
 						"dimension":       "blob",
-						"dimensionFilter": "*",
+						"dimensionFilter": "blob eq '*'",
 					},
 				})
 
@@ -124,14 +124,13 @@ func TestApplicationInsightsDatasource(t *testing.T) {
 			Convey("and has a dimension filter set to None", func() {
 				tsdbQuery.Queries[0].Model = simplejson.NewFromAny(map[string]interface{}{
 					"appInsights": map[string]interface{}{
-						"rawQuery":        false,
-						"timeGrain":       "PT1M",
-						"aggregation":     "Average",
-						"metricName":      "Percentage CPU",
-						"alias":           "testalias",
-						"queryType":       "Application Insights",
-						"dimension":       "None",
-						"dimensionFilter": "*",
+						"rawQuery":    false,
+						"timeGrain":   "PT1M",
+						"aggregation": "Average",
+						"metricName":  "Percentage CPU",
+						"alias":       "testalias",
+						"queryType":   "Application Insights",
+						"dimension":   "None",
 					},
 				})
 

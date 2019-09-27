@@ -71,7 +71,6 @@ export default class AppInsightsDatasource {
     }
 
     // migration for non-standard names
-
     if (item.groupBy && !item.dimension) {
       item.dimension = item.groupBy;
     }
@@ -135,7 +134,7 @@ export default class AppInsightsDatasource {
       Object.values(data.results).forEach((queryRes: any) => {
         if (queryRes.meta && queryRes.meta.columns) {
           const columnNames = queryRes.meta.columns as string[];
-          this.logAnalyticsColumns[queryRes.refId] = _.map(columnNames, n => ({text: n, value: n}));
+          this.logAnalyticsColumns[queryRes.refId] = _.map(columnNames, n => ({ text: n, value: n }));
         }
 
         if (!queryRes.series) {

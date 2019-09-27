@@ -105,7 +105,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       metricName: this.defaultDropdownValue,
       rawQuery: false,
       rawQueryString: '',
-      groupBy: 'none',
+      dimension: 'none',
       timeGrain: 'auto',
       timeColumn: 'timestamp',
       valueColumn: '',
@@ -613,7 +613,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   };
 
   getAppInsightsGroupBySegments(query: any) {
-    return _.map(this.target.appInsights.dimensions, option => {
+    return _.map(this.target.appInsights.dimensions, (option: string) => {
       return { text: option, value: option };
     });
   }
