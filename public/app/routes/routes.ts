@@ -1,19 +1,17 @@
 import './dashboard_loaders';
 import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
-
 // Pages
 import CreateFolderCtrl from 'app/features/folders/CreateFolderCtrl';
 import FolderDashboardsCtrl from 'app/features/folders/FolderDashboardsCtrl';
 import DashboardImportCtrl from 'app/features/manage-dashboards/DashboardImportCtrl';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
-import LdapUserPage from 'app/features/admin/ldap/LdapUserPage';
 import config from 'app/core/config';
 import { route, ILocationProvider } from 'angular';
-
 // Types
 import { DashboardRouteInfo } from 'app/types';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
+import { SafeDynamicImport } from '../core/components/SafeDynamicImport';
 
 /** @ngInject */
 export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locationProvider: ILocationProvider) {
@@ -23,7 +21,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
   // ones. That means angular ones could be navigated to in case there is a client side link some where.
 
   const importDashboardPage = () =>
-    import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage');
+    SafeDynamicImport(import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage'));
 
   $routeProvider
     .when('/', {
@@ -79,7 +77,9 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       reloadOnSearch: false,
       resolve: {
         component: () =>
-          import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage'),
+          SafeDynamicImport(
+            import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+          ),
       },
     })
     .when('/dashboard-solo/:type/:slug', {
@@ -89,7 +89,9 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       reloadOnSearch: false,
       resolve: {
         component: () =>
-          import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage'),
+          SafeDynamicImport(
+            import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+          ),
       },
     })
     .when('/dashboard/import', {
@@ -101,7 +103,9 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       resolve: {
         component: () =>
-          import(/* webpackChunkName: "DataSourcesListPage"*/ 'app/features/datasources/DataSourcesListPage'),
+          SafeDynamicImport(
+            import(/* webpackChunkName: "DataSourcesListPage"*/ 'app/features/datasources/DataSourcesListPage')
+          ),
       },
     })
     .when('/datasources/edit/:id/', {
@@ -109,20 +113,27 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       reloadOnSearch: false, // for tabs
       resolve: {
         component: () =>
-          import(/* webpackChunkName: "DataSourceSettingsPage"*/ '../features/datasources/settings/DataSourceSettingsPage'),
+          SafeDynamicImport(
+            import(/* webpackChunkName: "DataSourceSettingsPage"*/ '../features/datasources/settings/DataSourceSettingsPage')
+          ),
       },
     })
     .when('/datasources/edit/:id/dashboards', {
       template: '<react-container />',
       resolve: {
         component: () =>
-          import(/* webpackChunkName: "DataSourceDashboards"*/ 'app/features/datasources/DataSourceDashboards'),
+          SafeDynamicImport(
+            import(/* webpackChunkName: "DataSourceDashboards"*/ 'app/features/datasources/DataSourceDashboards')
+          ),
       },
     })
     .when('/datasources/new', {
       template: '<react-container />',
       resolve: {
-        component: () => import(/* webpackChunkName: "NewDataSourcePage"*/ '../features/datasources/NewDataSourcePage'),
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "NewDataSourcePage"*/ '../features/datasources/NewDataSourcePage')
+          ),
       },
     })
     .when('/dashboards', {
@@ -138,13 +149,19 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/dashboards/f/:uid/:slug/permissions', {
       template: '<react-container />',
       resolve: {
-        component: () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions'),
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
+          ),
       },
     })
     .when('/dashboards/f/:uid/:slug/settings', {
       template: '<react-container />',
       resolve: {
-        component: () => import(/* webpackChunkName: "FolderSettingsPage"*/ 'app/features/folders/FolderSettingsPage'),
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "FolderSettingsPage"*/ 'app/features/folders/FolderSettingsPage')
+          ),
       },
     })
     .when('/dashboards/f/:uid/:slug', {
@@ -162,7 +179,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       reloadOnSearch: false,
       resolve: {
         roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
-        component: () => import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper'),
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
       },
     })
     .when('/a/:pluginId/', {
@@ -170,13 +187,15 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
-        component: () => import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/AppRootPage'),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "AppRootPage" */ 'app/features/plugins/AppRootPage')),
       },
     })
     .when('/org', {
       template: '<react-container />',
       resolve: {
-        component: () => import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage'),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "OrgDetailsPage" */ '../features/org/OrgDetailsPage')),
       },
     })
     .when('/org/new', {
@@ -186,7 +205,8 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/org/users', {
       template: '<react-container />',
       resolve: {
-        component: () => import(/* webpackChunkName: "UsersListPage" */ 'app/features/users/UsersListPage'),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "UsersListPage" */ 'app/features/users/UsersListPage')),
       },
     })
     .when('/org/users/invite', {
@@ -198,14 +218,15 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       resolve: {
         roles: () => ['Editor', 'Admin'],
-        component: () => import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage'),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "ApiKeysPage" */ 'app/features/api-keys/ApiKeysPage')),
       },
     })
     .when('/org/teams', {
       template: '<react-container />',
       resolve: {
         roles: () => (config.editorsCanAdmin ? [] : ['Editor', 'Admin']),
-        component: () => import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList'),
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "TeamList" */ 'app/features/teams/TeamList')),
       },
     })
     .when('/org/teams/new', {
@@ -217,7 +238,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       resolve: {
         roles: () => (config.editorsCanAdmin ? [] : ['Admin']),
-        component: () => import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages'),
+        component: () => SafeDynamicImport(import(/* webpackChunkName: "TeamPages" */ 'app/features/teams/TeamPages')),
       },
     })
     .when('/profile', {
@@ -228,7 +249,10 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/profile/password', {
       template: '<react-container />',
       resolve: {
-        component: () => import(/* webPackChunkName: "ChangePasswordPage" */ 'app/features/profile/ChangePasswordPage'),
+        component: () =>
+          SafeDynamicImport(
+            import(/* webPackChunkName: "ChangePasswordPage" */ 'app/features/profile/ChangePasswordPage')
+          ),
       },
     })
     .when('/profile/select-org', {
@@ -259,12 +283,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       templateUrl: 'public/app/features/admin/partials/edit_user.html',
       controller: 'AdminEditUserCtrl',
     })
-    .when('/admin/users/ldap/edit/:id', {
-      template: '<react-container />',
-      resolve: {
-        component: () => LdapUserPage,
-      },
-    })
     .when('/admin/orgs', {
       templateUrl: 'public/app/features/admin/partials/orgs.html',
       controller: 'AdminListOrgsCtrl',
@@ -278,7 +296,8 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/admin/stats', {
       template: '<react-container />',
       resolve: {
-        component: () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats'),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')),
       },
     })
     .when('/admin/ldap', {
@@ -323,14 +342,16 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/plugins', {
       template: '<react-container />',
       resolve: {
-        component: () => import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage'),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "PluginListPage" */ 'app/features/plugins/PluginListPage')),
       },
     })
     .when('/plugins/:pluginId/', {
       template: '<react-container />',
       reloadOnSearch: false, // tabs from query parameters
       resolve: {
-        component: () => import(/* webpackChunkName: "PluginPage" */ '../features/plugins/PluginPage'),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "PluginPage" */ '../features/plugins/PluginPage')),
       },
     })
     .when('/plugins/:pluginId/page/:slug', {
@@ -350,7 +371,8 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       template: '<react-container />',
       reloadOnSearch: false,
       resolve: {
-        component: () => import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList'),
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "AlertRuleList" */ 'app/features/alerting/AlertRuleList')),
       },
     })
     .when('/alerting/notifications', {

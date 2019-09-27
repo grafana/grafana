@@ -7,7 +7,7 @@ Included services
 
 * Grafana
 * Mysql - Grafana configuration database and session storage
-* Prometheus - Monitoring of Grafana and used as datasource of provisioned alert rules
+* Prometheus - Monitoring of Grafana and used as data source of provisioned alert rules
 * Nginx - Reverse proxy for Grafana and Prometheus. Enables browsing Grafana/Prometheus UI using a hostname
 
 ## Prerequisites

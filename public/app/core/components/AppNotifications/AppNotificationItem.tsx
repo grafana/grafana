@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { AppNotification } from 'app/types';
-import { AlertBox } from '../AlertBox/AlertBox';
+import { Alert } from '@grafana/ui';
 
 interface Props {
   appNotification: AppNotification;
@@ -23,12 +23,11 @@ export default class AppNotificationItem extends Component<Props> {
     const { appNotification, onClearNotification } = this.props;
 
     return (
-      <AlertBox
+      <Alert
         severity={appNotification.severity}
         title={appNotification.title}
-        body={appNotification.text}
-        icon={appNotification.icon}
-        onClose={() => onClearNotification(appNotification.id)}
+        children={appNotification.text}
+        onRemove={() => onClearNotification(appNotification.id)}
       />
     );
   }

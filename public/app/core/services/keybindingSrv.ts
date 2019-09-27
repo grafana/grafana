@@ -1,9 +1,9 @@
-import $ from 'jquery';
 import _ from 'lodash';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
+import locationUtil from 'app/core/utils/location_util';
 import { store } from 'app/store/store';
 
 import Mousetrap from 'mousetrap';
@@ -47,7 +47,34 @@ export class KeybindingSrv {
       this.bind('s o', this.openSearch);
       this.bind('f', this.openSearch);
       this.bind('esc', this.exit);
+      this.bindGlobal('esc', this.globalEsc);
     }
+  }
+
+  globalEsc() {
+    const anyDoc = document as any;
+    const activeElement = anyDoc.activeElement;
+
+    // typehead needs to handle it
+    const typeaheads = document.querySelectorAll('.slate-typeahead--open');
+    if (typeaheads.length > 0) {
+      return;
+    }
+
+    // second check if we are in an input we can blur
+    if (activeElement && activeElement.blur) {
+      if (
+        activeElement.nodeName === 'INPUT' ||
+        activeElement.nodeName === 'TEXTAREA' ||
+        activeElement.hasAttribute('data-slate-editor')
+      ) {
+        anyDoc.activeElement.blur();
+        return;
+      }
+    }
+
+    // ok no focused input or editor that should block this, let exist!
+    this.exit();
   }
 
   openSearch() {
@@ -71,11 +98,6 @@ export class KeybindingSrv {
   }
 
   exit() {
-    const popups = $('.popover.in, .slate-typeahead');
-    if (popups.length > 0) {
-      return;
-    }
-
     appEvents.emit('hide-modal');
 
     if (this.modalOpen) {
@@ -199,8 +221,10 @@ export class KeybindingSrv {
           const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
           const datasource = await this.datasourceSrv.get(panel.datasource);
           const url = await getExploreUrl(panel, panel.targets, datasource, this.datasourceSrv, this.timeSrv);
-          if (url) {
-            this.$timeout(() => this.$location.url(url));
+          const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
+
+          if (urlWithoutBase) {
+            this.$timeout(() => this.$location.url(urlWithoutBase));
           }
         }
       });

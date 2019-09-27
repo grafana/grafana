@@ -21,6 +21,7 @@ import {
   ciPluginReportTask,
 } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
+import { pluginCreateTask } from './tasks/plugin.create';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -61,14 +62,16 @@ export const run = (includeInternalScripts = false) => {
 
         await execTask(changelogTask)({
           milestone: cmd.milestone,
+          silent: true,
         });
       });
 
     program
       .command('cherrypick')
+      .option('-e, --enterprise', 'Run task for grafana-enterprise')
       .description('Helps find commits to cherry pick')
       .action(async cmd => {
-        await execTask(cherryPickTask)({});
+        await execTask(cherryPickTask)({ enterprise: !!cmd.enterprise });
       });
 
     program
@@ -89,8 +92,7 @@ export const run = (includeInternalScripts = false) => {
       .command('toolkit:build')
       .description('Prepares grafana/toolkit dist package')
       .action(async cmd => {
-        // @ts-ignore
-        await execTask(toolkitBuildTask)();
+        await execTask(toolkitBuildTask)({});
       });
 
     program
@@ -118,10 +120,17 @@ export const run = (includeInternalScripts = false) => {
   }
 
   program
+    .command('plugin:create [name]')
+    .description('Creates plugin from template')
+    .action(async cmd => {
+      await execTask(pluginCreateTask)({ name: cmd, silent: true });
+    });
+
+  program
     .command('plugin:build')
     .description('Prepares plugin dist package')
     .action(async cmd => {
-      await execTask(pluginBuildTask)({ coverage: false });
+      await execTask(pluginBuildTask)({ coverage: false, silent: true });
     });
 
   program
@@ -133,6 +142,7 @@ export const run = (includeInternalScripts = false) => {
       await execTask(pluginDevTask)({
         watch: !!cmd.watch,
         yarnlink: !!cmd.yarnlink,
+        silent: true,
       });
     });
 
@@ -151,6 +161,7 @@ export const run = (includeInternalScripts = false) => {
         watch: !!cmd.watch,
         testPathPattern: cmd.testPathPattern,
         testNamePattern: cmd.testNamePattern,
+        silent: true,
       });
     });
 

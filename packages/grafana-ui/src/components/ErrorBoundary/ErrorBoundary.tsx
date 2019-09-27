@@ -1,6 +1,7 @@
 import React, { PureComponent, ReactNode } from 'react';
 import { Alert } from '../Alert/Alert';
 import { css } from 'emotion';
+import { stylesFactory } from '../../themes';
 
 interface ErrorInfo {
   componentStack: string;
@@ -44,12 +45,12 @@ export class ErrorBoundary extends PureComponent<Props, State> {
   }
 }
 
-function getAlertPageStyle() {
+const getStyles = stylesFactory(() => {
   return css`
     width: 500px;
     margin: 64px auto;
   `;
-}
+});
 
 interface WithAlertBoxProps {
   title?: string;
@@ -85,7 +86,7 @@ export class ErrorBoundaryAlert extends PureComponent<WithAlertBoxProps> {
             );
           } else {
             return (
-              <div className={getAlertPageStyle()}>
+              <div className={getStyles()}>
                 <h2>{title}</h2>
                 <details style={{ whiteSpace: 'pre-wrap' }}>
                   {error && error.toString()}

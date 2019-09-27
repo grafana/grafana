@@ -50,10 +50,10 @@ export class GeneralTab extends PureComponent<Props> {
     }
   }
 
-  onDataLinksChanged = (links: DataLink[]) => {
+  onDataLinksChanged = (links: DataLink[], callback?: () => void) => {
     this.props.panel.links = links;
     this.props.panel.render();
-    this.forceUpdate();
+    this.forceUpdate(callback);
   };
 
   render() {

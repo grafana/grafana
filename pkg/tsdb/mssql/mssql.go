@@ -3,7 +3,6 @@ package mssql
 import (
 	"database/sql"
 	"fmt"
-	"net/url"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,7 +23,10 @@ func init() {
 func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mssql")
 
-	cnnstr := generateConnectionString(datasource)
+	cnnstr, err := generateConnectionString(datasource)
+	if err != nil {
+		return nil, err
+	}
 	if setting.Env == setting.DEV {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
@@ -36,35 +38,35 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 	}
 
-	rowTransformer := mssqlRowTransformer{
+	queryResultTransformer := mssqlQueryResultTransformer{
 		log: logger,
 	}
 
-	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newMssqlMacroEngine(), logger)
+	return sqleng.NewSqlQueryEndpoint(&config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 }
 
-func generateConnectionString(datasource *models.DataSource) string {
+func generateConnectionString(datasource *models.DataSource) (string, error) {
 	server, port := util.SplitHostPortDefault(datasource.Url, "localhost", "1433")
+
 	encrypt := datasource.JsonData.Get("encrypt").MustString("false")
-
-	query := url.Values{}
-	query.Add("database", datasource.Database)
-	query.Add("encrypt", encrypt)
-
-	u := &url.URL{
-		Scheme:   "sqlserver",
-		User:     url.UserPassword(datasource.User, datasource.DecryptedPassword()),
-		Host:     fmt.Sprintf("%s:%s", server, port),
-		RawQuery: query.Encode(),
+	connStr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
+		server,
+		port,
+		datasource.Database,
+		datasource.User,
+		datasource.DecryptedPassword(),
+	)
+	if encrypt != "false" {
+		connStr += fmt.Sprintf("encrypt=%s;", encrypt)
 	}
-	return u.String()
+	return connStr, nil
 }
 
-type mssqlRowTransformer struct {
+type mssqlQueryResultTransformer struct {
 	log log.Logger
 }
 
-func (t *mssqlRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (t *mssqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(columnTypes))
 	valuePtrs := make([]interface{}, len(columnTypes))
 
@@ -97,4 +99,8 @@ func (t *mssqlRowTransformer) Transform(columnTypes []*sql.ColumnType, rows *cor
 	}
 
 	return values, nil
+}
+
+func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
+	return err
 }

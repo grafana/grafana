@@ -2,25 +2,29 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
 import { css } from 'emotion';
-
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { QueryInspector } from './QueryInspector';
 import { QueryOptions } from './QueryOptions';
-import { PanelOptionsGroup, TransformationsEditor } from '@grafana/ui';
+import {
+  PanelOptionsGroup,
+  TransformationsEditor,
+  DataQuery,
+  DataSourceSelectItem,
+  PanelData,
+  AlphaNotice,
+  PluginState,
+} from '@grafana/ui';
 import { QueryEditorRow } from './QueryEditorRow';
-
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
-
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DashboardModel } from '../state/DashboardModel';
-import { DataQuery, DataSourceSelectItem, PanelData, AlphaNotice, PluginState } from '@grafana/ui';
-import { LoadingState, DataTransformerConfig } from '@grafana/data';
+import { LoadingState, DataTransformerConfig, DefaultTimeRange } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { Unsubscribable } from 'rxjs';
 import { isSharedDashboardQuery, DashboardQueryEditor } from 'app/plugins/datasource/dashboard';
@@ -55,6 +59,7 @@ export class QueriesTab extends PureComponent<Props, State> {
     data: {
       state: LoadingState.NotStarted,
       series: [],
+      timeRange: DefaultTimeRange,
     },
   };
 

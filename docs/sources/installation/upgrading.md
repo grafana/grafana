@@ -163,15 +163,15 @@ The default cookie name for storing the auth token is `grafana_session`. you can
 
 ## Upgrading to v6.2
 
-### Ensure encryption of datasource secrets
+### Ensure encryption of data source secrets
 
-Datasources store passwords and basic auth passwords in secureJsonData encrypted (AES-256 in CFB mode) by default. Existing datasource
-will keep working with unencrypted passwords. If you want to migrate to encrypted storage for your existing datasources
+Data sources store passwords and basic auth passwords in secureJsonData encrypted (AES-256 in CFB mode) by default. Existing data source
+will keep working with unencrypted passwords. If you want to migrate to encrypted storage for your existing data sources
 you can do that by:
 
-- For datasources created through UI, you need to go to datasource config, re enter the password or basic auth
-password and save the datasource.
-- For datasources created by provisioning, you need to update your config file and use secureJsonData.password or
+- For data sources created through UI, you need to go to data source config, re enter the password or basic auth
+password and save the data source.
+- For data sources created by provisioning, you need to update your config file and use secureJsonData.password or
 secureJsonData.basicAuthPassword field. See [provisioning docs](/administration/provisioning) for example of current
 configuration.
 
@@ -191,7 +191,7 @@ Grafana will fallback to using the database as an shared cache.
 
 The semantics of `max concurrent shard requests` changed in Elasticsearch v7.0, see [release notes](https://www.elastic.co/guide/en/elasticsearch/reference/7.0/breaking-changes-7.0.html#semantics-changed-max-concurrent-shared-requests) for reference.
 
-If you upgrade Elasticsearch to v7.0+ you should make sure to update the datasource configuration in Grafana so that version
+If you upgrade Elasticsearch to v7.0+ you should make sure to update the data source configuration in Grafana so that version
 is `7.0+` and `max concurrent shard requests` properly configured. 256 was the default in pre v7.0 versions. In v7.0 and above 5 is the default.
 
 ## Upgrading to v6.4

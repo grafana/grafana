@@ -1,8 +1,8 @@
 import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { LokiResponse } from './types';
-import { finalize, map, multicast, refCount } from 'rxjs/operators';
+import { finalize, map } from 'rxjs/operators';
 import { appendResponseToBufferedData } from './result_transformer';
 
 /**
@@ -32,7 +32,6 @@ export class LiveStreams {
       data.addField({ name: 'line', type: FieldType.string });
       data.addField({ name: 'labels', type: FieldType.other });
 
-      const subject = new BehaviorSubject<DataFrame[]>([]);
       stream = webSocket(target.url).pipe(
         finalize(() => {
           delete this.streams[target.url];
@@ -40,9 +39,7 @@ export class LiveStreams {
         map((response: LokiResponse) => {
           appendResponseToBufferedData(response, data);
           return [data];
-        }),
-        multicast(subject),
-        refCount()
+        })
       );
       this.streams[target.url] = stream;
     }

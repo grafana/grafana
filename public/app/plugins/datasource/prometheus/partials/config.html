@@ -48,3 +48,23 @@
   </div>
 </div>
 
+<h3 class="page-heading">Misc</h3>
+<div class="gf-form-group">
+  <div class="gf-form-inline">
+    <div class="gf-form max-width-30">
+      <span class="gf-form-label width-13">Custom query parameters</span>
+      <input
+        type="text"
+        class="gf-form-input gf-form-input--has-help-icon"
+        ng-model="ctrl.current.jsonData.customQueryParameters"
+        spellcheck="false"
+        placeholder="Example: max_source_resolution=5m&timeout=10"
+      ></input>
+      <info-popover mode="right-absolute">
+        Add Custom parameters to Prometheus or Thanos queries.
+      </info-popover>
+    </div>
+  </div>
+</div>
+
+
