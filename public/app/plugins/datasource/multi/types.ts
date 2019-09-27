@@ -6,8 +6,9 @@ export enum ResolutionSelection {
 }
 
 export interface QueriesForResolution {
-  txt?: string;
-  ms: number; // Will be -Infinity when resolution is not set
+  id: string; // Unique ID
+  ms: number; // First value will be 0
+  now?: boolean; // only if to=now
   targets: DataQuery[]; // Always mixed
 }
 

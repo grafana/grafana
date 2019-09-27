@@ -39,9 +39,7 @@ export class QueryEditorRows extends PureComponent<Props> {
       return q !== query;
     });
     onChangeQueries(removed);
-
-    console.log('REMMMM', removed, queries);
-
+    console.log('REMOVE (QueryEditorRows)', removed, queries);
     panel.refresh();
   };
 

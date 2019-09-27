@@ -20,12 +20,12 @@ interface Props {
   onChange: (value: QueriesForResolution) => void;
   onDelete?: (value: QueriesForResolution) => void;
   mixed: DataSourceSelectItem;
-  current: boolean;
+  isCurrent: boolean;
+  currentTime: number;
 }
 
 type State = {
   isCollapsed: boolean;
-  txt: string;
 };
 
 export class MultiQueryRow extends PureComponent<Props, State> {
@@ -33,22 +33,7 @@ export class MultiQueryRow extends PureComponent<Props, State> {
     super(props);
     this.state = {
       isCollapsed: false,
-      txt: '',
     };
-  }
-
-  componentDidMount() {
-    this.componentDidUpdate(null);
-  }
-
-  componentDidUpdate(prevProps: Props) {
-    const { value } = this.props;
-
-    if (!prevProps || prevProps.value !== value) {
-      this.setState({
-        txt: value.txt || '',
-      });
-    }
   }
 
   toggleCollapse = () => {
@@ -73,51 +58,49 @@ export class MultiQueryRow extends PureComponent<Props, State> {
     });
   };
 
+  onSetTimeToNow = () => {
+    const { value, onChange, currentTime } = this.props;
+    console.log('SET TIME:', currentTime, value);
+    onChange({
+      ...value,
+      ms: currentTime,
+    });
+  };
+
+  toggleToNow = () => {
+    const { value, onChange } = this.props;
+    onChange({
+      ...value,
+      now: !value.now,
+    });
+  };
+
   onTextChange = (event: any) => {
-    // const { value, onChange } = this.props;
     const v = event.target.value;
 
-    // // Update the text
-    // onChange({
-    //   ...value,
-    //   txt: v,
-    // });
-    this.setState({ txt: v });
     console.log('TXT', v);
   };
 
   onBlur = () => {
-    const { value, onChange } = this.props;
-    const { txt } = this.state;
+    const txt = '10ms';
 
     try {
       const ms = kbn.interval_to_ms(txt);
       if (ms) {
         console.log('SET', ms, txt);
-        onChange({
-          ...value,
-          txt,
-          ms,
-        });
-        return;
       }
     } catch {}
-
-    // Reset the
-    this.setState({
-      txt: value.txt || '',
-    });
   };
 
   render() {
-    const { value, data, dashboard, panel, onScrollBottom, onDelete, mixed, current } = this.props;
-    const { txt, isCollapsed } = this.state;
+    const { value, data, dashboard, panel, onScrollBottom, onDelete, mixed, isCurrent } = this.props;
+    const { isCollapsed } = this.state;
     const xxx = css({
       fontSize: 16,
       fontWeight: 500,
       padding: '4px',
     });
-    const yyy = current
+    const yyy = isCurrent
       ? css({
           borderTop: '5px solid #33b5e5',
         })
@@ -131,17 +114,18 @@ export class MultiQueryRow extends PureComponent<Props, State> {
             <span>&nbsp;</span>
           </div>
           <div>
-            <input
-              type="text"
-              className={xxx}
-              value={txt}
-              onChange={this.onTextChange}
-              placeholder="Base"
-              onBlur={this.onBlur}
-            />
+            <span className={xxx}>{value.ms}ms</span>
+            {onDelete /* onDelete only exists with >1 rows */ && (
+              <button className="query-editor-row__action" onClick={this.onSetTimeToNow} title="Edit">
+                <i className="fa fa-fw fa-edit" />
+              </button>
+            )}
+            <button className="query-editor-row__action" onClick={this.toggleToNow} title="Edit">
+              <i className={value.now ? 'fa fa-fw fa-check-square-o' : 'fa fa-fw fa-square-o'} />
+              Live
+            </button>
           </div>
           <div className="query-editor-row__collapsed-text" onClick={this.toggleCollapse}>
-            <div>{value.ms}ms</div>
             {isCollapsed && <div>TODO, describe queries? collapse them all?</div>}
           </div>
           <div className="query-editor-row__actions">

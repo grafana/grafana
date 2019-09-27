@@ -1,7 +1,6 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import cloneDeep from 'lodash/cloneDeep';
-import classNames from 'classnames';
 
 // Types
 import { PanelData, DataSourceSelectItem } from '@grafana/ui';
@@ -9,7 +8,7 @@ import { MultiResolutionQuery, ResolutionSelection, QueriesForResolution } from 
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 import { SelectableValue } from '@grafana/data';
 import { MultiQueryRow } from './MultiQueryRow';
-import { getMultiResolutionQuery, getQueriesForResolution } from './MultiDataSource';
+import { getMultiResolutionQuery, getQueriesForResolution, nextId } from './MultiDataSource';
 
 interface Props {
   panel: PanelModel;
@@ -33,18 +32,6 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
     return getMultiResolutionQuery(panel.targets);
   }
 
-  async componentDidMount() {
-    this.componentDidUpdate(null);
-  }
-
-  async componentDidUpdate(prevProps: Props) {
-    const { data } = this.props;
-
-    if (!prevProps || prevProps.data !== data) {
-      console.log('DATA Changed', data);
-    }
-  }
-
   onSelectResolutionType = (item: SelectableValue<ResolutionSelection>) => {
     const { onChange } = this.props;
     const query = this.getQuery();
@@ -58,37 +45,27 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
     const query = this.getQuery();
     let found = false;
     const res = query.resolutions.map(v => {
-      if (v === value) {
-        found = true;
-      } else if (value.ms === v.ms) {
+      if (value.id === v.id) {
         found = true;
         return value;
+      }
+      if (!v.id) {
+        v.id = nextId();
       }
       return v;
     });
     if (found) {
-      // const res = q.resolutions.map(r => {
-      //   // if (r.ms <= 0) {
-      //   //   try {
-      //   //     const ms = kbn.interval_to_ms(r.txt);
-      //   //     if (ms) {
-      //   //       r.ms = ms;
-      //   //     }
-      //   //   } catch {}
-      //   // }
-      //   return r;
-      // });
       res.sort((a, b) => {
         return a.ms - b.ms;
       });
-      res[0].ms = Number.NEGATIVE_INFINITY;
-      res[0].txt = '';
+
+      res[0].ms = 0;
       this.props.onChange({
         ...query,
         resolutions: res,
       });
     } else {
-      console.log('NOT FOUND', value, 'vs');
+      console.log('NOT FOUND', value, 'vs', query);
     }
   };
 
@@ -101,36 +78,20 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
   onDuplicate = (value: QueriesForResolution) => {
     const query = this.getQuery();
     const add = cloneDeep(value);
-    let index = -1;
-    for (let i = 0; i < query.resolutions.length; i++) {
-      if (value.ms === query.resolutions[i].ms) {
-        index = i;
-        break;
-      }
-    }
+    add.id = nextId();
+    add.ms = getQueriesForResolution(query, this.props.panel.getQueryRunner().lastRequest).time;
 
-    if (index < 0 || index >= query.resolutions.length - 1) {
-      add.ms = Math.max(value.ms, 1) + 10000;
-      this.props.onChange({
-        ...query,
-        resolutions: [...query.resolutions, add],
-      });
-    } else {
-      const next = query.resolutions[index + 1];
-      const cMs = Math.max(value.ms, 1);
-      const nMs = Math.max(next.ms, 1);
-      add.ms = cMs + (nMs - cMs) / 2;
-      query.resolutions.splice(index, 0, add);
-      this.props.onChange(query);
-    }
-    console.log('DUPLICATE', add);
+    this.props.onChange({
+      ...query,
+      resolutions: [...query.resolutions, add],
+    });
   };
 
   render() {
     const props = this.props;
     const { panel } = this.props;
     const query = getMultiResolutionQuery(panel.targets);
-    const current = getQueriesForResolution(query, panel.getQueryRunner().lastRequest).index;
+    const info = getQueriesForResolution(query, panel.getQueryRunner().lastRequest);
 
     return (
       <div>
@@ -145,7 +106,8 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
             return (
               <MultiQueryRow
                 key={idx}
-                current={idx === current}
+                isCurrent={idx === info.index}
+                currentTime={info.time}
                 panel={props.panel}
                 dashboard={props.dashboard}
                 data={props.data}

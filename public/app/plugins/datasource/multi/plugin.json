@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "-- From Time --",
   "id": "multi",
+  "state": "alpha",
 
   "builtIn": true,
   "metrics": true,
