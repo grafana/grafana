@@ -1,44 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, ReactElement } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { SegmentSelect } from './SegmentSelect';
-import { OptionType } from './GroupBy';
+import { OptionType, useExpandableLabel } from '.';
 
-export interface Props<T> {
-  value?: SelectableValue<T>;
-  getOptions: () => Promise<SelectableValue<T>>;
-  onChange: (value: SelectableValue<T>) => void;
-  removeOptionText?: string;
+export interface SegmentAsyncProps<T> {
+  onChange: (item: SelectableValue<T>) => void;
+  loadOptions: () => Promise<Array<SelectableValue<T>>>;
+  currentOption?: SelectableValue<T>;
+  Component?: ReactElement;
 }
 
-export function SegmentAsync<T>({ value, removeOptionText, onChange, getOptions }: React.PropsWithChildren<Props<T>>) {
-  const [expanded, setExpanded] = useState(false);
+export function SegmentAsync<T>({
+  currentOption: { label } = { label: '' },
+  onChange,
+  loadOptions,
+  Component,
+}: React.PropsWithChildren<SegmentAsyncProps<T>>) {
+  const [selectPlaceholder, setSelectPlaceholder] = useState<string>('');
   const [loadedOptions, setLoadedOptions] = useState<OptionType<T>>([]);
+  const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
 
   if (!expanded) {
     return (
-      <div className="gf-form">
-        <a
-          className="gf-form-label query-part"
-          onClick={() => {
-            setExpanded(true);
-            getOptions().then(opts => setLoadedOptions(opts));
-          }}
-        >
-          {value}
-        </a>
-      </div>
+      <Label
+        onClick={async () => {
+          setSelectPlaceholder('Loading options...');
+          const opts = await loadOptions();
+          setLoadedOptions(opts);
+          setSelectPlaceholder(opts.length ? '' : 'No options found');
+        }}
+        Component={Component || <a className="gf-form-label query-part">{label}</a>}
+      />
     );
   }
 
   return (
     <SegmentSelect
-      removeOptionText={removeOptionText}
+      width={width}
       options={loadedOptions}
+      noOptionsMessage={selectPlaceholder}
       onClickOutside={() => {
+        setSelectPlaceholder('');
         setLoadedOptions([]);
         setExpanded(false);
       }}
       onChange={value => {
+        setSelectPlaceholder('');
         setLoadedOptions([]);
         setExpanded(false);
         onChange(value);

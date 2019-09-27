@@ -3,20 +3,22 @@ import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
-import { OptionType } from './GroupBy';
+import { OptionType } from './';
 
 export interface Props<T> {
   options: OptionType<T> | undefined;
   onChange: (item: SelectableValue<T>) => void;
   onClickOutside: () => void;
-  width?: number;
+  width: number;
+  noOptionsMessage?: string;
 }
 
 export function SegmentSelect<T>({
   options = [],
   onChange,
   onClickOutside,
-  width = 120,
+  width,
+  noOptionsMessage = '',
 }: React.PropsWithChildren<Props<T>>) {
   const ref = useRef(null);
   const [optionTypes, setOptionsTypes] = useState<Array<SelectableValue<T>>>([]);
@@ -44,9 +46,10 @@ export function SegmentSelect<T>({
       <Select
         className={cx(
           css`
-            width: ${width}px;
+            width: ${width > 120 ? width : 120}px;
           `
         )}
+        noOptionsMessage={() => noOptionsMessage}
         placeholder=""
         autoFocus={true}
         isOpen={true}

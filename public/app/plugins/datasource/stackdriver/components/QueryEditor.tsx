@@ -15,7 +15,7 @@ import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
 import { TimeSeries, SelectableValue } from '@grafana/data';
 
-import { GroupBy } from '@grafana/ui';
+import { SegmentExampleUsage } from './SegmentExampleUsage';
 
 export interface Props {
   onQueryChange: (target: StackdriverQuery) => void;
@@ -149,7 +149,6 @@ export class QueryEditor extends React.Component<Props, State> {
       refId,
     } = this.state;
     const { datasource, templateSrv } = this.props;
-    const toOption = (value: any) => ({ label: value, value: value });
 
     return (
       <>
@@ -162,32 +161,8 @@ export class QueryEditor extends React.Component<Props, State> {
         >
           {metric => (
             <>
-              <GroupBy
-                label="Group By using grouped options"
-                removeOptionText="'- remove group by -'"
-                options={{
-                  group1: ['grupp1', 'test3', 'hej', 'grupp2', 'hallå', 'test3'].map(toOption),
-                  group2: ['grupp5', 'test6', 'hej3', 'grupp8', 'hallå2', 'test5'].map(toOption),
-                }}
-                values={['grupp1', 'test3', 'janbasn'].map(toOption)}
-                onChange={values => console.log('Group by changed', values)}
-              />
-              <GroupBy
-                label="Group By using strings"
-                removeOptionText="'- remove group by -'"
-                options={['grupp1', 'test3test3test3test3test3test3test3test3', 'hej', 'grupp2', 'hallå', 'fest3'].map(
-                  toOption
-                )}
-                values={['grupp1', 'test3test3test3test3test3test3test3test3'].map(toOption)}
-                onChange={values => console.log('Group by changed', values)}
-              />
-              <GroupBy
-                label="Group By using numbers"
-                removeOptionText="'- remove group by -'"
-                options={[1, 2, 3, 4, 5, 6].map(toOption)}
-                values={[2, 4].map(toOption)}
-                onChange={values => console.log('Group by changed', values)}
-              />
+              <SegmentExampleUsage />
+
               <Filter
                 filtersChanged={value => this.onPropertyChange('filters', value)}
                 groupBysChanged={value => this.onPropertyChange('groupBys', value)}

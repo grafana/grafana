@@ -91,4 +91,4 @@ export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 
 // Segment
-export { GroupBy, SegmentAdd, Segment, SegmentSelect } from './Segment/';
+export { Segment, SegmentAsync, SegmentSelect, OptionType } from './Segment/';
