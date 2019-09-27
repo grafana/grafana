@@ -6,6 +6,7 @@ import { LogRow } from './LogRow';
 import { Themeable } from '../../types/theme';
 import { withTheme } from '../../themes/index';
 import { getLogRowStyles } from './getLogRowStyles';
+import memoizeOne from 'memoize-one';
 
 const PREVIEW_LIMIT = 100;
 const RENDER_LIMIT = 500;
@@ -65,6 +66,10 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     }
   }
 
+  makeGetRows = memoizeOne((processedRows: LogRowModel[]) => {
+    return () => processedRows;
+  });
+
   render() {
     const {
       dedupStrategy,
@@ -95,7 +100,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const lastRows = processedRows.slice(PREVIEW_LIMIT, rowCount);
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
-    const getRows = () => processedRows;
+    const getRows = this.makeGetRows(processedRows);
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
     const { logsRows } = getLogRowStyles(theme);
 
