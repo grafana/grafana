@@ -2,6 +2,7 @@ import { IHttpResponse } from 'angular';
 import { TimeRange } from './time';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DataFrame } from './dataFrame';
+import React from 'react';
 
 export type AlertPayload = [string, string?];
 
@@ -91,6 +92,7 @@ export interface MenuElement {
 
 export interface AppEvent<T> {
   readonly name: string;
+  readonly origin?: string;
   payload?: T;
 }
 
@@ -177,3 +179,5 @@ export const jsonDiffReady = eventFactory('json-diff-ready');
 export const closeTimepicker = eventFactory('closeTimepicker');
 
 export const routeUpdated = eventFactory('$routeUpdate');
+
+export const mouseMoveEvent = eventFactory<React.MouseEvent<HTMLDivElement, MouseEvent>>('mouseMove');

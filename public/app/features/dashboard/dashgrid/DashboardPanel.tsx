@@ -1,24 +1,23 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-
 // Utils & Services
 import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/plugin_loader';
-
 // Components
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
 import { PanelChrome } from './PanelChrome';
 import { PanelEditor } from '../panel_editor/PanelEditor';
 import { PanelResizer } from './PanelResizer';
-
 // Types
 import { PanelModel, DashboardModel } from '../state';
 import { PanelPluginMeta, PanelPlugin } from '@grafana/ui/src/types/panel';
 import { AutoSizer } from 'react-virtualized';
+import { mouseMoveEvent } from '@grafana/data';
+import { EventsContextApi, withEvents } from '../../../core/utils/EventsProvider';
 
-export interface Props {
+export interface Props extends EventsContextApi<React.MouseEvent<HTMLDivElement, MouseEvent>, React.MouseEvent<HTMLDivElement, MouseEvent>> {
   panel: PanelModel;
   dashboard: DashboardModel;
   isEditing: boolean;
@@ -32,7 +31,7 @@ export interface State {
   isLazy: boolean;
 }
 
-export class DashboardPanel extends PureComponent<Props, State> {
+class DashboardPanelWithOutEvents extends PureComponent<Props, State> {
   element: HTMLElement;
   specialPanels: { [key: string]: Function } = {};
 
@@ -91,6 +90,9 @@ export class DashboardPanel extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.loadPlugin(this.props.panel.type);
+    this.props.events(`Panel:${this.props.panel.id}`).subscribe(event => {
+      console.log(`New Event received from ${event.origin} received by Panel:${this.props.panel.id}`, event);
+    });
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
@@ -190,7 +192,12 @@ export class DashboardPanel extends PureComponent<Props, State> {
     });
 
     return (
-      <div className={editorContainerClasses}>
+      <div
+        className={editorContainerClasses}
+        onMouseMove={event => {
+          this.props.publish(mouseMoveEvent, `Panel:${this.props.panel.id}`, event);
+        }}
+      >
         <PanelResizer
           isEditing={isEditing}
           panel={panel}
@@ -218,3 +225,7 @@ export class DashboardPanel extends PureComponent<Props, State> {
     );
   }
 }
+
+export const DashboardPanel = withEvents(mouseMoveEvent)(DashboardPanelWithOutEvents);
+
+DashboardPanel.displayName = 'DashboardPanel';

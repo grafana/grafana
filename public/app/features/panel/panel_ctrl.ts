@@ -10,8 +10,7 @@ import {
 } from '@grafana/data';
 
 import config from 'app/core/config';
-import { profiler } from 'app/core/core';
-import { Emitter } from 'app/core/core';
+import { profiler, Emitter } from 'app/core/core';
 import getFactors from 'app/core/utils/factors';
 import {
   duplicatePanel,
@@ -29,6 +28,7 @@ import { PanelPluginMeta } from '@grafana/ui/src/types/panel';
 import { getPanelLinksSupplier } from './panellinks/linkSuppliers';
 import TableModel from 'app/core/table_model';
 import { rendered } from 'app/types';
+import { GrafanaRootScope } from '../../routes/GrafanaCtrl';
 
 export class PanelCtrl {
   panel: any;
@@ -51,7 +51,7 @@ export class PanelCtrl {
   maxPanelsPerRowOptions: number[];
 
   /** @ngInject */
-  constructor($scope: any, $injector: auto.IInjectorService) {
+  constructor($scope: GrafanaRootScope, $injector: auto.IInjectorService) {
     this.$injector = $injector;
     this.$location = $injector.get('$location');
     this.$scope = $scope;
