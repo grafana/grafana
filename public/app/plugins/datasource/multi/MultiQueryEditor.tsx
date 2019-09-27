@@ -56,7 +56,18 @@ export class MultiQueryEditor extends PureComponent<Props, State> {
     });
     if (found) {
       res.sort((a, b) => {
-        return a.ms - b.ms;
+        let msA = a.ms;
+        let msB = b.ms;
+
+        // Sort 'now' after regular
+        if (a.now) {
+          msA += 1;
+        }
+        if (b.now) {
+          msB += 1;
+        }
+
+        return msA - msB;
       });
 
       res[0].ms = 0;
