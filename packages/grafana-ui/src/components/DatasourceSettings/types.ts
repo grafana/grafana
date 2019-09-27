@@ -1,7 +1,7 @@
 import { DataSourceSettings } from '../../types/datasource';
 
 export interface DatasourceHttpSettingsBaseProps {
-  datasourceConfig: DataSourceSettings<any>;
+  datasourceConfig: DataSourceSettings<any, any>;
   onChange: (config: DataSourceSettings) => void;
 }
 

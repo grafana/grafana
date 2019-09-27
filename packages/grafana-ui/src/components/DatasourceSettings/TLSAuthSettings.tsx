@@ -1,5 +1,6 @@
 import React from 'react';
 import { DatasourceHttpSettingsBaseProps } from './types';
+import { KeyValue } from '@grafana/data';
 
 // TODO: Refactor forms below to a reusable Cert component
 export const DatasourceTLSAuthSettings: React.FC<DatasourceHttpSettingsBaseProps> = ({
@@ -7,21 +8,17 @@ export const DatasourceTLSAuthSettings: React.FC<DatasourceHttpSettingsBaseProps
   onChange,
 }) => {
   console.log();
-  // @ts-ignore
   const hasTLSCACert = datasourceConfig.secureJsonFields && datasourceConfig.secureJsonFields.tlsCACert;
-  // @ts-ignore
   const hasTLSClientCert = datasourceConfig.secureJsonFields && datasourceConfig.secureJsonFields.tlsClientCert;
-  // @ts-ignore
+  // @ts-ignre
   const hasTLSClientKey = datasourceConfig.secureJsonFields && datasourceConfig.secureJsonFields.tlsClientKey;
 
   const onResetClickFactory = (field: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    // @ts-ignore
-    const newSecureJsonFields = { ...datasourceConfig.secureJsonFields };
+    const newSecureJsonFields: KeyValue<boolean> = { ...datasourceConfig.secureJsonFields };
     newSecureJsonFields[field] = false;
     onChange({
       ...datasourceConfig,
-      // @ts-ignore
       secureJsonFields: newSecureJsonFields,
     });
   };

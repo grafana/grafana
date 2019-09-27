@@ -6,7 +6,6 @@ import { SecretFormField } from '../SecretFormFied/SecretFormField';
 export const DatasourceHttpBasicAuthSettings: React.FC<DatasourceHttpSettingsProps> = ({
   datasourceConfig,
   onChange,
-  onBasicAuthPasswordChange,
 }) => {
   const onPasswordReset = () => {
     onChange({
@@ -16,11 +15,9 @@ export const DatasourceHttpBasicAuthSettings: React.FC<DatasourceHttpSettingsPro
         ...datasourceConfig.secureJsonData,
         basicAuthPassword: '',
       },
-      // @ts-ignore
-      secureJsonField: {
-        // @ts-ignore
-        ...datasourceConfig.secureJsonField,
-        basicAuthPassword: '',
+      secureJsonFields: {
+        ...datasourceConfig.secureJsonFields,
+        basicAuthPassword: false,
       },
     });
   };
@@ -49,12 +46,9 @@ export const DatasourceHttpBasicAuthSettings: React.FC<DatasourceHttpSettingsPro
       <div className="gf-form">
         <SecretFormField
           isConfigured={
-            datasourceConfig.basicAuthPassword ||
-            // TODO: secureJsonFields to DataSourceSettings type
-            // @ts-ignore
-            (datasourceConfig.secureJsonFields && datasourceConfig.secureJsonFields.basicAuthPassword)
+            !!datasourceConfig.basicAuthPassword ||
+            !!(datasourceConfig.secureJsonFields && datasourceConfig.secureJsonFields.basicAuthPassword)
           }
-          // @ts-ignore
           value={datasourceConfig.secureJsonData!.basicAuthPassword || ''}
           inputWidth={18}
           labelWidth={10}
