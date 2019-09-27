@@ -319,8 +319,8 @@ The number of days the keep me logged in / remember me cookie lasts.
 
 ### secret_key
 
-Used for signing some datasource settings like secrets and passwords, the encryption format used is AES-256 in CFB mode. Cannot be changed without requiring an update
-to datasource settings to re-encode them.
+Used for signing some data source settings like secrets and passwords, the encryption format used is AES-256 in CFB mode. Cannot be changed without requiring an update
+to data source settings to re-encode them.
 
 ### disable_gravatar
 
@@ -347,7 +347,7 @@ mitigate the risk of [Clickjacking](https://www.owasp.org/index.php/Clickjacking
 
 ### strict_transport_security
 
-Set to `true` if you want to enable http `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS. The default value is `false` until the next minor release, `6.3`.
+Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. This is only sent when HTTPS is enabled in this configuration. HSTS tells browsers that the site should only be accessed using HTTPS. The default value is `false` until the next minor release, `6.3`.
 
 ### strict_transport_security_max_age_seconds
 

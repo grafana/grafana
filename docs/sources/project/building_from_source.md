@@ -98,7 +98,7 @@ Writing & watching frontend tests
 - Jest will run all test files that end with the name ".test.ts"
 
 
-### Datasource and dashboard provisioning
+### Data source and dashboard provisioning
 
 [Here](https://github.com/grafana/grafana/tree/master/devenv) you can find helpful scripts and docker-compose setup
 that will populate your dev environment for quicker testing end experimenting.

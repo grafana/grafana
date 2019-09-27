@@ -1,15 +1,16 @@
 import { MssqlDatasource } from '../datasource';
-import { TemplateSrvStub, TimeSrvStub } from 'test/specs/helpers';
+import { TimeSrvStub } from 'test/specs/helpers';
 import { CustomVariable } from 'app/features/templating/custom_variable';
 // @ts-ignore
 import q from 'q';
 import { dateTime } from '@grafana/data';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 describe('MSSQLDatasource', () => {
+  const templateSrv: TemplateSrv = new TemplateSrv();
+
   const ctx: any = {
     backendSrv: {},
-    // @ts-ignore
-    templateSrv: new TemplateSrvStub(),
     timeSrv: new TimeSrvStub(),
   };
 
@@ -17,7 +18,7 @@ describe('MSSQLDatasource', () => {
     ctx.$q = q;
     ctx.instanceSettings = { name: 'mssql' };
 
-    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.$q, ctx.templateSrv, ctx.timeSrv);
+    ctx.ds = new MssqlDatasource(ctx.instanceSettings, ctx.backendSrv, ctx.$q, templateSrv, ctx.timeSrv);
   });
 
   describe('When performing annotationQuery', () => {
@@ -276,6 +277,53 @@ describe('MSSQLDatasource', () => {
         ctx.variable.includeAll = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
       });
+    });
+  });
+
+  describe('targetContainsTemplate', () => {
+    it('given query that contains template variable it should return true', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$summarize') as time,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count' AND
+      hostname IN($host)
+    GROUP BY $__timeGroup(createdAt,'$summarize'), hostname
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeTruthy();
+    });
+
+    it('given query that only contains global template variable it should return false', () => {
+      const rawSql = `SELECT
+      $__timeGroup(createdAt,'$__interval') as time,
+      avg(value) as value,
+      hostname as metric
+    FROM
+      grafana_metric
+    WHERE
+      $__timeFilter(createdAt) AND
+      measurement = 'logins.count'
+    GROUP BY $__timeGroup(createdAt,'$summarize'), hostname
+    ORDER BY 1`;
+      const query = {
+        rawSql,
+      };
+      templateSrv.init([
+        { type: 'query', name: 'summarize', current: { value: '1m' } },
+        { type: 'query', name: 'host', current: { value: 'a' } },
+      ]);
+      expect(ctx.ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });
 });

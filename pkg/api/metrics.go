@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/grafana/grafana/pkg/tsdb/testdata"
+	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -68,13 +68,13 @@ func GetTestDataScenarios(c *m.ReqContext) Response {
 	result := make([]interface{}, 0)
 
 	scenarioIds := make([]string, 0)
-	for id := range testdata.ScenarioRegistry {
+	for id := range testdatasource.ScenarioRegistry {
 		scenarioIds = append(scenarioIds, id)
 	}
 	sort.Strings(scenarioIds)
 
 	for _, scenarioId := range scenarioIds {
-		scenario := testdata.ScenarioRegistry[scenarioId]
+		scenario := testdatasource.ScenarioRegistry[scenarioId]
 		result = append(result, map[string]interface{}{
 			"id":          scenario.Id,
 			"name":        scenario.Name,

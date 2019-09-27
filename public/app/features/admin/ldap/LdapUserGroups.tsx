@@ -9,7 +9,6 @@ interface Props {
 
 export const LdapUserGroups: FC<Props> = ({ groups, showAttributeMapping }) => {
   const items = showAttributeMapping ? groups : groups.filter(item => item.orgRole);
-  const roleColumnClass = showAttributeMapping && 'width-14';
 
   return (
     <div className="gf-form-group">
@@ -17,32 +16,39 @@ export const LdapUserGroups: FC<Props> = ({ groups, showAttributeMapping }) => {
         <table className="filter-table form-inline">
           <thead>
             <tr>
+              {showAttributeMapping && <th>LDAP Group</th>}
               <th>Organisation</th>
               <th>Role</th>
-              {showAttributeMapping && <th colSpan={2}>LDAP Group</th>}
             </tr>
           </thead>
           <tbody>
             {items.map((group, index) => {
               return (
                 <tr key={`${group.orgId}-${index}`}>
-                  <td className="width-16">{group.orgName}</td>
-                  <td className={roleColumnClass}>{group.orgRole}</td>
                   {showAttributeMapping && (
                     <>
                       <td>{group.groupDN}</td>
-                      <td>
-                        {!group.orgRole && (
-                          <span className="text-warning pull-right">
-                            No match
-                            <Tooltip placement="top" content="No matching groups found" theme={'info'}>
-                              <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-                                <i className="fa fa-info-circle" />
-                              </div>
-                            </Tooltip>
-                          </span>
-                        )}
-                      </td>
+                      {!group.orgRole && (
+                        <>
+                          <td />
+                          <td>
+                            <span className="text-warning">
+                              No match
+                              <Tooltip placement="top" content="No matching groups found" theme={'info'}>
+                                <span className="gf-form-help-icon">
+                                  <i className="fa fa-info-circle" />
+                                </span>
+                              </Tooltip>
+                            </span>
+                          </td>
+                        </>
+                      )}
+                    </>
+                  )}
+                  {group.orgName && (
+                    <>
+                      <td>{group.orgName}</td>
+                      <td>{group.orgRole}</td>
                     </>
                   )}
                 </tr>

@@ -217,7 +217,7 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 
 	// External plugins need a module.js file for SystemJS to load
-	if !strings.HasPrefix(pluginJsonFilePath, setting.StaticRootPath) {
+	if !strings.HasPrefix(pluginJsonFilePath, setting.StaticRootPath) && !scanner.IsBackendOnlyPlugin(pluginCommon.Type) {
 		module := filepath.Join(filepath.Dir(pluginJsonFilePath), "module.js")
 		if _, err := os.Stat(module); os.IsNotExist(err) {
 			plog.Warn("Plugin missing module.js",
@@ -229,6 +229,10 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 
 	reader.Seek(0, 0)
 	return loader.Load(jsonParser, currentDir)
+}
+
+func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
+	return pluginType == "renderer"
 }
 
 func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {

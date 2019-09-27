@@ -55,6 +55,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   resultTransformer: ResultTransformer;
+  customQueryParameters: any;
 
   /** @ngInject */
   constructor(
@@ -78,6 +79,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
+    this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
   }
 
   init = () => {
@@ -348,6 +350,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       data['timeout'] = this.queryTimeout;
     }
 
+    for (const [key, value] of this.customQueryParameters) {
+      if (data[key] == null) {
+        data[key] = value;
+      }
+    }
+
     return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) => {
       if (err.cancelled) {
         return err;
@@ -366,6 +374,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
+    }
+
+    for (const [key, value] of this.customQueryParameters) {
+      if (data[key] == null) {
+        data[key] = value;
+      }
     }
 
     return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) => {

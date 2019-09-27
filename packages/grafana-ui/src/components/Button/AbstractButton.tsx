@@ -3,6 +3,7 @@ import tinycolor from 'tinycolor2';
 import { css, cx } from 'emotion';
 import { Themeable, GrafanaTheme } from '../../types';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import { stylesFactory } from '../../themes/stylesFactory';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'inverse' | 'transparent';
 
@@ -19,7 +20,9 @@ export interface CommonButtonProps {
   className?: string;
 }
 
-export interface LinkButtonProps extends CommonButtonProps, AnchorHTMLAttributes<HTMLAnchorElement> {}
+export interface LinkButtonProps extends CommonButtonProps, AnchorHTMLAttributes<HTMLAnchorElement> {
+  disabled?: boolean;
+}
 export interface ButtonProps extends CommonButtonProps, ButtonHTMLAttributes<HTMLButtonElement> {}
 
 interface AbstractButtonProps extends CommonButtonProps, Themeable {
@@ -47,7 +50,13 @@ const buttonVariantStyles = (
   }
 `;
 
-const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonVariant, withIcon: boolean) => {
+interface StyleDeps {
+  theme: GrafanaTheme;
+  size: ButtonSize;
+  variant: ButtonVariant;
+  withIcon: boolean;
+}
+const getButtonStyles = stylesFactory(({ theme, size, variant, withIcon }: StyleDeps) => {
   const borderRadius = theme.border.radius.sm;
   let padding,
     background,
@@ -153,7 +162,7 @@ const getButtonStyles = (theme: GrafanaTheme, size: ButtonSize, variant: ButtonV
       filter: brightness(100);
     `,
   };
-};
+});
 
 export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
   renderAs,
@@ -165,7 +174,7 @@ export const AbstractButton: React.FunctionComponent<AbstractButtonProps> = ({
   children,
   ...otherProps
 }) => {
-  const buttonStyles = getButtonStyles(theme, size, variant, !!icon);
+  const buttonStyles = getButtonStyles({ theme, size, variant, withIcon: !!icon });
   const nonHtmlProps = {
     theme,
     size,
