@@ -7,6 +7,8 @@ export const DatasourceHttpBasicAuthSettings: React.FC<DatasourceHttpSettingsPro
   datasourceConfig,
   onChange,
 }) => {
+  const password = datasourceConfig.secureJsonData ? datasourceConfig.secureJsonData.basicAuthPassword : '';
+
   const onPasswordReset = () => {
     onChange({
       ...datasourceConfig,
@@ -49,7 +51,7 @@ export const DatasourceHttpBasicAuthSettings: React.FC<DatasourceHttpSettingsPro
             !!datasourceConfig.basicAuthPassword ||
             !!(datasourceConfig.secureJsonFields && datasourceConfig.secureJsonFields.basicAuthPassword)
           }
-          value={datasourceConfig.secureJsonData!.basicAuthPassword || ''}
+          value={password || ''}
           inputWidth={18}
           labelWidth={10}
           onReset={onPasswordReset}

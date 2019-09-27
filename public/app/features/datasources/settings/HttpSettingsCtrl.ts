@@ -13,17 +13,21 @@ coreModule.directive('datasourceHttpSettings', () => {
       pre: ($scope: any, elem, attrs) => {
         // do not show access option if direct access is disabled
         $scope.showAccessOption = $scope.noDirectAccess !== 'true';
-        $scope.showAccessHelp = false;
-        $scope.toggleAccessHelp = () => {
-          $scope.showAccessHelp = !$scope.showAccessHelp;
-        };
+        // $scope.showAccessHelp = false;
+        // $scope.toggleAccessHelp = () => {
+        //   $scope.showAccessHelp = !$scope.showAccessHelp;
+        // };
 
-        $scope.getSuggestUrls = () => {
-          return [$scope.suggestUrl];
-        };
+        // $scope.getSuggestUrls = () => {
+        //   return [$scope.suggestUrl];
+        // };
 
-        $scope.onBasicAuthPasswordReset = createResetHandler($scope, PasswordFieldEnum.BasicAuthPassword);
-        $scope.onBasicAuthPasswordChange = createChangeHandler($scope, PasswordFieldEnum.BasicAuthPassword);
+        // $scope.onBasicAuthPasswordReset = createResetHandler($scope, PasswordFieldEnum.BasicAuthPassword);
+        // $scope.onBasicAuthPasswordChange = createChangeHandler($scope, PasswordFieldEnum.BasicAuthPassword);
+
+        $scope.onChange = (datasourceSetting: any) => {
+          $scope.current = datasourceSetting;
+        };
       },
     },
   };
