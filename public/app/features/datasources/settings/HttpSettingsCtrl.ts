@@ -1,5 +1,5 @@
 import { coreModule } from 'app/core/core';
-import { createChangeHandler, createResetHandler, PasswordFieldEnum } from '../utils/passwordHandlers';
+// import { createChangeHandler, createResetHandler, PasswordFieldEnum } from '../utils/passwordHandlers';
 
 coreModule.directive('datasourceHttpSettings', () => {
   return {
