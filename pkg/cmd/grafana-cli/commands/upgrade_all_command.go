@@ -8,24 +8,18 @@ import (
 	"github.com/hashicorp/go-version"
 )
 
-func ShouldUpgrade(installed string, remote m.Plugin) bool {
-	installedVersion, err1 := version.NewVersion(installed)
-
-	if err1 != nil {
+func shouldUpgrade(installed string, remote *m.Plugin) bool {
+	installedVersion, err := version.NewVersion(installed)
+	if err != nil {
 		return false
 	}
 
-	for _, v := range remote.Versions {
-		remoteVersion, err2 := version.NewVersion(v.Version)
-
-		if err2 == nil {
-			if installedVersion.LessThan(remoteVersion) {
-				return true
-			}
-		}
+	latest := latestSupportedVersion(remote)
+	latestVersion, err := version.NewVersion(latest.Version)
+	if err != nil {
+		return false
 	}
-
-	return false
+	return installedVersion.LessThan(latestVersion)
 }
 
 func upgradeAllCommand(c utils.CommandLine) error {
@@ -33,7 +27,7 @@ func upgradeAllCommand(c utils.CommandLine) error {
 
 	localPlugins := s.GetLocalPlugins(pluginsDir)
 
-	remotePlugins, err := s.ListAllPlugins(c.GlobalString("repo"))
+	remotePlugins, err := c.ApiClient().ListAllPlugins(c.GlobalString("repo"))
 
 	if err != nil {
 		return err
@@ -44,7 +38,7 @@ func upgradeAllCommand(c utils.CommandLine) error {
 	for _, localPlugin := range localPlugins {
 		for _, remotePlugin := range remotePlugins.Plugins {
 			if localPlugin.Id == remotePlugin.Id {
-				if ShouldUpgrade(localPlugin.Info.Version, remotePlugin) {
+				if shouldUpgrade(localPlugin.Info.Version, &remotePlugin) {
 					pluginsToUpgrade = append(pluginsToUpgrade, localPlugin)
 				}
 			}

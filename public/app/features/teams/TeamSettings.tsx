@@ -19,7 +19,7 @@ interface State {
 }
 
 export class TeamSettings extends React.Component<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
 
     this.state = {
@@ -28,15 +28,15 @@ export class TeamSettings extends React.Component<Props, State> {
     };
   }
 
-  onChangeName = event => {
+  onChangeName = (event: any) => {
     this.setState({ name: event.target.value });
   };
 
-  onChangeEmail = event => {
+  onChangeEmail = (event: any) => {
     this.setState({ email: event.target.value });
   };
 
-  onUpdate = event => {
+  onUpdate = (event: any) => {
     const { name, email } = this.state;
     event.preventDefault();
     this.props.updateTeam(name, email);
@@ -86,7 +86,7 @@ export class TeamSettings extends React.Component<Props, State> {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state: any) {
   const teamId = getRouteParamsId(state.location);
 
   return {

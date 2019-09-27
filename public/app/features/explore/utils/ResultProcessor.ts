@@ -1,174 +1,98 @@
-import { DataQueryResponse, DataQueryResponseData } from '@grafana/ui';
-
-import { TableData, isTableData, LogsModel, toDataFrame, guessFieldTypes, TimeSeries } from '@grafana/data';
+import { LogsModel, GraphSeriesXY, DataFrame, FieldType } from '@grafana/data';
 
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
-import { getProcessedDataFrame } from 'app/features/dashboard/state/PanelQueryState';
 import TableModel, { mergeTablesIntoModel } from 'app/core/table_model';
-import { sortLogsResult } from 'app/core/utils/explore';
+import { sortLogsResult, refreshIntervalToSortOrder } from 'app/core/utils/explore';
 import { dataFrameToLogsModel } from 'app/core/logs_model';
-import { default as TimeSeries2 } from 'app/core/time_series2';
-import { DataProcessor } from 'app/plugins/panel/graph/data_processor';
+import { getGraphSeriesModel } from 'app/plugins/panel/graph2/getGraphSeriesModel';
 
 export class ResultProcessor {
-  private rawData: DataQueryResponseData[] = [];
-  private metrics: TimeSeries[] = [];
-  private tables: TableData[] = [];
+  constructor(private state: ExploreItemState, private dataFrames: DataFrame[], private intervalMs: number) {}
 
-  constructor(
-    private state: ExploreItemState,
-    private replacePreviousResults: boolean,
-    result?: DataQueryResponse | DataQueryResponseData[]
-  ) {
-    if (result && result.hasOwnProperty('data')) {
-      this.rawData = (result as DataQueryResponse).data;
-    } else {
-      this.rawData = (result as DataQueryResponseData[]) || [];
-    }
-
+  getGraphResult(): GraphSeriesXY[] {
     if (this.state.mode !== ExploreMode.Metrics) {
-      return;
+      return null;
     }
 
-    for (let index = 0; index < this.rawData.length; index++) {
-      const res: any = this.rawData[index];
-      const isTable = isTableData(res);
-      if (isTable) {
-        this.tables.push(res);
-      } else {
-        this.metrics.push(res);
-      }
+    const onlyTimeSeries = this.dataFrames.filter(isTimeSeries);
+
+    if (onlyTimeSeries.length === 0) {
+      return null;
     }
+
+    return getGraphSeriesModel(
+      onlyTimeSeries,
+      {},
+      { showBars: false, showLines: true, showPoints: false },
+      { asTable: false, isVisible: true, placement: 'under' }
+    );
   }
 
-  getRawData = (): any[] => {
-    return this.rawData;
-  };
-
-  getGraphResult = (): TimeSeries[] => {
+  getTableResult(): TableModel {
     if (this.state.mode !== ExploreMode.Metrics) {
-      return [];
+      return null;
     }
 
-    const newResults = this.makeTimeSeriesList(this.metrics);
-    return this.mergeGraphResults(newResults, this.state.graphResult);
-  };
+    // For now ignore time series
+    // We can change this later, just need to figure out how to
+    // Ignore time series only for prometheus
+    const onlyTables = this.dataFrames.filter(frame => !isTimeSeries(frame));
 
-  getTableResult = (): TableModel => {
-    if (this.state.mode !== ExploreMode.Metrics) {
-      return new TableModel();
+    if (onlyTables.length === 0) {
+      return null;
     }
 
-    const prevTableResults: any[] | TableModel = this.state.tableResult || [];
-    const tablesToMerge = this.replacePreviousResults ? this.tables : [].concat(prevTableResults, this.tables);
+    const tables = onlyTables.map(frame => {
+      const { fields } = frame;
+      const fieldCount = fields.length;
+      const rowCount = frame.length;
 
-    return mergeTablesIntoModel(new TableModel(), ...tablesToMerge);
-  };
+      const columns = fields.map(field => ({
+        text: field.name,
+        type: field.type,
+        filterable: field.config.filterable,
+      }));
 
-  getLogsResult = (): LogsModel => {
+      const rows: any[][] = [];
+      for (let i = 0; i < rowCount; i++) {
+        const row: any[] = [];
+        for (let j = 0; j < fieldCount; j++) {
+          row.push(frame.fields[j].values.get(i));
+        }
+        rows.push(row);
+      }
+
+      return new TableModel({
+        columns,
+        rows,
+        meta: frame.meta,
+      });
+    });
+
+    return mergeTablesIntoModel(new TableModel(), ...tables);
+  }
+
+  getLogsResult(): LogsModel {
     if (this.state.mode !== ExploreMode.Logs) {
       return null;
     }
-    const graphInterval = this.state.queryIntervals.intervalMs;
-    const dataFrame = this.rawData.map(result => guessFieldTypes(toDataFrame(result)));
-    const newResults = this.rawData ? dataFrameToLogsModel(dataFrame, graphInterval) : null;
-    const sortedNewResults = sortLogsResult(newResults, this.state.refreshInterval);
 
-    if (this.replacePreviousResults) {
-      return sortedNewResults;
-    }
+    const newResults = dataFrameToLogsModel(this.dataFrames, this.intervalMs);
+    const sortOrder = refreshIntervalToSortOrder(this.state.refreshInterval);
+    const sortedNewResults = sortLogsResult(newResults, sortOrder);
 
-    const prevLogsResult: LogsModel = this.state.logsResult || { hasUniqueLabels: false, rows: [] };
-    const sortedLogResult = sortLogsResult(prevLogsResult, this.state.refreshInterval);
-    const rowsInState = sortedLogResult.rows;
-    const seriesInState = sortedLogResult.series || [];
-
-    const processedRows = [];
-    for (const row of rowsInState) {
-      processedRows.push({ ...row, fresh: false });
-    }
-    for (const row of sortedNewResults.rows) {
-      processedRows.push({ ...row, fresh: true });
-    }
-
-    const processedSeries = this.mergeGraphResults(sortedNewResults.series, seriesInState);
-
-    const slice = -1000;
-    const rows = processedRows.slice(slice);
-    const series = processedSeries.slice(slice);
-
+    const rows = sortedNewResults.rows;
+    const series = sortedNewResults.series;
     return { ...sortedNewResults, rows, series };
-  };
+  }
+}
 
-  private makeTimeSeriesList = (rawData: any[]) => {
-    const dataList = getProcessedDataFrame(rawData);
-    const dataProcessor = new DataProcessor({ xaxis: {}, aliasColors: [] }); // Hack before we use GraphSeriesXY instead
-    const timeSeries = dataProcessor.getSeriesList({ dataList });
-
-    return (timeSeries as any) as TimeSeries[]; // Hack before we use GraphSeriesXY instead
-  };
-
-  private isSameTimeSeries = (a: TimeSeries | TimeSeries2, b: TimeSeries | TimeSeries2) => {
-    if (a.hasOwnProperty('id') && b.hasOwnProperty('id')) {
-      const aValue = (a as TimeSeries2).id;
-      const bValue = (b as TimeSeries2).id;
-      if (aValue !== undefined && bValue !== undefined && aValue === bValue) {
-        return true;
-      }
+export function isTimeSeries(frame: DataFrame): boolean {
+  if (frame.fields.length === 2) {
+    if (frame.fields[1].type === FieldType.time) {
+      return true;
     }
+  }
 
-    if (a.hasOwnProperty('alias') && b.hasOwnProperty('alias')) {
-      const aValue = (a as TimeSeries2).alias;
-      const bValue = (b as TimeSeries2).alias;
-      if (aValue !== undefined && bValue !== undefined && aValue === bValue) {
-        return true;
-      }
-    }
-
-    return false;
-  };
-
-  private mergeGraphResults = (
-    newResults: TimeSeries[] | TimeSeries2[],
-    prevResults: TimeSeries[] | TimeSeries2[]
-  ): TimeSeries[] => {
-    if (!prevResults || prevResults.length === 0 || this.replacePreviousResults) {
-      return (newResults as any) as TimeSeries[]; // Hack before we use GraphSeriesXY instead
-    }
-
-    const results: TimeSeries[] = prevResults.slice() as TimeSeries[];
-
-    // update existing results
-    for (let index = 0; index < results.length; index++) {
-      const prevResult = results[index];
-      for (const newResult of newResults) {
-        const isSame = this.isSameTimeSeries(prevResult, newResult);
-
-        if (isSame) {
-          prevResult.datapoints = prevResult.datapoints.concat(newResult.datapoints);
-          break;
-        }
-      }
-    }
-
-    // add new results
-    for (const newResult of newResults) {
-      let isNew = true;
-      for (const prevResult of results) {
-        const isSame = this.isSameTimeSeries(prevResult, newResult);
-        if (isSame) {
-          isNew = false;
-          break;
-        }
-      }
-
-      if (isNew) {
-        const timeSeries2Result = new TimeSeries2({ ...newResult });
-
-        const result = (timeSeries2Result as any) as TimeSeries; // Hack before we use GraphSeriesXY instead
-        results.push(result);
-      }
-    }
-    return results;
-  };
+  return false;
 }

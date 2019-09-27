@@ -47,6 +47,9 @@ Content-Type: application/json
 
 `GET /api/org/users`
 
+Returns all org users within the current organization.
+Accessible to users with org admin role.
+
 **Example Request**:
 
 ```http
@@ -64,11 +67,47 @@ Content-Type: application/json
 
 [
   {
-    "orgId":1,
-    "userId":1,
-    "email":"admin@mygraf.com",
-    "login":"admin",
-    "role":"Admin"
+    "orgId": 1,
+    "userId": 1,
+    "email": "admin@localhost",
+    "avatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56",
+    "login": "admin",
+    "role": "Admin",
+    "lastSeenAt": "2019-08-09T11:02:49+02:00",
+    "lastSeenAtAge": "< 1m"
+  }
+]
+```
+
+### Get all users within the current organization (lookup)
+
+`GET /api/org/users/lookup`
+
+Returns all org users within the current organization, but with less detailed information.
+Accessible to users with org admin role, admin in any folder or admin of any team.
+Mainly used by Grafana UI for providing list of users when adding team members and
+when editing folder/dashboard permissions.
+
+**Example Request**:
+
+```http
+GET /api/org/users/lookup HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+[
+  {
+    "userId": 1,
+    "login": "admin",
+    "avatarUrl": "/avatar/46d229b033af06a191ff2267bca9ae56"
   }
 ]
 ```
@@ -298,7 +337,7 @@ Accept: application/json
 Content-Type: application/json
 ```
 Note: The api will only work when you pass the admin name and password
-to the request http url, like http://admin:admin@localhost:3000/api/orgs
+to the request HTTP url, like http://admin:admin@localhost:3000/api/orgs
 
 **Example Response**:
 
@@ -378,7 +417,7 @@ Accept: application/json
 Content-Type: application/json
 ```
 Note: The api will only work when you pass the admin name and password
-to the request http url, like http://admin:admin@localhost:3000/api/orgs/1/users
+to the request HTTP url, like http://admin:admin@localhost:3000/api/orgs/1/users
 
 
 **Example Response**:

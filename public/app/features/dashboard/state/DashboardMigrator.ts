@@ -20,7 +20,7 @@ import {
   MIN_PANEL_HEIGHT,
   DEFAULT_PANEL_SPAN,
 } from 'app/core/constants';
-import { DataLinkBuiltInVars } from 'app/features/panel/panellinks/link_srv';
+import { DataLinkBuiltInVars } from '@grafana/ui';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -33,7 +33,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 19;
+    this.dashboard.schemaVersion = 20;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -48,7 +48,7 @@ export class DashboardMigrator {
         }
       }
 
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         // rename panel type
         if (panel.type === 'graphite') {
           panel.type = 'graph';
@@ -95,7 +95,7 @@ export class DashboardMigrator {
     if (oldVersion < 3) {
       // ensure panel ids
       let maxId = this.dashboard.getNextPanelId();
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         if (!panel.id) {
           panel.id = maxId;
           maxId += 1;
@@ -106,7 +106,7 @@ export class DashboardMigrator {
     // schema version 4 changes
     if (oldVersion < 4) {
       // move aliasYAxis changes
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
           return;
         }
@@ -151,7 +151,7 @@ export class DashboardMigrator {
       }
 
       // ensure query refIds
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         _.each(panel.targets, target => {
           if (!target.refId) {
             target.refId = panel.getNextQueryLetter && panel.getNextQueryLetter();
@@ -161,7 +161,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 8) {
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         _.each(panel.targets, target => {
           // update old influxdb query schema
           if (target.fields && target.tags && target.groupBy) {
@@ -206,7 +206,7 @@ export class DashboardMigrator {
     // schema version 9 changes
     if (oldVersion < 9) {
       // move aliasYAxis changes
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         if (panel.type !== 'singlestat' && panel.thresholds !== '') {
           return;
         }
@@ -225,7 +225,7 @@ export class DashboardMigrator {
     // schema version 10 changes
     if (oldVersion < 10) {
       // move aliasYAxis changes
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         if (panel.type !== 'table') {
           return;
         }
@@ -259,7 +259,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 12) {
       // update graph yaxes changes
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
           return;
         }
@@ -308,7 +308,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 13) {
       // update graph yaxes changes
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         if (panel.type !== 'graph') {
           return;
         }
@@ -380,7 +380,7 @@ export class DashboardMigrator {
     }
 
     if (oldVersion < 17) {
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         if (panel.minSpan) {
           const max = GRID_COLUMN_COUNT / panel.minSpan;
           const factors = getFactors(GRID_COLUMN_COUNT);
@@ -399,7 +399,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 18) {
       // migrate change to gauge options
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         if (panel['options-gauge']) {
           panel.options = panel['options-gauge'];
           panel.options.valueOptions = {
@@ -429,9 +429,36 @@ export class DashboardMigrator {
 
     if (oldVersion < 19) {
       // migrate change to gauge options
-      panelUpgrades.push(panel => {
+      panelUpgrades.push((panel: any) => {
         if (panel.links && _.isArray(panel.links)) {
           panel.links = panel.links.map(upgradePanelLink);
+        }
+      });
+    }
+
+    if (oldVersion < 20) {
+      const updateLinks = (link: DataLink) => {
+        return {
+          ...link,
+          url: updateVariablesSyntax(link.url),
+        };
+      };
+      panelUpgrades.push((panel: any) => {
+        // For graph panel
+        if (panel.options && panel.options.dataLinks && _.isArray(panel.options.dataLinks)) {
+          panel.options.dataLinks = panel.options.dataLinks.map(updateLinks);
+        }
+
+        // For panel with fieldOptions
+        if (panel.options && panel.options.fieldOptions && panel.options.fieldOptions.defaults) {
+          if (panel.options.fieldOptions.defaults.links && _.isArray(panel.options.fieldOptions.defaults.links)) {
+            panel.options.fieldOptions.defaults.links = panel.options.fieldOptions.defaults.links.map(updateLinks);
+          }
+          if (panel.options.fieldOptions.defaults.title) {
+            panel.options.fieldOptions.defaults.title = updateVariablesSyntax(
+              panel.options.fieldOptions.defaults.title
+            );
+          }
         }
       });
     }
@@ -452,7 +479,7 @@ export class DashboardMigrator {
     }
   }
 
-  upgradeToGridLayout(old) {
+  upgradeToGridLayout(old: any) {
     let yPos = 0;
     const widthFactor = GRID_COLUMN_COUNT / 12;
 
@@ -541,7 +568,7 @@ export class DashboardMigrator {
   }
 }
 
-function getGridHeight(height) {
+function getGridHeight(height: number | string) {
   if (_.isString(height)) {
     height = parseInt(height.replace('px', ''), 10);
   }
@@ -569,7 +596,7 @@ class RowArea {
   yPos: number;
   height: number;
 
-  constructor(height, width = GRID_COLUMN_COUNT, rowYPos = 0) {
+  constructor(height: number, width = GRID_COLUMN_COUNT, rowYPos = 0) {
     this.area = new Array(width).fill(0);
     this.yPos = rowYPos;
     this.height = height;
@@ -582,7 +609,7 @@ class RowArea {
   /**
    * Update area after adding the panel.
    */
-  addPanel(gridPos) {
+  addPanel(gridPos: any) {
     for (let i = gridPos.x; i < gridPos.x + gridPos.w; i++) {
       if (!this.area[i] || gridPos.y + gridPos.h - this.yPos > this.area[i]) {
         this.area[i] = gridPos.y + gridPos.h - this.yPos;
@@ -594,7 +621,7 @@ class RowArea {
   /**
    * Calculate position for the new panel in the row.
    */
-  getPanelPosition(panelHeight, panelWidth, callOnce = false) {
+  getPanelPosition(panelHeight: number, panelWidth: number, callOnce = false): any {
     let startPlace, endPlace;
     let place;
     for (let i = this.area.length - 1; i >= 0; i--) {
@@ -643,6 +670,11 @@ function upgradePanelLink(link: any): DataLink {
     url = `/dashboard/${link.dashUri}`;
   }
 
+  // some models are incomplete and have no dashboard or dashUri
+  if (!url) {
+    url = '/';
+  }
+
   if (link.keepTime) {
     url = appendQueryToUrl(url, `$${DataLinkBuiltInVars.keepTime}`);
   }
@@ -660,4 +692,27 @@ function upgradePanelLink(link: any): DataLink {
     title: link.title,
     targetBlank: link.targetBlank,
   };
+}
+
+function updateVariablesSyntax(text: string) {
+  const legacyVariableNamesRegex = /(__series_name)|(\$__series_name)|(__value_time)|(__field_name)|(\$__field_name)/g;
+
+  return text.replace(legacyVariableNamesRegex, (match, seriesName, seriesName1, valueTime, fieldName, fieldName1) => {
+    if (seriesName) {
+      return '__series.name';
+    }
+    if (seriesName1) {
+      return '${__series.name}';
+    }
+    if (valueTime) {
+      return '__value.time';
+    }
+    if (fieldName) {
+      return '__field.name';
+    }
+    if (fieldName1) {
+      return '${__field.name}';
+    }
+    return match;
+  });
 }

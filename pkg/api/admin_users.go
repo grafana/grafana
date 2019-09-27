@@ -34,7 +34,7 @@ func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) {
 		return
 	}
 
-	metrics.M_Api_Admin_User_Create.Inc()
+	metrics.MApiAdminUserCreate.Inc()
 
 	user := cmd.Result
 

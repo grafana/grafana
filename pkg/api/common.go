@@ -135,3 +135,15 @@ func Respond(status int, body interface{}) *NormalResponse {
 		header: make(http.Header),
 	}
 }
+
+type RedirectResponse struct {
+	location string
+}
+
+func (r *RedirectResponse) WriteTo(ctx *m.ReqContext) {
+	ctx.Redirect(r.location)
+}
+
+func Redirect(location string) *RedirectResponse {
+	return &RedirectResponse{location: location}
+}

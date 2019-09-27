@@ -6,8 +6,9 @@ import find from 'lodash/find';
 
 // Types
 import { UrlQueryMap } from '@grafana/runtime';
-import { StoreState } from 'app/types';
+import { StoreState, AppNotificationSeverity } from 'app/types';
 import {
+  Alert,
   PluginType,
   GrafanaPlugin,
   PluginInclude,
@@ -29,6 +30,7 @@ import { AppConfigCtrlWrapper } from './wrappers/AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
 import { appEvents } from 'app/core/core';
 import { config } from 'app/core/config';
+import { ContextSrv } from '../../core/services/context_srv';
 
 export function getLoadingNav(): NavModel {
   const node = {
@@ -69,6 +71,7 @@ interface Props {
   pluginId: string;
   query: UrlQueryMap;
   path: string; // the URL path
+  $contextSrv: ContextSrv;
 }
 
 interface State {
@@ -93,7 +96,7 @@ class PluginPage extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    const { pluginId, path, query } = this.props;
+    const { pluginId, path, query, $contextSrv } = this.props;
     const { appSubUrl } = config;
 
     const plugin = await loadPlugin(pluginId);
@@ -105,95 +108,14 @@ class PluginPage extends PureComponent<Props, State> {
       return; // 404
     }
 
-    const { meta } = plugin;
-    let defaultPage: string;
-    const pages: NavModelItem[] = [];
-
-    if (true) {
-      pages.push({
-        text: 'Readme',
-        icon: 'fa fa-fw fa-file-text-o',
-        url: `${appSubUrl}${path}?page=${PAGE_ID_README}`,
-        id: PAGE_ID_README,
-      });
-    }
-
-    // Only show Config/Pages for app
-    if (meta.type === PluginType.app) {
-      // Legacy App Config
-      if (plugin.angularConfigCtrl) {
-        pages.push({
-          text: 'Config',
-          icon: 'gicon gicon-cog',
-          url: `${appSubUrl}${path}?page=${PAGE_ID_CONFIG_CTRL}`,
-          id: PAGE_ID_CONFIG_CTRL,
-        });
-        defaultPage = PAGE_ID_CONFIG_CTRL;
-      }
-
-      if (plugin.configPages) {
-        for (const page of plugin.configPages) {
-          pages.push({
-            text: page.title,
-            icon: page.icon,
-            url: path + '?page=' + page.id,
-            id: page.id,
-          });
-          if (!defaultPage) {
-            defaultPage = page.id;
-          }
-        }
-      }
-
-      // Check for the dashboard pages
-      if (find(meta.includes, { type: 'dashboard' })) {
-        pages.push({
-          text: 'Dashboards',
-          icon: 'gicon gicon-dashboard',
-          url: `${appSubUrl}${path}?page=${PAGE_ID_DASHBOARDS}`,
-          id: PAGE_ID_DASHBOARDS,
-        });
-      }
-    }
-
-    if (!defaultPage) {
-      defaultPage = pages[0].id; // the first tab
-    }
-
-    const node = {
-      text: meta.name,
-      img: meta.info.logos.large,
-      subTitle: meta.info.author.name,
-      breadcrumbs: [{ title: 'Plugins', url: '/plugins' }],
-      url: `${appSubUrl}${path}`,
-      children: this.setActivePage(query.page as string, pages, defaultPage),
-    };
+    const { defaultPage, nav } = getPluginTabsNav(plugin, appSubUrl, path, query, $contextSrv.hasRole('Admin'));
 
     this.setState({
       loading: false,
       plugin,
       defaultPage,
-      nav: {
-        node: node,
-        main: node,
-      },
+      nav,
     });
-  }
-
-  setActivePage(pageId: string, pages: NavModelItem[], defaultPageId: string): NavModelItem[] {
-    let found = false;
-    const selected = pageId || defaultPageId;
-    const changed = pages.map(p => {
-      const active = !found && selected === p.id;
-      if (active) {
-        found = true;
-      }
-      return { ...p, active };
-    });
-    if (!found) {
-      changed[0].active = true;
-    }
-    return changed;
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -203,7 +125,7 @@ class PluginPage extends PureComponent<Props, State> {
       const { nav, defaultPage } = this.state;
       const node = {
         ...nav.node,
-        children: this.setActivePage(page, nav.node.children, defaultPage),
+        children: setActivePage(page, nav.node.children, defaultPage),
       };
       this.setState({
         nav: {
@@ -219,7 +141,7 @@ class PluginPage extends PureComponent<Props, State> {
     const { plugin, nav } = this.state;
 
     if (!plugin) {
-      return <div>Plugin not found.</div>;
+      return <Alert severity={AppNotificationSeverity.Error} title="Plugin Not Found" />;
     }
 
     const active = nav.main.children.find(tab => tab.active);
@@ -356,7 +278,7 @@ class PluginPage extends PureComponent<Props, State> {
           {info.links.map(link => {
             return (
               <li key={link.url}>
-                <a href={link.url} className="external-link" target="_blank">
+                <a href={link.url} className="external-link" target="_blank" rel="noopener">
                   {link.name}
                 </a>
               </li>
@@ -369,17 +291,33 @@ class PluginPage extends PureComponent<Props, State> {
 
   render() {
     const { loading, nav, plugin } = this.state;
+    const { $contextSrv } = this.props;
+    const isAdmin = $contextSrv.hasRole('Admin');
     return (
       <Page navModel={nav}>
         <Page.Contents isLoading={loading}>
           {!loading && (
             <div className="sidebar-container">
-              <div className="sidebar-content">{this.renderBody()}</div>
+              <div className="sidebar-content">
+                {plugin.loadError && (
+                  <Alert
+                    severity={AppNotificationSeverity.Error}
+                    title="Error Loading Plugin"
+                    children={
+                      <>
+                        Check the server startup logs for more information. <br />
+                        If this plugin was loaded from git, make sure it was compiled.
+                      </>
+                    }
+                  />
+                )}
+                {this.renderBody()}
+              </div>
               <aside className="page-sidebar">
                 {plugin && (
                   <section className="page-sidebar-section">
                     {this.renderVersionInfo(plugin.meta)}
-                    {this.renderSidebarIncludes(plugin.meta.includes)}
+                    {isAdmin && this.renderSidebarIncludes(plugin.meta.includes)}
                     {this.renderSidebarDependencies(plugin.meta.dependencies)}
                     {this.renderSidebarLinks(plugin.meta.info)}
                   </section>
@@ -391,6 +329,106 @@ class PluginPage extends PureComponent<Props, State> {
       </Page>
     );
   }
+}
+
+function getPluginTabsNav(
+  plugin: GrafanaPlugin,
+  appSubUrl: string,
+  path: string,
+  query: UrlQueryMap,
+  isAdmin: boolean
+): { defaultPage: string; nav: NavModel } {
+  const { meta } = plugin;
+  let defaultPage: string;
+  const pages: NavModelItem[] = [];
+
+  if (true) {
+    pages.push({
+      text: 'Readme',
+      icon: 'fa fa-fw fa-file-text-o',
+      url: `${appSubUrl}${path}?page=${PAGE_ID_README}`,
+      id: PAGE_ID_README,
+    });
+  }
+
+  // We allow non admins to see plugins but only their readme. Config is hidden even though the API needs to be
+  // public for plugins to work properly.
+  if (isAdmin) {
+    // Only show Config/Pages for app
+    if (meta.type === PluginType.app) {
+      // Legacy App Config
+      if (plugin.angularConfigCtrl) {
+        pages.push({
+          text: 'Config',
+          icon: 'gicon gicon-cog',
+          url: `${appSubUrl}${path}?page=${PAGE_ID_CONFIG_CTRL}`,
+          id: PAGE_ID_CONFIG_CTRL,
+        });
+        defaultPage = PAGE_ID_CONFIG_CTRL;
+      }
+
+      if (plugin.configPages) {
+        for (const page of plugin.configPages) {
+          pages.push({
+            text: page.title,
+            icon: page.icon,
+            url: path + '?page=' + page.id,
+            id: page.id,
+          });
+          if (!defaultPage) {
+            defaultPage = page.id;
+          }
+        }
+      }
+
+      // Check for the dashboard pages
+      if (find(meta.includes, { type: PluginIncludeType.dashboard })) {
+        pages.push({
+          text: 'Dashboards',
+          icon: 'gicon gicon-dashboard',
+          url: `${appSubUrl}${path}?page=${PAGE_ID_DASHBOARDS}`,
+          id: PAGE_ID_DASHBOARDS,
+        });
+      }
+    }
+  }
+
+  if (!defaultPage) {
+    defaultPage = pages[0].id; // the first tab
+  }
+
+  const node = {
+    text: meta.name,
+    img: meta.info.logos.large,
+    subTitle: meta.info.author.name,
+    breadcrumbs: [{ title: 'Plugins', url: '/plugins' }],
+    url: `${appSubUrl}${path}`,
+    children: setActivePage(query.page as string, pages, defaultPage),
+  };
+
+  return {
+    defaultPage,
+    nav: {
+      node: node,
+      main: node,
+    },
+  };
+}
+
+function setActivePage(pageId: string, pages: NavModelItem[], defaultPageId: string): NavModelItem[] {
+  let found = false;
+  const selected = pageId || defaultPageId;
+  const changed = pages.map(p => {
+    const active = !found && selected === p.id;
+    if (active) {
+      found = true;
+    }
+    return { ...p, active };
+  });
+  if (!found) {
+    changed[0].active = true;
+  }
+  return changed;
 }
 
 function getPluginIcon(type: string) {

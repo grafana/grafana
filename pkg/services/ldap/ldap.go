@@ -10,10 +10,9 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
-	"gopkg.in/ldap.v3"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"gopkg.in/ldap.v3"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -47,9 +46,12 @@ type Server struct {
 // Bind authenticates the connection with the LDAP server
 // - with the username and password setup in the config
 // - or, anonymously
+//
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) Bind() error {
-	if server.shouldAuthAdmin() {
-		if err := server.AuthAdmin(); err != nil {
+	if server.shouldAdminBind() {
+		if err := server.AdminBind(); err != nil {
 			return err
 		}
 	} else {
@@ -75,7 +77,7 @@ var (
 	ErrCouldNotFindUser = errors.New("Can't find user in LDAP")
 )
 
-// New creates the new LDAP auth
+// New creates the new LDAP connection
 func New(config *ServerConfig) IServer {
 	return &Server{
 		Config: config,
@@ -84,6 +86,7 @@ func New(config *ServerConfig) IServer {
 }
 
 // Dial dials in the LDAP
+// TODO: decrease cyclomatic complexity
 func (server *Server) Dial() error {
 	var err error
 	var certPool *x509.CertPool
@@ -139,21 +142,30 @@ func (server *Server) Dial() error {
 }
 
 // Close closes the LDAP connection
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) Close() {
 	server.Connection.Close()
 }
 
 // Login the user.
-// There is several cases -
-// 1. First we check if we need to authenticate the admin user.
-// That user should have search privileges.
-// 2. For some configurations it is allowed to search the
-// user without any authenfication, in such case we
-// perform "unauthenticated bind".
-// --
-// After either first or second step is done we find the user DN
-// by its username, after that, we then combine it with user password and
-// then try to authentificate that user
+// There are several cases -
+// 1. "admin" user
+// Bind the "admin" user (defined in Grafana config file) which has the search privileges
+// in LDAP server, then we search the targeted user through that bind, then the second
+// perform the bind via passed login/password.
+// 2. Single bind
+// // If all the users meant to be used with Grafana have the ability to search in LDAP server
+// then we bind with LDAP server with targeted login/password
+// and then search for the said user in order to retrive all the information about them
+// 3. Unauthenticated bind
+// For some LDAP configurations it is allowed to search the
+// user without login/password binding with LDAP server, in such case
+// we will perform "unauthenticated bind", then search for the
+// targeted user and then perform the bind with passed login/password.
+//
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
@@ -161,13 +173,16 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	var authAndBind bool
 
 	// Check if we can use a search user
-	if server.shouldAuthAdmin() {
-		if err := server.AuthAdmin(); err != nil {
+	if server.shouldAdminBind() {
+		if err := server.AdminBind(); err != nil {
 			return nil, err
 		}
 	} else if server.shouldSingleBind() {
 		authAndBind = true
-		err = server.UserBind(server.singleBindDN(query.Username), query.Password)
+		err = server.UserBind(
+			server.singleBindDN(query.Username),
+			query.Password,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -206,38 +221,26 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	return user, nil
 }
 
+// shouldAdminBind checks if we should use
+// admin username & password for LDAP bind
+func (server *Server) shouldAdminBind() bool {
+	return server.Config.BindPassword != ""
+}
+
+// singleBindDN combines the bind with the username
+// in order to get the proper path
 func (server *Server) singleBindDN(username string) string {
 	return fmt.Sprintf(server.Config.BindDN, username)
 }
 
+// shouldSingleBind checks if we can use "single bind" approach
 func (server *Server) shouldSingleBind() bool {
 	return strings.Contains(server.Config.BindDN, "%s")
 }
 
-// getUsersIteration is a helper function for Users() method.
-// It divides the users by equal parts for the anticipated requests
-func getUsersIteration(logins []string, fn func(int, int) error) error {
-	lenLogins := len(logins)
-	iterations := int(
-		math.Ceil(
-			float64(lenLogins) / float64(UsersMaxRequest),
-		),
-	)
-
-	for i := 1; i < iterations+1; i++ {
-		previous := float64(UsersMaxRequest * (i - 1))
-		current := math.Min(float64(i*UsersMaxRequest), float64(lenLogins))
-
-		err := fn(int(previous), int(current))
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// Users gets LDAP users
+// Users gets LDAP users by logins
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) Users(logins []string) (
 	[]*models.ExternalUserInfo,
 	error,
@@ -266,9 +269,34 @@ func (server *Server) Users(logins []string) (
 		return nil, err
 	}
 
-	server.log.Debug("LDAP users found", "users", spew.Sdump(serializedUsers))
+	server.log.Debug(
+		"LDAP users found", "users", spew.Sdump(serializedUsers),
+	)
 
 	return serializedUsers, nil
+}
+
+// getUsersIteration is a helper function for Users() method.
+// It divides the users by equal parts for the anticipated requests
+func getUsersIteration(logins []string, fn func(int, int) error) error {
+	lenLogins := len(logins)
+	iterations := int(
+		math.Ceil(
+			float64(lenLogins) / float64(UsersMaxRequest),
+		),
+	)
+
+	for i := 1; i < iterations+1; i++ {
+		previous := float64(UsersMaxRequest * (i - 1))
+		current := math.Min(float64(i*UsersMaxRequest), float64(lenLogins))
+
+		err := fn(int(previous), int(current))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // users is helper method for the Users()
@@ -302,7 +330,7 @@ func (server *Server) users(logins []string) (
 func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
 	if len(server.Config.Groups) > 0 && len(user.OrgRoles) < 1 {
 		server.log.Error(
-			"user does not belong in any of the specified LDAP groups",
+			"User does not belong in any of the specified LDAP groups",
 			"username", user.Login,
 			"groups", user.Groups,
 		)
@@ -327,6 +355,9 @@ func (server *Server) getSearchRequest(
 		inputs.Email,
 		inputs.Name,
 		inputs.MemberOf,
+
+		// In case for the POSIX LDAP schema server
+		server.Config.GroupSearchFilterUserAttribute,
 	)
 
 	search := ""
@@ -377,12 +408,12 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 
 	for _, group := range server.Config.Groups {
 		// only use the first match for each org
-		if extUser.OrgRoles[group.OrgID] != "" {
+		if extUser.OrgRoles[group.OrgId] != "" {
 			continue
 		}
 
 		if isMemberOf(memberOf, group.GroupDN) {
-			extUser.OrgRoles[group.OrgID] = group.OrgRole
+			extUser.OrgRoles[group.OrgId] = group.OrgRole
 			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
@@ -392,18 +423,14 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 	return extUser, nil
 }
 
-// shouldAuthAdmin checks if we should use
-// admin username & password for LDAP bind
-func (server *Server) shouldAuthAdmin() bool {
-	return server.Config.BindPassword != ""
-}
-
-// UserBind authenticates the connection with the LDAP server
+// UserBind binds the user with the LDAP server
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
 func (server *Server) UserBind(username, password string) error {
 	err := server.userBind(username, password)
 	if err != nil {
 		server.log.Error(
-			fmt.Sprintf("Cannot authentificate user %s in LDAP", username),
+			fmt.Sprintf("Cannot bind user %s with LDAP", username),
 			"error",
 			err,
 		)
@@ -413,8 +440,10 @@ func (server *Server) UserBind(username, password string) error {
 	return nil
 }
 
-// AuthAdmin authentificates LDAP admin user
-func (server *Server) AuthAdmin() error {
+// AdminBind binds "admin" user with LDAP
+// Dial() sets the connection with the server for this Struct. Therefore, we require a
+// call to Dial() before being able to execute this function.
+func (server *Server) AdminBind() error {
 	err := server.userBind(server.Config.BindDN, server.Config.BindPassword)
 	if err != nil {
 		server.log.Error(
@@ -428,7 +457,7 @@ func (server *Server) AuthAdmin() error {
 	return nil
 }
 
-// userBind authenticates the connection with the LDAP server
+// userBind binds the user with the LDAP server
 func (server *Server) userBind(path, password string) error {
 	err := server.Connection.Bind(path, password)
 	if err != nil {
@@ -443,7 +472,8 @@ func (server *Server) userBind(path, password string) error {
 	return nil
 }
 
-// requestMemberOf use this function when POSIX LDAP schema does not support memberOf, so it manually search the groups
+// requestMemberOf use this function when POSIX LDAP
+// schema does not support memberOf, so it manually search the groups
 func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 	var memberOf []string
 	var config = server.Config
@@ -489,6 +519,7 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 
 		if len(groupSearchResult.Entries) > 0 {
 			for _, group := range groupSearchResult.Entries {
+
 				memberOf = append(
 					memberOf,
 					getAttribute(groupIDAttribute, group),

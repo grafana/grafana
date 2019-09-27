@@ -6,10 +6,6 @@
   margin-left: 0.25em;
 }
 
-.run-icon {
-  transform: rotate(90deg);
-}
-
 .datasource-picker {
   .ds-picker {
     min-width: 200px;
@@ -163,64 +159,6 @@
   }
 }
 
-.explore-panel {
-  margin-top: $space-sm;
-}
-
-.explore-panel__body {
-  padding: $panel-padding;
-}
-
-.explore-panel__header {
-  padding: $space-sm $space-md 0 $space-md;
-  display: flex;
-  cursor: inherit;
-  transition: all 0.1s linear;
-}
-
-.explore-panel__header-label {
-  font-weight: 500;
-  margin-right: $space-sm;
-  font-size: $font-size-h6;
-  box-shadow: $text-shadow-faint;
-}
-
-.explore-panel__header-buttons {
-  display: none;
-}
-
-.explore-panel--collapsible {
-  .explore-panel__header {
-    cursor: pointer;
-  }
-
-  .explore-panel__header-buttons {
-    margin-right: $space-sm;
-    font-size: $font-size-lg;
-    line-height: $font-size-h6;
-    display: inherit;
-  }
-}
-
-.time-series-disclaimer {
-  width: 300px;
-  margin: $space-sm auto;
-  padding: 10px 0;
-  border-radius: $border-radius;
-  text-align: center;
-  background-color: $panel-bg;
-
-  .disclaimer-icon {
-    color: $yellow;
-    margin-right: $space-xs;
-  }
-
-  .show-all-time-series {
-    cursor: pointer;
-    color: $external-link-color;
-  }
-}
-
 .navbar .elapsed-time {
   position: absolute;
   left: 0;
@@ -232,39 +170,6 @@
 
 .graph-legend {
   flex-wrap: wrap;
-}
-
-.explore-panel__loader {
-  height: 2px;
-  position: relative;
-  overflow: hidden;
-  background: none;
-  margin: $space-xs;
-}
-
-.explore-panel__loader--active:after {
-  content: ' ';
-  display: block;
-  width: 25%;
-  top: 0;
-  top: -50%;
-  height: 250%;
-  position: absolute;
-  animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms;
-  animation-iteration-count: 100;
-  left: -25%;
-  background: $blue;
-}
-
-@keyframes loader {
-  from {
-    left: -25%;
-    opacity: 0.1;
-  }
-  to {
-    left: 100%;
-    opacity: 1;
-  }
 }
 
 .query-row {
@@ -304,7 +209,7 @@
 
 .query-transaction {
   display: table-row;
-  color: $text-color-faint;
+  color: $text-color-weak;
   line-height: 1.44;
 }
 
@@ -364,7 +269,7 @@
 .ReactTable .rt-thead.-header .rt-th {
   text-align: left;
   color: $blue;
-  font-weight: 500;
+  font-weight: $font-weight-semi-bold;
 }
 .ReactTable .rt-thead .rt-td,
 .ReactTable .rt-thead .rt-th {
@@ -411,14 +316,18 @@
   z-index: inherit;
 }
 
-// React-component cascade fix: show "loading" even though item can expand
-
+// React-component cascade fix: show "loading" when loading children
 .rc-cascader-menu-item-loading:after {
   position: absolute;
   right: 12px;
   content: 'loading';
   color: #767980;
   font-style: italic;
+}
+
+// React-component cascade fix: vertical alignment issue with Safari
+.rc-cascader-menu {
+  vertical-align: top;
 }
 
 // TODO Experimental
@@ -432,17 +341,13 @@
   font-size: $font-size-h3;
 }
 
-.cheat-sheet-item__expression {
+.cheat-sheet-item__example {
   margin: $space-xs 0;
   cursor: pointer;
 }
 
 .query-type-toggle {
   margin-left: 5px;
-
-  .toggle-button-group {
-    padding-top: 2px;
-  }
 
   .btn.active {
     background-color: $input-bg;

@@ -1,9 +1,9 @@
 import angular, { IQService } from 'angular';
 import _ from 'lodash';
-import { dateMath } from '@grafana/data';
+import { dateMath, ScopedVars } from '@grafana/data';
 import kbn from 'app/core/utils/kbn';
 import { CloudWatchQuery } from './types';
-import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings, ScopedVars } from '@grafana/ui';
+import { DataSourceApi, DataQueryRequest, DataSourceInstanceSettings } from '@grafana/ui';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -52,7 +52,6 @@ export default class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery>
       item.period = String(this.getPeriod(item, options)); // use string format for period in graph query, and alerting
       item.id = this.templateSrv.replace(item.id, options.scopedVars);
       item.expression = this.templateSrv.replace(item.expression, options.scopedVars);
-      item.returnData = typeof item.hide === 'undefined' ? true : !item.hide;
 
       // valid ExtendedStatistics is like p90.00, check the pattern
       const hasInvalidStatistics = item.statistics.some(s => {

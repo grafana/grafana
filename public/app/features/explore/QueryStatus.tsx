@@ -4,7 +4,7 @@ import ElapsedTime from './ElapsedTime';
 import { LoadingState } from '@grafana/data';
 import { PanelData } from '@grafana/ui';
 
-function formatLatency(value) {
+function formatLatency(value: number) {
   return `${(value / 1000).toFixed(1)}s`;
 }
 
@@ -39,9 +39,14 @@ interface QueryStatusProps {
 export default class QueryStatus extends PureComponent<QueryStatusProps> {
   render() {
     const { queryResponse, latency } = this.props;
+
+    if (queryResponse.state === LoadingState.NotStarted) {
+      return null;
+    }
+
     return (
       <div className="query-transactions">
-        {queryResponse && <QueryStatusItem queryResponse={queryResponse} latency={latency} />}
+        <QueryStatusItem queryResponse={queryResponse} latency={latency} />
       </div>
     );
   }

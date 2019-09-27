@@ -6,11 +6,12 @@ import _ from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 
 // Components
-import { FormLabel, Select, SelectOptionItem } from '@grafana/ui';
+import { FormLabel, Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data';
 
 // Types
 import { QueryEditorProps } from '@grafana/ui';
-import { TestDataDatasource } from './datasource';
+import { TestDataDataSource } from './datasource';
 import { TestDataQuery, Scenario } from './types';
 
 interface State {
@@ -18,7 +19,7 @@ interface State {
   current: Scenario | null;
 }
 
-type Props = QueryEditorProps<TestDataDatasource, TestDataQuery>;
+type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
 
 export class QueryEditor extends PureComponent<Props> {
   backendSrv = getBackendSrv();
@@ -40,7 +41,7 @@ export class QueryEditor extends PureComponent<Props> {
     this.setState({ scenarioList: scenarioList, current: current });
   }
 
-  onScenarioChange = (item: SelectOptionItem<string>) => {
+  onScenarioChange = (item: SelectableValue<string>) => {
     this.props.onChange({
       ...this.props.query,
       scenarioId: item.value,

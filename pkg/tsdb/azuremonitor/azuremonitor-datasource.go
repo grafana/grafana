@@ -119,6 +119,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 		params.Add("interval", timeGrain)
 		params.Add("aggregation", fmt.Sprintf("%v", azureMonitorTarget["aggregation"]))
 		params.Add("metricnames", fmt.Sprintf("%v", azureMonitorTarget["metricName"]))
+		params.Add("metricnamespace", fmt.Sprintf("%v", azureMonitorTarget["metricNamespace"]))
 
 		dimension := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimension"]))
 		dimensionFilter := strings.TrimSpace(fmt.Sprintf("%v", azureMonitorTarget["dimensionFilter"]))

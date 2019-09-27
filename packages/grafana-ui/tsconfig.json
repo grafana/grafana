@@ -5,6 +5,10 @@
   "compilerOptions": {
     "rootDirs": [".", "stories"],
     "typeRoots": ["./node_modules/@types", "types"],
+    "baseUrl": "./node_modules/@types",
+    "paths": {
+      "@grafana/slate-react": ["slate-react"]
+    },
     "declarationDir": "dist",
     "outDir": "compiled"
   }

@@ -21,7 +21,7 @@ export class PanelResizer extends PureComponent<Props, State> {
   throttledResizeDone: () => void;
   noStyles: object = {};
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     const { panel } = this.props;
 

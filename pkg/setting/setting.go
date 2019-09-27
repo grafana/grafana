@@ -29,6 +29,7 @@ type Scheme string
 const (
 	HTTP              Scheme = "http"
 	HTTPS             Scheme = "https"
+	HTTP2             Scheme = "h2"
 	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
 )
@@ -107,6 +108,7 @@ var (
 	ExternalSnapshotName  string
 	ExternalEnabled       bool
 	SnapShotRemoveExpired bool
+	SnapshotPublicMode    bool
 
 	// Dashboard history
 	DashboardVersionsToKeep int
@@ -241,6 +243,7 @@ type Cfg struct {
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
+	MetricsEndpointDisableTotalStats bool
 	PluginsEnableAlpha               bool
 	PluginsAppsSkipVerifyTLS         bool
 	DisableSanitizeHtml              bool
@@ -264,6 +267,8 @@ type Cfg struct {
 	EditorsCanAdmin bool
 
 	ApiKeyMaxSecondsToLive int64
+
+	FeatureToggles map[string]bool
 }
 
 type CommandLineArgs struct {
@@ -639,6 +644,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
+	if protocolStr == "h2" {
+		Protocol = HTTP2
+		CertFile = server.Key("cert_file").String()
+		KeyFile = server.Key("cert_key").String()
+	}
 	if protocolStr == "socket" {
 		Protocol = SOCKET
 		SocketPath = server.Key("socket").String()
@@ -728,6 +738,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	// read dashboard settings
 	dashboards := iniFile.Section("dashboards")
@@ -897,6 +908,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	if err != nil {
 		return err
 	}
+	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -932,6 +944,17 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	pluginsSection := iniFile.Section("plugins")
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
+
+	// Read and populate feature toggles list
+	featureTogglesSection := iniFile.Section("feature_toggles")
+	cfg.FeatureToggles = make(map[string]bool)
+	featuresTogglesStr, err := valueAsString(featureTogglesSection, "enable", "")
+	if err != nil {
+		return err
+	}
+	for _, feature := range util.SplitString(featuresTogglesStr) {
+		cfg.FeatureToggles[feature] = true
+	}
 
 	// check old location for this option
 	if panelsSection.Key("enable_alpha").MustBool(false) {

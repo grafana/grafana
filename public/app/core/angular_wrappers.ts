@@ -11,13 +11,27 @@ import { ColorPicker, SeriesColorPickerPopoverWithTheme, SecretFormField, DataLi
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
 import { GraphContextMenu } from 'app/plugins/panel/graph/GraphContextMenu';
+import ReactProfileWrapper from 'app/features/profile/ReactProfileWrapper';
+import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 
 export function registerAngularDirectives() {
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
   react2AngularDirective('appNotificationsList', AppNotificationList, []);
   react2AngularDirective('pageHeader', PageHeader, ['model', 'noTabs']);
-  react2AngularDirective('emptyListCta', EmptyListCTA, ['model']);
+  react2AngularDirective('emptyListCta', EmptyListCTA, [
+    'title',
+    'buttonIcon',
+    'buttonLink',
+    'buttonTitle',
+    ['onClick', { watchDepth: 'reference', wrapApply: true }],
+    'proTip',
+    'proTipLink',
+    'proTipLinkTitle',
+    'proTipTarget',
+    'infoBox',
+    'infoBoxTitle',
+  ]);
   react2AngularDirective('searchField', SearchField, [
     'query',
     'autoFocus',
@@ -77,6 +91,7 @@ export function registerAngularDirectives() {
     'items',
     ['onClose', { watchDepth: 'reference', wrapApply: true }],
     ['getContextMenuSource', { watchDepth: 'reference', wrapApply: true }],
+    ['formatSourceDate', { watchDepth: 'reference', wrapApply: true }],
   ]);
 
   // We keep the drilldown terminology here because of as using data-* directive
@@ -85,5 +100,13 @@ export function registerAngularDirectives() {
     'value',
     'suggestions',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
+  ]);
+
+  react2AngularDirective('reactProfileWrapper', ReactProfileWrapper, []);
+
+  react2AngularDirective('lokiAnnotationsQueryEditor', LokiAnnotationsQueryEditor, [
+    'expr',
+    'onChange',
+    ['datasource', { watchDepth: 'reference' }],
   ]);
 }

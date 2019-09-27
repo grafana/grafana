@@ -1,3 +1,4 @@
+import { Unsubscribable } from 'rxjs';
 import { ComponentClass } from 'react';
 import {
   DataQuery,
@@ -5,7 +6,8 @@ import {
   DataSourceApi,
   QueryHint,
   ExploreStartPageProps,
-  DataQueryError,
+  PanelData,
+  DataQueryRequest,
 } from '@grafana/ui';
 
 import {
@@ -14,16 +16,23 @@ import {
   TimeRange,
   LogsModel,
   LogsDedupStrategy,
-  LoadingState,
   AbsoluteTimeRange,
+  GraphSeriesXY,
 } from '@grafana/data';
 
 import { Emitter } from 'app/core/core';
 import TableModel from 'app/core/table_model';
 
+import { Value } from 'slate';
+
+import { Editor } from '@grafana/slate-react';
 export enum ExploreMode {
   Metrics = 'Metrics',
   Logs = 'Logs',
+}
+
+export enum CompletionItemKind {
+  GroupTitle = 'GroupTitle',
 }
 
 export interface CompletionItem {
@@ -33,40 +42,48 @@ export interface CompletionItem {
    * this completion.
    */
   label: string;
+
   /**
-   * The kind of this completion item. Based on the kind
-   * an icon is chosen by the editor.
+   * The kind of this completion item. An icon is chosen
+   * by the editor based on the kind.
    */
-  kind?: string;
+  kind?: CompletionItemKind | string;
+
   /**
    * A human-readable string with additional information
    * about this item, like type or symbol information.
    */
   detail?: string;
+
   /**
    * A human-readable string, can be Markdown, that represents a doc-comment.
    */
   documentation?: string;
+
   /**
    * A string that should be used when comparing this item
    * with other items. When `falsy` the `label` is used.
    */
   sortText?: string;
+
   /**
    * A string that should be used when filtering a set of
    * completion items. When `falsy` the `label` is used.
    */
   filterText?: string;
+
   /**
    * A string or snippet that should be inserted in a document when selecting
    * this completion. When `falsy` the `label` is used.
    */
   insertText?: string;
+
   /**
    * Delete number of characters before the caret position,
    * by default the letters from the beginning of the word.
    */
   deleteBackwards?: number;
+
   /**
    * Number of steps to move after the insertion, can be negative.
    */
@@ -78,18 +95,22 @@ export interface CompletionItemGroup {
    * Label that will be displayed for all entries of this group.
    */
   label: string;
+
   /**
    * List of suggestions of this group.
    */
   items: CompletionItem[];
+
   /**
    * If true, match only by prefix (and not mid-word).
    */
   prefixMatch?: boolean;
+
   /**
    * If true, do not filter items in this group based on the search.
    */
   skipFilter?: boolean;
+
   /**
    * If true, do not sort items.
    */
@@ -159,7 +180,7 @@ export interface ExploreItemState {
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
-  graphResult?: any[];
+  graphResult?: GraphSeriesXY[];
   /**
    * History of recent queries. Datasource-specific and initialized via localStorage.
    */
@@ -184,11 +205,6 @@ export interface ExploreItemState {
    */
   logsResult?: LogsModel;
 
-  /**
-   * Query intervals for graph queries to determine how many datapoints to return.
-   * Needs to be updated when `datasourceInstance` or `containerWidth` is changed.
-   */
-  queryIntervals: QueryIntervals;
   /**
    * Time range for this Explore. Managed by the time picker and used by all query runs.
    */
@@ -216,7 +232,7 @@ export interface ExploreItemState {
    */
   showingTable: boolean;
 
-  loadingState: LoadingState;
+  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -246,14 +262,25 @@ export interface ExploreItemState {
 
   update: ExploreUpdateState;
 
-  queryErrors: DataQueryError[];
-
   latency: number;
   supportedModes: ExploreMode[];
   mode: ExploreMode;
 
+  /**
+   * If true, the view is in live tailing mode.
+   */
   isLive: boolean;
+
+  /**
+   * If true, the live tailing view is paused.
+   */
+  isPaused: boolean;
   urlReplaced: boolean;
+
+  querySubscription?: Unsubscribable;
+
+  queryResponse: PanelData;
+  originPanelId?: number;
 }
 
 export interface ExploreUpdateState {
@@ -277,6 +304,7 @@ export interface ExploreUrlState {
   mode: ExploreMode;
   range: RawTimeRange;
   ui: ExploreUIState;
+  originPanelId?: number;
 }
 
 export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
@@ -285,7 +313,7 @@ export interface HistoryItem<TQuery extends DataQuery = DataQuery> {
 }
 
 export abstract class LanguageProvider {
-  datasource: any;
+  datasource: DataSourceApi;
   request: (url: string, params?: any) => Promise<any>;
   /**
    * Returns startTask that resolves with a task list when main syntax is loaded.
@@ -300,13 +328,12 @@ export interface TypeaheadInput {
   prefix: string;
   wrapperClasses: string[];
   labelKey?: string;
-  //Should be Value from slate
-  value?: any;
+  value?: Value;
+  editor?: Editor;
 }
 
 export interface TypeaheadOutput {
   context?: string;
-  refresher?: Promise<{}>;
   suggestions: CompletionItemGroup[];
 }
 
@@ -316,7 +343,7 @@ export interface QueryIntervals {
 }
 
 export interface QueryOptions {
-  interval: string;
+  minInterval: string;
   maxDataPoints?: number;
   live?: boolean;
 }
@@ -327,15 +354,8 @@ export interface QueryTransaction {
   error?: string | JSX.Element;
   hints?: QueryHint[];
   latency: number;
-  options: any;
+  request: DataQueryRequest;
   queries: DataQuery[];
   result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
-}
-
-export interface TextMatch {
-  text: string;
-  start: number;
-  length: number;
-  end: number;
 }

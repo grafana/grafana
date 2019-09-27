@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from 'react';
 import { mount } from 'enzyme';
-import { ThresholdsEditor, Props, threshodsWithoutKey } from './ThresholdsEditor';
+import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
 import { colors } from '../../utils';
 
 const setup = (propOverrides?: Partial<Props>) => {
@@ -21,13 +21,12 @@ const setup = (propOverrides?: Partial<Props>) => {
 };
 
 function getCurrentThresholds(editor: ThresholdsEditor) {
-  return threshodsWithoutKey(editor.state.thresholds);
+  return thresholdsWithoutKey(editor.state.thresholds);
 }
 
 describe('Render', () => {
   it('should render with base threshold', () => {
     const { wrapper } = setup();
-
     expect(wrapper).toMatchSnapshot();
   });
 });
@@ -35,8 +34,7 @@ describe('Render', () => {
 describe('Initialization', () => {
   it('should add a base threshold if missing', () => {
     const { instance } = setup();
-
-    expect(getCurrentThresholds(instance)).toEqual([{ value: -Infinity, color: colors[0] }]);
+    expect(getCurrentThresholds(instance)).toEqual([{ value: -Infinity, color: 'green' }]);
   });
 });
 
@@ -47,8 +45,8 @@ describe('Add threshold', () => {
     instance.onAddThresholdAfter(instance.state.thresholds[0]);
 
     expect(getCurrentThresholds(instance)).toEqual([
-      { value: -Infinity, color: colors[0] }, // 0
-      { value: 50, color: colors[2] }, // 1
+      { value: -Infinity, color: 'green' }, // 0
+      { value: 50, color: colors[1] }, // 1
     ]);
   });
 

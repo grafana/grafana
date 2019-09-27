@@ -1,8 +1,9 @@
-import angular from 'angular';
+import angular, { IQService } from 'angular';
 import _ from 'lodash';
 
 import { getPluginSettings } from './PluginSettingsCache';
 import { PluginMeta } from '@grafana/ui';
+import { NavModelSrv } from 'app/core/core';
 
 export class AppPageCtrl {
   page: any;
@@ -11,7 +12,12 @@ export class AppPageCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private $routeParams: any, private $rootScope, private navModelSrv, private $q) {
+  constructor(
+    private $routeParams: any,
+    private $rootScope: any,
+    private navModelSrv: NavModelSrv,
+    private $q: IQService
+  ) {
     this.pluginId = $routeParams.pluginId;
 
     this.$q

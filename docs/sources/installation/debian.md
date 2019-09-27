@@ -51,7 +51,7 @@ sudo add-apt-repository "deb https://packages.grafana.com/oss/deb beta main"
 Use the above line even if you are on Ubuntu or another Debian version. Then add our gpg key. This allows you to install signed packages.
 
 ```bash
-sudo wget -q -O - https://packages.grafana.com/gpg.key | apt-key add -
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
 ```
 
 Update your Apt repositories and install Grafana
@@ -163,5 +163,5 @@ binary and the `public` folder is located).
 
 ## Logging in for the first time
 
-To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default http port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
+To run Grafana open your browser and go to http://localhost:3000/. 3000 is the default HTTP port that Grafana listens to if you haven't [configured a different port](/installation/configuration/#http-port).
 Then follow the instructions [here](/guides/getting_started/).

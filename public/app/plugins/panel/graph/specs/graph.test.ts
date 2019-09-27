@@ -88,6 +88,9 @@ describe('grafanaGraph', () => {
         from: dateTime([2015, 1, 1, 10]),
         to: dateTime([2015, 1, 1, 22]),
       },
+      annotationsSrv: {
+        getAnnotations: () => Promise.resolve({}),
+      },
     } as any;
 
     ctx.data = [];
@@ -118,7 +121,7 @@ describe('grafanaGraph', () => {
     $.plot = ctrl.plot = jest.fn();
     scope.ctrl = ctrl;
 
-    link = graphDirective({} as any, {}, {} as any, {} as any).link(scope, {
+    link = graphDirective({} as any, {}, {} as any).link(scope, {
       width: () => 500,
       mouseleave: () => {},
       bind: () => {},

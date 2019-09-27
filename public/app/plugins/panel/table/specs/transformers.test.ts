@@ -1,8 +1,7 @@
 import { transformers, transformDataToTable } from '../transformers';
-import { TableData } from '@grafana/data';
 
 describe('when transforming time series table', () => {
-  let table: TableData;
+  let table: any;
 
   describe('given 2 time series', () => {
     const time = new Date().getTime();

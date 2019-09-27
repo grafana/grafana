@@ -1,4 +1,5 @@
 import { OrgSwitchCtrl } from '../components/org_switcher';
+// @ts-ignore
 import q from 'q';
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -15,15 +16,15 @@ jest.mock('app/core/config', () => {
 
 describe('OrgSwitcher', () => {
   describe('when switching org', () => {
-    let expectedHref;
-    let expectedUsingUrl;
+    let expectedHref: string;
+    let expectedUsingUrl: string;
 
     beforeEach(() => {
       const backendSrvStub: any = {
-        get: url => {
+        get: (url: string) => {
           return q.resolve([]);
         },
-        post: url => {
+        post: (url: string) => {
           expectedUsingUrl = url;
           return q.resolve({});
         },

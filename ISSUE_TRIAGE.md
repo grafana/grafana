@@ -1,17 +1,19 @@
-Triaging of issues
-------------------
+# Triaging issues
 
-Grafana being a popular open source project there are a lot of incoming issues. The main goal of issue triage is to categorize all incoming issues and make sure it has all basic information needed for anyone else to understand and/or being able to start working with it.
+The main goal of issue triage is to categorize all incoming Grafana issues and make sure each issue has all basic information needed for anyone else to understand and be able to start working on it.
 
-The core maintainers of the Grafana project is responsible for categorizing all incoming issues and delegate any critical and/or important issue to other maintainers. Currently there's one maintainer each week responsible. Besides that part, triage provides an important way to contribute to an open source project. Triage helps ensure issues resolve quickly by:
+The core maintainers of the Grafana project are responsible for categorizing all incoming issues and delegating any critical or important issue to other maintainers. Currently one maintainer each week is responsible. Besides that part, triage provides an important way to contribute to an open source project. 
 
-* Describing the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
+Triage helps ensure issues resolve quickly by:
+
+* Ensuring the issue's intent and purpose is conveyed precisely. This is necessary because it can be difficult for an issue to explain how an end user experiences a problem and what actions they took.
 * Giving a contributor the information they need before they commit to resolving an issue.
 * Lowering the issue count by preventing duplicate issues.
 * Streamlining the development process by preventing duplicate discussions.
 * If you don't have the knowledge or time to code, consider helping with triage. The community will thank you for saving them time by spending some of yours.
 
-**Simplified flowchart diagram of the issue triage process:**
+## Simplified flowchart diagram of the issue triage process
+
 <!-- https://textik.com/#610afa78553def29 -->
 ```
                         +--------------------------+
@@ -55,13 +57,13 @@ The core maintainers of the Grafana project is responsible for categorizing all 
 
 ## How you can help
 
-There are multiple ways that you can help with the Grafana project, especially without writing a single line of code. Everyone in the Grafana community will be greatly thankful you for helping out with any of the below tasks.
+There are multiple ways that you can help with the Grafana project, especially without writing a single line of code. Everyone in the Grafana community will be thankful to you for helping out with any of the below tasks.
 
 ### Answer/ask questions
 
 The [community site](https://community.grafana.com/) is the main channel to be used for asking and answering questions related to the Grafana project. This may be the first place a new or existing Grafana user look/ask for help after they found that the [documentation](https://grafana.com/docs) wasn't answering their questions. It's very important to help new and existing users so that these new users can find proper answers and eventually help out other users and by that keep growing the Grafana community.
 
-Please signup to the Grafana [community site](https://community.grafana.com/) and start help other Grafana users by answering their questions and/or ask for help.
+Please sign up to the Grafana [community site](https://community.grafana.com/) and start help other Grafana users by answering their questions and/or ask for help.
 
 ### Report documentation enhancements
 
@@ -99,7 +101,7 @@ See [investigation of issues](#investigation-of-issues).
 
 Helping the Grafana project to know which issues are most important by users and the community is crucial for the success of the project. Read more about [prioritizing issues](#4-prioritization-of-issues) for details about how issues are being prioritized. The Grafana project use GitGub issues and reactions for collecting votes on enhancement and bugs.
 
-**Please don't add `+1` issue comments or similar since that will notify everyone that have subscribed to an issue and it doesn't add any useful update, rather it creates a bad .**
+**Please don't add `+1` issue comments or similar since that will notify everyone that have subscribed to an issue and it doesn't add any useful update, rather it creates a bad habit.**
 
 If you want to show your interest or importance of an issue, please use [GitHub's reactions](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments).
 
@@ -119,7 +121,7 @@ To get started with issue triage and finding issues that haven't been triaged yo
 
 ### Browse unlabeled issues
 
-The easiest and straigt forward way of getting started and finding issues that haven't been triaged is to browse [unlabeled issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+no%3Alabel) and starting from the bottom and working yourself to the top.
+The easiest and straight forward way of getting started and finding issues that haven't been triaged is to browse [unlabeled issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+no%3Alabel) and starting from the bottom and working yourself to the top.
 
 ### Subscribe to all notifications
 
@@ -179,16 +181,18 @@ Depending on the issue, you might not feel all this information is needed. Use y
 
 If the author provides the standard information but you are still unable to triage the issue, request additional information. Do this kindly and politely because you are asking for more of the author's time.
 
-If the author does not respond requested information within the timespan of a week, close the issue with a kind note stating that the author can request for the issue to be reopened when the necessary information is provided.
+If the author does not respond to the requested information within the timespan of a week, close the issue with a kind note stating that the author can request for the issue to be reopened when the necessary information is provided.
 
 When you feel you have all the information needed you're ready to [categorizing the issue](#3-categorizing-an-issue).
+
+If you receive a notification with additional information provided but you are not anymore on issue triage and you feel you do not have time to handle it, you should delegate it to the current person on issue triage.
 
 ## 3. Categorizing an issue
 
 An issue can have multiple of the following labels. Typically, a properly categorized issue should at least have:
 
 - One label identifying its type (`type/*`).
-- One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or datasource (`datasource/*`), if applicable.
+- One or multiple labels identifying the functional areas of interest or component (`area/*`) and/or data source (`datasource/*`), if applicable.
 
 Label | Description
 ------- | --------
@@ -201,7 +205,7 @@ Label | Description
 `type/works-as-intended` | A reported bug works as intended/by design.
 `type/build-packaging` | Build or packaging problem or enhancement.
 `area/*` | Subject is related to a functional area of interest or component.
-`datasource/*` | Subject is related to a core datasource plugin.
+`datasource/*` | Subject is related to a core data source plugin.
 
 ### Duplicate issue?
 
@@ -347,11 +351,20 @@ In many cases the issue author or community as a whole is more suitable to contr
 
 When an issue has all basic information provided, but the triage responsible haven't been able to reproduce the reported problem at a first glance, the issue is labeled [Needs investigation](https://github.com/grafana/grafana/labels/needs%20investigation). Depending of the perceived severity and/or number of [upvotes](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments), the investigation will either be delegated to another maintainer for further investigation or either put on hold until someone else (maintainer or contributor) picks it up and eventually start investigating it.
 
-Investigating issues can be a very time consuming task, especially for the maintainers given the huge number of combinations of plugins, datasources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services etc that are being used with Grafana. There are a certain amount of combinations that are more common than others and these are in general easier for maintainers to investigate.
+Investigating issues can be a very time consuming task, especially for the maintainers given the huge number of combinations of plugins, data sources, platforms, databases, browsers, tools, hardware, integrations, versions and cloud services etc that are being used with Grafana. There are a certain amount of combinations that are more common than others and these are in general easier for maintainers to investigate.
 
 For some other combinations there may not be possible at all for a maintainer to setup a proper test environment for being able to investigate. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
 
 Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
+
+## External PRs
+
+Part of issue triage should also be triaging of external PRs. Main goal should be to make sure PRs from external contributors have an owner/reviewer and are not forgotten.
+
+1. Check new external PRs which do not have a reviewer.
+1. Check if there is a link to an existing issue.
+1. If not and you know which issue it is solving add the link yourself, otherwise ask the author to link the issue or create one.
+1. Assign a reviewer based on who was handling the linked issue or what code or feature does the PR touches (look at who was the last to make changes there if all else fails).
 
 ## Appendix
 

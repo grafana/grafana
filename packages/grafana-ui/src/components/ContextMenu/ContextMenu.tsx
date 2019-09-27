@@ -2,11 +2,13 @@ import React, { useContext, useRef } from 'react';
 import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
 import { GrafanaTheme, selectThemeVariant, ThemeContext } from '../../index';
+import { stylesFactory } from '../../themes/stylesFactory';
 import { Portal, List } from '../index';
+import { LinkTarget } from '@grafana/data';
 
 export interface ContextMenuItem {
   label: string;
-  target?: string;
+  target?: LinkTarget;
   icon?: string;
   url?: string;
   onClick?: (event?: React.SyntheticEvent<HTMLElement>) => void;
@@ -25,7 +27,7 @@ export interface ContextMenuProps {
   renderHeader?: () => JSX.Element;
 }
 
-const getContextMenuStyles = (theme: GrafanaTheme) => {
+const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
   const linkColor = selectThemeVariant(
     {
       light: theme.colors.dark2,
@@ -124,7 +126,7 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       cursor: pointer;
       &:hover {
         background: ${itemBgHover};
-        border-image: linear-gradient(rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
+        border-image: linear-gradient(#f05a28 30%, #fbca0a 99%);
         border-image-slice: 1;
       }
     `,
@@ -145,7 +147,7 @@ const getContextMenuStyles = (theme: GrafanaTheme) => {
       top: 4px;
     `,
   };
-};
+});
 
 export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, items, renderHeader }) => {
   const theme = useContext(ThemeContext);

@@ -1,4 +1,4 @@
-jest.mock('@grafana/data/src/utils/moment_wrapper', () => ({
+jest.mock('@grafana/data/src/datetime/moment_wrapper', () => ({
   dateTime: (ts: any) => {
     return {
       valueOf: () => ts,
@@ -16,48 +16,40 @@ jest.mock('@grafana/data/src/utils/moment_wrapper', () => ({
 import { ResultProcessor } from './ResultProcessor';
 import { ExploreItemState, ExploreMode } from 'app/types/explore';
 import TableModel from 'app/core/table_model';
-import { toFixed } from '@grafana/ui';
-import { TimeSeries, LogRowModel, LogsMetaItem } from '@grafana/data';
+import { TimeSeries, LogRowModel, toDataFrame, FieldType } from '@grafana/data';
 
 const testContext = (options: any = {}) => {
-  const response = [
-    {
-      target: 'A-series',
-      alias: 'A-series',
-      datapoints: [[39.91264531864214, 1559038518831], [40.35179822906545, 1559038519831]],
-      refId: 'A',
-    },
-    {
-      columns: [
-        {
-          text: 'Time',
-        },
-        {
-          text: 'Message',
-        },
-        {
-          text: 'Description',
-        },
-        {
-          text: 'Value',
-        },
-      ],
-      rows: [
-        [1559038518831, 'This is a message', 'Description', 23.1],
-        [1559038519831, 'This is a message', 'Description', 23.1],
-      ],
-      refId: 'B',
-    },
-  ];
+  const timeSeries = toDataFrame({
+    name: 'A-series',
+    refId: 'A',
+    fields: [
+      { name: 'A-series', type: FieldType.number, values: [4, 5, 6] },
+      { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+    ],
+  });
+
+  const table = toDataFrame({
+    name: 'table-res',
+    refId: 'A',
+    fields: [
+      { name: 'value', type: FieldType.number, values: [4, 5, 6] },
+      { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+      { name: 'message', type: FieldType.string, values: ['this is a message', 'second message', 'third'] },
+    ],
+  });
+
+  const emptyTable = toDataFrame({ name: 'empty-table', refId: 'A', fields: [] });
+
   const defaultOptions = {
     mode: ExploreMode.Metrics,
-    replacePreviousResults: true,
-    result: { data: response },
+    dataFrames: [timeSeries, table, emptyTable],
     graphResult: [] as TimeSeries[],
     tableResult: new TableModel(),
     logsResult: { hasUniqueLabels: false, rows: [] as LogRowModel[] },
   };
+
   const combinedOptions = { ...defaultOptions, ...options };
+
   const state = ({
     mode: combinedOptions.mode,
     graphResult: combinedOptions.graphResult,
@@ -65,46 +57,38 @@ const testContext = (options: any = {}) => {
     logsResult: combinedOptions.logsResult,
     queryIntervals: { intervalMs: 10 },
   } as any) as ExploreItemState;
-  const resultProcessor = new ResultProcessor(state, combinedOptions.replacePreviousResults, combinedOptions.result);
+
+  const resultProcessor = new ResultProcessor(state, combinedOptions.dataFrames, 60000);
 
   return {
-    result: combinedOptions.result,
+    dataFrames: combinedOptions.dataFrames,
     resultProcessor,
   };
 };
 
 describe('ResultProcessor', () => {
   describe('constructed without result', () => {
-    describe('when calling getRawData', () => {
-      it('then it should return an empty array', () => {
-        const { resultProcessor } = testContext({ result: null });
-        const theResult = resultProcessor.getRawData();
-
-        expect(theResult).toEqual([]);
-      });
-    });
-
     describe('when calling getGraphResult', () => {
-      it('then it should return an empty array', () => {
-        const { resultProcessor } = testContext({ result: null });
+      it('then it should return null', () => {
+        const { resultProcessor } = testContext({ dataFrames: [] });
         const theResult = resultProcessor.getGraphResult();
 
-        expect(theResult).toEqual([]);
+        expect(theResult).toEqual(null);
       });
     });
 
     describe('when calling getTableResult', () => {
-      it('then it should return an empty TableModel', () => {
-        const { resultProcessor } = testContext({ result: null });
+      it('then it should return null', () => {
+        const { resultProcessor } = testContext({ dataFrames: [] });
         const theResult = resultProcessor.getTableResult();
 
-        expect(theResult).toEqual(new TableModel());
+        expect(theResult).toEqual(null);
       });
     });
 
     describe('when calling getLogsResult', () => {
       it('then it should return null', () => {
-        const { resultProcessor } = testContext({ result: null });
+        const { resultProcessor } = testContext({ dataFrames: [] });
         const theResult = resultProcessor.getLogsResult();
 
         expect(theResult).toBeNull();
@@ -113,15 +97,6 @@ describe('ResultProcessor', () => {
   });
 
   describe('constructed with a result that is a DataQueryResponse', () => {
-    describe('when calling getRawData', () => {
-      it('then it should return result.data', () => {
-        const { result, resultProcessor } = testContext();
-        const theResult = resultProcessor.getRawData();
-
-        expect(theResult).toEqual(result.data);
-      });
-    });
-
     describe('when calling getGraphResult', () => {
       it('then it should return correct graph result', () => {
         const { resultProcessor } = testContext();
@@ -129,20 +104,14 @@ describe('ResultProcessor', () => {
 
         expect(theResult).toEqual([
           {
-            alias: 'A-series',
-            aliasEscaped: 'A-series',
-            bars: {
-              fillColor: '#7EB26D',
-            },
-            hasMsResolution: true,
-            id: 'A-series',
             label: 'A-series',
-            legend: true,
-            stats: {},
             color: '#7EB26D',
-            datapoints: [[39.91264531864214, 1559038518831], [40.35179822906545, 1559038519831]],
-            unit: undefined,
-            valueFormater: toFixed,
+            data: [[100, 4], [200, 5], [300, 6]],
+            info: undefined,
+            isVisible: true,
+            yAxis: {
+              index: 1,
+            },
           },
         ]);
       });
@@ -155,11 +124,12 @@ describe('ResultProcessor', () => {
 
         expect(theResult).toEqual({
           columnMap: {},
-          columns: [{ text: 'Time' }, { text: 'Message' }, { text: 'Description' }, { text: 'Value' }],
-          rows: [
-            [1559038518831, 'This is a message', 'Description', 23.1],
-            [1559038519831, 'This is a message', 'Description', 23.1],
+          columns: [
+            { text: 'value', type: 'number', filterable: undefined },
+            { text: 'time', type: 'time', filterable: undefined },
+            { text: 'message', type: 'string', filterable: undefined },
           ],
+          rows: [[4, 100, 'this is a message'], [5, 200, 'second message'], [6, 300, 'third']],
           type: 'table',
         });
       });
@@ -167,7 +137,7 @@ describe('ResultProcessor', () => {
 
     describe('when calling getLogsResult', () => {
       it('then it should return correct logs result', () => {
-        const { resultProcessor } = testContext({ mode: ExploreMode.Logs, observerResponse: null });
+        const { resultProcessor } = testContext({ mode: ExploreMode.Logs });
         const theResult = resultProcessor.getLogsResult();
 
         expect(theResult).toEqual({
@@ -175,292 +145,61 @@ describe('ResultProcessor', () => {
           meta: [],
           rows: [
             {
-              entry: 'This is a message',
+              entry: 'third',
               hasAnsi: false,
               labels: undefined,
               logLevel: 'unknown',
-              raw: 'This is a message',
+              raw: 'third',
               searchWords: [] as string[],
-              timeEpochMs: 1559038519831,
+              timeEpochMs: 300,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 1559038519831,
+              timestamp: 300,
               uniqueLabels: {},
             },
             {
-              entry: 'This is a message',
+              entry: 'second message',
               hasAnsi: false,
               labels: undefined,
               logLevel: 'unknown',
-              raw: 'This is a message',
+              raw: 'second message',
               searchWords: [] as string[],
-              timeEpochMs: 1559038518831,
+              timeEpochMs: 200,
               timeFromNow: 'fromNow() jest mocked',
               timeLocal: 'format() jest mocked',
               timeUtc: 'format() jest mocked',
-              timestamp: 1559038518831,
+              timestamp: 200,
+              uniqueLabels: {},
+            },
+            {
+              entry: 'this is a message',
+              hasAnsi: false,
+              labels: undefined,
+              logLevel: 'unknown',
+              raw: 'this is a message',
+              searchWords: [] as string[],
+              timeEpochMs: 100,
+              timeFromNow: 'fromNow() jest mocked',
+              timeLocal: 'format() jest mocked',
+              timeUtc: 'format() jest mocked',
+              timestamp: 100,
               uniqueLabels: {},
             },
           ],
           series: [
             {
-              alias: 'A-series',
-              datapoints: [[39.91264531864214, 1559038518831], [40.35179822906545, 1559038519831]],
-              meta: undefined,
-              refId: 'A',
-              target: 'A-series',
-              unit: undefined,
-            },
-          ],
-        });
-      });
-    });
-  });
-
-  describe('constructed with result that is a DataQueryResponse and merging with previous results', () => {
-    describe('when calling getRawData', () => {
-      it('then it should return result.data', () => {
-        const { result, resultProcessor } = testContext();
-        const theResult = resultProcessor.getRawData();
-
-        expect(theResult).toEqual(result.data);
-      });
-    });
-
-    describe('when calling getGraphResult', () => {
-      it('then it should return correct graph result', () => {
-        const { resultProcessor } = testContext({
-          replacePreviousResults: false,
-          graphResult: [
-            {
-              alias: 'A-series',
-              aliasEscaped: 'A-series',
-              bars: {
-                fillColor: '#7EB26D',
-              },
-              hasMsResolution: true,
-              id: 'A-series',
               label: 'A-series',
-              legend: true,
-              stats: {},
               color: '#7EB26D',
-              datapoints: [[19.91264531864214, 1558038518831], [20.35179822906545, 1558038519831]],
-              unit: undefined,
-              valueFormater: toFixed,
+              data: [[100, 4], [200, 5], [300, 6]],
+              info: undefined,
+              isVisible: true,
+              yAxis: {
+                index: 1,
+              },
             },
           ],
         });
-        const theResult = resultProcessor.getGraphResult();
-
-        expect(theResult).toEqual([
-          {
-            alias: 'A-series',
-            aliasEscaped: 'A-series',
-            bars: {
-              fillColor: '#7EB26D',
-            },
-            hasMsResolution: true,
-            id: 'A-series',
-            label: 'A-series',
-            legend: true,
-            stats: {},
-            color: '#7EB26D',
-            datapoints: [
-              [19.91264531864214, 1558038518831],
-              [20.35179822906545, 1558038519831],
-              [39.91264531864214, 1559038518831],
-              [40.35179822906545, 1559038519831],
-            ],
-            unit: undefined,
-            valueFormater: toFixed,
-          },
-        ]);
-      });
-    });
-
-    describe('when calling getTableResult', () => {
-      it('then it should return correct table result', () => {
-        const { resultProcessor } = testContext({
-          replacePreviousResults: false,
-          tableResult: {
-            columnMap: {},
-            columns: [{ text: 'Time' }, { text: 'Message' }, { text: 'Description' }, { text: 'Value' }],
-            rows: [
-              [1558038518831, 'This is a previous message 1', 'Previous Description 1', 21.1],
-              [1558038519831, 'This is a previous message 2', 'Previous Description 2', 22.1],
-            ],
-            type: 'table',
-          },
-        });
-        const theResult = resultProcessor.getTableResult();
-
-        expect(theResult).toEqual({
-          columnMap: {},
-          columns: [{ text: 'Time' }, { text: 'Message' }, { text: 'Description' }, { text: 'Value' }],
-          rows: [
-            [1558038518831, 'This is a previous message 1', 'Previous Description 1', 21.1],
-            [1558038519831, 'This is a previous message 2', 'Previous Description 2', 22.1],
-            [1559038518831, 'This is a message', 'Description', 23.1],
-            [1559038519831, 'This is a message', 'Description', 23.1],
-          ],
-          type: 'table',
-        });
-      });
-    });
-
-    describe('when calling getLogsResult', () => {
-      it('then it should return correct logs result', () => {
-        const { resultProcessor } = testContext({
-          mode: ExploreMode.Logs,
-          replacePreviousResults: false,
-          logsResult: {
-            hasUniqueLabels: false,
-            meta: [],
-            rows: [
-              {
-                entry: 'This is a previous message 1',
-                fresh: true,
-                hasAnsi: false,
-                labels: { cluster: 'some-cluster' },
-                logLevel: 'unknown',
-                raw: 'This is a previous message 1',
-                searchWords: [] as string[],
-                timeEpochMs: 1558038519831,
-                timeFromNow: 'fromNow() jest mocked',
-                timeLocal: 'format() jest mocked',
-                timeUtc: 'format() jest mocked',
-                timestamp: 1558038519831,
-                uniqueLabels: {},
-              },
-              {
-                entry: 'This is a previous message 2',
-                fresh: true,
-                hasAnsi: false,
-                labels: { cluster: 'some-cluster' },
-                logLevel: 'unknown',
-                raw: 'This is a previous message 2',
-                searchWords: [] as string[],
-                timeEpochMs: 1558038518831,
-                timeFromNow: 'fromNow() jest mocked',
-                timeLocal: 'format() jest mocked',
-                timeUtc: 'format() jest mocked',
-                timestamp: 1558038518831,
-                uniqueLabels: {},
-              },
-            ],
-            series: [
-              {
-                alias: 'A-series',
-                aliasEscaped: 'A-series',
-                bars: {
-                  fillColor: '#7EB26D',
-                },
-                hasMsResolution: true,
-                id: 'A-series',
-                label: 'A-series',
-                legend: true,
-                stats: {},
-                color: '#7EB26D',
-                datapoints: [[37.91264531864214, 1558038518831], [38.35179822906545, 1558038519831]],
-                unit: undefined,
-                valueFormater: toFixed,
-              },
-            ],
-          },
-        });
-        const theResult = resultProcessor.getLogsResult();
-        const expected = {
-          hasUniqueLabels: false,
-          meta: [] as LogsMetaItem[],
-          rows: [
-            {
-              entry: 'This is a previous message 1',
-              fresh: false,
-              hasAnsi: false,
-              labels: { cluster: 'some-cluster' },
-              logLevel: 'unknown',
-              raw: 'This is a previous message 1',
-              searchWords: [] as string[],
-              timeEpochMs: 1558038519831,
-              timeFromNow: 'fromNow() jest mocked',
-              timeLocal: 'format() jest mocked',
-              timeUtc: 'format() jest mocked',
-              timestamp: 1558038519831,
-              uniqueLabels: {},
-            },
-            {
-              entry: 'This is a previous message 2',
-              fresh: false,
-              hasAnsi: false,
-              labels: { cluster: 'some-cluster' },
-              logLevel: 'unknown',
-              raw: 'This is a previous message 2',
-              searchWords: [] as string[],
-              timeEpochMs: 1558038518831,
-              timeFromNow: 'fromNow() jest mocked',
-              timeLocal: 'format() jest mocked',
-              timeUtc: 'format() jest mocked',
-              timestamp: 1558038518831,
-              uniqueLabels: {},
-            },
-            {
-              entry: 'This is a message',
-              fresh: true,
-              hasAnsi: false,
-              labels: undefined,
-              logLevel: 'unknown',
-              raw: 'This is a message',
-              searchWords: [] as string[],
-              timeEpochMs: 1559038519831,
-              timeFromNow: 'fromNow() jest mocked',
-              timeLocal: 'format() jest mocked',
-              timeUtc: 'format() jest mocked',
-              timestamp: 1559038519831,
-              uniqueLabels: {},
-            },
-            {
-              entry: 'This is a message',
-              fresh: true,
-              hasAnsi: false,
-              labels: undefined,
-              logLevel: 'unknown',
-              raw: 'This is a message',
-              searchWords: [] as string[],
-              timeEpochMs: 1559038518831,
-              timeFromNow: 'fromNow() jest mocked',
-              timeLocal: 'format() jest mocked',
-              timeUtc: 'format() jest mocked',
-              timestamp: 1559038518831,
-              uniqueLabels: {},
-            },
-          ],
-          series: [
-            {
-              alias: 'A-series',
-              aliasEscaped: 'A-series',
-              bars: {
-                fillColor: '#7EB26D',
-              },
-              hasMsResolution: true,
-              id: 'A-series',
-              label: 'A-series',
-              legend: true,
-              stats: {},
-              color: '#7EB26D',
-              datapoints: [
-                [37.91264531864214, 1558038518831],
-                [38.35179822906545, 1558038519831],
-                [39.91264531864214, 1559038518831],
-                [40.35179822906545, 1559038519831],
-              ],
-              unit: undefined as string,
-              valueFormater: toFixed,
-            },
-          ],
-        };
-
-        expect(theResult).toEqual(expected);
       });
     });
   });

@@ -9,13 +9,18 @@ import {
   FieldDisplayEditor,
   FieldPropertiesEditor,
   PanelOptionsGroup,
+  DataLinksEditor,
 } from '@grafana/ui';
-import { Threshold, ValueMapping, Field } from '@grafana/data';
+import { Threshold, ValueMapping, FieldConfig, DataLink } from '@grafana/data';
 
 import { SingleStatOptions, SparklineOptions } from './types';
 import { ColoringEditor } from './ColoringEditor';
 import { FontSizeEditor } from './FontSizeEditor';
 import { SparklineEditor } from './SparklineEditor';
+import {
+  getDataLinksVariableSuggestions,
+  getCalculationValueDataLinksVariableSuggestions,
+} from 'app/features/panel/panellinks/link_srv';
 
 export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatOptions>> {
   onThresholdsChanged = (thresholds: Threshold[]) => {
@@ -46,10 +51,17 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
       sparkline,
     });
 
-  onDefaultsChange = (field: Partial<Field>) => {
+  onDefaultsChange = (field: FieldConfig) => {
     this.onDisplayOptionsChanged({
       ...this.props.options.fieldOptions,
-      override: field,
+      defaults: field,
+    });
+  };
+
+  onDataLinksChanged = (links: DataLink[]) => {
+    this.onDefaultsChange({
+      ...this.props.options.fieldOptions.defaults,
+      links,
     });
   };
 
@@ -57,6 +69,9 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
     const { options } = this.props;
     const { fieldOptions } = options;
     const { defaults } = fieldOptions;
+    const suggestions = fieldOptions.values
+      ? getDataLinksVariableSuggestions(this.props.data.series)
+      : getCalculationValueDataLinksVariableSuggestions(this.props.data.series);
 
     return (
       <>
@@ -77,6 +92,15 @@ export class SingleStatEditor extends PureComponent<PanelEditorProps<SingleStatO
         </PanelOptionsGrid>
 
         <ValueMappingsEditor onChange={this.onValueMappingsChanged} valueMappings={defaults.mappings} />
+
+        <PanelOptionsGroup title="Data links">
+          <DataLinksEditor
+            value={defaults.links}
+            onChange={this.onDataLinksChanged}
+            suggestions={suggestions}
+            maxLinks={10}
+          />
+        </PanelOptionsGroup>
       </>
     );
   }
