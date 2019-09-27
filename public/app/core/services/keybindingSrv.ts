@@ -4,7 +4,6 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import locationUtil from 'app/core/utils/location_util';
-import { config } from '@grafana/runtime';
 import { store } from 'app/store/store';
 
 import Mousetrap from 'mousetrap';
@@ -223,10 +222,9 @@ export class KeybindingSrv {
           const datasource = await this.datasourceSrv.get(panel.datasource);
           const url = await getExploreUrl(panel, panel.targets, datasource, this.datasourceSrv, this.timeSrv);
           const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
-          const finalUrl = config.appSubUrl + urlWithoutBase;
 
-          if (finalUrl) {
-            this.$timeout(() => this.$location.url(finalUrl));
+          if (urlWithoutBase) {
+            this.$timeout(() => this.$location.url(urlWithoutBase));
           }
         }
       });
