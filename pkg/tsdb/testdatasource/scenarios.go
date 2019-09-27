@@ -1,4 +1,4 @@
-package testdata
+package testdatasource
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -188,11 +189,11 @@ func init() {
 					value = null.FloatFrom(valueFloat)
 				}
 
-				if timeInt, err := strconv.ParseInt(string(pointValues[1].(json.Number)), 10, 64); err != nil {
+				timeInt, err := strconv.ParseInt(string(pointValues[1].(json.Number)), 10, 64)
+				if err != nil {
 					continue
-				} else {
-					time = timeInt
 				}
+				time = timeInt
 
 				if time >= startTime && time <= endTime {
 					series.Points = append(series.Points, tsdb.NewTimePoint(value, float64(time)))
@@ -447,7 +448,7 @@ func getPredictableCSVWave(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.Que
 	for i, rawValue := range rawValesCSV {
 		val, err := null.FloatFromString(strings.TrimSpace(rawValue), "null")
 		if err != nil {
-			queryRes.Error = fmt.Errorf("failed to parse value '%v' into nullable float: err", rawValue, err)
+			queryRes.Error = errutil.Wrapf(err, "failed to parse value '%v' into nullable float", rawValue)
 			return queryRes
 		}
 		values[i] = val
@@ -558,6 +559,7 @@ func parseLabels(text string) map[string]string {
 		idx := strings.Index(keyval, "=")
 		key := strings.TrimSpace(keyval[:idx])
 		val := strings.TrimSpace(keyval[idx+1:])
+		val = strings.Trim(val, "\"")
 		tags[key] = val
 	}
 
