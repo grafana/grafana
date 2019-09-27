@@ -6,14 +6,18 @@ on:
 
 jobs:
   build:
-    name: Build Storybook
+    name: Deploy Storybook
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-node@v1
       with:
         node-version: 10.x
-    - run: npm install -g yarn
+    - run: npm install -g yarn now
     - run: yarn install --pure-lockfile
-    # - run: yarn storybook:build
-    - uses: ./.github/actions/deploy-storybook
+    - name: Verify if storybook should be deployed
+      uses: ./.github/actions/verify-deploy-storybook
+      id: deployVerify
+    - name: Build Storybook
+      if: steps.deployVerify.outputs.shouldDeploy == 'true'
+      run: yarn storybook:build
