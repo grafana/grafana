@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
+import { SelectableValue } from '@grafana/data';
 import { OptionType } from './GroupBy';
 import { SegmentSelect } from './SegmentSelect';
 
-export interface Props {
-  options: OptionType;
-  onChange: (value: string) => void;
+export interface Props<T> {
+  options: OptionType<T> | undefined;
+  onChange: (item: SelectableValue<T>) => void;
   className?: string;
 }
 
-export const SegmentAdd: React.FunctionComponent<Props> = ({ options, onChange, className }) => {
+export function SegmentAdd<T>({ options, onChange, className }: React.PropsWithChildren<Props<T>>) {
   const [expanded, setExpanded] = useState(false);
 
   if (!expanded) {
@@ -25,10 +26,10 @@ export const SegmentAdd: React.FunctionComponent<Props> = ({ options, onChange, 
     <SegmentSelect
       options={options}
       onClickOutside={() => setExpanded(false)}
-      onChange={value => {
+      onChange={item => {
         setExpanded(false);
-        onChange(value);
+        onChange(item);
       }}
     />
   );
-};
+}

@@ -5,36 +5,34 @@ import { SelectableValue } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { OptionType } from './GroupBy';
 
-export interface Props {
-  options: OptionType;
-  onChange: (value: string) => void;
+export interface Props<T> {
+  options: OptionType<T> | undefined;
+  onChange: (item: SelectableValue<T>) => void;
   onClickOutside: () => void;
-  removeOptionText?: string;
+  width?: number;
 }
 
-export const SegmentSelect: React.FunctionComponent<Props> = ({
+export function SegmentSelect<T>({
   options = [],
   onChange,
   onClickOutside,
-  removeOptionText,
-}) => {
+  width = 120,
+}: React.PropsWithChildren<Props<T>>) {
   const ref = useRef(null);
-  const [optionTypes, setOptionsTypes] = useState([]);
+  const [optionTypes, setOptionsTypes] = useState<Array<SelectableValue<T>>>([]);
 
   useEffect(() => {
     const selectOptions = Array.isArray(options)
-      ? options.map(v => ({ label: v, value: v }))
-      : Object.entries(options).map(([key, values]: [string, string[]]) => {
+      ? options
+      : Object.entries(options).map(([key, values]: [string, Array<OptionType<T>>]) => {
           return {
             label: key,
             expanded: true,
-            options: values.map(v => ({ label: v, value: v })),
+            options: values,
           };
         });
 
-    setOptionsTypes(
-      removeOptionText ? [{ label: removeOptionText, value: removeOptionText }, ...selectOptions] : selectOptions
-    );
+    setOptionsTypes(selectOptions);
   }, [options]);
 
   useClickAway(ref, () => {
@@ -46,16 +44,15 @@ export const SegmentSelect: React.FunctionComponent<Props> = ({
       <Select
         className={cx(
           css`
-            width: 120px;
+            width: ${width}px;
           `
         )}
         placeholder=""
         autoFocus={true}
-        width={200}
         isOpen={true}
-        onChange={(option: SelectableValue<string>) => onChange(option.value)}
+        onChange={onChange}
         options={optionTypes}
       />
     </div>
   );
-};
+}

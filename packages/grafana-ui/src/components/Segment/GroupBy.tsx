@@ -1,70 +1,87 @@
-import React, { useEffect, useState, FunctionComponent } from 'react';
+import React, { useEffect, useState } from 'react';
+import { SelectableValue } from '@grafana/data';
 
 import { Segment } from './Segment';
+import { SegmentAsync } from './SegmentAsync';
 import { SegmentAdd } from './SegmentAdd';
 import _ from 'lodash';
 
-type ObjectOption = {
-  [key: string]: string[];
+type ObjectOption<T> = {
+  [key: string]: Array<SelectableValue<T>>;
 };
 
-export type OptionType = string[] | ObjectOption;
+export type OptionType<T> = Array<SelectableValue<T>> | ObjectOption<T>;
 
-export interface FilterGroupProps {
-  values: string[];
-  options: OptionType;
+export interface Props<T> {
+  values: Array<SelectableValue<T>>;
+  options: OptionType<T>;
   removeOptionText?: string;
-  onChange: (values: string[]) => void;
+  onChange: (items: Array<SelectableValue<T>>) => void;
+  label: string;
 }
 
-export const GroupBy: FunctionComponent<FilterGroupProps> = ({
+export function GroupBy<T>({
   values: initialValues,
   options: initialOptions,
-  removeOptionText = '- remove group by -',
+  removeOptionText,
+  label,
   onChange,
-}) => {
-  const [values, setValues] = useState<string[]>([]);
-  const [options, setOptions] = useState<OptionType>();
+}: React.PropsWithChildren<Props<T>>) {
+  const [values, setValues] = useState<Array<SelectableValue<T>>>([]);
+  const [options, setOptions] = useState<OptionType<T>>();
 
   useEffect(() => {
     setValues(
-      initialValues.filter(iv =>
+      initialValues.filter(({ value }) =>
         Array.isArray(initialOptions)
-          ? initialOptions.includes(iv)
+          ? initialOptions.some(o => o.value === value)
           : Object.entries(initialOptions).reduce(
-              (acc, [, values]: [string, string[]]) => (acc ? acc : values.includes(iv)),
+              (acc: boolean, [, values]: [string, Array<SelectableValue<T>>]) =>
+                acc || values.some(v => v.value === value),
               false
             )
       )
     );
+
     setOptions(initialOptions);
   }, [initialOptions, initialValues]);
 
-  const onRemove = (index: number) => {
-    setValues(values.filter((_, i) => i !== index));
-  };
-
-  const onSegmentChange = (index: number, value: string) => {
-    setValues(values.map((v, i) => (i === index ? value : v)));
+  const onSegmentChange = (index: number, item: SelectableValue<T>) => {
+    setValues(values.map((current, i) => (i === index ? item : current)));
     onChange(values);
   };
+
+  const loadOptions = (): Promise<Array<SelectableValue<string>>> =>
+    new Promise(res => {
+      setTimeout(() => {
+        console.log('loadOptions');
+        res([{ label: 'test1', value: 'test1' }, { label: 'test2', value: 'test2' }]);
+      }, 3000);
+    });
+
+  // const onRemove = (index: number) => {
+  //   setValues(values.filter((_, i) => i !== index));
+  // };
 
   return (
     <div className="gf-form-inline">
       <div className="gf-form">
-        <span className="gf-form-label width-9 query-keyword">Group By</span>
+        <span className="gf-form-label width-12 query-keyword">{label}</span>
       </div>
       {values.map((value, i) => (
         <Segment
           key={i}
-          value={value}
-          removeOptionText={removeOptionText}
+          currentOption={value}
           options={options}
-          onRemove={() => onRemove(i)}
-          onChange={(value: string) => onSegmentChange(i, value)}
+          onChange={(item: SelectableValue<T>) => {
+            onSegmentChange(i, item);
+          }}
         />
       ))}
       <SegmentAdd onChange={value => setValues([...values, value])} options={options} />
+      <SegmentAsync onChange={() => console.log('onchange')} getOptions={loadOptions} />
     </div>
   );
-};
+}
+
+// export const GroupBy = component as typeof component;

@@ -1,24 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { SelectableValue } from '@grafana/data';
 import { SegmentSelect } from './SegmentSelect';
 import { OptionType } from './GroupBy';
 
-export interface Props {
-  value?: string;
-  options: OptionType;
-  onRemove?: () => void;
-  onChange: (value: string) => void;
-  removeOptionText?: string;
+export interface Props<T> {
+  currentOption: SelectableValue<T>;
+  options: OptionType<T> | undefined;
+  onChange: (item: SelectableValue<T>) => void;
   className?: string;
 }
 
-export const Segment: React.FunctionComponent<Props> = ({ options, value, removeOptionText, onChange, onRemove }) => {
+export function Segment<T>({ options, currentOption: { label }, onChange }: React.PropsWithChildren<Props<T>>) {
+  const ref = useRef(null);
   const [expanded, setExpanded] = useState(false);
+  const [labelWidth, setLabelWidth] = useState();
 
   if (!expanded) {
     return (
-      <div className="gf-form">
-        <a className="gf-form-label query-part" onClick={() => setExpanded(true)}>
-          {value}
+      <div className="gf-form" ref={ref}>
+        <a
+          className="gf-form-label query-part"
+          onClick={() => {
+            ref && ref.current && setLabelWidth(ref.current.clientWidth);
+            setExpanded(true);
+          }}
+        >
+          {label}
         </a>
       </div>
     );
@@ -26,17 +33,14 @@ export const Segment: React.FunctionComponent<Props> = ({ options, value, remove
 
   return (
     <SegmentSelect
-      removeOptionText={removeOptionText}
+      width={labelWidth}
+      // removeOptionText={removeOptionText}
       options={options}
       onClickOutside={() => setExpanded(false)}
-      onChange={value => {
+      onChange={item => {
         setExpanded(false);
-        if (removeOptionText && removeOptionText === value) {
-          onRemove();
-        } else {
-          onChange(value);
-        }
+        onChange(item);
       }}
     />
   );
-};
+}
