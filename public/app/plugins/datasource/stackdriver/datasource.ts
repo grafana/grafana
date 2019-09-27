@@ -288,8 +288,7 @@ export default class StackdriverDatasource extends DataSourceApi<StackdriverQuer
 
       return this.metricTypes;
     } catch (error) {
-      //@ts-ignore
-      appEvents.emit(dsRequestError, this.formatStackdriverError(error));
+      appEvents.emit(dsRequestError, { error: { data: { error: this.formatStackdriverError(error) } } });
       return [];
     }
   }

@@ -21,7 +21,7 @@ import config from 'app/core/config';
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { rendered } from 'app/types';
 
-export const viewModeChanged = eventFactory<PanelModel>('view-mode-changed');
+export const viewModeChanged = eventFactory('view-mode-changed');
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
 

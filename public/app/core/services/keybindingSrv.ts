@@ -17,13 +17,16 @@ import {
   toggleKioskMode,
   toggleViewMode,
   closeTimepicker,
+  saveDashboard,
+  zoomOut,
+  shiftTime,
 } from '@grafana/data';
 
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import { ContextSrv } from './context_srv';
-import { ILocationService, ITimeoutService } from 'angular';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { ILocationService, ITimeoutService, IRootScopeService } from 'angular';
+import { GrafanaRootScope, AppEventEmitter } from 'app/routes/GrafanaCtrl';
 
 export class KeybindingSrv {
   helpModal: boolean;
@@ -178,7 +181,7 @@ export class KeybindingSrv {
     this.$location.search(search);
   }
 
-  setupDashboardBindings(scope: any, dashboard: any) {
+  setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: any) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit(graphHoverClear);
@@ -186,23 +189,23 @@ export class KeybindingSrv {
     });
 
     this.bind('mod+s', () => {
-      scope.appEvent('save-dashboard');
+      scope.appEvent(saveDashboard);
     });
 
     this.bind('t z', () => {
-      scope.appEvent('zoom-out', 2);
+      scope.appEvent(zoomOut, 2);
     });
 
     this.bind('ctrl+z', () => {
-      scope.appEvent('zoom-out', 2);
+      scope.appEvent(zoomOut, 2);
     });
 
     this.bind('t left', () => {
-      scope.appEvent('shift-time', -1);
+      scope.appEvent(shiftTime, -1);
     });
 
     this.bind('t right', () => {
-      scope.appEvent('shift-time', 1);
+      scope.appEvent(shiftTime, 1);
     });
 
     // edit panel
@@ -263,7 +266,7 @@ export class KeybindingSrv {
     // share panel
     this.bind('p s', () => {
       if (dashboard.meta.focusPanelId) {
-        const shareScope = scope.$new();
+        const shareScope: any = scope.$new();
         const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
         shareScope.panel = panelInfo.panel;
         shareScope.dashboard = dashboard;

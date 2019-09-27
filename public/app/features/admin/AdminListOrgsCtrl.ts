@@ -1,9 +1,11 @@
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
+import { showConfirmModal } from '@grafana/data';
+import { AppEventEmitter } from 'app/routes/GrafanaCtrl';
 
 export default class AdminListOrgsCtrl {
   /** @ngInject */
-  constructor($scope: any, backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
+  constructor($scope: { [key: string]: any } & AppEventEmitter, backendSrv: BackendSrv, navModelSrv: NavModelSrv) {
     $scope.init = () => {
       $scope.navModel = navModelSrv.getNav('admin', 'global-orgs', 0);
       $scope.getOrgs();
@@ -16,7 +18,7 @@ export default class AdminListOrgsCtrl {
     };
 
     $scope.deleteOrg = (org: any) => {
-      $scope.appEvent('confirm-modal', {
+      $scope.appEvent(showConfirmModal, {
         title: 'Delete',
         text: 'Do you want to delete organization ' + org.name + '?',
         text2: 'All dashboards for this organization will be removed!',

@@ -40,13 +40,23 @@ import {
 } from '@grafana/data';
 import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } from 'angular';
 
-export type GrafanaRootScope = IRootScopeService & {
-  colors: string[];
-  onAppEvent(name: string, callback: (event: IAngularEvent, ...args: any[]) => void, localScope: any): void;
-  onAppEvent<T>(event: AppEvent<T>, callback: (event: IAngularEvent, ...args: any[]) => void, localScope: any): void;
+export interface AppEventEmitter {
+  /**
+   * DEPRECATED.
+   */
   appEvent(name: string, data?: any): void;
-  appEvent<T>(event: AppEvent<T>, payload?: T): void;
-};
+
+  appEvent<T extends undefined>(event: AppEvent<T>): void;
+  appEvent<T extends Partial<T> extends T ? Partial<T> : never>(event: AppEvent<T>): void;
+  appEvent<T>(event: AppEvent<T>, payload: T): void;
+}
+
+export interface AppEventConsumer {
+  onAppEvent(name: string, callback: (event: IAngularEvent, ...args: any[]) => void, localScope?: any): void;
+  onAppEvent<T>(event: AppEvent<T>, callback: (event: IAngularEvent, ...args: any[]) => void, localScope?: any): void;
+}
+
+export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
 export class GrafanaCtrl {
   /** @ngInject */
@@ -92,7 +102,7 @@ export class GrafanaCtrl {
     $rootScope.onAppEvent = function<T>(
       event: AppEvent<T> | string,
       callback: (event: IAngularEvent, ...args: any[]) => void,
-      localScope: any
+      localScope?: any
     ) {
       let unbind;
       if (typeof event === 'string') {
@@ -155,7 +165,7 @@ export function grafanaAppDirective(
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
-    link: (scope: any, elem: JQuery) => {
+    link: (scope: IRootScopeService & AppEventEmitter, elem: JQuery) => {
       const body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
@@ -312,7 +322,7 @@ export function grafanaAppDirective(
         if (body.find('.search-container').length > 0) {
           if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
             scope.$apply(() => {
-              scope.appEvent('hide-dash-search');
+              scope.appEvent(hideDashSearch);
             });
           }
         }

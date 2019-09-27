@@ -1,6 +1,7 @@
 import coreModule from '../core_module';
 import config from 'app/core/config';
 import { BackendSrv } from '../services/backend_srv';
+import { alertWarning } from '@grafana/data';
 
 export class ResetPasswordCtrl {
   /** @ngInject */
@@ -41,7 +42,7 @@ export class ResetPasswordCtrl {
       }
 
       if ($scope.formModel.newPassword !== $scope.formModel.confirmPassword) {
-        $scope.appEvent('alert-warning', ['New passwords do not match', '']);
+        $scope.appEvent(alertWarning, ['New passwords do not match']);
         return;
       }
 

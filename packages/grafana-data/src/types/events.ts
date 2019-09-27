@@ -113,6 +113,7 @@ export const hideDashEditor = eventFactory('hide-dash-editor');
 export const dashScroll = eventFactory<DashScrollPayload>('dash-scroll');
 export const dashLinksUpdated = eventFactory('dash-links-updated');
 export const saveDashboard = eventFactory<SaveDashboardPayload>('save-dashboard');
+export const dashboardFetchStart = eventFactory('dashboard-fetch-start');
 
 export const searchQuery = eventFactory('search-query');
 
@@ -126,7 +127,7 @@ export const showConfirmModal = eventFactory<ShowConfirmModalPayload>('confirm-m
 export const hideModal = eventFactory('hide-modal');
 
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
-export const dsRequestError = eventFactory<DataSourceResponsePayload>('ds-request-error');
+export const dsRequestError = eventFactory<any>('ds-request-error');
 
 export const graphHover = eventFactory<GraphHoverPayload>('graph-hover');
 export const graphHoverClear = eventFactory('graph-hover-clear');
@@ -166,6 +167,8 @@ export const graphClicked = eventFactory<GraphClickedPayload>('graph-click');
 export const thresholdChanged = eventFactory<ThresholdChangedPayload>('threshold-changed');
 
 export const zoomOut = eventFactory<number>('zoom-out');
+
+export const shiftTime = eventFactory<number>('shift-time');
 
 export const elasticQueryUpdated = eventFactory('elastic-query-updated');
 

@@ -16,8 +16,10 @@ export class Emitter {
   /**
    * Emits an `event` with `payload`.
    */
-  emit<T>(event: AppEvent<T>, payload?: T): void;
-  emit<T>(event: AppEvent<T> | string, payload: T | any): void {
+  emit<T extends undefined>(event: AppEvent<T>): void;
+  emit<T extends Partial<T> extends T ? Partial<T> : never>(event: AppEvent<T>): void;
+  emit<T>(event: AppEvent<T>, payload: T): void;
+  emit<T>(event: AppEvent<T> | string, payload?: T | any): void {
     if (typeof event === 'string') {
       console.log(`Using strings as events is deprecated and will be removed in a future version. (${event})`);
       this.emitter.emit(event, payload);
@@ -34,7 +36,9 @@ export class Emitter {
   /**
    * Handles `event` with `handler()` when emitted.
    */
-  on<T>(event: AppEvent<T>, handler: (payload?: T) => void, scope?: any): void;
+  on<T extends undefined>(event: AppEvent<T>, handler: () => void, scope?: any): void;
+  on<T extends Partial<T> extends T ? Partial<T> : never>(event: AppEvent<T>, handler: () => void, scope?: any): void;
+  on<T>(event: AppEvent<T>, handler: (payload: T) => void, scope?: any): void;
   on<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void, scope?: any) {
     if (typeof event === 'string') {
       console.log(`Using strings as events is deprecated and will be removed in a future version. (${event})`);
@@ -64,7 +68,9 @@ export class Emitter {
    */
   off(name: string, handler: (payload?: any) => void): void;
 
-  off<T>(event: AppEvent<T>, handler: (payload?: T) => void): void;
+  off<T extends undefined>(event: AppEvent<T>, handler: () => void): void;
+  off<T extends Partial<T> extends T ? Partial<T> : never>(event: AppEvent<T>, handler: () => void, scope?: any): void;
+  off<T>(event: AppEvent<T>, handler: (payload: T) => void): void;
   off<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void) {
     if (typeof event === 'string') {
       console.log(`Using strings as events is deprecated and will be removed in a future version. (${event})`);

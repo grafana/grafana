@@ -1,13 +1,20 @@
 import _ from 'lodash';
-import { dateTime } from '@grafana/data';
+import { dateTime, showConfirmModal } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
 import { UserSession } from 'app/types';
+import { AppEventEmitter } from 'app/routes/GrafanaCtrl';
 
 export default class AdminEditUserCtrl {
   /** @ngInject */
-  constructor($scope: any, $routeParams: any, backendSrv: BackendSrv, $location: any, navModelSrv: NavModelSrv) {
+  constructor(
+    $scope: { [key: string]: any } & AppEventEmitter,
+    $routeParams: any,
+    backendSrv: BackendSrv,
+    $location: any,
+    navModelSrv: NavModelSrv
+  ) {
     $scope.user = {};
     $scope.sessions = [];
     $scope.newOrg = { name: '', role: 'Editor' };
@@ -162,7 +169,7 @@ export default class AdminEditUserCtrl {
     };
 
     $scope.deleteUser = (user: any) => {
-      $scope.appEvent('confirm-modal', {
+      $scope.appEvent(showConfirmModal, {
         title: 'Delete',
         text: 'Do you want to delete ' + user.login + '?',
         icon: 'fa-trash',

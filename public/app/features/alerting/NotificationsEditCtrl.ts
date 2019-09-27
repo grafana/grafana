@@ -79,7 +79,7 @@ export class AlertNotificationEditCtrl {
         .put(`/api/alert-notifications/${this.model.id}`, this.model)
         .then((res: any) => {
           this.model = res;
-          appEvents.emit(alertSuccess, ['Notification updated', '']);
+          appEvents.emit(alertSuccess, ['Notification updated']);
         })
         .catch((err: any) => {
           if (err.data && err.data.error) {
@@ -90,7 +90,7 @@ export class AlertNotificationEditCtrl {
       this.backendSrv
         .post(`/api/alert-notifications`, this.model)
         .then((res: any) => {
-          appEvents.emit(alertSuccess, ['Notification created', '']);
+          appEvents.emit(alertSuccess, ['Notification created']);
           this.$location.path('alerting/notifications');
         })
         .catch((err: any) => {

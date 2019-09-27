@@ -1,6 +1,6 @@
 // Libaries
 import React, { Component } from 'react';
-import { dateMath } from '@grafana/data';
+import { dateMath, shiftTime, zoomOut } from '@grafana/data';
 
 // Types
 import { DashboardModel } from '../../state';
@@ -43,10 +43,10 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onMoveBack = () => {
-    this.$rootScope.appEvent('shift-time', -1);
+    this.$rootScope.appEvent(shiftTime, -1);
   };
   onMoveForward = () => {
-    this.$rootScope.appEvent('shift-time', 1);
+    this.$rootScope.appEvent(shiftTime, 1);
   };
 
   onChangeTimePicker = (timeRange: TimeRange) => {
@@ -65,7 +65,7 @@ export class DashNavTimeControls extends Component<Props> {
   };
 
   onZoom = () => {
-    this.$rootScope.appEvent('zoom-out', 2);
+    this.$rootScope.appEvent(zoomOut, 2);
   };
 
   setActiveTimeOption = (timeOptions: TimeOption[], rawTimeRange: RawTimeRange): TimeOption[] => {

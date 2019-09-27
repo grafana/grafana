@@ -1,9 +1,10 @@
-import angular, { ILocationService } from 'angular';
+import angular, { ILocationService, IRootScopeService } from 'angular';
 import _ from 'lodash';
 import { DashboardModel } from '../state/DashboardModel';
 import { ContextSrv } from 'app/core/services/context_srv';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
+import { GrafanaRootScope, AppEventConsumer } from 'app/routes/GrafanaCtrl';
 import { showModal, saveDashboard } from '@grafana/data';
+import { dashboardSaved } from 'app/types';
 
 export class ChangeTracker {
   current: any;
@@ -16,7 +17,7 @@ export class ChangeTracker {
   /** @ngInject */
   constructor(
     dashboard: DashboardModel,
-    scope: any,
+    scope: IRootScopeService & AppEventConsumer,
     originalCopyDelay: any,
     private $location: ILocationService,
     $window: any,
@@ -32,7 +33,7 @@ export class ChangeTracker {
     this.scope = scope;
 
     // register events
-    scope.onAppEvent('dashboard-saved', () => {
+    scope.onAppEvent(dashboardSaved, () => {
       this.original = this.current.getSaveModelClone();
       this.originalPath = $location.path();
     });
