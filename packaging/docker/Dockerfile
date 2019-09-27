@@ -23,7 +23,8 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apk add --no-cache ca-certificates bash
+RUN apk add --no-cache ca-certificates bash && \
+    apk add --no-cache --upgrade --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main openssl musl-utils
 
 # PhantomJS
 RUN if [ `arch` = "x86_64" ]; then \

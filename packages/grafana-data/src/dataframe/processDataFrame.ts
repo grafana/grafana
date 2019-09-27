@@ -401,7 +401,7 @@ export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
       name: f.name,
       type: f.type,
       config: f.config,
-      values: f.values.toJSON(),
+      values: f.values.toArray(),
     };
   });
 

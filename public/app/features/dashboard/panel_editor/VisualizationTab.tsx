@@ -1,27 +1,23 @@
 // Libraries
 import React, { PureComponent } from 'react';
-
 // Utils & Services
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
 import { updateLocation } from 'app/core/actions';
-
 // Components
 import { EditorTabBody, EditorToolbarView } from './EditorTabBody';
 import { VizTypePicker } from './VizTypePicker';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
-
 // Types
-import { PanelModel } from '../state';
-import { DashboardModel } from '../state';
+import { PanelModel, DashboardModel } from '../state';
 import { VizPickerSearch } from './VizPickerSearch';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { PanelPlugin, PanelPluginMeta, PanelData } from '@grafana/ui';
 import { PanelCtrl } from 'app/plugins/sdk';
 import { Unsubscribable } from 'rxjs';
-import { LoadingState } from '@grafana/data';
+import { LoadingState, DefaultTimeRange } from '@grafana/data';
 
 interface Props {
   panel: PanelModel;
@@ -57,6 +53,7 @@ export class VisualizationTab extends PureComponent<Props, State> {
       data: {
         state: LoadingState.NotStarted,
         series: [],
+        timeRange: DefaultTimeRange,
       },
     };
   }

@@ -2,13 +2,11 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import _ from 'lodash';
-
 // Utils & Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { Emitter } from 'app/core/utils/emitter';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-
 // Types
 import { PanelModel } from '../state/PanelModel';
 import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, ErrorBoundaryAlert } from '@grafana/ui';
@@ -33,7 +31,7 @@ interface State {
   datasource: DataSourceApi | null;
   isCollapsed: boolean;
   hasTextEditMode: boolean;
-  queryResponse?: PanelData;
+  data?: PanelData;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -46,7 +44,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     isCollapsed: false,
     loadedDataSourceValue: undefined,
     hasTextEditMode: false,
-    queryResponse: null,
+    data: null,
   };
 
   componentDidMount() {
@@ -92,7 +90,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const { data, query, panel } = this.props;
 
     if (data !== prevProps.data) {
-      this.setState({ queryResponse: filterPanelDataToQuery(data, query.refId) });
+      this.setState({ data: filterPanelDataToQuery(data, query.refId) });
 
       if (this.angularScope) {
         this.angularScope.range = getTimeSrv().timeRange();
@@ -133,8 +131,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderPluginEditor() {
-    const { query, data, onChange } = this.props;
-    const { datasource, queryResponse } = this.state;
+    const { query, onChange } = this.props;
+    const { datasource, data } = this.state;
 
     if (datasource.components.QueryCtrl) {
       return <div ref={element => (this.element = element)} />;
@@ -149,8 +147,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           datasource={datasource}
           onChange={onChange}
           onRunQuery={this.onRunQuery}
-          queryResponse={queryResponse}
-          panelData={data}
+          data={data}
         />
       );
     }
@@ -321,10 +318,13 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     state = LoadingState.Error;
   }
 
+  const timeRange = data.timeRange;
+
   return {
     state,
     series,
     request,
     error,
+    timeRange,
   };
 }

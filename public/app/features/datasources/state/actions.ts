@@ -9,7 +9,7 @@ import { DataSourceSettings, DataSourcePluginMeta } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { LocationUpdate } from '@grafana/runtime';
 import { actionCreatorFactory } from 'app/core/redux';
-import { ActionOf, noPayloadActionCreatorFactory } from 'app/core/redux/actionCreatorFactory';
+import { ActionOf } from 'app/core/redux/actionCreatorFactory';
 import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 
@@ -19,7 +19,7 @@ export const dataSourcesLoaded = actionCreatorFactory<DataSourceSettings[]>('LOA
 
 export const dataSourceMetaLoaded = actionCreatorFactory<DataSourcePluginMeta>('LOAD_DATA_SOURCE_META').create();
 
-export const dataSourceTypesLoad = noPayloadActionCreatorFactory('LOAD_DATA_SOURCE_TYPES').create();
+export const dataSourceTypesLoad = actionCreatorFactory('LOAD_DATA_SOURCE_TYPES').create();
 
 export const dataSourceTypesLoaded = actionCreatorFactory<DataSourcePluginMeta[]>('LOADED_DATA_SOURCE_TYPES').create();
 

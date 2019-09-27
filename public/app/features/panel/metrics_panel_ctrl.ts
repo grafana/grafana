@@ -131,13 +131,14 @@ class MetricsPanelCtrl extends PanelCtrl {
       }
 
       if (data.request) {
-        const { range, timeInfo } = data.request;
-        if (range) {
-          this.range = range;
-        }
+        const { timeInfo } = data.request;
         if (timeInfo) {
           this.timeInfo = timeInfo;
         }
+      }
+
+      if (data.timeRange) {
+        this.range = data.timeRange;
       }
 
       if (this.useDataFrames) {
@@ -249,13 +250,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       });
     }
     return items;
-  }
-
-  async explore() {
-    const url = await getExploreUrl(this.panel, this.panel.targets, this.datasource, this.datasourceSrv, this.timeSrv);
-    if (url) {
-      this.$timeout(() => this.$location.url(url));
-    }
   }
 }
 

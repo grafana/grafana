@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { defaultQuery } from './runStreams';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { dateTime } from '@grafana/data';
+import { dateTime, dateMath } from '@grafana/data';
 
 export const defaultPulse: any = {
   timeStep: 60,
@@ -63,6 +63,7 @@ export class TestDataQueryCtrl extends QueryCtrl {
 
   addPoint() {
     this.target.points = this.target.points || [];
+    this.newPointTime = dateMath.parse(this.newPointTime);
     this.target.points.push([this.newPointValue, this.newPointTime.valueOf()]);
     this.target.points = _.sortBy(this.target.points, p => p[1]);
     this.refresh();

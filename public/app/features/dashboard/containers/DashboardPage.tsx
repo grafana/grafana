@@ -14,8 +14,7 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { SubMenu } from '../components/SubMenu';
 import { DashboardSettings } from '../components/DashboardSettings';
-import { CustomScrollbar } from '@grafana/ui';
-import { AlertBox } from 'app/core/components/AlertBox/AlertBox';
+import { CustomScrollbar, Alert } from '@grafana/ui';
 
 // Redux
 import { initDashboard } from '../state/initDashboard';
@@ -32,7 +31,6 @@ import {
   AppNotificationSeverity,
 } from 'app/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-
 export interface Props {
   urlUid?: string;
   urlSlug?: string;
@@ -242,10 +240,10 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     return (
       <div className="dashboard-loading">
-        <AlertBox
+        <Alert
           severity={AppNotificationSeverity.Error}
           title={initError.message}
-          body={getMessageFromError(initError.error)}
+          children={getMessageFromError(initError.error)}
         />
       </div>
     );

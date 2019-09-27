@@ -146,8 +146,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
               onRunQuery={this.onRunQuery}
               onHint={this.onClickHintFix}
               onChange={this.onChange}
-              panelData={null}
-              queryResponse={queryResponse}
+              data={queryResponse}
               absoluteRange={absoluteRange}
             />
           ) : (

@@ -14,7 +14,7 @@ import templateSrv from 'app/features/templating/template_srv';
 import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
-import { LoadingState, ScopedVars, AbsoluteTimeRange, toUtc } from '@grafana/data';
+import { LoadingState, ScopedVars, AbsoluteTimeRange, toUtc, toDataFrameDTO, DefaultTimeRange } from '@grafana/data';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -52,6 +52,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       data: {
         state: LoadingState.NotStarted,
         series: [],
+        timeRange: DefaultTimeRange,
       },
     };
   }
@@ -66,6 +67,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     if (this.hasPanelSnapshot) {
       this.setState({
         data: {
+          ...this.state.data,
           state: LoadingState.Done,
           series: getProcessedDataFrames(panel.snapshotData),
         },
@@ -129,7 +131,7 @@ export class PanelChrome extends PureComponent<Props, State> {
       if (data.state === LoadingState.Done) {
         // If we are doing a snapshot save data in panel model
         if (this.props.dashboard.snapshot) {
-          this.props.panel.snapshotData = data.series;
+          this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
         }
         if (isFirstLoad) {
           isFirstLoad = false;
@@ -241,6 +243,7 @@ export class PanelChrome extends PureComponent<Props, State> {
 
     const PanelComponent = plugin.panel;
     const innerPanelHeight = calculateInnerPanelHeight(panel, height);
+    const timeRange = data.timeRange || this.timeSrv.timeRange();
 
     return (
       <>
@@ -249,7 +252,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           <PanelComponent
             id={panel.id}
             data={data}
-            timeRange={data.request ? data.request.range : this.timeSrv.timeRange()}
+            timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
             options={panel.getOptions()}
             transparent={panel.transparent}

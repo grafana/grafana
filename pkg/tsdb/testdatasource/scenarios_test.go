@@ -1,4 +1,4 @@
-package testdata
+package testdatasource
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 
 func TestTestdataScenarios(t *testing.T) {
 	Convey("random walk ", t, func() {
-		scenario, _ := ScenarioRegistry["random_walk"]
+		scenario := ScenarioRegistry["random_walk"]
 
 		Convey("Should start at the requested value", func() {
 			req := &tsdb.TsdbQuery{
@@ -32,7 +32,7 @@ func TestTestdataScenarios(t *testing.T) {
 	})
 
 	Convey("random walk table", t, func() {
-		scenario, _ := ScenarioRegistry["random_walk_table"]
+		scenario := ScenarioRegistry["random_walk_table"]
 
 		Convey("Should return a table that looks like value/min/max", func() {
 			req := &tsdb.TsdbQuery{
@@ -99,9 +99,9 @@ func TestToLabels(t *testing.T) {
 		tags["job"] = "foo"
 		tags["instance"] = "bar"
 
-		So(parseLabels(`{job="foo", instance="bar"}`), ShouldEqual, tags)
-		So(parseLabels(`job="foo", instance="bar"`), ShouldEqual, tags)
-		So(parseLabels(`job=foo, instance=bar`), ShouldEqual, tags)
-		So(parseLabels(`job = foo,instance = bar`), ShouldEqual, tags)
+		So(parseLabels(`{job="foo", instance="bar"}`), ShouldResemble, tags)
+		So(parseLabels(`job="foo", instance="bar"`), ShouldResemble, tags)
+		So(parseLabels(`job=foo, instance=bar`), ShouldResemble, tags)
+		So(parseLabels(`job = foo,instance = bar`), ShouldResemble, tags)
 	})
 }

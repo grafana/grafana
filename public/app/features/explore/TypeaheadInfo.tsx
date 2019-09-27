@@ -1,44 +1,27 @@
 import React, { PureComponent } from 'react';
-import { Themeable, selectThemeVariant } from '@grafana/ui';
 import { css, cx } from 'emotion';
+
+import { Themeable, selectThemeVariant } from '@grafana/ui';
 
 import { CompletionItem } from 'app/types/explore';
 
 interface Props extends Themeable {
-  initialItem: CompletionItem;
+  item: CompletionItem;
   width: number;
   height: number;
 }
 
-interface State {
-  item: CompletionItem;
-}
-
-export class TypeaheadInfo extends PureComponent<Props, State> {
+export class TypeaheadInfo extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
-    this.state = { item: props.initialItem };
   }
 
   getStyles = (visible: boolean) => {
-    const { width, height, theme } = this.props;
-    const selection = window.getSelection();
-    const node = selection.anchorNode;
-    if (!node) {
-      return {};
-    }
-
-    // Read from DOM
-    const rect = node.parentElement.getBoundingClientRect();
-    const scrollX = window.scrollX;
-    const scrollY = window.scrollY;
-    const left = `${rect.left + scrollX + width + parseInt(theme.spacing.xs, 10)}px`;
-    const top = `${rect.top + scrollY + rect.height + 6}px`;
+    const { height, theme } = this.props;
 
     return {
       typeaheadItem: css`
         label: type-ahead-item;
-        z-index: auto;
         padding: ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.md};
         border-radius: ${theme.border.radius.md};
         border: ${selectThemeVariant(
@@ -55,25 +38,15 @@ export class TypeaheadInfo extends PureComponent<Props, State> {
           theme.type
         )};
         visibility: ${visible === true ? 'visible' : 'hidden'};
-        left: ${left};
-        top: ${top};
         width: 250px;
         height: ${height + parseInt(theme.spacing.xxs, 10)}px;
-        position: fixed;
+        position: relative;
       `,
     };
   };
 
-  refresh = (item: CompletionItem) => {
-    this.setState({ item });
-  };
-
-  hide = () => {
-    this.setState({ item: null });
-  };
-
   render() {
-    const { item } = this.state;
+    const { item } = this.props;
     const visible = item && !!item.documentation;
     const label = item ? item.label : '';
     const documentation = item && item.documentation ? item.documentation : '';

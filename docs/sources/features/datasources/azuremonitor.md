@@ -16,7 +16,7 @@ weight = 5
 
 As of Grafana 6.0, the Azure Monitor plugin has been moved into Grafana so it now ships with built-in support for Azure Monitor.
 
-The Azure Monitor Datasource supports multiple services in the Azure cloud:
+The Azure Monitor data source supports multiple services in the Azure cloud:
 
 - **[Azure Monitor]({{< relref "#querying-the-azure-monitor-service" >}})** is the platform service that provides a single source for monitoring Azure resources.
 - **[Application Insights]({{< relref "#querying-the-application-insights-service" >}})** is an extensible Application Performance Management (APM) service for web developers on multiple platforms and can be used to monitor your live web application - it will automatically detect performance anomalies.
@@ -25,7 +25,7 @@ The Azure Monitor Datasource supports multiple services in the Azure cloud:
 
 ## Adding the data source to Grafana
 
-The datasource can access metrics from four different services. You can configure access to the services that you use. It is also possible to use the same credentials for multiple services if that is how you have set it up in Azure AD.
+The data source can access metrics from four different services. You can configure access to the services that you use. It is also possible to use the same credentials for multiple services if that is how you have set it up in Azure AD.
 
 - [Guide to setting up an Azure Active Directory Application for Azure Monitor.](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal)
 - [Guide to setting up an Azure Active Directory Application for Azure Log Analytics.](https://dev.loganalytics.io/documentation/Authorization/AAD-Setup)
@@ -45,7 +45,7 @@ The datasource can access metrics from four different services. You can configur
 4. Paste these four items into the fields in the Azure Monitor API Details section:
    {{< docs-imagebox img="/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
 
-   - The Subscription Id can be changed per query. Save the datasource and refresh the page to see the list of subscriptions available for the specified Client Id.
+   - The Subscription Id can be changed per query. Save the data source and refresh the page to see the list of subscriptions available for the specified Client Id.
 
 5. If you are also using the Azure Log Analytics service, then you need to specify these two config values (or you can reuse the Client Id and Secret from the previous step).
 
@@ -71,7 +71,7 @@ az ad sp create-for-rbac -n "http://localhost:3000"
 
 ## Choose a Service
 
-In the query editor for a panel, after choosing your Azure Monitor datasource, the first option is to choose a service. There are three options here:
+In the query editor for a panel, after choosing your Azure Monitor data source, the first option is to choose a service. There are three options here:
 
 - `Azure Monitor`
 - `Application Insights`
@@ -121,7 +121,7 @@ Instead of hard-coding things like server, application and sensor name in you me
 
 Note that the Azure Monitor service does not support multiple values yet. If you want to visualize multiple time series (for example, metrics for server1 and server2) then you have to add multiple queries to able to view them on the same graph or in the same table.
 
-The Azure Monitor Datasource Plugin provides the following queries you can specify in the `Query` field in the Variable edit view. They allow you to fill a variable's options list.
+The Azure Monitor data source Plugin provides the following queries you can specify in the `Query` field in the Variable edit view. They allow you to fill a variable's options list.
 
 | Name                                                                                               | Description                                                                     |
 | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
@@ -151,7 +151,7 @@ types of template variables.
 
 ### Azure Monitor Metrics Whitelist
 
-Not all metrics returned by the Azure Monitor API have values. The Grafana datasource has a whitelist to only return metric names if it is possible they might have values. This whitelist is updated regularly as new services and metrics are added to the Azure cloud. You can find the current whitelist [here](https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
+Not all metrics returned by the Azure Monitor API have values. The Grafana data source has a whitelist to only return metric names if it is possible they might have values. This whitelist is updated regularly as new services and metrics are added to the Azure cloud. You can find the current whitelist [here](https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
 
 ### Azure Monitor Alerting
 
@@ -278,7 +278,7 @@ Not implemented yet.
 
 ### Writing Analytics Queries For the Application Insights Service
 
-If you change the service type to "Application Insights", the menu icon to the right adds another option, "Toggle Edit Mode". Once clicked, the query edit mode changes to give you a full text area in which to write log analytics queries. (This is identical to how the InfluxDB datasource lets you write raw queries.)
+If you change the service type to "Application Insights", the menu icon to the right adds another option, "Toggle Edit Mode". Once clicked, the query edit mode changes to give you a full text area in which to write log analytics queries. (This is identical to how the InfluxDB data source lets you write raw queries.)
 
 Once a query is written, the column names are automatically parsed out of the response data. You can then select them in the "X-axis", "Y-axis", and "Split On" dropdown menus, or just type them out.
 

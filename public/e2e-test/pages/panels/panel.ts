@@ -1,4 +1,4 @@
-import { TestPage, ClickablePageObjectType, ClickablePageObject, Selector } from '@grafana/toolkit';
+import { TestPage, ClickablePageObjectType, ClickablePageObject, Selector } from '@grafana/toolkit/src/e2e';
 
 export interface Panel {
   panelTitle: ClickablePageObjectType;
