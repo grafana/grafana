@@ -35,6 +35,7 @@ func TestUserApiEndpoint(t *testing.T) {
 					IsDisabled:     false,
 					IsExternal:     false,
 					UpdatedAt:      fakeNow,
+					CreatedAt:      fakeNow,
 				}
 				return nil
 			})
@@ -63,7 +64,8 @@ func TestUserApiEndpoint(t *testing.T) {
 				"authLabels": [
 					"LDAP"
 				],
-				"updatedAt": "2019-02-11T17:30:40Z"
+				"updatedAt": "2019-02-11T17:30:40Z",
+				"createdAt": "2019-02-11T17:30:40Z"
 			}
 			`
 
