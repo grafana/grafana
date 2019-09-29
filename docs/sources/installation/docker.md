@@ -85,6 +85,17 @@ docker run \
   grafana/grafana
 ```
 
+To install a plugin with a specific version, append `:<version>` to the plugin name.
+
+```bash
+docker run \
+  -d \
+  -p 3000:3000 \
+  --name=grafana \
+  -e "GF_INSTALL_PLUGINS=grafana-clock-panel:1.0.2" \
+  grafana/grafana
+```
+
 ## Building a custom Grafana image with pre-installed plugins
 
 In the [grafana-docker](https://github.com/grafana/grafana/tree/master/packaging/docker)  there is a folder called `custom/` which includes a `Dockerfile` that can be used to build a custom Grafana image.  It accepts `GRAFANA_VERSION` and `GF_INSTALL_PLUGINS` as build arguments.
@@ -107,7 +118,7 @@ docker run \
 
 > Only available in Grafana v5.3.1+
 
-It's possible to install plugins from custom url:s by specifying the url like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`
+It's possible to install plugins from custom urls by specifying the url like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`
 
 ```bash
 docker run \
