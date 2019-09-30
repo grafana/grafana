@@ -168,24 +168,23 @@ func SelectVersion(plugin *m.Plugin, version string) (*m.Version, error) {
 
 	if version == "" {
 		return latestForArch, nil
-	} else {
-		for _, v := range plugin.Versions {
-			if v.Version == version {
-				ver = v
-				break
-			}
-		}
-
-		if len(ver.Version) == 0 {
-			return nil, xerrors.New("Could not find the version you're looking for")
-		}
-
-		if !supportsCurrentArch(&ver) {
-			return nil, xerrors.Errorf("Version you want is not supported on your architecture and os. Latest suitable version is %v", latestForArch.Version)
-		}
-
-		return &ver, nil
 	}
+	for _, v := range plugin.Versions {
+		if v.Version == version {
+			ver = v
+			break
+		}
+	}
+
+	if len(ver.Version) == 0 {
+		return nil, xerrors.New("Could not find the version you're looking for")
+	}
+
+	if !supportsCurrentArch(&ver) {
+		return nil, xerrors.Errorf("Version you want is not supported on your architecture and os. Latest suitable version is %v", latestForArch.Version)
+	}
+
+	return &ver, nil
 }
 
 func RemoveGitBuildFromName(pluginName, filename string) string {
