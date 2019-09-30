@@ -54,11 +54,10 @@ type SqlStore struct {
 	Bus          bus.Bus                  `inject:""`
 	CacheService *localcache.CacheService `inject:""`
 
-	dbCfg           DatabaseConfig
-	engine          *xorm.Engine
-	log             log.Logger
-	Dialect         migrator.Dialect
-	skipEnsureAdmin bool
+	dbCfg   DatabaseConfig
+	engine  *xorm.Engine
+	log     log.Logger
+	Dialect migrator.Dialect
 }
 
 func (ss *SqlStore) Init() error {
