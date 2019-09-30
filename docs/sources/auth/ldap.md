@@ -42,8 +42,6 @@ allow_sign_up = true
 
 ## Grafana LDAP Configuration
 
-> Only available in Grafana v6.4+
-
 Depending on which LDAP server you're using and how that's configured your Grafana LDAP configuration may vary.
 See [configuration examples](#configuration-examples) for more information.
 
@@ -93,6 +91,8 @@ email =  "email"
 ```
 
 ## LDAP Debug View
+
+> Only available in Grafana v6.4+
 
 Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. At the moment of writing, only Grafana admins can use the LDAP debug view.
  
