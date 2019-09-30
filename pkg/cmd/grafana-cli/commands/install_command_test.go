@@ -137,7 +137,7 @@ func TestIsPathSafe(t *testing.T) {
 }
 
 func TestSelectVersion(t *testing.T) {
-	t.Run("Should return error when version does not exist", func(t *testing.T) {
+	t.Run("Should return error when requested version does not exist", func(t *testing.T) {
 		_, err := SelectVersion(
 			makePluginWithVersions(versionArg{Version: "version"}),
 			"1.1.1",
@@ -148,15 +148,7 @@ func TestSelectVersion(t *testing.T) {
 	t.Run("Should return error when no version supports current arch", func(t *testing.T) {
 		_, err := SelectVersion(
 			makePluginWithVersions(versionArg{Version: "version", Arch: []string{"non-existent"}}),
-			"1.1.1",
-		)
-		assert.NotNil(t, err)
-	})
-
-	t.Run("Should return error when no version supports current arch", func(t *testing.T) {
-		_, err := SelectVersion(
-			makePluginWithVersions(versionArg{Version: "version", Arch: []string{"non-existent"}}),
-			"1.1.1",
+			"",
 		)
 		assert.NotNil(t, err)
 	})
@@ -172,7 +164,7 @@ func TestSelectVersion(t *testing.T) {
 		assert.NotNil(t, err)
 	})
 
-	t.Run("Should return latest available for platform", func(t *testing.T) {
+	t.Run("Should return latest available for arch when no version specified", func(t *testing.T) {
 		ver, err := SelectVersion(
 			makePluginWithVersions(
 				versionArg{Version: "2.0.0", Arch: []string{"non-existent"}},
