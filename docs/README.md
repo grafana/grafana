@@ -61,11 +61,16 @@ Open [localhost:3004](http://localhost:3004) to view the docs.
 
 ### Images & Content
 
-All markdown files are located in this repo (main grafana repo). But all images are added to the https://github.com/grafana/website repo. So the process of adding images is a bit complicated.
+All markdown files are part of [this repository](https://github.com/grafana/grafana). However, all images are added to the [website repository](https://github.com/grafana/website).
 
-First you need create a feature (PR) branch of https://github.com/grafana/website so you can make change. Then add the image to the `/static/img/docs` directory. Then make a commit that adds the image.
+Therefore, the process of adding images is not as straightforward. These are the steps:
 
-Then run:
+1. Ensure you create a feature (PR) branch within the [website repository](https://github.com/grafana/website) to make the change
+2. Ensure the image(s) is compressed and optimised e.g. Using [tinypng](https://tinypng.com/)
+2. Add the image to the `/static/img/docs` directory
+3. Then, make a commit that adds the image
+
+Finally, run:
 ```
 make docs-build
 ```
