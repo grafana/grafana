@@ -81,7 +81,6 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     }
 
     const path = this.queryModel.getSegmentPathUpTo(fromIndex + 1);
-    console.log('path', path);
     if (path === '') {
       return Promise.resolve();
     }
@@ -89,7 +88,6 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return this.datasource
       .metricFindQuery(path)
       .then((segments: any) => {
-        console.log('segmeents', segments);
         if (segments.length === 0) {
           if (path !== '') {
             this.queryModel.segments = this.queryModel.segments.splice(0, fromIndex);
@@ -116,7 +114,6 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   getAltSegments(index: number, prefix: string) {
-    console.log('iiiiii');
     let query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
     if (index > 0) {
       query = this.queryModel.getSegmentPathUpTo(index) + '.' + query;
@@ -135,7 +132,6 @@ export class GraphiteQueryCtrl extends QueryCtrl {
             expandable: segment.expandable,
           });
         });
-        console.log('as', altSegments);
 
         if (index > 0 && altSegments.length === 0) {
           return altSegments;

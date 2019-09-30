@@ -46,7 +46,6 @@ class Editor extends Component<EditorProps, any> {
 
   render() {
     const { variables, getSchema, placeholder } = this.props;
-    console.log('vartiables', variables);
     const { edited, query } = this.state;
 
     return (
