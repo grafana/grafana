@@ -133,6 +133,7 @@ var (
 	ViewersCanEdit          bool
 
 	// Http auth
+	DisableAdminUser     bool
 	AdminUser            string
 	AdminPassword        string
 	LoginCookieName      string
@@ -755,6 +756,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	// admin
+	DisableAdminUser = security.Key("disable_admin_user").MustBool(false)
 	AdminUser, err = valueAsString(security, "admin_user", "")
 	if err != nil {
 		return err
