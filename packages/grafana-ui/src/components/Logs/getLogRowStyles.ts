@@ -3,8 +3,9 @@ import { LogLevel } from '@grafana/data';
 
 import { GrafanaTheme } from '../../types/theme';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import { stylesFactory } from '../../themes';
 
-export const getLogRowStyles = (theme: GrafanaTheme, logLevel?: LogLevel) => {
+export const getLogRowStyles = stylesFactory((theme: GrafanaTheme, logLevel?: LogLevel) => {
   let logColor = selectThemeVariant({ light: theme.colors.gray5, dark: theme.colors.gray2 }, theme.type);
   switch (logLevel) {
     case LogLevel.crit:
@@ -130,4 +131,4 @@ export const getLogRowStyles = (theme: GrafanaTheme, logLevel?: LogLevel) => {
       margin: 5px 0;
     `,
   };
-};
+});
