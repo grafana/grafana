@@ -107,6 +107,8 @@ export class AlertTabCtrl {
         return 'fa fa-bullhorn';
       case 'opsgenie':
         return 'fa fa-bell';
+      case 'statuspage':
+        return 'fa fa-thermometer-full';
       case 'hipchat':
         return 'fa fa-mail-forward';
       case 'pushover':

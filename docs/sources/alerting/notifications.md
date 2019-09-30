@@ -183,6 +183,7 @@ Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
 Slack | `slack` | yes | no
+StatusPage | `statuspage` | no | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
 VictorOps | `victorops` | yes, external only | no
