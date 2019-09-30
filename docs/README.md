@@ -75,10 +75,16 @@ Finally, run:
 make docs-build
 ```
 
-This will rebuild the docs docker container.
+This will rebuild the docs docker image.
 
 To be able to use the image you have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image.
 
 ### Editing content
 
 Changes to the markdown files should automatically cause a docs rebuild and live reload should reload the page in your browser.
+
+### Troubleshooting
+
+#### Running `make watch` errors out with `Warning: Task "default" not found.`
+
+Ensure that the docker image from the [website repository](https://github.com/grafana/website) is built using the `old-docs` branch.
