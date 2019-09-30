@@ -63,13 +63,7 @@ const FieldHighlight = (onClick: any): FunctionComponent<any> => (props: any) =>
   );
 };
 
-const logRowStyles = css`
-  position: relative;
-  /* z-index: 0; */
-  /* outline: none; */
-`;
-
-const getLogRowWithContextStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const outlineColor = selectThemeVariant(
     {
       light: theme.colors.white,
@@ -79,7 +73,12 @@ const getLogRowWithContextStyles = stylesFactory((theme: GrafanaTheme) => {
   );
 
   return {
-    row: css`
+    positionRelative: css`
+      label: positionRelative;
+      position: relative;
+    `,
+    rowWithContext: css`
+      label: rowWithContext;
       z-index: 1;
       outline: 9999px solid
         ${tinycolor(outlineColor as tinycolor.ColorInput)
@@ -212,8 +211,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
     const highlightClassName = previewHighlights
       ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
       : cx([style.logsRowMatchHighLight]);
-
-    const styles = showContext ? cx(logRowStyles, getLogRowWithContextStyles(theme).row) : logRowStyles;
+    const styles = getStyles(theme);
 
     return (
       <div
@@ -221,11 +219,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
         onMouseEnter={this.onMouseOverMessage}
         onMouseLeave={this.onMouseOutMessage}
       >
-        <div
-          className={css`
-            position: relative;
-          `}
-        >
+        <div className={styles.positionRelative}>
           {showContext && context && (
             <LogRowContext
               row={row}
@@ -240,7 +234,7 @@ class UnThemedLogRowMessage extends PureComponent<Props, State> {
               }}
             />
           )}
-          <span className={styles}>
+          <span className={cx(styles.positionRelative, { [styles.rowWithContext]: showContext })}>
             {parsed && (
               <Highlighter
                 style={{ whiteSpace: 'pre-wrap' }}
