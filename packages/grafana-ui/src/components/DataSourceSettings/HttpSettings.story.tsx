@@ -1,6 +1,6 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
-import { DatasourceHttpSettings } from './HttpSettings';
+import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 // import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { DataSourceSettings } from '../../types';
 import { UseState } from '../../utils/storybook/UseState';
@@ -32,17 +32,17 @@ const settingsMock: DataSourceSettings<any, any> = {
   readOnly: true,
 };
 
-const HttpSettingsStories = storiesOf('UI/Datasource/HttpSettings', module);
+const HttpSettingsStories = storiesOf('UI/DataSource/HttpSettings', module);
 
 HttpSettingsStories.add('default', () => {
   return (
     <UseState initialState={settingsMock} logState>
-      {(datasourceSettings, updateDatasourceSettings) => {
+      {(dataSourceSettings, updateDataSourceSettings) => {
         return (
-          <DatasourceHttpSettings
+          <DataSourceHttpSettings
             defaultUrl="http://localhost:9999"
-            datasourceConfig={datasourceSettings}
-            onChange={updateDatasourceSettings}
+            dataSourceConfig={dataSourceSettings}
+            onChange={updateDataSourceSettings}
             showAccessOptions={true}
             onBasicAuthPasswordChange={() => {}}
             onBasicAuthPasswordReset={() => {}}

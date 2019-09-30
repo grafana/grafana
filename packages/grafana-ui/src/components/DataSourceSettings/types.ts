@@ -1,11 +1,11 @@
-import { DataSourceSettings } from '../../types/datasource';
+import { DataSourceSettings } from '../../types';
 
-export interface DatasourceHttpSettingsBaseProps {
-  datasourceConfig: DataSourceSettings<any, any>;
+export interface HttpSettingsBaseProps {
+  dataSourceConfig: DataSourceSettings<any, any>;
   onChange: (config: DataSourceSettings) => void;
 }
 
-export interface DatasourceHttpSettingsProps extends DatasourceHttpSettingsBaseProps {
+export interface HttpSettingsProps extends HttpSettingsBaseProps {
   defaultUrl: string;
   showAccessOptions?: boolean;
   // Not sure these two should belong here, could be handled by onChange only

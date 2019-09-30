@@ -1,34 +1,31 @@
 import React from 'react';
-import { DatasourceHttpSettingsBaseProps } from './types';
+import { HttpSettingsBaseProps } from './types';
 import { KeyValue } from '@grafana/data';
 
 // TODO: Refactor forms below to a reusable Cert component
-export const DatasourceTLSAuthSettings: React.FC<DatasourceHttpSettingsBaseProps> = ({
-  datasourceConfig,
-  onChange,
-}) => {
+export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceConfig, onChange }) => {
   console.log();
-  const hasTLSCACert = datasourceConfig.secureJsonFields && datasourceConfig.secureJsonFields.tlsCACert;
-  const hasTLSClientCert = datasourceConfig.secureJsonFields && datasourceConfig.secureJsonFields.tlsClientCert;
+  const hasTLSCACert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsCACert;
+  const hasTLSClientCert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientCert;
   // @ts-ignre
-  const hasTLSClientKey = datasourceConfig.secureJsonFields && datasourceConfig.secureJsonFields.tlsClientKey;
+  const hasTLSClientKey = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientKey;
 
   const onResetClickFactory = (field: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    const newSecureJsonFields: KeyValue<boolean> = { ...datasourceConfig.secureJsonFields };
+    const newSecureJsonFields: KeyValue<boolean> = { ...dataSourceConfig.secureJsonFields };
     newSecureJsonFields[field] = false;
     onChange({
-      ...datasourceConfig,
+      ...dataSourceConfig,
       secureJsonFields: newSecureJsonFields,
     });
   };
 
   const onCertificateChangeFactory = (field: string) => (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
-    const newSecureJsonData = { ...datasourceConfig.jsonData };
+    const newSecureJsonData = { ...dataSourceConfig.jsonData };
     newSecureJsonData[field] = event.currentTarget.value;
 
     onChange({
-      ...datasourceConfig,
+      ...dataSourceConfig,
       secureJsonData: newSecureJsonData,
     });
   };
@@ -40,7 +37,7 @@ export const DatasourceTLSAuthSettings: React.FC<DatasourceHttpSettingsBaseProps
         <h6>TODO: add missing info popover</h6>
       </div>
       <div>
-        {datasourceConfig.jsonData.tlsAuthWithCACert && (
+        {dataSourceConfig.jsonData.tlsAuthWithCACert && (
           <div className="gf-form-inline">
             <div className="gf-form gf-form--v-stretch">
               <label className="gf-form-label width-7">CA Cert</label>
@@ -68,7 +65,7 @@ export const DatasourceTLSAuthSettings: React.FC<DatasourceHttpSettingsBaseProps
           </div>
         )}
 
-        {datasourceConfig.jsonData.tlsAuth && (
+        {dataSourceConfig.jsonData.tlsAuth && (
           <>
             <div className="gf-form-inline">
               <div className="gf-form gf-form--v-stretch">

@@ -1,13 +1,13 @@
 import React, { useState, useCallback } from 'react';
-import { DataSourceSettings } from '../../types';
+import { SelectableValue } from '@grafana/data';
 import { FormField } from '../FormField/FormField';
 import Select from '../Select/Select';
-import { SelectableValue } from '@grafana/data';
 import { Switch } from '../Switch/Switch';
-import { DatasourceHttpSettingsProps } from './types';
-import { DatasourceHttpBasicAuthSettings } from './BasicAuthSettings';
-import { DatasourceHttpProxySettings } from './HttpProxySettings';
-import { DatasourceTLSAuthSettings } from './TLSAuthSettings';
+import { BasicAuthSettings } from './BasicAuthSettings';
+import { HttpProxySettings } from './HttpProxySettings';
+import { TLSAuthSettings } from './TLSAuthSettings';
+import { DataSourceSettings } from '../../types';
+import { HttpSettingsProps } from './types';
 
 const ACCESS_OPTIONS: Array<SelectableValue<string>> = [
   {
@@ -25,7 +25,7 @@ const DEFAULT_ACCESS_OPTION = {
   value: 'proxy',
 };
 
-const DatasourceHttpAccessHelp = () => (
+const HttpAccessHelp = () => (
   <div className="grafana-info-box m-t-2">
     <p>
       Access mode controls how requests to the data source will be handled.
@@ -48,22 +48,22 @@ const DatasourceHttpAccessHelp = () => (
   </div>
 );
 
-export const DatasourceHttpSettings: React.FC<DatasourceHttpSettingsProps> = props => {
-  const { defaultUrl, datasourceConfig, onChange, showAccessOptions } = props;
+export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
+  const { defaultUrl, dataSourceConfig, onChange, showAccessOptions } = props;
   let urlTooltip;
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
 
   const onSettingsChange = useCallback(
     (change: Partial<DataSourceSettings<any, any>>) => {
       onChange({
-        ...datasourceConfig,
+        ...dataSourceConfig,
         ...change,
       });
     },
-    [datasourceConfig]
+    [dataSourceConfig]
   );
 
-  switch (datasourceConfig.access) {
+  switch (dataSourceConfig.access) {
     case 'direct':
       urlTooltip = (
         <>
@@ -87,7 +87,7 @@ export const DatasourceHttpSettings: React.FC<DatasourceHttpSettingsProps> = pro
     <Select
       width={20}
       options={ACCESS_OPTIONS}
-      value={ACCESS_OPTIONS.filter(o => o.value === datasourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
+      value={ACCESS_OPTIONS.filter(o => o.value === dataSourceConfig.access)[0] || DEFAULT_ACCESS_OPTION}
       onChange={selectedValue => onSettingsChange({ access: selectedValue.value })}
     />
   );
@@ -105,7 +105,7 @@ export const DatasourceHttpSettings: React.FC<DatasourceHttpSettingsProps> = pro
               labelWidth={11}
               inputWidth={20}
               placeholder={defaultUrl}
-              value={datasourceConfig.url}
+              value={dataSourceConfig.url}
               tooltip={urlTooltip}
               onChange={event => onSettingsChange({ url: event.currentTarget.value })}
             />
@@ -120,7 +120,7 @@ export const DatasourceHttpSettings: React.FC<DatasourceHttpSettingsProps> = pro
                     labelWidth={11}
                     inputWidth={30}
                     placeholder={defaultUrl}
-                    value={datasourceConfig.url}
+                    value={dataSourceConfig.url}
                     inputEl={accessSelect}
                   />
                 </div>
@@ -134,16 +134,16 @@ export const DatasourceHttpSettings: React.FC<DatasourceHttpSettingsProps> = pro
                   </label>
                 </div>
               </div>
-              {isAccessHelpVisible && <DatasourceHttpAccessHelp />}
+              {isAccessHelpVisible && <HttpAccessHelp />}
             </>
           )}
-          {datasourceConfig.access === 'proxy' && (
+          {dataSourceConfig.access === 'proxy' && (
             <div className="gf-form max-width-30">
               {/* keepCookies is an array of strings*/}
               <FormField
                 label="Whitelisted Cookies"
                 labelWidth={11}
-                value={datasourceConfig.jsonData.keepCookies}
+                value={dataSourceConfig.jsonData.keepCookies}
                 inputEl={cookieTagsInput}
                 tooltip="Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
               />
@@ -159,7 +159,7 @@ export const DatasourceHttpSettings: React.FC<DatasourceHttpSettingsProps> = pro
             <Switch
               label="Basic auth"
               labelClass="width-13"
-              checked={datasourceConfig.basicAuth}
+              checked={dataSourceConfig.basicAuth}
               onChange={event => {
                 onSettingsChange({ basicAuth: event!.currentTarget.checked });
               }}
@@ -167,7 +167,7 @@ export const DatasourceHttpSettings: React.FC<DatasourceHttpSettingsProps> = pro
             <Switch
               label="With Credentials"
               labelClass="width-13"
-              checked={datasourceConfig.withCredentials}
+              checked={dataSourceConfig.withCredentials}
               onChange={event => {
                 onSettingsChange({ withCredentials: event!.currentTarget.checked });
               }}
@@ -175,23 +175,23 @@ export const DatasourceHttpSettings: React.FC<DatasourceHttpSettingsProps> = pro
             />
           </div>
 
-          {datasourceConfig.access === 'proxy' && (
-            <DatasourceHttpProxySettings
-              datasourceConfig={datasourceConfig}
+          {dataSourceConfig.access === 'proxy' && (
+            <HttpProxySettings
+              dataSourceConfig={dataSourceConfig}
               onChange={jsonData => onSettingsChange({ jsonData })}
             />
           )}
         </div>
-        {datasourceConfig.basicAuth && (
+        {dataSourceConfig.basicAuth && (
           <>
             <h6>Basic Auth Details</h6>
             <div className="gf-form-group">
-              <DatasourceHttpBasicAuthSettings {...props} />
+              <BasicAuthSettings {...props} />
             </div>
           </>
         )}
 
-        {<DatasourceTLSAuthSettings datasourceConfig={datasourceConfig} onChange={onChange} />}
+        {<TLSAuthSettings dataSourceConfig={dataSourceConfig} onChange={onChange} />}
       </>
     </div>
   );

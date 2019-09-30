@@ -1,24 +1,21 @@
 import React from 'react';
-import { DatasourceHttpSettingsProps } from './types';
+import { HttpSettingsProps } from './types';
 import { FormField } from '../FormField/FormField';
 import { SecretFormField } from '../SecretFormFied/SecretFormField';
 
-export const DatasourceHttpBasicAuthSettings: React.FC<DatasourceHttpSettingsProps> = ({
-  datasourceConfig,
-  onChange,
-}) => {
-  const password = datasourceConfig.secureJsonData ? datasourceConfig.secureJsonData.basicAuthPassword : '';
+export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfig, onChange }) => {
+  const password = dataSourceConfig.secureJsonData ? dataSourceConfig.secureJsonData.basicAuthPassword : '';
 
   const onPasswordReset = () => {
     onChange({
-      ...datasourceConfig,
+      ...dataSourceConfig,
       basicAuthPassword: '',
       secureJsonData: {
-        ...datasourceConfig.secureJsonData,
+        ...dataSourceConfig.secureJsonData,
         basicAuthPassword: '',
       },
       secureJsonFields: {
-        ...datasourceConfig.secureJsonFields,
+        ...dataSourceConfig.secureJsonFields,
         basicAuthPassword: false,
       },
     });
@@ -26,9 +23,9 @@ export const DatasourceHttpBasicAuthSettings: React.FC<DatasourceHttpSettingsPro
 
   const onPasswordChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
     onChange({
-      ...datasourceConfig,
+      ...dataSourceConfig,
       secureJsonData: {
-        ...datasourceConfig.secureJsonData,
+        ...dataSourceConfig.secureJsonData,
         basicAuthPassword: event.currentTarget.value,
       },
     });
@@ -41,15 +38,15 @@ export const DatasourceHttpBasicAuthSettings: React.FC<DatasourceHttpSettingsPro
           label="User"
           labelWidth={10}
           placeholder="user"
-          value={datasourceConfig.basicAuthUser}
-          onChange={event => onChange({ ...datasourceConfig, basicAuthUser: event.currentTarget.value })}
+          value={dataSourceConfig.basicAuthUser}
+          onChange={event => onChange({ ...dataSourceConfig, basicAuthUser: event.currentTarget.value })}
         />
       </div>
       <div className="gf-form">
         <SecretFormField
           isConfigured={
-            !!datasourceConfig.basicAuthPassword ||
-            !!(datasourceConfig.secureJsonFields && datasourceConfig.secureJsonFields.basicAuthPassword)
+            !!dataSourceConfig.basicAuthPassword ||
+            !!(dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.basicAuthPassword)
           }
           value={password || ''}
           inputWidth={18}

@@ -12,7 +12,7 @@ import {
   SeriesColorPickerPopoverWithTheme,
   SecretFormField,
   DataLinksEditor,
-  DatasourceHttpSettings,
+  DataSourceHttpSettings,
 } from '@grafana/ui';
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { SearchField } from './components/search/SearchField';
@@ -115,7 +115,7 @@ export function registerAngularDirectives() {
     'onChange',
     ['datasource', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('datasourceHttpSettingsNext', DatasourceHttpSettings, [
+  react2AngularDirective('datasourceHttpSettingsNext', DataSourceHttpSettings, [
     'defaultUrl',
     'showAccessOptions',
     'datasourceConfig',
