@@ -42,6 +42,8 @@ allow_sign_up = true
 
 ## Grafana LDAP Configuration
 
+> Only available in Grafana v6.4+
+
 Depending on which LDAP server you're using and how that's configured your Grafana LDAP configuration may vary.
 See [configuration examples](#configuration-examples) for more information.
 
