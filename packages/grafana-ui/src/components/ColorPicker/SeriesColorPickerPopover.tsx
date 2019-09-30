@@ -1,9 +1,10 @@
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useState, useEffect } from 'react';
 
 import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
 import { PopoverContentProps } from '../Tooltip/Tooltip';
 import { Switch } from '../Switch/Switch';
 import { withTheme } from '../../themes/ThemeContext';
+import appEvents from '../../../../../public/app/core/app_events';
 
 export interface SeriesColorPickerPopoverProps extends ColorPickerProps, PopoverContentProps {
   yaxis?: number;
@@ -11,7 +12,22 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Popover
 }
 
 export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = props => {
-  const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
+  const [color, setColor] = useState(props.color);
+  useEffect(() => setColor(props.color), [props.color]);
+  useEffect(() => {
+    if (props.onColorChange) {
+      // used by Angular components only
+      appEvents.on('series-override-colors-changed', changeColor);
+    }
+    return function unsubscribeEvents() {
+      if (props.onColorChange) {
+        // used by Angular components only
+        appEvents.off('series-override-colors-changed', changeColor);
+      }
+    };
+  }, []);
+  const changeColor = (color: any) => setColor(color);
+  const { yaxis, onToggleAxis, ...colorPickerProps } = props;
   return (
     <ColorPickerPopover
       {...colorPickerProps}

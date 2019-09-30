@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
+import appEvents from '../../../core/app_events';
 
 /** @ngInject */
 export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: any) {
@@ -45,6 +46,7 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
     $scope.override['color'] = color;
     $scope.updateCurrentOverrides();
     $scope.ctrl.render();
+    appEvents.emit('series-override-colors-changed', color);
   };
 
   $scope.openColorSelector = (color: any) => {
