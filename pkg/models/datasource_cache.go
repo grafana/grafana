@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"sync"
@@ -17,10 +18,23 @@ type proxyTransportCache struct {
 	sync.Mutex
 }
 
+type headerRoundTripper struct {
+	headers map[string]string
+	proxied http.RoundTripper
+}
+
+func (h headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	for key, value := range h.headers {
+		req.Header.Set(key, value)
+	}
+
+	return h.proxied.RoundTrip(req)
+}
+
 type cachedTransport struct {
 	updated time.Time
 
-	*http.Transport
+	Transport http.RoundTripper
 }
 
 var ptc = proxyTransportCache{
@@ -40,7 +54,7 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
-func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
+func (ds *DataSource) GetHttpTransport() (http.RoundTripper, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
 
@@ -55,6 +69,8 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 
 	tlsConfig.Renegotiation = tls.RenegotiateFreelyAsClient
 
+	// Create transport which adds all
+	customHeaders := ds.getCustomHeaders()
 	transport := &http.Transport{
 		TLSClientConfig: tlsConfig,
 		Proxy:           http.ProxyFromEnvironment,
@@ -67,13 +83,17 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
 	}
+	proxiedTransport := &headerRoundTripper{
+		proxied: transport,
+		headers: customHeaders,
+	}
 
 	ptc.cache[ds.Id] = cachedTransport{
-		Transport: transport,
+		Transport: proxiedTransport,
 		updated:   ds.Updated,
 	}
 
-	return transport, nil
+	return proxiedTransport, nil
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
@@ -109,4 +129,30 @@ func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
 	}
 
 	return tlsConfig, nil
+}
+
+// getCustomHeaders returns a map with all the to be set headers
+// The map key represents the HeaderName and the value represents this header's value
+func (ds *DataSource) getCustomHeaders() map[string]string {
+	headers := make(map[string]string)
+
+	decrypted := ds.SecureJsonData.Decrypt()
+	index := 1
+	for {
+		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
+		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
+
+		key := ds.JsonData.Get(headerNameSuffix).MustString()
+		if key == "" {
+			// No (more) header values are available
+			break
+		}
+
+		if val, ok := decrypted[headerValueSuffix]; ok {
+			headers[key] = val
+		}
+		index++
+	}
+
+	return headers
 }
