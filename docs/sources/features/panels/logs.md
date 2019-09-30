@@ -11,7 +11,7 @@ weight = 2
 
 # Logs Panel
 
-<img class="screenshot" src="/img/docs/v64/logs-panel.png">
+<img class="screenshot" src="/assets/img/features/logs-panel.png">
 
 > Logs panel is only available in Grafana v6.4+
 
@@ -26,7 +26,12 @@ Note that you can scroll inside the panel in case the datasource returns more li
 
 ### Query Options
 
-To limit the number of lines rendered, you can use the queries-wide **Max data points** setting. If it is not set, the datasource will usually enforce a limit.
+Some datasources (e.g., Loki) allow the use of **Live** tailing to show a steady stream of log messages.
+When the panel is in **Live** mode, results are directly streamed from the datasource and the dashboard's time range is ignored.
+Note that the streaming can put extra effort on the datasource and your browser.
+Usually, the dashboard-wide refresh should be enough to get a recent set of log lines.
+
+To limit the number of lines rendered, you can use the query-wide **Max data points** setting. If it is not set, the datasource will usually enforce a limit.
 
 ## Visualization Options
 
