@@ -1,9 +1,23 @@
+# github.com/apache/arrow/go/arrow v0.0.0-20190716210558-5f564424c71c
+github.com/apache/arrow/go/arrow
+github.com/apache/arrow/go/arrow/array
+github.com/apache/arrow/go/arrow/ipc
+github.com/apache/arrow/go/arrow/memory
+github.com/apache/arrow/go/arrow/decimal128
+github.com/apache/arrow/go/arrow/float16
+github.com/apache/arrow/go/arrow/internal/bitutil
+github.com/apache/arrow/go/arrow/internal/debug
+github.com/apache/arrow/go/arrow/arrio
+github.com/apache/arrow/go/arrow/internal/flatbuf
+github.com/apache/arrow/go/arrow/internal/cpu
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
+# github.com/google/flatbuffers v1.11.0
+github.com/google/flatbuffers/go
 # github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
 github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-plugin v1.0.1
@@ -11,10 +25,14 @@ github.com/hashicorp/go-plugin
 github.com/hashicorp/go-plugin/internal/plugin
 # github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb
 github.com/hashicorp/yamux
+# github.com/mattetti/filebuffer v1.0.0
+github.com/mattetti/filebuffer
 # github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77
 github.com/mitchellh/go-testing-interface
 # github.com/oklog/run v1.0.0
 github.com/oklog/run
+# github.com/pkg/errors v0.8.1
+github.com/pkg/errors
 # golang.org/x/net v0.0.0-20190311183353-d8887717615a
 golang.org/x/net/context
 golang.org/x/net/trace

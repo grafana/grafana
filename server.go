@@ -9,20 +9,26 @@ const (
 	magicCookieValue = "datasource"
 )
 
+// Server serves all registered data source handlers.
 type Server struct {
-	datasources map[string]DatasourceHandler
+	datasources map[string]DataSourceHandler
 }
 
+// NewServer returns a new instance of Server.
 func NewServer() *Server {
 	return &Server{
-		datasources: make(map[string]DatasourceHandler),
+		datasources: make(map[string]DataSourceHandler),
 	}
 }
 
-func (g *Server) HandleDatasource(pluginID string, p DatasourceHandler) {
+// HandleDataSource registers a new data source.
+//
+// The plugin ID should be in the format <org>-<name>-datasource.
+func (g *Server) HandleDataSource(pluginID string, p DataSourceHandler) {
 	g.datasources[pluginID] = p
 }
 
+// Serve starts serving the registered handlers over gRPC.
 func (g *Server) Serve() error {
 	plugins := make(map[string]plugin.Plugin)
 

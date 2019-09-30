@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type boolVector []stringElement
+type boolVector []boolElement
 
 func (v boolVector) At(i int) Element { return &v[i] }
 func (v boolVector) Len() int         { return len(v) }

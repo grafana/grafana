@@ -17,11 +17,11 @@ import (
 
 const pluginID = "myorg-custom-datasource"
 
-type MyDatasource struct {
+type MyDataSource struct {
 	logger *log.Logger
 }
 
-func (d *MyDatasource) Query(ctx context.Context, tr gf.TimeRange, ds gf.DatasourceInfo, queries []gf.Query) ([]gf.QueryResult, error) {
+func (d *MyDataSource) Query(ctx context.Context, tr gf.TimeRange, ds gf.DataSourceInfo, queries []gf.Query) ([]gf.QueryResult, error) {
 	return []gf.QueryResult{}, nil
 }
 
@@ -30,7 +30,7 @@ func main() {
 
 	srv := gf.NewServer()
 
-	srv.HandleDatasource(pluginID, &MyDatasource{
+	srv.HandleDataSource(pluginID, &MyDataSource{
 		logger: logger,
 	})
 
