@@ -55,7 +55,9 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, err
 }
 
 func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, clientIP, userAgent string) (*models.UserToken, error) {
+	s.log.Debug("Creating user auth token", "clientIP", clientIP)
 	clientIP = util.ParseIPAddress(clientIP)
+	s.log.Debug("Parsed IP address", "clientIp", clientIP)
 	token, err := util.RandomHex(16)
 	if err != nil {
 		return nil, err

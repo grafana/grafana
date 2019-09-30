@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"net"
 	"strings"
 )
@@ -10,12 +11,15 @@ func ParseIPAddress(input string) string {
 	host, _ := SplitHostPort(input)
 
 	ip := net.ParseIP(host)
-
 	if ip == nil {
 		return host
 	}
 
 	if ip.IsLoopback() {
+		if strings.Contains(host, ":") {
+			// IPv6
+			return "::1"
+		}
 		return "127.0.0.1"
 	}
 
@@ -24,28 +28,37 @@ func ParseIPAddress(input string) string {
 
 // SplitHostPortDefault splits ip address/hostname string by host and port. Defaults used if no match found
 func SplitHostPortDefault(input, defaultHost, defaultPort string) (host string, port string) {
-	port = defaultPort
-	s := input
-	lastIndex := strings.LastIndex(input, ":")
-
-	if lastIndex != -1 {
-		if lastIndex > 0 && input[lastIndex-1:lastIndex] != ":" {
-			s = input[:lastIndex]
-			port = input[lastIndex+1:]
-		} else if lastIndex == 0 {
-			s = defaultHost
-			port = input[lastIndex+1:]
+	start := 0
+	// Determine if IPv6 address, in which case IP address will be enclosed in square brackets
+	if strings.Index(input, "[") == 0 {
+		addrEnd := strings.LastIndex(input, "]")
+		if addrEnd < 0 {
+			// Malformed address
+			return defaultHost, defaultPort
 		}
-	} else {
+
+		start = addrEnd
+	}
+	if strings.LastIndex(input[start:], ":") < 0 {
+		// There's no port section of the input
+		// It's still useful to call net.SplitHostPort though, since it removes IPv6
+		// square brackets from the address
+		input = fmt.Sprintf("%s:%s", input, defaultPort)
+	}
+
+	host, port, err := net.SplitHostPort(input)
+	if err != nil {
+		panic(fmt.Sprintf("net.SplitHostPort failed for '%s': %v", input, err))
+	}
+
+	if len(host) == 0 {
+		host = defaultHost
+	}
+	if len(port) == 0 {
 		port = defaultPort
 	}
 
-	s = strings.Replace(s, "[", "", -1)
-	s = strings.Replace(s, "]", "", -1)
-	port = strings.Replace(port, "[", "", -1)
-	port = strings.Replace(port, "]", "", -1)
-
-	return s, port
+	return host, port
 }
 
 // SplitHostPort splits ip address/hostname string by host and port
