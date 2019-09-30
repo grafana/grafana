@@ -98,16 +98,14 @@ export default function SuggestionsPlugin({
         case 'Tab': {
           if (hasSuggestions) {
             event.preventDefault();
-
-            component.typeaheadRef.insertSuggestion();
-            return handleTypeahead(event, editor, onTypeahead, cleanText);
+            return component.typeaheadRef.insertSuggestion();
           }
 
           break;
         }
 
         default: {
-          handleTypeahead(event, editor, onTypeahead, cleanText);
+          handleTypeahead(editor, onTypeahead, cleanText);
           break;
         }
       }
@@ -123,7 +121,9 @@ export default function SuggestionsPlugin({
         }
 
         // @ts-ignore
-        return editor.applyTypeahead(suggestion);
+        const ed = editor.applyTypeahead(suggestion);
+        handleTypeahead(editor, onTypeahead, cleanText);
+        return ed;
       },
 
       applyTypeahead: (editor: CoreEditor, suggestion: CompletionItem): CoreEditor => {
@@ -202,7 +202,6 @@ export default function SuggestionsPlugin({
 
 const handleTypeahead = debounce(
   async (
-    event: Event,
     editor: CoreEditor,
     onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>,
     cleanText?: (text: string) => string
