@@ -61,14 +61,12 @@ Open [localhost:3004](http://localhost:3004) to view the docs.
 
 ### Images & Content
 
-All markdown files are part of [this repository](https://github.com/grafana/grafana). However, all images are added to the [website repository](https://github.com/grafana/website).
-
-Therefore, the process of adding images is not as straightforward. These are the steps:
+All markdown files are part of [this repository](https://github.com/grafana/grafana). However, all images are added to the [website repository](https://github.com/grafana/website). Therefore, the process of adding images is not as straightforward. These are the steps:
 
 1. Ensure you create a feature (PR) branch within the [website repository](https://github.com/grafana/website) to make the change
-2. Ensure the image(s) is compressed and optimised e.g. Using [tinypng](https://tinypng.com/)
-2. Add the image to the `/static/img/docs` directory
-3. Then, make a commit that adds the image
+2. Ensure the image(s) are compressed and optimised e.g. Using [tinypng](https://tinypng.com/)
+2. Add the image(s) to the `/static/img/docs` directory
+3. Then, make a commit that adds the image(s)
 
 Finally, run:
 ```
@@ -77,7 +75,7 @@ make docs-build
 
 This will rebuild the docs docker image.
 
-To be able to use the image you have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image.
+To be able to use your image(s) you have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image(s).
 
 ### Editing content
 
