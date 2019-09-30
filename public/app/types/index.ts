@@ -15,3 +15,4 @@ export * from './explore';
 export * from './store';
 export * from './ldap';
 export * from './events';
+export * from './angular';

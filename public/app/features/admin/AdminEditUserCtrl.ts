@@ -3,13 +3,13 @@ import { dateTime, showConfirmModal } from '@grafana/data';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import { NavModelSrv } from 'app/core/core';
 import { User } from 'app/core/services/context_srv';
-import { UserSession } from 'app/types';
+import { UserSession, Scope } from 'app/types';
 import { AppEventEmitter } from 'app/routes/GrafanaCtrl';
 
 export default class AdminEditUserCtrl {
   /** @ngInject */
   constructor(
-    $scope: { [key: string]: any } & AppEventEmitter,
+    $scope: Scope & AppEventEmitter,
     $routeParams: any,
     backendSrv: BackendSrv,
     $location: any,

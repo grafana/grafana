@@ -6,11 +6,12 @@ import { BackendSrv } from 'app/core/services/backend_srv';
 import { ILocationService } from 'angular';
 import { AppEventEmitter } from './GrafanaCtrl';
 import { dashboardFetchStart } from '@grafana/data';
+import { Scope } from 'app/types';
 
 export class LoadDashboardCtrl {
   /** @ngInject */
   constructor(
-    $scope: AppEventEmitter & { [key: string]: any },
+    $scope: Scope & AppEventEmitter,
     $routeParams: UrlQueryMap,
     dashboardLoaderSrv: DashboardLoaderSrv,
     backendSrv: BackendSrv,
