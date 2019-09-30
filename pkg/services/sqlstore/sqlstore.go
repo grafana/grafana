@@ -99,10 +99,8 @@ func (ss *SqlStore) Init() error {
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
 
-	ss.skipEnsureAdmin = setting.DisableAdminUser
-
 	// ensure admin user
-	if ss.skipEnsureAdmin {
+	if ss.Cfg.DisableAdminUser {
 		return nil
 	}
 
@@ -296,7 +294,6 @@ type ITestDB interface {
 func InitTestDB(t ITestDB) *SqlStore {
 	t.Helper()
 	sqlstore := &SqlStore{}
-	sqlstore.skipEnsureAdmin = true
 	sqlstore.Bus = bus.New()
 	sqlstore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
 
@@ -309,6 +306,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 
 	// set test db config
 	sqlstore.Cfg = setting.NewCfg()
+	sqlstore.Cfg.DisableAdminUser = true
 	sec, _ := sqlstore.Cfg.Raw.NewSection("database")
 	sec.NewKey("type", dbType)
 

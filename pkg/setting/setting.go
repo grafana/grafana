@@ -236,6 +236,7 @@ type Cfg struct {
 	RendererLimitAlerting int
 
 	// Security
+	DisableAdminUser                 bool
 	DisableBruteForceLoginProtection bool
 	CookieSecure                     bool
 	CookieSameSite                   http.SameSite
@@ -756,7 +757,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	// admin
-	DisableAdminUser = security.Key("disable_admin_user").MustBool(false)
+	cfg.DisableAdminUser = security.Key("disable_admin_user").MustBool(false)
 	AdminUser, err = valueAsString(security, "admin_user", "")
 	if err != nil {
 		return err
