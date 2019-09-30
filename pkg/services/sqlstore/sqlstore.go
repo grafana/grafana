@@ -296,7 +296,7 @@ type ITestDB interface {
 func InitTestDB(t ITestDB) *SqlStore {
 	t.Helper()
 	sqlstore := &SqlStore{}
-	sqlstore.skipEnsureAdmin = false
+	sqlstore.skipEnsureAdmin = true
 	sqlstore.Bus = bus.New()
 	sqlstore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
 
