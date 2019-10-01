@@ -31,13 +31,13 @@ func TestDataSourceCache(t *testing.T) {
 			So(t2, ShouldEqual, t1)
 		})
 		Convey("Should verify TLS by default", func() {
-			So(t1.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			So(t1.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 		})
 		Convey("Should have no TLS client certificate configured", func() {
-			So(len(t1.TLSClientConfig.Certificates), ShouldEqual, 0)
+			So(len(t1.transport.TLSClientConfig.Certificates), ShouldEqual, 0)
 		})
 		Convey("Should have no user-supplied TLS CA onfigured", func() {
-			So(t1.TLSClientConfig.RootCAs, ShouldBeNil)
+			So(t1.transport.TLSClientConfig.RootCAs, ShouldBeNil)
 		})
 	})
 
@@ -62,13 +62,13 @@ func TestDataSourceCache(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should verify TLS by default", func() {
-			So(t1.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			So(t1.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 		})
 		Convey("Should have no TLS client certificate configured", func() {
-			So(len(t1.TLSClientConfig.Certificates), ShouldEqual, 0)
+			So(len(t1.transport.TLSClientConfig.Certificates), ShouldEqual, 0)
 		})
 		Convey("Should have no user-supplied TLS CA configured", func() {
-			So(t1.TLSClientConfig.RootCAs, ShouldBeNil)
+			So(t1.transport.TLSClientConfig.RootCAs, ShouldBeNil)
 		})
 
 		ds.JsonData = nil
@@ -79,7 +79,7 @@ func TestDataSourceCache(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should have no user-supplied TLS CA configured after the update", func() {
-			So(t2.TLSClientConfig.RootCAs, ShouldBeNil)
+			So(t2.transport.TLSClientConfig.RootCAs, ShouldBeNil)
 		})
 	})
 
@@ -110,10 +110,10 @@ func TestDataSourceCache(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should verify TLS by default", func() {
-			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			So(tr.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 		})
 		Convey("Should have a TLS client certificate configured", func() {
-			So(len(tr.TLSClientConfig.Certificates), ShouldEqual, 1)
+			So(len(tr.transport.TLSClientConfig.Certificates), ShouldEqual, 1)
 		})
 	})
 
@@ -139,10 +139,10 @@ func TestDataSourceCache(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should verify TLS by default", func() {
-			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+			So(tr.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 		})
 		Convey("Should have a TLS CA configured", func() {
-			So(len(tr.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
+			So(len(tr.transport.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
 		})
 	})
 
@@ -163,7 +163,7 @@ func TestDataSourceCache(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("Should skip TLS verification", func() {
-			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
+			So(tr.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
 		})
 	})
 }

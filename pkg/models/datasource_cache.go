@@ -18,23 +18,25 @@ type proxyTransportCache struct {
 	sync.Mutex
 }
 
-type headerRoundTripper struct {
-	headers map[string]string
-	proxied http.RoundTripper
+// dataSourceTransport implements http.RoundTripper (https://golang.org/pkg/net/http/#RoundTripper)
+type dataSourceTransport struct {
+	headers   map[string]string
+	transport *http.Transport
 }
 
-func (h headerRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	for key, value := range h.headers {
+// RoundTrip executes a single HTTP transaction, returning a Response for the provided Request.
+func (d *dataSourceTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	for key, value := range d.headers {
 		req.Header.Set(key, value)
 	}
 
-	return h.proxied.RoundTrip(req)
+	return d.transport.RoundTrip(req)
 }
 
 type cachedTransport struct {
 	updated time.Time
 
-	Transport http.RoundTripper
+	*dataSourceTransport
 }
 
 var ptc = proxyTransportCache{
@@ -54,12 +56,12 @@ func (ds *DataSource) GetHttpClient() (*http.Client, error) {
 	}, nil
 }
 
-func (ds *DataSource) GetHttpTransport() (http.RoundTripper, error) {
+func (ds *DataSource) GetHttpTransport() (*dataSourceTransport, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
 
 	if t, present := ptc.cache[ds.Id]; present && ds.Updated.Equal(t.updated) {
-		return t.Transport, nil
+		return t.dataSourceTransport, nil
 	}
 
 	tlsConfig, err := ds.GetTLSConfig()
@@ -83,17 +85,18 @@ func (ds *DataSource) GetHttpTransport() (http.RoundTripper, error) {
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
 	}
-	proxiedTransport := &headerRoundTripper{
-		proxied: transport,
-		headers: customHeaders,
+
+	dsTransport := &dataSourceTransport{
+		headers:   customHeaders,
+		transport: transport,
 	}
 
 	ptc.cache[ds.Id] = cachedTransport{
-		Transport: proxiedTransport,
-		updated:   ds.Updated,
+		dataSourceTransport: dsTransport,
+		updated:             ds.Updated,
 	}
 
-	return proxiedTransport, nil
+	return dsTransport, nil
 }
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
@@ -135,6 +138,9 @@ func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
 // The map key represents the HeaderName and the value represents this header's value
 func (ds *DataSource) getCustomHeaders() map[string]string {
 	headers := make(map[string]string)
+	if ds.JsonData == nil {
+		return headers
+	}
 
 	decrypted := ds.SecureJsonData.Decrypt()
 	index := 1
