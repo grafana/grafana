@@ -39,17 +39,17 @@ export const SingleValue = (props: Props) => {
   const { children, data } = props;
   const styles = getStyles();
 
-  const loading = useDelayedSwitch(data.loading || false, { delay: 250, duration: 500 });
+  const loading = useDelayedSwitch(data.loading || false, { delay: 250, duration: 750 });
 
   return (
     <components.SingleValue {...props}>
       <div className={cx('gf-form-select-box__img-value')}>
         <div className={styles.container}>
-          <FadeTransition visible={loading}>
+          <FadeTransition duration={150} visible={loading}>
             <Spinner className={styles.item} inline />
           </FadeTransition>
           {data.imgUrl && (
-            <FadeTransition visible={!loading}>
+            <FadeTransition duration={150} visible={!loading}>
               <img className={styles.item} src={data.imgUrl} />
             </FadeTransition>
           )}
