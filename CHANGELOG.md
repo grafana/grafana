@@ -1,4 +1,8 @@
-# 6.4.0 (unreleased)
+# 6.4.0 (2019-10-01)
+
+### Features / Enhancements
+* **Build**: Upgrade go to 1.12.10. [#19499](https://github.com/grafana/grafana/pull/19499), [@marefr](https://github.com/marefr)
+* **Logs**: Publish logs panel. [#19504](https://github.com/grafana/grafana/pull/19504), [@davkal](https://github.com/davkal)
 
 # 6.4.0-beta2 (2019-09-25)
 
