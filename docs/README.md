@@ -63,10 +63,11 @@ Open [localhost:3004](http://localhost:3004) to view the docs.
 
 All markdown files are part of [this repository](https://github.com/grafana/grafana). However, all images are added to the [website repository](https://github.com/grafana/website). Therefore, the process of adding images is not as straightforward. These are the steps:
 
-1. Ensure you create a feature (PR) branch within the [website repository](https://github.com/grafana/website) to make the change
+1. Ensure you create a feature branch within the [website repository](https://github.com/grafana/website) to make the change. This branch needs to be based on the `old-docs` branch. 
 2. Ensure the image(s) are compressed and optimised e.g. Using [tinypng](https://tinypng.com/)
 2. Add the image(s) to the `/static/img/docs` directory
 3. Then, make a commit that adds the image(s)
+4. The Pull Request you create needs to target where you branched off, the branch `old-docs`
 
 Finally, run:
 ```
