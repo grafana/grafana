@@ -191,7 +191,7 @@ func TestDataSourceCache(t *testing.T) {
 		headers := ds.getCustomHeaders()
 
 		Convey("Should match header value after decryption", func() {
-			So(headers["httpHeaderName1"], ShouldEqual, "Bearer xf5yhfkpsnmgo")
+			So(headers["Authorization"], ShouldEqual, "Bearer xf5yhfkpsnmgo")
 		})
 	})
 }
