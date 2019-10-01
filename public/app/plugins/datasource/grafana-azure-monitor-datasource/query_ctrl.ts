@@ -250,7 +250,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
     // Migrate old app insights data keys to match other datasources
     const mappings = {
-      xazis: 'timeColumn',
+      xaxis: 'timeColumn',
       yaxis: 'valueColumn',
       spliton: 'segmentColumn',
       groupBy: 'dimension',
