@@ -61,19 +61,29 @@ Open [localhost:3004](http://localhost:3004) to view the docs.
 
 ### Images & Content
 
-All markdown files are located in this repo (main grafana repo). But all images are added to the https://github.com/grafana/website repo. So the process of adding images is a bit complicated.
+All markdown files are part of [this repository](https://github.com/grafana/grafana). However, all images are added to the [website repository](https://github.com/grafana/website). Therefore, the process of adding images is not as straightforward. These are the steps:
 
-First you need create a feature (PR) branch of https://github.com/grafana/website so you can make change. Then add the image to the `/static/img/docs` directory. Then make a commit that adds the image.
+1. Ensure you create a feature branch within the [website repository](https://github.com/grafana/website) to make the change. This branch needs to be based on the `old-docs` branch. 
+2. Ensure the image(s) are compressed and optimised e.g. Using [tinypng](https://tinypng.com/)
+2. Add the image(s) to the `/static/img/docs` directory
+3. Then, make a commit that adds the image(s)
+4. The Pull Request you create needs to target where you branched off, the branch `old-docs`
 
-Then run:
+Finally, run:
 ```
 make docs-build
 ```
 
-This will rebuild the docs docker container.
+This will rebuild the docs docker image.
 
-To be able to use the image you have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image.
+To be able to use your image(s) you have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image(s).
 
 ### Editing content
 
 Changes to the markdown files should automatically cause a docs rebuild and live reload should reload the page in your browser.
+
+### Troubleshooting
+
+#### Running `make watch` errors out with `Warning: Task "default" not found.`
+
+Ensure that the docker image from the [website repository](https://github.com/grafana/website) is built using the `old-docs` branch.

@@ -115,27 +115,34 @@ export class PanelChrome extends PureComponent<Props, State> {
         return;
       }
 
-      let { errorMessage, isFirstLoad } = this.state;
+      let { isFirstLoad } = this.state;
+      let errorMessage: string | null = null;
 
-      if (data.state === LoadingState.Error) {
-        const { error } = data;
-        if (error) {
-          if (errorMessage !== error.message) {
-            errorMessage = error.message;
+      switch (data.state) {
+        case LoadingState.Loading:
+          // Skip updating state data if it is already in loading state
+          // This is to avoid rendering partial loading responses
+          if (this.state.data.state === LoadingState.Loading) {
+            return;
           }
-        }
-      } else {
-        errorMessage = null;
-      }
-
-      if (data.state === LoadingState.Done) {
-        // If we are doing a snapshot save data in panel model
-        if (this.props.dashboard.snapshot) {
-          this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
-        }
-        if (isFirstLoad) {
-          isFirstLoad = false;
-        }
+          break;
+        case LoadingState.Error:
+          const { error } = data;
+          if (error) {
+            if (errorMessage !== error.message) {
+              errorMessage = error.message;
+            }
+          }
+          break;
+        case LoadingState.Done:
+          // If we are doing a snapshot save data in panel model
+          if (this.props.dashboard.snapshot) {
+            this.props.panel.snapshotData = data.series.map(frame => toDataFrameDTO(frame));
+          }
+          if (isFirstLoad) {
+            isFirstLoad = false;
+          }
+          break;
       }
 
       this.setState({ isFirstLoad, errorMessage, data });
