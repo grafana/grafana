@@ -129,6 +129,11 @@ $select-input-bg-disabled: $input-bg-disabled;
   }
 }
 
+.tag-filter .gf-form-select-box__value-container {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
 .gf-form-select-box__indicators {
   position: absolute;
   height: 100%;
