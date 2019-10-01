@@ -18,15 +18,20 @@ func toArrow(refID string, f *Frame) ([]byte, error) {
 		return nil, err
 	}
 
-	columns, err := buildArrowColumns(f, arrowFields)
-	if err != nil {
-		return nil, err
-	}
-
 	schema, err := buildArrowSchema(refID, f, arrowFields)
 	if err != nil {
 		return nil, err
 	}
+
+	columns, err := buildArrowColumns(f, arrowFields)
+	if err != nil {
+		return nil, err
+	}
+	defer func(cols []array.Column) {
+		for _, col := range cols {
+			col.Release()
+		}
+	}(columns)
 
 	// Create a table from the schema and columns.
 	table := array.NewTable(schema, columns, -1)
@@ -47,9 +52,12 @@ func toArrow(refID string, f *Frame) ([]byte, error) {
 
 	for tableReader.Next() {
 		rec := tableReader.Record()
+
 		if err := fw.Write(rec); err != nil {
+			rec.Release()
 			return nil, err
 		}
+		rec.Release()
 	}
 
 	if err := fw.Close(); err != nil {

@@ -1,36 +1,54 @@
 package dataframe
 
 import (
-	"os"
+	"bytes"
+	"flag"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 	"time"
 )
 
+var update = flag.Bool("update", false, "update .golden.arrow files")
+
 func TestEncode(t *testing.T) {
-	var vals []float64
-	var ts []time.Time
-	for i := 0; i < 3; i++ {
-		vals = append(vals, float64(i))
-		ts = append(ts, time.Now())
-	}
-
 	df := New("http_requests_total", Labels{"service": "auth"},
-		NewField("timestamp", FieldTypeTime, ts),
-		NewField("value", FieldTypeNumber, vals),
+		NewField("timestamp", FieldTypeTime, []time.Time{
+			time.Unix(1568039445, 0),
+			time.Unix(1568039450, 0),
+			time.Unix(1568039455, 0),
+		}),
+		NewField("value", FieldTypeNumber, []float64{
+			0.0,
+			1.0,
+			2.0,
+		}),
 	)
-
-	f, err := os.Create("dataframe.arrow")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer f.Close()
 
 	w := Writer{
 		RefID: "A",
 		Frame: df,
 	}
 
-	if err := w.Write(f); err != nil {
+	var buf bytes.Buffer
+	if err := w.Write(&buf); err != nil {
 		t.Fatal(err)
+	}
+
+	goldenFile := filepath.Join("testdata", "timeseries.golden.arrow")
+
+	if *update {
+		if err := ioutil.WriteFile(goldenFile, buf.Bytes(), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	want, err := ioutil.ReadFile(goldenFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !bytes.Equal(buf.Bytes(), want) {
+		t.Fatalf("data frame doesn't match golden file")
 	}
 }
