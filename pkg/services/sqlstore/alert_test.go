@@ -14,7 +14,7 @@ func mockTimeNow() {
 	timeNow = func() time.Time {
 		fakeNow := time.Unix(timeSeed, 0)
 		timeSeed++
-		return fakeNow
+		return fakeNow.UTC()
 	}
 }
 
@@ -82,6 +82,12 @@ func TestAlertingDataAccess(t *testing.T) {
 
 					err = SetAlertState(cmd)
 					So(err, ShouldNotBeNil)
+				})
+
+				Convey("alert is paused", func() {
+					alert, _ = getAlertById(1)
+					currentState := alert.State
+					So(currentState, ShouldEqual, "paused")
 				})
 
 				Convey("pausing alerts should update their NewStateDate", func() {
