@@ -98,39 +98,52 @@ func (ss *SqlStore) Init() error {
 	// Register handlers
 	ss.addUserQueryAndCommandHandlers()
 
-	// ensure admin user
-	if ss.Cfg.DisableAdminUser {
-		return nil
-	}
-
-	return ss.ensureAdminUser()
+	return ss.ensureDefaults()
 }
 
-func (ss *SqlStore) ensureAdminUser() error {
+func (ss *SqlStore) ensureDefaults() error {
 	systemUserCountQuery := m.GetSystemUserCountStatsQuery{}
 
 	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
 
-		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
+		adminStatsQuery := m.GetAdminStatsQuery{}
+		err := bus.Dispatch(&adminStatsQuery)
 		if err != nil {
-			return fmt.Errorf("Could not determine if admin user exists: %v", err)
+			return fmt.Errorf("Could not determine if default org exists: %v", err)
 		}
 
-		if systemUserCountQuery.Result.Count > 0 {
-			return nil
+		if adminStatsQuery.Result.Orgs == 0 {
+			orgCmd := m.CreateOrgCommand{}
+			orgCmd.Name = "Main Org."
+
+			if err := bus.Dispatch(&orgCmd); err != nil {
+				return fmt.Errorf("Failed to create default org: %v", err)
+			}
 		}
 
-		cmd := m.CreateUserCommand{}
-		cmd.Login = setting.AdminUser
-		cmd.Email = setting.AdminUser + "@localhost"
-		cmd.Password = setting.AdminPassword
-		cmd.IsAdmin = true
+		// ensure admin user
+		if !ss.Cfg.DisableAdminUser {
+			err := bus.DispatchCtx(ctx, &systemUserCountQuery)
+			if err != nil {
+				return fmt.Errorf("Could not determine if admin user exists: %v", err)
+			}
 
-		if err := bus.DispatchCtx(ctx, &cmd); err != nil {
-			return fmt.Errorf("Failed to create admin user: %v", err)
+			if systemUserCountQuery.Result.Count > 0 {
+				return nil
+			}
+
+			cmd := m.CreateUserCommand{}
+			cmd.Login = setting.AdminUser
+			cmd.Email = setting.AdminUser + "@localhost"
+			cmd.Password = setting.AdminPassword
+			cmd.IsAdmin = true
+
+			if err := bus.DispatchCtx(ctx, &cmd); err != nil {
+				return fmt.Errorf("Failed to create admin user: %v", err)
+			}
+
+			ss.log.Info("Created default admin", "user", setting.AdminUser)
 		}
-
-		ss.log.Info("Created default admin", "user", setting.AdminUser)
 
 		return nil
 	})
