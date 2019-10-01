@@ -72,7 +72,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       metricName: this.defaultDropdownValue,
       dimensionFilter: '*',
       timeGrain: 'auto',
-      top: `10`,
+      top: '10',
     },
     azureLogAnalytics: {
       query: [
