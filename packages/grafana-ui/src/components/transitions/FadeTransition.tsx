@@ -1,11 +1,9 @@
 import React from 'react';
-import memoizeOne from 'memoize-one';
 import { css } from 'emotion';
 import { CSSTransition } from 'react-transition-group';
+import { stylesFactory } from '../../themes';
 
-const transitionDuration = 500;
-
-const getStyles = memoizeOne(() => {
+const getStyles = stylesFactory((duration: number) => {
   return {
     enter: css`
       label: enter;
@@ -14,7 +12,7 @@ const getStyles = memoizeOne(() => {
     enterActive: css`
       label: enterActive;
       opacity: 1;
-      transition: opacity ${transitionDuration}ms ease-out;
+      transition: opacity ${duration}ms ease-out;
     `,
     exit: css`
       label: exit;
@@ -23,7 +21,7 @@ const getStyles = memoizeOne(() => {
     exitActive: css`
       label: exitActive;
       opacity: 0;
-      transition: opacity ${transitionDuration}ms ease-out;
+      transition: opacity ${duration}ms ease-out;
     `,
   };
 });
@@ -31,19 +29,14 @@ const getStyles = memoizeOne(() => {
 type Props = {
   children: React.ReactNode;
   visible: boolean;
+  duration?: number;
 };
 
 export function FadeTransition(props: Props) {
-  const { visible, children } = props;
-  const styles = getStyles();
+  const { visible, children, duration = 250 } = props;
+  const styles = getStyles(duration);
   return (
-    <CSSTransition
-      in={visible}
-      mountOnEnter={true}
-      unmountOnExit={true}
-      timeout={transitionDuration}
-      classNames={styles}
-    >
+    <CSSTransition in={visible} mountOnEnter={true} unmountOnExit={true} timeout={duration} classNames={styles}>
       {children}
     </CSSTransition>
   );

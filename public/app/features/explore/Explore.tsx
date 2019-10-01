@@ -9,16 +9,7 @@ import memoizeOne from 'memoize-one';
 // Services & Utils
 import store from 'app/core/store';
 // Components
-import {
-  Alert,
-  ErrorBoundaryAlert,
-  DataQuery,
-  ExploreStartPageProps,
-  DataSourceApi,
-  PanelData,
-  ShowDelay,
-  Spinner,
-} from '@grafana/ui';
+import { Alert, ErrorBoundaryAlert, DataQuery, ExploreStartPageProps, DataSourceApi, PanelData } from '@grafana/ui';
 import LogsContainer from './LogsContainer';
 import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
@@ -76,7 +67,6 @@ interface ExploreProps {
   changeSize: typeof changeSize;
   datasourceError: string;
   datasourceInstance: DataSourceApi;
-  datasourceLoading: boolean | null;
   datasourceMissing: boolean;
   exploreId: ExploreId;
   initializeExplore: typeof initializeExplore;
@@ -260,7 +250,6 @@ export class Explore extends React.PureComponent<ExploreProps> {
       StartPage,
       datasourceInstance,
       datasourceError,
-      datasourceLoading,
       datasourceMissing,
       exploreId,
       showingStartPage,
@@ -368,7 +357,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     StartPage,
     datasourceError,
     datasourceInstance,
-    datasourceLoading,
     datasourceMissing,
     initialized,
     showingStartPage,
@@ -414,7 +402,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     StartPage,
     datasourceError,
     datasourceInstance,
-    datasourceLoading,
     datasourceMissing,
     initialized,
     showingStartPage,
