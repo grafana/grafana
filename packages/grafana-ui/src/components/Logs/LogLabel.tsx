@@ -6,8 +6,9 @@ import { LogLabelStats } from './LogLabelStats';
 import { GrafanaTheme, Themeable } from '../../types/theme';
 import { selectThemeVariant } from '../../themes/selectThemeVariant';
 import { withTheme } from '../../themes/ThemeContext';
+import { stylesFactory } from '../../themes';
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     logsLabel: css`
       label: logs-label;
@@ -43,7 +44,7 @@ const getStyles = (theme: GrafanaTheme) => {
       box-shadow: 0 0 20px ${selectThemeVariant({ light: theme.colors.white, dark: theme.colors.black }, theme.type)};
     `,
   };
-};
+});
 
 interface Props extends Themeable {
   value: string;

@@ -1,4 +1,4 @@
-import { actionCreatorFactory, noPayloadActionCreatorFactory } from 'app/core/redux';
+import { actionCreatorFactory } from 'app/core/redux';
 import config from 'app/core/config';
 import { ThunkResult, SyncInfo, LdapUser, LdapConnectionInfo, LdapError, UserSession, User } from 'app/types';
 import {
@@ -20,15 +20,15 @@ export const ldapConnectionInfoLoadedAction = actionCreatorFactory<LdapConnectio
 export const ldapSyncStatusLoadedAction = actionCreatorFactory<SyncInfo>('ldap/SYNC_STATUS_LOADED').create();
 export const userMappingInfoLoadedAction = actionCreatorFactory<LdapUser>('ldap/USER_INFO_LOADED').create();
 export const userMappingInfoFailedAction = actionCreatorFactory<LdapError>('ldap/USER_INFO_FAILED').create();
-export const clearUserMappingInfoAction = noPayloadActionCreatorFactory('ldap/CLEAR_USER_MAPPING_INFO').create();
-export const clearUserErrorAction = noPayloadActionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
+export const clearUserMappingInfoAction = actionCreatorFactory('ldap/CLEAR_USER_MAPPING_INFO').create();
+export const clearUserErrorAction = actionCreatorFactory('ldap/CLEAR_USER_ERROR').create();
 export const ldapFailedAction = actionCreatorFactory<LdapError>('ldap/LDAP_FAILED').create();
 
 export const userLoadedAction = actionCreatorFactory<User>('USER_LOADED').create();
 export const userSessionsLoadedAction = actionCreatorFactory<UserSession[]>('USER_SESSIONS_LOADED').create();
-export const userSyncFailedAction = noPayloadActionCreatorFactory('USER_SYNC_FAILED').create();
-export const revokeUserSessionAction = noPayloadActionCreatorFactory('REVOKE_USER_SESSION').create();
-export const revokeAllUserSessionsAction = noPayloadActionCreatorFactory('REVOKE_ALL_USER_SESSIONS').create();
+export const userSyncFailedAction = actionCreatorFactory('USER_SYNC_FAILED').create();
+export const revokeUserSessionAction = actionCreatorFactory('REVOKE_USER_SESSION').create();
+export const revokeAllUserSessionsAction = actionCreatorFactory('REVOKE_ALL_USER_SESSIONS').create();
 
 // Actions
 

@@ -38,7 +38,7 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 ## Querying Logs
 
-Querying and displaying log data from Loki is available via [Explore](/features/explore), and with [Table panel](/features/panels/table_panel/) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
+Querying and displaying log data from Loki is available via [Explore](/features/explore), and with the [logs panel](/features/panels/logs/) in dashboards. Select the Loki data source, and then enter a log query to display your logs.
 
 ### Log Queries
 

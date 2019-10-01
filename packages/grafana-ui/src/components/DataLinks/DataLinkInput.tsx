@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useContext, useRef, RefObject } from 'react';
+import React, { useState, useMemo, useContext, useRef, RefObject } from 'react';
 import { VariableSuggestion, VariableOrigin, DataLinkSuggestions } from './DataLinkSuggestions';
 import { ThemeContext, DataLinkBuiltInVars, makeValue } from '../../index';
 import { SelectionReference } from './SelectionReference';
@@ -12,6 +12,8 @@ import { css, cx } from 'emotion';
 
 import { SlatePrism } from '../../slate-plugins';
 import { SCHEMA } from '../../utils/slate';
+import { stylesFactory } from '../../themes';
+import { GrafanaTheme } from '../../types';
 
 const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 
@@ -28,25 +30,24 @@ const plugins = [
   }),
 ];
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  editor: css`
+    .token.builtInVariable {
+      color: ${theme.colors.queryGreen};
+    }
+    .token.variable {
+      color: ${theme.colors.queryKeyword};
+    }
+  `,
+}));
+
 export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, suggestions }) => {
   const editorRef = useRef<Editor>() as RefObject<Editor>;
   const theme = useContext(ThemeContext);
+  const styles = getStyles(theme);
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
   const [linkUrl, setLinkUrl] = useState<Value>(makeValue(value));
-
-  const getStyles = useCallback(() => {
-    return {
-      editor: css`
-        .token.builtInVariable {
-          color: ${theme.colors.queryGreen};
-        }
-        .token.variable {
-          color: ${theme.colors.queryKeyword};
-        }
-      `,
-    };
-  }, [theme]);
 
   // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
   const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
@@ -155,7 +156,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = ({ value, onChange, s
           onBlur={onUrlBlur}
           onKeyDown={(event, _editor, next) => onKeyDown(event as KeyboardEvent, next)}
           plugins={plugins}
-          className={getStyles().editor}
+          className={styles.editor}
         />
       </div>
     </div>
