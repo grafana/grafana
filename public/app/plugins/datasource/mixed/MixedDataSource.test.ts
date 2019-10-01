@@ -2,6 +2,7 @@ import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv'
 import { getDataSourceSrv } from '@grafana/runtime';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { DataSourceInstanceSettings } from '@grafana/ui';
+import { LoadingState } from '@grafana/data';
 import { MixedDatasource } from './module';
 import { from } from 'rxjs';
 
@@ -29,17 +30,23 @@ describe('MixedDatasource', () => {
   });
   const results: any[] = [];
 
-  beforeEach(async () => {
+  beforeEach(async done => {
     const ds = await getDataSourceSrv().get('-- Mixed --');
+
     from(ds.query(requestMixed)).subscribe(result => {
       results.push(result);
+      if (result.state === LoadingState.Done) {
+        done();
+      }
     });
   });
 
   it('direct query should return results', async () => {
     expect(results.length).toBe(3);
     expect(results[0].data).toEqual(['AAAA']);
+    expect(results[0].state).toEqual(LoadingState.Loading);
     expect(results[1].data).toEqual(['BBBB']);
     expect(results[2].data).toEqual(['CCCC']);
+    expect(results[2].state).toEqual(LoadingState.Done);
   });
 });

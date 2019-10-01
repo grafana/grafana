@@ -168,6 +168,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     return series;
   };
 
+  /**
+   * Runs live queries which in this case means creating a websocket and listening on it for new logs.
+   * This returns a bit different dataFrame than runQueries as it returns single dataframe even if there are multiple
+   * Loki streams, sets only common labels on dataframe.labels and has additional dataframe.fields.labels for unique
+   * labels per row.
+   *
+   * @param options
+   * @param observer Callback that will be called with new data. Is optional but only because we run this function
+   * even if there are no live targets defined in the options which would mean this is noop and observer is not called.
+   */
   runLiveQuery = (options: DataQueryRequest<LokiQuery>, target: LokiQuery): Observable<DataQueryResponse> => {
     const liveTarget = this.prepareLiveTarget(target, options);
     const stream = this.streams.getStream(liveTarget);
