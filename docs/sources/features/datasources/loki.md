@@ -129,7 +129,7 @@ Checkout the [Templating](/reference/templating) documentation for an introducti
 
 ## Annotations
 
-You can use any non-metric Loki query as a source for annotations. Log content will be used as annotation text, so there is no need for additional mapping.
+You can use any non-metric Loki query as a source for annotations. Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
 
 > Note: Annotations for Loki are only available in Grafana v6.4+
 
