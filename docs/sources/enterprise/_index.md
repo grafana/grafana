@@ -43,6 +43,9 @@ Supported auth providers:
 
 Data source permissions allow you to restrict query access to only specific Teams and Users. [Learn More]({{< relref "permissions/datasource_permissions.md" >}}).
 
+### Reports
+
+Reports make it possible to take any Dashboard and generate a PDF report and setup a schedule to have it delivered. [Learn More]({{< relref "administration/reports.md" >}}).
 
 ### Premium Plugins
 
