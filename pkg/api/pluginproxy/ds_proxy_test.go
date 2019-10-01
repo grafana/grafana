@@ -17,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -328,37 +327,6 @@ func TestDSRouteRule(t *testing.T) {
 
 			Convey("Should keep named cookies", func() {
 				So(req.Header.Get("Cookie"), ShouldEqual, "JSESSION_ID=test")
-			})
-		})
-
-		Convey("When proxying a data source with custom headers specified", func() {
-			plugin := &plugins.DataSourcePlugin{}
-
-			encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
-			ds := &m.DataSource{
-				Type: m.DS_PROMETHEUS,
-				Url:  "http://prometheus:9090",
-				JsonData: simplejson.NewFromAny(map[string]interface{}{
-					"httpHeaderName1": "Authorization",
-				}),
-				SecureJsonData: map[string][]byte{
-					"httpHeaderValue1": encryptedData,
-				},
-			}
-
-			ctx := &m.ReqContext{}
-			proxy := NewDataSourceProxy(ds, plugin, ctx, "", &setting.Cfg{})
-
-			requestURL, _ := url.Parse("http://grafana.com/sub")
-			req := http.Request{URL: requestURL, Header: make(http.Header)}
-			proxy.getDirector()(&req)
-
-			if err != nil {
-				log.Fatal(4, err.Error())
-			}
-
-			Convey("Match header value after decryption", func() {
-				So(req.Header.Get("Authorization"), ShouldEqual, "Bearer xf5yhfkpsnmgo")
 			})
 		})
 

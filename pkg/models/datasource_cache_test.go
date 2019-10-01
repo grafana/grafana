@@ -1,6 +1,7 @@
 package models
 
 import (
+	"log"
 	"testing"
 	"time"
 
@@ -164,6 +165,33 @@ func TestDataSourceCache(t *testing.T) {
 
 		Convey("Should skip TLS verification", func() {
 			So(tr.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
+		})
+	})
+
+	Convey("When caching a datasource proxy with custom headers specified", t, func() {
+		clearCache()
+
+		encryptedData, err := util.Encrypt([]byte(`Bearer xf5yhfkpsnmgo`), setting.SecretKey)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		json := simplejson.NewFromAny(map[string]interface{}{
+			"httpHeaderName1": "Authorization",
+		})
+
+		ds := DataSource{
+			Id:             1,
+			Url:            "http://k8s:8001",
+			Type:           "Kubernetes",
+			JsonData:       json,
+			SecureJsonData: map[string][]byte{"httpHeaderValue1": encryptedData},
+		}
+
+		headers := ds.getCustomHeaders()
+
+		Convey("Should match header value after decryption", func() {
+			So(headers["httpHeaderName1"], ShouldEqual, "Bearer xf5yhfkpsnmgo")
 		})
 	})
 }
