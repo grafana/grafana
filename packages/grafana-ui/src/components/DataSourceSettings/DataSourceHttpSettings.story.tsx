@@ -32,9 +32,9 @@ const settingsMock: DataSourceSettings<any, any> = {
   readOnly: true,
 };
 
-const HttpSettingsStories = storiesOf('UI/DataSource/HttpSettings', module);
+const DataSourceHttpSettingsStories = storiesOf('UI/DataSource/DataSourceHttpSettings', module);
 
-HttpSettingsStories.add('default', () => {
+DataSourceHttpSettingsStories.add('default', () => {
   return (
     <UseState initialState={settingsMock} logState>
       {(dataSourceSettings, updateDataSourceSettings) => {

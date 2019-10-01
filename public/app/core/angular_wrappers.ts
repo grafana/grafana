@@ -118,7 +118,7 @@ export function registerAngularDirectives() {
   react2AngularDirective('datasourceHttpSettingsNext', DataSourceHttpSettings, [
     'defaultUrl',
     'showAccessOptions',
-    'datasourceConfig',
+    'dataSourceConfig',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
 }
