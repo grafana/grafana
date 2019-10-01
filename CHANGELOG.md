@@ -1,5 +1,9 @@
 # 6.4.0 (unreleased)
 
+## Plugins that need updating when upgrading from 6.3 to 6.4
+
+* [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource)
+
 # 6.4.0-beta2 (2019-09-25)
 
 ### Features / Enhancements
