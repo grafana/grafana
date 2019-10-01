@@ -85,7 +85,6 @@ $select-input-bg-disabled: $input-bg-disabled;
   display: inline-block;
   margin-left: 2px;
   position: relative;
-  top: 3px;
 }
 
 .gf-form-select-box__multi-value__label {
@@ -127,11 +126,6 @@ $select-input-bg-disabled: $input-bg-disabled;
     display: inline-block;
     vertical-align: middle;
   }
-}
-
-.tag-filter .gf-form-select-box__value-container {
-  padding-top: 3px;
-  padding-bottom: 3px;
 }
 
 .gf-form-select-box__indicators {
