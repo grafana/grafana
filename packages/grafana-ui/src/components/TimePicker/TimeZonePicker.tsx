@@ -16,7 +16,7 @@ export const TimeZonePicker: FC<Props> = ({ onChange, value, width }) => {
     const options = group.options.map(timeZone => {
       return {
         label: timeZone,
-        value: timeZone.toLowerCase(),
+        value: timeZone,
       };
     });
 

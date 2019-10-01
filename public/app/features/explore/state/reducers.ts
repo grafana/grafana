@@ -11,7 +11,7 @@ import {
 } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreState, ExploreId, ExploreUpdateState, ExploreMode } from 'app/types/explore';
 import { LoadingState, toLegacyResponseData, DefaultTimeRange } from '@grafana/data';
-import { DataQuery, DataSourceApi, PanelData, DataQueryRequest } from '@grafana/ui';
+import { DataQuery, DataSourceApi, PanelData, DataQueryRequest, RefreshPicker } from '@grafana/ui';
 import {
   HigherOrderAction,
   ActionTypes,
@@ -59,7 +59,6 @@ import { reducerFactory, ActionOf } from 'app/core/redux';
 import { updateLocation } from 'app/core/actions/location';
 import { LocationUpdate } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
-import { isLive } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { ResultProcessor } from '../utils/ResultProcessor';
 
 export const DEFAULT_RANGE = {
@@ -191,11 +190,11 @@ export const itemReducer = reducerFactory<ExploreItemState>({} as ExploreItemSta
     filter: changeRefreshIntervalAction,
     mapper: (state, action): ExploreItemState => {
       const { refreshInterval } = action.payload;
-      const live = isLive(refreshInterval);
+      const live = RefreshPicker.isLive(refreshInterval);
       const sortOrder = refreshIntervalToSortOrder(refreshInterval);
       const logsResult = sortLogsResult(state.logsResult, sortOrder);
 
-      if (isLive(state.refreshInterval) && !live) {
+      if (RefreshPicker.isLive(state.refreshInterval) && !live) {
         stopQueryState(state.querySubscription);
       }
 
