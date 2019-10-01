@@ -202,7 +202,6 @@ export default class AzureMonitorDatasource {
       const resourceGroup = this.toVariable(metricNamespaceQueryWithSub[2]);
       const metricDefinition = this.toVariable(metricNamespaceQueryWithSub[3]);
       const resourceName = this.toVariable(metricNamespaceQueryWithSub[4]);
-      console.log(metricNamespaceQueryWithSub);
       return this.getMetricNamespaces(subscription, resourceGroup, metricDefinition, resourceName);
     }
 

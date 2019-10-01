@@ -3,8 +3,6 @@ cloud.google.com/go/compute/metadata
 cloud.google.com/go/civil
 # github.com/BurntSushi/toml v0.3.1
 github.com/BurntSushi/toml
-# github.com/Unknwon/com v0.0.0-20190214221849-2d12a219ccaf
-github.com/Unknwon/com
 # github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f
 github.com/VividCortex/mysqlerr
 # github.com/aws/aws-sdk-go v1.18.5
@@ -56,7 +54,7 @@ github.com/beevik/etree
 github.com/benbjohnson/clock
 # github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973
 github.com/beorn7/perks/quantile
-# github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737
+# github.com/bradfitz/gomemcache v0.0.0-20190329173943-551aad21a668
 github.com/bradfitz/gomemcache/memcache
 # github.com/codegangsta/cli v1.20.0
 github.com/codegangsta/cli
@@ -75,13 +73,13 @@ github.com/facebookgo/inject
 github.com/facebookgo/structtag
 # github.com/fatih/color v1.7.0
 github.com/fatih/color
-# github.com/go-macaron/binding v0.0.0-20170611065819-ac54ee249c27
+# github.com/go-macaron/binding v0.0.0-20190806013118-0b4f37bab25b
 github.com/go-macaron/binding
 # github.com/go-macaron/gzip v0.0.0-20160222043647-cad1c6580a07
 github.com/go-macaron/gzip
 # github.com/go-macaron/inject v0.0.0-20160627170012-d8a0b8677191
 github.com/go-macaron/inject
-# github.com/go-macaron/session v0.0.0-20190131233854-0a0a789bf193
+# github.com/go-macaron/session v0.0.0-20190805070824-1a3cdc6f5659
 github.com/go-macaron/session
 # github.com/go-sql-driver/mysql v1.4.1
 github.com/go-sql-driver/mysql
@@ -102,29 +100,29 @@ github.com/gobwas/glob/syntax/ast
 github.com/gobwas/glob/util/runes
 github.com/gobwas/glob/syntax/lexer
 github.com/gobwas/glob/util/strings
-# github.com/golang/protobuf v1.2.0
+# github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/gopherjs/gopherjs v0.0.0-20190411002643-bd77b112433e
+# github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c
 github.com/gopherjs/gopherjs/js
 # github.com/gorilla/websocket v1.4.0
 github.com/gorilla/websocket
 # github.com/gosimple/slug v1.4.2
 github.com/gosimple/slug
-# github.com/grafana/grafana-plugin-model v0.0.0-20180518082423-84176c64269d
+# github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
 github.com/grafana/grafana-plugin-model/go/datasource
 github.com/grafana/grafana-plugin-model/go/renderer
 # github.com/hashicorp/go-hclog v0.8.0
 github.com/hashicorp/go-hclog
-# github.com/hashicorp/go-plugin v0.0.0-20190220160451-3f118e8ee104
+# github.com/hashicorp/go-plugin v1.0.1
 github.com/hashicorp/go-plugin
 github.com/hashicorp/go-plugin/internal/plugin
 # github.com/hashicorp/go-version v1.1.0
 github.com/hashicorp/go-version
-# github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb
+# github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
 github.com/hashicorp/yamux
 # github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 github.com/inconshreveable/log15
@@ -149,7 +147,7 @@ github.com/lib/pq/scram
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.7
 github.com/mattn/go-isatty
-# github.com/mattn/go-sqlite3 v1.10.0
+# github.com/mattn/go-sqlite3 v1.11.0
 github.com/mattn/go-sqlite3
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
@@ -196,16 +194,16 @@ github.com/russellhaering/goxmldsig/etreeutils
 github.com/russellhaering/goxmldsig/types
 # github.com/sergi/go-diff v1.0.0
 github.com/sergi/go-diff/diffmatchpatch
-# github.com/smartystreets/assertions v0.0.0-20190401211740-f487f9de1cd3
+# github.com/smartystreets/assertions v1.0.1
 github.com/smartystreets/assertions
 github.com/smartystreets/assertions/internal/go-diff/diffmatchpatch
 github.com/smartystreets/assertions/internal/go-render/render
 github.com/smartystreets/assertions/internal/oglematchers
-# github.com/smartystreets/goconvey v0.0.0-20190330032615-68dc04aab96a
+# github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337
 github.com/smartystreets/goconvey/convey
 github.com/smartystreets/goconvey/convey/reporting
 github.com/smartystreets/goconvey/convey/gotest
-# github.com/stretchr/testify v1.3.0
+# github.com/stretchr/testify v1.4.0
 github.com/stretchr/testify/require
 github.com/stretchr/testify/assert
 # github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf
@@ -233,18 +231,20 @@ github.com/uber/jaeger-client-go/thrift-gen/baggage
 github.com/uber/jaeger-client-go/thrift-gen/agent
 # github.com/uber/jaeger-lib v2.0.0+incompatible
 github.com/uber/jaeger-lib/metrics
+# github.com/unknwon/com v1.0.1
+github.com/unknwon/com
 # github.com/yudai/gojsondiff v1.0.0
 github.com/yudai/gojsondiff
 github.com/yudai/gojsondiff/formatter
 # github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82
 github.com/yudai/golcs
-# golang.org/x/crypto v0.0.0-20190411191339-88737f569e3a
+# golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/md4
 golang.org/x/crypto/ripemd160
 golang.org/x/crypto/ed25519/internal/edwards25519
-# golang.org/x/net v0.0.0-20190415100556-4a65cf94b679
+# golang.org/x/net v0.0.0-20190724013045-ca1201d0de80
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/context
 golang.org/x/net/http2
@@ -259,11 +259,11 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/jwt
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
-# golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6
+# golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20190415081028-16da32be82c5
+# golang.org/x/sys v0.0.0-20190804053845-51ab0e2deafa
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.2
 golang.org/x/text/secure/bidirule
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
@@ -271,7 +271,7 @@ golang.org/x/text/transform
 # golang.org/x/xerrors v0.0.0-20190410155217-1f06c39b4373
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# google.golang.org/appengine v1.4.0
+# google.golang.org/appengine v1.6.1
 google.golang.org/appengine
 google.golang.org/appengine/cloudsql
 google.golang.org/appengine/urlfetch
@@ -318,11 +318,11 @@ google.golang.org/grpc/balancer/base
 gopkg.in/alexcesaro/quotedprintable.v3
 # gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
 gopkg.in/asn1-ber.v1
-# gopkg.in/ini.v1 v1.42.0
+# gopkg.in/ini.v1 v1.46.0
 gopkg.in/ini.v1
 # gopkg.in/ldap.v3 v3.0.2
 gopkg.in/ldap.v3
-# gopkg.in/macaron.v1 v1.3.2
+# gopkg.in/macaron.v1 v1.3.4
 gopkg.in/macaron.v1
 # gopkg.in/mail.v2 v2.3.1
 gopkg.in/mail.v2

@@ -21,6 +21,7 @@ import {
   NullValueMode,
   toDataFrame,
   FieldCache,
+  FieldWithIndex,
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 import { hasAnsiCodes } from 'app/core/utils/text';
@@ -249,6 +250,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
     const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
     const logLevelField = fieldCache.getFieldByName('level');
+    const idField = getIdField(fieldCache);
 
     let seriesLogLevel: LogLevel | undefined = undefined;
     if (series.labels && Object.keys(series.labels).indexOf('level') !== -1) {
@@ -291,6 +293,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
         raw: message,
         labels: series.labels,
         timestamp: ts,
+        uid: idField ? idField.values.get(j) : j.toString(),
       });
     }
   }
@@ -320,4 +323,15 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel {
     meta,
     rows,
   };
+}
+
+function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
+  const idFieldNames = ['id'];
+  for (const fieldName of idFieldNames) {
+    const idField = fieldCache.getFieldByName(fieldName);
+    if (idField) {
+      return idField;
+    }
+  }
+  return undefined;
 }

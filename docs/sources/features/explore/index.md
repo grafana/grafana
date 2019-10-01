@@ -116,6 +116,16 @@ after switching to the Logs data source, the query changes to:
 
 This will return a chunk of logs in the selected time range that can be grepped/text searched.
 
+#### Live tailing
+
+Use the Live tailing feature to see real-time logs on supported data sources.
+
+Click the **Live** button in the Explore toolbar to switch to Live tail view.
+
+While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting background so you can keep track of what is new. Click the **Pause** button or scroll the the logs view to pause the Live tailing and explore previous logs without interruption. Click **Resume** button to resume the Live tailing or click **Stop** button to exit Live tailing and go back to standard Explore view.
+
+{{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
+
 ## Navigating between Explore and a dashboard
 
 To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard

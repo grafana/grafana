@@ -30,6 +30,7 @@ Every commit to master that has changes within the `packages` directory is a sub
 Automatic prereleases are published under the `canary` dist tag.
 
 ### Manual release
+
 > All of the steps below must be performed on a release branch, according to Grafana Release Guide.
 
 > Make sure you are logged in to npm in your terminal and that you are a part of Grafana org on npm.
