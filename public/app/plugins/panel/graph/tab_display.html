@@ -80,6 +80,15 @@
         ></select>
       </div>
     </div>
+    <gf-form-switch
+      ng-disabled="!ctrl.panel.bars"
+      class="gf-form"
+      label="Center"
+      label-class="width-8"
+      checked="ctrl.panel.centered"
+      on-change="ctrl.render()"
+    >
+    </gf-form-switch>
   </div>
   <div class="section gf-form-group">
     <h5 class="section-heading">Hover tooltip</h5>
