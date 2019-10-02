@@ -1,7 +1,7 @@
 import React, { useState, useRef, ReactElement } from 'react';
 
 export const useExpandableLabel = (initialExpanded: boolean) => {
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState(initialExpanded);
   const [width, setWidth] = useState();
   const Label = ({ Component, onClick }: { Component: ReactElement; onClick: () => void }) => (

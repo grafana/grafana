@@ -13,9 +13,7 @@ import { Help } from './Help';
 import { StackdriverQuery, MetricDescriptor } from '../types';
 import { getAlignmentPickerData } from '../functions';
 import StackdriverDatasource from '../datasource';
-import { TimeSeries, SelectableValue } from '@grafana/data';
-
-import { SegmentExampleUsage } from './SegmentExampleUsage';
+import { TimeSeries } from '@grafana/data';
 
 export interface Props {
   onQueryChange: (target: StackdriverQuery) => void;
@@ -161,8 +159,6 @@ export class QueryEditor extends React.Component<Props, State> {
         >
           {metric => (
             <>
-              <SegmentExampleUsage />
-
               <Filter
                 filtersChanged={value => this.onPropertyChange('filters', value)}
                 groupBysChanged={value => this.onPropertyChange('groupBys', value)}
