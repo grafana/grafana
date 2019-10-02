@@ -195,8 +195,6 @@
     "printWidth": 120
   },
   "dependencies": {
-    "@actions/core": "^1.1.3",
-    "@actions/github": "^1.1.0",
     "@babel/polyfill": "7.2.5",
     "@grafana/slate-react": "0.22.9-grafana",
     "@torkelo/react-select": "2.4.1",

@@ -2,19 +2,6 @@
 # yarn lockfile v1
 
 
-"@actions/core@^1.1.3":
-  version "1.1.3"
-  resolved "https://registry.yarnpkg.com/@actions/core/-/core-1.1.3.tgz#543b0e7ca0e53dccc5dca4811a4fac59c1b35f5c"
-  integrity sha512-2BIib53Jh4Cfm+1XNuZYYGTeRo8yiWEAUMoliMh1qQGMaqTF4VUlhhcsBylTu4qWmUx45DrY0y0XskimAHSqhw==
-
-"@actions/github@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@actions/github/-/github-1.1.0.tgz#06f34e6b0cf07eb2b3641de3e680dbfae6bcd400"
-  integrity sha512-cHf6PyoNMdei13jEdGPhKprIMFmjVVW/dnM5/9QmQDJ1ZTaGVyezUSCUIC/ySNLRvDUpeFwPYMdThSEJldSbUw==
-  dependencies:
-    "@octokit/graphql" "^2.0.1"
-    "@octokit/rest" "^16.15.0"
-
 "@babel/code-frame@7.0.0", "@babel/code-frame@^7.0.0":
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.0.0.tgz#06e2ab19bdb535385559aabb5ba59729482800f8"
@@ -2162,14 +2149,6 @@
     universal-user-agent "^2.1.0"
     url-template "^2.0.8"
 
-"@octokit/graphql@^2.0.1":
-  version "2.1.3"
-  resolved "https://registry.yarnpkg.com/@octokit/graphql/-/graphql-2.1.3.tgz#60c058a0ed5fa242eca6f938908d95fd1a2f4b92"
-  integrity sha512-XoXJqL2ondwdnMIW3wtqJWEwcBfKk37jO/rYkoxNPEVeLBDGsGO1TCWggrAlq3keGt/O+C/7VepXnukUxwt5vA==
-  dependencies:
-    "@octokit/request" "^5.0.0"
-    universal-user-agent "^2.0.3"
-
 "@octokit/plugin-enterprise-rest@^2.1.1":
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/@octokit/plugin-enterprise-rest/-/plugin-enterprise-rest-2.2.2.tgz#c0e22067a043e19f96ff9c7832e2a3019f9be75c"
@@ -2195,24 +2174,6 @@
     node-fetch "^2.3.0"
     once "^1.4.0"
     universal-user-agent "^2.1.0"
-
-"@octokit/rest@^16.15.0":
-  version "16.30.1"
-  resolved "https://registry.yarnpkg.com/@octokit/rest/-/rest-16.30.1.tgz#03e6dfb93e9a9cd2b3bacb95c49a8c7923f42ad0"
-  integrity sha512-1n2QzTbbaBXNLpx7WHlcsSMdJvxSdKmerXQm+bMYlKDbQM19uq446ZpGs7Ynq5SsdLj1usIfgJ9gJf4LtcWkDw==
-  dependencies:
-    "@octokit/request" "^5.0.0"
-    "@octokit/request-error" "^1.0.2"
-    atob-lite "^2.0.0"
-    before-after-hook "^2.0.0"
-    btoa-lite "^1.0.0"
-    deprecation "^2.0.0"
-    lodash.get "^4.4.2"
-    lodash.set "^4.3.2"
-    lodash.uniq "^4.5.0"
-    octokit-pagination-methods "^1.1.0"
-    once "^1.4.0"
-    universal-user-agent "^4.0.0"
 
 "@octokit/rest@^16.16.0":
   version "16.28.3"
@@ -13153,7 +13114,7 @@ os-locale@^3.0.0, os-locale@^3.1.0:
     lcid "^2.0.0"
     mem "^4.0.0"
 
-os-name@^3.0.0, os-name@^3.1.0:
+os-name@^3.0.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/os-name/-/os-name-3.1.0.tgz#dec19d966296e1cd62d701a5a66ee1ddeae70801"
   integrity sha512-h8L+8aNjNcMpo/mAIBPn5PXCM16iyPGjHNWo6U1YO8sJTMHtEtyczI6QJnLoplswm6goopQkqc7OAnjhWcugVg==
@@ -18049,19 +18010,12 @@ universal-deep-strict-equal@^1.2.1:
     indexof "0.0.1"
     object-keys "^1.0.0"
 
-universal-user-agent@^2.0.0, universal-user-agent@^2.0.3, universal-user-agent@^2.1.0:
+universal-user-agent@^2.0.0, universal-user-agent@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/universal-user-agent/-/universal-user-agent-2.1.0.tgz#5abfbcc036a1ba490cb941f8fd68c46d3669e8e4"
   integrity sha512-8itiX7G05Tu3mGDTdNY2fB4KJ8MgZLS54RdG6PkkfwMAavrXu1mV/lls/GABx9O3Rw4PnTtasxrvbMQoBYY92Q==
   dependencies:
     os-name "^3.0.0"
-
-universal-user-agent@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/universal-user-agent/-/universal-user-agent-4.0.0.tgz#27da2ec87e32769619f68a14996465ea1cb9df16"
-  integrity sha512-eM8knLpev67iBDizr/YtqkJsF3GK8gzDc6st/WKzrTuPtcsOKW/0IdL4cnMBsU69pOx0otavLWBDGTwg+dB0aA==
-  dependencies:
-    os-name "^3.1.0"
 
 universalify@^0.1.0:
   version "0.1.2"
