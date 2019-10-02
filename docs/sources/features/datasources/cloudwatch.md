@@ -27,7 +27,7 @@ forget to check your log file (try looking in /var/log/grafana/grafana.log).
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Default Region* | Used in query editor to set region (can be changed on per query basis)
 *Custom Metrics namespace* | Specify the CloudWatch namespace of Custom metrics

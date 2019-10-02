@@ -26,7 +26,7 @@ visualize logs or metrics stored in Elasticsearch. You can also annotate your gr
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Name* | The data source name. This is how you refer to the data source in panels and queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The HTTP protocol, IP, and port of your Elasticsearch server.
 *Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
@@ -98,7 +98,7 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add/remove
 metrics or group by clauses. Some metrics and group by clauses haves options, click the option text to expand the row to view and edit metric or group by options.
 
-## Series naming & alias patterns
+## Series naming and alias patterns
 
 You can control the name for time series via the `Alias` input field.
 
@@ -131,7 +131,7 @@ Query | Description
 ------------ | -------------
 *{"find": "fields", "type": "keyword"}* | Returns a list of field names with the index type `keyword`.
 *{"find": "terms", "field": "@hostname", "size": 1000}* |  Returns a list of values for a field using term aggregation. Query will use current dashboard time range as time range for query.
-*{"find": "terms", "field": "@hostname", "query": '<lucene query>'}* | Returns a list of values for a field using term aggregation & and a specified lucene query filter. Query will use current dashboard time range as time range for query.
+*{"find": "terms", "field": "@hostname", "query": '<lucene query>'}* | Returns a list of values for a field using term aggregation and a specified lucene query filter. Query will use current dashboard time range as time range for query.
 
 There is a default size limit of 500 on terms queries. Set the size property in your query to set a custom limit.
 You can use other variables inside the query. Example query definition for a variable named `$host`.

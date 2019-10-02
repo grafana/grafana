@@ -98,7 +98,7 @@ Panels are the building blocks of a dashboard. It consists of data source querie
   }
 ```
 
-### Panel size & position
+### Panel size and position
 
 The gridPos property describes the panel size and position in grid coordinates.
 

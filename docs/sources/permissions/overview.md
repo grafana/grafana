@@ -30,9 +30,9 @@ Users can be belong to one or more organizations. A user's organization membersh
 in that organization. Learn more about [Organization Roles]({{< relref "permissions/organization_roles.md" >}}).
 
 
-## Dashboard & Folder Permissions
+## Dashboard and Folder Permissions
 
-Dashboard and folder permissions allows you to remove the default role based permissions for Editors and Viewers and assign permissions to specific **Users** and **Teams**. Learn more about [Dashboard & Folder Permissions]({{< relref "permissions/dashboard_folder_permissions.md" >}}).
+Dashboard and folder permissions allows you to remove the default role based permissions for Editors and Viewers and assign permissions to specific **Users** and **Teams**. Learn more about [Dashboard and Folder Permissions]({{< relref "permissions/dashboard_folder_permissions.md" >}}).
 
 ## Data source permissions
 

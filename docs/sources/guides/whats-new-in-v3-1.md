@@ -1,6 +1,6 @@
 +++
 title = "What's New in Grafana v3.1"
-description = "Feature & improvement highlights for Grafana v3.1"
+description = "Feature and improvement highlights for Grafana v3.1"
 keywords = ["grafana", "new", "documentation", "3.1"]
 type = "docs"
 [menu.docs]
@@ -12,7 +12,7 @@ weight = 5
 
 # What's New in Grafana v3.1
 
-## Dashboard Export & Import
+## Dashboard Export and Import
 
 The export feature is now accessed from the share menu.
 
@@ -32,7 +32,7 @@ Here you can change the name of the dashboard and also pick what data sources yo
 
 ## Discover Dashboards
 
-On [Grafana.com](https://grafana.com) you can now browse & search for dashboards. We have already added a few but more are being uploaded every day. To import a dashboard just copy the dashboard url and head back to Grafana, then Dashboard Search -> Import -> Paste Grafana.com Dashboard URL.
+On [Grafana.com](https://grafana.com) you can now browse and search for dashboards. We have already added a few but more are being uploaded every day. To import a dashboard just copy the dashboard url and head back to Grafana, then Dashboard Search -> Import -> Paste Grafana.com Dashboard URL.
 
 <img src="/img/docs/v31/gnet_dashboards_list.png">
 
