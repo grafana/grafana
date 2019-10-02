@@ -10,11 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
-        with:
-          node-version: 10.x
-      - run: npm install -g yarn
-      - run: yarn install --pure-lockfile
       - name: Parse Milestone
         uses: ./.github/actions/grafana-parse-milestone
         id: parseMilestone
