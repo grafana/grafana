@@ -13933,7 +13933,7 @@ try {
 
   console.log(`Milestone: ${JSON.stringify(milestone, null, 2)}!`);
 
-  if (milestone.closed) {
+  if (milestone.state === 'closed') {
     core.setFailed('Milestone ' + milestone.title + ' is closed! Please assign an open milestone.');
     return;
   }
